@@ -1,0 +1,10 @@
+Group is
+(*
+  to build this example, see ../../README.txt
+*)
+        ../../smlpplib.cm
+        Ast.sml
+	Lexer.lex
+	Parser.grm
+	ml-yacc-lib.cm
+	Main.sml

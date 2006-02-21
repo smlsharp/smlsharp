@@ -1,0 +1,13 @@
+signature S11 = sig datatype 'a t con D : ['a.'a t] end
+signature S12 = 
+sig datatype 'a t con D : ['a .'a t] datatype 'a s con E : ['a .'a s] end
+signature S21 = sig datatype ('a, 'b) t con D : ['a,'b.('b, 'a) t] end
+signature S31 = 
+sig datatype ('a, 'b, 'c) t con D : ['a,'b,'c.('c, 'b, 'a) t] end
+signature S32 =
+sig
+  datatype ('a, 'b, 'c) t
+  con D : ['a,'b,'c.('c, 'b, 'a) t]
+  datatype ('a, 'b, 'c) s
+  con E : ['a,'b,'c.('c, 'b, 'a) s]
+end

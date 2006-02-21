@@ -1,0 +1,37 @@
+#!/bin/sh
+
+if test "x$1" = "x-cm"; then
+  MODE_CM=yes
+  shift 1
+else
+  MODE_CM=no
+fi
+
+if test "x$1" = "x-sh"; then
+  MODE_SH=yes
+  shift 1
+else
+  MODE_SH=no
+fi
+
+FILENAME=$1
+
+case "@target_os@" in
+  *cygwin*|*mingw*)
+    if test "x$MODE_CM" = "xyes"; then
+      FILENAME=`@CYGPATH@ -aw "$FILENAME"`
+    else
+      FILENAME=`@CYGPATH@ -am "$FILENAME"`
+    fi
+    ;;
+  *)
+    ;;
+esac
+
+FILENAME=`echo "$FILENAME" | sed -e 's/\\\\/\\\\\\\\/g' -e 's/"/\\\\"/g'`
+
+if test "x$MODE_SH" = "xyes"; then
+  FILENAME=`echo "$FILENAME" | sed -e 's/\\\\/\\\\\\\\/g' -e 's/"/\\\\"/g'`
+fi
+
+echo "$FILENAME"

@@ -1,0 +1,118 @@
+SMLFormat format algorithm.
+
+@author YAMATODANI Kiyoshi
+@version $Id: PPAlgorithm.txt,v 1.2 2006/02/07 12:49:33 kiyoshiy Exp $
+
+ This document describes about format algorithm adopted by the SMLFormat.
+Target of this algorithm is a text which is semantically tree-structured, including program texts of C and ML.
+This algorithm is based on the policy: a semantically upper structure should be made explicit on the face of the text than its lower structures.
+More specifically, line-breaks and indentations should be used to emphasize upper structure than its lower structures.
+
+ A source text is represented by a string tree of which each of leaf is annotated with a string.
+The algorithm takes two arguments of a string tree and the number of columns.
+It translates a string tree into a string, separated by line breaks if it requires more than the specified columns to print in one line.
+
+ An example string tree is shown below.
+In this figure, '*' denotes an internal node.
+This tree has 4 leaves of "abc", "def", "ghi" and "jkl".
+
+     +-- "abc"
+     |
+     |      +-- "def"
+  *--+-- *--+
+     |      +-- "ghi"
+     |
+     +-- "jkl"
+
+ This algorithm traverses the tree twice.
+
+ The first path calculates, for each node, the length of the string obtained by concatenation of all leaves under the node.
+The example tree is translated into the following. 
+The top node is annotated with 12, which is the length of "abcdefghijkl".
+
+          +-- "abc" (3)
+          |
+          |          +-- "def" (3)
+  * (12)--+-- * (6)--+
+          |          +-- "ghi" (3)
+          |
+          +-- "jkl" (3)
+
+ The second path decides, for each node, about whether its sub-nodes are separated into multiple lines or not, by comparing the calculated string length and the number of columns.
+If the annotated length is less than or equal to the number of columns, sub-nodes are concatenated and printed in one line with prefixed indentation.
+Otherwise, sub-nodes are printed separately in multiple lines with indentation which is extended by white spaces.
+
+ Assume that the specified number of columns is 8, and the unit of indent extension is 2.
+Initial status is as follows.
+
+ indent = ""
+ columns = 8
+          +-- "abc" (3)
+          |
+          |          +-- "def" (3)
+  * (12)--+-- * (6)--+
+          |          +-- "ghi" (3)
+          |
+          +-- "jkl" (3)
+
+ First, because the length of top node is 12, which is more than the columns, sub-nodes of the top node are printed in separated lines. 
+And each line is prefixed with an indentation unit (= 2), so, the number of columns is now 6 (= 8 - 2).
+We now have three trees, and the columns is 6 for each of them.
+
+ indent = "  "
+ columns = 6
+   "abc" (3)
+
+ indent = "  "
+ columns = 6
+          +-- "def" (3)
+   * (6)--+
+          +-- "ghi" (3)
+
+ indent = "  "
+ columns = 6
+   "jkl" (3)
+
+For every of them, the length of its top node is less than or equal to the columns. 
+Therefore, each tree is printed in one line.
+By concatenating the prefix indent and all leaves in a tree, we obtain three lines of strings.
+
+  abc
+  defghi
+  jkl
+
+====================
+ The SimpleTreePP structure defined in "SimpleTreePP.sml" implements this algorithm.
+
+  structure SimpleTreePP :
+  sig
+    datatype tree = Leaf of string | Node of tree list
+    val pp : int -> tree -> string
+  end
+
+Eample usage.
+--------------------
+- use "SimpleTreePP.sml";
+- open SimpleTreePP;
+- val tree = Node[Leaf "abc", Node([Leaf "def", Leaf "ghi"]), Leaf "jkl"];
+- fun ppTree columns = app (fn s => print (s ^ "\n")) (pp columns tree);
+
+- ppTree 12;
+abcdefghijkl
+
+- ppTree 11;
+  abc
+  defghi
+  jkl
+
+- ppTree 8;
+  abc
+  defghi
+  jkl
+
+- ppTree 7;
+  abc
+    def
+    ghi
+  jkl
+--------------------

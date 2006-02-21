@@ -1,0 +1,10 @@
+type t11 = int -> int
+val v11 = fn : t11
+type 'a t12 = int -> 'a
+exception E12 : int -> exn
+val v12 = fn : int t12
+type 'a t21 = 'a -> int
+val v21 = fn : ['a .'a -> int]
+type ('a,'b) t22 = 'a -> 'b
+exception E22 : exn
+val v22 = fn : (int,int) t22

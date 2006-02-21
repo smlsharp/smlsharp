@@ -1,0 +1,94 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@commonrule
+
+VPATH = $(srcdir)
+
+# FIXME: all generating files should be placed in builddir, not in srcdir.
+
+HEAP    = $(srcdir)/commands/smlsharp/main/smlsharp.$(SML_HEAP_SUFFIX)
+
+TARGETS = $(HEAP) \
+          smlsharp \
+          smlsharp_build
+
+SOURCES = $(srcdir)/absyn/main/Absyn.ppg \
+          $(srcdir)/anormal/main/anormal.ppg \
+          $(srcdir)/assemble/main/AssembleError.ppg \
+          $(srcdir)/buccalc/main/BUCCalc.ppg \
+          $(srcdir)/control/main/UserError.ppg \
+          $(srcdir)/elaborate/main/ElaborateError.ppg \
+          $(srcdir)/format/main/SmlppgUtil.ppg \
+          $(srcdir)/matchcompilation/main/MatchError.ppg \
+          $(srcdir)/name/main/ID.ppg \
+          $(srcdir)/name/main/Loc.ppg \
+          $(srcdir)/patterncalc/main/PatternCalc.ppg \
+          $(srcdir)/patterncalcWithTvars/main/PatternCalcWithTvars.ppg \
+          $(srcdir)/recordcalc/main/RecordCalc.ppg \
+          $(srcdir)/settvars/main/SetTVarsError.ppg \
+          $(srcdir)/symbolicinstructions/main/SymbolicInstructions.ppg \
+          $(srcdir)/toplevel/main/TopLevelError.ppg \
+          $(srcdir)/typecontext/main/TypeContext.ppg \
+          $(srcdir)/typedcalc/main/TypedCalc.ppg \
+          $(srcdir)/typedflatcalc/main/TypedFlatCalc.ppg \
+          $(srcdir)/typedlambda/main/TypeCheckTypedLambdaError.ppg \
+          $(srcdir)/typedlambda/main/TypedLambda.ppg \
+          $(srcdir)/typeinference/main/TypeInferenceError.ppg \
+          $(srcdir)/types/main/Types.ppg \
+
+GENSOURCES = $(SOURCES:.ppg=.ppg.sml)
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(TARGETS) $(GENSOURCES)
+	-$(FIND) $(srcdir) -name "CM" -type d -print \
+	 | (while read i; do rm -rf "$$i"; done)
+	rm -f $(srcdir)/parser/main/iml.grm.sml
+	rm -f $(srcdir)/parser/main/iml.grm.desc
+	rm -f $(srcdir)/parser/main/iml.grm.sig
+	rm -f $(srcdir)/parser/main/iml.lex.sml
+
+install: $(TARGETS)
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(heapdir)'
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL_HEAP) $(HEAP) '$(DESTDIR)$(heapdir)'
+	$(INSTALL_PROGRAM) smlsharp '$(DESTDIR)$(bindir)'
+
+$(HEAP): $(GENSOURCES) PHONY
+	cd $(srcdir)/commands/smlsharp/main \
+	&& $(SHELL) $(BUILD_ROOT)/mksmlheap smlsharp
+
+smlsharp: $(top_builddir)mksmlrun
+	$(SHELL) $(top_builddir)mksmlrun smlsharp '$(heapdir)'
+
+smlsharp_build: $(top_builddir)mksmlrun
+	$(SHELL) $(top_builddir)mksmlrun smlsharp \
+	         $(SRC_ROOT)/src/compiler/commands/smlsharp/main $@
+
+$(srcdir)/absyn/main/Absyn.ppg.sml: absyn/main/Absyn.ppg
+$(srcdir)/anormal/main/anormal.ppg.sml: anormal/main/anormal.ppg
+$(srcdir)/assemble/main/AssembleError.ppg.sml: assemble/main/AssembleError.ppg
+$(srcdir)/buccalc/main/BUCCalc.ppg.sml: buccalc/main/BUCCalc.ppg
+$(srcdir)/control/main/UserError.ppg.sml: control/main/UserError.ppg
+$(srcdir)/elaborate/main/ElaborateError.ppg.sml: elaborate/main/ElaborateError.ppg
+$(srcdir)/format/main/SmlppgUtil.ppg.sml: format/main/SmlppgUtil.ppg
+$(srcdir)/matchcompilation/main/MatchError.ppg.sml: matchcompilation/main/MatchError.ppg
+$(srcdir)/name/main/ID.ppg.sml: name/main/ID.ppg
+$(srcdir)/name/main/Loc.ppg.sml: name/main/Loc.ppg
+$(srcdir)/patterncalc/main/PatternCalc.ppg.sml: patterncalc/main/PatternCalc.ppg
+$(srcdir)/patterncalcWithTvars/main/PatternCalcWithTvars.ppg.sml: patterncalcWithTvars/main/PatternCalcWithTvars.ppg
+$(srcdir)/recordcalc/main/RecordCalc.ppg.sml: recordcalc/main/RecordCalc.ppg
+$(srcdir)/settvars/main/SetTVarsError.ppg.sml: settvars/main/SetTVarsError.ppg
+$(srcdir)/symbolicinstructions/main/SymbolicInstructions.ppg.sml: symbolicinstructions/main/SymbolicInstructions.ppg
+$(srcdir)/toplevel/main/TopLevelError.ppg.sml: toplevel/main/TopLevelError.ppg
+$(srcdir)/typecontext/main/TypeContext.ppg.sml: typecontext/main/TypeContext.ppg
+$(srcdir)/typedcalc/main/TypedCalc.ppg.sml: typedcalc/main/TypedCalc.ppg
+$(srcdir)/typedflatcalc/main/TypedFlatCalc.ppg.sml: typedflatcalc/main/TypedFlatCalc.ppg
+$(srcdir)/typedlambda/main/TypeCheckTypedLambdaError.ppg.sml: typedlambda/main/TypeCheckTypedLambdaError.ppg
+$(srcdir)/typedlambda/main/TypedLambda.ppg.sml: typedlambda/main/TypedLambda.ppg
+$(srcdir)/typeinference/main/TypeInferenceError.ppg.sml: typeinference/main/TypeInferenceError.ppg
+$(srcdir)/types/main/Types.ppg.sml: types/main/Types.ppg

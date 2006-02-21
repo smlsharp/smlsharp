@@ -1,0 +1,58 @@
+Group is
+        smlnj-lib.cm
+
+        ../../../configuration/sources.cm
+        ../../../lib/sources.cm
+
+        ../../systemdef/sources.cm
+        ../../session/sources.cm (* use ChannelTypes *)
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../absyn/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../../instructions/compiler/sources.cm
+        ../../../primitives/compiler/sources.cm
+
+        RAW_MEMORY.sig
+        RawMemory.sml
+
+        RuntimeTypes.sml
+        RuntimeErrors.sml
+        RuntimeCounters.sml
+
+        HEAP.sig
+        Heap.sml
+
+        LocationTable.sml
+        NameSlotTable.sml
+        GlobalTable.sml
+        FrameStack.sml
+        HandlerStack.sml
+
+        SourceLanguageDatatypes.sml
+
+        PRIMITIVE_IMPLEMENTATIONS.sig
+        IntPrimitives.sml
+        WordPrimitives.sml
+        CharPrimitives.sml
+        StringPrimitives.sml
+        RealPrimitives.sml
+        IOPrimitives.sml
+        TimePrimitives.sml
+        TimerPrimitives.sml
+        GenericOSPrimitives.sml
+        CommandLinePrimitives.sml
+        DatePrimitives.sml
+        MathPrimitives.sml
+        InternalPrimitives.sml
+        UnmanagedMemoryPrimitives.sml
+        UnmanagedStringPrimitives.sml
+        PrimitiveTable.sml
+
+        VMSession.sml
+
+        Utility.sml
+
+        VM.sig
+        VM.sml

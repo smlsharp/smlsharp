@@ -1,0 +1,14 @@
+exception R1 : int -> exn
+exception E1 = R1
+val v1 = R1 1 : exn
+exception R2 : int -> exn
+exception R2 : bool -> exn
+exception E2 = R2
+val v2 = R2 2 : exn
+exception R3 : int -> exn
+exception E31 = R3
+exception R3 : string -> exn
+exception E31 = R3
+exception E32 = E31
+val v3 = R3 3 : exn
+

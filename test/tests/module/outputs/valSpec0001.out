@@ -1,0 +1,10 @@
+signature S11 = sig val x : int end
+signature S12 = sig val x : int val y : string end
+signature S21 = sig val x : int val y : bool * string end
+signature S22 =
+sig
+  val x : int
+  val y : bool * string
+  val v : int -> int
+  val w : {x:int , y:int list}
+end

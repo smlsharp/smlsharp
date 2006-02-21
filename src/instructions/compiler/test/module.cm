@@ -1,0 +1,8 @@
+Group is
+        ../main/sources.cm
+        ../../../smlunitlib.cm
+
+        PrimitiveSerializerLittleEndianTest001.sml
+        PrimitiveSerializerBigEndianTest001.sml
+
+        InstructionsTest.sml

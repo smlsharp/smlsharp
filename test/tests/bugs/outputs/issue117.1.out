@@ -1,0 +1,5 @@
+abstype t2
+datatype t2
+con E : real -> t2
+val ax2 = E 1.23 : t2
+val gx2 = E 1.23 : t2

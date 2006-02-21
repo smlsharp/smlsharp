@@ -1,0 +1,3 @@
+infix 0 f
+../tests/bugs/tests/issue10.2.sml:2.5-2.5 Error: infix operator f used
+ without "op" in fun dec

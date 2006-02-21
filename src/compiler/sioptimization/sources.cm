@@ -1,0 +1,4 @@
+Group
+        structure SymbolicInstructionsOptimizer
+is
+        main/module.cm

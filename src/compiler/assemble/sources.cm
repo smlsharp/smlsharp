@@ -1,0 +1,5 @@
+Group
+        signature ASSEMBLER
+        structure Assembler
+is
+        main/module.cm

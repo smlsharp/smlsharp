@@ -1,0 +1,9 @@
+Library
+        signature BASIC_FORMATTERS
+        signature FORMAT_EXPRESSION
+        signature PRINTER_PARAMETER
+        signature SMLFORMAT
+
+        structure SMLFormat
+is
+        formatlib/main/sources.cm

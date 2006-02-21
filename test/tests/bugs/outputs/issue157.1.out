@@ -1,0 +1,3 @@
+signature PSIG = sig datatype dt con D : dt end
+functor FTrans (S : PSIG) : sig datatype ds con D : ds end
+

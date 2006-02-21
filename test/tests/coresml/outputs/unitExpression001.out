@@ -1,0 +1,4 @@
+val v1 = () : unit
+val v2 = () : unit
+val v3 = 1 : int
+

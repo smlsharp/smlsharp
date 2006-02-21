@@ -1,0 +1,44 @@
+print "jugemu";
+print "jugemu" "jugemu";
+print "jugemu" " " "jugemu" " " "gokounosurikire";
+print "jugemu" + "jugemu" + "gokounosurikire";
+set columns "40";
+print "jugemu" + "jugemu" + "gokounosurikire" + "kaijarisuigyono";
+set columns "50";
+print "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono";
+set columns "40";
+print "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono";
+set columns "20";
+print "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono";
+
+set columns "50";
+print "jugemu" +2 "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono";
+set columns "40";
+print "jugemu" +2 "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono";
+print "jugemu" +2 "jugemu" " "1 "gokounosurikire" +2 "kaijarisuigyono";
+
+set columns "30";
+print "jugemu" +d "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono";
+set columns "10";
+print "jugemu" +d "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono";
+set columns "30";
+print "jugemu" +2 "jugemu" +1 "gokounosurikire" +d "kaijarisuigyono";
+print "jugemu" +d "jugemu" +1 "gokounosurikire" +d "kaijarisuigyono";
+
+set columns "40";
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ] +2 "kaijarisuigyono";
+set columns "30";
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ] +2 "kaijarisuigyono";
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" 3[ +2 "kaijarisuigyono"]];
+print "jugemu" 3[ +1 "jugemu" 5[ +2 "gokounosurikire" 3[ +3 "kaijarisuigyono"]]];
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ~3[ +2 "kaijarisuigyono"]];
+print "jugemu" + { "jugemu" 5[ 1 "gokounosurikire" ] ~3[ 1 "kaijarisuigyono" ]};
+print "jugemu" 3[ +d { "jugemu" 5[ 1 "gokounosurikire"] ~3[ 1 "kaijarisuigyono"]}];
+print "jugemu" 3[ +d { "jugemu" 5[ 1 "gokounosurikire" ~3[ 2 "kaijarisuigyono"]]}];
+set columns "42";
+print "jugemu" 3[ 1 "jugemu" 2[ 2 "gokounosurikire" 3 "kaijarisuigyono" ]];
+print "gokounosurikire" 3[ {"kaijarisuigyono" 2[ 2 "jugemu" 1 "jugemu" ]}];
+set columns "29";
+print "gokounosurikire" 3[ 3 "kaijarisuigyono" 2[ 1 "jugemu" 2 "jugemu" ]];
+
+print L10{ "f" + !N0{ "(" L10{ "g" + "x" } "," + "y" ")" }};

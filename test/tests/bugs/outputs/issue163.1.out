@@ -1,0 +1,6 @@
+val f = fn : ['a.'a -> {a:'a, b:'a}]
+val g = fn : ['a,'b.{a:'b , b:'a} -> int]
+val h1 = fn : ['a.'a -> int]
+val h2 = fn : ['a.'a -> int]
+val h3 = fn : ['a.'a -> int]
+val h4 = fn : ['a.'a -> int]

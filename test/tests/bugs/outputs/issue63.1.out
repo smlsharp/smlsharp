@@ -1,0 +1,2 @@
+infix 0 ##
+val ## = fn : int * int -> int

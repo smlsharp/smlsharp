@@ -1,0 +1,33 @@
+infix 1 P111 P112 P113
+datatype t11
+con P111 : int * int -> t11
+con P112 : bool * bool -> t11
+con P113 : string * string -> t11
+val v11 = (P111 (1, 2), P112 (true, false), P113 ("foo", "bar")) : t11 * t11 * t11
+infix 0 P121 P122 P123
+datatype t12
+con P121 : int * int -> t12
+con P122 : bool * bool -> t12
+con P123 : string * string -> t12
+val v12 = (P121 (1, 2), P122 (true, false), P123 ("foo", "bar")) : t12 * t12 * t12
+infixr 1 P211 P212 P213
+datatype t21
+con P211 : int * int -> t21
+con P212 : bool * bool -> t21
+con P213 : string * string -> t21
+val v21 = (P211 (1, 2), P212 (true, false), P213 ("foo", "bar")) : t21 * t21 * t21
+infixr 0 P221 P222 P223
+datatype t22
+con P221 : int * int -> t22
+con P222 : bool * bool -> t22
+con P223 : string * string -> t22
+val v22 = (P221 (1, 2), P222 (true, false), P223 ("foo", "bar")) : t22 * t22 * t22
+infix 0 P311
+infix 0 P312
+infix 0 P313
+nonfix P311 P312 P313
+datatype t31
+con P311 : int * int -> t31
+con P312 : bool * bool -> t31
+con P313 : string * string -> t31
+val v31 = (P311 (1, 2), P312 (true, false), P313 ("foo", "bar")) : t31 * t31 * t31

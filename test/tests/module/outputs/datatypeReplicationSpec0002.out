@@ -1,0 +1,6 @@
+datatype 'a dt1
+con D : ['a .'a -> 'a dt1]
+signature S1 = sig datatype t = datatype dt1 end
+datatype ('a, 'b) dt2
+con D : ['a,'b.'a * 'b -> ('b, 'a) dt2]
+signature S2 = sig datatype t = datatype dt2 end

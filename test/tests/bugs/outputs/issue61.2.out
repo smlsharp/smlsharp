@@ -1,0 +1,16 @@
+datatype 'a t121
+con C121 : ['a.'a -> 'a t121]
+datatype 'a t122
+con C122 : ['a.'a -> 'a t122]
+val it = C121 121 : int t121
+datatype 'a t121
+con C121 : ['a.'a t121]
+datatype 'a t122
+con C122 : ['a.'a -> 'a t122]
+val it = C121 : ['a.'a t121]
+datatype 'a t121
+con C121 : ['a.'a -> 'a t121]
+datatype 'a t122
+con C122 : ['a.'a -> 'a t122]
+val it = C121 121 : int t121
+

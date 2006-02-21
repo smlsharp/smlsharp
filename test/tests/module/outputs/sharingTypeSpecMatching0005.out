@@ -1,0 +1,18 @@
+signature S2 = sig type t1 type t2 sharing type t1 = t2 end
+../tests/module/tests/sharingTypeSpecMatching0005.sml:29.11-33.3 Error: Signature
+                                                                        mismatch
+                                                                        (arity): t2
+
+../tests/module/tests/sharingTypeSpecMatching0005.sml:34.11-38.3 Error: Signature
+                                                                        mismatch
+                                                                        (arity): t2
+
+signature S3 = sig type t1 type t2 type t3 sharing type t1 = t2 = t3 end
+../tests/module/tests/sharingTypeSpecMatching0005.sml:50.11-55.3 Error: Signature
+                                                                        mismatch
+                                                                        (arity): t3
+
+../tests/module/tests/sharingTypeSpecMatching0005.sml:56.11-61.3 Error: Signature
+                                                                        mismatch
+                                                                        (arity): t3
+

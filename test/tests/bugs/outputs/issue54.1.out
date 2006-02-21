@@ -1,0 +1,6 @@
+structure stacktran
+: sig
+  datatype 'a list
+  con Cons : ['a .'a * 'a list -> 'a list]
+  con Nil : ['a .'a list]
+  end

@@ -1,0 +1,36 @@
+(* -*- sml -*- *)
+
+structure Configuration =
+struct
+
+  (* version number of SML# compiler *)
+  val Version = "1.0"
+
+  (* absolute path to the root directory of development *)
+  val BuildRoot = "%BUILD_ROOT%"
+
+  (* filename of runtime executable file *)
+  val RuntimeFileName = "smlsharprun%EXEEXT%"
+
+  (* absolute path to the runtime executable *)
+  val RuntimePath = "%BINDIR%/" ^ RuntimeFileName
+
+  (* absolute path to the lib directory *)
+  val LibDirectory = "%LIBDIR%"
+
+  (* filename of basis library *)
+  val BasisFileName = "basis.sml"
+
+  (* filename of compiled basis library *)
+  val CompiledBasisFileName = "basis.smc"
+
+  (* path to the basis library *)
+  val BasisPath = LibDirectory ^ "/" ^ BasisFileName
+
+  (* filename of minimum prelude *)
+  val MinimumPreludeFileName = "minimum.sml"
+
+  (* path to the minimum prelude *)
+  val MinimumPreludePath = LibDirectory ^ "/" ^ MinimumPreludeFileName
+
+end

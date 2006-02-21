@@ -1,0 +1,12 @@
+val v1 = fn : int -> int
+../tests/bugs/tests/issue71.1.sml:2.1-2.57 Error: only variable or typed
+                                                  variable pattern is allowed in
+                                                  val rec
+
+../tests/bugs/tests/issue71.1.sml:3.1-4.46 Error: only variable or typed
+                                                  variable pattern is allowed in
+                                                  val rec
+
+../tests/bugs/tests/issue71.1.sml:5.1-5.57 Error: only variable or typed
+                                                  variable pattern is allowed in
+                                                  val rec

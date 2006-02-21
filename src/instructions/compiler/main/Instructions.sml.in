@@ -1,0 +1,25 @@
+(* -*- sml -*- *)
+
+(**
+ * definition of IML instructions.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: Instructions.sml.in,v 1.3 2005/10/24 07:28:26 kiyoshiy Exp $
+ *) 
+structure @SMLInstructionStructureName@ =
+struct
+
+@SMLDatatypeDeclaration@
+
+@SMLOpcodeDatatypeDeclaration@
+
+@SMLWordToOpcodeFunction@
+
+@SMLOpcodeToWordFunction@
+
+@SMLInstructionToStringFunction@
+
+@SMLOpcodeToStringFunction@
+
+@SMLEqualInstructionFunction@
+
+end

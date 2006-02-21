@@ -1,0 +1,6 @@
+val v1 = 1 : int
+val x = true : bool
+val v2 = true : bool
+val v3 = () : unit
+val v4 = 1 : int
+val v5 = (1,2) : int * int

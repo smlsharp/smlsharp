@@ -1,0 +1,18 @@
+Group is
+        smlnj-lib.cm
+	../../../smlformatlib.cm
+
+        ../../control/sources.cm
+        ../../format/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../absyn/sources.cm
+        ../../types/sources.cm
+        ../../typedcalc/sources.cm
+	../../systemdef/sources.cm
+        TypedLambda.ppg.sml
+        TypedLambdaUtils.sml
+	TypeCheckTypedLambdaError.ppg.sml
+	TypeCheckTypedLambda.sml
+        TYPEDLAMBDA_FORMATTER.sig
+        TypedLambdaFormatter.sml

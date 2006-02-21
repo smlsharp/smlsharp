@@ -1,0 +1,325 @@
+<HTML>
+<HEAD>
+<TITLE>SMLPPTest0008</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+<HR>
+<H2>SMLPPTest0008</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSMLPPTest0008.html">SMLPPTest0008</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0008-StrAssert.html">Assert</A>&nbsp;=&nbsp;SMLUnit.Assert<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0008-StrTest.html">Test</A>&nbsp;=&nbsp;SMLUnit.Test<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0008-StrTestee.html">Testee</A>&nbsp;=&nbsp;SMLPP<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0008-StrFE.html">FE</A>&nbsp;=&nbsp;Testee.FormatExpression<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0008-StrPP.html">PP</A>&nbsp;=&nbsp;Testee.PrinterParameter<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValTESTASSOC_COLUMNS">TESTASSOC_COLUMNS</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValprettyPrint">prettyPrint</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValmakeExpression">makeExpression</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValassertAssoc">assertAssoc</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LL1">testAssoc0LL1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LL2">testAssoc0LL2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LL3">testAssoc0LL3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LN1">testAssoc0LN1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LN2">testAssoc0LN2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LN3">testAssoc0LN3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LR1">testAssoc0LR1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LR2">testAssoc0LR2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0LR3">testAssoc0LR3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NL1">testAssoc0NL1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NL2">testAssoc0NL2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NL3">testAssoc0NL3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NN1">testAssoc0NN1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NN2">testAssoc0NN2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NN3">testAssoc0NN3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NR1">testAssoc0NR1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NR2">testAssoc0NR2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0NR3">testAssoc0NR3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RL1">testAssoc0RL1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RL2">testAssoc0RL2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RL3">testAssoc0RL3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RN1">testAssoc0RN1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RN2">testAssoc0RN2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RN3">testAssoc0RN3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RR1">testAssoc0RR1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RR2">testAssoc0RR2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#ValtestAssoc0RR3">testAssoc0RR3</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0008.html#Valsuite">suite</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+  test cases examining the relation between the associativity indicators
+ of two guards one of which is nested within the other.
+ <p>
+  These cases pretty-print expressions of the form as follows:
+ <pre>
+ <i>cm</i>{ <i>dn</i>{ ... } ... <i>dn</i>{ ... } }
+ </pre>
+ <i>c, d</i> denotes assoc direction(<code>L, R, N</code>), and <i>m, n</i>
+ denotes assoc strength (integer value).
+ </p>
+ <table border=1>
+ <caption>Test cases matrix</caption>
+ <tr>
+   <th>case</th>
+   <th>direction(inner)</th>
+   <th>direction(outer)</th>
+   <th>relation R of strength(inner R outer)</th>
+ </tr>
+ <tr><td>0LL1</td><td rowspan=9>L</td><td rowspan=3>L</td><td>&lt;</td></tr>
+ <tr><td>0LL2</td><td>=</td></tr>
+ <tr><td>0LL3</td><td>&gt;</td></tr>
+
+ <tr><td>0LN1</td><td rowspan=3>N</td><td>&lt;</td></tr>
+ <tr><td>0LN2</td><td>=</td></tr>
+ <tr><td>0LN3</td><td>&gt;</td></tr>
+
+ <tr><td>0LR1</td><td rowspan=3>R</td><td>&lt;</td></tr>
+ <tr><td>0LR2</td><td>=</td></tr>
+ <tr><td>0LR3</td><td>&gt;</td></tr>
+
+ </table>
+ 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValTESTASSOC_COLUMNS"><!-- --></A>
+<H3>TESTASSOC_COLUMNS</H3>
+<P>
+<CODE>val&nbsp;TESTASSOC_COLUMNS</CODE>
+
+<HR>
+<A NAME="ValprettyPrint"><!-- --></A>
+<H3>prettyPrint</H3>
+<P>
+<CODE>val&nbsp;prettyPrint</CODE>
+
+<HR>
+<A NAME="ValmakeExpression"><!-- --></A>
+<H3>makeExpression</H3>
+<P>
+<CODE>val&nbsp;makeExpression</CODE>
+
+<HR>
+<A NAME="ValassertAssoc"><!-- --></A>
+<H3>assertAssoc</H3>
+<P>
+<CODE>val&nbsp;assertAssoc</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LL1"><!-- --></A>
+<H3>testAssoc0LL1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LL1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LL2"><!-- --></A>
+<H3>testAssoc0LL2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LL2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LL3"><!-- --></A>
+<H3>testAssoc0LL3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LL3</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LN1"><!-- --></A>
+<H3>testAssoc0LN1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LN1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LN2"><!-- --></A>
+<H3>testAssoc0LN2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LN2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LN3"><!-- --></A>
+<H3>testAssoc0LN3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LN3</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LR1"><!-- --></A>
+<H3>testAssoc0LR1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LR1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LR2"><!-- --></A>
+<H3>testAssoc0LR2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LR2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0LR3"><!-- --></A>
+<H3>testAssoc0LR3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0LR3</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NL1"><!-- --></A>
+<H3>testAssoc0NL1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NL1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NL2"><!-- --></A>
+<H3>testAssoc0NL2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NL2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NL3"><!-- --></A>
+<H3>testAssoc0NL3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NL3</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NN1"><!-- --></A>
+<H3>testAssoc0NN1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NN1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NN2"><!-- --></A>
+<H3>testAssoc0NN2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NN2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NN3"><!-- --></A>
+<H3>testAssoc0NN3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NN3</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NR1"><!-- --></A>
+<H3>testAssoc0NR1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NR1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NR2"><!-- --></A>
+<H3>testAssoc0NR2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NR2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0NR3"><!-- --></A>
+<H3>testAssoc0NR3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0NR3</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RL1"><!-- --></A>
+<H3>testAssoc0RL1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RL1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RL2"><!-- --></A>
+<H3>testAssoc0RL2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RL2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RL3"><!-- --></A>
+<H3>testAssoc0RL3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RL3</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RN1"><!-- --></A>
+<H3>testAssoc0RN1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RN1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RN2"><!-- --></A>
+<H3>testAssoc0RN2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RN2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RN3"><!-- --></A>
+<H3>testAssoc0RN3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RN3</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RR1"><!-- --></A>
+<H3>testAssoc0RR1</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RR1</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RR2"><!-- --></A>
+<H3>testAssoc0RR2</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RR2</CODE>
+
+<HR>
+<A NAME="ValtestAssoc0RR3"><!-- --></A>
+<H3>testAssoc0RR3</H3>
+<P>
+<CODE>val&nbsp;testAssoc0RR3</CODE>
+
+<HR>
+<A NAME="Valsuite"><!-- --></A>
+<H3>suite</H3>
+<P>
+<CODE>val&nbsp;suite</CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+</BODY></HTML>

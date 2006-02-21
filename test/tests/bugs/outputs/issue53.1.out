@@ -1,0 +1,2 @@
+val f = fn : int -> int
+val f = fn : ['a .'a -> 'a]

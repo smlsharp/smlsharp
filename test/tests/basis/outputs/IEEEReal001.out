@@ -1,0 +1,74 @@
+val makeDec = fn : IEEEReal.float_class * bool * int list * int -> IEEEReal.decimal_approx
+val roundingMode_TO_NEAREST = TO_NEAREST : IEEEReal.rounding_mode
+val roundingMode_TO_NEGINF = TO_NEGINF : IEEEReal.rounding_mode
+val roundingMode_TO_POSINF = TO_POSINF : IEEEReal.rounding_mode
+val roundingMode_TO_ZERO = TO_ZERO : IEEEReal.rounding_mode
+val toString_NAN_QUIET = "nan" : string
+val toString_NAN_SIGNALLING = "nan" : string
+val toString_POS_INF = "inf" : string
+val toString_NEG_INF = "~inf" : string
+val toString_POS_ZERO = "0.0" : string
+val toString_NEG_ZERO = "~0.0" : string
+val toString_NORMAL_P_0_0 = "0.0" : string
+val toString_NORMAL_P_1_0 = "0.1" : string
+val toString_NORMAL_P_1_1 = "0.1E1" : string
+val toString_NORMAL_P_1_2 = "0.1E2" : string
+val toString_NORMAL_P_1_m1 = "0.1E~1" : string
+val toString_NORMAL_P_1_m2 = "0.1E~2" : string
+val toString_NORMAL_P_2_0 = "0.12" : string
+val toString_NORMAL_P_2_1 = "0.12E1" : string
+val toString_NORMAL_P_2_2 = "0.12E2" : string
+val toString_NORMAL_P_2_3 = "0.12E3" : string
+val toString_NORMAL_P_n_m1 = "0.12E~1" : string
+val toString_NORMAL_P_n_m2 = "0.12E~2" : string
+val toString_NORMAL_P_n_m3 = "0.12E~3" : string
+val toString_NORMAL_N_0_0 = "~0.0" : string
+val toString_NORMAL_N_1_0 = "~0.1" : string
+val toString_NORMAL_N_1_1 = "~0.1E1" : string
+val toString_NORMAL_N_1_2 = "~0.1E2" : string
+val toString_NORMAL_N_1_m1 = "~0.1E~1" : string
+val toString_NORMAL_N_1_m2 = "~0.1E~2" : string
+val toString_NORMAL_N_2_0 = "~0.12" : string
+val toString_NORMAL_N_2_1 = "~0.12E1" : string
+val toString_NORMAL_N_2_2 = "~0.12E2" : string
+val toString_NORMAL_N_2_3 = "~0.12E3" : string
+val toString_NORMAL_N_n_m1 = "~0.12E~1" : string
+val toString_NORMAL_N_n_m2 = "~0.12E~2" : string
+val toString_NORMAL_N_n_m3 = "~0.12E~3" : string
+val fromString_n_inf = SOME { digits = [], exp = 0, kind = INF, sign = false } : IEEEReal.decimal_approx option
+val fromString_p_inf = SOME { digits = [], exp = 0, kind = INF, sign = false } : IEEEReal.decimal_approx option
+val fromString_m_inf = SOME { digits = [], exp = 0, kind = INF, sign = true } : IEEEReal.decimal_approx option
+val fromString_t_inf = SOME { digits = [], exp = 0, kind = INF, sign = true } : IEEEReal.decimal_approx option
+val fromString_n_infinity = SOME { digits = [], exp = 0, kind = INF, sign = false } : IEEEReal.decimal_approx option
+val fromString_p_infinity = SOME { digits = [], exp = 0, kind = INF, sign = false } : IEEEReal.decimal_approx option
+val fromString_m_infinity = SOME { digits = [], exp = 0, kind = INF, sign = true } : IEEEReal.decimal_approx option
+val fromString_t_infinity = SOME { digits = [], exp = 0, kind = INF, sign = true } : IEEEReal.decimal_approx option
+val fromString_n_nan = SOME { digits = [], exp = 0, kind = NAN QUIET, sign = false } : IEEEReal.decimal_approx option
+val fromString_p_nan = SOME { digits = [], exp = 0, kind = NAN QUIET, sign = false } : IEEEReal.decimal_approx option
+val fromString_m_nan = SOME { digits = [], exp = 0, kind = NAN QUIET, sign = true } : IEEEReal.decimal_approx option
+val fromString_t_nan = SOME { digits = [], exp = 0, kind = NAN QUIET, sign = true } : IEEEReal.decimal_approx option
+val fromString_n_0e = SOME { digits = [], exp = 0, kind = ZERO, sign = false } : IEEEReal.decimal_approx option
+val fromString_n_0E = SOME { digits = [], exp = 0, kind = ZERO, sign = false } : IEEEReal.decimal_approx option
+val fromString_01 = SOME { digits = [1], exp = 1, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_012 = SOME { digits = [1,2], exp = 2, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0 = SOME { digits = [], exp = 0, kind = ZERO, sign = false } : IEEEReal.decimal_approx option
+val fromString_1 = SOME { digits = [1], exp = 0, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0120 = SOME { digits = [1,2], exp = ~1, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0_0 = SOME { digits = [], exp = 0, kind = ZERO, sign = false } : IEEEReal.decimal_approx option
+val fromString_0_1 = SOME { digits = [1], exp = 0, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_1_0 = SOME { digits = [1], exp = 1, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0_0120 = SOME { digits = [1,2], exp = ~1, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0120_0 = SOME { digits = [1,2,0], exp = 3, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0120_0120 = SOME { digits = [1,2,0,0,1,2], exp = 3, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0_0_0 = SOME { digits = [], exp = 0, kind = ZERO, sign = false } : IEEEReal.decimal_approx option
+val fromString_0120_0120_1 = SOME { digits = [1,2,0,0,1,2], exp = 4, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0120_0120_p1 = SOME { digits = [1,2,0,0,1,2], exp = 4, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0120_0120_m1 = SOME { digits = [1,2,0,0,1,2], exp = 2, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_0120_0120_t1 = SOME { digits = [1,2,0,0,1,2], exp = 2, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_p_0 = SOME { digits = [], exp = 0, kind = ZERO, sign = false } : IEEEReal.decimal_approx option
+val fromString_m_0 = SOME { digits = [], exp = 0, kind = ZERO, sign = true } : IEEEReal.decimal_approx option
+val fromString_t_0 = SOME { digits = [], exp = 0, kind = ZERO, sign = true } : IEEEReal.decimal_approx option
+val fromString_p_0120_0120_t1 = SOME { digits = [1,2,0,0,1,2], exp = 2, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option
+val fromString_m_0120_0120_t1 = SOME { digits = [1,2,0,0,1,2], exp = 2, kind = NORMAL, sign = true } : IEEEReal.decimal_approx option
+val fromString_t_0120_0120_t1 = SOME { digits = [1,2,0,0,1,2], exp = 2, kind = NORMAL, sign = true } : IEEEReal.decimal_approx option
+val fromString_ws_p_0120_0120_t1 = SOME { digits = [1,2,0,0,1,2], exp = 2, kind = NORMAL, sign = false } : IEEEReal.decimal_approx option

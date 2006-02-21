@@ -1,0 +1,11 @@
+datatype t11
+con C11 : int -> t11
+datatype t12
+con C12 : bool -> t12
+val v1 = (C11 1,C12 true) : t11 * t12
+datatype t21
+con C21 : int -> t21
+datatype t22
+con C22 : t21 * bool -> t22
+val v2 = (C21 1,C22 (C21 2,true)) : t21 * t22
+

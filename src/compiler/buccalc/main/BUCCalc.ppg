@@ -1,0 +1,644 @@
+(**
+ * Copyright (c) 2006, Tohoku University.
+ *
+ * @author NGUYEN Huu-Duc 
+ * @version $Id: BUCCalc.ppg,v 1.3 2006/02/18 16:04:05 duchuu Exp $ 
+ *)
+
+
+structure BUCCalc = struct
+
+  type loc = Loc.loc
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(tyFormat) Types.format_ty
+   *)
+  type ty = 
+       (*%
+        * @format(ty:tyFormat) ty()(btvEnv)
+        *)
+       Types.ty
+
+  (*%
+   * @formatter(idFormat) ID.format_id
+   *)
+  type id =
+       (*%
+        * @format(id:idFormat) id
+        *)
+       ID.id
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(Word32.word) SmlppgUtil.format_word32
+   *)
+  datatype varKind =
+	   ARG 
+         | LOCAL
+         | FREE
+         | FREEWORD of {nestLevel: Word32.word, offset : Word32.word}
+         | FREEVAR of {nestLevel : Word32.word, indirectOffset : Word32.word}
+         | LABEL of id 
+
+  (*%
+   * @params(btvEnv)
+   *)
+  type varInfo = 
+       (*%
+        * @format({id,displayName,ty, varKind}) id
+        *)
+       {id:id,displayName:string, ty:ty, varKind:varKind}
+           
+  (*%
+   * @params(btvEnv)
+   *)
+  type varInfoWithType = 
+       (*%
+        * @format({id,displayName,ty:ty,varKind}) {id ":" ty()(btvEnv)}
+        *)
+       {id:id,displayName:string, ty:ty, varKind:varKind}
+
+  (*%
+   * @params(btvEnv)
+   *)
+  datatype valId =
+           (*%
+            * @format(v) v()(btvEnv)
+            *)
+           VALIDVAR of varInfoWithType
+         | (*%
+            * @format(ty) "_:" ty()(btvEnv)
+            *)
+           VALIDWILD of ty
+
+  (*%
+   * @params(btvEnv)
+   *)
+  type primInfo =
+       (*%
+        * @format({name,ty}) name
+        *)
+       {name:string, ty:ty}
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(btvKindFormat) Types.format_btvKind
+   *)
+  type btvKind = 
+       (*%
+        * @format(value:btvKindFormat) value()(btvEnv)
+        *)
+       Types.btvKind
+
+  datatype constant =  datatype Types.constant
+
+  (*%
+   * @params(btvEnv)
+   *
+   * @formatter(formatConst) Types.format_constant
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
+   * @formatter(imap) SmlppgUtil.formatImap
+   * @formatter(createBtvKindMap) Types.createBtvKindMap
+   * @formatter(Word32.word) SmlppgUtil.format_word32
+   * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+   *)
+  datatype bucexp =
+           (*%
+            * @format({value : value : formatConst, loc}) value
+            *)
+           BUCCONSTANT of {value : constant, loc : loc}
+
+         | (*% @format({varInfo, loc}) varInfo()(btvEnv) *) 
+           BUCVAR of {varInfo : varInfo, loc: loc}
+
+         | (*% @format({nestLevel, offset, variableTy, loc}) 
+            *        "ENV[" nestLevel "," offset "]" 
+            *)
+           (* closure environment access by offset *)
+           BUCENVACC of 
+             {
+              nestLevel : Word32.word, 
+              offset : Word32.word, 
+              variableTy : ty, 
+              loc : loc
+             }
+
+         | (*% @format({nestLevel, indirectOffset, variableTy, loc}) 
+            *         "ENV_IND[" nestLevel "," indirectOffset "]" 
+            *)
+           (* closure environment indirect access by offset *)
+           BUCENVACCINDIRECT of 
+             {
+              nestLevel : Word32.word,
+              indirectOffset : Word32.word,
+              variableTy : ty,
+              loc : loc
+             }
+
+         | (*% @format({label, loc}) label *)
+           BUCLABEL of {label : id, loc : loc}
+
+         | (*%
+            * @format({
+            *          arrayIndex:index:formatUInt32, 
+            *          offset:offset:formatUInt32, 
+            *          ty,
+            *          loc
+            *         }) 
+            * "GetGlobalValue(" index "," offset ")"
+            *)
+           BUCGETGLOBALVALUE of 
+             {
+              arrayIndex : BasicTypes.UInt32, 
+              offset : BasicTypes.UInt32, 
+              ty : ty, 
+              loc: loc
+             }
+             
+         | (*%
+            * @format({arrayIndex:index:formatUInt32,offset:offset:formatUInt32,valueExp:exp,ty,loc}) 
+            * "SetGlobalValue((" index "," offset ") = " exp()(btvEnv) ")"  
+            *)
+           BUCSETGLOBALVALUE of 
+             {
+              arrayIndex : BasicTypes.UInt32, 
+              offset : BasicTypes.UInt32, 
+              valueExp: bucexp, 
+              ty:ty,
+              loc :loc
+             }
+
+         | (*%
+            * @format({arrayIndex:index:formatUInt32,size:size:formatUInt32,elemTy,loc}) 
+            * "InitialArray(" index "," size ")"
+            *)
+           BUCINITARRAY of 
+             {
+              arrayIndex : BasicTypes.UInt32, 
+              size : BasicTypes.UInt32, 
+              elemTy:ty, 
+              loc:loc
+             }
+
+         | (*%
+            * @format(
+            *     {
+            *      primOp : prim, 
+            *      argExpList : exp exps:formatListWithEnclosure,
+            *      argTyList : ty tys : formatListWithEnclosure,
+            *      loc : loc
+            *     })
+            *    prim()(btvEnv) exps(exp()(btvEnv))(",","(",")")
+            *)
+           BUCPRIMAPPLY of 
+             {
+              primOp : primInfo,
+              argExpList : bucexp list,
+              argTyList : ty list,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          funExp : funExp,
+            *          argTyList : ty tys:formatListWithEnclosure,
+            *          argExpList : exp exps:formatListWithEnclosure,
+            *          loc : loc
+            *         })
+            * R1{d
+            *     {
+            *       funExp()(btvEnv)
+            *       !N0{tys(ty()(btvEnv))(",","{","}")} 1
+            *       {exps(exp()(btvEnv))(","1,"(",")")}
+            *     }
+            *   }
+            *)
+           BUCFOREIGNAPPLY of 
+             {
+               funExp : bucexp,
+               argExpList : bucexp list,
+               argTyList : ty list,
+               loc : loc
+             }
+
+         | (*%
+            * @format({
+            *           funExp : funExp,
+            *           argExpList : arg args:formatListWithEnclosure,
+            *           argSizeList : size sizes:formatListWithEnclosure,
+            *           argTyList : ty tys,
+            *           loc : loc
+            *         }) 
+            *        L10{ funExp()(btvEnv) + 
+            *             !L0{args(arg()(btvEnv))(",","(",")")}
+            *           }
+            *)
+           BUCAPPLY of 
+             {
+              funExp : bucexp,
+              argExpList : bucexp list,
+              argSizeList : bucexp list,
+              argTyList : ty list,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          funExp : funExp,
+            *          argExpList : arg args:formatListWithEnclosure,
+            *          argSizeList : size sizes:formatListWithEnclosure,
+            *          argTyList : ty tys,
+            *          loc : loc
+            *         }) 
+            *        "RecCall(" 
+            *            2[1 {funExp()(btvEnv) "," +1  
+            *                    {args(arg()(btvEnv))(",","(",")")} 
+            *                } 
+            *             ] +  ")"
+            *)
+           BUCRECCALL of 
+             {
+              funExp : bucexp,
+              argExpList : bucexp list,
+              argSizeList : bucexp list,
+              argTyList : ty list,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          declList : dec decs,
+            *          mainExp : mainExp,
+            *          loc : loc
+            *         })
+            *          !N0{ {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]}  +1
+            *               {"in" 2[ +2 mainExp()(btvEnv) ] +2
+            *                 "end"} }
+            *)
+           BUCLET of 
+             {
+              declList : bucdecl list,
+              mainExp : bucexp,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          bitmapExp : bitmapExp,
+            *          totalSizeExp : totalSizeExp,
+            *          fieldList : field fields,
+            *          fieldSizeList : size sizes,
+            *          fieldTyList : ty tys,
+            *          loc : loc
+            *         }) 
+            * {"(bitmap=" bitmapExp()(btvEnv) ";totalsize=" totalSizeExp()(btvEnv) ";sizes="
+            *      2[1 "("  {sizes(size()(btvEnv))("," +1)} 1")"] 1
+            *      2[1 "("  {fields(field()(btvEnv))("," +1)} 1")"] 1
+            *   ")"}
+            *)
+           BUCRECORD of 
+             {
+              bitmapExp : bucexp,
+              totalSizeExp : bucexp,
+              fieldList : bucexp list,
+              fieldSizeList : bucexp list,
+              fieldTyList : ty list,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          bitmapExp : bitmapExp,
+            *          sizeExp : sizeExp,
+            *          initialValue : initialValue,
+            *          elementTy : elementTy,
+            *          loc : loc
+            *         }) 
+            *        "[" bitmapExp()(btvEnv) "," sizeExp()(btvEnv) "]" "{" initialValue()(btvEnv) "}"
+            *)
+           BUCARRAY of 
+             {
+              bitmapExp : bucexp,
+              sizeExp : bucexp,
+              initialValue : bucexp,
+              elementTy : ty,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          recordExp : recordExp,
+            *          nestLevel : nestLevel,
+            *          offset : offset,
+            *          elementExp : elementExp,
+            *          elementTy : elementTy,
+            *          loc : loc
+            *         })
+            *   recordExp()(btvEnv) "[(" nestLevel()(btvEnv) "," offset()(btvEnv) ")=" elementExp()(btvEnv) "]"
+            *)
+           BUCMODIFY of 
+             {
+              recordExp : bucexp,
+              nestLevel : bucexp,
+              offset :  bucexp,
+              elementExp :bucexp,
+              elementTy : ty,
+              loc : loc
+             }
+
+         | (*%
+            * @format({exceptionExp, loc}) N0{ "raise" +d {exceptionExp()(btvEnv)} }
+            *)
+           BUCRAISE of 
+             {
+              exceptionExp : bucexp,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          mainExp : mainExp,
+            *          exnVar : exnVar:varInfoWithType,
+            *          handler: handler,
+            *          loc : loc
+            *         })
+            *        "handle" + N0{mainExp()(btvEnv)} +d 
+            *        "with letexp" +  exnVar()(btvEnv)  + "in" + 2[1{handler()(btvEnv)}]
+            *)
+           BUCHANDLE of 
+           { 
+            mainExp : bucexp,
+            exnVar : varInfo,
+            handler : bucexp,
+            loc : loc
+           }
+
+         | (*%
+            * @format({funInfo, body, loc}) 
+            *        {funInfo()(btvEnv) 2[+1 {body()(btvEnv)}]}
+            *)
+           BUCCODE of 
+             {
+              funInfo : funInfo,
+              body : bucexp,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          btvEnv :btvKind:btvKind imap,
+            *          expTyWithoutTAbs : ty,
+            *          exp : exp,
+            *          loc : loc
+            *         })
+            *         {"[" 2[1  imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
+            *                        2[{exp()(imap:createBtvKindMap()(btvEnv))} ] 
+            *                        +1 ":" ty()(imap:createBtvKindMap()(btvEnv))
+            *               ] 1 
+            *          "]"}
+            *)
+           BUCPOLY of 
+             { 
+              btvEnv : btvKind IEnv.map,
+              expTyWithoutTAbs : ty,
+              exp : bucexp,
+              loc : loc
+             }
+
+
+         | (*%
+            * @format({
+            *          polyExp : polyExp,
+            *          instTyList : ty tys,
+            *          loc : loc
+            *         }) 
+            *        polyExp()(btvEnv) + "{" tys(ty()(btvEnv))("," +) "}" 
+            *)
+           BUCTAPP of 
+             {
+              polyExp : bucexp,
+              instTyList : ty list,
+              loc : loc
+             }
+
+         | (*%
+            * @format({code, env, loc}) 
+            *        {"Closure(" 2[+1 code()(btvEnv) "," +1 env()(btvEnv)] +1 ")"} 
+            *)
+           BUCCLOSURE of 
+             {
+              code : bucexp,
+              env : bucexp,
+              loc : loc
+             }
+
+         | (*%
+            * @format({code, loc}) 
+            *         "RecClosure(" 2[1 code()(btvEnv) ] ")" 
+            *)
+           BUCRECCLOSURE of {code : bucexp, loc : loc}
+
+         | (*%
+            * @format({
+            *          switchExp : switchExp,
+            *          expTy : expTy,
+            *          branches : rule rules,
+            *          defaultExp : defaultExp,
+            *          loc : loc
+            *         })
+            *        L0{"switch" 
+            *               2[ +d switchExp()(btvEnv) ]
+            *                 2[ +1 "of" ] 
+            *           + {rules(rule)(~2[ +1 "|" ]+)}
+            *                  ~2[ +1 "_ =>"  + {defaultExp()(btvEnv)} ] }
+            * @format:rule(const:formatConst * exp) const + "=>" +1{exp()(btvEnv)}
+            *)
+           BUCSWITCH of 
+             {
+              switchExp : bucexp,
+              expTy : ty,
+              branches : (constant * bucexp) list,
+              defaultExp :  bucexp,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          expList : exp exps,
+            *          expTyList : ty tys,
+            *          loc : loc
+            *         })
+            * !N0{ "(" 2[ 1 exps(exp()(btvEnv))(";" +1) ] 1 ")" }
+            *)
+           BUCSEQ of 
+             {
+              expList : bucexp list,
+              expTyList : ty list,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *           blockExp : blockExp,
+            *           nestLevel : nestLevel,
+            *           offset : offset,
+            *           loc : loc
+            *          })
+            * blockExp()(btvEnv) "[" nestLevel()(btvEnv) "," offset()(btvEnv) "]"
+            *)
+           BUCGETFIELD of 
+            {
+             blockExp : bucexp,
+             nestLevel : bucexp,
+             offset : bucexp,
+             loc : loc
+            }
+
+         | (*%
+            * @format({
+            *          blockExp : blockExp,
+            *          nestLevel : nestLevel,
+            *          offset : offset,
+            *          valueExp : valueExp,
+            *          expTy : expTy,
+            *          loc : loc
+            *         })  
+            * "SetField" + blockExp()(btvEnv) "[" nestLevel()(btvEnv) "," offset()(btvEnv) "]" "=" valueExp()(btvEnv) 
+            *)
+           BUCSETFIELD of 
+             {
+              blockExp : bucexp,
+              nestLevel : bucexp,
+              offset : bucexp,
+              valueExp : bucexp,
+              expTy : ty,
+              loc : loc
+             }
+
+         | (*%
+            * @format({exp, expTy, loc})
+            * "cast(" exp()(btvEnv) ":" expTy()(btvEnv) ")"
+            *)
+           BUCCAST of {exp : bucexp, expTy : ty, loc : loc}
+
+         | (*%
+            * @format({
+            *          funExp : funExp,
+            *          libExp : libExp,
+            *          argTyList : argty argtys,
+            *          resultTy : resultty,
+            *          funTy : infty,
+            *          loc : loc
+            *         })
+            * "import" + funExp()(btvEnv) +d "of" +d libExp()(btvEnv) +2
+            * ":" + "{" {argtys(argty()(btvEnv))("," +)} "}"
+            *       "->" {resultty()(btvEnv)}
+            *)
+           BUCFFIVAL of 
+             {
+              funExp : bucexp,
+              libExp : bucexp,
+              argTyList : ty list,
+              resultTy : ty,
+              funTy : ty,
+              loc : loc
+             }
+
+       and bucdecl =
+           (*%
+            * @format({bindList : bind binds, loc : loc})  
+            *         "val" + {binds(bind)(~4[ +1 "and"] +)}
+            * @format:bind(id * exp) {id()(btvEnv)}  +d "=" +2 {exp()(btvEnv)}
+            *)
+           BUCVAL of 
+            {
+             bindList : (valId * bucexp) list,
+             loc : loc
+            }
+
+         | (*%
+            * @format({recbindList : bind binds, loc : loc})
+            *  "val rec" +d {binds(bind)(~4[ +1 "and"] +)}
+            * @format:bind(id * ty * funInfo * exp) 
+            *             {id " : " ty()(btvEnv) +d "=" 2[+1 {funInfo()(btvEnv) 2[+1 exp()(btvEnv) ]}]} 
+            *)
+           BUCVALREC of 
+             {
+              recbindList : (id * ty * funInfo * bucexp ) list,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *           btvEnv : btvKind:btvKind imap,
+            *           recbindList : bind binds,
+            *           loc : loc
+            *         })
+            *        {"[" 2[1  imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
+            *                       "val rec" +d {binds(bind)(~4[ +1 "and"] +)} ] "]"}
+            * @format:bind(id * ty * funInfo * exp)
+            *             {id " : " ty()(imap:createBtvKindMap()(btvEnv)) +d "=" 
+            *                  2[+1 {funInfo()(imap:createBtvKindMap()(btvEnv))
+            *                  2[+1 exp()(imap:createBtvKindMap()(btvEnv))]}]}
+            *)
+           BUCVALPOLYREC of
+             {
+              btvEnv : btvKind IEnv.map,
+              recbindList : (id * ty * funInfo * bucexp ) list,
+              loc : loc
+             }
+
+         | (*%
+            * @format({
+            *          localDeclList : localdec localdecs,
+            *          mainDeclList : dec decs,
+            *          loc : loc
+            *         })
+            *            "local" 2[ +2 localdecs(localdec()(btvEnv))(+3) ] +1
+            *            "in" 2[ +2 decs(dec()(btvEnv))(+3) ] +2
+            *            "end"
+            *)
+           BUCLOCALDEC of 
+             {
+              localDeclList : bucdecl list,
+              mainDeclList : bucdecl list,
+              loc : loc
+             }
+
+         | (*%
+            * @format(arg) 
+            *)
+           BUCEMPTY of loc
+
+                   
+  withtype funInfo =
+           (*% 
+	    * @format({tyvars:tyvar tyvars, 
+            *          bitmapFree,
+            *          tagArgs: tagArg tagArgs,
+            *          sizevals : size sizes,
+            *          args:var:varInfoWithType vars,
+            *          resultTy
+            *        }) 
+            *        "fun {"
+            *              { "tyvars =(" tyvars(tyvar()(btvEnv))(","+) ")," +1
+            *                "bitmapFree =" bitmapFree()(btvEnv) +1
+            *                "tagArgs=(" tagArgs(tagArg()(btvEnv))(","+) ")," +1
+            *                "sizevals=(" sizes(size()(btvEnv))(","+) ")," +1
+            *                "args=(" vars(var()(btvEnv))(","+) ")," +1
+            *                "resultTy=" resultTy()(btvEnv) 
+            *              }
+            *            "} =>"
+	    *)
+           {
+            tyvars:ty list,
+            bitmapFree : bucexp,
+            tagArgs : varInfo list,
+            sizevals : bucexp list,
+            args:varInfo list,
+            resultTy:ty
+           }
+end
+

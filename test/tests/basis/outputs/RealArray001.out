@@ -1,0 +1,16 @@
+- val L2A = fn : int list -> Real64Array.array
+val L2V = fn : int list -> Real64Vector.vector
+val A2L = fn : Real64Array.array -> int list
+val V2L = fn : Real64Vector.vector -> int list
+val array_0i = [] : int list
+val array_1i = [1] : int list
+val array_2i = [1,1] : int list
+val array_m1i = [9] : int list
+stdIn:39.48-39.57 Error: unbound type constructor: word in path Real.word
+- stdIn:2.10 Error: syntax error found at RPAREN
+- stdIn:2.9-41.7 Error: operator and operand don't agree [equality type required]
+  operator domain: ''Z * ''Z
+  operand:         real * real
+  in expression:
+    value = 9.9
+- 

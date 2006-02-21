@@ -1,0 +1,16 @@
+Group is
+(*
+        ml-yacc-lib.cm
+        smlnj-lib.cm
+	../../../smlformatlib.cm
+
+        ../../control/sources.cm
+        ../../format/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../types/sources.cm
+*)
+        parser.cm
+(*
+        main.sml
+*)

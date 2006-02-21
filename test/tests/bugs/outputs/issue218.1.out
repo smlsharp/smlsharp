@@ -1,0 +1,17 @@
+signature SIG =
+sig
+  structure SIG1 : sigtype s end
+  structure SIG2 : sig type t end
+  sharing type SIG2.t = SIG1.s
+end
+functor F (P : SIG) : sig end
+structure S
+: sig
+    structure SIG1 : sig type s = int end
+    structure SIG2 : sig type t = int end
+  end
+structure T : sig end
+structure SOpaque : SIG
+structure T : sig end
+structure STrans : SIG
+structure T : sig end

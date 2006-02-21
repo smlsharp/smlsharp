@@ -1,0 +1,6 @@
+type 'a t1 = 'a
+val v1 = 1 : int t1
+type 'a t2 = 'a
+val v2 = 2 : int t2 t2
+type 'a t3 = 'a t2
+val v3 = 3 : int t3

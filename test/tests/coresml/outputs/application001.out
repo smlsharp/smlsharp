@@ -1,0 +1,5 @@
+val f1 = fn : int -> int
+val v1 = 2 : int
+val v2 = 2 : int
+val v3 = 1 : int
+

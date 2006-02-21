@@ -1,0 +1,2 @@
+structure S12 : sig datatype dt con D : dt val x : dt end
+val it = D : S12.dt

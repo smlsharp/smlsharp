@@ -1,0 +1,9 @@
+Group
+(*
+        signature TOP
+*)
+        structure Top
+        signature PATH_RESOLVER
+        structure PathResolver
+is
+        main/module.cm

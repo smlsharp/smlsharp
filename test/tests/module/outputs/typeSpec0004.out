@@ -1,0 +1,6 @@
+signature S1 = sig type 'a t1 = int * 'a type ('a, 'b) t2 = string * 'a * 'b end
+signature S2 =
+sig type 'a t1 = int * 'a type ('a, 'b) t2 = bool t1 * string * 'a * 'b end
+../tests/module/tests/typeSpec0004.sml:33.16-33.26 Error: unbound type
+                                                          constructor: t2
+

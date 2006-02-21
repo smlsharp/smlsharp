@@ -1,0 +1,20 @@
+Group is
+        ../../format/sources.cm
+        ../../../smlformatlib.cm
+        ../../absyn/sources.cm
+        ../../parser/sources.cm
+        ../../control/sources.cm
+        ../../parser/sources.cm
+        ../../util/sources.cm
+        ../../types/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+	../../systemdef/sources.cm	
+        smlnj-lib.cm
+
+        TYPEDFLATCALC.sig
+        TypedFlatCalc.ppg.sml
+        TypedFlatCalcUtils.sml
+        PRINTTFP.sig
+        PrintTFP.sml
+        TypedFlatCalcPickler.sml

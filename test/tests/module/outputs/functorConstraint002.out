@@ -1,0 +1,12 @@
+signature SType = sig type t val x : t end
+structure PType : sig type t = real val x : real end
+functor FTypeTrans (S : sig type t val x : t end) : SType
+structure STypeTrans : sig datatype t con D : PType.t -> t val x : t end
+datatype dtTrans
+con DTrans : STypeTrans.t -> dtTrans
+val aTypeTrans = DTrans (D -) : dtTrans
+functor FTypeOpaque (S : sig type t val x : t end) : SType
+structure STypeOpaque : sig type t val x : t end
+datatype dtOpaque
+con DOpaque : STypeOpaque.t -> dtOpaque
+val aTypeOpaque = DOpaque - : dtOpaque

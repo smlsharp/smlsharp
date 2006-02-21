@@ -1,0 +1,10 @@
+val id = fn : ['a .'a -> 'a]
+../tests/bugs/tests/issue168.1.sml:2.1-2.46 Warning: dummy type variable(s) X0
+                                                     are introduced due to value
+                                                     restriction
+val fHanldePolyBodyPolyVar = fn : X0 -> X0
+../tests/bugs/tests/issue168.1.sml:3.30-3.53 Error: operator and operand don't
+                                                    agree
+                                                    operator domain: X0
+                                                    operand: int
+

@@ -1,0 +1,11 @@
+exception Domain : exn
+val fold = fn : ['a, 'b. 'a list * ('a * 'b -> 'b) * 'b -> 'b]
+val foldOverSubsets = fn : ['a,'b,'c.
+  'b list *
+  ('b * bool * 'a * 'c * ('c -> exn) -> 'a * 'c) *
+  'a *
+  ('a * 'c -> 'c) *
+  'c ->
+    'c]
+
+

@@ -1,0 +1,7 @@
+functor F (P : sig type dt val x : dt val fmt : dt -> string end) :
+sig datatype dt con F : P.dt -> dt val fmt : dt -> string val x : dt end
+structure P : sig datatype dt con D : dt val fmt : dt -> string val x : dt end
+structure T2
+: sig datatype dt con F : F.dt -> dt val fmt : dt -> string val x : dt end
+val x2 = F - : T2.dt
+val it = "D" : string

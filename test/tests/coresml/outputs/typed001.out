@@ -1,0 +1,5 @@
+val v1 = 1 : int
+type t = int
+val v2 = 1 : t
+type t = int
+val v3 = 1 : int

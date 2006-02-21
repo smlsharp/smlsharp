@@ -1,0 +1,20 @@
+Group is
+	../../../smlformatlib.cm
+	smlnj-lib.cm
+        ../../absyn/sources.cm
+        ../../control/sources.cm
+        ../../types/sources.cm
+        ../../name/sources.cm
+        ../../env/sources.cm
+        ../../systemdef/sources.cm
+        ../../typedcalc/sources.cm
+        ../../typedlambda/sources.cm
+	../../buccalc/sources.cm
+
+	BUCCOMPILECONTEXT.sig
+	BUCCompileContext.sml
+	ExtraComputationGenerator.sml
+        BUCTRANSFORMER.sig
+        BUCTransformer.sml
+	ArithmeticOptimizer.sml	
+	VariableOptimizer.sml

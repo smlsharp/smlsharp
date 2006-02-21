@@ -1,0 +1,9 @@
+val id = fn : ['a.'a -> 'a]
+val f2 = fn : ['a. 'a -> ['b. 'b -> 'a * 'b]]
+val fRecord22 = fn : ['a,'b.'a -> ['c .'c -> {a:'b -> 'b , b:'a} * 'c]]
+../tests/bugs/tests/issue139.1.sml:4.1-4.33 Warning: dummy type variable(s) X0
+                                                     are introduced due to value
+                                                     restriction
+val a = fn : X0 -> X0
+val b = 1 : int
+val c = "a" : string

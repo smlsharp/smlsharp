@@ -1,0 +1,4 @@
+structure S1 : sig exception E : exn end
+exception E = S1.E
+val f1 = fn : exn -> int
+val x = 1 : int

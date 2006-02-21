@@ -1,0 +1,54 @@
+(* -*- sml -*- *)
+
+(**
+ *  This module provides a function which translates a sequence of IML
+ * instruction in ML datatype form to a byte array in which instructions in
+ * binary format is embedded.
+ *
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: InstructionSerializer.sml.in,v 1.4 2005/12/31 10:22:00 kiyoshiy Exp $
+ *)
+structure InstructionSerializer : INSTRUCTION_SERIALIZER =
+struct
+
+  type writer = Word8.word -> unit
+
+  (**
+   * emit the instruction in binary format into the byte array
+   * @params array (position, instruction)
+   * @param array the byte array into which the instruction is emitted
+   * @param position the position in the array where the instruction should
+   *                be emitted
+   * @param instruction the instruction
+   * @return unit
+   *)
+@SMLEmitInstruction@
+
+  (**
+   * calculate the number of bytes of the instruction in binary format
+   * @params instruction
+   * @param instruction the instruction
+   * @return the number of bytes of the instruction in binary format
+   *)
+@SMLGetSizeOfInstructin@
+
+  (***************************************************************************
+   Implementation of INSTRUCTION_SERIALIZER
+   *)
+
+  fun serialize instructions writer =
+      let
+(*
+        val instructionSizes = map getSizeOfInstruction instructions
+        val totalSize =
+            foldr (fn (size, sum) => sum + size) 0 instructionSizes
+*)
+        val position =
+            app
+                (fn instruction => emitInstruction instruction writer)
+                instructions
+      in
+        ()
+      end
+
+end

@@ -1,0 +1,1301 @@
+../tests/coresml/tests/infixPattern002.sml:50.22-50.71 Warning: match nonexhaustive
+                                                                         ## (
+                                                                              
+                                                                               >> (
+                                                                                    x1,
+                                                                                    x2
+                                                                                 ),
+                                                                              
+                                                                               << (
+                                                                                    x3,
+                                                                                    x4
+                                                                                 )
+                                                                            ) => ...
+datatype t
+con ## : t * t -> t
+con << : t * t -> t
+con >> : t * t -> t
+con N : int -> t
+infix 3 >>
+infix 2 ##
+infix 3 <<
+val f11111 = fn : t -> t * t * t * t
+val v11111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:56.22-56.71 Warning: match nonexhaustive
+                                                                         ## (
+                                                                              
+                                                                               >> (
+                                                                                    x1,
+                                                                                    x2
+                                                                                 ),
+                                                                              
+                                                                               << (
+                                                                                    x3,
+                                                                                    x4
+                                                                                 )
+                                                                            ) => ...
+infix 3 >>
+infix 2 ##
+infixr 3 <<
+val f11112 = fn : t -> t * t * t * t
+val v11112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:63.22-63.71 Warning: match nonexhaustive
+                                                                         ## (
+                                                                              
+                                                                               >> (
+                                                                                    x1,
+                                                                                    x2
+                                                                                 ),
+                                                                              
+                                                                               << (
+                                                                                    x3,
+                                                                                    x4
+                                                                                 )
+                                                                            ) => ...
+infix 3 >>
+infixr 2 ##
+infix 3 <<
+val f11121 = fn : t -> t * t * t * t
+val v11121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:70.22-70.71 Warning: match nonexhaustive
+                                                                         ## (
+                                                                              
+                                                                               >> (
+                                                                                    x1,
+                                                                                    x2
+                                                                                 ),
+                                                                              
+                                                                               << (
+                                                                                    x3,
+                                                                                    x4
+                                                                                 )
+                                                                            ) => ...
+infix 3 >>
+infixr 2 ##
+infixr 3 <<
+val f11122 = fn : t -> t * t * t * t
+val v11122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:77.22-77.71 Warning: match nonexhaustive
+                                                                         ## (
+                                                                              
+                                                                               >> (
+                                                                                    x1,
+                                                                                    x2
+                                                                                 ),
+                                                                              
+                                                                               << (
+                                                                                    x3,
+                                                                                    x4
+                                                                                 )
+                                                                            ) => ...
+infixr 3 >>
+infix 2 ##
+infix 3 <<
+val f11211 = fn : t -> t * t * t * t
+val v11211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:84.22-84.71 Warning: match nonexhaustive
+                                                                         ## (
+                                                                              
+                                                                               >> (
+                                                                                    x1,
+                                                                                    x2
+                                                                                 ),
+                                                                              
+                                                                               << (
+                                                                                    x3,
+                                                                                    x4
+                                                                                 )
+                                                                            ) => ...
+infixr 3 >>
+infix 2 ##
+infixr 3 <<
+val f11212 = fn : t -> t * t * t * t
+val v11212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:91.22-91.71 Warning: match nonexhaustive
+                                                                         ## (
+                                                                              
+                                                                               >> (
+                                                                                    x1,
+                                                                                    x2
+                                                                                 ),
+                                                                              
+                                                                               << (
+                                                                                    x3,
+                                                                                    x4
+                                                                                 )
+                                                                            ) => ...
+infixr 3 >>
+infixr 2 ##
+infix 3 <<
+val f11221 = fn : t -> t * t * t * t
+val v11221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:98.22-98.71 Warning: match nonexhaustive
+                                                                         ## (
+                                                                              
+                                                                               >> (
+                                                                                    x1,
+                                                                                    x2
+                                                                                 ),
+                                                                              
+                                                                               << (
+                                                                                    x3,
+                                                                                    x4
+                                                                                 )
+                                                                            ) => ...
+infixr 3 >>
+infixr 2 ##
+infixr 3 <<
+val f11222 = fn : t -> t * t * t * t
+val v11222 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:108.22-108.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 3 >>
+infix 2 ##
+infix 2 <<
+val f12111 = fn : t -> t * t * t * t
+val v12111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:115.22-115.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 3 >>
+infix 2 ##
+infixr 2 <<
+val f12112 = fn : t -> t * t * t * t
+val v12112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:122.22-122.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 3 >>
+infixr 2 ##
+infix 2 <<
+val f12121 = fn : t -> t * t * t * t
+val v12121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:129.22-129.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 3 >>
+infixr 2 ##
+infixr 2 <<
+val f12122 = fn : t -> t * t * t * t
+val v12122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:136.22-136.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 3 >>
+infix 2 ##
+infix 2 <<
+val f12211 = fn : t -> t * t * t * t
+val v12211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:143.22-143.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 3 >>
+infix 2 ##
+infixr 2 <<
+val f12212 = fn : t -> t * t * t * t
+val v12212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:150.22-150.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 3 >>
+infixr 2 ##
+infix 2 <<
+val f12221 = fn : t -> t * t * t * t
+val v12221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:157.22-157.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infixr 3 >>
+infixr 2 ##
+infixr 2 <<
+val f12222 = fn : t -> t * t * t * t
+val v12222 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:167.22-167.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 3 >>
+infix 2 ##
+infix 1 <<
+val f13111 = fn : t -> t * t * t * t
+val v13111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:174.22-174.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 3 >>
+infix 2 ##
+infixr 1 <<
+val f13112 = fn : t -> t * t * t * t
+val v13112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:181.22-181.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 3 >>
+infixr 2 ##
+infix 1 <<
+val f13121 = fn : t -> t * t * t * t
+val v13121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:188.22-188.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 3 >>
+infixr 2 ##
+infixr 1 <<
+val f13122 = fn : t -> t * t * t * t
+val v13122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:195.22-195.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 3 >>
+infix 2 ##
+infix 1 <<
+val f13211 = fn : t -> t * t * t * t
+val v13211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:202.22-202.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 3 >>
+infix 2 ##
+infixr 1 <<
+val f13212 = fn : t -> t * t * t * t
+val v13212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:209.22-209.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 3 >>
+infixr 2 ##
+infix 1 <<
+val f13221 = fn : t -> t * t * t * t
+val v13221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:216.22-216.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 3 >>
+infixr 2 ##
+infixr 1 <<
+val f13222 = fn : t -> t * t * t * t
+val v13222 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:226.22-226.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 2 >>
+infix 2 ##
+infix 3 <<
+val f21111 = fn : t -> t * t * t * t
+val v21111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:233.22-233.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 2 >>
+infix 2 ##
+infixr 3 <<
+val f21112 = fn : t -> t * t * t * t
+val v21112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:240.22-240.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 2 >>
+infixr 2 ##
+infix 3 <<
+val f21121 = fn : t -> t * t * t * t
+val v21121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:247.22-247.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 2 >>
+infixr 2 ##
+infixr 3 <<
+val f21122 = fn : t -> t * t * t * t
+val v21122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:254.22-254.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infixr 2 >>
+infix 2 ##
+infix 3 <<
+val f21211 = fn : t -> t * t * t * t
+val v21211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:261.22-261.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infixr 2 >>
+infix 2 ##
+infixr 3 <<
+val f21212 = fn : t -> t * t * t * t
+val v21212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:268.22-268.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infixr 2 >>
+infixr 2 ##
+infix 3 <<
+val f21221 = fn : t -> t * t * t * t
+val v21221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:275.22-275.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infixr 2 >>
+infixr 2 ##
+infixr 3 <<
+val f21222 = fn : t -> t * t * t * t
+val v21222 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:285.22-285.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 2 >>
+infix 2 ##
+infix 2 <<
+val f22111 = fn : t -> t * t * t * t
+val v22111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:292.22-292.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 2 >>
+infix 2 ##
+infixr 2 <<
+val f22112 = fn : t -> t * t * t * t
+val v22112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:299.22-299.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 2 >>
+infixr 2 ##
+infix 2 <<
+val f22121 = fn : t -> t * t * t * t
+val v22121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:306.22-306.71 Warning: match nonexhaustive
+                                                                           ## (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                      x2
+                                                                                   ),
+                                                                                
+                                                                                 << (
+                                                                                      x3,
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 2 >>
+infixr 2 ##
+infixr 2 <<
+val f22122 = fn : t -> t * t * t * t
+val v22122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:313.22-313.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 2 >>
+infix 2 ##
+infix 2 <<
+val f22211 = fn : t -> t * t * t * t
+val v22211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:320.22-320.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 2 >>
+infix 2 ##
+infixr 2 <<
+val f22212 = fn : t -> t * t * t * t
+val v22212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:327.22-327.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 2 >>
+infixr 2 ##
+infix 2 <<
+val f22221 = fn : t -> t * t * t * t
+val v22221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:334.22-334.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infixr 2 >>
+infixr 2 ##
+infixr 2 <<
+val f22222 = fn : t -> t * t * t * t
+val v22222 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:344.22-344.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 2 >>
+infix 2 ##
+infix 1 <<
+val f23111 = fn : t -> t * t * t * t
+val v23111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:351.22-351.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 2 >>
+infix 2 ##
+infixr 1 <<
+val f23112 = fn : t -> t * t * t * t
+val v23112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:358.22-358.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 2 >>
+infixr 2 ##
+infix 1 <<
+val f23121 = fn : t -> t * t * t * t
+val v23121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:365.22-365.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 2 >>
+infixr 2 ##
+infixr 1 <<
+val f23122 = fn : t -> t * t * t * t
+val v23122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:372.22-372.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 2 >>
+infix 2 ##
+infix 1 <<
+val f23211 = fn : t -> t * t * t * t
+val v23211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:379.22-379.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 ## (
+                                                                                     
+                                                                                       >> (
+                                                                                            x1,
+                                                                                            x2
+                                                                                        ),
+                                                                                      x3
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 2 >>
+infix 2 ##
+infixr 1 <<
+val f23212 = fn : t -> t * t * t * t
+val v23212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:386.22-386.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 2 >>
+infixr 2 ##
+infix 1 <<
+val f23221 = fn : t -> t * t * t * t
+val v23221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:393.22-393.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 2 >>
+infixr 2 ##
+infixr 1 <<
+val f23222 = fn : t -> t * t * t * t
+val v23222 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:403.22-403.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infix 1 >>
+infix 2 ##
+infix 3 <<
+val f31111 = fn : t -> t * t * t * t
+val v31111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:410.22-410.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infix 1 >>
+infix 2 ##
+infixr 3 <<
+val f31112 = fn : t -> t * t * t * t
+val v31112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:417.22-417.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infix 1 >>
+infixr 2 ##
+infix 3 <<
+val f31121 = fn : t -> t * t * t * t
+val v31121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:424.22-424.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infix 1 >>
+infixr 2 ##
+infixr 3 <<
+val f31122 = fn : t -> t * t * t * t
+val v31122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:431.22-431.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infix 2 ##
+infix 3 <<
+val f31211 = fn : t -> t * t * t * t
+val v31211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:438.22-438.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infix 2 ##
+infixr 3 <<
+val f31212 = fn : t -> t * t * t * t
+val v31212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:445.22-445.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infixr 2 ##
+infix 3 <<
+val f31221 = fn : t -> t * t * t * t
+val v31221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:452.22-452.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infixr 2 ##
+infixr 3 <<
+val f31222 = fn : t -> t * t * t * t
+val v31222 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:462.22-462.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 << (
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        ),
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 1 >>
+infix 2 ##
+infix 2 <<
+val f32111 = fn : t -> t * t * t * t
+val v32111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:469.22-469.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 << (
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        ),
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 1 >>
+infix 2 ##
+infixr 2 <<
+val f32112 = fn : t -> t * t * t * t
+val v32112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:476.22-476.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 << (
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        ),
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infix 1 >>
+infixr 2 ##
+infix 2 <<
+val f32121 = fn : t -> t * t * t * t
+val v32121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:483.22-483.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infix 1 >>
+infixr 2 ##
+infixr 2 <<
+val f32122 = fn : t -> t * t * t * t
+val v32122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:490.22-490.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 << (
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        ),
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infix 2 ##
+infix 2 <<
+val f32211 = fn : t -> t * t * t * t
+val v32211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:497.22-497.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 << (
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        ),
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infix 2 ##
+infixr 2 <<
+val f32212 = fn : t -> t * t * t * t
+val v32212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:504.22-504.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 << (
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        ),
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infixr 2 ##
+infix 2 <<
+val f32221 = fn : t -> t * t * t * t
+val v32221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:511.22-511.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 ## (
+                                                                                      x2,
+                                                                                     
+                                                                                       << (
+                                                                                            x3,
+                                                                                            x4
+                                                                                        )
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infixr 2 ##
+infixr 2 <<
+val f32222 = fn : t -> t * t * t * t
+val v32222 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:521.22-521.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 1 >>
+infix 2 ##
+infix 1 <<
+val f33111 = fn : t -> t * t * t * t
+val v33111 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:528.22-528.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 1 >>
+infix 2 ##
+infixr 1 <<
+val f33112 = fn : t -> t * t * t * t
+val v33112 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:535.22-535.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 1 >>
+infixr 2 ##
+infix 1 <<
+val f33121 = fn : t -> t * t * t * t
+val v33121 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:542.22-542.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infix 1 >>
+infixr 2 ##
+infixr 1 <<
+val f33122 = fn : t -> t * t * t * t
+val v33122 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:549.22-549.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 1 >>
+infix 2 ##
+infix 1 <<
+val f33211 = fn : t -> t * t * t * t
+val v33211 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:556.22-556.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 << (
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        ),
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infix 2 ##
+infixr 1 <<
+val f33212 = fn : t -> t * t * t * t
+val v33212 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:563.22-563.71 Warning: match nonexhaustive
+                                                                           << (
+                                                                                
+                                                                                 >> (
+                                                                                      x1,
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        )
+                                                                                   ),
+                                                                                x4
+                                                                              ) => ...
+infixr 1 >>
+infixr 2 ##
+infix 1 <<
+val f33221 = fn : t -> t * t * t * t
+val v33221 = (N 1, N 2, N 3, N 4) : t * t * t * t
+../tests/coresml/tests/infixPattern002.sml:570.22-570.71 Warning: match nonexhaustive
+                                                                           >> (
+                                                                                x1,
+                                                                                
+                                                                                 << (
+                                                                                     
+                                                                                       ## (
+                                                                                            x2,
+                                                                                            x3
+                                                                                        ),
+                                                                                      x4
+                                                                                   )
+                                                                              ) => ...
+infixr 1 >>
+infixr 2 ##
+infixr 1 <<
+val f33222 = fn : t -> t * t * t * t
+val v33222 = (N 1, N 2, N 3, N 4) : t * t * t * t

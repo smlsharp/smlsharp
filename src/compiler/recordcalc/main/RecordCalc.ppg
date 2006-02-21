@@ -1,0 +1,446 @@
+(**
+ * Copyright (c) 2006, Tohoku University.
+ *
+ * @author Atsushi Ohori 
+ * @version $Id: RecordCalc.ppg,v 1.4 2006/02/18 04:59:26 ohori Exp $
+ *)
+structure RecordCalc = struct
+
+ structure BT = BasicTypes
+ type loc = Loc.loc
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(tyformat) Types.format_ty
+  *)
+ type ty = 
+  (*%
+   * @format(ty:tyformat) ty()(btvEnv)
+   *)
+     Types.ty
+
+ (*%
+  * @formatter(absyntvar) Absyn.format_tvar
+  *)
+  type tvar = 
+    (*%
+    * @format(tvar:absyntvar) tvar
+    *)
+    Absyn.tvar 
+
+ (*% 
+  * @params(btvEnv)
+  * @formatter(tyConFormat) Types.format_tyCon
+  *)
+ type tyCon = 
+    (*%
+     * @format(tyCon:tyConFormat) tyCon()(btvEnv)
+     *)
+    Types.tyCon
+
+ (*%
+  * @formatter(conInfoFormat) Types.format_conInfoName
+  *)
+ type conInfo =  
+     (*%
+      * @format(value:conInfoFormat) value
+      *)
+     Types.conInfo
+
+ (*% 
+  * @params(btvEnv)
+  * @formatter(typesValIdent) Types.format_valIdent
+ *)
+ type valIdent = 
+     (*%
+      * @format(id:typesValIdent) id()(btvEnv)
+      *)
+     Types.valIdent
+ (*% 
+  * @formatter(ID.id) ID.format_id
+  *)
+ type id = 
+     (*%
+      * @format(id) id
+      *)
+      ID.id
+ (*% 
+  * @params(btvEnv)
+  *)
+ type varIdInfo = 
+     (*%
+      * @format({id,displayName,ty}) displayName 
+      *)
+     {id:id, displayName:string, ty:ty}
+
+ (*%
+  * @params(btvEnv)
+  *)
+ type varIdInfoWithType = 
+     (*%
+      * @format({id,displayName,ty:ty}) R0{displayName "<" id ">" ":" ty()(btvEnv)}
+      *)
+     {id:id,displayName:string, ty:ty}
+
+ (*% *)
+ type primInfo =
+     (*%
+      * @format({name,ty}) name
+      *)
+     {name:string, ty:ty}
+
+ (*% *)
+ type oprimInfo =
+     (*%
+      * @format({name,ty, instances}) name
+      *)
+      {name:string, ty:ty, instances:primInfo SEnv.map}
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(btvKindFormat) Types.format_btvKind
+  *)
+ type btvKind = 
+     (*%
+      * @format(value:btvKindFormat) value()(btvEnv)
+      *)
+      Types.btvKind
+
+ datatype constant =  datatype Types.constant
+
+(*%
+ * @params(btvEnv)
+ *
+ * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+ * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
+ * @formatter(formatConst) Types.format_constant
+ * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+ * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
+ * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
+ * @formatter(imap) SmlppgUtil.formatImap
+ * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+ *)
+ datatype rcexp 
+   = 
+     (*%
+      * @format
+      *   ({funExp:exp1, 
+      *     instTyList:ty tys:formatListWithEnclosure, 
+      *     argExp:exp2, 
+      *     argTyList:argTy argTys, 
+      *     loc:loc
+      *     })
+      * L10{
+      *      "("
+      *          exp1()(btvEnv)
+      *          2[ +2 ":" +d !N0{tys(ty()(btvEnv))(",","{","}")} ]
+      *      ")" +1
+      *      exp2()(btvEnv)
+      *    }
+      *)
+      RCFOREIGNAPPLY of 
+        {
+          funExp : rcexp, 
+	  instTyList:ty list,
+	  argExp:rcexp, 
+	  argTyList : ty list, 
+	  loc: loc
+        }
+   | (*%
+      * @format(const:formatConst * loc) const
+      *)
+     RCCONSTANT of constant * loc
+   | (*%
+      * @format(id * loc) id()(btvEnv)
+      *)
+     RCVAR of varIdInfo * loc
+   | (*%
+      * @format(id * ty * loc) "getGlobal(" id ")"
+      *)
+     RCGETGLOBAL of string * ty * loc
+   | (*%
+      * @format(arrayindex : formatUInt32 * offset * ty * loc) 
+      * "GetGlobalValue(" arrayindex "," offset ")"
+      *)
+     RCGETGLOBALVALUE of BT.UInt32 * int * ty * loc
+   | (*%
+      * @format(array * offset * elementtype * loc)
+      * "arraySub(" array()(btvEnv) "," offset ")"
+      *)
+     RCGETFIELD of rcexp * int * ty * loc
+   | (*%
+      * @format({sizeExp:exp1, initExp:exp2, elementTy:ty1, resultTy:ty2, loc:loc}) 
+       !N0 {ty1()(btvEnv) "[" 2[1 exp1()(btvEnv) ] 1"]" "{" exp2()(btvEnv) "}"
+           }
+      *)
+     (** ty1[e] : ty2  *)
+     RCARRAY of
+       {
+        sizeExp : rcexp,
+        initExp : rcexp,
+        elementTy : ty ,
+        resultTy : ty,
+        loc :loc
+        }
+   | (*%
+      * @format({primOp:prim, instTyList:ty tys:formatListWithEnclosure, argExpOpt:exp opt, loc:loc}) 
+        R1{d {prim !N0{tys(ty()(btvEnv))(",","{","}")} opt(exp()(btvEnv))}}
+     *)
+     RCPRIMAPPLY of {primOp:primInfo, instTyList:ty list, argExpOpt:rcexp option, loc:loc}
+   | (*%
+      * @format({oprimOp:oprim,instances:ty tys:formatListWithEnclosure, argExpOpt:exp opt,loc:loc}) 
+        R1{d {oprim !N0{tys(ty()(btvEnv))(",","{","}")} opt(exp()(btvEnv))}}
+     *)
+     RCOPRIMAPPLY of {oprimOp:oprimInfo, instances:ty list, argExpOpt:rcexp option, loc:loc}
+   | (*%
+      * @format({con:con, instTyList:ty tys:formatListWithEnclosure, argExpOpt:exp opt, loc:loc}) 
+         R1{d {con !N0{tys(ty()(btvEnv))(",","{","}")} {opt(exp()(btvEnv))}}}
+      *)
+     RCCONSTRUCT of {con:conInfo, instTyList:ty list, argExpOpt:rcexp option,loc:loc}
+   | (*%
+      * @format({funExp:exp1, funTy:ty, argExpList:exp2 exps:enclosedListIfMoreThanOne, loc:loc})
+      * L10{ exp1()(btvEnv) +d exps(exp2()(btvEnv))(","+, "{", "}") }
+      *)
+      (*
+         ty is the type of the function
+      *) 
+     RCAPPM of {funExp:rcexp,funTy:ty, argExpList:rcexp list,loc:loc}
+   | (*%
+      * @format({binds:bind binds, bodyExp:exp, loc:loc})
+      *          !N0{ {"bind" 2[ +1 binds(bind)( +1) ]}  +1
+      *               {"in" 2[ +2 exp()(btvEnv) ] +2
+      *              "end"} }
+      * @format:bind(id * exp)
+      * id()(btvEnv) +d "=" +2 {exp()(btvEnv)}
+      *)
+     RCMONOLET of {binds:(varIdInfo * rcexp) list, bodyExp:rcexp, loc:loc}
+   | (*%
+      * @format(dec decs * exp exps * ty tys * loc)
+      *          !N0{ {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]}  +1
+      *               {"in" 2[ +2 exps(exp()(btvEnv))( +3 ) ] +2
+      *                 "end"} }
+      *)
+     RCLET of rcdecl list * rcexp list * ty list * loc
+   | (*%
+      * @format({fields:records, recordTy:ty, loc:loc}) records()(btvEnv)
+      *)
+     RCRECORD of {fields:fields, recordTy:ty,loc:loc}
+   | (*%
+      * @format({label:selector, exp:exp, expTy:ty, loc:loc})
+      * L10{"#"{selector} + {exp()(btvEnv)}}
+      *)
+     RCSELECT of {label:string, exp:rcexp, expTy:ty, loc:loc}
+   | (*%
+      * @format({label:label,recordExp:exp1, recordTy:ty1, elementExp:exp2, elementTy:ty2, loc:loc})
+      *   !N0 { "MODIFY(" exp1()(btvEnv) "," + label "," + exp2()(btvEnv) ")"
+      }
+      *)
+     RCMODIFY of 
+      {
+       label:string, 
+       recordExp:rcexp, 
+       recordTy:ty, 
+       elementExp:rcexp, 
+       elementTy:ty, 
+       loc:loc
+       }
+   | (*%
+      * @format(exp * ty * loc)
+      * N0{ "raise" +d {exp()(btvEnv)} }
+      *)
+     RCRAISE of rcexp * ty * loc
+   | (*%
+      * @format({exp:exp1, exnVar:id, handler:exp2, loc:loc})
+                 "handle" + N0{exp1()(btvEnv)} +d 
+                 "with letexp" +  id()(btvEnv)  + "in" + {exp2()(btvEnv)}
+      *)
+      (*
+      * handle (exp1, x, exp2) 
+	   exp1 the expression to be evaluated normally
+	   x variable to received exception value 
+	   exp2 the handler body using x 
+      *)
+     RCHANDLE of {exp:rcexp, exnVar:varIdInfo, handler:rcexp, loc:loc}
+   | (*%
+      * @format({exp:exp1,
+                 expTy:ty, 
+                 ruleList:rule rules, 
+                 defaultExp:exp2,
+                 loc:loc})
+          L0{"case" 
+                 2[ +d exp1()(btvEnv)
+		 2[ +1 "of" ] 
+		 + {rules(rule)(~2[ +1 "|" ]+)}
+		 2[ +1 " | _ =>"  + {exp2()(btvEnv)} ] }
+      * @format:rule(con * id opt * exp)
+      * con opt(id()(btvEnv)) + "=>" +1{exp()(btvEnv)}
+      *)
+     RCCASE of 
+       {
+        exp:rcexp,
+        expTy:ty,
+        ruleList:(conInfo * varIdInfo option * rcexp) list,
+        defaultExp:rcexp,
+        loc:loc
+        }
+   | (*%
+      * @format({switchExp:exp1, expTy:ty, branches:rule rules, defaultExp:exp2, loc:loc})
+          L0{"switch" 
+                 2[ +d exp1()(btvEnv) ]
+		 2[ +1 "of" ] 
+                     + {rules(rule)(~2[ +1 "|" ]+)}
+                 2[+1 " | _ =>"  + {exp2()(btvEnv)}] }
+      * @format:rule(const:formatConst * exp) const + "=>" +1{exp()(btvEnv)}
+      *)
+     (* switch e of ... | c => e ... | _ => e
+      *)
+     RCSWITCH of
+       {
+        switchExp:rcexp, 
+        expTy:ty, 
+        branches:(constant * rcexp) list, 
+        defaultExp:rcexp, 
+        loc:loc
+        }
+   | (*%
+     * @format({argVarList:id ids:enclosedListIfMoreThanOne, bodyTy:ty, bodyExp:exp,loc:loc}) 
+           R1{ "(fn" + {ids(id()(btvEnv))(","+1,"{","}")}  
+                     2[ +1 "=>" {exp()(btvEnv)}]
+               ")" 
+	     }
+     *)
+     (**
+       \lambda(x1,....,xn).e 
+     *)
+     RCFNM of {argVarList:varIdInfo list, bodyTy:ty, bodyExp: rcexp, loc:loc}
+   | (*%
+      * @format({btvEnv:btvKind:btvKind imap,
+                 argVarList:var vars:enclosedListIfMoreThanOne,
+                 bodyTy:ty,
+                 bodyExp:exp,
+                 loc:loc})
+      *         {"[" 2[1  imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
+                          !N0{"fn" + vars(var()(imap:createBtvKindMap()(btvEnv)))(",","{","}")
+			         2[+d "=>" +1 {exp()(imap:createBtvKindMap()(btvEnv))}]} 
+                       ] 1 
+                 "]"}
+      *)
+      (*
+        \forall t.\fn x => e 
+      ty is the type of rcexp without type abstraction
+      *)
+     RCPOLYFNM of 
+     {
+      btvEnv:btvKind IEnv.map, 
+      argVarList:varIdInfo list,
+      bodyTy:ty,
+      bodyExp:rcexp,
+      loc:loc
+      }
+   | (*%
+      * @format({btvEnv:btvKind:btvKind imap,
+                 expTyWithoutTAbs:ty,
+                 exp:exp,
+                 loc:loc})
+      *         {"[" 2[1  imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
+			         2[{exp()(imap:createBtvKindMap()(btvEnv))} ] 
+                ] 1 "]"}
+      *)
+      (*
+       \forall t.e 
+      ty is the type of tpexp without type abstraction
+      *)
+     RCPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:rcexp, loc:loc}
+   | (*%
+       * @format({exp:exp, expTy:ty1, instTyList:ty2 tys, loc:loc}) 
+                 {exp()(btvEnv) 2[1 "(" ty1()(btvEnv) ")"] 2[1 !N0{"{" 2[ 1tys(ty2()(btvEnv))("," +1) ] 1 "}" }]}
+      *)
+     RCTAPP of {exp:rcexp, expTy:ty, instTyList:ty list, loc:loc}
+  | (*%
+     * @format({expList:exp exps, expTyList:ty tys, loc:loc})
+     * !N0{ "(" 2[ 1 exps(exp()(btvEnv))(";" +1) ] 1 ")" }
+     *)
+     RCSEQ of {expList:rcexp list, expTyList:ty list, loc:loc}
+  | (*%
+     * @format({funExp:funExp, 
+                libExp:libExp, 
+		argTyList:argty argtys:enclosedListIfMoreThanOne, 
+		resultTy:resultty, 
+		funTy:infty, 
+		loc:loc})
+     * "import" + funExp()(btvEnv) +d "of" +d libExp()(btvEnv) +2
+     * ":" + {argtys(argty()(btvEnv))("," +, "{", "}") }
+     *    "->" {resultty()(btvEnv)}
+     *)
+    RCFFIVAL of {funExp:rcexp, libExp:rcexp, argTyList:ty list, resultTy:ty, funTy:ty, loc: loc}
+  | (*%
+     * @format(exp * ty * loc) "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
+     *)
+    (*
+      cast e to some type ty
+      this is used to coerce constructor type to a record type
+      *)
+    RCCAST of rcexp * ty * loc
+
+ and rcdecl 
+   = (*%
+      * @format(bind binds * loc)  "val" + {binds(bind)(~4[ +1 "and"] +)}
+      * @format:bind(id * exp) {id()(btvEnv)} +d "=" +2 {exp()(btvEnv)}
+      *)
+     RCVAL of (valIdent * rcexp) list * loc
+   | (*%
+      * @format(bind binds * loc)
+      *  "val rec" +d {binds(bind)(~4[ +1 "and"] +)}
+      * @format:bind({var:id, expTy:ty, exp:exp}) 
+           {id()(btvEnv) +d "=" +2 {exp()(btvEnv)} }
+      *)
+     RCVALREC of {var:varIdInfo, expTy:ty, exp:rcexp} list * loc
+   | (*%
+      * @format(btvKind:btvKind imap * bind binds * loc)
+           {"[" 2[1  imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
+                    "val rec" +d {binds(bind)(~4[ +1 "and"] +)} ] "]"}
+      * @format:bind({var:id, expTy:ty, exp:exp})
+           {id()(imap:createBtvKindMap()(btvEnv)) +d "=" 
+	      +2 2[{exp()(imap:createBtvKindMap()(btvEnv))} 
+		   ]
+		   }
+      *)
+     RCVALPOLYREC of btvKind IEnv.map * {var:varIdInfo, expTy:ty, exp:rcexp} list * loc
+   | (*%
+      * @format(localdec localdecs * dec decs * loc)
+      *            "local" 2[ +2 localdecs(localdec()(btvEnv))(+d) ] +1
+      *            "in" 2[ +2 decs(dec()(btvEnv))(+3) ] +2
+      *            "end"
+      *)
+     RCLOCALDEC of rcdecl list * rcdecl list * loc
+   | (*%
+      * @format(exp * arrayexp * offset * ty * loc)  
+	       "SetField" + arrayexp()(btvEnv) "[" offset "]" "=" exp()(btvEnv) 
+      *)
+     RCSETFIELD of rcexp * rcexp * int * ty * loc
+   | (*%
+      * @format(name * exp * loc) "setGlobal(" name " = " exp()(btvEnv) ")"  
+      *)
+     RCSETGLOBAL of string * rcexp * loc
+   | (*%
+      * @format(arrayindex : formatUInt32 * offset * exp * ty * loc) 
+      * "SetGlobalValue((" arrayindex "," offset ") = " exp()(btvEnv) ")"  
+      *)
+     RCSETGLOBALVALUE of BT.UInt32 * int * rcexp * ty * loc
+   | (*%
+      * @format(arrayindex : formatUInt32 * size * elemTy * loc) 
+      * "InitialArray(" arrayindex "," size ")"
+      *)
+     RCINITARRAY of BT.UInt32 * int * ty * loc
+   | (*%
+      * @format(loc) ""
+      *)
+     RCEMPTY of loc
+
+ withtype fields = 
+     (*%
+      * @format(exp smap:genericSmapExp) smap(exp()(btvEnv))(+"=" +,"," +1)
+      *)
+     rcexp SEnv.map
+end

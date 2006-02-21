@@ -1,0 +1,6 @@
+- stdIn:13.1-13.25 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+
+uncaught exception Fail: foo
+  raised at: stdIn:13.15-13.25
+- 

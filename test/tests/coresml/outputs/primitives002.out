@@ -1,0 +1,38 @@
+infix 8 P8 PR8
+infix 7 P7 PR7
+infix 6 P6 PR6
+infix 5 P5 PR5
+infix 4 P4 PR4
+infix 3 P3 PR3 PNB3
+val P8 = fn : int * int -> int
+val P7 = fn : int * int -> int
+val P6 = fn : int * int -> int
+val P5 = fn : int * int -> int
+val P4 = fn : int * int -> int
+val P3 = fn : int * int -> int
+val PR8 = fn : real * real -> real
+val PR7 = fn : real * real -> real
+val PR6 = fn : real * real -> real
+val PR5 = fn : real * real -> real
+val PR4 = fn : real * real -> real
+val PR3 = fn : real * real -> real
+val PNB3 = fn : int * bool -> int
+val n1 = 3 : int
+val n2 = 5 : int
+val n3 = 7 : int
+val n4 = 11 : int
+val r1 = 3.3 : real
+val r2 = 5.5 : real
+val r3 = 7.7 : real
+val r4 = 11.11 : real
+val div1 = 33 : int
+val mod1 = 88 : int
+val mul1 = 16863 : int
+val divReal1 = 3.81919848641 : real
+val plus1 = 1694 : int
+val sub1 = ~1582 : int
+val lt1 = 9 : int
+val gt1 = 15 : int
+val lteq1 = 9 : int
+val gteq1 = 15 : int
+

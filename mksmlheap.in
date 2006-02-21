@@ -1,0 +1,26 @@
+#!/bin/sh
+
+HEAPNAME=$1
+MAINFUNC=$2
+if test -z "$MAINFUNC"; then
+  MAINFUNC="Main.main"
+fi
+
+case "@target_os@" in
+  *cygwin*|*mingw*)
+    MAINFUNC="(fn (p1, _::ps) => $MAINFUNC (p1, ps))"
+    HEAPNAME=`$SHELL @abs_top_builddir@/mksmlpath "$HEAPNAME"`
+    ;;
+  *)
+    ;;
+esac
+
+#SMLofNJ.Internals.GC.messages false;
+script="
+CM.make();
+SMLofNJ.exportFn (\"$HEAPNAME\", $MAINFUNC);
+"
+
+echo "$script" | @SMLCM@
+
+test -f "$HEAPNAME.@SML_HEAP_SUFFIX@"

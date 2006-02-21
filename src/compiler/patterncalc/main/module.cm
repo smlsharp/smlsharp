@@ -1,0 +1,14 @@
+Group is
+	../../../smlformatlib.cm
+
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../types/sources.cm
+        ../../env/sources.cm
+	../../name/sources.cm
+	../../format/sources.cm
+
+        PATTERNCALC.sig
+        PatternCalc.ppg.sml
+        PATTERNCALC_FORMATTER.sig
+        PatternCalcFormatter.sml 

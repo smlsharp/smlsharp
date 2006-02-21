@@ -1,0 +1,4 @@
+signature T = sig end
+../tests/bugs/tests/issue206.1.sml:5.3-5.14 Warning: match nonexhaustive
+                                                              S.D  => ...
+structure S : T

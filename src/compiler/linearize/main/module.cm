@@ -1,0 +1,18 @@
+Group is
+        smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../systemdef/sources.cm
+        ../../env/sources.cm
+        ../../anormal/sources.cm
+        ../../symbolicinstructions/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../util/sources.cm
+        ../../../instructions/compiler/sources.cm
+        ../../../primitives/compiler/sources.cm
+
+        LINEARIZE_CONTEXT.sig
+        LinearizeContext.sml
+        LINEARIZER.sig
+        Linearizer.sml

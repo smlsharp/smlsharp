@@ -1,0 +1,16 @@
+Group is
+	../../../smlformatlib.cm
+        smlnj-lib.cm
+
+        ../../absyn/sources.cm
+        ../../format/sources.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+	../../systemdef/sources.cm
+  
+        RECORDCALC.sig
+        RecordCalc.ppg.sml
+        RecordCalcUtils.sml
+        RecordCalcFormatter.sml

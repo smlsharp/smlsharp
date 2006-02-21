@@ -1,0 +1,24 @@
+val t11 = true : bool
+val t21 = true : bool
+val t22 = false : bool
+val t31 = true : bool
+val t32 = false : bool
+val t41 = true : bool
+val t42 = false : bool
+val t43 = false : bool
+val t44 = false : bool
+val t51 = true : bool
+val t52 = false : bool
+val t61 = true : bool
+val t62 = false : bool
+val t63 = false : bool
+val t66 = false : bool
+val t71 = true : bool
+val t72 = false : bool
+val t73 = false : bool
+val t74 = false : bool
+val t81 = true : bool
+val t82 = false : bool
+val t83 = false : bool
+val t84 = false : bool
+

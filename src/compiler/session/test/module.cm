@@ -1,0 +1,8 @@
+Group is
+        ../main/sources.cm
+        ../../../smlunitlib.cm
+
+        ByteListChannelTest0001.sml
+        StandAloneSessionTest0001.sml
+
+        SessionTest.sml

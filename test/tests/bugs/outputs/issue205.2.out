@@ -1,0 +1,16 @@
+datatype t21
+con C21 : int -> t21
+datatype t22
+con C22 : t21 -> t22
+datatype t21
+con C21 : t22 -> t21
+datatype t22
+con C22 : int -> t22
+datatype t21
+con C21 : t22 -> t21
+datatype t22
+con C22 : t21 -> t22
+datatype t21
+con C21 : t22 -> t21
+datatype t22
+con C22 : t21 * bool -> t22

@@ -1,0 +1,3 @@
+structure S : sig datatype dt con D : dt end
+structure T : sig datatype dt con D : dt end
+val x = D : T.dt

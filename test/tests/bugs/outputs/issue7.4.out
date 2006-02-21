@@ -1,0 +1,4 @@
+../tests/bugs/tests/issue7.4.sml:1.5-1.9 Warning: binding not exhaustive
+                                                           2 => ...
+
+

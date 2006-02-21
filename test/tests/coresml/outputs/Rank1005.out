@@ -1,0 +1,14 @@
+val id = fn : ['a .'a -> 'a]
+datatype 'a dt
+con D : ['a .'a dt]
+con E : ['a .'a -> 'a dt]
+val vPolyVar1 = fn : ['a .'a -> 'a]
+val vPolyVar2 = (fn, fn) : ['a .'a -> 'a] * ['a .'a -> 'a]
+val vPolyAbs1 = fn : ['a .'a -> 'a]
+val vPolyAbs2 = fn : ['a .'a -> ['b .'b -> 'b]]
+val vRecord1 = {a = fn} : {a:['a .'a -> 'a]}
+val vRecord2 = {a = (fn, fn), b = fn} : {a:['a .'a -> 'a] * ['a .'a -> 'a] , b:['a .'a -> 'a]}
+val vPolyConst1 = D : ['a .'a dt]
+val vPolyConst2 = E D : ['a .'a dt dt]
+val vLet1 = fn : ['a .'a -> 'a]
+val vLet2 = ((fn, D), (E fn, (fn, D))) : (['a .'a -> 'a] * ['a .'a dt]) * (['a .('a -> 'a) dt] * (['a .'a -> 'a] * ['a .'a dt]))

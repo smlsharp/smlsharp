@@ -1,0 +1,5 @@
+val f11 = fn : int -> int
+val f12 = fn : int -> int
+val f21 = fn : int -> int -> int
+val f22 = fn : int -> int -> int
+

@@ -1,0 +1,8 @@
+signature S = sig val f : int -> int end
+structure S : sig val f : ['a.'a -> 'a] end
+structure STrans : S
+val fTrans = fn : int -> int
+val xTrans = 1 : int
+structure SOpaque : S
+val fOpaque = fn : int -> int
+val xOpaque = 1 : int

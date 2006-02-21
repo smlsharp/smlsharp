@@ -1,0 +1,3 @@
+functor FException (S : sig exception E : exn end) : sig exception F : exn end
+structure TException : sig exception F : exn end
+

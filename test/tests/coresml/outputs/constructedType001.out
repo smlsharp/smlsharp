@@ -1,0 +1,6 @@
+type t1 = bool
+val v1 = true : t1
+type 'a t2 = 'a * bool
+val v2 = (2,false) : int t2
+type ('a,'b) t3 = 'a * 'b * bool
+val v3 = (3,"three",true) : (int,string) t3

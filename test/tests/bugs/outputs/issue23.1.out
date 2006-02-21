@@ -1,0 +1,9 @@
+val map_int = fn : (int -> int) -> int list -> int list
+val it = [1] : int list
+val map = fn : ['a,'b.('a -> 'b) -> 'a list -> 'b list]
+val it = [1] : int list
+val it = [1] : int list
+val map_argint = fn : ['a.(int -> 'a) -> int list -> 'a list]
+val it = [1] : int list
+val map_resint = fn : ['a.('a -> int) -> 'a list -> int list]
+val it = [1] : int list

@@ -1,0 +1,36 @@
+Group is
+        ../../systemdef/sources.cm
+        ../../../instructions/sources.cm
+
+        ChannelTypes.sml
+        ChannelUtility.sml
+        FileChannel.sml
+        ByteListChannel.sml
+        ByteArrayChannel.sml
+        ByteVectorChannel.sml
+        TextIOChannel.sml
+        ServerSocketChannel.sml
+        ClientSocketChannel.sml
+#if defined(structure Posix)
+        UnixProcessChannel.sml
+#endif
+        CharacterStreamWrapper.sml
+
+        SIGNAL_UTILITY.sig
+#if defined(structure Signals)
+        SignalUtility.sml
+#else
+        SignalUtility_dummy.sml
+#endif
+
+        RuntimeProxyTypes.sml
+        RUNTIME_PROXY.sig
+#if defined(structure Posix)
+        UnixProcessRuntimeProxy.sml
+#endif
+        NetworkRuntimeProxy.sml
+
+        SessionTypes.sml
+        SESSION.sig
+        StandAloneSession.sml
+        InteractiveSession.sml

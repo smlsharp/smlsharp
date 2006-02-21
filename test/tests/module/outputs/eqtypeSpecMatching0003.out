@@ -1,0 +1,11 @@
+signature SEq = sig eqtype t end
+signature SNonEq = sig type t end
+structure S1 : sig type t = int end
+structure S11 : SEq
+structure S12 : SNonEq
+structure S2 : sig type t = real end
+structure S21 : SNonEq
+../tests/module/tests/eqtypeSpecMatching0003.sml:15.17-15.25 Error: Signature
+                                                                    mismatch
+                                                                    (equality): t
+

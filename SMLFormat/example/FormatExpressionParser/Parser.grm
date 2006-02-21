@@ -1,0 +1,61 @@
+(* ml.grm
+ *
+ * Copyright 1989,1992 by AT&T Bell Laboratories
+ *)
+
+open SMLPP.FormatExpression
+
+  %%
+  %term
+      EOF
+    | STRING of string 
+    | ID of string
+
+    | SEMICOLON
+    | LBRACE | LBRACKET | LPAREN | RBRACE | RBRACKET | RPAREN
+    | EXIT | USE | PRINT | SET
+
+    | FORMATINDICATOR of
+      {
+        space : bool,
+        newline : {priority : SMLPP.FormatExpression.priority} option
+      }
+    | ASSOCINDICATOR of
+      {
+        cut : bool,
+        strength : int,
+        direction : SMLPP.FormatExpression.assocDirection
+      }
+    | STARTOFINDENT of int
+
+%nonterm command of Ast.command
+       | expressions of expression list
+       | expression of expression
+
+%verbose
+%pos {fileName:string, line:int, col:int}
+%start command
+%eop EOF SEMICOLON
+%noshift EOF
+
+%name FormatExpression
+
+%value STRING ("")
+
+%%
+
+command: EXIT                     (Ast.EXIT)
+     | PRINT expressions          (Ast.PRINT(expressions))
+     | USE STRING                 (Ast.USE(STRING))
+     | SET ID STRING              (Ast.SET(ID, STRING))
+
+expressions: expression expressions              (expression :: expressions)
+     |                            ([])
+
+expression: STRING                (Term (size STRING, STRING))
+     | ASSOCINDICATOR LBRACE expressions RBRACE
+                                (Guard(SOME(ASSOCINDICATOR), expressions))
+     | LBRACE expressions RBRACE  (Guard(NONE, expressions))
+     | FORMATINDICATOR            (Indicator FORMATINDICATOR)
+     | STARTOFINDENT              (StartOfIndent STARTOFINDENT)
+     | RBRACKET                   (EndOfIndent)

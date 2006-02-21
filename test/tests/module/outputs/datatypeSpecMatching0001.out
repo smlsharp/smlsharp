@@ -1,0 +1,11 @@
+signature S =
+  sig
+    datatype dt0
+    con D0 : dt0
+    datatype 'a dt1
+    con D1 : ['a. 'a -> 'a dt1]
+    datatype ('a,'b) dt2 
+    con D2 : ['a,'b.'b * 'a -> ('b, 'a) dt2]
+  end
+structure STrans : S
+structure SOpaque : S

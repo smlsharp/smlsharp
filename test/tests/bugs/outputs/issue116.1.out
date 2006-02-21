@@ -1,0 +1,6 @@
+signature SIG = sig type t end
+structure STR : sig datatype t con E : t end
+structure STrans : SIG
+../tests/bugs/tests/issue116.1.sml:4.15-4.22 Error: unbound variable or
+                                                    constructor: STrans.E
+

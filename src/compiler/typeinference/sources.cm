@@ -1,0 +1,9 @@
+Group
+        structure TypeInferencer
+        structure TypeinfBase
+	structure Unify
+	structure TypeInferenceUtils
+	structure StructureLocalization
+        structure UncurryFundecl
+is
+	main/module.cm

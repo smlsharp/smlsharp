@@ -1,0 +1,6 @@
+type ('a, 'b) t = {m:'b , n:'a}
+signature SIG = sig val f : ['a,'b.{y:('a, 'b) t , z:'b} -> 'b] end
+structure STR : SIG
+val it = fn : ['a,'b.{y:('a, 'b) t , z:'b} -> 'b]
+val it = "b" : string
+

@@ -1,0 +1,38 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@commonrule
+
+VPATH = $(srcdir)
+
+# FIXME: genration of smlformatlib.cm should not be here.
+
+TARGETS = $(srcdir)/Configuration.sml \
+          $(srcdir)/../smlformatlib.cm
+
+MKSMLPATH = $(SHELL) $(top_builddir)mksmlpath
+
+all: $(TARGETS)
+
+install: $(TARGETS)
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_DATA) $(srcdir)/Configuration.sml '$(DESTDIR)$(libdir_smlsharp)'
+
+clean:
+	-rm -rf $(srcdir)/CM
+	-rm -f $(TARGETS)
+
+$(srcdir)/Configuration.sml: Configuration.sml.in Makefile \
+                             $(top_builddir)mksmlpath
+	sed -e "s,%BUILD_ROOT%,`$(MKSMLPATH) -sh '$(BUILD_ROOT)'`," \
+	    -e "s,%EXEEXT%,$(EXTEXT)," \
+	    -e "s,%BINDIR%,`$(MKSMLPATH) -sh '$(bindir)'`," \
+	    -e "s,%LIBDIR%,`$(MKSMLPATH) -sh '$(libdir_smlsharp)'`," \
+	    $(srcdir)/Configuration.sml.in > $@
+
+$(srcdir)/../smlformatlib.cm: $(srcdir)/../smlformatlib.cm.in Makefile \
+                              $(top_builddir)mksmlpath
+	sed -e "s,%SMLFORMAT_CM%,`$(MKSMLPATH) -cm '$(SMLFORMATDIR)/smlformatlib.cm'`," \
+	    $(srcdir)/../smlformatlib.cm.in > $@

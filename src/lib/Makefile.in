@@ -1,0 +1,47 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@commonrule
+
+VPATH = $(srcdir)
+
+TARGETS = basis.smc
+
+# ./ is required to avoid PATH substitution on Solaris make.
+INSTALL_FILES = ./FFI \
+                ./basis \
+                ./basis.sml \
+                ./minimum.sml \
+                ./ml-yacc \
+                ./preludes
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(srcdir)/CM
+	-rm -f $(TARGETS)
+
+install: $(TARGETS)
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_DATA) basis.smc '$(DESTDIR)$(libdir_smlsharp)'
+	@cd $(srcdir); \
+	find $(INSTALL_FILES) -type d -print \
+	| $(EGREP) -v '.svn|CVS' \
+	| (while read i; do \
+	    echo $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/'$$i; \
+	    $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/'$$i \
+	  || exit $$?; \
+	done)
+	@cd $(srcdir); \
+	find $(INSTALL_FILES) -type f -print \
+	| $(EGREP) -v '.svn|CVS|.cvsignore' \
+	| (while read i; do \
+	    echo $(INSTALL_DATA) $$i '$(DESTDIR)$(libdir_smlsharp)/'$$i; \
+	    $(INSTALL_DATA) $$i '$(DESTDIR)$(libdir_smlsharp)/'$$i \
+	    || exit $$?; \
+	done)
+
+basis.smc: basis.sml $(SMLSHARP)
+	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/basis.sml --library --output=$@ --stdin

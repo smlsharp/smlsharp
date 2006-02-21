@@ -1,0 +1,30 @@
+structure S31 :
+  sig
+    datatype dt
+    con D : t -> dt
+    type t = int
+    val x : dt
+  end
+structure S32 :
+  sig
+    datatype dt
+    con D : t -> dt
+    datatype dt2 
+    con E : dt * t -> dt2
+    type t = int
+    val x : dt
+    val y : dt * int
+  end
+structure S33 :
+  sig
+    datatype dt
+    con D : t -> dt
+    datatype dt2 
+    con E : dt * t -> dt2
+    type t = int
+    type t3 = dt * dt2 * t
+    val x : dt
+    val y : dt * int
+    val z : dt * (dt * int) * int
+  end
+

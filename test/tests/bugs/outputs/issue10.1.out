@@ -1,0 +1,4 @@
+infix 0 f
+../tests/bugs/tests/issue10.1.sml:2.5-2.5 Error: expression or pattern begins
+                                                  with infix identifier : f
+

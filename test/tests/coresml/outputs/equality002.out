@@ -1,0 +1,57 @@
+datatype 'a dtNeq
+con DNeq : ['a .'a dtNeq]
+con ENeq : ['a .'a -> 'a dtNeq]
+datatype ''a dtEq
+con DEq : [''a .''a dtEq]
+con EEq : [''a .''a -> ''a dtEq]
+val eq11 = true : bool
+../tests/coresml/tests/equality002.sml:9.12-9.37 Error: operator and operand
+                                                        don't agree
+                                                        operator domain: ''C dtNeq *
+                                                                         ''C dtNeq
+                                                        operand: ''C dtNeq *
+                                                                 real dtNeq
+
+val eq21 = true : bool
+../tests/coresml/tests/equality002.sml:12.18-12.34 Error: type and
+                                                          type annotation don't
+                                                          agree
+                                                          inferred type: ''A dtEq
+                                                          type annotation: real dtEq
+
+val v1 = ENeq 1.23 : real dtNeq
+../tests/coresml/tests/equality002.sml:15.10-15.17 Error: operator and operand
+                                                          don't agree
+                                                          operator domain: ''A
+                                                          operand: real
+
+val f1 = fn : ['a .'a -> 'a dtNeq]
+val x11 = ENeq 1.23 : real dtNeq
+val f2 = fn : [''a .''a -> ''a dtEq]
+../tests/coresml/tests/equality002.sml:20.11-20.17 Error: operator and operand
+                                                          don't agree
+                                                          operator domain: ''A
+                                                          operand: real
+
+val g1 = fn : [''a .''a -> ''a dtNeq]
+../tests/coresml/tests/equality002.sml:23.11-23.17 Error: operator and operand
+                                                          don't agree
+                                                          operator domain: ''A
+                                                          operand: real
+
+val g2 = fn : [''a .''a -> ''a dtEq]
+../tests/coresml/tests/equality002.sml:25.11-25.17 Error: operator and operand
+                                                          don't agree
+                                                          operator domain: ''A
+                                                          operand: real
+
+val h1 = fn : ['a .'a -> 'a dtNeq]
+val x31 = ENeq 1.23 : real dtNeq
+../tests/coresml/tests/equality002.sml:29.19-29.23 Error: operator and operand
+                                                          don't agree
+                                                          operator domain: ''D
+                                                          operand: X0
+
+../tests/coresml/tests/equality002.sml:30.11-30.12 Error: unbound variable or
+                                                          constructor: h2
+

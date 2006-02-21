@@ -1,0 +1,16 @@
+val r = ref 0 : int ref
+functor F (S : sig end) : sig datatype dt con D : dt end
+structure S : sig end
+structure F1 : sig datatype dt con D : dt end
+val r1 = 1 : int
+structure F2 : sig datatype dt con D : dt end
+val r2 = 2 : int
+structure F3 : sig datatype dt con D : dt end
+val r3 = 3 : int
+../tests/module/tests/functorApplication001.sml:25.10-25.20 Error: operator and
+                                                                   operand don't
+                                                                   agree
+                                                        operator domain: F1.dt *
+                                                                         F1.dt
+                                                                   operand: F1.dt *
+                                                                            F2.dt

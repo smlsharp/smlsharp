@@ -1,0 +1,12 @@
+datatype t1
+con C1 : int -> t1
+val v1 = C1 1 : t1
+datatype 'a t2
+con C2 : ['a.'a * int -> 'a t2]
+val v2 = C2 (true,2) : bool t2
+datatype ('a,'b) t3
+con C3 : ['a,'b.{a:'b , b:'a} -> ('b, 'a) t3]
+val v3 = C3 {a=3,b=false} : (int,bool) t3
+datatype ('a,'b) t4
+con C4 : ['a,'b.{a:'b} -> ('b, 'a) t4]
+val v4 = C4 {a=3} : (int,bool) t4

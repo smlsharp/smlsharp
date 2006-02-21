@@ -1,0 +1,2075 @@
+SMLFormat: Pretty Printer for Standard ML
+
+
+========================================
+1. SMLFormat
+
+The SMLFormat consists of the two components:
+
+  * smlformat
+  * formatlib
+
+
+====================
+1.1. smlformat
+
+ The smlformat is a stand-alone tool.
+ The inputs to the smlformat are the SML source files which contain type/datatype declarations. The type/datatype declarations might be annotated with the special comments which specifies the format to use to print values of that types. These special comments are called the format comment.
+
+ The smlformat analyses the type/datatype declarations and their format comments, and generates the SML code of functions called the 'formatter'. The formatter for the type t is a function which receives value of the type t and returns the intermediate representation to pretty-print the value. That intermediate representation is called the format expression.
+
+  -------(Absyn.ppg)-----------------------------------------------
+  structure Absyn =
+  struct
+
+    (*%
+     *)
+    datatype exp
+      = (*%
+         * @format(const * loc) {const}
+         *)
+        EXPCONSTANT of constant * loc
+      | (*%
+         * @format(cond * ifTrue * ifFalse * loc)
+         *            N0{ "if" 2[ +d {cond} ]
+         *             +1 "then" 2[ +d {ifTrue} ]
+         *             +1 "else" 2[ +d {ifFalse} ] }
+         *)
+        EXPIF of exp * exp * exp * loc
+      | (*%
+         * @format(exp * rule rules * loc)
+         * N0{ "case" 2[+d {exp}] 2[+1 "of" ]+ {rules(rule)(~2[ +1 "|"] +)} }
+         * @format:rule(pat * exp) {{pat} + "=>" +1 {exp}}
+         *)
+        EXPCASE of exp * (pat * exp) list * loc
+
+        :
+
+  end
+  -----------------------------------------------------------------
+
+ When given the Absyn.ppg, the smlformat inserts the definition of the formatters into the content of the input and generates a SML source file.
+
+  -------(Absyn.ppg.sml)-------------------------------------------
+  structure Absyn =
+  struct
+
+    (*%
+     *)
+    datatype exp
+      = 
+        :
+
+    fun format_exp x = ...
+
+  end
+  -----------------------------------------------------------------
+
+ This format_exp has the following type:
+
+  val format_exp : exp -> FormatExpression.expression list
+
+
+====================
+1.2. formatlib
+
+ The formatlib provides the SMLFormat structure.
+ The SMLFormat structure implements the prettyPrint function.
+ The prettyPrint function receives the format expressions and other parameters including the number of columns, and outputs the string representation of the format expressions which is formatted to fit within the specified number of columns.
+The prettyPrint function has following type:
+
+  val prettyPrint :
+        PrinterParameter.printerParameter ->
+          FormatExpression.expression list ->
+            string
+
+ By using the formatters which the smlformat generated and SMLFormat.prettyPrint, the 'expression' of the Absyn.exp type can be pretty-printed as follows:
+
+  print
+    (SMLFormat.prettyPrint
+     {newlineString = "\n", spaceString = " ", columns = 60}
+     (Absyn.format_exp expression))
+
+ 60 columns is specified there.
+ The output is as follows:
+
+    123456789012345678901234567890123456789012345678901234567890
+    ------------------------------------------------------------
+    let
+      val exn = getException context
+      val message =
+          case exn
+            of SystemError => "SystemError"
+             | UserError msg =>
+               "User:" ^ msg ^
+               (
+                concatWith "\n"
+                (
+                 map (frameToString context) (getFrames context)
+                )
+               )
+    in raise Error message end
+
+ By changing the format specification in the format comment, the output is changed as follows:
+
+    123456789012345678901234567890123456789012345678901234567890
+    ------------------------------------------------------------
+    let val exn = getException context
+        val message = case exn of
+                          SystemError => "SystemError"
+                        | UserError msg =>
+                          "User:" ^ msg ^
+                            (
+                             concatWith "\n"
+                               (
+                                map (frameToString context)
+                                  (getFrames context)
+                               )
+                            )
+    in raise Error message end
+
+
+========================================
+2. Format expression
+
+
+====================
+2.1. notation
+
+ We write the translation of a list of format expressions 'exp1 ... expn' with the number of columns 'col' into the string 'text' as:
+
+  exp1 ... expn
+  col=>
+  text
+
+ The number of columns may be omitted.
+
+  exp1 ... expn
+  =>
+  text
+
+
+====================
+2.2. String literal
+
+ String literals which are enclosed by double quote characters are output as is.
+
+  "jugemu"
+  =>
+  jugemu
+
+ Sequence of string literals is output concatenated.
+
+  "jugemu" "jugemu"
+  =>
+  jugemujugemu
+
+ Use the string literal " " to insert white spaces.
+
+  "jugemu" " " "jugemu" " " "gokounosurikire"
+  =>
+  jugemu jugemu gokounosurikire
+
+ You can find that string literals " " and spaces between expressions are confusing.
+
+
+====================
+2.3. Space indicator
+
+ Instead of the string literal " ", the space indicator '+' can be used to insert white space.
+
+  "jugemu" + "jugemu" + "gokounosurikire"
+  =>
+  jugemu jugemu gokounosurikire
+
+
+====================
+2.4. Newline indicator
+
+ The output is not multilined even if the total of length of string exceeds the specified number of columns.
+
+  "jugemu" + "jugemu" + "gokounosurikire" + "kaijarisuigyono"
+  40=>
+  jugemu jugemu gokounosurikire kaijarisuigyono
+  ----------------------------------------
+  1234567890123456789012345678901234567890
+
+ The newline indicators specify where to insert newlines.
+ The priority should be specified with the newline indicatros by the integer equal to or more than one. Less number means higher priority.
+
+ The output is not affected if it is not needed to multiline.
+
+  "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono"
+  50=>
+  jugemujugemugokounosurikirekaijarisuigyono
+  --------------------------------------------------
+  12345678901234567890123456789012345678901234567890
+
+ If the output does not fit within the specified number of columns, the output is multilined at the newline indicators with higher priority.
+
+  "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono"
+  40=>
+  jugemujugemu
+  gokounosurikirekaijarisuigyono
+  ----------------------------------------
+  1234567890123456789012345678901234567890
+
+ A newline is inserted at the second indicator because the indicators with priority 1 have preference over the indicators with prirotiy 2.
+
+ If a newline should be inserted at some of the indicators of the same priority, newlines are inserted at all the indicators of that priority.
+
+  "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono"
+  20=>
+  jugemu
+  jugemu
+  gokounosurikire
+  kaijarisuigyono
+  --------------------
+  12345678901234567890
+
+ This example contains a newline indcator of prirority 1 and two newline indicators of prirority 2. If 20 is specified as the number of columns, a newline should be inserted at the indicator of priority 1 firstly. Moreover, it is needed to insert newline at the latter of indicators of priority 2, so newlines are inserted at both indicators of priority 2 although it is not needed to insert newline at the former of them.
+
+ To put it more precisely, whether or not to insert newline at a newline indicator N whose priority is n is decided as follows.
+
+  1) If newline is to be inserted at some newline indicator whose priority is less or equal to n, newline is inserted at N also.
+
+  2) Assumed that F and B are newline indicators which are the nearest to the N among newline indicators which has higer priority than n and that the F is at the left to the N and the B is at the right of N. A newline is inserted at the N if W < L which are defined as follows.
+
+    L = the number of columns required to output format expressions between F and B without breaking newlines.
+
+    W = the specified number of columns minus the column position just after F in a case that a newline is inserted at the F
+
+    For example,
+
+         F         N                        B
+     ... 1  "abc" +3 "def" 4 "ghi" +3 "jkl" 2 ...
+          <-------------------------------->
+
+    The L equals to 14 (= 3 + 1 + 3 + 0 + 3 + 1 + 3) columns which is required to output the format expressions between F and B without inserting newlines. And if newline is inserted at the F, the next line starts at the first column, it means that the W equals to the specified number of columns. As the result, if the specified number of columns is less than 14, it is required to start a newline at the B. 
+
+   3) Otherwise, no newline is inserted at the indicator.
+
+NOTE: If a string literal in format expression contains "\n", the output will start a newline at that position. But the behavior of the SMLFormat is undefined if some string literal in format expression contains any formatting character such as "\n" or "\t".
+
+
+==========
+2.4.1. combination of space indicator and newline indicator
+
+ Space indicators and newline indicators can be used in combination.
+ A white space is output if there is no need to insert newline at a combined indicator.
+
+  "jugemu" +2 "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono"
+  50=>
+  jugemu jugemu gokounosurikire kaijarisuigyono
+  --------------------------------------------------
+  12345678901234567890123456789012345678901234567890
+
+ If there is needed to insert newline at a combined indicator, white space is not output and a newline is inserted.
+
+  "jugemu" +2 "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono"
+  40=>
+  jugemu jugemu
+  gokounosurikire kaijarisuigyono
+  ----------------------------------------
+  1234567890123456789012345678901234567890
+
+NOTE: Space indicator and newline indicator must be glued without any space between them. If there is any space between space indicator and newline indicator, they are processed independently and a space is output always.
+
+NOTE: A string literal " " outputs a space always regardless of needs to insert newline.
+
+  "jugemu" +2 "jugemu" " "1 "gokounosurikire" +2 "kaijarisuigyono"
+  40=>
+  jugemu jugemu 
+  gokounosurikire kaijarisuigyono
+  ----------------------------------------
+  1234567890123456789012345678901234567890
+
+ There is output a white space at the end of the first line of the above output.
+
+==========
+2.4.2. deferred newline indicator
+
+ So far, priority is specified for each newline indicators.
+ There can be newline indicators with no priority. Newline indicator without priority is called 'deferred newline indicator'. Newline indicator with priority specified is called 'preferred newline indicator'.
+ Deferred newline indicator is written as 'd'.
+ Newline is inserted at deferred indicator only when the output does not fit within the specified number of columns even though newlines are inserted at all preferred newline indicators.
+
+  "jugemu" +d "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono"
+  30=>
+  jugemu jugemu
+  gokounosurikire
+  kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ In this example, newlines are inserted at the preferred indicators, but not inserted at the deferred indicator.
+ When less number of columns is specified, newline is inserted at deferred indicator also.
+
+  "jugemu" +d "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono"
+  10=>
+  jugemu
+  jugemu
+  gokounosurikire
+  kaijarisuigyono
+  ----------
+  1234567890
+
+
+==========
+2.4.3. independence of deferred newline indicators
+
+ As described above, if a newline is needed at some newline indicator of a priority, newlines are inserted at all newline indicators of the same or higher priority. Therefore, in the following example, because insertion of a newline at the last deferred indicator is needed, newlines are inserted at all indicators including the indicator of priority 2 even though the strings surrounding that indicator fit within the specified number of columns.
+
+  "jugemu" +2 "jugemu" +1 "gokounosurikire" +d "kaijarisuigyono"
+  30=>
+  jugemu
+  jugemu
+  gokounosurikire
+  kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ The relative preference is not defined between deferred newline indicators. Therefore, in the following example, a newline is inserted at the third deferred indicator, but not inserted at the first deferred indicator because the strings surrounding it fit within the columns.
+
+  "jugemu" +d "jugemu" +1 "gokounosurikire" +d "kaijarisuigyono"
+  30=>
+  jugemu jugemu
+  gokounosurikire
+  kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+
+==========
+2.5. indent stack
+
+ The width of indent of newline at newline indicators can be specified by a '[' following a integer number. ']' undoes the effect of the last '['.
+
+  "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ] +2 "kaijarisuigyono"
+  40=>
+  jugemu jugemu
+       gokounosurikire kaijarisuigyono
+  ----------------------------------------
+  1234567890123456789012345678901234567890
+
+ In the above example, because 5 is specified as the indent width just before the second newline indicator, the second line in the output is indented by 5 columns. In the next example, the indent width at the third indicator is 0, which is the default indent width, because of the ']' undoes just before that indicator.
+
+  "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ] +2 "kaijarisuigyono"
+  30=>
+  jugemu
+  jugemu
+       gokounosurikire
+  kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ If the expression is modified so that the indent width specification is undone after the third newline indicator, the output becomes as following.
+
+  "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" +2 "kaijarisuigyono"]
+  30=>
+  jugemu
+  jugemu
+       gokounosurikire
+       kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ Indent width is managed as stack.
+ A '[' indicates to push a indent width onto the indent stack, and a ']' indicates to pop a top element out of the indent stack.
+ The indent width at a newline indicator equals to the sum of the elements held in the indent stack at the indicator.
+
+  "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" 3[ +2 "kaijarisuigyono"]];
+  30=>
+  jugemu
+  jugemu
+       gokounosurikire
+          kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ In the above example, the indent width at the third indicator is 8 columns which equals to the sum of 3 and 5.
+
+  "jugemu" 3[ +1 "jugemu" 5[ +2 "gokounosurikire" 3[ +3 "kaijarisuigyono"]]]
+  30=>
+  jugemu
+     jugemu
+          gokounosurikire
+             kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ In the above example, the indent width at the third indicator is 11 columns which equals to the sum of 3, 5 and 3.
+
+ Width of indent stack can be specified by a negative integer.
+
+  "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ~3[ +2 "kaijarisuigyono"]];
+  30=>
+  jugemu
+  jugemu
+       gokounosurikire
+    kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ In this examle, the width of indent at the third indicator is 2 which equals to the sum of 5 and -3.
+
+NOTE: If the sum of indent width at some indicator is less than zero, an error is thrown. For example, in the next expression the indent width at the third indicator is -2 which is the sum of 3 and -5, which results an error thrown.
+
+  "jugemu" +2 "jugemu" 3[ +1 "gokounosurikire" ~5[ +2 "kaijarisuigyono"]];
+
+====================
+2.6. Guard
+
+ So far, priorities of all newline indicators belong to a global scope. Guards separate scopes of priorities.
+
+ An guard is specified by enclosing an sequence of format expressions by '{' and '}'.
+
+  {"jugemu" +2 "jugemu"} +1 {"gokounosurikire" +2 "kaijarisuigyono"}
+
+NOTE: An '[' and its corresponding ']' must belong to the same guard.
+The next expression is invalid.
+
+  {"jugemu" 2[ +2 "jugemu"} +1 {"gokounosurikire" ] +2 "kaijarisuigyono"}
+
+
+==========
+2.6.1. nest of guards
+
+ When guards are nested, indicators in the enclosing guards have higer priority than indicators in the enclosed guards.
+
+  {{"jugemu" +1 "jugemu"} +1 "gokounosurikire" +2 "kaijarisuigyono"}
+  30=>
+  jugemu jugemu
+  gokounosurikire
+  kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ Although the first indicator is specified the priority 1, it has less priority than the indicator in the outer guard. Therefore, no newline is inserted at the first indicator while newlines are inserted at the two indicators of priority 1 and 2 in the outer guard.
+
+ Relative preference is not defined between a deferred indicator in the outer guard and a deferred indicator in the inner guard.
+
+  {"jugemu" +d "jugemu" +1 {"gokounosurikire" +1 "kaijarisuigyono"}}
+  30=>
+  jugemu jugemu
+  gokounosurikire
+  kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+==========
+2.6.2. Separated guards
+
+ Relative preference is not defined between indicators in guards which are not included in each other.
+
+  {"jugemu" +2 "jugemu"} +1 {"gokounosurikire" +2 "kaijarisuigyono"}
+  30=>
+  jugemu jugemu
+  gokounosurikire
+  kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ The first indicator and the third belong to different guards which are not nested each other. Therefore, a newline is inserted at the third indicator while not inserted at the first indicator.
+
+
+==========
+2.6.3. Guard and base column
+
+ To be precise, the width of indent at newline indicator is equal to the sum of the base column and the elements pushed in the indent stack within the inner most guard enclosing the indicator.
+The base column is 0 if the indicator is not in a guard.
+
+ The base column of a guard is the column position at the beginning (= '{') of the guard.
+
+  "jugemu" + { "jugemu" 5[ +1 "gokounosurikire" ] ~3[ +1 "kaijarisuigyono" ]}
+  30=>
+  jugemu jugemu
+              gokounosurikire
+      kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ In the above example, the guard starts at the left of the second "jugemu" which begins at the 8 columns. Therefore, the base column of the guard is 8. Indent width at the indicators within the guard are equal to 13 (= 8 + 5) and 5 (= 8 + -3).
+
+ In the next example, an element is pushed/popped onto the indent stack before/after the guard.
+
+  "jugemu" 3[ +1 { "jugemu" 5[ +1 "gokounosurikire"] ~3[ +1 "kaijarisuigyono"]}]
+  30=>
+  jugemu
+     jugemu
+          gokounosurikire
+  kaijarisuigyono
+  ------------------------------
+  123456789012345678901234567890
+
+ In this example, because the guard starts just after the indent at the first newline indicator, the base column of the guard is 4. The indent width at two newline indicators within the guard are 9 (= 4 + 5) and 1 (= 4 + -3) respectively.
+
+
+========================================
+3. Assoc indicator
+
+ The main aim of the SMLFormat is to support to implement pretty-printing of the parse tree in programming language processors. Many programming languages define their rule about the association of elements in programs in addition to the production rules so that the hierarchy structure of program elements can be described precisely in the text form of source code.
+
+ In order to generate outputs conforming to the association rule of the programming languages, the SMLFormat introduces the assoc indicator which indicates associativity between elements of guards.
+
+ An assoc indicator is specified by the direction and strength of associativity at the just front of the start mark of guards ('{') as following:
+
+  L10{ "map" + "getContents" + "documents" }
+  R5{ "first" + "::" + "second" + "::" + "others" }
+  N0{ "if" + "matched" +1 "then" + "Matched" +1 "else" + "Fail" }
+
+ 'L' means that elements in the guard are grouped with left associativity, and 'R' means right associativity. 'N' means that elements are grouped but the direction of association is not considered.
+ The strength of associativity is specified by an integer. Larger integer indicates stronger associativity.
+ The associativity between elements of a guard is defined by these two components:the direction and the strength.
+
+
+====================
+3.1. protection of guard
+
+ When generating outputs, the SMLFormat encloses guards with which an assoc indicator is specified by parentheses if necessary.
+
+
+==========
+3.1.1. comparison of associativity of nested guards
+
+ For example, assumed that associativity of the add operator and the subtract operator are 'L1' and 'L2' respectively, an arithmetic expression can be formatted into an format expression as follows:
+
+  L2{ L1{ "x" "+" "y" } + "*" + L1{ "v" + "w" }}
+
+The output of this format expression should not be as:
+
+  x + y * v + w
+
+but should be as:
+
+  (x + y) * (v + w)
+
+ The SMLFormat decides whether or not to enclose an guard with parentheses by comparison of the associativity of elements in the guard and the associativity of elements in the upper guard which surrounds that guard.
+ That is, we assume that the guard P surrounds another guard C and that the associativities of the C and the P are S and T respectively. If the S is 'weaker' than the T, the C should be enclosed by parentheses to prevent association of elements of the C with elements of P.
+
+
+==========
+3.1.2. the assoc direction and position in the guard
+
+ To decide whether or not to enclose a guard with parentheses, in addition to the comparison of associativities of nested guards, the position of the inner guard within the outer guard must be considered.
+
+ For example, assumed that the associativity of function applications is 'L10', nested function application can be formatted into the following format expression:
+
+  L10{ L10{ "f" + "x" } + L10{ "g" + "y" }}
+
+The output of this format expression should not be:
+
+  f x g y
+
+but should be:
+
+  (f x) (g y)
+
+ Moreover, because the direction of associativity is left, the parentheses enclosing the left application can be removed:
+
+  f x (g y)
+
+but the parentheses enclosing the right application cannot be removed.
+
+ Similarly, assumued that the associativity of the type constructor '->' is 'R1', an function type expression can be formatted as:
+
+  R1{ R1{ "t1" + "->" + "t2" } + "->" + R1{ "s1" + "->" + "s2" }}
+
+and the output of this should not be:
+
+  t1 -> t2 -> s1 -> s2
+
+but should be:
+
+  (t1 -> t2) -> (s1 -> s2)
+
+moreover, should be:
+
+  (t1 -> t2) -> s1 -> s2
+
+
+====================
+3.2. elimination of assoc indicator
+
+ The SMLFormat translates guards with assoc indicators into guards without assoc indicators as follows.
+
+ Wheter or not to enclose a guard is decided by comparison of the associativity inherited from outer guards and the associativity specified with the guard.
+
+==========
+3.2.1. associativity inheritance
+
+ Assumed that the associativity inherited from outer guards is S and that e is an format expression.
+ The associativity to be inherited to the elements of e is decided as follows:
+
+  Case e = T{ exp1 ... expk }
+    Case T = Ln
+         'Ln' is inherited to the leftmost of guards or string literals
+        in exp1 ... expk.
+         'Nn' is inherited to other elements in e.
+    Case T = Rn
+         'Rn' is inherited to the rightmost of guards or string literals
+        in exp1 ... expk.
+         'Nn' is inherited to other elements in e.
+    Case T = Nn
+         'Nn' is inherited to each element of exp1 ... expk.
+
+  Case e = {exp1 ... expk}
+    Case S = Ln
+         'Ln' is inherited to the leftmost of guards or string literals
+        in exp1 ... expk.
+         'Nn' is inherited to other elements in e.
+    Case S = Rn
+         'Rn' is inherited to the rightmost of guards or string literals
+        in exp1 ... expk.
+         'Nn' is inherited to other elements in e.
+    Case S = Nn
+         'Nn' is inherited to each element of exp1 ... expk.
+
+  Otherwise
+    There is no associativity inheritance because the e has no sub elements.
+
+
+==========
+3.2.2. '<' relation on associativities
+
+ The '<' relation on associativities is defined as:
+
+     An < Bm, if n < m (A,B are L,R or N)
+     Ln < Nn
+     Rn < Nn
+     p < q, if p < r and r < q
+
+and '<>' is defined as:
+
+  p <> q == ((p = Ln and q = Rn) or (p = Rn and q = Ln))
+
+
+==========
+3.2.3. enclosing a guard
+
+ Assumed that the associativity inherited from the outer guard is S and that the associativity specified with the inner guard is T, the necessity of enclosing the inner guard with parentheses is decided as follows:
+
+  a) If S < T or S = T, enclosing is not needed.
+  b) Otherwise, that is, T < S or S <> T, the guard is enclosed.
+
+
+==========
+3.2.4. examples
+
+ Assumed that the inherited associativity is S, eliminating assoc indicators in format expression e and obtaining e' is written as:
+
+  S | e => e'
+
+
+ Below is translations of three format expressions appeared above.
+In these examples, the initial associativity to be inherited is 'N0'.
+
+=====
+Ex.1
+ L2{ L1{ "x" "+" "y" } + "*" + L1{ "v" + "w" } }
+
+  L1 < L2                      L1 < N2
+  --------------------------   --------------------------
+  L2| L1{"x" "+" "y"}          N2| L1{"v" "+" "w"}
+    | => "(" {"x" + "y"} ")"     | => "(" {"v" + "w"} ")"   N0 < L2
+  -----------------------------------------------------------------
+  N0| L2{L1{"x" "+" "y"} + "*" + L1{"v" + "w"}}
+    |        => {"(" {"x" + "y"} ")" + "*" + "(" {"v" + "w"} ")"}
+
+=====
+Ex.2
+ L10{ L10{ "f" + "x" } + L10{ "g" + "y" } }
+
+  L10 = L10             L10 < N10
+  -------------------   ---------------------------
+  L10| L10{"f" + "x"}   N10| L10{"g" + "y"}
+     | => {"f" + "x"}      | => "(" {"g" + "y"} ")"   N0 < L10
+  ------------------------------------------------------------
+  N0| L10{L10{"f" + "x"} + L10{"g" + "y"}}
+    |            => {{"f" + "x"} + "(" {"g" + "y"} ")"}
+
+=====
+Ex.3
+ R1{ R1{ "t1" + "->" + t2" } + "->" + R1{ "s1" + "->" + "s2" } }
+
+  R1 < N1                              R1 = R1
+  -------------------------------      ---------------------------
+  N1| R1{"t1" + "->" + t2"}            R1| R1{"s1" + "->" + "s2"}
+    | => "(" {"t1" + "->" + t2"} ")"     | => {"s1" + "->" + "s2"}  N0 < R1
+  -------------------------------------------------------------------------
+  N0| R1{R1{"t1" + "->" + t2"} + "->" + R1{"s1" + "->" + "s2"}}
+    |       => {"(" {"t1" + "->" + t2"} ")" + "->" + {"s1" + "->" + "s2"}}
+
+==========
+3.2.5. cut
+
+ With respect to expressions enclosed by keywords or special symbols such as let expression, tuple expression and record expression of SML, it is redundunt to enclose them with parentheses. With the assoc indicator described above, there is no way to specify appropriate associativity for these expressions.
+
+ For example, let encode the next SML expression into format expression.
+
+  f (g x, y)     --(*)
+
+ In SML, function application expression has stronger associativity than other expressions. Therfore, assumed that exp1 and exp2 are function expression and argument expression respectively, function application expression can be encoded in the following format expression.
+
+  L10{ exp1 + exp2 }
+
+Next, a tuple expression can be encoded as the following format expression:
+
+  N0{ "(" exp1 "," + ... "," + expn ")" }
+
+So, the SML expression (*) is encoded as:
+
+  L10{ "f" + N0{ "(" L10{ "g" + "x" } "," + "y"")" } }
+
+The output of this format expression is:
+
+                    N0 < L10
+                    ---------------------------------
+                    N0| L10{ "g" + "x" } => "g" + "x"
+                    ------------------------------------------
+                    N0| "(" L10{ "g" + "x" } "," + "y" ")"
+                      |       => "(" "g" + "x" "," + "y" ")"    N0 < N10
+                    ----------------------------------------------------
+                    N10| N0{ "(" L10{ "g" + "x" } "," + "y"")" }
+  L10| "f" => "f"      |     =>  "(" "(" "g" + "x" "," + "y" ")" ")"
+  ------------------------------------------------------------------
+  N0| L10{ "f" + N0{ "(" L10{ "g" + "x" } "," + "y"")" } }
+    |    => "f" + "(" "(" "g" + "x" "," + "y" ")" ")"
+
+The result is below, the tuple expression is enclosed redundunt parentheses.
+
+  f ((g x, y))
+
+This is because the associativity of tuple expression is weaker thane the associativity of function application.
+Then, raise the associativity of tuple expressions to 'N10':
+
+  N10{ "(" exp1 "," + ... "," + expn ")" }
+
+Now, the format expression encoding the SML expression (*) is
+
+  L10{ "f" + N10{ "(" L10{ "g" + "x" } "," + "y"")" } }
+
+and the output is
+
+                    L10 < N10
+                    ------------------------------------------
+                    N10| L10{ "g" + "x" } => "(" "g" + "x" ")"
+                    ------------------------------------------
+                    N10| "(" L10{ "g" + "x" } "," + "y" ")"
+                       |   => "(" "(" "g" + "x" ")" "," + "y" ")"
+                    ---------------------------------------------
+                    N10| N10{ "(" L10{ "g" + "x" } "," + "y"")" }
+  L10| "f" => "f"      |  =>  "(" "(" "g" + "x" ")" "," + "y" ")"
+  ---------------------------------------------------------------
+  N0| L10{ "f" + N10{ "(" L10{ "g" + "x" } "," + "y"")" } }
+    |    => "f" + "(" "(" "g" + "x" ")" "," + "y" ")"
+
+ In this output, the function application in the tuple expression is enclosed with parentheses redunduntly.
+
+  f ((g x), y)
+
+ This is because the associativity specified with a guard is compared to the associativity inherited from the outer guard and to the associativities specified with the inner guards nested in the guard. 
+ To solve this problem, the 'cut' attribute can be specified with assoc indicators. This attribute has effect to cut the associativity inheritance from the outer guards, which means that the associativity of the guard is compared to the associativities of inner guards only.
+
+ The cut attribute can be specified by the '!' just before assoc indicators. Guards which have assoc indicators with cut attribute are not enclosed with parentheses regardless of the associativity of upper guards.
+
+ With the cut attribute, tuple expressions of SML can be encoded as follows.
+
+  !N0{ "(" exp1 "," + ... "," + expn ")" }
+
+The SML expression (*) is encoded in format expression as follows:
+
+  L10{ "f" + !N0{ "(" L10{ "g" + "x" } "," + "y"")" } }
+
+The output is
+
+                    N0 < L10
+                    ---------------------------------
+                    N0| L10{ "g" + "x" } => "g" + "x"
+                    ------------------------------------------
+                    N0| "(" L10{ "g" + "x" } "," + "y" ")"
+                      |         => "(" "g" + "x" "," + "y" ")"
+                    ---------------------------------------------
+                    N10| !N0{ "(" L10{ "g" + "x" } "," + "y"")" }
+  L10| "f" => "f"      |     =>  "(" "g" + "x" "," + "y" ")"
+  ---------------------------------------------------------------
+  N0| L10{ "f" + !N0{ "(" L10{ "g" + "x" } "," + "y"")" } }
+    |    => "f" + "(" "g" + "x" "," + "y" ")"
+
+then, the result is:
+
+  f (g x, y)
+
+there is no redundunt parentheses.
+
+
+========================================
+4. formatter generation
+
+ Given special comments annotated with type/datatype declarations, the smlformat generates SML code of formatter functions.
+
+
+====================
+4.1. basic formatters
+
+ The BasicFormatters structure provides predefined formatters for basic types such as int, string and other types defined in SML Basis Library. For example, the format_int is a formatter for the int type, the format_string is for the string type.
+
+
+====================
+4.2. format comment for type declaration
+
+ Let define the 'number' type by following type declaration
+
+  type number = int
+
+and define a formatter for this type.
+
+ To make the smlformat generate formatter, the declaration is annotated with comments as follows:
+
+  (*%
+   *)
+  type number =
+                 (*%
+                  * @format(value) "123"
+                  *)
+                 int
+
+ The directives to the smlformat is described in comments enclosed with "(*%" and "*)". These comments are called 'format comment'.
+ Format comments just before the 'type' keyword are called 'type declaration header comment'. Format comments following '=' are called 'defining type expression comments'.
+
+
+==========
+4.2.1. type declaration header comment
+
+ To let the smlformat generate formatters for a type, type declaration header comment is required. In the above example, the type declaration header comment is empty.
+
+
+==========
+4.2.2. defining type expression comment
+
+ In type expression comment, a format tag must be specified.
+Syntax of format tags is:
+
+  "@format(" typepat ")" template ... template
+
+ 'typepat' is patterns on type expression, we call them type pattern.
+
+ 'template' is format templates. Format templates specify the format to be used to pretty-print values of the type annotated.
+Syntax of format templates is a superset of the syntax of format expression.
+
+
+==========
+4.2.3. generation of formatter
+
+ For the above 'number' type, the smlformat generates following SML code of formatter.
+ For purposes of illustration, between "<<" and ">>" is mixture of format expression and SML expression.
+
+  fun format_number x = case x of value => << "123" >>
+
+====================
+4.3. format comment for datatype declaration
+
+ A format comment for datatype declaration consist of a type declaration header comment and defining type expression comments for each value constructors.
+
+  (*% *)
+  datatype maybeNumber =
+                        (*% @format(value) "456" *)
+                        SomeNumber of number
+                      | (*% @format "none" *)
+                        NotNumber
+
+ In format tag, a type pattern matched with the type expression of argument of value constructor and templates must be specified. In format tag for value constructors which require no argument, type pattern must not be specified.
+
+ The smlformat generates following formatter for the above 'maybeNumber'.
+
+  fun format_maybeNumber x =
+      case x of
+          SomeNumber value => << "456" >>
+        | NotNumber => << "none" >>
+
+
+====================
+4.4. type pattern
+
+ From type patterns in format tags, the smlformat generates SML code which executes pattern match with values of the defined type. 
+
+ By matching the type pattern with the type expression, the SMLFormat identifies type expressions corresponding with identifiers occurring in type pattern.
+
+ Identifiers occurring in type pattern can be used in format templates. The smlformat translates identifiers occurring in format templates into a SML code which builds format expression encoding values bound to that identifier in runtime. That is, an identifier in format templates indicates to expand corresponding template which is specified with the declaration of the type matched with the identifier. We call occurring of identifiers in format templates 'template instantiation'.
+
+ Using template instantiation, the above format comment for the 'number' type can be modified as follows.
+
+  (*% *)
+  type number =
+                 (*% @format(value) value *)
+                 int
+
+The smlformat genearates below formatter for this type.
+
+  fun format_number x = case x of value => << format_int(value) >>
+
+By matching type expression and type pattern, the smlformat finds that the the 'int' type corresponds with the identifier 'value', so the occurrings of the identifier 'value' in the format template is translated to SML expression which invoke 'format_int' which is the formatter for the 'int' type.
+
+ The declaration of the 'maybeNumber' type can be modified also, as follows.
+
+  (*% *)
+  datatype maybeNumber =
+                        (*% @format(value) value *)
+                        SomeNumber of number
+                      | (*% @format "none" *)
+                        NotNumber
+
+  fun format_maybeNumber x =
+      case x of
+          SomeNumber value => << format_number(value) >>
+        | NotNumber => << "none" >>
+
+
+==========
+4.4.1. identifier type pattern
+
+ An identifier can be used as a type pattern which can be matched with any type expression.
+
+
+==========
+4.4.2. tuple type pattern
+
+ For tuple type expression, type pattern as follow can be specified.
+
+  (*% *)
+  type region =
+               (*% @format(left * right) "left=" left + "right=" right *)
+               int * int
+
+The smlformat genrates following formatter for the 'region' type.
+
+  fun format_region x =
+      case x of
+          (left, right) =>
+              << "left=" format_int(left) + "right=" format_int(right) >>
+
+
+==========
+4.4.3. record type pattern
+
+ For record type expression, type pattern can be specified also.
+
+  (*% *)
+  type range =
+               (*% @format({min : minimum, max}) minimum + "<->" + max *)
+               {min : int, max : int}
+
+The smlformat generates following formatter for the 'range' type.
+
+  fun format_range x =
+      case x of
+          {min = minimum, max} =>
+              << format_int(minimum) + "<->" + format_int(max) >>
+
+
+==========
+4.4.4. value constructor with argument
+
+ The smlformat can generate formatters for value constructors which require an argument.
+
+  (*% *)
+  datatype 'a maybe =
+                     (*% @format(value) value *)
+                     Something of 'a
+                   | (*% @format "none" *)
+                     Nothing
+
+ The formatter which the smlformat generates for this 'maybe' type requires a formatter for the type variable 'a' as an argument. It is called 'formatter argument'.
+
+  fun format_maybe format_'a x =
+      case x of
+          Something value => << format_'a(value) >>
+        | Nothing => << "none" >>
+
+
+ For types which use this 'maybe' type in their defining type expressions, format comments can be specified as follows.
+
+  (*% *)
+  type maybeString =
+                (*% @format(str tycon) tycon(str) *)
+                string maybe
+
+ A type pattern for type constructor application takes the form as
+
+  typepat ID
+
+In the above example, the type constructor 'maybe' matches with the identifier 'tycon' in type pattern, and the 'string' type matches with the identifier 'str'.
+
+In format templates, an identifier which matches with type constructor should be applied to identifier which matches with type expression which is the argument to that constructor.
+In the above example, the identifier 'tycon' is applied to the identifier 'str' in the format template.
+
+ The formatter which the smlformat generates for the 'maybeString' calls the 'format_maybe' with the 'format_string' as the first argument.
+
+  fun format_maybeString x =
+      case x of tycon => << (format_maybe format_string tycon) >>
+
+
+==========
+4.4.5. additional argument
+
+ Formatter can require additional arguments besides the value to be formatted and formatter arguments.
+
+  (*%
+   * @params (label)
+   *)
+  type 'a anyLabeled =
+                      (*% @format(value) label ":" value *)
+                      'a
+
+ Additional arguments are specified in the type header comment with "@params" tag.
+When multiple additional arguments are required, write as 
+
+  (*%
+   * @params (p1, ..., pk)
+   *)
+
+or
+
+  (*%
+   * @params (p1)
+   *     :
+   * @params (pk)
+   *)
+
+
+ Additional arguments can be used in format templates. 
+ Additional arugments occurring in format templates are translated into parameter variables which are bound to arguments passed from caller of the formatter in runtime.
+
+The smlformat generates the following formatter for the 'anyLabeled' type.
+
+  fun format_anyLabeled (format_'a, label) x =
+      case x of value => << label ":" format_'a(value) >>
+
+If the formatter for a type constructor 'T' requires additional arguments, identifiers in format template matching with the 'T' should be applied to additional arguments besides formatter arguments.
+Any templates can be passed as additional arguments.
+If a formatter requires 'j' formatter arguments and 'k' additional arguments, occurences of the identifier 'ID' matching with the formatter should take the form as follows:
+
+  ID(inst1, ..., instj)(temp1, ..., tempk)
+
+If the formatter requires no additional argument, the second tuple can be omitted.
+
+  ID(inst1, ..., instj)
+
+If the formatter requires some additional arguments and no formatter argument, the first tuple cannot be omitted.
+
+  ID()(temp1, ..., tempk)
+
+NOTE: Because the smlformat cannot determine the type of formatter invoked, formatter arguments and additional arguments must be separated explicitly.
+
+In format comments for type declarations which use the 'anyLabeled' in their defining type expression, additional arguments should be passed as follows:
+
+  (*% *)
+  type intLabeled =
+                      (*% @format(num tycon) tycon(num)("INT") *)
+                      int anyLabeled
+
+The following formatter is generated.
+
+  fun format_intLabeled x =
+      case x of tycon => << format_anyLabeled (format_int, "INT") tycon >>
+
+
+====================
+4.5. formal definition
+
+ We present the formal definition of formatter generation described above.
+
+
+==========
+4.5.1. environment
+
+ A formatter environment F is a function from a set of names of type constructors to a set of formatter names.
+
+ A type environment T is a function from a set of identifiers to types.
+
+ A additional argument names P is a set of names of additional arguments.
+
+
+==========
+4.5.2. translation of format templates
+
+ We write for the translation from a format template 'temp' to a mixture 'exp' of format expressions and SML expressions under F, T and P as follows:
+
+  F,T,P | temp ==> exp
+
+Rules of translation of format templates are following:
+
+(STRING)
+    F,T,P | "string" ==> "string"
+  
+(INDICATOR)
+    F,T,P | sp ==> sp
+
+(INDSTART)
+    F,T,P | ind[ ==> ind[
+
+(INDEND)
+    F,T,P | ] ==> ]
+
+(SEQ)
+    F,T,P | templ1 ==> exp1    F,T,P | templ2 ==> exp2
+    --------------------------------------------------
+    F,T,P | templ1 templ2 ==> exp1 exp2
+
+(GUARD)
+    F,T,P | temp ==> exp
+    ---------------------------
+    F,T,P | { temp } ==> { exp }
+
+(INST1)
+    T(ID) = (t1,...,tj) t    T(ID1) = t1   ...  T(IDj) = tj
+    F(t) = f    F(t1) = f1  ...  F(tj) = fj
+    F,T,P | temp1 ==> exp1
+          :
+    F,T,P | tempk ==> expk
+    -------------------------------------------------------
+    F,| ID(ID1,...,IDj)(temp1,..., tempk)
+    T,|        ==>
+    P |         f(f1, ..., fj, exp1, ... , expk)(ID)
+
+    iThis rule generates a function application in SML code.)
+
+(INST2)
+    T(ID) = t         F(t) = f
+    --------------------------
+    F,T,P | ID    ==>   f(ID)
+
+    iThis rule generates a function application in SML code.)
+
+(INST3)
+    P = P'+{ID}
+    ---------------------
+    F,T,P | ID   ==>   ID
+
+    iThis rule generates a function application in SML code.)
+
+
+==========
+4.5.3. generation of body of formatter
+
+ We write for the generation of SML expression 'e' from a format tag and a variable name 'x' and a type expression 'te' under F and P as follows:
+
+  F,P | @format(typepat) template, x, te  ==> e
+
+This means that 'x' is a variable which is bound to a value to be formatted, that 'te' is the type of 'x' and that the format tag specifies the format for the 'te'.
+
+Below are rules for the case where 'te' is a tuple type expression or type constructor application. The rule for record type expression is similar.
+Atom types such as 'int' or 'string' are considered type constructor application with no arguments.
+
+(TUPLEtype)
+    dom(F) includes {t1,...,tj}
+    T = {ID1:t1, ..., IDj:tj}
+    F,T,P | temp => e
+    -------------------------------------------------
+    F,| @format(ID1 * ... * IDj) temp,
+    P | x, (t1 * ... * tj)
+      |              ==> case x of (ID1,...,IDj) => e
+
+(TYCONAPPtype)
+    dom(F) includes {t,t1,...,tj}
+    T = {ID:(t1,...,tj)t, ID1:t1, ..., IDj:tj}
+    F,T,P | temp => e
+    --------------------------------------------------
+    F,| @format((ID1, ..., IDj) ID) temp,
+    P | x, (t1, ..., tj) t 
+      |                          ==> case x of ID => e
+
+
+==========
+4.5.4. generation of formatter
+
+ Using above rules, we present rules of generation of a formatter definition and new formatter environment F' from a type declaration or a datatype declaration under F.
+ We assume here that only single type constructor is defined in a type/datatype declaration. Of course, the SMLFormat supports formatter generation from type/datatype declarations where multiple type constructors are defined connected by 'and' keyword, described later.
+
+
+(TYPEdec)
+    x,f1,...,fj are fresh variables
+    F' = F+{t:format_t}
+    F'' = F'+{'a1:f1, ..., 'aj:fj}
+    P = {b1,...,bk}
+    F'',P | formattag,x,t  ==>  e
+    -------------------------------------------------------
+    F | (*% @formatparams (b1,...,bk) *)
+      | type ('a1,...,'aj) t =
+      |         (*% formattag *) t
+      |    ==>
+      |            fun format_t(f1,...,fj,b1,...,bk) x = e,
+      |            F'
+
+(DATATYPEdec)
+    x,x1,...,xj,f1,...,fj are fresh variables
+    F' = F+{t:format_t}
+    F'' = F'+{'a1:f1, ..., 'aj:fj}
+    P = {b1, ..., bk}
+    F'',P | formattag1,x1,t1  ==> e1
+             :
+    F'',P | formattagj,xj,tj  ==> ej
+    -----------------------------------------------------
+    F | (*% @formatparams (b1,...,bk) *)
+      | datatype ('a1,...,'aj) t =
+      |           (*% formattag1 *)  D1 of t1
+      |         | ...
+      |         | (*% formattagj *)  Dj of tj 
+      |    ==>
+      |      fun format_t(f1,...,fj,b1,...,bk) x =
+      |          case x of D1 x1 => e1 | ... | Dj xj => ej,
+      |      F'
+
+ The rule for the case where the value constructor takes no argument is omitted.
+
+
+====================
+4.6. compound type pattern
+
+ In the above description, every arguments to type constructors and elements of tuple/record type expressions are single identifiers. The SMLFormat can generate formatters for more compound type expression.
+
+
+==========
+4.6.1. type pattern for nested type expression
+
+ Format tag for type expression which contains nested type constructor applications, that is, type constructor applications whose argument is also a type constructor application, can be specified.
+
+  (*% *)
+  type maybeLabeledInt =
+                        (*%
+                         * @format(num may any) any(may(num))("INT")
+                         *)
+                        int maybe anyLabeled
+
+The formatter generated for this 'maybeLabeledInt' is as follows:
+
+  fun format_maybeLabledInt x =
+      case x of
+         any =>
+           << format_anyLabeled (format_maybe format_int, "INT") any >>
+
+ Format tag for type expression which includes tupe/record type expressions whose elements include tuple, record or type constructor application can be specified also.
+ The defining type expression of the following 'maybeRange' contains a record type expression which has a type constructor application in its elements.
+
+  (*% *)
+  type maybeRange =
+       (*%
+        * @format({min : min minMaybe, max : max maxMaybe})
+        *       minMaybe(min) "<->" maxMaybe(max)
+        *)
+       {min : int maybe, max : int maybe}
+
+  fun format_maybeRange x =
+      case x of
+        {min = minMaybe, max = maxMaybe} =>
+         <<
+          (format_maybe format_int minMaybe) "<->"
+          (format_maybe format_int maxMaybe)
+         >>
+
+
+==========
+4.6.2. matching of compound type expression and identifier
+
+ In the above examples, identifiers in type patterns are matched only with atom types such as 'int' and 'string' or type constructor names such as 'maybe'.
+When an identifier is matched with compound type expression such as record type expression or type constructor application, there is no way to specify the format of values bound to the identifier.
+
+For example, consider the following type declaration.
+
+  (*% *)
+  type labeledRange =
+       (*%
+        * @format(range any) any(range) <== ???
+        *)
+       {min : int, max : int} anyLabeled
+
+ A record type expression is matched with the identifier 'range', but there is no way to specify the format for the record value and pass that format to the formatter of 'anyLabeled'.
+
+ To avoid this restriction, we can split the declaration into a type declaration and a datatype declaration as follows:
+
+  type range = {min : int, max : int}
+
+  type labeledRange = range anyLabeled
+
+But this is not smart.
+
+
+==========
+4.6.3. local format tag
+
+ To the above problem, the SMLFormat provides a solution. In this solution, an identifier which matches with compound type expression is considered as an temporary name given to the compound type expression and the format specification of that type expression can be described in another format tag.
+
+ We call these format tag 'local format tag', which means that these tags specify the format of type expression which is given local temporary name. On the other hand, we call format tags for defining type expression 'primary format tag'.
+
+ Local format tag is written as
+
+  "@format:"ID "(" typepat ")" template ... template
+
+(No space is allowed between '@format:" and ID.)
+
+ Using local format tag, the above declaration of 'labeledRange' type can be rewritten as follows:
+
+  (*% *)
+  type labeledRange =
+       (*%
+        * @format(range any) any(range)("Range:")
+        * @format:range({min : min, max : max})
+        *         "(min =" + min "," + "max =" + max ")"
+        *)
+       {min : int, max : int} anyLabeled
+
+From matching of the type pattern in the primary format tag
+
+  range any
+
+and the defining type expression
+
+  {min : int, max : int} anyLabeled
+
+the smlformat determines the type of 'range' to be a record {min : int, max : int}.
+And the local tag following the primary tag indicates that the identifier 'range' is a name given to type expressions which matches with the type pattern
+
+  {min : min, max : max}
+
+ Put these together, the smlformat considers that a temporary type 'range' is declared locally as:
+
+  type range = {min : int, max : int}
+
+and that the identifier 'range' occuring in the primary format tag has the type 'range'. Then the smlformat generates a formatter for the 'range' type from this local format tag.
+
+ The smlformat generates following formatter.
+
+  fun format_labeledRange x =
+      let
+        fun format_range x =
+            case x of
+              {min = min, max = max} =>
+              <<
+                "(min =" + format_int(min) "," +
+                "max =" + format_int(max) ")"
+              >>
+      in
+        case x of
+          any => format_anyLabeled (format_range, "Range:") any
+      end
+
+ Similarly, for the below 'tree' type, format comment can be specified by using local format tag.
+
+  (*% *)
+  datatype tree =
+                 (*% @format(num) num *)
+                 Leaf of int
+               | (*%
+                  * @format(child children) "{" children(child)(", ") "}"
+                  * @format:child({child, label}) label "=" child
+                  *)
+                 Node of {child : tree, label : string} list
+
+ The following formatter is generated.
+
+  fun format_tree x =
+      case x of
+          Leaf x => case x of num => << (format_int num) >>
+        | Node x =>
+          let
+            fun format_child x =
+                case x of
+                    {child, label} =>
+                    << (format_string label) "=" (format_tree child) >>
+          in
+            case x of
+                children =>
+                << "{" (format_list(format_child, ", ") children) "}" >>
+          end
+
+
+ Local format tags can be used for specifying format of nested type constructor application. The above declaration of 'maybeLabeledInt' can be rewritten as follows:
+
+  (*% *)
+  type maybeLabeledInt =
+                        (*%
+                         * @format(maybeNum any) any(maybeNum)("INT")
+                         * @format:maybeNum(num may) may(num)
+                         *)
+                        int maybe anyLabeled
+
+ The following formatter is generated.
+
+  fun format_maybeLabledInt x =
+      case x of
+         any =>
+           let
+             fun format_maybeNum x =
+                 case x of may => format_maybe format_int may
+           in
+             << format_anyLabeled (format_maybeNum, "INT") any >>
+           end
+
+
+NOTE: Format tags must be ordered as described below.
+ The primary tag must be ahead of local format tags. If format tags in a format comment for a defining type expression are specified in the following order
+
+  @format( typepat0 ) ...
+  @format:ID1( typepat1 ) ...
+       :
+  @format:IDk( typepatk ) ...
+
+each IDi (1 <= i <= k) must occur somewhere in typepat0 ... typepat(i-1).
+
+
+====================
+4.7. custom formatter
+
+ For each type/datatype declarations, at most one format comment can be specified. And for primitive types and types defined in third-party library , format comment cannot be specified.
+
+ You can instruct the smlformat to generate formatter which uses hand coded formatters instead of formatters generated from format comment. These hand coded formatters are called 'custom formatter'.
+
+ For example, assume that a hand-coded formatter which formats word value in binary notation is defined in 'MyFormatters' structure, we want to use this instead of 'BasicFormatters.format_word'.
+
+  fun format_binary x = << "0b" (Word.fmt StringCvt.BIN x) >>
+
+ To use this formatter in a format comment of a type/datatype declaration, following tag should be used in declaration header comment.
+
+  @formatter(ID) qid
+
+This tag declares 'ID' as temporary type name, and indicates that 'qid' is used as formatter for this type.
+The syntax of 'qid' is as follows.
+
+  qid ::= ID
+       |  ID "." qid
+
+ Then, the identifiers in defining type expression comment can be annotated with these custom formatters to be used to format the values bound to these identifiers. Custom formatters can be specified in type pattern, or in format templates.
+
+Example.
+
+  (*%
+   * @formatter(binary) MyFormatters.format_binary
+   *)
+  type file =
+             (*%
+              * @format({name, flags : flags:binary})
+              *           "{name=" name "," + "flags=" flags "}"
+              *)
+             {name : string, flags : word}
+
+Or
+
+  (*%
+   * @formatter(binary) MyFormatters.format_binary
+   *)
+  type file =
+             (*%
+              * @format({name, flags})
+              *           "{name=" name "," + "flags=" flags:binary "}"
+              *)
+             {name : string, flags : word}
+
+The formatter for this 'file' type is generated as follows.
+
+  fun format_file x =
+      case x of
+        {name, flags} =>
+          <<
+            "{name=" (format_string name) "," +
+            "flags=" (MyFormatters.format_binary flags) "}"
+          >>
+
+
+====================
+4.8. formal definition
+
+ The formal definition is extented to include nested type pattern, local format tag and custom formatter.
+
+
+==========
+4.8.1. pattern match
+
+ The translation rule
+
+    t <=> tp ==> T
+
+denotes a translation from type 't' and type pattern 'tp' to type environment 'T'.
+
+(IDmatch)
+    t <=> ID ==> {ID:t}
+
+(TypedIDmatch)
+    t <=> ID1 : ID2 ==> {ID1:ID2}
+
+(TYCONAPPmatch)
+    t1 <=> p1 ==> T1  ...  tj <=> pj ==> Tj
+    ----------------------------------------
+    (t1, ..., tj) t <=> (p1, ..., pj) ID
+          ==> T1+...+Tj+{ID:(t1, ..., tj) t}
+
+(TypedTYCONAPPmatch)
+    t1 <=> p1 ==> T1  ...  tj <=> pj ==> Tj
+    ----------------------------------------
+    (t1, ..., tj) t <=> (p1, ..., pj) ID1 : ID2
+          ==> T1+...+Tj+{ID1:(t1, ..., tj) ID2}
+
+(TUPLEmatch)
+    t1 <=> p1 ==> T1  ...  tj <=> pj ==> Tj
+    -------------------------------------------
+    (t1, ..., tj) <=> (p1,... pj) ==> T1+...+Tj
+
+
+==========
+4.8.2. generation of SML pattern
+
+ The rule
+
+    typat --> expat
+
+denotes a generation of pattern 'expat' in SML from type pattern 'typat'.
+
+(IDpat)
+    ID --> ID
+
+(TypedIDpat)
+    ID1 : ID2 --> ID1
+
+(TYCONAPPpat)
+    (tp, ..., tp) ID --> ID
+
+(TypedTYCONAPPpat)
+    (tp, ..., tp) ID1 : ID2 --> ID1
+
+(TUPLEpat)
+    tp1 --> pat1    ...    tpj --> patj
+    ----------------------------------------
+    (tp1 * ... * tpj) -->  (pat1, ..., patj)
+
+
+==========
+4.8.3. translation of format templates
+
+ The rule INST1 is modified, and two rules TypedINST1 and TypedINST2 are added.
+
+(INST1)
+    T(ID) = (t1,...,tj) t
+    F(t) = f
+    F,T,P | inst1 ARG==> f1
+           :
+    F,T,P | instj ARG==> fj
+    F,T,P | temp1 ==> exp1
+           :
+    F,T,P | tempk ==> expk
+    -----------------------------------------------
+    F,| ID(inst1,...,instj)(temp1,..., tempk)
+    T,|       ==>
+    P |        f(f1, ..., fj, exp1, ... , expk)(ID)
+
+(TypedINST1)
+    F(ID2) = f
+    F,T,P | inst1 ARG==> f1
+           :
+    F,T,P | instj ARG==> fj
+    F,T,P | temp1 ==> exp1
+           :
+    F,T,P | tempk ==> expk
+    -----------------------------------------------
+    F,| ID1:ID2(inst1,...,instj)(temp1,..., tempk)
+    T,|      ==>
+    P |       f(f1, ..., fj, exp1, ... , expk)(ID1)
+
+(TypedINST2)
+    F(ID2) = f
+    --------------------------
+    F,T,P | ID1:ID2  ==>  f(ID1)
+
+
+ The TypedINST1 and TypedINST2 use translation rules from a template instantiation to a name of formatter defined as:
+
+    F,T,P | inst ARG==> formatter
+
+
+(INST1-ARG)
+    T(ID) = (t1,...,tj) t
+    F(t) = f
+    F,T,P | inst1 ARG==> f1
+           :
+    F,T,P | instj ARG==> fj
+    F,T,P | temp1 ==> exp1
+           :
+    F,T,P | tempk ==> expk
+    --------------------------------------------
+    F,| ID(inst1,...,instj)(temp1,..., tempk)
+    T,|        ARG==>
+    P |         f(f1, ..., fj, exp1, ... , expk)
+
+(TypedINST1-ARG)
+    F(ID2) = f
+    F,T,P | inst1 ARG==> f1
+           :
+    F,T,P | instj ARG==> fj
+    F,T,P | temp1 ==> exp1
+           :
+    F,T,P | tempk ==> expk
+    -----------------------------------------------
+    F,| ID1:ID2(inst1,...,instj)(temp1,..., tempk)
+    T,|         ARG==>
+    P |            f(f1, ..., fj, exp1, ... , expk)
+
+(INST2-ARG)
+    T(ID) = t    F(t) = f
+    ---------------------
+    F,T,P | ID  ARG==>  f
+
+(TypedINST2-ARG)
+    F(ID2) = f
+    -------------------------------
+    F,T,P | ID1:ID2  ARG==>  f(ID1)
+
+
+==========
+4.8.4. generation of body of formatter
+
+
+The TUPLEtype and the TYCONAPPtype are integrated into the following rule.
+
+(TYPEtype)
+    t <=> typepat ==> T
+    T(ID1) <=> typepat1 ==> T1
+    (T+T1)(ID2) <=> typepat2 ==> T2
+         :
+    (T+T1+...+Tj-1)(IDj) <=> typepatj ==> Tj
+    Fj = F                            (* register formatters for alias type *)
+    Fj-1 = Fj+{IDj:fj}
+         :
+    F1 = F2+{ID2:f2}
+    F0 = F1+{ID1:f1}
+    T' = T+{ID1:ID1,...,IDj:IDj}    (* overwrites entries for alias type *)
+    T1' = T1+{ID2:ID2,...,IDj:IDj}
+         :
+    Tj' = Tj
+    F0,T',P | templates ==> exp       (* generate exps for templates *)
+    F1,T1',P | templates1 ==> exp1
+         :
+    Fj,Tj',P | templatesj ==> expj
+    typepat --> pat
+    typepat1 --> pat1
+         :
+    typepatj --> patj
+    -----------------------------------------------------
+    F, | @format(typepat) templates
+    P  | @format:ID1(typepat1) templates1
+       |       :
+       | @format:IDj(typepatj) templatesj
+       | x, t
+       |
+       |     ==>
+       |
+       |       case x of pat => let fun fj patj = expj
+       |                               :
+       |                            fun f1 pat1 = exp1
+       |                        in exp end
+
+
+==========
+4.8.5. generation of formatter
+
+ The TYPEdec and the DATATYPEdec are extended to incorporate custom formatter tag in declaration header comment.
+
+ Both TYPEdec and DATATYPEdec add formatters specified by custom formatter tag into the formatter environment used in generating SML code of formatter for defining type expression
+
+(TYPEdec)
+    x,f1,...,fj are fresh names
+    F' = F+{t:format_t}
+    F'' = F'+{'a1:f1, ..., 'aj:fj}+{ID1:qid1, ..., IDn:qidn}
+    P = {b1,...,bk}
+    F'',P | formattag,x,t  ==>  e
+    -------------------------------------------------------
+    F | (*%
+      |    @formatparams (b1,...,bk)
+      |    @formatter(ID1) qid1
+      |          :
+      |    @formatter(IDn) qidn
+      |  *)
+      | type ('a1,...,'aj) t =
+      |         (*% formattag *) t
+      |    ==>
+      |            fun format_t(f1,...,fj,b1,...,bk) x = e,
+      |            F'
+
+(DATATYPEdec)
+    x,x1,...,xj,f1,...,fj are fresh names
+    F' = F+{t:format_t}
+    F'' = F'+{'a1:f1, ..., 'aj:fj}+{ID1:qid1, ..., IDn:qidn}
+    P = {b1, ..., bk}
+    F'',P | formattag1,x1,t1  ==> e1
+             :
+    F'',P | formattagj,xj,tj  ==> ej
+    -----------------------------------------------------
+    F | (*%
+      |    @formatparams (b1,...,bk)
+      |    @formatter(ID1) qid1
+      |          :
+      |    @formatter(IDn) qidn
+      |  *)
+      | datatype ('a1,...,'aj) t =
+      |           (*% formattag1 *)  D1 of t1
+      |         | ...
+      |         | (*% formattagj *)  Dj of tj 
+      |    ==>
+      |      fun format_t(f1,...,fj,b1,...,bk) x =
+      |          case x of D1 x1 => e1 | ... | Dj xj => ej,
+      |      F'
+
+
+====================
+4.9. generation of default formatter tags
+
+ If a declaration header comment is specified in a type/datatype declaration but some of the defining type expressions in the declaration has no defining type expression comment, the smlformat auto-generates format tags for that defining type expression. This auto generated format tag is called 'default format tag'. And formatters are generated from this format comment.
+
+ For example, assume the type 'maybe' is declared as follows.
+
+  (*% *)
+  datatype 'a maybe =
+                     Something of 'a
+                   | (*% @format "none" *)
+                     Nothing
+
+ The smlformat generates following default format tag and generates formatter from this tag.
+
+  (*% *)
+  datatype 'a maybe =
+                     (*% @format(x1) {"Something" + {x1}} *)
+                     Something of 'a
+                   | (*% @format "none" *)
+                     Nothing
+
+ Formatters generated from default format tags format values into the form in which these values are written in SML source code. For example, a record value {name = "YAMADA", age = 20} of the type {name : string, age : int} is formatted into
+  {name = "YAMADA", age = 20}
+and a int list [1, 3, 5] is formatted into
+  [1, 3, 5]
+
+ Generation rules of default format tags are presented below.
+ These rules indicate generation of a primary format tag and 'j' local format tags from type expression 't' as following.
+
+  t => (typat, temps), {(id1, typat1, temps1), ..., (idj, typatj, tempsj)}
+
+The primary tag consists of type pattern 'typat' and a list 'temps' of format templates. Each local format tag consists of a identifier 'idN', a type pattern 'typatN' and a list 'tempsN' of format template.
+
+(ATOMdeftags)
+    x is fresh name
+    ---------------
+    ID
+    =>
+    (x, x), {}
+
+(TUPLEdeftags)
+    x1,...,xj are fresh names
+    t1 => ((typat1, temp1), L1)
+         :
+    tj => ((typatj, tempj), Lj)
+    ---------------------------------------------------------
+    t1 * ... * tj
+    =>
+    ((x1, ..., xj), "(" x1 "," ... "," xj ")"),
+    {(x1, typat1, temp1), ..., (xj, typatj, tempj)}+L1+...+Lj
+
+(RECORDdeftags)
+    x1,...,xj are fresh names
+    t1 => ((typat1, temp1), L1)
+         :
+    tj => ((typatj, tempj), Lj)
+    -----------------------------------------------------------------------
+    {ID1:t1, ..., IDj:tj}
+    =>
+    ({ID1=x1, ..., IDj=xj}, "{" "ID1" "=" x1 "," ... "," "IDj" "=" xj "}"),
+    {(x1, typat1, temp1), ..., (xj, typatj, tempj)}+L1+...+Lj
+
+(TYCONAPPdeftags)
+    x1,...,xj are fresh names
+    t1 => ((typat1, temp1), L1)
+         :
+    tj => ((typatj, tempj), Lj)
+    ---------------------------------------------------------
+    (t1, ..., tj) ID
+    =>
+    ((x1, ..., xj) x, x(x1, ..., xj)),
+    {(x1, typat1, temp1), ..., (xj, typatj, tempj)}+L1+...+Lj
+
+ A following dedicated rule is applied if the 't' is an application of the type constructor 'List.list' because the 'BasicFormatters.format_list' which is the formatter for the 'list' type requires an additional argument.
+
+(listAPPdeftags)
+    x1,...,xj are fresh names
+    t1 => ((typat1, temp1), L1)
+         :
+    tj => ((typatj, tempj), Lj)
+    ---------------------------------------------------------
+    (t1, ..., tj) list
+    =>
+    ((x1, ..., xj) x, "[" x(x1, ..., xj)(",") "]"),
+    {(x1, typat1, temp1), ..., (xj, typatj, tempj)}+L1+...+Lj
+
+ Similarly, if the 't' is a application of type constructor 'Array.array' and 'Vector.vector', dedicated rules are applied.
+
+ If the 't' is a functional type, a fixed string literal is output.
+
+(funAPPdeftags)
+    x is a fresh name.
+    --------------
+    t1 -> t2
+    =>
+    (x, "<<fn>>"),
+    {}
+
+ For defining type expression in type declarations, the primary format tag generated by these rules are used as is. For defining type expressions in datatype declarations, the primary format tag generated by these rules are modified so that name of value constructor is prepended to the list of format template.
+
+
+====================
+4.10. type declarations
+
+==========
+4.10.1. mutual recursive datatype
+
+ For datatypes declared in a datatype declaration and connected by 'and' keyword, formatter function definitions connected by 'and' keyword are generated.
+
+
+==========
+4.10.2. withtype
+
+ Format comment can be specified for declarations using 'withtype' keyword.
+
+  (*% *)
+  datatype tree =
+                 (*% @format(num) num *)
+                 Leaf of int
+               | (*% @format(child children) "{" children(child)(", ") "}" *)
+                 Node of node list
+
+  withtype node =
+                 (*% @format({child, label}) label "=" child *)
+                 {child : tree, label : string}
+
+Formatters like following are generated.
+
+  fun format_tree x =
+      case x of
+          Leaf x => case x of num => << (format_int num) >>
+        | Node x =>
+          case x of
+              children =>
+              << "{" (format_list(format_node, ", ") children) "}" >>
+  and format_node x =
+      case x of
+          {child, label} =>
+              << (format_string label) "=" (format_tree child) >>
+
+==========
+4.10.3. abstype
+
+ Format comment can be specified for declarations using 'abstype' keyword.
+
+    (*% *)
+    abstype set =
+            (*% @format(element elements) "{" elements(element)(", ") "}" *)
+            SET of element list
+    withtype element =
+             (*% @format(value) value *)
+             string
+    with
+      fun create () = ...
+      fun addTo (v, set) = ...
+      fun isMemberOf (v, set) = ...
+    end
+
+ Code of formatters for the abstype are inserted within that declaration.
+
+    (*% *)
+    abstype set =
+            (*% @format(element elements) "{" elements(element)(", ") "}" *)
+            SET of element list
+    withtype element =
+             (*% @format(value) value *)
+             string
+    with
+      fun format_set x = ...
+      and format_element x = ...
+      fun create () = ...
+      fun addTo (v, set) = ...
+      fun isMemberOf (v, set) = ...
+    end
+
+
+====================
+4.10.4 datatype replication
+
+ For datatypes declared by replication in the form:
+
+  datatype s = datatype M.t
+
+formatters can be specified as follows.
+
+    (*%
+     * @formatter(Absyn.region) Absyn.format_region
+     *)
+    datatype region = datatype Absyn.region
+
+
+====================
+4.12. exception delcaration
+
+ Format comment can be specified for exception declarations.
+
+  (*% *)
+  exception
+  (*%
+   * @format({fileName, line : leftLine, col : leftCol} *
+   *         {line : rightLine, col : rightCol, ...} *
+   *         message)
+   * fileName ":" leftLine "." leftCol "-" rightLine "." rightCol ":" message
+   *)
+  ParseError of
+  {fileName:string, line:int, col:int} *
+  {fileName:string, line:int, col:int} *
+  string
+
+Since the exn type is extensible, formatter generated for an exception is different than those for datatype and type declarations as follows.
+
+  local
+    fun format x =
+        case x of
+          ParseError
+          (
+            {fileName, line = leftLine, col = leftCol},
+            {line = rightLine, col = rightCol, ...},
+            message
+          ) =>
+           <<
+             (format_string fileName) ":"
+             (format_int leftLine) "." (format_int leftCol) "-"
+             (format_int rightLine) "." (format_int rightCol) ":"
+             message
+           >>
+        | _ => (!SMLFormat.BasicFormatters.format_exn_Ref) x
+    val _ = SMLFormat.BasicFormatters.format_exn_Ref := format
+  in end
+
+The "format_exn_Ref" and "format_exn" are defined in the "BasicFormatters" structure.
+
+  val format_exn_Ref =
+      ref
+      (fn exn => 
+          let val text = General.exnMessage exn
+          in [FE.Term (size text, text)] end)
+
+  fun format_exn exn = !format_exn_Ref exn
+
+NOTE: The current version of SMLFormat constrains formatter generation for exception declaration in the two points.
+1, "prefix" tag described below is not allowed for "exception" declaration.
+2, format comment can not be specified for exception definition in the form:
+     exception E1 = E2
+
+====================
+4.12. prefix tag
+
+ By using "prefix" tag, multiple formatters can be generated for a type/datatype.
+ A prefix tag requires a string parameter. This parameter is used as prefix of name of the generated formatter.
+
+  (*%
+   * @prefix summary
+   *)
+  (*%
+   * @prefix detail
+   *)
+  type address =
+                (*%
+                 * @prefix summary
+                 * @format({zip, state, city}) state
+                 *)
+                (*%
+                 * @prefix detail
+                 * @format({zip, state, city})
+                 *   "zip=" zip ",state=" state ",city=" city
+                 *)
+                {zip : string, state : string, city : string}
+
+For this 'address' type, following two formatter are generated.
+
+  fun summaryaddress x =
+      case x of
+        {zip, state, city} => << format_string state >>
+
+  fun detailaddress x =
+      case x of
+        {zip, state, city} =>
+          <<
+            "zip=" (format_string zip)
+            ",state=" (format_string state)
+            ",city=" (format_string city)
+          >>
+
+ The prefix tag specifies the namespace to which the generated formatter belongs. In the body of a formatter generated from a format comment, only formatters generated from format comments specified with the same prefix can be called if other formatters are not specified explicitly by the "formatter" tags. (by way of exception, the formatters defined in the BasicFormatters, such as format_string and format_int, can be called from any formatter.)
+
+  (*%
+   * @prefix detail
+   *)
+  type customer = 
+                  (*%
+                   * @prefix detail
+                   * @prefix({name, address, tel})
+                   *      "name=" name ",address=" address ",tel=" tel
+                   *)
+                  {name : string, address : address, tel : string}
+
+ As follows, the formatter generated for this 'customer' invokes the formatter  generated for the "address" whose prefix is "detail".
+
+  fun detailcustomer x =
+      case x of
+        {name, address, tel} =>
+          <<
+            "name=" (format_string name)
+            ",address=" (detailaddress address)
+            ",tel=" (format_string tel)
+          >>
+
+ In order to call a formatter whose prefix is not the same as that of the calling formatter, the "formatter" tag can be used.
+
+ If no "prefix" tag is specified in a format comment, "format_" is considered to be specified as the prefix.
+
+ Similarly, multiple formatters can be generated for datatypes by using "prefix" tag.
+
+  (*%
+   * @prefix formatPlain
+   *)
+  (*%
+   * @prefix formatHTML
+   *)
+  datatype block = 
+                  (*%
+                   * @prefix formatPlain
+                   * @format(text) text
+                   *)
+                  (*%
+                   * @prefix formatHTML
+                   * @format(text) text
+                   *)
+                  Text of string
+                |
+                  (*%
+                   * @prefix formatPlain
+                   * @format(block) block
+                   *)
+                  (*%
+                   * @prefix formatHTML
+                   * @format(block) "<B>" block "</B>"
+                   *)
+                   Bold of block
+
+Following formatters are generated.
+
+  fun formatPlainblock x =
+      case x of
+        Text text => << format_string text >>
+      | Bold block => << formatPlainblock block >>
+
+  fun formatHTMLblock x =
+      case x of
+        Text text => << format_string text >>
+      | Bold block => << "<B>" formatHTMLblock block "</B>" >>
+
+
+========================================

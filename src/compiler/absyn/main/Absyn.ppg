@@ -1,0 +1,681 @@
+(* -*- sml -*- *)
+(**
+ * syntax for the IML.
+ * <p>
+ * Copyright (c) 2006, Tohoku University.
+ * </p>
+ * @author Atsushi Ohori 
+ * @author Liu Bochao
+ * @version $Id: Absyn.ppg,v 1.2 2006/02/18 04:59:14 ohori Exp $
+ *)
+structure Absyn : ABSYN = 
+struct
+
+    (*%
+     *)
+    type longid = 
+      (*%
+       * @format(longid longids) longids(longid)(".")
+       *)
+         string list 
+    and longTyCon =
+        (*%
+         * @format(strid strids) strids(strid)(".")
+         *)
+        string list                
+
+    fun longidToString longid =
+        let
+          fun longidToStr nil S = S
+            | longidToStr (h::t) S = case S of "" => longidToStr t (h)
+                                             | _ => longidToStr t (S^"."^h)
+        in
+          longidToStr longid ""
+        end
+         
+    fun getLastIdOfLongid nil =
+        raise Control.Bug "nil longid"
+      | getLastIdOfLongid [id] = id
+      | getLastIdOfLongid (id :: ids) = 
+        getLastIdOfLongid ids
+
+    fun getParentIdsOfLongid nil = nil
+      | getParentIdsOfLongid [x] = nil
+      | getParentIdsOfLongid (id :: ids) =
+        id :: getParentIdsOfLongid ids
+
+    type loc = Loc.loc
+
+    (*%
+     * @formatter(Int32.int) SmlppgUtil.format_int32
+     * @formatter(Word32.word) SmlppgUtil.format_word32
+     * @formatter(loc) Loc.format_loc
+     *)
+  datatype constant 
+    = (*%
+       * @format(value * loc) value
+       *)
+      INT of Int32.int * loc
+    | (*%
+       * @format(value * loc) "0wx" value
+       *)
+      WORD of Word32.word * loc
+    | (*%
+       * @format(value * loc) "\"" value "\""
+       *)
+      STRING of string * loc
+    | (*%
+       * @format(value * loc) value
+       *)
+      REAL of string * loc
+    | (*%
+       * @format(value * loc) "#\"" value "\""
+       *)
+      CHAR of char * loc
+    (*%
+     * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
+     *)
+   type tvar = 
+     (*%
+      * @format({name:id, ifeq:ifeq:binaryChoice}) ifeq()("''" id, "'" id)
+      *)
+     {name:string, ifeq:bool}
+
+  (*%
+   *)
+  datatype ty
+    = (*%
+       * @format(tvar * loc) tvar
+       *)
+      TYID of tvar * loc
+    | (*%
+       * @format(field fields * loc)
+       *           !N0{ "{" 2[ 1 fields(field)("," +1) ] 1 "}" }
+       * @format:field(label * ty) {label} +d ":" +d {ty}
+       *)
+      TYRECORD of (string * ty) list * loc
+    | (*%
+       * @format(arg args * tyCon tyCons * loc)
+       *                !N0{ "(" args(arg)("," + ) ")" +d tyCons(tyCon)(".") }
+       *)
+      TYCONSTRUCT of ty list * string list * loc
+    | (*%
+       * @format(elem elems * loc) N1{ d elems(elem)( + "*" +d ) }
+       *)
+      TYTUPLE of ty list * loc
+    | (*%
+       * @format(dom * result * loc) R1{ {dom} +d "->" 2[ +1 {result} ] }
+       *)
+      TYFUN of ty * ty * loc
+
+    (*%
+     * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
+     * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
+     *)
+    datatype pat
+      = (*%
+         * @format(loc) "_"
+         *)
+        PATWILD of loc
+      | (*%
+         * @format(cons * loc) cons
+         *)
+        PATCONSTANT of constant * loc
+      | (*%
+         * @format({opPrefix:isop,id:id, loc:loc}) id
+         *)
+        PATID of {opPrefix:bool, id:longid, loc:loc}
+      | (*%
+         * @format({ifFlex:ifFlex:binaryChoice, fields:field fields,loc:loc})
+         *               {"{" 2[ 1 fields(field)( "," +1) ] ifFlex()(",...","") 1 "}"}
+         *)
+        PATRECORD of {ifFlex:bool, fields:patrow list, loc:loc}
+      | (*%
+         * @format(pat pats * loc) {"(" 2[ 1 pats(pat)("," +1) ] 1 ")"}
+         *)
+        PATTUPLE of pat list * loc
+      | (*%
+         * @format(elem elems * loc)
+         *           {"[" 2[ 1 elems(elem)("," +1) ] 1 "]"}
+         *)
+        PATLIST of pat list * loc
+      | (*%
+         * @format(pat pats * loc) R1{d pats(pat)( +d) }
+         *)
+        PATAPPLY of pat list * loc
+      | (*%
+         * @format(pat * ty * loc) {pat} + ":" +d {ty}
+         *)
+        PATTYPED of pat * ty * loc
+      | (*%
+         * @format(pat1 * pat2 * loc) {pat1} +d "as" +d {pat2}
+         *)
+        PATLAYERED of pat * pat * loc
+
+    and patrow =
+        (*%
+         * @format(label * pat * loc) {label} +d "=" +2 {pat}
+         *)
+        PATROWPAT of string * pat * loc
+      | (*%
+         * @format(label * ty opt1:prependedOpt * pat opt2:prependedOpt * loc)
+         *         {label} {opt1(ty)(+d ":" +)}{opt2(pat)(+d "as" +)}
+         *)
+        PATROWVAR of string * (ty option) * (pat option) * loc
+
+    (*%
+     * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
+     *)
+    datatype exbind =
+             (*%
+              * @format(b * name * ty option:prependedOpt * loc)
+              *          {name} {option(ty)(+d "of" +)}
+              *)
+             EXBINDDEF of bool * string * ty option * loc
+           | (*%
+              * @format(b1 * left * b2 * right * loc) {left} +d "=" +2 {right}
+              *)
+             EXBINDREP of bool * string * bool * longid * loc
+
+    (*%
+     * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
+     * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
+     * @formatter(enclosedList) SmlppgUtil.formatListWithEnclosure
+     *)
+    type typbind = 
+         (*%
+          * @format(tyvar tyvars:enclosedList * name * ty)
+          *        {tyvars(tyvar)("," +, "(", ")" +)} {name} +d "=" +2 {ty}
+          *)
+         tvar list * string * ty
+
+    (*%
+     * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
+     * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
+     * @formatter(enclosedList) SmlppgUtil.formatListWithEnclosure
+     *)
+    type datbind = 
+         (*%
+          * @format(tyvar tyvars:enclosedList * tyCon * valcon valcons)
+          * {tyvars(tyvar)("," +, "(", ")" +) {tyCon} + "=" +1
+          *                                {valcons(valcon)(~2[ +1 "|" ] +)}}
+          * @format:valcon(b:binaryChoice * name * ty option:prependedOpt)
+          *          {b()("op" +, "")} {name} {option(ty)(~2[ +d "of" ] +)}
+          *)
+         tvar list * string * (bool * string * ty option) list
+
+    (*%
+     * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
+     * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
+     * @formatter(enclosedList) SmlppgUtil.formatListWithEnclosure
+     *)
+    datatype exp
+      = (*%
+         * @format(const * loc) {const}
+         *)
+        EXPCONSTANT of constant * loc
+      | (*%
+         * @format(longid * loc) {longid}
+         *)
+        EXPID of  longid * loc
+      | (*%
+         * @format(longid * loc) {longid}
+         *)
+        EXPOPID of  longid * loc
+      | (*%
+         * @format(field fields * loc)
+         *          !N0{ "{" 2[ 1 fields(field)( "," +1) ] 1 "}" }
+         * @format:field(label * exp) {{label} +d "=" +2 {exp}}
+         *)
+        EXPRECORD of (string * exp) list * loc
+      | (*%
+         * @format(exp * field fields * loc)
+         *     N0{ {exp} + "#" + "{" 2[ 1 fields(field)( "," +1) ] 1 "}" }
+         * @format:field(label * exp) {{label} +d "=" +2 {exp}}
+         *)
+        EXPRECORD_UPDATE of exp * (string * exp) list * loc
+      | (*%
+         * @format(selector * loc) "#"{selector}
+         *)
+        EXPRECORD_SELECTOR of string * loc
+      | (*%
+         * @format(field fields * loc)
+         *                 !N0{ "(" 2[ 1 fields(field)("," +1) ] 1 ")" }
+         *)
+        EXPTUPLE of exp list * loc
+      | (*%
+         * @format(elem elems * loc)
+         *                    !N0{ "[" 2[ 1 elems(elem)("," +1) ] 1 "]" }
+         *)
+        EXPLIST of exp list * loc
+      | (*%
+         * @format(exp exps * loc)
+         *                    !N0{ "(" 2[ 1 exps(exp)(";" +1) ] 1 ")" }
+         *)
+        EXPSEQ of exp list * loc
+      | (*%
+         * @format(exp exps * loc) L10{ d exps(exp)( +d) }
+         *)
+        EXPAPP of exp list * loc
+      | (*%
+         * @format(exp * ty * loc) N0{ {exp} + ":" +1 {ty} }
+         *)
+        EXPTYPED of exp * ty * loc
+      | (*%
+         * @format(left * right * loc) N3{{left} +d "andalso" +1 {right}}
+         *)
+        EXPCONJUNCTION of exp * exp * loc
+      | (*%
+         * @format(left * right * loc) N2{{left} +d "orelse" +1 {right}}
+         *)
+        EXPDISJUNCTION of exp * exp * loc
+      | (*%
+         * @format(exp * rule rules * loc)
+         *          N0{{exp} +1 "handle" +d rules(rule)( ~2[ +1 "|"] +)}
+         * @format:rule(pat * exp) {pat} + "=>" +1 {exp}
+         *)
+        EXPHANDLE of exp * (pat * exp) list * loc
+      | (*%
+         * @format(exp * loc) N0{ "raise" +d {exp} }
+         *)
+        EXPRAISE of exp * loc
+      | (*%
+         * @format(cond * ifTrue * ifFalse * loc)
+         *            !N0{ "if" 2[ +d {cond} ]
+         *             +1 "then" 2[ +d {ifTrue} ]
+         *             +1 "else" 2[ +d {ifFalse} ] }
+         *)
+        EXPIF of exp * exp * exp * loc
+      | (*%
+         * @format(cond * body * loc)
+         *             N0{ "while" 2[ +d {cond} ] +1 "do" 2[ +d {body} ] }
+         *)
+        EXPWHILE of exp * exp * loc
+      | (*%
+         * @format(exp * rule rules * loc)
+         * N0{ "case" 2[ +d {exp} ] 2[ +1 "of" ]+ {rules(rule)(~2[ +1 "|" ]+)}}
+         * @format:rule(pat * exp) {{pat} + "=>" +1 {exp}}
+         *)
+        EXPCASE of exp * (pat * exp) list * loc
+      | (*%
+         * @format(rule rules * loc) !N0{ "fn" + {rules(rule)(~2[ +1 "|"] +)} }
+         * @format:rule(pat * exp) {pat} + "=>" +1 {exp}
+         *)
+        EXPFN of (pat * exp) list * loc
+      | (*%
+         * @format(dec decs * exp exps * loc)
+         *          !N0{ {"let" 2[ +1 decs(dec)( +1) ]}  +1
+         *              {"in" 2[ +2 exps(exp)( +3 ) ] +2
+         *              "end"} }
+         *)
+        EXPLET of dec list * exp list * loc
+      | (*%
+         * @format({funExp:funExp, libExp:libExp, argTyList:argty argtys, resultTy:resultty, loc:loc})
+         *       "_external" + funExp +d "of" +d libExp +1
+         *       ":" + "{" {argtys(argty)("," +)} "}" "->" {resultty}
+         *)
+        EXPFFIVAL of {funExp: exp, libExp:exp, argTyList:ty list, resultTy: ty, loc:loc}
+      | (*%
+         * @format(aexp * loc)
+         *       "_cast" + aexp
+         *)
+        EXPCAST of exp * loc
+      
+    and dec =
+        (*%
+         * @format(var vars:enclosedList * bind binds * loc)
+         *       "val" {vars(var)("," +, + "(", ")")} +
+         *             {binds(bind)(~4[ +1 "and"] +)}
+         * @format:bind(pat * exp) {pat} +d "=" +2 {exp}
+         *)
+        DECVAL of tvar list * (pat * exp) list * loc
+      | (*%
+         * @format(var vars:enclosedList * bind binds * loc)
+         *  "val" {vars(var)("," +, + "(", ")")} +d
+         *          "rec" +d {binds(bind)(~4[ +1 "and"] +)}
+         * @format:bind(pat * exp) {pat} +d "=" +2 {exp}
+         *)
+        DECREC of tvar list * (pat * exp) list * loc
+      | (*%
+         * @format(var vars:enclosedList * rules binds * loc)
+         *  "fun" {vars(var)("," +, + "(", ")")} +
+         *                   {binds(rules)(~4[ +1 "and"] +)}
+         * @format:rules(rule rules) {rules(rule)(~2[ +1 "|"] +)}
+         * @format:rule(pat pats * ty opt:prependedOpt * exp)
+         *    {pats(pat)(+d) {opt(ty)(+d ":" +)} +d "=" +1 {exp}}
+         *)
+        DECFUN of tvar list * (pat list * ty option * exp) list list * loc 
+      | (*%
+         * @format(bind binds * loc) "type" + {binds(bind)(~4[ +1 "and"] +)}
+         *)
+        DECTYPE of typbind list * loc
+      | (*%
+         * @format(bind binds * withbind withbinds * loc)
+         * "datatype" + {binds(bind)(~4[ +1 "and" ] +)}
+         * "withtype" + {withbinds(withbind)(~4[ +1 "and" ] +)}
+         *)
+        DECDATATYPE of datbind list * typbind list * loc
+      | (*%
+         * @format(data datas * withbind withbinds * dec decs * loc)
+         * "abstype" +1 {datas(data)(~4[ +1 "and" ] +)}
+         * "withtype" +1 {withbinds(withbind)(~4[ +1 "and" ] +)}
+         * "with" 2[ +1 {decs(dec)(+1)} ] +1
+         * "end"
+         *)
+        DECABSTYPE of datbind list * typbind list * dec list * loc
+      | (*%
+         * @format(longstrid longstrids * loc)
+         *                "open" +  longstrids(longstrid)(5[+1])
+         *)
+        DECOPEN of longid list * loc
+      | (*%
+         * @format(tyCon * longTyCon * loc)
+         *    "datatype" + tyCon + "=" + "datatype" + longTyCon
+         *)
+        DECREPLICATEDAT of string * longTyCon * loc (* replication *)
+      | (*%
+         * @format(exc excs * loc) "exception" + {excs(exc)(~4[ +1 "and" ]+)}
+         *)
+        DECEXN of exbind list * loc
+      | (*%
+         * @format(localdec localdecs * dec decs * loc)
+         *            "local" 2[ +2 localdecs(localdec)(+d) ] +1
+         *            "in" 2[ +2 decs(dec)(+3) ] +2
+         *            "end"
+         *)
+        DECLOCAL of dec list * dec list * loc
+      | (*%
+         * @format(int * name names * loc)
+         *                   "infix" +d {int} +d names(name)(+d)
+         *)
+        DECINFIX of int * string list * loc
+      | (*%
+         * @format(int * name names * loc)
+         *                   "infixr" +d {int} +d names(name)(+d)
+         *)
+        DECINFIXR of int * string list * loc
+      | (*%
+         * @format(name names * loc) "nonfix" +d names(name)(+d)
+         *)
+        DECNONFIX of string list * loc
+
+(****************Module language********************************)
+   and strdec = 
+       (*%
+        * @format(dec * loc) dec
+        *)
+       COREDEC of dec * loc (* declaration*)
+     |(*%
+       * @format(strbind strbinds * loc)
+       * "structure" +d 4[strbinds(strbind)(~2[ +1 "and"] +)] 
+        *)
+      STRUCTBIND of strbind list * loc (* structure bind *)
+     |(*%
+        * @format(localstrdec localstrdecs  * strdec  strdecs * loc)
+        *            "local" 2[ +2 localstrdecs(localstrdec) (+d) ] +1
+        *            "in" 2[ +2 strdecs(strdec)(+3) ] +2
+        *            "end"
+        *)
+      STRUCTLOCAL of strdec  list * strdec list  * loc (* local declaration *)
+
+    and strexp =
+        (*%
+         * @format(strdec strdecs * loc)
+         * "struct"  2[ +1 strdecs(strdec)(+1)] +1  "end"
+         *)
+        STREXPBASIC of strdec list * loc (*basic*)
+      |(*%
+        * @format(longid * loc) longid
+        *)
+        STRID of longid * loc (*structure identifier*)
+      |(*%
+        * @format(strexp * sigexp * loc) strexp + ":" +  sigexp
+        *)
+        STRTRANCONSTRAINT of strexp * sigexp * loc (*transparent constraint*)
+      |(*%
+        * @format(strexp * sigexp * loc) strexp + ":>" + sigexp
+        *)
+        STROPAQCONSTRAINT of strexp * sigexp * loc (*opaque constraint*)
+      |(*%
+        * @format(functorid * strexp * loc) {functorid} {+d "(" strexp ")"}
+        *)
+        FUNCTORAPP of string * strexp * loc (* functor application*)
+      |(*%
+        * @format(strdec strdecs * strexp * loc) 
+        *           !N0{ {"let" 2[ +1 strdecs(strdec)( +1) ]}  +1
+        *              {"in" 2[ +2 strexp ] +2
+        *              "end"} }
+        *)
+        STRUCTLET  of strdec list * strexp * loc (*local declaration*)
+    and strbind = 
+        (*%
+         * @format(strid * sigexp * strexp * loc)
+         * strid + ":" + sigexp + "=" +1 strexp
+         *)
+        STRBINDTRAN of string * sigexp  * strexp * loc 
+        |(*%
+          * @format(strid * sigexp  * strexp * loc)
+          * strid + ":>" +  sigexp + "=" +1  strexp
+          *)
+        STRBINDOPAQUE of string * sigexp  * strexp * loc
+        |(*%
+          * @format(strid * strexp * loc) strid + "=" +1 strexp
+          *)
+        STRBINDNONOBSERV of string * strexp * loc
+
+    and sigexp = 
+        (*%
+         * @format(spec * loc) "sig" 2[+1 spec ] +1 "end"  
+         *)
+        SIGEXPBASIC of spec * loc (*basic*)
+      |(*%
+        * @format(sigid * loc) {sigid} 
+        *)
+        SIGID of string * loc (*signature identifier*)
+      |(*%
+        * @format(sigexp * rlstn rlstns * loc)
+        * sigexp +1 "where" + "type" + rlstns(rlstn)(+1 "where" + "type")
+        * @format:rlstn(tyvarseq * longTyCon * ty)
+        * tyvarseq + longTyCon  +  "=" + ty
+        * @format:tyvarseq(tyvar tyvars:enclosedList)
+        * tyvars(tyvar) ("," +, "(", ")" +)
+        *)
+      SIGWHERE of sigexp * (tvar list * longTyCon * ty) list * loc (* type realisation *) 
+
+    and spec =
+        (*%
+         * @format(specval specvals * loc)
+         * "val" + {specvals(specval)(~4[ +1 "and"] +)} 
+         * @format:specval(vid * ty) {{vid} + ":" +1 {ty}}
+         *)
+        SPECVAL of (string * ty) list * loc (* value *)
+      |
+      (*%
+       * @format(typdesc typdescs * loc)
+       * "type" + {typdescs(typdesc)(~4[ +1 "and"] +)}
+       * @format:typdesc(tyvar tyvars:enclosedList * tyCon) 
+       * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+       *)
+      SPECTYPE of (tvar list * string) list * loc (* type *)
+      |
+      (*%
+       * @format(derivedtyp derivedtyps * loc)
+       * derivedtyps(derivedtyp)(~4[ +1 "and"] +)
+       * @format:derivedtyp(tyvar tyvars:enclosedList * tyCon * ty)
+       * "type" + {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} } + "=" + ty
+       *)
+      SPECDERIVEDTYPE of (tvar list * string * ty) list  * loc
+      |
+      (*%
+       * @format(typdesc typdescs * loc)
+       * "eqtype" + {typdescs(typdesc)(~4[ +1 "and"] +)}
+       * @format:typdesc(tyvar tyvars:enclosedList * tyCon) 
+       * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+       *)
+      SPECEQTYPE of (tvar list * string) list * loc (* eqtype *)
+      |
+      (*%
+       * @format(datdesc datdescs * loc)
+       * "datatype" + {datdescs(datdesc)(~4[ +1 "and"] +)}
+       * @format:datdesc(tyvar tyvars:enclosedList * tyCon * condesc condescs) 
+       * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} + "=" +1
+       *                                 {condescs(condesc)(~2[ +1 "|" ] +)}}
+       * @format:condesc(vid * ty option:prependedOpt)
+       * {vid} {option(ty)(~2[ +d "of" ] +)}
+       *)
+      SPECDATATYPE of (tvar list * string * (string * ty option) list ) list * loc (* datatype*)
+      |
+      (*%
+       * @format(tyCon * longTyCon * loc)
+       * "datatype" + tyCon + "=" + "datatype" + longTyCon
+       *)
+      SPECREPLIC of string * longTyCon * loc (* replication *)
+      |
+      (*%
+       * @format(exdesc exdescs * loc)
+       * "exception" + {exdescs(exdesc)(~4[ +1 "and" ]+)}
+       * @format:exdesc(vid * ty option:prependedOpt)
+       *          {vid} {option(ty)(+d "of" +)}
+       *)     
+      SPECEXCEPTION of (string * ty option) list * loc (* exception *)
+      |
+      (*%
+       * @format(strdesc strdescs * loc)
+       * !N0{ "structure" + {strdescs(strdesc)(~2[ +1 "and" ] +)}}
+       * @format:strdesc(strid * sigexp) !N0{ strid ":" +d sigexp}
+       *)
+      SPECSTRUCT of (string * sigexp) list * loc (* structure *)
+    | (*%
+       * @format(sigexp * loc) !N0{"include" + {sigexp}}
+       *)
+      SPECINCLUDE of sigexp * loc (* include *)
+    | (*%
+       * @format(sigid sigids * loc) !N0{"include" + sigids(sigid)(+)}
+       *)
+      SPECDERIVEDINCLUDE of string list * loc (* include *)
+    | (*%
+       * @format(spec1 * spec2 * loc) spec1 + ";" +1 spec2
+       *)
+      SPECSEQ of spec * spec * loc 
+    | (*%
+       * @format( spec * longTyCon longTyCons * loc) 
+       * spec + !N0{"sharing type" + {longTyCons(longTyCon)(~2[ +1 "="] +)} }
+       *)
+      SPECSHARE of spec * longTyCon list * loc 
+    | (*%
+       * @format(spec * longstrid longstrids * loc)
+       * spec + !N0{ "sharing" + {longstrids(longstrid)(~2[ +1 "="] +)} }
+       *)
+      SPECSHARESTR of spec * longid list * loc 
+    | (*% 
+       *)
+      SPECEMPTY 
+
+    and funbind =
+        (*%
+         * @format(funid * strid * sigexp1 * sigexp2 * strexp * loc)
+         * funid + "(" strid + sigexp1 +")" + ":" + sigexp2 + "=" +1 4[strexp]
+         *)
+        FUNBINDTRAN of string * string * sigexp  * sigexp * strexp * loc 
+      | (*%
+         * @format(funid * strid * sigexp1 * sigexp2 * strexp * loc)
+         * funid + "(" strid + sigexp1 +")" + ":>" + sigexp2 + "=" +1 4[strexp]
+          *)
+        FUNBINDOPAQUE of string * string * sigexp  * sigexp * strexp * loc 
+      | (*%
+         * @format(funid * strid * sigexp * strexp * loc)
+         * funid + "(" strid + sigexp +")" + "=" +1 strexp
+         *)
+        FUNBINDNONOBSERV of string * string * sigexp  * strexp * loc 
+      | (*%
+         * @format(funid * spec * sigexp * strexp * loc)
+         * funid + "(" spec +")" + ":" + sigexp + "=" +1 strexp
+         *)
+        FUNBINDSPECTRAN of string * spec * sigexp  * strexp * loc 
+      | (*%
+         * @format(funid * spec * sigexp * strexp * loc)
+         * funid + "(" spec +")" + ":>" + sigexp + "=" +1 strexp
+         *)
+        FUNBINDSPECOPAQUE of string * spec * sigexp  * strexp * loc 
+      | (*%
+         * @format(funid * spec * strexp * loc)
+         * funid + "(" spec +")" + "=" +1 strexp
+         *)
+        FUNBINDSPECNONOBSERV of string * spec * strexp * loc 
+
+    and topdec = 
+        (*%
+         * @format (strdec * loc) strdec
+         *)
+        TOPDECSTR of strdec * loc (* structure-level declaration *)
+      | (*%
+         * @format(sigdec sigdecs * loc)
+         * "signature" + {sigdecs(sigdec)(~4[ +1 "and"] +)}
+         * @format:sigdec(sigid * sigexp) sigid +d "=" +1 sigexp
+         *)
+        TOPDECSIG of ( string * sigexp ) list * loc 
+      | (*%
+         * @format (funbind funbinds * loc)
+         * !N0{ "functor" + {funbinds(funbind)(~2[ +1 "and"] +)} }
+         *) 
+        TOPDECFUN of funbind list * loc (* functor binding*)
+
+  (*%
+   *)
+  datatype parseresult
+    = (*%
+       * @format(topdec topdecs * loc) {topdecs(topdec)("\n" 1)} "\n"
+       *)
+     TOPDECS of topdec list * loc
+    | (*%
+       * @format(file * loc) "use" + {file}
+       *)
+      USE of string * loc
+
+  fun getLocTy ty =
+      case ty of
+        TYID(_, loc) => loc
+      | TYRECORD (_, loc) => loc
+      | TYCONSTRUCT (_, _, loc) => loc
+      | TYTUPLE(_, loc) => loc
+      | TYFUN (_, _, loc) => loc
+
+  fun getLocPat pat =
+      case pat of 
+        PATWILD loc => loc
+      | PATCONSTANT (_, loc) => loc
+      | PATID {opPrefix, id, loc} => loc
+      | PATRECORD {ifFlex, fields, loc} => loc
+      | PATTUPLE (_, loc) => loc
+      | PATLIST (_, loc) => loc
+      | PATAPPLY (_, loc) => loc
+      | PATTYPED (_, _, loc) => loc
+      | PATLAYERED (_, _, loc) => loc
+
+  fun replaceLoc (exp,loc) =
+    case exp of
+      EXPCONSTANT (constant,_) => EXPCONSTANT (constant,loc)
+    | EXPID (string,_) => EXPID (string,loc)
+    | EXPOPID (string,_) =>EXPOPID (string,loc)
+    | EXPRECORD (fields,_) =>EXPRECORD (fields,loc)
+    | EXPRECORD_UPDATE (exp,fields,_) =>EXPRECORD_UPDATE (exp,fields,loc)
+    | EXPRECORD_SELECTOR (string,_) =>EXPRECORD_SELECTOR (string,loc)
+    | EXPTUPLE (expList,_) =>EXPTUPLE (expList,loc)
+    | EXPLIST (expList,_) =>EXPLIST (expList,loc)
+    | EXPSEQ (expList,_) =>EXPSEQ (expList,loc)
+    | EXPAPP (expList,_) =>EXPAPP (expList,loc)
+    | EXPTYPED (exp,ty,_) =>EXPTYPED (exp,ty,loc)
+    | EXPCONJUNCTION (exp1,exp2, _) =>EXPCONJUNCTION (exp1,exp2, loc)
+    | EXPDISJUNCTION (exp1,exp2, _) =>EXPDISJUNCTION (exp1,exp2, loc)
+    | EXPHANDLE (exp1, rules, _) =>EXPHANDLE (exp1, rules, loc)
+    | EXPRAISE (exp,_) =>EXPRAISE (exp,loc)
+    | EXPIF (exp1, exp2, exp3, _) =>EXPIF (exp1, exp2, exp3, loc)
+    | EXPWHILE (exp1,exp2, _) =>EXPWHILE (exp1,exp2, loc)
+    | EXPCASE (exp1, rules, _) =>EXPCASE (exp1, rules, loc)
+    | EXPFN (rules, _) =>EXPFN (rules, loc)
+    | EXPLET (decList,expList,_) =>EXPLET (decList,expList,loc)
+    | EXPFFIVAL {funExp, libExp, argTyList, resultTy, ...} =>
+      EXPFFIVAL {funExp = funExp, libExp = libExp, argTyList = argTyList, resultTy = resultTy, loc = loc}
+    | EXPCAST (aexp, _) => EXPCAST(aexp, loc)
+
+end

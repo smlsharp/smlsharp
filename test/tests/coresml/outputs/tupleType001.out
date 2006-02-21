@@ -1,0 +1,7 @@
+type t1 = int * int
+val v1 = (1,2) : int * int
+type 'a t21 = 'a * int
+type t2 = int * int t21
+val v2 = (1,(2,3)) : t2
+type t3 = int * int -> int * int
+val v3 = fn : t3

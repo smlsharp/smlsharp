@@ -1,0 +1,13 @@
+val polySelfTail = fn : ['a .('a -> bool) -> ('a -> 'a) -> ['b .'b -> 'a -> 'b * 'a]]
+val polySelfTail_int_int = (1,0) : int * int
+val polySelfTail_real_real = (1.0,~1.0) : real * real
+val dummy = fn : ['a .'a -> 'a]
+val polySelfNonTail = fn : ['a .('a -> bool) -> ('a -> 'a) -> ['b .'b -> 'a -> 'a]]
+val polySelfNonTail_int_int = ~3 : int
+val polySelfNonTail_real_real = ~5.0 : real
+val polyNonSelfTail = fn : ['a .('a -> bool) -> ('a -> 'a) -> ['b .'b -> 'a -> 'b * 'a]]
+val polyNonSelfTail_int_int = (1,0) : int * int
+val polyNonSelfTail_real_real = (1.2,~1.0) : real * real
+val polyNonSelfNonTail = fn : ['a .('a -> bool) -> ('a -> 'a) -> ['b .'b -> 'a -> 'a]]
+val polyNonSelfNonTail_int_int = ~2 : int
+val polyNonSelfNonTail_real_real = ~4.0 : real

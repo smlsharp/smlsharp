@@ -1,0 +1,134 @@
+val fPP11 = fn : ['a .'a -> ['b .'b -> 'a * 'b]]
+val xPP111 = ((1, "a"), ("a", 2)) : (int * string) * (string * int)
+val xPP112 = ((1, "a"), (1, (1, 2))) : (int * string) * (int * (int * int))
+val fPP12 = fn : ['a .'a -> ['b .'b -> 'a * 'a]]
+val xPP121 = ((1, 1), ("a", "a")) : (int * int) * (string * string)
+val xPP122 = ((1, 1), (1, 1)) : (int * int) * (int * int)
+val fPP21 = fn : ['a .'a -> ['b .'b -> 'b * 'b]]
+val xPP211 = (("a", "a"), (2, 2)) : (string * string) * (int * int)
+val xPP212 = (("a", "a"), ((1, 2), (1, 2))) : (string * string) * ((int * int) * (int * int))
+val fPP22 = fn : ['a .'a -> ['b .'b -> bool]]
+val xPP221 = (true, true) : bool * bool
+val xPP222 = (true, true) : bool * bool
+val fMP11 = fn : int -> ['a .'a -> int * 'a]
+val xMP111 = ((1, "a"), (2, 1.23)) : (int * string) * (int * real)
+val xMP112 = ((1, "a"), (1, (1, 2))) : (int * string) * (int * (int * int))
+val fMP12 = fn : int -> ['a .'a -> int * int]
+val xMP121 = ((1, 1), (2, 2)) : (int * int) * (int * int)
+val xMP122 = ((1, 1), (1, 1)) : (int * int) * (int * int)
+val fMP21 = fn : ['a .'a -> ['b .'b -> 'b * 'b]]
+val xMP211 = (("a", "a"), (1.23, 1.23)) : (string * string) * (real * real)
+val xMP212 = (("a", "a"), ((1, 2), (1, 2))) : (string * string) * ((int * int) * (int * int))
+val fMP22 = fn : int -> ['a .'a -> bool]
+val xMP221 = (true, true) : bool * bool
+val xMP222 = (true, true) : bool * bool
+val fPM11 = fn : ['a .'a -> int -> 'a * int]
+val xPM111 = (("a", 1), (true, 2)) : (string * int) * (bool * int)
+val fPM12 = fn : ['a .'a -> int -> 'a * 'a]
+val xPM121 = (("a", "a"), (true, true)) : (string * string) * (bool * bool)
+val fPM21 = fn : ['a .'a -> int -> int * int]
+val xPM211 = ((1, 1), (2, 2)) : (int * int) * (int * int)
+val fPM22 = fn : ['a .'a -> int -> real]
+val xPM221 = (1.23, 1.23) : real * real
+val fPPP111 = fn : ['a .'a -> ['b .'b -> ['c .'c -> 'a * 'b * 'c]]]
+val xPPP1111 = ((1, "a", true), (1.23, 2, "c")) : (int * string * bool) * (real * int * string)
+val xPPP1112 = ((1, 1, "a"), (1, true, (1, 2)), (1.23, true, "a"), (1.23, 1, (1, 2))) : (int * int * string) *
+(int * bool * (int * int)) *
+(real * bool * string) *
+(real * int * (int * int))
+val fPPP112 = fn : ['a .'a -> ['b .'b -> ['c .'c -> 'a * 'b]]]
+val xPPP1121 = ((1, "a"), (1.23, 2)) : (int * string) * (real * int)
+val xPPP1122 = ((1, 1), (1, true), (1.23, true), (1.23, 1)) : (int * int) * (int * bool) * (real * bool) * (real * int)
+val fPPP121 = fn : ['a .'a -> ['b .'b -> ['c .'c -> 'a * 'c]]]
+val xPPP1211 = ((1, true), (1.23, "c")) : (int * bool) * (real * string)
+val xPPP1212 = ((1, "a"), (1, (1, 2)), (1.23, "a"), (1.23, (1, 2))) : (int * string) * (int * (int * int)) * (real * string) * (real * (int * int))
+val fPPP122 = fn : ['a .'a -> ['b .'b -> ['c .'c -> 'a * 'a]]]
+val xPPP1221 = ((1, 1), (1.23, 1.23)) : (int * int) * (real * real)
+val xPPP1222 = ((1, 1), (1, 1), (1.23, 1.23), (1.23, 1.23)) : (int * int) * (int * int) * (real * real) * (real * real)
+val fPPP211 = fn : ['a .'a -> ['b .'b -> ['c .'c -> 'b * 'c]]]
+val xPPP2111 = (("a", true), (2, "c")) : (string * bool) * (int * string)
+val xPPP2112 = ((1, "a"), (true, (1, 2)), (true, "a"), (1, (1, 2))) : (int * string) * (bool * (int * int)) * (bool * string) * (int * (int * int))
+val fPPP212 = fn : ['a .'a -> ['b .'b -> ['c .'c -> 'b * 'b]]]
+val xPPP2121 = (("a", "a"), (2, 2)) : (string * string) * (int * int)
+val xPPP2122 = ((1, 1), (true, true), (true, true), (1, 1)) : (int * int) * (bool * bool) * (bool * bool) * (int * int)
+val fPPP221 = fn : ['a .'a -> ['b .'b -> ['c .'c -> 'c * 'c]]]
+val xPPP2211 = ((true, true), ("c", "c")) : (bool * bool) * (string * string)
+val xPPP2212 = (("a", "a"), ((1, 2), (1, 2)), ("a", "a"), ((1, 2), (1, 2))) : (string * string) *
+((int * int) * (int * int)) *
+(string * string) *
+((int * int) * (int * int))
+val fPPP222 = fn : ['a .'a -> ['b .'b -> ['c .'c -> real]]]
+val xPPP2221 = (1.23, 1.23) : real * real
+val xPPP2222 = (1.23, 1.23, 1.23, 1.23) : real * real * real * real
+val fMMP111 = fn : int -> int -> ['a .'a -> int * int * 'a]
+val xMMP1111 = ((2, 3, true), (3, 4, "c")) : (int * int * bool) * (int * int * string)
+val fMMP112 = fn : int -> int -> ['a .'a -> int * int]
+val xMMP1121 = ((2, 3), (3, 4)) : (int * int) * (int * int)
+val fMMP121 = fn : int -> int -> ['a .'a -> int * 'a]
+val xMMP1211 = ((2, true), (3, "c")) : (int * bool) * (int * string)
+val fMMP122 = fn : int -> int -> ['a .'a -> int]
+val xMMP1221 = (2, 3) : int * int
+val fMMP211 = fn : int -> int -> ['a .'a -> int * 'a]
+val xMMP2111 = ((3, true), (4, "c")) : (int * bool) * (int * string)
+val fMMP212 = fn : int -> int -> ['a .'a -> int]
+val xMMP2121 = (3, 4) : int * int
+val fMMP221 = fn : int -> int -> ['a .'a -> 'a]
+val xMMP2211 = (true, "c") : bool * string
+val fMMP222 = fn : int -> int -> ['a .'a -> bool]
+val xMMP2221 = (true, true) : bool * bool
+val fMPP111 = fn : int -> ['a .'a -> ['b .'b -> int * 'a * 'b]]
+val xMPP1111 = ((2, 2, true), (3, 1.23, "c")) : (int * int * bool) * (int * real * string)
+val xMPP1112 = ((2, "a", 1.23), (2, "a", false), (2, true, 1.23), (2, true, false)) : (int * string * real) *
+(int * string * bool) *
+(int * bool * real) *
+(int * bool * bool)
+val fMPP112 = fn : int -> ['a .'a -> ['b .'b -> int * 'a]]
+val xMPP1121 = ((2, 2), (3, 1.23)) : (int * int) * (int * real)
+val xMPP1122 = ((2, "a"), (2, "a"), (2, true), (2, true)) : (int * string) * (int * string) * (int * bool) * (int * bool)
+val fMPP121 = fn : int -> ['a .'a -> ['b .'b -> int * 'b]]
+val xMPP1211 = ((2, true), (3, "c")) : (int * bool) * (int * string)
+val xMPP1212 = ((2, 1.23), (2, false), (2, 1.23), (2, false)) : (int * real) * (int * bool) * (int * real) * (int * bool)
+val fMPP122 = fn : int -> ['a .'a -> ['b .'b -> int]]
+val xMPP1221 = (2, 3) : int * int
+val xMPP1222 = (2, 2, 2, 2) : int * int * int * int
+val fMPP211 = fn : int -> ['a .'a -> ['b .'b -> 'a * 'b]]
+val xMPP2111 = ((2, true), (1.23, "c")) : (int * bool) * (real * string)
+val xMPP2112 = (("a", 1.23), ("a", false), (true, 1.23), (true, false)) : (string * real) * (string * bool) * (bool * real) * (bool * bool)
+val fMPP212 = fn : int -> ['a .'a -> ['b .'b -> 'a]]
+val xMPP2121 = (2, 1.23) : int * real
+val xMPP2122 = ("a", "a", true, true) : string * string * bool * bool
+val fMPP221 = fn : int -> ['a .'a -> ['b .'b -> 'b]]
+val xMPP2211 = (true, "c") : bool * string
+val xMPP2212 = (1.23, false, 1.23, false) : real * bool * real * bool
+val fMPP222 = fn : int -> ['a .'a -> ['b .'b -> bool]]
+val xMPP2221 = (true, true) : bool * bool
+val xMPP2222 = (true, true, true, true) : bool * bool * bool * bool
+val fPMP111 = fn : ['a .'a -> int -> ['b .'b -> 'a * int * 'b]]
+val xPMP1111 = ((1, 3, true), (1.23, 4, "c")) : (int * int * bool) * (real * int * string)
+val xPMP1112 = ((1, 3, 1.23), (1, 3, false), (1.23, 3, 1.23), (1.23, 3, false)) : (int * int * real) *
+(int * int * bool) *
+(real * int * real) *
+(real * int * bool)
+val fPMP112 = fn : ['a .'a -> int -> ['b .'b -> 'a * int]]
+val xPMP1121 = ((1, 3), (1.23, 4)) : (int * int) * (real * int)
+val xPMP1122 = ((1, 3), (1, 3), (1.23, 3), (1.23, 3)) : (int * int) * (int * int) * (real * int) * (real * int)
+val fPMP121 = fn : ['a .'a -> int -> ['b .'b -> 'a * 'b]]
+val xPMP1211 = ((1, true), (1.23, "c")) : (int * bool) * (real * string)
+val xPMP1212 = ((1, 1.23), (1, false), (1.23, 1.23), (1.23, false)) : (int * real) * (int * bool) * (real * real) * (real * bool)
+val fPMP122 = fn : ['a .'a -> int -> ['b .'b -> 'a]]
+val xPMP1221 = (1, 1.23) : int * real
+val xPMP1222 = (1, 1, 1.23, 1.23) : int * int * real * real
+val fPMP211 = fn : ['a .'a -> int -> ['b .'b -> int * 'b]]
+val xPMP2111 = ((3, true), (4, "c")) : (int * bool) * (int * string)
+val xPMP2112 = ((3, 1.23), (3, false), (3, 1.23), (3, false)) : (int * real) * (int * bool) * (int * real) * (int * bool)
+val fPMP212 = fn : ['a .'a -> int -> ['b .'b -> int]]
+val xPMP2121 = (3, 4) : int * int
+val xPMP2122 = (3, 3, 3, 3) : int * int * int * int
+val fPMP221 = fn : ['a .'a -> int -> ['b .'b -> 'b]]
+val xPMP2211 = (true, "c") : bool * string
+val xPMP2212 = (1.23, false, 1.23, false) : real * bool * real * bool
+val fPMP222 = fn : ['a .'a -> int -> ['b .'b -> bool]]
+val xPMP2221 = (true, true) : bool * bool
+val xPMP2222 = (true, true, true, true) : bool * bool * bool * bool
+
+

@@ -1,0 +1,26 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@commonrule
+
+VPATH = $(srcdir)
+
+SOURCES = Log.cc
+
+OBJECTS = $(SOURCES:.cc=.$(OBJEXT))
+
+TARGETS = libimlruntimecore.$(LIBEXT)
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(OBJECTS) $(TARGETS)
+
+libimlruntimecore.$(LIBEXT): $(OBJECTS)
+	$(AR) rcu $@ $(OBJECTS)
+	-$(RANLIB) $@
+
+# FIXME: dependency
+Log.$(OBJEXT): Log.hh

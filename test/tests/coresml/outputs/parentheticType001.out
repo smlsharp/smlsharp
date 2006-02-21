@@ -1,0 +1,14 @@
+type 'a t1 = 'a
+val v1 = 1 : int t1
+type t2 = {x:int}
+val v2 = {x=2} : t2
+type t3 = int
+val v3 = 3 : t3
+type ('a,'b) t41 = 'a * 'b * bool
+type t4 = (int,string) t41
+val v4 = (4,"four",false) : t4
+type t5 = int -> int
+val v5 = fn : t5
+type ('a,'b) t61 = 'a * 'b * bool
+type t6 = (int,string) t61
+val v6 = (6,"six",true) : t6

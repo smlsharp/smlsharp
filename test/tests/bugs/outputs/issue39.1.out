@@ -1,0 +1,58 @@
+../tests/bugs/tests/issue39.1.sml:2.10-2.37 Error: duplicate label in record:a
+../tests/bugs/tests/issue39.1.sml:2.10-2.37 Error: duplicate label in record:b
+
+../tests/bugs/tests/issue39.1.sml:5.13-5.40 Error: duplicate label in
+                                                   record pattern:a
+../tests/bugs/tests/issue39.1.sml:5.13-5.40 Error: duplicate label in
+                                                  record pattern:b
+
+../tests/bugs/tests/issue39.1.sml:6.8-6.35 Error: duplicate label in
+                                                  record pattern:a
+../tests/bugs/tests/issue39.1.sml:6.8-6.35 Error: duplicate label in
+                                                  record pattern:b
+
+../tests/bugs/tests/issue39.1.sml:9.32-9.72 Error: duplicate label in
+                                                   a record type:a
+../tests/bugs/tests/issue39.1.sml:9.32-9.72 Error: duplicate label in
+                                                   a record type:b
+
+../tests/bugs/tests/issue39.1.sml:11.27-11.67 Error: duplicate label in
+                                                   a record type:a
+../tests/bugs/tests/issue39.1.sml:11.27-11.67 Error: duplicate label in
+                                                   a record type:b
+
+../tests/bugs/tests/issue39.1.sml:12.23-12.63 Error: duplicate label in
+                                                   a record type:a
+../tests/bugs/tests/issue39.1.sml:12.23-12.63 Error: duplicate label in
+                                                  a record type:b
+
+../tests/bugs/tests/issue39.1.sml:13.11-13.51 Error: duplicate label in
+                                                  a record type:a
+../tests/bugs/tests/issue39.1.sml:13.11-13.51 Error: duplicate label in
+                                                   a record type:b
+
+../tests/bugs/tests/issue39.1.sml:14.21-14.61 Error: duplicate label in
+                                                   a record type:a
+../tests/bugs/tests/issue39.1.sml:14.21-14.61 Error: duplicate label in
+                                                  a record type:b
+
+../tests/bugs/tests/issue39.1.sml:15.17-15.57 Error: duplicate label in
+                                                  a record type:a
+../tests/bugs/tests/issue39.1.sml:15.17-15.57 Error: duplicate label in
+                                                   a record type:b
+
+../tests/bugs/tests/issue39.1.sml:16.28-16.68 Error: duplicate label in
+                                                   a record type:a
+../tests/bugs/tests/issue39.1.sml:16.28-16.68 Error: duplicate label in
+                                                  a record type:b
+
+../tests/bugs/tests/issue39.1.sml:17.12-17.52 Error: duplicate label in
+                                                  a record type:a
+../tests/bugs/tests/issue39.1.sml:17.12-17.52 Error: duplicate label in
+                                                  a record type:b
+
+../tests/bugs/tests/issue39.1.sml:18.13-18.53 Error: duplicate label in
+                                                  a record type:a
+../tests/bugs/tests/issue39.1.sml:18.13-18.53 Error: duplicate label in
+                                                     a record type:b
+

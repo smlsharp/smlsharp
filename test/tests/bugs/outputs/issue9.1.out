@@ -1,0 +1,6 @@
+issue9.1.temp:1.1-1.31 Warning: dummy type variable(s) X1, X0 are introduced due
+                                to value restriction
+val it = fn : X0 * X1 -> X0 * X1
+issue9.1.temp:2.1-2.31 Warning: dummy type variable(s) X1, X0 are introduced due
+                                to value restriction
+val it = fn : X0 * X1 -> X0 * X1

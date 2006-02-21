@@ -1,0 +1,23 @@
+functor F (P : sig datatype dt con D : dt val x : int end) :
+  sig
+    val x : P.dt * int
+    val y : P.dt * int
+    structure P : sig datatype dt con D : dt val x : int end
+  end
+structure S : sig datatype dt con D : dt val x : int end
+structure T
+: sig
+  val x : S.dt * int
+  val y : P.dt * int
+  structure P : sig datatype dt con D : dt val x : int end
+  end
+val x1 = D : S.dt
+val x2 = 1 : int
+val y1 = D : T.P.dt
+val y2 = 2 : int
+../tests/module/tests/functor015.sml:16.10-16.16 Error: operator and operand
+                                                        don't agree
+                                                        operator domain: S.dt *
+                                                                         S.dt
+                                                        operand: S.dt * T.P.dt
+

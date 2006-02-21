@@ -1,0 +1,4 @@
+signature S2 = sig type t1 type t2 sharing type t1 = t2 end
+../tests/bugs/tests/issue107.1.sml:8.11-12.3 Error: Signature mismatch (tycon
+                                                    sharing): t1 t2
+

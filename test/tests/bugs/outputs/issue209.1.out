@@ -1,0 +1,5 @@
+datatype dt21
+con D21 : int * real -> dt21
+type t = int * real
+datatype dt21
+con D21 : t -> dt21

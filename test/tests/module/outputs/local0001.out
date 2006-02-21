@@ -1,0 +1,8 @@
+structure S11 : sig val x : S.dt * S.dt end
+val x11 = (-, -) : S.dt * S.dt
+structure S12 : sig datatype dt con D : dt val x : dt end
+val x12 = (D, D) : S12.dt * S12.dt
+structure S21 : sig val x : S21.dt * S21.dt end
+val x21 = (-, -) : S21.dt * S21.dt
+structure S22 : sig datatype dt con D : dt val x : dt end
+val x22 = (D, D) : S22.dt * S22.dt

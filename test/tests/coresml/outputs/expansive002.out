@@ -1,0 +1,36 @@
+val id = fn : ['a .'a -> 'a]
+val vrecord = {a = fn, b = 1} : {a:['a .'a -> 'a] , b:int}
+val vlet = fn : ['a .'a -> 'a]
+../tests/coresml/tests/expansive002.sml:27.1-27.35 Warning: dummy type
+                                                             variable(s) X0 are
+                                                             introduced due to
+                                                             value restriction
+val vapp1 = fn : X0 -> X0
+../tests/coresml/tests/expansive002.sml:28.1-28.26 Warning: dummy type
+                                                             variable(s) X0 are
+                                                             introduced due to
+                                                             value restriction
+val vapp2 = fn : X0 -> X0
+../tests/coresml/tests/expansive002.sml:29.1-29.26 Warning: dummy type
+                                                             variable(s) X0 are
+                                                             introduced due to
+                                                             value restriction
+val vapp3 = fn : X0 -> X0
+datatype 'a dt1
+con D : ['a .int -> 'a dt1]
+val vconstructed1 = D 2 : ['a .'a dt1]
+../tests/coresml/tests/expansive002.sml:37.1-37.18 Warning: dummy type
+                                                             variable(s) X0 are
+                                                             introduced due to
+                                                             value restriction
+val vref1 = ref fn : (X0 -> X0) ref
+val vref2 = {a = fn, b = ref 1} : {a:['a .'a -> 'a] , b:int ref}
+../tests/coresml/tests/expansive002.sml:43.1-43.31 Warning: dummy type
+                                                             variable(s) X0 are
+                                                             introduced due to
+                                                             value restriction
+val vhandle = fn : X0 -> X0
+exception E : exn
+val vraise = fn : int -> ['a .'a dt1]
+val vcase1 = fn : ['a .'a -> 'a]
+val vcase2 = (fn, 2) : ['a .'a -> 'a] * int

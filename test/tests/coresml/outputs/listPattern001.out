@@ -1,0 +1,9 @@
+val f1 = fn : ['a.'a list -> int]
+val v1 = 1 : int
+val f2 = fn : int list -> int
+val v2 = 1 : int
+val f3 = fn : int list -> int
+val v3 = 3 : int
+val f4 = fn : int list -> int
+val v4 = 6 : int
+

@@ -1,0 +1,8 @@
+type 'a t11 = 'a * int
+val v11 = ("foo",2) : string t11
+type 'a t12 = 'a * int * 'a
+val v12 = (true,12,false) : bool t12
+type ('a,'b) t21 = 'a * int * 'b
+val v21 = (false,21,"bar") : (bool,string) t21
+type ('a,'b) t22 = 'a * int * 'a * 'b * real * 'b
+val v22 = (true,22,false,"baz",1.23,"boo") : (bool,string) t22

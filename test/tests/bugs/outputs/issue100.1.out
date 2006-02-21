@@ -1,0 +1,6 @@
+structure A : sig datatype s con foo : s end
+structure B : sig datatype s con foo : s end
+val x = foo : B.s
+structure C : sig datatype t con bar : t end
+structure D : sig datatype t con bar : t end
+val y = bar : D.t

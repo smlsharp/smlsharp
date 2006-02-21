@@ -1,0 +1,45 @@
+
+                  Compiling and Installing SML#
+
+== Requirements
+
+The following softwares are required to build and install SML#:
+
+  * GNU C compiler (version 3.4.0 or higher)
+  * GNU make
+  * Standard ML of New Jersey (version 110.0.7)
+
+The following modules are required to build, but they are in the
+same package.
+
+  * SMLFormat
+  * SMLDoc
+  * SMLUnit
+
+
+== Quick Start
+
+  % ./configure
+  % make
+  % make install
+
+Things will be installed under /usr/local/bin and /usr/local/lib/smlsharp.
+
+If you meet some troubles caused by C compiler, rerun configure
+to try to compile with another compiler.
+
+  % CXX=<ANOTHER_COMPILER> ./configure
+
+
+== Customizing install location
+
+Run configure with --prefix option to specify where to install.
+
+  % ./configure --prefix=<PREFIX>
+
+If the --prefix option is omitted, /usr/local is assumed as PREFIX.
+Things are installed in those locations:
+
+  <PREFIX>/bin/smlsharp          SML# compiler
+  <PREFIX>/bin/smlsharprun       SML# runtime
+  <PREFIX>/lib/smlsharp/         Directory for libraries of SML#

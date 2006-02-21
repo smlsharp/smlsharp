@@ -1,0 +1,12 @@
+signature S = sig val x : int end
+structure S1 : S
+structure S2 : S
+../tests/module/tests/valSpecMatching0003.sml:36.11-40.3 Error: Signature
+                                                                mismatch
+                                                                (instance): x :
+                                                                
+                                                                structure: string
+                                                                spec: int
+
+
+

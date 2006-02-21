@@ -1,0 +1,2 @@
+val mkWriter = fn : ['a .'a -> {name:'a , writeArr:unit , writeArrNB:unit}]
+val it = { name = "", writeArr = (), writeArrNB = () } : {name:string , writeArr:unit , writeArrNB:unit}

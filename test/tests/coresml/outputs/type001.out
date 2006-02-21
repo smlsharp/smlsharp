@@ -1,0 +1,8 @@
+type t1 = int
+val v1 = 1 : t1
+type 'a t2 = 'a * int
+val v2 = (true,2) : bool t2
+type ('a,'b) t3 = {a:'a , b:'b}
+val v3 = {a=3,b=false} : (int,bool) t3
+type ('a,'b) t4 = {a:'a}
+val v4 = {a=3} : (int, bool) t4

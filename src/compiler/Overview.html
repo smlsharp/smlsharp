@@ -1,0 +1,450 @@
+<html>
+<head>
+<title>Overview of the IML compiler implemenation.</title>
+</head>
+<body>
+
+<hr>
+<hr>
+
+<h2>
+Overview of the IML compiler implemenation.
+</h2>
+
+<dl>
+<dt>author</dt>
+<dd>YAMATODANI Kiyoshi</dd>
+<dt>version</dt>
+<dd>$Id: Overview.html,v 1.5 2005/03/04 14:49:34 kiyoshiy Exp $</dd>
+</dl>
+
+<hr>
+<h2>
+1, Software development
+</h2>
+
+<p>
+Software development is process of translation between descriptions of the world, for the purpose of sharing a precise common understanding about the world among us and computers.
+Descriptions can include formal ones like mathematical logic, and informal ones such as natural language and diagram.
+We call these descriptions "software" as a whole.
+</p>
+
+<p>
+Each of descriptions is based on some particular principle of recognition.
+In other words, it assumes that this principle governs the world in two aspects of space and time.
+<ul>
+  <li>What kind of existences fill space of the world ?</li>
+  <li>How existences in the world change with time ?</li>
+</ul>
+For example, we can perceive that the world is filled with objects that change their status in response to received messages.
+Alternatively, in another extreme view, everything in the world is function and they are fused by function application to generate a new existence.
+</p>
+
+<p>
+Here, the "world" does not necessarily mean the whole of the world, the universe.
+Each development project targets a particular domain of the world.
+</p>
+
+<p>
+In sum, software is a set of descriptions about the application domain in the world based on several recognition principles.
+</p>
+
+<! ------------------------------------------------------------------------- !>
+<hr>
+<h3>
+2, Programming language
+</h3>
+
+<p>
+Programming language is one of methods for descriptions which achieves both of practical applicability and formal accuracy in some balance.
+And it also embodies some particular recognition principle as its foundation.
+For example, Java assumes the world of "everything is object", and ML assumes "everything is function".
+</p>
+
+<p>
+Choice of a programming language that is based on an appropriate principle is important for success of development.
+If the principle natural to the application domain and the principle of the selected language do not match, it will cause an increase of development cost and possibility of errors.
+</p>
+
+<! ------------------------------------------------------------------------- !>
+<hr>
+<h3>
+3, Compiler
+</h3>
+
+<p>
+Compilation is the last part of the translation process.
+Through compilation, a description from human's view is translated into another description from computer's view.
+</p>
+
+<p>
+Compiler performs this translation of compilation.
+It accepts a source description and generates a destination description.
+It converts recognition principles and representations of these descriptions, while preserving the image they denote.
+</p>
+
+<p>
+The source description is written in a programming language which is based on some characteristic principle as exemplified above.
+On the other end, characteristic of the description based on computer's recognition is that it is "sequential". Atomic operations are ordered in a row according to their execution sequence. Entities are represented as a sequence of bits and they are denoted by its position within a sequence of memory slots.
+Compiler must perform conversion between these principles.
+</p>
+
+<p>
+Conversion of representations is also the task of compiler.
+At representation level, most of compilers are translators from sequence to sequence.
+They accept a sequence of characters as its input and generate a sequence of instructions as its output.
+</p>
+
+<! ------------------------------------------------------------------------- !>
+<hr>
+<h3>
+4, Core modules of IML compiler
+</h3>
+
+<p>
+Compilation is performed by a series of three essential operations.
+<ol>
+ <li>accepts a source description, usually in a sequential form.</li>
+ <li>converts recognition principle.</li>
+ <li>generates a destination description, usually in a sequential form.</li>
+</ol>
+
+<p>
+The IML compiler implementation is composed of many modules.
+Among them, core modules which do the above operations are Parser, ANormalTransformer, Assembler and InstructionSerializer.
+These modules are invoked in the following sequence.
+<ol>
+  <li>Parser</li>
+  <li>ANormalTransformer</li>
+  <li>Assembler</li>
+  <li>InstructionSerializer</li>
+</ol>
+</p>
+
+<p>
+Principle conversion is done by ANormalTransformer for time aspect and by Assembler for space aspect.
+</p>
+
+<p>
+ANormalTransformer decomposes a source expression into a sequence of atomic computations aligned in their evaluation order. 
+There are several methods to represent sequence of atomic computations explicitly, such as CPS(continuation passing style), SSA(single static assignment) and etc. 
+Among them, the IML compiler adopts A-normal form.
+</p>
+
+<p>
+The source language ML assumes some kind of discrete world where entities can be referred to only by symbolic name.
+Assembler maps these entities to relative positions and regions in a sequence which is a model of the memory.
+Concretely speaking, Assembler determines locations in the memory where results of evaluation are stored and those where codes are placed.
+</p>
+
+<p>
+Parser and InstructionSerializer perform representation conversion.
+Parser deserializes a sequence of characters into an abstract syntax tree.
+InstructionSerializer serializes a sequence of abstract instructions into a sequence of bytes.
+</p>
+
+<p>
+The below is the sequence of core modules and forms of descriptions passed between them.
+<pre>
+   character sequence
+           |
+        (Parser)
+           |
+   abstract syntax tree
+           |
+   (ANormalTransformer)
+           |
+      A-normal form
+           |
+      (Assembler)
+           |
+   abstract instruction
+           |
+  (InstructionSerializer)
+           |
+     bytes sequence
+</pre>
+</p>
+
+<! ------------------------------------------------------------------------- !>
+<hr>
+<h3>
+5, Compilation of high-level language
+</h3>
+
+<p>
+Compilation is just a part of software development process.
+Manual translations precede this automatic translation.
+Initial informal image about the world is formalized to a description in a formal language gradually through manual translation phases, such as requirements analysis, basic design, detail design and so on.
+</p>
+
+<p>
+To extend the range covered by automatic compilation to eliminate manual works is one of main directions in research of programming language.
+A principal approach is to design programming languages closer to human's natural recognition. This may require invention of novel programming principle.
+Alternatively, more moderate and immediate approaches aim to reduce necessary volume of manual description by extending an existing language. Syntax sugar of most languages and type inference in ML are among them, for example.
+</p>
+
+<p>
+Both approaches bring what we call "high-level language" which can make a positive effect on development process.
+But, this means also increase of the distance between the programming language and the destination language of compilation.
+Therefore, compiler for high-level language must perform complicated task.
+An approach to handle such complication is to break down the compilation process into tractable phases.
+</p>
+
+<p>
+Those phases can be divided into two groups: front-end phases that precede principle conversion and back-end phases that follow principle conversion.
+Front-end phases are under the principle of the source language.
+Back-end phases are under the principle of the destination language, or runtime.
+</p>
+
+<! ------------------------------------------------------------------------- !>
+<hr>
+<h3>
+6, Front-end phases
+</h3>
+
+<p>
+The transformation from a character sequence to A-normal form is divided to several phases. In the IML compiler implementation, these phases are implemented by modules from Parser to ANormalTransformer.
+</p>
+
+<p>
+Parser generates an abstract syntax tree from a character sequence.
+ANormalTransformer performs the last part of transformation from a syntax tree to A-normal form.
+Phases between them perform preliminary transformations to A-normal form. Roughly speaking, these phases perform two kinds of transformations.
+</p>
+
+<dl>
+<dt>augmentation</dt>
+<dd>
+They augment the syntax tree by annotating it with semantic informations.
+Semantic informations include reference information and type information.
+Reference information links each reference with a binding which it indicates.
+For example, a variable expression is annotated with the information about the value binding which the name of the variable points to.
+Type information is attached to each expression, and is used heavily by phases of front-end and back-end.
+And, a source code that is syntactically correct but semantically not correct is rejected at this process.
+</dd>
+
+<dt>granulation</dt>
+<dd>
+They increase the granularity of constituent terms of the syntax tree by replacing them with combinations of more "atomic" terms.
+Atomicity of term is defined depending on the definition of "atomicity" in A-normal form, which depends on the target language of compilation further.
+For example, a "case" expression is transformed into a combination of "compare-branch" expressions, if "compare-branch" is atomic but "case" is not atomic in the A-normal form. (The current IML compiler implementation transforms "case" to "switch".)
+</dd>
+</dl>
+
+<p>
+The front-end phases are implemented by the following modules.
+<ul>
+  <li>Parser</li>
+  <li>Elaborator</li>
+  <li>TypeInferencer</li>
+  <li>MatchCompiler</li>
+  <li>RecordCompiler</li>
+  <li>ANormalTransformer</li>
+</ul>
+They are invoked in this sequence.
+</p>
+
+<p>
+Elaborator performs a part of granulation which does not require semantic information.
+</P
+
+<p>
+TypeInferencer performs augmentation.
+</p>
+
+<p>
+MatchCompiler and RecordCompiler perform granulations of particular kinds of expressions. MatchCompiler targets pattern matching expressions, RecordCompiler targets block manipulation expressions.
+</p>
+
+<p>
+Finally, ANormalTransformer sequences the half-granulated syntax tree into A-normal form.
+</p>
+
+<! ------------------------------------------------------------------------- !>
+<hr>
+<h3>
+7, Back-end phases
+</h3>
+
+<p>
+Back-end phases follow front-end phases.
+</p>
+
+<p>
+They calculate locations of variables and codes in the program.
+Locations are encoded to the offset from the stack top of the slot allocated for a variable, the distance between destination and source of execution jump, and so on, depending on the target architecture.
+For the following reasons, this conversion cannot be performed until the front-end phases finish the temporal aspect conversion.
+<ul>
+ <li>The spatial layout cannot be fixed until all variable bindings and all atomic operations are determined.</li>
+ <li>It varies depending on the architecture of the target machine.</li>
+</ul>
+</p>
+
+<p>
+And other transformations that depend on the detail of the target machine are also performed in the back-end phases.
+</p>
+
+<p>
+The back-end phases in the IML compiler perform the following translations.
+<ul>
+  <li>bitmap compilation</li>
+  <li>assemble</li>
+  <li>serialize</li>
+</ul>
+The bitmap compilation is a features of the IML compiler and runtime. It augments the A-normal form with bitmap informations. Bitmap informations indicate runtime type of variables and fields of blocks. They are calculated from type informations annotating terms.
+The assemble maps atomic operations in the A-normal form to machine instructions, and performs the layout calculation.
+The serialize generates a binary sequence encoding machine instructions.
+</p>
+
+<p>
+For implementation reason, these translations are divided to the following modules.
+<ul>
+  <li>BitmapCompiler</li>
+  <li>UntypedBitmapCompiler</li>
+  <li>Linearizer</li>
+  <li>Assembler</li>
+  <li>InstructionSerializer</li>
+</ul>
+</p>
+
+<! ------------------------------------------------------------------------- !>
+<hr>
+<h3>
+8, Auxiliary phases
+</h3>
+
+<p>
+Above mentioned phases are indispensable for implementing compilation.
+There are other phases that perform additional functions to give practical utility to the compiler.
+</p>
+
+<h4>
+8.1, Optimization
+</h4>
+
+<p>
+As mentioned earlier, programming language research has made efforts to increase the distance between the source language and the destination language, or machine language.
+</p>
+
+<p>
+On the other end, because of requirement for efficient compilation and execution, there is a constraint to keep them close to each other.
+A practical programming language should achieve a balance between the abstraction matching its target domain and the efficiency in compilation and execution.
+And it is another direction of programming language research to develop compilation algorithms that achieve such efficiencies to relax that constraint.
+<pre>
+                | <------ language design -----> |
+source language |                                | machine language
+                | --> language implementaion <-- |
+</pre>
+
+</p>
+
+<p>
+In the IML compiler implementation, phases mentioned above are designed with taking into consideration efficiency.
+Furthermore, there are phases committed specially to optimization.
+<ul>
+  <li>TypedLambdaOptimizer</li>
+  <li>VALREC_Optimizer</li>
+</ul>
+More optimization phases are expected to be implemented in future.
+</p>
+
+<h4>
+8.2, Other auxiliary phases
+</h4>
+
+<p>
+The PrinterGenerator inserts into the program some codes that print the evaluation result in human-readable format.
+</p>
+
+<p>
+The TypeCheck checks the correctness of intermediate representations that are generated by internal phases.
+</p>
+
+<! ------------------------------------------------------------------------- !>
+<hr>
+<h3>
+9, Interface modules
+</h3>
+
+<p>
+A compiler has to interact with external data stores to perform its functionality.
+It reads a character sequence from a data store, and emits a byte sequence into another store.
+</p>
+
+<p>
+For traditional compiler, it was sufficient if it could read a source code from a file and put a machine code into another file.
+But modern compilers have to be invoked in various situations, and to access various data stores.
+</p>
+
+<p>
+Compilation is just a part integrated in the whole development process.
+There is a trend toward seamless intermixing of phases in software life cycle.
+Compilation may occur during coding, test, deployment, and execution.
+Compiler may be invoked by terminal user, by IDE, by application server and so on.
+Source code may come from file, from memory, from another process and so on.
+Compiled code may go similarly.
+</p>
+
+<p>
+Implementation of compiler should be designed to deal with such requirements.
+</p>
+
+<p>
+The IML compiler implementation contains interface modules.
+They mediate the compiler modules and the external stores.
+</p>
+
+<p>
+Channel modules are abstractions of I/O operations on various data stores: memory, file, socket, terminal.
+</p>
+
+<p>
+Session modules are abstractions of interaction with execution runtime.
+</p>
+
+<p>
+Top module coordinates them and the compilation modules described above to a complete compiler as shown in the following diagram.
+It also implements interaction with user on terminal.
+<pre>
+  user <--(Channel)--> Top <--> Session <--(Channel)--> runtime
+                        |
+                        |
+               Parser, ..., InstructionSerializer
+</pre>
+</p>
+
+<! ------------------------------------------------------------------------- !>
+
+<!--  <hr> -->
+<!--  <h3> -->
+<!--  10, Interoperability -->
+<!--  </h3> -->
+
+<!--  <p> -->
+<!--  current widespread use of object-orientation  -->
+<!--  it may be because of its generality, natural to human's view. -->
+<!--  seemless transition analysys, design to coding -->
+<!--  </p> -->
+
+<!--  <p> -->
+<!--  project bigger -->
+<!--  there will be case  -->
+<!--  requires multi principle development -->
+<!--  </p> -->
+
+<!--  <p> -->
+<!--  approach to multi principle development -->
+<!--  language design -->
+<!--  * incorporate several principles -->
+<!--  there are object-XX -->
+<!--  language specification -->
+<!--  which makes a barrier for compiler implementation -->
+<!--  </p> -->
+<!--  <p> -->
+<!--  purity -->
+<!--  theoretical clean -->
+<!--  </p> -->
+
+</body>
+</html>

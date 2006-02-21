@@ -1,0 +1,21 @@
+Group is
+        ../../../../configuration/sources.cm
+        ../../../toplevel/sources.cm
+        ../../../control/sources.cm
+        ../../../env/sources.cm
+        ../../../session/sources.cm
+        ../../../util/sources.cm
+        ../../../pickle/sources.cm
+
+        GET_OPT.sig
+        GetOpt.sml
+
+#if defined(structure Posix)
+        FileSysUtil_Posix.sml
+        RuntimeProxyFactory_Unix.sml
+#else
+        RuntimeProxyFactory_General.sml
+        FileSysUtil_General.sml
+#endif
+
+        Main.sml

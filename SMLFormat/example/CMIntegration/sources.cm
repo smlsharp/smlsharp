@@ -1,0 +1,11 @@
+Group
+is
+        ../../smlpplib.cm
+
+#if (defined(structure PPGSourceTool))
+        Tree.ppg:ppg
+#else
+        Tree.ppg.sml
+#endif
+
+        Main.sml

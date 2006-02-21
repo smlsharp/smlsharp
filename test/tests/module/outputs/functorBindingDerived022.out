@@ -1,0 +1,11 @@
+signature SVal = sig val y : int end
+structure PVal : sig val x : int end
+functor FVal ('X : sig val x : int end) : sig val y : int end
+structure TVal : sig val y : int end
+val xVal = 2 : int
+functor FValTrans ('X : sig val x : int end) : SVal
+structure TValTrans : sig val y : int end
+val xValTrans = 2 : int
+functor FValOpaq ('X : sig val x : int end) : SVal
+structure TValOpaq : sig val y : int end
+val xValOpaq = 2 : int

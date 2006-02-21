@@ -1,0 +1,17 @@
+Group is
+	../../../smlformatlib.cm
+        smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../format/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../types/sources.cm
+        ../../typedcalc/sources.cm
+        ../../recordcalc/sources.cm
+        ../../typedlambda/sources.cm
+	../../name/sources.cm
+        RECORD_COMPILER.sig
+        RecordCompiler.sml
+
+

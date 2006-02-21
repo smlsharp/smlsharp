@@ -1,0 +1,22 @@
+signature S =
+sig type t1 type t2 type t3 val x : t1 * t2 * t3 end
+where type t1 = int
+where type t2 = string
+where type t3 = bool
+structure S
+: sig
+    type t1 = int
+    type t2 = string
+    type t3 = bool
+    val x : int * string * bool
+  end
+structure STrans : S
+val xTrans1 = 1 : STrans.t1
+val xTrans2 = "a" : STrans.t2
+val xTrans3 = true : STrans.t3
+structure SOpaque : S
+val xOpaque1 = 1 : SOpaque.t1
+val xOpaque2 = "a" : SOpaque.t2
+val xOpaque3 = true : SOpaque.t3
+
+

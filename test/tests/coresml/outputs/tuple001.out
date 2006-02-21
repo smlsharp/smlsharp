@@ -1,0 +1,11 @@
+val f1 = fn : ['a .'a -> 'a * 'a]
+val v11 = (1, 1) : int * int
+val v12 = ("foo", "foo") : string * string
+val v2 = ({x = 1}, {y = 2}) : {x:int} * {y:int}
+val v31 = (1, 2) : int * int
+val v32 = ("foo", "bar") : string * string
+datatype 'a t4
+con C4 : ['a .'a -> 'a t4]
+val v4 = (C4 1, C4 "foo") : int t4 * string t4
+val v5 = (fn, fn) : (int -> int) * (int -> int)
+val v6 = (fn, fn) : ['a .'a -> 'a] * ['a .'a -> 'a * 'a]

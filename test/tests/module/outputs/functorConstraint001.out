@@ -1,0 +1,8 @@
+signature SVal = sig val x : int end
+structure PVal : sig val x : bool end
+functor FValTrans (S : sig val x : bool end) : SVal
+structure SValTrans : sig val x : int end
+val xValTrans = 1 : int
+functor FValOpaque (S : sig val x : bool end) : SVal
+structure SValOpaque : sig val x : int end
+val xValOpaque = 1 : int

@@ -1,0 +1,25 @@
+Group is
+        ../main/sources.cm
+        ../smlunitlib.cm
+
+        SMLFormatTestUtil.sml
+
+        SMLFormatTest0001.sml
+        SMLFormatTest0002.sml
+        SMLFormatTest0003.sml
+        SMLFormatTest0004.sml
+        SMLFormatTest0005.sml
+        SMLFormatTest0006.sml
+        SMLFormatTest0007.sml
+
+        SMLFormatTest0008.sml
+        SMLFormatTest0009.sml
+        SMLFormatTest0010.sml
+
+        PrinterParameterTest0001.sml
+        PrinterParameterTest0002.sml
+
+        BasicFormattersTest0001.sml
+
+        PPLibTest.sml
+        TestMain.sml

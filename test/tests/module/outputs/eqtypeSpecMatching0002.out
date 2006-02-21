@@ -1,0 +1,49 @@
+signature S = sig eqtype t end
+structure SEqRecordTrans : S
+structure SEqRecordOpaque : S
+structure SEqConstructedTrans : S
+structure SEqConstructedOpaque : S
+structure SEqRefTrans : S
+structure SEqRefOpaque : S
+structure SEqDatatypeTrans : S
+structure SEqDatatypeOpaque : S
+../tests/module/tests/eqtypeSpecMatching0002.sml:86.11-89.3 Error: Signature
+                                                                   mismatch
+                                                                   (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:90.11-93.3 Error: Signature
+                                                                   mismatch
+                                                                   (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:96.11-100.3 Error: Signature
+                                                                    mismatch
+                                                                    (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:101.11-105.3 Error: Signature
+                                                                     mismatch
+                                                                     (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:108.11-112.3 Error: Signature
+                                                                     mismatch
+                                                                     (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:113.11-117.3 Error: Signature
+                                                                     mismatch
+                                                                     (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:119.11-122.3 Error: Signature
+                                                                     mismatch
+                                                                     (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:123.11-126.3 Error: Signature
+                                                                     mismatch
+                                                                     (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:128.11-131.3 Error: Signature
+                                                                     mismatch
+                                                                     (equality): t
+
+../tests/module/tests/eqtypeSpecMatching0002.sml:132.11-135.3 Error: Signature
+                                                                     mismatch
+                                                                     (equality): t
+

@@ -1,0 +1,11 @@
+Group is
+        ../main/sources.cm
+        ../../absyn/sources.cm
+        ../../../smlunitlib.cm
+
+        ASSEMBLER_TEST_UTIL.sig
+        AssemblerTestUtil.sml
+        AssemblerTest0001.sml
+        AssemblerTest0002.sml
+
+        AssembleTest.sml

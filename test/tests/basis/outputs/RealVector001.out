@@ -1,0 +1,6 @@
+- val L2V = fn : int list -> Real64Vector.vector
+val V2L = fn : Real64Vector.vector -> int list
+stdIn:26.49-26.58 Error: unbound type constructor: word in path Real.word
+- stdIn:1.1 Error: unbound variable or constructor: n
+- stdIn:1.1 Error: syntax error found at DOT
+- 

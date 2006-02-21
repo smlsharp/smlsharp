@@ -1,0 +1,8 @@
+datatype dt1 = datatype dt1
+val x1 = D1 : dt1
+datatype dt22 = datatype dt2
+val x2 = D2 : dt22
+datatype dt = datatype dt31
+val x = D31(1, "abc") : (int, string) dt
+datatype dt41 = datatype dt41
+val x = D41 (1, "abc") : (int, string) dt41

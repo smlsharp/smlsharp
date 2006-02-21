@@ -1,0 +1,12 @@
+structure S11 : sig datatype dt con D : dt end
+val f11 = fn : S11.dt -> int
+val x11 = 1 : int
+structure S21 : sig exception E : exn end
+val f21 = fn : exn -> int
+val x21 = 2 : int
+structure S12 : sig datatype dt con D : int * int -> dt end
+val f12 = fn : S12.dt -> int
+val x12 = 3 : int
+structure S22 : sig exception E : real * real -> exn end
+val f22 = fn : exn -> real
+val x22 = 5.79 : real

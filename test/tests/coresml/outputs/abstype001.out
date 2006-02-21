@@ -1,0 +1,8 @@
+abstype t1
+val v1 = - : t1
+abstype 'a t2
+val v2 = - : bool t2
+abstype ('a, 'b) t3
+val v3 = - : (int, bool) t3
+abstype ('a, 'b) t4
+val v4 = - : (int, bool) t4

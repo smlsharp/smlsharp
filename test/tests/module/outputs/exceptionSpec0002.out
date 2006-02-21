@@ -1,0 +1,6 @@
+signature S1 = sig exception e : int -> exn end
+signature S2 =
+sig
+  exception e1 : string -> exn
+  exception e2 : int * bool -> exn
+end

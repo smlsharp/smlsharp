@@ -1,0 +1,11 @@
+type t1 = unit
+val v1 = () : t1
+type t2 = {x:int}
+val v2 = {x=2} : t2
+type t3 = {a:int, z:bool}
+val v31 = {a=3,z=true} : t3
+val v32 = {a=3,z=true} : t3
+type t4 = {a:int, z:bool}
+val v41 = {a=4,z=true} : t4
+val v42 = {a=4,z=true} : t4
+

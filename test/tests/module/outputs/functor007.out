@@ -1,0 +1,5 @@
+functor F (S : sig structure T : sig val x : int end end) :
+sig val y : int end
+structure P : sig structure T : sig val x : int end end
+structure S : sig val y : int end
+val x = 3 : int

@@ -1,0 +1,4 @@
+val f = fn : string -> int
+val it = 1 : int
+val it = 2 : int
+val it = 3 : int

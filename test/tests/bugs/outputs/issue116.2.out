@@ -1,0 +1,4 @@
+signature S = sig val f : int -> int end
+structure S : sig val f : ['a .'a -> 'a] end
+structure T : S
+val it = fn : int -> int

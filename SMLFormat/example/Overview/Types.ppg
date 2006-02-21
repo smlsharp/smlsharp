@@ -1,0 +1,23 @@
+(* -*- sml -*- *)
+
+structure Types =
+struct
+
+(* default formatter *)
+
+  (*% *)
+  type inttuple = int * int
+
+  (*% *)
+  type intrecord = {left : int, right : int}
+
+  (*% *)
+  type intoption = int option
+
+  (*% *)
+  type intlist = int list
+
+  (*% *)
+  type intfun = int -> int
+
+end

@@ -1,0 +1,122 @@
+(* -*- sml -*-
+ *  syntax for the Core ML
+ *
+ * Copyright 2001
+ * Atsushi Ohori 
+ * JAIST Language project
+ * JAIST, Ishikawa Japan. 
+ *)
+
+structure Absyn =
+struct
+
+  (***************************************************************************)
+
+  (*% *)
+  type pos = {fileName:string, line:int, col:int}
+  (*% *)
+  type loc = pos * pos
+
+  val nopos = {fileName="none", line=0,col=0}
+  val noloc = ({fileName="none", line=0,col=0},{fileName="none", line=0,col=0})
+
+  (*%
+   *)
+  datatype constant 
+    = INTCONST of int * loc
+    | STRING of string * loc
+    | REAL of string * loc
+
+  (*%
+   *)
+  datatype ty
+    = TYID of string * loc
+    | TYRECORD of (string * ty) list * loc
+    | TYCONSTRUCTION of ty list * string * loc
+    | TYTUPLE of ty list * loc
+    | TYFUN of ty * ty * loc
+
+  local
+
+    fun formatPrependedOpt (formatter, prefixIfSome) =
+        fn NONE => [FormatExpression.Term ""]
+         | SOME value => prefixIfSome @ (formatter value)
+
+    fun formatBinaryChoice (ifTrue, ifFalse) value =
+        if value then ifTrue else ifFalse
+
+    fun formatListWithEnclosure
+        (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
+        fn [] => [FormatExpression.Term ""]
+         | list =>
+           prefixIfNotNull @
+           (BasicFormatters.format_list (elementFormatter, separator) list) @
+           suffixIfNotNull
+
+  in
+    (*%
+     *)
+    datatype pat
+      = PATWILD of loc
+      | PATCONSTANT of constant * loc
+      | PATID of bool * string * loc
+      | PATRECORD of bool * patrow list * loc
+      | PATTUPLE of pat list * loc
+      | PATLIST of pat list * loc
+      | PATAPPLY of pat list * loc
+      | PATTYPED of pat * ty * loc
+      | PATLAYERED of pat * pat * loc
+
+    and patrow =
+        PATROWPAT of string * pat * loc
+      | PATROWVAR of string * (ty option) * (pat option) * loc
+
+    (*%
+     *)
+    datatype exp
+      = EXPCONSTANT of constant * loc
+      | EXPID of  string * loc
+      | EXPOPID of  string * loc
+      | EXPRECORD of (string * exp) list * loc
+      | EXPRECORD_SELECTOR of string * loc
+      | EXPTUPLE of exp list * loc
+      | EXPLIST of exp list * loc
+      | EXPSEQ of exp list * loc
+      | EXPAPP of exp list * loc
+      | EXPTYPED of exp * ty * loc
+      | EXPCONJUNCTION of exp * exp * loc
+      | EXPDISJUNCTION of exp * exp * loc
+      | EXPHANDLE of exp * (pat * exp) list * loc
+      | EXPRAISE of exp * loc
+      | EXPIF of exp * exp * exp * loc
+      | EXPWHILE of exp * exp * loc
+      | EXPCASE of exp * (pat * exp) list * loc
+      | EXPFN of (pat * exp) list * loc
+      | EXPLET of dec list * exp list * loc
+      
+    and dec =
+        DECVAL of string list * (pat * exp) list * loc
+      | DECREC of string list * (pat * exp) list * loc
+      | DECFUN of
+        string list * (bool * string * pat list * exp) list list * loc 
+      | DECTYPE of (string list * string * ty) list * loc
+      | DECDATATYPE of
+        (string list * string * (bool * string * ty option) list) list * loc
+      | REPLICATEDAT of string * string * loc
+      | EXDECL of (bool * string * ty option) list * loc
+      | EXREP  of bool * string * bool * string * loc
+      | LOCALDEC of dec list * dec list * loc
+      | INFXDEC of int * string list * loc
+      | INFXRDEC of int * string list * loc
+      | NONFXDEC of string list * loc
+  end
+
+  (*%
+   *)
+  datatype parseresult
+    = DECS of dec list * loc
+    | USE of string
+    | SET of string * string
+    | EXIT
+
+end

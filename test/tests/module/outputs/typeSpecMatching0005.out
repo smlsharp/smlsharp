@@ -1,0 +1,26 @@
+datatype dt 
+con D : dt
+signature S =
+  sig
+    type t1 = dt
+    type t2 = t1 * string
+    structure S : sig type t end
+    type t3 = S.t * string
+    val x : t1 * t2 * t3
+  end
+structure S
+: sig
+    type t1 = dt
+    type t2 = t1 * string
+    type t3 = S.t * string
+    val x : dt * (dt * string) * (int * string)
+  structure S : sig type t = int end
+  end
+structure STrans : S
+val xTrans1 = D : STrans.t1
+val xTrans2 = (D,"a") : STrans.t2
+val xTrans3 = (1,"b") : STrans.t3
+structure SOpaque : S
+val xOpaque1 = D : SOpaque.t1
+val xOpaque2 = (D,"a") : SOpaque.t2
+val xOpaque3 = (-,"b") : SOpaque.t3

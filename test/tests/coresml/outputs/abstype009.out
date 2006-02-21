@@ -1,0 +1,21 @@
+datatype dt1
+con D : int -> dt1
+abstype at1
+datatype t1
+con D : bool -> t1
+val ax1 = D true : t1
+val gx1 = D false : t1
+datatype t2
+con D : int -> t2
+abstype t2
+datatype t2
+con E : real -> t2
+val ax2 = E 1.23 : t2
+val gx2 = E 1.23 : t2
+datatype t3
+con D : int -> t3
+abstype at3
+type t3 = string * at3
+type t3 = bool * at3
+val ax3 = - : at3
+val gx3 = (true, -) : t3

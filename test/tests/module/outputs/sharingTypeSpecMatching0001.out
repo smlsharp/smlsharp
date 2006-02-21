@@ -1,0 +1,20 @@
+signature S2 = sig type t1 type t2 sharing type t1 = t2 end
+structure SType2Trans : S2
+structure SType2Opaque : S2
+structure SDatatypeReplication2Trans : S2
+structure SDatatypeReplication2Opaque : S2
+signature S3 = sig type t1 type t2 type t3 sharing type t1 = t2 = t3 end
+structure SType31Trans : S3
+structure SType32Trans : S3
+structure SType31Opaque : S3
+structure SType32Opaque : S3
+structure SDatatypeReplication31Trans : S3
+structure SDatatypeReplication32Trans : S3
+structure SDatatypeReplication31Opaque : S3
+structure SDatatypeReplication32Opaque : S3
+structure SMixed31Trans : S3
+structure SMixed32Trans : S3
+structure SMixed31Opaque : S3
+structure SMixed32Opaque : S3
+
+

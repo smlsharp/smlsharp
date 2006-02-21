@@ -1,0 +1,9 @@
+signature S2 = sig type 'a t1 type 'a t2 sharing type t1 = t2 end
+structure S2Trans : S2
+structure S2Opaque : S2
+signature S3 =
+  sig
+    type ('a, 'b) t1 type ('a, 'b) t2 type ('a, 'b) t3 sharing type t1 = t2 = t3
+  end
+structure S3Trans : S3
+structure S3Opaque : S3

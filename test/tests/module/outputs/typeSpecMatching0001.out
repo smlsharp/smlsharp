@@ -1,0 +1,10 @@
+signature S =
+  sig
+    type t0
+    type 'a t1
+    type ('a,'b) t2
+  end
+structure StypeTrans : S
+structure StypeOpaque : S
+structure SdatatypeTrans : S
+structure SdatatypeTrans : S

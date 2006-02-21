@@ -1,0 +1,12 @@
+val case_intconst1 = true : bool
+val case_intvar = true : bool
+val case_intexp = true : bool
+val case_wordconst1 = true : bool
+val case_wordvar = true : bool
+val case_wordexp = true : bool
+val case_charconst1 = true : bool
+val case_charvar = true : bool
+val case_charexp = true : bool
+val case_stringconst1 = true : bool
+val case_stringvar = true : bool
+val case_stringexp = true : bool

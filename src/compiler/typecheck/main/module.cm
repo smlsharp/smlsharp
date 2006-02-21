@@ -1,0 +1,12 @@
+Group is
+        ../../../smlformatlib.cm
+        ../../control/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../typedflatcalc/sources.cm
+
+        TypeCheckTypedFlatCalc.sml
+
+

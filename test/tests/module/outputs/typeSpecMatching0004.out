@@ -1,0 +1,10 @@
+signature S11 = sig type 'a t end
+signature S12 = sig type ''a t end
+structure S11typeTrans : S11
+structure S11typeOpaque : S11
+structure S12typeTrans : S12
+structure S12typeOpaque : S12
+structure S11datatypeTrans : S11
+structure S11datatypeOpaque : S11
+structure S12datatypeTrans : S12
+structure S12datatypeOpaque : S12

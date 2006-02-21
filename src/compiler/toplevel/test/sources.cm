@@ -1,0 +1,12 @@
+Group is
+        ../main/sources.cm
+        ../../../smlunitlib.cm
+
+        AssemblerTestUtil.sml
+        AssemblerTest0001.sml
+(*
+        AssemblerTest0002.sml
+        AssemblerTest0003.sml
+*)
+
+        AssembleTest.sml

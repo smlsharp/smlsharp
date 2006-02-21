@@ -1,0 +1,6 @@
+Group
+        structure ModuleCompiler
+	structure InitialModuleContext
+        structure ModuleCompilationPickler
+is
+	main/module.cm

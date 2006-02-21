@@ -1,0 +1,17 @@
+(**
+ * Copyright (c) 2006, Tohoku University.
+ * 
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: SetTVarsError.ppg,v 1.2 2006/02/18 04:59:28 ohori Exp $
+ *)
+structure SetTVarsError =
+struct
+
+  (***************************************************************************)
+
+  (*% *)
+  exception DifferentEqattrivOfSameTvar of {tvar1 : bool ,tvar2 : bool} 
+
+  (***************************************************************************)
+
+end

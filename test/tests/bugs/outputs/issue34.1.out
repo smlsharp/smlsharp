@@ -1,0 +1,2 @@
+type ('a,'b) pair2 = 'a * 'a
+val y = (1,2) : (int, real) pair2

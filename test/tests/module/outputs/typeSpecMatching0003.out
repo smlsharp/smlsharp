@@ -1,0 +1,51 @@
+signature S0 = sig type t end
+signature S1 = sig type 'a t end
+signature S2 = sig type ('a,'b) t end
+../tests/module/tests/typeSpecMatching0003.sml:31.11-31.60 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:32.11-32.62 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:34.11-34.52 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:35.11-35.54 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:37.11-37.65 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:38.11-38.67 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:40.11-40.73 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:41.11-41.75 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:43.11-43.65 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:44.11-44.67 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:46.11-46.73 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+
+../tests/module/tests/typeSpecMatching0003.sml:47.11-47.75 Error: Signature
+                                                                  mismatch
+                                                                  (arity): t
+

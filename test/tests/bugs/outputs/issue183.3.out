@@ -1,0 +1,47 @@
+signature LR_TABLE =
+  sig
+    datatype state
+    con STATE : int -> state
+    datatype term
+    con T : int -> term
+    datatype action
+    con ACCEPT : action
+    con ERROR : action
+    con REDUCE : int -> action
+    con SHIFT : state -> action
+    type table = {x:int}
+    val action : table -> state * term -> action
+  end
+structure LrTable : LR_TABLE
+../tests/bugs/tests/issue183.3.sml:34.7-34.51 Warning: match nonexhaustive
+                                                                
+                                                                LrTable.SHIFT state => ...
+structure LrParser
+: sig
+  datatype action
+  con ACCEPT : action
+  con ERROR : action
+  con REDUCE : int -> action
+  con SHIFT : state -> action
+  datatype state
+  con STATE : int -> state
+  type table = {x:int}
+  datatype term
+  con T : int -> term
+  val action : table -> state * term -> action
+  val prAction : action -> unit
+  structure LrTable :
+  sig
+  datatype action
+  con ACCEPT : action
+  con ERROR : action
+  con REDUCE : int -> action
+  con SHIFT : state -> action
+  datatype state
+  con STATE : int -> state
+  type table = {x:int}
+  datatype term
+  con T : int -> term
+  val action : table -> state * term -> action
+  end
+  end

@@ -1,0 +1,210 @@
+:=,"['a.('a) ref * 'a -> unit]",2,,
+
+=,"[''a.''a * ''a -> bool]",2,Equal,
+addInt,"int * int -> int",2,AddInt,
+addReal,"real * real -> real",2,AddReal,
+addWord,"word * word -> word",2,AddWord,
+addByte,"byte * byte -> byte",2,AddByte,
+subInt,"int * int -> int",2,SubInt,
+subReal,"real * real -> real",2,SubReal,
+subWord,"word * word -> word",2,SubWord,
+subByte,"byte * byte -> byte",2,SubByte,
+mulInt,"int * int -> int",2,MulInt,
+mulReal,"real * real -> real",2,MulReal,
+mulWord,"word * word -> word",2,MulWord,
+mulByte,"byte * byte -> byte",2,MulByte,
+divInt,"int * int -> int",2,DivInt,
+divWord,"word * word -> word",2,DivWord,
+divByte,"byte * byte -> byte",2,DivByte,
+/,"real * real -> real",2,DivReal,
+modInt,"int * int -> int",2,ModInt,
+modWord,"word * word -> word",2,ModWord,
+modByte,"byte * byte -> byte",2,ModByte,
+quotInt,"int * int -> int",2,QuotInt,
+remInt,"int * int -> int",2,RemInt,
+negInt,"int -> int",1,NegInt,
+negReal,"real -> real",1,NegReal,
+absInt,"int -> int",1,AbsInt,
+absReal,"real-> real",1,AbsReal,
+
+ltInt,"int * int -> bool",2,LtInt,
+ltReal,"real * real -> bool",2,LtReal,
+ltWord,"word * word -> bool",2,LtWord,
+ltByte,"byte * byte -> bool",2,LtByte,
+ltChar,"char * char -> bool",2,LtChar,
+ltString,"string * string -> bool",2,LtString,
+gtInt,"int * int -> bool",2,GtInt,
+gtReal,"real * real -> bool",2,GtReal,
+gtWord,"word * word -> bool",2,GtWord,
+gtByte,"byte * byte -> bool",2,GtByte,
+gtChar,"char * char -> bool",2,GtChar,
+gtString,"string * string -> bool",2,GtString,
+lteqInt,"int * int -> bool",2,LteqInt,
+lteqReal,"real * real -> bool",2,LteqReal,
+lteqWord,"word * word -> bool",2,LteqWord,
+lteqByte,"byte * byte -> bool",2,LteqByte,
+lteqChar,"char * char -> bool",2,LteqChar,
+lteqString,"string * string -> bool",2,LteqString,
+gteqInt,"int * int -> bool",2,GteqInt,
+gteqReal,"real * real -> bool",2,GteqReal,
+gteqWord,"word * word -> bool",2,GteqWord,
+gteqByte,"byte * byte -> bool",2,GteqByte,
+gteqChar,"char * char -> bool",2,GteqChar,
+gteqString,"string * string -> bool",2,GteqString,
+
+Word_toIntX,"word -> int",1,Word_toIntX,
+Word_fromInt,"int -> word",1,Word_fromInt,
+Word_andb,"word * word -> word",2,Word_andb,
+Word_orb,"word * word -> word",2,Word_orb,
+Word_xorb,"word * word -> word",2,Word_xorb,
+Word_notb,"word -> word",1,Word_notb,
+Word_leftShift,"word * word -> word",2,Word_leftShift,
+Word_logicalRightShift,"word * word -> word",2,Word_logicalRightShift,
+Word_arithmeticRightShift,"word * word -> word",2,Word_arithmeticRightShift,
+
+Int_toString,"int -> string",1,,IMLPrim_Int_toString
+
+Word_toString,"word -> string",1,,IMLPrim_Word_toString
+
+Real_fromInt,"int -> real",1,,IMLPrim_Real_fromInt
+Real_toString,"real -> string",1,,IMLPrim_Real_toString
+Real_floor,"real -> int",1,,IMLPrim_Real_floor
+Real_ceil,"real -> int",1,,IMLPrim_Real_ceil
+Real_trunc,"real -> int",1,,IMLPrim_Real_trunc
+Real_round,"real -> int",1,,IMLPrim_Real_round
+Real_split,"real -> real * real",1,,IMLPrim_Real_split
+Real_toManExp,"real -> real * int",1,,IMLPrim_Real_toManExp
+Real_fromManExp,"real * int -> real",2,,IMLPrim_Real_fromManExp
+Real_copySign,"real * real -> real",2,,IMLPrim_Real_copySign
+Real_equal,"real * real -> bool",2,,IMLPrim_Real_equal
+Real_class,"real -> int",1,,IMLPrim_Real_class
+
+Char_toString,"char -> string",1,,IMLPrim_Char_toString
+Char_toEscapedString,"char -> string",1,,IMLPrim_Char_toEscapedString
+Char_ord,"char -> int",1,,IMLPrim_Char_ord
+Char_chr,"int -> char",1,,IMLPrim_Char_chr
+
+String_concat2,"string * string -> string",2,,IMLPrim_String_concat2
+String_sub,"string * int -> char",2,,IMLPrim_String_sub
+String_size,"string -> int",1,,IMLPrim_String_size
+String_substring,"string * int * int -> string",3,,IMLPrim_String_substring
+String_update,"string * int * char -> unit",3,,IMLPrim_String_update
+String_allocate,"int * char -> string",2,,IMLPrim_String_allocate
+
+print,"string -> unit",1,,IMLPrim_print
+
+Array_array,"['a.word * 'a -> ('a) array]",2,,
+Array_sub,"['a.('a) array * word -> 'a]",2,,
+Array_update,"['a.('a) array * word * 'a -> unit]",3,,
+Array_length,"['a.('a) array -> int]",1,Array_length,
+
+Internal_getCurrentIP,"int -> word * word",1,CurrentIP,
+Internal_getStackTrace,"int -> (word * word) list",1,StackTrace,
+Internal_IPToString,"word * word -> string",2,,IMLPrim_Internal_IPToString
+
+Time_gettimeofday,"int -> int * int",1,,IMLPrim_Time_gettimeofday
+
+GenericOS_errorName,"int -> string",1,,IMLPrim_GenericOS_errorName
+GenericOS_errorMsg,"int -> string",1,,IMLPrim_GenericOS_errorMsg
+GenericOS_syserror,"string -> (int) option",1,,IMLPrim_GenericOS_syserror
+
+GenericOS_getSTDIN,"int -> word",1,,IMLPrim_GenericOS_getSTDIN
+GenericOS_getSTDOUT,"int -> word",1,,IMLPrim_GenericOS_getSTDOUT
+GenericOS_getSTDERR,"int -> word",1,,IMLPrim_GenericOS_getSTDERR
+# FILE* fileOpen(fileName, mode)
+GenericOS_fileOpen,"string * string -> word",2,,IMLPrim_GenericOS_fileOpen
+GenericOS_fileClose,"word -> unit",1,,IMLPrim_GenericOS_fileClose
+# buffer fileRead(FILE*, nbytes)
+GenericOS_fileRead,"word * int -> byteArray",2,,IMLPrim_GenericOS_fileRead
+# readBytes fileReadBuf(FILE*, buffer, start, nbytes)
+GenericOS_fileReadBuf,"word * byteArray * int * int -> int",4,,IMLPrim_GenericOS_fileReadBuf
+# writtenBytes fileWrite(FILE*, buffer, start, nbytes)
+GenericOS_fileWrite,"word * byteArray * int * int -> int",4,,IMLPrim_GenericOS_fileWrite
+GenericOS_fileSetPosition,"word * int -> int",2,,IMLPrim_GenericOS_fileSetPosition
+GenericOS_fileGetPosition,"word -> int",1,,IMLPrim_GenericOS_fileGetPosition
+# returns the file descriptor.
+GenericOS_fileNo,"word -> int",1,,IMLPrim_GenericOS_fileNo
+# returns size of an opened file
+GenericOS_fileSize,"word -> int",1,,IMLPrim_GenericOS_fileSize
+
+GenericOS_isRegFD,"word -> bool",1,,IMLPrim_GenericOS_isRegFD
+GenericOS_isDirFD,"word -> bool",1,,IMLPrim_GenericOS_isDirFD
+GenericOS_isChrFD,"word -> bool",1,,IMLPrim_GenericOS_isChrFD
+GenericOS_isBlkFD,"word -> bool",1,,IMLPrim_GenericOS_isBlkFD
+GenericOS_isLinkFD,"word -> bool",1,,IMLPrim_GenericOS_isLinkFD
+GenericOS_isFIFOFD,"word -> bool",1,,IMLPrim_GenericOS_isFIFOFD
+GenericOS_isSockFD,"word -> bool",1,,IMLPrim_GenericOS_isSockFD
+GenericOS_poll,"((int * word) list * (int * int) option) -> (int * word) list",2,,IMLPrim_GenericOS_poll
+GenericOS_getPOLLINFlag,"int -> word",1,,IMLPrim_GenericOS_getPOLLINFlag
+GenericOS_getPOLLOUTFlag,"int -> word",1,,IMLPrim_GenericOS_getPOLLOUTFlag
+GenericOS_getPOLLPRIFlag,"int -> word",1,,IMLPrim_GenericOS_getPOLLPRIFlag
+
+# int system(char* name)
+GenericOS_system,"string -> int",1,,IMLPrim_GenericOS_system
+# void exit(int)
+GenericOS_exit,"int -> unit",1,,IMLPrim_GenericOS_exit
+GenericOS_getEnv,"string -> (string) option",1,,IMLPrim_GenericOS_getEnv
+# void sleep(unsigned int seconds)
+GenericOS_sleep,"word -> unit",1,,IMLPrim_GenericOS_sleep
+
+GenericOS_openDir,"string -> word",1,,IMLPrim_GenericOS_openDir
+GenericOS_readDir,"word -> (string) option",1,,IMLPrim_GenericOS_readDir
+GenericOS_rewindDir,"word -> unit",1,,IMLPrim_GenericOS_rewindDir
+GenericOS_closeDir,"word -> unit",1,,IMLPrim_GenericOS_closeDir
+GenericOS_chDir,"string -> unit",1,,IMLPrim_GenericOS_chDir
+GenericOS_getDir,"int -> string",1,,IMLPrim_GenericOS_getDir
+GenericOS_mkDir,"string -> unit",1,,IMLPrim_GenericOS_mkDir
+GenericOS_rmDir,"string -> unit",1,,IMLPrim_GenericOS_rmDir
+GenericOS_isDir,"string -> bool",1,,IMLPrim_GenericOS_isDir
+GenericOS_isLink,"string -> bool",1,,IMLPrim_GenericOS_isLink
+GenericOS_readLink,"string -> string",1,,IMLPrim_GenericOS_readLink
+GenericOS_getFileModTime,"string -> int",1,,IMLPrim_GenericOS_getFileModTime
+GenericOS_setFileTime,"string * int -> unit",2,,IMLPrim_GenericOS_setFileTime
+GenericOS_getFileSize,"string -> int",1,,IMLPrim_GenericOS_getFileSize
+GenericOS_remove,"string -> unit",1,,IMLPrim_GenericOS_remove
+GenericOS_rename,"string * string -> unit",2,,IMLPrim_GenericOS_rename
+GenericOS_isFileExists,"string -> bool",1,,IMLPrim_GenericOS_isFileExists
+GenericOS_isFileReadable,"string -> bool",1,,IMLPrim_GenericOS_isFileReadable
+GenericOS_isFileWritable,"string -> bool",1,,IMLPrim_GenericOS_isFileWritable
+GenericOS_isFileExecutable,"string -> bool",1,,IMLPrim_GenericOS_isFileExecutable
+GenericOS_tempFileName,"unit -> string",1,,IMLPrim_GenericOS_tempFileName
+GenericOS_getFileID,"string -> word",1,,IMLPrim_GenericOS_getFileID
+
+CommandLine_name,"int -> string",1,,IMLPrim_CommandLine_name
+CommandLine_arguments,"int -> (string) list",1,,IMLPrim_CommandLine_arguments
+
+Date_ascTime,"(int * int * int * int * int * int * int * int * int) -> string",9,,IMLPrim_Date_ascTime
+Date_localTime,"int -> (int * int * int * int * int * int * int * int * int)",1,,IMLPrim_Date_localTime
+Date_gmTime,"int -> (int * int * int * int * int * int * int * int * int)",1,,IMLPrim_Date_gmTime
+Date_mkTime,"(int * int * int * int * int * int * int * int * int) -> int",9,,IMLPrim_Date_mkTime
+Date_strfTime,"(string * (int * int * int * int * int * int * int * int * int)) -> string",2,,IMLPrim_Date_strfTime
+
+Timer_getTime,"int -> (int * int * int * int * int * int)",1,,IMLPrim_Timer_getTime
+
+Math_sqrt,"real -> real",1,,IMLPrim_Math_sqrt
+Math_sin,"real -> real",1,,IMLPrim_Math_sin
+Math_cos,"real -> real",1,,IMLPrim_Math_cos
+Math_tan,"real -> real",1,,IMLPrim_Math_tan
+Math_asin,"real -> real",1,,IMLPrim_Math_asin
+Math_acos,"real -> real",1,,IMLPrim_Math_acos
+Math_atan,"real -> real",1,,IMLPrim_Math_atan
+Math_atan2,"real * real -> real",2,,IMLPrim_Math_atan2
+Math_exp,"real -> real",1,,IMLPrim_Math_exp
+Math_pow,"real * real -> real",2,,IMLPrim_Math_pow
+Math_ln,"real -> real",1,,IMLPrim_Math_ln
+Math_log10,"real -> real",1,,IMLPrim_Math_log10
+Math_sinh,"real -> real",1,,IMLPrim_Math_sinh
+Math_cosh,"real -> real",1,,IMLPrim_Math_cosh
+Math_tanh,"real -> real",1,,IMLPrim_Math_tanh
+
+# getJavaProperty,"string -> string",1,,IMLPrim_getJavaProperty
+
+UnmanagedMemory_allocate,"int -> word",1,,IMLPrim_UnmanagedMemory_allocate
+UnmanagedMemory_release,"word -> unit",1,,IMLPrim_UnmanagedMemory_release
+UnmanagedMemory_sub,"word -> byte",1,,IMLPrim_UnmanagedMemory_sub
+UnmanagedMemory_update,"word * byte -> unit",2,,IMLPrim_UnmanagedMemory_update
+UnmanagedMemory_subWord,"word -> word",1,,IMLPrim_UnmanagedMemory_subWord
+UnmanagedMemory_updateWord,"word * word -> unit",2,,IMLPrim_UnmanagedMemory_updateWord
+UnmanagedMemory_import, "word * int -> byteArray",2,,IMLPrim_UnmanagedMemory_import
+UnmanagedMemory_export,"byteArray -> word",1,,IMLPrim_UnmanagedMemory_export
+UnmanagedString_size,"word -> int",1,,IMLPrim_UnmanagedString_size

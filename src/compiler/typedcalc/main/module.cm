@@ -1,0 +1,18 @@
+Group is
+        ../../format/sources.cm
+	../../../smlformatlib.cm
+        ../../parser/sources.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../util/sources.cm
+	../../types/sources.cm
+	../../env/sources.cm
+  	../../name/sources.cm
+       smlnj-lib.cm
+
+       TYPEDCALC.sig
+       TypedCalc.ppg.sml
+       TYPEDCALC_FORMATTER.sig
+       TypedCalcFormatter.sml
+       TYPEDCALCUTILS.sig
+       TypedCalcUtils.sml

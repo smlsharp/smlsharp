@@ -1,0 +1,26 @@
+(**
+ * Copyright (c) 2006, Tohoku University.
+ * 
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: TopLevelError.ppg,v 1.2 2006/02/18 04:59:30 ohori Exp $
+ *)
+structure TopLevelError =
+struct
+
+
+  (***************************************************************************)
+
+  (*%
+   *)
+  exception
+
+  (**
+   *)
+  (*%
+   * @format(message) message
+   *)
+  InvalidPath of string
+
+  (***************************************************************************)
+
+end

@@ -1,0 +1,6 @@
+signature S = sig val f : real -> real end
+functor F (S : sig end) : S
+structure P : sig end
+structure T : sig val f : real -> real end
+val x = 1.23 : real
+

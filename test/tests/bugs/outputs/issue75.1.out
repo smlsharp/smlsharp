@@ -1,0 +1,57 @@
+../tests/bugs/tests/issue75.1.sml:3.11-3.14 Error: Binding reserved name: true
+
+../tests/bugs/tests/issue75.1.sml:4.11-4.22 Error: Binding reserved name: false
+
+../tests/bugs/tests/issue75.1.sml:5.11-5.13 Error: Binding reserved name: nil
+
+../tests/bugs/tests/issue75.1.sml:6.11-6.12 Error: Binding reserved name: ::
+
+../tests/bugs/tests/issue75.1.sml:7.11-7.13 Error: Binding reserved name: ref
+
+../tests/bugs/tests/issue75.1.sml:8.11-8.12 Error: Binding reserved name: it
+
+../tests/bugs/tests/issue75.1.sml:10.1-10.18 Error: Binding reserved name: true
+
+../tests/bugs/tests/issue75.1.sml:11.1-11.19 Error: Binding reserved
+                                                     name: false
+
+../tests/bugs/tests/issue75.1.sml:12.1-12.17 Error: Binding reserved name: nil
+
+../tests/bugs/tests/issue75.1.sml:13.1-13.16 Error: Binding reserved name: ::
+
+../tests/bugs/tests/issue75.1.sml:14.1-14.17 Error: Binding reserved name: ref
+
+../tests/bugs/tests/issue75.1.sml:15.1-15.16 Error: Binding reserved name: it
+
+../tests/bugs/tests/issue75.1.sml:19.5-19.8 Error: Binding reserved name: true
+
+../tests/bugs/tests/issue75.1.sml:20.5-20.9 Error: Binding reserved name: false
+
+../tests/bugs/tests/issue75.1.sml:21.5-21.7 Error: Binding reserved name: nil
+
+../tests/bugs/tests/issue75.1.sml:22.5-22.6 Error: Binding reserved name: ::
+
+../tests/bugs/tests/issue75.1.sml:23.5-23.7 Error: Binding reserved name: ref
+
+../tests/bugs/tests/issue75.1.sml:25.6-25.10 Error: Binding reserved name: true
+
+../tests/bugs/tests/issue75.1.sml:26.6-26.11 Error: Binding reserved
+                                                     name: false
+
+../tests/bugs/tests/issue75.1.sml:27.6-27.9 Error: Binding reserved name: nil
+
+../tests/bugs/tests/issue75.1.sml:28.6-28.8 Error: Binding reserved name: ::
+
+../tests/bugs/tests/issue75.1.sml:29.6-29.9 Error: Binding reserved name: ref
+
+../tests/bugs/tests/issue75.1.sml:31.6-31.20 Error: Binding reserved name: true
+
+../tests/bugs/tests/issue75.1.sml:32.6-32.21 Error: Binding reserved
+                                                     name: false
+
+../tests/bugs/tests/issue75.1.sml:33.6-33.19 Error: Binding reserved name: nil
+
+../tests/bugs/tests/issue75.1.sml:34.6-34.18 Error: Binding reserved name: ::
+
+../tests/bugs/tests/issue75.1.sml:35.6-35.19 Error: Binding reserved name: ref
+

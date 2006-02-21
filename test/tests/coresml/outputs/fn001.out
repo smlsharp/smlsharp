@@ -1,0 +1,9 @@
+val v111 = fn : int -> int
+val v112 = fn : int -> int -> int
+val v121 = fn : (int -> int) -> int
+val v122 = fn : (int -> int) -> int -> int
+val v211 = fn : ['a.'a -> 'a * bool]
+val v212 = fn : ['a.'a -> ['b.'b -> 'a * 'b]]
+val v221 = fn : ['a.(int -> 'a) -> 'a * bool]
+val v222 = fn : ['a.(int -> 'a) -> ['b.'b -> 'a * 'b]]
+

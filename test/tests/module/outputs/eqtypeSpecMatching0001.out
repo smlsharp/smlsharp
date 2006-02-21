@@ -1,0 +1,5 @@
+signature S = sig eqtype t0 eqtype 'a t1 eqtype ('a, 'b) t2 end
+structure StypeTrans : S
+structure StypeOpaque : S
+structure SdatatypeTrans : S
+structure SdatatypeTrans : S

@@ -1,0 +1,10 @@
+Group is
+        ../../systemdef/sources.cm
+        ../../control/sources.cm
+        ../../../smlformatlib.cm
+        ../../../primitives/compiler/sources.cm
+        ../../absyn/sources.cm
+        ../../name/sources.cm
+
+        SymbolicInstructions.ppg.sml
+        SymbolicInstructionsFormatter.sml

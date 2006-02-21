@@ -1,0 +1,52 @@
+(**
+ * Copyright (c) 2006, Tohoku University.
+ *
+ * identifier of type, term, label and etc.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: ID.ppg,v 1.5 2006/02/18 04:59:24 ohori Exp $
+ *)
+structure ID :> ID =
+struct
+
+  (***************************************************************************)
+
+  (*% *)
+  type id = int
+
+  (***************************************************************************)
+
+  structure Map = IEnv
+
+  structure Set = ISet
+
+  (***************************************************************************)
+
+  val toString = Int.toString
+
+  val compare = Int.compare
+
+  val nextReservedID = ref ~1
+  val nextID = ref 0
+
+  fun init _ = nextID := 0 (* not initialize reserved ID. *)
+
+  fun reserve _ =
+      (!nextReservedID before nextReservedID := (!nextReservedID) - 1)
+
+  fun generate _ = (!nextID before nextID := (!nextID) + 1)
+
+  fun peek _ = !nextID
+
+  fun fromInt int =
+      (
+        if 0 <= int
+        then if !nextID <= int then nextID := int + 1 else ()
+        else if int <= !nextReservedID then nextReservedID := int - 1 else ();
+        int
+      )
+
+  fun toInt id = id
+
+  (***************************************************************************)
+
+end;

@@ -1,0 +1,16 @@
+Group is
+(*
+  to build this example, see ../../README.txt
+*)
+        ../../smlpplib.cm
+(*
+	Absyn.ppg:ppg
+*)
+	Absyn.ppg.sml
+(*
+	AbsynUseDefault.ppg:ppg
+*)
+	ml.lex
+	ml.grm
+	ml-yacc-lib.cm
+	Main.sml

@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# for debug
+#set -x
+#set -v
+
+###############################################################################
+# easy configuration script for SMLFormat
+#
+# This script does
+#   * generate formatlib/smlunitlib.cm (optional)
+#
+# usage:
+# $ ./configure [ SMLUNITDIR=${SMLUNITDIR} ]
+# $ make
+
+usage='usage: ./configure [ SMLUNITDIR=${SMLUNITDIR} ]'
+
+eval "$*"
+
+# check required parameters
+
+###############################################################################
+
+# operating system
+# example: SunOS, CYGWIN_NT-5.1, BSD/OS
+osname=`uname -s`
+
+###############################################################################
+# for SMLUnit
+
+if test ! -z "${SMLUNITDIR}";
+then
+    # generate smlunitlib.cm which contains a string
+    # "${SMLUNITDIR}/smlunitlib.cm".
+    #  'smlunitlib_cm_path' is used as string passed to SMLNJ/CM.
+    # SMLNJ/CM requires '\' as separator on Windows.
+    # On cygwin, the path must be converted to Windows style.
+    case "${osname}" in
+    CYGWIN*)
+        smlunitdir_winpath=`cygpath -aw ${SMLUNITDIR}`
+        smlunitlib_cm_path=${smlunitdir_winpath}\\smlunitlib.cm
+        ;;
+    *)
+        smlunitlib_cm_path=${SMLUNITDIR}/smlunitlib.cm
+        ;;
+    esac
+
+    # generate smlunitlib.cm
+    echo "Alias \"${smlunitlib_cm_path}\"" > ./formatlib/smlunitlib.cm
+else
+    echo "WARNING: generation for SMLUNIT is skipped because SMLUNITDIR is not specified."
+fi
+
+###############################################################################

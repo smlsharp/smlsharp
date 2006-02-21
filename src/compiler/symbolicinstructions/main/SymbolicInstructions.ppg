@@ -1,0 +1,1731 @@
+(* -*- sml -*- *)
+
+(**
+ * Copyright (c) 2006, Tohoku University.
+ *
+ * IML instructions with symbolic references.
+ * <p>
+ * This is 'symbolic' in a sense that operands which refer to addresses of
+ * other instructions and slots in stack frames are specified by their label
+ * and bound name.
+ * </p>
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: SymbolicInstructions.ppg,v 1.41 2006/02/20 06:52:03 kiyoshiy Exp $
+ *)
+structure SymbolicInstructions =
+struct
+
+  (***************************************************************************)
+
+  local
+    open BasicTypes
+    structure FE = SMLFormat.FormatExpression
+  in
+
+  (*%
+   * @formatter(Loc.loc) Loc.format_loc
+   *)
+  type loc = Loc.loc
+
+  (*% 
+   * @formatter(ID.id) ID.format_id
+   *)
+  type varid = 
+     (*%
+      * @format(id) id
+      *)
+      ID.id
+
+  (*% *)
+  type tyvarid = int
+
+  (*% *)
+  type address =
+       (*% @format(ad) "L" ad *)
+       varid
+
+  (*% *)
+  type varInfo = 
+       (*%
+        * @format({id, displayName}) "V" id
+        *)
+       {id : varid, displayName : string}
+
+  (*% *)
+  type entry = varInfo
+
+  (*% *)
+  datatype size =
+           (*% @format "S" *)
+           SINGLE
+         | (*% @format "D" *)
+           DOUBLE
+         | (*% @format(var) var *)
+           VARIANT of varInfo
+
+  (*%
+   * @formatter(UInt8) BasicTypeFormatters.format_UInt8
+   * @formatter(UInt16) BasicTypeFormatters.format_UInt16
+   * @formatter(UInt24) BasicTypeFormatters.format_UInt24
+   * @formatter(UInt32) BasicTypeFormatters.format_UInt32
+   *
+   * @formatter(SInt8) BasicTypeFormatters.format_SInt8
+   * @formatter(SInt16) BasicTypeFormatters.format_SInt16
+   * @formatter(SInt24) BasicTypeFormatters.format_SInt24
+   * @formatter(SInt32) BasicTypeFormatters.format_SInt32
+   *
+   * @formatter(Real64) BasicTypeFormatters.format_Real64
+   *
+   * @formatter(Primitives.primitive) Primitives.format_primitive
+   *)
+  datatype instruction =
+           (*%
+            * @format({value, destination})
+            * destination + "=" + "LoadInt" + value
+            *)
+           LoadInt of {value : SInt32, destination : entry}
+         | (*%
+            * @format({value, destination})
+            * destination + "=" + "LoadWord" + value
+            *)
+           LoadWord of {value : UInt32, destination : entry}
+         | (*%
+            * @format({string, destination})
+            * destination + "=" + "LoadString" + string
+            *)
+           LoadString of {string : address, destination : entry}
+         | (*%
+            * @format({value, destination})
+            * destination + "=" + "LoadReal" + value
+            *)
+           LoadReal of {value : string, destination : entry}
+         | (*%
+            * @format({value, destination})
+            * destination + "=" + "LoadChar" + value
+            *)
+           LoadChar of {value : UInt32, destination : entry}
+         | (*%
+            * @format({destination})
+            * destination + "=" + "LoadEmptyBlock" 
+            *)
+           LoadEmptyBlock of {destination : entry}
+         | (*%
+            * @format({variableEntry, variableSize, destination})
+            * destination + "=" + "Access" + variableEntry + variableSize
+            *)
+           Access of
+           {variableEntry : entry, variableSize : size, destination : entry}
+         | (*%
+            * @format({offset, variableSize, destination})
+            * destination + "=" + "AccessEnv" + offset + variableSize
+            *)
+           AccessEnv of
+           {offset : UInt32, variableSize : size, destination : entry}
+         | (*%
+            * @format({offset, variableSize, destination})
+            * destination + "=" + "AccessEnvIndirect" + offset + variableSize
+            *)
+           AccessEnvIndirect of
+           {
+             offset : UInt32,
+             variableSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({nestLevel, offset, variableSize, destination})
+            * destination + "="
+            * + "AccessNestedEnv" + nestLevel + offset + variableSize
+            *)
+           AccessNestedEnv of
+           {
+             nestLevel : UInt32, 
+             offset : UInt32, 
+             variableSize : size, 
+             destination : entry
+           }
+         | (*%
+            * @format({nestLevel, offset, variableSize, destination})
+            * destination + "="
+            * + "AccessNestedEnvIndirect" + nestLevel + offset + variableSize
+            *)
+           AccessNestedEnvIndirect of
+           {
+             nestLevel : UInt32, 
+             offset : UInt32, 
+             variableSize : size, 
+             destination : entry
+           }
+         | (*%
+            * @format({fieldOffset, fieldSize, blockEntry, destination})
+            * destination + "="
+            * + "GetField" + fieldOffset + fieldSize + blockEntry
+            *)
+           GetField of
+           {
+             fieldOffset : UInt32,
+             fieldSize : size,
+             blockEntry : entry,
+             destination : entry
+           }
+         | (*%
+            * @format({fieldEntry, fieldSize, blockEntry, destination})
+            * destination + "="
+            * + "GetFieldIndirect" + fieldEntry + fieldSize + blockEntry
+            *)
+           GetFieldIndirect of
+           {
+             fieldEntry : entry,
+             fieldSize : size,
+             blockEntry : entry,
+             destination : entry
+           }
+         | (*%
+            * @format
+            *  ({
+            *     nestLevelEntry,
+            *     offsetEntry,
+            *     fieldSize,
+            *     blockEntry,
+            *     destination
+            *   })
+            * destination + "="
+            * + "GetNestedFieldIndirect"
+            * + nestLevelEntry + offsetEntry + fieldSize + blockEntry
+            *)
+           GetNestedFieldIndirect of
+           {
+             nestLevelEntry : entry,
+             offsetEntry : entry,
+             fieldSize : size,
+             blockEntry : entry,
+             destination : entry
+           }
+         | (*%
+            * @format({fieldOffset, fieldSize, blockEntry, newValueEntry})
+            * "SetField" + fieldOffset + fieldSize + blockEntry + newValueEntry
+            *)
+           SetField of
+           {
+             fieldOffset : UInt32,
+             fieldSize : size,
+             blockEntry : entry,
+             newValueEntry : entry
+           }
+         | (*%
+            * @format({fieldEntry, fieldSize, blockEntry, newValueEntry})
+            * "SetFieldIndirect"
+            * + fieldEntry + fieldSize + blockEntry + newValueEntry
+            *)
+           SetFieldIndirect of
+           {
+             fieldEntry : entry,
+             fieldSize : size,
+             blockEntry : entry,
+             newValueEntry : entry
+           }
+         | (*%
+            * @format
+            *  ({
+            *     nestLevelEntry,
+            *     offsetEntry,
+            *     fieldSize,
+            *     blockEntry,
+            *     newValueEntry
+            *   })
+            * "SetNestedFieldIndirect"
+            * + nestLevelEntry + offsetEntry + fieldSize + blockEntry
+            * + newValueEntry
+            *)
+           SetNestedFieldIndirect of
+           {
+             nestLevelEntry : entry,
+             offsetEntry : entry,
+             fieldSize : size,
+             blockEntry : entry,
+             newValueEntry : entry
+           }
+	 | (*%
+            * @format({blockEntry, destination})
+            * destination + "=" + "CopyBlock" + blockEntry
+            *)
+           CopyBlock of
+	   {blockEntry : entry, destination : entry}
+         | (*%
+            * @format({globalArrayIndex, offset, variableSize, destination})
+            * destination
+            * + "=" + "GetGlobal(" + globalArrayIndex + "," + offset + ")"
+            *)
+           GetGlobal of 
+           {
+             globalArrayIndex : UInt32, 
+             offset : UInt32, 
+             variableSize : size, 
+             destination : entry
+           }
+         | (*%
+            * @format({globalArrayIndex, offset, variableSize, newValueEntry})
+            * "SetGlobal("
+            *              + globalArrayIndex + ","
+            *              + offset + ","
+            *              + newValueEntry +
+            *           ")"
+            *)
+           SetGlobal of 
+           {
+             globalArrayIndex : UInt32, 
+             offset : UInt32, 
+             newValueEntry : entry,
+             variableSize : size
+           }
+         | (*%
+            * @format({globalArrayIndex, arraySize})
+            * "InitGlobalArrayUnboxed(" + globalArrayIndex + ","
+            *                           + arraySize + ")"
+            *)
+           InitGlobalArrayUnboxed of 
+           {
+             globalArrayIndex : UInt32, 
+             arraySize : UInt32
+           }
+         | (*%
+            * @format({globalArrayIndex, arraySize})
+            * "InitGlobalArrayBoxed(" + globalArrayIndex + ","
+            *                         + arraySize + ")"
+            *)
+           InitGlobalArrayBoxed of 
+           {
+             globalArrayIndex : UInt32, 
+             arraySize : UInt32
+           }
+         | (*%
+            * @format({globalArrayIndex, arraySize})
+            * "InitGlobalArrayDouble(" + globalArrayIndex + ","
+            *                          + arraySize + ")"
+            *)
+           InitGlobalArrayDouble of 
+           {
+             globalArrayIndex : UInt32, 
+             arraySize : UInt32
+           }
+         | (*%
+            * @format({destination})
+            * destination + "=" + "GetEnv"
+            *)
+           GetEnv of {destination : entry}
+         | (*%
+            * @format({
+            *           argsCount,
+            *           primitive,
+            *           argEntries : argEntry argEntries,
+            *           argSizes : argSize argSizes,
+            *           resultSize,
+            *           destination
+            *         })
+            * destination + "="
+            * + "CallPrim"
+            * + argsCount
+            * + primitive
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            * + resultSize
+            *)
+           CallPrim of
+           {
+             argsCount : UInt32,
+             primitive : Primitives.primitive,
+             argEntries : entry list,
+             argSizes : size list,
+             resultSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           closureEntry,
+            *           argEntries : argEntry argEntries,
+            *           argSizes : argSize argSizes,
+            *           resultSize,
+            *           destination
+            *         })
+            * destination + "="
+            * + "ForeignApply"
+            * + argsCount
+            * + closureEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            * + resultSize
+            *)
+           ForeignApply of
+           {
+             argsCount : UInt32,
+             closureEntry : entry,
+             argEntries : entry list,
+             argSizes : size list,
+             resultSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           closureEntry,
+            *           argEntry,
+            *           argSize,
+            *           destination
+            *         })
+            * destination + "="
+            * + "Apply_S"
+            * + closureEntry
+            * + argEntry
+            * + argSize
+            *)
+           Apply_S of
+           {
+             closureEntry : entry,
+             argEntry : entry,
+             argSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           closureEntry,
+            *           argEntries : argEntry argEntries,
+            *           lastArgSize,
+            *           destination
+            *         })
+            * destination + "="
+            * + "Apply_ML"
+            * + argsCount
+            * + closureEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + lastArgSize
+            *)
+           Apply_ML of
+           {
+             argsCount : UInt32,
+             closureEntry : entry,
+             argEntries : entry list,
+             lastArgSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           closureEntry,
+            *           argEntries : argEntry argEntries,
+            *           argSizeEntries : argSize argSizes,
+            *           destination
+            *         })
+            * destination + "="
+            * + "Apply_M"
+            * + argsCount
+            * + closureEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            *)
+           Apply_M of
+           {
+             argsCount : UInt32,
+             closureEntry : entry,
+             argEntries : entry list,
+             argSizeEntries : entry list,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           closureEntry,
+            *           argEntry,
+            *           argSize
+            *         })
+            * "TailApply_S"
+            * + closureEntry
+            * + argEntry
+            * + argSize
+            *)
+           TailApply_S of
+           {
+             closureEntry : entry,
+             argEntry : entry,
+             argSize : size
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           closureEntry,
+            *           argEntries : argEntry argEntries,
+            *           lastArgSize
+            *         })
+            * "TailApply_ML"
+            * + argsCount
+            * + closureEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + lastArgSize
+            *)
+           TailApply_ML of
+           {
+             argsCount : UInt32,
+             closureEntry : entry,
+             argEntries : entry list,
+             lastArgSize : size
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           closureEntry,
+            *           argEntries : argEntry argEntries,
+            *           argSizeEntries : argSize argSizes
+            *         })
+            * "TailApply_M"
+            * + argsCount
+            * + closureEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            *)
+           TailApply_M of
+           {
+             argsCount : UInt32,
+             closureEntry : entry,
+             argEntries : entry list,
+             argSizeEntries : entry list
+           }
+         | (*%
+            * @format({
+            *           entryPoint,
+            *           envEntry,
+            *           argEntry,
+            *           argSize,
+            *           destination
+            *         })
+            * destination + "="
+            * + "CallStatic_S"
+            * + entryPoint
+            * + envEntry
+            * + argEntry
+            * + argSize
+            *)
+           CallStatic_S of
+           {
+             entryPoint : address,
+             envEntry : entry,
+             argEntry : entry,
+             argSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           entryPoint,
+            *           envEntry,
+            *           argEntries : argEntry argEntries,
+            *           lastArgSize,
+            *           destination
+            *         })
+            * destination + "="
+            * + "CallStatic_ML"
+            * + argsCount
+            * + entryPoint
+            * + envEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + lastArgSize
+            *)
+           CallStatic_ML of
+           {
+             argsCount : UInt32,
+             entryPoint : address,
+             envEntry : entry,
+             argEntries : entry list,
+             lastArgSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           entryPoint,
+            *           envEntry,
+            *           argEntries : argEntry argEntries,
+            *           argSizeEntries : argSize argSizes,
+            *           destination
+            *         })
+            * destination + "="
+            * + "CallStatic_M"
+            * + argsCount
+            * + entryPoint
+            * + envEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            *)
+           CallStatic_M of
+           {
+             argsCount : UInt32,
+             entryPoint : address,
+             envEntry : entry,
+             argEntries : entry list,
+             argSizeEntries : entry list,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           entryPoint,
+            *           envEntry,
+            *           argEntry,
+            *           argSize
+            *         })
+            * + "TailCallStatic_S"
+            * + entryPoint
+            * + envEntry
+            * + argEntry
+            * + argSize
+            *)
+           TailCallStatic_S of 
+           {
+             entryPoint : address,
+             envEntry : entry,
+             argEntry : entry,
+             argSize : size
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           entryPoint,
+            *           envEntry,
+            *           argEntries : argEntry argEntries,
+            *           lastArgSize
+            *         })
+            * + "TailCallStatic_ML"
+            * + argsCount
+            * + entryPoint
+            * + envEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + lastArgSize
+            *)
+           TailCallStatic_ML of 
+           {
+             argsCount : UInt32,
+             entryPoint : address,
+             envEntry : entry,
+             argEntries : entry list,
+             lastArgSize : size
+           }
+         | (*%
+            * @format({
+            *           argsCount,
+            *           entryPoint,
+            *           envEntry,
+            *           argEntries : argEntry argEntries,
+            *           argSizeEntries : argSize argSizes
+            *         })
+            * + "TailCallStatic_M"
+            * + argsCount
+            * + entryPoint
+            * + envEntry
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            *)
+           TailCallStatic_M of 
+           {
+             argsCount : UInt32,
+             entryPoint : address,
+             envEntry : entry,
+             argEntries : entry list,
+             argSizeEntries : entry list
+           }
+         | (*%
+            * @format({entryPoint, argEntry, argSize, destination})
+            * destination + "="
+            * + "RecursiveCallStatic_S"
+            * + entryPoint
+            * + argEntry
+            * + argSize
+            *)
+           RecursiveCallStatic_S of
+           {
+             entryPoint : address,
+             argEntry : entry,
+             argSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *          argsCount, 
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          argSizeEntries : argSize argSizes, 
+            *          destination
+            *        })
+            * destination + "="
+            * + "RecursiveCallStatic_M"
+            * + argsCount
+            * + entryPoint
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            *)
+           RecursiveCallStatic_M of
+           {
+             argsCount : UInt32,
+             entryPoint : address,
+             argEntries : entry list,
+             argSizeEntries : entry list,
+             destination : entry
+           }
+         | (*%
+            * @format({entryPoint, argEntry, argSize})
+            * + "RecursiveTailCallStatic_S"
+            * + entryPoint
+            * + argEntry
+            * + argSize
+            *)
+           RecursiveTailCallStatic_S of
+           {
+             entryPoint : address,
+             argEntry : entry,
+             argSize : size
+           }
+         | (*%
+            * @format({
+            *          argsCount, 
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          argSizeEntries : argSize argSizes
+            *        })
+            * "RecursiveTailCallStatic_M"
+            * + argsCount
+            * + entryPoint
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            *)
+           RecursiveTailCallStatic_M of
+           {
+             argsCount : UInt32,
+             entryPoint : address,
+             argEntries : entry list,
+             argSizeEntries : entry list
+           }
+         | (*%
+            * @format({entryPoint, argEntry, argSize, destination})
+            * destination + "="
+            * + "SelfRecursiveCallStatic_S"
+            * + entryPoint
+            * + argEntry
+            * + argSize
+            *)
+           SelfRecursiveCallStatic_S of
+           {
+             entryPoint : address,
+             argEntry : entry,
+             argSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *          argsCount, 
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          argSizeEntries : argSize argSizes, 
+            *          destination
+            *        })
+            * destination + "="
+            * + "SelfRecursiveCallStatic_M"
+            * + argsCount
+            * + entryPoint
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            *)
+           SelfRecursiveCallStatic_M of
+           {
+             argsCount : UInt32,
+             entryPoint : address,
+             argEntries : entry list,
+             argSizeEntries : entry list,
+             destination : entry
+           }
+         | (*%
+            * @format({entryPoint, argEntry, argSize})
+            * + "SelfRecursiveTailCallStatic_S"
+            * + entryPoint
+            * + argEntry
+            * + argSize
+            *)
+           SelfRecursiveTailCallStatic_S of
+           {
+             entryPoint : address,
+             argEntry : entry,
+             argSize : size
+           }
+         | (*%
+            * @format({
+            *          argsCount, 
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          argSizeEntries : argSize argSizes
+            *        })
+            * "SelfRecursiveTailCallStatic_M"
+            * + argsCount
+            * + entryPoint
+            * + "[" argEntries(argEntry)(",") "]"
+            * + "[" argSizes(argSize)(",") "]"
+            *)
+           SelfRecursiveTailCallStatic_M of
+           {
+             argsCount : UInt32,
+             entryPoint : address,
+             argEntries : entry list,
+             argSizeEntries : entry list
+           }
+         | (*%
+            * @format({
+            *           fieldsCount,
+            *           bitmapEntry,
+            *           sizeEntry,
+            *           fieldEntries : fieldEntry fieldEntries,
+            *           fieldSizeEntries : fieldSizeEntry fieldSizeEntries,
+            *           destination
+            *         })
+            * destination + "="
+            * + "MakeBlock"
+            * + fieldsCount
+            * + bitmapEntry
+            * + sizeEntry
+            * + "[" fieldEntries(fieldEntry)(",") "]"
+            * + "[" fieldSizeEntries(fieldSizeEntry)(",") "]"
+            *)
+           MakeBlock of
+           {
+             fieldsCount : UInt32,
+             bitmapEntry : entry,
+             sizeEntry : entry,
+             fieldEntries : entry list,
+             fieldSizeEntries : entry list,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           fieldsCount,
+            *           bitmapEntry,
+            *           fieldEntries : fieldEntry fieldEntries,
+            *           destination
+            *         })
+            * destination + "="
+            * + "MakeBlockOfSingleValues"
+            * + fieldsCount
+            * + bitmapEntry
+            * + "[" fieldEntries(fieldEntry)(",") "]"
+            *)
+           MakeBlockOfSingleValues of
+           {
+             fieldsCount : UInt32,
+             bitmapEntry : entry,
+             fieldEntries : entry list,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           bitmapEntry,
+            *           sizeEntry,
+            *           initialValueEntry,
+            *           initialValueSize,
+            *           destination
+            *         })
+            * destination + "="
+            * + "MakeArray"
+            * + bitmapEntry
+            * + sizeEntry
+            * + initialValueEntry
+            * + initialValueSize
+            *)
+           MakeArray of
+           {
+             bitmapEntry : entry,
+             sizeEntry : entry,
+             initialValueEntry : entry,
+             initialValueSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({entryPoint, ENVEntry, destination})
+            * destination + "=" + "MakeClosure" + entryPoint + ENVEntry
+            *)
+           MakeClosure of
+           {entryPoint : address, ENVEntry : entry, destination : entry}
+         | (*%
+            * @format({exceptionEntry})
+            * "Raise" + exceptionEntry
+            *)
+           Raise of {exceptionEntry : entry}
+         | (*%
+            * @format({handler, exceptionEntry})
+            * "PushHandler" + handler + exceptionEntry
+            *)
+           PushHandler of {handler : address, exceptionEntry : entry}
+         | PopHandler
+         | (*% @format(address) address ":" *) Label of address
+         | (*% @format(loc) loc *) Location of loc
+         | (*%
+            * @format({targetEntry, casesCount, cases : acase cases, default})
+            * "SwitchInt"
+            * + targetEntry + casesCount + "[" cases(acase)(",") "]" + default
+            * @format:acase({const, destination})
+            * "{" const + "=>" + destination "}"
+            *)
+           SwitchInt of
+           {
+             targetEntry : entry,
+             casesCount : UInt32,
+             (** cases must be sorted in ascending order of const value.
+              * CAUTION: To sort const values, they are treated as unsigned
+              *      integer. For instance, A list [~2, ~1, 0, 1, 2] is
+              *      sorted to [0, 1, 2, ~2, ~1].
+              *)
+             cases : {const : SInt32, destination : address} list,
+             default : address
+           }
+         | (*%
+            * @format({targetEntry, casesCount, cases : acase cases, default})
+            * "SwitchWord"
+            * + targetEntry + casesCount + "[" cases(acase)(",") "]" + default
+            * @format:acase({const, destination})
+            * "{" const + "=>" + destination "}"
+            *)
+           SwitchWord of
+           {
+             targetEntry : entry,
+             casesCount : UInt32,
+             (** cases must be sorted in ascending order of const value. *)
+             cases : {const : UInt32, destination : address} list,
+             default : address
+           }
+         | (*%
+            * @format({targetEntry, casesCount, cases : acase cases, default})
+            * "SwitchChar"
+            * + targetEntry + casesCount + "[" cases(acase)(",") "]" + default
+            * @format:acase({const, destination})
+            * "{" const + "=>" + destination "}"
+            *)
+           SwitchChar of
+           {
+             targetEntry : entry,
+             casesCount : UInt32,
+             (** cases must be sorted in ascending order of const value. *)
+             cases : {const : UInt32, destination : address} list,
+             default : address
+           }
+         | (*%
+            * @format({targetEntry, casesCount, cases : acase cases, default})
+            * "SwitchString"
+            * + targetEntry + casesCount + "[" cases(acase)(",") "]" + default
+            * @format:acase({const, destination})
+            * "{" const + "=>" + destination "}"
+            *)
+           SwitchString of
+           {
+             targetEntry : entry,
+             casesCount : UInt32,
+             (** cases must be sorted in ascending order of const value. *)
+             cases : {const : address, destination : address} list,
+             default : address
+           }
+         | (*% @format({destination}) "Jump" + destination *)
+           Jump of {destination : address}
+         | Exit
+         | (*%
+            * @format({variableEntry, variableSize})
+            * "Return" + variableEntry + variableSize
+            *)
+           Return of {variableEntry : entry, variableSize : size}
+         | (*% @format({string}) "ConstString" + string *)
+           ConstString of {string : string}
+         | (*%
+            * @format({funNameEntry, libNameEntry, destination})
+            * destination + "="
+            * + "FFIVal" + funNameEntry + libNameEntry
+            *)
+           FFIVal of
+           {funNameEntry : entry, libNameEntry : entry, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "AddInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           AddInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "AddInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           AddInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "AddReal_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           AddReal_Const_1 of
+           {argValue1 : string, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "AddReal_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           AddReal_Const_2 of
+           {argEntry1 : entry, argValue2 : string, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "AddWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           AddWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "AddWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           AddWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "AddByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           AddByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "AddByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           AddByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "SubInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           SubInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "SubInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           SubInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "SubReal_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           SubReal_Const_1 of
+           {argValue1 : string, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "SubReal_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           SubReal_Const_2 of
+           {argEntry1 : entry, argValue2 : string, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "SubWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           SubWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "SubWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           SubWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "SubByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           SubByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "SubByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           SubByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "MulInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           MulInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "MulInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           MulInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "MulReal_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           MulReal_Const_1 of
+           {argValue1 : string, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "MulReal_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           MulReal_Const_2 of
+           {argEntry1 : entry, argValue2 : string, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "MulWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           MulWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "MulWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           MulWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "MulByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           MulByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "MulByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           MulByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "DivInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           DivInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "DivInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           DivInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "DivReal_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           DivReal_Const_1 of
+           {argValue1 : string, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "DivReal_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           DivReal_Const_2 of
+           {argEntry1 : entry, argValue2 : string, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "DivWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           DivWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "DivWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           DivWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "DivByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           DivByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "DivByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           DivByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "ModInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           ModInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "ModInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           ModInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "ModWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           ModWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "ModWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           ModWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "ModByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           ModByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "ModByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           ModByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "QuotInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           QuotInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "QuotInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           QuotInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "RemInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           RemInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "RemInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           RemInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+
+(* Temporarily disable
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LtInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LtInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LtInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LtInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LtReal_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LtReal_Const_1 of
+           {argValue1 : string, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LtReal_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LtReal_Const_2 of
+           {argEntry1 : entry, argValue2 : string, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LtWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LtWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LtWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LtWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LtByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LtByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LtByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LtByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LtChar_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LtChar_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LtChar_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LtChar_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GtInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GtInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GtInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GtInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GtReal_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GtReal_Const_1 of
+           {argValue1 : string, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GtReal_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GtReal_Const_2 of
+           {argEntry1 : entry, argValue2 : string, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GtWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GtWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GtWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GtWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GtByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GtByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GtByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GtByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GtChar_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GtChar_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GtChar_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GtChar_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LteqInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LteqInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LteqInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LteqInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LteqReal_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LteqReal_Const_1 of
+           {argValue1 : string, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LteqReal_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LteqReal_Const_2 of
+           {argEntry1 : entry, argValue2 : string, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LteqWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LteqWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LteqWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LteqWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LteqByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LteqByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LteqByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LteqByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "LteqChar_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           LteqChar_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "LteqChar_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           LteqChar_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GteqInt_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GteqInt_Const_1 of
+           {argValue1 : SInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GteqInt_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GteqInt_Const_2 of
+           {argEntry1 : entry, argValue2 : SInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GteqReal_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GteqReal_Const_1 of
+           {argValue1 : string, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GteqReal_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GteqReal_Const_2 of
+           {argEntry1 : entry, argValue2 : string, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GteqWord_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GteqWord_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GteqWord_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GteqWord_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GteqByte_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GteqByte_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GteqByte_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GteqByte_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "GteqChar_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           GteqChar_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "GteqChar_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           GteqChar_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+*)
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "Word_andb_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           Word_andb_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "Word_andb_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           Word_andb_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "Word_orb_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           Word_orb_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "Word_orb_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           Word_orb_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "Word_xorb_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           Word_xorb_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "Word_xorb_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           Word_xorb_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "Word_leftShift_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           Word_leftShift_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "Word_leftShift_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           Word_leftShift_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "Word_logicalRightShift_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           Word_logicalRightShift_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "Word_logicalRightShift_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           Word_logicalRightShift_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+         | (*%
+            * @format({argValue1, argEntry2, destination})
+            * destination + "="
+            * + "Word_arithmeticRightShift_Const_1(" + argValue1 + "," + argEntry2 + ")"
+            *)
+           Word_arithmeticRightShift_Const_1 of
+           {argValue1 : UInt32, argEntry2 : entry, destination : entry}
+         | (*%
+            * @format({argEntry1, argValue2, destination})
+            * destination + "="
+            * + "Word_arithmeticRightShift_Const_2(" + argEntry1 + "," + argValue2 + ")"
+            *)
+           Word_arithmeticRightShift_Const_2 of
+           {argEntry1 : entry, argValue2 : UInt32, destination : entry}
+
+
+  (*%
+   * @formatter(UInt32) BasicTypeFormatters.format_UInt32
+   *)
+  (**
+   * information about a stack frame allocated for each invocation of a
+   * function.
+   * <p>
+   * A funinfo contins information about function arguments.
+   * Its "args" field indicates the number of arguments and slots in a frame
+   * to which argument values passed from caller should be stored.
+   * </p>
+   * <p>
+   * A funinfo contains information about slot allocation for local variables
+   * according to their runtime types.
+   * A runtime type is either boxed type or unboxed type, polymorphic type.
+   * Local variables are grouped by their runtime types.
+   * <ul>
+   *   <li>Pointer variables are boxed type.</li>
+   *   <li>Atom variables are unboxed type.</li>
+   *   <li>Polymorphic type is represented by a type variable.
+   *     Each of record varieble is associated with a type variable.
+   *     A record group is a list of record variables which share the same type
+   *     variable.</li>
+   * </ul>
+   * </p>
+   * <p>
+   * A funinfo contains information about how to build a bitmap value
+   * of a frame.
+   * Each stack frame has a bitmap entry.
+   * This entry holds a bitmap which indicates runtime type of record groups.
+   * The LSB of the bitmap indicates the type of the first record group.
+   * The 2nd bit indicates the type of the second record group, and so on.
+   * The bitmap value stored in the bitmap entry is built from arguments and
+   * free variables stored in the ENV block argument.
+   * </p>
+   *)
+  type funInfo = 
+       {
+         (** variables into which arguments are stored. *)
+         args : varInfo list,
+         (** sources from which the bitmap of frame is built. *)
+         bitmapvals
+         :
+           {
+             (** argument variables which constitute the bitmap. *)
+             args : varInfo list,
+             (** index of fields of ENV block which constitute the bitmap. *)
+             frees : UInt32 list
+           },
+         (** boxed type variables. The entry for ENV is not included. *)
+         pointers : varInfo list,
+         (** atom type variables. *)
+         atoms : varInfo list,
+         (** real type variables. *)
+         doubles : varInfo list,
+         (** list of lists of polymorphic type variables. *)
+         records : varInfo list list
+       }
+
+  local
+    fun format_instructions instructions =
+        let
+          fun format instruction =
+              (case instruction of
+                 (Label _) => []
+               |  _ => [FE.Term (4, "    ")])
+              @ (format_instruction instruction)
+              @ [
+                  FE.Indicator
+                    {space = true, newline = SOME{priority = FE.Preferred(1)}}
+                ]
+        in
+          List.concat(map format instructions)
+        end
+  in
+
+  (*%
+   * @formatter(instructions) format_instructions
+   *)
+  type functionCode =
+  (*%
+   * @format({name, loc, funInfo, instructions : instructions})
+   * "{"
+   *    2[
+   *       1 name
+   *       +1 loc
+   *       +1 funInfo
+   *       2[ +1 instructions:instructions ]
+   *     ] 1
+   * "}"
+   *)
+       {
+         (** function name *)
+         name : varInfo,
+         (** location *)
+         loc : loc,
+         (** function information *)
+         funInfo : funInfo,
+         (** instructions of function body. *)
+         instructions : instruction list
+       }
+
+  end (* local *)
+
+  (***************************************************************************)
+
+  end (* local *)
+
+end

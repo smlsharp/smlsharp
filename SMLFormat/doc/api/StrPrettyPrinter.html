@@ -1,0 +1,240 @@
+<HTML>
+<HEAD>
+<TITLE>PrettyPrinter</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLPP</em>
+</TD></TR></TABLE>
+<HR>
+<H2>PrettyPrinter</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPrettyPrinter.html">PrettyPrinter</A>&nbsp;:>&nbsp;<A HREF="SigPRETTYPRINTER.html">PRETTYPRINTER</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrPrettyPrinter.html#TypeenvironmentEntry">environmentEntry</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{requiredColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>,&nbsp;newline&nbsp;:&nbsp;bool&nbsp;ref,&nbsp;priority&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">FE.priority</A>}<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrPrettyPrinter.html#Typeenvironment">environment</A>&nbsp;=&nbsp;<A HREF="StrPrettyPrinter.html#TypeenvironmentEntry">environmentEntry</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrPrettyPrinter.html#ConstrTerm">Term</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrList">List</A>&nbsp;of&nbsp;{symbols&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;environment&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typeenvironment">environment</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrIndicator">Indicator</A>&nbsp;of&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;newline&nbsp;:&nbsp;bool&nbsp;ref}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrDeferredIndicator">DeferredIndicator</A>&nbsp;of&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;requiredColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrEndOfIndent">EndOfIndent</A><br>
+&nbsp;&nbsp;exception&nbsp;<A HREF="StrPrettyPrinter.html#ExceptionFail">Fail</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPrettyPrinter.html#Valformat">format</A>&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+  This module translates the symbols into a text representation which fits
+ within the specified column width.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Author:</B>
+<DD>
+YAMATODANI Kiyoshi
+
+<DT> <B>Version:</B>
+<DD>
+$Id: StrPrettyPrinter.html,v 1.2 2004/10/20 02:52:02 kiyoshiy Exp $
+ 
+
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="TypeenvironmentEntry"><!-- --></A>
+<H3>environmentEntry</H3>
+<P>
+<CODE>type&nbsp;environmentEntry&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{requiredColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>,&nbsp;newline&nbsp;:&nbsp;bool&nbsp;ref,&nbsp;priority&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">FE.priority</A>}</CODE>
+
+<HR>
+<A NAME="Typeenvironment"><!-- --></A>
+<H3>environment</H3>
+<P>
+<CODE>type&nbsp;environment&nbsp;=&nbsp;<A HREF="StrPrettyPrinter.html#TypeenvironmentEntry">environmentEntry</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typesymbol"><!-- --></A>
+<H3>symbol</H3>
+<P>
+<CODE>datatype&nbsp;symbol&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrPrettyPrinter.html#ConstrTerm">Term</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrList">List</A>&nbsp;of&nbsp;{symbols&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;environment&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typeenvironment">environment</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrIndicator">Indicator</A>&nbsp;of&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;newline&nbsp;:&nbsp;bool&nbsp;ref}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrDeferredIndicator">DeferredIndicator</A>&nbsp;of&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;requiredColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrEndOfIndent">EndOfIndent</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrTerm"><!-- --></A>
+<H3>Term</H3>
+<P>
+<CODE>constructor&nbsp;Term&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+
+<HR>
+<A NAME="ConstrList"><!-- --></A>
+<H3>List</H3>
+<P>
+<CODE>constructor&nbsp;List&nbsp;:&nbsp;{symbols&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;environment&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typeenvironment">environment</A>}&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+
+<HR>
+<A NAME="ConstrIndicator"><!-- --></A>
+<H3>Indicator</H3>
+<P>
+<CODE>constructor&nbsp;Indicator&nbsp;:&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;newline&nbsp;:&nbsp;bool&nbsp;ref}&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+
+<HR>
+<A NAME="ConstrDeferredIndicator"><!-- --></A>
+<H3>DeferredIndicator</H3>
+<P>
+<CODE>constructor&nbsp;DeferredIndicator<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;requiredColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref}&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+
+<HR>
+<A NAME="ConstrStartOfIndent"><!-- --></A>
+<H3>StartOfIndent</H3>
+<P>
+<CODE>constructor&nbsp;StartOfIndent&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+
+<HR>
+<A NAME="ConstrEndOfIndent"><!-- --></A>
+<H3>EndOfIndent</H3>
+<P>
+<CODE>constructor&nbsp;EndOfIndent&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valformat"><!-- --></A>
+<H3>format</H3>
+<P>
+<CODE>fun&nbsp;format&nbsp;parameter&nbsp;symbol<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+  translates the symbol into a text representation which fits within the
+ specified column width.
+ <p>
+  This function tries to insert newline characters so that the text can
+ fit within the specified column width, but it may exceed the specified
+ column width if the column width is too small.
+ </p>
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>parameter</CODE>
+<DD>
+ parameters which control the printer
+
+<DT> <CODE>symbol</CODE>
+<DD>
+ the symbol to be translated.
+
+</DL>
+<DT> <B>Returns:</B>
+<DD>
+the text representation of the symbol.
+   
+
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Exception detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ExceptionFail"><!-- --></A>
+<H3>Fail</H3>
+<P>
+<CODE>exception&nbsp;Fail&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+ raised when any error occurs.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>message</CODE>
+<DD>
+ the error message
+   
+
+</DL>
+</DL>
+</DL>
+<P>
+
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLPP: Pretty-Printer library for SML
+</TD></TR></TABLE>
+</BODY></HTML>

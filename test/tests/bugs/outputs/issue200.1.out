@@ -1,0 +1,6 @@
+val x = [fn,fn] : ['a,'b#{a:'a, b:'a}.('b -> 'a) list]
+../tests/bugs/tests/issue200.1.sml:2.1-2.44 Warning: dummy type variable(s) X0
+                                                     are introduced due to value
+                                                     restriction
+val v1 = [fn,fn] : ({a:X0 , b:X0} -> X0) list
+val v2 = 1 : int

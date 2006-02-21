@@ -1,0 +1,10 @@
+datatype dtEq
+con D : dtEq
+datatype dtNonEq
+con E : real -> dtNonEq
+signature S11 = sig type t end where type t = dtNonEq
+signature S12 = sig type t end where type t = dtEq
+../tests/module/tests/whereType002.sml:23.17-23.55 Error: equality type required
+                                                          for: t
+
+signature S22 = sig eqtype t end where type t = dtEq

@@ -1,0 +1,15 @@
+type t1 = int
+val x1 = 1 : t1
+type t2 = int -> int
+val f21 = fn : int -> int
+val x21 = 2 : int
+val f22 = fn : t2
+val x22 = 2 : int
+type 'a t3 = 'a -> 'a * 'a
+val f31 = fn : ['a .'a -> 'a * 'a]
+val x31 = (1, 1) : int * int
+val f32 = fn : int t3
+val x32 = (2, 2) : int * int
+type t4 = {a:int , b:string}
+val f = fn : {a:int , b:string} -> int * string
+val x4 = (1, "abc") : int * string

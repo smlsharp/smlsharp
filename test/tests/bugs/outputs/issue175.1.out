@@ -1,0 +1,8 @@
+signature DICTIONARY =
+sig type (''a, 'b) dict val create : [''a,'b.unit -> (''a, 'b) dict] end
+structure Dictionary : DICTIONARY
+open Dictionary
+../tests/bugs/tests/issue175.1.sml:13.1-13.9 Warning: dummy type variable(s) X1,
+                                                      X0 are introduced due to
+                         value restriction
+val it = - : (X1, X0) dict

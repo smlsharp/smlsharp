@@ -1,0 +1,7 @@
+structure S : sig datatype dt con D : dt val x : dt end
+functor F (S : sig type dt val x : dt end) : sig val x : S.dt end
+structure S1 : sig val x : S.dt end
+structure S2 : sig val x : S.dt end
+structure S3 : sig val x : S.dt end
+val x = [D,D,D] : S.dt list
+

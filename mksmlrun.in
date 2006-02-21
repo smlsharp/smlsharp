@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -e
+
+NAME=$1
+HEAPDIR=$2
+
+if test "$#" -gt "2" ; then
+  DSTFILE=$3
+else
+  DSTFILE="$NAME"
+fi
+
+case "@target_os@" in
+*cygwin*)
+  HEAPIMAGE=`$SHELL @abs_top_builddir@/mksmlpath -sh "$HEAPDIR/$NAME"`
+  ;;
+*)
+  HEAPIMAGE="$HEAPDIR/$NAME"
+  ;;
+esac
+
+cat <<END > "$DSTFILE"
+#!/bin/sh
+exec @SML@ @SMLload="$HEAPIMAGE" "\$@"
+END
+chmod +x "$DSTFILE"

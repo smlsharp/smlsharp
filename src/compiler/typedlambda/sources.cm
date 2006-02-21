@@ -1,0 +1,10 @@
+Group
+        structure TypedLambda
+        structure TypedLambdaFormatter
+        structure TypedLambdaUtils
+        structure TypeCheckTypedLambda
+(*
+        structure TypedLambdaOptimizer
+*)
+is
+	main/module.cm

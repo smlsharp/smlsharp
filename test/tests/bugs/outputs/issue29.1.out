@@ -1,0 +1,1 @@
+val x = fn : ['a.'a -> 'a ref]

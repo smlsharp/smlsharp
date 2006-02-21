@@ -1,0 +1,32 @@
+use "base.sig";
+use "stream.sml";
+use "lrtable.sml";
+use "join.sml";
+use "parser2.sml";
+use "utils.sig";
+use "sigs.sml";
+use "hdr.sml";
+use "yacc.grm.sig";
+use "yacc.grm.sml";
+use "yacc.lex.sml";
+use "parse.sml";
+use "utils.sml";
+use "grammar.sml";
+use "core.sml";
+use "coreutils.sml";
+use "graph.sml";
+use "look.sml";
+use "lalr.sml";
+use "mklrtable.sml";
+use "mkprstruct.sml";
+use "shrink.sml";
+use "verbose.sml";
+use "absyn.sig";
+use "absyn.sml";
+use "yacc.sml";
+use "link.sml";
+use "main.sml";
+
+
+Main.doit ();
+print "Done";

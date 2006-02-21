@@ -1,0 +1,3 @@
+signature S = sig datatype dt con E : dt end
+structure S1 : S
+val it = E : S1.dt

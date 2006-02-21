@@ -1,0 +1,54 @@
+Group is
+        smlnj-lib.cm
+
+        ../../../smlformatlib.cm
+        ../../types/sources.cm
+	../../typecontext/sources.cm
+        ../../format/sources.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../parser/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../valrecoptimization/sources.cm
+        ../../typedcalc/sources.cm
+        ../../typedlambda/sources.cm
+        ../../patterncalc/sources.cm
+        ../../elaborate/sources.cm
+        ../../patterncalcWithTvars/sources.cm
+        ../../settvars/sources.cm
+        ../../recordcalc/sources.cm
+        ../../typeinference/sources.cm
+        ../../printergeneration/sources.cm
+(*
+        ../../typecheck/sources.cm
+*)
+	../../typedflatcalc/sources.cm
+	../../modulecompilation/sources.cm
+        ../../matchcompilation/sources.cm
+        ../../recordcompilation/sources.cm
+
+	../../buccalc/sources.cm
+	../../buctransformation/sources.cm
+	../../anormal/sources.cm
+	../../anormaltransform/sources.cm
+	../../anormaloptimization/sources.cm
+
+        ../../linearize/sources.cm
+	../../sioptimization/sources.cm
+        ../../symbolicinstructions/sources.cm
+        ../../assemble/sources.cm
+
+        ../../../instructions/compiler/sources.cm
+
+        ../../session/sources.cm
+        TopLevelError.ppg.sml
+        PATH_RESOLVER.sig
+        PathResolver.sml
+
+(*
+	drive.sml
+*)
+        TOP.sig
+        Top.sml

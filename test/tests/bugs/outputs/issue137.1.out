@@ -1,0 +1,2 @@
+structure S6 : sig type t val x : t end
+

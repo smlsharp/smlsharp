@@ -1,0 +1,6 @@
+datatype dt1
+con D : dt1
+signature S1 = 
+sig 
+  datatype t = datatype dt1 
+end

@@ -1,0 +1,5 @@
+infix 1 $$
+datatype t
+con $$ : int * int -> t
+val v11 = 3 : int
+val v22 = 5 : int

@@ -1,0 +1,6 @@
+val v11 = fn : int -> int
+val v11 = fn : ['a.'a -> 'a * int]
+val v12 = fn : ['a.'a -> int * 'a]
+val v21 = fn : int -> int
+val v21 = fn : ['a.'a -> 'a * int]
+val v22 = fn : ['a.'a -> int * 'a]

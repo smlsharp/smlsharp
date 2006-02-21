@@ -1,0 +1,12 @@
+structure P : sig type t = real end
+datatype 'a dt
+con D : ['a .'a -> 'a dt]
+functor F1 (S : sig type t end) : sig type t = S.t end
+structure S1 : sig type t = P.t end
+functor F2 (S : sig type t end) : sig type t = int dt * S.t end
+structure S2 : sig type t = int dt * P.t end
+functor F3 (S : sig type t end) :
+sig datatype 'a dt con D : ['a .'a -> 'a dt] type t = S.t dt end
+structure S3 : sig datatype 'a dt con D : ['a .'a -> 'a dt] type t = P.t dt end
+functor F4 (S : sig type t end) : sig type t = S.t dt end
+structure S4 : sig type t = P.t dt end

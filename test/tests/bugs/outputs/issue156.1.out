@@ -1,0 +1,5 @@
+functor F (P : sig type dt val x : dt end) :
+sig datatype dt con D : P.dt -> dt val x : dt end
+signature SIG = sig type dt val x : dt end
+structure T : SIG
+structure TBasic : sig datatype dt con D : T.dt -> dt val x : dt end

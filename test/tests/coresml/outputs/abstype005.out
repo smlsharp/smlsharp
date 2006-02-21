@@ -1,0 +1,48 @@
+abstype dt11nn1
+type t11nn1 = int
+val dt11nn1 = - : dt11nn1
+val t11nn1 = 1 : t11nn1
+abstype dt11ny1
+type t11ny1 = int * dt11ny1
+val dt11ny1 = - : dt11ny1
+val t11ny1 = (1, -) : t11ny1
+abstype dt11yn1
+type t11yn1 = int
+val dt11yn1 = - : dt11yn1
+val t11yn1 = 1 : t11yn1
+abstype dt11yy1
+type t11yy1 = dt11yy1 * int
+val dt11yy1 = - : dt11yy1
+val t11yy1 = (-, 1) : t11yy1
+abstype dt22nn1
+abstype dt22nn2
+type t22nn1 = int
+type t22nn2 = int * int
+val dt22nn1 = - : dt22nn1
+val dt22nn2 = - : dt22nn2
+val t22nn1 = 1 : t22nn1
+val t22nn2 = (2,3) : t22nn2
+abstype dt22ny1
+abstype dt22ny2
+type t22ny1 = dt22ny1 * int
+type t22ny2 = int * int * dt22ny2
+val dt22ny1 = - : dt22ny1
+val dt22ny2 = - : dt22ny2
+val t22ny1 = (-, 1) : t22ny1
+val t22ny2 = (2, 3, -) : t22ny2
+abstype dt22yn1
+abstype dt22yn2
+type t22yn1 = int
+type t22yn2 = int * int
+val dt22yn1 = fn : (int * int) * int -> dt22yn1
+val dt22yn2 = fn : int * int -> dt22yn2
+val t22yn1 = 1 : t22yn1
+val t22yn2 = (2,3) : t22yn2
+abstype dt22yy1
+abstype dt22yy2
+type t22yy1 = int * dt22yy2
+type t22yy2 = int * int * dt22yy1
+val dt22yy1 = - : dt22yy1
+val dt22yy2 = - : dt22yy2
+val t22yy1 = (4, -) : t22yy1
+val t22yy2 = (5, 6, -) : t22yy2
