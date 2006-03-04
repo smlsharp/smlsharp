@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
- * a pretty printer for the symbolic instructions
+ * a pretty printer for the symbolic instructions.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SymbolicInstructionsFormatter.sml,v 1.3 2006/02/18 04:59:29 ohori Exp $
+ * @version $Id: SymbolicInstructionsFormatter.sml,v 1.4 2006/02/28 16:11:06 kiyoshiy Exp $
  *)
 structure SymbolicInstructionsFormatter =
 struct

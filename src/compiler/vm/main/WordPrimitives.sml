@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of primitives on word values.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: WordPrimitives.sml,v 1.6 2006/02/18 04:59:41 ohori Exp $
+ * @version $Id: WordPrimitives.sml,v 1.7 2006/02/28 16:11:14 kiyoshiy Exp $
  *)
 structure WordPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct

@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * utilities for variables.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: vars.sml,v 1.22 2006/02/18 04:59:37 ohori Exp $
+ * @version $Id: vars.sml,v 1.23 2006/02/28 16:11:10 kiyoshiy Exp $
  *)
 structure TvOrd : ordsig =
 struct 

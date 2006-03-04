@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * pickler for data types declared in types module.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypesPickler.sml,v 1.8 2006/02/18 04:59:36 ohori Exp $
+ * @version $Id: TypesPickler.sml,v 1.10 2006/03/02 12:54:08 bochao Exp $
  *)
 structure TypesPickler 
   : sig
@@ -45,6 +44,8 @@ structure TypesPickler
       val Env : Types.Env Pickle.pu
       val funBindInfo : Types.funBindInfo Pickle.pu
 
+      val tyConSizeTagEnv : Types.tyConSizeTagEnv Pickle.pu
+      val strSizeTagEnv : Types.strSizeTagEnv Pickle.pu
       val strInfo : Types.strInfo Pickle.pu
       val funEnv : Types.funEnv Pickle.pu
       val sigEnv : Types.sigEnv Pickle.pu
@@ -99,6 +100,7 @@ struct
   val (idStateFunctions, idState) =
       P.makeNullPu (T.PRIM {name = "foo", ty = T.ATOMty})
   val (tyBindInfoFunctions, tyBindInfo) = P.makeNullPu (T.TYCON SE.intTyCon)
+  val (sizeTagExpFunctions, sizeTagExp) = P.makeNullPu (T.ST_CONST 0)
 
   (********************)
 
@@ -364,31 +366,33 @@ struct
     val newTy : T.ty P.pu =
         let
           fun toInt (T.ABSSPECty _) = 0
-            | toInt (T.ALIASty _) = 1
-            | toInt (T.ATOMty) = 2
-            | toInt (T.BITMAPty _) = 3
-            | toInt (T.FRAMEBITMAPty _) = 4
-            | toInt (T.BITty int) = 5
-            | toInt (T.BMABSty _) = 6
-            | toInt (T.BOUNDVARty _) = 7
-            | toInt (T.BOXEDty) = 8
-            | toInt (T.CONty _) = 9
-            | toInt (T.DBLUNBOXEDty) = 10
-            | toInt (T.DOUBLEty) = 11
-            | toInt (T.DUMMYty _) = 12
-            | toInt (T.ERRORty) = 13
-            | toInt (T.FUNMty _) = 14
-            | toInt (T.INDEXty _) = 15
-            | toInt (T.OFFSETty _) = 16
-            | toInt (T.PADCONDty _) = 17
-            | toInt (T.PADty _) = 18
-            | toInt (T.POLYty _) = 19
-            | toInt (T.RECORDty _) = 20
-            | toInt (T.SIZEty _) = 21
-            | toInt (T.SPECty _) = 22
-            | toInt (T.TAGty _) = 23
-            | toInt (T.TYVARty _) = 24
-            | toInt (T.UNBOXEDty) = 25
+            | toInt (T.ABSTRACTty) = 1
+            | toInt (T.ALIASty _) = 2
+            | toInt (T.ATOMty) = 3
+            | toInt (T.BITMAPty _) = 4
+            | toInt (T.FRAMEBITMAPty _) = 5
+            | toInt (T.BITty int) = 6
+            | toInt (T.BMABSty _) = 7
+            | toInt (T.BOUNDVARty _) = 8
+            | toInt (T.BOXEDty) = 9
+            | toInt (T.CONty _) = 10
+            | toInt (T.DBLUNBOXEDty) = 11
+            | toInt (T.DOUBLEty) = 12
+            | toInt (T.DUMMYty _) = 13
+            | toInt (T.ERRORty) = 14
+            | toInt (T.FUNMty _) = 15
+            | toInt (T.INDEXty _) = 16
+            | toInt (T.OFFSETty _) = 17
+            | toInt (T.PADCONDty _) = 18
+            | toInt (T.PADty _) = 19
+            | toInt (T.POLYty _) = 20
+            | toInt (T.RECORDty _) = 21
+            | toInt (T.SIZEty _) = 22
+            | toInt (T.SPECty _) = 23
+            | toInt (T.TAGty _) = 24
+            | toInt (T.TYVARty _) = 25
+            | toInt (T.UNBOXEDty) = 26
+
 (*
             | toInt ty =
               raise
@@ -397,6 +401,7 @@ struct
                      ^ TypeFormatter.tyToString ty)
 *)
 
+          fun pu_ABSTRACTty pu = P.con0 T.ABSTRACTty pu
           fun pu_ABSSPECty pu =
               P.con1 T.ABSSPECty (fn T.ABSSPECty arg => arg) ty_ty
           fun pu_ALIASty pu = P.con1 T.ALIASty (fn T.ALIASty arg => arg) ty_ty
@@ -459,31 +464,32 @@ struct
                 [ (* CAUTION: if 'pu_XXXty' is the n-th element of this list,
                    * 'toInt XXXty' must return n. *)
                   pu_ABSSPECty, (* 0 *)
-                  pu_ALIASty, (* 1 *)
-                  pu_ATOMty, (* 2 *)
-                  pu_BITMAPty, (* 3 *)
-                  pu_FRAMEBITMAPty, (* 4 *)
-                  pu_BITty, (* 5 *)
-                  pu_BMABSty, (* 6 *)
-                  pu_BOUNDVARty, (* 7 *)
-                  pu_BOXEDty, (* 8 *)
-                  pu_CONty, (* 9 *)
-                  pu_DBLUNBOXEDty, (* 10 *)
-                  pu_DOUBLEty, (* 11 *)
-                  pu_DUMMYty, (* 12 *)
-                  pu_ERRORty, (* 13 *)
-                  pu_FUNMty, (* 14 *)
-                  pu_INDEXty, (* 15 *)
-                  pu_OFFSETty, (* 16 *)
-                  pu_PADCONDty, (* 17 *)
-                  pu_PADty, (* 18 *)
-                  pu_POLYty, (* 19 *)
-                  pu_RECORDty, (* 20 *)
-                  pu_SIZEty, (* 21 *)
-                  pu_SPECty, (* 22 *)
-                  pu_TAGty, (* 23 *)
-                  pu_TYVARty, (* 24 *)
-                  pu_UNBOXEDty (* 25 *)
+                  pu_ABSTRACTty, (* 1 *)
+                  pu_ALIASty, (* 2 *)
+                  pu_ATOMty, (* 3 *)
+                  pu_BITMAPty, (* 4 *)
+                  pu_FRAMEBITMAPty, (* 5 *)
+                  pu_BITty, (* 6 *)
+                  pu_BMABSty, (* 7 *)
+                  pu_BOUNDVARty, (* 8 *)
+                  pu_BOXEDty, (* 9 *)
+                  pu_CONty, (* 10 *)
+                  pu_DBLUNBOXEDty, (* 11 *)
+                  pu_DOUBLEty, (* 12 *)
+                  pu_DUMMYty, (* 13 *)
+                  pu_ERRORty, (* 14 *)
+                  pu_FUNMty, (* 15 *)
+                  pu_INDEXty, (* 16 *)
+                  pu_OFFSETty, (* 17 *)
+                  pu_PADCONDty, (* 18 *)
+                  pu_PADty, (* 19 *)
+                  pu_POLYty, (* 20 *)
+                  pu_RECORDty, (* 21 *)
+                  pu_SIZEty, (* 22 *)
+                  pu_SPECty, (* 23 *)
+                  pu_TAGty, (* 24 *)
+                  pu_TYVARty, (* 25 *)
+                  pu_UNBOXEDty (* 26 *)
                 ]
               )
         end
@@ -525,12 +531,45 @@ struct
         in
           P.data (toInt, [pu_TYCON, pu_TYFUN, pu_TYSPEC])
         end
+    val newSizeTagExp : T.sizeTagExp P.pu = 
+        let
+          fun toInt (T.ST_CONST arg) = 0
+            | toInt (T.ST_VAR arg) = 1
+            | toInt (T.ST_BDVAR arg) = 2
+            | toInt (T.ST_APP arg) = 3
+            | toInt (T.ST_FUN arg) = 4
+          fun pu_ST_CONST pu = 
+              P.con1 
+                T.ST_CONST 
+                (fn T.ST_CONST arg => arg) 
+                P.int
+          fun pu_ST_VAR pu = P.con1 T.ST_VAR (fn T.ST_VAR arg => arg) id
+          fun pu_ST_BDVAR pu = 
+              P.con1 T.ST_BDVAR
+                     (fn T.ST_BDVAR arg => arg) P.int
+          fun pu_ST_APP pu = 
+              P.con1 T.ST_APP (fn T.ST_APP arg => arg) 
+                     (P.conv
+                        (fn (stfun, args) => {stfun = stfun, args = args},
+                         fn {stfun, args} => (stfun, args))
+                        (P.tuple2(sizeTagExp, P.list sizeTagExp)))
+          fun pu_ST_FUN pu =
+              P.con1 T.ST_FUN
+                     (fn T.ST_FUN arg => arg)
+                     (P.conv
+                        (fn (args, body) => {args = args, body = body},
+                         fn {args, body} => (args, body))
+                        (P.tuple2(P.list P.int, sizeTagExp)))
+        in
+          P.data (toInt, [pu_ST_CONST, pu_ST_VAR, pu_ST_BDVAR, pu_ST_APP, pu_ST_FUN])
+        end
   in
   val _ = P.updateNullPu recKindFunctions newRecKind
   val _ = P.updateNullPu tvStateFunctions newTvState
   val _ = P.updateNullPu tyFunctions newTy
   val _ = P.updateNullPu idStateFunctions newIdState
   val _ = P.updateNullPu tyBindInfoFunctions newTyBindInfo
+  val _ = P.updateNullPu sizeTagExpFunctions newSizeTagExp
   end
 
   (********************)
@@ -573,7 +612,55 @@ struct
   in
   val _ = P.updateNullPu strBindInfoFunctions newStrBindInfo
   end
+  (****************************************)
+  val tyConSizeTagEnv = 
+      EnvPickler.SEnv 
+        (P.conv
+           ((fn (tyBindInfo, sizeInfo, tagInfo) =>
+                {tyBindInfo = tyBindInfo, sizeInfo = sizeInfo, tagInfo = tagInfo}),
+            (fn {tyBindInfo, sizeInfo, tagInfo} => (tyBindInfo, sizeInfo, tagInfo)))
+           (P.tuple3(tyBindInfo, sizeTagExp, sizeTagExp)))
+  local
+    val strPathSizeTagInfo =
+        {
+          id = ID.generate (),
+          name = "bar",
+          strpath = Path.NilPath,
+          env = (SEnv.empty, SEnv.empty, SEnv.empty)
+        }
+  in
+  val (strSizeTagBindInfoFunctions, strSizeTagBindInfo) =
+      P.makeNullPu (T.STRSIZETAG strPathSizeTagInfo)
+  end
 
+
+  val strSizeTagBindInfoSEnv = EnvPickler.SEnv strSizeTagBindInfo
+  val tyConSizeTagEnv_VarEnv_StrSizeTagBindInfoSEnv =
+      P.tuple3 (tyConSizeTagEnv, varEnv, strSizeTagBindInfoSEnv)
+  val SizeTagExpEnv = tyConSizeTagEnv_VarEnv_StrSizeTagBindInfoSEnv
+  val strPathSizeTagInfo : T.strPathSizeTagInfo P.pu =
+      P.conv
+          (
+            fn (id, name, strpath, env) =>
+               {id = id, name = name, strpath = strpath, env = env},
+            fn {id, name, strpath, env} => (id, name, strpath, env)
+          )
+          (P.tuple4(id, P.string, path, tyConSizeTagEnv_VarEnv_StrSizeTagBindInfoSEnv))
+
+  local
+    val newStrSizeTagExpBindInfo : T.strSizeTagBindInfo P.pu =
+        let
+          fun toInt (T.STRSIZETAG _) = 0
+          fun pu_STRSIZETAG pu =
+              P.con1 T.STRSIZETAG (fn T.STRSIZETAG x => x) strPathSizeTagInfo
+        in
+          P.data (toInt, [pu_STRSIZETAG])
+        end
+  in
+  val _ = P.updateNullPu strSizeTagBindInfoFunctions newStrSizeTagExpBindInfo
+  end
+
+  val strSizeTagEnv = strSizeTagBindInfoSEnv
   (****************************************)
 
   val tyConIdSet = NamePickler.IDSet

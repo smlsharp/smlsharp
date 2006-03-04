@@ -1,5 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
 
 functor UIntFun(W : WORD) : WORD = 
@@ -136,6 +136,9 @@ struct
   fun RealToReal64 (real : real) = (Real.toLarge real) : Real64
   fun Real64ToReal (real : Real64) =
       (Real.fromLarge IEEEReal.TO_NEAREST real) : real
+  fun Real64ToSInt32 (real : Real64) =
+      Real64.toLargeInt (IEEEReal.getRoundingMode ()) real
+  fun SInt32ToReal64 (sint32 : SInt32) = Real64.fromLargeInt sint32
 
   fun StringLengthToPaddedUInt8ListLength stringLength =
       (stringLength + 4) div 4

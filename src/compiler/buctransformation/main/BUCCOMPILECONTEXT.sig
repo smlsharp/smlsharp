@@ -1,15 +1,13 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: BUCCOMPILECONTEXT.sig,v 1.4 2006/02/18 16:04:05 duchuu Exp $
+ * @version $Id: BUCCOMPILECONTEXT.sig,v 1.6 2006/02/28 17:05:50 duchuu Exp $
  *)
-
 
 signature BUCCOMPILECONTEXT = sig
   
   type context
-  datatype bookmark = SIZE of int | TAG of int 
+  datatype bookmark = SIZE of int | TAG of int | FRAMEBITMAP of BUCCalc.id
 
   val makeContext : Types.btvEnv list -> context
   val getTyEnv : context -> Types.btvEnv list
@@ -29,6 +27,7 @@ signature BUCCOMPILECONTEXT = sig
   val listFreeVariables : context -> BUCCalc.varInfo list
   val listLocalBitmapVariables : context -> BUCCalc.varInfo list
   val listExtraLocalVariables : context -> BUCCalc.varInfo list
+  val getFrameBitmapIDs : context -> ID.Set.set
 
   val isBoundTypeVariable : context * int -> bool
 

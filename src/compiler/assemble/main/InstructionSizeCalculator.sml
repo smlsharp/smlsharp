@@ -2,7 +2,7 @@
  * This module calculates the size of instruction in words.
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: InstructionSizeCalculator.sml,v 1.24 2006/02/09 16:55:08 duchuu Exp $
+ * @version $Id: InstructionSizeCalculator.sml,v 1.25 2006/02/27 16:39:55 duchuu Exp $
  *)
 structure InstructionSizeCalculator : INSTRUCTION_SIZE_CALCULATOR =
 struct
@@ -124,7 +124,7 @@ struct
       | SI.CallStatic_ML {argsCount, lastArgSize = SI.SINGLE, ...} => 0w5 + argsCount
       | SI.CallStatic_ML {argsCount, lastArgSize = SI.DOUBLE, ...} => 0w5 + argsCount
       | SI.CallStatic_ML {argsCount, lastArgSize = SI.VARIANT v, ...} => 0w6 + argsCount
-      | SI.CallStatic_M {argsCount, ...} => 0w4 + argsCount + argsCount
+      | SI.CallStatic_M {argsCount, ...} => 0w5 + argsCount + argsCount
 
       | SI.TailCallStatic_S {argSize = SI.SINGLE, ...} => 0w4
       | SI.TailCallStatic_S {argSize = SI.DOUBLE, ...} => 0w4

@@ -1,14 +1,13 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * This module translates an expression represented by tree like structure
  * into a sequence of instructions.
  * <p>
  * References occurring in operands of instructions are represented by symbols.
  * </p>
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Linearizer.sml,v 1.67 2006/02/18 11:06:33 duchuu Exp $
+ * @version $Id: Linearizer.sml,v 1.69 2006/02/28 16:11:02 kiyoshiy Exp $
  *)
 structure Linearizer : LINEARIZER =
 struct
@@ -113,32 +112,35 @@ struct
            destination = destination
           }
 
+  val genPrim1_b = genPrim1_w
+  val genPrim2_b = genPrim2_w
+
   val prims =
       SEnv.fromList 
       [
        ("addInt",(genPrim1_i SI.AddInt_Const_1,genPrim2_i SI.AddInt_Const_2)),
        ("addWord",(genPrim1_w SI.AddWord_Const_1,genPrim2_w SI.AddWord_Const_2)),
        ("addReal",(genPrim1_r SI.AddReal_Const_1,genPrim2_r SI.AddReal_Const_2)),
-       ("addByte",(genPrim1_c SI.AddByte_Const_1,genPrim2_c SI.AddByte_Const_2)),
+       ("addByte",(genPrim1_b SI.AddByte_Const_1,genPrim2_b SI.AddByte_Const_2)),
 
        ("subInt",(genPrim1_i SI.SubInt_Const_1,genPrim2_i SI.SubInt_Const_2)),
        ("subWord",(genPrim1_w SI.SubWord_Const_1,genPrim2_w SI.SubWord_Const_2)),
        ("subReal",(genPrim1_r SI.SubReal_Const_1,genPrim2_r SI.SubReal_Const_2)),
-       ("subByte",(genPrim1_c SI.SubByte_Const_1,genPrim2_c SI.SubByte_Const_2)),
+       ("subByte",(genPrim1_b SI.SubByte_Const_1,genPrim2_b SI.SubByte_Const_2)),
 
        ("mulInt",(genPrim1_i SI.MulInt_Const_1,genPrim2_i SI.MulInt_Const_2)),
        ("mulWord",(genPrim1_w SI.MulWord_Const_1,genPrim2_w SI.MulWord_Const_2)),
        ("mulReal",(genPrim1_r SI.MulReal_Const_1,genPrim2_r SI.MulReal_Const_2)),
-       ("mulByte",(genPrim1_c SI.MulByte_Const_1,genPrim2_c SI.MulByte_Const_2)),
+       ("mulByte",(genPrim1_b SI.MulByte_Const_1,genPrim2_b SI.MulByte_Const_2)),
 
        ("divInt",(genPrim1_i SI.DivInt_Const_1,genPrim2_i SI.DivInt_Const_2)),
        ("divWord",(genPrim1_w SI.DivWord_Const_1,genPrim2_w SI.DivWord_Const_2)),
        ("/",(genPrim1_r SI.DivReal_Const_1,genPrim2_r SI.DivReal_Const_2)),
-       ("divByte",(genPrim1_c SI.DivByte_Const_1,genPrim2_c SI.DivByte_Const_2)),
+       ("divByte",(genPrim1_b SI.DivByte_Const_1,genPrim2_b SI.DivByte_Const_2)),
 
        ("modInt",(genPrim1_i SI.ModInt_Const_1,genPrim2_i SI.ModInt_Const_2)),
        ("modWord",(genPrim1_w SI.ModWord_Const_1,genPrim2_w SI.ModWord_Const_2)),
-       ("modByte",(genPrim1_c SI.ModByte_Const_1,genPrim2_c SI.ModByte_Const_2)),
+       ("modByte",(genPrim1_b SI.ModByte_Const_1,genPrim2_b SI.ModByte_Const_2)),
 
        ("quotInt",(genPrim1_i SI.QuotInt_Const_1,genPrim2_i SI.QuotInt_Const_2)),
        ("remInt",(genPrim1_i SI.RemInt_Const_1,genPrim2_i SI.RemInt_Const_2)),

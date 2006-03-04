@@ -1,8 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  * Assign global index to val declarations
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: IndexAllocator.sml,v 1.10 2006/02/18 11:06:33 duchuu Exp $
+ * @version $Id: IndexAllocator.sml,v 1.14 2006/03/02 12:46:47 bochao Exp $
  *)
 structure IndexAllocator =
 struct
@@ -12,15 +13,17 @@ local
     structure TO = TopObject
     structure TFCU = TypedFlatCalcUtils
     structure PE = PathEnv
+    structure BT = BasicTypes
     open TypedFlatCalc 
 in
-   fun allocateIndex (freeEntryPointer, 
+   fun allocateIndex (freeGlobalArrayIndex,
+                      freeEntryPointer, 
                       varIdInfo as {id,displayName,ty}:varIdInfo,
                       loc) =
        let
-         val pageTy = TO.convertTyToPagetype ty
+         val pageTy = TO.convertTyToPageKind ty
          val (allocatedPageArrayIndex, allocatedOffset) = 
-             case IEnv.find(freeEntryPointer,pageTy) of
+             case IEnv.find(freeEntryPointer, pageTy) of
                SOME x => x
              | NONE => raise Control.BugWithLoc ("invalid page type:"
                                                  ^displayName,loc)
@@ -34,13 +37,10 @@ in
                                 )
                                )
          val freeOffset = allocatedOffset + 1
-         val (freePageArrayIndex,freeOffset) =
-             if freeOffset = TO.pageSize then
-               (
-                (TO.globalPageArrayIndex := !TO.globalPageArrayIndex + 0w1;
-                 !TO.globalPageArrayIndex), 
-                0)
-             else (allocatedPageArrayIndex, freeOffset)
+         val (freePageArrayIndex, newFreeGlobalArrayIndex, freeOffset) =
+             if freeOffset = TO.getPageSize() then
+                 (freeGlobalArrayIndex, freeGlobalArrayIndex + 0w1:BT.UInt32, 0)
+             else (allocatedPageArrayIndex, freeGlobalArrayIndex, freeOffset)
          val newFreeEntryPointer = 
              IEnv.insert(
                          freeEntryPointer,
@@ -50,19 +50,48 @@ in
        in
          (
           newPageFlag,
+          newFreeGlobalArrayIndex,
           newFreeEntryPointer,
           deltaIndexMap,
           (pageTy,allocatedPageArrayIndex,allocatedOffset)
           )
        end
 
+   fun allocateAbstractIndex freeGlobalArrayIndex freeEntryPointer =
+       let
+         val (allocatedPageArrayIndex, allocatedOffset) = 
+             case IEnv.find(freeEntryPointer, TO.ABSTRACT_PAGE_KIND) of
+               SOME x => x
+             | NONE => raise Control. Bug("abstract page non exist")
+         val newPageFlag = allocatedOffset = 0
+         val freeOffset = allocatedOffset + 1
+         val (freePageArrayIndex, newFreeGlobalArrayIndex, freeOffset) =
+             if freeOffset = TO.getPageSize() then
+                 (freeGlobalArrayIndex, freeGlobalArrayIndex + 0w1:BT.UInt32, 0)
+             else (allocatedPageArrayIndex, freeGlobalArrayIndex, freeOffset)
+         val newFreeEntryPointer = 
+             IEnv.insert(
+                         freeEntryPointer,
+                         TO.ABSTRACT_PAGE_KIND,
+                         (freePageArrayIndex, freeOffset)
+                         )
+       in
+         (
+          newFreeGlobalArrayIndex,
+          newFreeEntryPointer,
+          (TO.ABSTRACT_PAGE_KIND, allocatedPageArrayIndex, allocatedOffset))
+       end
 
    fun makePreludeAndFinaleDec 
-         (freeEntryPointer, (varIdInfo:varIdInfo,loc)) =
+         (globalArrayIndex, freeEntryPointer, (varIdInfo:varIdInfo,loc)) =
        let
-         val (newPageFlag, newFreeEntryPointer, deltaIndexMap, allocatedIndex) =
-             allocateIndex(freeEntryPointer, varIdInfo, loc)
-         val elemTy = TO.pageElemTy allocatedIndex 
+         val (newPageFlag, 
+              newFreeGlobalArrayIndex,
+              newFreeEntryPointer, 
+              deltaIndexMap,
+              allocatedIndex) =
+             allocateIndex(globalArrayIndex, freeEntryPointer, varIdInfo, loc)
+         val elemTy = TO.pageKindToType (TO.getPageKind allocatedIndex) 
          val setGlobalValueDec =
              TFPSETGLOBALVALUE
                (
@@ -78,21 +107,21 @@ in
                 Loc.noloc
                 )
          val initializedPageDecs =
-             if newPageFlag then
-               let
-                 val pageArrayDec =
-                     TFPINITARRAY (
-                                   TO.getPageArrayIndex allocatedIndex,
-                                   TO.pageSize,
-                                   elemTy,
-                                   Loc.noloc
-                                  )
-               in
-                 [pageArrayDec]
-               end
-             else nil
+             if !Control.doSeparateCompilation then
+               nil
+             else
+               if newPageFlag then
+                 [TFPINITARRAY 
+                    (
+                     TO.getPageArrayIndex allocatedIndex,
+                     TO.getPageSize(),
+                     elemTy,
+                     Loc.noloc
+                     )]
+               else nil
        in
          (
+          newFreeGlobalArrayIndex,
           newFreeEntryPointer,
           deltaIndexMap,
           setGlobalValueDec,
@@ -131,21 +160,28 @@ in
    fun visibleVarsInPathBasis (pathBasis as (pathFunEnv, pathEnv)) =
        visibleVarsInPathEnv pathEnv
 
-   fun makePreludeAndFinaleDecs(freeEntryPointer, pathBasis) =
+   fun makePreludeAndFinaleDecs(freeGlobalArrayIndex, freeEntryPointer, pathBasis) =
        let
          val visibleVars = visibleVarsInPathBasis pathBasis 
-         val (freeEntryPointer, deltaIndexMap, preludeDecs, finaleDecs) =
+         val (freeGlobalArrayIndex, freeEntryPointer, deltaIndexMap, preludeDecs, finaleDecs) =
              foldl
                (fn (varIdInfoLoc,
-                    (freeEntryPointer, accIndexMap, accPreludeDecs, accFinaleDecs)) =>
+                    (freeGlobalArrayIndex, 
+                     freeEntryPointer, 
+                     accIndexMap, 
+                     accPreludeDecs, 
+                     accFinaleDecs)) =>
                    let
-                     val (newFreeEntryPointer, 
+                     val (
+                          newFreeGlobalArrayIndex,
+                          newFreeEntryPointer, 
                           deltaIndexMap, 
                           setGlobalValueDec, 
                           initializedPageDecs) =
-                         makePreludeAndFinaleDec (freeEntryPointer, varIdInfoLoc)
+                         makePreludeAndFinaleDec (freeGlobalArrayIndex, freeEntryPointer, varIdInfoLoc)
                    in
                      (
+                      newFreeGlobalArrayIndex,
                       newFreeEntryPointer,
                       ID.Map.unionWith #1 (deltaIndexMap, accIndexMap),
                       accPreludeDecs @ initializedPageDecs,
@@ -153,13 +189,53 @@ in
                       )
                    end
                      )
-               (freeEntryPointer, 
+               (
+                freeGlobalArrayIndex,
+                freeEntryPointer, 
                 TO.emptyIndexMap, 
                 nil,
                 nil)
                visibleVars
        in
-         (freeEntryPointer, deltaIndexMap, preludeDecs, finaleDecs) 
+         (freeGlobalArrayIndex, freeEntryPointer, deltaIndexMap, preludeDecs, finaleDecs) 
        end
+
+   fun makePreludeAndFinaleDecs_ObjFile (freeGlobalArrayIndex, freeEntryPointer, pathBasis) =
+       let
+           val (freeGlobalArrayIndex, freeEntryPointer, deltaIndexMap, preludeDecs, finaleDecs) =
+               makePreludeAndFinaleDecs (freeGlobalArrayIndex, freeEntryPointer, pathBasis)
+       in
+           (freeGlobalArrayIndex, freeEntryPointer, deltaIndexMap, nil, finaleDecs)
+       end
+
+   (* for Linker *)
+   fun allocateActualIndexAtLinking (freeGlobalArrayIndex, freeEntryPointer, {displayName,ty}) =
+       let
+         val pageKind = TO.convertTyToPageKind ty
+         val (allocatedPageArrayIndex, allocatedOffset) = 
+             case IEnv.find(freeEntryPointer, pageKind) of
+               SOME x => x
+             | NONE => raise Control.Bug ("invalid page type:" ^displayName)
+         val newPageFlag = allocatedOffset = 0
+         val freeOffset = allocatedOffset + 1
+         val (freePageArrayIndex, newFreeGlobalArrayIndex, freeOffset) =
+             if freeOffset = TO.getPageSize() then
+                 (freeGlobalArrayIndex, freeGlobalArrayIndex + 0w1:BT.UInt32, 0)
+             else (allocatedPageArrayIndex, freeGlobalArrayIndex, freeOffset)
+         val newFreeEntryPointer = 
+             IEnv.insert(
+                         freeEntryPointer,
+                         pageKind,
+                         (freePageArrayIndex,freeOffset)
+                         )
+       in
+         (
+          newPageFlag,
+          newFreeGlobalArrayIndex,
+          newFreeEntryPointer,
+          (pageKind, allocatedPageArrayIndex, allocatedOffset)
+          )
+       end
+
 end
 end

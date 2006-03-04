@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
- * @author Liu Bochao
  * utility functions for type inference modules.
- * @version $Id: tyinfBase.sml,v 1.13 2006/02/18 04:59:35 ohori Exp $
+ * @copyright (c) 2006, Tohoku University.
+ * @author Liu Bochao
+ * @version $Id: tyinfBase.sml,v 1.14 2006/02/28 16:11:09 kiyoshiy Exp $
  *)
 structure TypeinfBase : TYPEINFBASE =
 struct

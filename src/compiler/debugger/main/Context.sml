@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
- * global context
+ * global context.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Context.sml,v 1.3 2006/02/18 04:59:21 ohori Exp $
+ * @version $Id: Context.sml,v 1.4 2006/02/28 16:11:01 kiyoshiy Exp $
  *)
 structure Context =
 struct

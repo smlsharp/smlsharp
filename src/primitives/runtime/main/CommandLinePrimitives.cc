@@ -30,7 +30,7 @@ IMLPrim_CommandLine_argumentsImpl(UInt32Value argsCount,
     VirtualMachine::getInstance()->getArguments(&commandLineArguments);
 
     Cell resultList = PrimitiveSupport::constructListNil();
-    for(int index = 0; index < commandLineArgumentsCount; index += 1){
+    for(int index = commandLineArgumentsCount - 1; 0 <= index ; index -= 1){
         TemporaryRoot root(&resultList);
         Cell argument =
         PrimitiveSupport::stringToCell(commandLineArguments[index]);

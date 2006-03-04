@@ -1,13 +1,14 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * Initial module context for module compilation
+ * 
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: InitialModuleContext.sml,v 1.25 2006/02/18 16:04:06 duchuu Exp $
+ * @version $Id: InitialModuleContext.sml,v 1.28 2006/03/02 12:46:47 bochao Exp $
  *)
 structure InitialModuleContext:INITIALMODULECONTEXT =
 struct
   local 
-    open  Types PathEnv TopObject
+    open PathEnv TopObject
     structure TU = TypesUtils
     structure ITC = InitialTypeContext
     structure SE = StaticEnv
@@ -25,6 +26,7 @@ struct
     val initialTopPathBasis = (SEnv.empty,initialTopPathEnv)
 
     val initialModuleContext = { 
+                                freeGlobalArrayIndex = initialFreeGlobalArrayIndex,
                                 freeEntryPointer = initialFreeEntryPointer,
                                 topPathBasis = initialTopPathBasis 
                                 } 

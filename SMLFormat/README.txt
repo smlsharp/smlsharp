@@ -1,5 +1,8 @@
 SMLFormat (Pretty Printer for SML)
 
+@author YAMATODANI Kiyoshi
+@version $Id: README.txt,v 1.7 2006/02/23 05:45:45 kiyoshiy Exp $
+
  The SMLFormat consists of two components:
    formatlib (Pretty Printer library for SML)
    smlformat (Pretty Printer Generator for SML)
@@ -47,11 +50,11 @@ Build
  1) configure
    Specify the directory where SMLUnit is installed.
 
-   $ ./configure SMLUNITDIR=/home/kiyoshiy/IMLProject/SMLUnit
+   $ ./configure --with-smlunit=/home/kiyoshiy/IMLProject/SMLUnit
 
-  SMLUNITDIR must be absolute path.
+  the directory path must be an absolute path.
 
-  SMLUNITDIR is optional. If you won't run unit tests, simply:
+  --with-smlunit is optional. If you won't run unit tests, simply:
 
    $ ./configure
 
@@ -62,10 +65,17 @@ Build
  3) a batch file "smlformat" and a heap image file are generated in the bin
    directory.
 
+    If you want to move the heap image file to other place, you have to edit
+   "smlformat" command to use the new location of the heap image file.
+
+    And, if you want to move this package to other location, sources.cm must be
+   at the top of the install directory.
+   Other packages, including SMLDoc and SML#, assume that this file is there.
+
 ========================================
 Unit test of formatlib
 
- 1) configure with SMLUNITDIR specified.
+ 1) configure with --with-smlunit specified.
 
  2) cd formatlib/test.
 
@@ -89,7 +99,3 @@ Unit test of formatlib
     val it = () : unit
 
 ===============================================================================
-
-
-
-

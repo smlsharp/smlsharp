@@ -3,7 +3,7 @@
 set +x
 
 # A script for running one test
-# $Id: runonetest.sh,v 1.8 2005/06/15 04:27:12 kiyoshiy Exp $
+# $Id: runonetest.sh,v 1.9 2006/02/24 14:14:27 kiyoshiy Exp $
 #
 # Example:
 #   ./runonetest.sh -html -usebasis -d D:/tmp/imltest coresml datatype001.sml
@@ -25,7 +25,7 @@ TESTSDIR=../tests/
 PRINTER=HTML
 RUNTIME=ML
 # use default prelude (non Basis)
-PRELUDE=../../src/lib/preludes/preludes.sml
+PRELUDE=../../src/lib/minimum.sml
 
 while true
 do
@@ -43,7 +43,7 @@ do
 	RUNTIME="ML"
 	shift;;
     "-usebasis")
-	PRELUDE=../../src/lib/basis/main/basis.sml
+	PRELUDE=../../src/lib/basis.sml
 	shift;;
     *)
 	break;;

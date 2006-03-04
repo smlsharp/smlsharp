@@ -1,11 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a kinded type inference with type operators for ML core
  * (imperative version).
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypeInferCore.sml,v 1.55 2006/02/19 10:52:34 ohori Exp $
+ * @version $Id: TypeInferCore.sml,v 1.60 2006/03/02 20:25:59 ohori Exp $
  *)
 structure TypeInferCore  =
 struct
@@ -455,19 +454,20 @@ in
 
   (**
    *)
-  fun typeinfConst (const, loc) =
+  fun typeinfConst const =
     let
       fun staticEvalConst const =
         case const of
-          PT.INT (int, _) => TPCONSTANT (INT int, loc) 
-        | PT.WORD (word, _) => TPCONSTANT (WORD word, loc)
-        | PT.REAL (real, _) => TPCONSTANT (REAL real, loc)
-        | PT.STRING (string, _) => TPCONSTANT (STRING string, loc)
-        | PT.CHAR (char, _) => TPCONSTANT (CHAR char, loc)
+          PT.INT (int, _) => INT int
+        | PT.WORD (word, _) => WORD word
+        | PT.REAL (real, _) => REAL real
+        | PT.STRING (string, _) => STRING string
+        | PT.CHAR (char, _) => CHAR char
       val (ty, _) = TIU.freshTopLevelInstTy (ITC.constTy const)
     in
       (ty, staticEvalConst const)
     end
+
 
   fun mergeBoundEnvs (boundEnv1, boundEnv2) =
     let
@@ -1412,7 +1412,12 @@ in
    *)
   and typeinfExp applyDepth (currentContext : TIC.currentContext) ptexp =
       (case ptexp of
-         PT.PTCONSTANT (const, loc) => typeinfConst (const, loc)
+         PT.PTCONSTANT (const, loc) => 
+           let
+             val (ty, staticConst) = typeinfConst const
+           in
+             (ty, TPCONSTANT (staticConst,loc))
+           end
        | PT.PTVAR (longvid, loc) => 
          (case TIC.lookupLongVar(currentContext,longvid) of 
             ((varStrPath,vid), NONE) => 
@@ -2183,16 +2188,12 @@ in
               )                
             )
          end
-       | PT.PTPATCONSTANT (PT.INT(c, _), loc) => 
-         (SE.emptyVarEnv, SE.intty, TPPATCONSTANT(INT c, SE.intty, loc))
-       | PT.PTPATCONSTANT (PT.STRING(c, _), loc) => 
-         (SE.emptyVarEnv, SE.stringty, TPPATCONSTANT(STRING c, SE.stringty, loc))
-       | PT.PTPATCONSTANT (PT.REAL(c, _), loc) => 
-         (SE.emptyVarEnv, SE.realty, TPPATCONSTANT (REAL c, SE.realty, loc))
-       | PT.PTPATCONSTANT (PT.CHAR(c, _), loc) => 
-         (SE.emptyVarEnv, SE.charty, TPPATCONSTANT (CHAR c, SE.charty, loc))
-       | PT.PTPATCONSTANT (PT.WORD(c, _), loc) => 
-         (SE.emptyVarEnv, SE.wordty, TPPATCONSTANT (WORD c, SE.wordty, loc))
+       | PT.PTPATCONSTANT (const, loc) => 
+         let
+           val (ty, staticConst) = typeinfConst const
+         in
+           (SE.emptyVarEnv, ty, TPPATCONSTANT(staticConst, ty, loc))
+         end
        | PT.PTPATCONSTRUCT (ptpat1, ptpat2, loc) =>
          (case ptpat1 of
             PT.PTPATID(patId, _) =>
@@ -2489,7 +2490,6 @@ in
 	  val newcc = TIC.extendCurrentContextWithUtvarEnv(currentContext, tvarSEnv)
 	  val originTy = evalRawty newcc rawty
 	  val eqKind = if TU.admitEqTy originTy then EQ else NONEQ
-	  (* tobe : opaque *)
           val newTyCon = TU.newTyCon {name = string, 
                                       abstract = false,
                                       strpath = #strLevel currentContext,
@@ -3071,6 +3071,7 @@ in
                   funVar = funVarPathInfo,
                   bodyTy = case TU.derefTy tpmatchTy of
                              FUNMty (_, bodyTy) => bodyTy
+                           | ERRORty =>  ERRORty
                            | _ => raise Control.Bug "non fun type in fundecl",
                   argTyList = argTyList,
                   ruleList = tpmatch
@@ -3326,7 +3327,6 @@ in
               )
            val newCurrentContext = TIC.extendCurrentContextWithContext (currentContext, newContext)
            val (newContext, newDecls) = typeinfPtdeclList isTop newCurrentContext ptdecls
-	   (* tobe : abstract *)
            val (tyConSubst, newTyCons, newTyConEnv) =
                foldr (fn ({name, strpath, abstract, tyvars, id, eqKind, boxedKind, datacon}, 
 			  (tyConSubst, newTyCons, newTyConEnv)) =>
@@ -3336,7 +3336,7 @@ in
 				 {
 				  name = name,
 				  strpath = strpath,
-				  abstract = true, (* abstract type *)
+				  abstract = true, 
                                   tyvars = tyvars,
 				  eqKind = ref NONEQ,
 				  boxedKind = boxedKind,
@@ -3589,7 +3589,7 @@ in
           val etaExpandedTpFffival = 
             let
              val funVarPathInfo =
-                 {name = name, strpath = #strLevel currentContext, ty = newTy}
+                 {name = name, strpath = NilPath, ty = newTy}
              val funVarExp = TPVAR(funVarPathInfo, loc)
              val newVarPathInfo =
                  {name = Vars.newTPVarName(), strpath = NilPath, ty = newArgTy}
@@ -3665,19 +3665,24 @@ in
      let
         val _ = kindedTyvarList := nil
         val (newContext, tpdeclList) = typeinfPtdecl true currentContext ptdecl
-        val tyvars = TypeContextUtils.tyvarsContext newContext
-        val dummyTyList =
-          (foldr
-           (fn (r as ref(TVAR {recKind = OVERLOADED (h :: tl), ...}),dummyTyList) => 
-                 (r := SUBSTITUTED h; dummyTyList)
-             | (r as ref (TVAR {id, recKind=UNIV, eqKind, tyvarName}), dummyTyList) =>
-                 let
-                   val dummyty = TIU.nextDummyTy ()
-                   val _ = r := (SUBSTITUTED dummyty)
-                 in
-                   dummyty :: dummyTyList
-                 end
-            | (**** temporary fix of BUG 200 ***)
+     in
+       if E.isError() then 
+         (newContext, tpdeclList)
+       else
+         let
+           val tyvars = TypeContextUtils.tyvarsContext newContext
+           val dummyTyList =
+             (foldr
+              (fn (r as ref(TVAR {recKind = OVERLOADED (h :: tl), ...}),dummyTyList) => 
+               (r := SUBSTITUTED h; dummyTyList)
+            | (r as ref (TVAR {id, recKind=UNIV, eqKind, tyvarName}), dummyTyList) =>
+               let
+                 val dummyty = TIU.nextDummyTy ()
+                 val _ = r := (SUBSTITUTED dummyty)
+               in
+                 dummyty :: dummyTyList
+               end
+                | (**** temporary fix of BUG 200 ***)
                (r as ref (TVAR {id, recKind=REC tySEnvMap, eqKind, tyvarName}), dummyTyList) =>
                  let
                    val _ = r := (SUBSTITUTED (RECORDty tySEnvMap))
@@ -3686,22 +3691,20 @@ in
                  end
              | (r as ref (SUBSTITUTED _), dummyTyList) => dummyTyList
                  )
-            nil
-            (OTSet.listItems tyvars)
-            )
-            handle x => raise x
-        val _ =
-          if E.isError()
-            then ()
-          else 
-            case dummyTyList of
-              nil => ()
-            | _ =>
-                E.enqueueWarning
-                (PT.getLocDec ptdecl, E.ValueRestriction {dummyTyList = dummyTyList})
-        val _ = TU.eliminateVacuousTyvars()
-     in
-       (newContext, tpdeclList)
+              nil
+              (OTSet.listItems tyvars)
+              )
+             handle x => raise x
+           val _ =
+             case dummyTyList of
+               nil => ()
+             | _ =>
+                 E.enqueueWarning
+                 (PT.getLocDec ptdecl, E.ValueRestriction {dummyTyList = dummyTyList})
+           val _ = TU.eliminateVacuousTyvars()
+         in
+           (newContext, tpdeclList)
+         end
      end
    handle x => raise x
 end

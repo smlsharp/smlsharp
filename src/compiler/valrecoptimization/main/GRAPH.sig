@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
- * Graph signature with strong connected component computation
+ * Graph signature with strong connected component computation.
  * 
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: GRAPH.sig,v 1.3 2006/02/18 16:04:07 duchuu Exp $
+ * @version $Id: GRAPH.sig,v 1.4 2006/02/28 16:11:11 kiyoshiy Exp $
  *)
 signature GRAPH = sig
     type node_id = int

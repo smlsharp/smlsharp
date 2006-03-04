@@ -1,7 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * Pickler for module compilation
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author Kiyoshi Yamatodani
- * @version $Id: ModuleCompilationPickler.sml,v 1.12 2006/02/18 16:04:06 duchuu Exp $
+ * @version $Id: ModuleCompilationPickler.sml,v 1.15 2006/03/02 12:46:47 bochao Exp $
  *)
 structure ModuleCompilationPickler =
 struct
@@ -29,6 +31,7 @@ struct
   val freeEntryPointer : TO.freeEntryPointer P.pu =
       EnvPickler.IEnv (P.tuple2(pageArrayIndex, offset))
 
+  val freeGlobalArrayIndex = P.word32
   (****************************************)
 
   (* picklers for datatypes defined in PathEnv. *)
@@ -114,18 +117,28 @@ struct
 
   (****************************************)
 
-  val moduleEnv : ModuleCompiler.moduleEnv P.pu =
+  val moduleEnv : StaticModuleEnv.moduleEnv P.pu =
       P.conv
           (
-            fn (freeEntryPointer, topPathBasis) =>
+           fn (freeGlobalArrayIndex, freeEntryPointer, topPathBasis) =>
                {
+                 freeGlobalArrayIndex = freeGlobalArrayIndex,
                  freeEntryPointer = freeEntryPointer,
                  topPathBasis = topPathBasis
                },
-            fn {freeEntryPointer, topPathBasis} =>
-               (freeEntryPointer, topPathBasis)
+            fn {freeGlobalArrayIndex, freeEntryPointer, topPathBasis} =>
+               (freeGlobalArrayIndex, freeEntryPointer, topPathBasis)
           )
-          (P.tuple2(freeEntryPointer, topPathBasis))
+          (P.tuple3(freeGlobalArrayIndex, freeEntryPointer, topPathBasis))
+
+  val staticModuleEnv : StaticModuleEnv.staticModuleEnv P.pu =
+      P.conv
+      ((fn (importModuleEnv, exportModuleEnv) =>
+           {importModuleEnv = importModuleEnv, 
+            exportModuleEnv = exportModuleEnv}),
+       (fn {importModuleEnv, exportModuleEnv} =>
+           (importModuleEnv, exportModuleEnv)))
+      (P.tuple2(pathBasis, pathBasis))
 
   (***************************************************************************)
 

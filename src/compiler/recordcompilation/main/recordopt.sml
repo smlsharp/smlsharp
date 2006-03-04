@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * This is obsolue, and is  not used.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: recordopt.sml,v 1.3 2006/02/18 04:59:27 ohori Exp $
+ * @version $Id: recordopt.sml,v 1.4 2006/02/28 16:11:04 kiyoshiy Exp $
  *)
 structure RecordCalcOpt = struct
 local 

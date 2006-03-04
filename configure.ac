@@ -78,7 +78,7 @@ AC_MSG_RESULT([$SMLNJ_VERSION])
 case "$SMLNJ_VERSION" in
 110.0.[[789]]) ;;
 *)
-  AC_MSG_ERROR([This version of SML/NJ is not supported.])
+  AC_MSG_WARN([This version of SML/NJ is not supported.])
   ;;
 esac
 AC_SUBST(SMLNJ_VERSION)
@@ -166,7 +166,14 @@ AC_SUBST(SMLUNITDIR)
 if test "x$SMLFORMATDIR" = "x$PWD/$srcdir/SMLFormat"; then
   if test \! -f "$SMLFORMATDIR/bin/smlformat"; then
     echo "*** SMLFormat is not configured ***"
-    (cd "$SMLFORMATDIR" && ./configure && make)
+    (cd "$SMLFORMATDIR" && ./configure && make SML_CMD="$SML")
+  fi
+fi
+
+if test "x$SMLDOCDIR" = "x$PWD/$srcdir/SMLDoc"; then
+  if test \! -f "$SMLDOCDIR/bin/smldoc"; then
+    echo "*** SMLDoc is not configured ***"
+    (cd "$SMLDOCDIR" && ./configure && make SML_CMD="$SML")
   fi
 fi
 
@@ -463,7 +470,7 @@ AC_ARG_ENABLE(debug,
 AS_HELP_STRING([--enable-debug],
                [enable debug (for developer only) [[default=no]]]))
 if test "x$enable_debug" = "xyes"; then
-  DEFS="$DEFS -DIML_DEBUG"
+  DEFS="$DEFS -DIML_DEBUG -DIML_ENABLE_EXECUTION_MONITORING"
   # remove default -O options.
   if test "x$ac_env_CFLAGS_value" = "x"; then
     CFLAGS=`echo "$CFLAGS" | sed 's,-O[[0-9]]*,,g'`
@@ -525,6 +532,7 @@ AC_CONFIG_FILES([commonrule
                  src/instructions/compiler/main/Makefile
                  src/compiler/Makefile
                  src/lib/Makefile
+                 src/lib/Script/Makefile
                  src/runtime/Makefile
                  src/runtime/runtime-core/main/Makefile
                  src/runtime/runtime-impl/main/Makefile

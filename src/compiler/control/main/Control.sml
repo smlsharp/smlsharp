@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * switches to control compiler's behavior.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: Control.sml,v 1.17 2006/02/18 04:59:20 ohori Exp $
+ * @version $Id: Control.sml,v 1.23 2006/03/02 12:43:31 bochao Exp $
  *)
 structure Control = 
 struct
@@ -37,20 +36,8 @@ struct
         SMLFormat.prettyPrint ppgenParameter expressions
       end
 
-  (** true if trace of compilation should be printed. *)
-  val switchTrace = ref false
-  val printSource = ref false
-  val printPL = ref false
-  val printUC = ref false
-  val printTP = ref false
-  val printTFP = ref false
-  val printRC = ref false
-  val printTL = ref false
-  val printBUC = ref false
-  val printAN = ref false
-  val printLS = ref false
-  val printIS = ref false
-
+  (****************************************)
+  (* switches to control informations reported to user *)
 
   (** true if binding informations are to be printed. *)
   val printBinds = ref true
@@ -58,14 +45,20 @@ struct
   (** true if every warning should be printed. *)
   val printWarning = ref true
 
-  (** true if every diagnosis should be printed. *)
-  val printDiagnosis = ref true
-
   (** true if no formatter is generated and no binding information is printed.
    *)
   val skipPrinter = ref false
 
-  val checkType = ref true
+  (** If true, information which is required to implement the exnHistory is
+   * embedded in the output Executable. *)
+  val generateExnHistory = ref true
+
+  (** If true, information for debugger is embedded in the output Executable.
+   *)
+  val generateDebugInfo = ref false
+
+  (****************************************)
+  (* switches to control optimizations *)
 
   val doUncurryOptimization = ref true
 
@@ -79,20 +72,19 @@ struct
 
   val doTailCallOptimize = ref true
 
-  (**
-   * If doRecursiveCallOptimize is true, recursive call 
+  (** If true, recursive call is optimized
    *)
   val doRecursiveCallOptimize = ref true
 
-  (** If doSelfRecursiveCallOptimize is flase, self recursive call is compiled
-   * in the same way as non-self recursive call.
-   * If doRecursiveCallOptimize and doSelfRecursiveCallOptimize are true,
+  (** If flase, self recursive call is compiled in the same way as non-self
+   * recursive call.
+   * If both of doRecursiveCallOptimize and this switch are true,
    * self-recursive call is compiled into a more specialized instruction than
    * an instruction for non-self recursive call. *)
   val doSelfRecursiveCallOptimize = ref true
 
-  (** If doInlineCaseBranch is true, the match compiler tries inlining case
-   * branch, rather than translates each case branch into a function.
+  (** If true, the match compiler tries inlining case branch, rather than
+   * translates each case branch into a function.
    *)
   val doInlineCaseBranch = ref true
 
@@ -102,17 +94,45 @@ struct
    *)
   val limitOfInlineCaseBranch = ref 10
 
-  val doUncurryingOptimizeInMachCompile = ref false
+  val doUncurryingOptimizeInMachCompile = ref true
+
+  val pageSizeOfGlobalArray = ref 1024
+
+  (****************************************)
+  (* switches to runtime parameter *)
+
+  val VMHeapSize = ref 4096000
+
+  val VMStackSize = ref 4096000
+
+  (****************************************)
+  (* internal switches for development *)
+
+  (** true if trace of compilation should be printed. *)
+  val switchTrace = ref false
+
+  val printSource = ref false
+  val printPL = ref false
+  val printUC = ref false
+  val printTP = ref false
+  val printTFP = ref false
+  val printRC = ref false
+  val printTL = ref false
+  val printBUC = ref false
+  val printAN = ref false
+  val printLS = ref false
+  val printIS = ref false
+
+  val checkType = ref true
+
+  (** true if every diagnosis should be printed. *)
+  val printDiagnosis = ref true
 
   val doProfile = ref false
 
-  (** If true, information for debugger is embedded in the output Executable.
+  (** If true, then in separate compilation mode 
    *)
-  val generateDebugInfo = ref false
-
-  (** If true, information which is required to implement the exnHistory is
-   * embedded in the output Executable. *)
-  val generateExnHistory = ref true
+  val doSeparateCompilation = ref false
 
   (* MEMO: procedure to generate switches list.
    * (1) get signature of Control structure.
@@ -152,6 +172,7 @@ struct
     ("generateExnHistory", BoolSwitch generateExnHistory),
     ("limitOfBlockFields", IntSwitch limitOfBlockFields),
     ("limitOfInlineCaseBranch", IntSwitch limitOfInlineCaseBranch),
+    ("pageSizeOfGlobalArray", IntSwitch pageSizeOfGlobalArray),
     ("printAN", BoolSwitch printAN),
     ("printBUC", BoolSwitch printBUC),
     ("printBinds", BoolSwitch printBinds),
@@ -168,7 +189,9 @@ struct
     ("printWarning", BoolSwitch printWarning),
     ("printWidth", IntSwitch printWidth),
     ("skipPrinter", BoolSwitch skipPrinter),
-    ("switchTrace", BoolSwitch switchTrace)
+    ("switchTrace", BoolSwitch switchTrace),
+    ("VMHeapSize", IntSwitch VMHeapSize),
+    ("VMStackSize", IntSwitch VMStackSize)
           ]
 
   (****************************************)
@@ -201,8 +224,11 @@ struct
               case getValue (prefix ^ name) of
                 SOME value =>
                 (
-                  print ("set control option: " ^ name ^ "\n");
-                  interpretControlOption (name, switch, value)
+                  interpretControlOption (name, switch, value);
+                  print
+                      ("set control option: "
+                       ^ name ^ " = "
+                       ^ switchToString switch ^ "\n")
                 )
               | NONE => ())
           (SEnv.listItemsi switchTable)

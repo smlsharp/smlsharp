@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * counters which records the number of occurrences of events in the runtime.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RuntimeCounters.sml,v 1.2 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: RuntimeCounters.sml,v 1.3 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 structure RuntimeCounters =
 struct

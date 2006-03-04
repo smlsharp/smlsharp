@@ -1,10 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
  * Utility functions to manipulate the typed flat pattern calculus.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @author Satoshi Osaka
- * @version $Id: TypedFlatCalcUtils.sml,v 1.4 2006/02/18 04:59:32 ohori Exp $
+ * @version $Id: TypedFlatCalcUtils.sml,v 1.5 2006/02/27 06:31:09 bochao Exp $
  *)
 structure TypedFlatCalcUtils  = 
 struct

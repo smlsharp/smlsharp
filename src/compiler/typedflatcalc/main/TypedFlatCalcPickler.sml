@@ -1,7 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypedFlatCalcPickler.sml,v 1.4 2006/02/18 16:04:07 duchuu Exp $
+ * @version $Id: TypedFlatCalcPickler.sml,v 1.5 2006/02/27 06:31:09 bochao Exp $
  *)
 structure TypedFlatCalcPickler =
 struct

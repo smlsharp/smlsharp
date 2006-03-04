@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of primitives on IO operataions.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: IOPrimitives.sml,v 1.5 2006/02/18 04:59:39 ohori Exp $
+ * @version $Id: IOPrimitives.sml,v 1.6 2006/02/28 16:11:12 kiyoshiy Exp $
  *)
 structure IOPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct

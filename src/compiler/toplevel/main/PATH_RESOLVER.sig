@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a simple interpreter of file path string.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PATH_RESOLVER.sig,v 1.4 2006/02/18 04:59:29 ohori Exp $
+ * @version $Id: PATH_RESOLVER.sig,v 1.5 2006/02/28 16:11:06 kiyoshiy Exp $
  *)
 signature PATH_RESOLVER =
 sig

@@ -1,1 +1,1 @@
-use "./preludes/preludes.sml";
+use "./minimum/main/preludes.sml";

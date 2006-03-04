@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Module compiler flattens structure.
- * 
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompileCore.sml,v 1.35 2006/02/18 11:06:33 duchuu Exp $
+ * @version $Id: ModuleCompileCore.sml,v 1.36 2006/02/27 06:23:01 bochao Exp $
  *)
 structure ModuleCompileCore  = 
 struct

@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * utility functions for manupilating types (needs re-writing).
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: StructureLocalization.sml,v 1.5 2006/02/18 04:59:33 ohori Exp $
+ * @version $Id: StructureLocalization.sml,v 1.6 2006/02/28 16:11:08 kiyoshiy Exp $
  *)
 
 (* type instantiation for structure.

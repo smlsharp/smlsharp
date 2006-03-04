@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: VALREC_OPTIMIZER.sig,v 1.5 2006/02/18 16:04:07 duchuu Exp $
+ * @version $Id: VALREC_OPTIMIZER.sig,v 1.6 2006/02/28 16:11:11 kiyoshiy Exp $
  *)
 signature VALREC_OPTIMIZER =
 sig

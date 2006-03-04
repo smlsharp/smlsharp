@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of channel using a client socket.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ClientSocketChannel.sml,v 1.4 2006/02/18 04:59:28 ohori Exp $
+ * @version $Id: ClientSocketChannel.sml,v 1.5 2006/02/28 16:11:04 kiyoshiy Exp $
  *)
 structure ClientSocketChannel =
 struct

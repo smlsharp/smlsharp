@@ -1,7 +1,6 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * type structures.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
@@ -18,10 +17,14 @@ signature TYPES  =
       | REAL of string
       | STRING of string
       | WORD of Word32.word
-
     datatype path = datatype Path.path
-
     type id = ID.id
+    datatype sizeTagExp =
+             ST_CONST of int
+           | ST_VAR of id
+           | ST_BDVAR of int
+           | ST_APP of {stfun: sizeTagExp, args: sizeTagExp list}
+           | ST_FUN of {args : int list, body : sizeTagExp}
     eqtype tid
     val initialTid : tid
     val tidToString : tid -> string
@@ -57,6 +60,7 @@ signature TYPES  =
       | FRAMEBITMAPty of int list
       | ABSSPECty of ty * ty 
       | SPECty of ty
+      | ABSTRACTty
     and idState
       = CONID of conPathInfo
       | OPRIM of oprimInfo
@@ -68,11 +72,18 @@ signature TYPES  =
       = TYCON of tyCon
       | TYFUN of tyFun
       | TYSPEC of {impl:tyBindInfo option, spec:tySpec}
+    and strSizeTagBindInfo = STRSIZETAG of strPathSizeTagInfo
     withtype tvKind = {id : tid, recKind : recKind, eqKind : eqKind, tyvarName : string option}
     and varIdInfo = {id : id, displayName : string, ty : ty}
     and btvKind = {index : int, recKind : recKind, eqKind : eqKind}
     and varEnv = idState SEnv.map
     and tyConEnv = tyBindInfo SEnv.map
+    and tyConSizeTagEnv =
+        {tyBindInfo : tyBindInfo, sizeInfo : sizeTagExp, tagInfo : sizeTagExp} SEnv.map
+    and strSizeTagEnv = strSizeTagBindInfo SEnv.map
+    and SizeTagEnv = tyConSizeTagEnv * varEnv * strSizeTagEnv
+    and strPathSizeTagInfo =
+        {id : id, name : string, strpath : path, env : SizeTagEnv}
     and tyFun = {name : string, tyargs : btvKind IEnv.map, body : ty}
     and tyCon = {
                  name : string,
@@ -146,8 +157,7 @@ signature TYPES  =
     val format_Env : (int
                       * {eqKind:eqKind, index:int, recKind:recKind} IEnv.map) 
                        list
-                     -> tyBindInfo SEnv.map * idState SEnv.map
-                        * strBindInfo SEnv.map
+                       -> Env
                         -> SMLFormat.FormatExpression.expression list
     val format_bmap_int : ('a -> SMLFormat.FormatExpression.expression list)
                           * SMLFormat.FormatExpression.expression list
@@ -249,6 +259,11 @@ signature TYPES  =
                              IEnv.map) list
                         -> strBindInfo SEnv.map
                            -> SMLFormat.FormatExpression.expression list
+    val format_strSizeTagEnv : (int
+                         * {eqKind:eqKind, index:int, recKind:recKind} 
+                             IEnv.map) list
+                        -> strSizeTagEnv
+                           -> SMLFormat.FormatExpression.expression list
     val format_strInfo : 'a
                          -> {env:'b, id:'c, name:string}
                             -> SMLFormat.FormatExpression.expression list 
@@ -288,8 +303,13 @@ signature TYPES  =
     val format_tyConEnv : (int
                            * {eqKind:eqKind, index:int, recKind:recKind} 
                                IEnv.map) list
-                          -> tyBindInfo SEnv.map
+                          -> tyConEnv
                              -> SMLFormat.FormatExpression.expression list
+    val format_tyConSizeTagEnv : (int
+                                  * {eqKind:eqKind, index:int, recKind:recKind} 
+                                        IEnv.map) list
+                                 -> tyConSizeTagEnv
+                                 -> SMLFormat.FormatExpression.expression list
     val format_tyFun : (int
                         * {eqKind:eqKind, index:int, recKind:recKind} IEnv.map)
                          list
@@ -327,6 +347,7 @@ signature TYPES  =
                                   IEnv.map) list
                              -> varPathInfo
                                 -> SMLFormat.FormatExpression.expression list
+    val format_tyConIdSet : tyConIdSet -> SMLFormat.FormatExpression.expression list
     val freeTyIdName : int -> string
     val freeTyIdToDoc : {eqKind:eqKind, id:int, recKind:'a} -> string
     val init : unit -> unit

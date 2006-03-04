@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: ExecutableLinker.cc,v 1.43 2006/02/04 13:48:48 kiyoshiy Exp $
+ * @version $Id: ExecutableLinker.cc,v 1.44 2006/02/25 02:39:50 kiyoshiy Exp $
  */
 #include "ExecutableLinker.hh"
 #include "Instructions.hh"
@@ -675,6 +675,8 @@ ExecutableLinker::link(Executable *executable)
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
+                toNativeOrderQuad(PC); // envOffset
+                PC += 1;
                 toNativeOrderQuad(PC); // argOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
@@ -687,6 +689,8 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // argOffset
                 PC += 1;
@@ -703,6 +707,8 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
@@ -721,6 +727,8 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
@@ -741,6 +749,8 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
@@ -765,6 +775,8 @@ ExecutableLinker::link(Executable *executable)
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
+                toNativeOrderQuad(PC); // envOffset
+                PC += 1;
                 toNativeOrderQuad(PC); // argOffset
                 PC += 1;
                 break;
@@ -775,6 +787,8 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // argOffset
                 PC += 1;
@@ -789,6 +803,8 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
@@ -805,6 +821,8 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
@@ -823,6 +841,8 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envOffset
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);

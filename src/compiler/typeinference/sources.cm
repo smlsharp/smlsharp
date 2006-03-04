@@ -5,5 +5,8 @@ Group
 	structure TypeInferenceUtils
 	structure StructureLocalization
         structure UncurryFundecl
+	structure SigUtils
+	structure TypeInferenceError
+	structure SigCheck
 is
 	main/module.cm

@@ -1,14 +1,13 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * The implementation of IML runtime.
  * <p>
  * This module provides a virtual machine which executes IML instructions.
  * </p>
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: VM.sml,v 1.109 2006/02/18 04:59:41 ohori Exp $
+ * @version $Id: VM.sml,v 1.111 2006/03/01 08:55:47 kiyoshiy Exp $
  *)
 structure VM :> VM =
 struct
@@ -462,42 +461,7 @@ val _ = TextIO.print "finish initialization of registers\n"
             in (entryPoint, restoredENV) end
 
         (********************)
-(*
 
-        fun copyAndUpdateBlock (blockIndex, fieldIndex, valueIndex) =
-	    let
-              val blockAddress =
-                  pointerOf
-                      "block in CopyAndUpdateField"
-                      (FS.load (frameStack, blockIndex))
-	      val newBlockAddress =
-		  H.allocateBlock
-		      heap
-		      {
-		        fields = H.getFields heap blockAddress,
-		        bitmap = H.getBitmap heap blockAddress,
-		        blockType = H.getBlockType heap blockAddress
-		      }
-              (* since blockAddress may be changed by garbage collection,
-	         load it again here *)
-	      val blockAddress =
-                  pointerOf
-                      "block in CopyAndUpdateField"
-                      (FS.load (frameStack, blockIndex))
-
-	      val fields = H.getFields heap blockAddress
-	      val value = FS.load (frameStack, valueIndex)
-
-	      val fieldValues =
-		  let fun f (n,l) =
-			  let val v = if n = fieldIndex then value
-				      else H.getField heap (blockAddress, n)
-			  in if n = 0w0 then v::l else f (n - 0w1, v::l)
-			  end
-		  in f (fields - 0w1, nil) end
-	      val _ = H.putFields heap (newBlockAddress, fieldValues)
-	    in newBlockAddress end
-*)
         (**
          * <p>
          * Every function call passes a block as the first argument.

@@ -1,8 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  * location in the source code.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LOC.sig,v 1.4 2006/02/18 16:04:06 duchuu Exp $
+ * @version $Id: LOC.sig,v 1.5 2006/02/27 06:26:13 bochao Exp $
  *)
 signature LOC =
 sig

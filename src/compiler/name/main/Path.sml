@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
- * type structures.
+ * Path represents a long identifier.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Path.sml,v 1.7 2006/02/18 11:06:34 duchuu Exp $
+ * @version $Id: Path.sml,v 1.8 2006/02/27 06:26:14 bochao Exp $
  *)
 structure Path : PATH = 
 struct

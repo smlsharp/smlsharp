@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: Heap.cc,v 1.5 2005/12/19 02:19:38 kiyoshiy Exp $
+ * @version $Id: Heap.cc,v 1.6 2006/02/27 09:12:59 kiyoshiy Exp $
  */
 #include "Heap.hh"
 #include "IllegalStateException.hh"
@@ -239,7 +239,12 @@ INLINE_FUN
 BoolValue
 Heap::isValidBlockPointer(Cell* block)
 {
-    return isValidHeaderPointer(BLOCK_TO_HEADER(block));
+    if(NULL == block){
+        return false;
+    }
+    else{
+        return isValidHeaderPointer(BLOCK_TO_HEADER(block));
+    }
 }
 
 void

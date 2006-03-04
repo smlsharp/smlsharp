@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * The typed pattern calculus for the IML.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypedCalc.ppg,v 1.4 2006/02/18 04:59:31 ohori Exp $
+ * @version $Id: TypedCalc.ppg,v 1.6 2006/03/02 12:52:25 bochao Exp $
  *)
 structure TypedCalc : TYPEDCALC = struct
 
@@ -911,35 +910,8 @@ structure TypedCalc : TYPEDCALC = struct
        *  +  "=" +1 4[strexp()(btvEnv)]
        *)
       TPMDECFUN of (funBindInfo  * string * tpmsigexp  * tpmstrexp) list * loc
-
-(* 
- and instStrInfo =
-     (*%
-      * @format(ive * ise) 
-      *)
-     InstStr of instVarEnv * instStrEnv
- and instVarEnv = 
-     (*%
-      * @format(item smap:genericSmapExp) 
-      *)
-     ((tpexp -> tpexp) * idState) SEnv.map
- and instStrEnv = 
-     (*%
-      * @format(instStrInfo smap:genericSmapExp) 
-      *)
-     instStrInfo SEnv.map
- and instFunEnv = 
-     (*%
-      * @format(instStrInfo smap:genericSmapExp) 
-      *)
-     (instVarEnv * instStrEnv) SEnv.map
- and instEnv =
-     (*%
-      * @format(instVE * instSE) 
-      *)
-     instVarEnv * instStrEnv
-*)
-(*************************************************************)
-
-
+    | (*%
+       *@format(tpmspec * Env * loc) "import" + tpmspec()(btvEnv)
+       *)
+      TPMDECIMPORT of tpmspec * Types.Env * loc 
 end

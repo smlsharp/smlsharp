@@ -1,14 +1,13 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * channel is an abstraction of I/O operation.
  *  Motivation is to provide the same facility of the stream classes in the
  * Java library.
  *  It provides an uniform way of I/O operations on file, socket, and memory
  * buffer, which the SML Basis library lacks.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ChannelTypes.sml,v 1.3 2006/02/18 04:59:27 ohori Exp $
+ * @version $Id: ChannelTypes.sml,v 1.4 2006/02/28 16:11:04 kiyoshiy Exp $
  *)
 structure ChannelTypes =
 struct

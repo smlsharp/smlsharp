@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * entry point of the debugger.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.7 2006/02/21 01:50:26 katsuu Exp $
+ * @version $Id: Main.sml,v 1.8 2006/02/28 16:11:01 kiyoshiy Exp $
  *)
 structure Main =
 struct

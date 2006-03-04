@@ -10,9 +10,11 @@ Group is
         ../../types/sources.cm
         ../../typedcalc/sources.cm
 	../../systemdef/sources.cm
+
         TypedLambda.ppg.sml
         TypedLambdaUtils.sml
 	TypeCheckTypedLambdaError.ppg.sml
 	TypeCheckTypedLambda.sml
         TYPEDLAMBDA_FORMATTER.sig
         TypedLambdaFormatter.sml
+	TypedLambdaPickler.sml

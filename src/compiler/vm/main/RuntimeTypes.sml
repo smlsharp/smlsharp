@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * declartions of types which represent elements operated in the runtime.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RuntimeTypes.sml,v 1.19 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: RuntimeTypes.sml,v 1.20 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 structure RuntimeTypes =
 struct

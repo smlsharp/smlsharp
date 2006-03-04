@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * signature check for module.
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: signatureCheck.sml,v 1.105 2006/02/18 04:59:35 ohori Exp $
+ * @version $Id: signatureCheck.sml,v 1.107 2006/03/02 12:53:26 bochao Exp $
  *)
 structure SigCheck =
 struct 
@@ -811,6 +810,21 @@ in
          exnTagSubst
          )
       end
+
+  fun checkEnvAndSigma (Env, sigma) =
+      let
+        val (tyConIdSet, sigEnv) = freshTyConIdSetInSig sigma
+        val tyConEqs = computeTyBindInfoEquationsEnv (Env, sigEnv)
+        val tyConIdSubst = unifyTyConId tyConIdSet tyConEqs ID.Map.empty
+        val tyConEqs = substTyConIdInTyBindInfoEqsDomain tyConIdSubst tyConEqs
+        val tyConSubst = unifyTyBindInfo tyConEqs ID.Map.empty
+        val (_, sigEnv) = TCU.substTyConIdInEnv ID.Set.empty tyConIdSubst sigEnv
+        val (_, sigEnv) = TCU.substTyConInEnv ID.Set.empty tyConSubst sigEnv
+        val _ = checkInstEnv (Env, sigEnv)         
+      in 
+        sigEnv
+      end
+
 
 end
 end

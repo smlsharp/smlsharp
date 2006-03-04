@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Pretty printer of the typed pattern calculus.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TYPEDCALC_FORMATTER.sig,v 1.7 2006/02/18 04:59:31 ohori Exp $
+ * @version $Id: TYPEDCALC_FORMATTER.sig,v 1.8 2006/02/28 16:11:07 kiyoshiy Exp $
  *)
 signature TYPEDCALC_FORMATTER = 
 sig

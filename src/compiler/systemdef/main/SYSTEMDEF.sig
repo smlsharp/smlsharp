@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * This module collects system dependent entities.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  *)
 signature SYSTEMDEF =

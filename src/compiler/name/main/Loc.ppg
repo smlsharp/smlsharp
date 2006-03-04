@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
  * location in the source code.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Loc.ppg,v 1.3 2006/02/18 04:59:24 ohori Exp $
+ * @version $Id: Loc.ppg,v 1.4 2006/02/27 06:26:13 bochao Exp $
  *)
 structure Loc :> LOC =
 struct

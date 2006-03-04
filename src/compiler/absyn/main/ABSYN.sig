@@ -5,7 +5,7 @@
  *  Copyright (c) 2006, Tohoku University.
  * </p>
  * @author Atsushi Ohori 
- * @version $Id: ABSYN.sig,v 1.3 2006/02/18 04:59:14 ohori Exp $
+ * @version $Id: ABSYN.sig,v 1.4 2006/03/02 12:42:40 bochao Exp $
  *)
 signature ABSYN = 
 sig
@@ -133,9 +133,11 @@ sig
       TOPDECSTR of strdec * Loc.loc (* structure-level declaration *)
     | TOPDECSIG of ( string * sigexp ) list * Loc.loc 
     | TOPDECFUN of funbind list * Loc.loc (* functor binding*)
+    | TOPDECIMPORT of spec * Loc.loc 
   datatype parseresult = 
       TOPDECS of topdec list * Loc.loc
     | USE of string * Loc.loc
+    | USEOBJ of string * Loc.loc
 
   val getLocTy : ty -> Loc.loc
   val getLocPat : pat -> Loc.loc

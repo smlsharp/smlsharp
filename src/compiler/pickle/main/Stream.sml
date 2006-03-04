@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * serialize library based on
  * "Type-Specialized Serialization with Sharing", Martin Elsman
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Stream.sml,v 1.2 2006/02/18 04:59:25 ohori Exp $
+ * @version $Id: Stream.sml,v 1.3 2006/02/28 16:11:03 kiyoshiy Exp $
  *)
 structure Stream =
 struct

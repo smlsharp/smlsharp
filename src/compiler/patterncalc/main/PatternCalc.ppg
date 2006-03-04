@@ -4,7 +4,7 @@
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: PatternCalc.ppg,v 1.1 2006/01/17 11:19:13 ohori Exp $
+ * @version $Id: PatternCalc.ppg,v 1.2 2006/03/02 12:48:03 bochao Exp $
  *)
 structure PatternCalc : PATTERNCALC = struct
 
@@ -559,6 +559,12 @@ and pltopdec =
      *       +  "=" +1 4[strexp()(expFormatter,patFormatter)]
      *)
     PLTOPDECFUN of  (string * string * plsigexp  * plstrexp * loc) list * loc 
+  | (*%
+     * @format (spec * loc)
+     * !N0{ "import" + spec()(expFormatter,patFormatter) }
+     *) 
+    PLTOPDECIMPORT of plspec * loc 
+
 
   end
 

@@ -98,7 +98,7 @@ structure BasicFormatters{
  val format_order
  val format_list
 }
-structure SMLPP{
+structure SMLFormat{
  structure FormatExpression{
   type priority => structure FormatExpression
   type assocDirection => structure FormatExpression
@@ -180,7 +180,7 @@ signature BASIC_FORMATTERS{
  val format_order
  val format_list
 }
-signature SMLPP{
+signature SMLFORMAT{
  structure FormatExpression{
   type priority => signature FORMAT_EXPRESSION
   type assocDirection => signature FORMAT_EXPRESSION

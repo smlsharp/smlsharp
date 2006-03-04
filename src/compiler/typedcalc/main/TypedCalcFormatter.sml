@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Pretty printer of the typed pattern calculus.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypedCalcFormatter.sml,v 1.10 2006/02/18 04:59:31 ohori Exp $
+ * @version $Id: TypedCalcFormatter.sml,v 1.11 2006/02/28 16:11:07 kiyoshiy Exp $
  *)
 structure TypedCalcFormatter : TYPEDCALC_FORMATTER =
 struct

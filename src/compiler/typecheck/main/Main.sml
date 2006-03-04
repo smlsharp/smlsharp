@@ -1,7 +1,6 @@
 (*
- * Copyright (c) 2006, Tohoku University.
- *
  * run the VM simulator
+ * @copyright (c) 2006, Tohoku University.
  *)
 structure Main =
 struct

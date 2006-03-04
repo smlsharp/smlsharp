@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * This structure generates codes which print binding informations.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrintCodeGenerator.sml,v 1.24 2006/02/18 04:59:26 ohori Exp $
+ * @version $Id: PrintCodeGenerator.sml,v 1.25 2006/02/28 16:11:03 kiyoshiy Exp $
  *)
 structure PrintCodeGenerator =
 struct

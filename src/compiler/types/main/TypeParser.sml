@@ -1,6 +1,4 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * A hand written type parser for setting up the compiler context.
  *
  * <pre>
@@ -37,8 +35,9 @@
  *         | byteArray
  *         | option
  * </pre>
+ * @copyright (c) 2006, Tohoku University.
  * @author OHORI Atsushi
- * @version $Id: TypeParser.sml,v 1.10 2006/02/18 04:59:36 ohori Exp $
+ * @version $Id: TypeParser.sml,v 1.11 2006/02/28 16:11:10 kiyoshiy Exp $
  *)
 structure TypeParser : TYPE_PARSER =
 struct

@@ -1,12 +1,11 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * THIS IS OBSOLUTE. AN OPTIMIZER IS BEING WRITTEN.
  * Source-to-source optimizer for the typed lambda calculus.
  * This phase also rectifi the bound variables 
  *  so that bound and free variables are all unique.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypedLambdaOptimizer.sml,v 1.12 2006/02/18 04:59:33 ohori Exp $
+ * @version $Id: TypedLambdaOptimizer.sml,v 1.13 2006/02/28 16:11:08 kiyoshiy Exp $
  *)
 structure TypedLambdaOptimizer =
 struct

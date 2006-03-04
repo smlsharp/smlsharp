@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author YAMATODANI Kiyoshi
- * @version $Id: Top.sml,v 1.139 2006/02/18 04:59:30 ohori Exp $
+ * @version $Id: Top.sml,v 1.145 2006/03/03 07:15:16 ohori Exp $
  *)
 structure Top : TOP =
 struct
@@ -27,7 +26,7 @@ struct
   type context =
        {
          fixEnvRef : SE.fixity SEnv.map ref,
-	 moduleEnvRef : ModuleCompiler.moduleEnv ref,
+	 moduleEnvRef : StaticModuleEnv.moduleEnv ref,
          session : SessionTypes.Session,
          standardOutput : ChannelTypes.OutputChannel,
          standardError : ChannelTypes.OutputChannel,
@@ -262,13 +261,18 @@ struct
                 fileName : string,
                 stream : ChannelTypes.InputChannel,
                 promptMode : bool,
-                printInput : bool
+                printInput : bool,
+                (** list of name of files which opened the current source
+                 * directly or indirectly.
+                 * The direct parent file is at the top of the list.
+                 *)
+                history : string list
               }
 
         val promptMode = ref true
         val doFirstLinePrompt = ref true
-        val firstLinePrompt = ref "->"
-        val secondLinePrompt = ref ">>"
+        val firstLinePrompt = ref "# "
+        val secondLinePrompt = ref "> "
 
         local
           fun printPrompt promptMode =
@@ -467,7 +471,7 @@ struct
 	      (* module compile *)
               val _ = #start moduleCompilationTimeCounter ()
               val (deltaModuleEnv, tpflatdecs) =
-                  ModuleCompiler.modulecompile moduleEnv tpdecs
+                  ModuleCompiler.moduleCompile moduleEnv tpdecs
               val _ = #stop moduleCompilationTimeCounter ()
 
               val _ =
@@ -689,9 +693,163 @@ The current optimizer is obsolute.
                 SEnv.unionWith #1 (newFixEnv,fixEnv),
 		InitialTypeContext.extendTopTypeContextWithContext
                     topTypeContext newContext,
-		ModuleCompiler.extendModuleEnvWithDeltaModuleEnv
-                    {deltaModuleEnv = deltaModuleEnv,
-                     moduleEnv = moduleEnv},
+		StaticModuleEnv.extendModuleEnvWithDeltaModuleEnv
+                  {deltaModuleEnv = deltaModuleEnv,
+                   moduleEnv = moduleEnv},
+                codeBlock
+              )
+            end
+
+        (************************************************************)
+        fun compileObj (topTypeContext, moduleEnv, compUnit) =
+            let
+                val (newContext, deltaModuleEnv, optimizedTldecs) =
+                    Linker.useObj ({topTypeContext = topTypeContext,
+                                    moduleEnv = moduleEnv},
+                                   compUnit)
+(*                val _ =
+                    (
+                     printError "\nRecord Compiled to:\n";
+                      app
+                      (fn dec =>
+                          printError
+                          (TypedLambdaFormatter.tldecToString [] dec ^ "\n"))
+                      optimizedTldecs
+                    )
+                val _ =
+                    (
+                     printError "\nGenerated static bindings:\n";
+                     printError (TypeContext.contextToString newContext)
+                     )
+*)
+              (* buc transformation *)
+                val _ = #start bitmapCompilationTimeCounter ()
+                val bucdecls =
+                    BUCTransformer.transform optimizedTldecs 
+                val _ = #stop bitmapCompilationTimeCounter ()
+                        
+                val _ =
+                    if !C.printBUC andalso !C.switchTrace
+                    then
+                        (
+                         printError "\nBUC transform to:\n";
+                         app
+                             (fn decl =>
+                                 printError
+                                     (BUCCalcFormatter.bucdeclToString [] decl
+                                      ^ "\n"))
+                             bucdecls
+                             )
+                    else ()
+                         
+                (* Anormalization *)
+                         
+                val _ = #start untypedBitmapCompilationTimeCounter ()
+                val anexp = ANormalTranslator.translate bucdecls
+                val _ = #stop untypedBitmapCompilationTimeCounter ()
+
+                val _ =
+                    if !C.printAN andalso !C.switchTrace
+                    then
+                        (
+                         printError "\nUntyped bitmap compiled to:\n";
+                         printError
+                             (ANormalFormatter.anexpToString anexp ^ "\n")
+                             )
+                    else ()
+                         
+                         
+                (* Anormal optimization*)
+                         
+                val anexp = ANormalOptimizer.optimize anexp
+                            
+                val _ =
+                    if !C.printAN andalso !C.switchTrace
+                    then
+                        (
+                         printError "\nAnormal optimized to:\n";
+                         printError
+                             (ANormalFormatter.anexpToString anexp ^ "\n")
+                             )
+                    else ()
+                         
+                (* linearize *)
+                val _ = #start linearizationTimeCounter ()
+                val symbolicCode as {functions, ...} =
+                    Linearizer.linearize anexp
+                val _ = #stop linearizationTimeCounter ()
+                        
+                val _ =
+                    if !C.printLS andalso !C.switchTrace
+                    then
+                        (
+                         printError "\nLinearized to:\n";
+                         app
+                             (printError
+                              o (fn string => string ^ "\n")
+                              o SymbolicInstructionsFormatter.functionCodeToString)
+                             functions
+                             )
+                    else ()
+                         
+                (* symbolic instructions optimization *)
+                val symbolicCode as {functions, ...} =
+                    {
+                     mainFunctionName = #mainFunctionName symbolicCode,
+                     functions =
+                     if !C.doSymbolicInstructionsOptimization
+                     then
+                         map
+                             SymbolicInstructionsOptimizer.optimize
+                             functions
+                     else functions
+                          }
+                    
+                val _ =
+                    if !C.printLS andalso !C.switchTrace
+                    then
+                        (
+                         printError "\nSymbolicInstructions Optimized to:\n";
+                         app
+                             (printError
+                              o (fn string => string ^ "\n")
+                              o SymbolicInstructionsFormatter.functionCodeToString)
+                             functions
+                             )
+                    else ()
+                         
+                (* assemble *)
+                val _ = #start assembleTimeCounter ()
+                val executable as {instructions, locationTable, ...} =
+                    Assembler.assemble symbolicCode
+                val _ = #stop assembleTimeCounter ()
+                        
+                val _ =
+                    if !C.printIS andalso !C.switchTrace
+                    then
+                        (
+                         printError "\nAssembled to:\n";
+                         app
+                             (printError
+                              o (fn string => string ^ "\n")
+                              o Instructions.toString)
+                             instructions;
+                             printError
+                                 (Executable.locationTableToString locationTable)
+                                 )
+                    else ()
+                         
+                (* serialize *)
+                val _ = #start serializeTimeCounter ()
+                val codeBlock = ExecutableSerializer.serialize executable
+                val _ = #stop serializeTimeCounter ()
+            in
+              ( 
+		InitialTypeContext.extendTopTypeContextWithContext
+                    topTypeContext newContext,
+		StaticModuleEnv.extendModuleEnvWithDeltaModuleEnv
+                  {deltaModuleEnv = deltaModuleEnv,
+                   moduleEnv = moduleEnv},
                 codeBlock
               )
             end
@@ -708,7 +866,8 @@ The current optimizer is obsolute.
                 stream = initialSource,
                 promptMode =
                 case interactionMode of Interactive => true | _ => false,
-                printInput = false
+                printInput = false,
+                history = [initialSourceName]
               } : parseSource
 
         val initialParseContext = 
@@ -727,10 +886,27 @@ The current optimizer is obsolute.
                       getVariable loadPathList currentBaseDirectory fileName
                   handle exn => raise UE.UserErrors [(loc, UE.Error, exn)]
               val _ =
+                  if
+                    List.exists
+                        (fn parent => parent = absoluteFilePath)
+                        (#history currentSource)
+                  then
+                    raise
+                      UE.UserErrors
+                          [(
+                             loc,
+                             UE.Error,
+                             Fail
+                                 ("detected circular file references: "
+                                  ^ absoluteFilePath)
+                           )]
+                  else ()
+              val _ =
                   if !C.switchTrace
                   then printError ("loading: " ^ absoluteFilePath ^ "\n")
                   else ()
-              val baseDirectory = OS.Path.dir absoluteFilePath
+
+              val baseDirectory = #dir(PU.splitDirFile absoluteFilePath)
               val newSource =
                   {
                     interactionMode = NonInteractive {stopOnError = true},
@@ -738,7 +914,8 @@ The current optimizer is obsolute.
                     getBaseDirectory = fn () => baseDirectory,
                     stream = FileChannel.openIn {fileName = absoluteFilePath},
                     promptMode = false,
-                    printInput = false
+                    printInput = false,
+                    history = absoluteFilePath :: (#history currentSource)
                   } : parseSource
               val newParseContext =
                   Parser.createContext
@@ -749,6 +926,31 @@ The current optimizer is obsolute.
                       }
             in
               (newSource, newParseContext)
+            end
+
+        fun useInputObj (currentSource : parseSource) (fileName, loc) = 
+            let
+              val currentBaseDirectory = #getBaseDirectory currentSource ()
+              val absoluteFilePath =
+                  PathResolver.resolve
+                      getVariable loadPathList currentBaseDirectory fileName
+                  handle exn => raise UE.UserErrors [(loc, UE.Error, exn)]
+              val compUnit = 
+                  let
+                      val _ = ID.init ()
+                      val infile = BinIO.openIn absoluteFilePath
+                      val instream =
+                          Pickle.makeInstream (fn _ => valOf(BinIO.input1 infile))
+                      val _ = printError ("\n[begin unpickle "^ absoluteFilePath ^ ".......")
+                      val compUnit : LinkageUnit.linkageUnit = 
+                          P.unpickle LinkageUnitPickler.linkageUnit instream
+                      val _ = print "done]\n"
+                      val _ = BinIO.closeIn infile
+                  in
+                      compUnit
+                  end
+            in
+                compUnit
             end
 
         fun flush parseContext = 
@@ -858,6 +1060,27 @@ The current optimizer is obsolute.
                           (#close (#stream innerSource) (); raise exn))
                   before (#close (#stream innerSource) ())
                 end)
+             | Absyn.USEOBJ (fileName, loc) => 
+               let
+                   val compUnit = useInputObj source (fileName, loc)
+                   val (newTopContext, newModuleEnv, codeBlock) =
+                       compileObj (!topTypeContextRef,
+		                   !moduleEnvRef,
+                                   compUnit)
+                       
+                   val _= #stop compilationTimeCounter ()
+                          
+                   val _ = #start executeTimeCounter ()
+                   val _ = #execute session codeBlock
+                   val _ = #stop executeTimeCounter ()
+                           
+                   (* update contexts *)
+                   (* ToDo : change to parameter passing style *)
+                   val _ = topTypeContextRef := newTopContext
+		   val _ = moduleEnvRef := newModuleEnv
+               in
+                   true
+               end
              | Absyn.TOPDECS (topdecs,loc) =>
                let
                  val _= #start compilationTimeCounter ();

@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  * The typed flat pattern calculus after module compilation
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
  * @author Atsushi Ohori
- * @version $Id: TYPEDFLATCALC.sig,v 1.5 2006/02/18 16:04:06 duchuu Exp $
+ * @version $Id: TYPEDFLATCALC.sig,v 1.6 2006/02/27 06:31:09 bochao Exp $
  *)
 signature TYPEDFLATCALC = sig
 

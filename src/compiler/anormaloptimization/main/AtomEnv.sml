@@ -1,7 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: AtomEnv.sml,v 1.3 2006/02/18 16:04:04 duchuu Exp $
+ * @version $Id: AtomEnv.sml,v 1.4 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 structure AtomEnv = struct
 

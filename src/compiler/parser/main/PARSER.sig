@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Parser of ML source code.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PARSER.sig,v 1.6 2006/02/18 04:59:24 ohori Exp $
+ * @version $Id: PARSER.sig,v 1.7 2006/02/28 16:11:02 kiyoshiy Exp $
  *)
 signature PARSER =
 sig

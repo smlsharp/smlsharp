@@ -1,5 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
 
 structure TypeCheckTypedFlatCalc =

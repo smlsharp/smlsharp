@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: RECORDCALC.sig,v 1.4 2006/02/18 04:59:26 ohori Exp $
+ * @version $Id: RECORDCALC.sig,v 1.5 2006/02/28 16:11:03 kiyoshiy Exp $
  *)
 signature RECORDCALC = sig
 

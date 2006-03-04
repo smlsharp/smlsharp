@@ -1,7 +1,7 @@
 (*
  * loads modules of Basis library.
  * @author YAMATODANI Kiyoshi
- * @version $Id: basis.sml,v 1.66 2005/12/28 09:23:30 kiyoshiy Exp $
+ * @version $Id: basis.sml,v 1.69 2006/03/03 14:18:40 kiyoshiy Exp $
  *)
 
 (* NOTE : Prefix "../main/" is specified in order to enable SML/NJ to load
@@ -73,6 +73,10 @@ fun implode chars =
 use "./BasicFormatters.sml";
 
 exception Unimplemented of string;
+
+(* for FFI *)
+
+type void = int;
 
 (*****************************************************************************)
 
@@ -484,6 +488,8 @@ use "./BinIOFn.sml";
 use "./TextIOFn.sml";
 
 use "./GenericOS/loadio.sml";
+
+val print = TextIO.print;
 
 (*
 use "./POSIX_ERROR.sig";

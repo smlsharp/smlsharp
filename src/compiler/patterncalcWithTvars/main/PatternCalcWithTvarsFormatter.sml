@@ -1,7 +1,6 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
- * @version $Id: PatternCalcWithTvarsFormatter.sml,v 1.6 2006/02/18 04:59:25 ohori Exp $
+ * @copyright (c) 2006, Tohoku University.
+ * @version $Id: PatternCalcWithTvarsFormatter.sml,v 1.7 2006/02/28 16:11:03 kiyoshiy Exp $
  *)
 structure PatternCalcWithTvarsFormatter : PATTERNCALCWITHTVARS_FORMATTER =
 struct

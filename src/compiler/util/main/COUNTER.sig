@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * counter module.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: COUNTER.sig,v 1.6 2006/02/18 04:59:38 ohori Exp $
+ * @version $Id: COUNTER.sig,v 1.7 2006/02/28 16:11:11 kiyoshiy Exp $
  *)
 signature COUNTER =
 sig

@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author OHORI Atsushi
- * @version $Id: PATTERNCALC_FORMATTER.sig,v 1.4 2006/02/18 04:59:25 ohori Exp $
+ * @version $Id: PATTERNCALC_FORMATTER.sig,v 1.5 2006/02/28 16:11:02 kiyoshiy Exp $
  *)
 signature PATTERNCALC_FORMATTER =
 sig

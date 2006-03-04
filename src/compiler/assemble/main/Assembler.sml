@@ -1,6 +1,4 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  *  This structure translates instructions with symbolic references into
  * instructions in lower level representation.
  * <p>
@@ -8,10 +6,11 @@
  * or index in stack frame.
  * </p>
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
  * @author Nguyen Huu Duc
- * @version $Id: Assembler.sml,v 1.53 2006/02/18 04:59:16 ohori Exp $
+ * @version $Id: Assembler.sml,v 1.54 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 structure Assembler :> ASSEMBLER =
 struct

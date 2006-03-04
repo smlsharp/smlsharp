@@ -1,0 +1,7 @@
+structure S : sig datatype dt1 con D1 : dt1 datatype dt2 con D2 : dt2 end
+datatype dt1
+con D1 : dt1
+datatype 'a dt2
+con D2 : ['a .'a dt2]
+structure S
+: sig datatype dt1 con D1 : dt1 datatype 'a dt2 con D2 : ['a .'a dt2] end

@@ -3,6 +3,7 @@ Group
         structure TypedLambdaFormatter
         structure TypedLambdaUtils
         structure TypeCheckTypedLambda
+	structure TypedLambdaPickler
 (*
         structure TypedLambdaOptimizer
 *)

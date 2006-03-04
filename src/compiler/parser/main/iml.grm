@@ -1,8 +1,7 @@
 (* a grammar for the raw symtax of IML.
- * Copyright (c) 2006, Tohoku University.
- * 
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori, Kiyoshi Yamatodani, Liu Bochao
- * @version $Id: iml.grm,v 1.38 2006/02/18 04:59:24 ohori Exp $
+ * @version $Id: iml.grm,v 1.41 2006/03/03 02:40:16 bochao Exp $
 *)
 %%
 %eop EOF SEMICOLON
@@ -44,6 +43,7 @@
     | ID of string
     | IF 
     | IN
+    | IMPORT
     | INCLUDE
     | INFIX
     | INFIXR
@@ -80,6 +80,7 @@
     | TYVAR of string 
     | UNDERBAR
     | USE
+    | USEOBJ
     | VAL
     | WHILE 
     | WHERE
@@ -169,6 +170,8 @@
        | funbindseq of Absyn.funbind list
        | topdecs of Absyn.topdec list
        | topdec of Absyn.topdec
+       | importdec of Absyn.topdec
+       | importdecs of Absyn.topdec list
        | longid of Absyn.longid
        | longtycon of Absyn.longTyCon
        | longtyconeqrow of Absyn.longTyCon list
@@ -220,6 +223,7 @@ start : topdecs (Absyn.TOPDECS(topdecs,(topdecsleft,topdecsright)))
               )
              )
       | USE STRING (Absyn.USE(STRING,(USEleft,STRINGright)))
+      | USEOBJ STRING (Absyn.USEOBJ(STRING,(USEOBJleft,STRINGright)))
 
 (****************** constant ***************************)
 constant : INT (Absyn.INT(INT,(INTleft,INTright)))
@@ -758,3 +762,4 @@ topdec : strdec (Absyn.TOPDECSTR(strdec,(strdecleft,strdecright)))
                 (Absyn.TOPDECSIG(sigbind,(SIGNATUREleft,sigbindright)))
        | FUNCTOR funbindseq
                 (Absyn.TOPDECFUN(funbindseq,(FUNCTORleft,funbindseqright)))
+       | IMPORT spec END   (Absyn.TOPDECIMPORT (spec,(IMPORTleft, ENDright))) 

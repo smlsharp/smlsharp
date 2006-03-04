@@ -1,17 +1,16 @@
-(**
- * Copyright (c) 2006, Tohoku University.
- *
+(*
  TODO:
   1.  ***compTy in RecordCompile.sml loop bug**** the fix is temporary
- *
- * A Typed-Directed Polymorohic Record Compiler.
- * @author Atsushi Ohori 
- * @version $Id: RecordCompiler.sml,v 1.80 2006/02/18 04:59:26 ohori Exp $
  *
  * the possible places where polytype occurrs:
    RCVAR,
    PRIM
-   
+*)
+(**
+ * A Typed-Directed Polymorohic Record Compiler.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori 
+ * @version $Id: RecordCompiler.sml,v 1.83 2006/03/02 12:49:56 bochao Exp $
  *)
 structure RecordCompiler : RECORD_COMPILER =
 struct
@@ -89,7 +88,9 @@ struct
 
   fun rcompTy ty =
       case ty of
-        SPECty specTy => raise Control.Bug "SPECty is not instantiated to other types"
+        SPECty specTy => 
+        if !Control.doSeparateCompilation then ty 
+        else raise Control.Bug "SPECty is not instantiated to other types"
       | ABSSPECty(ty1,ty2) => ABSSPECty(ty1,rcompTy ty2)
       | ALIASty(ty1, ty2) => ALIASty(ty1, rcompTy ty2)
       | FUNMty (argtys, ty) => FUNMty(argtys, rcompTy ty)
@@ -850,7 +851,7 @@ struct
       | RCRECORD {fields, recordTy, loc} => 
           TLRECORD {
                     expList = map (rcomp vEnv iEnv) (SEnv.listItems fields), 
-                    internalTy = recordTy, 
+                    internalTy = rcompTy recordTy, 
                     externalTy = NONE,
                     loc=loc
                     }

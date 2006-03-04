@@ -1,13 +1,12 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * The IML runtime.
  * <p>
  * This module provides a virtual machine which executes IML instructions.
  * </p>
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: VM.sig,v 1.14 2006/02/18 04:59:41 ohori Exp $
+ * @version $Id: VM.sig,v 1.15 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 signature VM =
 sig

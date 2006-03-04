@@ -1,7 +1,6 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
-
 structure TypedLambdaUtils = struct
 local 
     open TypedLambda
@@ -36,6 +35,14 @@ in
      | TLOFFSET {loc,...} => loc
      | TLFFIVAL {loc,...} => loc
 
+   fun getLocOfDec dec =
+       case dec of
+           TLVAL {loc,...} => loc
+         | TLVALREC {loc,...} => loc
+         | TLVALPOLYREC {loc,...} => loc
+         | TLLOCALDEC {loc,...} => loc
+         | TLSETGLOBAL (string, tlexp, loc) => loc
+         | TLEMPTY loc => loc
 end
 end
 

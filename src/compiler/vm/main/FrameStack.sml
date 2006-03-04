@@ -1,5 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
 local
 
@@ -23,7 +23,7 @@ in
  * This module manipulates the runtime frame stack.
  * About the layout of stack frames, refer to comment in Assembler.sml.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FrameStack.sml,v 1.15 2006/02/18 04:59:39 ohori Exp $
+ * @version $Id: FrameStack.sml,v 1.16 2006/02/28 16:11:12 kiyoshiy Exp $
  *)
 structure FrameStack
   : sig

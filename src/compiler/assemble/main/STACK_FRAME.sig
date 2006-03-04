@@ -1,8 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: STACK_FRAME.sig,v 1.9 2006/02/18 04:59:16 ohori Exp $
+ * @version $Id: STACK_FRAME.sig,v 1.10 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 signature STACK_FRAME =
 sig

@@ -1,5 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
 local
   open RuntimeTypes
@@ -10,8 +10,9 @@ local
 in
 (**
  * functions to manipulate data structures defined in the source language.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SourceLanguageDatatypes.sml,v 1.11 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: SourceLanguageDatatypes.sml,v 1.12 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 structure SourceLanguageDatatypes =
 struct

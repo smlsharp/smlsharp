@@ -1,6 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  *)
 structure TypeCheckTypedLambda = struct
@@ -84,6 +83,15 @@ local
                   else if TU.isATOMty boxedKindValue1 andalso TU.isATOMty boxedKindValue2 
                     then ()
                   else raise Eqty
+            | (
+               CONty{tyCon = {name=name1,id=id1, boxedKind = ref NONE,...}, args = tyList1},
+               CONty{tyCon = {name=name2,id=id2, boxedKind = ref NONE,...}, args = tyList2}
+               ) =>
+              if !Control.doSeparateCompilation then
+                if id1 = id2 andalso length tyList1 = length tyList2
+                then eqTys btvEquiv  (ListPair.zip (tyList1, tyList2))
+                else raise Eqty
+              else  raise Eqty
             | (RECORDty tyFields1, RECORDty tyFields2) =>
                  let
                    val (newTyEquations, rest) = 
@@ -118,6 +126,14 @@ local
                      else raise Eqty
                  in eqTy newBtvEquiv (body1, body2)
                  end
+            | (ABSTRACTty, ABSTRACTty) => ()
+            | (SPECty ty1, SPECty ty2) => 
+              if !Control.doSeparateCompilation then 
+                eqTy btvEquiv (ty1, ty2)
+              else 
+                (print "ty1 : " ; printTy ty1;
+                 print "ty2 : " ; printTy ty2;
+                 raise Eqty) 
             | _ => 
                  (print "ty1 : " ; printTy ty1;
                   print "ty2 : " ; printTy ty2;
@@ -268,25 +284,23 @@ in
                                   )
                          )
 
-         val argExpTyList = map (typecheckExp btvEnv) argExpList
-         val _ = (if length argTyList = length argExpTyList then
+         val argExpTyList = map (typecheckExp btvEnv) argExpList 
+         val _ = if length argTyList = length argExpTyList then
                    eqTyList (ListPair.zip (argTyList,argExpTyList))
-                  else E.enqueueDiagnosis(loc,
-                                          "typecheckExp 2",
-                                          E.ArgNumAndArgTyListMisMatch
-                                          {numArgs = length argTyList, 
-                                           numArgTys = length argExpTyList
-                                           }
-                                          )
-                  )
-           handle Eqty => E.enqueueDiagnosis(loc,
-                                             "typecheckExp 3",
-                                             E.ArgTyListAndArgExpTyListMismatch
-                                             {
-                                              argTyList = argTyList, 
-                                              argExpTyList = argExpTyList
-                                              }
-                                             )
+                  else ()
+         val argExpTyList = 
+           case argExpTyList of
+             nil => [StaticEnv.unitty]
+           | argExpTyList => argExpTyList
+         val _ =  eqTyList (ListPair.zip (argTyList,argExpTyList))
+                  handle Eqty => E.enqueueDiagnosis(loc,
+                                                    "typecheckExp 3",
+                                                    E.ArgTyListAndArgExpTyListMismatch
+                                                    {
+                                                     argTyList = argTyList, 
+                                                     argExpTyList = argExpTyList
+                                                     }
+                                                    )
          val resultTy  = checkApplyTy (instFunTy, argExpTyList)
                           handle ApplyTy =>
                             (E.enqueueDiagnosis (loc,

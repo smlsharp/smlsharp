@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: BUCCompileContext.sml,v 1.3 2006/02/18 16:04:05 duchuu Exp $
+ * @version $Id: BUCCompileContext.sml,v 1.5 2006/02/28 17:05:50 duchuu Exp $
  *)
 
 
@@ -14,7 +13,7 @@ structure BUCCompileContext :> BUCCOMPILECONTEXT = struct
   structure TU = TypesUtils
   structure VEnv = ID.Map
 
-  datatype bookmark = SIZE of int | TAG of int
+  datatype bookmark = SIZE of int | TAG of int | FRAMEBITMAP of BC.id
 
   structure bookmark_ord:ordsig = struct 
     type ord_key = bookmark
@@ -25,6 +24,10 @@ structure BUCCompileContext :> BUCCOMPILECONTEXT = struct
         | (SIZE _,_) => LESS
         | (TAG _, SIZE _) => GREATER
         | (TAG tid1, TAG tid2) => Int.compare(tid1,tid2)
+        | (TAG _, _) => LESS
+        | (FRAMEBITMAP _, SIZE _) => GREATER
+        | (FRAMEBITMAP _, TAG _) => GREATER
+        | (FRAMEBITMAP id1, FRAMEBITMAP id2) => ID.compare(id1,id2)
   end
 
   structure Bookmark = BinaryMapFn(bookmark_ord)
@@ -102,6 +105,16 @@ structure BUCCompileContext :> BUCCOMPILECONTEXT = struct
       case VEnv.find(varEnv,id) of
         SOME varInfo => varInfo
       | NONE => raise Control.Bug "lookup: id not found"
+
+  fun getFrameBitmapIDs ({bookmarks,...} : context) =
+      Bookmark.foldli
+          (fn (bookmark,id,S) => 
+              case bookmark of
+                FRAMEBITMAP _ => ID.Set.add(S,id)
+              | _ => S
+          )
+          (ID.Set.empty)
+          (!bookmarks)
 
   fun listFreeVariables ({varEnv,...}:context) =
       VEnv.foldl

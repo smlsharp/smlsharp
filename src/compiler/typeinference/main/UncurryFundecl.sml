@@ -1,6 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
  *)
 structure UncurryFundecl : UNCURRYFUNDECL = struct

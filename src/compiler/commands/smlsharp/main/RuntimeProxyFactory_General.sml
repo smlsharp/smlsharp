@@ -3,21 +3,16 @@ struct
 
   val name = "General"
 
-(*
-  val runtimePath = "../../../../../obj/c/bin/smlsharprun.exe"
-*)
-(*
-  val runtimePath = "..\\..\\..\\..\\..\\obj\\c\\bin\\smlsharprun.exe"
-*)
   val runtimePath = Configuration.RuntimePath 
 
-  val port = 12345;
+  val port = 12345
 
-  fun createInstance () =
+  fun createInstance runtimePath arguments =
       NetworkRuntimeProxy.initialize
           {
             runtimePath = runtimePath,
-            port = 12345
+            arguments = arguments,
+            port = port
           }
 
 end

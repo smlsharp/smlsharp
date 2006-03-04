@@ -1,10 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * SML# match compiler.
- * @author Satoshi Osaka 
- * @author Atsushi Ohori
- * @version $Id: MatchCompiler.sml,v 1.38 2006/02/18 04:59:22 ohori Exp $
 
  This code is based on the following works.
  * Atsushi Ohori and Satoshi Osaka 
@@ -42,6 +37,11 @@
          case ... 
              | ... => exp
   is generated.
+ *
+ * @copyright (c) 2006, Tohoku University.
+ * @author Satoshi Osaka 
+ * @author Atsushi Ohori
+ * @version $Id: MatchCompiler.sml,v 1.40 2006/02/28 16:11:02 kiyoshiy Exp $
  *)
 
 structure MatchCompiler : MATCH_COMPILER = 
@@ -339,7 +339,16 @@ struct
         T.FUNMty ([SE.unitty], bodyTy)
         )
     | makeUncurriedFun argList body bodyTy loc =
-       (RCFNM {argVarList=argList, bodyTy=bodyTy, bodyExp=body, loc=loc}, T.FUNMty (map #ty argList, bodyTy))
+       (
+        RCFNM 
+        {
+         argVarList=argList, 
+         bodyTy=bodyTy, 
+         bodyExp=body, 
+         loc=loc
+         }, 
+        T.FUNMty (map #ty argList, bodyTy)
+        )
 
   (*
      [..., ([P1,...,Pn], e),...] ->  (branchEnv, [..., P1++...++Pn++n,...])

@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of primitives on int values.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: IntPrimitives.sml,v 1.5 2006/02/18 04:59:39 ohori Exp $
+ * @version $Id: IntPrimitives.sml,v 1.6 2006/02/28 16:11:12 kiyoshiy Exp $
  *)
 structure IntPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct

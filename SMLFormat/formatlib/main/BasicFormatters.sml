@@ -6,7 +6,7 @@
  * formatter to the formatters environment.
  *
  * @author YAMATODANI Kiyoshi
- * @version $Id: BasicFormatters.sml,v 1.1 2006/02/07 12:51:52 kiyoshiy Exp $
+ * @version $Id: BasicFormatters.sml,v 1.2 2006/02/25 12:19:05 kiyoshiy Exp $
  *)
 structure BasicFormatters : BASIC_FORMATTERS =
 struct
@@ -55,6 +55,27 @@ struct
   fun format_exn exn = !format_exn_Ref exn
 
   fun format_array (elementFormatter, separator) array =
+      (* This function can be implemented by using Array.foldri.
+       * But, the signature of Array.fordri differs depending on Basis version.
+       * In order to compile both on SML/NJ and on SML#, we do not use
+       * Array.foldri.
+       * For the same reason, the format_vector is implemented without using
+       * Vector.foldri.
+       *)
+      let
+        fun scan index expressions =
+            let val expression = elementFormatter (Array.sub (array, index))
+            in
+              if 0 = index
+              then expression @ expressions
+              else scan (index - 1) (separator @ expression @ expressions)
+            end
+      in
+        case Array.length array of
+          0 => []
+        | arraySize => scan (arraySize - 1) []
+      end
+(*
       Array.foldri
       (fn (index, element, expressions) =>
           let val expression = elementFormatter element
@@ -65,8 +86,23 @@ struct
           end)
       []
       (array, 0, NONE)
+*)
 
   fun format_vector (elementFormatter, separator) vector =
+      let
+        fun scan index expressions =
+            let val expression = elementFormatter (Vector.sub (vector, index))
+            in
+              if 0 = index
+              then expression @ expressions
+              else scan (index - 1) (separator @ expression @ expressions)
+            end
+      in
+        case Vector.length vector of
+          0 => []
+        | vectorSize => scan (vectorSize - 1) []
+      end
+(*
       Vector.foldri
       (fn (index, element, expressions) =>
           let val expression = elementFormatter element
@@ -77,6 +113,7 @@ struct
           end)
       []
       (vector, 0, NONE)
+*)
 
   fun format_ref elementFormatter (ref value) =
       elementFormatter value

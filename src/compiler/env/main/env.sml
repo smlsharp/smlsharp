@@ -1,7 +1,6 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
-
 signature ordsig = sig
     type ord_key
     val compare : ord_key * ord_key -> order

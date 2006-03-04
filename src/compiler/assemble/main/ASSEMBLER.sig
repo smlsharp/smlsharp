@@ -1,6 +1,4 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  *  This signature specifies the interface of the module which provides the
  * functionality of translating instructions with symbolic references into
  * instructions in lower level representation.
@@ -30,8 +28,9 @@
  * transformed so that generated bitmap fits within 32 bit width.
  * </p>
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ASSEMBLER.sig,v 1.7 2006/02/18 04:59:16 ohori Exp $
+ * @version $Id: ASSEMBLER.sig,v 1.8 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 signature ASSEMBLER =
 sig

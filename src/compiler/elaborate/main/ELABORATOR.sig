@@ -1,6 +1,4 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Elaborator.
  * <p>
  * In this pahse, we do the following:
@@ -8,9 +6,10 @@
  *   <li>infix elaboration</li>
  *   <li>expand derived form (incomplete; revise later)</li>
  * </ol>
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: ELABORATOR.sig,v 1.8 2006/02/18 04:59:21 ohori Exp $
+ * @version $Id: ELABORATOR.sig,v 1.9 2006/02/28 16:11:01 kiyoshiy Exp $
  *)
 signature ELABORATOR =
 sig

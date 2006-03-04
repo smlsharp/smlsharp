@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of primitives for GenericOS structures.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: GenericOSPrimitives.sml,v 1.10 2006/02/18 04:59:39 ohori Exp $
+ * @version $Id: GenericOSPrimitives.sml,v 1.11 2006/02/28 16:11:12 kiyoshiy Exp $
  *)
 structure GenericOSPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct

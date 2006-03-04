@@ -1,8 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * Functor Application Utilities.
+ *
+ * @copyright (c) 2006, Tohoku University.
  *
  * @author Liu Bochao
- * @version $Id: FunctorApplyUtils.sml,v 1.47 2006/02/18 04:59:23 ohori Exp $
+ * @version $Id: FunctorApplyUtils.sml,v 1.49 2006/03/02 12:46:46 bochao Exp $
  *)
 structure FunctorApplyUtils =
 struct
@@ -23,8 +25,7 @@ struct
         SEnv.foldli (
 		     fn (tyCon,tyBind1,substTyEnv) =>
                         case SEnv.find(strTyConEnv,tyCon) of 
-                          NONE => 
-                          raise Control.Bug "structure does not match signature in TyConEnv"
+                          NONE => substTyEnv
                         | SOME tyBind2 => 
                           ( case tyBind1 of
                               T.TYSPEC{spec = {id,...},...} => 
@@ -48,8 +49,7 @@ struct
             SEnv.foldli (
                          fn (strId, T.STRUCTURE{env=sigEnv,...}, newTyBindsMap) =>
                             case SEnv.find(strStrEnv,strId) of
-                              NONE => 
-                              raise Control.Bug "structure does not match signature in StrEnv"
+                                NONE => newTyBindsMap
                             | SOME (T.STRUCTURE{env=strEnv,...}) => 
                               ID.Map.unionWith #1 (
                                                    newTyBindsMap, 

@@ -1,11 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * The typed pattern calculus for the IML.
  * Patters are explicitly typde.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TYPEDCALC.sig,v 1.4 2006/02/18 04:59:31 ohori Exp $
+ * @version $Id: TYPEDCALC.sig,v 1.6 2006/03/02 12:52:25 bochao Exp $
  *)
 
 signature TYPEDCALC = sig
@@ -211,6 +210,7 @@ signature TYPEDCALC = sig
       TPMDECSTR of tpmstrdecl * loc (* structure *)
     | TPMDECSIG of (Types.sigBindInfo * tpmsigexp) list * loc
     | TPMDECFUN of (funBindInfo  * string * tpmsigexp  * tpmstrexp) list * loc
+    | TPMDECIMPORT of tpmspec * Types.Env * loc
 
   val format_btvKind : (int
                         * {eqKind:Types.eqKind, index:int,

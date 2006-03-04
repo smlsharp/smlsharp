@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * signature check utility for module.
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: sigutils.sml,v 1.57 2006/02/18 04:59:35 ohori Exp $
+ * @version $Id: sigutils.sml,v 1.60 2006/03/02 12:53:26 bochao Exp $
  *)
 structure SigUtils =
 struct 
@@ -24,17 +23,6 @@ in
     | (_,SOME(T.TYSPEC({spec = {id,...},impl}))) => id
     | (_,SOME(T.TYFUN({name,...}))) => raise (E.SharingOnTypeFun {tyConName = name})
 
-  fun tyConIdInTyBindInfo tyBindInfo = 
-    case  tyBindInfo of
-      T.TYCON(tyCon) => TU.tyConId tyCon
-    | T.TYSPEC {spec={id, ...},impl} => id
-    | T.TYFUN {name,...} => raise (E.SharingOnTypeFun {tyConName = name})
-
-  fun tyConIdInTyBindInfoOpt tyBindInfo = 
-    case  tyBindInfo of
-      T.TYCON(tyCon) => SOME (TU.tyConId tyCon)
-    | T.TYSPEC {spec = {id, ...},impl} => SOME id
-    | T.TYFUN {name,...} => NONE
 
   fun extendTyConIdSubst (newSubst, oldSubst) =
       let
@@ -54,71 +42,6 @@ in
      funEnv = funEnv
      } : TC.context
 
-  fun tyConIdSetTyConEnv fromTyConId tyConEnv =
-      SEnv.foldl
-        (fn (tyBindInfo, tyConIdSet) => 
-            let
-              val thisTyConIdOpt = tyConIdInTyBindInfoOpt tyBindInfo
-            in
-              case thisTyConIdOpt of
-                SOME thisTyConId =>
-                (* ToDo: Explanation is required for this comparation. *)
-                (*
-                  if fromTyConId <= thisTyConId 
-                 *)
-                if ID.compare (fromTyConId, thisTyConId) <> GREATER
-                    then
-                      ID.Set.add(tyConIdSet, thisTyConId)
-                  else
-                    tyConIdSet
-              | NONE => tyConIdSet
-            end
-          )
-        ID.Set.empty
-        tyConEnv
-
-  and tyConIdSetVarEnv fromTyConId varEnv =
-      SEnv.foldl
-        (fn (T.CONID {name, strpath, funtyCon, ty, tag, tyCon}, tyConIdSet) =>
-            let 
-              val thisTyConId = #id tyCon
-            in
-              (* ToDo : Some explanation is required for this compararation. *)
-              (*
-              if fromTyConId <= thisTyConId 
-               *)
-              if ID.compare (fromTyConId, thisTyConId) <> GREATER
-              then
-                ID.Set.add(tyConIdSet, thisTyConId)
-              else
-                tyConIdSet
-            end
-          | (_, tyConIdSet) => tyConIdSet
-                              )
-        ID.Set.empty
-        varEnv
-
-  and tyConIdSetStrEnv fromTyConId strEnv =
-      SEnv.foldl
-        (fn (T.STRUCTURE {env = (tyConEnv, varEnv, strEnv), ...}, tyConIdSet) =>
-            let
-              val T1 = tyConIdSetTyConEnv fromTyConId tyConEnv
-              val T2 = tyConIdSetVarEnv fromTyConId varEnv
-              val T3 = tyConIdSetStrEnv fromTyConId strEnv
-            in
-              ID.Set.union (ID.Set.union(T1, ID.Set.union(T2,T3)),tyConIdSet)
-            end)
-        ID.Set.empty
-        strEnv
-
-  fun tyConIdSetEnv fromTyConId (tyConEnv, varEnv, strEnv) =
-      let
-        val T1 = tyConIdSetTyConEnv fromTyConId tyConEnv
-        val T2 = tyConIdSetVarEnv fromTyConId varEnv
-        val T3 = tyConIdSetStrEnv fromTyConId strEnv
-      in
-        ID.Set.union(T1,ID.Set.union(T2,T3))
-      end
 
   fun exnTagSetVarEnv fromExnTag varEnv =
       SEnv.foldl
@@ -1408,6 +1331,34 @@ in
       in
         E
       end                        
-
+  fun handleException (ex,loc) =
+      case ex of
+          exn as E.ArityMismatchInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.EqErrorInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.RedunantConstructorInSignatureInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.RedunantConstructorInStructureInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.TyConMisMatchInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.SharingTypeMismatchInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.IdNotFoundInSigMatch _ => 
+          E.enqueueError(loc, exn)
+        | exn as E.InstanceCheckInSigMatch _ => 
+          E.enqueueError(loc, exn)
+        | exn as E.DataConRequiredInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.DatatypeContainUnboundType _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.unboundStructureInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.unboundVarInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.unboundTyconInSigMatch _ =>
+          E.enqueueError(loc, exn)
+        | _ => raise Control.Bug "unmatched signature match check"
 end
 end

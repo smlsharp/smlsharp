@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a kinded unification for ML core, an imperative version.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: UNIFY.sig,v 1.2 2006/02/18 04:59:34 ohori Exp $
+ * @version $Id: UNIFY.sig,v 1.3 2006/02/28 16:11:09 kiyoshiy Exp $
  *)
 signature UNIFY =
 sig

@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
- * a pretty printer for the record calclulus
+ * a pretty printer for the record calclulus.
  * 
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: RecordCalcFormatter.sml,v 1.2 2006/02/18 04:59:26 ohori Exp $
+ * @version $Id: RecordCalcFormatter.sml,v 1.3 2006/02/28 16:11:04 kiyoshiy Exp $
  *)
 structure RecordCalcFormatter =
 struct

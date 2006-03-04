@@ -1,6 +1,4 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
 Utility functions which traverse and transduce a type expression.
 
 <h3>consideration of efficiency</h3>
@@ -75,8 +73,9 @@ false when visiting POLYty.
 This indicates that body of POLYty should not be visited.
 </p>
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypeTransducer.sml,v 1.10 2006/02/18 04:59:36 ohori Exp $
+ * @version $Id: TypeTransducer.sml,v 1.11 2006/02/28 16:11:10 kiyoshiy Exp $
  *)
 structure TypeTransducer : TYPE_TRANSDUCER =
 struct

@@ -1,11 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * misc utilities.
  * ToDo : It is better to move members of this strucutre to other more
  * specific modules.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Utility.sml,v 1.13 2006/02/18 04:59:26 ohori Exp $
+ * @version $Id: Utility.sml,v 1.14 2006/02/28 16:11:03 kiyoshiy Exp $
  *)
 structure Utility = 
 struct

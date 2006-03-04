@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * formatter of types.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: tyformatter.sml,v 1.8 2006/02/18 04:59:37 ohori Exp $
+ * @version $Id: tyformatter.sml,v 1.9 2006/02/28 16:11:10 kiyoshiy Exp $
  *)
 structure TyFormatter =
 struct

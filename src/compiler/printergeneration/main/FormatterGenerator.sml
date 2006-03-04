@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * This structure generates formatter declarations for type/datatype/exception
  * declarations.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FormatterGenerator.sml,v 1.21 2006/02/18 04:59:25 ohori Exp $
+ * @version $Id: FormatterGenerator.sml,v 1.23 2006/02/28 16:11:03 kiyoshiy Exp $
  *)
 structure FormatterGenerator =
 struct
@@ -758,7 +757,10 @@ val _ = print "\n"
         val polyFormatterVarPathInfo =
             {
               name = #name formatterVarPathInfo,
+(*
               strpath = #strpath formatterVarPathInfo,
+*)
+              strpath = P.NilPath,
               ty =
               TY.POLYty
                   {boundtvars = BTVKindMap, body = #ty formatterVarPathInfo}

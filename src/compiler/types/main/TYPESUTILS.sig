@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * utility functions for manupilating types (needs re-writing).
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TYPESUTILS.sig,v 1.2 2006/02/18 04:59:36 ohori Exp $
+ * @version $Id: TYPESUTILS.sig,v 1.3 2006/02/28 16:11:10 kiyoshiy Exp $
  *)
 signature TYPESUTILS =
 sig

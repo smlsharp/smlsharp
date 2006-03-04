@@ -1,6 +1,6 @@
 Group is
         ../../../smlunitlib.cm
-        ../main/typedflatcalc.cm
+        ../main/module.cm
 
         TypedFlatCalcPicklerTest0001.sml
         TypedFlatCalcTest.sml

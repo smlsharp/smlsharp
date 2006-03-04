@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a kinded unification for ML, an imperative version.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Unify.sml,v 1.2 2006/02/18 04:59:34 ohori Exp $
+ * @version $Id: Unify.sml,v 1.4 2006/03/02 20:25:59 ohori Exp $
  *)
 structure Unify : UNIFY =
 struct
@@ -297,15 +296,25 @@ struct
              if occurres tvState1 ty2 
                 then raise Unify
               else 
-                (let val newTyEquations = checkKind ty2 tvKind1
-                 in performSubst(ty1, ty2); unifyTy (newTyEquations@tail) end
+                (let 
+                   val newTyEquations = checkKind ty2 tvKind1
+                 in 
+                   unifyTy newTyEquations;
+                   performSubst(ty1, ty2); 
+                   unifyTy tail 
+                 end
                    handle KindCheck => raise Unify)
           | (ty1, TYVARty (tvState2 as ref(TVAR tvKind2))) => 
              if occurres tvState2 ty1 
                then raise Unify
              else 
-               (let val newTyEquations = checkKind ty1 tvKind2
-                in performSubst(ty2,ty1); unifyTy (newTyEquations@tail) end
+               (let 
+                  val newTyEquations = checkKind ty1 tvKind2
+                in
+                  unifyTy newTyEquations;
+                  performSubst(ty2,ty1); 
+                  unifyTy tail 
+                end
                   handle KindCheck => raise Unify)
           | (FUNMty(domainTyList1, rangeTy1), FUNMty(domainTyList2, rangeTy2)) =>
               if length domainTyList1 = length domainTyList2 then

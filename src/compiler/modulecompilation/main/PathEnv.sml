@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Module compilation environments.
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: PathEnv.sml,v 1.43 2006/02/18 04:59:23 ohori Exp $
+ * @version $Id: PathEnv.sml,v 1.44 2006/02/27 06:23:02 bochao Exp $
  *)
 structure PathEnv = 
 struct

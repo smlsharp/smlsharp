@@ -19,8 +19,7 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 /**
  * log writer
  */
-DBGWRAP(static LogAdaptor LOG =
-        LogAdaptor("Primitive"));
+DBGWRAP(static LogAdaptor LOG = LogAdaptor("Primitive");)
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -159,6 +158,7 @@ class PrimitiveSupport
     INLINE_FUN
     Cell stringToCell(const char* string, int length)
     {
+        ASSERT(string);
         // add space for '\0' trailer.
         UInt32Value stringWords = (length + sizeof(Cell)) / sizeof(Cell);
         Cell* block = Heap::allocAtomBlock(1 + stringWords);
@@ -180,6 +180,7 @@ class PrimitiveSupport
     INLINE_FUN
     Cell stringToCell(const char* buffer)
     {
+        ASSERT(buffer);
         return stringToCell(buffer, ::strlen(buffer));
     }
 
@@ -202,6 +203,7 @@ class PrimitiveSupport
     INLINE_FUN
     Cell byteArrayToCell(const char* buffer, int size)
     {
+        ASSERT(buffer);
         Cell result = stringToCell(buffer, size);
         return result;
     }
@@ -213,6 +215,7 @@ class PrimitiveSupport
     INLINE_FUN
     UInt32Value writeToSTDOUT(UInt32Value length, const ByteValue* buffer)
     {
+        ASSERT(buffer);
         Writer* writer = 
         VirtualMachine::getInstance()
         ->getSession()
@@ -270,6 +273,7 @@ class PrimitiveSupport
     INLINE_FUN
     int cellToOption(Cell option, Cell* argumentRef)
     {
+        ASSERT(Heap::isValidBlockPointer(option.blockRef));
         int tag = option.blockRef[0].uint32;
         if(TAG_option_SOME == tag)
         {
@@ -285,10 +289,12 @@ class PrimitiveSupport
     INLINE_FUN
     int cellToListLength(Cell list)
     {
+        ASSERT(Heap::isValidBlockPointer(list.blockRef));
         int length = 0;
         while(TAG_list_cons == list.blockRef[0].uint32){
             length += 1;
             list = list.blockRef[2];
+            ASSERT(Heap::isValidBlockPointer(list.blockRef));
         }
         return length;
     }
@@ -297,6 +303,7 @@ class PrimitiveSupport
     INLINE_FUN
     int cellToListGetItem(Cell list, Cell* headRef, Cell* tailRef)
     {
+        ASSERT(Heap::isValidBlockPointer(list.blockRef));
         int tag = list.blockRef[0].uint32;
         if(TAG_list_cons == tag)
         {
@@ -348,6 +355,8 @@ class PrimitiveSupport
     INLINE_FUN
     void cellToTupleElements(Cell tuple, Cell* elementsRef, int numElements)
     {
+        ASSERT(Heap::isValidBlockPointer(tuple.blockRef));
+
         int blockSize = Heap::getPayloadSize(tuple.blockRef);
         assert(numElements <= blockSize);// ToDo : raise an error.
         
@@ -379,6 +388,7 @@ class PrimitiveSupport
     constructExnSysErr(int errorNumber, char* message)
     {
         // we will construct SysErr(message, SOME errorNumber)
+        ASSERT(message);
 
         Cell messageValue = stringToCell(message);
         TemporaryRoot(&messageValue, true);

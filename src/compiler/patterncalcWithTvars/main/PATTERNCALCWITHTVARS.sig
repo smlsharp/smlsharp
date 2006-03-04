@@ -1,11 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * A calculus with explicitly scoped user type variables.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: PATTERNCALCWITHTVARS.sig,v 1.4 2006/02/18 04:59:25 ohori Exp $
+ * @version $Id: PATTERNCALCWITHTVARS.sig,v 1.6 2006/03/02 12:48:46 bochao Exp $
  *)
 signature PATTERNCALCWITHTVARS = sig
 
@@ -108,6 +107,7 @@ signature PATTERNCALCWITHTVARS = sig
      PTTOPDECSTR of ptstrdec * loc 
    | PTTOPDECSIG of  ( string * ptsigexp ) list * loc 
    | PTTOPDECFUN of  ( string * string * ptsigexp  * ptstrexp * loc ) list * loc 
+   | PTTOPDECIMPORT of ptspec * loc 
 
   val getLocExp : ptexp -> loc
   val getLocPat : ptpat -> loc

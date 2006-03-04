@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: CodeEnv.sml,v 1.1 2006/02/20 14:48:29 kiyoshiy Exp $
+ * @version $Id: CodeEnv.sml,v 1.2 2006/02/28 16:11:05 kiyoshiy Exp $
  *)
 
 structure CodeEnv = struct

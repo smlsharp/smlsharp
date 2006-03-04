@@ -1,7 +1,7 @@
 (**
  * user errors detected in type inference phase.
  * @author OHORI Atsushi
- * @version $Id: TypeInferenceError.ppg,v 1.54 2006/01/17 11:19:25 ohori Exp $
+ * @version $Id: TypeInferenceError.ppg,v 1.55 2006/03/02 12:53:26 bochao Exp $
  *)
 structure TypeInferenceError =
 struct
@@ -947,6 +947,39 @@ struct
    *)
   FFIFunctionLibraryName
   
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format({name})
+   * "unbound" +d  "import" +d "value" +d "identifier:" + name
+   *)
+  UnboundImportValueIdentifier of {name:string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format({name})
+   * "unbound" +d  "import" +d "type" +d "constructor:" + name
+   *)
+  UnboundImportTypeContructor of {name:string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format({name})
+   * "unbound" +d  "import" +d "structure:" + name
+   *)
+  UnboundImportStructure of {name:string}
+
   val isAnyError = ref false
 
   fun initializeTypeinfError () = 

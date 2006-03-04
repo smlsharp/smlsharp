@@ -15,10 +15,8 @@ Group is
 	../../name/sources.cm
 	../../typedflatcalc/sources.cm
 	../../typeinference/sources.cm
-(*
-        ../../matchcompilation/sources.cm
-	../../recordcompilation/sources.cm
-*)
+	../../format/sources.cm
+
 
 	ModuleCompiler.sml
 	MODULECOMPILER.sig
@@ -29,8 +27,9 @@ Group is
 	ModuleContext.sml
         InitialModuleContext.sml
 	INITIALMODULECONTEXT.sig
-	TopObject.sml
-	PathEnv.sml
+	TopObject.ppg.sml
+	PathEnv.ppg.sml
 	FunctorApplyUtils.sml
         IndexAllocator.sml
         ModuleCompilationPickler.sml
+        StaticModuleEnv.ppg.sml	

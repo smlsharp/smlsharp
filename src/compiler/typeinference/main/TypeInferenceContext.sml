@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypeInferenceContext.sml,v 1.19 2006/02/18 04:59:34 ohori Exp $
+ * @version $Id: TypeInferenceContext.sml,v 1.20 2006/02/28 16:11:08 kiyoshiy Exp $
  *)
 structure TypeInferenceContext =
 struct

@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * type constants (needs re-writing).
  * 
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: staticenv.sml,v 1.61 2006/02/18 04:59:37 ohori Exp $
+ * @version $Id: staticenv.sml,v 1.62 2006/02/28 16:11:10 kiyoshiy Exp $
  *)
 structure StaticEnv = struct
 local

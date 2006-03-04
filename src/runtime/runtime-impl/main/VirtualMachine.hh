@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: VirtualMachine.hh,v 1.22 2006/02/17 13:29:25 kiyoshiy Exp $
+ * @version $Id: VirtualMachine.hh,v 1.24 2006/03/01 14:15:16 kiyoshiy Exp $
  */
 #ifndef VirtualMachine_hh_
 #define VirtualMachine_hh_
@@ -53,14 +53,9 @@ class VirtualMachine
     static UInt32Value* savedSP_;
 
     /**
-     * global table of boxed(= block pointer) type variables
+     * global table of arrays
      */
-    static VariableLengthArray boxedGlobals_;
-
-    /**
-     * global table of unboxed(= non-pointer) type variables
-     */
-    static VariableLengthArray unboxedGlobals_;
+    static VariableLengthArray globalArrays_;
 
     /**
      * a stack to save pointers to blocks temporarily.
@@ -123,7 +118,13 @@ class VirtualMachine
     {
 
       private:
+        /*
+         * The stack extends from higher address to lower address.
+         */
         static UInt32Value* frameStack_;
+        /*
+         * frameStack_ < frameStackBottom_
+         */
         static UInt32Value* frameStackBottom_;
 
         INLINE_FUN static
@@ -262,7 +263,7 @@ class VirtualMachine
               case 0: break;
               case 4: 
                 frameStackBottom_ =
-                (UInt32Value*)((UInt32Value)frameStackBottom_ + 4);
+                (UInt32Value*)((UInt32Value)frameStackBottom_ - 4);
                 break;
               default:
                 DBGWRAP(LOG.error("FrameStack::initialize: invalid modulo"));
@@ -407,6 +408,7 @@ class VirtualMachine
         void popFramesUntil(UInt32Value* &SP, UInt32Value* &restoredSP)
         {
             SP = restoredSP;
+            ASSERT(SP <= frameStackBottom_);
         };
 
         INLINE_FUN static
@@ -415,6 +417,7 @@ class VirtualMachine
             UInt32Value frameSize = FRAME_SIZE(SP);
             PC = FRAME_RETURN_ADDRESS(SP);
             SP += frameSize; // shrink the stack to higher address
+            ASSERT(SP <= frameStackBottom_);
         };
 
         INLINE_FUN static
@@ -486,7 +489,8 @@ class VirtualMachine
 
         /**
          * stack of exception handlers.
-         * stack extends from lower address to higher address.
+         * The stack extends from lower address to higher address.
+         * This is different to the frame stack.
          */
         static UInt32Value* stack_;
         /**
@@ -527,6 +531,7 @@ class VirtualMachine
                 if(currentTop_ == stack_){ break; }
                 UInt32Value* nextEntry =
                 currentTop_ - WORDS_OF_HANDLERSTACK_ENTRY;
+                ASSERT(stack_ <= nextEntry);
                 if(SP !=
                    (UInt32Value*)(nextEntry[INDEX_OF_FRAME_HANDLERSTACK]))
                 { break; }
@@ -541,6 +546,7 @@ class VirtualMachine
         void remove()
         {
             currentTop_ -= WORDS_OF_HANDLERSTACK_ENTRY;
+            ASSERT(stack_ <= currentTop_);
         };
 
         /**
@@ -996,6 +1002,9 @@ class VirtualMachine
     void LoadConstString(UInt32Value* ConstStringAddress,
                          UInt32Value* length,
                          UInt32Value** stringBuffer);
+
+    INLINE_FUN static
+    Real64Value LoadConstReal64(UInt32Value* ConstRealAddress);
 
     INLINE_FUN static
     Cell* getNestedBlock(Cell* block, UInt32Value nestLevel);

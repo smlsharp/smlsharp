@@ -1,5 +1,6 @@
 Group is
         ../../systemdef/sources.cm
+        ../../control/sources.cm
         ../../../instructions/sources.cm
 
         ChannelTypes.sml

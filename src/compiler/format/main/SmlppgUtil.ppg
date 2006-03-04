@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Utility functions for formatting using SMLFormat.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: SmlppgUtil.ppg,v 1.3 2006/02/18 04:59:22 ohori Exp $
+ * @version $Id: SmlppgUtil.ppg,v 1.5 2006/03/02 12:44:14 bochao Exp $
  *)
 structure SmlppgUtil =
 struct
@@ -93,6 +92,19 @@ struct
          L
       end
 
+  fun formatIDSet (separator, prefixIfNotNull, suffixIfNotNull) idset = 
+      let 
+          val L = map ID.toString (ID.Set.listItems idset)
+      in
+          formatListWithEnclosureOne
+              (
+               SMLFormat.BasicFormatters.format_string,
+               separator,
+               prefixIfNotNull,
+               suffixIfNotNull
+               )
+              L
+      end
   (*
     This is for the usual list printing, u.e.
       nil => ""

@@ -10,14 +10,20 @@ struct
   type InitialParameter =
        {
          runtimePath : string,
+         arguments : string list,
          port : int
        }
 
   (***************************************************************************)
 
-  fun initialize ({runtimePath, port} : InitialParameter) =
+  fun initialize ({runtimePath, arguments, port} : InitialParameter) =
       let
-        val command = runtimePath ^ " -client " ^ (Int.toString port)
+        val command =
+            runtimePath
+            ^ " -heap " ^ (Int.toString (!Control.VMHeapSize))
+            ^ " -stack " ^ (Int.toString (!Control.VMStackSize))
+            ^ " -client " ^ (Int.toString port)
+            ^ concat (map (fn arg => " " ^ arg) arguments)
         val _ = if OS.Process.system command = OS.Process.success
                 then ()
                 else raise RPT.Error ("Runtime cannot run.:" ^ command)

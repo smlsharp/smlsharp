@@ -1,7 +1,7 @@
 (**
  * Int structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Int.sml,v 1.7 2005/06/17 14:00:58 kiyoshiy Exp $
+ * @version $Id: Int.sml,v 1.8 2006/02/21 16:04:21 kiyoshiy Exp $
  *)
 structure Int =
 struct
@@ -30,8 +30,8 @@ struct
 
   val maxInt = SOME 2147483647
 *)
-  val minInt = NONE
-  val maxInt = NONE
+  val minInt = SOME ~2147483648
+  val maxInt = SOME 2147483647
 
   val ~ = fn num => ~ num
 

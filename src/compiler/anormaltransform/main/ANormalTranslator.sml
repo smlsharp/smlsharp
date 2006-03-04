@@ -1,7 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: ANormalTranslator.sml,v 1.11 2006/02/18 16:04:04 duchuu Exp $
+ * @version $Id: ANormalTranslator.sml,v 1.12 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 
 

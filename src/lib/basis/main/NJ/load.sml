@@ -1,2 +1,2 @@
-use "CLEAN_UP.sig";
-use "CleanUp.sml";
+use "./CLEAN_UP.sig";
+use "./CleanUp.sml";

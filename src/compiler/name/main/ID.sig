@@ -1,5 +1,4 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
  * identifier of type, term, label and etc.
  * <p>
@@ -22,8 +21,9 @@
  * The uniqueness of dynamic ID is not ensured beyond the <code>init</code>.
  * Dynamic ID is allocated for user defined entities.
  * </p>
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ID.sig,v 1.7 2006/02/18 04:59:24 ohori Exp $
+ * @version $Id: ID.sig,v 1.9 2006/02/28 13:38:40 kiyoshiy Exp $
  *)
 signature ID =
 sig
@@ -44,6 +44,7 @@ sig
 
   (**
    * initializes the seed of dynamic ID allocation.
+   * Before compilation of each linkage unit, this should be called.
    *)
   val init : unit -> unit
 
@@ -51,8 +52,7 @@ sig
 
   val toString : id -> string
 
-  val fromInt : int -> id
-  val toInt : id -> int
+  val pu_ID : id Pickle.pu
 
   (**
    * compare two IDs.

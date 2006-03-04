@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Module Compilation Context 
+ * 
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleContext.sml,v 1.5 2006/02/18 04:59:23 ohori Exp $
+ * @version $Id: ModuleContext.sml,v 1.6 2006/02/27 06:23:02 bochao Exp $
  *)
 
 structure ModuleContext =

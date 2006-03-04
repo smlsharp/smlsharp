@@ -1,8 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  * Module compiler flattens structure.
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompiler.sml,v 1.116 2006/02/18 11:06:34 duchuu Exp $
+ * @version $Id: ModuleCompiler.sml,v 1.119 2006/03/02 12:46:47 bochao Exp $
  *)
 structure ModuleCompiler : MODULECOMPILER  = 
 struct
@@ -17,55 +17,46 @@ local
   structure PE = PathEnv
   open TypedCalc TypedFlatCalc 
 in
-
-   type moduleEnv = {
-                     freeEntryPointer : TO.freeEntryPointer,
-                     topPathBasis : PathEnv.topPathBasis
-                    } 
-
-   type deltaModuleEnv = 
-        {
-         freeEntryPointer : TO.freeEntryPointer,
-         pathBasis : PathEnv.pathBasis
-        }
-
-   fun extendModuleEnvWithDeltaModuleEnv 
-         {
-          deltaModuleEnv = {freeEntryPointer = freeEntryPointer1,
-                            pathBasis = liftedPathBasis : PE.pathBasis},
-          moduleEnv = {freeEntryPointer = freeEntryPointer2,
-                       topPathBasis = topPathBasis : PE.topPathBasis}
-          }
-       =
-       {
-        freeEntryPointer = freeEntryPointer1,
-        topPathBasis = 
-        PE.extendTopPathBasisWithPathBasis 
-          {topPathBasis = topPathBasis,
-           pathBasis = liftedPathBasis}
-       }
-
-   fun modulecompile {freeEntryPointer, topPathBasis} tptopdecs =
+ 
+   fun moduleCompile {freeGlobalArrayIndex, freeEntryPointer, topPathBasis} tptopdecs =
        let
          val prefix = P.NilPath             
-         val (newFreeEntryPointer, liftedPathBasis, tfpdecs) = 
-             MCM.tptopdecsToTfpdecs freeEntryPointer topPathBasis prefix tptopdecs
-(*         val deltaTopPathBasis = 
-             PE.extendTopPathBasisWithPathBasis 
-               {
-                topPathBasis = PE.emptyTopPathBasis,
-                pathBasis = liftedPathBasis
-                }
-*)
+         val tptopGroups = MCM.tptopdecsToTpTopGroups tptopdecs
+         val (newFreeGlobalArrayIndex, newFreeEntryPointer, liftedPathBasis, tfpdecs) = 
+             MCM.tptopGroupsToTfpdecs freeGlobalArrayIndex 
+                                      freeEntryPointer
+                                      topPathBasis
+                                      prefix
+                                      tptopGroups
        in
          (
           {
+           freeGlobalArrayIndex = newFreeGlobalArrayIndex,
            freeEntryPointer = newFreeEntryPointer,
            pathBasis = liftedPathBasis
-(*           topPathBasis = deltaTopPathBasis *)
            },
           tfpdecs
          )
+       end
+
+   fun compileLinkageUnit tptopdecs =
+       let
+         val {freeGlobalArrayIndex, 
+              freeEntryPointer, 
+              topPathBasis} = InitialModuleContext.initialModuleContext
+         val prefix = P.NilPath             
+         val tptopGroups = MCM.tptopdecsToTpTopGroups tptopdecs
+         val (newFreeGlobalArrayIndex, newFreeEntryPointer, liftedPathBasis, importPathBasis, tfpdecs) = 
+             MCM.tptopGroupdecsToTfpdecs' freeGlobalArrayIndex 
+                                          freeEntryPointer
+                                          topPathBasis
+                                          prefix
+                                          tptopGroups
+         val moduleEnv =
+             {importModuleEnv = importPathBasis,
+              exportModuleEnv = liftedPathBasis}
+       in
+         (moduleEnv, tfpdecs)
        end
 end
 end

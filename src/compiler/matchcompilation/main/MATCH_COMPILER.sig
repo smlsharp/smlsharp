@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * match compiler.
+ * @copyright (c) 2006, Tohoku University.
  * @author OSAKA Satoshi
- * @version $Id: MATCH_COMPILER.sig,v 1.7 2006/02/18 04:59:22 ohori Exp $
+ * @version $Id: MATCH_COMPILER.sig,v 1.8 2006/02/28 16:11:02 kiyoshiy Exp $
  *)
 signature MATCH_COMPILER =
 sig

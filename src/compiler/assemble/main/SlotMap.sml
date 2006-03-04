@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a map from variable name to its slot index.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SlotMap.sml,v 1.8 2006/02/18 04:59:16 ohori Exp $
+ * @version $Id: SlotMap.sml,v 1.9 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 structure SlotMap : SLOT_MAP =
 struct

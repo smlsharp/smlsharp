@@ -1,7 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * utilities of A-Normal form.
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: ANormalUtils.sml,v 1.4 2006/02/18 16:04:03 duchuu Exp $
+ * @version $Id: ANormalUtils.sml,v 1.5 2006/02/28 16:10:58 kiyoshiy Exp $
  *)
 
 structure ANormalUtils : ANORMAL_UTILS = struct

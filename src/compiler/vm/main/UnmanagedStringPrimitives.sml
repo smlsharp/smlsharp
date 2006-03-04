@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of primitives on unmanaged string.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: UnmanagedStringPrimitives.sml,v 1.2 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: UnmanagedStringPrimitives.sml,v 1.3 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 structure UnmanagedStringPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct

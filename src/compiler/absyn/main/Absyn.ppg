@@ -1,12 +1,11 @@
 (* -*- sml -*- *)
 (**
  * syntax for the IML.
- * <p>
- * Copyright (c) 2006, Tohoku University.
- * </p>
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Absyn.ppg,v 1.2 2006/02/18 04:59:14 ohori Exp $
+ * @version $Id: Absyn.ppg,v 1.4 2006/03/02 12:42:40 bochao Exp $
  *)
 structure Absyn : ABSYN = 
 struct
@@ -618,7 +617,12 @@ struct
          * @format (funbind funbinds * loc)
          * !N0{ "functor" + {funbinds(funbind)(~2[ +1 "and"] +)} }
          *) 
-        TOPDECFUN of funbind list * loc (* functor binding*)
+        TOPDECFUN of funbind list * loc (* functor binding *)
+      | (*%
+         * @format (spec * loc)
+         * !N0{ "import" + spec }
+         *) 
+        TOPDECIMPORT of spec * loc 
 
   (*%
    *)
@@ -631,6 +635,11 @@ struct
        * @format(file * loc) "use" + {file}
        *)
       USE of string * loc
+    | (*%
+       * @format(file * loc) "useObj" + {file}
+       *)
+      USEOBJ of string * loc
+
 
   fun getLocTy ty =
       case ty of

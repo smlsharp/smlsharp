@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Pretty printer of the typed pattern calculus.
+ * @copyright (c) 2006, Tohoku University.
  * @author LIU Bochao
- * @version $Id: PRINTTFP.sig,v 1.3 2006/02/18 11:06:34 duchuu Exp $
+ * @version $Id: PRINTTFP.sig,v 1.4 2006/02/27 06:31:09 bochao Exp $
  *)
 signature PRINTTFP = sig
   val tfpdecToString : Types.btvEnv list -> TypedFlatCalc.tfpdecl -> string

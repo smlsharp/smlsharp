@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of channel using a server socket.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ServerSocketChannel.sml,v 1.2 2006/02/18 04:59:28 ohori Exp $
+ * @version $Id: ServerSocketChannel.sml,v 1.3 2006/02/28 16:11:05 kiyoshiy Exp $
  *)
 structure ServerSocketChannel =
 struct

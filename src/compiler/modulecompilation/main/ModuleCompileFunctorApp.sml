@@ -1,9 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
- * Module compiler flattens structure.
+ * Module compiler expands functor application.
+ * 
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompileFunctorApp.sml,v 1.37 2006/02/18 04:59:23 ohori Exp $
+ * @version $Id: ModuleCompileFunctorApp.sml,v 1.38 2006/02/27 06:23:01 bochao Exp $
  *)
 structure ModuleCompileFunctorApp  = 
 struct

@@ -1,7 +1,7 @@
 (**
  * Date structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Date.sml,v 1.2 2005/12/06 11:49:41 kiyoshiy Exp $
+ * @version $Id: Date.sml,v 1.3 2006/02/21 16:04:20 kiyoshiy Exp $
  *)
 (* date.sml
  *
@@ -280,12 +280,14 @@ struct
 
   fun canonicalOffset off =
       let
-        val offs = Time.toSeconds off
-        val offs' = offs mod day_seconds
+        val offs = IntInf.fromLarge(Time.toSeconds off)
+        val offs' = IntInf.mod (offs, day_seconds)
         val offs'' =
-            if offs' > hday_seconds then offs' - day_seconds else offs'
+            if IntInf.> (offs', hday_seconds)
+            then IntInf.- (offs', day_seconds)
+            else offs'
       in
-        Time.fromSeconds offs''
+        Time.fromSeconds (IntInf.toLarge offs'')
       end
 
   fun toTime d =

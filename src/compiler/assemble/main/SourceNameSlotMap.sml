@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a map from a slot index to a bound name in the source code.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SourceNameSlotMap.sml,v 1.3 2006/02/18 04:59:16 ohori Exp $
+ * @version $Id: SourceNameSlotMap.sml,v 1.4 2006/02/28 16:11:00 kiyoshiy Exp $
  *)
 structure SourceNameSlotMap : SOURCE_NAME_SLOT_MAP =
 struct

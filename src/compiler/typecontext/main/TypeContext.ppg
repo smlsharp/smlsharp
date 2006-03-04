@@ -1,17 +1,17 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *	
- * type structures.
+ * type context for type inference.
+ * @copyright (c) 2006, Tohoku University.
  * @author OHORI Atushi
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypeContext.ppg,v 1.10 2006/02/18 11:06:34 duchuu Exp $
+ * @version $Id: TypeContext.ppg,v 1.12 2006/03/02 12:51:54 bochao Exp $
  *)
 structure TypeContext =
 struct
   local
     open Types Path
-
+    structure TU = TypesUtils
   in
 
   (* dupcliate specifiction *)
@@ -69,6 +69,205 @@ struct
         sigEnv = SEnv.empty,
         funEnv = SEnv.empty
       } : context
+
+  (***************************************************************)
+  (* separate compilation type environment *)
+  (*% 
+   * @params(btvEnv)
+   * @formatter(tyConSizeTagEnv) Types.format_tyConSizeTagEnv
+   * @formatter(varEnv) Types.format_varEnv
+   * @formatter(strSizeTagEnv) Types.format_strSizeTagEnv
+   *)
+  type typeEnv = 
+       (*%
+        * @format({tyConSizeTagEnv,varEnv,strSizeTagEnv})
+        *  "tyConSizeTagEnv:" + 2[tyConSizeTagEnv()(btvEnv)] +1
+        *  "varEnv:" + 2[varEnv()(btvEnv)] +1
+        *  "strSizeTagEnv" + 2[strSizeTagEnv()(btvEnv)]
+        *)       
+       {
+        tyConSizeTagEnv : tyConSizeTagEnv,
+        varEnv : varEnv,
+        strSizeTagEnv : strSizeTagEnv
+       }
+  type importTypeEnv = typeEnv and exportTypeEnv = typeEnv
+
+  (*% 
+   * @params(btvEnv)
+   * @formatter(tyConIdSet) Types.format_tyConIdSet
+   * @formatter(importTypeEnv) format_typeEnv
+   * @formatter(exportTypeEnv) format_typeEnv
+   *)
+  type staticTypeEnv = 
+       (*%
+        * @format({importTyConIdSet,importTypeEnv,exportTypeEnv})
+        * "importTyConIdSet:" +1 2[importTyConIdSet] +1
+        * "importTypeEnv:" +1 2[importTypeEnv()(btvEnv)] +1
+        * "exportTypeEnv:" +1 2[exportTypeEnv()(btvEnv)]
+        *)       
+       {
+        importTyConIdSet : tyConIdSet,
+        importTypeEnv : importTypeEnv, 
+        exportTypeEnv : exportTypeEnv
+       }
+
+  (****************************************************************)
+  (* utility functions *)
+  val emptyTypeEnv =
+      {
+       tyConSizeTagEnv = SEnv.empty,
+       varEnv = SEnv.empty,
+       strSizeTagEnv = SEnv.empty
+       }
+  val emptyImportTypeEnv = emptyTypeEnv
+  val emptyExportTypeEnv = emptyTypeEnv
+  val emptyStaticTypeEnv =
+      { 
+       importTyConIdSet = ID.Set.empty,
+       importTypeEnv = emptyTypeEnv,
+       exportTypeEnv = emptyTypeEnv
+       }
+
+  (******************************************************************************)
+
+  fun sizeTagBoxedKindValue boxedKindValue  =
+      case boxedKindValue of
+        BOXEDty => let val size = 1 and tag = 1 in
+                     (ST_CONST size, ST_CONST tag)
+                   end
+      | ATOMty => let val size = 1 and tag = 0 in
+                    (ST_CONST size, ST_CONST tag)
+                  end
+      | DOUBLEty => let val size = 2 and tag = 0 in
+                      (ST_CONST size, ST_CONST tag)
+                    end
+      | BOUNDVARty n => (ST_BDVAR n, ST_BDVAR n)
+      | (* imported type specification *)
+        SPECty (CONty {tyCon as {id,...}, args}) =>
+        ( case args of
+            nil => (ST_VAR id, ST_VAR id)
+          | args => 
+            let
+              val (argSizes, argTags) = 
+                  foldr (fn (arg, (sizeInfos, tagInfos)) =>
+                            let
+                              val (sizeInfo, tagInfo) = 
+                                  TU.computeTy sizeTagBoxedKindValue arg
+                            in
+                              (sizeInfo :: sizeInfos,
+                               tagInfo :: tagInfos)
+                            end)
+                        (nil, nil)
+                        args
+            in
+              (ST_APP {stfun = ST_VAR id, args = argSizes},
+               ST_APP {stfun = ST_VAR id, args = argTags})
+            end
+       )
+      | ty => raise Control.Bug ("illegal SPECty type:"^(TypeFormatter.tyToString ty))
+
+  fun sizeTagTyBindInfo tyBindInfo =
+      case tyBindInfo of
+        TYCON (tyCon as {name, boxedKind = boxedKindOpt,...}) =>
+        ((* currently optimization on boxedKind computation of tyCon 
+          * is surpressed in TypesUtils.sml, 
+          * so boxedKind should always be decided.
+          * This case should be explored in the future under optimization version.
+          *)
+         case !boxedKindOpt of
+           SOME boxedKindValue => sizeTagBoxedKindValue boxedKindValue
+         | NONE => 
+           raise Control.Bug ("undecided boxedKind in tyCon " ^ name))
+      | TYSPEC {spec, impl = SOME _} =>
+        raise Control.Bug ("import signature type specification"^
+                           "should not contain implementation")
+      | TYSPEC {spec = {id,...}, impl = NONE} => 
+        (ST_VAR id, ST_VAR id)
+      | TYFUN {name, tyargs, body} =>
+        let
+          val argOrderEnv = 
+              IEnv.foldli (fn (btvid, btv as {index,...}, argEnv) =>
+                              IEnv.insert(argEnv, index, btvid))
+                          IEnv.empty
+                          tyargs
+          val (sizeBody, tagBody) = TU.computeTy sizeTagBoxedKindValue body
+        (* to be : listItems is not reliable, should be implemented on our own *)
+        in
+          (ST_FUN {args = IEnv.listItems argOrderEnv, body = sizeBody},
+           ST_FUN {args = IEnv.listItems argOrderEnv, body = tagBody})
+        end
+
+  fun tyConEnvToTyConSizeTagEnv tyConEnv =
+      SEnv.foldli (fn (tyConName, tyBindInfo, tyConSizeTagEnv) =>
+                      let
+                        val (sizeInfo, tagInfo) = sizeTagTyBindInfo tyBindInfo
+                      in
+                        SEnv.insert (tyConSizeTagEnv, 
+                                     tyConName, 
+                                     {tyBindInfo = tyBindInfo,
+                                      sizeInfo = sizeInfo,
+                                      tagInfo = tagInfo})
+                      end
+                  )
+                  SEnv.empty
+                  tyConEnv
+            
+  fun strEnvToStrSizeTagEnv strEnv =
+      SEnv.map (fn STRUCTURE {id, name, strpath, env = (tyConEnv, varEnv, strEnv)} =>
+                   STRSIZETAG { 
+                               id = id,
+                               name = name,
+                               strpath = strpath,
+                               env = (tyConEnvToTyConSizeTagEnv tyConEnv,
+                                      varEnv,
+                                      strEnvToStrSizeTagEnv strEnv)
+                               }
+               )
+               strEnv
+
+  fun contextToTypeEnv (context:context) =
+      {
+       tyConSizeTagEnv = tyConEnvToTyConSizeTagEnv (#tyConEnv context),
+       varEnv = #varEnv context,
+       strSizeTagEnv = strEnvToStrSizeTagEnv (#strEnv context)
+       }
+
+  fun EnvToTypeEnv (tyConEnv, varEnv, strEnv) =
+      {
+       tyConSizeTagEnv = tyConEnvToTyConSizeTagEnv tyConEnv,
+       varEnv = varEnv,
+       strSizeTagEnv = strEnvToStrSizeTagEnv strEnv}
+
+  fun extendTypeEnvWithTypeEnv 
+      {newTypeEnv = {tyConSizeTagEnv = newTyConSizeTagEnv,
+                     varEnv = newVarEnv,
+                     strSizeTagEnv = newStrSizeTagEnv},
+       oldTypeEnv = {tyConSizeTagEnv = oldTyConSizeTagEnv,
+                     varEnv = oldVarEnv,
+                     strSizeTagEnv = oldStrSizeTagEnv}}
+      =
+      {
+       tyConSizeTagEnv = SEnv.unionWith #1 (newTyConSizeTagEnv, oldTyConSizeTagEnv),
+       varEnv = SEnv.unionWith #1 (newVarEnv,oldVarEnv),
+       strSizeTagEnv = SEnv.unionWith #1 (newStrSizeTagEnv, oldStrSizeTagEnv)
+       }
+      
+  fun extendImportTypeEnvWithImportTypeEnv {newImportTypeEnv, oldImportTypeEnv} =
+      extendTypeEnvWithTypeEnv{newTypeEnv = newImportTypeEnv,
+                               oldTypeEnv = oldImportTypeEnv}
+
+  fun extendExportTypeEnvWithExportTypeEnv {newExportTypeEnv, oldExportTypeEnv} =
+      extendTypeEnvWithTypeEnv{newTypeEnv = newExportTypeEnv,
+                               oldTypeEnv = oldExportTypeEnv}
+
+  fun injectContextIntoEmptyExportTypeEnv (context:context) =
+      {
+       tyConSizeTagEnv = 
+       tyConEnvToTyConSizeTagEnv (#tyConEnv context),
+       varEnv = #varEnv context,
+       strSizeTagEnv = 
+       strEnvToStrSizeTagEnv (#strEnv context)
+       }
 
   (**
    * @params (context, path, name)
@@ -395,6 +594,8 @@ struct
   fun mergeTyNameSet(tyNameSet1,tyNameSet2) =
       ISet.union(tyNameSet1,tyNameSet2)
 
+  fun extractEnvFromContext (context:context) =
+      (#tyConEnv context, #varEnv context, #strEnv context)
 
   (* ToDo : *)
   fun contextToString context =

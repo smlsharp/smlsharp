@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * This module allocates frame slots for local variables.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SLOT_ALLOCATOR.sig,v 1.5 2006/02/18 04:59:16 ohori Exp $
+ * @version $Id: SLOT_ALLOCATOR.sig,v 1.6 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 signature SLOT_ALLOCATOR =
 sig

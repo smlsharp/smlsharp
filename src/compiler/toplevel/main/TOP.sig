@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * coordinates whole phases of the compiler.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TOP.sig,v 1.18 2006/02/18 04:59:30 ohori Exp $
+ * @version $Id: TOP.sig,v 1.20 2006/03/01 08:55:47 kiyoshiy Exp $
  *)
 signature TOP =
 sig
@@ -60,8 +59,8 @@ sig
    * <p>
    * You must this function at first before using the compiler.
    * </p>
-   * @parameters
-   *    {session, standardOutput, standardError, loadPathList, getVariable}
+   * @params
+   *     {session, standardOutput, standardError, loadPathList, getVariable}
    * @param session the session instance.
    * @param standardOutput a channel to be used as standard output.
    *                    Prompt is printed to this channel.

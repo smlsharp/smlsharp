@@ -1,11 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  *  This structure implements the protocol for interactive communication with
  * IML runtime.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: InteractiveSession.sml,v 1.12 2006/02/18 04:59:28 ohori Exp $
+ * @version $Id: InteractiveSession.sml,v 1.13 2006/02/28 16:11:04 kiyoshiy Exp $
  *)
 structure InteractiveSession : SESSION = 
 struct

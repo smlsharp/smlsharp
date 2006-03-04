@@ -1,16 +1,15 @@
 (* -*- sml -*- *)
 
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * IML instructions with symbolic references.
  * <p>
  * This is 'symbolic' in a sense that operands which refer to addresses of
  * other instructions and slots in stack frames are specified by their label
  * and bound name.
  * </p>
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SymbolicInstructions.ppg,v 1.41 2006/02/20 06:52:03 kiyoshiy Exp $
+ * @version $Id: SymbolicInstructions.ppg,v 1.42 2006/02/28 16:11:06 kiyoshiy Exp $
  *)
 structure SymbolicInstructions =
 struct

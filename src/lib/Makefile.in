@@ -5,17 +5,28 @@ top_builddir = @top_builddir@
 
 include @top_builddir@commonrule
 
+SUBDIRS = Script
+
 VPATH = $(srcdir)
 
-TARGETS = basis.smc
+TARGETS = prelude.smc
 
 # ./ is required to avoid PATH substitution on Solaris make.
-INSTALL_FILES = ./FFI \
-                ./basis \
+INSTALL_FILES = ./basis \
                 ./basis.sml \
+                ./FFI \
+                ./FFI.sml \
+                ./minimum \
                 ./minimum.sml \
                 ./ml-yacc \
-                ./preludes
+		./prelude.sml \
+		./Script \
+		./script.sml \
+		./smlformatlib.sml \
+                ./SMLNJ \
+                ./smlnj-lib.sml \
+		./smlunitlib.sml \
+
 
 all: $(TARGETS)
 
@@ -25,7 +36,7 @@ clean:
 
 install: $(TARGETS)
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
-	$(INSTALL_DATA) basis.smc '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_DATA) prelude.smc '$(DESTDIR)$(libdir_smlsharp)'
 	@cd $(srcdir); \
 	find $(INSTALL_FILES) -type d -print \
 	| $(EGREP) -v '.svn|CVS' \
@@ -43,5 +54,7 @@ install: $(TARGETS)
 	    || exit $$?; \
 	done)
 
-basis.smc: basis.sml $(SMLSHARP)
-	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/basis.sml --library --output=$@ --stdin
+# ToDO : 
+# prelude depends on many files in Basis and other libraries.
+prelude.smc: prelude.sml $(SMLSHARP)
+	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/prelude.sml --make-library --output=$@ --stdin

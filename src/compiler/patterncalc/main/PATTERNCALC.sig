@@ -1,12 +1,11 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * The pattern calculus for the core.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: PATTERNCALC.sig,v 1.3 2006/02/18 04:59:25 ohori Exp $
+ * @version $Id: PATTERNCALC.sig,v 1.5 2006/03/02 12:48:03 bochao Exp $
  *)
 signature PATTERNCALC = sig
 
@@ -111,6 +110,7 @@ signature PATTERNCALC = sig
      PLTOPDECSTR of plstrdec * loc (* structure-level declaration *)
    | PLTOPDECSIG of ( string * plsigexp ) list * loc 
    | PLTOPDECFUN of  (string * string * plsigexp  * plstrexp * loc) list * loc 
+   | PLTOPDECIMPORT of plspec * loc 
 
   val getLeftPosExp :  plexp  -> Loc.pos
   val getRightPosExp :  plexp  -> Loc.pos 

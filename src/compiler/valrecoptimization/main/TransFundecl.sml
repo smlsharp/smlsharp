@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
- * @version $Id: TransFundecl.sml,v 1.4 2006/02/18 16:04:07 duchuu Exp $
+ * @version $Id: TransFundecl.sml,v 1.5 2006/02/28 16:11:11 kiyoshiy Exp $
  *)
 structure TransFundecl = struct
 local

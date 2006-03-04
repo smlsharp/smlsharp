@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * run the VM simulator.
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.60 2006/02/21 01:50:26 katsuu Exp $
+ * @version $Id: Main.sml,v 1.63 2006/02/27 04:40:44 kiyoshiy Exp $
  *)
 structure Main =
 struct
@@ -25,9 +25,9 @@ struct
   val _ = Control.printBinds := true
   val _ = Control.switchTrace := true
 
-  val libdir = Configuration.BuildRoot ^ "/src/lib/"
+  val libdir = Configuration.SourceRoot ^ "/src/lib/"
   val minimumPreludePath = libdir ^ Configuration.MinimumPreludeFileName
-  val BasisPath = libdir ^ Configuration.BasisFileName
+  val PreludePath = libdir ^ Configuration.PreludeFileName
 
   (* initialize virtual machine *)
   val heapSize = ref (0w1000000 : BasicTypes.UInt32)
@@ -37,7 +37,7 @@ struct
 
   fun main () =
       let
-        val preludePath = if !useBasis then BasisPath else minimumPreludePath
+        val preludePath = if !useBasis then PreludePath else minimumPreludePath
         val preludeDir = 
             OS.FileSys.fullPath(#dir(PathUtility.splitDirFile preludePath))
 

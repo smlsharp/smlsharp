@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * picklers for data structures declared in env module.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: EnvPickler.sml,v 1.2 2006/02/18 04:59:21 ohori Exp $
+ * @version $Id: EnvPickler.sml,v 1.3 2006/02/28 16:11:02 kiyoshiy Exp $
  *)
 structure EnvPickler
   : sig

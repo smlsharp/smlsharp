@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * a pretty printer for the raw symtax of core ML.
  *
- * a pretty printer for the raw symtax of core ML
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: AbsynFormatter.sml,v 1.5 2006/02/18 04:59:15 ohori Exp $
+ * @version $Id: AbsynFormatter.sml,v 1.6 2006/02/28 16:10:58 kiyoshiy Exp $
  *)
 structure AbsynFormatter : ABSYN_FORMATTER =
 struct

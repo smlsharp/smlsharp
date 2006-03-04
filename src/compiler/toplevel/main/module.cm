@@ -1,5 +1,6 @@
 Group is
         smlnj-lib.cm
+        ../../../configuration/sources.cm
 
         ../../../smlformatlib.cm
         ../../types/sources.cm
@@ -39,14 +40,14 @@ Group is
 	../../sioptimization/sources.cm
         ../../symbolicinstructions/sources.cm
         ../../assemble/sources.cm
-
+	../../linker/sources.cm
         ../../../instructions/compiler/sources.cm
-
         ../../session/sources.cm
+
         TopLevelError.ppg.sml
         PATH_RESOLVER.sig
         PathResolver.sml
-
+	CompileObj.sml
 (*
 	drive.sml
 *)

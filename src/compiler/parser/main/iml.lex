@@ -1,13 +1,12 @@
 (*
- * Copyright (c) 2006, Tohoku University.
- *
  * lexical structures of IML.
  *   the part of constant specifications is based on 
  *   that of the SML New Jersye implementation
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: iml.lex,v 1.21 2006/02/18 04:59:24 ohori Exp $
+ * @version $Id: iml.lex,v 1.24 2006/03/03 02:40:16 bochao Exp $
  *)
 
 structure Tokens = Tokens
@@ -182,6 +181,7 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"functor" => (Tokens.FUNCTOR (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"handle" => (Tokens.HANDLE (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"if" => (Tokens.IF (left(yypos,arg),right(yypos,2,arg)));
+<INITIAL>"_import" => (Tokens.IMPORT (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"in" => (Tokens.IN (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"include" => (Tokens.INCLUDE (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"infix" => (Tokens.INFIX (left(yypos,arg),right(yypos,5,arg)));
@@ -205,6 +205,7 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"then" => (Tokens.THEN (left(yypos,arg),right(yypos,4,arg)));
 <INITIAL>"type" => (Tokens.TYPE (left(yypos,arg),right(yypos,4,arg)));
 <INITIAL>"use" => (Tokens.USE (left(yypos,arg),right(yypos,3,arg)));
+<INITIAL>"useObj" => (Tokens.USEOBJ (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"val" => (Tokens.VAL (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"where" => (Tokens.WHERE (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"while" => (Tokens.WHILE (left(yypos,arg),right(yypos,5,arg)));

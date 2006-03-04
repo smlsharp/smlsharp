@@ -1,5 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
 local
 
@@ -19,8 +19,9 @@ local
 in
 (**
  * This module manipulates the runtime table of variable name map.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: NameSlotTable.sml,v 1.5 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: NameSlotTable.sml,v 1.6 2006/02/28 16:11:12 kiyoshiy Exp $
  *)
 structure NameSlotTable
           : sig

@@ -11,7 +11,8 @@ struct
       NetworkRuntimeProxy.initialize
           {
             runtimePath = runtimePath,
-            port = 12345
+            arguments = [],
+            port = port
           }
 
 end

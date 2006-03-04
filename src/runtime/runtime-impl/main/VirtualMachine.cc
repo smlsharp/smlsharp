@@ -1,7 +1,7 @@
 /**
  * Implementation of IML Virtual Machine.
  * @author YAMATODANI Kiyoshi
- * @version $Id: VirtualMachine.cc,v 1.43 2006/02/17 13:29:25 kiyoshiy Exp $
+ * @version $Id: VirtualMachine.cc,v 1.51 2006/03/03 11:39:09 kiyoshiy Exp $
  */
 #include "Heap.hh"
 #include "Primitives.hh"
@@ -53,6 +53,9 @@ ASSERT(FrameStack::isPointerSlot((SP1), (index1)) \
 ASSERT(FrameStack::isPointerSlot((SP), (index1)) \
        == Heap::isPointerField((block), (index2)))
 
+#define ASSERT_REAL64_ALIGNED(address) \
+ASSERT(0 == ((UInt32Value)(address)) % sizeof(Real64Value))
+
 ///////////////////////////////////////////////////////////////////////////////
 
 Cell* VirtualMachine::savedENV_ = 0;
@@ -75,9 +78,7 @@ UInt32Value* VirtualMachine::HandlerStack::stack_ = 0;
 UInt32Value* VirtualMachine::HandlerStack::stackTop_ = 0;
 UInt32Value* VirtualMachine::HandlerStack::currentTop_ = 0;
 
-VariableLengthArray VirtualMachine::boxedGlobals_;
-
-VariableLengthArray VirtualMachine::unboxedGlobals_;
+VariableLengthArray VirtualMachine::globalArrays_;
 
 VariableLengthArray VirtualMachine::temporaryPointers_;
 
@@ -100,14 +101,14 @@ VirtualMachine::VirtualMachine(const char* name,
                                const int stackSize)
 {
     name_ = name;
-    argumentsCount_ = argumentsCount_;
+    argumentsCount_ = argumentsCount;
     arguments_ = arguments;
+    DBGWRAP(printf("VM: argc = %d\n", argumentsCount_);)
 
     FrameStack::initialize(stackSize);
     HandlerStack::initialize(stackSize);
 
-    boxedGlobals_.clear();
-    unboxedGlobals_.clear();
+    globalArrays_.clear();
     temporaryPointers_.clear();
 
 #ifdef IML_ENABLE_EXECUTION_MONITORING
@@ -395,7 +396,7 @@ VirtualMachine::printStackTrace(UInt32Value *PC, UInt32Value* SP)
 
     UInt32Value *cursorSP = SP;
     UInt32Value* const stackBottom = FrameStack::getBottom();
-    while(stackBottom != cursorSP)
+    while((!interrupted_) && (stackBottom != cursorSP))
     {
         /*  get the instruction offset and the Executable of
          * the call instruction which created the current
@@ -421,7 +422,9 @@ VirtualMachine::printStackTrace(UInt32Value *PC, UInt32Value* SP)
         PrimitiveSupport::writeToSTDOUT(strlen(buffer), buffer);
         PrimitiveSupport::writeToSTDOUT(strlen("\n"), "\n");
     }
-
+    if(interrupted_){
+        DBGWRAP(LOG.debug("printStackTrace is interrupted.");)
+    }
 }
 
 /**
@@ -644,6 +647,7 @@ VirtualMachine::fillFrameForTailCall_D(UInt32Value* funInfoAddress,
                                        UInt32Value* SP)
 {
     Real64Value savedArg;
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
     savedArg = *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, argIndex);
     
     /* replace frame for tail call */
@@ -651,6 +655,7 @@ VirtualMachine::fillFrameForTailCall_D(UInt32Value* funInfoAddress,
     FrameStack::replaceFrame(SP, frameSize, bitmap, funInfoAddress);
 
     /* copy arguments from the caller to the callee */
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, argDest));
     *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, argDest) = savedArg;
     ASSERT_VALID_FRAME_VAR(calleeSP, argDest);
     ASSERT_VALID_FRAME_VAR(calleeSP, argDest + 1);
@@ -679,6 +684,8 @@ VirtualMachine::fillFrameForNonTailCall_D(UInt32Value* funInfoAddress,
     ASSERT_SAME_TYPE_SLOTS(calleeSP, argDest, SP, argIndex);
     ASSERT_SAME_TYPE_SLOTS(calleeSP, argDest + 1, SP, argIndex + 1);
 
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, argDest));
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
     *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, argDest) =
     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, argIndex);
     ASSERT_VALID_FRAME_VAR(calleeSP, argDest);
@@ -760,6 +767,7 @@ VirtualMachine::fillFrameForTailCall_ML_D(UInt32Value* funInfoAddress,
         savedArgs[index] = FRAME_ENTRY(SP, *argIndexes);
         argIndexes += 1;
     }
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argIndexes));
     Real64Value savedLastArg =
         *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
     
@@ -774,6 +782,7 @@ VirtualMachine::fillFrameForTailCall_ML_D(UInt32Value* funInfoAddress,
         argDests += 1;
     }
 
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
     *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = savedLastArg;
     ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
     ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
@@ -807,10 +816,15 @@ VirtualMachine::fillFrameForNonTailCall_ML_D(UInt32Value* funInfoAddress,
         argIndexes += 1;
         argDests += 1;
     }
+
     ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
     ASSERT_SAME_TYPE_SLOTS(calleeSP, (*argDests) + 1, SP, (*argIndexes) + 1);
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argIndexes));
+
     *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
+
     ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
     ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
 
@@ -1622,6 +1636,9 @@ VirtualMachine::callSelfRecursiveFunction_D(bool isTailCall,
 
     ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, argIndex);
     ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests + 1, SP, argIndex + 1);
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
+
     *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, argIndex);
 
@@ -1669,8 +1686,12 @@ VirtualMachine::callSelfRecursiveFunction_V(bool isTailCall,
       case 2:
         ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, argIndex);
         ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests + 1, SP, argIndex + 1);
+        ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
+        ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
+
         *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
         *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, argIndex);
+
         break;
       default:
         DBGWRAP(LOG.error
@@ -1754,6 +1775,7 @@ VirtualMachine::raiseException(UInt32Value* &SP,
                                Cell* &ENV,
                                Cell exceptionValue)
 {
+    DBGWRAP(LOG.debug("raiseException begin");)
     ASSERT(Heap::isValidBlockPointer(exceptionValue.blockRef));
 
     // find the handler to invoke
@@ -1767,6 +1789,7 @@ VirtualMachine::raiseException(UInt32Value* &SP,
     ASSERT(FrameStack::isPointerSlot(SP, exceptionDestinationIndex));
     FRAME_ENTRY(SP, exceptionDestinationIndex) = exceptionValue;
     PC = handlerAddress;
+    DBGWRAP(LOG.debug("raiseException end");)
 }
 
 INLINE_FUN
@@ -1778,6 +1801,16 @@ VirtualMachine::LoadConstString(UInt32Value* ConstStringAddress,
     ConstStringAddress += 1;
     *length = getWordAndInc(ConstStringAddress);
     *stringBuffer = ConstStringAddress;
+}
+
+INLINE_FUN
+Real64Value
+VirtualMachine::LoadConstReal64(UInt32Value* ConstRealAddress)
+{
+    Real64Value buffer;
+    *(UInt32Value*)&buffer = *ConstRealAddress;
+    *(((UInt32Value*)&buffer) + 1) = *(ConstRealAddress + 1);
+    return buffer;
 }
 
 INLINE_FUN
@@ -1821,6 +1854,9 @@ VirtualMachine::execute(Executable* executable)
 
     interrupted_ = false;
     setSignalHandler();
+
+    isPrimitiveExceptionRaised_ = false;
+    temporaryPointers_.clear();
 
     // NOTE : the state of this machine might be modified by monitors.
     INVOKE_ON_MONITORS(beforeExecution(executable, PC, ENV, SP));
@@ -1909,8 +1945,11 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, destination));
                     ASSERT(!FrameStack::isPointerSlot(SP, destination + 1));
-                    ASSERT(((UInt32Value)&FRAME_ENTRY(SP, destination).uint32) 
-                           % sizeof(Real64Value) == 0); 
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
+
+                    /* Because instruction operand is not aligned, 
+                     * we must copy word by word. */
                     FRAME_ENTRY(SP, destination).uint32 = floatBuffer[0];
                     FRAME_ENTRY(SP, destination + 1).uint32 = floatBuffer[1];
                     break;
@@ -1962,6 +2001,10 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT_VALID_FRAME_VAR(SP, variableIndex);
                     ASSERT_VALID_FRAME_VAR(SP, variableIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, variableIndex));
 
                     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
                     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
@@ -2007,9 +2050,13 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination, ENV, variableIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination + 1, ENV, variableIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
 
-                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                    *(Real64Value*)&HEAP_GETFIELD(ENV, variableIndex);
+                    FRAME_ENTRY(SP, destination) =
+                        HEAP_GETFIELD(ENV, variableIndex);
+                    FRAME_ENTRY(SP, destination + 1) =
+                        HEAP_GETFIELD(ENV, variableIndex + 1);
 
                     break;
                 }
@@ -2021,7 +2068,7 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, variableSizeIndex));
                     UInt32Value variableSize =
-                    FRAME_ENTRY(SP, variableSizeIndex).uint32;
+                        FRAME_ENTRY(SP, variableSizeIndex).uint32;
 
                     for(int index = 0; index < variableSize; index += 1){
                         ASSERT_SAME_TYPE_SLOT_FIELD
@@ -2038,13 +2085,13 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!Heap::isPointerField(ENV, indirectOffset));
                     UInt32Value variableIndex = 
-                    HEAP_GETFIELD(ENV, indirectOffset).uint32;
+                        HEAP_GETFIELD(ENV, indirectOffset).uint32;
 
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination, ENV, variableIndex);
 
                     FRAME_ENTRY(SP, destination) =
-                    HEAP_GETFIELD(ENV, variableIndex);
+                        HEAP_GETFIELD(ENV, variableIndex);
                     break;
                 }
               case AccessEnvIndirect_D:
@@ -2054,15 +2101,19 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!Heap::isPointerField(ENV, indirectOffset));
                     UInt32Value variableIndex = 
-                    HEAP_GETFIELD(ENV, indirectOffset).uint32;
+                        HEAP_GETFIELD(ENV, indirectOffset).uint32;
 
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination, ENV, variableIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination + 1, ENV, variableIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
 
-                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                    *(Real64Value*)&HEAP_GETFIELD(ENV, variableIndex);
+                    FRAME_ENTRY(SP, destination) =
+                        HEAP_GETFIELD(ENV, variableIndex);
+                    FRAME_ENTRY(SP, destination + 1) =
+                        HEAP_GETFIELD(ENV, variableIndex + 1);
 
                     break;
                 }
@@ -2074,16 +2125,16 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, variableSizeIndex));
                     UInt32Value variableSize =
-                    FRAME_ENTRY(SP, variableSizeIndex).uint32;
+                        FRAME_ENTRY(SP, variableSizeIndex).uint32;
 
                     ASSERT(!Heap::isPointerField(ENV, indirectOffset));
                     UInt32Value variableIndex = 
-                    HEAP_GETFIELD(ENV, indirectOffset).uint32;
+                        HEAP_GETFIELD(ENV, indirectOffset).uint32;
                     for(int index = 0; index < variableSize; index += 1){
                         ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination + index, ENV, variableIndex + index);
                         FRAME_ENTRY(SP, destination + index) =
-                        HEAP_GETFIELD(ENV, variableIndex + index);
+                            HEAP_GETFIELD(ENV, variableIndex + index);
                     }
                     break;
                 }
@@ -2099,7 +2150,7 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination, block, variableIndex);
 
                     FRAME_ENTRY(SP, destination) =
-                    HEAP_GETFIELD(block, variableIndex);
+                        HEAP_GETFIELD(block, variableIndex);
                     break;
                 }
               case AccessNestedEnv_D:
@@ -2114,9 +2165,13 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination, block, variableIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination + 1, block, variableIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
 
-                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                    *(Real64Value*)&HEAP_GETFIELD(block, variableIndex);
+                    FRAME_ENTRY(SP, destination) =
+                        HEAP_GETFIELD(block, variableIndex);
+                    FRAME_ENTRY(SP, destination + 1) =
+                        HEAP_GETFIELD(block, variableIndex + 1);
 
                     break;
                 }
@@ -2130,7 +2185,7 @@ VirtualMachine::execute(Executable* executable)
                     Cell* block = getNestedBlock(ENV, nestLevel);
                     ASSERT(!FrameStack::isPointerSlot(SP, variableSizeIndex));
                     UInt32Value variableSize =
-                    FRAME_ENTRY(SP, variableSizeIndex).uint32;
+                        FRAME_ENTRY(SP, variableSizeIndex).uint32;
 
                     for(int index = 0; index < variableSize; index += 1){
                         ASSERT_SAME_TYPE_SLOT_FIELD
@@ -2138,7 +2193,7 @@ VirtualMachine::execute(Executable* executable)
                              block, variableIndex + index);
 
                         FRAME_ENTRY(SP, destination + index) =
-                        HEAP_GETFIELD(block, variableIndex + index);
+                            HEAP_GETFIELD(block, variableIndex + index);
                     }
                     break;
                 }
@@ -2151,13 +2206,13 @@ VirtualMachine::execute(Executable* executable)
                     Cell* block = getNestedBlock(ENV, nestLevel);
                     ASSERT(!Heap::isPointerField(block, indirectOffset));
                     UInt32Value variableIndex = 
-                    HEAP_GETFIELD(block, indirectOffset).uint32;
+                        HEAP_GETFIELD(block, indirectOffset).uint32;
 
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination, block, variableIndex);
 
                     FRAME_ENTRY(SP, destination) =
-                    HEAP_GETFIELD(block, variableIndex);
+                        HEAP_GETFIELD(block, variableIndex);
                     break;
                 }
               case AccessNestedEnvIndirect_D:
@@ -2169,15 +2224,19 @@ VirtualMachine::execute(Executable* executable)
                     Cell* block = getNestedBlock(ENV, nestLevel);
                     ASSERT(!Heap::isPointerField(block, indirectOffset));
                     UInt32Value variableIndex = 
-                    HEAP_GETFIELD(block, indirectOffset).uint32;
+                        HEAP_GETFIELD(block, indirectOffset).uint32;
 
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination, block, variableIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination + 1, block, variableIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
 
-                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                    *(Real64Value*)&HEAP_GETFIELD(block, variableIndex);
+                    FRAME_ENTRY(SP, destination) =
+                        HEAP_GETFIELD(block, variableIndex);
+                    FRAME_ENTRY(SP, destination + 1) =
+                        HEAP_GETFIELD(block, variableIndex + 1);
 
                     break;
                 }
@@ -2191,11 +2250,11 @@ VirtualMachine::execute(Executable* executable)
                     Cell* block = getNestedBlock(ENV, nestLevel);
                     ASSERT(!Heap::isPointerField(block, indirectOffset));
                     UInt32Value variableIndex = 
-                    HEAP_GETFIELD(block, indirectOffset).uint32;
+                        HEAP_GETFIELD(block, indirectOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, variableSizeIndex));
                     UInt32Value variableSize =
-                    FRAME_ENTRY(SP, variableSizeIndex).uint32;
+                        FRAME_ENTRY(SP, variableSizeIndex).uint32;
 
                     for(int index = 0; index < variableSize; index += 1){
                         ASSERT_SAME_TYPE_SLOT_FIELD
@@ -2203,7 +2262,7 @@ VirtualMachine::execute(Executable* executable)
                              block, variableIndex + index);
 
                         FRAME_ENTRY(SP, destination + index) =
-                        HEAP_GETFIELD(block, variableIndex + index);
+                            HEAP_GETFIELD(block, variableIndex + index);
                     }
                     break;
                 }
@@ -2222,7 +2281,7 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination, block, fieldIndex);
 
                     FRAME_ENTRY(SP, destination) =
-                    HEAP_GETFIELD(block, fieldIndex);
+                        HEAP_GETFIELD(block, fieldIndex);
                     break;
                 }
               case GetField_D:
@@ -2240,9 +2299,13 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination, block, fieldIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination + 1, block, fieldIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
+                    ASSERT_REAL64_ALIGNED
+                        (&HEAP_GETFIELD(block, fieldIndex));
 
                     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                    *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
+                        *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
 
                     break;
                 }
@@ -2255,7 +2318,7 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
                     UInt32Value fieldSize =
-                    FRAME_ENTRY(SP, fieldSizeIndex).uint32;
+                        FRAME_ENTRY(SP, fieldSizeIndex).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2268,7 +2331,7 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination + index, block, fieldIndex + index);
 
                         FRAME_ENTRY(SP, destination + index) =
-                        HEAP_GETFIELD(block, fieldIndex + index);
+                            HEAP_GETFIELD(block, fieldIndex + index);
                     }
                     break;
                 }
@@ -2280,7 +2343,7 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2291,7 +2354,7 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination, block, fieldIndex);
 
                     FRAME_ENTRY(SP, destination) =
-                    HEAP_GETFIELD(block, fieldIndex);
+                        HEAP_GETFIELD(block, fieldIndex);
                     break;
                 }
               case GetFieldIndirect_D:
@@ -2302,7 +2365,7 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(block));
@@ -2312,9 +2375,12 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination, block, fieldIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination + 1, block, fieldIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
+                    ASSERT_REAL64_ALIGNED(&HEAP_GETFIELD(block, fieldIndex));
 
                     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                    *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
+                        *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
 
                     break;
                 }
@@ -2327,11 +2393,11 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
                     UInt32Value fieldSize =
-                    FRAME_ENTRY(SP, fieldSizeIndex).uint32;
+                        FRAME_ENTRY(SP, fieldSizeIndex).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2345,7 +2411,7 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination + index, block, fieldIndex + index);
 
                         FRAME_ENTRY(SP, destination + index) =
-                        HEAP_GETFIELD(block, fieldIndex + index);
+                            HEAP_GETFIELD(block, fieldIndex + index);
                     }
                     break;
                 }
@@ -2358,11 +2424,11 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, nestLevelOffset));
                     UInt32Value nestLevel =
-                    FRAME_ENTRY(SP, nestLevelOffset).uint32;
+                        FRAME_ENTRY(SP, nestLevelOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2374,7 +2440,7 @@ VirtualMachine::execute(Executable* executable)
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination, block, fieldIndex);
                     FRAME_ENTRY(SP, destination) =
-                    HEAP_GETFIELD(block, fieldIndex);
+                        HEAP_GETFIELD(block, fieldIndex);
                     break;
                 }
               case GetNestedFieldIndirect_D:
@@ -2386,11 +2452,11 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, nestLevelOffset));
                     UInt32Value nestLevel =
-                    FRAME_ENTRY(SP, nestLevelOffset).uint32;
+                        FRAME_ENTRY(SP, nestLevelOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2403,9 +2469,12 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination, block, fieldIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination + 1, block, fieldIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
+                    ASSERT_REAL64_ALIGNED(&HEAP_GETFIELD(block, fieldIndex));
 
                     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                    *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
+                        *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
 
                     break;
                 }
@@ -2419,15 +2488,15 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, nestLevelOffset));
                     UInt32Value nestLevel =
-                    FRAME_ENTRY(SP, nestLevelOffset).uint32;
+                        FRAME_ENTRY(SP, nestLevelOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
                     UInt32Value fieldSize =
-                    FRAME_ENTRY(SP, fieldSizeIndex).uint32;
+                        FRAME_ENTRY(SP, fieldSizeIndex).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2443,7 +2512,7 @@ VirtualMachine::execute(Executable* executable)
                         (SP, destination + index, block, fieldIndex + index);
 
                         FRAME_ENTRY(SP, destination + index) =
-                        HEAP_GETFIELD(block, fieldIndex + index);
+                            HEAP_GETFIELD(block, fieldIndex + index);
                     }
                     break;
                 }
@@ -2479,6 +2548,8 @@ VirtualMachine::execute(Executable* executable)
                         (SP, variableIndex, block, fieldIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, variableIndex + 1, block, fieldIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, variableIndex));
 
                     Real64Value fieldValue =
                       *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
@@ -2494,7 +2565,7 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
                     UInt32Value fieldSize =
-                    FRAME_ENTRY(SP, fieldSizeIndex).uint32;
+                        FRAME_ENTRY(SP, fieldSizeIndex).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2508,9 +2579,9 @@ VirtualMachine::execute(Executable* executable)
                         (SP, variableIndex + index, block, fieldIndex + index);
 
                         Cell variableValue =
-                        FRAME_ENTRY(SP, variableIndex + index);
+                            FRAME_ENTRY(SP, variableIndex + index);
                         Heap::updateField
-                        (block, fieldIndex + index, variableValue);
+                            (block, fieldIndex + index, variableValue);
                     }
                     break;
                 }
@@ -2522,7 +2593,7 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2543,7 +2614,7 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2554,9 +2625,11 @@ VirtualMachine::execute(Executable* executable)
                         (SP, variableIndex, block, fieldIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, variableIndex + 1, block, fieldIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, variableIndex));
 
                     Real64Value fieldValue =
-                      *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
                     Heap::updateField_D(block, fieldIndex, fieldValue);
 
                     break;
@@ -2570,11 +2643,11 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
                     UInt32Value fieldSize =
-                    FRAME_ENTRY(SP, fieldSizeIndex).uint32;
+                        FRAME_ENTRY(SP, fieldSizeIndex).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2587,7 +2660,7 @@ VirtualMachine::execute(Executable* executable)
                         ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, variableIndex + index, block, fieldIndex + index);
                         Cell variableValue =
-                        FRAME_ENTRY(SP, variableIndex + index);
+                            FRAME_ENTRY(SP, variableIndex + index);
                         Heap::updateField
                             (block, fieldIndex + index, variableValue);
                     }
@@ -2602,11 +2675,11 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, nestLevelOffset));
                     UInt32Value nestLevel =
-                    FRAME_ENTRY(SP, nestLevelOffset).uint32;
+                        FRAME_ENTRY(SP, nestLevelOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2631,11 +2704,11 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, nestLevelOffset));
                     UInt32Value nestLevel =
-                    FRAME_ENTRY(SP, nestLevelOffset).uint32;
+                        FRAME_ENTRY(SP, nestLevelOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2649,9 +2722,11 @@ VirtualMachine::execute(Executable* executable)
                         (SP, variableIndex, block, fieldIndex);
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, variableIndex + 1, block, fieldIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, variableIndex));
 
                     Real64Value fieldValue =
-                      *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
                     Heap::updateField_D(block, fieldIndex, fieldValue);
 
                     break;
@@ -2666,15 +2741,15 @@ VirtualMachine::execute(Executable* executable)
 
                     ASSERT(!FrameStack::isPointerSlot(SP, nestLevelOffset));
                     UInt32Value nestLevel =
-                    FRAME_ENTRY(SP, nestLevelOffset).uint32;
+                        FRAME_ENTRY(SP, nestLevelOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, indirectOffset));
                     UInt32Value fieldIndex =
-                    FRAME_ENTRY(SP, indirectOffset).uint32;
+                        FRAME_ENTRY(SP, indirectOffset).uint32;
 
                     ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
                     UInt32Value fieldSize =
-                    FRAME_ENTRY(SP, fieldSizeIndex).uint32;
+                        FRAME_ENTRY(SP, fieldSizeIndex).uint32;
 
                     ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
                     Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
@@ -2689,9 +2764,9 @@ VirtualMachine::execute(Executable* executable)
                         ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, variableIndex + index, block, fieldIndex + index);
                         Cell variableValue =
-                        FRAME_ENTRY(SP, variableIndex + index);
+                            FRAME_ENTRY(SP, variableIndex + index);
                         Heap::updateField
-                        (block, fieldIndex + index, variableValue);
+                            (block, fieldIndex + index, variableValue);
                     }
                     break;
                 }
@@ -2727,17 +2802,23 @@ VirtualMachine::execute(Executable* executable)
                     UInt32Value offset = getWordAndInc(PC);
                     UInt32Value destination = getWordAndInc(PC);
 
+                    ASSERT(arrayIndex < globalArrays_.getCount());
                     Cell* block = 
-                    (Cell*)(boxedGlobals_.getContents()[arrayIndex]);
+                        (Cell*)(globalArrays_.getContents()[arrayIndex]);
                     ASSERT(Heap::isValidBlockPointer(block));
-
+/*
+                    DBGWRAP(printf("GetGlobal: "
+                                   "arrayIndex=%d, offset=%d, block=%x\n",
+                                   arrayIndex, offset, block);)
+*/
+                    ASSERT(offset < Heap::getPayloadSize(block));
                     ASSERT_SAME_TYPE_SLOT_FIELD
-                      (SP, destination, block, offset);
+                        (SP, destination, block, offset);
                     FRAME_ENTRY(SP, destination) =
-                    HEAP_GETFIELD(block, offset);
+                        HEAP_GETFIELD(block, offset);
                     if(GetGlobal_D == opcode){
                         FRAME_ENTRY(SP, destination + 1) =
-                        HEAP_GETFIELD(block, offset + 1);
+                            HEAP_GETFIELD(block, offset + 1);
                     }
                     break;
                 }
@@ -2748,15 +2829,22 @@ VirtualMachine::execute(Executable* executable)
                     UInt32Value offset = getWordAndInc(PC);
                     UInt32Value variableIndex = getWordAndInc(PC);
 
+                    ASSERT(arrayIndex < globalArrays_.getCount());
                     Cell* block = 
-                    (Cell*)(boxedGlobals_.getContents()[arrayIndex]);
+                        (Cell*)(globalArrays_.getContents()[arrayIndex]);
                     ASSERT(Heap::isValidBlockPointer(block));
-
+/*
+                    DBGWRAP(printf("SetGlobal: "
+                                   "arrayIndex=%d, offset=%d, block=%x\n",
+                                   arrayIndex, offset, block);)
+*/
+                    ASSERT(offset < Heap::getPayloadSize(block));
                     ASSERT_SAME_TYPE_SLOT_FIELD
-                      (SP, variableIndex, block, offset);
+                        (SP, variableIndex, block, offset);
                     Cell value = FRAME_ENTRY(SP, variableIndex);
                     Heap::updateField(block, offset, value);
                     if(SetGlobal_D == opcode){
+                        ASSERT(offset + 1 < Heap::getPayloadSize(block));
                         value = FRAME_ENTRY(SP, variableIndex + 1);
                         Heap::updateField(block, offset + 1, value);
                     }
@@ -2794,14 +2882,18 @@ VirtualMachine::execute(Executable* executable)
 
                     for(int index = 0; index < arraySize; index += 1){
                         Heap::initializeField
-                        (block, index, initialValue);
+                            (block, index, initialValue);
                     }
-                    
-                    if(boxedGlobals_.getCount() <= arrayIndex){
-                        boxedGlobals_.extend
-                        (arrayIndex + 1 - boxedGlobals_.getCount());
+/*                    
+                    DBGWRAP(printf("InitGlobalArray: "
+                                   "arrayIndex=%d, arraySize=%d, block=%x\n",
+                                   arrayIndex, arraySize, block);)
+*/
+                    if(globalArrays_.getCount() <= arrayIndex){
+                        globalArrays_.extend
+                            (arrayIndex + 1 - globalArrays_.getCount());
                     }
-                    boxedGlobals_.getContents()[arrayIndex] = (void*)block;
+                    globalArrays_.getContents()[arrayIndex] = (void*)block;
                     break;
                 }
               case GetEnv:
@@ -3218,6 +3310,7 @@ VirtualMachine::execute(Executable* executable)
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
                     UInt32Value argsCount;
                     switch(opcode){
                       case CallStatic_ML_S:
@@ -3229,9 +3322,9 @@ VirtualMachine::execute(Executable* executable)
                     // now, PC points to destination operand.
                     UInt32Value* returnAddress = PC;
 
-                    // the 1st arg is ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, *argIndexes));
-                    Cell* calleeENV = FRAME_ENTRY(SP, *argIndexes).blockRef;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
                     /* save ENV registers to the current frame. */
@@ -3243,7 +3336,7 @@ VirtualMachine::execute(Executable* executable)
                                       ENV,
                                       entryPoint,
                                       calleeENV,
-                                      argIndexes + 1, // skip the 1st arg
+                                      argIndexes,
                                       returnAddress);
                     break;
                 }
@@ -3252,6 +3345,7 @@ VirtualMachine::execute(Executable* executable)
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
                     UInt32Value argsCount;
                     switch(opcode){
                       case CallStatic_ML_D:
@@ -3263,9 +3357,9 @@ VirtualMachine::execute(Executable* executable)
                     // now, PC points to destination operand.
                     UInt32Value* returnAddress = PC;
 
-                    // the 1st arg is ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, *argIndexes));
-                    Cell* calleeENV = FRAME_ENTRY(SP, *argIndexes).blockRef;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
                     /* save ENV registers to the current frame. */
@@ -3277,7 +3371,7 @@ VirtualMachine::execute(Executable* executable)
                                       ENV,
                                       entryPoint,
                                       calleeENV,
-                                      argIndexes + 1, // skip the 1st arg
+                                      argIndexes,
                                       returnAddress);
                     break;
                 }
@@ -3286,6 +3380,7 @@ VirtualMachine::execute(Executable* executable)
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
                     UInt32Value argsCount;
                     switch(opcode){
                       case CallStatic_ML_V:
@@ -3301,9 +3396,9 @@ VirtualMachine::execute(Executable* executable)
                     UInt32Value lastArgSize =
                     FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
 
-                    // the 1st arg is ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, *argIndexes));
-                    Cell* calleeENV = FRAME_ENTRY(SP, *argIndexes).blockRef;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
                     /* save ENV registers to the current frame. */
@@ -3315,7 +3410,7 @@ VirtualMachine::execute(Executable* executable)
                                       ENV,
                                       entryPoint,
                                       calleeENV,
-                                      argIndexes + 1, // skip the 1st arg
+                                      argIndexes,
                                       lastArgSize,
                                       returnAddress);
                     break;
@@ -3324,6 +3419,7 @@ VirtualMachine::execute(Executable* executable)
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
                     UInt32Value argsCount = getWordAndInc(PC);
                     UInt32Value* argIndexes = PC;
                     PC += argsCount;
@@ -3332,9 +3428,9 @@ VirtualMachine::execute(Executable* executable)
                     // now, PC points to destination operand.
                     UInt32Value* returnAddress = PC;
 
-                    // the 1st arg is ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, *argIndexes));
-                    Cell* calleeENV = FRAME_ENTRY(SP, *argIndexes).blockRef;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
                     /* save ENV registers to the current frame. */
@@ -3346,8 +3442,8 @@ VirtualMachine::execute(Executable* executable)
                                    ENV,
                                    entryPoint,
                                    calleeENV,
-                                   argIndexes + 1, // skip the 1st arg
-                                   argSizeIndexes + 1, // skip the 1st arg
+                                   argIndexes,
+                                   argSizeIndexes,
                                    returnAddress);
                     break;
                 }
@@ -3356,6 +3452,7 @@ VirtualMachine::execute(Executable* executable)
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
                     UInt32Value argsCount;
                     switch(opcode){
                       case TailCallStatic_ML_S:
@@ -3365,9 +3462,9 @@ VirtualMachine::execute(Executable* executable)
                     UInt32Value* argIndexes = PC;
                     PC += argsCount;
 
-                    // the 1st arg is ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, *argIndexes));
-                    Cell* calleeENV = FRAME_ENTRY(SP, *argIndexes).blockRef;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
                     callFunction_ML_S(true,
@@ -3376,7 +3473,7 @@ VirtualMachine::execute(Executable* executable)
                                       ENV,
                                       entryPoint,
                                       calleeENV,
-                                      argIndexes + 1, // skip the 1st arg
+                                      argIndexes,
                                       NULL);
                     break;
                 }
@@ -3385,6 +3482,7 @@ VirtualMachine::execute(Executable* executable)
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
                     UInt32Value argsCount;
                     switch(opcode){
                       case TailCallStatic_ML_D:
@@ -3395,9 +3493,9 @@ VirtualMachine::execute(Executable* executable)
                     PC += argsCount;
                     UInt32Value lastArgSize;
 
-                    // the 1st arg is ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, *argIndexes));
-                    Cell* calleeENV = FRAME_ENTRY(SP, *argIndexes).blockRef;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
                     callFunction_ML_D(true,
@@ -3406,7 +3504,7 @@ VirtualMachine::execute(Executable* executable)
                                       ENV,
                                       entryPoint,
                                       calleeENV,
-                                      argIndexes + 1, // skip the 1st arg
+                                      argIndexes,
                                       NULL);
                     break;
                 }
@@ -3415,6 +3513,7 @@ VirtualMachine::execute(Executable* executable)
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
                     UInt32Value argsCount;
                     switch(opcode){
                       case TailCallStatic_ML_V:
@@ -3428,9 +3527,9 @@ VirtualMachine::execute(Executable* executable)
                     UInt32Value lastArgSize =
                     FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
 
-                    // the 1st arg is ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, *argIndexes));
-                    Cell* calleeENV = FRAME_ENTRY(SP, *argIndexes).blockRef;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
                     callFunction_ML_V(true,
@@ -3439,7 +3538,7 @@ VirtualMachine::execute(Executable* executable)
                                       ENV,
                                       entryPoint,
                                       calleeENV,
-                                      argIndexes + 1, // skip the 1st arg
+                                      argIndexes,
                                       lastArgSize,
                                       NULL);
                     break;
@@ -3448,15 +3547,16 @@ VirtualMachine::execute(Executable* executable)
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
                     UInt32Value argsCount = getWordAndInc(PC);
                     UInt32Value* argIndexes = PC;
                     PC += argsCount;
                     UInt32Value* argSizeIndexes = PC;
                     PC += argsCount;
 
-                    // the 1st arg is ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, *argIndexes));
-                    Cell* calleeENV = FRAME_ENTRY(SP, *argIndexes).blockRef;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
                     callFunction_M(true,
@@ -3465,8 +3565,8 @@ VirtualMachine::execute(Executable* executable)
                                    ENV,
                                    entryPoint,
                                    calleeENV,
-                                   argIndexes + 1, // skip the 1st arg
-                                   argSizeIndexes + 1, // skip the 1st arg
+                                   argIndexes,
+                                   argSizeIndexes,
                                    NULL);
                     break;
                 }
@@ -4295,10 +4395,9 @@ VirtualMachine::execute(Executable* executable)
                     (FRAME_ENTRY(SP, libNameOffset));
                     RESTORE_REGISTERS;
 
-#ifdef IML_DEBUG
-                    printf("FFIVal:funName = \"%s\", libName = \"%s\"\n",
-                           funName, libName);
-#endif
+                    DBGWRAP
+                    (printf("FFIVal:funName = \"%s\", libName = \"%s\"\n",
+                            funName, libName);)
 
                     DLL_HANDLE dllHandle = DLL_OPEN(libName);
                     if(0 == dllHandle){
@@ -4323,9 +4422,7 @@ VirtualMachine::execute(Executable* executable)
                         raiseException(SP, PC, ENV, exception);
                         break;
                     }
-#ifdef IML_DEBUG
-                    printf("function = %x\n", functionValue.uint32);
-#endif
+                    DBGWRAP(printf("function = %x\n", functionValue.uint32);)
 
                     // make a temporary closure block (for test)
                     SAVE_REGISTERS;
@@ -4364,17 +4461,16 @@ VirtualMachine::execute(Executable* executable)
                     const char* libName = 
                     PrimitiveSupport::cellToString(closure[2]);
 
-#ifdef IML_DEBUG
-                    printf("function = %x, "
-                           "funName = %s, "
-                           "libName = %s, "
-                           "#args = %d\n", 
-                           function, funName, libName, argsCount);
-#endif
+                    DBGWRAP
+                    (printf("function = %x, "
+                            "funName = %s, "
+                            "libName = %s, "
+                            "#args = %d\n", 
+                            function, funName, libName, argsCount);)
 
                     Cell returnValue;
                     if(0 == function){
-                        printf("null function pointer\n");
+                        DBGWRAP(printf("null function pointer\n");)
                         throw IllegalStateException();
                     }
                     switch(argsCount)
@@ -4432,8 +4528,9 @@ VirtualMachine::execute(Executable* executable)
                              FRAME_ENTRY(SP, argIndexes[4]).uint32);
                         break;
                       default:
-                        printf
-                            ("Error: too many arguments %d\n", argsCount);
+                        DBGWRAP
+                        (printf
+                         ("Error: too many arguments %d\n", argsCount);)
                         throw IllegalStateException();
                         break;
                     }
@@ -4459,14 +4556,13 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             } 
 #ifdef FLOAT_UNBOXING
+/*
 #define PRIMITIVE_R_R(op) \
             { \
                 UInt32Value argIndex = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex).uint32) \
-                       % sizeof(Real64Value) == 0); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, destination).uint32) \
-                       % sizeof(Real64Value) == 0); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex)); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, destination)); \
                 Real64Value arg = \
                   PrimitiveSupport::WORDS_TO_REAL64 \
                                  (FRAME_ENTRY(SP, argIndex).uint32, \
@@ -4478,23 +4574,20 @@ VirtualMachine::execute(Executable* executable)
                                 &FRAME_ENTRY(SP, destination + 1).uint32); \
                 break; \
             }
-/*
+*/
 #define PRIMITIVE_R_R(op) \
             { \
                 UInt32Value argIndex = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex).uint32) \
-                       % sizeof(Real64Value) == 0); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, destination).uint32) \
-                       % sizeof(Real64Value) == 0); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex)); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, destination)); \
                 Real64Value arg = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex)); \
                 Real64Value result = op (arg); \
-                *(Real64Value*)(&FRAME_ENTRY(SP, destination).uint32) = \
+                *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, destination)) = \
                   result; \
                 break; \
             } 
-*/
 #else // FLOAT_UNBOXING
 #define PRIMITIVE_R_R(op) \
             { \
@@ -4600,52 +4693,45 @@ VirtualMachine::execute(Executable* executable)
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex1).uint32) \
-                       % sizeof(Real64Value) == 0); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex2).uint32) \
-                       % sizeof(Real64Value) == 0); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, destination).uint32) \
-                       % sizeof(Real64Value) == 0); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex1)); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex2)); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, destination)); \
                 Real64Value arg1 = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex1).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex1)); \
                 Real64Value arg2 = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex2).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex2)); \
                 Real64Value result = arg1 op arg2; \
-                *(Real64Value*)(&FRAME_ENTRY(SP, destination).uint32) = \
+                *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, destination)) = \
                   result; \
                 break; \
             } 
 #define PRIMITIVE_RR_R_Const_1(op) \
             { \
-                Real64Value arg1 = *(Real64Value*)(PC); \
+                Real64Value arg1 = LoadConstReal64(PC); \
                 PC += 2; \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex2).uint32) \
-                       % sizeof(Real64Value) == 0); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, destination).uint32) \
-                       % sizeof(Real64Value) == 0); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex2)); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, destination)); \
                 Real64Value arg2 = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex2).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex2)); \
                 Real64Value result = arg1 op arg2; \
-                *(Real64Value*)(&FRAME_ENTRY(SP, destination).uint32) = \
+                *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, destination)) = \
                   result; \
                 break; \
             } 
 #define PRIMITIVE_RR_R_Const_2(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
-                Real64Value arg2 = *(Real64Value*)(PC); \
+                Real64Value arg2 = LoadConstReal64(PC); \
                 PC += 2; \
                 UInt32Value destination = getWordAndInc(PC); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex1).uint32) \
-                       % sizeof(Real64Value) == 0); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, destination).uint32) \
-                       % sizeof(Real64Value) == 0); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex1)); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, destination)); \
                 Real64Value arg1 = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex1).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex1)); \
                 Real64Value result = arg1 op arg2; \
-                *(Real64Value*)(&FRAME_ENTRY(SP, destination).uint32) = \
+                *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, destination)) = \
                   result; \
                 break; \
             } 
@@ -4735,14 +4821,12 @@ VirtualMachine::execute(Executable* executable)
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex1).uint32) \
-                       % sizeof(Real64Value) == 0); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex2).uint32) \
-                       % sizeof(Real64Value) == 0); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex1)); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex2)); \
                 Real64Value arg1 = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex1).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex1)); \
                 Real64Value arg2 = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex2).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex2)); \
                 bool result = arg1 op arg2; \
                 FRAME_ENTRY(SP, destination) = \
                   PrimitiveSupport::boolToCell(result); \
@@ -4750,14 +4834,13 @@ VirtualMachine::execute(Executable* executable)
             } 
 #define PRIMITIVE_RR_B_Const_1(op) \
             { \
-                Real64Value arg1 = *(Real64Value*)(PC); \
+                Real64Value arg1 = LoadConstReal64(PC); \
                 PC += 2; \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex2).uint32) \
-                       % sizeof(Real64Value) == 0); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex2)); \
                 Real64Value arg2 = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex2).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex2)); \
                 bool result = arg1 op arg2; \
                 FRAME_ENTRY(SP, destination) = \
                   PrimitiveSupport::boolToCell(result); \
@@ -4766,13 +4849,12 @@ VirtualMachine::execute(Executable* executable)
 #define PRIMITIVE_RR_B_Const_2(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
-                Real64Value arg2 = *(Real64Value*)(PC); \
+                Real64Value arg2 = LoadConstReal64(PC); \
                 PC += 2; \
                 UInt32Value destination = getWordAndInc(PC); \
-                ASSERT(((UInt32Value)&FRAME_ENTRY(SP, argIndex1).uint32) \
-                       % sizeof(Real64Value) == 0); \
+                ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex1)); \
                 Real64Value arg1 = \
-                  *(Real64Value*)(&FRAME_ENTRY(SP, argIndex1).uint32); \
+                  *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndex1)); \
                 bool result = arg1 op arg2; \
                 FRAME_ENTRY(SP, destination) = \
                   PrimitiveSupport::boolToCell(result); \
@@ -5077,6 +5159,8 @@ VirtualMachine::execute(Executable* executable)
                         (static_cast<instruction>
                            (*previousPC)));)
 
+        interrupted_ = false;
+
         const char* what = exception.what();
         PrimitiveSupport::writeToSTDOUT(strlen(what), what);
         PrimitiveSupport::writeToSTDOUT(strlen("\n"), "\n");
@@ -5085,6 +5169,7 @@ VirtualMachine::execute(Executable* executable)
 
         resetSignalHandler();
         INVOKE_ON_MONITORS(afterExecution(PC, ENV, SP));
+        DBGWRAP(LOG.debug("VM.execute: throw uncaught IMLException.");)
         throw;
     }
 }
@@ -5143,8 +5228,8 @@ VirtualMachine::trace(RootTracer* tracer)
     FrameStack::trace(tracer, savedSP_);
 
     // boxed global variables
-    int numberOfBoxedGlobals = boxedGlobals_.getCount();
-    Cell** boxedGlobals = (Cell**)(boxedGlobals_.getContents());
+    int numberOfBoxedGlobals = globalArrays_.getCount();
+    Cell** boxedGlobals = (Cell**)(globalArrays_.getContents());
     // some elements in boxedGlobals might hold NULL pointer.
     for(int remains = numberOfBoxedGlobals; 0 < remains; remains -= 1){
         if(*boxedGlobals){

@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: VALREC_Optimizer.sml,v 1.25 2006/02/18 16:04:07 duchuu Exp $
+ * @version $Id: VALREC_Optimizer.sml,v 1.27 2006/03/02 12:54:43 bochao Exp $
  *)
 structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 
@@ -531,6 +530,7 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
          in
            (incContext,[PLTOPDECFUN(plfundecs,loc)]) 
          end
+       | PLTOPDECIMPORT x => (emptyContext, [PLTOPDECIMPORT x])
              
  and optimizetopdecList globalContext context topdecs = 
      let

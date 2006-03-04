@@ -3,7 +3,7 @@
  *
  * run the interactive session with runtime
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.20 2006/02/21 02:23:41 katsuu Exp $
+ * @version $Id: Main.sml,v 1.25 2006/03/03 06:36:09 kiyoshiy Exp $
  *)
 structure Main :
           sig
@@ -21,6 +21,7 @@ struct
   structure C = Control
   structure G = GetOpt
   structure PU = PathUtility
+  structure TE = TopLevelError
 
   (***************************************************************************)
 
@@ -44,9 +45,9 @@ struct
          | NoPrintBinds
          | OutputFile of string
          | PreludeFile of string
+         | Runtime of string
          | Quiet
          | StdIn
-         | UseBasis
          | Version
 
   (**
@@ -54,13 +55,15 @@ struct
    *)
   type parameters =
        {
-         sources : (unit -> Top.source) list ref,
-         mode : runMode ref,
+         extraArgs : string list ref,
          libPaths : string list ref,
+         mode : runMode ref,
          outputFileName : string ref,
          preludeFileName : prelude ref,
+         runtimePath : string ref,
          printBinds : bool ref,
-         printWarning : bool ref
+         printWarning : bool ref,
+         sources : (unit -> Top.source) list ref
        }
 
   (***************************************************************************)
@@ -90,16 +93,18 @@ struct
 
   (* use the standard preludes. *)
   val minimumPreludeFileName = Configuration.MinimumPreludeFileName
-  val BasisFileName = Configuration.BasisFileName
-  val CompiledBasisFileName = Configuration.CompiledBasisFileName
+  val PreludeFileName = Configuration.PreludeFileName
+  val CompiledPreludeFileName = Configuration.CompiledPreludeFileName
   val DefaultPreludeFile =
-      Compiled CompiledBasisFileName
+      Compiled CompiledPreludeFileName
 (*
       Source (if !useBasis then BasisFileName else minimumPreludeFileName)
 *)
 
   (* ToDo : the file name of runtime should be specified in Configuration. *)
   val RuntimeFileName = Configuration.RuntimeFileName
+  val RuntimePathEnvVarName = "SMLSHARP_RUNTIME"
+  val DefaultRuntimePath = Configuration.RuntimePath
   val DefaultObjectFileName = "a.sme"
   val InstallLibDirectory = Configuration.LibDirectory
   val LibPathEnvVarName = "SMLSHARP_LIB_PATH"
@@ -157,7 +162,7 @@ struct
         },
         {
           short = "",
-          long = ["library"],
+          long = ["make-library"],
           desc = G.NoArg MakeLibrary,
           help = "Generate a library file."
         },
@@ -192,6 +197,12 @@ struct
           help = "Change prelude."
         },
         {
+          short = "",
+          long = ["runtime"],
+          desc = G.ReqArg (Runtime, "FILE"),
+          help = "Specify a path to runtime executable file."
+        },
+        {
           short = "q",
           long = ["quiet"],
           desc = G.NoArg Quiet,
@@ -203,14 +214,6 @@ struct
           desc = G.NoArg StdIn,
           help = "Read source code from standard input."
         },
-(*
-        {
-          short = "",
-          long = ["usebasis"],
-          desc = G.NoArg UseBasis,
-          help = "shorthand of --prelude=" ^ BasisFileName
-        },
-*)
         {
           short = "v",
           long = ["version"],
@@ -258,6 +261,8 @@ struct
         val absoluteFilePath = 
             PathResolver.resolve
                 getVariable loadPathList "." sourceFileName
+            handle TE.InvalidPath message =>
+                   raise InvalidOption message
         val sourceDir = #dir(PU.splitDirFile absoluteFilePath)
         fun getSource () =
             {
@@ -283,7 +288,7 @@ struct
    *)
   fun parseArguments (parameters : parameters) arguments =
       let
-        val (options, sourceNames) =
+        val (options, otherArguments) =
             G.getOpt
                 {
                   argOrder = G.Permute,
@@ -314,6 +319,8 @@ struct
             (#outputFileName parameters) := fileName
           | processOpt (PreludeFile fileName) =
             (#preludeFileName parameters) := Source fileName
+          | processOpt (Runtime fileName) =
+            (#runtimePath parameters) := fileName
           | processOpt Quiet =
             (
               #printWarning parameters := false;
@@ -323,8 +330,6 @@ struct
             (#sources parameters)
             := !(#sources parameters)
                @ [getSourceOfStdIn (Top.NonInteractive {stopOnError = true})]
-          | processOpt UseBasis =
-            (#preludeFileName parameters) := Source BasisFileName
           | processOpt Version = (print (version ^ "\n"); raise Quit)
 
         val _ = app processOpt options
@@ -336,7 +341,6 @@ struct
             getSourceOfFile
                 OS.Process.getEnv (!(#libPaths parameters)) fileName
 
-        val sources = map getSourceOfName sourceNames
       in
         (* Binding information is printed only if
          *   (1) the program is cmpiled and executed.
@@ -350,23 +354,38 @@ struct
           CompileAndExecuteMode => ()
         | _ => #printBinds parameters := false;
 
-        #sources parameters := !(#sources parameters) @ sources;
-
         case !(#sources parameters) of
-          [] => (* interactive mode *)
-          #sources parameters := [getSourceOfStdIn Top.Interactive]
-        | _ => (* filter mode *) #printBinds parameters := false
+          [] =>
+          (case otherArguments of
+             [] => (* interactive mode *)
+             #sources parameters := [getSourceOfStdIn Top.Interactive]
+           | fileName :: others => (* filter mode *) 
+             (
+               #printBinds parameters := false;
+               #sources parameters := [getSourceOfName fileName];
+               #extraArgs parameters := others
+             ))
+        | _ => (* filter mode *) 
+          (
+            #printBinds parameters := false;
+            #extraArgs parameters := otherArguments
+          )
       end
 
   (********************)
 
   fun createLibrary outputChannel context executableChannel =
       let
+        val _ = print "saving static environment..."
         fun writer byte = #send outputChannel byte
         (* pickled static environment is at the head of library file. *)
         val _ = Top.pickle context (Pickle.makeOutstream writer)
+        val _ = print "done\n"
+
+        val _ = print "saving dynamic environment..."
         (* copy executables into the library file. *)
         val _ = ChannelUtility.copy (executableChannel, outputChannel)
+        val _ = print "done\n"
       in
         ()
       end
@@ -408,7 +427,10 @@ struct
 
   fun getInteractiveSession (parameters : parameters) =
       let
-        val proxy = RuntimeProxyFactory.createInstance ()
+        val proxy =
+            RuntimeProxyFactory.createInstance
+                (!(#runtimePath parameters))
+                (!(#extraArgs parameters))
         val sessionParameter = 
             {
               terminalInputChannel = STDINChannel,
@@ -480,22 +502,29 @@ struct
             | SOME libPath =>
               String.tokens (fn ch => ch = FileSysUtil.PathSeprator) libPath
 
+        val runtimePath =
+            case OS.Process.getEnv RuntimePathEnvVarName of
+              NONE => DefaultRuntimePath
+            | SOME runtimePath => runtimePath
+
         val _ = C.setControlOptions "IML_" OS.Process.getEnv
 
         (* default parameter *)                
         val parameters =
             {
-              sources = ref [],
+              extraArgs = ref [],
+              libPaths = ref (libPaths @ [InstallLibDirectory, "."]),
               mode =
               ref
                   (if !compileOnly
                    then CompileOnlyMode
                    else CompileAndExecuteMode),
-              libPaths = ref (libPaths @ [InstallLibDirectory, "."]),
               outputFileName = ref DefaultObjectFileName,
               preludeFileName = ref DefaultPreludeFile,
+              runtimePath = ref runtimePath,
               printBinds = C.printBinds,
-              printWarning = C.printWarning
+              printWarning = C.printWarning,
+              sources = ref []
             } : parameters
 
         (* update parameter to user specified *)                
@@ -566,8 +595,12 @@ struct
                      case exn of
                        SessionTypes.Error exn => exn
                      | _ => exn
+                 val message =
+                     case exn of
+                       InvalidOption message => message
+                     | _ => exnMessage exn
                in
-                 print ("Error:" ^ (exnMessage exn) ^ "\n");
+                 print ("Error:" ^ message ^ "\n");
                  app
                      (fn line => print (line ^ "\n"))
                      (SMLofNJ.exnHistory exn);

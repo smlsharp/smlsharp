@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
  * pickler for name module.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: NamePickler.sml,v 1.2 2006/02/18 04:59:24 ohori Exp $
+ * @version $Id: NamePickler.sml,v 1.4 2006/02/28 13:38:40 kiyoshiy Exp $
  *)
 structure NamePickler 
   : sig
@@ -25,7 +25,7 @@ struct
 
   (***************************************************************************)
 
-  val id = P.conv (ID.fromInt, ID.toInt) P.int
+  val id = ID.pu_ID
 
   structure IDMapPickler = OrdMapPickler(ID.Map)
   fun IDMap value_pu = IDMapPickler.map (id, value_pu)

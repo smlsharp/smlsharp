@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: main.cc,v 1.15 2005/11/29 14:00:25 kiyoshiy Exp $
+ * @version $Id: main.cc,v 1.20 2006/03/02 16:20:36 kiyoshiy Exp $
  */
 #include "StandAloneSession.hh"
 #include "InteractiveSession.hh"
@@ -34,6 +34,10 @@
 #ifdef USE_NAMESPACE
 using namespace jp_ac_jaist_iml_runtime;
 #endif
+
+///////////////////////////////////////////////////////////////////////////////
+
+#define IML_ENV_ENABLE_INSTTRACE "IML_instTrace"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -200,6 +204,7 @@ main(int argc, const char** argv)
       case CHANNEL_TYPE_FILE:
         {
             const char* executableFileName = nextArg[0];
+            nextArg += 1;
 
             executableFileDesc = open(executableFileName, O_RDONLY);
             if(executableFileDesc < 0){
@@ -216,6 +221,7 @@ main(int argc, const char** argv)
       case CHANNEL_TYPE_SERVER_SOCKET:
         {
             int port = atoi(nextArg[0]);
+            nextArg += 1;
 
             socklen_t clilen;
             struct sockaddr_in cli_addr, serv_addr;
@@ -277,6 +283,7 @@ main(int argc, const char** argv)
       case CHANNEL_TYPE_CLIENT_SOCKET:
         {
             int port = atoi(nextArg[0]);
+            nextArg += 1;
 
             socklen_t servlen;
             struct sockaddr_in serv_addr;
@@ -316,6 +323,7 @@ main(int argc, const char** argv)
         {
             const char* inFDString = nextArg[0];
             const char* outFDString = nextArg[1];
+            nextArg += 2;
 
             inFD = atoi(inFDString);
             outFD = atoi(outFDString);
@@ -333,19 +341,36 @@ main(int argc, const char** argv)
 
     ////////////////////////////////////////
 
-    signal(SIGINT, SIG_IGN);
+    if(CHANNEL_TYPE_FILE != channelType){
+        signal(SIGINT, SIG_IGN);
+    }
 
     ////////////////////////////////////////
 
+    DBGWRAP(printf("heapSize = %d, stackSize = %d\n", heapSize, stackSize);)
+    DBGWRAP(printf("argc = %d, nextArg - argv = %d\n", argc, nextArg - argv);)
+
     Heap::initialize(heapSize);
-    VirtualMachine vm(argv[0], argc - 1, argv + 1, stackSize);
+    VirtualMachine vm(argv[0], argc - (nextArg - argv), nextArg, stackSize);
     Heap::setRootSet(&vm);
     VirtualMachine::setSession(session_);
 
 #ifdef IML_ENABLE_EXECUTION_MONITORING
+    DBGWRAP(printf("monitoring is enabled.\n");)
+    char* envValue = getenv(IML_ENV_ENABLE_INSTTRACE);
+    DBGWRAP(printf("getenv(%s) = %s\n",
+                   IML_ENV_ENABLE_INSTTRACE,
+                   envValue ? envValue : "(null)");)
+    if(envValue && (0 == strcmp(envValue, "yes")))
+    {
+        DBGWRAP(printf("enable instTrace\n");)
+        InstructionTracer::_enableTrace = true;
+    }
     InstructionTracer tracer;
-    VirtualMachine::addExecutionMonitor
-    ((VirtualMachineExecutionMonitor*)&tracer);
+    if(InstructionTracer::_enableTrace){
+        VirtualMachine::addExecutionMonitor
+        ((VirtualMachineExecutionMonitor*)&tracer);
+    }
 #endif
 
     ExecutableLinker linker;

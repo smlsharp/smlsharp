@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * abstraction of memory.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RAW_MEMORY.sig,v 1.7 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: RAW_MEMORY.sig,v 1.8 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 signature RAW_MEMORY =
 sig

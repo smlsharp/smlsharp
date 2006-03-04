@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of primitives on real values.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RealPrimitives.sml,v 1.9 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: RealPrimitives.sml,v 1.11 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 structure RealPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct
@@ -24,27 +23,27 @@ struct
       raise RE.UnexpectedPrimitiveArguments "Real_toString"
 
   fun Real_fromInt VM heap [Int intValue] =
-      [Real(Real64.fromInt(SInt32.toInt(intValue))), Word 0w0]
+      [Real(SInt32ToReal64 intValue), Word 0w0]
     | Real_fromInt _ _ _ =
       raise RE.UnexpectedPrimitiveArguments "Real_fromInt"
 
   fun Real_floor VM heap [Real realValue, Word 0w0] =
-      [Int(SInt32.fromInt(Real64.floor realValue))]
+      [Int(IntToSInt32(Real64.floor realValue))]
     | Real_floor _ _ _ =
       raise RE.UnexpectedPrimitiveArguments "Real_floor"
 
   fun Real_ceil VM heap [Real realValue, Word 0w0] =
-      [Int(SInt32.fromInt(Real64.ceil realValue))]
+      [Int(IntToSInt32(Real64.ceil realValue))]
     | Real_ceil _ _ _ =
       raise RE.UnexpectedPrimitiveArguments "Real_ceil"
 
   fun Real_trunc VM heap [Real realValue, Word 0w0] =
-      [Int(SInt32.fromInt(Real64.trunc realValue))]
+      [Int(IntToSInt32(Real64.trunc realValue))]
     | Real_trunc _ _ _ =
       raise RE.UnexpectedPrimitiveArguments "Real_trunc"
 
   fun Real_round VM heap [Real realValue, Word 0w0] =
-      [Int(SInt32.fromInt(Real64.round realValue))]
+      [Int(IntToSInt32(Real64.round realValue))]
     | Real_round _ _ _ =
       raise RE.UnexpectedPrimitiveArguments "Real_round"
 
@@ -73,7 +72,7 @@ struct
   (* real * int -> real *)
   fun Real_fromManExp VM heap [Real manValue, Word 0w0, Int expValue] =
       [
-        Real(Real.fromManExp{man = manValue, exp = SInt32.toInt expValue}),
+        Real(Real.fromManExp{man = manValue, exp = SInt32ToInt expValue}),
         Word 0w0
       ]
     | Real_fromManExp _ _ _ = 
@@ -116,7 +115,7 @@ struct
             | (IEEEReal.NORMAL, true) => 8
             | (IEEEReal.NORMAL, false) => 9
       in
-        [Int(SInt32.fromInt(class))]
+        [Int(IntToSInt32 class)]
       end
     | Real_class _ _ _ =
       raise RE.UnexpectedPrimitiveArguments "Real_class"

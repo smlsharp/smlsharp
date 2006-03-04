@@ -1,6 +1,4 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Elaborator.
  * <p>
  * In this pahse, we do the following:
@@ -77,10 +75,11 @@
  * </pre>
  * </p>
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Elaborator.sml,v 1.74 2006/02/18 04:59:21 ohori Exp $
+ * @version $Id: Elaborator.sml,v 1.76 2006/03/02 12:43:52 bochao Exp $
  *)
 structure Elaborator : ELABORATOR =
 struct
@@ -1493,6 +1492,11 @@ in
           let val plfunbinds = map (elabFunBind env) funbinds
           in ([PC.PLTOPDECFUN(plfunbinds, loc)], SEnv.empty)
           end
+        | A.TOPDECIMPORT(import, loc) =>
+          let val plimport = elabSpec env import
+          in ([PC.PLTOPDECIMPORT(plimport, loc)], SEnv.empty)
+          end
+            
 
     and elabTopDecs env topdecs = elabSequence elabTopDec env topdecs
 

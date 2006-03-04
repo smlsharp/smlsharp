@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * resolve the scope of user declaraed type variables.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: SetTVars.sml,v 1.4 2006/02/18 04:59:28 ohori Exp $
+ * @version $Id: SetTVars.sml,v 1.6 2006/03/02 12:50:13 bochao Exp $
  *)
 structure SetTVars : SETTVARS = struct
 local
@@ -553,6 +552,7 @@ in
                          plfunbinds,
                          loc
                          )
+       | PLTOPDECIMPORT(import,loc) => PTTOPDECIMPORT(setspec env import,loc)
 
 end
 end

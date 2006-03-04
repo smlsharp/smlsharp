@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * ArithmeticOptimizer.
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: ArithmeticOptimizer.sml,v 1.4 2006/02/18 16:04:05 duchuu Exp $
+ * @version $Id: ArithmeticOptimizer.sml,v 1.5 2006/02/28 16:11:00 kiyoshiy Exp $
  *)
 
 (* This module simulates a simple numeric algebra and provides facilities for 

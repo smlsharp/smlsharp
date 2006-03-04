@@ -1,6 +1,4 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * translates an expression of untyped bitmap calc into sequences of symbolic
  * instructions.
  * <p>
@@ -197,8 +195,9 @@
  * </ul>
  * </p>
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LINEARIZER.sig,v 1.9 2006/02/18 04:59:22 ohori Exp $
+ * @version $Id: LINEARIZER.sig,v 1.10 2006/02/28 16:11:02 kiyoshiy Exp $
  *)
 signature LINEARIZER =
 sig

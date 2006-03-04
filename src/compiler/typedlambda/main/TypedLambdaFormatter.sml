@@ -1,7 +1,6 @@
-(*
- * Copyright (c) 2006, Tohoku University.
- *
- * a pretty printer for the typed lambda calclulus
+(**
+ * a pretty printer for the typed lambda calclulus.
+ * @copyright (c) 2006, Tohoku University.
  *)
 structure TypedLambdaFormatter =
 struct

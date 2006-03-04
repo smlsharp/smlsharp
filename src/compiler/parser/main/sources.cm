@@ -10,7 +10,7 @@ Group is
         ../../env/sources.cm
         ../../types/sources.cm
 *)
-        parser.cm
+	module.cm
 (*
         main.sml
 *)

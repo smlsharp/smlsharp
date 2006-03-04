@@ -1,7 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: BUCCalcFormatter.sml,v 1.4 2006/02/18 16:04:05 duchuu Exp $
+ * @version $Id: BUCCalcFormatter.sml,v 1.5 2006/02/28 16:11:00 kiyoshiy Exp $
  *)
 structure BUCCalcFormatter =
 struct

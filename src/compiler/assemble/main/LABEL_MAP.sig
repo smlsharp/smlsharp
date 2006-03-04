@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a map from label to its offset.
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LABEL_MAP.sig,v 1.4 2006/02/18 04:59:16 ohori Exp $
+ * @version $Id: LABEL_MAP.sig,v 1.5 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 signature LABEL_MAP =
 sig

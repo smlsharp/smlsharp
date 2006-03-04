@@ -8,7 +8,8 @@ struct
 
   val runtimePath = Configuration.RuntimePath
 
-  fun createInstance () =
-      UnixProcessRuntimeProxy.initialize {runtimePath = runtimePath}
+  fun createInstance runtimePath arguments =
+      UnixProcessRuntimeProxy.initialize
+          {runtimePath = runtimePath, arguments = arguments}
 
 end

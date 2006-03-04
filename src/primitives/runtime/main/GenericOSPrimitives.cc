@@ -25,6 +25,9 @@ raiseSysErr()
 {
     int errorNumber = errno;
     char* message = ::strerror(errorNumber);
+    if(0 == message){message = "Unknown system error number";}
+    DBGWRAP(printf("raiseSysErr: %s \n", message);)
+    errno = 0;
 
     Cell exception =
     PrimitiveSupport::constructExnSysErr(errorNumber, message);
@@ -119,6 +122,7 @@ IMLPrim_GenericOS_errorMsgImpl(UInt32Value argsCount,
 {
     SInt32Value error = argumentRefs[0]->sint32;
     char* message = ::strerror(error);
+    if(0 == message){message = "Unknown error number";}
     *resultRef = PrimitiveSupport::stringToCell(message);
     return;
 };
@@ -243,8 +247,11 @@ IMLPrim_GenericOS_fileOpenImpl(UInt32Value argsCount,
     FILE* file = ::fopen(fileName, mode);
     if(NULL == file){
         raiseSysErr();
+        resultRef->uint32 = 0;
     }
-    resultRef->uint32 = (UInt32Value)fileno(file);
+    else{
+        resultRef->uint32 = (UInt32Value)fileno(file);
+    }
     return;
 };
 

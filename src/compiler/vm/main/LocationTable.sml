@@ -1,5 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
 local
 
@@ -19,8 +19,9 @@ local
 in
 (**
  * This module manipulates the runtime table of source code locations.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LocationTable.sml,v 1.10 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: LocationTable.sml,v 1.11 2006/02/28 16:11:12 kiyoshiy Exp $
  *)
 structure LocationTable
           : sig

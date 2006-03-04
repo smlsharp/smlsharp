@@ -1,5 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  *)
 structure UnixProcessRuntimeProxy : RUNTIME_PROXY =
 struct
@@ -10,7 +10,7 @@ struct
 
   (***************************************************************************)
 
-  type InitialParameter = {runtimePath : string}
+  type InitialParameter = {runtimePath : string, arguments : string list}
 
   (***************************************************************************)
 
@@ -22,12 +22,16 @@ struct
       P.Process.kill
           (P.Process.K_PROC pid, P.Signal.fromWord signal)
 
-  fun initialize ({runtimePath} : InitialParameter) =
+  fun initialize ({runtimePath, arguments} : InitialParameter) =
       let
         val processIDRef = ref NONE
         val (runtimeInputChannel, runtimeOutputChannel) =
             UnixProcessChannel.openProcess
-                {fileName = runtimePath, processIDRef = processIDRef}
+                {
+                  fileName = runtimePath,
+                  processIDRef = processIDRef,
+                  arguments = arguments
+                }
         fun sendInterrupt () = 
             sendSignal
                 (Posix.Signal.toWord InterruptSignal) 

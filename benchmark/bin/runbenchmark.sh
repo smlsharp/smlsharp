@@ -3,7 +3,7 @@
 set +x
 
 # A script for running benchmark
-# $Id: runbenchmark.sh,v 1.7 2005/10/17 23:32:52 kiyoshiy Exp $
+# $Id: runbenchmark.sh,v 1.8 2006/02/24 14:14:25 kiyoshiy Exp $
 #
 # Example:
 #   ./runonebenchmark.sh -html -usebasis -d D:/tmp/imlbench boyer/load.sml
@@ -31,7 +31,7 @@ fi
 PRINTER=HTML
 RUNTIME=Remote
 # use default prelude (non Basis)
-PRELUDE=../../src/lib/preludes/preludes.sml
+PRELUDE=../../src/lib/minimum.sml
 
 while true
 do
@@ -49,7 +49,7 @@ do
 	RUNTIME="Emulator"
 	shift;;
     "-usebasis")
-	PRELUDE=../../src/lib/basis/main/basis.sml
+	PRELUDE=../../src/lib/basis.sml
 	shift;;
     *)
 	break;;

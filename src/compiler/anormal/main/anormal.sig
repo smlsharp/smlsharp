@@ -1,7 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * A-Normal form.
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: anormal.sig,v 1.15 2006/02/18 16:04:03 duchuu Exp $
+ * @version $Id: anormal.sig,v 1.16 2006/02/28 16:10:58 kiyoshiy Exp $
  *)
 
 signature ANormal = sig

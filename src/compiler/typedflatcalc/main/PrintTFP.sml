@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author LIU Bochao
- * @version $Id: PrintTFP.sml,v 1.3 2006/02/18 11:06:34 duchuu Exp $
+ * @version $Id: PrintTFP.sml,v 1.4 2006/02/27 06:31:09 bochao Exp $
  *)
 structure PrintTFP : PRINTTFP =
 struct

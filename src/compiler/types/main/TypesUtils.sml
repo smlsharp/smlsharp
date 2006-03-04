@@ -1,13 +1,13 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * utility functions for manupilating types (needs re-writing).
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori 
+ * @version $Id: TypesUtils.sml,v 1.5 2006/03/02 12:54:08 bochao Exp $
+ *)
+(*
 TODO:
   1.  ***compTy in RecordCompile.sml loop bug**** the fix is temporary
-
- * utility functions for manupilating types (needs re-writing).
- * @author Atsushi Ohori 
- * @version $Id: TypesUtils.sml,v 1.3 2006/02/18 04:59:36 ohori Exp $
- *)
+*)
 structure TypesUtils =
 struct
 
@@ -755,20 +755,18 @@ So be careful in using this.
   fun boxedKindOptOfTyCon (tyCon:tyCon) =
       (SOME (boxedKindValueOfTyCon tyCon)) handle ExSpecTyCon _ => NONE
 
-  (* compact a type 
-   * to one of following  ATOMty,DOUBLEty,BOXEDty and BOUNDVARty
-   *)
-  fun compactTy ty = 
+  fun computeTy computeFun ty = 
       case derefTy ty of 
-        TYVARty (ref (TVAR {recKind = REC _,...})) => BOXEDty
-      | TYVARty _  => ATOMty  (* TODO. ????*)
-      | BOUNDVARty tid  => BOUNDVARty tid
-      | FUNMty _  => BOXEDty 
-      | ABSSPECty (_, ty) => compactTy ty
-      | SPECty specTy => compactTy specTy
-      | RECORDty _  => BOXEDty 
+        TYVARty (ref (TVAR {recKind = REC _,...})) => computeFun BOXEDty
+      | TYVARty _  => computeFun ATOMty  
+      | BOUNDVARty tid  => computeFun (BOUNDVARty tid)
+      | FUNMty _  => computeFun BOXEDty 
+      | ABSSPECty (_, ty) => computeTy computeFun ty
+      | (* imported type specificiation *)
+        SPECty specTy => computeFun (SPECty specTy)
+      | RECORDty _  => computeFun BOXEDty 
       | CONty {tyCon as {datacon,...}, args} =>
-        if isSameTyCon (refTyCon, tyCon) then BOXEDty
+        if isSameTyCon (refTyCon, tyCon) then computeFun BOXEDty
         else 
           (
            case boxedKindValueOfTyCon tyCon of
@@ -779,11 +777,11 @@ So be careful in using this.
                 let
                   val ty' = POLYty{boundtvars=boundtvars,body=BOUNDVARty tid}
                 in
-                  compactTy (tpappTy (ty',args))
+                  computeTy computeFun (tpappTy (ty',args))
                 end
               | _ => raise Control.Bug "tyconSpan <> 1 or CONID is monomorphic"
              )
-           | boxedKind => boxedKind
+           | boxedKind => computeFun boxedKind
           )
       | POLYty{boundtvars,body}  => 
         (
@@ -791,26 +789,42 @@ So be careful in using this.
            BOUNDVARty tid =>
            (
             case IEnv.find(boundtvars,tid) of
-              SOME _ => BOXEDty   (* \forall{t}.t --> BOXED *)
-            | _ => BOUNDVARty tid
+              SOME _ => computeFun BOXEDty   (* \forall{t}.t --> BOXED *)
+            | _ => computeFun (BOUNDVARty tid)
            )
-         | _ => compactTy body
+         | _ => computeTy computeFun body
         )
-      | DUMMYty _ => ATOMty
-      | BOXEDty => BOXEDty
-      | ATOMty => ATOMty
-      | INDEXty _ => ATOMty
-      | ALIASty (_,actualTy) => compactTy actualTy
-      | BITMAPty _ => ATOMty
-      | FRAMEBITMAPty _ => ATOMty
-      | OFFSETty _ => ATOMty
-      | DOUBLEty => DOUBLEty
-      | TAGty _ => ATOMty
-      | SIZEty _ => ATOMty
-      | PADty _ => ATOMty
-      | PADCONDty _ => ATOMty
-      | ERRORty  => ATOMty (* ? ok? *)
-      | _ => raise Control.Bug "illegal type in compactTy"
+      | DUMMYty _ => computeFun ATOMty
+      | BOXEDty => computeFun BOXEDty
+      | ATOMty => computeFun ATOMty
+      | INDEXty _ => computeFun ATOMty
+      | ALIASty (_,actualTy) => computeTy computeFun actualTy
+      | BITMAPty _ => computeFun ATOMty
+      | FRAMEBITMAPty _ => computeFun ATOMty
+      | OFFSETty _ => computeFun ATOMty
+      | DOUBLEty => computeFun DOUBLEty
+      | TAGty _ => computeFun ATOMty
+      | SIZEty _ => computeFun ATOMty
+      | PADty _ => computeFun ATOMty
+      | PADCONDty _ => computeFun ATOMty
+      | ERRORty  => computeFun ATOMty 
+      | _ => raise Control.Bug "illegal type in computeTy"
+
+  (* compact a type 
+   * to one of following  ATOMty,DOUBLEty,BOXEDty and BOUNDVARty
+   *)
+  fun compactTy ty = 
+      let
+        val resultTy = computeTy (fn x => x) ty
+      in
+        case resultTy of
+          SPECty specTy => computeTy (fn x => x) specTy
+        | ATOMty => resultTy
+        | BOXEDty => resultTy
+        | DOUBLEty => resultTy
+        | BOUNDVARty _ => resultTy
+        | _ => raise Control.Bug "ilegal result in compactTy"
+      end
 	     
   fun boxedKindValueOfType ty = compactTy ty
        

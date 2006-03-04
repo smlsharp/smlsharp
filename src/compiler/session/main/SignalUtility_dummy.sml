@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  *  Alternative implementation of SignalUtility for platforms where the
  * strucutre Signals is not available.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SignalUtility_dummy.sml,v 1.4 2006/02/18 04:59:28 ohori Exp $
+ * @version $Id: SignalUtility_dummy.sml,v 1.5 2006/02/28 16:11:05 kiyoshiy Exp $
  *)
 structure SignalUtility =
 struct

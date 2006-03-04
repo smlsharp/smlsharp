@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * exceptions indicating runtime error.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RuntimeErrors.sml,v 1.4 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: RuntimeErrors.sml,v 1.5 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 structure RuntimeErrors =
 struct

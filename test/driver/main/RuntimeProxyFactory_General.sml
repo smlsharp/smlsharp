@@ -3,9 +3,6 @@ struct
 
   val name = "General"
 
-(*
-  val runtimePath = "../../obj/c/bin/imlrun.exe"
-*)
   val runtimePath = Configuration.RuntimePath 
 
   val port = 12345;
@@ -14,6 +11,7 @@ struct
       NetworkRuntimeProxy.initialize
           {
             runtimePath = runtimePath,
+            arguments = [],
             port = 12345
           }
 

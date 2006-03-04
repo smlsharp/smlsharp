@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of primitives on string values.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: StringPrimitives.sml,v 1.7 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: StringPrimitives.sml,v 1.8 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 structure StringPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct

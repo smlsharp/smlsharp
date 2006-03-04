@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * BUCTransformer.
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: BUCTransformer.sml,v 1.5 2006/02/18 16:04:06 duchuu Exp $
+ * @version $Id: BUCTransformer.sml,v 1.7 2006/02/28 17:05:50 duchuu Exp $
  *)
 
 (* 
@@ -19,7 +18,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
   structure BU = BUCUtils
   structure BCC = BUCCompileContext
   structure ECG = ExtraComputationGenerator
-  structure IDMap = SEnv
+  structure IDSet = ID.Set
   structure SE = StaticEnv
   structure VO = VariableOptimizer
 
@@ -69,14 +68,14 @@ structure BUCTransformer : BUCTRANSFORMER = struct
   (* sort a list of variables in the following type order
    * FRAMEBITMAPty < fixed-size type < BOUNDVARty  
    *)
-  fun arrangeFreeVariables (vars : varInfo list) =
+  fun arrangeFreeVariables (vars : varInfo list,priorIDs : ID.Set.set) =
       let
         val (frameBitmaps,fixedSizes,polys) =
             foldl 
-                (fn (varInfo as {ty,...},(L1,L2,L3)) =>
-                    case ty of 
-                      T.FRAMEBITMAPty _ => (varInfo::L1,L2,L3)
-                    | _ =>
+                (fn (varInfo as {ty,id,...},(L1,L2,L3)) =>
+                    if ID.Set.member(priorIDs,id) 
+                    then (varInfo::L1,L2,L3)
+                    else
                       (
                        case TU.compactTy ty of
                          T.ATOMty => (L1,varInfo::L2,L3)
@@ -463,6 +462,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
               let
                 val var = BU.newVar(T.FRAMEBITMAPty tyvarFrees,LOCAL)
                 val (context,var) = BCC.mergeVariable(context,var)
+                val _ = BCC.setBookmark(context,BCC.FRAMEBITMAP (#id var),var)
               in
                 (context,BUCVAR {varInfo = var, loc = loc})
               end
@@ -1519,7 +1519,11 @@ structure BUCTransformer : BUCTRANSFORMER = struct
         val freeVars = BCC.listFreeVariables bodyContext
         val varSet = VO.insertList(VO.empty,freeVars)
         val optimizedFreeVars = VO.optimizedVariables varSet
-        val optimizedFreeVars = arrangeFreeVariables optimizedFreeVars
+        val priorIDs = 
+            ID.Set.map
+                (VO.lookupID varSet)
+                (BCC.getFrameBitmapIDs bodyContext)
+        val optimizedFreeVars = arrangeFreeVariables(optimizedFreeVars,priorIDs)
 
         val tyList = map (fn {ty,...} => TU.compactTy ty) optimizedFreeVars
         (* decompose free variables into blocks for making nested environment records
@@ -1601,6 +1605,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
       in
         (context,bodyContext,env)
       end
+      handle  Dummy => raise Control.Bug "dummy"
 
   and compileSize context (ty, loc) =
       case ty of
@@ -2075,4 +2080,3 @@ structure BUCTransformer : BUCTRANSFORMER = struct
       handle  Dummy => raise Control.Bug "dummy"
                              
 end
-

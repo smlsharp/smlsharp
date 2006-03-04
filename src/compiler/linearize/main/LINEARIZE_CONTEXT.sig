@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LINEARIZE_CONTEXT.sig,v 1.12 2006/02/18 11:06:33 duchuu Exp $
+ * @version $Id: LINEARIZE_CONTEXT.sig,v 1.13 2006/02/28 16:11:02 kiyoshiy Exp $
  *)
 signature LINEARIZE_CONTEXT =
 sig

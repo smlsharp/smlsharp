@@ -2,7 +2,7 @@
  * OS_IO structure.
  * @author AT&T Bell Laboratories.
  * @author YAMATODANI Kiyoshi
- * @version $Id: OS_IO.sml,v 1.4 2005/08/24 15:13:49 kiyoshiy Exp $
+ * @version $Id: OS_IO.sml,v 1.5 2006/02/21 16:04:21 kiyoshiy Exp $
  *)
 (* os-io.sml
  *
@@ -109,7 +109,8 @@ struct
              of SOME t =>
                 let
                   val usec = Time.toMicroseconds t
-                  val (sec, usec) = IntInf.divMod (usec, 1000000)
+                  val sec = usec div 1000000
+                  val usec = usec mod 1000000
                 in
                   SOME (Int32.fromLarge sec, Int.fromLarge usec)
                 end

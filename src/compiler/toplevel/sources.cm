@@ -3,6 +3,7 @@ Group
         signature TOP
 *)
         structure Top
+        structure TopLevelError
         signature PATH_RESOLVER
         structure PathResolver
 is

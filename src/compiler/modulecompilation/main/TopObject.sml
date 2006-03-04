@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Top objects
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TopObject.sml,v 1.34 2006/02/18 04:59:24 ohori Exp $
+ * @version $Id: TopObject.sml,v 1.37 2006/02/28 01:22:50 bochao Exp $
  *)
 structure TopObject =
 struct
@@ -25,7 +25,9 @@ struct
         type globalIndex = pageType * pageArrayIndex * offset
           
         (**** IndexMap ********)
-        val  pageSize = 1024
+        fun getPageSize () =
+            !Control.pageSizeOfGlobalArray
+
         type indexMap = 
              (* a map from unique id to its index *)
              (
@@ -47,59 +49,19 @@ struct
 
         val initialFreeEntryPointer = 
             IEnv.insert
-              (
-               (IEnv.insert
-                 (
-                  (IEnv.singleton (BOXED_PAGE_TYPE,(0w0:BT.UInt32, 0))),
-                  ATOM_PAGE_TYPE,(0w1:BT.UInt32,0)
-                 )
-               ),
-               DOUBLE_PAGE_TYPE,(0w2:BT.UInt32,0)
-              )
+                (
+                 (IEnv.insert
+                      (
+                       (IEnv.singleton (BOXED_PAGE_TYPE,(0w0:BT.UInt32, 0))),
+                       ATOM_PAGE_TYPE,(0w1:BT.UInt32,0)
+                                      )
+                      ),
+                 DOUBLE_PAGE_TYPE,(0w2:BT.UInt32,0)
+                )
+                
+        (* shared by 3 top arrays *)
+        val initialFreeGlobalArrayIndex = 0w3 : BT.UInt32 
 
-        val globalPageArrayIndex = ref 0w3 : BT.UInt32 ref
-
-        (******* Top Array  Default Value *******)
-(*        fun refConPathInfoToConInfo {funtyCon, name, strpath, tag, ty, tyCon} =
-            {
-             funtyCon = funtyCon,
-             displayName = name,
-             tag = tag,
-             ty = ty, 
-             tyCon = tyCon
-             }
-        val DEFAULT_ATOM_VALUE = 
-            TFC.TFPCAST(TFC.TFPCONSTANT(T.INT(0), Loc.noloc), 
-                        T.ATOMty, 
-                        Loc.noloc)
-
-        val DEFAULT_DOUBLE_VALUE = 
-            TFC.TFPCAST(TFC.TFPCONSTANT(T.REAL("0.0"), Loc.noloc), 
-                        T.DOUBLEty, 
-                        Loc.noloc)
-
-        val DEFAULT_BOXED_VALUE = 
-          TFC.TFPCAST(
-                      TFC.TFPCONSTRUCT
-                      {
-                       con = refConPathInfoToConInfo (ITC.refCon),
-                       instTyList = [T.ATOMty],
-                       argExpOpt=SOME DEFAULT_ATOM_VALUE,
-                       loc=Loc.noloc
-                       },
-                      T.BOXEDty,
-                      Loc.noloc
-                      )
-                      
-
-        (**** ArrayType **************)
-        val BOXED_ARRAY_TYPE = 
-            T.CONty{tyCon = SE.arrayTyCon, args =  [T.BOXEDty]}
-        val ATOM_ARRAY_TYPE = 
-            T.CONty{tyCon = SE.arrayTyCon, args =  [T.ATOMty]}
-        val DOUBLE_ARRAY_TYPE = 
-            T.CONty{tyCon = SE.arrayTyCon, args =  [T.DOUBLEty]}
-*)
         (*******utilities*********)
         fun convertTyToPagetype ty = 
             case TypesUtils.compactTy ty of
@@ -115,21 +77,6 @@ struct
             | 2 => TOP_DOUBLE_PREFIX ^ (UInt32.toString pageArrayIndex)
             | _ => raise Control.Bug "invalid page type"
 
-(*        fun getArrayTypeFromIndex (pageTy,pageArrayIndex,offset) =
-            case pageTy of
-              0 => BOXED_ARRAY_TYPE
-            | 1 => ATOM_ARRAY_TYPE
-            | 2 => DOUBLE_ARRAY_TYPE
-            | _ => raise Control.Bug "invalid page type"
-
-                         
-        fun pageDefaultValue (pageTy,pageArrayIndex,offset) =
-            case pageTy of
-              0 => DEFAULT_BOXED_VALUE
-            | 1 => DEFAULT_ATOM_VALUE
-            | 2 => DEFAULT_DOUBLE_VALUE
-            | _ => raise Control.Bug "invalid page type"
-*)                         
         fun pageElemTy (pageTy,pageArrayIndex,offset) =
             case pageTy of
               0 => T.BOXEDty

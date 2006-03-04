@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>Overview of the IML compiler implemenation.</title>
+<title>Overview of the SML# compiler implemenation.</title>
 </head>
 <body>
 
@@ -8,14 +8,14 @@
 <hr>
 
 <h2>
-Overview of the IML compiler implemenation.
+Overview of the SML# compiler implemenation.
 </h2>
 
 <dl>
 <dt>author</dt>
 <dd>YAMATODANI Kiyoshi</dd>
 <dt>version</dt>
-<dd>$Id: Overview.html,v 1.5 2005/03/04 14:49:34 kiyoshiy Exp $</dd>
+<dd>$Id: Overview.html,v 1.6 2006/02/23 12:41:48 kiyoshiy Exp $</dd>
 </dl>
 
 <hr>
@@ -98,7 +98,7 @@ They accept a sequence of characters as its input and generate a sequence of ins
 <! ------------------------------------------------------------------------- !>
 <hr>
 <h3>
-4, Core modules of IML compiler
+4, Core modules of SML# compiler
 </h3>
 
 <p>
@@ -110,7 +110,7 @@ Compilation is performed by a series of three essential operations.
 </ol>
 
 <p>
-The IML compiler implementation is composed of many modules.
+The SML# compiler implementation is composed of many modules.
 Among them, core modules which do the above operations are Parser, ANormalTransformer, Assembler and InstructionSerializer.
 These modules are invoked in the following sequence.
 <ol>
@@ -128,7 +128,7 @@ Principle conversion is done by ANormalTransformer for time aspect and by Assemb
 <p>
 ANormalTransformer decomposes a source expression into a sequence of atomic computations aligned in their evaluation order. 
 There are several methods to represent sequence of atomic computations explicitly, such as CPS(continuation passing style), SSA(single static assignment) and etc. 
-Among them, the IML compiler adopts A-normal form.
+Among them, the SML# compiler adopts A-normal form.
 </p>
 
 <p>
@@ -204,7 +204,7 @@ Back-end phases are under the principle of the destination language, or runtime.
 </h3>
 
 <p>
-The transformation from a character sequence to A-normal form is divided to several phases. In the IML compiler implementation, these phases are implemented by modules from Parser to ANormalTransformer.
+The transformation from a character sequence to A-normal form is divided to several phases. In the SML# compiler implementation, these phases are implemented by modules from Parser to ANormalTransformer.
 </p>
 
 <p>
@@ -228,7 +228,7 @@ And, a source code that is syntactically correct but semantically not correct is
 <dd>
 They increase the granularity of constituent terms of the syntax tree by replacing them with combinations of more "atomic" terms.
 Atomicity of term is defined depending on the definition of "atomicity" in A-normal form, which depends on the target language of compilation further.
-For example, a "case" expression is transformed into a combination of "compare-branch" expressions, if "compare-branch" is atomic but "case" is not atomic in the A-normal form. (The current IML compiler implementation transforms "case" to "switch".)
+For example, a "case" expression is transformed into a combination of "compare-branch" expressions, if "compare-branch" is atomic but "case" is not atomic in the A-normal form. (The current SML# compiler implementation transforms "case" to "switch".)
 </dd>
 </dl>
 
@@ -286,13 +286,13 @@ And other transformations that depend on the detail of the target machine are al
 </p>
 
 <p>
-The back-end phases in the IML compiler perform the following translations.
+The back-end phases in the SML# compiler perform the following translations.
 <ul>
   <li>bitmap compilation</li>
   <li>assemble</li>
   <li>serialize</li>
 </ul>
-The bitmap compilation is a features of the IML compiler and runtime. It augments the A-normal form with bitmap informations. Bitmap informations indicate runtime type of variables and fields of blocks. They are calculated from type informations annotating terms.
+The bitmap compilation is a features of the SML# compiler and runtime. It augments the A-normal form with bitmap informations. Bitmap informations indicate runtime type of variables and fields of blocks. They are calculated from type informations annotating terms.
 The assemble maps atomic operations in the A-normal form to machine instructions, and performs the layout calculation.
 The serialize generates a binary sequence encoding machine instructions.
 </p>
@@ -340,7 +340,7 @@ source language |                                | machine language
 </p>
 
 <p>
-In the IML compiler implementation, phases mentioned above are designed with taking into consideration efficiency.
+In the SML# compiler implementation, phases mentioned above are designed with taking into consideration efficiency.
 Furthermore, there are phases committed specially to optimization.
 <ul>
   <li>TypedLambdaOptimizer</li>
@@ -391,7 +391,7 @@ Implementation of compiler should be designed to deal with such requirements.
 </p>
 
 <p>
-The IML compiler implementation contains interface modules.
+The SML# compiler implementation contains interface modules.
 They mediate the compiler modules and the external stores.
 </p>
 

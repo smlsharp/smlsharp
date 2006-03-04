@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: checkeq.sml,v 1.16 2006/02/18 04:59:34 ohori Exp $
+ * @version $Id: checkeq.sml,v 1.17 2006/02/28 16:11:09 kiyoshiy Exp $
  *)
 structure CheckEq =
 struct

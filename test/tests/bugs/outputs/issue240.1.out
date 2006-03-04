@@ -1,0 +1,2 @@
+val f = fn : ['a .real  -> int  -> 'a  -> string]
+val it = "" : string

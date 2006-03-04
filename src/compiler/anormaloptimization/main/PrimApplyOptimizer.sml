@@ -1,7 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: PrimApplyOptimizer.sml,v 1.3 2006/02/18 16:04:04 duchuu Exp $
+ * @version $Id: PrimApplyOptimizer.sml,v 1.5 2006/02/28 16:10:59 kiyoshiy Exp $
  *)
 structure PrimApplyOptimizer = struct
 
@@ -124,31 +124,48 @@ structure PrimApplyOptimizer = struct
           atomEnv
           primApplyInfo
 
-  fun genericOp_ii_b constOp atomEnv primApplyInfo =
+  fun genericOp_bb_b constOp atomEnv primApplyInfo =
+      genericOp_2
+          (fn (T.WORD v1,T.WORD v2) => 
+              T.WORD (Word8.toLargeWord(constOp(Word8.fromLargeWord v1,Word8.fromLargeWord v2))))
+          atomEnv
+          primApplyInfo
+
+
+  fun genericOp_ii_l constOp atomEnv primApplyInfo =
       genericOp_2
           (fn (T.INT v1,T.INT v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
-  fun genericOp_ww_b constOp atomEnv primApplyInfo =
+  fun genericOp_ww_l constOp atomEnv primApplyInfo =
       genericOp_2
           (fn (T.WORD v1,T.WORD v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
-  fun genericOp_rr_b constOp atomEnv primApplyInfo =
+  fun genericOp_rr_l constOp atomEnv primApplyInfo =
       genericOp_2
           (fn (T.REAL v1,T.REAL v2) => 
               if constOp(stringToReal v1,stringToReal v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
-  fun genericOp_cc_b constOp atomEnv primApplyInfo =
+  fun genericOp_cc_l constOp atomEnv primApplyInfo =
       genericOp_2
           (fn (T.CHAR v1,T.CHAR v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
+          atomEnv
+          primApplyInfo
+
+  fun genericOp_bb_l constOp atomEnv primApplyInfo =
+      genericOp_2
+          (fn (T.WORD v1,T.WORD v2) => 
+              if constOp(Word8.fromLargeWord v1,Word8.fromLargeWord v2) 
+              then trueValue 
+              else falseValue)
           atomEnv
           primApplyInfo
 
@@ -177,6 +194,13 @@ structure PrimApplyOptimizer = struct
           atomEnv
           primApplyInfo
 
+  fun genericOp2_bb_b constOp atomEnv primApplyInfo =
+      genericOp2_2
+          (fn (T.WORD v1,T.WORD v2) => 
+              T.WORD (Word8.toLargeWord(constOp(Word8.fromLargeWord v1, Word8.fromLargeWord v2))))
+          atomEnv
+          primApplyInfo
+
   fun genericOp2_ss_s constOp atomEnv primApplyInfo =
       genericOp2_2
           (fn (T.STRING v1,T.STRING v2) => T.STRING (constOp(v1,v2)))
@@ -189,35 +213,44 @@ structure PrimApplyOptimizer = struct
           atomEnv
           primApplyInfo
 
-  fun genericOp2_ii_b constOp atomEnv primApplyInfo =
+  fun genericOp2_ii_l constOp atomEnv primApplyInfo =
       genericOp2_2
           (fn (T.INT v1,T.INT v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
-  fun genericOp2_ww_b constOp atomEnv primApplyInfo =
+  fun genericOp2_ww_l constOp atomEnv primApplyInfo =
       genericOp2_2
           (fn (T.WORD v1,T.WORD v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
-  fun genericOp2_rr_b constOp atomEnv primApplyInfo =
+  fun genericOp2_rr_l constOp atomEnv primApplyInfo =
       genericOp2_2
           (fn (T.REAL v1,T.REAL v2) => 
               if constOp(stringToReal v1,stringToReal v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
-  fun genericOp2_cc_b constOp atomEnv primApplyInfo =
+  fun genericOp2_cc_l constOp atomEnv primApplyInfo =
       genericOp2_2
           (fn (T.CHAR v1,T.CHAR v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
-  fun genericOp2_ss_b constOp atomEnv primApplyInfo =
+  fun genericOp2_bb_l constOp atomEnv primApplyInfo =
+      genericOp2_2
+          (fn (T.WORD v1,T.WORD v2) => 
+              if constOp(Word8.fromLargeWord v1,Word8.fromLargeWord v2) 
+              then trueValue 
+              else falseValue)
+          atomEnv
+          primApplyInfo
+
+  fun genericOp2_ss_l constOp atomEnv primApplyInfo =
       genericOp2_2
           (fn (T.STRING v1,T.STRING v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
@@ -342,26 +375,26 @@ structure PrimApplyOptimizer = struct
        ("addInt",genericOp_ii_i (op + )),
        ("addWord",genericOp_ww_w (op + )),
        ("addReal",genericOp_rr_r (op + )),
-       ("addByte",genericOp_cc_c (fn (c1,c2) => Char.chr((Char.ord c1) + (Char.ord c2)))),
+       ("addByte",genericOp_bb_b (op + )),
 
        ("subInt",genericOp_ii_i (op - )),
        ("subWord",genericOp_ww_w (op - )),
        ("subReal",genericOp_rr_r (op - )),
-       ("subByte",genericOp_cc_c (fn (c1,c2) => Char.chr((Char.ord c1) - (Char.ord c2)))),
+       ("subByte",genericOp_bb_b (op - )),
 
        ("mulInt",genericOp_ii_i (op * )),
        ("mulWord",genericOp_ww_w (op * )),
        ("mulReal",genericOp_rr_r (op * )),
-       ("mulByte",genericOp_cc_c (fn (c1,c2) => Char.chr((Char.ord c1) * (Char.ord c2)))),
+       ("mulByte",genericOp_bb_b (op * )),
 
        ("divInt",genericOp_ii_i (op div )),
        ("divWord",genericOp_ww_w (op div )),
        ("/",divRealOp),
-       ("divByte",genericOp_cc_c (fn (c1,c2) => Char.chr((Char.ord c1) div (Char.ord c2)))),
+       ("divByte",genericOp_bb_b (op div )),
 
        ("modInt",genericOp_ii_i (op mod )),
        ("modWord",genericOp_ww_w (op mod )),
-       ("modByte",genericOp_cc_c (fn (c1,c2) => Char.chr((Char.ord c1) mod (Char.ord c2)))),
+       ("modByte",genericOp_bb_b (op mod)),
 
        ("quotInt",genericOp_ii_i (Int32.quot)),
        ("remInt",genericOp_ii_i (Int32.rem)),
@@ -372,33 +405,33 @@ structure PrimApplyOptimizer = struct
        ("absInt",genericOp_i_i abs),
        ("absReal",genericOp_r_r abs),
 
-       ("ltInt",genericOp2_ii_b (op < )),
-       ("ltWord",genericOp2_ww_b (op < )),
-       ("ltReal",genericOp2_rr_b (op < )),
-       ("ltByte",genericOp2_cc_b (op < )),
-       ("ltChar",genericOp2_cc_b (op < )),
-       ("ltString",genericOp2_ss_b (op < )),
+       ("ltInt",genericOp2_ii_l (op < )),
+       ("ltWord",genericOp2_ww_l (op < )),
+       ("ltReal",genericOp2_rr_l (op < )),
+       ("ltByte",genericOp2_bb_l (op < )),
+       ("ltChar",genericOp2_cc_l (op < )),
+       ("ltString",genericOp2_ss_l (op < )),
 
-       ("gtInt",genericOp2_ii_b (op > )),
-       ("gtWord",genericOp2_ww_b (op > )),
-       ("gtReal",genericOp2_rr_b (op > )),
-       ("gtByte",genericOp2_cc_b (op > )),
-       ("gtChar",genericOp2_cc_b (op > )),
-       ("gtString",genericOp2_ss_b (op > )),
+       ("gtInt",genericOp2_ii_l (op > )),
+       ("gtWord",genericOp2_ww_l (op > )),
+       ("gtReal",genericOp2_rr_l (op > )),
+       ("gtByte",genericOp2_bb_l (op > )),
+       ("gtChar",genericOp2_cc_l (op > )),
+       ("gtString",genericOp2_ss_l (op > )),
 
-       ("lteqInt",genericOp2_ii_b (op <= )),
-       ("lteqWord",genericOp2_ww_b (op <= )),
-       ("lteqReal",genericOp2_rr_b (op <= )),
-       ("lteqByte",genericOp2_cc_b (op <= )),
-       ("lteqChar",genericOp2_cc_b (op <= )),
-       ("lteqString",genericOp2_ss_b (op <= )),
+       ("lteqInt",genericOp2_ii_l (op <= )),
+       ("lteqWord",genericOp2_ww_l (op <= )),
+       ("lteqReal",genericOp2_rr_l (op <= )),
+       ("lteqByte",genericOp2_bb_l (op <= )),
+       ("lteqChar",genericOp2_cc_l (op <= )),
+       ("lteqString",genericOp2_ss_l (op <= )),
 
-       ("gteqInt",genericOp2_ii_b (op >= )),
-       ("gteqWord",genericOp2_ww_b (op >= )),
-       ("gteqReal",genericOp2_rr_b (op >= )),
-       ("gteqByte",genericOp2_cc_b (op >= )),
-       ("gteqChar",genericOp2_cc_b (op >= )),
-       ("gteqString",genericOp2_ss_b (op >= )),
+       ("gteqInt",genericOp2_ii_l (op >= )),
+       ("gteqWord",genericOp2_ww_l (op >= )),
+       ("gteqReal",genericOp2_rr_l (op >= )),
+       ("gteqByte",genericOp2_bb_l (op >= )),
+       ("gteqChar",genericOp2_cc_l (op >= )),
+       ("gteqString",genericOp2_ss_l (op >= )),
 
        ("Word_toIntX",genericOp_w_i (Word32.toLargeIntX)),
        ("Word_fromInt",genericOp_i_w (Word32.fromLargeInt)),

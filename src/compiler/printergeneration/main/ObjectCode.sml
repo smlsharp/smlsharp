@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  *  This structure defines constants and operators on terms in the language
  * which is the target of compilation.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ObjectCode.sml,v 1.9 2006/02/18 04:59:26 ohori Exp $
+ * @version $Id: ObjectCode.sml,v 1.10 2006/02/28 16:11:03 kiyoshiy Exp $
  *)
 structure ObjectCode =
 struct

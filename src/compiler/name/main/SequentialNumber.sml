@@ -1,9 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
  * sequence number generator.
+ *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SequentialNumber.sml,v 1.3 2006/02/18 04:59:24 ohori Exp $
+ * @version $Id: SequentialNumber.sml,v 1.4 2006/02/27 06:26:14 bochao Exp $
  *)
 structure SequentialNumber
   : sig

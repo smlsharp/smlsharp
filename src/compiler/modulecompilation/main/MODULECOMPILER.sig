@@ -1,27 +1,23 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
  * Module compiler flattens structure.
- *
+ * @copyright (c) 2006, Tohoku University. 
  * @author Liu Bochao
- * @version $Id: MODULECOMPILER.sig,v 1.10 2006/02/18 11:06:33 duchuu Exp $
+ * @version $Id: MODULECOMPILER.sig,v 1.12 2006/03/02 12:46:47 bochao Exp $
  *)
 signature MODULECOMPILER =
 sig
 
   (***************************************************************************)
-  type moduleEnv
-  type deltaModuleEnv 
-  (***************************************************************************)
-  val extendModuleEnvWithDeltaModuleEnv :
-      {deltaModuleEnv : deltaModuleEnv,
-       moduleEnv : moduleEnv} -> moduleEnv
-
-  val modulecompile :
-      moduleEnv ->
+  (* interactive mode *)
+  val moduleCompile :
+      StaticModuleEnv.moduleEnv ->
       TypedCalc.tptopdecl list -> 
-      (deltaModuleEnv * TypedFlatCalc.tfpdecl list)
+      (StaticModuleEnv.deltaModuleEnv * TypedFlatCalc.tfpdecl list)
 
+  val compileLinkageUnit :
+      TypedCalc.tptopdecl list -> 
+      (StaticModuleEnv.staticModuleEnv * TypedFlatCalc.tfpdecl list)
   (***************************************************************************)
 
 end

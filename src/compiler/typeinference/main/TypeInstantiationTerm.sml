@@ -1,6 +1,5 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
  *)
 structure TypeInstantiationTerm =
@@ -55,113 +54,7 @@ in
      in
        boundEnv
      end
-(*                             
- fun generateInstTermFunOnStructure (sigTy, strTy) =
-     let
-       val instTermFun = 
-           let
-             val instSigTy = 
-                 if TU.monoTy sigTy then sigTy 
-                 else TU.freshRigidInstTy sigTy
-           in   
-             fn tpvar => 
-              (
-               let
-                 val (instStrTy,tpexp) = TCU.freshInst(strTy,tpvar)
-                 (* unify error captured by signature check *)
-                 val _ = U.unify [(instStrTy,instSigTy)]
-                 val boundEnv = 
-                     (* after the imperative operation
-                      * instSigTy = instStrTy 
-                      *)
-                     generalizeRigidTyvarBoundEnv instStrTy
-               in 
-                 if IEnv.isEmpty boundEnv then
-                   tpexp
-                 else
-                   TC.TPPOLY {btvEnv=boundEnv, expTyWithoutTAbs=instSigTy, exp=tpexp, loc=TCU.getLocOfExp tpvar}
-               end)
-              handle U.Unify => tpvar
-           end
-     in
-       instTermFun
-     end
-*)
-(* fun generateInstVarEnvOnStructure (actualVarEnv, constrainedVarEnv) =
-     SEnv.foldli (fn (varName,idstate,instVarEnv) =>
-                     case idstate of
-                       T.VARID({name, strpath, ty = sigTy}) =>
-                       ( 
-                        case SEnv.find(actualVarEnv,varName) of
-                          SOME(idstate as T.VARID({name, strpath, ty = strTy})) =>
-                          (
-                           let
-                             val instTerm = 
-                                 generateInstTermFunOnStructure (sigTy,strTy) 
-                           in
-                             SEnv.insert(instVarEnv,varName, (instTerm,idstate))
-                           end
-                           )
-                        | SOME(idstate as T.CONID({ty = strTy,...})) =>
-                          (
-                           let
-                             val instTerm =
-                                 generateInstTermFunOnStructure (sigTy,strTy) 
-                           in
-                             SEnv.insert(instVarEnv,varName, (instTerm,idstate))
-                           end
-                           ) 
-                        | _ => instVarEnv
-                       )
-                     | T.CONID({ty = sigTy,...}) =>
-                       (
-                        case SEnv.find(actualVarEnv,varName) of
-                          SOME(idstate as T.CONID{ty = strTy,...}) =>
-                            let
-                              val instTerm = 
-                                  generateInstTermFunOnStructure (sigTy,strTy) 
-                            in
-                              SEnv.insert(instVarEnv,varName, (instTerm,idstate))
-                            end
-                        | _ => instVarEnv
-                       )
-                     | _ => instVarEnv
-                  )
-                 SEnv.empty
-                 constrainedVarEnv
-                 
- fun generateInstStrEnvOnStructure (actualStrEnv, constrainedStrEnv) =
-     SEnv.foldli (fn (strName, T.STRUCTURE{ env = (_, cVE, cSE),...}, instStrEnv) =>
-                     case SEnv.find(actualStrEnv,strName) of
-                       SOME(T.STRUCTURE{ env = (_, aVE, aSE),...}) =>
-                       let
-                         val subInstVarEnv = 
-                             generateInstVarEnvOnStructure(aVE, cVE)
-                         val subInstStrEnv = 
-                             generateInstStrEnvOnStructure(aSE, cSE)
-                       in
-                         SEnv.insert(instStrEnv,
-                                     strName,
-                                     (TConT.InstStr(subInstVarEnv,subInstStrEnv)))
-                       end
-                     | NONE => 
-                       (* error case captured by signature check *)
-                       instStrEnv
-                         )
-                 SEnv.empty
-                 constrainedStrEnv
 
- fun generateInstEnvOnStructure (actualEnv , constrainedEnv) =
-     let
-       val (_, aVarEnv, aStrEnv) = actualEnv
-       val (_, cVarEnv, cStrEnv) = constrainedEnv
-       val instVarEnv = generateInstVarEnvOnStructure (aVarEnv, cVarEnv)
-       val instStrEnv = generateInstStrEnvOnStructure (aStrEnv, cStrEnv)
-     in
-       (instVarEnv, instStrEnv)
-     end
-*)
-  (************ refractoring ******************)
   (* strId, strName, strPath is a relative path
    * representing the long structure identifier 
    * appearing in "open" declaration

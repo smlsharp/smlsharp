@@ -1,11 +1,10 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * type structures.
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: Types.ppg,v 1.6 2006/02/18 04:59:36 ohori Exp $
+ * @version $Id: Types.ppg,v 1.8 2006/03/02 12:54:07 bochao Exp $
  *)
 structure Types : TYPES =
 struct
@@ -191,9 +190,32 @@ struct
        *)
       CHAR of char
 
-
   datatype path = datatype Path.path
-         
+
+  (*% *)
+  datatype sizeTagExp =
+           (*%
+            * @format(int) "CONST" int
+            *)
+           ST_CONST of int
+         | (* id is tyCon Id *) 
+           (*%
+            * @format(id) "VAR" id
+            *)
+           ST_VAR of id
+         | (*%
+            * @format(id) "BDVAR" id
+            *)
+           ST_BDVAR of int
+         | (*%
+            * @format({stfun, args:arg args}) "APP(fun=" stfun ",args=" args(arg)()
+            *)
+           ST_APP of {stfun: sizeTagExp, args: sizeTagExp list}
+         | (*%
+            * @format({args:arg args, body}) "FUN" + args(arg)() + "=>" + body
+            *)
+           ST_FUN of {args : int list, body : sizeTagExp}
+
 (* The following two are unility formatters needed to define 
    genericSmapFormatter and smapFormatter in TyFormatter
 *)
@@ -381,6 +403,11 @@ struct
        * @format(specty)  specty()(btvEnv) 
        *)
       SPECty of ty
+   | (*% 
+       * @format(abstractty)  "ABSTRACTty"
+       *)
+      (* only used under separate compilation *)
+      ABSTRACTty 
 
   and idState =
       (*%
@@ -432,7 +459,11 @@ struct
        * @format(strPathInfo) strPathInfo()(btvEnv)
        *)
       STRUCTURE of strPathInfo
-
+  and strSizeTagBindInfo = 
+      (*%
+       * @format(strPathInfo) strPathInfo()(btvEnv)
+       *)
+      STRSIZETAG of strPathSizeTagInfo
   withtype tvKind =
       (*% 
        * @format({id, recKind, eqKind, tyvarName:name opt:optWithDefault}) 
@@ -476,6 +507,15 @@ struct
             smap(tyCon()(btvEnv))("=", +1, "typebinds" + 1, "")
         *)
        tyBindInfo SEnv.map
+
+  and tyConSizeTagEnv = 
+       (*%
+        * @format(tyConSizeTag smap:smapWithEnclosure) 
+                 smap(tyConSizeTag)("=", +1, "typebinds" + 1, "")
+        * @format:tyConSizeTag({tyBindInfo, sizeInfo, tagInfo}) 
+        *   "tyBindInfo = " + tyBindInfo()(btvEnv) +1 "," +1 "sizeInfo =" + sizeInfo
+        *)
+      {tyBindInfo : tyBindInfo, sizeInfo : sizeTagExp, tagInfo : sizeTagExp} SEnv.map
 
   and tyCon =
       (*% 
@@ -582,6 +622,11 @@ struct
        * @format(strEnv smap:smap) smap(strEnv()(btvEnv))(":",1) "\n"
        *)
       strBindInfo SEnv.map
+  and strSizeTagEnv =
+            (*%
+       * @format(strEnv smap:smap) smap(strEnv()(btvEnv))(":",1) "\n"
+       *)
+      strSizeTagBindInfo SEnv.map
   and Env = 
       (*%
        * @format(tyConEnv * varEnv * strEnv)
@@ -590,6 +635,15 @@ struct
        * "STRENV:" strEnv()(btvEnv)
        *)
        tyConEnv * varEnv * strEnv
+
+  and SizeTagEnv = 
+      (*%
+       * @format(tyConEnv * varEnv * strEnv)
+       * "TCENV:" tyConEnv()(btvEnv) +1
+       * "VARENV:" +1 varEnv()(btvEnv) +1
+       * "STRENV:" strEnv()(btvEnv)
+       *)
+       tyConSizeTagEnv * varEnv * strSizeTagEnv
 
   and strInfo =
        (*%
@@ -602,7 +656,11 @@ struct
         * @format({id, name, strpath, env}) strpath:format_path name +1 env()(btvEnv)
         *)
        {id : id, name : string, strpath : path, env : Env}
-
+  and strPathSizeTagInfo =
+       (*%
+        * @format({id, name, strpath, env}) strpath:format_path name +1 env()(btvEnv)
+        *)
+       {id : id, name : string, strpath : path, env : SizeTagEnv}
   and foreignFunPathInfo = 
        (*%
         * @format({name, strpath, ty, argTys}) name
@@ -697,7 +755,18 @@ struct
        bool SEnv.map 
   end
 
-  type tyConIdSet = ID.Set.set
+  val format_IDSet =  SmlppgUtil.formatIDSet
+                          ([FE.Term(1, ",")],
+                           [FE.Term(1, "(")],
+                           [FE.Term(1, ")")]) 
+  (*%
+   * @formatter(ID.Set.set) format_IDSet
+   *)
+  type tyConIdSet = 
+       (*%
+        * @format(set) set
+        *)
+       ID.Set.set
 
   (*%
    * @params(btvEnv)

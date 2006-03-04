@@ -2,7 +2,6 @@ Group is
         smlnj-lib.cm
 
         ../../../configuration/sources.cm
-        ../../../lib/sources.cm
 
         ../../systemdef/sources.cm
         ../../session/sources.cm (* use ChannelTypes *)

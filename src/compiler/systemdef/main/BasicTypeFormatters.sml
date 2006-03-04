@@ -1,7 +1,6 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * SMLFormat formatters for types declared in the BasicTypes structure.
+ * @copyright (c) 2006, Tohoku University.
  *)
 structure BasicTypeFormatters =
 struct

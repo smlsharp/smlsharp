@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @author $Id: VariableOptimizer.sml,v 1.4 2006/02/18 16:04:06 duchuu Exp $
+ * @author $Id: VariableOptimizer.sml,v 1.6 2006/02/28 17:05:50 duchuu Exp $
  *)
 
 structure VariableOptimizer = struct
@@ -153,5 +152,10 @@ structure VariableOptimizer = struct
   fun lookup (varSet,varInfo) =
       case find(varSet,varInfo) of
         SOME varInfo' => varInfo'
+      | _ => raise Control.Bug "variable not found"
+
+  fun lookupID ({varMap,...} : varSet) id =
+      case VMap.find(varMap,id) of
+        SOME {id = id',...} => id'
       | _ => raise Control.Bug "variable not found"
 end

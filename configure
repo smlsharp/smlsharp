@@ -3341,9 +3341,8 @@ echo "${ECHO_T}$SMLNJ_VERSION" >&6
 case "$SMLNJ_VERSION" in
 110.0.[789]) ;;
 *)
-  { { echo "$as_me:$LINENO: error: This version of SML/NJ is not supported." >&5
-echo "$as_me: error: This version of SML/NJ is not supported." >&2;}
-   { (exit 1); exit 1; }; }
+  { echo "$as_me:$LINENO: WARNING: This version of SML/NJ is not supported." >&5
+echo "$as_me: WARNING: This version of SML/NJ is not supported." >&2;}
   ;;
 esac
 
@@ -3543,7 +3542,14 @@ echo "${ECHO_T}$SMLUNITDIR" >&6
 if test "x$SMLFORMATDIR" = "x$PWD/$srcdir/SMLFormat"; then
   if test \! -f "$SMLFORMATDIR/bin/smlformat"; then
     echo "*** SMLFormat is not configured ***"
-    (cd "$SMLFORMATDIR" && ./configure && make)
+    (cd "$SMLFORMATDIR" && ./configure && make SML_CMD="$SML")
+  fi
+fi
+
+if test "x$SMLDOCDIR" = "x$PWD/$srcdir/SMLDoc"; then
+  if test \! -f "$SMLDOCDIR/bin/smldoc"; then
+    echo "*** SMLDoc is not configured ***"
+    (cd "$SMLDOCDIR" && ./configure && make SML_CMD="$SML")
   fi
 fi
 
@@ -11946,7 +11952,7 @@ if test "${enable_debug+set}" = set; then
 
 fi;
 if test "x$enable_debug" = "xyes"; then
-  DEFS="$DEFS -DIML_DEBUG"
+  DEFS="$DEFS -DIML_DEBUG -DIML_ENABLE_EXECUTION_MONITORING"
   # remove default -O options.
   if test "x$ac_env_CFLAGS_value" = "x"; then
     CFLAGS=`echo "$CFLAGS" | sed 's,-O[0-9]*,,g'`
@@ -11996,7 +12002,7 @@ fi
 
 # finish.
 
-                                                                                                                                                                                                                                      ac_config_files="$ac_config_files commonrule mksmlheap mksmlrun mksmlpath Makefile stublibs/Makefile src/Makefile src/configuration/Makefile src/primitives/Makefile src/primitives/generator/main/Makefile src/primitives/runtime/main/Makefile src/primitives/compiler/main/Makefile src/instructions/Makefile src/instructions/generator/Makefile src/instructions/runtime/main/Makefile src/instructions/compiler/main/Makefile src/compiler/Makefile src/lib/Makefile src/runtime/Makefile src/runtime/runtime-core/main/Makefile src/runtime/runtime-impl/main/Makefile src/runtime/byterun/main/Makefile doc/Makefile"
+                                                                                                                                                                                                                                                ac_config_files="$ac_config_files commonrule mksmlheap mksmlrun mksmlpath Makefile stublibs/Makefile src/Makefile src/configuration/Makefile src/primitives/Makefile src/primitives/generator/main/Makefile src/primitives/runtime/main/Makefile src/primitives/compiler/main/Makefile src/instructions/Makefile src/instructions/generator/Makefile src/instructions/runtime/main/Makefile src/instructions/compiler/main/Makefile src/compiler/Makefile src/lib/Makefile src/lib/Script/Makefile src/runtime/Makefile src/runtime/runtime-core/main/Makefile src/runtime/runtime-impl/main/Makefile src/runtime/byterun/main/Makefile doc/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -12541,6 +12547,7 @@ do
   "src/instructions/compiler/main/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/instructions/compiler/main/Makefile" ;;
   "src/compiler/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/compiler/Makefile" ;;
   "src/lib/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/Makefile" ;;
+  "src/lib/Script/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/Script/Makefile" ;;
   "src/runtime/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/runtime/Makefile" ;;
   "src/runtime/runtime-core/main/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-core/main/Makefile" ;;
   "src/runtime/runtime-impl/main/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-impl/main/Makefile" ;;

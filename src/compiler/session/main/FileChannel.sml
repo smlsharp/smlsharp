@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * implementation of channel on a file.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FileChannel.sml,v 1.3 2006/02/18 04:59:28 ohori Exp $
+ * @version $Id: FileChannel.sml,v 1.4 2006/02/28 16:11:04 kiyoshiy Exp $
  *)
 structure FileChannel =
 struct

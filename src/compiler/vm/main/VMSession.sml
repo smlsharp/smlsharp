@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a session implementation which communicates with the VM simulator.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: VMSession.sml,v 1.12 2006/02/18 04:59:41 ohori Exp $
+ * @version $Id: VMSession.sml,v 1.13 2006/02/28 16:11:14 kiyoshiy Exp $
  *)
 structure VMSession : SESSION =
 struct

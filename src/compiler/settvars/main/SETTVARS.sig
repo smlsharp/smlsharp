@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
- * resolve the scope of user declaraed type variables
+ * resolve the scope of user declaraed type variables.
  * 
+ * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: SETTVARS.sig,v 1.2 2006/02/18 04:59:28 ohori Exp $
+ * @version $Id: SETTVARS.sig,v 1.3 2006/02/28 16:11:05 kiyoshiy Exp $
  *)
 signature SETTVARS = 
 sig

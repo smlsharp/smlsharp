@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * a simple interpreter of file path string.
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PathResolver.sml,v 1.5 2006/02/18 04:59:30 ohori Exp $
+ * @version $Id: PathResolver.sml,v 1.7 2006/02/28 16:11:06 kiyoshiy Exp $
  *)
 structure PathResolver : PATH_RESOLVER =
 struct
@@ -62,7 +61,7 @@ struct
       | findFileInPathList baseDir path (loadPath :: loadPaths) =
         case 
           PU.makeAbsolute
-              baseDir (OS.Path.joinDirFile {dir = loadPath, file = path})
+              baseDir (PU.joinDirFile {dir = loadPath, file = path})
          of
           SOME absPath => SOME absPath
         | NONE => findFileInPathList baseDir path loadPaths

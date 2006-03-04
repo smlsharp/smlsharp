@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RawMemory.sml,v 1.8 2006/02/18 04:59:40 ohori Exp $
+ * @version $Id: RawMemory.sml,v 1.9 2006/02/28 16:11:13 kiyoshiy Exp $
  *)
 structure RawMemory : RAW_MEMORY =
 struct

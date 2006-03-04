@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # A script for running through test
-# $Id: runtest.sh,v 1.14 2005/06/15 04:27:12 kiyoshiy Exp $
+# $Id: runtest.sh,v 1.15 2006/02/24 14:14:27 kiyoshiy Exp $
 #
 # Example:
 #   ./runtest.sh -html -usebasis -d D:/tmp/imltest coresml
@@ -23,7 +23,7 @@ TESTSDIR=../tests/
 PRINTER=HTML
 RUNTIME=ML
 # use default prelude (non Basis)
-PRELUDE=../../src/lib/preludes/preludes.sml
+PRELUDE=../../src/lib/minimum.sml
 
 while true
 do
@@ -41,7 +41,7 @@ do
 	RUNTIME="ML"
 	shift;;
     "-usebasis")
-	PRELUDE=../../src/lib/basis/main/basis.sml
+	PRELUDE=../../src/lib/basis.sml
 	shift;;
     *)
 	break;;

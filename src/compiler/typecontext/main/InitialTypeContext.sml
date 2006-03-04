@@ -1,9 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
  *
+ * @copyright (c) 2006, Tohoku University.
  * @author OHORI Atsushi
  * @author YAMATODANI Kiyoshi
- * @version $Id: InitialTypeContext.sml,v 1.35 2006/02/18 04:59:31 ohori Exp $
+ * @version $Id: InitialTypeContext.sml,v 1.38 2006/03/02 12:51:54 bochao Exp $
  *)
 structure InitialTypeContext =
 struct
@@ -221,7 +221,7 @@ in
           instances = [(SE.intty,"int", "addInt"),
                       (SE.realty,"real", "addReal"),
                       (SE.wordty,"word", "addWord"),
-                      (SE.wordty,"byte", "addByte")]
+                      (SE.bytety,"byte", "addByte")]
         },
         {
           name = "-",   
@@ -229,7 +229,7 @@ in
           instances = [(SE.intty,"int", "subInt"),
                        (SE.realty,"real", "subReal"),
                        (SE.wordty,"word", "subWord"),
-                       (SE.realty,"byte", "subByte")]
+                       (SE.bytety,"byte", "subByte")]
         },
         {
           name = "*",   
@@ -237,21 +237,21 @@ in
           instances = [(SE.intty, "int", "mulInt"),
                        (SE.realty, "real", "mulReal"),
                        (SE.wordty, "word", "mulWord"),
-                       (SE.wordty, "byte", "mulByte")]
+                       (SE.bytety, "byte", "mulByte")]
         },
         {
           name = "div", 
           ty = "['a#{int,word,byte}.'a * 'a -> 'a]",
           instances = [(SE.intty, "int", "divInt"),
                        (SE.wordty, "word", "divWord"),
-                       (SE.wordty, "byte", "divByte")]
+                       (SE.bytety, "byte", "divByte")]
         },
         {
           name = "mod", 
           ty = "['a#{int,word,byte}.'a * 'a -> 'a]",
           instances = [(SE.intty, "int", "modInt"),
                        (SE.wordty, "word", "modWord"),
-                       (SE.wordty, "byte", "modByte")]
+                       (SE.bytety, "byte", "modByte")]
         },
         {
           name = "~",   
@@ -271,7 +271,7 @@ in
           instances = [(SE.intty, "int", "ltInt"),
                        (SE.realty, "real", "ltReal"),
                        (SE.wordty, "word", "ltWord"),
-                       (SE.wordty, "byte", "ltByte"),
+                       (SE.bytety, "byte", "ltByte"),
                        (SE.charty, "char", "ltChar"),
                        (SE.stringty, "string", "ltString")]
         },
@@ -281,7 +281,7 @@ in
           instances = [(SE.intty, "int", "gtInt"),
                        (SE.realty, "real", "gtReal"),
                        (SE.wordty, "word", "gtWord"),
-                       (SE.wordty, "byte", "gtByte"),
+                       (SE.bytety, "byte", "gtByte"),
                        (SE.charty, "char", "gtChar"),
                        (SE.stringty, "string", "gtString")]
         },
@@ -291,7 +291,7 @@ in
           instances = [(SE.intty, "int",  "lteqInt"),
                        (SE.realty, "real", "lteqReal"),
                        (SE.wordty, "word", "lteqWord"),
-                       (SE.wordty, "byte", "lteqByte"),
+                       (SE.bytety, "byte", "lteqByte"),
                        (SE.charty, "char", "lteqChar"),
                        (SE.stringty, "string", "lteqString")]
         },
@@ -301,7 +301,7 @@ in
           instances = [(SE.intty, "int",  "gteqInt"),
                        (SE.realty, "real", "gteqReal"),
                        (SE.wordty, "word",  "gteqWord"),
-                       (SE.wordty, "byte",  "gteqByte"),
+                       (SE.bytety, "byte",  "gteqByte"),
                        (SE.charty, "char",  "gteqChar"),
                        (SE.stringty, "string", "gteqString")]
         }
@@ -619,5 +619,18 @@ in
         }
       end
 
+  fun projectTypeContextInTopTypeContext (TopTypeContext as {strEnv, sigEnv, funEnv}) =
+      let
+          val (tyConEnv, varEnv, strEnv) =
+              case SEnv.find(strEnv, P.topStrName) of
+                  SOME (TY.STRUCTURE {env,...}) => env
+                | NONE => raise Control.Bug ("top type context contains no"^ P.topStrName)
+      in
+          {funEnv = funEnv,
+           tyConEnv = tyConEnv,
+           varEnv = varEnv,
+           strEnv = strEnv,
+           sigEnv = sigEnv}
+      end
 end
 end

@@ -1,0 +1,7 @@
+../tests/bugs/tests/issue238.1.sml:2.28-2.29 Error:
+  unbound variable or constructor: <<
+../tests/bugs/tests/issue238.1.sml:2.13-2.31 Error:
+  operator and operand don't agree
+  operator domain: 'F  -> int  -> X1
+  operand: int
+

@@ -1,0 +1,158 @@
+(**
+ * Top objects
+ *
+ * @copyright (c) 2006, Tohoku University.
+ * @author Liu Bochao
+ * @version $Id: TopObject.ppg,v 1.1 2006/03/02 12:47:29 bochao Exp $
+ *)
+structure TopObject =
+struct
+   local
+        structure TFC = TypedFlatCalc
+        structure T = Types 
+        structure ITC = InitialTypeContext
+        structure SE = StaticEnv
+        structure BT = BasicTypes
+   in
+
+        structure BF = SMLFormat.BasicFormatters
+        
+        type  pageKind = int
+
+        val BOXED_PAGE_KIND = 0
+        val ATOM_PAGE_KIND = 1 
+        val DOUBLE_PAGE_KIND = 2
+        val ABSTRACT_PAGE_KIND = 3
+        
+        (*% 
+         * @formatter(BT.UInt32) BasicTypeFormatters.format_UInt32
+         *)
+        type pageArrayIndex = BT.UInt32
+        type offset = int
+
+        fun format_pageKind pageKind =
+            case pageKind of
+                0 =>
+                let
+                    val string = "BOXED_PAGE_KIND"
+                in
+                    [SMLFormat.FormatExpression.Term(size string, string)]
+                end
+              | 1 =>
+                let
+                    val string = "ATOM_PAGE_KIND"
+                in
+                    [SMLFormat.FormatExpression.Term(size string, string)]
+                end
+              | 2 =>
+                let
+                    val string = "DOUBLE_PAGE_KIND"
+                in
+                    [SMLFormat.FormatExpression.Term(size string, string)]
+                end
+              | 3 => 
+                let
+                    val string = "ABSTRACT_PAGE_KIND"
+                in
+                    [SMLFormat.FormatExpression.Term(size string, string)]
+                end
+              | _ => raise Control.Bug "illegal pageType"
+        (*%
+         * @formatter(pageKind) format_pageKind
+         * @formatter(pageArrayIndex) BasicTypeFormatters.format_UInt32
+         * @formatter(offset) BF.format_int
+         *)
+        type globalIndex = 
+             (*%
+              * @format(pageKind * index * offset)
+              * "(" pageKind "," index "," offset ")"
+              *)
+             pageKind * pageArrayIndex * offset
+          
+        (**** IndexMap ********)
+        fun getPageSize () =
+            !Control.pageSizeOfGlobalArray
+
+        type indexMap = 
+             (* a map from unique id to its index *)
+             (
+              string *     (* displayName for debugging *)
+              globalIndex
+             ) ID.Map.map 
+
+
+        (* from PAGE_KIND to freeEntry of that PAGE_KIND *)        
+        (*%
+         * @formatter(imap) SmlppgUtil.formatImap
+         * @formatter(pageArrayIndex) BasicTypeFormatters.format_UInt32
+         * @formatter(offset) BF.format_int
+         *)
+        type freeEntryPointer = 
+             (*%
+              * @format(freeEntry imap:imap) imap(freeEntry)
+              * @format:freeEntry(index * offset) 
+              *    "(" index "," offset ")"
+              *)
+             (pageArrayIndex * offset) IEnv.map
+
+        val emptyIndexMap = ID.Map.empty : indexMap
+        val initialIndexMap = emptyIndexMap 
+
+        val TOP_BOXED_PREFIX = "$TOPBOXEDARRAY$"
+        val TOP_ATOM_PREFIX = "$TOPATOMARRAY$"
+        val TOP_DOUBLE_PREFIX = "$TOPDOUBLEARRAY$"
+        val TOP_ABSTRACT_PREFIX = "$TOPABSTRACTARRAY$"
+
+
+        val initialFreeEntryPointer = 
+            IEnv.insert
+            (
+             IEnv.insert
+               (
+                (IEnv.insert
+                   (
+                    (IEnv.singleton (BOXED_PAGE_KIND,(0w0:BT.UInt32, 0))),
+                    ATOM_PAGE_KIND,(0w1:BT.UInt32,0)
+                                   )
+                   ),
+                DOUBLE_PAGE_KIND,(0w2:BT.UInt32,0)
+               ),
+             ABSTRACT_PAGE_KIND, (0w3:BT.UInt32,0)
+            )
+                
+        (* shared by 3 top arrays *)
+        val initialFreeGlobalArrayIndex = 0w3 : BT.UInt32 
+
+        (*******utilities*********)
+        fun convertTyToPageKind ty = 
+            if !Control.doSeparateCompilation then
+              ABSTRACT_PAGE_KIND
+            else
+              case TypesUtils.compactTy ty of
+                T.BOXEDty => BOXED_PAGE_KIND
+              | T.ATOMty => ATOM_PAGE_KIND
+              | T.DOUBLEty => DOUBLE_PAGE_KIND
+              | _ => raise Control.Bug "invalid Page Type"
+                         
+        fun pageKindToType pageKind =
+            case pageKind of
+              0 => T.BOXEDty
+            | 1 => T.ATOMty
+            | 2 => T.DOUBLEty
+            | 3 => T.ABSTRACTty
+            | _ => raise Control.Bug "invalid page type"
+                         
+
+        fun getPageArrayIndex (pageKind, pageArrayIndex, offset) = pageArrayIndex
+        fun getOffset (pageKind,pageNo,offset) = offset
+        fun getPageKind (pageKind,pageNo,offset) = pageKind
+
+        fun mergeIndexMap { 
+                           newIndexMap = newIndexMap,                                
+                           oldIndexMap = oldIndexMap
+                          }
+            = ID.Map.unionWith #1 (newIndexMap,oldIndexMap)
+
+   end            
+end
+

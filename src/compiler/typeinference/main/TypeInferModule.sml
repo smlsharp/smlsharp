@@ -1,8 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TypeInferModule.sml,v 1.51 2006/02/18 04:59:33 ohori Exp $
+ * @version $Id: TypeInferModule.sml,v 1.54 2006/03/02 12:53:26 bochao Exp $
  *)
 structure TypeInferModule =
 struct
@@ -543,8 +542,8 @@ in
                        NONE => phi
                      | SOME(tyBindInfo') => 
                        let
-                         val idFrom = TCU.substTyConIdInId phi (SU.tyConIdInTyBindInfo tyBindInfo)
-                         val idTo = TCU.substTyConIdInId phi (SU.tyConIdInTyBindInfo tyBindInfo')
+                         val idFrom = TCU.substTyConIdInId phi (TIU.tyConIdInTyBindInfo tyBindInfo)
+                         val idTo = TCU.substTyConIdInId phi (TIU.tyConIdInTyBindInfo tyBindInfo')
                        in
                          (* ToDo : explanation about this comparation is
                           * necessary. *)
@@ -723,7 +722,7 @@ in
           val (sigIdPath, context : TC.context, sigspec) = 
                 typeinfSigexp cc ptsigexp
           val E = TC.getStructureEnvFromContext context
-          val T = SU.tyConIdSetEnv fromTyConId E
+          val T = TIU.tyConIdSetEnv fromTyConId E
         in
           (sigIdPath,(T, E), sigspec)
         end
@@ -791,32 +790,7 @@ in
               val strictEnv = 
                     ( 
                      SigCheck.transparentSigMatch (Env, sigma)
-                     handle exn as E.ArityMismatchInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.EqErrorInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.RedunantConstructorInSignatureInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.RedunantConstructorInStructureInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.TyConMisMatchInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.SharingTypeMismatchInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.IdNotFoundInSigMatch _ => 
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.InstanceCheckInSigMatch _ => 
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.DataConRequiredInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.DatatypeContainUnboundType _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.unboundStructureInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.unboundVarInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
-                          | exn as E.unboundTyconInSigMatch _ =>
-                            (E.enqueueError(loc, exn); SE.emptyE)
+                     handle exn => (SU.handleException (exn,loc); SE.emptyE)
                     )
               val strictEnv = updateStrpathInEnv (sigIdPath, #strLevel cc, strictEnv)
               val context2 = TC.injectEnvToContext strictEnv
@@ -861,33 +835,7 @@ in
               val (abstractEnv, enrichedEnv) = 
                   (
                    SigCheck.opaqueSigMatch (Env, sigma)
-                   handle exn as E.ArityMismatchInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.EqErrorInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.RedunantConstructorInSignatureInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.RedunantConstructorInStructureInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.TyConMisMatchInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.SharingTypeMismatchInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.IdNotFoundInSigMatch _ => 
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.InstanceCheckInSigMatch _ => 
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.DataConRequiredInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.DatatypeContainUnboundType _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.unboundStructureInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.unboundVarInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                        | exn as E.unboundTyconInSigMatch _ =>
-                          (E.enqueueError(loc, exn); (SE.emptyE,SE.emptyE))
-                  )
+                   handle exn => (SU.handleException (exn,loc);(SE.emptyE,SE.emptyE)))
               val abstractEnv  = 
                   updateStrpathInEnv (sigIdPath, #strLevel cc, abstractEnv)
               val context2 = TC.injectEnvToContext abstractEnv
@@ -973,33 +921,7 @@ in
                   in
                     ( 
                      SigCheck.functorSigMatch(Env, functorSig)
-                     handle exn as E.ArityMismatchInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.EqErrorInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.RedunantConstructorInSignatureInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.RedunantConstructorInStructureInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.TyConMisMatchInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.SharingTypeMismatchInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.IdNotFoundInSigMatch _ => 
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.InstanceCheckInSigMatch _ => 
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.DataConRequiredInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.DatatypeContainUnboundType _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.unboundStructureInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.unboundVarInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                          | exn as E.unboundTyconInSigMatch _ =>
-                            (E.enqueueError(loc, exn); defaultErrorValue)
-                            )
+                     handle exn => (SU.handleException (exn,loc); defaultErrorValue))
                   end
               val context2 = TC.injectEnvToContext resEnv
               (***** below deal with type instantiation environment *****)
@@ -1207,7 +1129,7 @@ in
               typeinfStrexp newcc3 newptstrexp
           val unConstrainedEnv = TC.getStructureEnvFromContext unConstrainedContext
           val E' = TC.getStructureEnvFromContext context1
-          val T' = SU.tyConIdSetEnv fromTyConId E'
+          val T' = TIU.tyConIdSetEnv fromTyConId E'
           val exnTagSet = SU.exnTagSetEnv fromExnTag E'
           val funBindInfo = 
               {
@@ -1275,10 +1197,61 @@ in
               in
                 (context3, TCC.TPMDECFUN (tpfunbinds, loc) :: tptopbinds)
               end
-        
+            | PT.PTTOPDECIMPORT _ => raise Control.Bug "import occurs at separate compilation"
+            
       in
         (newContext, topbinds)
       end
+
+    fun typeinfPttopdeclList' (cc : TIC.currentContext) pltopdecs =
+        let
+          val fromTyConId = SE.nextTyConId()
+          fun typeInfPttopdecListImpl cc nil =
+              ((TC.emptyImportTypeEnv, TC.emptyExportTypeEnv), nil)
+            | typeInfPttopdecListImpl cc (pltopdec :: rest) =
+              case pltopdec of
+                PT.PTTOPDECIMPORT(ptspec, loc) =>
+                let
+                  val (context1, tpImSpecs) = typeinfSpec cc ptspec
+                  val importTypeEnv1 = TC.contextToTypeEnv context1
+                  val newcc = TIC.extendCurrentContextWithContext (cc, context1)
+                  val ((importTypeEnv2, exportTypeEnv2), tptopbinds) =
+                      typeInfPttopdecListImpl newcc rest
+                  val importTypeEnv3 = TC.extendImportTypeEnvWithImportTypeEnv
+                                         { newImportTypeEnv = importTypeEnv2,
+                                           oldImportTypeEnv = importTypeEnv1}
+                                         handle TC.exDuplicateElem id => 
+                                                (E.enqueueError(loc,
+                                                                E.DuplicateSpecification{id = id});
+                                                 TC.emptyTypeEnv)
+                in
+                  ((importTypeEnv3, exportTypeEnv2),
+                   TCC.TPMDECIMPORT(tpImSpecs, TC.extractEnvFromContext context1, loc) :: tptopbinds)
+                end
+              | _ =>
+                let
+                  val (context1, tptopbinds1) = typeinfPttopdeclList cc [pltopdec]
+                  val exportTypeEnv1 = 
+                      TC.injectContextIntoEmptyExportTypeEnv context1
+                  val newcc = TIC.extendCurrentContextWithContext(cc, context1)
+                  val ((importTypeEnv2, exportTypeEnv2), tptopbinds2) =
+                      typeInfPttopdecListImpl newcc rest
+                  val exportTypeEnv3 = 
+                      TC.extendExportTypeEnvWithExportTypeEnv
+                        { newExportTypeEnv = exportTypeEnv2,
+                          oldExportTypeEnv = exportTypeEnv1}
+                in
+                  ((importTypeEnv2, exportTypeEnv3), tptopbinds1 @ tptopbinds2)
+                end
+          val ((importTypeEnv, exportTypeEnv), tptopbinds) =
+              typeInfPttopdecListImpl cc pltopdecs
+          val staticTypeEnv = 
+              {importTyConIdSet = TIU.tyConIdSetTypeEnv fromTyConId importTypeEnv ,
+               importTypeEnv = importTypeEnv,
+               exportTypeEnv = exportTypeEnv}
+        in
+          (staticTypeEnv:TC.staticTypeEnv, tptopbinds)
+        end
 end
 end
 

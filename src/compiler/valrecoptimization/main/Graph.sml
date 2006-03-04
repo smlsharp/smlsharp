@@ -1,10 +1,9 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * Graph structure with strong connected component computation.
  *
- * Graph structure with strong connected component computation
- *
+ * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: Graph.sml,v 1.4 2006/02/18 16:04:07 duchuu Exp $
+ * @version $Id: Graph.sml,v 1.5 2006/02/28 16:11:11 kiyoshiy Exp $
  *)
 structure Graph :> GRAPH = struct
   type node_id = int

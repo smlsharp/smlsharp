@@ -1,13 +1,8 @@
 (**
  * serialize library based on
  * "Type-Specialized Serialization with Sharing", Martin Elsman
-<<<<<<< DYN.sig
  * @author YAMATODANI Kiyoshi
- * @version $Id: DYN.sig,v 1.3 2006/02/18 09:10:49 kiyoshiy Exp $
-=======
- * @author Martin Elsman
- * @version $Id: DYN.sig,v 1.3 2006/02/18 09:10:49 kiyoshiy Exp $
->>>>>>> 1.2
+ * @version $Id: DYN.sig,v 1.4 2006/03/01 08:55:46 kiyoshiy Exp $
  *)
 signature DYN =
 sig

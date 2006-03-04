@@ -1,19 +1,23 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * Utility functions for file path manipulation.
  * <p>
  * NOTE: This structure has nothing to do with the module path.
  * It is the Path structure in "path" module that defines functions for that
  * purpose.
  * </p>
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PathUtility.sml,v 1.7 2006/02/18 04:59:38 ohori Exp $
+ * @version $Id: PathUtility.sml,v 1.9 2006/02/28 16:11:11 kiyoshiy Exp $
  *)
 structure PathUtility : PATH_UTILITY =
 struct
 
   (***************************************************************************)
+
+  fun trPath path =
+      String.translate
+          (fn #"\\" => "/" | ch => String.str ch)
+          path
 
   fun isAbsolute path =
       if OS.Path.isAbsolute path
@@ -105,10 +109,7 @@ struct
       then dir ^ file
       else dir ^ "/" ^ file
 *)
-  fun joinDirFile arg =
-      String.translate
-          (fn #"\\" => "/" | ch => String.str ch)
-          (OS.Path.joinDirFile arg)
+  fun joinDirFile arg = trPath (OS.Path.joinDirFile arg)
 
   val splitBaseExt = OS.Path.splitBaseExt
 
