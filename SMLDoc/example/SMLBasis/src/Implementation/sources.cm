@@ -1,0 +1,466 @@
+Group (../basis.cm)
+	signature ARRAY
+	signature ARRAY_SLICE
+	signature ARRAY2
+	signature VECTOR
+	signature VECTOR_SLICE
+	signature GENERAL
+	signature INTEGER
+	signature INT_INF
+	signature BOOL
+	signature CHAR
+	signature STRING
+	signature SUBSTRING
+	signature STRING_CVT
+	signature LIST
+	signature MONO_ARRAY
+	signature MONO_ARRAY_SLICE
+	signature MONO_ARRAY2
+	signature MONO_VECTOR
+	signature MONO_VECTOR_SLICE
+	signature WORD
+	signature BYTE
+	signature COMMAND_LINE
+	signature DATE
+	signature IEEE_REAL
+	signature LIST_PAIR
+	signature OPTION
+	signature REAL
+	signature TIME
+	signature TIMER
+	signature MATH
+	signature OS
+	signature OS_FILE_SYS
+	signature OS_IO
+	signature OS_PATH
+	signature OS_PROCESS
+	signature SIGNALS
+	signature BIN_IO
+	signature IMPERATIVE_IO
+	signature IO
+	signature PRIM_IO
+	signature STREAM_IO
+	signature TEXT_IO
+	signature TEXT_STREAM_IO
+	signature PACK_WORD
+	signature TEXT
+	signature SML90
+
+	(* SML/NJ specific *)
+	signature SIGNALS
+
+	signature CLEAN_UP
+	signature CONT
+	signature INTERVAL_TIMER
+	signature INTERNALS
+	signature GC
+	signature SYS_INFO
+	signature WEAK
+	signature SML_OF_NJ
+
+	signature UNSAFE_OBJECT
+	signature POLL
+	signature UNSAFE_ARRAY
+	signature UNSAFE_VECTOR
+	signature UNSAFE_MONO_ARRAY
+	signature UNSAFE_MONO_VECTOR
+	signature UNSAFE
+
+	(* Basis *)
+	structure Vector
+	structure VectorSlice
+	structure General
+	structure StringCvt
+	structure CharVectorSlice
+	structure CharArraySlice
+	structure Text
+	structure List
+	structure ListPair
+	structure Array
+	structure ArraySlice
+	structure Array2
+	structure IEEEReal
+	structure IntImp
+	structure Int31Imp
+	structure Int32Imp
+	structure IntInfImp
+	structure IntInfImp
+	structure LargeIntImp
+	structure FixedIntImp
+	structure LargeRealImp
+	structure LargeWordImp
+	structure Math
+	structure PositionImp
+	structure RealImp
+	structure Real64Imp
+	structure WordImp
+	structure Word31Imp
+	structure Word32Imp
+	structure Bool
+	structure Word8Imp
+	structure Word8Vector
+	structure Word8VectorSlice
+	structure Word8Array
+	structure Word8ArraySlice
+	structure SysWordImp
+	structure TimeImp
+	structure Timer
+	structure Byte
+	structure CommandLine
+	structure OSImp
+	structure Option
+	structure BinIO
+	structure BinPrimIO
+	structure IO
+	structure Pack16Big
+	structure Pack16Little
+	structure Pack32Big
+	structure Pack32Little
+	structure TextIO
+	structure TextPrimIO
+	structure Date
+	structure Real64Array
+	structure Real64ArraySlice
+	structure Real64Vector
+	structure Real64VectorSlice
+	structure SML90
+	structure ExnName
+
+	(* SML/NJ specific *)
+	structure Signals
+	structure Unsafe
+	structure SMLofNJ
+	structure Export
+	structure Cont
+	structure IntervalTimer
+	structure Internals
+	structure SysInfo
+	structure Weak
+	structure Lazy
+
+#if defined(OPSYS_UNIX) orelse defined(OPSYS_WIN32)
+	(* Sockets (common part) *)
+	signature NET_HOST_DB
+	signature NET_PROT_DB
+	signature NET_SERV_DB
+
+	signature SOCKET
+	signature INET_SOCK
+	signature GENERIC_SOCK
+
+	structure GenericSock
+	structure NetHostDB
+	structure NetProtDB
+	structure NetServDB
+	structure SocketImp
+	structure INetSock
+#endif
+
+#if defined(OPSYS_UNIX)
+	(* Posix *)
+	signature POSIX_FLAGS
+	signature POSIX_ERROR
+	signature POSIX_SIGNAL
+	signature POSIX_PROCESS
+	signature POSIX_PROC_ENV
+	signature POSIX_FILE_SYS
+	signature POSIX_IO
+	signature POSIX_SYS_DB
+	signature POSIX_TTY
+	signature POSIX
+	structure Posix
+
+	(* Unix *)
+	signature UNIX_SIGNALS
+	structure UnixSignals
+	signature UNIX
+	structure Unix
+
+	(* Sockets (Unix part) *)
+	signature NET_DB
+	signature UNIX_SOCK
+
+	structure NetDB
+	structure UnixSock
+
+#elif defined (OPSYS_WIN32)
+
+	signature WIN32_GENERAL
+	signature WIN32_PROCESS
+	signature WIN32_FILESYS
+	signature WIN32_IO
+	signature WIN32
+
+	structure Win32
+#endif
+
+is
+	$smlnj/init/init.cmi : cm
+
+	../TypesOnly/sources.cm
+
+	NJ/cleanup.sig
+	NJ/cleanup.sml
+	NJ/smlnj.sml
+	NJ/signals.sig
+	NJ/internal-signals.sml
+	NJ/signals.sml
+	NJ/weak.sig
+	NJ/weak.sml
+	NJ/export.sig
+	NJ/wrap-export.sml
+	NJ/export.sml
+	NJ/interval-timer.sig
+	NJ/interval-timer.sml
+	NJ/sysinfo.sig
+	NJ/sysinfo.sml
+	NJ/prof-control.sig
+	NJ/prof-control.sml
+	NJ/gc.sig
+	NJ/gc.sml
+	NJ/print-hook.sml
+	NJ/internals.sig
+	NJ/internals.sml
+	NJ/cont.sig
+	NJ/cont.sml
+	NJ/smlnj.sig
+	NJ/lazy.sml
+
+	Unsafe/cinterface.sig
+	Unsafe/cinterface.sml
+	Unsafe/poll.sig
+	Unsafe/poll.sml
+	Unsafe/object.sig
+	Unsafe/object.sml
+	Unsafe/unsafe-array.sig
+	Unsafe/unsafe-vector.sig
+	Unsafe/unsafe-mono-array.sig
+	Unsafe/unsafe-mono-vector.sig
+	Unsafe/unsafe.sig
+	Unsafe/unsafe.sml
+
+	OS/os.sig
+	OS/os-filesys.sig
+	OS/os-path.sig
+	OS/os-process.sig
+	OS/os-io.sig
+	OS/at-exit.sml
+	OS/os-path-fn.sml
+
+	pre-basis.sml
+	pre-string.sml
+	substring.sig
+	text.sig
+
+	general.sig
+	array.sig
+	array-slice.sig
+	array2.sig
+	vector.sig
+	vector-slice.sig
+	integer.sig
+	bool.sig
+	char.sig
+	string.sig
+	string-cvt.sig
+	list.sig
+	list-pair.sig
+	word.sig
+	byte.sig
+	command-line.sig
+	date.sig
+	ieee-real.sig
+	real.sig
+	time.sig
+	timer.sig
+	option.sig
+	math.sig
+	sml90.sig
+
+	substring.sml
+	text.sml
+	general.sml
+	vector.sml
+	vector-slice.sml
+	string-cvt.sml
+	string.sml
+	char.sml
+	list.sml
+	num-scan.sml
+	num-format.sml
+	bool.sml
+	date.sml
+
+	mono-vector.sig
+	mono-vector-slice.sig
+	mono-array.sig
+	mono-array-slice.sig
+	mono-array2.sig
+
+	real64-vector.sml
+	real64-vector-slice.sml
+	real64-array.sml
+	real64-array-slice.sml
+
+	char-array.sml
+	char-array-slice.sml
+	char-vector.sml
+	char-vector-slice.sml
+	array.sml
+	array-slice.sml
+	array2.sml
+	ieee-real.sml
+	int31.sml
+	int32.sml
+	int-inf-sig.sml
+	int-inf.sml
+	word31.sml
+	word32.sml
+	real64.sml
+#if defined(ARCH_X86)
+	math64-x86.sml
+#elif defined(ARCH_ALPHA)
+	math64-none.sml
+#elif defined(ARCH_PPC)
+	math64-none.sml
+#else
+	math64-sqrt.sml
+#endif
+	real-format.sml
+	word8.sml
+	word8-vector.sml
+	word8-vector-slice.sml
+	word8-array.sml
+	word8-array-slice.sml
+	time.sml
+	internal-timer.sml
+	timer.sml
+	list-pair.sml
+	byte.sml
+	command-line.sml
+	option.sml
+	exn-name.sml
+	sml90.sml
+
+	bind-int-32.sml
+	bind-word-32.sml
+	bind-largeint-32.sml
+	bind-fixedint-32.sml
+	bind-largeword-32.sml
+	bind-sysword-32.sml
+	bind-position-32.sml
+	bind-real-32.sml
+	bind-math-32.sml
+	bind-largereal-32.sml
+
+#if defined(OPSYS_UNIX)
+	Unix/pre-os.sml
+	Posix/posix-prelude.sml
+	Posix/posix-flags.sig
+	Posix/posix-error.sig
+	Posix/posix-error.sml
+	Posix/posix-signal.sig
+	Posix/posix-signal.sml
+	Posix/posix-process.sig
+	Posix/posix-process.sml
+	Posix/posix-filesys.sig
+	Posix/posix-filesys.sml
+	Posix/posix-io.sig
+	Posix/posix-io.sml
+	Posix/posix-procenv.sig
+	Posix/posix-procenv.sml
+	Posix/posix-sysdb.sig
+	Posix/posix-sysdb.sml
+	Posix/posix-tty.sig
+	Posix/posix-tty.sml
+	Posix/posix.sig
+	Posix/posix.sml
+	Unix/unix-signals.sig
+	Unix/unix-signals.sml
+
+	Unix/os-path.sml
+	Unix/os-filesys.sml
+	Unix/os-process.sml
+	Unix/os-io.sml
+	Unix/os.sml
+
+	Unix/posix-bin-prim-io.sml
+	Unix/posix-text-prim-io.sml
+	Unix/posix-bin-io.sml
+	Unix/posix-text-io.sml
+	Unix/unix.sig
+	Unix/unix.sml
+#elif defined(OPSYS_WIN32)
+	Win32/pre-os.sml
+	Win32/win32-general.sig
+	Win32/win32-general.sml
+	Win32/win32-filesys.sig
+	Win32/win32-filesys.sml
+	Win32/win32-io.sig
+	Win32/win32-io.sml
+	Win32/win32-process.sig
+	Win32/win32-process.sml
+	Win32/win32.sig
+	Win32/win32.sml
+
+	Win32/os-path.sml
+	Win32/os-filesys.sml
+	Win32/os-process.sml
+	Win32/os-io.sml
+	Win32/os.sml
+
+	Win32/win32-bin-prim-io.sml
+	Win32/win32-text-prim-io.sml
+	Win32/win32-bin-io.sml
+	Win32/win32-text-io.sml
+#else
+# error OS not supported for this system
+#endif
+
+	pack-word.sig
+	pack-word-b16.sml
+	pack-word-l16.sml
+	pack-word-b32.sml
+	pack-word-l32.sml
+
+	IO/prim-io.sig
+	IO/prim-io-fn.sml
+	IO/bin-prim-io.sml
+	IO/text-prim-io.sml
+	IO/io.sig
+	IO/io.sml
+	IO/clean-io.sml
+	IO/stream-io.sig
+	IO/text-stream-io.sig
+	IO/imperative-io.sig
+	IO/bin-io.sig
+	IO/text-io.sig
+	IO/os-prim-io.sig
+	IO/bin-io-fn.sml
+	IO/text-io-fn.sml
+
+#if defined(OPSYS_UNIX) orelse defined(OPSYS_WIN32)
+	Sockets/pre-sock.sml
+	Sockets/prot-db.sig
+	Sockets/prot-db.sml
+	Sockets/host-db.sig
+	Sockets/host-db.sml
+	Sockets/serv-db.sig
+	Sockets/serv-db.sml
+	Sockets/socket.sig
+	Sockets/generic-sock.sig
+	Sockets/inet-sock.sig
+	Sockets/inet-sock.sml
+#endif
+
+#if defined(OPSYS_UNIX)
+	Sockets/net-db.sig
+	Sockets/net-db.sml
+	Sockets/unix-socket.sml
+	Sockets/unix-sock.sig
+	Sockets/unix-generic-sock.sml
+	Sockets/unix-sock.sml
+#elif defined(OPSYS_WIN32)
+	Sockets/win32-socket.sml
+	Sockets/win32-generic-sock.sml
+#endif

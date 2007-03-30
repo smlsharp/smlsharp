@@ -37,13 +37,11 @@ SessionBase::getStandardErrorWriter()
     return standardErrorWriter_;
 }
 
-int
+void
 SessionBase::
 addExecutablePreProcessor(ExecutablePreProcessor* preProcessor)
 {
-    int index = executablePreProcessors_.getCount();
-    executablePreProcessors_.add(preProcessor);
-    return index;
+    executablePreProcessors_.push_front(preProcessor);
 }
 
 void
@@ -52,12 +50,11 @@ SessionBase::linkAndExecute(Executable* executable)
           UserException,
           SystemError)
 {
-    int numberOfPreProcessors = executablePreProcessors_.getCount();
-    VariableLengthArray::Element* preProcessors =
-    executablePreProcessors_.getContents();
-    for(int index = 0 ; index < numberOfPreProcessors ; index += 1){
-        ExecutablePreProcessor* preProcessor = 
-        ((ExecutablePreProcessor*)(preProcessors[index]));
+    for(PreProcessorList::iterator i = executablePreProcessors_.begin() ;
+        i != executablePreProcessors_.end ();
+        i++)
+    {
+        ExecutablePreProcessor* preProcessor = *i;
         if(0 != preProcessor){
             preProcessor->process(executable);
         }
@@ -74,9 +71,6 @@ SessionBase::linkAndExecute(Executable* executable)
 Executable*
 SessionBase::receiveExecutable(InputChannel* channel)
 {
-    UInt8Value byteOrder;
-    channel->receive(sizeof(UInt8Value), (ByteValue*)&byteOrder);
-
     // UInt32Value totalByteLength (NOTE: the number of BYTEs)
     UInt32Value totalByteLength;
     channel->receive(sizeof(UInt32Value), (ByteValue*)&totalByteLength);
@@ -101,10 +95,28 @@ SessionBase::receiveExecutable(InputChannel* channel)
         throw ProtocolException();// ToDo : illegal format executable
     }
 
-    Executable *executable =
-    new Executable((Executable::ByteOrder)byteOrder,
-                   totalWordLength,
-                   executableBuffer);
+    Executable *executable = new Executable(totalWordLength, executableBuffer);
+
+    return executable;
+}
+
+Executable*
+SessionBase::deserializeExecutionRequestFromBuffer(UInt32Value* &buffer)
+{
+    // UInt32Value totalByteLength (NOTE: the number of BYTEs)
+    UInt32Value totalByteLength = *buffer;
+    buffer += 1;
+    totalByteLength = NetToNativeOrderQuadByte(totalByteLength);
+    if(0 != totalByteLength % sizeof(UInt32Value)){
+        DBGWRAP(LOG.error("total length not multi 4 bytes."));
+        throw ProtocolException();// ToDo : illegal format executable
+    }
+    UInt32Value totalWordLength = totalByteLength / sizeof(UInt32Value);
+
+    UInt32Value* executableBuffer = buffer;
+    buffer += totalWordLength;
+
+    Executable *executable = new Executable(totalWordLength, executableBuffer);
 
     return executable;
 }

@@ -3,18 +3,20 @@
  * which is the target of compilation.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ObjectCode.sml,v 1.10 2006/02/28 16:11:03 kiyoshiy Exp $
+ * @version $Id: ObjectCode.sml,v 1.23 2007/02/11 16:39:51 kiyoshiy Exp $
  *)
 structure ObjectCode =
 struct
 
   (***************************************************************************)
 
+  structure CT = ConstantTerm
   structure FE = SMLFormat.FormatExpression
   structure IT = InitialTypeContext
   structure P = Path
   structure PP = SMLFormat
-  structure SE = StaticEnv
+  structure PR = Primitives
+  structure PT = PredefinedTypes
   structure TP = TypedCalc
   structure TPU = TypedCalcUtils
   structure TU = TypesUtils
@@ -24,54 +26,59 @@ struct
 
   (***************************************************************************)
 
-  val stringTy = StaticEnv.stringty
-  val intTy = StaticEnv.intty
-  val realTy = StaticEnv.realty
-  val unitTy = StaticEnv.unitty
-  val exnTy = StaticEnv.exnty
-  val stringPairTy = TY.RECORDty(U.listToTupleSEnv [stringTy, stringTy])
-  val trueCon = IT.trueCon
-  val falseCon = IT.falseCon
-  val refCon = IT.refCon
-  val refTyCon = SE.refTyCon
-
-  val nameOfConcatString = "String_concat2"
-  val primInfoOfConcatString =
-      {name = nameOfConcatString, ty = TY.FUNMty ([stringPairTy], stringTy)}
-
-  val nameOfPrintString = "print"
-  val primInfoOfPrintString =
-      {name = nameOfPrintString, ty = TY.FUNMty ([stringTy], unitTy)}
-
-  val nameOfUpdateRef = ":="
-  val typeOfUpdateRef =
-      let
-        val btvKind =
-            {index = 0, recKind = TY.UNIV, eqKind = TY.NONEQ}
-        val argTy = TY.BOUNDVARty 0
-        val argRefTy = TY.CONty{tyCon = refTyCon, args = [argTy]}
-      in
-        TY.POLYty
-        {
-          boundtvars = IEnv.insert (IEnv.empty, 0, btvKind),
-          body =
-          TY.FUNMty ([TY.RECORDty(U.listToTupleSEnv [argRefTy, argTy])], unitTy)
-        }
-      end
-  val primInfoOfUpdateRef = {name = nameOfUpdateRef, ty = typeOfUpdateRef}
+  val primInfoOfPrintString = PR.printPrimInfo
+  val primInfoOfUpdateRef = PR.assignPrimInfo
 
   fun failException (message, loc) =
       TP.TPCONSTRUCT
           {
-            con=IT.FormatterExnConpath,
-            instTyList=[],
-            argExpOpt=SOME(TP.TPCONSTANT(TY.STRING message, loc)),
-            loc=loc
+            con = PT.FormatterCon,
+            instTyList = [],
+            argExpOpt =
+            SOME(TP.TPCONSTANT(CT.STRING message, PT.stringty, loc)),
+            loc = loc
           }
-  val formatExpressionTy = stringTy
+
+  fun constIntExp int =
+      TP.TPCONSTANT(CT.INT (Int32.fromInt int), PT.intty, Loc.noloc)
+  fun constStringExp string =
+      TP.TPCONSTANT(CT.STRING string, PT.stringty, Loc.noloc)
+  fun constructExp con instTyList argExpOpt loc =
+      TP.TPCONSTRUCT
+          {
+            con = con,
+            instTyList = instTyList,
+            argExpOpt = argExpOpt,
+            loc = loc
+          }
+  fun constBoolExp bool =
+      constructExp (if bool then PT.trueCon else PT.falseCon) [] NONE Loc.noloc
+  fun optionExp NONE ty loc = constructExp PT.NONECon [ty] NONE loc
+    | optionExp (SOME arg) ty loc = constructExp PT.SOMECon [ty] (SOME arg) loc
+  (**
+   * convert a sequence of expressions of which types are "elementTy"
+   * to an expression of which type is "elementTy list".
+   *)
+  fun expsToListExp elementTy TPExpressions =
+      let
+        val listTy = TY.CONty{tyCon = PT.listTyCon, args = [elementTy]}
+        fun append (left, right) =
+            let
+              val loc = TPU.getLocOfExp left
+              val tupleExp =
+                  U.listToTupleExp [(left, elementTy), (right, listTy)] loc
+            in
+              constructExp PT.consCon [elementTy] (SOME tupleExp) loc
+            end
+        val nilExp = constructExp PT.nilCon [elementTy] NONE Loc.noloc
+      in
+        foldr append nilExp TPExpressions
+      end
+
+  val formatExpressionTy = PT.expressionty
   val formatterResultTy = formatExpressionTy
 
-  val nameOfFormatExnRef = "format_exnRef"
+  val nameOfFormatExnRef = "_format_exnRef"
   val pathOfFormatExnRef = P.topStrPath
 
   fun applyTy (TY.FUNMty(_, resultTy), argTy) = resultTy
@@ -151,64 +158,163 @@ struct
   fun formatterOfTySpecTy (tySpec : TY.tySpec) =
       formatterOfTyConTy (U.tySpecToTyCon tySpec)
       
-  fun FEToString formatExpressions =
-      PP.prettyPrint
-          {newlineString = "\n", spaceString = " ", columns = 80}
-          formatExpressions
-
-  fun concatStrings [] = raise Control.Bug "[] is passed to concatStrings."
-    | concatStrings [expression] = expression
-    | concatStrings (headExpression :: tailExpressions) =
-      let
-        fun append (right, left) =
-            let
-              val loc = TPU.getLocOfExp right
-              val fields = U.listToTupleSEnv [left, right]
-              val tupleExp = TP.TPRECORD {fields=fields, recordTy=stringPairTy, loc=loc}
-            in
-              TP.TPPRIMAPPLY {primOp=primInfoOfConcatString, instTyList=[], argExpOpt=SOME tupleExp, loc=loc}
-            end
-      in
-        foldl append headExpression tailExpressions
-      end
+  fun FEToString formatExpressions = Control.prettyPrint formatExpressions
 
   fun printString expression =
       let val loc = TPU.getLocOfExp expression
-      in TP.TPPRIMAPPLY{primOp=primInfoOfPrintString, instTyList=[], argExpOpt=SOME expression, loc=loc}
+      in
+        TP.TPPRIMAPPLY
+            {
+              primOp = primInfoOfPrintString,
+              instTyList = [],
+              argExpOpt = SOME expression,
+              loc = loc
+            }
       end
 
+  val printFormatName = "printFormat"
+  val printFormatTy = TY.FUNMty([formatExpressionTy], PT.unitty)
+  val printFormatVarPathInfo =
+      {name = printFormatName, strpath = P.topStrPath, ty = printFormatTy}
+  val printFormatExp = TP.TPVAR(printFormatVarPathInfo, Loc.noloc)
   fun printFormat expression =
       let val loc = TPU.getLocOfExp expression
-      in TP.TPPRIMAPPLY{primOp=primInfoOfPrintString, instTyList=[], argExpOpt=SOME expression, loc=loc}
+      in
+        TP.TPAPPM
+            {
+              funExp = printFormatExp,
+              funTy = printFormatTy,
+              argExpList = [expression],
+              loc = loc
+            }
       end
 
-  fun concatFormatExpressions [] =
-      raise Control.Bug "[] is passed to concatFormatExpressions"
-    | concatFormatExpressions [expression] = expression
-    | concatFormatExpressions expressions = concatStrings expressions
+  fun printFormatStatic expressions =
+      printString (constStringExp (FEToString expressions))
 
   local
-    fun removeIndents (FE.Guard (guard, expressions)) =
-        FE.Guard (guard, map removeIndents expressions)
-      | removeIndents (FE.StartOfIndent _) = FE.Term(0, "")
-      | removeIndents FE.EndOfIndent = FE.Term(0, "")
-      | removeIndents expression = expression
-  in
-  fun translateFormatExpression expression =
-      let
-        val string = FEToString [removeIndents expression]
-        val loc = Loc.noloc
-      in TP.TPCONSTANT(TY.STRING string, loc) end
-        handle PP.Fail message => raise Control.Bug message
+    val expListTy = TY.CONty{tyCon = PT.listTyCon, args = [formatExpressionTy]}
 
-  fun translateFormatExpressions (expressions as expression :: _) =
-      (let
-         val loc = Loc.noloc
-         val string = FEToString (map removeIndents expressions)
-       in [TP.TPCONSTANT(TY.STRING string, loc)] end
-         handle PP.Fail message => raise Control.Bug message)
-    | translateFormatExpressions [] =
-      raise Control.Bug "ObjectCode.translateFormatExpressions found null."
+    val assocTy =
+        U.listToRecordTy
+            [
+              ("cut", PT.boolty),
+              ("strength", PT.intty),
+              ("direction", PT.assocDirectionty)
+            ]
+    val assocOptTy = TY.CONty{tyCon = PT.optionTyCon, args = [assocTy]}
+    fun translateAssocDirection direction =
+        case direction
+         of FE.Left => constructExp PT.LeftCon [] NONE Loc.noloc
+          | FE.Right => constructExp PT.RightCon [] NONE Loc.noloc
+          | FE.Neutral => constructExp PT.NeutralCon [] NONE Loc.noloc
+    fun translateAssoc {cut, strength, direction} =
+        U.listToRecordExp
+            [
+              ("cut", constBoolExp cut, PT.boolty),
+              ("strength", constIntExp strength, PT.intty),
+              (
+                "direction",
+                translateAssocDirection direction, PT.assocDirectionty
+              )
+            ]
+            Loc.noloc
+
+    val priorityRecTy = (U.listToRecordTy [("priority", PT.priorityty)])
+    val priorityRecOptTy =
+        TY.CONty{tyCon = PT.optionTyCon, args = [priorityRecTy]}
+    fun translatePriority (FE.Preferred n) =
+        constructExp PT.PreferredCon [] (SOME(constIntExp n)) Loc.noloc
+      | translatePriority (FE.Deferred) =
+        constructExp PT.DeferredCon [] NONE Loc.noloc
+    fun translatePriorityRec {priority} =
+        U.listToRecordExp
+            [("priority", translatePriority priority, PT.priorityty)]
+            Loc.noloc
+  in
+
+  fun translateFormatExpression (FE.Term(n, string)) =
+      constructExp
+          PT.TermCon
+          []
+          (SOME
+               (U.listToTupleExp
+                    [
+                      (constIntExp n, PT.intty),
+                      (constStringExp string, PT.stringty)
+                    ]
+                    Loc.noloc))
+          Loc.noloc
+    | translateFormatExpression (FE.Guard (assocOpt, expList)) =
+      let
+        val assocOptExp =
+            optionExp (Option.map translateAssoc assocOpt) assocTy Loc.noloc
+        val expListExp =
+            expsToListExp
+                formatExpressionTy (translateFormatExpressions expList)
+      in
+        constructExp
+            PT.GuardCon
+            []
+            (SOME
+                 (U.listToTupleExp
+                      [(assocOptExp, assocOptTy), (expListExp, expListTy)]
+                      Loc.noloc))
+            Loc.noloc
+      end
+    | translateFormatExpression (FE.Indicator {space, newline}) =
+      constructExp
+          PT.IndicatorCon
+          []
+          (SOME
+               (U.listToRecordExp
+                    [
+                      ("space", constBoolExp space, PT.boolty),
+                      (
+                        "newline",
+                        optionExp
+                            (Option.map translatePriorityRec newline)
+                            priorityRecTy Loc.noloc,
+                        priorityRecOptTy
+                      )
+                    ]
+                    Loc.noloc))
+          Loc.noloc
+    | translateFormatExpression (FE.StartOfIndent n) =
+      constructExp PT.StartOfIndentCon [] (SOME(constIntExp n)) Loc.noloc
+    | translateFormatExpression (FE.EndOfIndent) =
+      constructExp PT.EndOfIndentCon [] NONE Loc.noloc
+
+  and translateFormatExpressions (expressions as expression :: _) =
+      map translateFormatExpression expressions
+
+  fun makeConstantTerm string =
+      translateFormatExpression (FE.Term(size string, string))
+
+  fun makeGuard (assocOpt, TPExpressions) =
+      let
+        val assocOptExp =
+            optionExp (Option.map translateAssoc assocOpt) assocTy Loc.noloc
+        val expLisExp = 
+            expsToListExp formatExpressionTy TPExpressions
+      in
+        constructExp
+            PT.GuardCon
+            []
+            (SOME
+                 (U.listToTupleExp
+                      [(assocOptExp, assocOptTy), (expLisExp, expListTy)]
+                      Loc.noloc))
+            Loc.noloc
+      end
+
+  (**
+   * convert a sequence of expressions of which types are EXP
+   * to an expression of which type is EXP.
+   *)
+  fun concatFormatExpressions TPExpressions =
+      makeGuard (NONE, TPExpressions)
+
   end
 
 (*
@@ -225,9 +331,6 @@ struct
 
     fun translateFormatExpressions exps = map translateFormatExpression exps
 *)
-
-  fun makeTerm stringExp = stringExp
-  fun makeGuard (guard, expressions) = concatFormatExpressions expressions
 
   (***************************************************************************)
 

@@ -47,6 +47,12 @@ see the COPYRIGHT NOTICE for details and restrictions.
 	05/18/95 (jhr) changed Vector.vector to Vector.fromList
 *
  * $Log: lexgen.sml,v $
+ * Revision 1.6  2006/12/09 11:25:51  ohori
+ * ""
+ *
+ * Revision 1.5  2006/12/09 11:17:58  ohori
+ * *** empty log message ***
+ *
  * Revision 1.4  2005/09/28 05:22:20  kiyoshiy
  * updated.
  *
@@ -1323,4 +1329,5 @@ structure Main =
     fun doit () = LexGen.lexGen (s^"/DATA/ml.lex")
     fun testit _ = LexGen.lexGen (s^"/DATA/ml.lex")
   end; (* Main *)
+
 

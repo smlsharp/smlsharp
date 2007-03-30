@@ -1,0 +1,50 @@
+<html>
+<body>
+<pre>
+Sound Spectrum
+
+This is an example program using FFI.
+
+This program reads raw sound data from standard input by fread(3),
+calculates its power spectrum by FFT function of GSL library,
+and displays it graphically in real time by using either curses or
+OpenGL.
+
+This demo requires the following libraries:
+
+- GNU Scientific Library (libgsl)
+- libcurses or OpenGL (libgl, libglu, libglut)
+
+How to run this demo:
+
+1. Prepare raw sound stream (44100Hz, signed 16 bit, stereo) by using
+   mpg123, mplayer, sox or any other your favorite tool.
+   If you don't have any tools, use "sine.c", which is a sine wave
+   generator.
+
+2. Choose one display mode (text, curses or glut) and edit load.sml.
+   Default is glut.
+
+3. Set some environment variables (CPPFLAGS, LDFLAGS, LDD, and so on)
+   so that the program can find header files and libraries.
+   See also samples/glut/README.
+
+4. Run load.sml with supplying the sound stream from standard input.
+
+Example:
+
+First, compile sine.c.
+
+  $ cc sine.c -o sine -lm
+
+Then, run load.sml with piping with sine.
+
+  $ ./sine | smlsharp load.sml
+
+If your GSL library is installed to /somewhere, you would specify
+CPPFLAGS and LDFLAGS like this:
+
+  $ ./sine | env CPPFLAGS=-I/somewhere/include LDFLAGS=-I/somewhere/lib smlsharp load.sml
+</pre>
+</body>
+</html>

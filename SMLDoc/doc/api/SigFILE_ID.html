@@ -1,0 +1,131 @@
+<HTML>
+<HEAD>
+<TITLE>FILE_ID</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLDoc</em>
+</TD></TR></TABLE>
+<HR>
+<H2>FILE_ID</H2>
+<DL>
+<DT> <B>All Known Implementing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="StrFileID.html">FileID</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigFILE_ID.html">FILE_ID</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigFILE_ID.html#Typeord_key">ord_key</A>&nbsp;=&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFILE_ID.html#Valcompare">compare</A>&nbsp;:&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A>&nbsp;*&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeorder">order</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFILE_ID.html#ValfileId">fileId</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFILE_ID.html#Valcanonical">canonical</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+ Abstract file IDs.
+ <ul>
+   <li>IDs for files regardless whether they exist or not.</li>
+   <li>For existing files equivalent to OS.FileSys.file_id.</li>
+ </ul>
+
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Author:</B>
+<DD>
+Copyright (c) 2000 by Lucent Technologies, Bell Laboratories
+, Matthias Blume (blume@kurims.kyoto-u.ac.jp)
+
+<DT> <B>Version:</B>
+<DD>
+$Id: SigFILE_ID.html,v 1.9 2007/02/17 07:01:57 kiyoshiy Exp $
+ 
+
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeid"><!-- --></A>
+<H3>id</H3>
+<P>
+<CODE>type&nbsp;id</CODE>
+
+<HR>
+<A NAME="Typeord_key"><!-- --></A>
+<H3>ord_key</H3>
+<P>
+<CODE>type&nbsp;ord_key&nbsp;=&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A></CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valcompare"><!-- --></A>
+<H3>compare</H3>
+<P>
+<CODE>val&nbsp;compare&nbsp;:&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A>&nbsp;*&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeorder">order</A></CODE>
+
+<HR>
+<A NAME="ValfileId"><!-- --></A>
+<H3>fileId</H3>
+<P>
+<CODE>val&nbsp;fileId&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigFILE_ID.html#Typeid">id</A></CODE>
+
+<HR>
+<A NAME="Valcanonical"><!-- --></A>
+<H3>canonical</H3>
+<P>
+<CODE>val&nbsp;canonical&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLDoc: Documentation generator for SML</em>
+</TD></TR></TABLE>
+</BODY></HTML>

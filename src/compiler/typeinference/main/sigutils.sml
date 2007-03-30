@@ -2,7 +2,7 @@
  * signature check utility for module.
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: sigutils.sml,v 1.60 2006/03/02 12:53:26 bochao Exp $
+ * @version $Id: sigutils.sml,v 1.73 2007/02/28 15:31:26 katsu Exp $
  *)
 structure SigUtils =
 struct 
@@ -12,14 +12,17 @@ local
   structure TU = TypesUtils
   structure TCU = TypeContextUtils
   structure E = TypeInferenceError
-  structure SE = StaticEnv
+  structure PT = PredefinedTypes
   structure T = Types
   structure P = Path
+  structure PT = PredefinedTypes
+
+  fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
 in
   fun longTyConId currentContext longTyCon = 
     case TIC.lookupLongTyCon (currentContext, longTyCon) of
       (_,NONE) => raise E.TyConNotFoundInShare ({tyCon = Absyn.longidToString(longTyCon)})
-    | (_,SOME(T.TYCON(tyCon))) => TU.tyConId tyCon
+    | (_,SOME(T.TYCON({id, ...}))) => id
     | (_,SOME(T.TYSPEC({spec = {id,...},impl}))) => id
     | (_,SOME(T.TYFUN({name,...}))) => raise (E.SharingOnTypeFun {tyConName = name})
 
@@ -33,11 +36,11 @@ in
       end
 
   fun equateTyConIdInContext 
-        tyConIdSubst {tyConEnv, varEnv, strEnv, sigEnv, funEnv}
+        tyConIdSubst {tyConEnv, varEnv, strEnv = T.STRUCTURE strEnvCont, sigEnv, funEnv}
     =
     {tyConEnv = #2 (TCU.substTyConIdInTyConEnv ID.Set.empty tyConIdSubst tyConEnv),
      varEnv = #2 (TCU.substTyConIdInVarEnv ID.Set.empty tyConIdSubst varEnv),
-     strEnv = #2 (TCU.substTyConIdInStrEnv ID.Set.empty tyConIdSubst strEnv),
+     strEnv = T.STRUCTURE (#2 (TCU.substTyConIdInStrEnvCont ID.Set.empty tyConIdSubst strEnvCont)),
      sigEnv = sigEnv,
      funEnv = funEnv
      } : TC.context
@@ -47,7 +50,7 @@ in
       SEnv.foldl
         (
          fn (T.CONID {tag, tyCon,...}, exnTagSet) =>
-            if SE.exnTyConid = #id tyCon andalso tag >= fromExnTag then
+            if ID.eq(PT.exnTyConid, #id tyCon) andalso tag >= fromExnTag then
               ISet.add(exnTagSet, tag)
             else
               exnTagSet
@@ -56,9 +59,9 @@ in
         ISet.empty
         varEnv
 
-  fun exnTagSetStrEnv fromExnTag strEnv =
+  fun exnTagSetStrEnv fromExnTag (T.STRUCTURE strEnvCont) =
       SEnv.foldl
-        (fn (T.STRUCTURE {env = (tyConEnv, varEnv, strEnv), ...}, exnTagSet) =>
+        (fn ({env = (tyConEnv, varEnv, strEnv), ...}, exnTagSet) =>
             let
               val exnTagSet1 = exnTagSetVarEnv fromExnTag varEnv
               val exnTagSet2 = exnTagSetStrEnv fromExnTag strEnv
@@ -66,7 +69,7 @@ in
               ISet.union ((ISet.union(exnTagSet1,exnTagSet2)),exnTagSet)
             end)
         ISet.empty
-        strEnv
+        strEnvCont
 
   fun exnTagSetEnv fromExnTag (tyConEnv, varEnv, strEnv) =
       let
@@ -83,15 +86,13 @@ in
             case idstate of
               T.VARID{name, strpath = absStrpath, ty = absTy} =>
               (case SEnv.find(enrichedVE, varName) of
-                 SOME (T.FFID{name,strpath,ty,argTys}) =>
-                 T.FFID{name = name, strpath = absStrpath, ty = absTy, argTys = argTys}
-               | SOME (T.CONID{name, strpath, funtyCon, ty, tag, tyCon}) =>
+                 SOME (T.CONID{name, strpath, funtyCon, ty, tag, tyCon}) =>
                  T.CONID{name = name, strpath =  absStrpath, funtyCon = funtyCon,
                        ty = absTy,  tag = tag, tyCon = tyCon}
                | _ => idstate
               )
             | T.CONID {name,strpath,funtyCon,ty,tag,tyCon = {id,...}} =>
-              if id = SE.exnTyConid then
+              if ID.eq(id, PT.exnTyConid) then
                 (case SEnv.find(enrichedVE, varName) of
                    SOME  (T.CONID {tag,tyCon,...}) => 
                    T.CONID({ 
@@ -110,26 +111,29 @@ in
        )
         absVE
 
-  fun instStrEnvWithExnAndIdState (enrichedSE, absSE) =
+  fun instStrEnvWithExnAndIdState (T.STRUCTURE enrichedSECont, T.STRUCTURE absSECont) =
+    T.STRUCTURE
+    (
       SEnv.mapi
-        (fn (strName, str2 as T.STRUCTURE{env = (absSubTE, absSubVE, absSubSE),id,name,strpath})=> 
-            (case SEnv.find(enrichedSE, strName) of
-               SOME (T.STRUCTURE{env = (_, enrichedSubVE, enrichedSubSE), ...}) => 
+        (fn (strName, strPathInfo2 as {env = (absSubTE, absSubVE, absSubSE),id,name,strpath})=> 
+            (case SEnv.find(enrichedSECont, strName) of
+               SOME {env = (_, enrichedSubVE, enrichedSubSE), ...} => 
                let
                  val newAbsSubVE = instVarEnvWithExnAndIdState (enrichedSubVE, absSubVE)
                  val newAbsSubSE = instStrEnvWithExnAndIdState (enrichedSubSE, absSubSE)
                in
-                 T.STRUCTURE {
-                              env = (absSubTE, newAbsSubVE, newAbsSubSE),
-                              id = id,
-                              name = name,
-                              strpath = strpath
-                              }
+                 {
+                  env = (absSubTE, newAbsSubVE, newAbsSubSE),
+                  id = id,
+                  name = name,
+                  strpath = strpath
+                  }
                end
-             | NONE => str2
+             | NONE => strPathInfo2
             )
         )
-        absSE
+        absSECont
+      )
  
   (* instantiate the followings:
    * 1. Exception tag.
@@ -153,7 +157,7 @@ in
                    fn (varId, idstate, subst) =>
                       case idstate of
                         T.CONID {tag = oldTag,tyCon,...} =>
-                        if (#id tyCon) = SE.exnTyConid then
+                        if ID.eq(#id tyCon, PT.exnTyConid) then
                           case SEnv.find(actVarEnv,varId) of
                             NONE => subst (* error captured by sigmatch *)
                           | SOME (T.CONID {tag = argTag,...}) =>
@@ -164,12 +168,12 @@ in
                   )
                   IEnv.empty
                   argVarEnv
-  fun computeExnTagSubstStrEnv (argStrEnv, actStrEnv) =
+  fun computeExnTagSubstStrEnv (T.STRUCTURE  argStrEnvCont, T.STRUCTURE actStrEnvCont) =
       SEnv.foldli (
-                   fn (strId, T.STRUCTURE{env = (_, argSubVarEnv, argSubStrEnv),...}, subst) =>
-                      case SEnv.find(actStrEnv, strId) of
+                   fn (strId, {env = (_, argSubVarEnv, argSubStrEnv),...}, subst) =>
+                      case SEnv.find(actStrEnvCont, strId) of
                         NONE => subst (* error captured by sigmatch *)
-                      | SOME (T.STRUCTURE{env = (_, actSubVarEnv, actSubStrEnv),...}) =>
+                      | SOME {env = (_, actSubVarEnv, actSubStrEnv),...} =>
                         let
                           val subst1 = computeExnTagSubstVarEnv (argSubVarEnv,actSubVarEnv)
                           val subst2 = computeExnTagSubstStrEnv (argSubStrEnv,actSubStrEnv)
@@ -179,7 +183,7 @@ in
                         end
                    )
                   IEnv.empty
-                  argStrEnv
+                  argStrEnvCont
   fun computeExnTagSubst (argEnv as (_, argVE, argSE), 
                           actEnv as (_, actVE, actSE)) =
       let
@@ -194,7 +198,7 @@ in
       SEnv.map ( fn idstate:T.idState =>
                     case idstate of
                       T.CONID {tag,name,strpath,funtyCon,ty,tyCon} =>
-                      if (#id tyCon) = SE.exnTyConid then
+                      if ID.eq(#id tyCon, PT.exnTyConid) then
                         case IEnv.find(subst, tag) of
                           NONE => (idstate : T.idState)
                         | SOME argTag =>
@@ -211,21 +215,24 @@ in
                 )
                varEnv
 
-  fun instExnTagBySubstOnStrEnv subst strEnv =
-      SEnv.map ( fn (T.STRUCTURE{ env = (subTyConEnv, subVarEnv, subStrEnv),id,name,strpath}) =>
+  fun instExnTagBySubstOnStrEnv subst (T.STRUCTURE strEnvCont) =
+    T.STRUCTURE
+    (
+      SEnv.map ( fn { env = (subTyConEnv, subVarEnv, subStrEnv),id,name,strpath} =>
                     let
                       val subVarEnv = instExnTagBySubstOnVarEnv subst subVarEnv
                       val subStrEnv = instExnTagBySubstOnStrEnv subst subStrEnv
                     in
-                      T.STRUCTURE{
-                                  env = (subTyConEnv, subVarEnv, subStrEnv),
-                                  id = id,
-                                  name = name,
-                                  strpath = strpath}
+                      {
+                       env = (subTyConEnv, subVarEnv, subStrEnv),
+                       id = id,
+                       name = name,
+                       strpath = strpath
+                       }
                     end
                )
-               strEnv
-                          
+               strEnvCont
+    )                      
   (* 
    * instantiate tag field of exception with actual one for exception replication
    *)
@@ -270,15 +277,25 @@ in
            let
              val (specTy, visited) =
                  instSigTy visited boxedKindSubst strPathSubst ID.Map.empty ty
+             val (args, visited) = 
+                 foldl (fn (arg,(newargs,visited)) =>
+                           let
+                               val (newarg,visited) = 
+                                   instSigTy visited boxedKindSubst strPathSubst tyConSubst arg
+                           in
+                               (newargs @ [newarg], visited)
+                           end)
+                       (nil,visited)
+                       args
              val newTy = 
                  case ID.Map.find(tyConSubst, #id tyCon) of
-                   NONE => T.SPECty specTy
+                   NONE => specTy
                  | SOME tyBindInfo => 
                    case (TU.peelTySpec tyBindInfo) of
                       T.TYFUN tyFun => 
-                      T.ABSSPECty(specTy, TU.betaReduceTy (tyFun,args))
-                    | T.TYCON tyCon => 
-                      T.ABSSPECty(specTy, T.CONty {tyCon = tyCon, args = args})
+                      T.ABSSPECty(T.CONty{tyCon=tyCon,args=args}, TU.betaReduceTy (tyFun,args))
+                    | T.TYCON newTyCon => 
+                      T.ABSSPECty(T.CONty{tyCon=tyCon,args=args}, T.CONty {tyCon = newTyCon, args = args})
                     | T.TYSPEC _ => 
                       raise Control.Bug "after peelTySpec there should be no TYSPEC"
            in
@@ -352,11 +369,15 @@ in
                  end
                | T.SPECty ty =>
                  let
-                   val (vsisited, newTy) =
+                   val (vsisited, newTy1) =
                        instSPECty
                          visited boxedKindSubst strPathSubst tyConSubst ty
+                   val newTy2 = case newTy1 of
+                                    T.ABSSPECty _ => newTy1
+                                  | T.CONty _ => T.SPECty newTy1
+                                  | _ => raise Control.Bug "illegal specTy form"
                  in
-                   (newTy, visited, false)
+                   (newTy2, visited, false)
                  end
                | T.POLYty {boundtvars, body} => 
                  let
@@ -379,7 +400,7 @@ in
            visited
            ty
            
-     and instSigTvKind visited boxedKindSubst strPathSubst tyConSubst {id, recKind, eqKind, tyvarName} = 
+     and instSigTvKind visited boxedKindSubst strPathSubst tyConSubst {lambdaDepth, id, recKind, eqKind, tyvarName} = 
          let
            val (visited, recKind) =
                case recKind of 
@@ -420,10 +441,13 @@ in
          in
            (
             visited,
-            {id=id, 
+            {
+             lambdaDepth = lambdaDepth,
+             id=id, 
              recKind = recKind,
              eqKind = eqKind,
-             tyvarName = tyvarName}
+             tyvarName = tyvarName
+             }
             )
          end
            
@@ -506,26 +530,6 @@ in
                       (tyConSubst :T.tyBindInfo ID.Map.map)
                       (tyCon as {name, strpath, abstract, tyvars, id, eqKind, boxedKind, datacon}) 
        =
-       let
-         val tyBindInfo = 
-             case ID.Map.find(tyConSubst,id) of
-               NONE => NONE
-             | SOME (T.TYSPEC tyspec) => SOME (TU.peelTySpec (T.TYSPEC tyspec))
-             | SOME tyBindInfo => SOME tyBindInfo
-       in
-         case  tyBindInfo of
-           SOME (T.TYCON tyCon) => (visited, tyCon)
-         | SOME (T.TYSPEC _) => 
-           raise Control.Bug
-                   "instSigTyCon:after peelTySpec there should be no TYSPEC"
-         | SOME (T.TYFUN {body,...}) => 
-           (
-            case (TU.extractAliasTyImpl body) of
-              T.CONty({tyCon,...}) => (visited, tyCon)
-            | _ => 
-              raise Control.Bug "instSigTyCon: instiantiate with non typeName tyfun"
-           )
-         | _ =>
            let 
              val _ = 
                  case ID.Map.find(boxedKindSubst,id) of
@@ -561,7 +565,6 @@ in
                }
               )
            end
-       end
      and instSigIdstate visited boxedKindSubst strPathSubst tyConSubst idstate =
          case idstate of
            T.CONID {name, strpath, funtyCon, ty, tag, tyCon} =>
@@ -604,28 +607,32 @@ in
                      instSigIdstate visited boxedKindSubst strPathSubst tyConSubst idstate
                in
                  (visited,SEnv.insert(varEnv,label,idstate))
-               end
-                 )
+               end)
            (visited, SEnv.empty)
            varEnv
            
      and instSigStrEnv 
-           visited boxedKindSubst strPathSubstOfTyCon tyConSubst strEnv =
-         SEnv.foldri
-           (fn
-            (label, T.STRUCTURE {id, name, strpath, env = Env, ...}, (visited, strEnv))
-            =>
-            let
-              val (visited, Env) = 
-                  instSigEnv
+           visited boxedKindSubst strPathSubstOfTyCon tyConSubst (T.STRUCTURE strEnvCont) =
+           let
+             val (visited, strEnvCont) =
+               SEnv.foldri
+               (fn
+                (label, {id, name, strpath, env = Env, ...}, (visited, strEnvCont))
+                =>
+                let
+                  val (visited, Env) = 
+                    instSigEnv
                     visited boxedKindSubst strPathSubstOfTyCon tyConSubst Env
-              val strPathInfo = {id = id, name = name, strpath = strpath, env = Env}
-            in
-              (visited, SEnv.insert(strEnv, label, T.STRUCTURE strPathInfo))
-            end
-              )
-           (visited, SEnv.empty)
-           strEnv
+                  val strPathInfo = {id = id, name = name, strpath = strpath, env = Env}
+                in
+                  (visited, SEnv.insert(strEnvCont, label, strPathInfo))
+                end
+                )
+               (visited, SEnv.empty)
+               strEnvCont
+           in
+             (visited, T.STRUCTURE strEnvCont)
+           end
            
      and instSigTyConEnv visited boxedKindSubst strPathSubst tyConSubst tyConEnv =
          let
@@ -711,7 +718,7 @@ in
                    visited boxedKindSubst strPathSubstOfTyCon tyConSubst tyConEnv1
              val (visited,varEnv1) = 
                  instSigVarEnv
-                   visited boxedKindSubst strPathSubstOfTyCon tyConSubst varEnv1
+                  visited  boxedKindSubst strPathSubstOfTyCon tyConSubst varEnv1
              val (visited,strEnv1) = 
                  instSigStrEnv 
                    visited boxedKindSubst strPathSubstOfTyCon tyConSubst strEnv1
@@ -719,6 +726,7 @@ in
              (visited,(tyConEnv1,varEnv1,strEnv1))
            end
              
+
      and tySpecToAbsTyCon (tyspec,
                            {name, strpath, abstract, tyvars, id, eqKind,boxedKind, datacon}
                            )
@@ -751,35 +759,44 @@ in
            (sigTE,sigVE,newSigSE)
          end
            
-     and instStrpathOfStructureInStrEnv (strEnv, sigStrEnv) =
-         SEnv.foldli (fn (strName,
-                          (T.STRUCTURE { env = (subSigTE,subSigVE,subSigSE),
-                                       id ,
-                                       name,
-                                       strpath}),
-                          newStrEnv
-                          )
-                         =>
-                         let
-                           val (newSigStrPath,newSubSigSE) =
-                               case SEnv.find(strEnv,strName) of
-                                 (* error case captured by sigmatching*)
-                                 NONE => (strpath,subSigSE)
-                               | SOME (T.STRUCTURE {env = (_,_,subSE),strpath,...}) => 
-                                 (
-                                  strpath,
-                                  instStrpathOfStructureInStrEnv (subSE,subSigSE)
-                                  )
-                         in
-                           SEnv.insert(newStrEnv,
-                                       strName,
-                                       T.STRUCTURE {env = (subSigTE, subSigVE, newSubSigSE),
-                                                  id = id,
-                                                  strpath = newSigStrPath,
-                                                  name = name})
-                         end)
-                     SEnv.empty
-                     sigStrEnv
+     and instStrpathOfStructureInStrEnv (T.STRUCTURE strEnvCont, T.STRUCTURE sigStrEnvCont) =
+       let
+         val newStrEnvCont =
+           SEnv.foldli (fn (strName,
+                            {
+                              env = (subSigTE,subSigVE,subSigSE),
+                              id,
+                              name,
+                              strpath
+                             },
+                             newStrEnvCont
+                            )
+                        =>
+                        let
+                          val (newSigStrPath,newSubSigSE) =
+                            case SEnv.find(strEnvCont, strName) of
+                              (* error case captured by sigmatching*)
+                              NONE => (strpath,subSigSE)
+                            | SOME {env = (_,_,subSE),strpath,...} => 
+                                (
+                                 strpath,
+                                 instStrpathOfStructureInStrEnv (subSE,subSigSE)
+                                 )
+                        in
+                          SEnv.insert(
+                                      newStrEnvCont,
+                                      strName,
+                                      {env = (subSigTE, subSigVE, newSubSigSE),
+                                       id = id,
+                                       strpath = newSigStrPath,
+                                       name = name}
+                                      )
+                        end)
+           SEnv.empty
+           sigStrEnvCont
+       in
+         T.STRUCTURE newStrEnvCont
+       end
                      
      (* boxedKinsSubst : instantiate boxedKind field 
       * strPathSubst : insantiate strPath field of tyCon
@@ -803,7 +820,7 @@ in
                           (boxedKindSubst, strPathSubst, tyConSubst)
                         | SOME tyBindInfo => 
                           let
-                            val boxedKindOpt = TU.boxedKindOptOfTyBindInfo tyBindInfo
+                            val boxedKind = TU.boxedKindOfTyBindInfo tyBindInfo
                             val strPathSubst =  
                                 strPathEnv.insert(
                                                   strPathSubst, 
@@ -829,7 +846,7 @@ in
                                   ID.Map.insert(tyConSubst, id, tyBindInfo) 
                           in
                             (
-                             ID.Map.insert(boxedKindSubst, id, boxedKindOpt),
+                             ID.Map.insert(boxedKindSubst, id, boxedKind),
                              strPathSubst,
                              tyConSubst
                              )
@@ -843,14 +860,13 @@ in
                           (boxedKindSubst, strPathSubst, tyConSubst)
                         | SOME tyBindInfo => 
                           ( case boxedKindValue of
-                              NONE =>
+                              T.GENERICty =>
                               let
-                                val boxedKindOpt = TU.boxedKindOptOfTyBindInfo tyBindInfo
+                                val boxedKind = TU.boxedKindOfTyBindInfo tyBindInfo
                                 val boxedKindSubst = 
-                                    case boxedKindOpt of
-                                      NONE => boxedKindSubst
-                                    | SOME _ => 
-                                      ID.Map.insert(boxedKindSubst, id, boxedKindOpt)
+                                    case boxedKind of
+                                        T.GENERICty => boxedKindSubst
+                                      | _ => ID.Map.insert(boxedKindSubst, id, boxedKind)
                                 val strPathSubst =  
                                     strPathEnv.insert(strPathSubst, 
                                                       (id,strpath),
@@ -862,7 +878,7 @@ in
                                  tyConSubst
                                  )
                               end
-                            | SOME _ =>
+                            | _ =>
                               let
                                 val strPathSubst = 
                                     strPathEnv.insert(strPathSubst, 
@@ -898,15 +914,18 @@ in
                  (ID.Map.empty, strPathEnv.empty, ID.Map.empty)
                  tyConEnv1
 
-           fun substOfStrEnv strEnv1 strEnv2 = 
+           fun substOfStrEnv (T.STRUCTURE strEnvCont1) 
+                             (T.STRUCTURE strEnvCont2) = 
                SEnv.foldli (
-                            fn (strName, T.STRUCTURE {env = (tyConEnv1,_,strEnv1),id,...},
+                            fn (strName, {env = (tyConEnv1,_, strEnv1),
+                                          id,...},
                                 (boxedKindSubst,strPathSubstOfTyCon,tyConSubst)) 
                                =>
-                               case SEnv.find(strEnv2,strName) of
+                               case SEnv.find(strEnvCont2,strName) of
                                  NONE =>
                                  (boxedKindSubst, strPathSubstOfTyCon, tyConSubst)
-                               | SOME (T.STRUCTURE {env = (tyConEnv2,_,strEnv2),strpath,...}) =>
+                               | SOME {env = (tyConEnv2,_, strEnv2),
+                                       strpath,...} =>
                                  let
                                    val subst1 = substOfTyConEnv tyConEnv1 tyConEnv2
                                    val subst2 = substOfStrEnv strEnv1 strEnv2
@@ -928,7 +947,7 @@ in
                                  end
                                    )
                            (ID.Map.empty, strPathEnv.empty, ID.Map.empty)
-                           strEnv1
+                           strEnvCont1
            val subst1 = substOfTyConEnv tyConEnv1 tyConEnv2
            val subst2 = substOfStrEnv strEnv1 strEnv2
            val (boxedKindSubst, strPathSubstOfTyCon, tyConSubst) = 
@@ -937,12 +956,24 @@ in
                 strPathEnv.unionWith #1 (#2 subst2, #2 subst1),
                 ID.Map.unionWith #1 (#3 subst2, #3 subst1)
                 )
-           val (visited,Env) = 
-               instSigEnv ID.Set.empty
-                          boxedKindSubst 
-                          strPathSubstOfTyCon
-                          tyConSubst
-                          (tyConEnv1,varEnv1,strEnv1)
+(*
+           val _ = print "\n*********** tyconSubst************* \n"
+           val _ = 
+                ID.Map.mapi (fn (id, tybind) =>
+                        (print "\n id :";
+                         print (ID.toString(id));
+                         print "\n tybind:";
+                         print (Control.prettyPrint 
+                                    (Types.format_tyBindInfo nil tybind))
+                         ))
+                    tyConSubst
+           val _ = print "\n *********************************** \n"
+*)
+           val (visited,Env) = instSigEnv ID.Set.empty
+                                boxedKindSubst 
+                                strPathSubstOfTyCon
+                                tyConSubst
+                                (tyConEnv1,varEnv1,strEnv1)
          in
            Env
          end
@@ -992,7 +1023,7 @@ in
         visited
         ty
 
-  and freshRefAddressInTvKind visited tyConSubst {id, recKind, eqKind, tyvarName}  =
+  and freshRefAddressInTvKind visited tyConSubst {lambdaDepth, id, recKind, eqKind, tyvarName}  =
       let
         val (visited, recKind) =
             case recKind of 
@@ -1029,10 +1060,13 @@ in
               end
       in
         (visited,
-         {id=id, 
+         {
+          lambdaDepth = lambdaDepth,
+          id=id, 
           recKind = recKind,
           eqKind = eqKind,
-          tyvarName = tyvarName}
+          tyvarName = tyvarName
+          }
          )
       end
             
@@ -1221,31 +1255,31 @@ in
       (visited,SEnv.empty)
       varEnv
 
-  and freshRefAddressInStrEnv visited tyConSubst strEnv =
+  and freshRefAddressInStrEnv visited tyConSubst (T.STRUCTURE strEnvCont) =
         SEnv.foldri
           (fn
-           (label, T.STRUCTURE {id, name, strpath, env = Env, ...}, (visited,strEnv))
+           (label, {id, name, strpath, env = Env, ...}, (visited, strEnvCont))
            =>
            let
-             val (visited,Env) = freshRefAddressInEnv visited tyConSubst Env
+             val (visited, Env) = freshRefAddressInEnv visited tyConSubst Env
              val strPathInfo = {id = id, name = name, strpath = strpath, env = Env}
            in
              (
               visited,
-              SEnv.insert(strEnv, label, T.STRUCTURE strPathInfo)
+              SEnv.insert(strEnvCont, label, strPathInfo)
               )
            end
              )
           (visited,SEnv.empty)
-          strEnv
+          strEnvCont
 
   and freshRefAddressInEnv visited tyConSubst  (tyConEnv, varEnv, strEnv) =
       let
         val (visited,tyConEnv) = freshRefAddressInTyConEnv visited tyConSubst tyConEnv
         val (visited,varEnv) = freshRefAddressInVarEnv  visited tyConSubst varEnv
-        val (visited,strEnv) = freshRefAddressInStrEnv  visited tyConSubst strEnv
+        val (visited,strEnvCont) = freshRefAddressInStrEnv  visited tyConSubst strEnv
       in
-        (visited,(tyConEnv,varEnv,strEnv))
+        (visited,(tyConEnv, varEnv, T.STRUCTURE strEnvCont))
       end
 
   fun freshRefAddressOfTyConInEnv (E as (TE,VE,SE)) =
@@ -1310,8 +1344,8 @@ in
                             | _ => tyConSubst)
                         ID.Map.empty
                         TE
-        fun tyConSubstOfSE SE =
-            SEnv.foldli (fn (str,T.STRUCTURE {env = (TE,VE,SE),...},tyConSubst) =>
+        fun tyConSubstOfSE (T.STRUCTURE SECont) =
+            SEnv.foldli (fn (str,{env = (TE, VE, SE),...},tyConSubst) =>
                             let
                               val tyConSubst1 = tyConSubstOfTE TE
                               val tyConSubst2 = tyConSubstOfSE SE
@@ -1325,12 +1359,13 @@ in
                             end
                         )
                         ID.Map.empty
-                        SE
+                        SECont
         val tyConSubst = ID.Map.unionWith #1 (tyConSubstOfTE TE,tyConSubstOfSE SE)
         val (visited, E) = freshRefAddressInEnv ID.Set.empty tyConSubst E
       in
         E
       end                        
+
   fun handleException (ex,loc) =
       case ex of
           exn as E.ArityMismatchInSigMatch _ =>
@@ -1359,6 +1394,58 @@ in
           E.enqueueError(loc, exn)
         | exn as E.unboundTyconInSigMatch _ =>
           E.enqueueError(loc, exn)
-        | _ => raise Control.Bug "unmatched signature match check"
+        | exn as E.KindCheckFailure _ =>
+          E.enqueueError(loc, exn)
+        | exn as E.KindConstranintOnAbstractTypeSpecification _ =>
+          E.enqueueError(loc, exn)
+        | TCU.ExBoxedKindCheckFailure {tyConName, requiredKind, objectKind} =>
+          E.enqueueError(loc, E.KindCheckFailure{tyConName = tyConName,
+                                                 requiredKind = requiredKind,
+                                                 objectKind = objectKind})
+        | _ => raise Control.Bug "unmatched signature match exception"
+
+
+    fun substTyEnvFromTyConEnv (sigTyConEnv, strTyConEnv) =
+        SEnv.foldli (
+		     fn (tyCon,tyBind1,substTyEnv) =>
+                        case SEnv.find(strTyConEnv,tyCon) of 
+                          NONE => substTyEnv
+                        | SOME tyBind2 => 
+                          ( case tyBind1 of
+                              T.TYSPEC{spec = {id,...},...} => 
+                              ID.Map.insert(substTyEnv,id , tyBind2)
+                            | T.TYCON{id,...} =>
+                              ID.Map.insert(substTyEnv,id , tyBind2)
+                            | _ => substTyEnv
+                          )
+		    )
+                    ID.Map.empty
+                    sigTyConEnv
+
+    fun substTyEnvFromEnv (
+                           (sigTyConEnv,sigVarEnv, T.STRUCTURE sigStrEnvCont), 
+                           (strTyConEnv,strVarEnv,T.STRUCTURE strStrEnvCont)
+                           ) 
+      =
+      let
+        val substTyEnv1 = substTyEnvFromTyConEnv (sigTyConEnv,strTyConEnv)
+        val substTyEnv2 =
+            SEnv.foldli (
+                         fn (strId, {env=sigEnv,...}, newTyBindsMap) =>
+                            case SEnv.find(strStrEnvCont,strId) of
+                                NONE => newTyBindsMap
+                            | SOME {env=strEnv,...} => 
+                              ID.Map.unionWith #1 (
+                                                   newTyBindsMap, 
+                                                   substTyEnvFromEnv (sigEnv,strEnv)
+                                                   )
+                        )
+                        substTyEnv1
+                        sigStrEnvCont
+      in
+        substTyEnv2
+      end
+
+
 end
 end

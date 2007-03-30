@@ -17,6 +17,7 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 #define MESSAGE_TYPE_OUTPUT_RESULT 5
 #define MESSAGE_TYPE_INPUT_REQUEST 6
 #define MESSAGE_TYPE_INPUT_RESULT 7
+#define MESSAGE_TYPE_CHANGE_DIRECTORY_REQUEST 8
 
 #define MAJOR_CODE_SUCCESS 0
 #define MAJOR_CODE_FAILURE 1
@@ -57,6 +58,18 @@ InteractiveSession::sendUInt32Value(UInt32Value value)
                                      (ByteValue*)&inBigEndian);
 }
 
+void
+InteractiveSession::sendSInt32Value(SInt32Value value)
+{
+    // transmit 32bit word in network byte order (= big endian)
+    UInt32Value inBigEndian = value;
+#if defined(BYTE_ORDER_LITTLE_ENDIAN)
+    reverseQuadByte(&inBigEndian);
+#endif
+    messageOutputChannel_->sendArray(sizeof(SInt32Value),
+                                     (ByteValue*)&inBigEndian);
+}
+
 UInt32Value
 InteractiveSession::receiveUInt32Value()
 {
@@ -66,6 +79,19 @@ InteractiveSession::receiveUInt32Value()
                                   (ByteValue*)&inBigEndian);
 #if defined(BYTE_ORDER_LITTLE_ENDIAN)
     reverseQuadByte(&inBigEndian);
+#endif
+    return inBigEndian;
+}
+
+SInt32Value
+InteractiveSession::receiveSInt32Value()
+{
+    // transmit 32bit word in network byte order (= big endian)
+    SInt32Value inBigEndian;
+    messageInputChannel_->receive(sizeof(SInt32Value),
+                                  (ByteValue*)&inBigEndian);
+#if defined(BYTE_ORDER_LITTLE_ENDIAN)
+    reverseQuadByte((UInt32Value*)&inBigEndian);
 #endif
     return inBigEndian;
 }
@@ -134,6 +160,20 @@ InteractiveSession::sendExecutionResult(Result* result)
     sendResult(result);
 }
 
+void
+InteractiveSession::sendExitRequest(SInt32Value exitCode)
+{
+    messageOutputChannel_->send(MESSAGE_TYPE_EXIT_REQUEST);
+    sendSInt32Value(exitCode);
+}
+
+void
+InteractiveSession::sendChangeDirectoryRequest(const char* directory)
+{
+    messageOutputChannel_->send(MESSAGE_TYPE_CHANGE_DIRECTORY_REQUEST);
+    sendByteArray(::strlen(directory), directory);
+}
+
 void 
 InteractiveSession::sendInputRequest(UInt32Value length)
 {
@@ -198,6 +238,8 @@ InteractiveSession::start()
                     DBGWRAP(LOG.error(what));
                     sendExecutionResult(&failure);
                 }
+                fflush(stdout);
+                fflush(stderr);
                 break;
             }
           case MESSAGE_TYPE_EXIT_REQUEST:

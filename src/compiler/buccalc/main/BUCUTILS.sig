@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: BUCUTILS.sig,v 1.3 2006/02/28 16:11:00 kiyoshiy Exp $
+ * @version $Id: BUCUTILS.sig,v 1.4 2007/02/25 03:36:57 ducnh Exp $
  *)
 
 signature BUCUTILS = sig
@@ -13,6 +13,7 @@ signature BUCUTILS = sig
   val newVar: Types.ty * BUCCalc.varKind -> BUCCalc.varInfo
   val newTLVar : Types.ty -> TypedLambda.varIdInfo
 
+  val rootTy :  Types.ty -> Types.ty
   val convertTy : Types.ty -> Types.ty
   val convertVarInfo : BUCCalc.varKind -> TypedLambda.varIdInfo -> BUCCalc.varInfo
 

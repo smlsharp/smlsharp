@@ -4,14 +4,14 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: InteractiveSession.sml,v 1.13 2006/02/28 16:11:04 kiyoshiy Exp $
+ * @version $Id: InteractiveSession.sml,v 1.22 2007/03/13 05:34:55 kiyoshiy Exp $
  *)
 structure InteractiveSession : SESSION = 
 struct
 
   (***************************************************************************)
 
-  open BasicTypes
+  structure BT = BasicTypes
   structure SU = SignalUtility
   structure RTP = RuntimeProxyTypes
 
@@ -23,49 +23,43 @@ struct
          terminalOutputChannel : ChannelTypes.OutputChannel,
          terminalErrorChannel : ChannelTypes.OutputChannel,
          runtimeProxy : RTP.Proxy
-(*
-         (**
-          * the destination to which the messages should be sent.
-          *)
-         messageInputChannel : ChannelTypes.InputChannel,
-         (**
-          * the destination to which the messages should be sent.
-          *)
-         messageOutputChannel : ChannelTypes.OutputChannel
-*)
        }
 
   (****************************************)
 
   type ByteArray = Word8Array.array
 
-  type FileDescriptor = UInt32
+  type ByteVector = Word8Array.vector
+
+  type FileDescriptor = BT.UInt32
 
   type ByteOrder = SystemDefTypes.byteOrder
 
-  type MajorCode = UInt8
+  type MajorCode = BT.UInt8
 
-  type MinorCode = UInt8
+  type MinorCode = BT.UInt8
 
-  datatype Result = Success | Failure of (MajorCode * MinorCode * ByteArray)
+  datatype Result = Success | Failure of (MajorCode * MinorCode * ByteVector)
 
   (********************)
 
   type InitializationResult = Result
 
-  type ExitRequest = {exitCode : SInt32}
+  type ExitRequest = {exitCode : BT.SInt32}
 
-  type ExecutionRequest = {endian : ByteOrder, code : ByteArray}
+  type ExecutionRequest = {code : ByteVector}
 
   type ExecutionResult = Result
 
-  type OutputRequest = {descriptor : FileDescriptor, data : ByteArray}
+  type OutputRequest = {descriptor : FileDescriptor, data : ByteVector}
 
   type OutputResult = Result
 
-  type InputRequest = {length : UInt32}
+  type InputRequest = {length : BT.UInt32}
 
-  type InputResult = {result : Result, data : ByteArray option}
+  type InputResult = {result : Result, data : ByteVector option}
+
+  type ChangeDirectoryRequest = {directory : ByteVector}
 
   (********************)
 
@@ -78,6 +72,7 @@ struct
          | OutputResult of OutputResult
          | InputRequest of InputRequest
          | InputResult of InputResult
+         | ChangeDirectoryRequest of ChangeDirectoryRequest
 
   (***************************************************************************)
 
@@ -85,7 +80,7 @@ struct
 
   exception ProtocolException of string
 
-  exception ExecutionException of (MajorCode * MinorCode * ByteArray)
+  exception ExecutionException of (MajorCode * MinorCode * ByteVector)
 
   exception Interrupted
 
@@ -94,7 +89,15 @@ struct
   fun wrapByHandler wrapee arg =
       (wrapee arg)
       handle exn as (SessionTypes.Error _) => raise exn
+           | exn as (SessionTypes.Exit _) => raise exn
            | exn => raise (SessionTypes.Error exn)
+
+  fun handleInternalError exn =
+      (
+        print "Internal Error: ";
+        print (exnMessage exn);
+        print "\n"
+      )
 
   fun wrapBySignalHandler (proxy : RTP.Proxy) wrapee arg =
       let
@@ -104,19 +107,20 @@ struct
 *)
       in
 (*
-          SU.doWithAction ["INT", "CHLD"] (SU.Handle handler) wrapee arg
+          SU.doWithAction [SU.SIGINT, "CHLD"] (SU.Handle handler) wrapee arg
 *)
-          SU.doWithAction ["INT"] (SU.Handle handler) wrapee arg
+          SU.doWithAction [SU.SIGINT] (SU.Handle handler) wrapee arg
 (*
  Ignore is sufficient for the purpose, but it causes strange status of
 messaging between the compiler and the runtime.
-          SU.doWithAction ["INT"] SU.Ignore wrapee arg
+          SU.doWithAction [SU.SIGINT] SU.Ignore wrapee arg
 *)
       end
 
+  (** send a UInt32 in NetworkByteOrder. *)
   fun sendUInt32 (channel : ChannelTypes.OutputChannel) uint32 =
       let
-          fun out uint32 = #send channel (UInt32ToUInt8 uint32)
+          fun out uint32 = #send channel (BT.UInt32ToUInt8 uint32)
       in
           (
             out (UInt32.>> (uint32, 0w24));
@@ -127,12 +131,18 @@ messaging between the compiler and the runtime.
       end
 
   fun sendSInt32 (channel : ChannelTypes.OutputChannel) sint32 =
-      sendUInt32 channel (SInt32ToUInt32 sint32)
+      sendUInt32 channel (BT.SInt32ToUInt32 sint32)
 
   fun sendByteArray (channel : ChannelTypes.OutputChannel) array =
       (
-        sendUInt32 channel (IntToUInt32 (Word8Array.length array));
+        sendUInt32 channel (BT.IntToUInt32 (Word8Array.length array));
         #sendArray channel array
+      )
+
+  fun sendByteVector (channel : ChannelTypes.OutputChannel) vector =
+      (
+        sendUInt32 channel (BT.IntToUInt32 (Word8Vector.length vector));
+        #sendVector channel vector
       )
 
   fun sendResult (channel : ChannelTypes.OutputChannel) result =
@@ -142,17 +152,14 @@ messaging between the compiler and the runtime.
           (
             #send channel majorCode;
             #send channel minorCode;
-            sendByteArray channel description
+            sendByteVector channel description
           )
 
   fun sendExitRequest channel ({exitCode} : ExitRequest) =
       sendSInt32 channel exitCode
 
-  fun sendExecutionRequest channel ({endian, code} : ExecutionRequest) =
-      (
-        #send channel (WordToUInt8(SystemDefTypes.byteOrderToWord endian));
-        sendByteArray channel code
-      )
+  fun sendExecutionRequest channel ({code} : ExecutionRequest) =
+      sendByteVector channel code
 
   fun sendOutputResult channel result = sendResult channel result
 
@@ -160,7 +167,7 @@ messaging between the compiler and the runtime.
       (
         sendResult channel result;
         case result of
-            Success => sendByteArray channel (valOf data)
+            Success => sendByteVector channel (valOf data)
           | _ => ()
       )
 
@@ -178,12 +185,13 @@ messaging between the compiler and the runtime.
 
   (********************)
 
+  (** receive a UInt32 in NetworkByteOrder. *)
   fun receiveUInt32 (channel : ChannelTypes.InputChannel) =
       let
           fun receive () =
               case #receive channel () of
                   NONE => raise MessageFormatException "cannot receive UInt32"
-                | SOME(byte) => UInt8ToUInt32 byte
+                | SOME(byte) => BT.UInt8ToUInt32 byte
           val byte1 = receive()
           val byte2 = receive()
           val byte3 = receive()
@@ -200,17 +208,34 @@ messaging between the compiler and the runtime.
           )
       end
 
+  fun receiveSInt32 channel =
+      BT.UInt32ToSInt32(receiveUInt32 channel)
+
   fun receiveFileDescriptor channel = receiveUInt32 channel
 
   fun receiveByteArray channel =
       let
-          val length = UInt32ToInt (receiveUInt32 channel)
+          val length = BT.UInt32ToInt (receiveUInt32 channel)
           val data = #receiveArray channel length
       in
-          if Word8Array.length data <> length then
-              raise
+          if Word8Array.length data <> length
+          then
+            raise
               MessageFormatException
-              "cannot receive sufficient bytes of array."
+                  "cannot receive sufficient bytes of array."
+          else data
+      end
+
+  fun receiveByteVector channel =
+      let
+          val length = BT.UInt32ToInt (receiveUInt32 channel)
+          val data = #receiveVector channel length
+      in
+          if Word8Vector.length data <> length
+          then
+            raise
+              MessageFormatException
+                  "cannot receive sufficient bytes of array."
           else data
       end
 
@@ -222,7 +247,7 @@ messaging between the compiler and the runtime.
           case #receive channel() of
               NONE => raise MessageFormatException "cannot receive MinorCode"
             | SOME(minorCode) =>
-              let val description = receiveByteArray channel
+              let val description = receiveByteVector channel
               in Failure(majorCode, minorCode, description)
               end
 
@@ -230,15 +255,24 @@ messaging between the compiler and the runtime.
 
   fun receiveExecutionResult channel = receiveResult channel
 
+  fun receiveExitRequest channel = {exitCode = receiveSInt32 channel}
+
   fun receiveOutputRequest channel =
       let
           val descriptor = receiveFileDescriptor channel
-          val data = receiveByteArray channel
+          val data = receiveByteVector channel
       in {descriptor = descriptor, data = data} end
 
   fun receiveInputRequest channel =
       let val length = receiveUInt32 channel
       in {length = length} end
+
+  fun receiveChangeDirectoryRequest channel =
+      let
+        val data = receiveByteVector channel
+      in
+        {directory = data}
+      end
 
   fun receiveMessage channel =
       case #receive channel () of
@@ -246,19 +280,22 @@ messaging between the compiler and the runtime.
         | SOME(messageType) =>
           case messageType of
               0w0 => InitializationResult(receiveInitializationResult channel)
+            | 0w1 => ExitRequest(receiveExitRequest channel)
             | 0w3 => ExecutionResult(receiveExecutionResult channel)
             | 0w4 => OutputRequest(receiveOutputRequest channel)
             | 0w6 => InputRequest(receiveInputRequest channel)
+            | 0w8 =>
+              ChangeDirectoryRequest(receiveChangeDirectoryRequest channel)
             | _ =>
               raise
-              MessageFormatException
-              ("unknown messageType:" ^ Word8.toString messageType)
+                MessageFormatException
+                    ("unknown messageType:" ^ Word8.toString messageType)
 
   (****************************************)
 
   fun inputLine length (channel : ChannelTypes.InputChannel) =
       let
-          fun readUntilEOL (bytesToRead : UInt32) buffer =
+          fun readUntilEOL (bytesToRead : BT.UInt32) buffer =
               if 0w0 = bytesToRead then buffer
               else
                   case #receive channel () of
@@ -267,8 +304,7 @@ messaging between the compiler and the runtime.
                     | SOME(byte) =>
                       readUntilEOL (bytesToRead - 0w1) (byte :: buffer)
       in
-          Word8Array.fromList
-          (List.rev (readUntilEOL length []))
+          Word8Vector.fromList (List.rev (readUntilEOL length []))
       end
 
   fun openSession 
@@ -288,67 +324,84 @@ messaging between the compiler and the runtime.
       case receiveMessage messageInputChannel of
           InitializationResult(Success) =>
           let
-              fun waitForExecutionResult () =
-                  let
-                    fun receive () =
-                        (wrapBySignalHandler
-                             proxy receiveMessage messageInputChannel)
-                        handle OS.SysErr _ => receive ()
-                  in
-                    case  receive () of
-                        ExecutionResult result => result
-                      | InputRequest {length} =>
-                        let val input = inputLine length terminalInputChannel
-                        in
-                            sendMessage
-                            messageOutputChannel
-                            (InputResult{result = Success, data = SOME input});
-                            waitForExecutionResult ()
-                        end
-                      | OutputRequest {descriptor, data} =>
-                        let
-                            val channel =
-                                case descriptor of
-                                    0w1 => terminalOutputChannel
-                                  | 0w2 => terminalErrorChannel
-                                  | _ =>
-                                    raise
-                                        ProtocolException
-                                            ("invalid descriptor:" ^
-                                             (UInt32.toString descriptor))
-                        in
-                            #sendArray channel data;
-                            sendMessage
-                                messageOutputChannel
-                                (OutputResult Success);
-                            waitForExecutionResult ()
-                        end
-                      | message => raise ProtocolException "invalid message."
-                  end
-                                                   
-              fun execute codeBlock =
-                  (
-                    sendMessage
-                    messageOutputChannel
+            fun waitForExecutionResult () =
+                let
+                  fun receive () =
+                      (wrapBySignalHandler
+                           proxy receiveMessage messageInputChannel)
+                      handle OS.SysErr _ => receive ()
+                in
+                  case receive () of
+                    ExecutionResult result => result
+                  | ExitRequest {exitCode} => raise SessionTypes.Exit exitCode
+                  | InputRequest {length} =>
+                    let
+                      val input =
+                          (inputLine length terminalInputChannel)
+                          handle e =>
+                                 (
+                                   handleInternalError e;
+                                   Word8Vector.fromList []
+                                 )
+                    in
+                      sendMessage
+                          messageOutputChannel
+                          (InputResult{result = Success, data = SOME input});
+                      waitForExecutionResult ()
+                    end
+                  | OutputRequest {descriptor, data} =>
                     (
-                      ExecutionRequest
-                      {endian = SystemDef.NativeByteOrder, code = codeBlock}
-                    );
-                    case waitForExecutionResult () of
-                        Success => ()
-                      | Failure(majorCode, minorCode, description) =>
-                        raise
-                        ExecutionException(majorCode, minorCode, description)
-                  )
-              fun close () =
+                      (let
+                         val channel =
+                             case descriptor of
+                               0w1 => terminalOutputChannel
+                             | 0w2 => terminalErrorChannel
+                             | _ =>
+                               raise
+                                 ProtocolException
+                                     ("invalid descriptor:" ^
+                                      (UInt32.toString descriptor))
+                       in
+                         #sendVector channel data
+                       end)
+                      handle e => (handleInternalError e; ());
+                      sendMessage messageOutputChannel (OutputResult Success);
+                      waitForExecutionResult ()
+                    )
+                  | ChangeDirectoryRequest {directory = bytes} =>
+                    (
+                      let
+                        val directory = Byte.bytesToString bytes
+                      in
+                        OS.FileSys.chDir directory
+                      end
+                        handle e => (handleInternalError e; ());
+                      (* no response *)
+                      waitForExecutionResult ()
+                    )
+                  | message => raise ProtocolException "invalid message."
+                end
+                                                   
+            fun execute codeBlock =
+                (
                   sendMessage
-                  messageOutputChannel
-                  (ExitRequest{exitCode = IntToSInt32 0})
+                      messageOutputChannel
+                      (ExecutionRequest {code = codeBlock});
+                  case waitForExecutionResult () of
+                    Success => ()
+                  | Failure(majorCode, minorCode, description) =>
+                    raise
+                      ExecutionException(majorCode, minorCode, description)
+                )
+            fun close () =
+                sendMessage
+                    messageOutputChannel
+                    (ExitRequest{exitCode = BT.IntToSInt32 0})
           in
-              {
-                execute = wrapByHandler execute,
-                close = wrapByHandler close
-              }
+            {
+              execute = wrapByHandler execute,
+              close = wrapByHandler close
+            }
           end
         | InitializationResult(Failure(failDetail)) =>
           raise ExecutionException failDetail

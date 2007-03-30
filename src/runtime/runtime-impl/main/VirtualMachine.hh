@@ -1,27 +1,49 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: VirtualMachine.hh,v 1.24 2006/03/01 14:15:16 kiyoshiy Exp $
+ * @version $Id: VirtualMachine.hh,v 1.33 2007/03/03 22:54:08 kiyoshiy Exp $
  */
 #ifndef VirtualMachine_hh_
 #define VirtualMachine_hh_
 
-#include <signal.h>
-#include <stdio.h>
-#include <setjmp.h>
-
 #include "ExecutableLinker.hh"
 #include "Heap.hh"
 #include "Session.hh"
-#include "VariableLengthArray.hh"
 #include "WordOperations.hh"
 #include "EmptyHandlerStackException.hh"
 #include "IllegalStateException.hh"
 #include "NoEnoughFrameStackException.hh"
 #include "NoEnoughHandlerStackException.hh"
+#include "OutOfMemoryException.hh"
 #include "Log.hh"
 #include "Debug.hh"
+#include "FFI.hh"
+
+#include <setjmp.h>
+#include <list>
+#include <vector>
+
+#define LARGEFFISWITCH
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
+
+/////////////////////////////////////////////////
+
+#define ASSERT_VALID_FRAME_VAR(SP, index) \
+ASSERT((!FrameStack::isPointerSlot((SP), (index))) \
+       || Heap::isValidBlockPointer(FRAME_ENTRY((SP), (index)).blockRef))
+
+#define ASSERT_SAME_TYPE_SLOTS(SP1, index1, SP2, index2) \
+ASSERT(FrameStack::isPointerSlot((SP1), (index1)) \
+       == FrameStack::isPointerSlot((SP2), (index2)))
+
+#define ASSERT_SAME_TYPE_SLOT_FIELD(SP, index1, block, index2) \
+ASSERT(FrameStack::isPointerSlot((SP), (index1)) \
+       == Heap::isPointerField((block), (index2)))
+
+#define ASSERT_REAL64_ALIGNED(address) \
+ASSERT(0 == ((UInt32Value)(address)) % sizeof(Real64Value))
+
+/////////////////////////////////////////////////
 
 class VirtualMachineExecutionMonitor;
 
@@ -30,11 +52,14 @@ class VirtualMachineExecutionMonitor;
  */
 class VirtualMachine
     : public RootSet,
+      public FinalizerExecutor, 
       public WordOperations 
 {
     ///////////////////////////////////////////////////////////////////////////
-
   private:
+
+    typedef std::list<Cell**> BlockPointerRefList;
+    typedef std::vector<Cell*> BlockPointerVector;
 
     static Session* session_;
     static VirtualMachine* instance_;
@@ -49,18 +74,19 @@ class VirtualMachine
      * collector).
      */
 
-    static Cell* savedENV_;
-    static UInt32Value* savedSP_;
+    static Cell* ENV_;
+    static UInt32Value* SP_;
+    static UInt32Value* PC_;
 
     /**
      * global table of arrays
      */
-    static VariableLengthArray globalArrays_;
+    static BlockPointerVector globalArrays_;
 
     /**
      * a stack to save pointers to blocks temporarily.
      */
-    static VariableLengthArray temporaryPointers_;
+    static BlockPointerRefList temporaryPointers_;
 
     /** SIGINT handler which is overriden by VM's handler. */
     static void (*prevSIGINTHandler_)(int);
@@ -73,11 +99,8 @@ class VirtualMachine
     /** SIGPIPE handler which is overriden by VM's handler. */
     static void (*prevSIGPIPEHandler_)(int);
 
-    /** SIGSEGV handler which is overriden by VM's handler. */
-    static void (*prevSIGSEGVHandler_)(int);
-
     /** used to jump from signalHandler to 'execute' function */
-    static jmp_buf onSignal_jmp_buf;
+    static jmp_buf onSIGFPE_jmp_buf;
 
     /** the name of VM instance. */
     static const char* name_;
@@ -93,7 +116,8 @@ class VirtualMachine
     static Cell primitiveException_;
 
 #ifdef IML_ENABLE_EXECUTION_MONITORING
-    static VariableLengthArray executionMonitors_;
+    typedef std::list<VirtualMachineExecutionMonitor*> MonitorList;
+    static MonitorList executionMonitors_;
 #endif
 
 /*
@@ -339,8 +363,11 @@ class VirtualMachine
             if(getAvailableSize(SP) < frameSize){
                 throw NoEnoughFrameStackException();
             }
+            ASSERT(0 == ((frameSize * sizeof(Cell)) % FRAME_ALIGNMENT));
 
             SP -= frameSize; // extend the stack to lower address
+            ASSERT_REAL64_ALIGNED(FRAME_TOP_ADDRESS(SP));
+
             FRAME_SIZE(SP) = frameSize;
             FRAME_FUNINFO(SP) = funInfoAddress;
             FRAME_BITMAP(SP) = bitmap;
@@ -521,25 +548,6 @@ class VirtualMachine
         }
 
         /**
-         * remove top entries whose frame field is equals to the specified SP.
-         */
-        INLINE_FUN static
-        void removeHandlersOfFrame(UInt32Value* SP)
-        {
-            while(true)
-            {
-                if(currentTop_ == stack_){ break; }
-                UInt32Value* nextEntry =
-                currentTop_ - WORDS_OF_HANDLERSTACK_ENTRY;
-                ASSERT(stack_ <= nextEntry);
-                if(SP !=
-                   (UInt32Value*)(nextEntry[INDEX_OF_FRAME_HANDLERSTACK]))
-                { break; }
-                currentTop_ = nextEntry;
-            }
-        };
-
-        /**
          * remove the top entry.
          */
         INLINE_FUN static
@@ -600,6 +608,17 @@ class VirtualMachine
     ///////////////////////////////////////////////////////////////////////////
 
   public:
+    /**
+     * 
+     */
+    enum UncaughtExceptionHandleMode
+    {
+        /** exit by lngjmp */
+        Longjump,
+
+        /** ignore exception */
+        Ignore
+    };
 
     /**
      * constructor
@@ -642,10 +661,31 @@ class VirtualMachine
               SystemError);
 
     static
-    int addExecutionMonitor(VirtualMachineExecutionMonitor* monitor);
+    UInt32Value executeFunction(UncaughtExceptionHandleMode mode,
+                                UInt32Value *entryPoint, Cell *env,
+                                Cell *returnValue,
+                                bool returnBoxed,
+                                FFI::Arguments &args)
+        throw(UserException,
+              IMLRuntimeException,
+              SystemError);
+
+    static 
+    UInt32Value executeClosure_PA(UncaughtExceptionHandleMode mode,
+                                  Cell closure,
+                                  Cell* arg)
+        throw(UserException,
+              IMLRuntimeException,
+              SystemError);
 
     static
-    VirtualMachineExecutionMonitor* removeExecutionMonitor(int index);
+    void executeLoop(void)
+        throw(UserException,
+              IMLRuntimeException,
+              SystemError);
+
+    static
+    void addExecutionMonitor(VirtualMachineExecutionMonitor* monitor);
 
     static
     const char* getName(){
@@ -660,12 +700,12 @@ class VirtualMachine
 
     static
     void pushTemporaryRoot(Cell** blockRef){
-        temporaryPointers_.push((void*)blockRef);
+        temporaryPointers_.push_front(blockRef);
     }
 
     static
-    Cell** popTemporaryRoot(){
-        return (Cell**)temporaryPointers_.pop();
+    void popTemporaryRoot(){
+        temporaryPointers_.pop_front();
     }
 
     static
@@ -1027,6 +1067,14 @@ class VirtualMachine
 
     virtual
     void trace(RootTracer* tracer)
+        throw(IMLRuntimeException);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Concretization of class FinalizerExecutor
+  public:
+
+    virtual
+    void executeFinalizer(Cell* finalizable)
         throw(IMLRuntimeException);
 
 };

@@ -1,5 +1,16 @@
 Group
 is
+
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
+        smlnj-lib.cm
+#endif
+
+#if defined(NEW_CM)
+        $/basis.cm
+#endif
+
         FORMAT_EXPRESSION.sig
         FormatExpression.sml
         PRINTER_PARAMETER.sig

@@ -1,0 +1,267 @@
+<HTML>
+<HEAD>
+<TITLE>IMPERATIVE_IO</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>IMPERATIVE_IO</H2>
+<DL>
+<DT> <B>All Known Implementing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="FctBinIOFn.html">BinIOFn</A>,&nbsp;<A HREF="StrBinIO.html">BinIO</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigIMPERATIVE_IO.html">IMPERATIVE_IO</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="SigIMPERATIVE_IO-StrStreamIO.html">StreamIO</A>&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html">STREAM_IO</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeelem">elem</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;sharing&nbsp;type&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A>&nbsp;=&nbsp;<A HREF="SigSTREAM_IO.html#Typevector">StreamIO.vector</A><br>
+&nbsp;&nbsp;sharing&nbsp;type&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeelem">elem</A>&nbsp;=&nbsp;<A HREF="SigSTREAM_IO.html#Typeelem">StreamIO.elem</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#Valinput">input</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#Valinput1">input1</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeelem">elem</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValinputN">inputN</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValinputAll">inputAll</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValcanInput">canInput</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#Vallookahead">lookahead</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeelem">elem</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValcloseIn">closeIn</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValendOfStream">endOfStream</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#Valoutput">output</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#Valoutput1">output1</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeelem">elem</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValflushOut">flushOut</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValcloseOut">closeOut</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValmkInstream">mkInstream</A>&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValgetInstream">getInstream</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValsetInstream">setInstream</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValgetPosOut">getPosOut</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeout_pos">StreamIO.out_pos</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValsetPosOut">setPosOut</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeout_pos">StreamIO.out_pos</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValmkOutstream">mkOutstream</A>&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValgetOutstream">getOutstream</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigIMPERATIVE_IO.html#ValsetOutstream">setOutstream</A>&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typevector"><!-- --></A>
+<H3>vector</H3>
+<P>
+<CODE>type&nbsp;vector</CODE>
+
+<HR>
+<A NAME="Typeelem"><!-- --></A>
+<H3>elem</H3>
+<P>
+<CODE>type&nbsp;elem</CODE>
+
+<HR>
+<A NAME="Typeinstream"><!-- --></A>
+<H3>instream</H3>
+<P>
+<CODE>type&nbsp;instream</CODE>
+
+<HR>
+<A NAME="Typeoutstream"><!-- --></A>
+<H3>outstream</H3>
+<P>
+<CODE>type&nbsp;outstream</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valinput"><!-- --></A>
+<H3>input</H3>
+<P>
+<CODE>val&nbsp;input&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A></CODE>
+
+<HR>
+<A NAME="Valinput1"><!-- --></A>
+<H3>input1</H3>
+<P>
+<CODE>val&nbsp;input1&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeelem">elem</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValinputN"><!-- --></A>
+<H3>inputN</H3>
+<P>
+<CODE>val&nbsp;inputN&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A></CODE>
+
+<HR>
+<A NAME="ValinputAll"><!-- --></A>
+<H3>inputAll</H3>
+<P>
+<CODE>val&nbsp;inputAll&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A></CODE>
+
+<HR>
+<A NAME="ValcanInput"><!-- --></A>
+<H3>canInput</H3>
+<P>
+<CODE>val&nbsp;canInput&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Vallookahead"><!-- --></A>
+<H3>lookahead</H3>
+<P>
+<CODE>val&nbsp;lookahead&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeelem">elem</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValcloseIn"><!-- --></A>
+<H3>closeIn</H3>
+<P>
+<CODE>val&nbsp;closeIn&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValendOfStream"><!-- --></A>
+<H3>endOfStream</H3>
+<P>
+<CODE>val&nbsp;endOfStream&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valoutput"><!-- --></A>
+<H3>output</H3>
+<P>
+<CODE>val&nbsp;output&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typevector">vector</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valoutput1"><!-- --></A>
+<H3>output1</H3>
+<P>
+<CODE>val&nbsp;output1&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeelem">elem</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValflushOut"><!-- --></A>
+<H3>flushOut</H3>
+<P>
+<CODE>val&nbsp;flushOut&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValcloseOut"><!-- --></A>
+<H3>closeOut</H3>
+<P>
+<CODE>val&nbsp;closeOut&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValmkInstream"><!-- --></A>
+<H3>mkInstream</H3>
+<P>
+<CODE>val&nbsp;mkInstream&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ValgetInstream"><!-- --></A>
+<H3>getInstream</H3>
+<P>
+<CODE>val&nbsp;getInstream&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A></CODE>
+
+<HR>
+<A NAME="ValsetInstream"><!-- --></A>
+<H3>setInstream</H3>
+<P>
+<CODE>val&nbsp;setInstream&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValgetPosOut"><!-- --></A>
+<H3>getPosOut</H3>
+<P>
+<CODE>val&nbsp;getPosOut&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeout_pos">StreamIO.out_pos</A></CODE>
+
+<HR>
+<A NAME="ValsetPosOut"><!-- --></A>
+<H3>setPosOut</H3>
+<P>
+<CODE>val&nbsp;setPosOut&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeout_pos">StreamIO.out_pos</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValmkOutstream"><!-- --></A>
+<H3>mkOutstream</H3>
+<P>
+<CODE>val&nbsp;mkOutstream&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A>&nbsp;->&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A></CODE>
+
+<HR>
+<A NAME="ValgetOutstream"><!-- --></A>
+<H3>getOutstream</H3>
+<P>
+<CODE>val&nbsp;getOutstream&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A></CODE>
+
+<HR>
+<A NAME="ValsetOutstream"><!-- --></A>
+<H3>setOutstream</H3>
+<P>
+<CODE>val&nbsp;setOutstream&nbsp;:&nbsp;<A HREF="SigIMPERATIVE_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

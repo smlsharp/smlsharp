@@ -3,17 +3,19 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypeInferenceUtils.sml,v 1.26 2006/03/02 12:53:26 bochao Exp $
+ * @version $Id: TypeInferenceUtils.sml,v 1.35 2007/02/28 15:31:26 katsu Exp $
  *)
 structure TypeInferenceUtils =
 struct
   local 
     structure PT = PatternCalcWithTvars
+    structure PDT = PredefinedTypes
     structure TIC = TypeInferenceContext
     structure TC = TypeContext
     structure TU = TypesUtils
     structure E = TypeInferenceError
-    open Types StaticEnv TypesUtils TypedCalc
+    structure STE = StaticTypeEnv
+    open Types TypesUtils TypedCalc
   in
   
   val dummyTyId = ref 0
@@ -205,49 +207,18 @@ struct
             | FUNMty(_, ty) => raise Control.Bug "Uncurried fun type in OPRIM"
             | _ =>raise Control.Bug "oprim type"
           end
-      | FFID (foreignFunPathInfo as {name, strpath, ty, argTys}) =>
-        (case ty of
-           FUNMty([argTy], resultTy) =>
-           let
-             val funVarPathInfo =
-                 {name = name, strpath = varStrPath, ty = ty}
-             val funVarExp = TPVAR(funVarPathInfo, loc)
-             val newVarPathInfo =
-                 {name = Vars.newTPVarName(), strpath = NilPath, ty = argTy}
-           in
-             (
-               ty,
-               TPFNM
-                   {
-                     argVarList=[newVarPathInfo],
-                     bodyTy=resultTy,
-                     bodyExp=
-                       TPFOREIGNAPPLY
-                         {
-                           funExp=funVarExp,
-                           instTyList=nil,
-                           argExp=TPVAR (newVarPathInfo, loc),
-                           argTyList=argTys,
-                           loc=loc
-                         },
-                     loc=loc
-                   }
-             )
-           end
-         | FUNMty(_,_) =>raise Control.Bug "Uncurried fun type in FFID"
-         | _ =>raise Control.Bug "datacon type")
       | RECFUNID _ => raise Control.Bug "recfunid in etaExpandCon"
       | VARID _ => raise Control.Bug "var in etaExpandCon"
 
   fun tyConIdInTyBindInfo tyBindInfo = 
     case  tyBindInfo of
-      TYCON(tyCon) => TU.tyConId tyCon
+      TYCON({id, ...}) => id
     | TYSPEC {spec={id, ...},impl} => id
     | TYFUN {name,...} => raise (E.SharingOnTypeFun {tyConName = name})
 
   fun tyConIdInTyBindInfoOpt tyBindInfo = 
     case  tyBindInfo of
-      TYCON(tyCon) => SOME (TU.tyConId tyCon)
+      TYCON({id, ...}) => SOME id
     | TYSPEC {spec = {id, ...},impl} => SOME id
     | TYFUN {name,...} => NONE
 
@@ -295,9 +266,9 @@ struct
         ID.Set.empty
         varEnv
 
-  and tyConIdSetStrEnv fromTyConId strEnv =
+  and tyConIdSetStrEnv fromTyConId (STRUCTURE strEnvCont) =
       SEnv.foldl
-        (fn (STRUCTURE {env = (tyConEnv, varEnv, strEnv), ...}, tyConIdSet) =>
+        (fn ({env = (tyConEnv, varEnv, strEnv), ...}, tyConIdSet) =>
             let
               val T1 = tyConIdSetTyConEnv fromTyConId tyConEnv
               val T2 = tyConIdSetVarEnv fromTyConId varEnv
@@ -306,7 +277,7 @@ struct
               ID.Set.union (ID.Set.union(T1, ID.Set.union(T2,T3)),tyConIdSet)
             end)
         ID.Set.empty
-        strEnv
+        strEnvCont
 
   fun tyConIdSetEnv fromTyConId (tyConEnv, varEnv, strEnv) =
       let
@@ -316,7 +287,7 @@ struct
       in
         ID.Set.union(T1,ID.Set.union(T2,T3))
       end
-
+(*
   fun tyConIdSetTyConSizeTagEnv fromTyConId tyConSizeTagEnv =
       SEnv.foldl
         (fn ({tyBindInfo,sizeInfo,tagInfo}, tyConIdSet) => 
@@ -352,14 +323,55 @@ struct
             end)
         ID.Set.empty
         strSizeTagEnv
-
-  fun tyConIdSetTypeEnv fromTyConId (TypeEnv:TC.typeEnv)  =
-      ID.Set.union (tyConIdSetStrSizeTagEnv fromTyConId (#strSizeTagEnv TypeEnv),
-                    ID.Set.union (tyConIdSetTyConSizeTagEnv fromTyConId (#tyConSizeTagEnv TypeEnv),
+*)
+  fun tyConIdSetTypeEnv fromTyConId (TypeEnv:StaticTypeEnv.typeEnv)  =
+      ID.Set.union (tyConIdSetStrEnv fromTyConId (#strEnv TypeEnv),
+                    ID.Set.union (tyConIdSetTyConEnv fromTyConId (#tyConEnv TypeEnv),
                                   tyConIdSetVarEnv fromTyConId (#varEnv TypeEnv)))
 
   fun tyConIdSetImExTypeEnv fromTyConId (importTypeEnv, exportTypeEnv)  =
       ID.Set.union (tyConIdSetTypeEnv fromTyConId importTypeEnv ,
                     tyConIdSetTypeEnv fromTyConId exportTypeEnv )
+
+
+  fun computeGenerativeExnTag(fromExnTag, toExnTag, importTypeEnv) =
+      let
+          fun collectExnTagVarEnv varEnv =
+              SEnv.foldl
+              (fn (CONID {name, strpath, funtyCon, ty, tag, tyCon}, exnTagSet) =>
+                   if Types.eqTyCon(PDT.exnTyCon, tyCon) 
+                   then ISet.add(exnTagSet, tag)
+                   else exnTagSet
+                | (_, exnTagSet) => exnTagSet)
+              ISet.empty
+              varEnv
+
+          fun collectExnTagStrEnv (STRUCTURE strEnvCont) =
+              SEnv.foldl
+              (fn ({env = (_, subVarEnv, subStrEnv),...}, exnTagSet) =>
+                  ISet.union
+                      ((ISet.union (collectExnTagVarEnv subVarEnv,
+                                    collectExnTagStrEnv subStrEnv)),
+                       exnTagSet))
+              ISet.empty
+              strEnvCont
+              
+          fun genExnTagSetByInterval (fromExnTag, toExnTag) =
+              let
+                  fun impl currentExnTag exnTagSet =
+                      if currentExnTag < toExnTag 
+                      then impl (currentExnTag + 1) (ISet.add(exnTagSet, currentExnTag))
+                      else exnTagSet
+              in impl fromExnTag ISet.empty end
+
+          fun collectExnTagTypeEnv (importTypeEnv:STE.importTypeEnv) =
+              ISet.union (collectExnTagVarEnv (#varEnv importTypeEnv),
+                          collectExnTagStrEnv (#strEnv importTypeEnv))
+
+          val allExnTagSet = genExnTagSetByInterval (fromExnTag, toExnTag)
+          val importExnTagSet = collectExnTagTypeEnv importTypeEnv
+      in
+          ISet.difference (allExnTagSet, importExnTagSet)
+      end
 end
 end

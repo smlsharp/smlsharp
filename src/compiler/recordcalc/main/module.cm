@@ -1,6 +1,17 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
 	../../../smlformatlib.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
 
         ../../absyn/sources.cm
         ../../format/sources.cm
@@ -9,6 +20,7 @@ Group is
         ../../name/sources.cm
         ../../types/sources.cm
 	../../systemdef/sources.cm
+        ../../../primitives/compiler/sources.cm
   
         RECORDCALC.sig
         RecordCalc.ppg.sml

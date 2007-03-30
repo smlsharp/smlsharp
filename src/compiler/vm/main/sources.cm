@@ -1,4 +1,7 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
         ../../types/sources.cm
         ../../toplevel/sources.cm
         ../../control/sources.cm

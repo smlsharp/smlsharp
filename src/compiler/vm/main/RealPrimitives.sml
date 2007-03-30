@@ -2,7 +2,7 @@
  * implementation of primitives on real values.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RealPrimitives.sml,v 1.11 2006/02/28 16:11:13 kiyoshiy Exp $
+ * @version $Id: RealPrimitives.sml,v 1.11.6.1 2007/03/22 16:57:42 katsu Exp $
  *)
 structure RealPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct
@@ -120,6 +120,16 @@ struct
     | Real_class _ _ _ =
       raise RE.UnexpectedPrimitiveArguments "Real_class"
 
+  (* val fromFloat : float -> real *)
+  fun Real_fromFloat VM heap [Real floatValue] = [Real floatValue, Word 0w0]
+    | Real_fromFloat _ _ _ = 
+      raise RE.UnexpectedPrimitiveArguments "Real_fromFloat"
+
+  (* val toFloat : float -> real *)
+  fun Real_toFloat VM heap [Real realValue1, Word 0w0] = [Real realValue1]
+    | Real_toFloat _ _ _ = 
+      raise RE.UnexpectedPrimitiveArguments "Real_toFloat"
+
   val primitives =
       [
         {name = "Real_toString", function = Real_toString},
@@ -133,7 +143,9 @@ struct
         {name = "Real_fromManExp", function = Real_fromManExp},
         {name = "Real_copySign", function = Real_copySign},
         {name = "Real_equal", function = Real_equal},
-        {name = "Real_class", function = Real_class}
+        {name = "Real_class", function = Real_class},
+        {name = "Real_fromFloat", function = Real_fromFloat},
+        {name = "Real_toFloat", function = Real_toFloat}
       ]
 
   (***************************************************************************)

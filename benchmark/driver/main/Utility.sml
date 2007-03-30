@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: Utility.sml,v 1.1 2005/09/05 12:33:51 kiyoshiy Exp $
+ * @version $Id: Utility.sml,v 1.2 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
 structure Utility =
 struct
@@ -27,6 +27,16 @@ struct
   fun finally arg userFunction finalizer =
       ((userFunction arg) before (finalizer arg))
       handle e => (finalizer arg; raise e)
+
+  fun isSuffix (string, suffix) =
+      let
+        val stringlen = size string
+        val suffixlen = size suffix
+      in
+        suffixlen <= stringlen
+        andalso
+        suffix = String.substring (string, stringlen - suffixlen, suffixlen)
+      end
 
   (***************************************************************************)
 

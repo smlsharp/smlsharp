@@ -15,6 +15,10 @@ TARGETS = $(HEAP) \
           smlsharp \
           smlsharp_build
 
+MLTON_TARGET_PLATFORM=self
+MLTON_OBJDIR=mlton_$(MLTON_TARGET_PLATFORM)
+MLTON_TARGET=$(MLTON_OBJDIR)/smlsharp$(EXEEXT)
+
 SOURCES = $(srcdir)/absyn/main/Absyn.ppg \
           $(srcdir)/anormal/main/anormal.ppg \
           $(srcdir)/assemble/main/AssembleError.ppg \
@@ -23,6 +27,7 @@ SOURCES = $(srcdir)/absyn/main/Absyn.ppg \
           $(srcdir)/elaborate/main/ElaborateError.ppg \
           $(srcdir)/format/main/SmlppgUtil.ppg \
           $(srcdir)/linker/main/LinkageUnit.ppg \
+          $(srcdir)/linker/main/LinkageError.ppg \
           $(srcdir)/matchcompilation/main/MatchError.ppg \
           $(srcdir)/modulecompilation/main/PathEnv.ppg \
           $(srcdir)/modulecompilation/main/StaticModuleEnv.ppg \
@@ -36,6 +41,7 @@ SOURCES = $(srcdir)/absyn/main/Absyn.ppg \
           $(srcdir)/symbolicinstructions/main/SymbolicInstructions.ppg \
           $(srcdir)/toplevel/main/TopLevelError.ppg \
           $(srcdir)/typecontext/main/TypeContext.ppg \
+          $(srcdir)/typecontext/main/StaticTypeEnv.ppg \
           $(srcdir)/typedcalc/main/TypedCalc.ppg \
           $(srcdir)/typedflatcalc/main/TypedFlatCalc.ppg \
           $(srcdir)/typedlambda/main/TypeCheckTypedLambdaError.ppg \
@@ -49,18 +55,26 @@ all: $(TARGETS)
 
 clean:
 	-rm -f $(TARGETS) $(GENSOURCES)
-	-$(FIND) $(srcdir) -name "CM" -type d -print \
-	 | (while read i; do rm -rf "$$i"; done)
-	rm -f $(srcdir)/parser/main/iml.grm.sml
-	rm -f $(srcdir)/parser/main/iml.grm.desc
-	rm -f $(srcdir)/parser/main/iml.grm.sig
-	rm -f $(srcdir)/parser/main/iml.lex.sml
+	-rm -rf `$(FIND) $(srcdir) -name "CM" -type d -print`
+	-rm -rf `$(FIND) $(srcdir) -name ".cm" -type d -print`
+	-rm -f $(srcdir)/parser/main/iml.grm.sml
+	-rm -f $(srcdir)/parser/main/iml.grm.desc
+	-rm -f $(srcdir)/parser/main/iml.grm.sig
+	-rm -f $(srcdir)/parser/main/iml.lex.sml
+	-rm -f $(srcdir)/parser/main/iml.grm.mlton.sml
+	-rm -f $(srcdir)/parser/main/iml.grm.mlton.sig
+	-rm -f $(srcdir)/parser/main/iml.lex.mlton.sml
+	-rm -rf $(MLTON_OBJDIR)
 
 install: $(TARGETS)
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(heapdir)'
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
 	$(INSTALL_HEAP) $(HEAP) '$(DESTDIR)$(heapdir)'
-	$(INSTALL_PROGRAM) smlsharp '$(DESTDIR)$(bindir)'
+	if test -f '$(MLTON_TARGET)'; then \
+	  $(INSTALL_PROGRAM) $(MLTON_TARGET) '$(DESTDIR)$(bindir)/smlsharp$(EXEEXT)'; \
+	else \
+	  $(INSTALL_PROGRAM) smlsharp '$(DESTDIR)$(bindir)'; \
+	fi
 
 $(HEAP): $(GENSOURCES) PHONY
 	cd $(srcdir)/commands/smlsharp/main \
@@ -73,6 +87,120 @@ smlsharp_build: $(top_builddir)mksmlrun
 	$(SHELL) $(top_builddir)mksmlrun smlsharp \
 	         $(SRC_ROOT)/src/compiler/commands/smlsharp/main $@
 
+####################
+# To generate C files for host A by MLton for host B;
+# (1) on host A, do "./configure",
+# (2) on host A, do "make mlton_config MLTON_TARGET_PLATFORM=<target>",
+# (3) copy "src/compiler/mlton_<target>" directory from A to B,
+# (4) on host B, do "cd src/compiler" and
+#     "make mlton_g MLTON_TARGET_PLATFORM=<target>".
+#
+# To compile and link C files for host A generated at host B;
+# (1) copy "src/compiler/mlton_<target>" directory from B to A,
+# (2) on host A, do "make mlton MLTON_TARGET_PLATFORM=<target>".
+#
+# Where <target> is an MLton platform identifier (x86-linux etc.) of host A.
+#
+# Note:
+# - Setup MLton on both 2 hosts so that they share same platform identifier
+#   of host A.
+# - Use identical version of SML# source code.
+
+mlton:
+	test -f $(MLTON_OBJDIR)/MLTON_CONFIGURED || $(MAKE) mlton_config
+	test -f $(MLTON_OBJDIR)/MLTON_COMPILED_G || $(MAKE) mlton_g
+	test -f $(MLTON_OBJDIR)/MLTON_COMPILED_O || $(MAKE) mlton_o
+	$(MAKE) $(MLTON_TARGET)
+
+$(MLTON_TARGET): $(MLTON_OBJDIR)/MLTON_COMPILED_O \
+                 $(LIBSMLSHARP_O)
+	-rm -f $@
+	flags=; \
+	for i in $(LIBS); do flags="$$flags -link-opt $$i"; done; \
+	$(MLTON) -verbose 2 -output $@ -cc '$(CXX)' \
+	         -target $(MLTON_TARGET_PLATFORM) \
+	         -link-opt '$(LIBSMLSHARP_O)' $$flags $(MLTON_FLAGS) \
+	         $(MLTON_OBJDIR)/sources.*.$(OBJEXT)
+
+mlton_o: $(MLTON_OBJDIR)/MLTON_COMPILED_G
+	test ! -f $(MLTON_OBJDIR)/MLTON_COMPILED_O
+	-rm -f $@ $(MLTON_OBJDIR)/sources.*.$(OBJEXT)
+	cd $(MLTON_OBJDIR) && \
+	$(MLTON) -verbose 2 -cc '$(CC)' \
+	         -target $(MLTON_TARGET_PLATFORM) \
+	         -keep o -stop o $(MLTON_FLAGS) \
+	         sources.*.c `ls -d -v sources.*.[sS] 2> /dev/null`
+	-rm -f $(MLTON_OBJDIR)/MLTON_COMPILED_O
+	: > $(MLTON_OBJDIR)/MLTON_COMPILED_O
+
+mlton_g: $(MLTON_OBJDIR)/MLTON_CONFIGURED \
+         $(GEN_SOURCES) \
+         $(srcdir)/parser/main/iml.grm.mlton.sml \
+         $(srcdir)/parser/main/iml.lex.mlton.sml
+	test ! -f $(MLTON_OBJDIR)/MLTON_COMPILED_G
+	test "x`grep ReleaseDate $(MLTON_OBJDIR)/Configuration.sml`" = \
+	     "x`grep ReleaseDate $(top_srcdir)/src/configuration/Configuration.sml`"
+	-rm -f $(MLTON_OBJDIR)/sources.*.[ocsS]
+	echo "CONFIGDIR `$(MKSMLPATH) -sh '$(BUILD_ROOT)/src/compiler/$(MLTON_OBJDIR)'`" > $(MLTON_OBJDIR)/mlton_path.map
+	$(MLTON) -verbose 2 \
+	         -mlb-path-map $(MLTON_OBJDIR)/mlton_path.map \
+	         -mlb-path-map $(MLTON_OBJDIR)/mlton_conf.map \
+	         -target $(MLTON_TARGET_PLATFORM) \
+	         -keep g -stop g $(MLTON_FLAGS) \
+	         $(srcdir)/commands/smlsharp/main/sources.mlb
+	mv $(srcdir)/commands/smlsharp/main/sources.*.[csS] $(MLTON_OBJDIR)
+	-rm -f $(MLTON_OBJDIR)/MLTON_COMPILED_O
+	-rm -f $(MLTON_OBJDIR)/MLTON_COMPILED_G
+	: > $(MLTON_OBJDIR)/MLTON_COMPILED_G
+
+mlton_config:
+	test ! -f $(MLTON_OBJDIR)/MLTON_CONFIGURED
+	$(MAKE) $(MLTON_OBJDIR)/mlton_conf.map
+	$(MAKE) $(MLTON_OBJDIR)/Configuration.sml
+	-rm -f $(MLTON_OBJDIR)/MLTON_COMPILED_O
+	-rm -f $(MLTON_OBJDIR)/MLTON_COMPILED_G
+	-rm -f $(MLTON_OBJDIR)/MLTON_CONFIGURED
+	: > $(MLTON_OBJDIR)/MLTON_CONFIGURED
+
+$(MLTON_OBJDIR)/mlton_conf.map: $(top_builddir)/commonrule Makefile
+	-mkdir $(MLTON_OBJDIR)
+	-rm -f $@
+	if test "x$(BYTE_ORDER)" = "xLittle"; then \
+	  echo 'ARCH x86' >> $@; \
+	else \
+	  echo 'ARCH Sparc' >> $@; \
+	fi
+	echo 'BYTE_ORDER $(BYTE_ORDER)' >> $@
+
+$(MLTON_OBJDIR)/Configuration.sml: \
+                $(top_srcdir)/src/configuration/Configuration.sml
+	-mkdir $(MLTON_OBJDIR)
+	-rm -f $@
+	cp $(top_srcdir)/src/configuration/Configuration.sml $@
+
+####################
+
+$(srcdir)/parser/main/iml.grm.mlton.sml: parser/main/iml.grm
+	-rm -f $(srcdir)/parser/main/iml.grm.sig
+	-rm -f $(srcdir)/parser/main/iml.grm.sml
+	-rm -f $(srcdir)/parser/main/iml.grm.mlton.sig
+	-rm -f $(srcdir)/parser/main/iml.grm.mlton.sml
+	-rm -f $(srcdir)/parser/main/iml.grm.desc
+	$(MLTON_YACC) $(srcdir)/parser/main/iml.grm
+	mv $(srcdir)/parser/main/iml.grm.sig \
+	   $(srcdir)/parser/main/iml.grm.mlton.sig
+	mv $(srcdir)/parser/main/iml.grm.sml \
+	   $(srcdir)/parser/main/iml.grm.mlton.sml
+
+$(srcdir)/parser/main/iml.lex.mlton.sml: parser/main/iml.lex
+	-rm -f $(srcdir)/parser/main/iml.lex.sml
+	-rm -f $(srcdir)/parser/main/iml.lex.mlton.sml
+	$(MLTON_LEX) $(srcdir)/parser/main/iml.lex
+	mv $(srcdir)/parser/main/iml.lex.sml \
+	   $(srcdir)/parser/main/iml.lex.mlton.sml
+
+####################
+
 $(srcdir)/absyn/main/Absyn.ppg.sml: absyn/main/Absyn.ppg
 $(srcdir)/anormal/main/anormal.ppg.sml: anormal/main/anormal.ppg
 $(srcdir)/assemble/main/AssembleError.ppg.sml: assemble/main/AssembleError.ppg
@@ -80,6 +208,8 @@ $(srcdir)/buccalc/main/BUCCalc.ppg.sml: buccalc/main/BUCCalc.ppg
 $(srcdir)/control/main/UserError.ppg.sml: control/main/UserError.ppg
 $(srcdir)/elaborate/main/ElaborateError.ppg.sml: elaborate/main/ElaborateError.ppg
 $(srcdir)/format/main/SmlppgUtil.ppg.sml: format/main/SmlppgUtil.ppg
+$(srcdir)/linker/main/LinkageUnit.ppg.sml: linker/main/LinkageUnit.ppg
+$(srcdir)/linker/main/LinkageError.ppg.sml: linker/main/LinkageError.ppg
 $(srcdir)/matchcompilation/main/MatchError.ppg.sml: matchcompilation/main/MatchError.ppg
 $(srcdir)/name/main/ID.ppg.sml: name/main/ID.ppg
 $(srcdir)/name/main/Loc.ppg.sml: name/main/Loc.ppg
@@ -95,4 +225,5 @@ $(srcdir)/typedflatcalc/main/TypedFlatCalc.ppg.sml: typedflatcalc/main/TypedFlat
 $(srcdir)/typedlambda/main/TypeCheckTypedLambdaError.ppg.sml: typedlambda/main/TypeCheckTypedLambdaError.ppg
 $(srcdir)/typedlambda/main/TypedLambda.ppg.sml: typedlambda/main/TypedLambda.ppg
 $(srcdir)/typeinference/main/TypeInferenceError.ppg.sml: typeinference/main/TypeInferenceError.ppg
+$(srcdir)/typeinference/main/StaticTypeEnv.ppg.sml: typeinference/main/StaticTypeEnv.ppg
 $(srcdir)/types/main/Types.ppg.sml: types/main/Types.ppg

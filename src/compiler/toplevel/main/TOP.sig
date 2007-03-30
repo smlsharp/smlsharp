@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TOP.sig,v 1.20 2006/03/01 08:55:47 kiyoshiy Exp $
+ * @version $Id: TOP.sig,v 1.24 2006/12/22 10:21:06 katsu Exp $
  *)
 signature TOP =
 sig
@@ -18,6 +18,8 @@ sig
          | (** no prompt. *)
            NonInteractive of
                {(** stop session on error if true. *) stopOnError : bool}
+         | (** special session for compiling prelude *)
+           Prelude
 
   (**
    *  A context holds global status of compilation, such as global table.
@@ -88,9 +90,19 @@ sig
    * </p>
    * @params context source
    * @param context the context, which is updated by this function.
+   * @param source data source from which an source code is read.
    * @return true if compile and session.execute succeed.
    *)
   val run : context -> source -> bool
+
+  (**
+   * compile (and execute) a separate compiled object.
+   * @params context source
+   * @param context the context, which is updated by this function.
+   * @param source data source from which an object code is read.
+   * @return true if compile and session.execute succeed.
+   *)
+  val runObject : context -> source -> bool
 
   (***************************************************************************)
 

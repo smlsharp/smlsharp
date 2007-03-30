@@ -1,23 +1,34 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
 	../../../smlformatlib.cm
+#endif
 	../../typecontext/sources.cm
         ../../control/sources.cm
         ../../absyn/sources.cm
         ../../util/sources.cm
         ../../env/sources.cm
         ../../types/sources.cm
+        ../../../primitives/compiler/sources.cm
         ../../patterncalcWithTvars/sources.cm
         ../../patterncalc/sources.cm
         ../../typedcalc/sources.cm
 	../../name/sources.cm
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
 
         checkeq.sml
         UNIFY.sig
         Unify.sml
         tyinfBase.sig
         tyinfBase.sml 
-        TypeInferencer.sml 
         TYPE_INFERENCER.sig
         TypeInferenceError.ppg.sml
         TypeInferenceContext.sml
@@ -26,7 +37,8 @@ Group is
 	TypeInstantiationTerm.sml
 	TypeInferenceUtils.sml
         TypeInferCore.sml
-        TypeInferModule.sml
-	StructureLocalization.sml
 	UncurryFundecl.sml
 	UNCURRYFUNDECL.sig
+	StructureLocalization.sml
+        TypeInferModule.sml
+        TypeInferencer.sml 

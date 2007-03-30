@@ -4,19 +4,23 @@
  *)
 structure TypeCheckTypedLambda = struct
 local
+
  (* for debugging *)
   fun printTy ty = print (TypeFormatter.tyToString ty ^ "\n")
+  fun debugprint x = if false then (print x) else () 
 
   open TypedLambda Types
   exception Eqty
   exception ApplyTy
   exception NotYet
+  structure CT = ConstantTerm
   structure E = TypeCheckTypedLambdaError
   structure TU = TypesUtils
+  structure PT = PredefinedTypes
   val emptyBtvEnv = IEnv.empty
   fun extendBtvEnv (oldBtvEnv, newBtvEnv) = IEnv.unionWith #2 (oldBtvEnv, newBtvEnv)
 
-  fun printTlexp tlexp = print (Control.prettyPrint (TypedLambda.format_tlexp nil tlexp) ^ "\n")
+  fun printTlexp tlexp = print (Control.prettyPrint (TypedLambda.typedtlexp nil tlexp) ^ "\n")
 
 
   structure btvEq:ordsig = struct 
@@ -49,51 +53,50 @@ local
        *)
       fun eqTy btvEquiv (ty1, ty2) = 
           case (ty1, ty2) of
-              (TYVARty (ref(SUBSTITUTED derefTy1)), _) => eqTy btvEquiv (derefTy1, ty2)
-            | (_, TYVARty (ref(SUBSTITUTED derefTy2))) => eqTy btvEquiv (ty1, derefTy2)
-            | (ALIASty(_, ty1), ty2) => eqTy btvEquiv (ty1, ty2)
-            | (ty1, ALIASty(_, ty2)) => eqTy btvEquiv (ty1, ty2)
+              (TYVARty (ref(SUBSTITUTED derefTy1)), _) => 
+              (debugprint "\n a1 \n";eqTy btvEquiv (derefTy1, ty2))
+            | (_, TYVARty (ref(SUBSTITUTED derefTy2))) => 
+              (debugprint "\n a2 \n";eqTy btvEquiv (ty1, derefTy2))
+            | (ALIASty(_, ty1), ty2) => 
+              (debugprint "\n a3 \n";eqTy btvEquiv (ty1, ty2))
+            | (ty1, ALIASty(_, ty2)) => (debugprint "\n a4 \n";eqTy btvEquiv (ty1, ty2))
             | (ERRORty, _) => ()
             | (_, ERRORty) => ()
+            | (ABSSPECty(ty11, ty12), ty2) => 
+              (debugprint "\n a11.1 \n";eqTy btvEquiv (ty11,ty2))
+            | (ty1, ABSSPECty(ty21, ty22)) => 
+              (debugprint "\n a11.2 \n";eqTy btvEquiv (ty1,ty21))
             | (BOUNDVARty tv1, BOUNDVARty tv2) => 
-                if tv1 = tv2 orelse isBtvEquiv (btvEquiv,(tv1,tv2)) then () 
-                else raise Eqty
-            | (BOUNDVARty _, _) => raise Eqty
-            | (_, BOUNDVARty _) => raise Eqty
-            | (DUMMYty n2, DUMMYty n1) => if n1 = n2 then () else raise Eqty
-            | (DUMMYty _, _) => raise Eqty
-            | (_, DUMMYty _) => raise Eqty
-            | (ABSSPECty(ty11, ty12), _) => eqTy btvEquiv (ty12,ty2)
-            | (_, ABSSPECty(ty21, ty22)) => eqTy btvEquiv (ty1,ty22)
+                (debugprint "\n a5 \n";if tv1 = tv2 orelse isBtvEquiv (btvEquiv,(tv1,tv2)) then () 
+                else raise Eqty)
+            | (BOUNDVARty _, _) => (debugprint "\n a6 \n";raise Eqty)
+            | (_, BOUNDVARty _) => (debugprint "\n a7 \n";raise Eqty)
+            | (DUMMYty n2, DUMMYty n1) => (debugprint "\n a8 \n";if n1 = n2 then () else raise Eqty)
+            | (DUMMYty _, _) => (debugprint "\n a9 \n";raise Eqty)
+            | (_, DUMMYty _) => (debugprint "\n a10 \n";raise Eqty)
             | (TYVARty(ref(TVAR {id = id1, ...})), TYVARty(ref(TVAR {id = id2, ...}))) =>
-                if id1 = id2 then () else raise Eqty
-            | (TYVARty _, _) => raise Eqty
-            | (_, TYVARty _) => raise Eqty
+              (debugprint "\n a13 \n";if id1 = id2 then () else raise Eqty)
+            | (TYVARty _, _) => (debugprint "\n a14 \n";raise Eqty)
+            | (_, TYVARty _) => (debugprint "\n a15 \n";raise Eqty)
             | (FUNMty(domainTyList1, rangeTy1), FUNMty(domainTyList2, rangeTy2)) =>
+              (debugprint "\n a16 \n";
                  if length domainTyList1 = length domainTyList2
                    then eqTys btvEquiv (ListPair.zip (domainTyList1, domainTyList2)
                                         @[(rangeTy1, rangeTy2)])
-                  else raise Eqty
+                  else raise Eqty before (debugprint"eq1"))
             | (
-               CONty{tyCon = {name=name1,id=id1, boxedKind = ref (SOME boxedKindValue1),...}, args = tyList1},
-               CONty{tyCon = {name=name2,id=id2, boxedKind = ref (SOME boxedKindValue2),...}, args = tyList2}
+               CONty{tyCon = {name=name1,id=id1, boxedKind = ref boxedKindValue1,...}, args = tyList1},
+               CONty{tyCon = {name=name2,id=id2, boxedKind = ref boxedKindValue2,...}, args = tyList2}
                ) =>
-                 if id1 = id2 andalso length tyList1 = length tyList2
+                 (debugprint "\n a18 \n";
+                  if ID.eq(id1, id2) andalso length tyList1 = length tyList2
                       then eqTys btvEquiv  (ListPair.zip (tyList1, tyList2))
                   else if TU.isATOMty boxedKindValue1 andalso TU.isATOMty boxedKindValue2 
                     then ()
-                  else raise Eqty
-            | (
-               CONty{tyCon = {name=name1,id=id1, boxedKind = ref NONE,...}, args = tyList1},
-               CONty{tyCon = {name=name2,id=id2, boxedKind = ref NONE,...}, args = tyList2}
-               ) =>
-              if !Control.doSeparateCompilation then
-                if id1 = id2 andalso length tyList1 = length tyList2
-                then eqTys btvEquiv  (ListPair.zip (tyList1, tyList2))
-                else raise Eqty
-              else  raise Eqty
+                  else raise Eqty)
             | (RECORDty tyFields1, RECORDty tyFields2) =>
                  let
+                   val _ = debugprint "\n a19 \n"
                    val (newTyEquations, rest) = 
                      SEnv.foldri 
                      (fn (label, ty1, (newTyEquations, rest)) =>
@@ -107,15 +110,17 @@ local
                      then eqTys btvEquiv newTyEquations
                    else raise Eqty
                  end
-            | (BOXEDty, BOXEDty) => ()
-            | (DOUBLEty, DOUBLEty) => ()
-            | (ATOMty, ATOMxty) => ()
+            | (BOXEDty, BOXEDty) => (debugprint "\n a20 \n";())
+            | (DOUBLEty, DOUBLEty) => (debugprint "\n a21 \n";())
+            | (ATOMty, ATOMxty) => (debugprint "\n a22 \n";())
             | (INDEXty(ty1,l1), INDEXty(ty2,l2)) => 
-                 if l1 = l2 then eqTy btvEquiv (ty1,ty2)
-                 else raise Eqty
+              (debugprint "\n a23 \n";
+               if l1 = l2 then eqTy btvEquiv (ty1,ty2)
+               else raise Eqty)
             | (POLYty{boundtvars = btvenv1, body = body1},
                POLYty{boundtvars = btvenv2, body = body2}) =>
                  let
+                   val _ = debugprint "\n a24 \n"
                    val btvlist1 = IEnv.listKeys btvenv1
                    val btvlist2 = IEnv.listKeys btvenv2
                    val newBtvEquiv =
@@ -124,20 +129,50 @@ local
                                        addToBtvEquiv(btvEquiv, (btv1,btv2)))
                        btvEquiv (btvlist1, btvlist2)
                      else raise Eqty
-                 in eqTy newBtvEquiv (body1, body2)
+                 in eqTy newBtvEquiv (body1, body2) 
                  end
-            | (ABSTRACTty, ABSTRACTty) => ()
+            | (ABSTRACTty, ABSTRACTty) => (debugprint "\n a25 \n";())
             | (SPECty ty1, SPECty ty2) => 
-              if !Control.doSeparateCompilation then 
+              (debugprint "\n a26 \n";
+               if !Control.doCompileObj then 
                 eqTy btvEquiv (ty1, ty2)
               else 
                 (print "ty1 : " ; printTy ty1;
                  print "ty2 : " ; printTy ty2;
-                 raise Eqty) 
-            | _ => 
+                 raise Eqty)) 
+           (*
+             The following two cases are for the code like:
+                datatype 'a foo = A
+                A
+             Here A is compiled to 0 (of int)
+             but its type is ['a.'a foo]
+           *)
+            | (
+               POLYty{boundtvars = btvenv1, body = 
+                      CONty{tyCon = {name=name1,id=id1, boxedKind = ref boxedKindValue1,...}, args = tyList1}},
+               CONty{tyCon = {name=name2,id=id2, boxedKind = ref boxedKindValue2,...}, args = tyList2}
+               ) =>
+                 (debugprint "\n a28 \n";
+                  if ID.eq(id1, id2) andalso length tyList1 = length tyList2
+                      then eqTys btvEquiv  (ListPair.zip (tyList1, tyList2))
+                  else if TU.isATOMty boxedKindValue1 andalso TU.isATOMty boxedKindValue2 
+                    then ()
+                  else raise Eqty)
+            | (
+               CONty{tyCon = {name=name2,id=id2, boxedKind = ref boxedKindValue2,...}, args = tyList2},
+               POLYty{boundtvars = btvenv1, body = 
+                      CONty{tyCon = {name=name1,id=id1, boxedKind = ref boxedKindValue1,...}, args = tyList1}}
+               ) =>
+                 (debugprint "\n a29 \n";
+                  if ID.eq(id1, id2) andalso length tyList1 = length tyList2
+                      then eqTys btvEquiv  (ListPair.zip (tyList1, tyList2))
+                  else if TU.isATOMty boxedKindValue1 andalso TU.isATOMty boxedKindValue2 
+                    then ()
+                  else raise Eqty)
+            | _ => (debugprint "\n a27 \n";
                  (print "ty1 : " ; printTy ty1;
                   print "ty2 : " ; printTy ty2;
-                  raise Eqty)
+                  raise Eqty))
       and eqTys btvEquiv nil = ()
         | eqTys btvEquiv ((ty1,ty2)::tail) = (eqTy btvEquiv (ty1,ty2); eqTys btvEquiv tail)
     in
@@ -242,14 +277,14 @@ in
  fun typecheckExp btvEnv tlexp = 
    case tlexp of
      TLFOREIGNAPPLY {
-                     funExp, 
+                     funTy,
                      instTyList, 
                      argExpList, 
                      argTyList,
-                     loc
+                     loc,
+                     ...
                      } =>
        let
-         val funTy = typecheckExp btvEnv funExp
          val instFunTy = 
            case TypesUtils.derefTy funTy of
              POLYty {boundtvars, body} => 
@@ -288,10 +323,6 @@ in
          val _ = if length argTyList = length argExpTyList then
                    eqTyList (ListPair.zip (argTyList,argExpTyList))
                   else ()
-         val argExpTyList = 
-           case argExpTyList of
-             nil => [StaticEnv.unitty]
-           | argExpTyList => argExpTyList
          val _ =  eqTyList (ListPair.zip (argTyList,argExpTyList))
                   handle Eqty => E.enqueueDiagnosis(loc,
                                                     "typecheckExp 3",
@@ -315,17 +346,73 @@ in
        in
          resultTy
        end
-   | TLCONSTANT {value = constant, loc} => TU.constTy constant
+
+   | TLEXPORTCALLBACK {funExp, instTyList, argTyList, resultTy, loc} =>
+       let
+         val funTy = typecheckExp btvEnv funExp
+         val instFunTy =
+             case TypesUtils.derefTy funTy of
+               POLYty {boundtvars, body} => 
+                 let
+                   val polyArity = IEnv.numItems boundtvars 
+                   val numTyArgs = List.length instTyList
+                 in
+                   if polyArity = numTyArgs
+                   then TU.tpappTy(funTy, instTyList)
+                   else 
+                     (
+                      E.enqueueDiagnosis(loc, 
+                                         "typecheckExp 36",
+                                         E.InstanceArityMisMatch
+                                         {polyArity = polyArity, 
+                                          numTyargs = numTyArgs
+                                          }
+                                         );
+                      Types.ERRORty
+                     )
+                 end
+             | funty => (case instTyList of
+                           nil => funty 
+                         | _ => (
+                                 E.enqueueDiagnosis(loc, 
+                                                    "typecheckExp 37",
+                                                    E.InstanceArityMisMatch
+                                                    {polyArity = 0,
+                                                     numTyargs = length instTyList});
+                                 Types.ERRORty
+                                ))
+         val _ =
+             (case TypesUtils.derefTy instFunTy of
+                FUNMty (paramTyList, retTy) =>
+                if length paramTyList = length argTyList
+                then eqTyList ((retTy, resultTy)
+                               :: ListPair.zip (paramTyList, argTyList))
+                else raise ApplyTy
+              | _ => raise ApplyTy)
+             handle ApplyTy => E.enqueueDiagnosis(loc, 
+                                                  "typecheckExp 38",
+                                                  E.OperatorOperandMismatch
+                                                      {
+                                                       funTy = instFunTy,
+                                                       argTyList = argTyList
+                                                      })
+       in
+         PT.ptrty
+       end             
+
+   | TLSIZEOF {ty, loc} => PT.intty
+   | TLCONSTANT {value = constant, loc} => CT.constDefaultTy constant
+   | TLEXCEPTIONTAG {tagValue, loc} => CT.constDefaultTy (INT(Int32.fromInt(tagValue)))
    | TLVAR {varInfo = varIdInfo, loc} => #ty varIdInfo
    | TLGETGLOBAL (string, ty, loc) => ty
    | TLGETFIELD {arrayExp, indexExp, elementTy, loc} => elementTy
    | TLSETFIELD {valueExp, arrayExp, indexExp, elementTy, loc} => 
-     StaticEnv.unitty
+     PT.unitty
    | TLGETGLOBALVALUE {arrayIndex, offset, ty, loc} => ty
    | TLSETGLOBALVALUE {arrayIndex, offset, valueExp, ty, loc} => 
-     StaticEnv.unitty
+     PT.unitty
    | TLINITARRAY {arrayIndex, size, elemTy, loc} =>
-     StaticEnv.unitty
+     PT.unitty
    | TLARRAY {sizeExp, initialValue, elementTy, resultTy, loc} => 
        let
          val initialValueTy = typecheckExp btvEnv initialValue
@@ -402,10 +489,6 @@ in
          val expFunTy = typecheckExp btvEnv funExp
          val _ = eqTyList [(funTy, expFunTy)]
            handle Eqty => 
-             (print (TypedLambdaFormatter.tlexpToString funExp);
-              print "\n";
-              print (TypedLambdaFormatter.tlexpToString tlexp);
-              print "\n";
              E.enqueueDiagnosis (loc,
                                  "typecheckExp 12",
                                  E.TypeAndAnnotationMismatch
@@ -414,7 +497,6 @@ in
                                   expType = expFunTy
                                   }
                                  )
-              )
          val argExpTyList = map  (typecheckExp btvEnv) argExpList
          val resultTy  = checkApplyTy (funTy, argExpTyList)
                           handle ApplyTy =>
@@ -584,13 +666,13 @@ in
    | TLHANDLE {exp=tlexp1, exnVar={ty=varTy,...}, handler=tlexp2, loc} => 
        let
          val tlexpTy1 = typecheckExp btvEnv tlexp1
-         val _ = eqTyList [(varTy, StaticEnv.exnty)]
+         val _ = eqTyList [(varTy, PT.exnty)]
            handle Eqty =>
                     E.enqueueDiagnosis (loc,
                                         "typecheckExp 24",
                                         E.TypeAndAnnotationMismatch
                                         {
-                                         annotation = StaticEnv.exnty,
+                                         annotation = PT.exnty,
                                          expType = varTy
                                          }
                                         )
@@ -625,9 +707,9 @@ in
        in
          FUNMty(parmTyList, bodyTy)
        end
-   | TLPOLY {btvEnv, expTyWithoutTAbs, exp, loc} => 
+   | TLPOLY {btvEnv=newBtvEnv, expTyWithoutTAbs, exp, loc} => 
        let
-         val bodyExpTy = typecheckExp (extendBtvEnv(btvEnv,btvEnv)) exp
+         val bodyExpTy = typecheckExp (extendBtvEnv(btvEnv,newBtvEnv)) exp
          val _ = eqTyList [(expTyWithoutTAbs, bodyExpTy)]
            handle Eqty =>
                     E.enqueueDiagnosis (loc,
@@ -639,22 +721,20 @@ in
                                          }
                                         )
        in
-         POLYty{boundtvars=btvEnv, body=bodyExpTy}
+         POLYty{boundtvars=newBtvEnv, body=bodyExpTy}
        end
    | TLTAPP {exp, expTy, instTyList, loc} => 
        let
          val polyExpTy = typecheckExp btvEnv exp
          val _ = eqTyList [(expTy, polyExpTy)]
-           handle Eqty =>
-                    E.enqueueDiagnosis (loc,
-                                        "typecheckExp 29",
-                                        E.TypeAndAnnotationMismatch
-                                        {
-                                         annotation = expTy,
-                                         expType = polyExpTy
-                                         }
-                                        )
-
+           handle Eqty => E.enqueueDiagnosis (loc,
+                                              "typecheckExp 29",
+                                              E.TypeAndAnnotationMismatch
+                                                  {
+                                                   annotation = expTy,
+                                                   expType = polyExpTy
+                                                   }
+                                                  )
          val instanciatedTy = 
            case TypesUtils.derefTy expTy of
              POLYty {boundtvars, body} => 
@@ -693,7 +773,7 @@ in
                                          expType = expTy
                                          }
                                         )
-         val _ = map (fn (constant,tlexp) =>
+         val _ = map (fn {constant, exp = tlexp} =>
                       let
                         val ruleBodyTy = typecheckExp btvEnv tlexp
                       in
@@ -755,7 +835,6 @@ in
          targetTy
        end
    | TLOFFSET {recordTy = ty, label = string, loc} => INDEXty(ty, string)
-   | TLFFIVAL {funExp, libExp, argTyList, resultTy, funTy, loc} => funTy
 
  and typecheckTldecl btvEnv tldecl = 
    case tldecl of

@@ -52,6 +52,7 @@
  *               | "SInt24"
  *               | "UInt32"
  *               | "SInt32"
+ *               | "Real32"
  *               | "Real64"
  *               | operandType "list"
  * </pre>
@@ -66,7 +67,7 @@
  *        | LoadString of { length : UInt24, string : UInt8 list }
  * </pre>
  * @author YAMATODANI Kiyoshi
- * @version $Id: InstructionGenerator.sml,v 1.6 2006/02/03 13:47:25 kiyoshiy Exp $
+ * @version $Id: InstructionGenerator.sml,v 1.7 2007/01/10 09:43:45 katsu Exp $
  *)
 structure InstructionGenerator :>
   sig
@@ -192,6 +193,7 @@ struct
          | SInt24 => "SInt24"
          | UInt32 => "UInt32"
          | SInt32 => "SInt32"
+         | Real32 => "Real32"
          | Real64 => "Real64"
          | List elementType => (getNameOfOperandType elementType) ^ " list"
 
@@ -205,6 +207,7 @@ struct
          | SInt24 => "serializeSInt24"
          | UInt32 => "serializeUInt32"
          | SInt32 => "serializeSInt32"
+         | Real32 => "serializeReal32"
          | Real64 => "serializeReal64"
 
   fun getBytesOfOperandType operandType =
@@ -217,6 +220,7 @@ struct
          | SInt24 => 3
          | UInt32 => 4
          | SInt32 => 4
+         | Real32 => 4
          | Real64 => 8
          (* | List elementType *)
 
@@ -475,6 +479,7 @@ struct
           "  fun equalSInt24 pair = EQUAL = SInt24.compare pair" ^ newLine ^
           "  fun equalUInt32 pair = EQUAL = UInt32.compare pair" ^ newLine ^
           "  fun equalSInt32 pair = EQUAL = SInt32.compare pair" ^ newLine ^
+          "  fun equalReal32 pair = EQUAL = Real32.compare pair" ^ newLine ^
           "  fun equalReal64 pair = EQUAL = Real64.compare pair" ^ newLine ^
           "  fun equalList f (left, right) = " ^ newLine ^
           "      (List.length left = List.length right) andalso " ^ newLine ^

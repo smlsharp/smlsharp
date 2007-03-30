@@ -8,7 +8,8 @@ structure TType : sig datatype dt con D : X?.t -> dt end
 datatype dtType
 con DType : TType.dt -> dtType
 val xType = D - : TType.dt
-functor FEqType (S : sig eqtype t end) : sig datatype dt con D : S.t -> dt end
+functor FEqType (S : sig eqtype t end) :
+sig datatype dt con D : S.t  -> dt end
 structure TEqType : sig datatype dt con D : X?.t -> dt end
 datatype dtEqType
 con DEqType : TEqType.dt -> dtEqType

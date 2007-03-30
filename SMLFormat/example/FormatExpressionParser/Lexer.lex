@@ -10,6 +10,11 @@ type lexresult = (svalue,pos) Tokens.token
 
 type arg = {
   columns : int ref,
+  space : string ref,
+  newline : string ref,
+  guardLeft : string ref,
+  guardRight : string ref,
+
   comLevel : int ref,
   doFirstLinePrompt : bool ref,
   error : (string * pos * pos) -> unit,
@@ -50,6 +55,11 @@ fun dec (ri as ref i) = (ri := i-1)
 %arg (args as 
 {
   columns,
+  space,
+  newline,
+  guardLeft,
+  guardRight,
+
   comLevel,
   doFirstLinePrompt,
   error,
@@ -65,6 +75,11 @@ fun dec (ri as ref i) = (ri := i-1)
 } : 
 {
   columns : int ref,
+  space : string ref,
+  newline : string ref,
+  guardLeft : string ref,
+  guardRight : string ref,
+
   comLevel : int ref,
   doFirstLinePrompt : bool ref,
   error :
@@ -111,8 +126,8 @@ hexnum=[0-9a-fA-F]+;
           if space then String.extract (yytext, 1, NONE) else yytext
       val priority =
           if priorityText = "d"
-          then SMLPP.FormatExpression.Deferred
-          else SMLPP.FormatExpression.Preferred (atoi(priorityText, 0))
+          then SMLFormat.FormatExpression.Deferred
+          else SMLFormat.FormatExpression.Preferred (atoi(priorityText, 0))
       val indicatorArg =
           {space = space, newline = SOME{priority = priority}}
     in
@@ -127,9 +142,9 @@ hexnum=[0-9a-fA-F]+;
              else (false, 0, 1)
          val direction =
              case String.sub (yytext, directionCharPos)
-              of #"L" => SMLPP.FormatExpression.Left
-               | #"R" => SMLPP.FormatExpression.Right
-               | #"N" => SMLPP.FormatExpression.Neutral
+              of #"L" => SMLFormat.FormatExpression.Left
+               | #"R" => SMLFormat.FormatExpression.Right
+               | #"N" => SMLFormat.FormatExpression.Neutral
          val strength = atoi (yytext, numStartPos)
        in
          Tokens.ASSOCINDICATOR

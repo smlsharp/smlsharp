@@ -2,7 +2,7 @@
  *  This module translates the symbols into a text representation which fits
  * within the specified column width.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrettyPrinter.sml,v 1.1 2006/02/07 12:51:52 kiyoshiy Exp $
+ * @version $Id: PrettyPrinter.sml,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
  *)
 structure PrettyPrinter :> PRETTYPRINTER =
 struct
@@ -10,6 +10,7 @@ struct
   (***************************************************************************)
 
   structure FE = FormatExpression
+  structure PP = PrinterParameter
 
   (***************************************************************************)
 
@@ -94,8 +95,19 @@ struct
    * @param symbol the symbol to be translated.
    * @return the text representation of the symbol.
    *)
-  fun format (parameter : PrinterParameter.printerParameter) symbol =
+  fun format parameters symbol =
     let
+      val (initialCols, spaceString, newlineString) =
+          List.foldl
+              (fn (param, (cols, space, newline)) =>
+                  case param
+                   of PP.Newline s => (cols, space, s)
+                    | PP.Space s => (cols, s, newline)
+                    | PP.Columns n => (n, space, newline)
+                    | _ => (cols, space, newline))
+              (PP.defaultColumns, PP.defaultSpace, PP.defaultNewline)
+              parameters
+
       type context =
            {
              cols : int,
@@ -126,7 +138,7 @@ struct
                 raise IndentUnderFlow diff
               else
                 String.concat
-                (List.tabulate (newIndentSize, fn _ => #spaceString parameter))
+                (List.tabulate (newIndentSize, fn _ => spaceString))
             end
 
       (** creates a string of specified number of whitespaces.
@@ -135,9 +147,7 @@ struct
        * @return a string consisted of the <code>size</code> whitespaces.
        *)
       fun makeIndent size =
-          String.concat (List.tabulate (size, fn _ => #spaceString parameter))
-
-      val initialCols = #columns parameter
+          String.concat (List.tabulate (size, fn _ => spaceString))
 
       fun visit canMultiline (context : context) (Term (columns, text)) =
           (
@@ -255,7 +265,7 @@ struct
               val newCols = initialCols - (#indentWidth context)
             in
               (
-                (#newlineString parameter) ^ (#indentString context),
+                newlineString ^ (#indentString context),
                 {
                   cols = newCols,
                   indentString = #indentString context,
@@ -266,7 +276,7 @@ struct
             end
           else
             if space
-            then visit canMultiline context (Term (1, #spaceString parameter))
+            then visit canMultiline context (Term (1, spaceString))
             else ("", context)
 
         | visit
@@ -277,7 +287,7 @@ struct
               val newCols = initialCols - (#indentWidth context)
             in
               (
-                (#newlineString parameter) ^ (#indentString context),
+                newlineString ^ (#indentString context),
                 {
                   cols = newCols,
                   indentString = #indentString context,
@@ -288,7 +298,7 @@ struct
             end
           else
             if space
-            then visit canMultiline context (Term (1, #spaceString parameter))
+            then visit canMultiline context (Term (1, spaceString))
             else ("", context)
 
         | visit _ context EndOfIndent =

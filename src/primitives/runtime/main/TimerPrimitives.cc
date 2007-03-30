@@ -4,7 +4,7 @@
 #include "Debug.hh"
 
 // ToDo : 
-#ifdef IML_ARCH_BCC
+#if defined(__MINGW32__)
 #include <sys/timeb.h>
 #else
 #include <sys/times.h>
@@ -16,7 +16,7 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef IML_ARCH_BCC
+#if defined(__MINGW32__)
 
 static
 void

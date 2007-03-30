@@ -1,4 +1,4 @@
-
+structure Main = struct
 fun main () =
 InstructionGenerator.generateFiles
 "../Instructions.sml"
@@ -9,3 +9,4 @@ InstructionGenerator.generateFiles
   "../runtime/main/Instructions.cc",
   "../runtime/main/Instructions.hh"
 ]
+end

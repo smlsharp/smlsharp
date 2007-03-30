@@ -1,7 +1,7 @@
 (**
  * This module generates formatter code for types.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FormatterGenerator.sml,v 1.13 2006/02/07 12:49:33 kiyoshiy Exp $
+ * @version $Id: FormatterGenerator.sml,v 1.16 2006/12/31 09:20:58 kiyoshiy Exp $
  *)
 structure FormatterGenerator : FORMATTER_GENERATOR =
 struct
@@ -113,7 +113,9 @@ struct
       | GenerationError _ => error
       | otherError => GenerationError(General.exnMessage otherError, region)
 
-  (** raised if two lists the zipEq receives are not equal length. *)
+  (** raised if two lists the zipEq receives are not equal length.
+   * This exception is local. It should not be raised out of the SMLFormat lib.
+   *)
   exception UnequalLengths
 
   (**
@@ -290,6 +292,23 @@ struct
   fun addToParameterSet (P : parameterSet) paramName =
       fn name => (name = paramName orelse P name)
 
+  (********************)
+
+  (**
+   * generates an unique name which does not conflict with any name in params.
+   *)
+  fun generateUniqueName prefix params =
+      let
+        fun generate n =
+            let val name = prefix ^ Int.toString n
+            in if List.exists (fn x => x = name) params
+               then generate (n + 1)
+               else name
+            end
+      in
+        generate 0
+      end
+
   (****************************************)
 
   (**
@@ -461,6 +480,7 @@ struct
    *      pattern match.
    *)
   fun matchTyPat T (ty, (VarTyPat id)) = addToTypeEnv T (id, ty)
+    | matchTyPat T (ty, WildTyPat) = T
     | matchTyPat T (ty, (TypedVarTyPat (id, typeID))) = (* ignore ty *)
       addToTypeEnv T (id, Ast.VarTy (Ast.Tyv typeID))
     | matchTyPat T (Ast.RecordTy fieldTypes, RecordTyPat(fieldPats, flexible))
@@ -514,6 +534,7 @@ struct
    * @return a text of SML code of pattern
    *)
   fun translateTyPatToExpPat (VarTyPat id) = id
+    | translateTyPatToExpPat WildTyPat = "_"
     | translateTyPatToExpPat (TypedVarTyPat (id, _)) = id
     | translateTyPatToExpPat (RecordTyPat(fieldPats, flexible)) =
       "{" ^
@@ -992,7 +1013,7 @@ struct
    * @return a text of SML code of formatter
    *)
   fun generateForDataTypeBind
-      (F, params, prefix)
+      (F, formatParams, prefix)
       (
         formatterName,
         {tyConName, tyvars, rhs = Ast.Constrs valconBinds, lazyp,
@@ -1000,9 +1021,10 @@ struct
       ) =
       let
         val localParams = List.concat (map #params innerHeaderFormatComments)
-        val params = case localParams of nil => params
+        val params = case localParams of nil => formatParams
                                        | _ => localParams
-        val varNameForValConArg = "x"
+        val varNameForValConArg = generateUniqueName "x" params
+        val varNameForFormatterArg = generateUniqueName "y" params
         val tyvarNames = map getTyVarName tyvars
         val formatterNames =
             map
@@ -1038,7 +1060,8 @@ struct
          then " "
          else
            "(" ^ (U.interleaveString ", " (formatterNames @ params)) ^ ")") ^
-        " x = case x of " ^ newline ^
+        " " ^ varNameForFormatterArg ^ " = " ^
+        "case " ^ varNameForFormatterArg ^ " of " ^ newline ^
         (U.interleaveString (newline ^ " | ") rules) ^ newline
       end
     | generateForDataTypeBind
@@ -1080,7 +1103,7 @@ struct
             | SOME {primaryTag, localTags, ...} =>
               ((primaryTag, localTags), false)
 
-        val varNameForArg = "x"
+        val varNameForArg = generateUniqueName "x" formatParams
         val tyvarNames = map getTyVarName tyvars
         val formatterNames =
             map
@@ -1124,17 +1147,18 @@ struct
    * @return a text of SML code of formatter
    *)
   fun generateForExceptionBind
-      (F, params, prefix)
+      (F, formatParams, prefix)
       formatterRefName
       (Ast.EbGen
          {formatComments, exn, etype,
           innerHeaderFormatComments : Ast.innerHeaderFormatComment list}) =
       let
         val localParams = List.concat (map #params innerHeaderFormatComments)
-        val params = case localParams of nil => params
+        val params = case localParams of nil => formatParams
                                        | _ => localParams
         val formatExnName = F(prefix, Ast.ConTy(["exn"], []))
-        val varNameForValConArg = "x"
+        val varNameForValConArg = generateUniqueName "x" params
+        val varNameForFormatterArg = generateUniqueName "y" params
         val P =
             foldl
             (fn (param, P) => addToParameterSet P param)
@@ -1161,9 +1185,10 @@ struct
             else "(" ^ (U.interleaveString ", " params) ^ ")"
       in
         "local val prev_format = !" ^ formatterRefName ^ newline ^
-        "fun format " ^ paramsList ^ " x = case x of " ^ newline ^
+        "fun format " ^ paramsList ^ " " ^ varNameForFormatterArg ^ " = " ^
+        "case " ^ varNameForFormatterArg ^ " of " ^ newline ^
         rule ^ newline ^
-        " | _ => prev_format x" ^newline ^
+        " | _ => prev_format " ^ varNameForFormatterArg ^ newline ^
         "val _ = " ^ formatterRefName ^ " := format " ^ newline ^
         "in end" ^ newline
       end
@@ -1493,11 +1518,7 @@ struct
       end
         handle error =>
                raise
-               (translateError
-                (
-                  error,
-                  if isSome regionOpt then valOf regionOpt else unknownRegion
-                ))
+                 translateError(error, Option.getOpt(regionOpt, unknownRegion))
 
   (***************************************************************************)
 

@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: BENCHMARK_RUNNER.sig,v 1.3 2005/09/15 09:05:19 kiyoshiy Exp $
+ * @version $Id: BENCHMARK_RUNNER.sig,v 1.4 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
 local
   structure BT = BenchmarkTypes
@@ -14,8 +14,9 @@ sig
 
   val runBenchmark
       : {
-          preludesFileName : string,
-          preludesChannel : CT.InputChannel,
+          preludeFileName : string,
+          isCompiledPrelude : bool,
+          preludeChannel : CT.InputChannel,
           sourceFileName : string,
           sourceChannel : CT.InputChannel,
           compileOutputChannel : CT.OutputChannel,

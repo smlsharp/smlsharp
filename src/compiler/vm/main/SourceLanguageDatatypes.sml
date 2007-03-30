@@ -12,7 +12,7 @@ in
  * functions to manipulate data structures defined in the source language.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SourceLanguageDatatypes.sml,v 1.12 2006/02/28 16:11:13 kiyoshiy Exp $
+ * @version $Id: SourceLanguageDatatypes.sml,v 1.13 2006/04/21 04:54:16 ohori Exp $
  *)
 structure SourceLanguageDatatypes =
 struct
@@ -115,14 +115,15 @@ struct
    * @param unit the unit
    * @return a runtime value which represents the unit.
    *)
-  fun unitToValue heap () =
+  fun unitToValue heap () = Int 0
+(*
       let
         val block = 
             H.allocateBlock
                 heap {bitmap = 0w0, size = 0w0, blockType = RecordBlock}
       in Pointer block
       end
-
+*)
   (********************)
 
   (**

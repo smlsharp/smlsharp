@@ -32,11 +32,10 @@ sig<br>
 &nbsp;&nbsp;structure&nbsp;<A HREF="SigSMLFORMAT-StrFormatExpression.html">FormatExpression</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html">FORMAT_EXPRESSION</A><br>
 &nbsp;&nbsp;structure&nbsp;<A HREF="SigSMLFORMAT-StrPrinterParameter.html">PrinterParameter</A>&nbsp;:&nbsp;<A HREF="SigPRINTER_PARAMETER.html">PRINTER_PARAMETER</A><br>
 &nbsp;&nbsp;structure&nbsp;<A HREF="SigSMLFORMAT-StrBasicFormatters.html">BasicFormatters</A>&nbsp;:&nbsp;<A HREF="SigBASIC_FORMATTERS.html">BASIC_FORMATTERS</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="SigSMLFORMAT.html#Typeparameter">parameter</A>&nbsp;=&nbsp;datatype&nbsp;<A HREF="SigPRINTER_PARAMETER.html#Typeparameter">PrinterParameter.parameter</A><br>
 &nbsp;&nbsp;sharing&nbsp;type&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">FormatExpression.expression</A>&nbsp;=&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">BasicFormatters.expression</A><br>
 &nbsp;&nbsp;exception&nbsp;<A HREF="SigSMLFORMAT.html#ExceptionFail">Fail</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigSMLFORMAT.html#ValprettyPrint">prettyPrint</A><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="SigPRINTER_PARAMETER.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;-><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">FormatExpression.expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigSMLFORMAT.html#ValprettyPrint">prettyPrint</A>&nbsp;:&nbsp;<A HREF="SigSMLFORMAT.html#Typeparameter">parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">FormatExpression.expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 end</CODE>
 <P>
 
@@ -54,7 +53,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: SigSMLFORMAT.html,v 1.1 2006/02/23 10:10:21 kiyoshiy Exp $
+$Id: SigSMLFORMAT.html,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
  
 
 </DL>
@@ -64,6 +63,18 @@ $Id: SigSMLFORMAT.html,v 1.1 2006/02/23 10:10:21 kiyoshiy Exp $
 <P>
 &nbsp;
 &nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeparameter"><!-- --></A>
+<H3>parameter</H3>
+<P>
+<CODE>datatype&nbsp;parameter&nbsp;=&nbsp;datatype&nbsp;<A HREF="SigPRINTER_PARAMETER.html#Typeparameter">PrinterParameter.parameter</A></CODE>
+
+<P>
+
 &nbsp;
 &nbsp;
 <TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
@@ -75,8 +86,7 @@ $Id: SigSMLFORMAT.html,v 1.1 2006/02/23 10:10:21 kiyoshiy Exp $
 <H3>prettyPrint</H3>
 <P>
 <CODE>fun&nbsp;prettyPrint&nbsp;parameter&nbsp;expressions<br>
-&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="SigPRINTER_PARAMETER.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;-><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">FormatExpression.expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="SigSMLFORMAT.html#Typeparameter">parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">FormatExpression.expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 <DL>
 <DD>
   translates the format expressions into a text representation which

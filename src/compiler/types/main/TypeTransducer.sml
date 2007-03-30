@@ -75,7 +75,7 @@ This indicates that body of POLYty should not be visited.
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypeTransducer.sml,v 1.11 2006/02/28 16:11:10 kiyoshiy Exp $
+ * @version $Id: TypeTransducer.sml,v 1.13 2006/06/19 01:55:10 bochao Exp $
  *)
 structure TypeTransducer : TYPE_TRANSDUCER =
 struct
@@ -191,10 +191,11 @@ struct
 		      end
                     | TY.SPECty ty =>
                       let
-                        val (ty', accum') = visit accum ty
+                          val (ty', accum') = visit accum ty
                       in
-                        (TY.SPECty ty', accum')
+                          (TY.SPECty ty', accum')
                       end
+                    | TY.ABSTRACTty => (ty, accum)
 (*
                 | _ => raise Control.Bug "unknown ty"
 *)

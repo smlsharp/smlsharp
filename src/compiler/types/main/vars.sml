@@ -2,7 +2,7 @@
  * utilities for variables.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: vars.sml,v 1.23 2006/02/28 16:11:10 kiyoshiy Exp $
+ * @version $Id: vars.sml,v 1.24 2007/02/11 16:39:51 kiyoshiy Exp $
  *)
 structure TvOrd : ordsig =
 struct 
@@ -84,34 +84,6 @@ end
 
 structure VEnv = BinaryMapFn(Vord)
 structure VSet = BinarySetFn(Vord)
-
-structure Cord:ordsig =
-struct 
-  type ord_key = Types.constant
-  fun compare (x, y) = 
-      case (x, y) of
-	(Types.INT i1, Types.INT i2) => Int32.compare(i1, i2)
-      | (Types.INT _, _) => LESS
-      | (Types.WORD _, Types.INT _) => GREATER
-      | (Types.WORD w1, Types.WORD w2) => Word32.compare (w1,w2)
-      | (Types.WORD _, _) => LESS
-      | (Types.STRING _, Types.INT _) => GREATER
-      | (Types.STRING _, Types.WORD _) => GREATER
-      | (Types.STRING s1, Types.STRING s2) => String.compare (s1, s2)
-      | (Types.STRING _, _) => LESS
-      | (Types.REAL r1, Types.INT _) => GREATER
-      | (Types.REAL r1, Types.WORD _) => GREATER
-      | (Types.REAL r1, Types.STRING _) => GREATER
-      | (Types.REAL r1, Types.REAL r2) => String.compare(r1, r2)
-      | (Types.REAL _, _) => LESS
-      | (Types.CHAR _, Types.INT _) =>  GREATER
-      | (Types.CHAR _, Types.WORD _) =>  GREATER
-      | (Types.CHAR _, Types.STRING _) =>  GREATER
-      | (Types.CHAR _, Types.REAL _) =>  GREATER
-      | (Types.CHAR c1, Types.CHAR c2) =>  Char.compare(c1, c2)
-end
-
-structure CEnv = BinaryMapFn(Cord)
 
 structure Vars =
 struct

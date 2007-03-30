@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TypeInferModule.sml,v 1.54 2006/03/02 12:53:26 bochao Exp $
+ * @version $Id: TypeInferModule.sml,v 1.69.2.1 2007/03/23 01:53:00 katsu Exp $
  *)
 structure TypeInferModule =
 struct
@@ -10,9 +10,9 @@ local
   structure C = Control
   structure E = TypeInferenceError
   structure P = Path
+  structure PDT = PredefinedTypes
   structure PL = PatternCalc
   structure PT = PatternCalcWithTvars
-  structure SE = StaticEnv
   structure TB = TypeinfBase
   structure TC = TypeContext
   structure TIC = TypeInferenceContext
@@ -29,6 +29,7 @@ local
   structure SU = SigUtils
   structure T = Types
   structure TCC = TypedCalc 
+  structure STE = StaticTypeEnv
   val emptyContext = TC.emptyContext
 
 in 
@@ -73,6 +74,11 @@ in
             | A.TYFUN (rawty1, rawty2, loc) =>
               let val tvarSEnv = compImpl rawty1 tvarSEnv
               in compImpl rawty2 tvarSEnv end
+            | A.TYFFI (cconv, argTys, retTy, loc) =>
+              foldl
+                (fn (rawTy, tvarSEnv) => compImpl rawTy tvarSEnv)
+                (compImpl retTy tvarSEnv)
+                argTys
       in
         compImpl rawTy SEnv.empty
       end
@@ -104,7 +110,15 @@ in
         val tau = TIFC.evalRawty newcc rawTy
         val newTau = 
             let
+              (*
+                Ohori:
+                tau below should not contain any free type variables shared by
+                other.
+                *)
+              val {boundEnv, removedTyIds} = TIFC.generalizer (tau, T.toplevelDepth)
+(*
               val {boundEnv, removedTyIds} = TIFC.generalizer (tau, cc)
+*)
             in 
               if IEnv.isEmpty boundEnv
               then tau
@@ -117,8 +131,16 @@ in
              strpath = #strLevel cc, 
              ty = newTau
             }
+        (*
+         Ohori: Need to check.
+         This was originally coded below.
+          val context1 = 
+               TC.bindVarInEmptyContext (vidString, T.VARID varPathInfo)
+         Since there should not be any free type variables shared by others,
+         it should be a toplevel binding.
+         *)
         val context1 = 
-            TC.bindVarInEmptyContext (vidString, T.VARID varPathInfo)
+            TC.bindVarInEmptyContext (T.toplevelDepth, vidString, T.VARID varPathInfo)
         val (context2 : TC.context, valDescs) = 
             typeinfValdescs cc rem loc
       in
@@ -128,6 +150,12 @@ in
          )
       end
 
+  and typeinfSpecKind specKind =
+      case specKind of
+          A.ATOM => T.ATOMty
+        | A.DOUBLE => T.DOUBLEty
+        | A.BOXED => T.BOXEDty
+        | A.GENERIC => T.GENERICty
  (*
   * for type description ([type] 'a foo and ...) in a signature.
   *)
@@ -135,16 +163,16 @@ in
       (TC.emptyContext, nil)
     | typeinfTypdescs eqKind 
         (cc : TIC.currentContext) 
-        ((tyvars : {name:string, ifeq:bool} list, tyconName) :: rem) loc =
+        ((tyvars : {name:string, ifeq:bool} list, tyconName, specKind) :: rem) loc =
       (* rule 80-for rule 69 *)
       let
         val spec = {
                     name = tyconName,
-                    id = SE.newTyConId(),
+                    id = T.newTyConId(),
                     strpath = #strLevel cc,
                     eqKind = eqKind,
                     tyvars = map (fn {name, ifeq} => ifeq) tyvars,
-                    boxedKind = NONE
+                    boxedKind = typeinfSpecKind specKind
                     }
         val tySpec = {spec = spec, impl = NONE}
         val context1 = TC.bindTyConInEmptyContext (tyconName, T.TYSPEC tySpec)
@@ -175,8 +203,14 @@ in
               if  OTSet.isEmpty (TU.EFTV tau') then () 
               else E.enqueueError
                      (loc, E.FreeTypeVariablesInExceptionType({exid = vidString}))
-        val conPathInfo = ITC.makeExnConpath(vidString, P.NilPath, tau)
-        val context1 = TC.bindVarInEmptyContext (vidString, T.CONID conPathInfo)
+        val conPathInfo = PDT.makeExnConPath vidString P.NilPath tau
+        (*
+         Ohori: Need to check.
+         This was originally coded below.
+            val context1 = TC.bindVarInEmptyContext (vidString, T.CONID conPathInfo)
+         This should be regarded as a toplevel binding with respect to lambdaDepth.
+          *)
+        val context1 = TC.bindVarInEmptyContext (T.toplevelDepth, vidString, T.CONID conPathInfo)
         val (context2, conPathInfos) = typeinfExdescs cc rem loc
       in
         (
@@ -194,7 +228,7 @@ in
     | typeinfStrdescs cc ((strName, ptsigexp) :: rem) loc = 
       (*rule 84*)
       let
-        val strID = SE.newStructureId ()
+        val strID = T.newStructureId ()
         val newcc =
             TIC.updateStrLevel
                 (cc, P.appendPath (#strLevel cc, strID, strName))
@@ -205,7 +239,7 @@ in
             {id = strID, name = strName, strpath = #strLevel cc, env = E}
         val context1 =
             TC.injectStrEnvToContext
-                (SEnv.singleton(strName, T.STRUCTURE strPathInfo))
+                (T.STRUCTURE (SEnv.singleton(strName, strPathInfo)))
         val (context2, strdescs) = typeinfStrdescs cc rem loc
       in
         (
@@ -231,12 +265,12 @@ in
           end
       | PT.PTSPECTYPE(typdescs, loc) =>
           (* rule 69 *)
-          let
+        let
             val (newContext, typespecs) = 
-                  typeinfTypdescs T.NONEQ cc typdescs loc
-          in
+                typeinfTypdescs T.NONEQ cc typdescs loc
+        in
             (newContext, TCC.TPMSPECTYPE typespecs)
-          end
+        end
       | PT.PTSPECTYPEEQUATION (tvarListStringRawTy as (_,tyConName,_) ,loc) =>
           (* appendix A *)
           let
@@ -245,7 +279,7 @@ in
                 (
                  PT.PTSIGWHERE
                    (
-                    PT.PTSIGEXPBASIC (PT.PTSPECTYPE([(tyvars, tyConName)], loc), loc),
+                    PT.PTSIGEXPBASIC (PT.PTSPECTYPE([(tyvars, tyConName, A.GENERIC)], loc), loc),
                     [(tyvars, [tyConName], rawTy)],
                     loc
                    ),
@@ -287,70 +321,75 @@ in
                  (tvars, tyConName, newconstructorlist)
                end)
               datadescs
+            (* 
+              Ohori: 
+                val (newContext, tyCons) = 
+                      TIFC.typeinfDatatypeDecl cc newdatadescs loc
+            *)
             val (newContext, tyCons) = 
-                  TIFC.typeinfDatatypeDecl cc newdatadescs loc
+                  TIFC.typeinfDatatypeDecl T.toplevelDepth cc newdatadescs loc
           in
             (newContext, TCC.TPMSPECDATATYPE tyCons)
           end
       | PT.PTSPECREPLIC(tyConName, longTyCon, loc) =>
           (* rule 72 *)
-          let 
+        let 
             val ((tyConStrPath,tyCon), tyBindInfoOpt) = TIC.lookupLongTyCon (cc, longTyCon)
-          in
+        in
             case tyBindInfoOpt of
-              SOME(T.TYCON rightTyCon) => 
-              let
-                val {name, strpath, abstract, tyvars,
-                     id,   eqKind,  boxedKind, datacon} : T.tyCon= rightTyCon
-                val leftTyCon : T.tyCon =
-                    {
-                     name = tyConName,
-                     strpath = #strLevel cc,
-                     abstract = abstract,
-                     tyvars = tyvars,
-                     id = id,
-                     eqKind = ref (!eqKind),
-                     boxedKind = ref (!boxedKind),
-                     datacon = ref SEnv.empty 
-                    } 
-                  val tyConSubst = ID.Map.singleton(id,T.TYCON leftTyCon)
-                  val (visited,newDatacon) = 
+                SOME(T.TYCON rightTyCon) => 
+                let
+                    val {name, strpath, abstract, tyvars,
+                         id,   eqKind,  boxedKind, datacon} : T.tyCon= rightTyCon
+                    val leftTyCon : T.tyCon =
+                        {
+                         name = tyConName,
+                         strpath = #strLevel cc,
+                         abstract = abstract,
+                         tyvars = tyvars,
+                         id = id,
+                         eqKind = ref (!eqKind),
+                         boxedKind = ref (!boxedKind),
+                         datacon = ref SEnv.empty 
+                         } 
+                    val tyConSubst = ID.Map.singleton(id,T.TYCON leftTyCon)
+                    val (visited,newDatacon) = 
                         TCU.substTyConInVarEnv ID.Set.empty tyConSubst (!datacon)
-                  val _ = (#datacon leftTyCon):= newDatacon
-                  val context1 = TC.bindTyConInEmptyContext(tyConName, T.TYCON leftTyCon)
-                  val context2 = 
-                      (* do not propagate varEnv of abstype *)
-                      if not abstract then
-                        TC.extendContextWithVarEnv (context1,!(#datacon leftTyCon))
-                      else context1
+                    val _ = (#datacon leftTyCon):= newDatacon
+                    val context1 = TC.bindTyConInEmptyContext(tyConName, T.TYCON leftTyCon)
+                    val context2 = 
+                        (* do not propagate varEnv of abstype *)
+                        if not abstract then
+                            TC.extendContextWithVarEnv (context1,!(#datacon leftTyCon))
+                        else context1
                 in
-                  (
-                   context2,
-                   TCC.TPMSPECREPLIC ({left = leftTyCon, 
-                                   right = {
-                                            relativePath = (tyConStrPath,tyCon),
-                                            tyCon = rightTyCon
-                                            }
-                                   }
-                                  )
-                   )
+                    (
+                     context2,
+                     TCC.TPMSPECREPLIC ({left = leftTyCon, 
+                                         right = {
+                                                  relativePath = (tyConStrPath,tyCon),
+                                                  tyCon = rightTyCon
+                                                  }
+                                         }
+                                        )
+                     )
                 end
             | SOME _ => 
-                (
-                 E.enqueueError(
-                                loc,
-                                E.TyFunFoundInsteadOfTyCon 
+              (
+               E.enqueueError(
+                              loc,
+                              E.TyFunFoundInsteadOfTyCon 
                                   {tyFun = Absyn.longidToString(longTyCon)}
-                                );
-                 (TC.emptyContext, TCC.TPMSPECERROR)
-                 )
+                                  );
+               (TC.emptyContext, TCC.TPMSPECERROR)
+               )
             | _ =>
               (
                E.enqueueError(
                               loc,
                               E.TyConNotFoundInReplicateData
-                                ({tyCon = Absyn.longidToString(longTyCon)})
-                                );
+                                  ({tyCon = Absyn.longidToString(longTyCon)})
+                                  );
                (TC.emptyContext, TCC.TPMSPECERROR)
                )
           end
@@ -406,7 +445,7 @@ in
              At the time of realizer computation, we check the equality.
           *)
          (let
-            val fromTyConId = SE.nextTyConId()
+            val fromTyConId = T.nextTyConId()
             val (context1, tpmspec) = typeinfSpec cc ptspec
             val newCurrentContext = 
                   TIC.injectContextToCurrentContext context1
@@ -486,7 +525,7 @@ in
          * then phi = { 1 -> 3, 2 -> 3}
          *)
         let 
-          val fromTyConId = SE.nextTyConId()
+          val fromTyConId = T.nextTyConId()
           val (context1, tpmspec) = typeinfSpec cc ptspec
           val newCurrentContext = TIC.injectContextToCurrentContext context1
           val (Es, strPaths) = 
@@ -525,8 +564,8 @@ in
               end
 
           and sharePairE
-                  (E1 as (tyConEnv1, varEnv1, strEnv1))
-                  (E2 as (tyConEnv2, varEnv2, strEnv2))
+                  (E1 as (tyConEnv1, varEnv1, strEnv1:T.strEnv))
+                  (E2 as (tyConEnv2, varEnv2, strEnv2:T.strEnv))
                   phi =
                   let 
                     val phi1 = shareTE (tyConEnv1, tyConEnv2) phi
@@ -555,7 +594,7 @@ in
                            (ID.compare(fromTyConId, idFrom) <> GREATER)
                            andalso (ID.compare(fromTyConId, idTo) <> GREATER)
                          then
-                           if idFrom = idTo then phi
+                           if ID.eq(idFrom, idTo) then phi
                            else 
                              SU.extendTyConIdSubst (ID.Map.singleton(idFrom, idTo), phi)
                          else
@@ -570,14 +609,14 @@ in
                 phi
                 tyConEnv1
 
-          and shareSE (strEnv1, strEnv2) phi =
+          and shareSE (T.STRUCTURE strEnvCont1, T.STRUCTURE strEnvCont2) phi =
               SEnv.foldli
-                (fn (strid, T.STRUCTURE{env = E1, ...}, phi) =>
-                    case SEnv.find (strEnv2, strid) of
+                (fn (strid, {env = E1, ...}, phi) =>
+                    case SEnv.find (strEnvCont2, strid) of
                       NONE => phi
-                    | SOME(T.STRUCTURE{env = E2, ...}) => sharePairE E1 E2 phi)
+                    | SOME {env = E2, ...} => sharePairE E1 E2 phi)
                 phi
-                strEnv1
+                strEnvCont1
           val phi = share Es ID.Map.empty
         in         
           (SU.equateTyConIdInContext phi context1, TCC.TPMSPECSHARESTR (tpmspec,strPaths))
@@ -609,7 +648,7 @@ in
                 | NONE =>
                   (
                     E.enqueueError (loc, E.SignatureNotFound{id = sigName});
-                    (P.NilPath,SE.emptyE)
+                    (P.NilPath,T.emptyE)
                   )
           in
             (sigIdPath, TC.injectEnvToContext Env, TCC.TPMSIGID sigName)
@@ -624,12 +663,12 @@ in
                     (fn ((typarams, longTyCon, ty), (tyConIdEnv, pathTyFunInfoList)) =>
                         let
                           val tyFunName = Absyn.getLastIdOfLongid longTyCon
-                          val (_, newTyFun) = TIFC.makeTyFun cc (typarams, tyFunName, ty)
+                          val (_, newTyFun) = TIFC.makeTyFun T.toplevelDepth cc (typarams, tyFunName, ty)
                           val (tyConStrPath, tyConId) =
                               case TIC.lookupLongTyCon (cc1, longTyCon) of
                                 (_, NONE) => 
                                 raise E.TyConNotFoundInWhereType
-                                        {tyCon = Absyn.longidToString(longTyCon)}
+                                          {tyCon = Absyn.longidToString(longTyCon)}
                               | ((tyConStrPath,_), SOME (T.TYCON {name,id,eqKind,tyvars,...})) => 
                                 if  TU.isTyNameOfTyFun(newTyFun) then
                                   if (!eqKind = T.EQ) andalso
@@ -664,44 +703,51 @@ in
                                          ...}
                                         )
                                  ) => 
-                                if (eqKind = T.EQ) andalso
-                                   not (TU.admitEqTyFun newTyFun)
-                                then 
-                                  raise E.EqtypeRequiredInWhereType {
-                                                                     longTyCon = 
-                                                                     Absyn.longidToString(longTyCon)
-                                                                     }
+                                if TU.isNotGenericBoxedKind boxedKind then
+                                    raise E.KindConstranintOnAbstractTypeSpecification
+                                              {tyConName = name, kind = boxedKind}
                                 else
-                                  if List.length tyvars <> List.length typarams
-                                  then
+                                    if (eqKind = T.EQ) andalso
+                                       not (TU.admitEqTyFun newTyFun)
+                                    then 
+                                        raise E.EqtypeRequiredInWhereType {
+                                                                           longTyCon = 
+                                                                           Absyn.longidToString(longTyCon)
+                                                                           }
+                                    else
+                                        if List.length tyvars <> List.length typarams
+                                        then
                                     raise E.ArityMismatchInWhereType 
-                                            {
-                                             wants = List.length tyvars,
-                                             given = List.length typarams,
-                                             tyCon = Absyn.longidToString(longTyCon)
-                                             }
-                                  else
-                                    (tyConStrPath,id)
+                                              {
+                                               wants = List.length tyvars,
+                                               given = List.length typarams,
+                                               tyCon = Absyn.longidToString(longTyCon)
+                                               }
+                                        else
+                                            (tyConStrPath,id)
                         in
                           (ID.Map.insert(tyConIdEnv, tyConId, T.TYFUN newTyFun),
                            (tyConStrPath, newTyFun)::pathTyFunInfoList)
                         end
-                      handle 
+                            handle 
                             exn as E.TyConNotFoundInWhereType _ => 
-                                (E.enqueueError (loc, exn);
-                                (tyConIdEnv, pathTyFunInfoList))
+                            (E.enqueueError (loc, exn);
+                             (tyConIdEnv, pathTyFunInfoList))
                           | exn as E.DataConWithWhereType _ =>
-                                (E.enqueueError (loc, exn);
-                                 (tyConIdEnv, pathTyFunInfoList))
+                            (E.enqueueError (loc, exn);
+                             (tyConIdEnv, pathTyFunInfoList))
                           | exn as E.EqtypeRequiredInWhereType _ => 
-                                (E.enqueueError (loc, exn);
-                                 (tyConIdEnv, pathTyFunInfoList))
+                            (E.enqueueError (loc, exn);
+                             (tyConIdEnv, pathTyFunInfoList))
                           | exn as E.DatatypeNotWellFormed _ => 
-                                (E.enqueueError (loc, exn);
-                                 (tyConIdEnv, pathTyFunInfoList))
+                            (E.enqueueError (loc, exn);
+                             (tyConIdEnv, pathTyFunInfoList))
                           | exn as E.ArityMismatchInWhereType _ => 
-                                (E.enqueueError (loc, exn);
-                                 (tyConIdEnv, pathTyFunInfoList))
+                            (E.enqueueError (loc, exn);
+                             (tyConIdEnv, pathTyFunInfoList))
+                          | exn as E.KindConstranintOnAbstractTypeSpecification _ =>
+                            (E.enqueueError (loc, exn);
+                             (tyConIdEnv, pathTyFunInfoList))
                       )
                     (ID.Map.empty, nil)
                     stringListLongTyConTyList
@@ -718,7 +764,7 @@ in
     and typeinfSig (cc : TIC.currentContext) ptsigexp =
         (*rule 65*)
         let
-          val fromTyConId = SE.nextTyConId()
+          val fromTyConId = T.nextTyConId()
           val (sigIdPath, context : TC.context, sigspec) = 
                 typeinfSigexp cc ptsigexp
           val E = TC.getStructureEnvFromContext context
@@ -759,12 +805,12 @@ in
                     (
                      E.enqueueError
                        (loc, E.StructureNotFound({id = Absyn.longidToString(longStrid)}));
-                       (P.NilPath, path, SE.emptyE)
+                       (P.NilPath, path, T.emptyE)
                     )
               val context1 = TC.injectEnvToContext E
               val {id, name} = 
                   case absolutePath of 
-                    P.NilPath => {id = SE.dummyStructureId, name = "?X"}
+                    P.NilPath => {id = T.dummyStructureId, name = "?X"}
                   | _ => P.getLastElementOfPath absolutePath
             in
               (
@@ -786,11 +832,12 @@ in
                     typeinfStrexp cc ptstrexp
               val Env = TC.getStructureEnvFromContext context1
               val (sigIdPath, sigma, tpmsigexp) = 
-                    typeinfSig (TIC.updateStrLevel (cc, P.NilPath)) ptsigexp
+                  typeinfSig cc ptsigexp
+                  (* typeinfSig (TIC.updateStrLevel (cc, P.NilPath)) ptsigexp *)
               val strictEnv = 
                     ( 
                      SigCheck.transparentSigMatch (Env, sigma)
-                     handle exn => (SU.handleException (exn,loc); SE.emptyE)
+                     handle exn => (SU.handleException (exn,loc); T.emptyE)
                     )
               val strictEnv = updateStrpathInEnv (sigIdPath, #strLevel cc, strictEnv)
               val context2 = TC.injectEnvToContext strictEnv
@@ -808,15 +855,16 @@ in
                                     )
                                ) =>
                     let
-                      val newTpmstrdecls =
-                          TIT.generateInstantiatedStructure (id,name,strpath,loc1) (env,strictEnv)
+	                val pathPrefix = Path.appendPath (strpath, id, name)
+                        val newTpmstrdecls =
+                            TIT.generateInstantiatedStructure (pathPrefix,loc1) (env,strictEnv)
                     in
                       TCC.TPMSTRUCT ((h :: newTpmstrdecls),loc)
                     end
                   | _ => 
                     raise Control.Bug 
-                            ("only basic structure expression  " ^
-                             "can be constrained by signature")
+                              ("only basic structure expression  " ^
+                               "can be constrained by signature")
             in
               (stridStrpath, 
                context2, 
@@ -831,11 +879,12 @@ in
                   typeinfStrexp cc  ptstrexp
               val Env = TC.getStructureEnvFromContext context1
               val (sigIdPath, sigma, tpmsigexp) =
-                  typeinfSig (TIC.updateStrLevel (cc, P.NilPath)) ptsigexp
+                  (* typeinfSig (TIC.updateStrLevel (cc, P.NilPath)) ptsigexp *)
+                  typeinfSig cc ptsigexp
               val (abstractEnv, enrichedEnv) = 
                   (
                    SigCheck.opaqueSigMatch (Env, sigma)
-                   handle exn => (SU.handleException (exn,loc);(SE.emptyE,SE.emptyE)))
+                   handle exn => (SU.handleException (exn,loc);(T.emptyE,T.emptyE)))
               val abstractEnv  = 
                   updateStrpathInEnv (sigIdPath, #strLevel cc, abstractEnv)
               val context2 = TC.injectEnvToContext abstractEnv
@@ -852,8 +901,9 @@ in
                                     )
                                    ) =>
                     let
-                      val newTpmstrdecls =
-                          TIT.generateInstantiatedStructure (id,name,strpath,loc1) (env,enrichedEnv)
+                        val pathPrefix = Path.appendPath (strpath, id, name)
+                        val newTpmstrdecls =
+                            TIT.generateInstantiatedStructure (pathPrefix,loc1) (env,enrichedEnv)
                     in
                       TCC.TPMSTRUCT ((h :: newTpmstrdecls),loc)
                     end
@@ -882,16 +932,16 @@ in
                   | NONE =>
                     (
                      E.enqueueError (loc, E.FunctorNotFound{id = functorName});
-                     { func = {name = functorName, id = SE.newStructureId()},
-                       argument = {name = "X?",id = SE.newStructureId()},
+                     { func = {name = functorName, id = T.newStructureId()},
+                       argument = {name = "X?",id = T.newStructureId()},
                        functorSig = {
                                      exnTagSet = ISet.empty,
                                      tyConIdSet = ID.Set.empty,
                                      func = {
-                                             arg = SE.emptyE, 
+                                             arg = T.emptyE, 
                                              body = {
-                                                     constrained = (ID.Set.empty,SE.emptyE),
-                                                     unConstrained = SE.emptyE
+                                                     constrained = (ID.Set.empty,T.emptyE),
+                                                     unConstrained = T.emptyE
                                                      }
                                              }
                                      }
@@ -902,7 +952,7 @@ in
                     let
                       val anonyStrPath = 
                           P.appendPath(#strLevel cc,
-                                       SE.newStructureId (),
+                                       T.newStructureId (),
                                        TIU.NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
                                        )
                     in
@@ -914,41 +964,50 @@ in
                   typeinfStrexp newcc ptstrexp
               val Env = TC.getStructureEnvFromContext context1
                         
-              val (resEnv, argMatchedEnv, instTyConSubst, exnTagSubst) =
+              val (resEnv, argMatchedEnv, instTyConSubstInBody, exnTagSubst) =
                   let
                     val defaultErrorValue = 
-                        (SE.emptyE,SE.emptyE,ID.Map.empty,IEnv.empty)
+                        (T.emptyE,T.emptyE,ID.Map.empty,IEnv.empty)
                   in
                     ( 
                      SigCheck.functorSigMatch(Env, functorSig)
                      handle exn => (SU.handleException (exn,loc); defaultErrorValue))
                   end
+              val instTyConSubst = 
+                  ID.Map.unionWith 
+                      #1 (SU.substTyEnvFromEnv (#arg (#func(#functorSig(funBindInfo))),
+                                                Env),
+                          instTyConSubstInBody)
               val context2 = TC.injectEnvToContext resEnv
               (***** below deal with type instantiation environment *****)
 
               val instantiatedStrExp =
-                  TCC.TPMSTRUCT 
-                    (
-                     (TCC.TPMCOREDEC
-                        ([TCC.TPOPEN 
-                            ([{id = Path.localizedConstrainedStrID,
-                              name = Path.localizedConstrainedStrName,
-                              strpath = Path.NilPath, 
-                              env = Env}], 
-                            loc)
-                         ],
-                         loc
-                         )
-                        )
-                     :: (TIT.generateInstantiatedStructure 
-                           (Path.localizedConstrainedStrID, 
-                            Path.localizedConstrainedStrName,
-                            Path.NilPath,
-                            loc)
-                           (Env, argMatchedEnv)
-                           ),
-                     loc
-                     )
+                  let
+                      val pathPrefix = 
+                          Path.appendPath 
+                              (Path.NilPath, 
+                               Path.localizedConstrainedStrID, 
+                               Path.localizedConstrainedStrName)
+                  in
+                      TCC.TPMSTRUCT 
+                          (
+                           (TCC.TPMCOREDEC
+                                ([TCC.TPOPEN 
+                                      ([{id = Path.localizedConstrainedStrID,
+                                         name = Path.localizedConstrainedStrName,
+                                         strpath = Path.NilPath, 
+                                         env = Env}], 
+                                       loc)
+                                      ],
+                                 loc
+                                 )
+                                )
+                           :: (TIT.generateInstantiatedStructure 
+                                   (pathPrefix,loc)
+                                   (Env, argMatchedEnv)
+                                   ),
+                           loc)
+                  end
               val strInfo = 
                   {id = Path.localizedConstrainedStrID,
                    name = Path.localizedConstrainedStrName,
@@ -1003,7 +1062,7 @@ in
                 if strName = Path.localizedConstrainedStrName then
                   Path.localizedConstrainedStrID
                 else
-                  SE.newStructureId ()
+                  T.newStructureId ()
             val newcc =
                 TIC.updateStrLevel
                     (cc, P.appendPath (#strLevel cc, strID, strName))
@@ -1014,7 +1073,7 @@ in
             val strInfo = {id = strID, name = strName, env = newE}
             val strPathInfo =
                 {id = strID, name = strName, strpath = #strLevel cc, env = newE}
-            val context2 = TC.bindStrInEmptyContext(strName, T.STRUCTURE strPathInfo)
+            val context2 = TC.bindStrInEmptyContext(strName, strPathInfo)
         in
           (
            context2,
@@ -1043,7 +1102,11 @@ in
           PT.PTCOREDEC(pdecl, loc) => 
           (* rule 56 *)
           let
-            val (context, tdecl) = TIFC.typeinfTopPtdecl cc pdecl
+            (*
+              Ohori: lambdaDepth parameter is added.
+                val (context, tdecl) = TIFC.typeinfTopPtdecl cc pdecl
+             *)
+            val (context, tdecl) = TIFC.typeinfTopPtdecl T.toplevelDepth cc pdecl
           in
             (context, TCC.TPMCOREDEC(tdecl, loc))
           end
@@ -1084,7 +1147,7 @@ in
       | typeinfSigbinds cc ((sigName, ptsigexp) :: rem)  =
         (*rule 67*)
         let
-            val sigID = SE.newStructureId ()
+            val sigID = T.newStructureId ()
             val newcc =
                 TIC.updateStrLevel
                     (cc, P.appendPath (#strLevel cc, sigID, sigName))
@@ -1110,10 +1173,10 @@ in
       | typeinfFunbinds cc (ptfunbind as (funName,strName,ptsigexp,ptstrexp,loc) :: rem) =
         (* rule 86 *)
         let
-          val functorID = SE.newStructureId ()
+          val functorID = T.newStructureId ()
           val newcc1 = TIC.updateStrLevel
                          (cc, P.appendPath (#strLevel cc, functorID,funName))
-          val strID = SE.newStructureId ()
+          val strID = T.newStructureId ()
           val strPath = P.appendPath (#strLevel newcc1, strID,strName)
           val newcc2 = TIC.updateStrLevel (newcc1, strPath)
           val (sigIdPath, sigma as (T,E), tpsigexp) = typeinfSig newcc2  ptsigexp
@@ -1121,10 +1184,10 @@ in
               updateStrpathInEnv (sigIdPath, strPath, E)
           val strPathInfo =
               {id = strID, name = strName, strpath = P.NilPath, env = sigmaE}
-          val newcc3 = TIC.bindStrInCurrentContext(newcc1,strName,T.STRUCTURE strPathInfo)
+          val newcc3 = TIC.bindStrInCurrentContext(newcc1,strName, strPathInfo)
           val newptstrexp = SL.localizeToLetStrexp ptstrexp loc
-          val fromTyConId = SE.nextTyConId ()
-          val fromExnTag = SE.nextExnTag ()
+          val fromTyConId = T.nextTyConId ()
+          val fromExnTag = T.nextExnTag ()
           val (_, context1, unConstrainedContext, tpmodexp) = 
               typeinfStrexp newcc3 newptstrexp
           val unConstrainedEnv = TC.getStructureEnvFromContext unConstrainedContext
@@ -1198,60 +1261,85 @@ in
                 (context3, TCC.TPMDECFUN (tpfunbinds, loc) :: tptopbinds)
               end
             | PT.PTTOPDECIMPORT _ => raise Control.Bug "import occurs at separate compilation"
+            | PT.PTTOPDECEXPORT _ => raise Control.Bug "export occurs at separate compilation"
             
       in
         (newContext, topbinds)
       end
 
-    fun typeinfPttopdeclList' (cc : TIC.currentContext) pltopdecs =
+    fun typeinfPttopdeclListLinkageUnit (cc : TIC.currentContext) pltopdecs =
         let
-          val fromTyConId = SE.nextTyConId()
-          fun typeInfPttopdecListImpl cc nil =
-              ((TC.emptyImportTypeEnv, TC.emptyExportTypeEnv), nil)
-            | typeInfPttopdecListImpl cc (pltopdec :: rest) =
-              case pltopdec of
-                PT.PTTOPDECIMPORT(ptspec, loc) =>
-                let
-                  val (context1, tpImSpecs) = typeinfSpec cc ptspec
-                  val importTypeEnv1 = TC.contextToTypeEnv context1
-                  val newcc = TIC.extendCurrentContextWithContext (cc, context1)
-                  val ((importTypeEnv2, exportTypeEnv2), tptopbinds) =
-                      typeInfPttopdecListImpl newcc rest
-                  val importTypeEnv3 = TC.extendImportTypeEnvWithImportTypeEnv
-                                         { newImportTypeEnv = importTypeEnv2,
-                                           oldImportTypeEnv = importTypeEnv1}
-                                         handle TC.exDuplicateElem id => 
-                                                (E.enqueueError(loc,
-                                                                E.DuplicateSpecification{id = id});
-                                                 TC.emptyTypeEnv)
-                in
-                  ((importTypeEnv3, exportTypeEnv2),
-                   TCC.TPMDECIMPORT(tpImSpecs, TC.extractEnvFromContext context1, loc) :: tptopbinds)
-                end
-              | _ =>
-                let
-                  val (context1, tptopbinds1) = typeinfPttopdeclList cc [pltopdec]
-                  val exportTypeEnv1 = 
-                      TC.injectContextIntoEmptyExportTypeEnv context1
-                  val newcc = TIC.extendCurrentContextWithContext(cc, context1)
-                  val ((importTypeEnv2, exportTypeEnv2), tptopbinds2) =
-                      typeInfPttopdecListImpl newcc rest
-                  val exportTypeEnv3 = 
-                      TC.extendExportTypeEnvWithExportTypeEnv
-                        { newExportTypeEnv = exportTypeEnv2,
-                          oldExportTypeEnv = exportTypeEnv1}
-                in
-                  ((importTypeEnv2, exportTypeEnv3), tptopbinds1 @ tptopbinds2)
-                end
-          val ((importTypeEnv, exportTypeEnv), tptopbinds) =
-              typeInfPttopdecListImpl cc pltopdecs
-          val staticTypeEnv = 
-              {importTyConIdSet = TIU.tyConIdSetTypeEnv fromTyConId importTypeEnv ,
-               importTypeEnv = importTypeEnv,
-               exportTypeEnv = exportTypeEnv}
+            fun typeInfPttopdecListImpl cc nil =
+                ((ID.Set.empty, STE.emptyImportTypeEnv, STE.emptyExportTypeEnv), nil)
+              | typeInfPttopdecListImpl cc (pltopdec :: rest) =
+                case pltopdec of
+                    PT.PTTOPDECIMPORT(ptspec, loc) =>
+                    let
+                        val fromTyConId = T.nextTyConId()
+                        val (context1, tpImSpecs) = typeinfSpec cc ptspec
+                        val importTypeEnv1 = STE.contextToTypeEnv context1
+                        val importTyConIdSet1 =
+                            TIU.tyConIdSetTypeEnv fromTyConId importTypeEnv1
+                        val newcc = TIC.extendCurrentContextWithContext (cc, context1)
+                        val ((importTyConIdSet2, importTypeEnv2, exportTypeEnv2), tptopbinds) =
+                            typeInfPttopdecListImpl newcc rest
+                        val importTypeEnv3 = STE.extendImportTypeEnvWithImportTypeEnv
+                                                 { newImportTypeEnv = importTypeEnv2,
+                                                   oldImportTypeEnv = importTypeEnv1}
+                                                 handle TC.exDuplicateElem id => 
+                                                        (E.enqueueError(loc,
+                                                                        E.DuplicateSpecification{id = id});
+                                                         STE.emptyTypeEnv)
+                        val importTyConIdSet3 =
+                            ID.Set.union (importTyConIdSet1, importTyConIdSet2)
+                    in
+                        ( (importTyConIdSet3, importTypeEnv3, exportTypeEnv2),
+                          TCC.TPMDECIMPORT(tpImSpecs,TC.extractEnvFromContext context1, loc) 
+                          :: tptopbinds
+                          )
+                    end
+                  | _ =>
+                    let
+                        val (context1, tptopbinds1) = typeinfPttopdeclList cc [pltopdec]
+                        val exportTypeEnv1 = 
+                            STE.injectContextIntoEmptyExportTypeEnv context1
+                        val newcc = TIC.extendCurrentContextWithContext(cc, context1)
+                        val ((importTyConIdSet2, importTypeEnv2, exportTypeEnv2), tptopbinds2) =
+                            typeInfPttopdecListImpl newcc rest
+                        val exportTypeEnv3 = 
+                            STE.extendExportTypeEnvWithExportTypeEnv
+                                { newExportTypeEnv = exportTypeEnv2,
+                                  oldExportTypeEnv = exportTypeEnv1}
+                    in
+                        ((importTyConIdSet2, importTypeEnv2, exportTypeEnv3), tptopbinds1 @ tptopbinds2)
+                    end
+            val fromExnTag = T.nextExnTag()
+            val ((importTyConIdSet, importTypeEnv, exportTypeEnv), tptopbinds) =
+                typeInfPttopdecListImpl cc pltopdecs
+            val toExnTag = T.nextExnTag()
+            val staticTypeEnv = 
+                {importTyConIdSet = importTyConIdSet,
+                 importTypeEnv = importTypeEnv,
+                 exportTypeEnv = exportTypeEnv,
+                 generativeExnTagSet = TIU.computeGenerativeExnTag(fromExnTag, toExnTag, importTypeEnv)}
         in
-          (staticTypeEnv:TC.staticTypeEnv, tptopbinds)
+            (staticTypeEnv:STE.staticTypeEnv, tptopbinds)
         end
+
+    fun typeinfPttopdeclInterface (cc : TIC.currentContext) nil = 
+        (ID.Set.empty, StaticTypeEnv.emptyTypeEnv)
+      | typeinfPttopdeclInterface (cc : TIC.currentContext) [PT.PTTOPDECEXPORT(ptspec, loc)] = 
+        let
+            val fromTyConId = T.nextTyConId()
+            val (context1, tpImSpecs) = typeinfSpec cc ptspec
+            val exportTypeEnv = STE.contextToTypeEnv context1
+            val exportTyConIdSet =
+                TIU.tyConIdSetTypeEnv fromTyConId exportTypeEnv
+        in
+            (exportTyConIdSet, exportTypeEnv)
+        end
+      | typeinfPttopdeclInterface _ _  = raise Control.Bug "export interface contains other constructs"
+
 end
 end
 

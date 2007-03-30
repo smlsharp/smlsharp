@@ -1,0 +1,3 @@
+Group is
+	sources.cm (bind:(anchor:basis_compat.cm value:"@BASISDIR@")
+                    bind:(anchor:smlformatlib.cm value:"@SMLFORMATDIR@"))

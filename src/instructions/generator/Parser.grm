@@ -18,6 +18,7 @@ val lastOpcode = ref 0;
 	        SINT24 |
 	        UINT32 |
 	        SINT32 |
+	        REAL32 |
 	        REAL64 |
 	        LIST |
                 EOF
@@ -90,6 +91,7 @@ OperandType:
   | SINT24	(SInt24)
   | UINT32	(UInt32)
   | SINT32	(SInt32)
+  | REAL32	(Real32)
   | REAL64	(Real64)
   | OperandType LIST	(List(OperandType))
 

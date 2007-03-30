@@ -1,0 +1,141 @@
+structure FFIGenItem = struct
+  
+  (*% *)
+  datatype caseTag =
+    (*%
+     @format(i) "case" + i ":" +1
+     *)
+    CASETAG of int
+  
+  (*% *)
+  datatype break =
+     (*%
+      @format "break;" +1
+      *)	   
+      BREAK 
+  
+  (*% *)
+  datatype return =
+         (*%
+              @format "  *(Real64Value*" ")returnValue =" +1
+  	  *)	   
+  	 REAL_RETURN
+         | (*%
+             @format "     returnValue->uint32 =" +1
+  	  *)	   
+           WORD_RETURN
+  
+  (*% *)
+  datatype resultTy =
+  	 (*%
+             @format "Real64Value (" "*" ")" +1
+  	  *)	   
+   	 REAL_RESULT_TY 
+      | (*%
+             @format "UInt32Value (" "*" ")" +1
+  	  *)	   
+           WORD_RESULT_TY
+  
+  (*% *)
+  datatype argTy =
+  	 (*%
+             @format "Real64Value"
+  	  *)	   
+  	 REALARG
+         | (*%
+             @format "UInt32Value"
+  	  *)	   
+           WORDARG
+  
+  (*% *)
+  type argTyList =
+     (*%
+       @format(arg args) 
+         "     ("
+	 args(arg)(","  +1 "      ")
+	 ")" +1
+      *
+      *)
+      argTy list 
+
+  (*% *)
+  type funBody =
+     (*%
+       @format(result * args) 
+         "   ((CONVENTION "
+	 result 
+         args
+	 "   )" +1
+	 "    function)" +1
+      *
+      *)
+    resultTy * argTyList
+
+  (*% 
+  * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+  *)
+  datatype argEntry =
+  	 (*%
+             @format(i) "*(Real64Value*" ")(FRAME_ENTRY_ADDRESS(SP,argIndexes[" i "]))"
+  	  *)	   
+  	 REALLOAD of int
+         | (*%
+             @format(i) "FRAME_ENTRY(SP, argIndexes[" i  "]).uint32"
+  	  *)	   
+           WORDLOAD of int
+
+
+  (*% *)
+  type funArgs =
+     (*%
+       @format(arg args) 
+         "   ("
+         args(arg)("," +1 "     ")
+	 ");" +1
+      *
+      *)
+    argEntry list 
+
+  (*% *)
+  type returnStatement =
+     (*%
+       @format(return * funbody * funargs) 
+         return
+	 funbody
+	 funargs
+      *
+      *)
+    return * funBody * funArgs
+
+  (*% *)
+  type ffiEntry =
+     (*%
+       @format(caseTag * returnStatement) 
+	 caseTag
+	 returnStatement
+	 "     break;" +1
+      *
+      *)
+    caseTag * returnStatement
+    
+  (*% *)
+  type ffiSwitchFunc =
+     (*%
+       @format(name * entry entries * default)
+         "static void" + "SWITCHFUNCNAME(" name ")"
+         "(" "Cell *returnValue," +
+             "void *function," +
+             "UInt32Value *SP," +
+             "UInt32Value tag," +
+             "UInt32Value *argIndexes" ")" +1
+         "{" +1
+         2[ "switch (tag) {" +1
+            entries(entry)()
+            "default:" +1
+            "  " default ";" +1
+            "}" ] +1
+         "}" +1
+      *)
+    string * ffiEntry list * string
+  
+end

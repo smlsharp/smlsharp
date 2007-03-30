@@ -1,9 +1,8 @@
 (**
- * Copyright (c) 2006, Tohoku University.
- *
  * run the interactive session with runtime
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.25 2006/03/03 06:36:09 kiyoshiy Exp $
+ * @version $Id: Main.sml,v 1.48 2007/02/28 14:55:36 katsu Exp $
  *)
 structure Main :
           sig
@@ -19,13 +18,17 @@ struct
   (***************************************************************************)
 
   structure C = Control
+  structure CT = Counter
   structure G = GetOpt
   structure PU = PathUtility
   structure TE = TopLevelError
 
   (***************************************************************************)
 
-  datatype runMode = CompileAndExecuteMode | CompileOnlyMode | MakeLibraryMode
+  datatype runMode =
+           CompileAndExecuteMode
+         | CompileOnlyMode
+         | MakeCompiledLibraryMode
 
   datatype prelude = Source of string | Compiled of string
 
@@ -38,17 +41,19 @@ struct
          | Control of string * C.switch * string
          | Expression of string
          | Help
+         | HelpEx
          | LibraryDirectory of string
-         | MakeLibrary
+         | MakeCompiledLibrary
          | NoBasis
          | NoWarning
          | NoPrintBinds
+         | ObjectFile of string
          | OutputFile of string
          | PreludeFile of string
          | Runtime of string
          | Quiet
+         | ShowVersion
          | StdIn
-         | Version
 
   (**
    * command line options are stored in this record.
@@ -59,8 +64,8 @@ struct
          libPaths : string list ref,
          mode : runMode ref,
          outputFileName : string ref,
+         objectFileNames : string list ref,
          preludeFileName : prelude ref,
-         runtimePath : string ref,
          printBinds : bool ref,
          printWarning : bool ref,
          sources : (unit -> Top.source) list ref
@@ -84,7 +89,7 @@ struct
    *)
   val loadPrelude = ref true
   val printPrelude = ref false
-  val tracePrelude = ref false
+  val tracePrelude = C.tracePrelude
   val useBasis = ref false
   val compileOnly = ref false
 
@@ -101,34 +106,54 @@ struct
       Source (if !useBasis then BasisFileName else minimumPreludeFileName)
 *)
 
-  (* ToDo : the file name of runtime should be specified in Configuration. *)
-  val RuntimeFileName = Configuration.RuntimeFileName
-  val RuntimePathEnvVarName = "SMLSHARP_RUNTIME"
-  val DefaultRuntimePath = Configuration.RuntimePath
   val DefaultObjectFileName = "a.sme"
   val InstallLibDirectory = Configuration.LibDirectory
   val LibPathEnvVarName = "SMLSHARP_LIB_PATH"
-  val version = Configuration.Version
+  val ProductName = "SML#"
+  val Version = Configuration.Version
+  val VersionInfoMessage = ProductName ^ " " ^ Version
+                           ^ " (" ^ Configuration.ReleaseDate ^ ")"
+
+  (********************)
+
+  val CT.CounterSet MainCounterSet =
+      #addSet CT.root ("Main", CT.ORDER_OF_ADDITION)
+  val CT.ElapsedTimeCounter restoreStaticEnvTimeCounter =
+      #addElapsedTime MainCounterSet "restore static ENV"
+  val CT.ElapsedTimeCounter restoreDynamicEnvTimeCounter =
+      #addElapsedTime MainCounterSet "restore dynamic ENV"
+  val CT.ElapsedTimeCounter initializationCounter =
+      #addElapsedTime MainCounterSet "initialization"
 
   (********************)
   (* functions to manipulate control option *)
 
   fun getOptOfControlOption (name, switch) =
       let
-        val argument =
-            case switch of C.IntSwitch _ => "NUM" | C.BoolSwitch _ => "yes/no"
+        val desc =
+            case switch of
+              C.IntSwitch _ =>
+              G.ReqArg (fn value => Control(name, switch, value), "NUM")
+            | C.BoolSwitch _ => 
+              G.ReqArg (fn value => Control(name, switch, value), "yes/no")
+            | C.StringSwitch _ =>
+              (* TEXT option can be an empty string. *)
+              G.OptArg
+                  (fn valueOpt =>
+                      Control
+                          (name, switch, Option.getOpt(valueOpt, "")), "TEXT")
       in
         {
           short = "",
           long = ["x" ^ name],
-          desc = G.ReqArg (fn value => Control(name, switch, value), argument),
+          desc = desc,
           help = "control option."
         }
       end
 
   (********************)
 
-  val optionDescs =
+  val optionDescsStandard =
       [
         {
           short = "c",
@@ -155,15 +180,21 @@ struct
           help = "Display command line options"
         },
         {
+          short = "X",
+          long = [],
+          desc = G.NoArg HelpEx,
+          help = "Display non-standard command line options"
+        },
+        {
           short = "I",
-          long = ["lib"],
+          long = ["load-path"],
           desc = G.ReqArg (LibraryDirectory, "DIR"),
           help = "Prepend DIR to the load path list."
         },
         {
           short = "",
-          long = ["make-library"],
-          desc = G.NoArg MakeLibrary,
+          long = ["make-compiled-prelude"],
+          desc = G.NoArg MakeCompiledLibrary,
           help = "Generate a library file."
         },
         {
@@ -191,16 +222,16 @@ struct
           help = "Place the output into FILE."
         },
         {
+          short = "l",
+          long = ["library"],
+          desc = G.ReqArg (ObjectFile, "FILE"),
+          help = "Load object code from FILE."
+        },
+        {
           short = "",
           long = ["prelude"],
           desc = G.ReqArg (PreludeFile, "FILE"),
           help = "Change prelude."
-        },
-        {
-          short = "",
-          long = ["runtime"],
-          desc = G.ReqArg (Runtime, "FILE"),
-          help = "Specify a path to runtime executable file."
         },
         {
           short = "q",
@@ -217,13 +248,18 @@ struct
         {
           short = "v",
           long = ["version"],
-          desc = G.NoArg Version,
+          desc = G.NoArg ShowVersion,
           help = "Print version number and exit."
         }
       ]
-      @ (map getOptOfControlOption (SEnv.listItemsi C.switchTable))
-  val usageHeader = "Usage : smlsharp [OPTION ...] [files...]"
-  val usage = G.usageInfo {header = usageHeader, options = optionDescs}
+  val optionDescsExtra =
+      map getOptOfControlOption (SEnv.listItemsi C.switchTable)
+  val optionDescs = optionDescsStandard @ optionDescsExtra
+  val usageHeader = "Usage : smlsharp [OPTION ...] [file] [arguments ...]"
+  val usage =
+      G.usageInfo {header = usageHeader, options = optionDescsStandard} ^ "\n"
+  val usageExtra =
+      G.usageInfo {header = usageHeader, options = optionDescsExtra} ^ "\n"
 
   val STDINChannel = TextIOChannel.openIn {inStream = TextIO.stdIn}
   val STDOUTChannel = TextIOChannel.openOut {outStream = TextIO.stdOut}
@@ -234,10 +270,11 @@ struct
       ((userFunction arg) before (finalizer arg))
       handle e => (finalizer arg; raise e)
 
-  fun writeMagicNumberHeader outputChannel =
-      #print
-          (CharacterStreamWrapper.wrapOut outputChannel)
-          ("#!/usr/bin/env " ^ RuntimeFileName ^ "\n")
+  fun trace message = 
+      if !C.switchTrace andalso !C.traceFileLoad
+      then
+        (TextIO.output (TextIO.stdErr, message); TextIO.flushOut TextIO.stdErr)
+      else ()
 
   fun getSourceOfStdIn interactionMode () =
       {
@@ -263,11 +300,22 @@ struct
                 getVariable loadPathList "." sourceFileName
             handle TE.InvalidPath message =>
                    raise InvalidOption message
+        val _ = trace ("source: " ^ absoluteFilePath ^ "\n")
         val sourceDir = #dir(PU.splitDirFile absoluteFilePath)
+        val fileChannel = FileChannel.openIn {fileName = absoluteFilePath}
+
+        (* This buffering makes unpickling prelude fast slightly. *)
+        val contents = ChannelUtility.getAll fileChannel
+        val _ = #close fileChannel ()
+        val sourceChannel = ByteVectorChannel.openIn {buffer = contents}
+(*
+        val sourceChannel = fileChannel
+*)
+
         fun getSource () =
             {
               interactionMode = Top.NonInteractive {stopOnError = true},
-              initialSource = FileChannel.openIn {fileName = absoluteFilePath},
+              initialSource = sourceChannel,
               initialSourceName = sourceFileName,
               getBaseDirectory = fn () => sourceDir
             } : Top.source
@@ -293,7 +341,7 @@ struct
                 {
                   argOrder = G.Permute,
                   options = optionDescs,
-                  errFn = fn message => raise Fail (message ^ usage)
+                  errFn = fn message => raise InvalidOption message
                 }
                 arguments
 
@@ -307,20 +355,23 @@ struct
             := (!(#sources parameters)
                 @ [getSourceOfInlineExpression expression])
           | processOpt Help = (print usage; raise Quit)
+          | processOpt HelpEx = (print usageExtra; raise Quit)
           | processOpt (LibraryDirectory directory) =
             (* prepend to the list *)
             (#libPaths parameters) := directory :: !(#libPaths parameters)
-          | processOpt MakeLibrary = #mode parameters := MakeLibraryMode
+          | processOpt MakeCompiledLibrary =
+            #mode parameters := MakeCompiledLibraryMode
           | processOpt NoBasis = 
             (#preludeFileName parameters) := Source minimumPreludeFileName
           | processOpt NoWarning = (#printWarning parameters) := false
           | processOpt NoPrintBinds = (#printBinds parameters) := false
           | processOpt (OutputFile fileName) =
             (#outputFileName parameters) := fileName
+          | processOpt (ObjectFile fileName) =
+            (#objectFileNames parameters) :=
+            (!(#objectFileNames parameters)) @ [fileName]
           | processOpt (PreludeFile fileName) =
             (#preludeFileName parameters) := Source fileName
-          | processOpt (Runtime fileName) =
-            (#runtimePath parameters) := fileName
           | processOpt Quiet =
             (
               #printWarning parameters := false;
@@ -330,7 +381,8 @@ struct
             (#sources parameters)
             := !(#sources parameters)
                @ [getSourceOfStdIn (Top.NonInteractive {stopOnError = true})]
-          | processOpt Version = (print (version ^ "\n"); raise Quit)
+          | processOpt ShowVersion =
+            (print (VersionInfoMessage ^ "\n"); raise Quit)
 
         val _ = app processOpt options
 
@@ -376,16 +428,16 @@ struct
 
   fun createLibrary outputChannel context executableChannel =
       let
-        val _ = print "saving static environment..."
+        val _ = trace "saving static environment..."
         fun writer byte = #send outputChannel byte
         (* pickled static environment is at the head of library file. *)
         val _ = Top.pickle context (Pickle.makeOutstream writer)
-        val _ = print "done\n"
+        val _ = trace "done\n"
 
-        val _ = print "saving dynamic environment..."
+        val _ = trace "saving dynamic environment..."
         (* copy executables into the library file. *)
         val _ = ChannelUtility.copy (executableChannel, outputChannel)
-        val _ = print "done\n"
+        val _ = trace "done\n"
       in
         ()
       end
@@ -398,18 +450,26 @@ struct
             case #receive channel () of
               SOME byte => byte
             | NONE => raise Fail "unexpected EOF of library"
-        val _ = print "restoring static environment..."
-        val context = Top.unpickle parameter (Pickle.makeInstream reader)
-        val _ = print "done\n"
+        val _ = trace "restoring static environment..."
+        val _ = #start restoreStaticEnvTimeCounter ()
+        val context =
+            Top.unpickle parameter (Pickle.makeInstream reader)
+            handle exn =>
+                   raise Fail ("malformed compiled code:" ^ exnMessage exn)
+        val _ = #stop restoreStaticEnvTimeCounter ()
+        val _ = trace "done\n"
 
         val session = #session parameter
         fun execute () =
             case StandAloneSession.loadExecutable channel of
               SOME executable => (#execute session executable; execute ())
             | NONE => ()
-        val _ = print "restoring dynamic environment..."
+        val _ = trace "restoring dynamic environment..."
+        val _ = #start restoreDynamicEnvTimeCounter ()
         val _ = execute ()
-        val _ = print "done\n"
+        val _ = #stop restoreDynamicEnvTimeCounter ()
+        val _ = trace "done\n"
+
       in
         context
       end
@@ -417,6 +477,13 @@ struct
   fun start (parameter : Top.contextParameter) (preludeSource : Top.source) =
       let
         val context = Top.initialize parameter
+        val preludeSource =
+            {
+              interactionMode = Top.Prelude,
+              initialSource = #initialSource preludeSource,
+              initialSourceName = #initialSourceName preludeSource,
+              getBaseDirectory = #getBaseDirectory preludeSource
+            }
       in
         if Top.run context preludeSource
         then context
@@ -427,37 +494,38 @@ struct
 
   fun getInteractiveSession (parameters : parameters) =
       let
-        val proxy =
-            RuntimeProxyFactory.createInstance
-                (!(#runtimePath parameters))
-                (!(#extraArgs parameters))
         val sessionParameter = 
             {
               terminalInputChannel = STDINChannel,
               terminalOutputChannel = STDOUTChannel,
               terminalErrorChannel = STDERRChannel,
-              runtimeProxy = proxy
+              arguments = !(#extraArgs parameters)
             }
-        val session = InteractiveSession.openSession sessionParameter
-        fun cleanUp _ = #release proxy ()
+        val session = InteractiveSessionFactory.openSession sessionParameter
       in
-        (session, cleanUp)
+        (session, fn _ => ())
       end
 
   fun getBatchSession (parameters : parameters) =
       let
         val outputFileName = !(#outputFileName parameters)
         val outputChannel = FileChannel.openOut {fileName = outputFileName}
-        val _ = writeMagicNumberHeader outputChannel
+
         val _ = FileSysUtil.setFileModeExecutable outputFileName
+
+        val _ = (* inserts header *)
+            #print
+                (CharacterStreamWrapper.wrapOut outputChannel)
+                (!C.headerOfExecutable)
         val session =
             StandAloneSession.openSession {outputChannel = outputChannel}
+
         fun cleanUp _ = #close outputChannel ()
       in
         (session, cleanUp)
       end
 
-  fun getMakeLibrarySession (parameters : parameters) =
+  fun getMakeCompiledLibrarySession (parameters : parameters) =
       let
         (* generated executables are bufferred into this bufferOptRef. *)
         val bufferOptRef = ref (NONE : Word8Array.array option)
@@ -496,20 +564,18 @@ struct
 
   fun main (commandName, arguments) =
       let
+
+        val _ = #reset MainCounterSet ()
+
         val libPaths =
             case OS.Process.getEnv LibPathEnvVarName of
               NONE => []
             | SOME libPath =>
-              String.tokens (fn ch => ch = FileSysUtil.PathSeprator) libPath
-
-        val runtimePath =
-            case OS.Process.getEnv RuntimePathEnvVarName of
-              NONE => DefaultRuntimePath
-            | SOME runtimePath => runtimePath
+              String.tokens (fn ch => ch = FileSysUtil.PathSeparator) libPath
 
         val _ = C.setControlOptions "IML_" OS.Process.getEnv
 
-        (* default parameter *)                
+        (* default parameter *)
         val parameters =
             {
               extraArgs = ref [],
@@ -520,8 +586,8 @@ struct
                    then CompileOnlyMode
                    else CompileAndExecuteMode),
               outputFileName = ref DefaultObjectFileName,
+              objectFileNames = ref [],
               preludeFileName = ref DefaultPreludeFile,
-              runtimePath = ref runtimePath,
               printBinds = C.printBinds,
               printWarning = C.printWarning,
               sources = ref []
@@ -529,12 +595,17 @@ struct
 
         (* update parameter to user specified *)                
         val _ = parseArguments parameters arguments
+        val _ =
+            app
+                (fn libPath => trace ("libpath: " ^ libPath ^ "\n"))
+                (!(#libPaths parameters))
 
         val (session, cleanUp) =
             case !(#mode parameters) of
               CompileAndExecuteMode => getInteractiveSession parameters
             | CompileOnlyMode => getBatchSession parameters
-            | MakeLibraryMode => getMakeLibrarySession parameters
+            | MakeCompiledLibraryMode =>
+              getMakeCompiledLibrarySession parameters
 
         val topParameter = 
             {
@@ -545,19 +616,23 @@ struct
               getVariable = OS.Process.getEnv
             }
 
-        fun getPreludeSource preludeFileName =
-            getSourceOfFile
-                OS.Process.getEnv
-                (!(#libPaths parameters))
-                preludeFileName
-
         val currentSwitchTrace = !C.switchTrace
         val currentPrintBinds = !C.printBinds
 
       in
+        if !C.printBinds
+        then (print VersionInfoMessage; print "\n")
+        else ();
+
+        #start initializationCounter ();
+
         C.switchTrace := !tracePrelude;
         C.printBinds := !printPrelude;
         let
+          fun getSource fileName =
+              getSourceOfFile
+                  OS.Process.getEnv (!(#libPaths parameters)) fileName
+
           val context = 
               if !loadPrelude
               then
@@ -568,12 +643,25 @@ struct
                       | Compiled preludeFileName => (preludeFileName, resume)
                 in
                   finally
-                      (getPreludeSource fileName ())
+                      (getSource fileName ())
                       (contextCreator topParameter)
                       (fn source => #close (#initialSource source) ())
                 end
               else Top.initialize topParameter
         in
+          if
+            List.all
+                (fn fileName => Top.runObject context (getSource fileName ()))
+                (!(#objectFileNames parameters))
+          then ()
+          else raise Fail "loading object file fails.";
+
+          #stop initializationCounter ();
+
+          if !C.doProfile
+          then (print "\n"; print (Counter.dump ()))
+          else ();
+
           C.switchTrace := currentSwitchTrace;
           C.printBinds := currentPrintBinds;
 
@@ -589,6 +677,15 @@ struct
                  (#close session (); cleanUp NONE; raise exn)
       end
         handle Quit => OS.Process.success
+             | SessionTypes.Exit exitCode =>
+               (*
+                * NOTE: The type of status code is platform-dependent.
+                *       OS.Process.status is int on UNIX system,
+                *       but is word on Windows.
+                *)
+               if 0 = exitCode
+               then OS.Process.success
+               else OS.Process.failure
              | exn =>
                let
                  val exn = 
@@ -598,6 +695,9 @@ struct
                  val message =
                      case exn of
                        InvalidOption message => message
+                     | Control.Bug message => "Bug:" ^ message
+                     | Control.BugWithLoc (message, _) => 
+                       "BugWithLoc:" ^ message 
                      | _ => exnMessage exn
                in
                  print ("Error:" ^ message ^ "\n");

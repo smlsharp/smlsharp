@@ -7,5 +7,6 @@ Group
 	structure FunctorApplyUtils
 	structure TopObject
 	structure IndexAllocator
+	structure ModuleCompileUtils	
 is
 	main/module.cm

@@ -456,7 +456,7 @@ G E [x] ty = let val f = F E ty in [print f x] end
 
  * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
- * @version $Id: PrinterGenerator.sml,v 1.164 2006/02/09 10:24:28 ohori Exp $
+ * @version $Id: PrinterGenerator.sml,v 1.173 2007/02/11 16:39:51 kiyoshiy Exp $
  *)
 structure PrinterGenerator : PRINTER_GENERATOR =
 struct
@@ -465,15 +465,16 @@ struct
 
   structure A = Absyn
   structure BF = SMLFormat.BasicFormatters
+  structure CT = ConstantTerm
   structure FE = SMLFormat.FormatExpression
   structure IT = InitialTypeContext
   structure P = Path
   structure PE = PatternCalc
-  structure SE = StaticEnv
+  structure PT = PredefinedTypes
+  structure STE = StaticTypeEnv
   structure TC = TypeContext
   structure TP = TypedCalc
   structure TPU = TypedCalcUtils
-  structure TU = TypesUtils
   structure TCU = TypeContextUtils
   structure TY = Types
 
@@ -599,7 +600,8 @@ struct
           formatterVarInfo
         end
   in
-  fun insertFormatterIntoEnv ((tyConEnv, varEnv, strEnv) : TY.Env) =
+  fun insertFormatterIntoEnv
+          ((tyConEnv, varEnv, TY.STRUCTURE strEnvCont) : TY.Env) =
       let
         fun bindFormatterOfBindInfo (name, tyBindInfo, newVarEnv) =
             let
@@ -610,31 +612,30 @@ struct
             end
         val newVarEnv = SEnv.foldli bindFormatterOfBindInfo varEnv tyConEnv
 
-        fun insertToStructure (TY.STRUCTURE{name, id, strpath, env, ...}) =
+        fun insertToStructure ({name, id, strpath, env, ...}:TY.strPathInfo) =
             let val newEnv = insertFormatterIntoEnv env
             in
-              TY.STRUCTURE
-                  {name = name, id = id, strpath = strpath, env = newEnv}
+              {name = name, id = id, strpath = strpath, env = newEnv}
             end
-        val newStrEnv = SEnv.map insertToStructure strEnv
+        val newStrEnv = TY.STRUCTURE (SEnv.map insertToStructure strEnvCont)
       in
         (tyConEnv, newVarEnv, newStrEnv)
       end
   end
 
-  fun replaceTySpecToTyConInEnv ((tyConEnv, varEnv, strEnv) : TY.Env) =
+  fun replaceTySpecToTyConInEnv
+          ((tyConEnv, varEnv, TY.STRUCTURE strEnvCont) : TY.Env) =
       let
         fun replaceTyBindInfo (TY.TYSPEC {spec = tySpec,...}) =
             TY.TYCON(U.tySpecToTyCon tySpec)
           | replaceTyBindInfo tyBindInfo = tyBindInfo
         val newTyConEnv = SEnv.map replaceTyBindInfo tyConEnv
-        fun replaceInStructure (TY.STRUCTURE{name, id, strpath, env}) =
+        fun replaceInStructure {name, id, strpath, env} =
             let val newEnv = replaceTySpecToTyConInEnv env
             in
-              TY.STRUCTURE
-                  {name = name, id = id, strpath = strpath, env = newEnv}
+              {name = name, id = id, strpath = strpath, env = newEnv}
             end
-        val newStrEnv = SEnv.map replaceInStructure strEnv
+        val newStrEnv = TY.STRUCTURE (SEnv.map replaceInStructure strEnvCont)
       in (newTyConEnv, varEnv, newStrEnv)
       end
 
@@ -693,11 +694,11 @@ struct
         let
           val loc = TPU.getLocOfExp exp
           val exnVarName = U.makeVarName ()
-          val exnVarInfo = {name = exnVarName, ty = OC.exnTy}
+          val exnVarInfo = {name = exnVarName, ty = PT.exnty}
           val exnVarPathInfo = U.varInfoToVarPathInfo exnVarInfo
           val exnFormatterExp =
-              FG.generateFormatterOfTy context path [] [] loc OC.exnTy
-          val exnFormatterTy = OC.formatterOfTyTy OC.exnTy
+              FG.generateFormatterOfTy context path [] [] loc PT.exnty
+          val exnFormatterTy = OC.formatterOfTyTy PT.exnty
           val handlerBodyExp =
               TP.TPSEQ
               {
@@ -711,10 +712,11 @@ struct
                              argExpList = [TP.TPVAR (exnVarPathInfo, loc)],
                              loc = loc
                            }),
-                  OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc)),
+                  OC.printString
+                      (TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc)),
                   TP.TPRAISE(TP.TPVAR (exnVarPathInfo, loc), ty, loc)
                 ],
-                expTyList = [OC.unitTy, OC.unitTy, ty],
+                expTyList = [PT.unitty, PT.unitty, ty],
                 loc = loc
               }
         in
@@ -903,7 +905,13 @@ struct
             let
               val varName = #name varInfo
               val idState = TY.VARID(U.varInfoToVarPathInfo varInfo)
-            in TC.bindVarInContext (newContext, varName, idState)
+              (*
+               Changed by Ohori, Dec 6, 2006.
+                  in TC.bindVarInContext (newContext, varName, idState)
+               *)
+            in
+              TC.bindVarInContext
+                  (TY.toplevelDepth, newContext, varName, idState)
             end
         val bindContext = foldl bindVarBind TC.emptyContext namedBinds
 
@@ -934,12 +942,13 @@ struct
       | TP.TPVALREC (binds, loc) =>
         let
           val valIDBinds =
-              map (fn {var=varInfo, expTy=ty, exp} => (TY.VALIDVAR varInfo, exp)) binds
+              map (fn {var, expTy, exp} => (TY.VALIDVAR var, exp)) binds
           val (context, handledValIDBinds, printCodesMap) =
               visitValBinds context path positionCTX loc valIDBinds
           val handledBinds =
               map
-              (fn (TY.VALIDVAR varInfo, exp) => {var=varInfo, expTy = #ty varInfo, exp=exp})
+                  (fn (TY.VALIDVAR varInfo, exp) =>
+                      {var = varInfo, expTy = #ty varInfo, exp = exp})
               handledValIDBinds
         in
           (context, [TP.TPVALREC(handledBinds, loc)], printCodesMap)
@@ -955,7 +964,7 @@ struct
 
           val valIDBinds =
               map
-                  (fn {var=varInfo, expTy=ty, exp} => (TY.VALIDVAR(toPoly varInfo), exp))
+                  (fn {var, expTy, exp} => (TY.VALIDVAR(toPoly var), exp))
                   binds
           val (context, handledValIDBinds, printCodesMap) =
               visitValBinds context path positionCTX loc valIDBinds
@@ -1187,12 +1196,22 @@ struct
           fun bindExn (exnBind, localContext) =
               case exnBind of
                 TP.TPEXNBINDDEF (conInfo as {name = conName, ...}) =>
-                TC.bindVarInContext (localContext, conName, TY.CONID(conInfo))
+                (*
+                 Changed by Ohori, Dec 6, 2006.
+                  TC.bindVarInContext (localContext, conName, TY.CONID(conInfo))
+                *)
+                TC.bindVarInContext
+                    (TY.toplevelDepth, localContext, conName, TY.CONID(conInfo))
               | TP.TPEXNBINDREP(name, (strPath, string)) =>
                 (* search global CTX *)
                 case TC.lookupLongVar(context, strPath, string) of
                   (_, SOME idState) => (* bind in local CTX *)
-                  TC.bindVarInContext(localContext, name, idState)
+                   (*
+                    Changed by Ohori, Dec 6, 2006.
+                    TC.bindVarInContext(localContext, name, idState)
+                    *)
+                  TC.bindVarInContext
+                      (TY.toplevelDepth, localContext, name, idState)
                 | (_, NONE) =>
                   raise
                     Control.Bug
@@ -1241,7 +1260,7 @@ struct
           let
             val printCode =
                 PG.generatePrintCodeForInfix
-                    context path loc (SE.INFIX n, names)
+                    context path loc (Fixity.INFIX n, names)
           in (TC.emptyContext, [printCode]) end
         else (TC.emptyContext, [])
       | TP.TPINFIXRDEC(n, names, loc) =>
@@ -1250,7 +1269,7 @@ struct
           let
             val printCode =
                 PG.generatePrintCodeForInfix
-                    context path loc (SE.INFIXR n, names)
+                    context path loc (Fixity.INFIXR n, names)
           in (TC.emptyContext, [printCode]) end
         else (TC.emptyContext, [])
       | TP.TPNONFIXDEC(names, loc) =>
@@ -1259,7 +1278,7 @@ struct
           let
             val printCode =
                 PG.generatePrintCodeForInfix
-                    context path loc (SE.NONFIX, names)
+                    context path loc (Fixity.NONFIX, names)
           in (TC.emptyContext, [printCode]) end
         else (TC.emptyContext, [])
 
@@ -1388,7 +1407,7 @@ struct
         val strPathInfo = {id = id, name = name, strpath = path, env = strEnv}
       in
         (
-          TC.bindStrInContext(TC.emptyContext, name, TY.STRUCTURE strPathInfo),
+          TC.bindStrInContext(TC.emptyContext, name, strPathInfo),
           [(strInfo, newStrExp)]
         )
       end
@@ -1410,7 +1429,7 @@ struct
                 val printExp =
                     PG.generatePrintCodeForStrBind context path loc strBind
                 val printDec =
-                    TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+                    TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
               in
                 (context, [TP.TPMCOREDEC([printDec], loc)])
               end
@@ -1474,7 +1493,7 @@ struct
               env = innerArgEnv
             }
         val innerContext = 
-            TC.bindStrInContext(context, argName, TY.STRUCTURE argStrPathInfo)
+            TC.bindStrInContext(context, argName, argStrPathInfo)
         (* insert formatters for tyCons declared in the body *)
         val (_, [newStrExp]) =
             visitStrExp innerContext innerPath positionCTX strExp
@@ -1517,7 +1536,7 @@ struct
                 val printExp =
                     PG.generatePrintCodeForSigDecls context path loc sigDecls
                 val printDec =
-                    TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+                    TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
               in
                 [TP.TPMDECSTR(TP.TPMCOREDEC([printDec], loc), loc)]
               end
@@ -1536,7 +1555,7 @@ struct
                 val printExp =
                     PG.generatePrintCodeForFunDecls context path loc funDecls
                 val printDec =
-                    TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+                    TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
               in
                 [TP.TPMDECSTR(TP.TPMCOREDEC([printDec], loc), loc)]
               end
@@ -1545,6 +1564,27 @@ struct
             visitSequential visitFunBind context path positionCTX funDecls
       in
         (newContext, [TP.TPMDECFUN (newFunDecls, loc)] @ printCode)
+      end
+    | visitTopDec context path positionCTX (TP.TPMDECIMPORT(spec, env, loc)) =
+      let
+        val printCode =
+            if PC.isPrintBinds positionCTX
+            then
+              let
+                val printExp =
+                    PG.generatePrintCodeForImport context path loc spec
+                val printDec =
+                    TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
+              in
+                [TP.TPMDECSTR(TP.TPMCOREDEC([printDec], loc), loc)]
+              end
+            else []
+        val newEnv = (* insertFormatterIntoEnv env *)
+                     env
+        (* ToDo : *)
+        val newContext = TC.emptyContext
+      in
+        (newContext, [TP.TPMDECIMPORT (spec, newEnv, loc)] @ printCode)
       end
 
   fun visitTopDecs context path positionCTX declarations =
@@ -1573,6 +1613,22 @@ struct
       in
         (* return newContext which is passed as the argument without change. *)
         (newContext, newDeclarations)
+      end
+
+  fun generateForSeparateCompile
+          {
+            newTypeEnv,
+            printBinds,
+            declarations
+          } =
+      let
+        val context = TC.emptyContext
+        val positionCTX = PC.create printBinds
+        val (_, newDeclarations) =
+            visitTopDecs context P.NilPath positionCTX declarations
+      in
+        (* return newContext which is passed as the argument without change. *)
+        (newTypeEnv, newDeclarations)
       end
 
   (***************************************************************************)

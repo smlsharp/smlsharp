@@ -3,7 +3,7 @@
  * declarations.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FormatterGenerator.sml,v 1.23 2006/02/28 16:11:03 kiyoshiy Exp $
+ * @version $Id: FormatterGenerator.sml,v 1.30 2007/03/01 14:01:52 kiyoshiy Exp $
  *)
 structure FormatterGenerator =
 struct
@@ -14,6 +14,7 @@ struct
   structure FE = SMLFormat.FormatExpression
   structure P = Path
   structure PE = PatternCalc
+  structure PT = PredefinedTypes
   structure TC = TypeContext
   structure TP = TypedCalc
   structure TU = TypesUtils
@@ -47,256 +48,303 @@ struct
         val argVarName = U.makeVarName ()
         val argVarPathInfo = {name = argVarName, strpath = P.NilPath, ty = ty}
         val argVarExp = TP.TPVAR (argVarPathInfo, loc)
-        (* make bodyExp.
-         * Because recursive call is necessary to handle type variable and
-         * POLYty, this is defined as a function. *)
-        fun generateFormatterBodyOfTy ty =
-            case ty of
-              TY.ERRORty => raise Control.Bug "unexpected ERRORty"
-            | TY.DUMMYty _ =>
-              TP.TPRAISE
-                  (
-                    OC.failException ("BUG? DUMMYty.", loc),
-                    OC.formatterResultTy,
-                    loc
-                  )
 
-            | TY.TYVARty(ref (TY.SUBSTITUTED actualTy)) =>
-              generateFormatterBodyOfTy actualTy
+        val bodyExp =
+            generateFormatterBodyOfTy
+                context path currentTyCons TVFormatters loc ty argVarExp
+      in
+        TP.TPFNM
+            {
+              argVarList = [argVarPathInfo],
+              bodyTy = OC.formatterResultTy,
+              bodyExp = bodyExp,
+              loc = loc
+            }
+      end
 
-            | TY.TYVARty(ref (TY.TVAR tvKind)) =>
-              (case
-                 List.find
-                     (fn (ref (TY.TVAR{id, ...}), _) => id = #id tvKind)
-                     TVFormatters
-                of
-                 SOME(_, TVFormatter) =>
-                 (* formatter of this variable is passed from the caller. *)
-                 let
-                   val TVFormatterTy = OC.formatterOfTyTy ty
-                   val varInfo =
-                       {
-                         name = TVFormatter,
-                         strpath = P.NilPath,
-                         ty = TVFormatterTy
-                       }
-                 in
-                   TP.TPAPPM
-                       {
-                         funExp = TP.TPVAR (varInfo, loc), 
-                         funTy = TVFormatterTy, 
-                         argExpList = [argVarExp], 
-                         loc = loc
-                       }
-                 end
-               | NONE =>
-                 TP.TPRAISE
-                     (
-                       OC.failException ("BUG? free tyvar.", loc),
-                       OC.formatterResultTy,
-                       loc
-                     ))
+  (** make bodyExp.
+   * Because recursive call is necessary to handle type variable and
+   * POLYty, this is defined as a function. *)
+  and generateFormatterBodyOfTy
+          context path currentTyCons TVFormatters loc ty argVarExp  =
+      case ty of
+        TY.ERRORty => raise Control.Bug "unexpected ERRORty"
 
-            | TY.BOUNDVARty(ID) =>
-              (* This branch is for polymorphic value, such as nil.
-               * this expression will be never called in runtime. *)
-              TP.TPRAISE
-                  (
-                    OC.failException ("BUG? bound tyvar.", loc),
-                    OC.formatterResultTy,
-                    loc
-                  )
-            | TY.FUNMty _ =>
-              OC.translateFormatExpression (FE.Term(2, "fn"))
+      | TY.DUMMYty _ =>
+        TP.TPRAISE
+            (OC.failException ("BUG:DUMMYty.", loc), OC.formatterResultTy, loc)
 
-            | TY.RECORDty fieldsMap =>
-              if 0 = SEnv.numItems fieldsMap
-              then
-                OC.translateFormatExpression(FE.Term(2, "()"))
-              else
-                let
-                  fun generateForField (label, polyFieldTy) =
-                      let 
-                        val (fieldExp, fieldTy) =
-                            U.instantiateExp
-                                (
-                                  TP.TPSELECT
-                                      {
-                                        label = label,
-                                        exp = argVarExp,
-                                        expTy = ty,
-                                        loc = loc
-                                      },
-                                  polyFieldTy
-                                )
-                        val fieldFormatterExp =
-                            generateFormatterOfTy
-                                context
-                                path
-                                currentTyCons
-                                TVFormatters
-                                loc
-                                fieldTy
-                        val fieldFormatterTy = OC.formatterOfTyTy fieldTy
-                        val fieldFormatExp = 
-                            TP.TPAPPM
+      | TY.TYVARty(ref (TY.SUBSTITUTED actualTy)) =>
+        generateFormatterBodyOfTy
+            context path currentTyCons TVFormatters loc actualTy argVarExp
+
+      | TY.TYVARty(ref (TY.TVAR tvKind)) =>
+        (case
+           List.find
+               (fn (ref (TY.TVAR{id, ...}), _) => id = #id tvKind)
+               TVFormatters
+          of
+           SOME(_, TVFormatter) =>
+           (* formatter of this variable is passed from the caller. *)
+           let
+             val TVFormatterTy = OC.formatterOfTyTy ty
+             val varInfo =
+                 {
+                   name = TVFormatter,
+                   strpath = P.NilPath,
+                   ty = TVFormatterTy
+                 }
+           in
+             TP.TPAPPM
+                 {
+                   funExp = TP.TPVAR (varInfo, loc), 
+                   funTy = TVFormatterTy, 
+                   argExpList = [argVarExp], 
+                   loc = loc
+                 }
+           end
+         | NONE =>
+           TP.TPRAISE
+               (
+                 OC.failException ("BUG? free tyvar.", loc),
+                 OC.formatterResultTy,
+                 loc
+               ))
+
+      | TY.BOUNDVARty(ID) =>
+        (* This branch is for polymorphic value, such as nil.
+         * this expression will be never called in runtime. *)
+        TP.TPRAISE
+            (
+              OC.failException ("BUG? bound tyvar.", loc),
+              OC.formatterResultTy,
+              loc
+            )
+
+      | TY.FUNMty _ => OC.makeConstantTerm "fn"
+
+      | TY.RECORDty fieldsMap =>
+        if 0 = SEnv.numItems fieldsMap
+        then OC.makeConstantTerm "()"
+        else
+          let
+            fun generateForField (label, polyFieldTy) =
+                let 
+                  val (fieldExp, fieldTy) =
+                      U.instantiateExp
+                          (
+                            TP.TPSELECT
                                 {
-                                  funExp = fieldFormatterExp,
-                                  funTy = fieldFormatterTy,
-                                  argExpList = [fieldExp],
+                                  label = label,
+                                  exp = argVarExp,
+                                  expTy = ty,
                                   loc = loc
-                                }
-                      in
-                        (label, fieldFormatExp)
-                      end
-                  (* labelFieldExps = [(l1, #l1 arg), ..., (ln, #ln arg)] *)
-                  val labelFieldExps =
-                      map generateForField (SEnv.listItemsi fieldsMap)
-                  val isTuple = U.isTupleFields fieldsMap
-                  val fieldExps =
-                      if isTuple
-                      then #2(ListPair.unzip labelFieldExps)
-                      else
-                        (* add label to each field *)
-                        map
-                        (fn (label, fieldExp) =>
-                            OC.makeGuard
-                            (
-                              NONE,
-                              OC.translateFormatExpressions
-                              [
-                                FE.Term (size label, label),
-                                U.s_d_Indicator,
-                                FE.Term (1, "="),
-                                U.s_1_Indicator
-                              ]
-                              @ [fieldExp]
-                            ))
-                        labelFieldExps
-
-                  (* insert commas between fields *)
-                  val joinedExps =
-                      List.rev
-                      (foldl
-                       (fn (exp, joined) =>
-                           OC.makeGuard(NONE, [exp]) ::
-                           OC.translateFormatExpressions
-                               [FE.Term (1, ","), U.s_1_Indicator] @
-                           joined)
-                       ([hd fieldExps])
-                       (tl fieldExps))
-
-                  (* header and trailer which enclose the fields list *)
-                  val (left, right) =
-                      if isTuple then ("(", ")") else ("{", "}")
-                  val leftParenExps = 
-                      OC.translateFormatExpressions
-                      [FE.Term (1, left), FE.StartOfIndent 2, U.s_1_Indicator]
-                  val rightParenExps =
-                      OC.translateFormatExpressions
-                      [FE.EndOfIndent, U.s_1_Indicator, FE.Term (1, right)]
+                                },
+                                polyFieldTy
+                          )
+                  val fieldFormatterExp =
+                      generateFormatterOfTy
+                          context
+                          path
+                          currentTyCons
+                          TVFormatters
+                          loc
+                          fieldTy
+                  val fieldFormatterTy = OC.formatterOfTyTy fieldTy
+                  val fieldFormatExp = 
+                      TP.TPAPPM
+                          {
+                            funExp = fieldFormatterExp,
+                            funTy = fieldFormatterTy,
+                            argExpList = [fieldExp],
+                            loc = loc
+                          }
                 in
-                  OC.makeGuard
-                      (NONE, leftParenExps @ joinedExps @ rightParenExps)
+                  (label, fieldFormatExp)
                 end
+            (* labelFieldExps = [(l1, #l1 arg), ..., (ln, #ln arg)] *)
+            val labelFieldExps =
+                map generateForField (SEnv.listItemsi fieldsMap)
+            val isTuple = U.isTupleFields fieldsMap
+            val fieldExps =
+                if isTuple
+                then #2(ListPair.unzip labelFieldExps)
+                else
+                  (* add label to each field *)
+                  map
+                      (fn (label, fieldExp) =>
+                          OC.makeGuard
+                              (
+                                NONE,
+                                OC.translateFormatExpressions
+                                    [
+                                      FE.Term (size label, label),
+                                      U.s_d_Indicator,
+                                      FE.Term (1, "="),
+                                      U.s_1_Indicator
+                                    ]
+                                @ [fieldExp]
+                              ))
+                      labelFieldExps
 
-            | TY.CONty{tyCon, args = argTys} =>
-              if U.isHiddenTyCon context path tyCon
-              then OC.translateFormatExpression(FE.Term(1, "-"))
-              else
-              let
+            (* insert commas between fields *)
+            val joinedExps =
+                List.rev
+                    (foldl
+                         (fn (exp, joined) =>
+                             OC.makeGuard(NONE, [exp]) ::
+                             OC.translateFormatExpressions
+                                 [U.s_1_Indicator, FE.Term (1, ",")] @
+                             joined)
+                         ([hd fieldExps])
+                         (tl fieldExps))
 
-                (* If the tyCon is one of tyCons for which formatters is now
-                 * generated, that formatter for the tyCon is referrred as
-                 * local variable. Otherwise, it is referred as global.
-                 * And these formatters is monotyped within the bodies of them.
-                 *)
-                val isRecursive = 
-                    List.exists (fn tc => tyCon = tc) currentTyCons
+            (* header and trailer which enclose the fields list *)
+            val (left, right) = if isTuple then ("(", ")") else ("{", "}")
+            val leftParenExps = 
+                OC.translateFormatExpressions
+                    [FE.Term (1, left), FE.StartOfIndent 2, U.ns_1_Indicator]
+            val rightParenExps =
+                OC.translateFormatExpressions
+                    [FE.EndOfIndent, U.ns_1_Indicator, FE.Term (1, right)]
+          in
+            OC.makeGuard
+                (
+                  SOME{cut = true, strength = 0, direction = FE.Neutral},
+                  leftParenExps @ joinedExps @ rightParenExps
+                )
+          end
 
-                (* [f1,...,fn] *)
-                val argFormatterExps =
-                    map
-                        (generateFormatterOfTy
-                             context path currentTyCons TVFormatters loc)
-                        argTys
-                (* [t1->r,...tn->r] *)
-                val argFormatterTys = map OC.formatterOfTyTy argTys
+      | TY.CONty{tyCon, args = argTys} =>
+        if ID.eq(#id tyCon, PT.unitTyConid)
+        then OC.makeConstantTerm "()"
+        else
+        if U.isHiddenTyCon context path tyCon
+        then OC.makeConstantTerm "-"
+        else
+          (case
+             (
+              (* true if this occurrence of tyCon is recursive. *)
+              List.exists
+                  (fn tc => ID.eq (#id tyCon, #id (tc : Types.tyCon)))
+                  currentTyCons,
+
+              (* true if this occurrence of tyCon is applied with type
+               * variables which are exactly same with type variables that
+               * appear in the definition of thie tycon.
+               * For example, true for d in the former, false for the latter.
+               *   datatype ('a, 'b) d = A of ('a, 'b) d | B
+               *   datatype ('a, 'b) d = A of ('b, 'a) d | B
+               *)
+              List.all
+                  (fn (
+                        ref (TY.TVAR{id = id1, ...}),
+                        TY.TYVARty(ref(TY.TVAR{id = id2, ...}))
+                      )
+                      => id1 = id2
+                    | _ => false)
+                  (ListPair.zip (#1 (ListPair.unzip TVFormatters), argTys))
+            )
+            of
+             (true, false) =>
+             (* recursive occurrence, but instantiated with different types.
+              * For example, occurrence of d in the argument of A is in this
+              * case.
+              *   datatype ('a, 'b) d = A of ('b, 'a) d | B
+              * Current BUCTransformer cannot handle formatter generated for
+              * this recursive datatype, so the formatter produce only "...".
+              *)
+             OC.makeConstantTerm "..."
+
+           | (isRecursive, _) =>
+             let
+              
+               (* [f1,...,fn] *)
+               val argFormatterExps =
+                   map
+                       (generateFormatterOfTy
+                            context path currentTyCons TVFormatters loc)
+                       argTys
+               (* [t1->r,...tn->r] *)
+               val argFormatterTys = map OC.formatterOfTyTy argTys
 (*
 val _ = print ("tyCon = " ^ pathToString(appendPath(#strpath tyCon, #name tyCon)) ^ "\n")
 *)
-                val (formatterPath, formatterName) =
-                    U.formatterPathNameOfTyCon path tyCon
+               (* If the tyCon is recursive occurrence, the formatter for the
+                * tyCon is referrred as local variable.
+                * Otherwise, it is referred as global.
+                * And these formatters is monotyped within the bodies of them.
+                *)
+               val (formatterPath, formatterName) =
+                   case U.formatterPathNameOfTyCon path tyCon of
+                     (path, name) => 
+                     (if isRecursive then P.NilPath else path, name)
 
-                local
-                  val polyFormatterTy =
-                      U.generalize(OC.formatterOfTyConTy tyCon)
-                in
-                (* formatter type which is instantiated with argument types.
-                 *   (t1->r)->...->(tn->r)->(t1,...,tn)t->r
-                 *)
-                val instantiatedFormatterTy =
-                    TU.tpappTy (polyFormatterTy, argTys)
+               local
+                 (* f : ['a1,...,'an.('a1->r)->...->('an->r)->('a1,...,'an)t->r
+                  *)
+                 val polyFormatterTy =
+                     U.generalize(OC.formatterOfTyConTy tyCon)
+               in
+               (* formatter type which is instantiated with argument types.
+                *   (t1->r)->...->(tn->r)->(t1,...,tn)t->r
+                *)
+               val instantiatedFormatterTy =
+                   TU.tpappTy (polyFormatterTy, argTys)
+                   
+               (* type of formatter which is bound in static environment. *)
+               val originalFormatterTy =
+                   if isRecursive
+                   then
+                     (* recursive reference is monotype. *)
+                     instantiatedFormatterTy 
+                   else polyFormatterTy
+               end
 
-                (* type formatter which is bound in static environment.
-                 * f : ['a1,...,'an.('a1->r)->...->('an->r)->('a1,...,'an)t->r
-                 *)
-                val originalFormatterTy =
-                    if isRecursive
-                    then
-                      (* recursive reference is monotype. *)
-                      instantiatedFormatterTy 
-                    else polyFormatterTy
-                end
+               val originalFormatterExp =
+                   TP.TPVAR
+                       (
+                         {
+                           name = formatterName,
+                           strpath = formatterPath,
+                           ty = originalFormatterTy
+                         },
+                         loc
+                       )
 
-                (* If the formatter is one which is now defined, it should
-                 * be referred by using only single name without module path.
-                 *)
-                val originalFormatterExp =
-                    TP.TPVAR
-                        (
-                          {
-                            name = formatterName,
-                            strpath =
-                            if isRecursive then P.NilPath else formatterPath,
-                            ty = originalFormatterTy
-                          },
-                          loc
-                        )
+               (* make monotype version of formatter exp *)
+               val instantiatedFormatterExp =
+                   if isRecursive orelse List.null argTys
+                   then originalFormatterExp
+                   else
+                     TP.TPTAPP
+                         {
+                           exp = originalFormatterExp,
+                           expTy = originalFormatterTy,
+                           instTyList = argTys,
+                           loc = loc
+                         }
 
-                (* make monotype version of formatter exp *)
-                val instantiatedFormatterExp =
-                    if isRecursive orelse List.null argTys
-                    then originalFormatterExp
-                    else
-                      TP.TPTAPP
-                          {
-                            exp = originalFormatterExp,
-                            expTy = originalFormatterTy,
-                            instTyList = argTys,
-                            loc = loc
-                          }
-
-                (* apply argFormatters to the formatter. *)
-                val (formatterExp, formatterTy) =
-                    (* apply argument formatters to the formatter for the
-                     * tyCon,  from 'a1->r to 'an->r. *)
-                    foldl
-                    (fn ((argFormatterExp, argFormatterTy),(funExp, funTy)) =>
-                        let
-                          val resultTy = OC.applyTy(funTy, argFormatterTy)
-                          val resultExp =
-                              TP.TPAPPM
-                                  {
-                                    funExp = funExp,
-                                    funTy = funTy,
-                                    argExpList = [argFormatterExp],
-                                    loc = loc
-                                  }
-                        in (resultExp, resultTy)
-                        end)
-                    (instantiatedFormatterExp, instantiatedFormatterTy)
-                    (ListPair.zip (argFormatterExps, argFormatterTys))
+               (* apply argFormatters to the formatter. *)
+               val (formatterExp, formatterTy) =
+                   (* apply argument formatters to the formatter for the
+                    * tyCon,  from 'a1->r to 'an->r. *)
+                   foldl
+                       (fn ((argFormatterExp,argFormatterTy),(funExp,funTy)) =>
+                           let
+                             val resultTy = OC.applyTy(funTy, argFormatterTy)
+                             val resultExp =
+                                 TP.TPAPPM
+                                     {
+                                       funExp = funExp,
+                                       funTy = funTy,
+                                       argExpList = [argFormatterExp],
+                                       loc = loc
+                                     }
+                           in (resultExp, resultTy)
+                           end)
+                       (instantiatedFormatterExp, instantiatedFormatterTy)
+                       (ListPair.zip (argFormatterExps, argFormatterTys))
 
 (*
 val _ = print "generateFormatterOfTy\n"
@@ -314,52 +362,43 @@ val _ = print "formatterTy: "
 val _ = print (TypeFormatter.tyToString formatterTy)
 val _ = print "\n"
 *)
-              in
-                (* apply the formatter to the argument *)
-                TP.TPAPPM
-                    {
-                      funExp = formatterExp,
-                      funTy = formatterTy,
-                      argExpList = [argVarExp],
-                      loc = loc
-                    }
-              end
+             in
+               (* apply the formatter to the argument *)
+               TP.TPAPPM
+                   {
+                     funExp = formatterExp,
+                     funTy = formatterTy,
+                     argExpList = [argVarExp],
+                     loc = loc
+                   }
+             end)
 
-            | TY.POLYty{body, boundtvars} =>
-              let
-                val (monoTy, argTys) = 
-                    TU.instantiate {body = body, boundtvars = boundtvars}
-                val formatterExp = generateFormatterBodyOfTy monoTy
-              in
-                formatterExp
-              end
+      | TY.POLYty{body, boundtvars} =>
+        let
+          val (monoTy, argTys) = 
+              TU.instantiate {body = body, boundtvars = boundtvars}
+          val formatterExp =
+              generateFormatterBodyOfTy
+                  context path currentTyCons TVFormatters loc monoTy argVarExp
+        in
+          formatterExp
+        end
+          
+      | TY.ALIASty(alias, actual) =>
+        (* Use the formatter defined for the actual type.
+         * No formatter is defined for the alias type.
+         *)
+        generateFormatterBodyOfTy
+            context path currentTyCons TVFormatters loc actual argVarExp
 
-            | TY.ALIASty(alias, actual) =>
-              (* Use the formatter defined for the actual type.
-               * No formatter is defined for the alias type.
-               *)
-              generateFormatterBodyOfTy actual
+      | TY.ABSSPECty _ => OC.makeConstantTerm "-"
 
-	    | TY.ABSSPECty _ => OC.translateFormatExpression(FE.Term(1, "-"))
+      (* this type is declared in functor parameter structure. *)
+      | TY.SPECty ty => OC.makeConstantTerm "-"
+        
 
-            | TY.SPECty ty =>
-              (* this type is declared in functor parameter structure. *)
-              OC.translateFormatExpression(FE.Term(1, "-"))
-
-            | _ =>
-              raise
-                Control.Bug ("unexpected ty: " ^ TypeFormatter.tyToString ty)
-
-        val bodyExp = generateFormatterBodyOfTy ty
-      in
-        TP.TPFNM
-            {
-              argVarList = [argVarPathInfo],
-              bodyTy = OC.formatterResultTy,
-              bodyExp = bodyExp,
-              loc = loc
-            }
-      end
+      | _ =>
+        raise Control.Bug ("unexpected ty: " ^ TypeFormatter.tyToString ty)
 
   (***************************************************************************)
 
@@ -458,12 +497,15 @@ val _ = print "\n"
                       argExpList = [argVarExp],
                       loc = loc
                     }
-            (* "D" ^ (format_s v) *)
+            (* L1{ "D" +1 (format_s v) } *)
             val exp =
-                OC.concatFormatExpressions
-                    ((OC.translateFormatExpressions
-                          [FE.Term(size conName, conName), U.s_1_Indicator])
-                     @ [argExp])
+                OC.makeGuard
+                    (
+                      SOME {cut = false, strength = 1, direction = FE.Left},
+                      (OC.translateFormatExpressions
+                           [FE.Term(size conName, conName), U.s_1_Indicator])
+                      @ [argExp]
+                    )
           in ([pat], exp)
           end
         else
@@ -478,8 +520,7 @@ val _ = print "\n"
                       patTy = conTy, 
                       loc = loc
                     }
-            val exp =
-                OC.translateFormatExpression (FE.Term(size conName, conName))
+            val exp = OC.makeConstantTerm conName
           in ([pat], exp)
           end
       end
@@ -1044,7 +1085,7 @@ val _ = print "\n"
         val argVarPathInfo =
             {name = argVarName, ty = argVarTy, strpath = P.NilPath}
 
-        val bodyExp = TP.TPCONSTANT (TY.STRING "-", loc)
+        val bodyExp = OC.makeConstantTerm "-"
 
         (* fn format_'X1 => ... fn format_'Xn => fn v => body *)
         val (formatterExp, resultTy) =
@@ -1235,10 +1276,10 @@ val _ = print
                        | TP.TPEXNBINDREP _ => [])
                      exnBinds)
         (* exn -> result *)
-        val formatterTy = OC.formatterOfTyTy OC.exnTy
+        val formatterTy = OC.formatterOfTyTy PT.exnty
         (* argument of formatter *)
         val argVarName = U.makeVarName ()
-        val argVarInfo = {name = argVarName, ty = OC.exnTy}
+        val argVarInfo = {name = argVarName, ty = PT.exnty}
         val argVarPathInfo = U.varInfoToVarPathInfo argVarInfo
         val argVarExp = TP.TPVAR (argVarPathInfo, loc)
 
@@ -1258,7 +1299,7 @@ val _ = print
         (* | _ => previous_formatter arg *)
         val defaultBranch =
             (
-              [TP.TPPATWILD(OC.exnTy, loc)],
+              [TP.TPPATWILD(PT.exnty, loc)],
               TP.TPAPPM
                   {
                     funExp = previousFormatterExp,
@@ -1294,7 +1335,7 @@ val _ = print
 
         (* (exn -> result) ref *)
         val formatExnRefTy =
-            TY.CONty{tyCon = OC.refTyCon, args = [formatterTy]}
+            TY.CONty{tyCon = PT.refTyCon, args = [formatterTy]}
         (* format_exnRef *)
         val formatExnRefVarPathInfo =
             {
@@ -1320,7 +1361,7 @@ val _ = print
               [(
                  [TP.TPPATCONSTRUCT
                       {
-                        conPat = OC.refCon,
+                        conPat = PT.refCon,
                         instTyList = [formatterTy],
                         argPatOpt = SOME(TP.TPPATVAR(tempVarPathInfo, loc)),
                         patTy = formatExnRefTy,
@@ -1376,7 +1417,7 @@ val _ = print
                      }],
                     loc
                   ),
-              TP.TPVAL([(TY.VALIDWILD OC.unitTy, updateFormatExnRefExp)], loc)
+              TP.TPVAL([(TY.VALIDWILD PT.unitty, updateFormatExnRefExp)], loc)
             ]
       in
         (TC.emptyContext, [TP.TPLOCALDEC(binds, [], loc)])

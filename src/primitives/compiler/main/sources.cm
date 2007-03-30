@@ -1,8 +1,2 @@
 Group is
-        ../../../smlformatlib.cm
-        ../../../compiler/systemdef/sources.cm
-        ../../../instructions/compiler/sources.cm
-        ../../../compiler/types/sources.cm
-        ../../../compiler/control/sources.cm
-        Primitives.ppg.sml
-        Constants.sml
+        module.cm

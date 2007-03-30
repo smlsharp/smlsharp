@@ -1,0 +1,90 @@
+Group is
+#if defined(NEW_CM)
+	$/basis_compat.cm
+#endif
+
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
+        smlnj-lib.cm
+#endif
+
+#if defined(NEW_CM)
+	$/ml-yacc-lib.cm
+#else
+	ml-yacc-lib.cm
+#endif
+
+#if defined(NEW_CM)
+        $/smlformatlib.cm
+#else
+        ../smlformatlib.cm
+#endif
+
+        Utility.sml
+        PATH_UTILITY.sig
+        PathUtility.sml
+        ParserUtil.sml
+
+        DocumentGenerationParameter.sml
+
+        AST.sig
+        Ast.sml
+        TokenTable.sml
+        ASTUTIL.sig
+        AstUtil.sml
+        DocComment.sml
+	ML.lex
+	ML.grm
+        ParamPattern.lex
+        ParamPattern.grm
+        AnnotatedAst.sml
+
+        EASY_HTML_PARSER.sig
+        EasyHTMLParser.sml
+
+        PARSER.sig
+        Parser.sml
+
+        DEPENDENCY_GRAPH.sig
+        DependencyGraph.sml
+
+        DEPENDENCY_ANALYZER.sig
+        DependencyAnalyzer.sml
+
+        ENVSet.sml
+        ElaboratedAst.sml
+        ELABORATOR.sig
+        Elaborator.sml
+
+        LinkFile.sml
+        LinkFile.lex
+        LinkFile.grm
+        EXTERNALREF_LINKER.sig
+        ExternalRefLinker.sml
+
+        Linkage.sml
+        Binds.sml
+        SUMMARIZER.sig
+        Summarizer.sml
+
+        DOCUMENT_GENERATOR.sig
+        HTML/html-lib.cm
+        HTMLDocumentGenerator.sml
+
+        SMLDOC.sig
+        SMLDoc.sml
+
+        GET_OPT.sig
+        GetOpt.sml
+
+        smlnjcm/CM.lex
+        smlnjcm/CM.grm
+        smlnjcm/CMSemantic.sml
+        smlnjcm/SourcePath.sml
+        smlnjcm/FileID.sml
+        smlnjcm/CMFILE_PARSER.sig
+        smlnjcm/CMFileParser.sml
+
+        Main.sml
+

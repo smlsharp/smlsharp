@@ -1,0 +1,425 @@
+<HTML>
+<HEAD>
+<TITLE>Char</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>Char</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrChar.html">Char</A>&nbsp;:&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;<A HREF="SigCHAR.html">CHAR</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValscanC">scanC</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="SigCHAR.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF="SigCHAR.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrChar-StrC.html">C</A>&nbsp;=&nbsp;InlineT.Char<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;=&nbsp;<A HREF=".//StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrChar.html#Typestring">string</A>&nbsp;=&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Val+">+</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Val-">-</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Val*">*</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valitoc">itoc</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valctoi">ctoi</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValminChar">minChar</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValmaxChar">maxChar</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValmaxOrd">maxOrd</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valpred">pred</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valsucc">succ</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valchr">chr</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valord">ord</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Val<"><</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Val<="><=</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Val>">></A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Val>=">>=</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valcompare">compare</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valcontains">contains</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValnotContains">notContains</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValctypeTbl">ctypeTbl</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValinSet">inSet</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisAlpha">isAlpha</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisUpper">isUpper</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisLower">isLower</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisDigit">isDigit</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisHexDigit">isHexDigit</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisAlphaNum">isAlphaNum</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisSpace">isSpace</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisPunct">isPunct</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisGraph">isGraph</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisPrint">isPrint</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisCntrl">isCntrl</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValisAscii">isAscii</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valoffset">offset</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValtoUpper">toUpper</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValtoLower">toLower</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValscanDigits">scanDigits</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValchkDigits">chkDigits</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valscan">scan</A>&nbsp;:&nbsp;(<A HREF="StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValfromString">fromString</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">String.string</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#Valitoa">itoa</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">String.string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValscanC">scanC</A>&nbsp;:&nbsp;(<A HREF="StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValfromCString">fromCString</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">String.string</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrChar.html#ValtoCString">toCString</A>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">String.string</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typechar"><!-- --></A>
+<H3>char</H3>
+<P>
+<CODE>type&nbsp;char&nbsp;=&nbsp;<A HREF=".//StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="Typestring"><!-- --></A>
+<H3>string</H3>
+<P>
+<CODE>type&nbsp;string&nbsp;=&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Val+"><!-- --></A>
+<H3>+</H3>
+<P>
+<CODE>val&nbsp;+</CODE>
+
+<HR>
+<A NAME="Val-"><!-- --></A>
+<H3>-</H3>
+<P>
+<CODE>val&nbsp;-</CODE>
+
+<HR>
+<A NAME="Val*"><!-- --></A>
+<H3>*</H3>
+<P>
+<CODE>val&nbsp;*</CODE>
+
+<HR>
+<A NAME="Valitoc"><!-- --></A>
+<H3>itoc</H3>
+<P>
+<CODE>val&nbsp;itoc</CODE>
+
+<HR>
+<A NAME="Valctoi"><!-- --></A>
+<H3>ctoi</H3>
+<P>
+<CODE>val&nbsp;ctoi</CODE>
+
+<HR>
+<A NAME="ValminChar"><!-- --></A>
+<H3>minChar</H3>
+<P>
+<CODE>val&nbsp;minChar&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="ValmaxChar"><!-- --></A>
+<H3>maxChar</H3>
+<P>
+<CODE>val&nbsp;maxChar&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="ValmaxOrd"><!-- --></A>
+<H3>maxOrd</H3>
+<P>
+<CODE>val&nbsp;maxOrd&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valpred"><!-- --></A>
+<H3>pred</H3>
+<P>
+<CODE>val&nbsp;pred&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="Valsucc"><!-- --></A>
+<H3>succ</H3>
+<P>
+<CODE>val&nbsp;succ&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="Valchr"><!-- --></A>
+<H3>chr</H3>
+<P>
+<CODE>val&nbsp;chr&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="Valord"><!-- --></A>
+<H3>ord</H3>
+<P>
+<CODE>val&nbsp;ord&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Val<"><!-- --></A>
+<H3><</H3>
+<P>
+<CODE>val&nbsp;<&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val<="><!-- --></A>
+<H3><=</H3>
+<P>
+<CODE>val&nbsp;<=&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val>"><!-- --></A>
+<H3>></H3>
+<P>
+<CODE>val&nbsp;>&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val>="><!-- --></A>
+<H3>>=</H3>
+<P>
+<CODE>val&nbsp;>=&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valcompare"><!-- --></A>
+<H3>compare</H3>
+<P>
+<CODE>val&nbsp;compare&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A></CODE>
+
+<HR>
+<A NAME="Valcontains"><!-- --></A>
+<H3>contains</H3>
+<P>
+<CODE>val&nbsp;contains&nbsp;:&nbsp;<A HREF="StrChar.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValnotContains"><!-- --></A>
+<H3>notContains</H3>
+<P>
+<CODE>val&nbsp;notContains&nbsp;:&nbsp;<A HREF="StrChar.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValctypeTbl"><!-- --></A>
+<H3>ctypeTbl</H3>
+<P>
+<CODE>val&nbsp;ctypeTbl</CODE>
+
+<HR>
+<A NAME="ValinSet"><!-- --></A>
+<H3>inSet</H3>
+<P>
+<CODE>val&nbsp;inSet</CODE>
+
+<HR>
+<A NAME="ValisAlpha"><!-- --></A>
+<H3>isAlpha</H3>
+<P>
+<CODE>val&nbsp;isAlpha&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisUpper"><!-- --></A>
+<H3>isUpper</H3>
+<P>
+<CODE>val&nbsp;isUpper&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisLower"><!-- --></A>
+<H3>isLower</H3>
+<P>
+<CODE>val&nbsp;isLower&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisDigit"><!-- --></A>
+<H3>isDigit</H3>
+<P>
+<CODE>val&nbsp;isDigit&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisHexDigit"><!-- --></A>
+<H3>isHexDigit</H3>
+<P>
+<CODE>val&nbsp;isHexDigit&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisAlphaNum"><!-- --></A>
+<H3>isAlphaNum</H3>
+<P>
+<CODE>val&nbsp;isAlphaNum&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisSpace"><!-- --></A>
+<H3>isSpace</H3>
+<P>
+<CODE>val&nbsp;isSpace&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisPunct"><!-- --></A>
+<H3>isPunct</H3>
+<P>
+<CODE>val&nbsp;isPunct&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisGraph"><!-- --></A>
+<H3>isGraph</H3>
+<P>
+<CODE>val&nbsp;isGraph&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisPrint"><!-- --></A>
+<H3>isPrint</H3>
+<P>
+<CODE>val&nbsp;isPrint&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisCntrl"><!-- --></A>
+<H3>isCntrl</H3>
+<P>
+<CODE>val&nbsp;isCntrl&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisAscii"><!-- --></A>
+<H3>isAscii</H3>
+<P>
+<CODE>val&nbsp;isAscii&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valoffset"><!-- --></A>
+<H3>offset</H3>
+<P>
+<CODE>val&nbsp;offset</CODE>
+
+<HR>
+<A NAME="ValtoUpper"><!-- --></A>
+<H3>toUpper</H3>
+<P>
+<CODE>val&nbsp;toUpper&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="ValtoLower"><!-- --></A>
+<H3>toLower</H3>
+<P>
+<CODE>val&nbsp;toLower&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="ValscanDigits"><!-- --></A>
+<H3>scanDigits</H3>
+<P>
+<CODE>val&nbsp;scanDigits</CODE>
+
+<HR>
+<A NAME="ValchkDigits"><!-- --></A>
+<H3>chkDigits</H3>
+<P>
+<CODE>val&nbsp;chkDigits</CODE>
+
+<HR>
+<A NAME="Valscan"><!-- --></A>
+<H3>scan</H3>
+<P>
+<CODE>val&nbsp;scan&nbsp;:&nbsp;(<A HREF="StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+
+<HR>
+<A NAME="ValfromString"><!-- --></A>
+<H3>fromString</H3>
+<P>
+<CODE>val&nbsp;fromString&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">String.string</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Valitoa"><!-- --></A>
+<H3>itoa</H3>
+<P>
+<CODE>val&nbsp;itoa</CODE>
+
+<HR>
+<A NAME="ValtoString"><!-- --></A>
+<H3>toString</H3>
+<P>
+<CODE>val&nbsp;toString&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">String.string</A></CODE>
+
+<HR>
+<A NAME="ValscanC"><!-- --></A>
+<H3>scanC</H3>
+<P>
+<CODE>val&nbsp;scanC&nbsp;:&nbsp;(<A HREF="StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+
+<HR>
+<A NAME="ValfromCString"><!-- --></A>
+<H3>fromCString</H3>
+<P>
+<CODE>val&nbsp;fromCString&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">String.string</A>&nbsp;->&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValtoCString"><!-- --></A>
+<H3>toCString</H3>
+<P>
+<CODE>val&nbsp;toCString&nbsp;:&nbsp;<A HREF="StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">String.string</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

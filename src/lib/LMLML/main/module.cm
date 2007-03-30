@@ -1,0 +1,47 @@
+Group
+(*
+        signature MULTI_BYTE_STRING
+        structure MultiByteString
+*)
+is
+
+#if (SMLNJ_VERSION * 100 + SMLNJ_MINOR_VERSION) <= 11000
+        ../basis/compatible.cm
+#endif
+        ../basis/extension.cm
+
+        CODEC.sig
+        CODECS.sig
+        MB_CHAR.sig
+        MB_STRING.sig
+        MB_SUBSTRING.sig
+        MULTI_BYTE_STRING.sig
+        PRIM_CODEC.sig
+
+        Codecs.sml
+
+        CodecCharBase.sml
+        CodecStringBase.sml
+        Codec.sml
+
+        PrimCodecUtil.sml
+        VariableLengthCharPrimCodecBase.sml
+        FixedLengthCharPrimCodecBase.sml
+
+        ASCIICodec.sml
+
+        EUCJPCodec.sml
+        GBKCodec.sml
+        GB2312Codec.sml
+        ISO2022JPCodec.sml
+        ShiftJISCodec.sml
+        UTF8Codec.sml
+        UTF16Codec.sml
+
+        MultiByteString.sml
+        MBChar.sml
+        MBString.sml
+        MBSubstring.sml
+        MBStringConverter.sml
+        MBParserCombinator.sml
+

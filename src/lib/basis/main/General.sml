@@ -1,7 +1,7 @@
 (**
  * General structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: General.sml,v 1.3 2005/05/05 15:20:19 kiyoshiy Exp $
+ * @version $Id: General.sml,v 1.8 2007/02/05 08:32:45 kiyoshiy Exp $
  *)
 structure General :> GENERAL =
 struct
@@ -24,7 +24,7 @@ struct
 
   exception Domain
 
-  exception Fail of string
+  exception Fail = Fail (* Fail is builtin exception *)
 
   exception Match = Match
 
@@ -38,11 +38,11 @@ struct
 
   (***************************************************************************)
 
-  (* ToDo *)
-  fun exnName (exn : exn) = "not implemented"
+  (* exnName is redefined later to use SMLFormat. *)
+  fun exnName (exn : exn) = "exnName is not implemented"
 
-  (* ToDo *)
-  fun exnMessage (exn : exn) = "not implemented"
+  (* exnName is redefined later to use SMLFormat. *)
+  fun exnMessage (exn : exn) = "exnMessage is not implemented"
 
   fun ! (ref arg) = arg;
 

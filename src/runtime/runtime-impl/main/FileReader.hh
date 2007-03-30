@@ -25,6 +25,8 @@ class FileReader
 
     FileReader(const char* fileName, int descriptor, BoolValue DontClose);
 
+    FileReader(const char* fileName, FILE* stream, BoolValue DontClose);
+
     ///////////////////////////////////////////////////////////////////////////
   public:
 

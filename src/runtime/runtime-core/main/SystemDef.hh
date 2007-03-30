@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: SystemDef.hh,v 1.10 2006/02/21 01:50:38 katsuu Exp $
+ * @version $Id: SystemDef.hh,v 1.15.4.1 2007/03/24 14:39:54 katsu Exp $
  */
 #ifndef SystemDef_hh_
 #define SystemDef_hh_
@@ -13,6 +13,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#if defined(__MINGW32__) || defined(__CYGWIN32__)
+/* see http://www.cygwin.com/ml/cygwin/2005-09/msg00903.html */
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+# include <windows.h>
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -51,6 +59,12 @@ typedef double Real64Value;
 typedef float Real64Value;
 #else
 #error ---- 64bit floating point number type is not found ----
+#endif
+
+#if SIZEOF_FLOAT == 4
+typedef float Real32Value;
+#else
+#error ---- 32bit floating point number type is not found ----
 #endif
 
 typedef bool BoolValue;
@@ -124,6 +138,11 @@ int IEEEREAL_CLASS(double realValue)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/*
+ * int DLL_CLOSE(handle)
+ *     returns 0 if succeeded, non-zero if failed.
+ */
+
 #ifdef HAVE_LIBDL
 
 #include <dlfcn.h>
@@ -136,15 +155,41 @@ typedef void* DLL_HANDLE;
 #define DLL_ERROR() dlerror()
 
 #else /* HAVE_LIBDL */
+#if defined(__MINGW32__)
+
+typedef HMODULE DLL_HANDLE;
+#define DLL_INIT() 
+#define DLL_EXIT()
+#define DLL_OPEN(name) LoadLibrary(name)
+#define DLL_CLOSE(dllHandle) (!FreeLibrary(dllHandle))
+#define DLL_GET_SYM(dllHandle, name) \
+            (void*)(GetProcAddress((dllHandle), (name)))
+
+static char DLLErrorMessage[256];
+static char* DLL_ERROR()
+{
+    DWORD errorCode = 
+    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+                  0,
+                  GetLastError(),
+                  LANG_USER_DEFAULT,
+                  (LPTSTR)DLLErrorMessage,
+                  sizeof(DLLErrorMessage),
+                  NULL);
+    return DLLErrorMessage;
+}
+
+#else /* defined(__MINGW32__) */
 
 typedef void* DLL_HANDLE;
 #define DLL_INIT() 
 #define DLL_EXIT()
 #define DLL_OPEN(name) ((void*)0)
-#define DLL_CLOSE(dllHandle) ((void)(dllHandle))
+#define DLL_CLOSE(dllHandle) (-1)
 #define DLL_GET_SYM(dllHandle, name) ((void*)0)
 #define DLL_ERROR() ("not implemented")
 
+#endif /* defined(__MINGW32__) */
 #endif /* HAVE_LIBDL */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -259,6 +304,14 @@ namespace jp_ac_jaist_iml_runtime { using namespace jp_ac_jaist_iml; }
 #define INLINE_FUN
 #else
 #define INLINE_FUN INLINE_MODIFIER
+#endif
+
+#if defined(__MINGW32__) || defined(__CYGWIN32__)
+#define CDECL_FUN __attribute__((cdecl))
+#define STDCALL_FUN __attribute__((stdcall))
+#else
+#define CDECL_FUN
+#define STDCALL_FUN
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////

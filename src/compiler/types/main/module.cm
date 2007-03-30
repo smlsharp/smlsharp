@@ -1,6 +1,17 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
+#if defined(NEW_CM)
+        $/smlformatlib.cm
+#else
         ../../../smlformatlib.cm
+#endif
 
         ../../util/sources.cm
         ../../env/sources.cm
@@ -8,18 +19,18 @@ Group is
         ../../control/sources.cm
 	../../name/sources.cm
         ../../pickle/sources.cm
+        ../../absyn/sources.cm
 
         TYPE_FORMATTER.sig
         TypeFormatter.sml
-        TYPE_PARSER.sig
-        TypeParser.sml
         TYPES.sig
         Types.ppg.sml
-        staticenv.sml
+        TYPE_PARSER.sig
+        TypeParser.sml
         TYPESUTILS.sig
         TypesUtils.sml
         TYPE_TRANSDUCER.sig
         TypeTransducer.sml
 	vars.sml
         TypesPickler.sml	
-	
+        Fixity.sml

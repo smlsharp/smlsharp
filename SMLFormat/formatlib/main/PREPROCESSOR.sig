@@ -2,7 +2,7 @@
  *  This module translates FormatExpression.expression into
  * PrettyPrinter.symbol.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PREPROCESSOR.sig,v 1.1 2006/02/07 12:51:52 kiyoshiy Exp $
+ * @version $Id: PREPROCESSOR.sig,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
  *)
 signature PREPROCESSOR =
 sig
@@ -26,7 +26,7 @@ sig
    * @return a PrettyPrinter.symbol translated from the symbol.
    *)
   val preProcess :
-      PrinterParameter.printerParameter ->
+      PrinterParameter.parameter list ->
       FormatExpression.expression ->
       PrettyPrinter.symbol
 

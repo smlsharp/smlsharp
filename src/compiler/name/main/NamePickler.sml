@@ -3,7 +3,7 @@
  * pickler for name module.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: NamePickler.sml,v 1.4 2006/02/28 13:38:40 kiyoshiy Exp $
+ * @version $Id: NamePickler.sml,v 1.5 2007/02/21 02:12:32 kiyoshiy Exp $
  *)
 structure NamePickler 
   : sig
@@ -65,7 +65,7 @@ struct
             fn (first, next) => {first = first, next = next},
             fn {first, next} => (first, next)
           )
-          (P.tuple2(P.int, P.refCyc 0 P.int))
+          (P.tuple2(P.int, P.refNonCycle P.int))
 
   (***************************************************************************)
 

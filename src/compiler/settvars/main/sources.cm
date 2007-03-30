@@ -2,7 +2,7 @@ Group is
 (*
         ml-yacc-lib.cm
 *)
-        settvars.cm
+        module.cm
 (*
         main.sml
 *)

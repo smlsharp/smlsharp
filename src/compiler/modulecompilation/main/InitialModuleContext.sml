@@ -3,15 +3,13 @@
  * 
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: InitialModuleContext.sml,v 1.28 2006/03/02 12:46:47 bochao Exp $
+ * @version $Id: InitialModuleContext.sml,v 1.29 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure InitialModuleContext:INITIALMODULECONTEXT =
 struct
   local 
     open PathEnv TopObject
-    structure TU = TypesUtils
     structure ITC = InitialTypeContext
-    structure SE = StaticEnv
   in
 
     val initialPathVarEnv : pathVarEnv = emptyPathVarEnv

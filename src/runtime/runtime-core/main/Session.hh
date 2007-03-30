@@ -54,7 +54,7 @@ class Session
      * @param preProcessor an ExecutablePreProcessor object
      */
     virtual
-    int addExecutablePreProcessor(ExecutablePreProcessor* preProcessor)
+    void addExecutablePreProcessor(ExecutablePreProcessor* preProcessor)
         = 0;
 
     /**
@@ -69,6 +69,21 @@ class Session
               SystemError)
         = 0;
 
+    /**
+     * send an ExitRequest message to front-end, if interactive session.
+     * In non-interactive session, this function does nothing.
+     */
+    virtual
+    void sendExitRequest(SInt32Value exitCode)
+    {
+        // do nothing.
+    }
+
+    virtual
+    void sendChangeDirectoryRequest(const char* directory)
+    {
+      // do nothing.
+    }
 };
 
 ///////////////////////////////////////////////////////////////////////////////

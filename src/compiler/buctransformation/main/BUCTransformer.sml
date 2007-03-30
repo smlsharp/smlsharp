@@ -2,7 +2,7 @@
  * BUCTransformer.
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: BUCTransformer.sml,v 1.7 2006/02/28 17:05:50 duchuu Exp $
+ * @version $Id: BUCTransformer.sml,v 1.18 2007/02/28 15:31:25 katsu Exp $
  *)
 
 (* 
@@ -12,6 +12,8 @@
 structure BUCTransformer : BUCTRANSFORMER = struct
 
   open BUCCalc
+  structure BT = BasicTypes
+  structure CT = ConstantTerm
   structure T =  Types
   structure TU =  TypesUtils
   structure TL =  TypedLambda
@@ -19,7 +21,6 @@ structure BUCTransformer : BUCTRANSFORMER = struct
   structure BCC = BUCCompileContext
   structure ECG = ExtraComputationGenerator
   structure IDSet = ID.Set
-  structure SE = StaticEnv
   structure VO = VariableOptimizer
 
   type templateInfo =
@@ -269,12 +270,21 @@ structure BUCTransformer : BUCTRANSFORMER = struct
                    argTyList = argTyList,
                    loc = loc
                   }
-            | BUCFOREIGNAPPLY {funExp,argExpList,argTyList,loc} =>
+            | BUCFOREIGNAPPLY {funExp,argExpList,argTyList,convention,loc} =>
               BUCFOREIGNAPPLY 
                   {
                    funExp = fix funExp,
                    argExpList = map fix argExpList,
                    argTyList = argTyList,
+                   convention = convention,
+                   loc = loc
+                  }
+            | BUCEXPORTCALLBACK {funExp,argTyList,resultTy,loc} =>
+              BUCEXPORTCALLBACK 
+                  {
+                   funExp = fix funExp,
+                   argTyList = argTyList,
+                   resultTy = resultTy,
                    loc = loc
                   }
             | BUCAPPLY {funExp,argExpList,argSizeList,argTyList,loc} =>
@@ -386,16 +396,6 @@ structure BUCTransformer : BUCTRANSFORMER = struct
                   }
             | BUCCAST {exp,expTy,loc} => 
               BUCCAST {exp = fix exp, expTy = expTy, loc = loc}
-            | BUCFFIVAL {funExp, libExp, argTyList, resultTy, funTy, loc} =>
-              BUCFFIVAL
-                  {
-                   funExp = fix funExp, 
-                   libExp = fix libExp, 
-                   argTyList = argTyList, 
-                   resultTy = resultTy, 
-                   funTy = funTy, 
-                   loc = loc
-                  }
         and fixDecl decl =
             case decl of
               BUCVAL {bindList, loc} =>
@@ -622,9 +622,9 @@ structure BUCTransformer : BUCTRANSFORMER = struct
                 (#sizevals templateFunInfo)
         fun lookupSize ty =
             case TU.compactTy ty of
-              T.ATOMty => BUCCONSTANT{value = T.WORD 0w1,loc=loc}
-            | T.BOXEDty => BUCCONSTANT{value = T.WORD 0w1,loc=loc}
-            | T.DOUBLEty => BUCCONSTANT{value = T.WORD 0w2,loc=loc}
+              T.ATOMty => BUCCONSTANT{value = CT.WORD 0w1,loc=loc}
+            | T.BOXEDty => BUCCONSTANT{value = CT.WORD 0w1,loc=loc}
+            | T.DOUBLEty => BUCCONSTANT{value = CT.WORD 0w2,loc=loc}
             | T.BOUNDVARty tid => 
               (
                case IEnv.find(sizeMap,tid) of
@@ -692,7 +692,8 @@ structure BUCTransformer : BUCTRANSFORMER = struct
       case tlexp of 
         TL.TLCONSTANT {value=constant,loc} => 
         (context, BUCCONSTANT {value = constant, loc = loc}) 
-        
+      | TL.TLEXCEPTIONTAG {tagValue, loc} =>
+        (context, BUCCONSTANT {value = INT(Int32.fromInt(tagValue)), loc = loc})
       | (* variables, which have been recorded in the context, must be free variables.
          * The compiler firstly marks them with FREE varkind, then converts them into
          * ENVACC in FixEnvironmentAccess
@@ -724,7 +725,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
           val (context,elementSize) = compileSize  context (TU.compactTy ty,loc)
           val offset' =
               case elementSize of
-                BUCCONSTANT{value=T.WORD w,...} => w * (UInt32.fromInt offset)
+                BUCCONSTANT{value=CT.WORD w,...} => w * (UInt32.fromInt offset)
               | _ => raise Control.Bug "GETGLOBALVALUE: element size must be a constant"
         in
           (
@@ -744,7 +745,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
           val (context,elementSize) = compileSize  context (TU.compactTy ty,loc)
           val offset' =
               case elementSize of
-                BUCCONSTANT{value=T.WORD w,...} => w * (UInt32.fromInt offset)
+                BUCCONSTANT{value=CT.WORD w,...} => w * (UInt32.fromInt offset)
               | _ => raise Control.Bug "SETGLOBALVALUE: element size must be a constant"
           val (context, valueExp') = compileExp context valueExp
         in
@@ -766,7 +767,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
           val (context,elementSize) = compileSize  context (TU.compactTy elemTy,loc)
           val size' =
               case elementSize of
-                BUCCONSTANT{value=T.WORD w,...} => w * (UInt32.fromInt size)
+                BUCCONSTANT{value=CT.WORD w,...} => w * (UInt32.fromInt size)
               | _ => raise Control.Bug "INITARRAY: element size must be a constant"
         in
           (
@@ -811,9 +812,11 @@ structure BUCTransformer : BUCTRANSFORMER = struct
       | TL.TLFOREIGNAPPLY
             {
              funExp = funexp as TL.TLVAR{varInfo = {ty, ...}, ...},
+             funTy = funTy,
              instTyList = tyArgList,
              argExpList = argList,
              argTyList = argTys,
+             convention = convention,
              loc = loc
              }=> 
         (let
@@ -827,15 +830,63 @@ structure BUCTransformer : BUCTRANSFORMER = struct
                 {
                  funExp = funexp', 
                  argExpList = argList', 
-                 argTyList = argTyList, 
+                 argTyList = argTyList,
+                 convention = convention,
                  loc = loc
                 }
            )
          end
            handle Dummy => raise Control.Bug "dummy")
 
-      | TL.TLFOREIGNAPPLY _ => raise Control.Bug "compileExp: funcExp mus be a variable"
-        
+      | TL.TLFOREIGNAPPLY _ => raise Control.Bug "compileExp: funcExp must be a variable"
+
+      | TL.TLEXPORTCALLBACK
+            {
+             funExp = funexp as TL.TLVAR{varInfo = {ty, ...}, ...},
+             instTyList = tyArgList,
+             argTyList = argTys,
+             resultTy = resultTy,
+             loc = loc
+             }=> 
+        (let
+           val (context,funexp') = compileExp context funexp
+           val argTyList = map BU.convertTy argTys
+           val resultTy' = BU.convertTy resultTy
+         in 
+           (
+            context, 
+            BUCEXPORTCALLBACK
+                {
+                 funExp = funexp', 
+                 argTyList = argTyList,
+                 resultTy = resultTy',
+                 loc = loc
+                }
+           )
+         end
+           handle Dummy => raise Control.Bug "dummy")
+
+      | TL.TLEXPORTCALLBACK _ => raise Control.Bug "compileExp: funcExp must be a variable"
+
+      | TL.TLSIZEOF {ty, loc} =>
+        let
+          val (context,size) = compileSize context (TU.compactTy ty, loc)
+          (* FIXME: currently we assume the size of one word is 4 bytes,
+           *        but this should be configured with respect to the runtime system. *)
+          val sizeOfWord = 4
+          val intty = PredefinedTypes.intty
+        in
+          (context,
+           BUCPRIMAPPLY
+           {
+             primOp = {name = #name (Primitives.mulIntPrimInfo),
+                       ty = T.FUNMty ([intty, intty], intty)},
+             argExpList = [BUCCONSTANT {value = CT.INT sizeOfWord, loc = loc}, size],
+             argTyList = [intty, intty],
+             loc = loc
+           })
+        end
+
       | (* if the application follows a type instantiation, the compiler first 
          * generates extra bit tag/size arguments, then un-curries these arguments 
          * with the actual argument of the application.
@@ -953,7 +1004,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
       | TL.TLRECORD {expList=elementList, internalTy=recordTy,loc=loc,...} =>
         let
           val flty = 
-              case TU.derefTy recordTy of
+              case BU.rootTy recordTy of
                 T.RECORDty flty => flty
               | _ => raise Control.Bug "invalid record type"
         in
@@ -1112,29 +1163,6 @@ structure BUCTransformer : BUCTRANSFORMER = struct
          handle Dummy => raise Control.Bug "dummy"
         )
 
-      | (* if the source expression isn't a polymorphic function construction but 
-         * its type is a polymorphic function type, the compiler must 
-         * first perform eta-expansion (in order to perform uncurrying), 
-         * then translates this result into a target bitmap-passing closure term.
-         *   [{t1,...,tn}.e] => [{t1,...,tn}.fn {x1,...,xm}. (e {x1,...,xm})]
-         * 
-         * Note. by new convention, T.FUNty must be unified with T.FUNMty 
-         *)
-        TL.TLPOLY
-            {btvEnv = btvEnv, expTyWithoutTAbs = funTy as T.FUNMty(argTys,domTy), exp = exp, loc = loc} => 
-        let
-          val args = map BU.newTLVar argTys
-          val argExps = map (fn arg => TL.TLVAR {varInfo = arg,loc=loc}) args
-          val newExp =
-              TL.TLFNM {
-                        argVarList = args, bodyTy = domTy,
-                        bodyExp = TL.TLAPPM {funExp = exp, funTy = funTy, argExpList = argExps, loc = loc}, 
-                        loc = loc
-                        }
-        in
-          compileExp context (TL.TLPOLY {btvEnv = btvEnv, expTyWithoutTAbs = funTy, exp = newExp, loc = loc})
-        end
-
       | (* - if the source expression is a non-function polymorphic term and has a boxed type,
          *   we still have to insert extra arguments for bit tags and sizes.
          *   In this case, we consider the source exp as a polymorphic function without arguments.
@@ -1142,22 +1170,43 @@ structure BUCTransformer : BUCTRANSFORMER = struct
          *   a construction of a datatype optimized into integers (by record compilation)
          *)
         TL.TLPOLY {btvEnv = btvEnv, expTyWithoutTAbs = bodyTy, exp = exp, loc = loc} => 
-        if TU.isBoxedType bodyTy
-        then
-          compileExp
-              context
-              (TL.TLPOLY {
-                          btvEnv = btvEnv,
-                          expTyWithoutTAbs = bodyTy,
-                          exp = TL.TLFNM {
-                                          argVarList = [],
-                                          bodyTy = bodyTy,
-                                          bodyExp = exp,
-                                          loc = loc
-                                          },
-                          loc = loc
-                          })
-        else compileExp context exp
+        (
+         case BU.rootTy bodyTy of 
+           T.FUNMty(argTys, domTy) =>
+           let
+             val args = map BU.newTLVar argTys
+             val argExps = map (fn arg => TL.TLVAR {varInfo = arg,loc=loc}) args
+             val newExp =
+                 TL.TLFNM 
+                     {
+                      argVarList = args, bodyTy = domTy,
+                      bodyExp = TL.TLAPPM {funExp = exp, funTy = bodyTy, argExpList = argExps, loc = loc}, 
+                      loc = loc
+                     }
+           in
+             compileExp context (TL.TLPOLY {btvEnv = btvEnv, expTyWithoutTAbs = bodyTy, exp = newExp, loc = loc})
+           end
+        | _ =>
+          if TU.isBoxedType bodyTy
+          then
+            compileExp
+                context
+                (TL.TLPOLY 
+                     {
+                      btvEnv = btvEnv,
+                      expTyWithoutTAbs = bodyTy,
+                      exp = TL.TLFNM 
+                                {
+                                 argVarList = [],
+                                 bodyTy = bodyTy,
+                                 bodyExp = exp,
+                                 loc = loc
+                                },
+                      loc = loc
+                     }
+                )
+          else compileExp context exp
+        )
 
       | (* This is the case where type instantiation appears without lambda application.
          * - If the instantiated term has a function type,
@@ -1173,7 +1222,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
         TL.TLTAPP {exp = polyExp, expTy = polyTy, instTyList = tyArgList, loc = loc} => 
         (
          let
-           val funcTy = TU.derefTy (TU.tpappTy(polyTy,tyArgList))
+           val funcTy = BU.rootTy (TU.tpappTy(polyTy,tyArgList))
            val (bodyTy,argTyList) =
                case funcTy of
                  T.FUNMty(argTys,body) => (body,argTys)
@@ -1239,8 +1288,18 @@ structure BUCTransformer : BUCTRANSFORMER = struct
           val (context,other') = compileExp context other
           val (context,rules') = 
               foldr 
-                  (fn ((constant,exp),(context,rules)) =>
+                  (fn (({constant,exp}),(context,rules)) =>
                       let
+                        (* tobe: temporary solution. In the future the intermediate 
+                         * language after typeLambda should continue to propogate the 
+                         * EXCEPTIONTAG term until the last compilation phase
+                         * Liu
+                         *)
+                        val constant = 
+                            case constant of
+                                TL.TLCONSTANT{value,...} => value
+                              | TL.TLEXCEPTIONTAG{tagValue,...} => INT(Int32.fromInt(tagValue))
+                              | _ => raise Control.Bug "illegal constant"
                         val (context,exp') = compileExp context exp
                       in
                         (context,(constant,exp')::rules)
@@ -1328,7 +1387,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
           val (context,nestLevel,offset) = compileNestedOffset context tlexp
           val mask = 
               case nestLevel of
-                BUCCONSTANT { value = T.WORD w,...} => Word32.<<(w,OFFSET_SHIFT_BITS)
+                BUCCONSTANT { value = CT.WORD w,...} => Word32.<<(w,OFFSET_SHIFT_BITS)
               | _ => raise Control.Bug "nestLevel of layout-fixed record offset must be a constant"
         in
           (*encoding*)
@@ -1336,29 +1395,10 @@ structure BUCTransformer : BUCTRANSFORMER = struct
           then (context,offset)
           else
             case offset of
-              BUCCONSTANT{value = T.WORD w,...} => 
+              BUCCONSTANT{value = CT.WORD w,...} => 
               (context,BU.word_constant(Word32.orb(mask,w),loc))
             | _ =>
               (context,BU.word_orb(BU.word_constant(mask,loc),offset,loc))
-        end
-
-      | TL.TLFFIVAL {funExp, libExp, argTyList = argTys, resultTy, funTy = ty, loc = loc} =>
-        let
-          val (context, newFunExp) = compileExp context funExp
-          val (context, newLibExp) = compileExp context libExp
-        in
-          (
-           context, 
-           BUCFFIVAL
-               {
-                funExp = newFunExp, 
-                libExp = newLibExp, 
-                argTyList = argTys, 
-                resultTy = resultTy, 
-                funTy = ty, 
-                loc = loc
-               }
-          )
         end
 
   and compileExpList context expList =
@@ -1404,7 +1444,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
 
   and compileNestedOffset context exp =
       case exp of 
-        TL.TLCONSTANT{value=T.WORD w,loc} => 
+        TL.TLCONSTANT{value=CT.WORD w,loc} => 
         (*this is the case of accessing to the tag of a flatten datatype block*)
         (context,BU.word_constant(0w0,loc),BU.word_constant(w,loc))
       | TL.TLOFFSET{recordTy,label,loc} =>
@@ -1432,7 +1472,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
               )
 
           val flty = 
-              case TU.derefTy recordTy of
+              case BU.rootTy recordTy of
                 T.RECORDty flty => flty
               | _ => raise Control.Bug "compileNestedLevel: invalid offset exp(2)"
           (*decompose record fields into blocks*)
@@ -1453,10 +1493,10 @@ structure BUCTransformer : BUCTRANSFORMER = struct
           (* decoding*)
           val nestLevel = 
               BU.word_logicalRightShift
-                  (encodedOffset,BU.word_constant(Word.toLargeWord OFFSET_SHIFT_BITS,loc),loc)
+                  (encodedOffset,BU.word_constant(BT.WordToUInt32 OFFSET_SHIFT_BITS,loc),loc)
           val offset = 
               BU.word_andb
-                  (encodedOffset,BU.word_constant(Word.toLargeWord OFFSET_MASK,loc),loc)
+                  (encodedOffset,BU.word_constant(BT.WordToUInt32 OFFSET_MASK,loc),loc)
         in
           (context,nestLevel,offset)
         end
@@ -1553,7 +1593,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
                       val varInfo' = VO.lookup(varSet,varInfo)
                       val id' = #id varInfo'
                     in
-                      if id = id' 
+                      if ID.eq(id , id')
                       then M
                       else 
                         case ID.Map.find(M,id') of
@@ -1704,18 +1744,18 @@ structure BUCTransformer : BUCTRANSFORMER = struct
         val (context,indexExp) = compileExp context indexExp 
         val indexExp =
             case indexExp of 
-              BUCCONSTANT {value = T.INT n, loc = loc} =>
+              BUCCONSTANT {value = CT.INT n, loc = loc} =>
               BU.word_constant(Word32.fromInt (Int32.toInt n), loc)
             | _ => indexExp 
 
         val (context,sizeExp) = compileSize context (elementTy,loc)
       in
         case (indexExp,sizeExp) of
-          (BUCCONSTANT {value = T.WORD w1, loc = loc1},BUCCONSTANT {value = T.WORD w2, loc = loc2}) => 
+          (BUCCONSTANT {value = CT.WORD w1, loc = loc1},BUCCONSTANT {value = CT.WORD w2, loc = loc2}) => 
           (context,BU.word_constant(w1 * w2,loc1))
-        | (_,BUCCONSTANT {value = T.WORD 0w1, loc =  loc2}) =>
+        | (_,BUCCONSTANT {value = CT.WORD 0w1, loc =  loc2}) =>
           (context,indexExp)
-        | (_,BUCCONSTANT {value = T.WORD 0w2, loc = loc2}) =>
+        | (_,BUCCONSTANT {value = CT.WORD 0w2, loc = loc2}) =>
           (context,BU.word_leftShift(indexExp,BU.word_constant(0w1,loc),loc))
         | (_,_) =>
           (
@@ -1785,7 +1825,7 @@ structure BUCTransformer : BUCTRANSFORMER = struct
         val bodyContext = BCC.makeContext(IEnv.empty::(BCC.getTyEnv context))
         val labels = 
             map 
-                (fn {boundVar=v,boundTy=ty,boundExp=e} => BU.convertVarInfo (LABEL (SE.newVarId())) v)
+                (fn {boundVar=v,boundTy=ty,boundExp=e} => BU.convertVarInfo (LABEL (T.newVarId())) v)
                 recBinds
         val bodyContext = BCC.insertVariables(bodyContext,labels)
         (* compile mutual recursive functions,

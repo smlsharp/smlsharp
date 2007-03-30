@@ -1,7 +1,7 @@
 (**
  * Pretty-printer library for Standard ML.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SMLFormat.sml,v 1.1 2006/02/07 12:51:53 kiyoshiy Exp $
+ * @version $Id: SMLFormat.sml,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
  *)
 structure SMLFormat :> SMLFORMAT =
 struct
@@ -13,6 +13,10 @@ struct
   structure PrinterParameter = PrinterParameter
 
   structure BasicFormatters = BasicFormatters
+
+  (***************************************************************************)
+
+  datatype parameter = datatype PrinterParameter.parameter
 
   (***************************************************************************)
 

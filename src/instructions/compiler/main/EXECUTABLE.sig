@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: EXECUTABLE.sig,v 1.4 2005/11/16 07:35:01 kiyoshiy Exp $
+ * @version $Id: EXECUTABLE.sig,v 1.5 2007/01/13 03:35:00 kiyoshiy Exp $
  *)
 signature EXECUTABLE =
 sig
@@ -48,6 +48,7 @@ sig
 
   type executable =
        {
+         byteOrder : SystemDefTypes.byteOrder,
          instructionsSize : BasicTypes.UInt32,
          instructions : Instructions.instruction list,
          locationTable : locationTable,

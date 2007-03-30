@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.8 2006/02/15 09:18:00 kiyoshiy Exp $
+ * @version $Id: Main.sml,v 1.9 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
 functor Main(structure Printer : RESULT_PRINTER
              structure SessionMaker : SESSION_MAKER) =
@@ -18,11 +18,27 @@ struct
 
   (***************************************************************************)
 
+  val libdir = Configuration.LibDirectory
+  val minimumPreludePath = libdir ^ "/" ^ Configuration.MinimumPreludeFileName
+  val PreludePath = libdir ^ "/" ^ Configuration.PreludeFileName
+  val compiledPreludePath = libdir ^ "/" ^ Configuration.CompiledPreludeFileName
+
   val USAGE = "prelude expectedDirectory resultDirectory sourcePath1 ..."
+
+  fun isSuffix (string, suffix) =
+      let
+        val stringlen = size string
+        val suffixlen = size suffix
+      in
+        suffixlen <= stringlen
+        andalso
+        suffix = String.substring (string, stringlen - suffixlen, suffixlen)
+      end
 
   fun main
           (_, prelude :: expectedDirectory :: resultDirectory :: sourcePaths) =
       (
+print ("prelude = [" ^ prelude ^ "]\n");
         Control.switchTrace := false;
         C.setControlOptions "IML_" OS.Process.getEnv;
         VM.instTrace := false;
@@ -30,7 +46,8 @@ struct
         VM.heapTrace := false;
         Driver.runTests
         {
-          prelude = prelude,
+          prelude = if prelude = "" then compiledPreludePath else prelude,
+          isCompiledPrelude = prelude = "" orelse isSuffix(prelude, "smc"),
           sourcePaths = sourcePaths,
           expectedDirectory = expectedDirectory,
           resultDirectory = resultDirectory

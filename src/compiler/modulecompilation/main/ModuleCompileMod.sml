@@ -2,7 +2,7 @@
  * Module compiler flattens structure.
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompileMod.sml,v 1.51 2006/03/02 12:46:47 bochao Exp $
+ * @version $Id: ModuleCompileMod.sml,v 1.56 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure ModuleCompileMod  = 
 struct
@@ -11,8 +11,6 @@ local
   structure T  = Types
   structure P = Path
   structure TO = TopObject
-  structure TU = TypesUtils
-  structure SE = StaticEnv
   structure FAU = FunctorApplyUtils
   structure MCC = ModuleCompileCore
   structure MCFA = ModuleCompileFunctorApp            
@@ -111,13 +109,9 @@ in
        | TPMFUNCTORAPP(
                        funBindInfo as {
                                        func = { name = funcName,id = funcID},
-                                       functorSig = {func ={arg= argEnv,...},...},
                                        ...
                                        },
-                       {
-                        strArg = tpmodexp,
-                        env = actEnv
-                        },
+                       {strArg = tpmodexp, env},
                        exnTagSubst,
                        instTyConSubst,
                        argStrpath,
@@ -130,9 +124,6 @@ in
                NONE => 
                raise Control.Bug ("undefined functor:" ^ funcName)
                | SOME funSig => funSig
-           val substTyEnv = 
-               ID.Map.unionWith 
-                 #1 (FAU.substTyEnvFromEnv (argEnv,actEnv),instTyConSubst)
            (* elab functor argument *)
            val newContext =
                MC.updateContextWithPrefix (context, argStrpath)
@@ -167,7 +158,7 @@ in
            val (newtfpdecs, pathIdEnv) = 
                MCFA.substituteHoleTfpdecs pathHoleIdEnv
                                           PE.emptyPathIdEnv
-                                          substTyEnv
+                                          instTyConSubst
                                           exnTagSubst
                                           tfpdecs
 
@@ -184,14 +175,14 @@ in
                        context
                        pathIdEnv
                        pathHoleIdEnv
-                       substTyEnv
+                       instTyConSubst
                  val pathStrEnv = 
                      FAU.fixPathStrEnv 
                        (#2 (funBodyPathEnv:PE.pathEnv)) 
                        context
                        pathIdEnv
                        pathHoleIdEnv
-                       substTyEnv
+                       instTyConSubst
                in
                  (pathVarEnv,pathStrEnv)
                end
@@ -305,7 +296,7 @@ in
                              SEnv.insert(pathVarEnv,
                                          varName,
                                          PE.CurItem ((P.NilPath, varName),
-                                                     SE.newVarId(),
+                                                     T.newVarId(),
                                                      ty,
                                                      Loc.noloc)
                                         )
@@ -313,9 +304,9 @@ in
                          )
                          SEnv.empty
                          varEnv
-         fun strEnvToPathStrEnv strEnv =
+         fun strEnvToPathStrEnv (T.STRUCTURE strEnvCont) =
              SEnv.mapi (
-                        fn (strName, T.STRUCTURE {env = (TE,VE,SE),...}) =>
+                        fn (strName, {env = (TE,VE,SE),...}) =>
                            let
                              val newPathVarEnv  = varEnvToPathVarEnv VE
                              val newPathStrEnv = strEnvToPathStrEnv SE
@@ -326,7 +317,7 @@ in
                                         )
                            end
                        )
-                       strEnv
+                       strEnvCont
          val argPathStrEnv = 
              SEnv.singleton(
                             strName,
@@ -441,7 +432,7 @@ in
              STRDECGroupToTfpdecs 
                topPathBasis accPathBasis prefix tptopstrdecs
          val (newFreeGlobalArrayIndex, newFreeEntryPointer, deltaIndexMap, preludeDecs, finaleDecs) = 
-             if !Control.doSeparateCompilation then
+             if !Control.doCompileObj then
                IA.makePreludeAndFinaleDecs_ObjFile(freeGlobalArrayIndex, freeEntryPointer, deltaPathBasis)
              else IA.makePreludeAndFinaleDecs(freeGlobalArrayIndex, freeEntryPointer, deltaPathBasis)
          val deltaLiftedPathBasis = 
@@ -451,12 +442,13 @@ in
           newFreeEntryPointer,
           deltaPathBasis,
           deltaLiftedPathBasis,
-          preludeDecs @ tfpdecs @ finaleDecs)
+          (preludeDecs, tfpdecs,  finaleDecs))
        end
          
-   fun tptopGroupsToTfpdecs freeGlobalArrayIndex freeEntryPointer topPathBasis prefix tptopGroups =
+   fun tptopGroupsToTfpdecs 
+           freeGlobalArrayIndex freeEntryPointer topPathBasis accPathBasis prefix tptopGroups =
        let
-         val (freeGlobalArrayIndex, freeEntryPointer, pathBasis, liftedPathBasis, tfpdecs) =
+           val (freeGlobalArrayIndex, freeEntryPointer, pathBasis, liftedPathBasis, tfpdecs) =
              foldl 
              (fn (tpTopGroup, 
                   (freeGlobalArrayIndex, freeEntryPointer, accPathBasis, liftedPathBasis, newTfpdecs)) 
@@ -468,7 +460,7 @@ in
                           newFreeEntryPointer,
                           deltaPathBasis,
                           deltaLiftedPathBasis,
-                          tfpdecs) = STRDECGroupToTopdecs tptopstrdecs  
+                          (prelude, body, finale)) = STRDECGroupToTopdecs tptopstrdecs  
                                                           freeGlobalArrayIndex
                                                           freeEntryPointer
                                                           prefix
@@ -482,7 +474,7 @@ in
                                         oldPathBasis = accPathBasis},
                       PE.mergePathBasis{newPathBasis = deltaLiftedPathBasis,
                                         oldPathBasis = liftedPathBasis},
-                      newTfpdecs @ tfpdecs
+                      newTfpdecs @ (prelude @ body @ finale)
                      )
                    end
                  | FUNDEC tpfundecs =>
@@ -503,7 +495,7 @@ in
                  | IMPORTDEC tpmspecEnvs =>
                    raise Control.Bug "import should occur in separate compilation"
              )
-             (freeGlobalArrayIndex, freeEntryPointer, PE.emptyPathBasis, PE.emptyPathBasis, nil)
+             (freeGlobalArrayIndex, freeEntryPointer, accPathBasis, PE.emptyPathBasis, nil)
              tptopGroups
        in
          (
@@ -536,51 +528,49 @@ in
                  case tpTopGroup of
                    IMPORTDEC tpmspecEnvs =>
                    let
-                     val (newGlobalArrayIndex, newFreeEntryPointer, newImportPathBasis) =
-                         foldl (fn ((tpmspec, Env), 
-                                    (freeGlobalArrayIndex,
-                                     freeEntryPointer, 
-                                     importPathBasis)) =>
-                                   let
-                                     val (newGlobalArrayIndex, newFreeEntryPointer, pathBasis) =
-                                         MCU.genImportPathBasisFromEnv Env
-                                                                       freeGlobalArrayIndex
-                                                                       freeEntryPointer
-                                   in
-                                     (
-                                      newGlobalArrayIndex,
-                                      newFreeEntryPointer,
-                                      PE.extendPathBasisWithPathBasis
-                                        { 
-                                         newPathBasis = pathBasis,
-                                         oldPathBasis = importPathBasis
-                                         })
-                                   end
-                               )
-                               (freeGlobalArrayIndex, freeEntryPointer, PE.emptyPathBasis)
-                               tpmspecEnvs
-                     val newAccPathBasis =
-                         PE.extendPathBasisWithPathBasis 
-                           {newPathBasis = newImportPathBasis,
-                            oldPathBasis = accPathBasis}
-                     val newLiftedPathBasis =
-                         PE.extendPathBasisWithPathBasis
-                           {newPathBasis = newImportPathBasis,
-                            oldPathBasis = liftedPathBasis}
-                     val newImportPathBasis =
-                         PE.extendPathBasisWithPathBasis
-                           {newPathBasis = newImportPathBasis,
-                            oldPathBasis = incImportPathBasis}
+                       val (newFreeEntryPointer, newImportPathBasis) =
+                           foldl (fn ((tpmspec, Env), 
+                                      (freeEntryPointer, 
+                                       importPathBasis)) =>
+                                     let
+                                         val _ = print 
+                                         val (newFreeEntryPointer, pathBasis) =
+                                             MCU.genImportPathBasisFromEnv Env
+                                                                           freeEntryPointer
+                                     in
+                                         (
+                                          newFreeEntryPointer,
+                                          PE.extendPathBasisWithPathBasis
+                                              { 
+                                               newPathBasis = pathBasis,
+                                               oldPathBasis = importPathBasis
+                                               })
+                                     end
+                                         )
+                                 (freeEntryPointer, PE.emptyPathBasis)
+                                 tpmspecEnvs
+                       val newAccPathBasis =
+                           PE.extendPathBasisWithPathBasis 
+                               {newPathBasis = newImportPathBasis,
+                                oldPathBasis = accPathBasis}
+                       val newLiftedPathBasis =
+                           PE.extendPathBasisWithPathBasis
+                               {newPathBasis = newImportPathBasis,
+                                oldPathBasis = liftedPathBasis}
+                       val newImportPathBasis =
+                           PE.extendPathBasisWithPathBasis
+                               {newPathBasis = newImportPathBasis,
+                                oldPathBasis = incImportPathBasis}
                    in
-                     (
-                      newGlobalArrayIndex,
-                      newFreeEntryPointer,
-                      newAccPathBasis,
-                      newLiftedPathBasis,
-                      newImportPathBasis,
-                      incLiftedPathBasis,
-                      nil
-                      )
+                       (
+                        freeGlobalArrayIndex,
+                        newFreeEntryPointer,
+                        newAccPathBasis,
+                        newLiftedPathBasis,
+                        newImportPathBasis,
+                        incLiftedPathBasis,
+                        nil
+                        )
                    end
                  | STRDEC tptopstrdecs =>
                    let
@@ -588,7 +578,7 @@ in
                           newFreeEntryPointer,
                           deltaPathBasis,
                           deltaLiftedPathBasis,
-                          tfpdecs) = STRDECGroupToTopdecs tptopstrdecs 
+                          (prelude, body, finale)) = STRDECGroupToTopdecs tptopstrdecs 
                                                           freeGlobalArrayIndex 
                                                           freeEntryPointer 
                                                           prefix
@@ -604,7 +594,7 @@ in
                       incImportPathBasis,
                       PE.mergePathBasis{newPathBasis = deltaLiftedPathBasis,
                                         oldPathBasis = incLiftedPathBasis},
-                      newTfpdecs @ tfpdecs)
+                      newTfpdecs @ (prelude @ body @ finale))
                    end
                  | FUNDEC tpfundecs =>
                    let

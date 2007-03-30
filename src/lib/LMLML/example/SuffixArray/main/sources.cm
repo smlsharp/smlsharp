@@ -1,0 +1,7 @@
+Group
+is
+        smlnj-lib.cm
+
+        ../../../main/sources.cm
+
+        SuffixArray.sml

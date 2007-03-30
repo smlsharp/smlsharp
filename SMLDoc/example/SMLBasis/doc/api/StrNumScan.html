@@ -1,0 +1,410 @@
+<HTML>
+<HEAD>
+<TITLE>NumScan</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>NumScan</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrNumScan.html">NumScan</A>&nbsp;:&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValscanWord">scanWord</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF="StrWord32Imp.html#Typeword">Word32.word</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValscanInt">scanInt</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF="StrInt32Imp.html#Typeint">Int32.int</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValscanReal">scanReal</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF=".//StrReal.html#Typereal">real</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrNumScan-StrW.html">W</A>&nbsp;=&nbsp;InlineT.Word32<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrNumScan-StrI.html">I</A>&nbsp;=&nbsp;InlineT.Int31<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrNumScan-StrI32.html">I32</A>&nbsp;=&nbsp;InlineT.Int32<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrNumScan-StrR.html">R</A>&nbsp;=&nbsp;InlineT.Real64<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrNumScan.html#Typeword">word</A>&nbsp;=&nbsp;<A HREF="StrWord32Imp.html#Typeword">Word32.word</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrNumScan.html#Typeprefix_pat">prefix_pat</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{wOkay&nbsp;:&nbsp;bool,&nbsp;xOkay&nbsp;:&nbsp;bool,&nbsp;ptOkay&nbsp;:&nbsp;bool,&nbsp;isDigit&nbsp;:&nbsp;<A HREF="StrNumScan.html#Typeword">word</A>&nbsp;->&nbsp;bool}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#Val<"><</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#Val>=">>=</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#Val+">+</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#Val-">-</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#Val*">*</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#VallargestWordDiv10">largestWordDiv10</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#VallargestWordMod10">largestWordMod10</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#VallargestNegInt32">largestNegInt32</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#VallargestPosInt32">largestPosInt32</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValminInt32">minInt32</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#Valcode">code</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValwsCode">wsCode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValplusCode">plusCode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValminusCode">minusCode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValptCode">ptCode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValeCode">eCode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValwCode">wCode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValxCode">xCode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscanPrefix">scanPrefix</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValchkOverflow">chkOverflow</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValisBinDigit">isBinDigit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValisOctDigit">isOctDigit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValisDecDigit">isDecDigit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValisHexDigit">isHexDigit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValbinPat">binPat</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValoctPat">octPat</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValhexPat">hexPat</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValdecPat">decPat</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscanBin">scanBin</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscanOct">scanOct</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscanDec">scanDec</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscanHex">scanHex</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValfinalWord">finalWord</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscanWord">scanWord</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrWord32Imp.html#Typeword">Word32.word</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValfinalInt">finalInt</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscanInt">scanInt</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrInt32Imp.html#Typeint">Int32.int</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#Valfscan10">fscan10</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscaleUp">scaleUp</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscaleDown">scaleDown</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumScan.html#ValscanReal">scanReal</A>&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF=".//StrReal.html#Typereal">real</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeword"><!-- --></A>
+<H3>word</H3>
+<P>
+<CODE>type&nbsp;word&nbsp;=&nbsp;<A HREF="StrWord32Imp.html#Typeword">Word32.word</A></CODE>
+
+<HR>
+<A NAME="Typeprefix_pat"><!-- --></A>
+<H3>prefix_pat</H3>
+<P>
+<CODE>type&nbsp;prefix_pat&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{wOkay&nbsp;:&nbsp;bool,&nbsp;xOkay&nbsp;:&nbsp;bool,&nbsp;ptOkay&nbsp;:&nbsp;bool,&nbsp;isDigit&nbsp;:&nbsp;<A HREF="StrNumScan.html#Typeword">word</A>&nbsp;->&nbsp;bool}</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Val<"><!-- --></A>
+<H3><</H3>
+<P>
+<CODE>val&nbsp;<</CODE>
+
+<HR>
+<A NAME="Val>="><!-- --></A>
+<H3>>=</H3>
+<P>
+<CODE>val&nbsp;>=</CODE>
+
+<HR>
+<A NAME="Val+"><!-- --></A>
+<H3>+</H3>
+<P>
+<CODE>val&nbsp;+</CODE>
+
+<HR>
+<A NAME="Val-"><!-- --></A>
+<H3>-</H3>
+<P>
+<CODE>val&nbsp;-</CODE>
+
+<HR>
+<A NAME="Val*"><!-- --></A>
+<H3>*</H3>
+<P>
+<CODE>val&nbsp;*</CODE>
+
+<HR>
+<A NAME="VallargestWordDiv10"><!-- --></A>
+<H3>largestWordDiv10</H3>
+<P>
+<CODE>val&nbsp;largestWordDiv10</CODE>
+
+<HR>
+<A NAME="VallargestWordMod10"><!-- --></A>
+<H3>largestWordMod10</H3>
+<P>
+<CODE>val&nbsp;largestWordMod10</CODE>
+
+<HR>
+<A NAME="VallargestNegInt32"><!-- --></A>
+<H3>largestNegInt32</H3>
+<P>
+<CODE>val&nbsp;largestNegInt32</CODE>
+
+<HR>
+<A NAME="VallargestPosInt32"><!-- --></A>
+<H3>largestPosInt32</H3>
+<P>
+<CODE>val&nbsp;largestPosInt32</CODE>
+
+<HR>
+<A NAME="ValminInt32"><!-- --></A>
+<H3>minInt32</H3>
+<P>
+<CODE>val&nbsp;minInt32</CODE>
+
+<HR>
+<A NAME="Valcode"><!-- --></A>
+<H3>code</H3>
+<P>
+<CODE>val&nbsp;code</CODE>
+
+<HR>
+<A NAME="ValwsCode"><!-- --></A>
+<H3>wsCode</H3>
+<P>
+<CODE>val&nbsp;wsCode</CODE>
+
+<HR>
+<A NAME="ValplusCode"><!-- --></A>
+<H3>plusCode</H3>
+<P>
+<CODE>val&nbsp;plusCode</CODE>
+
+<HR>
+<A NAME="ValminusCode"><!-- --></A>
+<H3>minusCode</H3>
+<P>
+<CODE>val&nbsp;minusCode</CODE>
+
+<HR>
+<A NAME="ValptCode"><!-- --></A>
+<H3>ptCode</H3>
+<P>
+<CODE>val&nbsp;ptCode</CODE>
+
+<HR>
+<A NAME="ValeCode"><!-- --></A>
+<H3>eCode</H3>
+<P>
+<CODE>val&nbsp;eCode</CODE>
+
+<HR>
+<A NAME="ValwCode"><!-- --></A>
+<H3>wCode</H3>
+<P>
+<CODE>val&nbsp;wCode</CODE>
+
+<HR>
+<A NAME="ValxCode"><!-- --></A>
+<H3>xCode</H3>
+<P>
+<CODE>val&nbsp;xCode</CODE>
+
+<HR>
+<A NAME="ValscanPrefix"><!-- --></A>
+<H3>scanPrefix</H3>
+<P>
+<CODE>val&nbsp;scanPrefix</CODE>
+
+<HR>
+<A NAME="ValchkOverflow"><!-- --></A>
+<H3>chkOverflow</H3>
+<P>
+<CODE>val&nbsp;chkOverflow</CODE>
+
+<HR>
+<A NAME="ValisBinDigit"><!-- --></A>
+<H3>isBinDigit</H3>
+<P>
+<CODE>val&nbsp;isBinDigit</CODE>
+
+<HR>
+<A NAME="ValisOctDigit"><!-- --></A>
+<H3>isOctDigit</H3>
+<P>
+<CODE>val&nbsp;isOctDigit</CODE>
+
+<HR>
+<A NAME="ValisDecDigit"><!-- --></A>
+<H3>isDecDigit</H3>
+<P>
+<CODE>val&nbsp;isDecDigit</CODE>
+
+<HR>
+<A NAME="ValisHexDigit"><!-- --></A>
+<H3>isHexDigit</H3>
+<P>
+<CODE>val&nbsp;isHexDigit</CODE>
+
+<HR>
+<A NAME="ValbinPat"><!-- --></A>
+<H3>binPat</H3>
+<P>
+<CODE>val&nbsp;binPat</CODE>
+
+<HR>
+<A NAME="ValoctPat"><!-- --></A>
+<H3>octPat</H3>
+<P>
+<CODE>val&nbsp;octPat</CODE>
+
+<HR>
+<A NAME="ValhexPat"><!-- --></A>
+<H3>hexPat</H3>
+<P>
+<CODE>val&nbsp;hexPat</CODE>
+
+<HR>
+<A NAME="ValdecPat"><!-- --></A>
+<H3>decPat</H3>
+<P>
+<CODE>val&nbsp;decPat</CODE>
+
+<HR>
+<A NAME="ValscanBin"><!-- --></A>
+<H3>scanBin</H3>
+<P>
+<CODE>val&nbsp;scanBin</CODE>
+
+<HR>
+<A NAME="ValscanOct"><!-- --></A>
+<H3>scanOct</H3>
+<P>
+<CODE>val&nbsp;scanOct</CODE>
+
+<HR>
+<A NAME="ValscanDec"><!-- --></A>
+<H3>scanDec</H3>
+<P>
+<CODE>val&nbsp;scanDec</CODE>
+
+<HR>
+<A NAME="ValscanHex"><!-- --></A>
+<H3>scanHex</H3>
+<P>
+<CODE>val&nbsp;scanHex</CODE>
+
+<HR>
+<A NAME="ValfinalWord"><!-- --></A>
+<H3>finalWord</H3>
+<P>
+<CODE>val&nbsp;finalWord</CODE>
+
+<HR>
+<A NAME="ValscanWord"><!-- --></A>
+<H3>scanWord</H3>
+<P>
+<CODE>val&nbsp;scanWord<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrWord32Imp.html#Typeword">Word32.word</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+
+<HR>
+<A NAME="ValfinalInt"><!-- --></A>
+<H3>finalInt</H3>
+<P>
+<CODE>val&nbsp;finalInt</CODE>
+
+<HR>
+<A NAME="ValscanInt"><!-- --></A>
+<H3>scanInt</H3>
+<P>
+<CODE>val&nbsp;scanInt<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrInt32Imp.html#Typeint">Int32.int</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+
+<HR>
+<A NAME="Valfscan10"><!-- --></A>
+<H3>fscan10</H3>
+<P>
+<CODE>val&nbsp;fscan10</CODE>
+
+<HR>
+<A NAME="ValscaleUp"><!-- --></A>
+<H3>scaleUp</H3>
+<P>
+<CODE>val&nbsp;scaleUp</CODE>
+
+<HR>
+<A NAME="ValscaleDown"><!-- --></A>
+<H3>scaleDown</H3>
+<P>
+<CODE>val&nbsp;scaleDown</CODE>
+
+<HR>
+<A NAME="ValscanReal"><!-- --></A>
+<H3>scanReal</H3>
+<P>
+<CODE>val&nbsp;scanReal&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF=".//StrReal.html#Typereal">real</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

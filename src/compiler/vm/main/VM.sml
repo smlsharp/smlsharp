@@ -7,7 +7,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: VM.sml,v 1.111 2006/03/01 08:55:47 kiyoshiy Exp $
+ * @version $Id: VM.sml,v 1.113 2006/12/10 01:50:38 kiyoshiy Exp $
  *)
 structure VM :> VM =
 struct
@@ -56,11 +56,11 @@ struct
              handlerStack : HS.stack,
              ENV : cellValue ref,
              (** channel to used as standard input. *)
-             standardInput : CharacterStreamWrapper.InputStream,
+             standardInput : ChannelTypes.InputChannel,
              (** channel to used as standard output. *)
-             standardOutput : CharacterStreamWrapper.OutputStream,
+             standardOutput : ChannelTypes.OutputChannel,
              (** channel to used as standard error. *)
-             standardError : CharacterStreamWrapper.OutputStream,
+             standardError : ChannelTypes.OutputChannel,
              (** the address of flag which indicates a received signal. *)
              signalFlagAddress : cellValue RM.pointer,
              primitives : primitive IEnv.map,
@@ -99,11 +99,11 @@ struct
 
   (** print a string to the standard output. *)
   fun print (VMStatus {standardOutput, ...}) string =
-      #print standardOutput string
+      #print (CharacterStreamWrapper.wrapOut standardOutput) string
 
   (** print a string to the standard error. *)
   fun printError (VMStatus {standardError, ...}) string =
-      #print standardError string
+      #print (CharacterStreamWrapper.wrapOut standardError) string
 
   (** textual representation of machine status. *)
   fun statusToString (VMStatus {frameStack, ENV, ...}) = 
@@ -187,9 +187,9 @@ struct
           frameStack = frameStack,
           handlerStack = handlerStack,
           ENV = ENV,
-          standardInput = CharacterStreamWrapper.wrapIn standardInput,
-          standardOutput = CharacterStreamWrapper.wrapOut standardOutput,
-          standardError = CharacterStreamWrapper.wrapOut standardError,
+          standardInput = standardInput,
+          standardOutput = standardOutput,
+          standardError = standardError,
           signalFlagAddress = signalFlagAddress,
           primitives = primitives,
           debuggerOpt = debuggerOpt,
@@ -2631,32 +2631,6 @@ val _ =
               | I.OPCODE_Return_S => doReturn loadSingleSize
               | I.OPCODE_Return_D => doReturn loadDoubleSize
               | I.OPCODE_Return_V => doReturn loadVariantSize
-              | I.OPCODE_FFIVal =>
-                let
-                  val funNameIndex = getUInt32 ()
-                  val libNameIndex = getUInt32 ()
-                  val destination = getUInt32 ()
-
-                  fun getString index =
-                      UInt8ArrayToString
-                          (SLD.expandStringBlock
-                               heap (FS.load (frameStack, index)))
-                  val funName = getString funNameIndex
-                  val libName = getString libNameIndex
-
-                  val _ =
-                      TextIO.print
-                          ("FFIVAL instruction: "
-                           ^ funName ^ " of " ^ libName ^ "\n")
-                  (* ToDo : this is dummy value. *)
-                  val blockAddress =
-                      H.allocateBlock
-                          heap
-                          {size = 0w1, bitmap = 0w0, blockType = RecordBlock}
-                  val _ =
-                      FS.store (frameStack, destination, Pointer blockAddress)
-                in () end
-
               | I.OPCODE_DebuggerBreak =>
                 (case debuggerOpt of
                    NONE => ()
@@ -2741,6 +2715,12 @@ val _ =
 
   fun getName (VMStatus {name, ...}) = name
   fun getArguments (VMStatus {arguments, ...}) = arguments
+
+  fun getStandardInput (VMStatus{standardInput, ...}) = standardInput
+
+  fun getStandardOutput (VMStatus{standardOutput, ...}) = standardOutput
+
+  fun getStandardError (VMStatus{standardError, ...}) = standardError
 
   (***************************************************************************)
 

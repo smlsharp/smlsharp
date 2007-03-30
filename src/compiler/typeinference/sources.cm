@@ -8,5 +8,6 @@ Group
 	structure SigUtils
 	structure TypeInferenceError
 	structure SigCheck
+	structure TypeInstantiationTerm
 is
 	main/module.cm

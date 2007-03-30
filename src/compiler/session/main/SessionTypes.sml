@@ -4,7 +4,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SessionTypes.sml,v 1.5 2006/02/28 16:11:05 kiyoshiy Exp $
+ * @version $Id: SessionTypes.sml,v 1.7 2007/02/28 07:34:08 kiyoshiy Exp $
  *)
 structure SessionTypes =
 struct
@@ -17,7 +17,7 @@ struct
   type Session =
        {
          (** executes a code block. *)
-         execute : Word8Array.array -> unit,
+         execute : Word8Vector.vector -> unit,
 
          (** close the session. *)
          close : unit -> unit
@@ -26,6 +26,7 @@ struct
   (***************************************************************************)
 
   exception Error of exn
+  exception Exit of BasicTypes.SInt32
 
   (***************************************************************************)
 

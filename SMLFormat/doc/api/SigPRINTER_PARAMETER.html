@@ -29,8 +29,17 @@
 <P>
 <CODE>signature&nbsp;<A HREF="SigPRINTER_PARAMETER.html">PRINTER_PARAMETER</A>&nbsp;=<br>
 sig<br>
-&nbsp;&nbsp;type&nbsp;<A HREF="SigPRINTER_PARAMETER.html#TypeprinterParameter">printerParameter</A>&nbsp;=<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;newlineString&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;&nbsp;spaceString&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;&nbsp;columns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="SigPRINTER_PARAMETER.html#Typeparameter">parameter</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrNewline">Newline</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrSpace">Space</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrColumns">Columns</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrGuardLeft">GuardLeft</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrGuardRight">GuardRight</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ValdefaultNewline">defaultNewline</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ValdefaultSpace">defaultSpace</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ValdefaultColumns">defaultColumns</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ValdefaultGuardLeft">defaultGuardLeft</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ValdefaultGuardRight">defaultGuardRight</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 end</CODE>
 <P>
 
@@ -48,7 +57,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: SigPRINTER_PARAMETER.html,v 1.3 2006/02/23 10:10:21 kiyoshiy Exp $
+$Id: SigPRINTER_PARAMETER.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
  
 
 </DL>
@@ -57,26 +66,201 @@ $Id: SigPRINTER_PARAMETER.html,v 1.3 2006/02/23 10:10:21 kiyoshiy Exp $
 
 <P>
 &nbsp;
+&nbsp;
 <TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
 <TR BGCOLOR="#CCCCFF">
 <TH COLSPAN=1>
-<FONT SIZE="+2">Type detail</FONT>
+<FONT SIZE="+2">Datatype detail</FONT>
 </TH></TR></TABLE>
-<A NAME="TypeprinterParameter"><!-- --></A>
-<H3>printerParameter</H3>
+<A NAME="Typeparameter"><!-- --></A>
+<H3>parameter</H3>
 <P>
-<CODE>type&nbsp;printerParameter&nbsp;=<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* string used as newline.*)</I></FONT>&nbsp;newlineString&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* string used as space.*)</I></FONT>&nbsp;spaceString&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* the number of columns.*)</I></FONT>&nbsp;columns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</CODE>
+<CODE>datatype&nbsp;parameter&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrNewline">Newline</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrSpace">Space</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrColumns">Columns</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrGuardLeft">GuardLeft</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRINTER_PARAMETER.html#ConstrGuardRight">GuardRight</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 
 <P>
 
 &nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrNewline"><!-- --></A>
+<H3>Newline</H3>
+<P>
+<CODE>constructor&nbsp;Newline&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigPRINTER_PARAMETER.html#Typeparameter">parameter</A></CODE>
+<DL>
+<DD>
+a string used to begin a new line. 
+ For example, "\n" or "&lt;br&gt;".
+            
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrSpace"><!-- --></A>
+<H3>Space</H3>
+<P>
+<CODE>constructor&nbsp;Space&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigPRINTER_PARAMETER.html#Typeparameter">parameter</A></CODE>
+<DL>
+<DD>
+a string used to insert a space.
+ For example, " " or "&amp;nbsp;".
+ The specified string is considered to occupy 1 column in the
+ formatted output.
+            
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrColumns"><!-- --></A>
+<H3>Columns</H3>
+<P>
+<CODE>constructor&nbsp;Columns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigPRINTER_PARAMETER.html#Typeparameter">parameter</A></CODE>
+<DL>
+<DD>
+the desired number of columns in which the output is formatted.
+            
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrGuardLeft"><!-- --></A>
+<H3>GuardLeft</H3>
+<P>
+<CODE>constructor&nbsp;GuardLeft&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigPRINTER_PARAMETER.html#Typeparameter">parameter</A></CODE>
+<DL>
+<DD>
+a string to be used to enclose at the left side of Guard.
+ For example, "(" or "[".
+ The specified string is considered to occupy 1 column in the
+ formatted output. 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrGuardRight"><!-- --></A>
+<H3>GuardRight</H3>
+<P>
+<CODE>constructor&nbsp;GuardRight&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigPRINTER_PARAMETER.html#Typeparameter">parameter</A></CODE>
+<DL>
+<DD>
+a string to be used to enclose at the right side of Guard.
+ For example, ")" or "]".
+ The specified string is considered to occupy 1 column in the
+ formatted output. 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
 &nbsp;
-&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValdefaultNewline"><!-- --></A>
+<H3>defaultNewline</H3>
+<P>
+<CODE>val&nbsp;defaultNewline&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+Its value is "\n". 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValdefaultSpace"><!-- --></A>
+<H3>defaultSpace</H3>
+<P>
+<CODE>val&nbsp;defaultSpace&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+Its value is " ". 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValdefaultColumns"><!-- --></A>
+<H3>defaultColumns</H3>
+<P>
+<CODE>val&nbsp;defaultColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A></CODE>
+<DL>
+<DD>
+Its value is 80. 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValdefaultGuardLeft"><!-- --></A>
+<H3>defaultGuardLeft</H3>
+<P>
+<CODE>val&nbsp;defaultGuardLeft&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+Its value is "(". 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValdefaultGuardRight"><!-- --></A>
+<H3>defaultGuardRight</H3>
+<P>
+<CODE>val&nbsp;defaultGuardRight&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+Its value is ")". 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
 &nbsp;
 <HR>
 <TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">

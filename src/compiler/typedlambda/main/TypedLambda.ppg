@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypedLambda.ppg,v 1.12 2006/02/28 16:11:08 kiyoshiy Exp $
+ * @version $Id: TypedLambda.ppg,v 1.24 2007/02/28 15:31:26 katsu Exp $
  *)
 
 structure TypedLambda = struct
@@ -9,6 +9,11 @@ structure TypedLambda = struct
  structure BT = BasicTypes
 
  type loc = Loc.loc
+
+ (*%
+  * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+  *)
+ type callingConvention = Absyn.callingConvention
 
  (*%
   * @params(btvEnv)
@@ -45,23 +50,18 @@ structure TypedLambda = struct
   *)
  (*% 
   * @params(btvEnv)
+  * @formatter(typesValdInfo) Types.format_varIdInfo
   *)
  (*% 
   * @prefix typed
   * @params(btvEnv)
-  * @formatter(id) format_id
-  * @formatter(ty) format_ty
+  * @formatter(typesValdInfo) Types.format_varIdInfo
   *)
  type varIdInfo = 
      (*%
-      * @format({id,displayName,ty}) displayName
+      * @format(id:typesValdInfo) id()(btvEnv)
       *)
-     (*%
-      * @prefix typed
-      * @format({id,displayName,ty:ty})
-      *       R0{displayName "<" id ">" ":" ty()(btvEnv)}
-      *)
-     {id:id, displayName:string, ty:ty}
+      Types.varIdInfo
 
  (*% 
   * @params(btvEnv)
@@ -91,14 +91,14 @@ structure TypedLambda = struct
       *)
       Types.btvKind
 
- datatype constant =  datatype Types.constant
+ datatype constant = datatype ConstantTerm.constant
 
 
 (*%
  * @params(btvEnv)
  *
  * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
- * @formatter(formatConst) Types.format_constant
+ * @formatter(formatConst) ConstantTerm.format_constant
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
  * @formatter(imap) SmlppgUtil.formatImap
@@ -116,7 +116,7 @@ structure TypedLambda = struct
  * @formatter(valIdent) format_valIdent
  * @formatter(enclosedListIfMoreThanOne)
  *              SmlppgUtil.formatListWithEnclosureIfMoreThanOne
- * @formatter(formatConst) Types.format_constant
+ * @formatter(formatConst) ConstantTerm.format_constant
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
  * @formatter(imap) SmlppgUtil.formatImap
@@ -129,15 +129,17 @@ structure TypedLambda = struct
       * @format(
       *        {
       *          funExp:exp1,
+      *          funTy,
       *          instTyList: ty tys:formatListWithEnclosure,
       *          argExpList: exp2 exps2:formatListWithEnclosure,
       *          argTyList: argTy argTys:formatListWithEnclosure,
-      *          loc:loc
+      *          convention,
+      *          loc
       *         }
       *        )
       * R1{d
       *      {
-      *        exp1()(btvEnv)
+      *        "Foreign" + convention + exp1()(btvEnv)
       *        !N0{tys(ty()(btvEnv))(",","{","}")} 2
       *        {exps2(exp2()(btvEnv))(","1,"(",")")} 1
       *        ":" + !N0{argTys(argTy()(btvEnv))(",","{","}")}
@@ -149,25 +151,67 @@ structure TypedLambda = struct
       * @format(
       *        {
       *          funExp:exp1,
+      *          funTy,
       *          instTyList: ty tys:formatListWithEnclosure,
       *          argExpList: exp2 exps2:formatListWithEnclosure,
       *          argTyList: argTy argTys:formatListWithEnclosure,
-      *          loc:loc
+      *          convention,
+      *          loc
       *         }
       *        )
       * R1{d
       *      {
-      *        exp1()(btvEnv)
+      *        "Foreign" + exp1()(btvEnv)
       *      }
       *   }
       *)
-      TLFOREIGNAPPLY of {
-                         funExp:tlexp, 
-                         instTyList:ty list, 
-                         argExpList:tlexp list, 
-                         argTyList: ty list,
-                         loc:loc
-                         }
+      TLFOREIGNAPPLY of
+      {
+        funExp:tlexp, 
+        funTy: ty,
+        instTyList:ty list, 
+        argExpList:tlexp list, 
+        argTyList: ty list,
+        convention : callingConvention,
+        loc:loc
+      }
+   | (*%
+      * @format({funExp, instTyList: ty tys:formatListWithEnclosure,
+      *          argTyList: argTy argTys:formatListWithEnclosure, resultTy,
+      *          loc})
+      * L10{ "CALLBACK(" funExp()(btvEnv) 
+      *          2[ +2 ":" +d !N0{tys(ty()(btvEnv))(",","{","}")} ]
+      * ")" }
+      *)
+     (*%
+      * @prefix typed
+      * @format({funExp, instTyList: ty tys:formatListWithEnclosure,
+      *          argTyList: argTy argTys:formatListWithEnclosure, resultTy,
+      *          loc})
+      * L10{ "CALLBACK(" funExp()(btvEnv) 
+      *          2[ +2 ":" +d !N0{tys(ty()(btvEnv))(",","{","}")} ]
+      *       +1 ":" + {argTys(argTy()(btvEnv))(","+2,"{","}") +2
+      *         "->" +2 resultTy()(btvEnv)}
+      * ")" }
+      *)
+      TLEXPORTCALLBACK of 
+       {
+         funExp : tlexp,
+         instTyList:ty list,
+	 argTyList : ty list,
+	 resultTy : ty,
+         loc: loc
+       }
+   | (*%
+      * @prefix typed
+      * @format({ty, loc})
+      * "_sizeof(" ty()(btvEnv) ")"
+      *)
+     (*%
+      * @format({ty, loc})
+      * "_sizeof(" ty()(btvEnv) ")"
+      *)
+     TLSIZEOF of {ty: ty, loc: loc}
    | 
      (*%
       * @prefix typed
@@ -178,6 +222,11 @@ structure TypedLambda = struct
       *)
      (** constant int or real or string *)
      TLCONSTANT of {value : constant, loc : loc}
+   | 
+     (*%
+      * @format({tagValue,loc}) tagValue
+      *)
+     TLEXCEPTIONTAG of {tagValue : int, loc : loc}
    | 
      (*%
       * @prefix typed
@@ -194,12 +243,13 @@ structure TypedLambda = struct
    | 
      (*%
       * @prefix typed
-      * @format(id * ty * loc) "getGlobal(" id + ":" + ty()(btvEnv) ")"
+      * @format(id * ty * loc) "getGlobal(" id ")"
       *)
      (*%
       * @format(id * ty * loc) "getGlobal(" id ")"
       *)
-      (*NOTE. no more use*)
+      (*NOTE. no more use
+       *)
      TLGETGLOBAL of string * ty * loc
    | 
      (*%
@@ -216,7 +266,7 @@ structure TypedLambda = struct
      (*%
       * @prefix typed
       * @format({arrayIndex:index:formatUInt32,offset,valueExp:exp,ty,loc}) 
-      * "SetGlobalValue((" index "," offset ") = " exp()(btvEnv) ")"  
+      * "SetGlobalValue((" index "," offset ") =" +1 exp()(btvEnv) ")"  
       *)
      (*%
       * @format({arrayIndex:index:formatUInt32,offset,valueExp:exp,ty,loc}) 
@@ -356,19 +406,15 @@ structure TypedLambda = struct
      (*%
       * @prefix typed
       * @format({binds:bind binds, bodyExp:exp, loc:loc})
-       !N0{
-            "bind" 
-             +1
-             2[binds(bind)( +1) ]
-             +1
-             "in"
-             +1
-             2[{exp()(btvEnv)}] 
-	     +1
-             "end"
-           }
+          "bind" 
+           2[+1binds(bind)( +1)]
+           +1
+           "in"
+           2[1+{exp()(btvEnv)}] 
+           +1 
+           "end"
       * @format:bind(id * exp) 
-           {id()(btvEnv) +d "=" 2[+1 {exp()(btvEnv)]}}
+          {id()(btvEnv) +d "=" 2[+1 {exp()(btvEnv)}]}
       *)
      (*%
       * @format({binds:bind binds, bodyExp:exp, loc:loc})
@@ -434,25 +480,25 @@ structure TypedLambda = struct
       * @prefix typed
       * @format({expList:exp record, internalTy, externalTy:ety opt,loc}) 
         !N0{
-	  "("
+	  "{"
              d
              2[
                 record(exp()(btvEnv))("," +1)
               ] 
 	     d
-	  ")" 
+	  "}" + ":" opt(ety()(btvEnv))
            }
       *)
     (*%
       * @format({expList:exp record, internalTy, externalTy:ety opt,loc}) 
         !N0{
-	  "("
+	  "{"
              d
              2[
                 record(exp()(btvEnv))("," +1)
               ] 
 	     d
-	  ")" 
+	  "}" 
            }
       *)
      (** (e1,...,en) 
@@ -473,7 +519,7 @@ structure TypedLambda = struct
      (*%
       * @prefix typed
       * @format({recordExp:exp, indexExp:selector, recordTy:ty1, loc:loc})
-      * exp()(btvEnv) "[" selector()(btvEnv) "]"
+      * exp()(btvEnv) "[" selector()(btvEnv) "]" + ":" ty1()(btvEnv)
       *)
      (*%
       * @format({recordExp:exp, indexExp:selector, recordTy:ty1, loc:loc})
@@ -549,27 +595,23 @@ structure TypedLambda = struct
    |
      (*%
       * @prefix typed
-      * @format({argVarList:id ids:enclosedListIfMoreThanOne, bodyTy:ty, bodyExp:exp, loc:loc}) 
+      * @format({argVarList:id ids:enclosedListIfMoreThanOne, 
+                 bodyTy:ty, bodyExp:exp, loc:loc}) 
            R1{ 
-               "fn" + {ids(id()(btvEnv))(","+, "{", "}") + "=>" }
-                     2[ +1 {exp()(btvEnv)}]
+               "fn" + "{"
+                  5[+ ids(id()(btvEnv))(","+, "", +"}") ]
+                 +1
+                 "=>" 
+                 2[ +1 {exp()(btvEnv)}]
              }
      *)
      (*%
-      * @format({argVarList:id ids:enclosedListIfMoreThanOne, bodyTy:ty, bodyExp:exp, loc:loc}) 
+      * @format({argVarList:id ids:enclosedListIfMoreThanOne, 
+                 bodyTy:ty, bodyExp:exp, loc:loc}) 
            R1{ 
                "fn" + {ids(id()(btvEnv))(","+, "{", "}") + "=>" }
-                     2[ +1 {exp()(btvEnv)}]
+                2[ +1 {exp()(btvEnv)}]
              }
-     *)
-     (**
-       \lambda(x1,....,xn).e 
-     formatted to:
-       fn x =>
-         eeeeee
-     or
-       fn {x,...,z} =>
-         eeeeee
      *)
      TLFNM of 
        {
@@ -596,15 +638,7 @@ structure TypedLambda = struct
       *)
      (*%
       * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs:ty, exp:exp, loc:loc})
-        {
-          "[" imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
-             2[
-               +1
-               {exp()(imap:createBtvKindMap()(btvEnv))}
-              ] 
-           +1 
-           "]"
-	}
+        {exp()(imap:createBtvKindMap()(btvEnv))}
       *)
       (** 
         \forall t1...tn.e 
@@ -682,8 +716,8 @@ structure TypedLambda = struct
             ~2[+1 " |" +]
             {"_ =>" 2[+2] 2[{exp2()(btvEnv)}]}
           ]
-      * @format:rule(const:formatConst * exp) 
-           const + "=>" 2[+2] 2[exp()(btvEnv)]
+      * @format:rule({constant, exp})
+           constant()(btvEnv) + "=>" 2[+2] 2[exp()(btvEnv)]
       *)
      (*%
       * @format({switchExp:exp1, expTy:ty, branches:rule rules, defaultExp:exp2, loc:loc})
@@ -693,8 +727,8 @@ structure TypedLambda = struct
             {rules(rule)(~2[+1 "|"] +)}
             +1 " |" +
             {"_ =>" 2[+1{exp2()(btvEnv)}]}
-      * @format:rule(const:formatConst * exp) 
-            {const + "=>" 2[+1{exp()(btvEnv)}]}
+      * @format:rule({constant,exp})
+            {constant()(btvEnv) + "=>" 2[+1{exp()(btvEnv)}]}
       *)
       (** switch e of
                 c1 => e1 | ... | cn => en
@@ -713,7 +747,7 @@ structure TypedLambda = struct
        {
         switchExp:tlexp, 
         expTy:ty, 
-        branches:(constant * tlexp) list, 
+        branches: {constant:tlexp , exp : tlexp} list, 
         defaultExp:tlexp, 
         loc:loc
         }
@@ -737,9 +771,6 @@ structure TypedLambda = struct
   |
      (*%
       * @prefix typed
-     * @format({exp:exp, targetTy:ty, loc:loc}) "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
-     *)
-     (*%
      * @format({exp:exp, targetTy:ty, loc:loc}) 
 	   {
 	    "("
@@ -748,6 +779,18 @@ structure TypedLambda = struct
               +1
               2["to" + 2[{ty()(btvEnv)}]]
 	      1
+	    ")"
+           }
+     *)
+     (*%
+     * @format({exp:exp, targetTy:ty, loc:loc}) 
+	   {
+	    "("
+              +1
+	      2["cast" + 2[{exp()(btvEnv)}]]
+              +1
+              2["to" + 2[{ty()(btvEnv)}]]
+	      +1
 	    ")"
            }
      *)
@@ -768,35 +811,16 @@ structure TypedLambda = struct
      * @format(ty * label) "offset(" label + "of" + ty()(btvEnv) ")"
      *)
     TLOFFSET of {recordTy : ty, label : string, loc : loc}
-  |
-     (*%
-      * @prefix typed
-     * @format({funExp:funExp, libExp:libExp, argTyList: argty argtys, resultTy:resultty, funTy:infty, loc:loc})
-     * "import" + {funExp()(btvEnv)} +d "of" +d {libExp()(btvEnv)} +2
-     * ":" + "{" {argtys(argty()(btvEnv))("," +)} "}"
-     *       "->" {resultty()(btvEnv)}
-     *)
-     (*%
-     * @format({funExp:funExp, libExp:libExp, argTyList: argty argtys, resultTy:resultty, funTy:infty, loc:loc})
-     * "import" + {funExp()(btvEnv)} +d "of" +d {libExp()(btvEnv)} +2
-     * ":" + "{" {argtys(argty()(btvEnv))("," +)} "}"
-     *       "->" {resultty()(btvEnv)}
-     *)
-    TLFFIVAL of 
-      {
-       funExp:tlexp, 
-       libExp:tlexp, 
-       argTyList:ty list, 
-       resultTy:ty, 
-       funTy:ty, 
-       loc:loc
-       }
 
  and tldecl 
    = (*%
       * @prefix typed
       * @format({bindList:bind binds,loc})  
-          "val" + 2[binds(bind)(~2[ +1 "and"] +)]
+         2[
+          "val" 
+          + 
+          binds(bind)(~2[ +1 "and"] +)
+          ]
       * @format:bind({boundValIdent:id,boundExp:exp}) 
          id()(btvEnv) +d "=" +1 exp()(btvEnv)
       *)

@@ -1,0 +1,26 @@
+Group is
+#if defined(NEW_CM)
+	$/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
+        smlnj-lib.cm
+#endif
+#if defined(NEW_CM)
+        $/smlformatlib.cm
+#else
+        ../../../smlformatlib.cm
+#endif
+        ../../../compiler/systemdef/sources.cm
+        ../../../instructions/compiler/sources.cm
+        ../../../compiler/types/sources.cm
+        ../../../compiler/env/sources.cm
+        ../../../compiler/control/sources.cm
+        ../../../compiler/format/sources.cm
+        ../../../compiler/name/sources.cm
+        Primitives.ppg.sml
+        Constants.sml
+        PredefinedTypes.sml
+        ConstantTerm.ppg.sml
+        ConstantTermPickler.sml

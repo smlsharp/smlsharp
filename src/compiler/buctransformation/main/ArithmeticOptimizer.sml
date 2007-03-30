@@ -2,7 +2,7 @@
  * ArithmeticOptimizer.
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: ArithmeticOptimizer.sml,v 1.5 2006/02/28 16:11:00 kiyoshiy Exp $
+ * @version $Id: ArithmeticOptimizer.sml,v 1.6 2006/11/06 01:50:00 kiyoshiy Exp $
  *)
 
 (* This module simulates a simple numeric algebra and provides facilities for 
@@ -11,6 +11,7 @@
 
 structure ArithmeticOptimizer = struct
 
+  structure BT = BasicTypes
   structure VMap = IEnv
   structure VSet = ISet
   type const = Word32.word
@@ -231,7 +232,7 @@ structure ArithmeticOptimizer = struct
         val (batch,v2) = insert(batch,e2)
       in
         case (lookup(batch,v1),lookup(batch,v2)) of
-          (CONST c1,CONST c2) => insertAtom(batch,CONST (Word32.<<(c1,Word.fromLargeWord c2)))
+          (CONST c1,CONST c2) => insertAtom(batch,CONST (Word32.<<(c1,BT.UInt32ToWord c2)))
         | (e,CONST 0w0) => (batch,v1)
         | (CONST 0w0,e) => (batch,v1)
         | (LSHIFT(e,CONST c1),CONST c2) => insertLShift(batch,e,CONST(c1 + c2))
@@ -250,7 +251,7 @@ structure ArithmeticOptimizer = struct
         val (batch,v2) = insert(batch,e2)
       in
         case (lookup(batch,v1),lookup(batch,v2)) of
-          (CONST c1,CONST c2) => insertAtom(batch,CONST (Word32.>>(c1,Word.fromLargeWord c2)))
+          (CONST c1,CONST c2) => insertAtom(batch,CONST (Word32.>>(c1,BT.UInt32ToWord c2)))
         | (e,CONST 0w0) => (batch,v1)
         | (CONST 0w0,e) => (batch,v1)
         | (RSHIFT(e,CONST c1),CONST c2) => insertRShift(batch,e,CONST(c1 + c2))

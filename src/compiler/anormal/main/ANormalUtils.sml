@@ -2,7 +2,7 @@
  * utilities of A-Normal form.
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: ANormalUtils.sml,v 1.5 2006/02/28 16:10:58 kiyoshiy Exp $
+ * @version $Id: ANormalUtils.sml,v 1.7 2007/01/10 09:43:43 katsu Exp $
  *)
 
 structure ANormalUtils : ANORMAL_UTILS = struct
@@ -24,6 +24,7 @@ structure ANormalUtils : ANORMAL_UTILS = struct
       | ANPRIMAPPLY_1{loc,...} => loc
       | ANPRIMAPPLY_2{loc,...} => loc
       | ANFOREIGNAPPLY{loc,...} => loc
+      | ANEXPORTCALLBACK{loc,...} => loc
       | ANAPPLY{loc,...} => loc
       | ANCALL{loc,...} => loc
       | ANRECORD{loc,...} => loc
@@ -40,7 +41,6 @@ structure ANormalUtils : ANORMAL_UTILS = struct
       | ANRECCLOSURE{loc,...} => loc
       | ANGETFIELD{loc,...} => loc
       | ANSETFIELD{loc,...} => loc
-      | ANFFIVAL{loc,...} => loc
       | ANEXIT loc => loc
 
 end

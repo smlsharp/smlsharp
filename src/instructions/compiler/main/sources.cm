@@ -1,25 +1,2 @@
 Group is
-        ../../../compiler/systemdef/sources.cm
-
-        PRIMITIVE_SERIALIZER.sig
-        PrimitiveSerializerLittleEndian.sml
-        PrimitiveSerializerBigEndian.sml
-
-        BASIC_TYPE_SERIALIZER.sig
-        BasicTypeSerializerBase.sml
-#if defined(LITTLE_ENDIAN)
-        BasicTypeSerializer_ForLittleEndian.sml
-#elif defined(BIG_ENDIAN)
-        BasicTypeSerializer_ForBigEndian.sml
-#else
-#error neither 'LITTLE_ENDIAN' nor 'BIG_ENDIAN' is defined.
-#endif
-        BasicTypeSerializerForNetworkByteOrder.sml
-
-        Instructions.sml
-        INSTRUCTION_SERIALIZER.sig
-        InstructionSerializer.sml
-        EXECUTABLE.sig
-        Executable.sml
-        EXECUTABLE_SERIALIZER.sig
-        ExecutableSerializer.sml
+        module.cm

@@ -15,6 +15,7 @@ structure UInt24 = UIntFun(Word);
 structure SInt24 = Int;
 structure UInt32 = UIntFun(Word32);
 structure SInt32 = Int32;
+structure Real32 = Real64;
 structure Real64 = Real64;
 
 (**
@@ -49,6 +50,9 @@ struct
   (** signed 32 bit integer *)
   type SInt32 = Int32.int;
 
+  (** 32 bit real *)
+  type Real32 = Real32.real;
+
   (** 64 bit real *)
   type Real64 = Real64.real;
 
@@ -69,13 +73,19 @@ struct
   fun SInt24ToSInt32 (sint24 : SInt24) = (SInt24.toLarge sint24) : SInt32
 
   (* UInt <-> UInt *)
-  fun UInt32ToUInt8 (uint32 : UInt32) = (UInt8.fromLargeWord uint32) : UInt8
-  fun UInt32ToUInt16 (uint32 : UInt32) = (UInt16.fromLargeWord uint32) : UInt16
-  fun UInt32ToUInt24 (uint32 : UInt32) = (UInt24.fromLargeWord uint32) : UInt24
+  fun UInt32ToUInt8 (uint32 : UInt32) =
+      ((UInt8.fromLargeWord o UInt32.toLargeWord) uint32) : UInt8
+  fun UInt32ToUInt16 (uint32 : UInt32) =
+      ((UInt16.fromLargeWord o UInt32.toLargeWord) uint32) : UInt16
+  fun UInt32ToUInt24 (uint32 : UInt32) =
+      ((UInt24.fromLargeWord o UInt32.toLargeWord) uint32) : UInt24
 
-  fun UInt8ToUInt32 (uint8 : UInt8) = (UInt8.toLargeWord uint8) : UInt32
-  fun UInt16ToUInt32 (uint16 : UInt16) = (UInt16.toLargeWord uint16) : UInt32
-  fun UInt24ToUInt32 (uint24 : UInt24) = (UInt24.toLargeWord uint24) : UInt32
+  fun UInt8ToUInt32 (uint8 : UInt8) =
+      ((UInt32.fromLargeWord o UInt8.toLargeWord) uint8) : UInt32
+  fun UInt16ToUInt32 (uint16 : UInt16) =
+      ((UInt32.fromLargeWord o UInt16.toLargeWord) uint16) : UInt32
+  fun UInt24ToUInt32 (uint24 : UInt24) =
+      ((UInt32.fromLargeWord o UInt24.toLargeWord) uint24) : UInt32
 
   (* UInt <-> SInt *)
   fun SInt8ToUInt32 (sint8 : SInt8) = (UInt32.fromInt sint8) : UInt32
@@ -114,12 +124,14 @@ struct
   fun WordToUInt8 (word : word) = ((UInt8.fromInt o Word.toInt) word) : UInt8
   fun WordToUInt16 (word : word) = word : UInt16
   fun WordToUInt24 (word : word) = word : UInt24
-  fun WordToUInt32 (word : word) = (Word.toLargeWord word) : UInt32
+  fun WordToUInt32 (word : word) =
+      ((UInt32.fromLargeWord o Word.toLargeWord) word) : UInt32
 
   fun UInt8ToWord (uint8 : UInt8) = ((Word.fromInt o UInt8.toInt) uint8) : word
   fun UInt16ToWord (uint16 : UInt16) = uint16 : word
   fun UInt24ToWord (uint24 : UInt24) = uint24 : word
-  fun UInt32ToWord (uint32 : UInt32) = (Word.fromLargeWord uint32) : word
+  fun UInt32ToWord (uint32 : UInt32) =
+      ((Word.fromLargeWord o UInt32.toLargeWord) uint32) : word
 
   (* Word <-> SInt *)
   fun WordToSInt8 (word : word) = (Word.toInt word) : SInt8
@@ -139,6 +151,12 @@ struct
   fun Real64ToSInt32 (real : Real64) =
       Real64.toLargeInt (IEEEReal.getRoundingMode ()) real
   fun SInt32ToReal64 (sint32 : SInt32) = Real64.fromLargeInt sint32
+
+  (* Real <-> Real32 *)
+  val RealToReal32 = RealToReal64
+  val Real32ToReal = Real64ToReal
+  val Real32ToSInt32 = Real64ToSInt32
+  val SInt32ToReal32 = SInt32ToReal64
 
   fun StringLengthToPaddedUInt8ListLength stringLength =
       (stringLength + 4) div 4

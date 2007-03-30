@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: ANormalTranslator.sml,v 1.12 2006/02/28 16:10:59 kiyoshiy Exp $
+ * @version $Id: ANormalTranslator.sml,v 1.18 2007/02/11 16:39:50 kiyoshiy Exp $
  *)
 
 
@@ -13,7 +13,7 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
   structure TU = TypesUtils
   structure BC = BUCCalc
   structure BU = BUCUtils
-  structure SE = StaticEnv
+  structure CT = ConstantTerm
   structure IDMap = IEnv
   structure ANU = ANormalUtils
 
@@ -31,32 +31,10 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
         | EQUAL => Word32.compare(y1,y2)
         | LESS => LESS
 
-    fun constantCompare (x,y) = 
-        case (x,y) of
-          (T.INT i1, T.INT i2) => Int32.compare(i1, i2)
-        | (T.INT _, _) => LESS
-        | (T.WORD _,T.INT _) => GREATER
-        | (T.WORD w1,T.WORD w2) => Word32.compare(w1,w2)
-        | (T.WORD w1,_) => LESS
-        | (T.STRING _, T.INT _) => GREATER
-        | (T.STRING _, T.WORD _) => GREATER
-        | (T.STRING s1, T.STRING s2) => String.compare (s1, s2)
-        | (T.STRING _, _) => LESS
-        | (T.REAL r1, T.INT _) => GREATER
-        | (T.REAL r1, T.WORD _) => GREATER
-        | (T.REAL r1, T.STRING _) => GREATER
-        | (T.REAL r1, T.REAL r2) => String.compare(r1, r2)
-        | (T.REAL r1, _) => LESS
-        | (T.CHAR _, T.INT _) => GREATER
-        | (T.CHAR _, T.WORD _) => GREATER
-        | (T.CHAR _, T.STRING _) => GREATER
-        | (T.CHAR _, T.REAL _) => GREATER
-        | (T.CHAR c1, T.CHAR c2) => Char.compare(c1,c2)
-
     fun compare (x,y) =
         case (x,y) of
           (BC.BUCCONSTANT {value=c1,...}, BC.BUCCONSTANT {value=c2,...}) =>
-          constantCompare (c1,c2)
+          CT.compare (c1,c2)
         | (BC.BUCCONSTANT _, _) =>  LESS
 
         | (BC.BUCVAR _, BC.BUCCONSTANT _) => GREATER
@@ -124,7 +102,7 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
 
   fun newVar (ty,varKind) = 
       let 
-        val id = SE.newVarId()
+        val id = T.newVarId()
       in
         {id=id,displayName="$" ^ (ID.toString id),ty=ty,varKind=varKind}
       end
@@ -188,8 +166,8 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
          tyvars = map tidOf tyvars, 
          bitmapFree = 
              case bitmapFree of
-               BC.BUCCONSTANT {value = T.WORD 0w0,loc} => 
-               ANCONSTANT{value=T.WORD 0w0,loc=loc}
+               BC.BUCCONSTANT {value = CT.WORD 0w0,loc} => 
+               ANCONSTANT{value=CT.WORD 0w0,loc=loc}
              | BC.BUCENVACC{nestLevel=0w0,offset=i,variableTy,loc} =>
                ANENVACC{nestLevel=0w0,offset=i,loc=loc}
              | BC.BUCENVACC _ => raise Control.Bug "invalid bitmapFree(envacc)"
@@ -338,10 +316,10 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
                 }
           )
         end
-      | BC.BUCFOREIGNAPPLY {funExp,argExpList,argTyList,loc} =>
+      | BC.BUCFOREIGNAPPLY {funExp,argExpList,argTyList,convention,loc} =>
         let
           val (atomEnv',funcBinds,funExp') = 
-              compileInlineExp atomEnv (funExp,BOXED)
+              compileInlineExp atomEnv (funExp,ATOM)
           val argTyList' = map convertTy argTyList
           val (atomEnv',argBinds,argExpList') =
               compileExpList atomEnv' (argExpList, argTyList')
@@ -354,6 +332,26 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
                  funExp = funExp',
                  argExpList = argExpList',
                  argTyList = argTyList',
+                 convention = convention,
+                 loc = loc
+                }
+          )
+        end
+      | BC.BUCEXPORTCALLBACK {funExp,argTyList,resultTy,loc} =>
+        let
+          val (atomEnv',funcBinds,funExp') = 
+              compileInlineExp atomEnv (funExp,BOXED)
+          val argTyList' = map convertTy argTyList
+          val resultTy' = convertTy resultTy
+        in
+          (
+            atomEnv',
+            funcBinds,
+            ANEXPORTCALLBACK
+                {
+                 funExp = funExp',
+                 argTyList = argTyList',
+                 resultTy = resultTy',
                  loc = loc
                 }
           )
@@ -514,7 +512,7 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
       | BC.BUCCLOSURE {code = BC.BUCCODE {funInfo,body,loc = locOfBody},env,loc} =>
         let
           val (funInfo',body') = compileCode(funInfo,body,locOfBody)
-          val label = SE.newVarId()
+          val label = T.newVarId()
           val _ = Code.addCode(Code.CLS{funLabel = label,funInfo = funInfo', body = body'})
           val (atomEnv',binds,env') =
               compileInlineExp atomEnv (env,BOXED)
@@ -608,28 +606,6 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
                 loc = loc
                }
           )
-        end
-      | BC.BUCFFIVAL{funExp, libExp, argTyList, resultTy, funTy, loc} =>
-        let
-          val (atomEnv', funBinds, funExp') = 
-              compileInlineExp atomEnv (funExp, BOXED)
-          val (atomEnv', libBinds, libExp') =
-              compileInlineExp atomEnv' (libExp, BOXED)
-          val argTyList' = map convertTy argTyList
-          val resultTy' = convertTy resultTy
-          val funTy' = convertTy funTy
-          val anexp =
-              ANFFIVAL 
-                  {
-                   funExp = funExp',
-                   libExp = libExp',
-                   argTyList = argTyList',
-                   resultTy = resultTy',
-                   funTy = funTy',
-                   loc = loc 
-                  }
-        in
-          (atomEnv', funBinds @@ libBinds, anexp)
         end
 
   and compileExpList atomEnv ([],[]) = (atomEnv,EMPTY,[])

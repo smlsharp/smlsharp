@@ -8,6 +8,7 @@ local
  (* for debugging *)
   fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
 
+  structure T = Types
   open Types
   open TypedCalc
   structure TIU = TypeInferenceUtils
@@ -168,8 +169,10 @@ in
   and uncurryExp spine tpexp = 
     case tpexp of
       TPFOREIGNAPPLY {loc,...} => makeApply (tpexp, spine, loc)
+    | TPEXPORTCALLBACK {loc,...} => makeApply (tpexp, spine, loc)
+    | TPSIZEOF (_,loc) => makeApply (tpexp, spine, loc)
     | TPERROR => tpexp
-    | TPCONSTANT (_, loc) => makeApply(tpexp, spine, loc)
+    | TPCONSTANT (_, _, loc) => makeApply(tpexp, spine, loc)
     | TPVAR (_,loc) => makeApply (tpexp, spine, loc)
     | 
       (*
@@ -456,20 +459,6 @@ in
                     spine,
                     loc)
         end
-     | TPFFIVAL {funExp, libExp, argTyList, resultTy, funTy, loc} =>
-        let
-          val newFunExp = uncurryExp nil funExp
-          val newLibExp = uncurryExp nil libExp
-        in
-          makeApply(TPFFIVAL {funExp = newFunExp, 
-                              libExp = newLibExp, 
-                              argTyList = argTyList,
-                              resultTy = resultTy,
-                              funTy = funTy,
-                              loc = loc},
-                    spine,
-                    loc)
-        end
      | TPCAST (tpexp, ty, loc) =>
         makeApply(TPCAST(uncurryExp nil tpexp, ty, loc),
                   spine,
@@ -636,12 +625,12 @@ in
                            )
                     (instBodyTy, newBodyTerm)
                     newVars
-                  val newBtvEnv = #boundEnv(TypesUtils.generalizer (curriedFunTy, SEnv.empty, SEnv.empty))
+                  val newBtvEnv = #boundEnv(TypesUtils.generalizer (curriedFunTy, T.toplevelDepth))
                   val _ =
                     map
                     (fn (TYVARty (r as ref(TVAR {recKind = OVERLOADED (h :: tl), ...}))) => 
                            r := SUBSTITUTED h
-                      | (TYVARty (r as ref (TVAR {id, recKind=UNIV, eqKind, tyvarName}))) =>
+                      | (TYVARty (r as ref (TVAR {recKind=UNIV, ...}))) =>
                          let
                            val dummyty = TIU.nextDummyTy ()
                            
@@ -649,7 +638,7 @@ in
                            r := (SUBSTITUTED dummyty)
                          end
                        | (**** temporary fix of BUG 200 ***)
-                         (TYVARty (r as ref (TVAR {id, recKind=REC tySEnvMap, eqKind, tyvarName}))) =>
+                         (TYVARty (r as ref (TVAR {recKind=REC tySEnvMap, ...}))) =>
                              r := (SUBSTITUTED (RECORDty tySEnvMap))
                        | (TYVARty (r as ref (SUBSTITUTED _))) => ()
                        | _ => ()
@@ -750,14 +739,14 @@ in
 
  and uncurryTopdec topdec = 
     case topdec of
-      TPMDECSTR (strdec, loc) => TPMDECSTR (uncurryStrdec strdec, loc)
-    | TPMDECSIG (stringPlsigexplist, loc) => topdec
-    | TPMDECFUN (funBindInfoStringSigexpStrexpList, loc) =>
+        TPMDECSTR (strdec, loc) => TPMDECSTR (uncurryStrdec strdec, loc)
+      | TPMDECSIG (stringPlsigexplist, loc) => topdec
+      | TPMDECFUN (funBindInfoStringSigexpStrexpList, loc) =>
         TPMDECFUN (map (fn (f, s, sigexp, strexp) =>
-                         (f, s, sigexp, uncurryStrexp strexp))
-                   funBindInfoStringSigexpStrexpList, 
-                   loc)
-
-  fun optimize topdecList = map uncurryTopdec topdecList
+                           (f, s, sigexp, uncurryStrexp strexp))
+                       funBindInfoStringSigexpStrexpList, 
+                       loc)
+        
+ fun optimize topdecList = map uncurryTopdec topdecList
 end
 end

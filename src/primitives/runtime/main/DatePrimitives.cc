@@ -3,7 +3,7 @@
 #include "Log.hh"
 #include "Debug.hh"
 
-#include <sys/time.h>
+#include <time.h>
 #include <stdlib.h>
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
@@ -55,7 +55,8 @@ IMLPrim_Date_localTimeImpl(UInt32Value argsCount,
     int numFields = sizeof(struct tm) / sizeof(Cell);
     assert(9 == numFields);
     Cell* block = Heap::allocAtomBlock(numFields);
-    ::localtime_r((time_t*)&seconds, (struct tm*)block);
+    struct tm* local_tm = ::localtime((time_t*)&seconds);
+    COPY_MEMORY((struct tm*)block, local_tm, sizeof(struct tm));
     resultRef->blockRef = block;
 // printf("end Date_localTime\n");
     return;
@@ -72,7 +73,8 @@ IMLPrim_Date_gmTimeImpl(UInt32Value argsCount,
     int numFields = sizeof(struct tm) / sizeof(Cell);
     assert(9 == numFields);
     Cell* block = Heap::allocAtomBlock(numFields);
-    ::gmtime_r((time_t*)&seconds, (struct tm*)block);
+    struct tm* gm_tm = ::gmtime((time_t*)&seconds);
+    COPY_MEMORY((struct tm*)block, gm_tm, sizeof(struct tm));
     resultRef->blockRef = block;
 // printf("end Date_gmTime\n");
     return;

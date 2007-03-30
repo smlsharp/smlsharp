@@ -3,14 +3,13 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: PathEnv.sml,v 1.44 2006/02/27 06:23:02 bochao Exp $
+ * @version $Id: PathEnv.sml,v 1.45 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure PathEnv = 
 struct
   local
     open Types TypedFlatCalc
     structure P = Path
-    structure SE = StaticEnv
     structure ITC =  InitialTypeContext
     structure TO = TopObject
   in

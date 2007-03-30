@@ -2,12 +2,11 @@
  * utility functions for manupilating types (needs re-writing).
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TYPESUTILS.sig,v 1.3 2006/02/28 16:11:10 kiyoshiy Exp $
+ * @version $Id: TYPESUTILS.sig,v 1.5 2007/02/11 16:39:51 kiyoshiy Exp $
  *)
 signature TYPESUTILS =
 sig
 
-  val computeTagId : Types.conInfo -> Types.constant
   val tyconSpan : Types.tyCon -> int
   val isBoxedData : Types.ty -> bool
 
@@ -22,9 +21,7 @@ sig
   val monoTy : Types.ty -> bool
   val eqTyCon : Types.conInfo * Types.conInfo -> bool
   val freshSubst : Types.btvEnv -> Types.ty IEnv.map
-  (* ToDo : replace "(tvState ref) SEnv.map" with "utvarEnv" which should be
-   * defined in some module. *)
-  val constTy : Types.constant -> Types.ty
+
   val applyMatch : Types.ty IEnv.map -> Types.ty -> Types.ty
   val complementBSubst :
       Types.ty IEnv.map

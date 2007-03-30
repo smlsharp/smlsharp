@@ -25,7 +25,6 @@ structure ParserComb (* : PARSER_COMB *) =
 	   of NONE => NONE
 	    | (SOME(x, strm)) => SOME(f x, strm)
 	  (* end case *))
-
     fun seqWith f (p1, p2) getc strm = (case (p1 getc strm)
 	   of SOME(t1, strm1) => (case (p2 getc strm1)
 		 of SOME(t2, strm2) => SOME(f(t1, t2), strm2)
@@ -55,7 +54,7 @@ structure ParserComb (* : PARSER_COMB *) =
 		  | _ => NONE
 		(* end case *))
 	  in
-	    eat (Substring.all s, strm)
+	    eat (Substring.full s, strm)
 	  end
 
     fun skipBefore pred p getc strm = let

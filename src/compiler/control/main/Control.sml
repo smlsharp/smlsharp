@@ -2,7 +2,7 @@
  * switches to control compiler's behavior.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: Control.sml,v 1.23 2006/03/02 12:43:31 bochao Exp $
+ * @version $Id: Control.sml,v 1.34 2007/02/23 11:19:58 kiyoshiy Exp $
  *)
 structure Control = 
 struct
@@ -12,6 +12,7 @@ struct
   datatype switch =
            IntSwitch of int ref
          | BoolSwitch of bool ref
+         | StringSwitch of string ref
 
   type switchTable = switch SEnv.map
 
@@ -30,8 +31,7 @@ struct
   val printWidth = ref 80
   fun prettyPrint expressions =
       let
-        val ppgenParameter =
-            {spaceString = " ", newlineString = "\n", columns = !printWidth}
+        val ppgenParameter = [SMLFormat.Columns (!printWidth)]
       in
         SMLFormat.prettyPrint ppgenParameter expressions
       end
@@ -59,6 +59,15 @@ struct
 
   (****************************************)
   (* switches to control optimizations *)
+
+  (*
+   * Ohori: Dec 17, 2006.
+     This trun on the large FFI switch in VirtualMachine.cc
+     THIS MUST BE ON TOGETHER WITH
+       #define LARGEFFISWITCH
+    in VirtualMachine.cc
+   *)
+  val LARGEFFISWITCH = ref true
 
   val doUncurryOptimization = ref true
 
@@ -101,6 +110,8 @@ struct
   (****************************************)
   (* switches to runtime parameter *)
 
+  val runtimePath = ref Configuration.RuntimePath
+
   val VMHeapSize = ref 4096000
 
   val VMStackSize = ref 4096000
@@ -111,6 +122,8 @@ struct
   (** true if trace of compilation should be printed. *)
   val switchTrace = ref false
 
+  val traceFileLoad = ref false
+  val tracePrelude = ref false
   val printSource = ref false
   val printPL = ref false
   val printUC = ref false
@@ -130,9 +143,18 @@ struct
 
   val doProfile = ref false
 
-  (** If true, then in separate compilation mode 
+  (* several switch for separate compilation *)
+  val doCompileObj = ref false
+  val doLinking = ref false
+
+  (****************************************)
+  (* other *)
+
+  (** a string that SML# inserts at the head of output executable.
    *)
-  val doSeparateCompilation = ref false
+  val headerOfExecutable = ref ("#!" ^ Configuration.RuntimePath ^ "\n")
+
+  (****************************************)
 
   (* MEMO: procedure to generate switches list.
    * (1) get signature of Control structure.
@@ -170,6 +192,7 @@ struct
     ("enableUnboxedFloat", BoolSwitch enableUnboxedFloat),
     ("generateDebugInfo", BoolSwitch generateDebugInfo),
     ("generateExnHistory", BoolSwitch generateExnHistory),
+    ("headerOfExecutable", StringSwitch headerOfExecutable),
     ("limitOfBlockFields", IntSwitch limitOfBlockFields),
     ("limitOfInlineCaseBranch", IntSwitch limitOfInlineCaseBranch),
     ("pageSizeOfGlobalArray", IntSwitch pageSizeOfGlobalArray),
@@ -188,8 +211,11 @@ struct
     ("printUC", BoolSwitch printUC),
     ("printWarning", BoolSwitch printWarning),
     ("printWidth", IntSwitch printWidth),
+    ("runtimePath", StringSwitch runtimePath),
     ("skipPrinter", BoolSwitch skipPrinter),
     ("switchTrace", BoolSwitch switchTrace),
+    ("traceFileLoad", BoolSwitch traceFileLoad),
+    ("tracePrelude", BoolSwitch tracePrelude),
     ("VMHeapSize", IntSwitch VMHeapSize),
     ("VMStackSize", IntSwitch VMStackSize)
           ]
@@ -199,6 +225,7 @@ struct
 
   fun switchToString (IntSwitch intRef) = Int.toString (!intRef)
     | switchToString (BoolSwitch boolRef) = if !boolRef then "yes" else "no"
+    | switchToString (StringSwitch stringRef) = !stringRef
 
   fun interpretControlOption (name, switch, value) =
       case switch of
@@ -211,6 +238,7 @@ struct
            "yes" => boolRef := true
          | "no" => boolRef := false
          | _ => raise Fail (name ^ " should be yes or no."))
+      | StringSwitch stringRef => stringRef := value
 
   (**
    * usage:

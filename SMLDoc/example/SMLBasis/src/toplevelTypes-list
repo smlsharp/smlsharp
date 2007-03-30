@@ -1,0 +1,13 @@
+type unit => structure General
+type int => structure Int
+type word => structure Word
+type real => structure Real
+type char => structure Char
+type string => structure String
+type substring => structure Substring
+type exn => structure General
+type array => structure Array
+type vector => structure Vector
+type option => structure Option
+type order => structure General
+type list => structure List

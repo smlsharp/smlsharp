@@ -3,7 +3,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
  * @author Atsushi Ohori
- * @version $Id: TYPEDFLATCALC.sig,v 1.6 2006/02/27 06:31:09 bochao Exp $
+ * @version $Id: TYPEDFLATCALC.sig,v 1.14 2007/02/28 15:31:26 katsu Exp $
  *)
 signature TYPEDFLATCALC = sig
 
@@ -12,22 +12,25 @@ signature TYPEDFLATCALC = sig
  type ty
  type tvar
  type tyCon
+ type callingConvention
  type conInfo
  type varIdInfo
  type primInfo
  type oprimInfo
  type btvKind
  type caseKind
- datatype constant = datatype Types.constant
+ datatype constant = datatype ConstantTerm.constant
  type fields
  type patfields
+ type valIdent
 
  datatype exnbind =
           TFPEXNBINDDEF of conInfo
         | TFPEXNBINDREP  of string * string
 
+(*
  datatype valIdent =  VALDECIDENT of varIdInfo | VALDECIDENTWILD of ty
-
+*)
  datatype tfppat
    = TFPPATWILD of ty * loc
    | TFPPATVAR of varIdInfo * loc
@@ -42,16 +45,28 @@ signature TYPEDFLATCALC = sig
         }
    | TFPPATRECORD of {fields:patfields, recordTy:ty, loc:loc}
    | TFPPATLAYERED of {varPat:tfppat, asPat:tfppat, loc:loc}
+   | TFPPATORPAT of tfppat * tfppat * loc
 
  datatype tfpexp = 
       TFPFOREIGNAPPLY of 
         {
           funExp : tfpexp, 
+	  funTy: ty,
 	  instTyList:ty list,
-	  argExp:tfpexp, 
+	  argExpList:tfpexp list, 
 	  argTyList : ty list, 
+          convention : callingConvention,
 	  loc: loc
         }
+    | TFPEXPORTCALLBACK of 
+        {
+          funExp : tfpexp,
+          instTyList:ty list,
+          argTyList : ty list,
+          resultTy : ty,
+          loc: loc
+        }
+   | TFPSIZEOF of ty * loc
    | TFPCONSTANT of constant * loc
    | TFPVAR of varIdInfo * loc
    | TFPGETGLOBAL of string * ty * loc
@@ -97,7 +112,6 @@ signature TYPEDFLATCALC = sig
    | TFPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tfpexp, loc:loc}
    | TFPTAPP of {exp:tfpexp, expTy:ty, instTyList:ty list, loc:loc}
    | TFPSEQ of {expList:tfpexp list, expTyList:ty list, loc:loc}      (* this must be primitive *)
-   | TFPFFIVAL of {funExp:tfpexp, libExp:tfpexp, argTyList:ty list, resultTy:ty, funTy:ty, loc:loc}
    | TFPCAST of tfpexp * ty * loc
  and tfpdecl 
    = TFPVAL of (valIdent * tfpexp) list * loc

@@ -1,0 +1,152 @@
+<HTML>
+<HEAD>
+<TITLE>OS_PROCESS</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>OS_PROCESS</H2>
+<DL>
+<DT> <B>All Known Implementing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="StrOS_Process.html">OS_Process</A>,&nbsp;<A HREF="StrOSImp-StrProcess.html">OSImp.Process</A>,&nbsp;<A HREF="StrWrapExport-StrProcess.html">WrapExport.Process</A>,&nbsp;<A HREF="StrExport-StrProcess.html">Export.Process</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigOS_PROCESS.html">OS_PROCESS</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigOS_PROCESS.html#Valsuccess">success</A>&nbsp;:&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigOS_PROCESS.html#Valfailure">failure</A>&nbsp;:&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigOS_PROCESS.html#Valsystem">system</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigOS_PROCESS.html#ValatExit">atExit</A>&nbsp;:&nbsp;(<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigOS_PROCESS.html#Valexit">exit</A>&nbsp;:&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A>&nbsp;->&nbsp;'a<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigOS_PROCESS.html#Valterminate">terminate</A>&nbsp;:&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A>&nbsp;->&nbsp;'a<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigOS_PROCESS.html#ValgetEnv">getEnv</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typestatus"><!-- --></A>
+<H3>status</H3>
+<P>
+<CODE>eqtype&nbsp;status</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valsuccess"><!-- --></A>
+<H3>success</H3>
+<P>
+<CODE>val&nbsp;success&nbsp;:&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A></CODE>
+
+<HR>
+<A NAME="Valfailure"><!-- --></A>
+<H3>failure</H3>
+<P>
+<CODE>val&nbsp;failure&nbsp;:&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A></CODE>
+
+<HR>
+<A NAME="Valsystem"><!-- --></A>
+<H3>system</H3>
+<P>
+<CODE>val&nbsp;system&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A></CODE>
+
+<HR>
+<A NAME="ValatExit"><!-- --></A>
+<H3>atExit</H3>
+<P>
+<CODE>val&nbsp;atExit&nbsp;:&nbsp;(<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valexit"><!-- --></A>
+<H3>exit</H3>
+<P>
+<CODE>val&nbsp;exit&nbsp;:&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A>&nbsp;->&nbsp;'a</CODE>
+
+<HR>
+<A NAME="Valterminate"><!-- --></A>
+<H3>terminate</H3>
+<P>
+<CODE>val&nbsp;terminate&nbsp;:&nbsp;<A HREF="SigOS_PROCESS.html#Typestatus">status</A>&nbsp;->&nbsp;'a</CODE>
+
+<HR>
+<A NAME="ValgetEnv"><!-- --></A>
+<H3>getEnv</H3>
+<P>
+<CODE>val&nbsp;getEnv&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

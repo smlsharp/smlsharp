@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LINEARIZE_CONTEXT.sig,v 1.13 2006/02/28 16:11:02 kiyoshiy Exp $
+ * @version $Id: LINEARIZE_CONTEXT.sig,v 1.14 2007/01/09 15:07:21 kiyoshiy Exp $
  *)
 signature LINEARIZE_CONTEXT =
 sig
@@ -67,6 +67,15 @@ sig
   val setBoundPosition
       : (context * SymbolicInstructions.varInfo * ANormal.ty)
         -> context
+  (**
+   *  creates a new context for linearization of an expression guarded by
+   * 'handle' clause.
+   * <pre>
+   *   e1 handle pat => e2
+   * </pre>
+   * To linearize e1, use a new context obtained by enterGuardedCode.
+   *)
+  val enterGuardedCode : (context * label) -> context
 
   (**
    *  store the location of the enclosing expression into the context.
@@ -105,6 +114,8 @@ sig
    * get the size of a value of the type.
    *)
   val getSize : context -> ANormal.ty  -> SymbolicInstructions.size
+
+  val getEnclosingHandlers : context -> label list
 
   (***************************************************************************)
                                     

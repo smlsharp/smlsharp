@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: VALREC_Optimizer.sml,v 1.27 2006/03/02 12:54:43 bochao Exp $
+ * @version $Id: VALREC_Optimizer.sml,v 1.32 2007/02/28 17:57:20 katsu Exp $
  *)
 structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 
@@ -75,6 +75,21 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
         PLSEQ (map (optimizeExp globalContext context) expList, loc)
       | PLCAST (exp, loc) =>
         PLCAST (optimizeExp globalContext context exp, loc)
+      | PLFFIIMPORT (exp,ty,loc) =>
+        PLFFIIMPORT (optimizeExp globalContext context exp, ty, loc)
+      | PLFFIEXPORT (exp,ty,loc) =>
+        PLFFIEXPORT (optimizeExp globalContext context exp, ty, loc)
+      | PLFFIAPPLY (cconv, funExp, args, retTy, loc) =>
+        PLFFIAPPLY (cconv,
+                    optimizeExp globalContext context funExp,
+                    map (fn PLFFIARG (exp, ty) =>
+                            PLFFIARG (optimizeExp globalContext context exp, ty)
+                          | PLFFIARGSIZEOF (ty, SOME exp) =>
+                            PLFFIARGSIZEOF (ty, SOME (optimizeExp globalContext context exp))
+                          | PLFFIARGSIZEOF (ty, NONE) =>
+                            PLFFIARGSIZEOF (ty, NONE))
+                        args,
+                    retTy, loc)
 
   and optimizeRule globalContext (context:context) patListExpList =
      map (fn (patList,exp) => (patList, optimizeExp globalContext context exp))
@@ -304,19 +319,6 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
       | PDINFIXRDEC _ => (emptyContext,[pdecl])
       | PDNONFIXDEC _ => (emptyContext,[pdecl])
       | PDEMPTY => (emptyContext,[pdecl])
-      | PDFFIVAL{name, funExp, libExp, argTyList, resultTy, loc} =>
-        (
-          injectVarSetInEmptyContext (SSet.singleton name),
-          [PDFFIVAL
-               {
-                 name=name,
-                 funExp = optimizeExp globalContext context funExp,
-                 libExp = optimizeExp globalContext context libExp,
-                 argTyList = argTyList,
-                 resultTy = resultTy,
-                 loc = loc
-               }]
-        )
       | _ => raise Control.Bug "invalid declaration"
 
   and optimizeDeclList globalContext context pdeclList =
@@ -531,6 +533,7 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
            (incContext,[PLTOPDECFUN(plfundecs,loc)]) 
          end
        | PLTOPDECIMPORT x => (emptyContext, [PLTOPDECIMPORT x])
+       | PLTOPDECEXPORT x => (emptyContext, [PLTOPDECEXPORT x])
              
  and optimizetopdecList globalContext context topdecs = 
      let

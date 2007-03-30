@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
- * @version $Id: TransFundecl.sml,v 1.5 2006/02/28 16:11:11 kiyoshiy Exp $
+ * @version $Id: TransFundecl.sml,v 1.7 2007/02/28 17:57:20 katsu Exp $
  *)
 structure TransFundecl = struct
 local
@@ -90,6 +90,18 @@ in
         PLSELECT (string, transExp plexp, loc)
     | PLSEQ (plexpList, loc) => PLSEQ (map transExp plexpList, loc)
     | PLCAST (plexp, loc) => PLCAST(transExp plexp, loc)
+    | PLFFIIMPORT (plexp, ty, loc) => PLFFIIMPORT (transExp plexp, ty, loc)  
+    | PLFFIEXPORT (plexp, ty, loc) => PLFFIEXPORT (transExp plexp, ty, loc)  
+    | PLFFIAPPLY (cconv, funExp, args, retTy, loc) =>
+      PLFFIAPPLY (cconv, transExp funExp,
+                  map (fn PLFFIARG (exp, ty) =>
+                          PLFFIARG (transExp funExp, ty)
+                        | PLFFIARGSIZEOF (ty, SOME exp) =>
+                          PLFFIARGSIZEOF (ty, SOME (transExp exp))
+                        | PLFFIARGSIZEOF (ty, NONE) =>
+                          PLFFIARGSIZEOF (ty, NONE))
+                      args,
+                  retTy, loc)
 
   and transDecl pdecl = 
     case pdecl of
@@ -115,7 +127,6 @@ in
     | PDINFIXDEC _ => pdecl
     | PDINFIXRDEC _ => pdecl
     | PDNONFIXDEC _ => pdecl
-    | PDFFIVAL _ => pdecl
     | PDEMPTY => pdecl
 
  and transStrdec plstrdec =

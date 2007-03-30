@@ -43,6 +43,8 @@ sig<br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValassocToString">assocToString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValpriorityToString">priorityToString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Valparse">parse</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A><br>
 end</CODE>
 <P>
 
@@ -60,7 +62,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: SigFORMAT_EXPRESSION.html,v 1.3 2006/02/23 10:10:21 kiyoshiy Exp $
+$Id: SigFORMAT_EXPRESSION.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
  
 
 </DL>
@@ -492,6 +494,27 @@ the string representation of the <code>priority</code>
 the string representation of the <code>expression</code>
    
 
+</DL>
+</DL>
+<HR>
+<A NAME="Valparse"><!-- --></A>
+<H3>parse</H3>
+<P>
+<CODE>val&nbsp;parse<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+<DL>
+<DD>
+ parse format expression list.
+ <p>
+ Any character follows a back slash is interpreted as is.
+ Especially, a sequence of ['\', '"'] is interpreted as a character '"'.
+ </p>
+   
+
+<P>
+
+<DD>
+<DL>
 </DL>
 </DL>
 <P>

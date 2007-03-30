@@ -3,12 +3,11 @@
  *
  * @copyright (c) 2006, Tohoku University. 
  * @author Liu Bochao
- * @version $Id: Linker.sml,v 1.1 2006/03/02 12:46:19 bochao Exp $
+ * @version $Id: Linker.sml,v 1.22 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure Linker:
           sig
-              val linkClosed : string -> string list -> unit
-              val linkUnClosed : string -> string list -> unit
+              val link : string -> string list -> unit
               val useObj : {moduleEnv : StaticModuleEnv.moduleEnv,
                              topTypeContext : InitialTypeContext.topTypeContext}
                            * LinkageUnit.linkageUnit
@@ -25,26 +24,31 @@ struct
       structure ITC = InitialTypeContext
       structure TCU = TypeContextUtils
       structure SME = StaticModuleEnv
+      structure STE = StaticTypeEnv
+      structure STEU = StaticTypeEnvUtils
       structure IMC = InitialModuleContext
       structure TO = TopObject
       structure PE = PathEnv
       structure SC = SigCheck
       structure FAU = FunctorApplyUtils
       structure P = Pickle
-      structure SE = StaticEnv
       structure E = TypeInferenceError
       structure UE = UserError 
+      structure LE = LinkError
+      structure SU = SigUtils
+      structure PT = PredefinedTypes
+
+      exception ExSigCheckFailure
       open LinkageUnit
       open LinkerUtils
       val debug = ref true
       fun printDebug x = if !debug then print x else ()
 
-      exception sigCheckFail 
   in
     (*************************************************************)  
 
-    val emptyImportTypeEnv = TC.emptyTypeEnv
-    val emptyExportTypeEnv = TC.emptyTypeEnv
+    val emptyImportTypeEnv = STE.emptyTypeEnv
+    val emptyExportTypeEnv = STE.emptyTypeEnv
     val emptyImportModuleEnv = PathEnv.emptyPathBasis
     val emptyExportModuleEnv = PathEnv.emptyPathBasis
 
@@ -52,435 +56,928 @@ struct
     (* dupcliate index *)
     exception exDuplicateElem 
 
+    fun allocateActualIndexInTyInstValIndexList 
+            substTyEnv freeGlobalArrayIndex freeEntryPointer hiddenValIndexList =
+        foldl 
+        (fn ((pathVar, globalIndex, ty),
+             (freeGlobalArrayIndex,
+              freeEntryPointer,
+              indexEnv,
+              arrayHdElemIndices,
+              newTyInstValIndexList)) =>
+            let
+                val (newPageFlag, newFreeGlobalArrayIndex, newFreeEntryPointer, newGlobalIndex) =
+                    IndexAllocator.allocateActualIndexAtLinking 
+                        (freeGlobalArrayIndex,
+                         freeEntryPointer, 
+                         {displayName = PE.pathVarToString(pathVar), 
+                          ty = substTy (injectSubstTyEnvInSubstContext substTyEnv) ty})
+            in
+                (newFreeGlobalArrayIndex,
+                 newFreeEntryPointer,
+                 IndexEnv.insert(indexEnv,
+                                 (getKeyInIndex globalIndex),
+                                 newGlobalIndex),
+                 if newPageFlag then arrayHdElemIndices @ [newGlobalIndex] else arrayHdElemIndices,
+                 newTyInstValIndexList @ [(pathVar, newGlobalIndex, ty)])
+            end)
+        (freeGlobalArrayIndex, freeEntryPointer, IndexEnv.empty, nil, nil)
+        hiddenValIndexList
+
+    fun allocateAbstractIndexInTyInstValIndexList 
+            (substTyConEnv, substTyConIdEnv) freeEntryPointer hiddenValIndexList =
+        foldl 
+        (fn ((pathVar, globalIndex, ty),
+             (freeEntryPointer,
+              indexEnv,
+              newTyInstValIndexList)) =>
+            let
+                val (newFreeEntryPointer, newGlobalIndex) =
+                    IndexAllocator.allocateAbstractIndex freeEntryPointer
+                val newTy = 
+                    let
+                        val (ty1, visited) = 
+                            TCU.substTyConIdInTy ID.Set.empty substTyConIdEnv ty
+                        val (ty2, visited) =
+                            TCU.substTyConInTy ID.Set.empty substTyConEnv ty1
+                    in
+                        ty2
+                    end
+                        
+            in
+                (
+                 newFreeEntryPointer,
+                 IndexEnv.insert(indexEnv,
+                                 (getKeyInIndex globalIndex),
+                                 newGlobalIndex),
+                 newTyInstValIndexList @ [(pathVar, newGlobalIndex, newTy)]
+                 )
+            end)
+        (freeEntryPointer, IndexEnv.empty, nil)
+        hiddenValIndexList
+
+
     (*
      * merge object files,
      * allocate abstract index to exported value identifier
      *)
     fun reAllocateAbstractIndexInExportVarEnv 
-            exportVarEnv substTyEnv freeGlobalArrayIndex freeEntryPointer  =
-        SEnv.foldli (fn (varName,
-                         PE.TopItem (pathVar, index, ty),
-                         (freeGlobalArrayIndex, 
-                          freeEntryPointer, 
+            exportVarEnv accExportVarEnv freeEntryPointer
+      =
+      SEnv.foldli (fn (varName,
+                       PE.TopItem (pathVar, index, ty),
+                         (freeEntryPointer, 
                           indexEnv, 
+                          hiddenValIndexList,
                           exportVarEnv)) =>
-                        let
-                          val (newFreeGlobalArrayIndex, newFreeEntryPointer, newIndex) =
-                              IndexAllocator.allocateAbstractIndex 
-                                  freeGlobalArrayIndex freeEntryPointer
+                      let
+                          val (newFreeEntryPointer, newIndex) =
+                              IndexAllocator.allocateAbstractIndex freeEntryPointer
                           val newIndexEnv = 
                               IndexEnv.insert(indexEnv,
                                               (getKeyInIndex index),
                                               newIndex)
-                          val newTy = substTy (injectSubstTyEnvInSubstContext substTyEnv) ty
                           val newExportVarEnv =
                               SEnv.insert (exportVarEnv,
                                            varName, 
-                                           PE.TopItem(pathVar, newIndex, newTy))
-                        in
-                          (newFreeGlobalArrayIndex,
-                           newFreeEntryPointer, 
-                           newIndexEnv, 
-                           newExportVarEnv)
-                        end
-                      | (varName, PE.CurItem _, _) => 
-                        raise Control.Bug "CurItem occurs at linking phase"
-                          )
-                    (freeGlobalArrayIndex, freeEntryPointer, IndexEnv.empty, SEnv.empty)
-                    exportVarEnv        
+                                           PE.TopItem(pathVar, newIndex, ty))
+                      in
+                          case SEnv.find(accExportVarEnv, varName) of
+                              NONE =>(newFreeEntryPointer, 
+                                      newIndexEnv, 
+                                      hiddenValIndexList,
+                                      newExportVarEnv)
+                            | SOME (PE.TopItem (pathVar, index, ty)) =>
+                              (newFreeEntryPointer, 
+                               newIndexEnv, 
+                               hiddenValIndexList @ [(pathVar,index,ty)],
+                               newExportVarEnv)
+                            | SOME (PE.CurItem _ ) =>
+                              raise Control.Bug "CurItem occurs at linking phase"
+                      end
+                    | (varName, PE.CurItem _, _) => 
+                      raise Control.Bug "CurItem occurs at linking phase"
+                  )
+                  (freeEntryPointer, IndexEnv.empty, nil, SEnv.empty)
+                  exportVarEnv     
+
     (* 
      * allocate abstract index
-     * 1. inner imported value identifier are resolved
+     * 1. inner already exported and then imported value identifier are resolved
      * 2. outer imported value identifier are still kept their imported status
      *)
     fun reAllocateAbstractIndexInImportVarEnv 
-            importVarEnv freeGlobalArrayIndex freeEntryPointer innerAccExportVarEnv = 
-        SEnv.foldli (fn (varName, PE.TopItem (pathVar, index, ty), 
-                         (freeGlobalArrayIndex,
-                          freeEntryPointer, 
-                          indexEnv, 
-                          outerImportVarEnv)) =>
-                        (
-                         case SEnv.find(innerAccExportVarEnv, varName) of
-                             SOME (PE.TopItem (pathVar, globalIndex, ty)) =>
-                             (* inner resolved *)
-                             (freeGlobalArrayIndex,
-                              freeEntryPointer, 
-                              IndexEnv.insert(indexEnv,
-                                              (getKeyInIndex index),
-                                              globalIndex),
-                              outerImportVarEnv)
-                        | SOME _ => raise Control.Bug "CurItem occurs at linking phase"
+            importVarEnv (innerTyInstImportVarEnv, outerTyInstImportVarEnv) freeEntryPointer  = 
+        SEnv.foldli 
+            (fn (varName, PE.TopItem (pathVar, index, ty), 
+                 (freeEntryPointer, 
+                  indexEnv, 
+                  outerImportVarEnv)) =>
+                (case SEnv.find(innerTyInstImportVarEnv, varName) of
+                     SOME (PE.TopItem (pathVar, globalIndex, ty)) =>
+                     (* inner resolved *)
+                     (freeEntryPointer, 
+                      IndexEnv.insert(indexEnv,
+                                      (getKeyInIndex index),
+                                      globalIndex),
+                      outerImportVarEnv)
+                   | SOME (PE.CurItem _) => 
+                     raise Control.Bug "CurItem occurs at linking phase"
+                   | NONE =>
+                     (case SEnv.find(outerTyInstImportVarEnv, varName) of
+                          (* already imported in previous linkageunits*)
+                          SOME (PE.TopItem (pathVar, globalIndex, ty)) =>
+                          (freeEntryPointer, 
+                           IndexEnv.insert(indexEnv,
+                                           (getKeyInIndex index),
+                                           globalIndex),
+                           outerImportVarEnv)
+                        | SOME (PE.CurItem _) => 
+                          raise Control.Bug "CurItem occurs at linking phase"
+                        (* outer imported *)
                         | NONE =>
-                          (* outer imported *)
                           let
-                              val (newFreeGlobalArrayIndex, newFreeEntryPointer, newIndex) =
-                                  IndexAllocator.allocateAbstractIndex freeGlobalArrayIndex 
-                                                                       freeEntryPointer
-                            val newIndexEnv = 
-                                IndexEnv.insert(indexEnv,
-                                                (getKeyInIndex index),
-                                                newIndex)
-                            val newOuterImportVarEnv =
-                                SEnv.insert (outerImportVarEnv,
-                                             varName, 
-                                             PE.TopItem(pathVar, newIndex, ty))
+                              val (newFreeEntryPointer, newIndex) =
+                                  IndexAllocator.allocateAbstractIndex freeEntryPointer
+                              val newIndexEnv = 
+                                  IndexEnv.insert(indexEnv,
+                                                  (getKeyInIndex index),
+                                                  newIndex)
+                              val newOuterImportVarEnv =
+                                  SEnv.insert (outerImportVarEnv,
+                                               varName, 
+                                               PE.TopItem(pathVar, newIndex, ty))
                           in
-                              (newFreeGlobalArrayIndex,
-                               newFreeEntryPointer, 
+                              (newFreeEntryPointer, 
                                newIndexEnv, 
                                newOuterImportVarEnv)
-                          end)
-                      | (varName, PE.CurItem _, _ ) => 
-                        raise Control.Bug "CurItem occurs at linking phase")
-                    (freeGlobalArrayIndex, freeEntryPointer, IndexEnv.empty, SEnv.empty)
-                    importVarEnv
-                    
+                          end))
+              | (varName, PE.CurItem _, _ ) => 
+                raise Control.Bug "CurItem occurs at linking phase")
+            (freeEntryPointer, IndexEnv.empty, SEnv.empty)
+            importVarEnv
+                         
     fun reAllocateAbstractIndexInExportStrEnv 
-            exportStrEnv substTyEnv freeGlobalArrayIndex freeEntryPointer =
-        SEnv.foldli (fn (strName, 
-                         PE.PATHAUX (subExportVarEnv, subExportStrEnv),
-                         (freeGlobalArrayIndex,
-                          freeEntryPointer, 
-                          indexEnv, 
-                          exportStrEnv)) =>
-                        let
-                          val (freeGlobalArrayIndex1,
-                               freeEntryPointer1, 
+            exportStrEnv accExportStrEnv freeEntryPointer 
+      =
+      SEnv.foldli (fn (strName, 
+                       PE.PATHAUX (subExportVarEnv, subExportStrEnv),
+                       (freeEntryPointer, 
+                        indexEnv, 
+                        hiddenValIndexList,
+                        exportStrEnv)) =>
+                      let
+                          val (freeEntryPointer1, 
                                indexEnv1:TO.globalIndex IndexEnv.map, 
+                               hiddenValIndexList1,
                                newSubExportVarEnv) =
                               reAllocateAbstractIndexInExportVarEnv 
-                                subExportVarEnv 
-                                substTyEnv
-                                freeGlobalArrayIndex
-                                freeEntryPointer 
-                          val (freeGlobalArrayIndex2,
-                               freeEntryPointer2, 
+                                  subExportVarEnv 
+                                  SEnv.empty
+                                  freeEntryPointer 
+                          val (freeEntryPointer2, 
                                indexEnv2:TO.globalIndex IndexEnv.map, 
+                               hiddenValIndexList2,
                                newSubExportStrEnv)
-                                =
-                              reAllocateAbstractIndexInExportStrEnv
+                            =
+                            reAllocateAbstractIndexInExportStrEnv
                                 subExportStrEnv 
-                                substTyEnv
-                                freeGlobalArrayIndex1
+                                SEnv.empty
                                 freeEntryPointer1
-                        in
-                          (freeGlobalArrayIndex2,
-                           freeEntryPointer2,
-                           (IndexEnv.unionWithi 
-                              (fn _ => raise exDuplicateElem)
-                              (
+                      in
+                          case SEnv.find(accExportStrEnv, strName) of
+                              NONE =>
+                              (freeEntryPointer2,
                                (IndexEnv.unionWithi 
-                                  (fn _ => raise exDuplicateElem) (indexEnv2, indexEnv1)),
-                                 indexEnv)),
-                           SEnv.insert(exportStrEnv,
-                                       strName,
-                                       PE.PATHAUX (newSubExportVarEnv,
-                                                   newSubExportStrEnv)
-                                       )
-                           )
-                        end
-                    )
-                    (freeGlobalArrayIndex, freeEntryPointer, IndexEnv.empty, SEnv.empty)
-                    exportStrEnv
-
-    fun reAllocateAbstractIndexInImportStrEnv 
-            importStrEnv freeGlobalArrayIndex freeEntryPointer innerAccExportStrEnv =
-        SEnv.foldli 
-            (fn (strName, PE.PATHAUX (subImportVarEnv, subImportStrEnv),
-                 (freeGlobalArrayIndex,
-                  freeEntryPointer, 
-                  indexEnv, 
-                  outerImportStrEnv)) 
-                =>
-                case SEnv.find(innerAccExportStrEnv, strName) of
-                    SOME (PE.PATHAUX (subInnerAccExportVarEnv,
-                                      subInnerAccExportStrEnv)) =>
-                    (* inner resolved *)
-                    let
-                        val (freeGlobalArrayIndex1,
-                             freeEntryPointer1, 
-                             indexEnv1, 
-                             newSubOuterImportVarEnv) =
-                            reAllocateAbstractIndexInImportVarEnv
-                                subImportVarEnv
-                                freeGlobalArrayIndex 
-                                freeEntryPointer
-                                subInnerAccExportVarEnv
-                        val _ = 
-                            if SEnv.numItems(newSubOuterImportVarEnv) = 0 
-                            then ()
-                            else 
-                                raise Control.Bug
-                                          ("imported structure does not match" ^
-                                           " signature(should be checked by signature matching(1)")
-                        val (freeGlobalArrayIndex2,
-                             freeEntryPointer2,
-                             indexEnv2,
-                             newSubOuterImportStrEnv) =
-                            reAllocateAbstractIndexInImportStrEnv
-                                subImportStrEnv
-                                freeGlobalArrayIndex1
-                                freeEntryPointer1 
-                                subInnerAccExportStrEnv
-                        val _ = 
-                            if SEnv.numItems(newSubOuterImportStrEnv) = 0 
-                            then ()
-                            else 
-                                raise Control.Bug
-                                          ("imported structure does not match" ^
-                                           " signature(should be checked by signature matching(2)")
-                    in
-                        (freeGlobalArrayIndex2,
-                         freeEntryPointer2,
-                         (IndexEnv.unionWithi
-                              (fn _ => raise exDuplicateElem) 
-                              ((IndexEnv.unionWithi
                                     (fn _ => raise exDuplicateElem)
-                                    (indexEnv1, indexEnv2)), 
-                               indexEnv)),
-                         outerImportStrEnv
-                         )
-                    end
-                  | NONE => (* outer imported *)
-                    (freeGlobalArrayIndex,
-                     freeEntryPointer,
-                     indexEnv,
-                     SEnv.insert(outerImportStrEnv,
-                                 strName,
-                                 PE.PATHAUX (subImportVarEnv,subImportStrEnv))))
-            (freeGlobalArrayIndex, freeEntryPointer, IndexEnv.empty, SEnv.empty)
+                                    (
+                                     (IndexEnv.unionWithi 
+                                          (fn _ => raise exDuplicateElem) (indexEnv2, indexEnv1)),
+                                     indexEnv)),
+                               hiddenValIndexList,
+                               SEnv.insert(exportStrEnv,
+                                           strName,
+                                           PE.PATHAUX (newSubExportVarEnv,
+                                                       newSubExportStrEnv)
+                                           )
+                               )
+                            | SOME (PE.PATHAUX (subAccExportVarEnv, subAccExportStrEnv)) =>
+                              let
+                                  val indices1 = calcValIndexListPathVarEnv subAccExportVarEnv
+                                  val indices2 = calcValIndexListPathStrEnv subAccExportStrEnv
+                              in
+                                  (freeEntryPointer2,
+                                   (IndexEnv.unionWithi 
+                                        (fn _ => raise exDuplicateElem)
+                                        (
+                                         (IndexEnv.unionWithi 
+                                              (fn _ => raise exDuplicateElem) (indexEnv2, indexEnv1)),
+                                         indexEnv)),
+                                   hiddenValIndexList @ indices1 @ indices2,
+                                   SEnv.insert(exportStrEnv,
+                                               strName,
+                                               PE.PATHAUX (newSubExportVarEnv,
+                                                           newSubExportStrEnv)
+                                               )
+                                   )
+                              end
+                              
+                      end
+                          )
+                  (freeEntryPointer, IndexEnv.empty, nil, SEnv.empty)
+                  exportStrEnv
+
+    (*
+     * 1. inner exported are resolved
+     * 2. return import = already outer imported + incremental outer import
+     *  already imported is returned for easy merging of outer import value identifier
+     *  (import structure merging need not go deep inside)
+     *)                    
+    fun reAllocateAbstractIndexInImportStrEnv 
+            importStrEnv (innerTyInstImportStrEnv, outerTyInstExportStrEnv) freeEntryPointer  
+      =
+      SEnv.foldli 
+          (fn (strName, PE.PATHAUX (subImportVarEnv, subImportStrEnv),
+               (freeEntryPointer, 
+                indexEnv, 
+                outerImportStrEnv)) 
+              =>
+              case SEnv.find(innerTyInstImportStrEnv, strName) of
+                  SOME (PE.PATHAUX (subInnerTyInstImportVarEnv,
+                                    subInnerTyInstImportStrEnv)) =>
+                  (* inner resolved *)
+                  let
+                      val (freeEntryPointer1, 
+                           indexEnv1, 
+                           newSubOuterImportVarEnv) =
+                          reAllocateAbstractIndexInImportVarEnv 
+                              subImportVarEnv
+                              (subInnerTyInstImportVarEnv, SEnv.empty)
+                              freeEntryPointer
+                      val (freeEntryPointer2,
+                           indexEnv2,
+                           newSubOuterImportStrEnv) =
+                          reAllocateAbstractIndexInImportStrEnv 
+                              subImportStrEnv
+                              (subInnerTyInstImportStrEnv, SEnv.empty)
+                              freeEntryPointer1 
+                      val _ = if SEnv.numItems(newSubOuterImportVarEnv) <> 0 then
+                                  raise LE.ImportUnExportedValueIdentifier
+                                            {name = #1 (ListPair.unzip
+                                                            (SEnv.listItemsi newSubOuterImportVarEnv))
+                                             }
+                              else ()
+                      val _ = if SEnv.numItems(newSubOuterImportStrEnv) <> 0 then
+                                  raise LE.ImportUnExportedStructureIdentifier
+                                        {name = #1(ListPair.unzip
+                                                   (SEnv.listItemsi newSubOuterImportStrEnv))
+                                         }
+                              else ()
+                  in
+                      (freeEntryPointer2,
+                       (IndexEnv.unionWithi
+                            (fn _ => raise exDuplicateElem) 
+                            ((IndexEnv.unionWithi
+                                  (fn _ => raise exDuplicateElem)
+                                  (indexEnv1, indexEnv2)), 
+                             indexEnv)),
+                       outerImportStrEnv
+                       )
+                  end
+                | NONE => (* outer imported *)
+                  (case SEnv.find(outerTyInstExportStrEnv, strName) of
+                       (* already imported *)
+                       SOME (PE.PATHAUX (subOuterTyInstExportVarEnv,
+                                         subOuterTyInstExportStrEnv)) =>
+                       let
+                           val (freeEntryPointer1, 
+                                indexEnv1, 
+                                newSubOuterImportVarEnv) =
+                               reAllocateAbstractIndexInImportVarEnv 
+                                   subImportVarEnv
+                                   (SEnv.empty, subOuterTyInstExportVarEnv)
+                                   freeEntryPointer
+                           val (freeEntryPointer2,
+                                indexEnv2,
+                                newSubOuterImportStrEnv) =
+                               reAllocateAbstractIndexInImportStrEnv
+                                   subImportStrEnv
+                                   (SEnv.empty, subOuterTyInstExportStrEnv)
+                                   freeEntryPointer1 
+                           val newOuterImportStrEnv =
+                               SEnv.insert(outerImportStrEnv,
+                                           strName,
+                                           PE.PATHAUX (newSubOuterImportVarEnv,
+                                                       newSubOuterImportStrEnv))
+                       in
+                           (freeEntryPointer2,
+                            (IndexEnv.unionWithi
+                                 (fn _ => raise exDuplicateElem) 
+                                 ((IndexEnv.unionWithi
+                                       (fn _ => raise exDuplicateElem)
+                                       (indexEnv1, indexEnv2)), 
+                                  indexEnv)),
+                            newOuterImportStrEnv)
+                       end
+                     | NONE =>
+                       (* newly imported *) 
+                       let
+                           val (freeEntryPointer1, 
+                                indexEnv1, 
+                                newSubOuterImportVarEnv) =
+                               reAllocateAbstractIndexInImportVarEnv subImportVarEnv
+                                                                     (SEnv.empty, SEnv.empty)
+                                                                     freeEntryPointer
+                           val (freeEntryPointer2,
+                                indexEnv2,
+                                newSubOuterImportStrEnv) =
+                               reAllocateAbstractIndexInImportStrEnv subImportStrEnv
+                                                                     (SEnv.empty, SEnv.empty)
+                                                                     freeEntryPointer1
+                           val newOuterImportStrEnv =
+                               SEnv.insert(outerImportStrEnv,
+                                           strName,
+                                           PE.PATHAUX (newSubOuterImportVarEnv,
+                                                       newSubOuterImportStrEnv))
+                       in
+                           (freeEntryPointer2,
+                            (IndexEnv.unionWithi
+                                 (fn _ => raise exDuplicateElem) 
+                                 ((IndexEnv.unionWithi
+                                       (fn _ => raise exDuplicateElem)
+                                       (indexEnv1, indexEnv2)), 
+                                  indexEnv)),
+                            newOuterImportStrEnv)
+                       end
+                       )
+                  )
+            (freeEntryPointer, IndexEnv.empty, SEnv.empty)
             importStrEnv
 
     fun reAllocateAbstractIndexInImportModuleEnv
-            importModuleEnv freeGlobalArrayIndex freeEntryPointer innerAccExportModuleEnv 
+            importModuleEnv (innerTyInstImportModuleEnv, outerTyInstImportModuleEnv) freeEntryPointer 
       =
       let
           val (importFunEnv, (importVarEnv, importStrEnv)) = importModuleEnv
-          val (innerAccExportFunEnv,
-               (innerAccExportVarEnv,innerAccExportStrEnv)) = innerAccExportModuleEnv
-          val (freeGlobalArrayIndex1,
-               freeEntryPointer1, 
+          val (_, (innerTyInstImportVarEnv, innerTyInstImportStrEnv)) 
+            = innerTyInstImportModuleEnv
+          val (_, (outerTyInstImportVarEnv, outerTyInstImportStrEnv)) 
+            = outerTyInstImportModuleEnv
+          val (freeEntryPointer1, 
                indexEnv1, 
                newImportVarEnv) =
               reAllocateAbstractIndexInImportVarEnv
-                  importVarEnv freeGlobalArrayIndex freeEntryPointer innerAccExportVarEnv
-          val (freeGlobalArrayIndex2,
-               freeEntryPointer2, 
+                  importVarEnv (innerTyInstImportVarEnv, outerTyInstImportVarEnv) freeEntryPointer 
+          val (freeEntryPointer2, 
                indexEnv2, 
                newImportStrEnv) =
               reAllocateAbstractIndexInImportStrEnv
-                  importStrEnv freeGlobalArrayIndex1 freeEntryPointer1 innerAccExportStrEnv
+                  importStrEnv (innerTyInstImportStrEnv, outerTyInstImportStrEnv) freeEntryPointer1
       in
-          (freeGlobalArrayIndex2,
-           freeEntryPointer2,
+          (freeEntryPointer2,
            IndexEnv.unionWithi (fn _ => raise exDuplicateElem) (indexEnv1, indexEnv2),
            (importFunEnv, (newImportVarEnv, newImportStrEnv)))
       end
           
     fun reAllocateAbstractIndexInExportModuleEnv
-            exportModuleEnv substTyEnv freeGlobalArrayIndex freeEntryPointer =
-            let
-                val (exportFunEnv, (exportVarEnv,exportStrEnv)) = exportModuleEnv
-                val (freeGlobalArrayIndex1, freeEntryPointer1, indexEnv1, newExportVarEnv) =
-                    reAllocateAbstractIndexInExportVarEnv
-                        exportVarEnv substTyEnv freeGlobalArrayIndex freeEntryPointer
-                val (freeGlobalArrayIndex2, freeEntryPointer2, indexEnv2, newExportStrEnv) =
-                    reAllocateAbstractIndexInExportStrEnv
-                        exportStrEnv substTyEnv freeGlobalArrayIndex1 freeEntryPointer1
-            in
-                (freeGlobalArrayIndex2,
-                 freeEntryPointer2,
-                 IndexEnv.unionWithi (fn _ => raise exDuplicateElem) (indexEnv1, indexEnv2),
-                 (exportFunEnv,(newExportVarEnv, newExportStrEnv)))
-            end
+            exportModuleEnv accExportModuleEnv freeEntryPointer 
+      =
+      let
+          val (exportFunEnv, (exportVarEnv,exportStrEnv)) = exportModuleEnv
+          val (accExportFunEnv, (accExportVarEnv, accExportStrEnv)) = accExportModuleEnv
+          val (freeEntryPointer1, indexEnv1, hiddenValIndexList1, newExportVarEnv) =
+              reAllocateAbstractIndexInExportVarEnv
+                  exportVarEnv accExportVarEnv freeEntryPointer
+          val (freeEntryPointer2, indexEnv2, hiddenValIndexList2, newExportStrEnv) =
+              reAllocateAbstractIndexInExportStrEnv
+                  exportStrEnv accExportStrEnv freeEntryPointer1
+      in
+          (freeEntryPointer2,
+           IndexEnv.unionWithi (fn _ => raise exDuplicateElem) (indexEnv1, indexEnv2),
+           hiddenValIndexList1 @ hiddenValIndexList2,
+           (exportFunEnv,(newExportVarEnv, newExportStrEnv)))
+      end
                            
+    (* accExportModuleEnv is used for compute hiddenValIndexList *)
     fun reAllocateAbstractIndexInModuleEnv
             (staticModuleEnv: SME.staticModuleEnv) 
-            substTyEnv 
-            freeGlobalArrayIndex 
+            (innerTyInstImportModuleEnv, outerTyInstImportModuleEnv, accExportModuleEnv)
             freeEntryPointer
-            (innerAccExportModuleEnv : SME.exportModuleEnv)
       =
           let
-              val (innerAccImportFunEnv,
-                   (innerAccImportVarEnv,
-                    innerAccImportStrEnv)) = innerAccExportModuleEnv
-              val (freeGlobalArrayIndex1,
-                   freeEntryPointer1, 
+              val (freeEntryPointer1, 
                    indexEnv1, 
                    newImportModuleEnv : SME.importModuleEnv) =
                   reAllocateAbstractIndexInImportModuleEnv
                       (#importModuleEnv staticModuleEnv)
-                      freeGlobalArrayIndex
+                      (innerTyInstImportModuleEnv, outerTyInstImportModuleEnv)
                       freeEntryPointer 
-                      innerAccExportModuleEnv
-              val (freeGlobalArrayIndex2,
-                   freeEntryPointer2,
+              val (freeEntryPointer2,
                    indexEnv2, 
+                   hiddenValIndexList,
                    newExportModuleEnv : SME.exportModuleEnv) =
                   reAllocateAbstractIndexInExportModuleEnv
                       (#exportModuleEnv staticModuleEnv)
-                      substTyEnv
-                      freeGlobalArrayIndex1
+                      accExportModuleEnv
                       freeEntryPointer1
           in
-              (
-               freeGlobalArrayIndex,
-               freeEntryPointer2,
-               IndexEnv.unionWithi (fn (key,x,y) => raise exDuplicateElem) 
-                                   (indexEnv1, indexEnv2),
-               (newImportModuleEnv, newExportModuleEnv)
-               )
+              (freeEntryPointer2,
+               (IndexEnv.unionWithi (fn (key,x,y) => raise exDuplicateElem) 
+                                    (indexEnv1, indexEnv2)),
+               hiddenValIndexList,
+               (newImportModuleEnv, newExportModuleEnv))
           end
 
     (* link unclosed object files.
-     * only resolve array index allocation.
+     * 1. resolve array index allocation.
+     * 2. least generalization type scheme computation
      *)
     fun linkUnClosedLinkageUnits (linkageUnits : linkageUnit list)  =
         foldl (fn (linkageUnit, 
                    (codes,
                     tyConIdSet,
-                    freeGlobalArrayIndex,
                     freeEntryPointer,
-                    accImportTE : TC.importTypeEnv, 
-                    accExportTE : TC.exportTypeEnv, 
+                    accImportTE : STE.importTypeEnv, 
+                    accExportTE : STE.exportTypeEnv, 
                     accImportME : SME.importModuleEnv, 
-                    accExportME : SME.exportModuleEnv)) =>
+                    accExportME : SME.exportModuleEnv,
+                    accGenerativeExnTagSet,
+                    accHiddenValIndexList
+                    ))
+                  =>
                   let
-                      (*************************************************************)
-                      (*
-                       * Type Context:
-                       * 1. type check
-                       * 2. Merge import and export enviornment; inner resolved
-                       * imported value identifiers are not imported in the new 
-                       * linked object. 
-                       *)
+                      val loc = getLocLinkageUnit linkageUnit
+                      val importTyConIdSet = #importTyConIdSet (#staticTypeEnv linkageUnit)
                       val importTypeEnv = #importTypeEnv (#staticTypeEnv linkageUnit)
                       val exportTypeEnv = #exportTypeEnv (#staticTypeEnv linkageUnit)
-                      (************************************************************ 
-                       * import signature check 
+
+                      val (implAccEnv, unResolvedLUImportEnv) = 
+                          constructImplAndUnResolvedEnv (importTypeEnv, accExportTE)
+                      val (resolvedLUImportEnv, implEnv) =  
+                          (typeEnvToEnv(#1 (constructImplAndUnResolvedEnv (implAccEnv, importTypeEnv))),
+                           typeEnvToEnv implAccEnv)
+
+                      (**********************************************************************
+                       * Unification of common type components(tySpec and tyCon) of import inteface;
+                       * Do not check the equivalence of type parts
                        *)
-                      val (implTypeEnv, unResolvedImportEnv) = 
-                          constructImplEnv (importTypeEnv, accExportTE)
+                      val (commonAccImportEnv, outerUnResolvedLUImportEnv) 
+                        = constructImplAndUnResolvedEnv (unResolvedLUImportEnv, accImportTE)
+                      (* Note: substTyConEnvAccCommon is not enough for instantiating the
+                       * types in the accumulated static information; the exported types 
+                       * of current linkage unit may provide implementation type for those 
+                       * in the range of substitution substTyConEnvAccCommon. 
+                       *)
+                      val (substTyConIdEnvLinkageUnit,
+                           substTyConEnvLinkageUnit,
+                           substTyConEnvAccCommon) =
+                          unifyCommonTypeEnv
+                              ((#importTyConIdSet (#staticTypeEnv linkageUnit),
+                                unResolvedLUImportEnv), 
+                               commonAccImportEnv)
+                              handle exn => (SU.handleException (exn,loc);
+                                             raise ExSigCheckFailure)
+                      (**********************************************************************
+                       * New linkage unit import interface construction:
+                       * unified tyCons(above step) are removed from flexible tyConId set.
+                       *)
+                      
+                      val flexibleImportTyConIdSet =
+                          let
+                              val fixedTyConIdSet = 
+                                  ID.Set.union (domainIDMap substTyConIdEnvLinkageUnit,
+                                                domainIDMap substTyConEnvLinkageUnit)
+                          in
+                              ID.Set.difference (importTyConIdSet, fixedTyConIdSet)
+                          end
+                      val resolvedLUImportEnvWithCommonTyInst =
+                          let
+                              val (_, Env1) = 
+                                  TCU.substTyConIdInEnv 
+                                      ID.Set.empty
+                                      substTyConIdEnvLinkageUnit
+                                      resolvedLUImportEnv
+                              val (_, Env2) =
+                                  TCU.substTyConInEnv 
+                                      ID.Set.empty 
+                                      substTyConEnvLinkageUnit
+                                      Env1
+                          in Env2 end
+                      val implEnvWithCommonTyInst =
+                          let
+                              val (_, Env) =
+                                  TCU.substTyConInEnv 
+                                      ID.Set.empty 
+                                      substTyConEnvAccCommon
+                                      implEnv
+                          in
+                              Env
+                          end
+                      val strictEnv = 
+                          (SC.checkEnvAndSigma 
+                               (implEnvWithCommonTyInst, 
+                                (flexibleImportTyConIdSet, resolvedLUImportEnvWithCommonTyInst)))
+                          handle exn => (SU.handleException (exn,loc); 
+                                         raise ExSigCheckFailure)
+                      (*****************************************************************
+                       * type instantiation declaration for inner resolved parts
+                       *)
                       local
-                          val importPureTypeEnv = stripSizeTagTypeEnv importTypeEnv
-                          val implPureTypeEnv = stripSizeTagTypeEnv implTypeEnv
+                          val currentModuleEnv as {pathBasis,...} =
+                              {freeGlobalArrayIndex = TO.abstractGlobalArrayIndex,
+                               freeEntryPointer = freeEntryPointer,
+                               pathBasis = accExportME}
                       in
-                          val _ = 
+                          val (tyInstCode1, instDeltaModuleEnv1) = 
                               let
-                                  val defaultErrorValue = SE.emptyE
-                                  val loc = getLocLinkageUnit linkageUnit
+                                  val previousState = !Control.doCompileObj
+                                  val _ = Control.doCompileObj := true
                               in
-                                  (SC.checkEnvAndSigma 
-                                       (implPureTypeEnv,
-                                        ((#importTyConIdSet (#staticTypeEnv linkageUnit)), 
-                                         importPureTypeEnv)))
-                                  handle exn => (handleException (exn, loc); defaultErrorValue)
+                                  genTyInstantiationCode 
+                                      (implEnvWithCommonTyInst, strictEnv) 
+                                      currentModuleEnv
+                                      loc
+                                      before (Control.doCompileObj := previousState)
                               end
-                          val substTyEnv = 
-                              FAU.substTyEnvFromEnv (importPureTypeEnv, implPureTypeEnv)
+                          val freeEntryPointer = #freeEntryPointer instDeltaModuleEnv1
+                          val innerTyInstValIndexList =
+                              (flattenPathBasisToList (#pathBasis instDeltaModuleEnv1))
+                      end
+                      (*****************************************************************
+                       * environments instantiation with the constructed 
+                       * tyConId/tyCon substitution
+                       *)
+                      val substExportTyEnv = SigUtils.substTyEnvFromEnv 
+                                           (resolvedLUImportEnvWithCommonTyInst, 
+                                            implEnvWithCommonTyInst)
+
+                      (******************************************************************)
+                      val mergedSubstTyConEnvLinkageUnit =
+                          substEffectKeepingMerge (substExportTyEnv, substTyConEnvLinkageUnit)
+                      val mergedSubstTyConEnvAccEnv =
+                          substEffectKeepingMerge (substExportTyEnv, substTyConEnvAccCommon)
+
+                      (******************************************************************)
+                      val unResolvedLUImportEnvWithTyInst =
+                          let
+                              val Env1 = 
+                                  STE.substTyConIdInTypeEnv substTyConIdEnvLinkageUnit
+                                                            unResolvedLUImportEnv
+                              val Env2 = 
+                                  STE.substTyConInTypeEnv mergedSubstTyConEnvLinkageUnit 
+                                                          Env1
+                          in
+                              Env2
+                          end
+                      val commonAccImportTypeEnvWithTyInst = 
+                          (* Note:
+                           * substTyConEnvAccCommon : commonAccImportEnv may depends on
+                           * the implementation type given in the import interface of the 
+                           * new linkage unit.
+                           * substTyEnv : the implementation type above may depends on the 
+                           * implementation type given in the export type of accExportTE
+                           *)
+                          STE.substTyConInTypeEnv mergedSubstTyConEnvAccEnv 
+                                                  commonAccImportEnv
+                                                  
+                      (*****************************************************************
+                       * 1. Check common import type parts type compatibility
+                       * 2. Generate anti-unified import value parts
+                       *)
+                      val generalizedCommonLUImportEnv =
+                          compatibiltyUnify (commonAccImportTypeEnvWithTyInst,
+                                             unResolvedLUImportEnvWithTyInst)
+                      val (generalizedCommonLinkageUnitImportME, freeEntryPointer) = 
+                          typeEnvToAbstractPathBasis 
+                               generalizedCommonLUImportEnv freeEntryPointer
+                      (* Current linkageUnit:
+                       * generate type instantiation value declarations for 
+                       * value identifier 
+                       *)
+                      local
+                          val currentModuleEnv as {pathBasis,...} =
+                              {freeGlobalArrayIndex = TO.abstractGlobalArrayIndex,
+                               freeEntryPointer = freeEntryPointer,
+                               pathBasis = generalizedCommonLinkageUnitImportME}
+                      in
+                          val (tyInstCode2, instDeltaModuleEnv2) = 
+                              let
+                                  val previousState = !Control.doCompileObj
+                                  val _ = Control.doCompileObj := true
+                                  val restrictedUnResolvedLUImportEnv =
+                                      pruneUnGeneralizedInLinkageUnitImportTypeEnv
+                                          (generalizedCommonLUImportEnv, 
+                                           unResolvedLUImportEnvWithTyInst)
+                              in
+                                  (genTyInstantiationCode
+                                       (typeEnvToEnv generalizedCommonLUImportEnv, 
+                                        typeEnvToEnv restrictedUnResolvedLUImportEnv)
+                                       currentModuleEnv
+                                       loc)
+                                  before (Control.doCompileObj := previousState)
+                              end
+                          val freeEntryPointer = #freeEntryPointer instDeltaModuleEnv2
+                          val currLinkageUnitImportTyInstValIndexList =
+                              (flattenPathBasisToList (#pathBasis instDeltaModuleEnv2))
+                      end
+                      (* Previous linkageUnits: generate type instantiation value declarations for 
+                       * value identifier with type involving least generalized type 
+                       *)
+                      local
+                          val currentModuleEnv =
+                              {freeGlobalArrayIndex = TO.abstractGlobalArrayIndex,
+                               freeEntryPointer = freeEntryPointer,
+                               pathBasis = generalizedCommonLinkageUnitImportME}
+                      in
+                          val (tyInstCode3, instTyValCommonModuleEnvInAcc) = 
+                              let
+                                  val previousState = !Control.doCompileObj
+                                  val _ = Control.doCompileObj := true
+                              in
+                                  (genTyInstantiationCode
+                                       (typeEnvToEnv generalizedCommonLUImportEnv, 
+                                        typeEnvToEnv commonAccImportTypeEnvWithTyInst)
+                                       currentModuleEnv
+                                       loc)
+                                  before (Control.doCompileObj := previousState)
+                              end
+                          val freeEntryPointer = #freeEntryPointer instTyValCommonModuleEnvInAcc
+                          val indexEnv3 = 
+                              constructAlreadyImportValIndexEnvInPathBasis
+                                  (#pathBasis instTyValCommonModuleEnvInAcc, accImportME)
+                          val prevLinkageUnitTyInstValIndexList =
+                              (flattenPathBasisToList (#pathBasis instTyValCommonModuleEnvInAcc))
                       end
                       (****************************************************************** 
-                       * sizeTag computation:
-                       * 1.construct sizeTag map from tyConId -> sizeTag, used for
-                       * substitution in the target code.
-                       * 2.update exported environment of current linkage unit
+                       * sizeTag computation. Construct sizetag term substitution which maps
+                       * sizetag variable to its implementation. Suppose two object files,
+                       *  # link A.smo B.smo
+                       * The map invovles three parts:
+                       * 1. A.smo exports, B.smo imports.
+                       * eg.  A: type t = int   B: import type t end
+                       * 2. A.smo imports implemented part, B.smo imports abstract type specification. 
+                       * eg.  A: import type t = int  end
+                       *      B: import type t end
+                       * 3. A.smo import abstract type specification,
+                       *    B.smo import implemented part.
+                       * eg.  A: import type t end
+                       *      B: import type t = int end
                        *)
-                      val sizeTagSubst = 
-                          TCU.sizeTagSubstFromEnv (importTypeEnv, implTypeEnv)
-                      val updatedExportTypeEnv =
-                          TCU.substSizeTagTypeEnv sizeTagSubst exportTypeEnv
-                          
+                      val sizeTagSubstAccEnv = 
+                          sizeTagSubstTyConSubst mergedSubstTyConEnvAccEnv
+                      val sizeTagSubstLinkageUnit = 
+                          sizeTagSubstTyConSubst mergedSubstTyConEnvLinkageUnit
+                      (*****************************************************************
+                       * exnTag Compuation:
+                       * 1. generativity
+                       * 2. import
+                       *   2.1 resolved import
+                       *   2.2 unresolved import 
+                       *       2.2.1 already imported by previous linkageUnits
+                       *       2.2.2 newly imported
+                       *)
+                      val (generativeExnTagSubst, freshGenerativeExnTagSet) = 
+                          freshExnTagSetSubst (#generativeExnTagSet (#staticTypeEnv linkageUnit))
+                      val innerResolvedImportExnSubst = 
+                          SU.computeExnTagSubst (resolvedLUImportEnv,implEnv)
+                      val innerCommonImportExnSubst = 
+                          let
+                              val (commonImportTEInLinkageUnit, _) =
+                                  constructImplAndUnResolvedEnv 
+                                      (commonAccImportTypeEnvWithTyInst,
+                                       unResolvedLUImportEnvWithTyInst)
+                          in
+                              SU.computeExnTagSubst 
+                                  (typeEnvToEnv commonImportTEInLinkageUnit, 
+                                   typeEnvToEnv commonAccImportTypeEnvWithTyInst)
+                          end
+                      val (outerUnResolvedImportTEWithFreshExnTag,
+                           outerUnResolvedImportExnSubst) = 
+                          let
+                              val outerUnResolvedLUImportEnvWithTyInst =
+                                  let
+                                      val Env1 = 
+                                          STE.substTyConIdInTypeEnv 
+                                              substTyConIdEnvLinkageUnit
+                                              outerUnResolvedLUImportEnv
+                                      val Env2 =
+                                          STE.substTyConInTypeEnv
+                                              substTyConEnvLinkageUnit
+                                              Env1
+                                  in
+                                      STE.substTyConInTypeEnv substExportTyEnv
+                                                              Env2
+                                  end
+                          in
+                              (* Note: to avoid conflicting with freshExnTagSetSubst *)
+                              freshExnTagTypeEnv outerUnResolvedLUImportEnvWithTyInst
+                          end
+                      val allExnTagSubst =
+                          exnTagSubstMergeList
+                              [generativeExnTagSubst,
+                               innerResolvedImportExnSubst,
+                               innerCommonImportExnSubst,
+                               outerUnResolvedImportExnSubst
+                               ] 
+                              IEnv.empty
+                      (*****************************************************************)
                       val newAccImportTE =
-                          TC.extendImportTypeEnvWithImportTypeEnv
-                              {newImportTypeEnv = unResolvedImportEnv,
-                               oldImportTypeEnv = accImportTE}
+                          let
+                              val accImportTEWithTyInst =
+                                  STE.substTyConInTypeEnv 
+                                      substExportTyEnv
+                                      (STE.substTyConInTypeEnv substTyConEnvAccCommon
+                                                               accImportTE)
+                          in
+                              STE.extendImportTypeEnvWithImportTypeEnv
+                                  {newImportTypeEnv = outerUnResolvedImportTEWithFreshExnTag,
+                                   oldImportTypeEnv =
+                                   (STE.extendImportTypeEnvWithImportTypeEnv
+                                        {
+                                         newImportTypeEnv = (substExnTagTypeEnv 
+                                                                 innerCommonImportExnSubst
+                                                                 generalizedCommonLUImportEnv),
+                                         oldImportTypeEnv = accImportTEWithTyInst
+                                         }
+                                        )
+                                   }
+                          end
                       val newAccExportTE =
                           let
-                              val newExportTypeEnv =
-                                  TCU.substTyConInTypeEnv substTyEnv updatedExportTypeEnv
+                              val exportTypeEnvWithTyInst =
+                                  let
+                                      val Env1 = 
+                                          STE.substTyConIdInTypeEnv 
+                                              substTyConIdEnvLinkageUnit
+                                              exportTypeEnv
+                                      val Env2 =
+                                          STE.substTyConInTypeEnv mergedSubstTyConEnvLinkageUnit
+                                                                  Env1 
+                                  in
+                                      Env2
+                                  end
+                              val accExportTEWithTyInst =
+                                  STE.substTyConInTypeEnv mergedSubstTyConEnvAccEnv
+                                                          accExportTE
                           in
-                              TC.extendExportTypeEnvWithExportTypeEnv
-                                  {newExportTypeEnv = newExportTypeEnv,
-                                   oldExportTypeEnv = accExportTE}
+                              STE.extendExportTypeEnvWithExportTypeEnv
+                                  {newExportTypeEnv = 
+                                   substExnTagTypeEnv allExnTagSubst exportTypeEnvWithTyInst,
+                                   oldExportTypeEnv = accExportTEWithTyInst}
                           end
-                            
                       (****************************************************************
-                       * Module Context: 
-                       * 1. Reallocate abstract index to value identifier
+                       * Module Env: 
+                       * 1. Reallocate abstract index of value identifier
                        * 2. the same as 2nd point of type context
                        *)
-                      val staticModuleEnv = 
-                          (*substTyConIdStaticModuleEnv substTyConIdEnv*) (#staticModuleEnv linkageUnit)
-                      val (freeGlobalArrayIndex1,
-                           freeEntryPointer1,
-                           indexEnv1, 
+                      val accImportMEWithTyInst =
+                          SME.substTyConPathBasis mergedSubstTyConEnvAccEnv
+                                                  accImportME
+                      val accExportMEWithTyInst =
+                          SME.substTyConPathBasis mergedSubstTyConEnvAccEnv
+                                                  accExportME
+                      val linkageUnitStaticModuleEnv = 
+                          SME.substTyConStaticModuleEnv 
+                              mergedSubstTyConEnvLinkageUnit
+                              (SME.substTyConIdStaticModuleEnv 
+                                   substTyConIdEnvLinkageUnit
+                                   (#staticModuleEnv linkageUnit))
+                              
+                      (* only return the incremental moduleEnv *)
+                      val (freeEntryPointer1,
+                           indexEnv1,
+                           hiddenValIndexList,
                            (newImportModuleEnv,newExportModuleEnv)) =
-                          reAllocateAbstractIndexInModuleEnv
-                              staticModuleEnv substTyEnv freeGlobalArrayIndex freeEntryPointer accExportME
-                      val newAccImportME =
-                          SME.extendImportModuleEnv
-                              {newImportModuleEnv = newImportModuleEnv,
-                               oldImportModuleEnv = accImportME}
+                          reAllocateAbstractIndexInModuleEnv 
+                              linkageUnitStaticModuleEnv 
+                              (#pathBasis instDeltaModuleEnv1, (* inner import instantiated   *)
+                               #pathBasis instDeltaModuleEnv2, (* outer import instantiated   *)
+                               accExportMEWithTyInst)(* accumulated export - compute hiddenValIndexList *)
+                              freeEntryPointer
+                      val newAccImportME =  
+                          PE.recursiveExtendPathBasisList
+                              [accImportMEWithTyInst, 
+                               generalizedCommonLinkageUnitImportME, 
+                               newImportModuleEnv]
                       val newAccExportME =
-                          let
-                              val newExportModuleEnv =
-                                  instantiateTyExportModuleEnv
-                                      substTyEnv
-                                      newExportModuleEnv
-                          in
-                              SME.extendExportModuleEnv
-                                  {newExportModuleEnv = newExportModuleEnv,
-                                   oldExportModuleEnv = accExportME}
-                          end
+                          SME.extendExportModuleEnv
+                              {
+                               newExportModuleEnv = newExportModuleEnv,
+                               oldExportModuleEnv = accExportMEWithTyInst
+                               }
+                      
+                      (****************************************************************)
+                      (* reallocate global index for hiddenValIndexList *)
+                      val (freeEntryPointer2,
+                           indexEnv2,
+                           currLinkageUnitBoundTyInstValIndexList) =
+                          allocateAbstractIndexInTyInstValIndexList 
+                              (mergedSubstTyConEnvLinkageUnit, substTyConIdEnvLinkageUnit)
+                              freeEntryPointer1
+                              (#hiddenValIndexList linkageUnit)
                       (* *******************************************************
                        * code update :
-                       * 1. type instantiation
-                       * 2. array index instantiation
-                       * 3. sizeTag instantiation
+                       * 1. array index instantiation
+                       * 2. sizeTag instantiation
                        *)
-                      val newCode1 = 
-                          (*substTyConIdTldecs substTyConIdEnv*) (#code linkageUnit)
-                      val newCode2 =  substTyTldecs substTyEnv newCode1
-                      val newCode3 = substIndexTldecs indexEnv1 newCode2
+                      val codesWithIndexTyUpdated = 
+                          let
+                              val substContext =
+                                  {indexSubst = indexEnv3,
+                                   substTyEnv = mergedSubstTyConEnvAccEnv,
+                                   exnTagSubst = IEnv.empty,
+                                   tyConIdSubst = ID.Map.empty}
+                          in
+                              substTldecs substContext codes
+                          end
+                      val (instCodeWithTyConIdUpdate, bodyCodeWithTyConIdUpdate) =
+                          (substTyConIdTldecs
+                               substTyConIdEnvLinkageUnit (tyInstCode1 @ tyInstCode2),
+                           substTyConIdTldecs 
+                               substTyConIdEnvLinkageUnit (#code linkageUnit))
+                      val (instCodeWithTyUpdate, bodyCodeWithTyUpdate) =
+                          (substTyTldecs 
+                               mergedSubstTyConEnvLinkageUnit (tyInstCode1 @ tyInstCode2),
+                           substTyTldecs 
+                               mergedSubstTyConEnvLinkageUnit (#code linkageUnit))
+                      val newCode =
+                          let
+                              val substContext =
+                                  {indexSubst = IndexEnv.unionWith #1 (indexEnv1, indexEnv2),
+                                   substTyEnv = mergedSubstTyConEnvLinkageUnit,
+                                   exnTagSubst = allExnTagSubst,
+                                   tyConIdSubst = substTyConIdEnvLinkageUnit}
+                          in
+                              (instCodeWithTyUpdate @ substTldecs substContext bodyCodeWithTyUpdate)
+                          end
                   in
                       (
-                       codes @ newCode3,
+                       tyInstCode3 @ codesWithIndexTyUpdated @ newCode,
                        ID.Set.union (tyConIdSet, (#importTyConIdSet (#staticTypeEnv linkageUnit))),
-                       freeGlobalArrayIndex1,
-                       freeEntryPointer1,
+                       freeEntryPointer2,
                        newAccImportTE,
                        newAccExportTE,
                        newAccImportME,
-                       newAccExportME
+                       newAccExportME,
+                       accGenerativeExnTagSet,
+                       accHiddenValIndexList @ innerTyInstValIndexList 
+                       @ currLinkageUnitImportTyInstValIndexList 
+                       @ prevLinkageUnitTyInstValIndexList
+                       @ currLinkageUnitBoundTyInstValIndexList
+                       @ hiddenValIndexList
                        )
-                  end
-                      )
+                  end)
               (nil,
                ID.Set.empty,
-               TO.initialFreeGlobalArrayIndex,
                TO.initialFreeEntryPointer,
                emptyImportTypeEnv,
                emptyExportTypeEnv,
                emptyImportModuleEnv,
-               emptyExportModuleEnv)
+               emptyExportModuleEnv,
+               ISet.empty,
+               nil
+               )
               linkageUnits
               
 
+    fun linkUnClosed newObjName linkageUnits = 
+        let
+            val (code,
+                 tyConIdSet, 
+                 freeEntryPointer, 
+                 accImportTE,
+                 accExportTE, 
+                 accImportME,
+                 accExportME,
+                 accGenerativeExnTagSet,
+                 hiddenValIndexList
+                 ) =
+                linkUnClosedLinkageUnits linkageUnits
+        in
+            {fileName = newObjName,
+             staticTypeEnv = {importTyConIdSet = tyConIdSet,
+                              importTypeEnv = accImportTE,
+                              exportTypeEnv =  accExportTE,
+                              generativeExnTagSet = accGenerativeExnTagSet},
+             staticModuleEnv = {importModuleEnv = accImportME,
+                                exportModuleEnv = accExportME},
+             hiddenValIndexList = hiddenValIndexList,
+             code = code}
+        end
+
     (*****************************************************************************)
-    fun lookupActualIndexInImportVarEnv importVarEnv accExportVarEnv =
+    fun lookupActualIndexInImportVarEnv importVarEnv instDeltaExportVarEnv =
         SEnv.foldli (fn (varName, 
                          PE.TopItem (pathVar, index, ty), 
                          indexEnv) =>
                         (
-                         case SEnv.find(accExportVarEnv, varName) of
+                         case SEnv.find(instDeltaExportVarEnv, varName) of
                            SOME (PE.TopItem (pathVar, globalIndex, ty)) =>
                            IndexEnv.insert(indexEnv,
                                            (getKeyInIndex index),
                                            globalIndex)
                          | SOME _ => raise Control.Bug "CurItem occurs at linking phase"
-                         | NONE => raise E.UnboundImportValueIdentifier {name=varName}
+                         | NONE => raise Control.Bug ("unbound import value identifier:"^varName)
                         )
                       | (varName, PE.CurItem _, _ ) => 
                         raise Control.Bug "CurItem occurs at linking phase"
@@ -488,11 +985,11 @@ struct
                     IndexEnv.empty
                     importVarEnv
 
-    fun lookupActualIndexInImportStrEnv importStrEnv accExportStrEnv =
+    fun lookupActualIndexInImportStrEnv importStrEnv instDeltaExportStrEnv =
         SEnv.foldli (fn (strName,
                          PE.PATHAUX (subImportVarEnv, subImportStrEnv),
                          indexEnv) =>
-                        case SEnv.find(accExportStrEnv, strName) of
+                        case SEnv.find(instDeltaExportStrEnv, strName) of
                           SOME (PE.PATHAUX (subAccExportVarEnv,
                                             subAccExportStrEnv)) =>
                           let
@@ -509,140 +1006,220 @@ struct
                                                         (indexEnv1, indexEnv2)),
                                    indexEnv)
                           end
-                        | NONE => raise E.UnboundImportStructure {name=strName}
+                        | NONE => raise Control.Bug ("non-import structure:"^strName)
                     )
                     IndexEnv.empty
                     importStrEnv
 
     fun lookupActualIndexInImportModuleEnv
-          importModuleContext accExportModuleContext =
+          importModuleEnv instDeltaExportModuleEnv =
         let
           val (importFunEnv, (importVarEnv, importStrEnv)) = 
-              importModuleContext
-          val (accExportFunEnv, (accExportVarEnv, accExportStrEnv)) = 
-              accExportModuleContext
-          val indexEnv1 = lookupActualIndexInImportVarEnv
-                            importVarEnv accExportVarEnv
-          val indexEnv2 = lookupActualIndexInImportStrEnv
-                            importStrEnv accExportStrEnv
+              importModuleEnv
+          val (instDeltaExportFunEnv, (instDeltaExportVarEnv, instDeltaExportStrEnv)) = 
+              instDeltaExportModuleEnv
+          val indexEnv1 = 
+              lookupActualIndexInImportVarEnv
+                  importVarEnv instDeltaExportVarEnv
+          val indexEnv2 = 
+              lookupActualIndexInImportStrEnv
+                  importStrEnv instDeltaExportStrEnv 
         in
             IndexEnv.unionWithi (fn _ => raise exDuplicateElem) (indexEnv1, indexEnv2)
         end
 
     fun allocateActualIndexInExportVarEnv 
-        substTyEnv exportVarEnv freeGlobalArrayIndex freeEntryPointer =
-        SEnv.foldli 
-        (fn (varName, 
-             PE.TopItem (pathVar, index, ty), 
-             (freeGlobalArrayIndex, freeEntryPointer, indexEnv, newExportVarEnv, arrayIndices)
-             ) =>
-            let
-              val newTy = FAU.instantiateTy substTyEnv ty
-              val (newPageFlag, newFreeGlobalArrayIndex, newFreeEntryPointer, newIndex) =
-                  IndexAllocator.allocateActualIndexAtLinking 
-                    (freeGlobalArrayIndex,
-                     freeEntryPointer, 
-                     {displayName = PE.pathVarToString(pathVar), ty = newTy})
-            in
-              (newFreeGlobalArrayIndex,
-               newFreeEntryPointer,
-               IndexEnv.insert(indexEnv,
-                               (getKeyInIndex index),
-                               newIndex),
-               SEnv.insert(newExportVarEnv,
-                           varName,
-                           PE.TopItem (pathVar, newIndex, newTy)),
-               if newPageFlag then arrayIndices @ [newIndex] else arrayIndices)
-            end
-          | (varName, PE.CurItem _ , _) => 
-            raise Control.Bug "CurItem occurs at linking phase")
-        (freeGlobalArrayIndex, freeEntryPointer, IndexEnv.empty, SEnv.empty, nil)
-        exportVarEnv
+            substTyEnv exportVarEnv accExportVarEnv freeGlobalArrayIndex freeEntryPointer 
+      =
+      SEnv.foldli 
+          (fn (varName, 
+               PE.TopItem (pathVar, globalIndex, ty), 
+               (freeGlobalArrayIndex, 
+                freeEntryPointer, 
+                newExportVarEnv, 
+                indexEnv, 
+                arrayHdElemIndices,
+                hiddenValIndexList))
+              =>
+              (case SEnv.find(accExportVarEnv, varName) of
+                  NONE =>
+                  let
+                      val newTy = FAU.instantiateTy substTyEnv ty
+                      val (newPageFlag, newFreeGlobalArrayIndex, newFreeEntryPointer, newGlobalIndex) =
+                          IndexAllocator.allocateActualIndexAtLinking 
+                              (freeGlobalArrayIndex,
+                               freeEntryPointer, 
+                               {displayName = PE.pathVarToString(pathVar), ty = newTy})
+                  in
+                      (newFreeGlobalArrayIndex,
+                       newFreeEntryPointer,
+                       SEnv.insert(newExportVarEnv,
+                                   varName,
+                                   PE.TopItem (pathVar, newGlobalIndex, newTy)),
+                       IndexEnv.insert(indexEnv,
+                                       (getKeyInIndex globalIndex),
+                                       newGlobalIndex),
+                       if newPageFlag then arrayHdElemIndices @ [newGlobalIndex] else arrayHdElemIndices,
+                       hiddenValIndexList)
+                  end
+                | SOME (PE.TopItem accItemInfo) =>
+                  let
+                      val newTy = FAU.instantiateTy substTyEnv ty
+                      val (newPageFlag, newFreeGlobalArrayIndex, newFreeEntryPointer, newGlobalIndex) =
+                          IndexAllocator.allocateActualIndexAtLinking 
+                              (freeGlobalArrayIndex,
+                               freeEntryPointer, 
+                               {displayName = PE.pathVarToString(pathVar), ty = newTy})
+                  in
+                      (newFreeGlobalArrayIndex,
+                       newFreeEntryPointer,
+                       SEnv.insert(newExportVarEnv,
+                                   varName,
+                                   PE.TopItem (pathVar, newGlobalIndex, newTy)),
+                       IndexEnv.insert(indexEnv,
+                                       (getKeyInIndex globalIndex),
+                                       newGlobalIndex),
+                       if newPageFlag then arrayHdElemIndices @ [newGlobalIndex] else arrayHdElemIndices,
+                       hiddenValIndexList @ [accItemInfo])
+                  end
+                | SOME (PE.CurItem _) => 
+                  raise Control.Bug "CurItem occurs at linking phase")
+            | (varName, PE.CurItem _ , _) => 
+              raise Control.Bug "CurItem occurs at linking phase")
+          (freeGlobalArrayIndex, freeEntryPointer, SEnv.empty, IndexEnv.empty, nil, nil)
+          exportVarEnv
 
     fun allocateActualIndexInExportStrEnv 
-        substTyEnv exportStrEnv freeGlobalArrayIndex freeEntryPointer =
+            substTyEnv exportStrEnv accExportStrEnv freeGlobalArrayIndex freeEntryPointer
+      =
         SEnv.foldli
         (fn (strName,
              PE.PATHAUX (subExportVarEnv, subExportStrEnv),
-             (freeGlobalArrayIndex, freeEntryPointer, indexEnv, newExportStrEnv, arrayIndices)) =>
+             (freeGlobalArrayIndex, 
+              freeEntryPointer, 
+              newExportStrEnv, 
+              indexEnv, 
+              arrayHdElemIndices,
+              hiddenValIndexList)) =>
             let
-              val (freeGlobalArrayIndex1, 
-                   freeEntryPointer1, 
-                   indexEnv1, 
-                   newSubExportVarEnv, 
-                   arrayIndices1) =
-                  allocateActualIndexInExportVarEnv
-                      substTyEnv subExportVarEnv freeGlobalArrayIndex freeEntryPointer
-              val (freeGlobalArrayIndex2, 
-                   freeEntryPointer2, 
-                   indexEnv2, 
-                   newSubExportStrEnv, 
-                   arrayIndices2) =
-                  allocateActualIndexInExportStrEnv
-                      substTyEnv subExportStrEnv freeGlobalArrayIndex1 freeEntryPointer1
+                val (freeGlobalArrayIndex1, 
+                     freeEntryPointer1, 
+                     newSubExportVarEnv, 
+                     indexEnv1, 
+                     arrayHdElemIndices1,
+                     hiddenValIndexList1) =
+                    allocateActualIndexInExportVarEnv
+                        substTyEnv subExportVarEnv SEnv.empty freeGlobalArrayIndex freeEntryPointer
+                val (freeGlobalArrayIndex2, 
+                     freeEntryPointer2, 
+                     newSubExportStrEnv, 
+                     indexEnv2, 
+                     arrayHdElemIndices2,
+                     hiddenValIndexList2) =
+                    allocateActualIndexInExportStrEnv
+                        substTyEnv subExportStrEnv SEnv.empty freeGlobalArrayIndex1 freeEntryPointer1
             in
-              (freeGlobalArrayIndex2,
-               freeEntryPointer2,
-               (IndexEnv.unionWith (fn _ => raise exDuplicateElem)
-                                   (IndexEnv.unionWith (fn _ => raise exDuplicateElem) 
-                                                       (indexEnv1, indexEnv2),
-                                    indexEnv)),
-               SEnv.insert(newExportStrEnv,
-                           strName,
-                           PE.PATHAUX (newSubExportVarEnv,
-                                       newSubExportStrEnv)),
-               arrayIndices @ arrayIndices1 @ arrayIndices2)
+                case SEnv.find(accExportStrEnv, strName) of
+                    NONE =>(freeGlobalArrayIndex2,
+                            freeEntryPointer2,
+                            SEnv.insert(newExportStrEnv,
+                                        strName,
+                                        PE.PATHAUX (newSubExportVarEnv,
+                                                    newSubExportStrEnv)),
+                            (IndexEnv.unionWith (fn _ => raise exDuplicateElem)
+                                                (IndexEnv.unionWith (fn _ => raise exDuplicateElem) 
+                                                                    (indexEnv1, indexEnv2),
+                                                                    indexEnv)),
+                            arrayHdElemIndices @ arrayHdElemIndices1 @ arrayHdElemIndices2,
+                            hiddenValIndexList)
+                  | SOME (PE.PATHAUX (subAccExportVarEnv, subAccExportStrEnv)) =>
+                    (* calculate all the indices for removing the setGlobal instruction *)
+                    let
+                        val indices1 = calcValIndexListPathVarEnv subAccExportVarEnv
+                        val indices2 = calcValIndexListPathStrEnv subAccExportStrEnv
+                    in
+                        (freeGlobalArrayIndex2,
+                         freeEntryPointer2,
+                         SEnv.insert(newExportStrEnv,
+                                     strName,
+                                     PE.PATHAUX (newSubExportVarEnv,
+                                                 newSubExportStrEnv)),
+                         (IndexEnv.unionWith (fn _ => raise exDuplicateElem)
+                                             (IndexEnv.unionWith (fn _ => raise exDuplicateElem) 
+                                                                 (indexEnv1, indexEnv2),
+                                                                 indexEnv)),
+                         arrayHdElemIndices @ arrayHdElemIndices1 @ arrayHdElemIndices2,
+                         hiddenValIndexList @ indices1 @ indices2)
+                    end
             end)
-        (freeGlobalArrayIndex, freeEntryPointer, IndexEnv.empty, SEnv.empty, nil)
+        (freeGlobalArrayIndex, freeEntryPointer, SEnv.empty, IndexEnv.empty, nil, nil)
         exportStrEnv
 
     fun allocateActualIndexInExportModuleEnv
-          substTyEnv (exportModuleEnv:SME.exportModuleEnv) freeGlobalArrayIndex freeEntryPointer =
+            substTyEnv (exportModuleEnv:SME.exportModuleEnv) (accExportModuleEnv:SME.exportModuleEnv)
+            freeGlobalArrayIndex freeEntryPointer =
         let
           val (exportFunEnv, (exportVarEnv,exportStrEnv)) = 
               exportModuleEnv
+          val (accExportFunEnv, (accExportVarEnv, accExportStrEnv)) =
+              accExportModuleEnv
           val (freeGlobalArrayIndex1, 
                freeEntryPointer1, 
-               indexEnv1, 
                newExportVarEnv, 
-               arrayIndices1) =
+               indexEnv1, 
+               arrayHdElemIndices1,
+               hiddenValIndexList1) =
               allocateActualIndexInExportVarEnv
-                  substTyEnv exportVarEnv freeGlobalArrayIndex freeEntryPointer
+                  substTyEnv exportVarEnv accExportVarEnv
+                  freeGlobalArrayIndex freeEntryPointer
           val (freeGlobalArrayIndex2, 
                freeEntryPointer2, 
+               newExportStrEnv,
                indexEnv2, 
-               newExportStrEnv, 
-               arrayIndices2) =
+               arrayHdElemIndices2,
+               hiddenValIndexList2) =
               allocateActualIndexInExportStrEnv
-                  substTyEnv exportStrEnv freeGlobalArrayIndex1 freeEntryPointer1
+                  substTyEnv exportStrEnv accExportStrEnv
+                  freeGlobalArrayIndex1 freeEntryPointer1
         in
-          (freeGlobalArrayIndex2,
-           freeEntryPointer2,
-           IndexEnv.unionWithi (fn (key,x,y) => raise exDuplicateElem) (indexEnv1, indexEnv2),
-           (exportFunEnv,
-            (newExportVarEnv, newExportStrEnv)): SME.exportModuleEnv,
-           arrayIndices1 @ arrayIndices2
-          )
+            (freeGlobalArrayIndex2,
+             freeEntryPointer2,
+             (exportFunEnv,
+              (newExportVarEnv, newExportStrEnv)): SME.exportModuleEnv,
+             IndexEnv.unionWithi (fn (key,x,y) => raise exDuplicateElem) (indexEnv1, indexEnv2),
+             arrayHdElemIndices1 @ arrayHdElemIndices2,
+             hiddenValIndexList1 @ hiddenValIndexList2)
         end
 
+    (* accExportModuleEnv is only used for overriden,
+     * thus hiddenValIndex computation
+     *)
     fun allocateActualIndexInModuleEnv
-          substTyEnv moduleEnv accExportModuleEnv freeGlobalArrayIndex freeEntryPointer =
+            substTyEnv moduleEnv accExportModuleEnv instDeltaExportModuleEnv
+            freeGlobalArrayIndex freeEntryPointer =
         let
             val (importModuleEnv, exportModuleEnv) = moduleEnv
             val indexEnv1 = 
                 lookupActualIndexInImportModuleEnv
-                    importModuleEnv accExportModuleEnv
-            val (freeGlobalArrayIndex1, freeEntryPointer1, indexEnv2, newExportModuleEnv, arrayIndices) =
+                    importModuleEnv instDeltaExportModuleEnv
+            val (freeGlobalArrayIndex1, 
+                 freeEntryPointer1, 
+                 newExportModuleEnv,
+                 indexEnv2, 
+                 arrayHdElemIndices,
+                 hiddenValIndexList) =
                 allocateActualIndexInExportModuleEnv
-                    substTyEnv exportModuleEnv freeGlobalArrayIndex freeEntryPointer
+                    substTyEnv exportModuleEnv accExportModuleEnv
+                    freeGlobalArrayIndex freeEntryPointer
         in
             (freeGlobalArrayIndex1,
              freeEntryPointer1,
-             IndexEnv.unionWithi (fn _ => raise exDuplicateElem) (indexEnv1, indexEnv2),
              newExportModuleEnv,
-             arrayIndices)
+             IndexEnv.unionWithi (fn _ => raise exDuplicateElem) (indexEnv1, indexEnv2),
+             arrayHdElemIndices,
+             hiddenValIndexList)
         end
-           
+        
     (* 
      * link closed object files.
      * 1. type check and type propagation
@@ -650,14 +1227,18 @@ struct
      *   (1) export value identifier
      *   (2) inner resolved import value identifiers
      *)
-    fun linkClosedCompUnits (linkageUnits : linkageUnit list)  =
+    fun linkClosedLinkageUnits (linkageUnits : linkageUnit list)  =
         foldl (fn (linkageUnit : linkageUnit, 
                    (codes : TypedLambda.tldecl list,
                     freeGlobalArrayIndex,
                     freeEntryPointer,
-                    accExportTE : TC.exportTypeEnv, 
-                    accExportME : SME.exportModuleEnv)) =>
+                    accExportTE : STE.exportTypeEnv, 
+                    accExportME : SME.exportModuleEnv,
+                    accGenerativeExnTagSet,
+                    accHiddenValIndexes
+                    )) =>
                   let
+                      val loc = getLocLinkageUnit linkageUnit
                       (****************************************************************)
                       (* Type Env: *)
                       val importTypeEnv = #importTypeEnv (#staticTypeEnv linkageUnit)
@@ -666,172 +1247,232 @@ struct
                        * import signature check
                        *)
                       val (implTypeEnv, unResolvedImportEnv) = 
-                          constructImplEnv (importTypeEnv, accExportTE)
-                      val importPureTypeEnv = 
-                          stripSizeTagTypeEnv importTypeEnv
-                      val implPureTypeEnv = 
-                          stripSizeTagTypeEnv implTypeEnv
-                      val _ = 
+                          constructImplAndUnResolvedEnv (importTypeEnv, accExportTE)
+                      val (importEnv,implEnv) =  
+                          (typeEnvToEnv importTypeEnv, typeEnvToEnv implTypeEnv)
+                      val strictEnv = 
+                          (SC.checkEnvAndSigma 
+                               (implEnv,
+                                ((#importTyConIdSet (#staticTypeEnv linkageUnit)), 
+                                 importEnv)))
+                          handle exn => (SU.handleException (exn,loc);raise ExSigCheckFailure)
+                      (****************************************************************** 
+                       * compute type spec implementation
+                       *)
+                      val substTyEnv = SigUtils.substTyEnvFromEnv (importEnv, implEnv)
+                      (*****************************************************************
+                       * type instantiation term 
+                       *)
+                      local
+                          val currentModuleEnv as {pathBasis,...} =
+                              {freeGlobalArrayIndex = freeGlobalArrayIndex,
+                               freeEntryPointer = freeEntryPointer,
+                               pathBasis = accExportME}
+                      in
+                          val (tyInstCode, instDeltaModuleEnv) = 
+                              genTyInstantiationCode (implEnv, strictEnv) 
+                                                     currentModuleEnv
+                                                     loc
+                          val freeGlobalArrayIndex = #freeGlobalArrayIndex instDeltaModuleEnv
+                          val freeEntryPointer = #freeEntryPointer instDeltaModuleEnv
+                          val newTyInstValIndexList1 =
+                               (flattenPathBasisToList (#pathBasis instDeltaModuleEnv))
+                      end
+                      (****************************************************************** 
+                       * sizeTag computation:
+                       * 1.construct sizeTag map from tyConId -> sizeTag, used for
+                       * substitution in the target code.
+                       * 2.update exported environment of current linkage unit
+                       *)
+                      val sizeTagSubst = sizeTagSubstEnv (importEnv, implEnv)
+                      (******************************************************************
+                       * exnTag compuation:
+                       * 1. generativity
+                       * 2. import
+                       *)
+                      val (exnTagSubst, freshGenerativeExnTagSet) =
                           let
-                              val defaultErrorValue = SE.emptyE
-                              val loc = getLocLinkageUnit linkageUnit
+                              val (generativeExnTagSubst, freshGenerativeExnTagSet) = 
+                                  freshExnTagSetSubst (#generativeExnTagSet (#staticTypeEnv linkageUnit))
+                              val importExnSubst =
+                                  SU.computeExnTagSubst (importEnv, implEnv)
                           in
-                              (SC.checkEnvAndSigma 
-                                   (implPureTypeEnv,
-                                    ((#importTyConIdSet (#staticTypeEnv linkageUnit)), importPureTypeEnv)))
-                              handle exn => (handleException (exn,loc);defaultErrorValue)
-                        end
-                    val substTyEnv = 
-                        FAU.substTyEnvFromEnv (importPureTypeEnv, implPureTypeEnv)
-
-                    (****************************************************************** 
-                     * sizeTag computation:
-                     * 1.construct sizeTag map from tyConId -> sizeTag, used for
-                     * substitution in the target code.
-                     * 2.update exported environment of current linkage unit
-                     *)
-                    val sizeTagSubst = 
-                        TCU.sizeTagSubstFromEnv (importTypeEnv, implTypeEnv)
-                    val updatedExportTypeEnv =
-                        TCU.substSizeTagTypeEnv sizeTagSubst exportTypeEnv
-
-                    val newAccExportTC =
-                        let
-                          val newExportTypeEnv =
-                              TCU.substTyConInTypeEnv substTyEnv updatedExportTypeEnv
-                        in
-                          TC.extendExportTypeEnvWithExportTypeEnv
-                            {newExportTypeEnv = newExportTypeEnv,
-                             oldExportTypeEnv = accExportTE}
-                        end
-
-                    (****************************************************************)
-                    (* Module Env: *)
-                    local
-                        val staticModuleEnv = 
-                            (*substTyConIdStaticModuleEnv substTyConIdEnv*) (#staticModuleEnv linkageUnit)
-                    in
-                        val (freeGlobalArrayIndex1, 
-                             freeEntryPointer1, 
-                             indexEnv1, 
-                             newExportModuleEnv, 
-                             arrayIndices1) =
-                            allocateActualIndexInModuleEnv substTyEnv
-                                                           (#importModuleEnv staticModuleEnv,
-                                                            #exportModuleEnv staticModuleEnv) 
-                                                           accExportME
-                                                           freeGlobalArrayIndex
-                                                           freeEntryPointer
-                                                           
-                        val newAccExportME : SME.exportModuleEnv =
-                            SME.extendExportModuleEnv
-                                {newExportModuleEnv = newExportModuleEnv,
-                                 oldExportModuleEnv = accExportME}
-                    end
-                    (*************************************************************
-                     * update code
-                     *)
-                    val newCode1 = 
-                        (*substTyConIdTldecs substTyConIdEnv*) (#code linkageUnit)
-                    val newCode2 =  
-                        substTyTldecs substTyEnv newCode1
-                    val newCode3 =  
-                        substIndexTldecs indexEnv1 newCode2
+                              ((IEnv.unionWith (fn _ => raise Control.Bug "duplicate exnTag")
+                                               (generativeExnTagSubst, importExnSubst)),
+                               freshGenerativeExnTagSet)
+                          end
+                      val exportTypeEnvWithExnTagFilled =
+                          substExnTagTypeEnv exnTagSubst exportTypeEnv
+                      (*******************************************************************)
+                      val newAccExportTC =
+                          let
+                              val newExportTypeEnv =
+                                  STE.substTyConInTypeEnv substTyEnv exportTypeEnvWithExnTagFilled
+                          in
+                              STE.extendExportTypeEnvWithExportTypeEnv
+                                  {newExportTypeEnv = newExportTypeEnv,
+                                   oldExportTypeEnv = accExportTE}
+                          end
+                      (****************************************************************)
+                      (* Module Env: *)
+                      val (freeGlobalArrayIndex1, 
+                           freeEntryPointer1, 
+                           newExportModuleEnv, 
+                           indexEnv1, 
+                           arrayHdElemIndices1,
+                           hiddenValIndexes) =
+                          let
+                              val linkageUnitStaticModuleEnv = #staticModuleEnv linkageUnit
+                          in
+                              allocateActualIndexInModuleEnv substTyEnv
+                                                             (#importModuleEnv linkageUnitStaticModuleEnv,
+                                                              #exportModuleEnv linkageUnitStaticModuleEnv) 
+                                                             accExportME
+                                                             (#pathBasis instDeltaModuleEnv)
+                                                             freeGlobalArrayIndex
+                                                             freeEntryPointer 
+                          end
+                      val newAccExportME : SME.exportModuleEnv =
+                          SME.extendExportModuleEnv
+                              {newExportModuleEnv = newExportModuleEnv,
+                               oldExportModuleEnv = accExportME}
+                   
+                      (****************************************************************)
+                      (* reallocate global index for hiddenValIndexList *)
+                      val (freeGlobalArrayIndex2,
+                           freeEntryPointer2,
+                           indexEnv2,
+                           arrayHdElemIndices2,
+                           newTyInstValIndexList2) =
+                          allocateActualIndexInTyInstValIndexList 
+                              substTyEnv
+                              freeGlobalArrayIndex1
+                              freeEntryPointer1
+                              (#hiddenValIndexList linkageUnit)
+                      (*************************************************************
+                       * update code
+                       *)
+                      val updatedIndexTldecs =  
+                          substIndexTldecs (IndexEnv.unionWith 
+                                                (fn (x,y) => raise Control.Bug "duplicate element")
+                                                (indexEnv1,indexEnv2))
+                                           (#code linkageUnit)
+                      val newCode = 
+                          substTldecs ({substTyEnv = substTyEnv,
+                                        exnTagSubst = exnTagSubst,
+                                        tyConIdSubst = ID.Map.empty,
+                                        indexSubst = IndexEnv.empty})
+                                      (tyInstCode @ updatedIndexTldecs)
                   in
-                    (
-                     codes @ newCode3,
-                     freeGlobalArrayIndex1,
-                     freeEntryPointer1,
-                     newAccExportTC : TC.exportTypeEnv,
-                     newAccExportME : SME.exportModuleEnv 
-                     )
-                  end
-              )
+                      (
+                       codes @ newCode,
+                       freeGlobalArrayIndex1,
+                       freeEntryPointer1,
+                       newAccExportTC : STE.exportTypeEnv,
+                       newAccExportME : SME.exportModuleEnv,
+                       ISet.union(accGenerativeExnTagSet, freshGenerativeExnTagSet),
+                       accHiddenValIndexes @ hiddenValIndexes
+                       @ newTyInstValIndexList1 @ newTyInstValIndexList2
+                       )
+                  end)
+              (*handle exn as (TCU.ExBoxedKindCheckFailure _) =>
+                       (SU.handleException (exn, getLocLinkageUnit linkageUnit);
+                        raise ExSigCheckFailure))*)
               (nil,
                TO.initialFreeGlobalArrayIndex,
                TO.initialFreeEntryPointer,            
-               emptyExportTypeEnv : TC.exportTypeEnv, 
-               emptyExportModuleEnv : SME.exportModuleEnv)
+               emptyExportTypeEnv : STE.exportTypeEnv, 
+               emptyExportModuleEnv : SME.exportModuleEnv,
+               ISet.empty,
+               nil)
               linkageUnits
-
-    fun linkClosed newObjName objNames = 
+              
+    fun linkClosed newObjName linkageUnits = 
         let
-            val _ = E.initializeTypeinfError()
-            val compUnits = 
-                foldl (fn (objName, compUnits) =>
-                          let
-                              val compUnit = unPickle objName LinkageUnitPickler.linkageUnit
-                          in
-                              compUnits @ [compUnit]
-                          end)
-                      nil
-                      objNames
             val (code, 
                  freeGlobalArrayIndex,
                  freeEntryPointer, 
                  accExportTE, 
-                 accExportME) = linkClosedCompUnits compUnits
-            val newCompUnit =
-                {fileName = newObjName,
-                 staticTypeEnv = {importTyConIdSet = ID.Set.empty,
-                                  importTypeEnv = TC.emptyTypeEnv,
-                                  exportTypeEnv =  accExportTE},
-                 staticModuleEnv = {importModuleEnv = SME.emptyImportModuleEnv,
-                                    exportModuleEnv = accExportME},
-                 code = code}
-            val outfile = BinIO.openOut newObjName
-            val outstream =
-                Pickle.makeOutstream
-                    (fn byte => BinIO.output1 (outfile, byte))
-            val _ = P.pickle LinkageUnitPickler.linkageUnit newCompUnit outstream
+                 accExportME,
+                 accGenerativeExnTagSet,
+                 hiddenValIndexList
+                 ) = linkClosedLinkageUnits linkageUnits
         in
-            BinIO.closeOut outfile
+            {fileName = newObjName,
+             staticTypeEnv = {importTyConIdSet = ID.Set.empty,
+                              importTypeEnv = STE.emptyTypeEnv,
+                              exportTypeEnv =  accExportTE,
+                              generativeExnTagSet = accGenerativeExnTagSet},
+             staticModuleEnv = {importModuleEnv = SME.emptyImportModuleEnv,
+                                exportModuleEnv = accExportME},
+             hiddenValIndexList = hiddenValIndexList,
+             code = code}
         end
-            handle sigCheckFail => handleSigCheckFail ()
 
-
-    fun linkUnClosed newObjName objNames = 
+    fun link newObjName objNames =
         let
+            val _ = Control.doLinking := true
             val _ = E.initializeTypeinfError()
-            val compUnits = 
-                foldl (fn (objName, compUnits) =>
+            val _ = LE.initializeLinkError()
+            val _ = checkObjectFileNames (newObjName :: objNames)
+            val linkageUnits = 
+                foldl (fn (objName, linkageUnits) =>
                           let
-                              val compUnit = unPickle objName LinkageUnitPickler.linkageUnit
+                              val linkageUnit = unPickle objName LinkageUnitPickler.linkageUnit
                           in
-                              compUnits @ [compUnit]
+                              linkageUnits @ [linkageUnit]
                           end)
                       nil
                       objNames
-            val (code,
-                 tyConIdSet, 
-                 freeGlobalArrayIndex,
-                 freeEntryPointer, 
-                 accImportTE,
-                 accExportTE, 
-                 accImportME,
-                 accExportME) = linkUnClosedLinkageUnits compUnits
-            val newCompUnit =
-                {fileName = newObjName,
-                 staticTypeEnv = {importTyConIdSet = tyConIdSet,
-                                  importTypeEnv = accImportTE,
-                                  exportTypeEnv =  accExportTE},
-                 staticModuleEnv = {importModuleEnv = accImportME,
-                                    exportModuleEnv = accExportME},
-                 code = code}
+            val newLinkageUnit =
+                if checkClosed linkageUnits 
+                then
+                    let
+                        val _ = print "\n[linking closed objects ......]\n"
+                    in
+                        linkClosed newObjName linkageUnits 
+                    end
+                else
+                    let
+                        val _ = print "\n[linking unclosed objects ......]\n"
+                    in
+                        linkUnClosed newObjName linkageUnits 
+                    end
             val outfile = BinIO.openOut newObjName
             val outstream =
                 Pickle.makeOutstream
                     (fn byte => BinIO.output1 (outfile, byte))
-            val _ = P.pickle LinkageUnitPickler.linkageUnit newCompUnit outstream
-            val _ = BinIO.closeOut outfile
+            val _ = print "\n[******** linked object *************] \n"
+            val _ = print (Control.prettyPrint (format_linkageUnit nil newLinkageUnit))
+            val _ = print "\n[************************************] \n"
+            val _ = P.pickle LinkageUnitPickler.linkageUnit newLinkageUnit outstream
         in
-            ()
+            BinIO.closeOut outfile
         end
-            handle sigCheckFail => handleSigCheckFail ()
+            handle linkExn as LE.IllegalObjectFileSuffix _ =>
+                   (LE.enqueueError(Loc.noloc, linkExn);LE.handleError())
+                 | linkExn as LE.UnboundImportValueIdentifier _ =>
+                   (LE.enqueueError(Loc.noloc, linkExn);LE.handleError())
+                 | linkExn as LE.UnboundImportTypeContructor _ =>
+                   (LE.enqueueError(Loc.noloc, linkExn);LE.handleError())
+                 | linkExn as LE.UnboundImportStructure _ =>
+                   (LE.enqueueError(Loc.noloc, linkExn);LE.handleError())
+                 | linkExn as LE.UnEquivalentImportType _ =>
+                   (LE.enqueueError(Loc.noloc, linkExn);LE.handleError())
+                 | linkExn as IO.Io {name,function,...} => 
+                   (LE.enqueueError(Loc.noloc, LE.IOException {name = name, 
+                                                               function = function});
+                    LE.handleError())
+                 | ExSigCheckFailure => LE.handleError()
+                 | C.Bug message => (print message;raise C.Bug message)
+                 
+                 | _ => raise Control.Bug "uncaught exception"
+                   
 
-    fun useObj (context as {topTypeContext, moduleEnv:StaticModuleEnv.moduleEnv},
+    fun useObj (context as {topTypeContext, moduleEnv:SME.moduleEnv},
                 (linkageUnit : linkageUnit)) =
         let
+            val _ = Control.doLinking := true
             val loc = getLocLinkageUnit linkageUnit
             (* Type Env: *)
             val importTypeEnv = #importTypeEnv (#staticTypeEnv linkageUnit)
@@ -843,103 +1484,150 @@ struct
                 ITC.projectTypeContextInTopTypeContext topTypeContext
             val implEnv = 
                 constructImplEnvWithTypeContext (importTypeEnv, typeContext)
-            val importPureTypeEnv = 
-                stripSizeTagTypeEnv importTypeEnv
-            val _ = 
-                let
-                    val defaultErrorValue = SE.emptyE
-                in
-                    (SC.checkEnvAndSigma 
-                         (implEnv,
-                          ((#importTyConIdSet (#staticTypeEnv linkageUnit)), 
-                           importPureTypeEnv)))
-                    handle exn => 
-                           (handleException (exn,loc); raise sigCheckFail)
-                end
-            val substTyEnv = 
-                FAU.substTyEnvFromEnv (importPureTypeEnv, implEnv)
-            val updatedExportTypeEnv =
-                TCU.substTyConInTypeEnv substTyEnv exportTypeEnv
-            (****************************************************************** 
-             * sizeTag computation:
-             * 1.construct sizeTag map from tyConId -> sizeTag, used for
-             * substitution in the target code.
-             * 2.update exported environment of current linkage unit
+            val importEnv = typeEnvToEnv importTypeEnv
+            val strictEnv = 
+                (SC.checkEnvAndSigma 
+                     (implEnv,
+                      ((#importTyConIdSet (#staticTypeEnv linkageUnit)), 
+                       importEnv)))
+                handle exn => (SU.handleException (exn,loc); raise ExSigCheckFailure)
+            (*****************************************************************
+             * import type instantiation
              *)
-            val sizeTagSubst = 
-                TCU.sizeTagSubstFromEnv (importTypeEnv, TC.EnvToTypeEnv(implEnv))
-            val updatedExportTypeEnv =
-                TCU.substSizeTagTypeEnv sizeTagSubst updatedExportTypeEnv
-
-            local 
-                val newPureExportTypeEnv =
-                    stripSizeTagTypeEnv updatedExportTypeEnv
-            in
-                val newTypeContext =
-                    {funEnv = SEnv.empty,
-                     sigEnv = SEnv.empty,
-                     tyConEnv = #1 newPureExportTypeEnv,
-                     varEnv = #2 newPureExportTypeEnv,
-                     strEnv = #3 newPureExportTypeEnv}
-            end
+            val substTyEnv = 
+                SigUtils.substTyEnvFromEnv (importEnv, implEnv)
+            val substExnTagEnv =
+                substExnTag
+            val exportTypeEnvWithTyConFilled =
+                STE.substTyConInTypeEnv substTyEnv exportTypeEnv
+            (*****************************************************************
+             * type instantiation term and 
+             *)
+            val currentModuleEnv = SME.projectTopModuleEnvToCurrentModuleEnv moduleEnv
+            val (tyInstCode, instDeltaModuleEnv) = 
+                genTyInstantiationCode (implEnv, strictEnv) currentModuleEnv loc
+            (****************************************************************** 
+             * sizeTag computation.
+             *)
+            val sizeTagSubst = sizeTagSubstEnv (importEnv, implEnv)
+            (******************************************************************
+             * exnTag computation:
+             * 1. generativity
+             * 2. import exn
+             *)
+            val exnTagSubst =
+                let
+                    val (generativeExnTagSubst, _) = 
+                        freshExnTagSetSubst (#generativeExnTagSet (#staticTypeEnv linkageUnit))
+                    val importExnSubst =
+                        SU.computeExnTagSubst (importEnv, implEnv)
+                in
+                    IEnv.unionWith (fn _ => raise Control.Bug "duplicate exnTag")
+                                   (generativeExnTagSubst, importExnSubst)
+                end
+            val exportTypeEnvWithExnTagFilled =
+                substExnTagTypeEnv exnTagSubst exportTypeEnvWithTyConFilled
+            (**********************************************************************)
+            val newTypeContext =
+                {funEnv = SEnv.empty,
+                 sigEnv = SEnv.empty,
+                 tyConEnv = #tyConEnv exportTypeEnvWithExnTagFilled,
+                 varEnv = #varEnv exportTypeEnvWithExnTagFilled,
+                 strEnv = #strEnv exportTypeEnvWithExnTagFilled}
             (****************************************************************)
             (* Module Env: *)
             local
-                val staticModuleEnv = #staticModuleEnv linkageUnit
+                val linkageUnitModuleEnv = #staticModuleEnv linkageUnit
             in
                 val (freeGlobalArrayIndex1,
                      freeEntryPointer1, 
-                     indexEnv1, 
                      newExportModuleEnv, 
-                     arrayIndices1) =
+                     indexEnv1, 
+                     arrayHdElemIndices1,
+                     _) =
                     allocateActualIndexInModuleEnv 
                         substTyEnv
-                        (#importModuleEnv staticModuleEnv,
-                         #exportModuleEnv staticModuleEnv) 
-                        (PE.projectPathBasisInTop (#topPathBasis moduleEnv))
-                        (#freeGlobalArrayIndex moduleEnv)
-                        (#freeEntryPointer moduleEnv)
+                        (#importModuleEnv linkageUnitModuleEnv,
+                         #exportModuleEnv linkageUnitModuleEnv) 
+                        (#pathBasis currentModuleEnv)
+                        (#pathBasis instDeltaModuleEnv)
+                        (#freeGlobalArrayIndex instDeltaModuleEnv)
+                        (#freeEntryPointer instDeltaModuleEnv)
             end
 
+            (****************************************************************)
+            (* reallocate global index for inner type instantiated value identifier 
+             *)
+            val (freeGlobalArrayIndex2,
+                 freeEntryPointer2,
+                 indexEnv2,
+                 arrayHdElemIndices2,
+                 _) =
+                allocateActualIndexInTyInstValIndexList 
+                    substTyEnv 
+                    freeGlobalArrayIndex1
+                    freeEntryPointer1 
+                    (#hiddenValIndexList linkageUnit)
+                
+            (****************************************************************)
             (* generate initialization code for top array containing value *)
             val initializationCode =
-                foldl (fn (arrayIndex, iniArrayCodes) =>
+                foldl (fn (arrayHdElemIndex, iniArrayCodes) =>
                           let
                               open TypedLambda
                           in
                               iniArrayCodes  @ 
                               [TLVAL
-                                  {
+                                   {
                                    bindList =
                                    [{
-                                     boundValIdent = Types.VALIDENTWILD StaticEnv.unitty,
+                                     boundValIdent = Types.VALIDENTWILD PT.unitty,
                                      boundExp = 
                                      TLINITARRAY
                                          { 
-                                          arrayIndex = TO.getPageArrayIndex(arrayIndex), 
+                                          arrayIndex = TO.getPageArrayIndex(arrayHdElemIndex), 
                                           size = TO.getPageSize(),
-                                          elemTy = TO.pageKindToType(TO.getPageKind(arrayIndex)), 
-                                          loc = Loc.noloc
+                                          elemTy = TO.pageKindToType(TO.getPageKind(arrayHdElemIndex)), 
+                                          loc = loc
                                           }
                                          }],
-                                   loc = Loc.noloc
+                                   loc = loc
                                    }]
                           end)
                       nil
-                      arrayIndices1
+                      (arrayHdElemIndices1 @ arrayHdElemIndices2)
 
             (****************************************************************)
-            val newCode1 = substTyTldecs substTyEnv (#code linkageUnit)
-            val newCode2 =  substIndexTldecs indexEnv1  newCode1
+            (* update code *)
+            val updatedIndexTldecs = 
+                substIndexTldecs (IndexEnv.unionWith
+                                      (fn (x,y) => raise exDuplicateElem)
+                                      (indexEnv1, indexEnv2))
+                                 (#code linkageUnit)
+            val newCode = 
+                substTldecs ({substTyEnv = substTyEnv,
+                              exnTagSubst = exnTagSubst,
+                              tyConIdSubst = ID.Map.empty,
+                              indexSubst = IndexEnv.empty})
+                            (tyInstCode @ updatedIndexTldecs)
         in
             (newTypeContext,
              {
-              freeGlobalArrayIndex = freeGlobalArrayIndex1,
-              freeEntryPointer = freeEntryPointer1,
+              freeGlobalArrayIndex = freeGlobalArrayIndex2,
+              freeEntryPointer = freeEntryPointer2,
               pathBasis = newExportModuleEnv}:StaticModuleEnv.deltaModuleEnv,
-             initializationCode @ newCode2)
+             initializationCode @ newCode)
         end 
-            handle sigCheckFail => raise UE.UserErrors (E.getErrorsAndWarnings ())
-                                         
+            handle ExSigCheckFailure => 
+                   raise UE.UserErrors (E.getErrorsAndWarnings () @ LE.getErrorsAndWarnings ())
+                 | TCU.ExBoxedKindCheckFailure {tyConName, requiredKind, objectKind} =>
+                   (E.enqueueError(getLocLinkageUnit linkageUnit, 
+                                   E.KindCheckFailure
+                                       {tyConName = tyConName,
+                                        requiredKind = requiredKind,
+                                        objectKind = objectKind});
+                    raise UE.UserErrors (E.getErrorsAndWarnings () 
+                                         @ LE.getErrorsAndWarnings ()))
+                 | C.Bug message => raise C.Bug message
   end (* end local *)
 end (* end structure *)

@@ -1,6 +1,7 @@
 TAG_ref_ref,0
 TAG_bool_true,1
 TAG_bool_false,0
+TAG_pointer_null,0
 TAG_list_nil,0
 TAG_list_cons,1
 TAG_exn_Bind,0
@@ -8,7 +9,11 @@ TAG_exn_Match,1
 TAG_exn_MatchCompBug,2
 TAG_exn_Formatter,3
 TAG_exn_SysErr,4
+TAG_exn_Fail,5
 TAG_option_NONE,0
 TAG_option_SOME,1
 OS_Process_success,0
 OS_Process_failure,1
+FFI_CC_DEFAULT,0
+FFI_CC_CDECL,1
+FFI_CC_STDCALL,2

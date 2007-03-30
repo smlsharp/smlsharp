@@ -1,7 +1,14 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
         ../../systemdef/sources.cm
         ../../control/sources.cm
+#if defined(NEW_CM)
+        $/smlformatlib.cm
+#else
         ../../../smlformatlib.cm
+#endif
         ../../../primitives/compiler/sources.cm
         ../../absyn/sources.cm
         ../../name/sources.cm

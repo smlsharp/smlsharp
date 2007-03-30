@@ -2,7 +2,7 @@
  * (imperative version).
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TYPE_INFERENCER.sig,v 1.16 2006/03/02 12:53:25 bochao Exp $
+ * @version $Id: TYPE_INFERENCER.sig,v 1.18 2006/07/12 06:30:12 bochao Exp $
  *)
 signature TYPE_INFERENCER =
 sig
@@ -18,10 +18,21 @@ sig
   val inferLinkageUnit :
       PatternCalcWithTvars.pttopdec list 
       -> (
-          TypeContext.staticTypeEnv *
+          StaticTypeEnv.staticTypeEnv *
           TypedCalc.tptopdecl list *
           UserError.errorInfo list
          )
 
+  val inferInterface :
+      StaticTypeEnv.typeEnv
+      -> 
+      PatternCalcWithTvars.pttopdec list 
+      -> 
+      ((Types.tyConIdSet * StaticTypeEnv.typeEnv) * UserError.errorInfo list)
+
+  val exportSigCheck : 
+      (StaticTypeEnv.exportTypeEnv * (Types.tyConIdSet * StaticTypeEnv.typeEnv) * Loc.loc)
+      -> StaticTypeEnv.exportTypeEnv * UserError.errorInfo list
+      
 end
 

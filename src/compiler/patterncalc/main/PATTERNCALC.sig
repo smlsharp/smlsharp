@@ -5,7 +5,7 @@
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: PATTERNCALC.sig,v 1.5 2006/03/02 12:48:03 bochao Exp $
+ * @version $Id: PATTERNCALC.sig,v 1.12 2007/02/28 17:57:20 katsu Exp $
  *)
 signature PATTERNCALC = sig
 
@@ -14,6 +14,7 @@ signature PATTERNCALC = sig
  datatype constant = datatype Absyn.constant
  type tvar
 
+ type callingConvention
  type caseKind
 
  type longid
@@ -39,7 +40,14 @@ signature PATTERNCALC = sig
    | PLSELECT of string * plexp * loc
    | PLSEQ of plexp list * loc
    | PLCAST of plexp * loc
+   | PLFFIIMPORT of plexp * ty * loc
+   | PLFFIEXPORT of plexp * ty * loc
+   | PLFFIAPPLY of callingConvention * plexp * ffiArg list * ty * loc
 
+ and ffiArg =
+     PLFFIARG of plexp * ty
+   | PLFFIARGSIZEOF of ty * plexp option
+  
  and pdecl = 
      PDVAL of tvar list * (plpat * plexp ) list * loc 
    | PDDECFUN of tvar list * (plpat * (plpat list * plexp) list) list * loc 
@@ -61,7 +69,6 @@ signature PATTERNCALC = sig
    | PDINFIXDEC of int * string list * loc
    | PDINFIXRDEC of int * string list * loc
    | PDNONFIXDEC of string list * loc
-   | PDFFIVAL of {name:string, funExp:plexp, libExp:plexp, argTyList:ty list, resultTy:ty, loc:loc}
    | PDEMPTY 
 
  and plpat =
@@ -72,6 +79,8 @@ signature PATTERNCALC = sig
    | PLPATRECORD of bool * (string * plpat) list * loc
    | PLPATLAYERED of string * ty option * plpat * loc
    | PLPATTYPED of plpat * ty * loc
+   | PLPATORPAT of plpat * plpat * loc
+
  and plstrdec =
      PLCOREDEC of pdecl * loc
    | PLSTRUCTBIND of (string * plstrexp) list * loc
@@ -92,9 +101,9 @@ signature PATTERNCALC = sig
 
  and plspec =
      PLSPECVAL of (string * ty) list * loc (* value *)
-   | PLSPECTYPE of (tvar list * string) list * loc (* type *)
+   | PLSPECTYPE of (tvar list * string * Absyn.specKind) list * loc (* type *)
    | PLSPECTYPEEQUATION of (tvar list * string * ty) * loc
-   | PLSPECEQTYPE of (tvar list * string) list * loc (* eqtype *)
+   | PLSPECEQTYPE of (tvar list * string * Absyn.specKind) list * loc (* eqtype *)
    | PLSPECDATATYPE of (tvar list * string * (string * ty option) list ) list * loc (* datatype*)
    | PLSPECREPLIC of string * longid * loc (* replication *)
    | PLSPECEXCEPTION of (string * ty option) list * loc (* exception *)
@@ -111,6 +120,7 @@ signature PATTERNCALC = sig
    | PLTOPDECSIG of ( string * plsigexp ) list * loc 
    | PLTOPDECFUN of  (string * string * plsigexp  * plstrexp * loc) list * loc 
    | PLTOPDECIMPORT of plspec * loc 
+   | PLTOPDECEXPORT of plspec * loc 
 
   val getLeftPosExp :  plexp  -> Loc.pos
   val getRightPosExp :  plexp  -> Loc.pos 

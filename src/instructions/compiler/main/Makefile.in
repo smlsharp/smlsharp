@@ -6,4 +6,4 @@ top_builddir = @top_builddir@
 include @top_builddir@commonrule
 
 clean:
-	rm -rf $(srcdir)/CM
+	rm -rf $(srcdir)/CM $(srcdir)/.cm

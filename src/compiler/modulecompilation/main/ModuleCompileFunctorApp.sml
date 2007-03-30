@@ -4,7 +4,7 @@
  * 
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompileFunctorApp.sml,v 1.38 2006/02/27 06:23:01 bochao Exp $
+ * @version $Id: ModuleCompileFunctorApp.sml,v 1.46 2007/02/28 15:31:25 katsu Exp $
  *)
 structure ModuleCompileFunctorApp  = 
 struct
@@ -13,12 +13,12 @@ local
   structure T  = Types
   structure P = Path
   structure TO = TopObject
-  structure TU = TypesUtils
-  structure SE = StaticEnv
+  structure PT = PredefinedTypes
   structure FAU = FunctorApplyUtils
   structure TFCU = TypedFlatCalcUtils
   structure PE =  PathEnv 
   structure MCU = ModuleCompileUtils
+  datatype valIdent = datatype Types.valIdent
   open TypedCalc TypedFlatCalc 
 
 in
@@ -68,13 +68,13 @@ in
                                pathHoleIdEnv pathIdEnv substTyEnv exnTagSubst tfpexp
                          val (newValId, pathIdEnv1) = 
                              case valId of
-                               VALDECIDENT (varIdInfo as {id = oldId, displayName, ty}) => 
+                               VALIDENT (varIdInfo as {id = oldId, displayName, ty}) => 
                                let
-                                 val newId = SE.newVarId()
+                                 val newId = T.newVarId()
                                  val newTy = FAU.instantiateTy substTyEnv ty
                                in
                                  (
-                                  VALDECIDENT { 
+                                  VALIDENT { 
                                                id = newId,
                                                displayName = displayName,
                                                ty = newTy
@@ -82,11 +82,11 @@ in
                                   ID.Map.singleton (oldId,(displayName, newId))
                                   )
                                end
-                             | VALDECIDENTWILD ty => 
+                             | VALIDENTWILD ty => 
                                let
                                  val newTy = FAU.instantiateTy substTyEnv ty
                                in
-                                 (VALDECIDENTWILD newTy, PE.emptyPathIdEnv)
+                                 (VALIDENTWILD newTy, PE.emptyPathIdEnv)
                                end
                        in
                          (
@@ -106,7 +106,7 @@ in
              foldr (
                     fn ((varIdInfo as {id = oldId,displayName,ty}, _, _), newPathIdEnv) => 
                        let
-                         val newId = SE.newVarId()
+                         val newId = T.newVarId()
                        in
                          ID.Map.insert(newPathIdEnv, oldId,(displayName, newId))
                        end
@@ -147,7 +147,7 @@ in
              foldr (
                     fn ((varIdentInfo as {id = oldId, displayName, ty}, _, _), newPathIdEnv) => 
                        let
-                         val newId = SE.newVarId()
+                         val newId = T.newVarId()
                        in
                          ID.Map.insert(newPathIdEnv, oldId, (displayName, newId))
                        end
@@ -238,19 +238,37 @@ in
                             exnTagSubst 
                             tfpexp =
        case tfpexp of
-         TFPFOREIGNAPPLY {funExp=foreignFunInfo, instTyList=tyList, 
-                          argExp=tpexp, argTyList=argTys, loc=loc} => 
+         TFPFOREIGNAPPLY {funExp=foreignFunInfo, funTy, instTyList=tyList, 
+                          argExpList=tfpexpList, argTyList=argTys, convention, loc} => 
          let
-           val newTfpexp = 
-               substituteHoleTfpexp 
-                 pathHoleIdEnv pathIdEnv substTyEnv exnTagSubst tfpexp
+           val newForeignFunInfo =
+               substituteHoleTfpexp
+                 pathHoleIdEnv pathIdEnv substTyEnv exnTagSubst foreignFunInfo
+           val newTfpexpList =
+               substituteHoleTfpexpList
+                 pathHoleIdEnv pathIdEnv substTyEnv exnTagSubst tfpexpList
          in
-           TFPFOREIGNAPPLY {funExp=foreignFunInfo, 
+           TFPFOREIGNAPPLY {funExp=newForeignFunInfo, 
+                            funTy=funTy,
                             instTyList=tyList, 
-                            argExp=newTfpexp, 
-                            argTyList=argTys, 
+                            argExpList=newTfpexpList, 
+                            argTyList=argTys,
+                            convention=convention,
                             loc=loc}
          end
+       | TFPEXPORTCALLBACK {funExp, instTyList, argTyList, resultTy, loc} =>
+         let
+           val tfpFunExp =
+               substituteHoleTfpexp
+                 pathHoleIdEnv pathIdEnv substTyEnv exnTagSubst funExp
+         in
+           TFPEXPORTCALLBACK {funExp=funExp,
+                              instTyList=instTyList, 
+                              argTyList=argTyList,
+                              resultTy=resultTy,
+                              loc=loc}
+         end
+       | TFPSIZEOF _ => tfpexp
        | TFPCONSTANT _ => tfpexp
        | TFPVAR (varIdInfo as {id,displayName,ty}, loc) => 
          let
@@ -345,7 +363,7 @@ in
                        loc=loc} =>
          let 
            val newTag = 
-               if (#id tyCon) = SE.exnTyConid then
+               if ID.eq(#id tyCon, PT.exnTyConid) then
                  case IEnv.find(exnTagSubst,tag) of
                    NONE => tag
                  | SOME newTag => newTag
@@ -396,7 +414,7 @@ in
                           let
                             val newVar as {id = newId, ...} = 
                                 { 
-                                 id = SE.newVarId(),
+                                 id = T.newVarId(),
                                  displayName = displayName,
                                  ty = FAU.instantiateTy substTyEnv ty
                                  }
@@ -505,7 +523,7 @@ in
                  pathHoleIdEnv pathIdEnv substTyEnv exnTagSubst tfpexp1
            val newVar as {id = newId, ...} = 
                { 
-                id = SE.newVarId(),
+                id = T.newVarId(),
                 displayName = displayName,
                 ty = FAU.instantiateTy substTyEnv ty
                 }
@@ -573,7 +591,7 @@ in
                map (fn {id, displayName, ty} =>
                        (id,
                         { 
-                         id = SE.newVarId(),
+                         id = T.newVarId(),
                          displayName = displayName,
                          ty = FAU.instantiateTy substTyEnv ty
                          })
@@ -609,7 +627,7 @@ in
              map (fn {id, displayName, ty} =>
                   (id,
                    { 
-                    id = SE.newVarId(),
+                    id = T.newVarId(),
                     displayName = displayName,
                     ty = FAU.instantiateTy substTyEnv ty
                     })
@@ -678,7 +696,6 @@ in
          in           
            TFPSEQ {expList=newTfpexps, expTyList=map (FAU.instantiateTy substTyEnv) tys, loc=loc}
          end
-       | TFPFFIVAL _  => tfpexp
        | TFPCAST (tfpexp,ty,loc) => 
          let
            val newTfpexp = 
@@ -712,7 +729,7 @@ in
        | TFPPATVAR ({id,displayName,ty},loc) =>
          let
            val newTy = FAU.instantiateTy substTyEnv ty
-           val newId = SE.newVarId()
+           val newId = T.newVarId()
          in
            (
             TFPPATVAR({id = newId,
@@ -734,7 +751,7 @@ in
                           } =>
          let
            val newTag = 
-               if (#id tyCon) = SE.exnTyConid then 
+               if ID.eq(#id tyCon, PT.exnTyConid) then 
                  case IEnv.find(exnTagSubst, tag) of
                    NONE => tag
                  | SOME newTag => newTag

@@ -1,0 +1,232 @@
+(* basis.cm
+ *
+ *   The Standard ML Basis Library.
+ *
+ * Copyright (c) 2004 by The Fellowship of SML/NJ
+ *)
+Library
+	(* Basis *)
+	signature Orig_ARRAY
+	signature ARRAY_SLICE
+	signature ARRAY2
+	signature Orig_VECTOR
+	signature VECTOR_SLICE
+	signature GENERAL
+	signature Orig_INTEGER
+	signature INT_INF
+	signature BOOL
+	signature CHAR
+	signature STRING
+#if SMLNJ_MINOR_VERSION >= 57
+	signature Orig_SUBSTRING
+#else
+	signature SUBSTRING
+#endif
+	signature STRING_CVT
+	signature LIST
+	signature Orig_MONO_ARRAY
+	signature Orig_MONO_VECTOR
+	signature MONO_ARRAY_SLICE
+	signature MONO_ARRAY2
+	signature MONO_VECTOR
+	signature MONO_VECTOR_SLICE
+	signature Orig_BYTE
+	signature COMMAND_LINE
+	signature DATE
+	signature IEEE_REAL
+	signature OPTION
+	signature LIST_PAIR
+	signature Orig_REAL
+	signature TIME
+	signature TIMER
+	signature Orig_WORD
+	signature MATH
+	signature Orig_OS
+	signature Orig_OS_FILE_SYS
+	signature OS_IO
+	signature OS_PATH
+	signature OS_PROCESS
+	signature BIN_IO
+	signature IMPERATIVE_IO
+	signature IO
+	signature PRIM_IO
+	signature STREAM_IO
+	signature Orig_TEXT_IO
+	signature TEXT_STREAM_IO
+	signature PACK_WORD
+	signature PACK_REAL
+	signature TEXT
+	signature SML90
+	signature BIT_FLAGS
+
+	(* SML/NJ specific *)
+	signature SIGNALS
+
+	signature CLEAN_UP
+	signature CONT
+	signature INTERVAL_TIMER
+	signature INTERNALS
+	signature GC
+	signature SYS_INFO
+	signature WEAK
+	signature SUSP
+	signature SML_OF_NJ
+
+	signature UNSAFE_OBJECT
+	signature POLL
+	signature UNSAFE_ARRAY
+	signature UNSAFE_VECTOR
+	signature UNSAFE_MONO_ARRAY
+	signature UNSAFE_MONO_VECTOR
+	signature UNSAFE
+
+	(* Basis *)
+	structure Orig_Vector
+	structure VectorSlice
+	structure General
+	structure StringCvt
+#if SMLNJ_MINOR_VERSION >= 57
+	structure Orig_Substring
+#else
+	structure Substring
+#endif
+	structure String
+	structure Char
+	structure Orig_Byte
+	structure List
+	structure ListPair
+	structure Orig_CharArray
+	structure CharArraySlice
+	structure CharVector
+	structure CharVectorSlice
+	structure Orig_Array
+	structure ArraySlice
+	structure Array2
+	structure IEEEReal
+	structure Orig_Int
+	structure Orig_Int31
+	structure Orig_Int32
+	structure Int64
+	structure IntInf
+	structure Orig_LargeInt
+	structure FixedInt
+	structure LargeReal
+	structure LargeWord
+	structure Math
+	structure Position
+	structure Orig_Real
+	structure Orig_Real64
+	structure Orig_Word
+	structure Orig_Word31
+	structure Orig_Word32
+	structure Word64
+	structure SysWord
+	structure Bool
+	structure Orig_Word8
+	structure Orig_Word8Array
+	structure Word8ArraySlice
+	structure Orig_Word8Vector
+	structure Word8VectorSlice
+	structure CommandLine
+	structure Orig_Time
+	structure Orig_Timer
+	structure Orig_OS
+	structure BinIO
+	structure BinPrimIO
+	structure IO
+	structure Option
+	structure Pack16Big
+	structure Pack16Little
+	structure Pack32Big
+	structure Pack32Little
+	structure Orig_TextIO
+	structure TextPrimIO
+	structure Date
+	structure Orig_RealArray
+	structure RealArraySlice
+	structure RealVector
+	structure RealVectorSlice
+	structure Orig_Real64Array
+	structure Real64ArraySlice
+	structure Real64Vector
+	structure Real64VectorSlice
+	structure Text
+	structure SML90
+
+	functor PrimIO
+
+	(* SML/NJ specific *)
+	structure Signals
+	structure Unsafe
+	structure SMLofNJ
+	structure Lazy
+
+#if defined(OPSYS_UNIX) orelse defined(OPSYS_WIN32)
+	(* Sockets (common part) *)
+	signature NET_HOST_DB
+	signature NET_PROT_DB
+	signature NET_SERV_DB
+
+	signature SYNCHRONOUS_SOCKET
+	signature Orig_SOCKET
+	signature INET_SOCK
+	signature GENERIC_SOCK
+
+	structure GenericSock
+	structure NetHostDB
+	structure NetProtDB
+	structure NetServDB
+	structure Orig_Socket
+	structure INetSock
+#endif
+
+#if defined(OPSYS_UNIX)
+	(* Posix *)
+	signature POSIX_ERROR
+	signature POSIX_SIGNAL
+	signature POSIX_PROCESS
+	signature POSIX_PROC_ENV
+	signature POSIX_FILE_SYS
+	signature Orig_POSIX_IO
+	signature POSIX_SYS_DB
+	signature POSIX_TTY
+	signature Orig_POSIX
+	structure Orig_Posix
+
+	(* Unix *)
+	signature UNIX_SIGNALS
+	structure UnixSignals
+	signature UNIX
+	structure Unix
+
+	(* Sockets *)
+	signature NET_DB
+	signature UNIX_SOCK
+
+	structure NetDB
+	structure UnixSock
+
+#elif defined (OPSYS_WIN32)
+
+	signature WIN32_GENERAL
+	signature WIN32_PROCESS
+	signature WIN32_FILESYS
+	signature WIN32_IO
+	signature WIN32
+
+	structure Win32
+#endif
+
+is
+	$/basis.cm
+	basis_orig.sml
+#if SMLNJ_MINOR_VERSION >= 57
+	pack_word_orig.sml
+#endif
+#if defined(OPSYS_UNIX) orelse defined(OPSYS_WIN32)
+	socket_orig.sml
+#endif
+#if defined(OPSYS_UNIX)
+	posix_orig.sml
+#endif
+

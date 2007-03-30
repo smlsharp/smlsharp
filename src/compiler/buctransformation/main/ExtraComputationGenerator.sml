@@ -2,7 +2,7 @@
  * ExtraComputationGenerator.
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: ExtraComputationGenerator.sml,v 1.5 2006/02/28 16:11:00 kiyoshiy Exp $
+ * @version $Id: ExtraComputationGenerator.sml,v 1.7 2007/02/11 16:39:50 kiyoshiy Exp $
  *)
 
 structure ExtraComputationGenerator = struct
@@ -10,6 +10,7 @@ structure ExtraComputationGenerator = struct
   structure BC = BUCCalc
   structure BCC = BUCCompileContext 
   structure BU = BUCUtils
+  structure CT = ConstantTerm
   structure T = Types
   structure AO = ArithmeticOptimizer
   structure VO = VariableOptimizer
@@ -123,7 +124,7 @@ structure ExtraComputationGenerator = struct
 
   fun convertExp (compileContext,varMap,loc) e =
       case e of
-        AO.CONST c => BC.BUCCONSTANT{value = T.WORD c, loc = loc}
+        AO.CONST c => BC.BUCCONSTANT{value = CT.WORD c, loc = loc}
       | AO.VAR v => varInfoToExp(lookup(varMap,v),loc)
       | AO.SIZE tid => varInfoToExp(BCC.lookupSize(compileContext,tid),loc)
       | AO.TAG tid => varInfoToExp(BCC.lookupTag(compileContext,tid),loc)
@@ -200,7 +201,7 @@ structure ExtraComputationGenerator = struct
                     let
                       val varInfo' = VO.lookup(varSet,varInfo)
                     in
-                      if (#id varInfo) = (#id varInfo')
+                      if ID.eq(#id varInfo,#id varInfo')
                       then L
                       else (BC.VALIDVAR varInfo,BC.BUCVAR {varInfo = varInfo',loc = loc})::L
                     end

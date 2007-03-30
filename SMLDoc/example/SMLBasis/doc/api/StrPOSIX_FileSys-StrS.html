@@ -1,0 +1,261 @@
+<HTML>
+<HEAD>
+<TITLE>POSIX_FileSys.S</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>POSIX_FileSys.S</H2>
+<DL>
+<DT> <B>Enclosing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="StrPOSIX_FileSys.html">POSIX_FileSys</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html">S</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Typemode">mode</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Typeflags">flags</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#ConstrMODE">MODE</A>&nbsp;of&nbsp;<A HREF="StrPOSIX_FileSys.html#Typeword">word</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#ValfromWord">fromWord</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#ValtoWord">toWord</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valflags">flags</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#ValanySet">anySet</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#ValallSet">allSet</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valirwxu">irwxu</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valirusr">irusr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valiwusr">iwusr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valixusr">ixusr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valirwxg">irwxg</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valirgrp">irgrp</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valiwgrp">iwgrp</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valixgrp">ixgrp</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valirwxo">irwxo</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valiroth">iroth</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valiwoth">iwoth</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valixoth">ixoth</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valisuid">isuid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Valisgid">isgid</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typemode"><!-- --></A>
+<H3>mode</H3>
+<P>
+<CODE>type&nbsp;mode&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Typeflags">flags</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeflags"><!-- --></A>
+<H3>flags</H3>
+<P>
+<CODE>datatype&nbsp;flags&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#ConstrMODE">MODE</A>&nbsp;of&nbsp;<A HREF="StrPOSIX_FileSys.html#Typeword">word</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrMODE"><!-- --></A>
+<H3>MODE</H3>
+<P>
+<CODE>constructor&nbsp;MODE&nbsp;:&nbsp;<A HREF="StrPOSIX_FileSys.html#Typeword">word</A>&nbsp;->&nbsp;<A HREF="StrPOSIX_FileSys-StrS.html#Typeflags">flags</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValfromWord"><!-- --></A>
+<H3>fromWord</H3>
+<P>
+<CODE>val&nbsp;fromWord</CODE>
+
+<HR>
+<A NAME="ValtoWord"><!-- --></A>
+<H3>toWord</H3>
+<P>
+<CODE>val&nbsp;toWord</CODE>
+
+<HR>
+<A NAME="Valflags"><!-- --></A>
+<H3>flags</H3>
+<P>
+<CODE>val&nbsp;flags</CODE>
+
+<HR>
+<A NAME="ValanySet"><!-- --></A>
+<H3>anySet</H3>
+<P>
+<CODE>val&nbsp;anySet</CODE>
+
+<HR>
+<A NAME="ValallSet"><!-- --></A>
+<H3>allSet</H3>
+<P>
+<CODE>val&nbsp;allSet</CODE>
+
+<HR>
+<A NAME="Valirwxu"><!-- --></A>
+<H3>irwxu</H3>
+<P>
+<CODE>val&nbsp;irwxu</CODE>
+
+<HR>
+<A NAME="Valirusr"><!-- --></A>
+<H3>irusr</H3>
+<P>
+<CODE>val&nbsp;irusr</CODE>
+
+<HR>
+<A NAME="Valiwusr"><!-- --></A>
+<H3>iwusr</H3>
+<P>
+<CODE>val&nbsp;iwusr</CODE>
+
+<HR>
+<A NAME="Valixusr"><!-- --></A>
+<H3>ixusr</H3>
+<P>
+<CODE>val&nbsp;ixusr</CODE>
+
+<HR>
+<A NAME="Valirwxg"><!-- --></A>
+<H3>irwxg</H3>
+<P>
+<CODE>val&nbsp;irwxg</CODE>
+
+<HR>
+<A NAME="Valirgrp"><!-- --></A>
+<H3>irgrp</H3>
+<P>
+<CODE>val&nbsp;irgrp</CODE>
+
+<HR>
+<A NAME="Valiwgrp"><!-- --></A>
+<H3>iwgrp</H3>
+<P>
+<CODE>val&nbsp;iwgrp</CODE>
+
+<HR>
+<A NAME="Valixgrp"><!-- --></A>
+<H3>ixgrp</H3>
+<P>
+<CODE>val&nbsp;ixgrp</CODE>
+
+<HR>
+<A NAME="Valirwxo"><!-- --></A>
+<H3>irwxo</H3>
+<P>
+<CODE>val&nbsp;irwxo</CODE>
+
+<HR>
+<A NAME="Valiroth"><!-- --></A>
+<H3>iroth</H3>
+<P>
+<CODE>val&nbsp;iroth</CODE>
+
+<HR>
+<A NAME="Valiwoth"><!-- --></A>
+<H3>iwoth</H3>
+<P>
+<CODE>val&nbsp;iwoth</CODE>
+
+<HR>
+<A NAME="Valixoth"><!-- --></A>
+<H3>ixoth</H3>
+<P>
+<CODE>val&nbsp;ixoth</CODE>
+
+<HR>
+<A NAME="Valisuid"><!-- --></A>
+<H3>isuid</H3>
+<P>
+<CODE>val&nbsp;isuid</CODE>
+
+<HR>
+<A NAME="Valisgid"><!-- --></A>
+<H3>isgid</H3>
+<P>
+<CODE>val&nbsp;isgid</CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

@@ -5,7 +5,7 @@
  *  Copyright (c) 2006, Tohoku University.
  * </p>
  * @author Atsushi Ohori 
- * @version $Id: ABSYN.sig,v 1.4 2006/03/02 12:42:40 bochao Exp $
+ * @version $Id: ABSYN.sig,v 1.14 2007/02/28 17:57:20 katsu Exp $
  *)
 signature ABSYN = 
 sig
@@ -19,6 +19,12 @@ sig
   | STRING of string * Loc.loc
   | REAL of string * Loc.loc
   | CHAR of char * Loc.loc
+  | UNITCONST of Loc.loc
+
+  datatype callingConvention =
+           CC_DEFAULT
+         | CC_CDECL
+         | CC_STDCALL
 
   datatype ty = 
     TYID of tvar * Loc.loc
@@ -26,6 +32,7 @@ sig
   | TYCONSTRUCT of ty list * string list * Loc.loc
   | TYTUPLE of ty list * Loc.loc
   | TYFUN of ty * ty * Loc.loc
+  | TYFFI of callingConvention * ty list * ty * Loc.loc
 
   datatype pat = 
     PATWILD of Loc.loc
@@ -37,6 +44,7 @@ sig
   | PATAPPLY of pat list * Loc.loc
   | PATTYPED of pat * ty * Loc.loc
   | PATLAYERED of pat * pat * Loc.loc
+  | PATORPAT of pat * pat * Loc.loc
 
   and patrow =
       PATROWPAT of string * pat * Loc.loc
@@ -48,7 +56,7 @@ sig
 
   type typbind = tvar list * string * ty
   type datbind = tvar list * string * (bool * string * ty option) list
-
+  datatype specKind = ATOM | DOUBLE | BOXED | GENERIC
   datatype exp = 
       EXPCONSTANT of constant * Loc.loc
     | EXPID of  longid * Loc.loc
@@ -70,8 +78,13 @@ sig
     | EXPCASE of exp * (pat * exp) list * Loc.loc
     | EXPFN of (pat * exp) list * Loc.loc
     | EXPLET of dec list * exp list * Loc.loc
-    | EXPFFIVAL of {funExp: exp, libExp:exp, argTyList:ty list, resultTy: ty, loc:Loc.loc}
     | EXPCAST of exp * Loc.loc
+    | EXPFFIIMPORT of exp * ty * Loc.loc
+    | EXPFFIEXPORT of exp * ty * Loc.loc
+    | EXPFFIAPPLY of callingConvention * exp * ffiArg list * ty * Loc.loc
+  and ffiArg =
+      FFIARG of exp * ty
+    | FFIARGSIZEOF of ty * exp option
   and dec =
       DECVAL of tvar list * (pat * exp) list * Loc.loc
     | DECREC of tvar list * (pat * exp) list * Loc.loc
@@ -108,9 +121,9 @@ sig
     | SIGWHERE of sigexp * (tvar list * longTyCon * ty) list * Loc.loc 
   and spec = 
       SPECVAL of (string * ty) list * Loc.loc 
-    | SPECTYPE of (tvar list * string) list * Loc.loc 
+    | SPECTYPE of (tvar list * string * specKind) list * Loc.loc 
     | SPECDERIVEDTYPE of (tvar list * string * ty) list  * Loc.loc
-    | SPECEQTYPE of (tvar list * string) list * Loc.loc 
+    | SPECEQTYPE of (tvar list * string * specKind) list * Loc.loc 
     | SPECDATATYPE of
       (tvar list * string * (string * ty option) list ) list * Loc.loc 
     | SPECREPLIC of string * longTyCon * Loc.loc 
@@ -134,6 +147,7 @@ sig
     | TOPDECSIG of ( string * sigexp ) list * Loc.loc 
     | TOPDECFUN of funbind list * Loc.loc (* functor binding*)
     | TOPDECIMPORT of spec * Loc.loc 
+    | TOPDECEXPORT of spec * Loc.loc
   datatype parseresult = 
       TOPDECS of topdec list * Loc.loc
     | USE of string * Loc.loc
@@ -145,6 +159,7 @@ sig
   val longidToString : longid -> string
   val getLastIdOfLongid : longid -> string
   val getParentIdsOfLongid : longid -> longid
+  val format_callingConvention : callingConvention -> SMLFormat.FormatExpression.expression list
   val format_constant : constant -> SMLFormat.FormatExpression.expression list
   val format_dec : dec -> SMLFormat.FormatExpression.expression list
   val format_topdec : topdec -> SMLFormat.FormatExpression.expression list
@@ -155,6 +170,6 @@ sig
   val format_patrow : patrow -> SMLFormat.FormatExpression.expression list
   val format_tvar : tvar -> SMLFormat.FormatExpression.expression list
   val format_ty : ty -> SMLFormat.FormatExpression.expression list
-
+  val format_specKind : specKind -> SMLFormat.FormatExpression.expression list
   val replaceLoc : exp * Loc.loc -> exp
 end

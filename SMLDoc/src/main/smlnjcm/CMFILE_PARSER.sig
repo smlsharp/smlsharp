@@ -1,0 +1,18 @@
+(**
+ * parser of SML/NJ CM description file.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: CMFILE_PARSER.sig,v 1.2 2004/10/20 03:26:07 kiyoshiy Exp $
+ *)
+signature CMFILE_PARSER =
+sig
+
+  (***************************************************************************)
+
+  val isCMFileName : string -> bool
+
+  val readCMFile
+      : DocumentGenerationParameter.parameter -> string -> string list
+
+  (***************************************************************************)
+
+end

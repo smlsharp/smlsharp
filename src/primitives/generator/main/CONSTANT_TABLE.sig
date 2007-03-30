@@ -1,25 +1,10 @@
 (**
  *
  * @author YAMATODANI Kiyoshi
- * @version $Id: CONSTANT_TABLE.sig,v 1.1 2005/08/10 07:38:53 kiyoshiy Exp $
+ * @version $Id: CONSTANT_TABLE.sig,v 1.2 2007/01/23 03:25:16 kiyoshiy Exp $
  *)
 signature CONSTANT_TABLE =
 sig
-
-  (***************************************************************************)
-
-  datatype constant =
-           Int of int
-         | Word of word
-         | String of string
-         | Char of char
-         | Real of real
-
-  type spec =
-       {
-         bindName : string,
-         constant : constant
-       }
 
   (***************************************************************************)
 
@@ -27,10 +12,6 @@ sig
 
   (***************************************************************************)
 
-  val input : string -> spec list
-  val constantsSML : spec list -> string
-  val constantsC  : spec list -> string
-  val formatTemplate : spec list * string * string -> unit
   val generateFiles : string -> string list -> unit
 
   (***************************************************************************)

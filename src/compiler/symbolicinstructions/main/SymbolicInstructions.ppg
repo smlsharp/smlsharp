@@ -9,7 +9,7 @@
  * </p>
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SymbolicInstructions.ppg,v 1.42 2006/02/28 16:11:06 kiyoshiy Exp $
+ * @version $Id: SymbolicInstructions.ppg,v 1.49 2007/02/22 08:13:41 katsu Exp $
  *)
 structure SymbolicInstructions =
 struct
@@ -63,6 +63,11 @@ struct
            VARIANT of varInfo
 
   (*%
+   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+   *)
+  type callingConvention = Absyn.callingConvention
+        
+  (*%
    * @formatter(UInt8) BasicTypeFormatters.format_UInt8
    * @formatter(UInt16) BasicTypeFormatters.format_UInt16
    * @formatter(UInt24) BasicTypeFormatters.format_UInt24
@@ -93,6 +98,11 @@ struct
             * destination + "=" + "LoadString" + string
             *)
            LoadString of {string : address, destination : entry}
+         | (*%
+            * @format({value, destination})
+            * destination + "=" + "LoadFloat" + value
+            *)
+           LoadFloat of {value : string, destination : entry}
          | (*%
             * @format({value, destination})
             * destination + "=" + "LoadReal" + value
@@ -244,11 +254,15 @@ struct
              newValueEntry : entry
            }
 	 | (*%
-            * @format({blockEntry, destination})
-            * destination + "=" + "CopyBlock" + blockEntry
+            * @format({blockEntry, nestLevelEntry, destination})
+            * destination + "=" + "CopyBlock" + nestLevelEntry + blockEntry
             *)
            CopyBlock of
-	   {blockEntry : entry, destination : entry}
+	   {
+             nestLevelEntry : entry,
+             blockEntry : entry,
+             destination : entry
+           }
          | (*%
             * @format({globalArrayIndex, offset, variableSize, destination})
             * destination
@@ -320,13 +334,17 @@ struct
             *           resultSize,
             *           destination
             *         })
-            * destination + "="
-            * + "CallPrim"
-            * + argsCount
-            * + primitive
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
-            * + resultSize
+            * destination + "=" +
+            * {
+            *     "CallPrim"
+            *     4[
+            *         +1 argsCount
+            *         +1 primitive
+            *         +1 "[" argEntries(argEntry)(",") "]"
+            *         +1 "[" argSizes(argSize)(",") "]"
+            *         +1 resultSize
+            *      ]
+            * }
             *)
            CallPrim of
            {
@@ -340,27 +358,54 @@ struct
          | (*%
             * @format({
             *           argsCount,
+            *           switchTag,
+            *           convention,
             *           closureEntry,
             *           argEntries : argEntry argEntries,
             *           argSizes : argSize argSizes,
             *           resultSize,
             *           destination
             *         })
-            * destination + "="
-            * + "ForeignApply"
-            * + argsCount
-            * + closureEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
-            * + resultSize
+            * destination + "=" +
+            * {
+            *     "ForeignApply"
+            *     4[
+            *         +2 argsCount
+            *         +2 switchTag
+            *         +2 convention
+            *         +2 closureEntry
+            *         +2 "[" argEntries(argEntry)(",") "]"
+            *         +2 "[" argSizes(argSize)(",") "]"
+            *         +2 resultSize
+            *      ]
+            * }
             *)
            ForeignApply of
            {
              argsCount : UInt32,
+             switchTag : UInt32,
+             convention : callingConvention,
              closureEntry : entry,
              argEntries : entry list,
              argSizes : size list,
              resultSize : size,
+             destination : entry
+           }
+         | (*%
+            * @format({
+            *           sizeTag,
+            *           closureEntry,
+            *           destination
+            *         })
+            * destination + "="
+            * + "RegisterCallback"
+            * + sizeTag
+            * + closureEntry
+            *)
+           RegisterCallback of
+           {
+             sizeTag : UInt32,
+             closureEntry : entry,
              destination : entry
            }
          | (*%
@@ -370,11 +415,15 @@ struct
             *           argSize,
             *           destination
             *         })
-            * destination + "="
-            * + "Apply_S"
-            * + closureEntry
-            * + argEntry
-            * + argSize
+            * destination + "=" +
+            * {
+            *     "Apply_S"
+            *     4[
+            *          +2 closureEntry
+            *          +2 argEntry
+            *          +2 argSize
+            *      ]
+            * }
             *)
            Apply_S of
            {
@@ -391,12 +440,16 @@ struct
             *           lastArgSize,
             *           destination
             *         })
-            * destination + "="
-            * + "Apply_ML"
-            * + argsCount
-            * + closureEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + lastArgSize
+            * destination + "=" +
+            * {
+            *    "Apply_ML"
+            *    4[
+            *        +2 argsCount
+            *        +2 closureEntry
+            *        +2 "[" argEntries(argEntry)(",") "]"
+            *        +2 lastArgSize
+            *     ]
+            * }
             *)
            Apply_ML of
            {
@@ -414,12 +467,16 @@ struct
             *           argSizeEntries : argSize argSizes,
             *           destination
             *         })
-            * destination + "="
-            * + "Apply_M"
-            * + argsCount
-            * + closureEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
+            * destination + "=" +
+            * {
+            *     "Apply_M"
+            *     4[
+            *         +2 argsCount
+            *         +2 closureEntry
+            *         +2 "[" argEntries(argEntry)(",") "]"
+            *         +2 "[" argSizes(argSize)(",") "]"
+            *      ]
+            * }
             *)
            Apply_M of
            {
@@ -435,10 +492,14 @@ struct
             *           argEntry,
             *           argSize
             *         })
-            * "TailApply_S"
-            * + closureEntry
-            * + argEntry
-            * + argSize
+            * {
+            *     "TailApply_S"
+            *     4[
+            *         +2 closureEntry
+            *         +2 argEntry
+            *         +2 argSize
+            *      ]
+            * }
             *)
            TailApply_S of
            {
@@ -453,11 +514,15 @@ struct
             *           argEntries : argEntry argEntries,
             *           lastArgSize
             *         })
-            * "TailApply_ML"
-            * + argsCount
-            * + closureEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + lastArgSize
+            * {
+            *     "TailApply_ML"
+            *     4[
+            *         +2 argsCount
+            *         +2 closureEntry
+            *         +2 "[" argEntries(argEntry)(",") "]"
+            *         +2 lastArgSize
+            *      ]
+            * }
             *)
            TailApply_ML of
            {
@@ -473,11 +538,15 @@ struct
             *           argEntries : argEntry argEntries,
             *           argSizeEntries : argSize argSizes
             *         })
-            * "TailApply_M"
-            * + argsCount
-            * + closureEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
+            * {
+            *     "TailApply_M"
+            *     4[
+            *         +2 argsCount
+            *         +2 closureEntry
+            *         +2 "[" argEntries(argEntry)(",") "]"
+            *         +2 "[" argSizes(argSize)(",") "]"
+            *      ]
+            * }
             *)
            TailApply_M of
            {
@@ -494,12 +563,16 @@ struct
             *           argSize,
             *           destination
             *         })
-            * destination + "="
-            * + "CallStatic_S"
-            * + entryPoint
-            * + envEntry
-            * + argEntry
-            * + argSize
+            * destination + "=" +
+            * {
+            *     "CallStatic_S"
+            *     4[
+            *          +2 entryPoint
+            *          +2 envEntry
+            *          +2 argEntry
+            *          +2 argSize
+            *      ]
+            * }
             *)
            CallStatic_S of
            {
@@ -518,13 +591,17 @@ struct
             *           lastArgSize,
             *           destination
             *         })
-            * destination + "="
-            * + "CallStatic_ML"
-            * + argsCount
-            * + entryPoint
-            * + envEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + lastArgSize
+            * destination + "=" +
+            * {
+            *    "CallStatic_ML"
+            *    4[
+            *         +2 argsCount
+            *         +2 entryPoint
+            *         +2 envEntry
+            *         +2 "[" argEntries(argEntry)(",") "]"
+            *         +2 lastArgSize
+            *     ]
+            * }
             *)
            CallStatic_ML of
            {
@@ -544,13 +621,17 @@ struct
             *           argSizeEntries : argSize argSizes,
             *           destination
             *         })
-            * destination + "="
-            * + "CallStatic_M"
-            * + argsCount
-            * + entryPoint
-            * + envEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
+            * destination + "=" +
+            * {
+            *      "CallStatic_M"
+            *      4[
+            *           +2 argsCount
+            *           +2 entryPoint
+            *           +2 envEntry
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 "[" argSizes(argSize)(",") "]"
+            *       ]
+            * }
             *)
            CallStatic_M of
            {
@@ -568,11 +649,15 @@ struct
             *           argEntry,
             *           argSize
             *         })
-            * + "TailCallStatic_S"
-            * + entryPoint
-            * + envEntry
-            * + argEntry
-            * + argSize
+            * {
+            *     "TailCallStatic_S"
+            *     4[
+            *         +2 entryPoint
+            *         +2 envEntry
+            *         +2 argEntry
+            *         +2 argSize
+            *      ]
+            * }
             *)
            TailCallStatic_S of 
            {
@@ -589,12 +674,16 @@ struct
             *           argEntries : argEntry argEntries,
             *           lastArgSize
             *         })
-            * + "TailCallStatic_ML"
-            * + argsCount
-            * + entryPoint
-            * + envEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + lastArgSize
+            * {
+            *     "TailCallStatic_ML"
+            *     4[
+            *          +2 argsCount
+            *          +2 entryPoint
+            *          +2 envEntry
+            *          +2 "[" argEntries(argEntry)(",") "]"
+            *          +2 lastArgSize
+            *      ]
+            * }
             *)
            TailCallStatic_ML of 
            {
@@ -612,12 +701,16 @@ struct
             *           argEntries : argEntry argEntries,
             *           argSizeEntries : argSize argSizes
             *         })
-            * + "TailCallStatic_M"
-            * + argsCount
-            * + entryPoint
-            * + envEntry
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
+            * {
+            *     "TailCallStatic_M"
+            *     4[
+            *          +2 argsCount
+            *          +2 entryPoint
+            *          +2 envEntry
+            *          +2 "[" argEntries(argEntry)(",") "]"
+            *          +2 "[" argSizes(argSize)(",") "]"
+            *      ]
+            * }
             *)
            TailCallStatic_M of 
            {
@@ -629,11 +722,15 @@ struct
            }
          | (*%
             * @format({entryPoint, argEntry, argSize, destination})
-            * destination + "="
-            * + "RecursiveCallStatic_S"
-            * + entryPoint
-            * + argEntry
-            * + argSize
+            * destination + "=" +
+            * {
+            *      "RecursiveCallStatic_S"
+            *      4[
+            *         +2 entryPoint
+            *         +2 argEntry
+            *         +2 argSize
+            *       ]
+            * }
             *)
            RecursiveCallStatic_S of
            {
@@ -650,12 +747,16 @@ struct
             *          argSizeEntries : argSize argSizes, 
             *          destination
             *        })
-            * destination + "="
-            * + "RecursiveCallStatic_M"
-            * + argsCount
-            * + entryPoint
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
+            * destination + "=" +
+            * {
+            *      "RecursiveCallStatic_M"
+            *      4[
+            *           +2 argsCount
+            *           +2 entryPoint
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 "[" argSizes(argSize)(",") "]"
+            *       ]
+            * }
             *)
            RecursiveCallStatic_M of
            {
@@ -667,10 +768,14 @@ struct
            }
          | (*%
             * @format({entryPoint, argEntry, argSize})
-            * + "RecursiveTailCallStatic_S"
-            * + entryPoint
-            * + argEntry
-            * + argSize
+            * {
+            *     "RecursiveTailCallStatic_S"
+            *     4[
+            *          +2 entryPoint
+            *          +2 argEntry
+            *          +2 argSize
+            *      ]
+            * }
             *)
            RecursiveTailCallStatic_S of
            {
@@ -685,11 +790,15 @@ struct
             *          argEntries : argEntry argEntries, 
             *          argSizeEntries : argSize argSizes
             *        })
-            * "RecursiveTailCallStatic_M"
-            * + argsCount
-            * + entryPoint
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
+            * {
+            *      "RecursiveTailCallStatic_M"
+            *      4[
+            *           +2 argsCount
+            *           +2 entryPoint
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 "[" argSizes(argSize)(",") "]"
+            *       ]
+            * }
             *)
            RecursiveTailCallStatic_M of
            {
@@ -700,11 +809,15 @@ struct
            }
          | (*%
             * @format({entryPoint, argEntry, argSize, destination})
-            * destination + "="
-            * + "SelfRecursiveCallStatic_S"
-            * + entryPoint
-            * + argEntry
-            * + argSize
+            * destination + "=" +
+            * {
+            *      "SelfRecursiveCallStatic_S"
+            *      4[
+            *            +2 entryPoint
+            *            +2 argEntry
+            *            +2 argSize
+            *       ]
+            * }
             *)
            SelfRecursiveCallStatic_S of
            {
@@ -721,12 +834,16 @@ struct
             *          argSizeEntries : argSize argSizes, 
             *          destination
             *        })
-            * destination + "="
-            * + "SelfRecursiveCallStatic_M"
-            * + argsCount
-            * + entryPoint
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
+            * destination + "=" +
+            * {
+            *     "SelfRecursiveCallStatic_M"
+            *     4[
+            *          +2 argsCount
+            *          +2 entryPoint
+            *          +2 "[" argEntries(argEntry)(",") "]"
+            *          +2 "[" argSizes(argSize)(",") "]"
+            *      ]
+            * }
             *)
            SelfRecursiveCallStatic_M of
            {
@@ -738,10 +855,14 @@ struct
            }
          | (*%
             * @format({entryPoint, argEntry, argSize})
-            * + "SelfRecursiveTailCallStatic_S"
-            * + entryPoint
-            * + argEntry
-            * + argSize
+            * {
+            *     "SelfRecursiveTailCallStatic_S"
+            *     4[
+            *          +2 entryPoint
+            *          +2 argEntry
+            *          +2 argSize
+            *      ]
+            * }
             *)
            SelfRecursiveTailCallStatic_S of
            {
@@ -756,11 +877,15 @@ struct
             *          argEntries : argEntry argEntries, 
             *          argSizeEntries : argSize argSizes
             *        })
-            * "SelfRecursiveTailCallStatic_M"
-            * + argsCount
-            * + entryPoint
-            * + "[" argEntries(argEntry)(",") "]"
-            * + "[" argSizes(argSize)(",") "]"
+            * {
+            *      "SelfRecursiveTailCallStatic_M"
+            *      4[
+            *           +2 argsCount
+            *           +2 entryPoint
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 "[" argSizes(argSize)(",") "]"
+            *       ]
+            * }
             *)
            SelfRecursiveTailCallStatic_M of
            {
@@ -850,11 +975,19 @@ struct
             *)
            Raise of {exceptionEntry : entry}
          | (*%
-            * @format({handler, exceptionEntry})
-            * "PushHandler" + handler + exceptionEntry
+            * @format({handlerStart, handlerEnd, exceptionEntry})
+            * "PushHandler" + handlerStart + handlerEnd + exceptionEntry
             *)
-           PushHandler of {handler : address, exceptionEntry : entry}
-         | PopHandler
+           PushHandler of
+           {
+             handlerStart : address,
+             handlerEnd : address,
+             exceptionEntry : entry
+           }
+         | (*%
+            * @format({guardedStart}) "PopHandler" + guardedStart
+            *)
+           PopHandler of {guardedStart : address}
          | (*% @format(address) address ":" *) Label of address
          | (*% @format(loc) loc *) Location of loc
          | (*%
@@ -931,14 +1064,6 @@ struct
            Return of {variableEntry : entry, variableSize : size}
          | (*% @format({string}) "ConstString" + string *)
            ConstString of {string : string}
-         | (*%
-            * @format({funNameEntry, libNameEntry, destination})
-            * destination + "="
-            * + "FFIVal" + funNameEntry + libNameEntry
-            *)
-           FFIVal of
-           {funNameEntry : entry, libNameEntry : entry, destination : entry}
-
          | (*%
             * @format({argValue1, argEntry2, destination})
             * destination + "="
@@ -1685,8 +1810,8 @@ struct
               (case instruction of
                  (Label _) => []
                |  _ => [FE.Term (4, "    ")])
-              @ (format_instruction instruction)
               @ [
+                  FE.Guard(NONE, format_instruction instruction),
                   FE.Indicator
                     {space = true, newline = SOME{priority = FE.Preferred(1)}}
                 ]

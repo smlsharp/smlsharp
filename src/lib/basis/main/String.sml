@@ -1,7 +1,7 @@
 (**
  * String structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: String.sml,v 1.8 2005/08/16 23:25:00 kiyoshiy Exp $
+ * @version $Id: String.sml,v 1.10 2006/12/04 04:21:03 kiyoshiy Exp $
  *)
 (*
  * Because the STRING signature refers to String structure, the STRING
@@ -17,10 +17,12 @@ struct
 
   type char = char
 
-(*
-  val maxSize = 0xFFFFFFFF
-*)
-  val maxSize = 0xFFFF
+  (* (SIZE_MASK - 1) * sizeof(UInt32Value) - 1
+   * SIZE_MASK is defined in Heap.hh as 0xFFFFFFF.
+   * The first '1' means the cell to store string length.
+   * The last '1' means a byte for append '\0' character.
+   *)
+  val maxSize = (0xFFFFFFF - 1) * 4 - 1
 
   val size = String_size (* NOTE: sizeString is a primitive operator. *)
 
@@ -134,33 +136,11 @@ struct
         val fields = (charsToField chars) :: fields
       in List.rev fields end
 
-  fun isPrefix left right =
+  local
+    fun collateImp
+            charCollate
+            ((left, leftStart, leftSize), (right, rightStart, rightSize)) =
       let
-        val leftSize = size left
-        val rightSize = size right
-      in
-        if rightSize < leftSize
-        then false
-        else left = substring (right, 0, leftSize)
-      end
-
-  fun isSubstring left right = (* ToDo : implement *)
-      raise General.Fail "String.isSubstring is not implemented."
-
-  fun isSuffix left right =
-      let
-        val leftSize = size left
-        val rightSize = size right
-      in
-        if rightSize < leftSize
-        then false
-        else left = substring (right, rightSize - leftSize, leftSize)
-      end
-
-  fun collate charCollate (left, right) =
-      let
-        val leftSize = size left
-        val rightSize = size right
         fun scan index =
             if leftSize = index orelse rightSize = index
             then
@@ -169,12 +149,72 @@ struct
               else
                 if leftSize = rightSize then General.EQUAL else General.GREATER
             else
-              case charCollate (sub (left, index), sub (right, index)) of
-                EQUAL => scan (index + 1)
-              | notEqual => notEqual
+              case
+                charCollate
+                    (
+                      sub (left, leftStart + index),
+                      sub (right, rightStart + index)
+                    )
+               of EQUAL => scan (index + 1)
+                | notEqual => notEqual
       in scan 0 end
+  in
+
+  fun collate charCollate (left, right) =
+      let
+        val leftSize = size left
+        val rightSize = size right
+      in
+        collateImp charCollate ((left, 0, leftSize), (right, 0, rightSize))
+      end
 
   val compare = collate Char.compare
+
+  fun isPrefix left right =
+      let
+        val leftSize = size left
+        val rightSize = size right
+      in
+        if rightSize < leftSize
+        then false
+        else
+          General.EQUAL
+          = collateImp Char.compare ((left, 0, leftSize), (right, 0, leftSize))
+      end
+
+  fun isSubstring left right = 
+      let
+        val leftSize = size left
+        val rightSize = size right
+        (* ToDo : rewrite by efficient search algorithm. *)
+        fun search index =
+            if rightSize - index < leftSize
+            then false
+            else
+              if
+                General.EQUAL
+                = collateImp
+                      Char.compare
+                      ((left, 0, leftSize), (right, index, leftSize))
+              then true
+              else search (index + 1)
+      in
+        search 0
+      end
+
+  fun isSuffix left right =
+      let
+        val leftSize = size left
+        val rightSize = size right
+      in
+        if rightSize < leftSize
+        then false
+        else
+          General.EQUAL
+          = collateImp
+                Char.compare
+                ((left, 0, leftSize), (right, rightSize - leftSize, leftSize))
+      end
 
   fun op < (left, right) =
       case compare (left, right) of General.LESS => true | _ => false
@@ -182,6 +222,8 @@ struct
       case compare (left, right) of General.GREATER => false | _ => true
   val op > = not o (op <=)
   val op >= = not o (op <)
+
+  end (* end of local *)
 
   local structure PC = ParserComb
   in

@@ -6,7 +6,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: VM.sig,v 1.15 2006/02/28 16:11:13 kiyoshiy Exp $
+ * @version $Id: VM.sig,v 1.16 2006/03/07 05:02:29 kiyoshiy Exp $
  *)
 signature VM =
 sig
@@ -98,6 +98,12 @@ sig
   val getHeap : VM -> Heap.heap
 
   val getCurrentCodeRef : VM -> RuntimeTypes.codeRef
+
+  val getStandardInput : VM -> ChannelTypes.InputChannel
+
+  val getStandardOutput : VM -> ChannelTypes.OutputChannel
+
+  val getStandardError : VM -> ChannelTypes.OutputChannel
 
   (***************************************************************************)
 

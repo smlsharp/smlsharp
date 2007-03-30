@@ -1,35 +1,16 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: main.cc,v 1.20 2006/03/02 16:20:36 kiyoshiy Exp $
+ * @version $Id: main.cc,v 1.27.4.1 2007/03/26 11:16:14 katsu Exp $
  */
-#include "StandAloneSession.hh"
-#include "InteractiveSession.hh"
-#include "VirtualMachine.hh"
-#include "Heap.hh"
-#include "ExecutableLinker.hh"
-#include "FileLogFacade.hh"
-#include "FileInputChannel.hh"
-#include "FileOutputChannel.hh"
-#include "ServerSocketChannel.hh"
-#include "ClientSocketChannel.hh"
-#include "Reader.hh"
-#include "Writer.hh"
-#include "WordOperations.hh"
-#include "IMLException.hh"
-#include "Instructions.hh"
+/**
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: main.cc,v 1.27.4.1 2007/03/26 11:16:14 katsu Exp $
+ */
+#include "main.hh"
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <strings.h>
-#include <ctype.h>
-#include <unistd.h>
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 #ifdef USE_NAMESPACE
 using namespace jp_ac_jaist_iml_runtime;
@@ -37,42 +18,9 @@ using namespace jp_ac_jaist_iml_runtime;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define IML_ENV_ENABLE_INSTTRACE "IML_instTrace"
-
-///////////////////////////////////////////////////////////////////////////////
-
 Session* session_ = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
-
-class InstructionTracer
-    : public VirtualMachineExecutionMonitor
-{
-
-  public:
-    
-    InstructionTracer(){}
-
-    virtual
-    ~InstructionTracer(){}
-
-  public:
-
-    virtual
-    void beforeInstruction(UInt32Value* &PC,
-                           Cell* &ENV,
-                           UInt32Value* &SP)
-    {
-      if(_enableTrace){
-        printf("%s\n", instructionToString((instruction)*((UInt8Value*)PC)));
-      }
-    };
-
-  public:
-  static bool _enableTrace;
-};
-
-bool InstructionTracer::_enableTrace = false;
 
 void
 usage(const char* exeName){
@@ -155,10 +103,18 @@ main(int argc, const char** argv)
             channelType = CHANNEL_TYPE_FILE;
         }
         else if(0 == strcmp("-client", nextArg[0])){
+#ifdef HAVE_SYS_SOCKET_H
             channelType = CHANNEL_TYPE_CLIENT_SOCKET;
+#else
+            usage("-client is not supported in this platform.");
+#endif
         }
         else if(0 == strcmp("-server", nextArg[0])){
+#ifdef HAVE_SYS_SOCKET_H
             channelType = CHANNEL_TYPE_SERVER_SOCKET;
+#else
+            usage("-server is not supported in this platform.");
+#endif
         }
         else if(0 == strcmp("-pipe", nextArg[0])){
             channelType = CHANNEL_TYPE_PIPE;
@@ -179,9 +135,11 @@ main(int argc, const char** argv)
      */
     if((CHANNEL_TYPE_SERVER_SOCKET == channelType)
        || (CHANNEL_TYPE_CLIENT_SOCKET == channelType)){
+#if defined(HAVE_FORK)
         if(fork()){
             exit(0);
         }
+#endif
     }
 
     ////////////////////////////////////////
@@ -206,7 +164,7 @@ main(int argc, const char** argv)
             const char* executableFileName = nextArg[0];
             nextArg += 1;
 
-            executableFileDesc = open(executableFileName, O_RDONLY);
+            executableFileDesc = open(executableFileName, O_RDONLY | O_BINARY);
             if(executableFileDesc < 0){
                 perror(executableFileName);
                 exit(1);
@@ -218,6 +176,7 @@ main(int argc, const char** argv)
             session_ = new StandAloneSession(executableChannel);
             break;
         }
+#ifdef HAVE_SYS_SOCKET_H
       case CHANNEL_TYPE_SERVER_SOCKET:
         {
             int port = atoi(nextArg[0]);
@@ -258,9 +217,9 @@ main(int argc, const char** argv)
 
             bzero((char *)&serv_addr, sizeof(serv_addr));
             serv_addr.sin_family = AF_INET;
-            serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+            serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
             serv_addr.sin_port = htons(port);
-    
+
             if (bind(serverSocket,
                      (struct sockaddr *)&serv_addr,
                      sizeof(serv_addr)) < 0)
@@ -319,6 +278,7 @@ main(int argc, const char** argv)
             new InteractiveSession(clientSocketChannel, clientSocketChannel);
             break;
         }
+#endif
     case CHANNEL_TYPE_PIPE:
         {
             const char* inFDString = nextArg[0];
@@ -334,7 +294,7 @@ main(int argc, const char** argv)
         }
       default:
         {
-            fprintf(stderr, "unknown channel type.\n");
+            fprintf(stderr, "unsupported channel type.\n");
             exit(1);
         }
     }
@@ -353,23 +313,47 @@ main(int argc, const char** argv)
     Heap::initialize(heapSize);
     VirtualMachine vm(argv[0], argc - (nextArg - argv), nextArg, stackSize);
     Heap::setRootSet(&vm);
+    Heap::setFinalizerExecutor(&vm);
     VirtualMachine::setSession(session_);
 
+    FFI::init();
+
 #ifdef IML_ENABLE_EXECUTION_MONITORING
-    DBGWRAP(printf("monitoring is enabled.\n");)
-    char* envValue = getenv(IML_ENV_ENABLE_INSTTRACE);
-    DBGWRAP(printf("getenv(%s) = %s\n",
-                   IML_ENV_ENABLE_INSTTRACE,
-                   envValue ? envValue : "(null)");)
-    if(envValue && (0 == strcmp(envValue, "yes")))
+    InstructionTracer instructionTracer;
     {
-        DBGWRAP(printf("enable instTrace\n");)
-        InstructionTracer::_enableTrace = true;
+        DBGWRAP(printf("execution monitoring is enabled.\n");)
+        char* envValue = getenv(IML_ENV_ENABLE_INSTTRACE);
+        DBGWRAP(printf("getenv(%s) = %s\n",
+                       IML_ENV_ENABLE_INSTTRACE,
+                       envValue ? envValue : "(null)");)
+        if(envValue && (0 == strcmp(envValue, "yes")))
+        {
+            DBGWRAP(printf("enable instTrace\n");)
+            InstructionTracer::_enableTrace = true;
+        }
+        if(InstructionTracer::_enableTrace){
+            VirtualMachine::addExecutionMonitor
+            ((VirtualMachineExecutionMonitor*)&instructionTracer);
+        }
     }
-    InstructionTracer tracer;
-    if(InstructionTracer::_enableTrace){
-        VirtualMachine::addExecutionMonitor
-        ((VirtualMachineExecutionMonitor*)&tracer);
+#endif
+
+#ifdef IML_ENABLE_ALLOCATION_MONITORING
+    HeapAllocationTracer allocationTracer;
+    {
+        DBGWRAP(printf("heap allocation monitoring is enabled.\n");)
+        char* envValue = getenv(IML_ENV_ENABLE_ALLOCTRACE);
+        DBGWRAP(printf("getenv(%s) = %s\n",
+                       IML_ENV_ENABLE_ALLOCTRACE,
+                       envValue ? envValue : "(null)");)
+        if(envValue && (0 == strcmp(envValue, "yes")))
+        {
+            DBGWRAP(printf("enable allocationTrace\n");)
+            HeapAllocationTracer::_enableTrace = true;
+        }
+        if(HeapAllocationTracer::_enableTrace){
+            Heap::addMonitor((HeapMonitor*)&allocationTracer);
+        }
     }
 #endif
 
@@ -385,6 +369,7 @@ main(int argc, const char** argv)
     ////////////////////////////////////////
 
     delete session_;
+    FFI::finalize();
 
     if(executableChannel){ delete executableChannel; }
     if(executableFileDesc){ close(executableFileDesc); }
@@ -399,6 +384,10 @@ main(int argc, const char** argv)
     if(outputChannel){ delete outputChannel; }
 
     ////////////////////////////////////////
+
+#ifdef IML_ENABLE_ALLOCATION_MONITORING
+    printf("allocated fields: %d\n", allocationTracer._allocatedFields);
+#endif
 
     return exitCode;
 }

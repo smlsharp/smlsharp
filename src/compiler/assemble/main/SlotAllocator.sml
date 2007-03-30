@@ -1,7 +1,7 @@
 (**
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: SlotAllocator.sml,v 1.12 2006/01/29 22:37:11 duchuu Exp $
+ * @version $Id: SlotAllocator.sml,v 1.13 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure SlotAllocator : SLOT_ALLOCATOR =
 struct
@@ -11,7 +11,7 @@ struct
   structure AI = AllocationInfo
   structure BT = BasicTypes
   structure SI = SymbolicInstructions
-  structure SE = StaticEnv
+  structure T = Types
 
   (***************************************************************************)
 
@@ -20,10 +20,10 @@ struct
   val SLOTS_OF_DOUBLE_VAR = 0w2 : BT.UInt32
   val SLOTS_OF_RECORD_VAR = 0w2 : BT.UInt32
 
-  fun createLabel () = SE.newVarId()
+  fun createLabel () = T.newVarId()
 (*
   val labelSeparator = "$LLS"
-  fun createLabel () = labelSeparator + (SE.newVarId()) * 4
+  fun createLabel () = labelSeparator + (T.newVarId()) * 4
 *)
   (** implementation of slot allocation *)
   fun allocate

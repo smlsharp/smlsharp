@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ID.ppg,v 1.8 2006/03/03 06:35:19 kiyoshiy Exp $
+ * @version $Id: ID.ppg,v 1.10 2007/02/21 02:12:32 kiyoshiy Exp $
  *)
 structure ID :> ID =
 struct
@@ -49,6 +49,11 @@ struct
             raise Fail "ID.compare found non unique unit ID."
       | order => order
 
+  fun eq (id1, id2) = 
+     case compare (id1, id2) of
+      EQUAL => true
+    | _ => false
+
   fun generateUnitID () = 
       (!unitIDRef) before (unitIDRef := ref ((!(!unitIDRef)) + 1))
 
@@ -70,7 +75,7 @@ struct
     (* NOTE:
      * afterUnpickleUnitID replaces a unpickled unit ID to a fresh unit ID.
      * afterUnpickleUnitID is invoked only once for each unit ID.
-     * It assume that Pickle.refCyc ensures it.
+     * It assume that Pickle.refCycle ensures it.
      *)
     fun afterUnpickleUnitIDNumber unitIDNumber =
         if isReservedUnitIDNumber unitIDNumber
@@ -93,8 +98,7 @@ struct
           end
     fun beforePickleUnitIDNumber unitID = unitID
     val pu_UnitID =
-        P.refCyc
-            0
+        P.refNonCycle
             (P.conv
                  (afterUnpickleUnitIDNumber, beforePickleUnitIDNumber)
                  P.int)

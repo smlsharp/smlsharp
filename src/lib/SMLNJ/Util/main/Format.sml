@@ -82,7 +82,7 @@ structure Format : FORMAT =
 		      (* end case *)
 		    end
 	  in
-	    scan (SS.all str, [])
+	    scan (SS.full str, [])
 	  end
 
     fun format s = let
@@ -294,7 +294,7 @@ structure Format : FORMAT =
 	  fun doArgs ([], [], l) = SS.concat(rev l)
 	    | doArgs ((Raw s)::rf, args, l) = doArgs(rf, args, s::l)
 	    | doArgs (Field(flags, wid, ty)::rf, arg::ra, l) =
-		doArgs (rf, ra, SS.all (doField (flags, wid, ty, arg)) :: l)
+		doArgs (rf, ra, SS.full (doField (flags, wid, ty, arg)) :: l)
 	    | doArgs _ = raise BadFmtList
 	  in
 	    fn args => doArgs (fmts, args, [])

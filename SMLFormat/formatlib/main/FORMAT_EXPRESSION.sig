@@ -1,7 +1,7 @@
 (**
  *  This module defines types which represents format expressions.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FORMAT_EXPRESSION.sig,v 1.1 2006/02/07 12:51:52 kiyoshiy Exp $
+ * @version $Id: FORMAT_EXPRESSION.sig,v 1.2 2007/01/17 04:51:34 kiyoshiy Exp $
  *)
 signature FORMAT_EXPRESSION =
 sig
@@ -131,6 +131,16 @@ sig
    * @return the string representation of the <code>expression</code>
    *)
   val toString : expression -> string
+
+  (**
+   * parse format expression list.
+   * <p>
+   * Any character follows a back slash is interpreted as is.
+   * Especially, a sequence of ['\', '"'] is interpreted as a character '"'.
+   * </p>
+   *)
+  val parse
+      : (char, 'a) StringCvt.reader -> (expression list, 'a) StringCvt.reader
 
   (***************************************************************************)
 

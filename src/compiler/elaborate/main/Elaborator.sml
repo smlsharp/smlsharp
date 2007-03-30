@@ -79,7 +79,7 @@
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Elaborator.sml,v 1.76 2006/03/02 12:43:52 bochao Exp $
+ * @version $Id: Elaborator.sml,v 1.87 2007/02/28 17:57:20 katsu Exp $
  *)
 structure Elaborator : ELABORATOR =
 struct
@@ -96,7 +96,7 @@ in
 
   (***************************************************************************)
 
-  datatype fixity = datatype StaticEnv.fixity
+  datatype fixity = datatype Fixity.fixity
 
   (***************************************************************************)
 
@@ -228,6 +228,8 @@ in
             | A.TYTUPLE(tys, loc) => A.TYTUPLE(map subst tys, loc)
             | A.TYFUN(rangeTy, domainTy, loc) =>
               A.TYFUN(subst rangeTy, subst domainTy, loc)
+            | A.TYFFI(cconv, domTys, ranTy, loc) =>
+              A.TYFFI(cconv, map subst domTys, subst ranTy, loc)
       in
         subst ty
       end
@@ -300,6 +302,8 @@ in
             | A.TYTUPLE(tys, loc) => A.TYTUPLE(map expandInTy tys, loc)
             | A.TYFUN(rangeTy, domainTy, loc) =>
               A.TYFUN(expandInTy rangeTy, expandInTy domainTy, loc)
+            | A.TYFFI(cconv, domTys, ranTy, loc) =>
+              A.TYFFI(cconv, map expandInTy domTys, expandInTy ranTy, loc)
         fun expandInDataCon (isOp, name, tyOpt) =
             let
               val newTyOpt =
@@ -349,7 +353,7 @@ in
    * this function takes some operators in parameter.
    * </p>
    * <p>
-   *  And this function also asserts that every infix identifier occurs only
+   * And this function also asserts that every infix identifier occurs only
    * at infix position. 
    * <p>
    *)
@@ -363,13 +367,13 @@ in
         (* ToDo : getIDInfo and findFixity should be merged ?
          * Both operates on ID term (EXPID/PATID). *)
         val (first, last) = (hd elist, List.last elist)
-        val valIdFirst = 
+        val validFirst = 
             case findFixity env first of
               NONFIX => true
             | _ => let val (id, loc) = getIDInfo first
                    in enqueueError (loc, E.BeginWithInfixID id); false
                    end
-        val valIdLast =
+        val validLast =
             case elist of
               [_] => true (* first and last is the same element. *)
             | _ =>
@@ -379,8 +383,9 @@ in
                      in enqueueError (loc, E.EndWithInfixID id); false
                      end
 
-        (* An infix ID used may be not a data constructor.
-         * But, it will be rejected by the type checker later.
+        (* An infix ID used may not be a data constructor.
+         * We do not reject at this point, since it will be rejected by 
+         * the type checker later. 
          *)
         fun resolve [x] nil nil = x
           | resolve (h1 :: h2 :: args) ((op1 : 'a operator) :: ops) nil = 
@@ -410,12 +415,12 @@ in
                    (tl tail))
           | resolve _ _ _ = raise Control.Bug "Elab.resolveInfix"
       in
-        if valIdFirst andalso valIdLast
+        if validFirst andalso validLast
         then
           resolve [elab env (hd elist)] nil (tl elist)
         else
           (* elist contains invalid infix occurrence, which aborts resolve.
-           * So, after checks each element, returns temporary result.
+           * So, after checking each element, it returns temporary result.
            *)
           hd (map (elab env) elist)
       end
@@ -444,8 +449,8 @@ in
   fun falsePat loc = PC.PLPATID(["false"], loc)
   fun trueExp loc = PC.PLVAR(["true"], loc)
   fun falseExp loc = PC.PLVAR(["false"], loc)
-  fun unitPat loc = PC.PLPATRECORD(false, nil, loc)
-  fun unitExp loc = PC.PLRECORD(nil, loc)
+  fun unitPat loc = PC.PLPATCONSTANT(A.UNITCONST loc, loc)
+  fun unitExp loc = PC.PLCONSTANT(A.UNITCONST loc, loc)
 
   fun elabLabeledSequence elaborator env elements =
       map (fn (label, element) => (label, elaborator env element)) elements
@@ -465,6 +470,8 @@ in
       | A.TYTUPLE(tys, loc) => A.TYTUPLE(map (elabTy env) tys, loc)
       | A.TYFUN(rangeTy, domainTy, loc) =>
         A.TYFUN(elabTy env rangeTy, elabTy env domainTy, loc)
+      | A.TYFFI(cconv, domTys, ranTy, loc) =>
+        A.TYFFI(cconv, map (elabTy env) domTys, elabTy env ranTy, loc)
 
   fun elabConDesc env (name, NONE) = (name, NONE)
     | elabConDesc env (name, SOME ty) = (name, SOME(elabTy env ty))
@@ -506,20 +513,18 @@ in
         fun getIDInfo (A.EXPID (id, loc)) = (A.longidToString(id), loc)
           | getIDInfo exp = raise Control.Bug "getIDInfo expects EXPID."
 
-        val resolved =
-            resolveInfix
-                {
-                  makeApp = makeApp,
-                  makeUserOp = makeUserOp,
-                  elab = elabExp,
-                  findFixity = findFixity,
-                  getIDInfo = getIDInfo
-                }
-                env
-                elist
       in
-        resolved
-      end
+        resolveInfix
+        {
+          makeApp = makeApp,
+          makeUserOp = makeUserOp,
+          elab = elabExp,
+          findFixity = findFixity,
+          getIDInfo = getIDInfo
+         }
+        env
+        elist
+       end
 
   (**
    *  transforms infix constructor application pattern into non-infix
@@ -552,19 +557,17 @@ in
         fun getIDInfo (A.PATID {opPrefix, id=id, loc=loc}) = (A.longidToString(id), loc)
           | getIDInfo pat = raise Control.Bug "getIDInfo expects PATID"
 
-        val resolved =
-            resolveInfix
-                {
-                  makeApp = makeApp,
-                  makeUserOp = makeUserOp,
-                  elab = elabPat,
-                  findFixity = findFixity,
-                  getIDInfo = getIDInfo
-                }
-                env
-                elist
       in
-        resolved
+        resolveInfix
+        {
+          makeApp = makeApp,
+          makeUserOp = makeUserOp,
+          elab = elabPat,
+          findFixity = findFixity,
+          getIDInfo = getIDInfo
+         }
+        env
+        elist
       end
 
   (**
@@ -936,20 +939,26 @@ in
         in
           PC.PLLET (pdecs, map (elabExp newEnv) elist, loc)
         end
-      | A.EXPFFIVAL{funExp, libExp, argTyList, resultTy, loc} =>
-        let
-          (*
-           * translates a FFIVAL(...) into:
-           *   let val $x = FFIVAL(...) in $x end
-           *)
-          val newid = Vars.newPLVarName()
-          val pat = A.PATAPPLY([A.PATID {opPrefix=false, id = [newid], loc=loc}], loc)
-          val decVal = A.DECVAL([], [(pat, ast)], loc)
-          val expLet = A.EXPLET ([decVal], [A.EXPID([newid], loc)], loc)
-        in
-          elabExp env expLet
-        end
       | A.EXPCAST (exp,loc) => PC.PLCAST(elabExp env exp, loc)
+      | A.EXPFFIIMPORT (exp, ty, loc) =>
+        (case ty of A.TYFFI _ => ()
+                  | _ => enqueueError (loc, E.NotForeignFunctionType {ty=ty});
+         PC.PLFFIIMPORT (elabExp env exp, elabTy env ty, loc))
+      | A.EXPFFIEXPORT (exp, ty, loc) =>
+        (case ty of A.TYFFI _ => ()
+                  | _ => enqueueError (loc, E.NotForeignFunctionType {ty=ty});
+         PC.PLFFIEXPORT (elabExp env exp, elabTy env ty, loc))
+      | A.EXPFFIAPPLY (cconv, funExp, args, retTy, loc) =>
+        PC.PLFFIAPPLY (cconv, elabExp env funExp,
+                       map (fn A.FFIARG (exp, ty) =>
+                               PC.PLFFIARG (elabExp env exp, elabTy env ty)
+                             | A.FFIARGSIZEOF (ty, SOME exp) =>
+                               PC.PLFFIARGSIZEOF (elabTy env ty,
+                                                  SOME (elabExp env exp))
+                             | A.FFIARGSIZEOF (ty, NONE) =>
+                               PC.PLFFIARGSIZEOF (elabTy env ty, NONE))
+                           args,
+                       elabTy env retTy, loc)
 
   and elabPat env pat = 
       case pat of
@@ -1011,7 +1020,7 @@ in
         end
       | A.PATLAYERED
             (A.PATTYPED(A.PATAPPLY([pat], _), ty, loc1), pat2, loc2) =>
-        (* The first argument of PATLAYERED and PATTYPED is PATAPPLY always
+        (* The first argument of PATLAYERED and PATTYPED is always be PATAPPLY 
          * (see iml.grm). This is because sequence of at least one pat should
          * be checked for infix occurrence.
          *)
@@ -1024,6 +1033,12 @@ in
           elabPat env pat1;
           elabPat env pat2
         )
+      | A.PATORPAT (pat1, pat2, loc2) =>
+        PC.PLPATORPAT(
+                      elabPat env pat1,
+                      elabPat env pat2,
+                      loc2
+                      )
 
     and elabPatRow env patrow =
         case patrow of
@@ -1047,39 +1062,7 @@ in
 
     and elabDec env dec = 
         case dec of
-          (* handles FFIVAL *)
-          A.DECVAL
-              (
-                tyvs,
-                [(
-                   A.PATAPPLY([A.PATID{opPrefix=isOp, id, loc=patLoc}], _),
-                   A.EXPFFIVAL{funExp, libExp, argTyList, resultTy, loc=expLoc}
-                )],
-                decLoc
-              ) =>
-          let
-            val name = A.longidToString id
-            val newFunExp = elabExp env funExp
-            val newLibExp = elabExp env libExp
-            val newArgTys = map (elabTy env) argTyList
-            val newResultTy = elabTy env resultTy
-          in
-            (* ToDo : add an error if tyvs is not empty. *)
-            (
-              [PC.PDFFIVAL
-               {
-                name=name, 
-                funExp = newFunExp, 
-                libExp = newLibExp, 
-                argTyList = newArgTys, 
-                resultTy = newResultTy, 
-                loc = decLoc
-                }],
-              SEnv.empty
-            )
-          end
-
-        | A.DECVAL (tyvs, decls, loc) =>
+          A.DECVAL (tyvs, decls, loc) =>
           let
             val newDecls =
                 map (fn (pat, e) => (elabPat env pat, elabExp env e)) decls
@@ -1250,256 +1233,289 @@ in
   (***************************************************************************)
 
 (*******************below dealing with module*********************************)
+    local
+        datatype sigexpKind = ImportSig | ExportSig | OrdinarySig
+    in
+        fun specListToSpecSeq loc specList =
+            let
+                fun makeSeqSpec [] = raise Control.Bug "nilspec found in elaborate"
+                  | makeSeqSpec [spec] = spec
+                  | makeSeqSpec (spec :: specs) =
+                    PC.PLSPECSEQ(spec, makeSeqSpec specs, loc)
+            in makeSeqSpec specList
+            end
+        (*
+         * specification kind can only be specified 
+         * (1) separate compilation mode;not allowed 
+         * in interactive mode.
+         * (2) import specification
+         *)
+        fun checkWellformedTydescs sigexpKind nil loc = ()
+          | checkWellformedTydescs sigexpKind ((tyvars,tycon, specKind)::tail) loc =
+            if !Control.doCompileObj = false then
+                case specKind of
+                    Absyn.GENERIC => ()
+                  | _ => enqueueError
+                             (loc,
+                              E.KindSpecificationInInteractiveMode{speckind = specKind})
+            else 
+                case (specKind, sigexpKind) of
+                    (Absyn.GENERIC, _) => ()
+                  | (_, OrdinarySig) =>
+                    (* kind constraint is applied not in import signature, thus error *)
+                    enqueueError
+                        (loc,
+                         E.KindSpecificationInOrdinarySigexp{speckind = specKind})
+                  | _ => ()
 
-    fun specListToSpecSeq loc specList =
-        let
-          fun makeSeqSpec [] = raise Control.Bug "nilspec found in elaborate"
-            | makeSeqSpec [spec] = spec
-            | makeSeqSpec (spec :: specs) =
-              PC.PLSPECSEQ(spec, makeSeqSpec specs, loc)
-        in makeSeqSpec specList
-        end
-
-    fun elabSpec env spec =
-        case spec of
-          A.SPECSEQ(A.SPECEMPTY, spec, loc) => elabSpec env spec
-        | A.SPECSEQ(spec, A.SPECEMPTY, loc) => elabSpec env spec
-        | A.SPECSEQ(spec1, spec2, loc) =>
-          PC.PLSPECSEQ(elabSpec env spec1, elabSpec env spec2, loc)
-        | A.SPECVAL(valBinds, loc) =>
-          let
-            val _ =
-                checkNameDuplication
-                  #1 valBinds loc E.DuplicateValDesc
-          in
-            PC.PLSPECVAL(elabLabeledSequence elabTy env valBinds, loc)
-          end
-        | A.SPECTYPE(tydescs, loc) => 
-          let
-            val _ =
-                checkNameDuplication
-                  #2 tydescs loc E.DuplicateTypDesc
-          in
-            PC.PLSPECTYPE(tydescs, loc)
-          end
-        | A.SPECDERIVEDTYPE(maniftypedescs, loc) =>
-          let 
-            val _ =
-                checkNameDuplication
-                  #2 maniftypedescs loc E.DuplicateTypDesc
-            fun elabDesc (tvars, name, ty) = (tvars, name, elabTy env ty)
-            fun elabTypeEquation m = PC.PLSPECTYPEEQUATION (elabDesc m, loc)
-          in 
-            specListToSpecSeq loc (map elabTypeEquation maniftypedescs)
-          end
-        | A.SPECEQTYPE(tydescs, loc) => 
-          let
-            val _ =
-                checkNameDuplication
-                  #2 tydescs loc E.DuplicateTypDesc
-          in
-            PC.PLSPECEQTYPE(tydescs, loc)
-          end
-        | A.SPECDATATYPE(dataDescs, loc) =>
-          let
-            val _ =
-                checkNameDuplication
-                  #2 dataDescs loc E.DuplicateTypDesc
-          in
-            PC.PLSPECDATATYPE(map (elabDataDesc loc env) dataDescs, loc)
-          end
-        | A.SPECREPLIC(tyCon, longTyCon, loc) =>
-          PC.PLSPECREPLIC(tyCon, longTyCon, loc)
-        | A.SPECEXCEPTION(exnDescs, loc) =>
-          let
-            val _ = 
-                checkNameDuplication
-                  #1 exnDescs loc E.DuplicateConstructorNameInException
-            fun elabExn env exnDescOpt = Option.map (elabTy env) exnDescOpt
-          in
-            PC.PLSPECEXCEPTION(elabLabeledSequence elabExn env exnDescs, loc)
-          end
-        | A.SPECSTRUCT(strdescs, loc) => 
-          let
-            val _ = 
-                checkNameDuplication
-                  #1 strdescs loc E.DuplicateStrDesc
-          in
-            PC.PLSPECSTRUCT (elabLabeledSequence elabSigExp env strdescs, loc)
-          end
-        | A.SPECINCLUDE(sigexp, loc)=>
-          PC.PLSPECINCLUDE(elabSigExp env sigexp, loc)
-        | A.SPECDERIVEDINCLUDE(sigids, loc) => 
-          let
-            fun elabSigID sigid = PC.PLSPECINCLUDE(PC.PLSIGID(sigid, loc), loc)
-          in
-            specListToSpecSeq loc (map elabSigID sigids)
-          end
-        | A.SPECSHARE(spec, longTyCons, loc) => 
-          PC.PLSPECSHARE (elabSpec env spec, longTyCons, loc)
-        | A.SPECSHARESTR(spec, longstrids, loc) => 
-          PC.PLSPECSHARESTR (elabSpec env spec, longstrids, loc)
-        | A.SPECEMPTY => PC.PLSPECEMPTY
-
-    and elabSigExp env sigexp =
-        case sigexp of 
-          A.SIGEXPBASIC(spec, loc) => PC.PLSIGEXPBASIC(elabSpec env spec, loc)
-        | A.SIGID(sigid,loc) => PC.PLSIGID(sigid, loc)
-        | A.SIGWHERE(sigexp, whtypes, loc) =>
-          let
-            fun elabClause (tyvars, tyCon, ty) = (tyvars, tyCon, elabTy env ty)
-          in
-            PC.PLSIGWHERE(elabSigExp env sigexp, map elabClause whtypes, loc)
-          end
-
-    and elabStrExp env strexp =
-        case strexp of
-          A.STREXPBASIC(strdecs, loc) => 
-          let val (plstrdecs, env') = elabStrDecs env strdecs
-          in PC.PLSTREXPBASIC(plstrdecs, loc)
-          end
-        | A.STRID(longid, loc) => PC.PLSTRID(longid, loc)
-        | A.STRTRANCONSTRAINT(strexp, sigexp, loc) =>
-          PC.PLSTRTRANCONSTRAINT
-              (elabStrExp env strexp, elabSigExp env sigexp, loc)
-        | A.STROPAQCONSTRAINT(strexp, sigexp, loc) =>
-          PC.PLSTROPAQCONSTRAINT
-              (elabStrExp env strexp, elabSigExp env sigexp, loc)
-        | A.FUNCTORAPP(funid, strexp, loc) => 
-          PC.PLFUNCTORAPP(funid, elabStrExp env strexp, loc)
-        | A.STRUCTLET(strdecs, strexp, loc) =>
-          let
-            val (plstrdecs, env') = elabStrDecs env strdecs
-            val newenv = SEnv.unionWith #1 (env', env)
-          in
-            PC.PLSTRUCTLET(plstrdecs, elabStrExp env strexp, loc)
-          end
-
-    and elabStrBind env strbind =
-        case strbind of
-          A.STRBINDTRAN(strid, sigexp, strexp, loc) =>
-          (
-            strid,
-            PC.PLSTRTRANCONSTRAINT
-                (elabStrExp env strexp, elabSigExp env sigexp, loc)
-          )
-        | A.STRBINDOPAQUE(strid, sigexp, strexp, loc) =>
-          (
-            strid,
-            PC.PLSTROPAQCONSTRAINT
-                (elabStrExp env strexp, elabSigExp env sigexp, loc)
-          )
-        | A.STRBINDNONOBSERV(strid, strexp, loc) =>
-          (strid, elabStrExp env strexp)
-    
-    and elabStrDec env strdec =
-        case strdec of 
-          A.COREDEC(dec, loc) => 
-          let val (pldecs, env) = elabDec env dec
-          in (map (fn pldec => PC.PLCOREDEC(pldec, loc)) pldecs, env)
-          end
-        | A.STRUCTBIND(strbinds,loc) => 
-          ([PC.PLSTRUCTBIND(map (elabStrBind env) strbinds, loc)], SEnv.empty)
-        | A.STRUCTLOCAL(strdecs1, strdecs2, loc) =>
-          let
-            val (plstrdecs1, env1) = elabStrDecs env strdecs1
-            val (plstrdecs2, env2) =
-                elabStrDecs (SEnv.unionWith #1 (env1, env)) strdecs2
-          in
-            ([PC.PLSTRUCTLOCAL(plstrdecs1, plstrdecs2, loc)], env2)
-          end
-
-    and elabStrDecs env strdecs = elabSequence elabStrDec env strdecs
-
-    and elabFunBind env funbind  =
-        case funbind of
-          A.FUNBINDTRAN (funid, strid, argSigexp, resSigexp, strexp, loc) =>
-          let val newStrexp = A.STRTRANCONSTRAINT(strexp, resSigexp, loc)
-          in
-            elabFunBind
-                env
-                (A.FUNBINDNONOBSERV(funid, strid, argSigexp, newStrexp, loc))
-          end
-        | A.FUNBINDOPAQUE (funid, strid, argSigexp, resSigexp, strexp, loc) =>
-          let val newStrexp = A.STROPAQCONSTRAINT(strexp, resSigexp, loc)
-          in
-            elabFunBind
-                env
-                (A.FUNBINDNONOBSERV(funid, strid, argSigexp, newStrexp, loc))
-          end
-        | A.FUNBINDNONOBSERV(funid, strid, argSigexp, strexp, loc) =>
-          let
-            val newArgSigexp = elabSigExp env argSigexp
-            val newStrexp = elabStrExp env strexp
-          in
-            (funid, strid, newArgSigexp, newStrexp, loc)
-          end
-        | A.FUNBINDSPECTRAN(funid, spec, resSigexp, strexp, loc) =>
-          let
-            val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
-            val newStrexp =
-                A.STRUCTLET
-                  ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], 
-                   A.STRTRANCONSTRAINT(strexp,resSigexp,loc),
-                   loc)
-            val argSigExp = A.SIGEXPBASIC(spec, loc)
-            val newFunBind =
-                A.FUNBINDNONOBSERV
-                    (funid, newStrid, argSigExp, newStrexp, loc)
-          in
-            elabFunBind env newFunBind
-          end
-        | A.FUNBINDSPECOPAQUE(funid, spec, resSigexp, strexp, loc) =>
-          let
-            val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
-            val newStrexp =
-                A.STRUCTLET
-                  ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], 
-                   A.STROPAQCONSTRAINT(strexp,resSigexp,loc),
-                   loc)
-            val argSigExp = A.SIGEXPBASIC(spec, loc)
-            val newFunBind =
-                A.FUNBINDNONOBSERV
-                  (funid, newStrid, argSigExp, newStrexp, loc)
-          in
-            elabFunBind env newFunBind
-          end
-        | A.FUNBINDSPECNONOBSERV (funid, spec, strexp, loc) =>
-          let
-            val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
-            val newStrexp =
-                A.STRUCTLET
-                  ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], strexp, loc)
-            val newFunBind =
-                A.FUNBINDNONOBSERV
-                  (funid, newStrid, A.SIGEXPBASIC(spec, loc), newStrexp, loc)
-          in
-            elabFunBind env newFunBind
-          end
-
-    and elabTopDec env topdec = 
-        case topdec of 
-          A.TOPDECSTR(strdec, loc) => 
-          let val (plstrdecs, env') = elabStrDec env strdec
-          in
-            (map (fn plstrdec => PC.PLTOPDECSTR(plstrdec, loc)) plstrdecs, env')
-          end
-        | A.TOPDECSIG(sigdecs, loc) => 
-          let val plsigdecs = elabLabeledSequence elabSigExp env sigdecs
-          in ([PC.PLTOPDECSIG(plsigdecs, loc)], SEnv.empty)
-          end
-        | A.TOPDECFUN(funbinds, loc) =>
-          let val plfunbinds = map (elabFunBind env) funbinds
-          in ([PC.PLTOPDECFUN(plfunbinds, loc)], SEnv.empty)
-          end
-        | A.TOPDECIMPORT(import, loc) =>
-          let val plimport = elabSpec env import
-          in ([PC.PLTOPDECIMPORT(plimport, loc)], SEnv.empty)
-          end
-            
-
-    and elabTopDecs env topdecs = elabSequence elabTopDec env topdecs
-
+        fun elabSpec sigexpKind env spec =
+            case spec of
+                A.SPECSEQ(A.SPECEMPTY, spec, loc) => elabSpec sigexpKind env spec
+              | A.SPECSEQ(spec, A.SPECEMPTY, loc) => elabSpec sigexpKind env spec
+              | A.SPECSEQ(spec1, spec2, loc) =>
+                PC.PLSPECSEQ(elabSpec sigexpKind env spec1, elabSpec sigexpKind env spec2, loc)
+              | A.SPECVAL(valBinds, loc) =>
+                let
+                    val _ =
+                        checkNameDuplication
+                            #1 valBinds loc E.DuplicateValDesc
+                in
+                    PC.PLSPECVAL(elabLabeledSequence elabTy env valBinds, loc)
+                end
+              | A.SPECTYPE(tydescs, loc) => 
+                let
+                    val _ =
+                        checkNameDuplication
+                            #2 tydescs loc E.DuplicateTypDesc
+                    val _ = 
+                        checkWellformedTydescs sigexpKind tydescs loc
+                in
+                    PC.PLSPECTYPE(tydescs, loc)
+                end
+              | A.SPECDERIVEDTYPE(maniftypedescs, loc) =>
+                let 
+                    val _ =
+                        checkNameDuplication
+                            #2 maniftypedescs loc E.DuplicateTypDesc
+                    fun elabDesc (tvars, name, ty) = (tvars, name, elabTy env ty)
+                    fun elabTypeEquation m = PC.PLSPECTYPEEQUATION (elabDesc m, loc)
+                in 
+                    specListToSpecSeq loc (map elabTypeEquation maniftypedescs)
+                end
+              | A.SPECEQTYPE(tydescs, loc) => 
+                let
+                    val _ =
+                        checkNameDuplication
+                            #2 tydescs loc E.DuplicateTypDesc
+                    val _ = 
+                        checkWellformedTydescs sigexpKind tydescs
+                in
+                    PC.PLSPECEQTYPE(tydescs, loc)
+                end
+              | A.SPECDATATYPE(dataDescs, loc) =>
+                let
+                    val _ =
+                        checkNameDuplication
+                            #2 dataDescs loc E.DuplicateTypDesc
+                in
+                    PC.PLSPECDATATYPE(map (elabDataDesc loc env) dataDescs, loc)
+                end
+              | A.SPECREPLIC(tyCon, longTyCon, loc) =>
+                PC.PLSPECREPLIC(tyCon, longTyCon, loc)
+              | A.SPECEXCEPTION(exnDescs, loc) =>
+                let
+                    val _ = 
+                        checkNameDuplication
+                            #1 exnDescs loc E.DuplicateConstructorNameInException
+                    fun elabExn env exnDescOpt = Option.map (elabTy env) exnDescOpt
+                in
+                    PC.PLSPECEXCEPTION(elabLabeledSequence elabExn env exnDescs, loc)
+                end
+              | A.SPECSTRUCT(strdescs, loc) => 
+                let
+                    val _ = 
+                        checkNameDuplication
+                            #1 strdescs loc E.DuplicateStrDesc
+                in
+                    PC.PLSPECSTRUCT (elabLabeledSequence (elabSigExp sigexpKind) env strdescs, loc)
+                end
+              | A.SPECINCLUDE(sigexp, loc)=>
+                PC.PLSPECINCLUDE(elabSigExp sigexpKind env sigexp, loc)
+              | A.SPECDERIVEDINCLUDE(sigids, loc) => 
+                let
+                    fun elabSigID sigid = PC.PLSPECINCLUDE(PC.PLSIGID(sigid, loc), loc)
+                in
+                    specListToSpecSeq loc (map elabSigID sigids)
+                end
+              | A.SPECSHARE(spec, longTyCons, loc) => 
+                PC.PLSPECSHARE (elabSpec sigexpKind env spec, longTyCons, loc)
+              | A.SPECSHARESTR(spec, longstrids, loc) => 
+                PC.PLSPECSHARESTR (elabSpec sigexpKind env spec, longstrids, loc)
+              | A.SPECEMPTY => PC.PLSPECEMPTY
+                               
+        and elabSigExp sigexpKind env sigexp =
+            case sigexp of 
+                A.SIGEXPBASIC(spec, loc) => PC.PLSIGEXPBASIC(elabSpec sigexpKind env spec, loc)
+              | A.SIGID(sigid,loc) => PC.PLSIGID(sigid, loc)
+              | A.SIGWHERE(sigexp, whtypes, loc) =>
+                let
+                    fun elabClause (tyvars, tyCon, ty) = (tyvars, tyCon, elabTy env ty)
+                in
+                    PC.PLSIGWHERE(elabSigExp sigexpKind env sigexp, map elabClause whtypes, loc)
+                end
+                    
+        and elabStrExp env strexp =
+            case strexp of
+                A.STREXPBASIC(strdecs, loc) => 
+                let val (plstrdecs, env') = elabStrDecs env strdecs
+                in PC.PLSTREXPBASIC(plstrdecs, loc)
+                end
+              | A.STRID(longid, loc) => PC.PLSTRID(longid, loc)
+              | A.STRTRANCONSTRAINT(strexp, sigexp, loc) =>
+                PC.PLSTRTRANCONSTRAINT
+                    (elabStrExp env strexp, elabSigExp OrdinarySig env sigexp, loc)
+              | A.STROPAQCONSTRAINT(strexp, sigexp, loc) =>
+                PC.PLSTROPAQCONSTRAINT
+                    (elabStrExp env strexp, elabSigExp OrdinarySig env sigexp, loc)
+              | A.FUNCTORAPP(funid, strexp, loc) => 
+                PC.PLFUNCTORAPP(funid, elabStrExp env strexp, loc)
+              | A.STRUCTLET(strdecs, strexp, loc) =>
+                let
+                    val (plstrdecs, env') = elabStrDecs env strdecs
+                    val newenv = SEnv.unionWith #1 (env', env)
+                in
+                    PC.PLSTRUCTLET(plstrdecs, elabStrExp env strexp, loc)
+                end
+                    
+        and elabStrBind env strbind =
+            case strbind of
+                A.STRBINDTRAN(strid, sigexp, strexp, loc) =>
+                (
+                 strid,
+                 PC.PLSTRTRANCONSTRAINT
+                     (elabStrExp env strexp, elabSigExp OrdinarySig env sigexp, loc)
+                     )
+              | A.STRBINDOPAQUE(strid, sigexp, strexp, loc) =>
+                (
+                 strid,
+                 PC.PLSTROPAQCONSTRAINT
+                     (elabStrExp env strexp, elabSigExp OrdinarySig env sigexp, loc)
+                     )
+              | A.STRBINDNONOBSERV(strid, strexp, loc) =>
+                (strid, elabStrExp env strexp)
+                
+        and elabStrDec env strdec =
+            case strdec of 
+                A.COREDEC(dec, loc) => 
+                let val (pldecs, env) = elabDec env dec
+                in (map (fn pldec => PC.PLCOREDEC(pldec, loc)) pldecs, env)
+                end
+              | A.STRUCTBIND(strbinds,loc) => 
+                ([PC.PLSTRUCTBIND(map (elabStrBind env) strbinds, loc)], SEnv.empty)
+              | A.STRUCTLOCAL(strdecs1, strdecs2, loc) =>
+                let
+                    val (plstrdecs1, env1) = elabStrDecs env strdecs1
+                    val (plstrdecs2, env2) =
+                        elabStrDecs (SEnv.unionWith #1 (env1, env)) strdecs2
+                in
+                    ([PC.PLSTRUCTLOCAL(plstrdecs1, plstrdecs2, loc)], env2)
+                end
+                    
+        and elabStrDecs env strdecs = elabSequence elabStrDec env strdecs
+                                      
+        and elabFunBind env funbind  =
+            case funbind of
+                A.FUNBINDTRAN (funid, strid, argSigexp, resSigexp, strexp, loc) =>
+                let val newStrexp = A.STRTRANCONSTRAINT(strexp, resSigexp, loc)
+                in
+                    elabFunBind
+                        env
+                        (A.FUNBINDNONOBSERV(funid, strid, argSigexp, newStrexp, loc))
+                end
+              | A.FUNBINDOPAQUE (funid, strid, argSigexp, resSigexp, strexp, loc) =>
+                let val newStrexp = A.STROPAQCONSTRAINT(strexp, resSigexp, loc)
+                in
+                    elabFunBind
+                        env
+                        (A.FUNBINDNONOBSERV(funid, strid, argSigexp, newStrexp, loc))
+                end
+              | A.FUNBINDNONOBSERV(funid, strid, argSigexp, strexp, loc) =>
+                let
+                    val newArgSigexp = elabSigExp OrdinarySig env argSigexp
+                    val newStrexp = elabStrExp env strexp
+                in
+                    (funid, strid, newArgSigexp, newStrexp, loc)
+                end
+              | A.FUNBINDSPECTRAN(funid, spec, resSigexp, strexp, loc) =>
+                let
+                    val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+                    val newStrexp =
+                        A.STRUCTLET
+                            ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], 
+                             A.STRTRANCONSTRAINT(strexp,resSigexp,loc),
+                             loc)
+                    val argSigExp = A.SIGEXPBASIC(spec, loc)
+                    val newFunBind =
+                        A.FUNBINDNONOBSERV
+                            (funid, newStrid, argSigExp, newStrexp, loc)
+                in
+                    elabFunBind env newFunBind
+                end
+              | A.FUNBINDSPECOPAQUE(funid, spec, resSigexp, strexp, loc) =>
+                let
+                    val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+                    val newStrexp =
+                        A.STRUCTLET
+                            ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], 
+                             A.STROPAQCONSTRAINT(strexp,resSigexp,loc),
+                             loc)
+                    val argSigExp = A.SIGEXPBASIC(spec, loc)
+                    val newFunBind =
+                        A.FUNBINDNONOBSERV
+                            (funid, newStrid, argSigExp, newStrexp, loc)
+                in
+                    elabFunBind env newFunBind
+                end
+              | A.FUNBINDSPECNONOBSERV (funid, spec, strexp, loc) =>
+                let
+                    val newStrid = NAME_OF_ANONYMOUS_FUNCTOR_PARAMETER
+                    val newStrexp =
+                        A.STRUCTLET
+                            ([A.COREDEC(A.DECOPEN([[newStrid]], loc), loc)], strexp, loc)
+                    val newFunBind =
+                        A.FUNBINDNONOBSERV
+                            (funid, newStrid, A.SIGEXPBASIC(spec, loc), newStrexp, loc)
+                in
+                    elabFunBind env newFunBind
+                end
+                    
+        and elabTopDec env topdec = 
+            case topdec of 
+                A.TOPDECSTR(strdec, loc) => 
+                let val (plstrdecs, env') = elabStrDec env strdec
+                in
+                    (map (fn plstrdec => PC.PLTOPDECSTR(plstrdec, loc)) plstrdecs, env')
+                end
+              | A.TOPDECSIG(sigdecs, loc) => 
+                let val plsigdecs = elabLabeledSequence (elabSigExp OrdinarySig) env sigdecs
+                in ([PC.PLTOPDECSIG(plsigdecs, loc)], SEnv.empty)
+                end
+              | A.TOPDECFUN(funbinds, loc) =>
+                let val plfunbinds = map (elabFunBind env) funbinds
+                in ([PC.PLTOPDECFUN(plfunbinds, loc)], SEnv.empty)
+                end
+              | A.TOPDECIMPORT(import, loc) =>
+                let val plimport = elabSpec ImportSig env import 
+                in ([PC.PLTOPDECIMPORT(plimport, loc)], SEnv.empty)
+                end
+              | A.TOPDECEXPORT(export, loc) =>
+                let val plexport = elabSpec ExportSig env export
+                in ([PC.PLTOPDECEXPORT(plexport, loc)], SEnv.empty)
+                end 
+                    
+        and elabTopDecs env topdecs = elabSequence elabTopDec env topdecs
+    end (* end local *)
+        
     fun elaborate env decs =
         let        
           val _ = initializeErrorQueue ()

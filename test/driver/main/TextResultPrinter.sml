@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: TextResultPrinter.sml,v 1.5 2005/09/05 03:06:07 kiyoshiy Exp $
+ * @version $Id: TextResultPrinter.sml,v 1.6 2007/02/19 14:11:56 kiyoshiy Exp $
  *)
 structure TextResultPrinter : RESULT_PRINTER =
 struct
@@ -50,10 +50,10 @@ struct
           (
             print subSectionSeparator;
             print "SOURCE:\n";
-            #sendArray resultChannel source;
+            #sendVector resultChannel source;
             print subSectionSeparator;
             print "OUTPUT:\n";
-            #sendArray resultChannel output;
+            #sendVector resultChannel output;
             print sectionSeparator
           )
         else ();

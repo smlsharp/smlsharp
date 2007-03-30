@@ -173,10 +173,8 @@ fun topLevel (fixenv,context) arg =
 			 val _ = if null warnings
 			         then ()
 				 else app (fn warning => 
-					   (print (SMLFormat.prettyPrint 
-						   {newlineString = "\n", 
-						    spaceString = " ", 
-						    columns = !Control.printWidth} 
+					   (print (SMLFormat.prettyPrint
+                                                       [SMLFormat.Columns(!Control.printWidth)]
 						   (MatchError.format_errorInfo warning)); TextIO.print "\n")) 
 				   warnings
 			 val _ = (print "Match Compiled to:\n";

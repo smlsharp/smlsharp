@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: TestTypes.sml,v 1.2 2005/03/17 14:58:46 kiyoshiy Exp $
+ * @version $Id: TestTypes.sml,v 1.3 2007/02/19 14:11:56 kiyoshiy Exp $
  *)
 structure TestTypes =
 struct
@@ -12,9 +12,9 @@ struct
        {
          sourcePath : string,
          isSameContents : bool,
-         source : Word8Array.array,
-         output : Word8Array.array,
-         expected : Word8Array.array,
+         source : Word8Vector.vector,
+         output : Word8Vector.vector,
+         expected : Word8Vector.vector,
          exceptions : exn list
        }
 

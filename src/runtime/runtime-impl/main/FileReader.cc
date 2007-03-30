@@ -8,6 +8,16 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 ///////////////////////////////////////////////////////////////////////////////
 
 FileReader::
+FileReader(const char* fileName, FILE* stream, BoolValue DontClose)
+    :Reader(),
+     fileName_(fileName),
+     stream_(stream),
+     DontClose_(DontClose)
+{
+    descriptor_ = fileno(stream);
+}
+
+FileReader::
 FileReader(const char* fileName, int descriptor, BoolValue DontClose)
     :Reader(),
      fileName_(fileName),

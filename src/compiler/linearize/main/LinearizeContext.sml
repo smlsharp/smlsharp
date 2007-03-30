@@ -1,7 +1,7 @@
 (**
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: LinearizeContext.sml,v 1.12 2006/01/29 22:37:14 duchuu Exp $
+ * @version $Id: LinearizeContext.sml,v 1.15 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure LinearizeContext : LINEARIZE_CONTEXT =
 struct
@@ -12,7 +12,7 @@ struct
   structure SI = SymbolicInstructions
   structure AN = ANormal
   structure TMap = IEnv
-  structure SE = StaticEnv
+  structure T = Types
 
   (***************************************************************************)
 
@@ -52,7 +52,9 @@ struct
          (** instructions for holding constants *)
          constantInstructions : SI.instruction list ref,
          (** the shared context for this translation *)
-         linearizeContext : linearizeContext
+         linearizeContext : linearizeContext,
+         (** start labels of enclosing codes guarded by 'handle'. *)
+         enclosingGuardedCodes : label list
        }
 
   type context = functionContext
@@ -64,9 +66,9 @@ struct
   fun ANVarInfoToVarInfo ({id, displayName, ...} : AN.varInfo) =
       {id = id, displayName = displayName} : SI.varInfo
 
-  fun createLabel functionContext = SE.newVarId()
+  fun createLabel functionContext = T.newVarId()
 
-  fun createLocalVarID functionContext = SE.newVarId()
+  fun createLocalVarID functionContext = T.newVarId()
 
   fun addVarBind ({localBindingsRef, ...} : functionContext) varInfo =
       localBindingsRef := (varInfo :: (!localBindingsRef))
@@ -86,7 +88,8 @@ struct
           resultType = #resultType functionContext,
           locOfEnclosingExp = #locOfEnclosingExp functionContext,
           constantInstructions = #constantInstructions functionContext,
-          localBindingsRef = #localBindingsRef functionContext
+          localBindingsRef = #localBindingsRef functionContext,
+          enclosingGuardedCodes = #enclosingGuardedCodes functionContext
         }
         : functionContext
   in
@@ -97,11 +100,38 @@ struct
       let
         val currentPosition = #position functionContext
         val newPosition =
-            if currentPosition = Tail then Result else currentPosition
+          case currentPosition of
+            Tail => Result 
+          | _ => currentPosition
       in changePosition (functionContext, newPosition) end
 
   fun setBoundPosition (functionContext : functionContext, varid, ty) =
       changePosition (functionContext, Bound (varid, ty))
+
+  (**
+   * add enclosingGuardedCodes, and changes position to non-tail.
+   *)
+  fun enterGuardedCode (functionContext : functionContext, label) =
+      let
+        val ctx = 
+            {
+              functionID = #functionID functionContext,
+              sizeMap = #sizeMap functionContext,
+              position = #position functionContext,
+              linearizeContext = #linearizeContext functionContext,
+              resultType = #resultType functionContext,
+              locOfEnclosingExp = #locOfEnclosingExp functionContext,
+              constantInstructions = #constantInstructions functionContext,
+              localBindingsRef = #localBindingsRef functionContext,
+              enclosingGuardedCodes =
+              label :: #enclosingGuardedCodes functionContext
+            } : functionContext
+      in
+        notTailPosition ctx
+      end
+
+  fun getEnclosingHandlers (functionContext : functionContext) =
+      #enclosingGuardedCodes functionContext
 
   end
 
@@ -114,7 +144,8 @@ struct
           resultType = #resultType functionContext,
           locOfEnclosingExp = loc,
           constantInstructions = #constantInstructions functionContext,
-          localBindingsRef = #localBindingsRef functionContext
+          localBindingsRef = #localBindingsRef functionContext,
+          enclosingGuardedCodes = #enclosingGuardedCodes functionContext
         }
         : functionContext
   fun getLocOfEnclosingExp (functionContext : functionContext) =
@@ -166,14 +197,15 @@ struct
             : linearizeContext
       in
         {
-          functionID = SE.newVarId(),
+          functionID = T.newVarId(),
           sizeMap = TMap.empty,
           localBindingsRef = ref [],
           position = Tail,
           resultType = AN.ATOM, (* ToDo : UNBOXED ? *)
           locOfEnclosingExp = Loc.noloc,
           constantInstructions = ref [],
-          linearizeContext = linearizeContext
+          linearizeContext = linearizeContext,
+          enclosingGuardedCodes = []
         }
         : functionContext
       end
@@ -198,7 +230,8 @@ struct
               resultType = #resultTy funInfo,
               locOfEnclosingExp = loc,
               constantInstructions = ref [],
-              linearizeContext = linearizeContext
+              linearizeContext = linearizeContext,
+              enclosingGuardedCodes = []
             }
         val _ = app (fn varInfo => addVarBind context varInfo) (#args funInfo)
       in

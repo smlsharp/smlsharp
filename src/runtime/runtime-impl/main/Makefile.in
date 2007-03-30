@@ -7,6 +7,8 @@ include @top_builddir@commonrule
 
 VPATH = $(srcdir)
 
+LOCAL_CPPFLAGS = $(LIBFFI_BUILD:libffi_build=-I../../libffi_build/include)
+
 SOURCES = ByteArrayInputChannel.cc \
           ClientSocketChannel.cc \
           ExecutableLinker.cc \
@@ -22,7 +24,12 @@ SOURCES = ByteArrayInputChannel.cc \
           StandAloneSession.cc \
           StreamInputChannelBase.cc \
           StreamOutputChannelBase.cc \
-          VirtualMachine.cc
+          VirtualMachine.cc \
+          FFI_$(FFI_STUB).cc
+
+SOURCES_DEPEND = $(SOURCES) \
+                 FFI_default.cc \
+                 FFI_libffi.cc
 
 OBJECTS = $(SOURCES:.cc=.$(OBJEXT))
 
@@ -31,26 +38,407 @@ TARGETS = libimlruntimeimpl.$(LIBEXT)
 all: $(TARGETS)
 
 clean:
+	-rm -f $(srcdir)/FFISwitchGen/LARGEFFISWITCH.cc
+	-rm -f $(srcdir)/FFISwitchGen/FFIGenData.ppg.sml
+	-rm -rf $(srcdir)/FFISwitchGen/CM $(srcdir)/FFISwitchGen/.cm
 	-rm -f $(OBJECTS) $(TARGETS)
 
 libimlruntimeimpl.$(LIBEXT): $(OBJECTS)
 	$(AR) rcu $@ $(OBJECTS)
 	-$(RANLIB) $@
 
-# FIXME: dependency
-ByteArrayInputChannel.$(OBJEXT): ByteArrayInputChannel.cc
-ClientSocketChannel.$(OBJEXT): ClientSocketChannel.cc
-ExecutableLinker.$(OBJEXT): ExecutableLinker.cc
-FileInputChannel.$(OBJEXT): FileInputChannel.cc
-FileLogFacade.$(OBJEXT): FileLogFacade.cc
-FileOutputChannel.$(OBJEXT): FileOutputChannel.cc
-FileReader.$(OBJEXT): FileReader.cc
-FileWriter.$(OBJEXT): FileWriter.cc
-Heap.$(OBJEXT): Heap.cc
-InteractiveSession.$(OBJEXT): InteractiveSession.cc
-ServerSocketChannel.$(OBJEXT): ServerSocketChannel.cc
-SessionBase.$(OBJEXT): SessionBase.cc
-StandAloneSession.$(OBJEXT): StandAloneSession.cc
-StreamInputChannelBase.$(OBJEXT): StreamInputChannelBase.cc
-StreamOutputChannelBase.$(OBJEXT): StreamOutputChannelBase.cc
-VirtualMachine.$(OBJEXT): VirtualMachine.cc
+FFISwitchGen/LARGEFFISWITCH.cc: Makefile FFISwitchGen/FFISwitchGen.sml \
+                                FFISwitchGen/FFIGenData.ppg.sml
+	cd $(srcdir) \
+	&& cd FFISwitchGen \
+	&& $(SHELL) -x $(BUILD_ROOT)/mksmlheap \
+	   --exec 'FFISwitchGen.main $(FFI_MAX_ARGS);'
+
+FFISwitchGen/FFIGenData.ppg.sml: FFISwitchGen/FFIGenData.ppg
+
+##---- dependency (automatically generated) ----
+ByteArrayInputChannel.$(OBJEXT): ByteArrayInputChannel.cc \
+  ByteArrayInputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/InputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h
+ClientSocketChannel.$(OBJEXT): ClientSocketChannel.cc ClientSocketChannel.hh \
+  StreamInputChannelBase.hh \
+  ../../../../src/runtime/runtime-core/main/InputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h StreamOutputChannelBase.hh \
+  ../../../../src/runtime/runtime-core/main/OutputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh
+ExecutableLinker.$(OBJEXT): ExecutableLinker.cc ExecutableLinker.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  WordOperations.hh ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh \
+  ../../../../src/instructions/runtime/main/Instructions.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh
+FileInputChannel.$(OBJEXT): FileInputChannel.cc FileInputChannel.hh \
+  StreamInputChannelBase.hh \
+  ../../../../src/runtime/runtime-core/main/InputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h
+FileLogFacade.$(OBJEXT): FileLogFacade.cc FileLogFacade.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h
+FileOutputChannel.$(OBJEXT): FileOutputChannel.cc FileOutputChannel.hh \
+  StreamOutputChannelBase.hh \
+  ../../../../src/runtime/runtime-core/main/OutputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h
+FileReader.$(OBJEXT): FileReader.cc FileReader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh
+FileWriter.$(OBJEXT): FileWriter.cc FileWriter.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh
+Heap.$(OBJEXT): Heap.cc Heap.hh \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh
+InteractiveSession.$(OBJEXT): InteractiveSession.cc InteractiveSession.hh \
+  ../../../../src/runtime/runtime-core/main/Session.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  VirtualMachine.hh ExecutableLinker.hh WordOperations.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh Heap.hh \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  WordOperations.hh EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughFrameStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/InputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/OutputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh SessionBase.hh \
+  VirtualMachine.hh WordOperations.hh \
+  ../../../../src/runtime/runtime-core/main/ProtocolException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh
+ServerSocketChannel.$(OBJEXT): ServerSocketChannel.cc ServerSocketChannel.hh \
+  StreamInputChannelBase.hh \
+  ../../../../src/runtime/runtime-core/main/InputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h StreamOutputChannelBase.hh \
+  ../../../../src/runtime/runtime-core/main/OutputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh
+SessionBase.$(OBJEXT): SessionBase.cc SessionBase.hh \
+  ../../../../src/runtime/runtime-core/main/Session.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  VirtualMachine.hh ExecutableLinker.hh WordOperations.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh Heap.hh \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  WordOperations.hh EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughFrameStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/InputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  WordOperations.hh \
+  ../../../../src/runtime/runtime-core/main/ProtocolException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh
+StandAloneSession.$(OBJEXT): StandAloneSession.cc StandAloneSession.hh \
+  ../../../../src/runtime/runtime-core/main/Session.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  SessionBase.hh VirtualMachine.hh ExecutableLinker.hh WordOperations.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh Heap.hh \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  WordOperations.hh EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughFrameStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/InputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  WordOperations.hh VirtualMachine.hh WordOperations.hh FileReader.hh \
+  FileWriter.hh
+StreamInputChannelBase.$(OBJEXT): StreamInputChannelBase.cc \
+  StreamInputChannelBase.hh \
+  ../../../../src/runtime/runtime-core/main/InputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h
+StreamOutputChannelBase.$(OBJEXT): StreamOutputChannelBase.cc \
+  StreamOutputChannelBase.hh \
+  ../../../../src/runtime/runtime-core/main/OutputChannel.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h
+VirtualMachine.$(OBJEXT): VirtualMachine.cc Heap.hh \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh \
+  ../../../../src/primitives/runtime/main/Primitives.hh \
+  ../../../../src/primitives/runtime/main/Constants.hh \
+  PrimitiveSupport.hh Heap.hh VirtualMachine.hh ExecutableLinker.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  WordOperations.hh Heap.hh \
+  ../../../../src/runtime/runtime-core/main/Session.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  WordOperations.hh EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughFrameStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  EmptyHandlerStackException.hh \
+  ../../../../src/instructions/runtime/main/Instructions.hh \
+  VirtualMachine.hh \
+  ../../../../src/runtime/runtime-core/main/FFIException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  InterruptedException.hh FFI.hh
+FFI_default.$(OBJEXT): FFI_default.cc \
+  ../../../../src/primitives/runtime/main/Constants.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h FFI.hh \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh \
+  ../../../../src/runtime/runtime-core/main/FFIException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  Heap.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  VirtualMachine.hh ExecutableLinker.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  WordOperations.hh Heap.hh \
+  ../../../../src/runtime/runtime-core/main/Session.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  WordOperations.hh EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughFrameStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  FFISwitchGen/LARGEFFISWITCH.cc FFISwitchGen/LARGEFFISWITCH.cc \
+  FFISwitchGen/LARGEFFISWITCH.cc

@@ -1,0 +1,596 @@
+<HTML>
+<HEAD>
+<TITLE>DependencyGraphTest0001</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+<HR>
+<H2>DependencyGraphTest0001</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrDependencyGraphTest0001.html">DependencyGraphTest0001</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrDependencyGraphTest0001-StrAssert.html">Assert</A>&nbsp;=&nbsp;SMLUnit.Assert<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrDependencyGraphTest0001-StrTest.html">Test</A>&nbsp;=&nbsp;SMLUnit.Test<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrDependencyGraphTest0001-StrTestee.html">Testee</A>&nbsp;=&nbsp;DependencyGraph<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValassertEqualIsDependsOn">assertEqualIsDependsOn</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestDependsOn0001">testDependsOn0001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestDependsOn0002">testDependsOn0002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestDependsOn0003">testDependsOn0003</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosure1001">testGetClosure1001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosure2001">testGetClosure2001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosure2002">testGetClosure2002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosure2003">testGetClosure2003</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosure3001">testGetClosure3001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosure3002">testGetClosure3002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosure4001">testGetClosure4001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosureRev1001">testGetClosureRev1001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosureRev2001">testGetClosureRev2001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosureRev2002">testGetClosureRev2002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosureRev2003">testGetClosureRev2003</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosureRev3001">testGetClosureRev3001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosureRev3002">testGetClosureRev3002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestGetClosureRev4001">testGetClosureRev4001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestSort1001">testSort1001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestSort1002">testSort1002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestSort2001">testSort2001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestSort2002">testSort2002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestSort3001">testSort3001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestSort3002">testSort3002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#ValtestSort3003">testSort3003</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrDependencyGraphTest0001.html#Valsuite">suite</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+ unit test of <code>structure DependencyGraph</code>
+ 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValassertEqualIsDependsOn"><!-- --></A>
+<H3>assertEqualIsDependsOn</H3>
+<P>
+<CODE>val&nbsp;assertEqualIsDependsOn</CODE>
+
+<HR>
+<A NAME="ValtestDependsOn0001"><!-- --></A>
+<H3>testDependsOn0001</H3>
+<P>
+<CODE>val&nbsp;testDependsOn0001</CODE>
+<DL>
+<DD>
+ test case of dependsOn/isDependsOn (normal case)
+ <ol>
+   <li>calls dependsOn.</li>
+   <li>calls isDependsOn and verifies the return value indicates that
+     there is a dependency with the attribute between the specified
+     nodes.</li>
+ </ol>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestDependsOn0002"><!-- --></A>
+<H3>testDependsOn0002</H3>
+<P>
+<CODE>val&nbsp;testDependsOn0002</CODE>
+<DL>
+<DD>
+ test case of dependsOn/isDependsOn (normal case)
+ <ol>
+   <li>calls isDependsOn and verifies the return value indicates that
+     there is no dependency with the attribute between the specified
+     nodes.</li>
+ </ol>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestDependsOn0003"><!-- --></A>
+<H3>testDependsOn0003</H3>
+<P>
+<CODE>val&nbsp;testDependsOn0003</CODE>
+<DL>
+<DD>
+ test case of dependsOn/isDependsOn (normal case)
+ <ol>
+   <li>calls dependsOn.</li>
+   <li>calls isDependsOn and verifies the return value indicates that
+     there is a dependency with the attribute between the specified
+     nodes.</li>
+   <li>calls isDependsOn with src and destination reversed
+     and verifies the return value indicates that
+     there is no dependency of the opposite direction between the
+     specified nodes.</li>
+ </ol>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosure1001"><!-- --></A>
+<H3>testGetClosure1001</H3>
+<P>
+<CODE>val&nbsp;testGetClosure1001</CODE>
+<DL>
+<DD>
+  tests the getClosure function with a node graph.
+ <ul>
+   <li>the number of nodes: 1</li>
+   <li>the length of dependency path: 0</li>
+   <li>the number of dependency path: 0</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosure2001"><!-- --></A>
+<H3>testGetClosure2001</H3>
+<P>
+<CODE>val&nbsp;testGetClosure2001</CODE>
+<DL>
+<DD>
+  tests the getClosure function with two nodes graph where is no
+ dependency.
+ <ul>
+   <li>the number of nodes: 2</li>
+   <li>the length of dependency path: 0</li>
+   <li>the number of dependency path: 0</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosure2002"><!-- --></A>
+<H3>testGetClosure2002</H3>
+<P>
+<CODE>val&nbsp;testGetClosure2002</CODE>
+<DL>
+<DD>
+  tests the getClosure function with two nodes graph where is a
+ dependency.
+ <ul>
+   <li>the number of nodes: 2</li>
+   <li>the length of dependency path: 1</li>
+   <li>the number of dependency path: 1</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosure2003"><!-- --></A>
+<H3>testGetClosure2003</H3>
+<P>
+<CODE>val&nbsp;testGetClosure2003</CODE>
+<DL>
+<DD>
+  tests the getClosure function with two nodes graph which are mutual
+ dependencies between the nodes.
+ <ul>
+   <li>the number of nodes: 2</li>
+   <li>the length of dependency path: 1</li>
+   <li>the number of dependency path: 2</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosure3001"><!-- --></A>
+<H3>testGetClosure3001</H3>
+<P>
+<CODE>val&nbsp;testGetClosure3001</CODE>
+<DL>
+<DD>
+  tests the getClosure function with three nodes graph.
+ <ul>
+   <li>the number of nodes: 3</li>
+   <li>the length of dependency path: 1</li>
+   <li>the number of dependency path: 1</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosure3002"><!-- --></A>
+<H3>testGetClosure3002</H3>
+<P>
+<CODE>val&nbsp;testGetClosure3002</CODE>
+<DL>
+<DD>
+  tests the getClosure function with three nodes graph.
+ <ul>
+   <li>the number of nodes: 3</li>
+   <li>the length of dependency path: 2</li>
+   <li>the number of dependency path: 1</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosure4001"><!-- --></A>
+<H3>testGetClosure4001</H3>
+<P>
+<CODE>val&nbsp;testGetClosure4001</CODE>
+<DL>
+<DD>
+  tests the getClosure function with four nodes graph.
+ <ul>
+   <li>the number of nodes: 4</li>
+   <li>the length of dependency path: 2</li>
+   <li>the number of dependency path: 2</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosureRev1001"><!-- --></A>
+<H3>testGetClosureRev1001</H3>
+<P>
+<CODE>val&nbsp;testGetClosureRev1001</CODE>
+<DL>
+<DD>
+  tests the getClosureRev function with a node graph.
+ <ul>
+   <li>the number of nodes: 1</li>
+   <li>the length of dependency path: 0</li>
+   <li>the number of dependency path: 0</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosureRev2001"><!-- --></A>
+<H3>testGetClosureRev2001</H3>
+<P>
+<CODE>val&nbsp;testGetClosureRev2001</CODE>
+<DL>
+<DD>
+  tests the getClosureRev function with two nodes graph where is no
+ dependency.
+ <ul>
+   <li>the number of nodes: 2</li>
+   <li>the length of dependency path: 0</li>
+   <li>the number of dependency path: 0</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosureRev2002"><!-- --></A>
+<H3>testGetClosureRev2002</H3>
+<P>
+<CODE>val&nbsp;testGetClosureRev2002</CODE>
+<DL>
+<DD>
+  tests the getClosureRev function with two nodes graph where is a
+ dependency.
+ <ul>
+   <li>the number of nodes: 2</li>
+   <li>the length of dependency path: 1</li>
+   <li>the number of dependency path: 1</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosureRev2003"><!-- --></A>
+<H3>testGetClosureRev2003</H3>
+<P>
+<CODE>val&nbsp;testGetClosureRev2003</CODE>
+<DL>
+<DD>
+  tests the getClosureRev function with two nodes graph which are mutual
+ dependencies between the nodes.
+ <ul>
+   <li>the number of nodes: 2</li>
+   <li>the length of dependency path: 1</li>
+   <li>the number of dependency path: 2</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosureRev3001"><!-- --></A>
+<H3>testGetClosureRev3001</H3>
+<P>
+<CODE>val&nbsp;testGetClosureRev3001</CODE>
+<DL>
+<DD>
+  tests the getClosureRev function with three nodes graph.
+ <ul>
+   <li>the number of nodes: 3</li>
+   <li>the length of dependency path: 1</li>
+   <li>the number of dependency path: 1</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosureRev3002"><!-- --></A>
+<H3>testGetClosureRev3002</H3>
+<P>
+<CODE>val&nbsp;testGetClosureRev3002</CODE>
+<DL>
+<DD>
+  tests the getClosureRev function with three nodes graph.
+ <ul>
+   <li>the number of nodes: 3</li>
+   <li>the length of dependency path: 2</li>
+   <li>the number of dependency path: 1</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestGetClosureRev4001"><!-- --></A>
+<H3>testGetClosureRev4001</H3>
+<P>
+<CODE>val&nbsp;testGetClosureRev4001</CODE>
+<DL>
+<DD>
+  tests the getClosureRev function with four nodes graph.
+ <ul>
+   <li>the number of nodes: 4</li>
+   <li>the length of dependency path: 2</li>
+   <li>the number of dependency path: 2</li>
+ </ul>
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestSort1001"><!-- --></A>
+<H3>testSort1001</H3>
+<P>
+<CODE>val&nbsp;testSort1001</CODE>
+<DL>
+<DD>
+  tests the sort function with a nodes graph without any dependency.
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestSort1002"><!-- --></A>
+<H3>testSort1002</H3>
+<P>
+<CODE>val&nbsp;testSort1002</CODE>
+<DL>
+<DD>
+  tests the sort function with a nodes graph depending itself.
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestSort2001"><!-- --></A>
+<H3>testSort2001</H3>
+<P>
+<CODE>val&nbsp;testSort2001</CODE>
+<DL>
+<DD>
+  tests the sort function with a two nodes graph where a nodes depends on
+ the other node.
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestSort2002"><!-- --></A>
+<H3>testSort2002</H3>
+<P>
+<CODE>val&nbsp;testSort2002</CODE>
+<DL>
+<DD>
+  tests the sort function with a two nodes graph where they depend on
+ each other.
+  The order of nodes in the result value of the sort function is not
+ defined if they depend each other, but the function must return some
+ value (not stuck).
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestSort3001"><!-- --></A>
+<H3>testSort3001</H3>
+<P>
+<CODE>val&nbsp;testSort3001</CODE>
+<DL>
+<DD>
+  tests the sort function with a three nodes graph where two nodes depend
+ the other node.
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestSort3002"><!-- --></A>
+<H3>testSort3002</H3>
+<P>
+<CODE>val&nbsp;testSort3002</CODE>
+<DL>
+<DD>
+  tests the sort function with a three nodes graph where a node depends
+ the other two nodes.
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValtestSort3003"><!-- --></A>
+<H3>testSort3003</H3>
+<P>
+<CODE>val&nbsp;testSort3003</CODE>
+<DL>
+<DD>
+  tests the sort function with a three nodes graph where a node depends
+ the other two nodes of which the one node depends the other node.
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="Valsuite"><!-- --></A>
+<H3>suite</H3>
+<P>
+<CODE>val&nbsp;suite</CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+</BODY></HTML>

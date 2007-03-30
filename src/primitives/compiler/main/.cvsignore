@@ -1,5 +1,5 @@
 CM
+.cm
 Primitives.ppg
-Primitives.ppg.sml
 Constants.sml
-
+*.ppg.sml

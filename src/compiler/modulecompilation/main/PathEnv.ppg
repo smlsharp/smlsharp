@@ -3,14 +3,13 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: PathEnv.ppg,v 1.1 2006/03/02 12:47:29 bochao Exp $
+ * @version $Id: PathEnv.ppg,v 1.7 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure PathEnv = 
 struct
   local
     open Types TypedFlatCalc
     structure P = Path
-    structure SE = StaticEnv
     structure ITC =  InitialTypeContext
     structure TO = TopObject
   in
@@ -39,31 +38,58 @@ struct
      * @params(btvEnv)
      * @formatter(pathVarItem) format_pathVarItem
      * @formatter(smap) SmlppgUtil.formatSmap
-     * @formatter(tfpdecl) TypedFlatCalc.format_tfpdecl
      *)
-    datatype pathStrEnvEntry = 
-             (*%
-              * @format(pathEnv) pathEnv()(btvEnv)
-              *)
-             PATHAUX of pathEnv
-    withtype pathVarEnv =
+    type pathVarEnv =
        (*%
         * @format(varItem smap:smap) smap(varItem()(btvEnv))(":",+1) 
         *)
         pathVarItem SEnv.map
-    and pathStrEnv = 
-        (*%
-         * @format(strEnv smap:smap) smap(strEnv()(btvEnv))(":",+1) 
-         *)
-        pathStrEnvEntry SEnv.map
-    and pathEnv = 
+
+    (*%
+     * @params(btvEnv)
+     * @formatter(pathVarItem) format_pathVarItem
+     * @formatter(smap) SmlppgUtil.formatSmap
+     *)
+    datatype pathStrEnvEntry = 
+             (*%
+              * @format(pathVarEnv * strEnv smap:smap) 
+              * {"pathVarEnv" +1 2[pathVarEnv()(btvEnv)] +1
+              * "pathStrEnv" +1 2[smap(strEnv()(btvEnv))(":",+1)]}
+              *)
+             PATHAUX of pathVarEnv * (pathStrEnvEntry SEnv.map)
+
+    (*%
+     * @params(btvEnv)
+     * @formatter(pathVarItem) format_pathVarItem
+     * @formatter(smap) SmlppgUtil.formatSmap
+     *)
+    type pathStrEnv =
+         (*%
+          * @format(strEnv smap:smap) smap(strEnv()(btvEnv))(":",+1) 
+          *)
+         pathStrEnvEntry SEnv.map
+         
+    (*%
+     * @params(btvEnv)
+     * @formatter(varEnv) format_pathVarEnv
+     * @formatter(strEnv) format_pathStrEnv
+     *)
+    type pathEnv = 
         (*%
          * @format(varEnv * strEnv)
          * {"pathVarEnv" +1 2[varEnv()(btvEnv)] +1
          * "pathStrEnv" +1 2[strEnv()(btvEnv)]}
          *)
         pathVarEnv * pathStrEnv 
-    and pathFunEnv = 
+
+    (*%
+     * @params(btvEnv)
+     * @formatter(pathStrEnv) format_pathStrEnv
+     * @formatter(pathEnv) format_pathEnv
+     * @formatter(smap) SmlppgUtil.formatSmap
+     * @formatter(tfpdecl) TypedFlatCalc.format_tfpdecl
+     *)
+    type pathFunEnv = 
         (*%
          * @format(funEnv smap:smap) smap(funEnv)(":",1) 
          * @format:funEnv(pathStrEnv * pathEnv * tfpdec tfpdecs) 
@@ -77,7 +103,12 @@ struct
          tfpdecl list              (* body declarations *)
          ) SEnv.map 
 
-    and pathBasis =  
+    (*%
+     * @params(btvEnv)
+     * @formatter(pathFunEnv) format_pathFunEnv
+     * @formatter(pathEnv) format_pathEnv
+     *)
+    type pathBasis =  
         (*%
          * @format(funEnv * Env)
          * "pathFunEnv:" +1 2[funEnv()(btvEnv)] 
@@ -294,7 +325,7 @@ struct
           
     fun isGlobalPath path =
         case path of
-          Path.PStructure(strId, _, _) => strId = Path.topStrID
+          Path.PStructure(strId, _, _) => ID.eq(strId, Path.topStrID)
         | _ => false
 
     fun lookupVar (topPathBasis,pathBasis,path,varName) =
@@ -485,6 +516,56 @@ struct
                                      oldPathEnv = oldPathEnv}
            )
          
-         
+
+    fun recursiveExtendPathStrEnvWithPathStrEnv
+            {newPathStrEnv:pathStrEnv, oldPathStrEnv:pathStrEnv}
+      = 
+      let
+          fun recursiveExtendDuplicateStructure
+              (PATHAUX (newPathVarEnv, newPathStrEnv),
+               PATHAUX (oldPathVarEnv, oldPathStrEnv)) 
+            =
+            let
+                val pathVarEnv = SEnv.unionWith #1 (newPathVarEnv, oldPathVarEnv)
+                val pathStrEnv = 
+                    recursiveExtendPathStrEnvWithPathStrEnv
+                        {newPathStrEnv = newPathStrEnv, oldPathStrEnv = oldPathStrEnv}
+            in
+                PATHAUX (pathVarEnv, pathStrEnv)
+            end
+      in
+          SEnv.unionWith 
+              recursiveExtendDuplicateStructure
+              (newPathStrEnv, oldPathStrEnv)
+      end
+      
+    fun recursiveExtendPathBasisWithPathBasis 
+            {newPathBasis:pathBasis,oldPathBasis:pathBasis} 
+      =
+      let
+          val (newPathFunEnv, (newPathVarEnv, newPathStrEnv)) = newPathBasis
+          val (oldPathFunEnv, (oldPathVarEnv, oldPathStrEnv)) = oldPathBasis
+      in
+          (SEnv.unionWith #1 (newPathFunEnv, oldPathFunEnv),
+           (SEnv.unionWith #1 (newPathVarEnv,oldPathVarEnv),
+            recursiveExtendPathStrEnvWithPathStrEnv {newPathStrEnv = newPathStrEnv,
+                                                     oldPathStrEnv = oldPathStrEnv}))
+      end
+
+    fun recursiveExtendPathBasisList pathbases =
+        let
+            fun impl nil pathBasis = pathBasis
+              | impl (hd :: tail) pathBasis =
+                let
+                    val newPathBasis = 
+                        recursiveExtendPathBasisWithPathBasis
+                            {oldPathBasis = pathBasis, newPathBasis = hd}
+                in
+                    impl tail newPathBasis
+                end
+        in
+            impl pathbases emptyPathBasis
+        end
+
   end
 end

@@ -22,6 +22,8 @@ struct
 	      structure Lex=FormatExpressionLex
 	      structure LrParser=LrParser)
 
+  structure PP = SMLFormat.PrinterParameter
+
   (***************************************************************************)
 
   type pos = {fileName : string, line : int, col : int}
@@ -29,6 +31,11 @@ struct
   type lexarg =
        {
          columns : int ref,
+         space : string ref,
+         newline : string ref,
+         guardLeft : string ref,
+         guardRight : string ref,
+
          comLevel : int ref,
          doFirstLinePrompt : bool ref,
          error : (string * pos * pos) -> unit,
@@ -146,6 +153,10 @@ struct
                        SOME width => (#columns arg) := width
                      | NONE => print "columns must be integer.\n";
                      loop lexer')
+                 | "space" => (#space arg := value; loop lexer')
+                 | "newline" => (#newline arg := value; loop lexer')
+                 | "guardleft" => (#guardLeft arg := value; loop lexer')
+                 | "guardright" => (#guardRight arg := value; loop lexer')
                  | "verbose" =>
                    (case value of
                        "true" => (#verbose arg) := true
@@ -160,6 +171,10 @@ struct
 		   val arg =
                        {
                          columns = ref (!(#columns arg)),
+                         space = ref (!(#space arg)),
+                         newline = ref (!(#newline arg)),
+                         guardLeft = ref (!(#guardLeft arg)),
+                         guardRight = ref (!(#guardRight arg)),
                          comLevel = ref 0,
                          doFirstLinePrompt = ref true,
                          error = #error arg,
@@ -197,14 +212,16 @@ struct
 	      |  Ast.PRINT (expressions) =>
                  let
                    val parameter =
-                       {
-                         spaceString = " ",
-                         newlineString = "\n",
-                         columns = !(#columns arg)
-                       }
+                       [
+                         SMLFormat.Columns(!(#columns arg)),
+                         SMLFormat.Newline(!(#newline arg)),
+                         SMLFormat.Space(!(#space arg)),
+                         SMLFormat.GuardLeft(!(#guardLeft arg)),
+                         SMLFormat.GuardRight(!(#guardRight arg))
+                       ]
                  in
-                   print (SMLPP.prettyPrint parameter expressions)
-                   handle SMLPP.Fail message => print (message ^ "\n");
+                   print (SMLFormat.prettyPrint parameter expressions)
+                   handle SMLFormat.Fail message => print (message ^ "\n");
                    print "\n";
                    if !(#verbose arg)
                    then print (makeScale (!(#columns arg)) ^ "\n")
@@ -244,6 +261,11 @@ struct
         val initialSource =
             {
               columns = ref 40,
+              space = ref PP.defaultSpace,
+              newline = ref PP.defaultNewline,
+              guardLeft = ref PP.defaultGuardLeft,
+              guardRight = ref PP.defaultGuardRight,
+
               comLevel=ref 0,
               doFirstLinePrompt = ref true,
               error = printError,

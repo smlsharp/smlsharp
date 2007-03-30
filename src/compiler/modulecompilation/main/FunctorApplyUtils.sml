@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  *
  * @author Liu Bochao
- * @version $Id: FunctorApplyUtils.sml,v 1.49 2006/03/02 12:46:46 bochao Exp $
+ * @version $Id: FunctorApplyUtils.sml,v 1.51 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure FunctorApplyUtils =
 struct
@@ -13,55 +13,12 @@ struct
     structure TFCU = TypedFlatCalcUtils
     structure T = Types
     structure TCU = TypeContextUtils
-    structure TU = TypesUtils
     structure P = Path
     structure PE = PathEnv
     structure TO = TopObject
-    structure SE = StaticEnv
     structure MCU = ModuleCompileUtils
     structure MC = ModuleContext
   in
-    fun substTyEnvFromTyConEnv (sigTyConEnv, strTyConEnv) =
-        SEnv.foldli (
-		     fn (tyCon,tyBind1,substTyEnv) =>
-                        case SEnv.find(strTyConEnv,tyCon) of 
-                          NONE => substTyEnv
-                        | SOME tyBind2 => 
-                          ( case tyBind1 of
-                              T.TYSPEC{spec = {id,...},...} => 
-                              ID.Map.insert(substTyEnv,id , tyBind2)
-                            | T.TYCON{id,...} =>
-                              ID.Map.insert(substTyEnv,id , tyBind2)
-                            | _ => substTyEnv
-                          )
-		    )
-                    ID.Map.empty
-                    sigTyConEnv
-
-    fun substTyEnvFromEnv (
-                           (sigTyConEnv,sigVarEnv,sigStrEnv), 
-                           (strTyConEnv,strVarEnv,strStrEnv)
-                           ) 
-      =
-      let
-        val substTyEnv1 = substTyEnvFromTyConEnv (sigTyConEnv,strTyConEnv)
-        val substTyEnv2 =
-            SEnv.foldli (
-                         fn (strId, T.STRUCTURE{env=sigEnv,...}, newTyBindsMap) =>
-                            case SEnv.find(strStrEnv,strId) of
-                                NONE => newTyBindsMap
-                            | SOME (T.STRUCTURE{env=strEnv,...}) => 
-                              ID.Map.unionWith #1 (
-                                                   newTyBindsMap, 
-                                                   substTyEnvFromEnv (sigEnv,strEnv)
-                                                   )
-                        )
-                        substTyEnv1
-                        sigStrEnv
-      in
-        substTyEnv2
-      end
-
     fun instantiateTy substTyEnv ty =
         let
           val (ty, visited) = TCU.substTyConInTy ID.Set.empty substTyEnv ty

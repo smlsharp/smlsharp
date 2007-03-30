@@ -1,11 +1,23 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
         ../../control/sources.cm
         ../../format/sources.cm
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
 	../../../smlformatlib.cm
+#endif
         ../../name/sources.cm
+#if defined(NEW_CM)
+        $/ml-yacc-lib.cm
+#else
         ml-yacc-lib.cm
+#endif
 
 	ABSYN.sig
 	Absyn.ppg.sml
         ABSYN_FORMATTER.sig
         AbsynFormatter.sml
+        AbsynPickler.sml

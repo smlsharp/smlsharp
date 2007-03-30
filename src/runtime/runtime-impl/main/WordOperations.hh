@@ -103,48 +103,84 @@ class WordOperations
 
     INLINE_FUN
     static
-    UInt32Value pack_1_3(UInt8Value singleByte, UInt32Value triByte)
+    UInt32Value packUInt32(UInt8Value byte0,
+                           UInt8Value byte1,
+                           UInt8Value byte2,
+                           UInt8Value byte3)
     {
 #if defined(BYTE_ORDER_LITTLE_ENDIAN)
-        return (singleByte | (triByte << 8));
+        return ((byte3 << 24) |
+                (byte2 << 16) |
+                (byte1 << 8) |
+                byte0);
 #elif defined(BYTE_ORDER_BIG_ENDIAN)
-        return ((singleByte << 24) | (triByte & 0xffffff));
+        return ((byte0 << 24) |
+                (byte1 << 16) |
+                (byte2 << 8) |
+                byte3);
 #endif
     }
 
     INLINE_FUN
     static
-    UInt32Value pack_1_1_2(UInt8Value firstByte,
-                           UInt8Value secondByte,
-                           UInt16Value doubleByte)
+    Real64Value packReal64(UInt8Value byte0,
+                           UInt8Value byte1,
+                           UInt8Value byte2,
+                           UInt8Value byte3,
+                           UInt8Value byte4,
+                           UInt8Value byte5,
+                           UInt8Value byte6,
+                           UInt8Value byte7)
     {
-#if defined(BYTE_ORDER_LITTLE_ENDIAN)
-        return (firstByte | (secondByte << 8) | (doubleByte << 16));
-#elif defined(BYTE_ORDER_BIG_ENDIAN)
-        return ((firstByte << 24) |
-                (secondByte << 16) |
-                (doubleByte & 0xffffff));
-#endif
+        Real64Value result;
+        UInt8Value* ptr = (UInt8Value*)&result;
+        ptr[0] = byte0;
+        ptr[1] = byte1;
+        ptr[2] = byte2;
+        ptr[3] = byte3;
+        ptr[4] = byte4;
+        ptr[5] = byte5;
+        ptr[6] = byte6;
+        ptr[7] = byte7;
+        return result;
     }
 
     INLINE_FUN
     static
-    UInt32Value pack_1_1_1_1(UInt8Value firstByte,
-                             UInt8Value secondByte,
-                             UInt8Value thirdByte,
-                             UInt8Value fourthByte)
+    void unpackUInt32(UInt32Value word,
+                      UInt8Value* pByte0,
+                      UInt8Value* pByte1,
+                      UInt8Value* pByte2,
+                      UInt8Value* pByte3)
     {
-#if defined(BYTE_ORDER_LITTLE_ENDIAN)
-        return ((fourthByte << 24) |
-                (thirdByte << 16) |
-                (secondByte << 8) |
-                firstByte);
-#elif defined(BYTE_ORDER_BIG_ENDIAN)
-        return ((firstByte << 24) |
-                (secondByte << 16) |
-                (thirdByte << 8) |
-                fourthByte);
-#endif
+        UInt8Value* ptr = (UInt8Value*)&word;
+        *pByte0 = ptr[0];
+        *pByte1 = ptr[1];
+        *pByte2 = ptr[2];
+        *pByte3 = ptr[3];
+    }
+
+    INLINE_FUN
+    static
+    void unpackReal64(Real64Value real,
+                      UInt8Value* pByte0,
+                      UInt8Value* pByte1,
+                      UInt8Value* pByte2,
+                      UInt8Value* pByte3,
+                      UInt8Value* pByte4,
+                      UInt8Value* pByte5,
+                      UInt8Value* pByte6,
+                      UInt8Value* pByte7)
+    {
+        UInt8Value* ptr = (UInt8Value*)&real;
+        *pByte0 = ptr[0];
+        *pByte1 = ptr[1];
+        *pByte2 = ptr[2];
+        *pByte3 = ptr[3];
+        *pByte4 = ptr[4];
+        *pByte5 = ptr[5];
+        *pByte6 = ptr[6];
+        *pByte7 = ptr[7];
     }
 
     ////////////////////////////////////////

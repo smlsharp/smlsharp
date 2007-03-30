@@ -7,8 +7,9 @@ struct
 
 open Types RecordCalc
 
+structure CTU = ConstantTypeUtils
 structure P  = Path
-structure SE = StaticEnv
+structure PT = PredefinedTypes
 structure TF = TypeFormatter
 structure TU = TypesUtils
 
@@ -37,11 +38,7 @@ fun op ^^ ((ls,msg), (l,msg')) =
 
 fun locToString loc =
     "\n" ^
-    SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
-        (Loc.format_loc loc) ^
+    SMLFormat.prettyPrint [SMLFormat.Columns 60] (Loc.format_loc loc) ^
     " Typecheck fail (rc): "
 
 fun ERRELS loc msg = Err ([L_ELSE], locToString loc ^ msg ^ "\n")
@@ -115,13 +112,9 @@ fun at_exp env exp =
     limit_lines
     (
     "In expression:\n" ^
-    (
-    SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
-        (format_rcexp [(0,getBtvEnv env)] exp)
-    handle _ => "") ^
+    (SMLFormat.prettyPrint
+         [SMLFormat.Columns 60] (format_rcexp [(0,getBtvEnv env)] exp)
+     handle _ => "") ^
     "\n"
     )
 
@@ -130,9 +123,7 @@ fun at_decl env decl =
     (
     "In declaration:\n" ^
     SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
+        [SMLFormat.Columns 60]
         (format_rcdecl [(0,getBtvEnv env)] decl) ^
     "\n"
     )
@@ -561,7 +552,7 @@ and eqTys iEnv1 iEnv2 [] []                   = true
     eqTy iEnv1 iEnv2 ty1 ty2 andalso eqTys iEnv1 iEnv2 tys1 tys2
   | eqTys _ _ _ _                             = false
 
-(* and eqTyCon tyCon tyCon' = SE.isSameTyCon tyCon tyCon' *)
+(* and eqTyCon tyCon tyCon' = PT.isSameTyCon tyCon tyCon' *)
 
 and eqTyCon (tyCon  as {name=name, strpath=path, tyvars=bs, id=id,
                         abstract=abstract, eqKind=eqkind,
@@ -688,7 +679,7 @@ and calcEqRecKind env TY =
           val eqk = foldr (fn ((eqk,_),eqKind) => 
                            if eqk=EQ then eqKind else NONEQ)
                            EQ (map (calcEqRecKind env) tys)
-          val eqKind = if #name tyCon = #name SE.refTyCon
+          val eqKind = if #name tyCon = #name PT.refTyCon
                        then EQ
                        else if eqk=EQ 
                        then !(#eqKind tyCon)
@@ -922,7 +913,7 @@ fun checkExp env exp =
       in ty2
       end
 
-    | RCCONSTANT (const,loc) => TU.constTy const
+    | RCCONSTANT (const,loc) => CTU.constTy const
     | RCVAR (varIdInfo,loc) => #ty varIdInfo
     | RCGETGLOBAL (string,ty,loc) => ty
 
@@ -931,11 +922,11 @@ fun checkExp env exp =
           val tyexp = checkExp env exp
 
           val BOXED_ARRAY_TYPE = 
-              CONty{tyCon = SE.arrayTyCon, args =  [BOXEDty]}
+              CONty{tyCon = PT.arrayTyCon, args =  [BOXEDty]}
           val ATOM_ARRAY_TYPE = 
-              CONty{tyCon = SE.arrayTyCon, args =  [ATOMty]}
+              CONty{tyCon = PT.arrayTyCon, args =  [ATOMty]}
           val DOUBLE_ARRAY_TYPE = 
-              CONty{tyCon = SE.arrayTyCon, args =  [DOUBLEty]}
+              CONty{tyCon = PT.arrayTyCon, args =  [DOUBLEty]}
 
       in  if eqType env tyexp BOXED_ARRAY_TYPE 
           orelse eqType env tyexp ATOM_ARRAY_TYPE
@@ -952,7 +943,7 @@ fun checkExp env exp =
           val _ = checkType env tyArr loc
           val tySize = checkExp env expSize
           val tyInitVal = checkExp env expInitVal
-          val _ = if eqType env tySize SE.intty = false
+          val _ = if eqType env tySize PT.intty = false
                   then raise ERREXP loc (
                                "array size type is not int: " ^
                                TF.tyToString tySize)
@@ -967,11 +958,11 @@ fun checkExp env exp =
                   else ()
 
           val BOXED_ARRAY_TYPE = 
-              CONty{tyCon = SE.arrayTyCon, args =  [BOXEDty]}
+              CONty{tyCon = PT.arrayTyCon, args =  [BOXEDty]}
           val ATOM_ARRAY_TYPE = 
-              CONty{tyCon = SE.arrayTyCon, args =  [ATOMty]}
+              CONty{tyCon = PT.arrayTyCon, args =  [ATOMty]}
           val DOUBLE_ARRAY_TYPE = 
-              CONty{tyCon = SE.arrayTyCon, args =  [DOUBLEty]}
+              CONty{tyCon = PT.arrayTyCon, args =  [DOUBLEty]}
 
           val _ = if eqType env tyElem BOXEDty
                   andalso eqType env tyArr BOXED_ARRAY_TYPE
@@ -1238,15 +1229,11 @@ fun checkExp env exp =
                              TF.tyToString tyf ^
                              "\n  exp: " ^
                              SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
-        (format_rcexp [(0,getBtvEnv env)] exp) ^
+                                 [SMLFormat.Columns 60]
+                                 (format_rcexp [(0,getBtvEnv env)] exp) ^
                              "\n exp': " ^SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
-        (format_rcexp [(0,getBtvEnv env)] exp') ^
+                                 [SMLFormat.Columns 60]
+                                 (format_rcexp [(0,getBtvEnv env)] exp') ^
                              "\n  isRCVAR?: " ^
                              (case exp of
                                 RCVAR (varIdInfo,loc) => TF.tyToString (#ty varIdInfo)
@@ -1451,7 +1438,7 @@ fun checkExp env exp =
     | RCRAISE (exp,ty,loc) => 
       let val _ = checkType env ty loc
           val tyExn = checkExp env exp
-          val _ = if eqType env tyExn SE.exnty = false 
+          val _ = if eqType env tyExn PT.exnty = false 
                   then raise ERREXP loc
                          ("exception type is expected in raise" ^
                           TF.tyToString tyExn)
@@ -1464,7 +1451,7 @@ fun checkExp env exp =
           val id  = #displayName varIdInfo
           val ety = #ty varIdInfo
           val envHandler = 
-               if eqType env SE.exnty ety
+               if eqType env PT.exnty ety
                then extendVarEnv env 
                      (SEnv.singleton (id,
                          VARID (varIdInfoToVarPathInfo varIdInfo)))
@@ -1473,7 +1460,7 @@ fun checkExp env exp =
                             "\n  variable: " ^
                             #displayName varIdInfo ^
                             "\n  expected type: " ^
-                            TF.tyToString SE.exnty ^
+                            TF.tyToString PT.exnty ^
                             "\n  annotated type: " ^
                             TF.tyToString ety)
           val ty' = checkExp envHandler expHandler
@@ -1643,10 +1630,8 @@ fun checkExp env exp =
                           TF.tyToString ty ^
                           "\n polyfun expr: " ^
                           SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
-        (format_rcexp [(0,getBtvEnv env)] exp))
+                                 [SMLFormat.Columns 60]
+                                 (format_rcexp [(0,getBtvEnv env)] exp))
                   else ()
           val ty = skip ty
           val (btvEnv,ty) = 
@@ -1675,51 +1660,6 @@ fun checkExp env exp =
       end
 
     | RCSEQ (expList,tyList,loc) => checkExps env tyList expList loc
-
-    | RCFFIVAL (expFun, expLib, tyArgs, tyRes, tyInf, loc) => 
-      let val _ = checkTypes env tyArgs loc
-          val _ = checkType  env tyRes loc
-          val _ = checkType  env tyInf loc
-          val tyFun = checkExp env expFun
-          val tyLib = checkExp env expLib
-          val _ = if eqType env tyFun SE.stringty = false
-                  then raise ERREXP loc
-                        ("string type is expected for ffi function: " ^
-                         TF.tyToString tyFun)
-                  else if eqType env tyLib SE.stringty = false
-                  then raise ERREXP loc
-                        ("string type is expected for ffi library: " ^
-                         TF.tyToString tyLib)
-                  else ()
-
-          val tyInf' = 
-              case tyArgs of
-                    [] => FUNty (SE.unitty, tyRes)
-                  | _  => 
-                    let 
-                      val (_, tySmap) =
-                          foldl 
-                              (fn (argTy, (n, tySmap)) =>
-                                let val label = Int.toString n
-                                in (n + 1, SEnv.insert(tySmap, label, argTy))
-                                end)
-                              (1, SEnv.empty)
-                              tyArgs
-                    in
-                      FUNty (RECORDty tySmap, tyRes)
-                    end
-                       
-
-          val _ = if eqType env tyInf tyInf' = false
-                  then raise ERREXP loc
-                          ("type mismatch in ffi val binding: " ^
-                           "\n  ffi function: " ^
-                           TF.tyToString tyInf' ^
-                           "\n  annotation: " ^
-                           TF.tyToString tyInf)
-                  else ()
-      in  tyInf
-      end 
 
 (* Need any condition on ty'? Should it be a constructor type? *)
     | RCCAST (exp, ty, loc) => 
@@ -1770,7 +1710,7 @@ and checkExps env [] [] loc =
 (* case alternatives *)
 
 and checkConstExp env (const,exp) loc = 
-    let val tyArg = TU.constTy const
+    let val tyArg = CTU.constDefaultTy const
         val tyRes = checkExp env exp
     in  (tyArg, tyRes)
     end
@@ -2064,11 +2004,11 @@ and checkDecl env decl =
         val tyArr = checkExp env expArr
 
         val BOXED_ARRAY_TYPE = 
-            CONty{tyCon = SE.arrayTyCon, args =  [BOXEDty]}
+            CONty{tyCon = PT.arrayTyCon, args =  [BOXEDty]}
         val ATOM_ARRAY_TYPE = 
-            CONty{tyCon = SE.arrayTyCon, args =  [ATOMty]}
+            CONty{tyCon = PT.arrayTyCon, args =  [ATOMty]}
         val DOUBLE_ARRAY_TYPE = 
-            CONty{tyCon = SE.arrayTyCon, args =  [DOUBLEty]}
+            CONty{tyCon = PT.arrayTyCon, args =  [DOUBLEty]}
 
         val _ = if eqType env tyVal ATOMty
                 andalso eqType env tyArr ATOM_ARRAY_TYPE
@@ -2092,11 +2032,11 @@ and checkDecl env decl =
     let val tyVal = checkExp env expVal
 
         val BOXED_ARRAY_TYPE = 
-            CONty{tyCon = SE.arrayTyCon, args =  [BOXEDty]}
+            CONty{tyCon = PT.arrayTyCon, args =  [BOXEDty]}
         val ATOM_ARRAY_TYPE = 
-            CONty{tyCon = SE.arrayTyCon, args =  [ATOMty]}
+            CONty{tyCon = PT.arrayTyCon, args =  [ATOMty]}
         val DOUBLE_ARRAY_TYPE = 
-            CONty{tyCon = SE.arrayTyCon, args =  [DOUBLEty]}
+            CONty{tyCon = PT.arrayTyCon, args =  [DOUBLEty]}
 
         val _ = if eqType env tyVal BOXED_ARRAY_TYPE 
                 orelse eqType env tyVal ATOM_ARRAY_TYPE
@@ -2134,7 +2074,7 @@ and checkDecls env decls =
 fun typecheck rcdecs = 
     let val env = {varEnv = SEnv.empty,
                    btvEnv = IEnv.empty,
-                   tyConEnv = SE.initialTyConEnv}
+                   tyConEnv = PT.initialTyConEnv}
     in  if !typeCheck 
         then
 

@@ -23,6 +23,7 @@ struct
   val format_SInt24 = formatter SInt24.toString
   val format_SInt32 = formatter SInt32.toString
 
+  val format_Real32 = formatter Real32.toString
   val format_Real64 = formatter Real64.toString
   end
 

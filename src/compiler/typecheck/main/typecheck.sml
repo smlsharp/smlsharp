@@ -24,7 +24,6 @@ struct
 local
  open Types
  open TypedCalc
- open StaticEnv
  open TypeFormatter
 in
 
@@ -205,25 +204,19 @@ fun tysToString tys =
 fun at_exp (env : tyckEnv) exp =
     "\nIn " ^
     SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
+        [SMLFormat.Columns 60]
         (format_tpexp [(0,#btvEnv env)] exp)
 
 fun at_pat (env : tyckEnv) pat = 
     "\nIn " ^
     SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
+        [SMLFormat.Columns 60]
         (format_tppat [(0,#btvEnv env)] pat)
 
 fun at_decl (env : tyckEnv) decl =
     "\nIn " ^
     SMLFormat.prettyPrint
-       {newlineString="\n",
-        spaceString  =" ",
-        columns      =60}
+        [SMLFormat.Columns 60]
         (format_tpdecl [(0,#btvEnv env)] decl)
 
 fun skipInd (TYVARty (r as (ref (SUBSTITUTED ty)))) = 

@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypedFlatCalcPickler.sml,v 1.5 2006/02/27 06:31:09 bochao Exp $
+ * @version $Id: TypedFlatCalcPickler.sml,v 1.6 2007/02/11 16:39:51 kiyoshiy Exp $
  *)
 structure TypedFlatCalcPickler =
 struct
@@ -32,7 +32,7 @@ struct
             P.con1
                 TFC.TFPCONSTANT
                 (fn (TFC.TFPCONSTANT x) => x)
-                (P.tuple2(TypesPickler.constant, NamePickler.loc))
+                (P.tuple2(ConstantTermPickler.constant, NamePickler.loc))
       in
         P.data (toInt, [pu_TFPCONSTANT])
       end

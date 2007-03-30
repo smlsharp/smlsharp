@@ -1,0 +1,7 @@
+type 'a reader = 'a  -> 'a option
+val f = fn : ['a .'a  -> 'a option]
+val x = NONE : string option
+val it = 1 : int
+val f = fn : ['a .'a reader]
+val x = NONE : string option
+val it = 1 : int

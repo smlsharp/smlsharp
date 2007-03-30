@@ -4,8 +4,9 @@
  * <pre>
  * ty ::= funTy | prodOrAtty
  * funTy ::= prodOrAtty -> ty
- * prodOrAtty ::= prodTy | atty
+ * prodOrAtty ::= recTy | prodTy | atty
  * prodTy ::= {atty "*"}+ atty
+ * recTy ::= "{" id ":" ty ("," id ":" ty)* "}"
  * atty ::= id
  *        | "'"tyId
  *        | "''"tyId
@@ -37,14 +38,13 @@
  * </pre>
  * @copyright (c) 2006, Tohoku University.
  * @author OHORI Atsushi
- * @version $Id: TypeParser.sml,v 1.11 2006/02/28 16:11:10 kiyoshiy Exp $
+ * @version $Id: TypeParser.sml,v 1.15 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
-structure TypeParser : TYPE_PARSER =
+structure TypeParser :> TYPE_PARSER =
 struct
 
 local
   structure TY = Types
-  structure SE = StaticEnv
 in
 
     structure PC = ParserComb
@@ -52,41 +52,34 @@ in
     type ('a, 'strm) parser = (char,'strm) reader -> ('a,'strm) reader
     type ty = Types.ty
 
-    fun skipSP parser = 
-        fn getc => fn strm => 
+    fun skipSP parser getc strm = 
         PC.seqWith #2 (PC.zeroOrMore (PC.token Char.isSpace), 
                        parser) getc strm
 
-    fun scanTid getc strm = 
-        PC.seqWith
-            #2
+    fun scanId getc strm =
+        (PC.wrap
             (
-              PC.zeroOrMore (PC.token Char.isSpace),
-              PC.or'
-                  [
-                    PC.seqWith #2 (PC.string "bool",PC.result SE.boolty),
-                    PC.seqWith #2 (PC.string "int",PC.result SE.intty),
-                    PC.seqWith #2 (PC.string "word",PC.result SE.wordty),
-                    PC.seqWith #2 (PC.string "char",PC.result SE.charty),
-                    PC.seqWith #2 (PC.string "string",PC.result SE.stringty),
-                    PC.seqWith #2 (PC.string "real",PC.result SE.realty),
-                    PC.seqWith #2 (PC.string "exn",PC.result SE.exnty),
-                    PC.seqWith #2 (PC.string "unit",PC.result SE.unitty),
-                    PC.seqWith
-                        #2 (PC.string "largeInt",PC.result SE.largeIntty),
-                    PC.seqWith
-                        #2 (PC.string "largeWord",PC.result SE.largeWordty),
-                    PC.seqWith
-                        #2 (PC.string "byteArray",PC.result SE.byteArrayty),
-                    PC.seqWith #2 (PC.string "byte",PC.result SE.bytety),
-                    PC.failure
-                  ]
-            )
+              PC.oneOrMore
+                  (PC.eatChar (fn ch => Char.isAlpha ch orelse ch = #"_")),
+              String.implode
+            ) : (string, 'strm) parser) getc strm
+
+    and scanTid tyConEnv getc strm = 
+        skipSP
+            (PC.bind
+                 (
+                   scanId,
+                   fn id =>
+                      case SEnv.find(tyConEnv, id)
+                       of SOME (TY.TYCON(tyCon as {tyvars = [], ...})) =>
+                          PC.result (TY.CONty{tyCon = tyCon, args = []})
+                        | _ => PC.failure
+                 ))
             getc strm
 
     and scanTyvar getc strm =
-        PC.seqWith #2 (PC.zeroOrMore (PC.token Char.isSpace),
-        PC.seqWith #2
+        skipSP
+        (PC.seqWith #2
         (PC.or(PC.string "''",
                PC.string "'"
                ),
@@ -99,100 +92,126 @@ in
            PC.failure))))))))
         getc strm
 
-    and scanAtty getc strm = 
-        PC.or(scanPolyTy,
-        PC.or(scanTid,
+    and scanAtty tyConEnv getc strm = 
+        PC.or(scanPolyTy tyConEnv,
+        PC.or(scanTid tyConEnv,
         PC.or(scanTyvar,
-        PC.or(scanConty,
-              scanParenedTy))))
+        PC.or(scanConty tyConEnv,
+              scanParenedTy tyConEnv))))
         getc strm
 
-    and scanProdOrAtty getc strm =
-        PC.or(scanProdTy,scanAtty)
-        getc strm
+    and scanProdOrAtty tyConEnv getc strm =
+        PC.or'
+            [scanRecordTy tyConEnv, scanProdTy tyConEnv, scanAtty tyConEnv]
+            getc strm
 
-    and scanTyStar getc strm =
-        PC.seqWith #1 
-        (PC.or(scanAtty,
-               scanParenedTy),
-         PC.seq(PC.zeroOrMore (PC.token Char.isSpace), 
-                PC.char #"*"))
-        getc strm
+    and scanTyStar tyConEnv getc strm =
+        PC.seqWith
+            #1 
+            (PC.or(scanAtty tyConEnv, scanParenedTy tyConEnv),
+             skipSP(PC.char #"*"))
+            getc strm
 
-    and scanProdTy getc strm  =
+    and scanField tyConEnv getc strm =
+        PC.seqWith
+            (fn (id, (_, ty)) => (id, ty))
+            (scanId, PC.seq(PC.char #":", scanTy tyConEnv))
+            getc strm
+
+    and scanRecordTy tyConEnv getc strm =
+        PC.seqWith
+            (fn (_, SOME fields) =>
+                TY.RECORDty
+                    (foldl
+                         (fn ((id, ty), env) => SEnv.insert (env, id, ty))
+                         SEnv.empty
+                         fields)
+              | (_, NONE) => TY.RECORDty SEnv.empty)
+            (
+              PC.char #"{",
+              PC.seqWith
+                  #1
+                  (
+                    PC.option
+                        (PC.seqWith
+                             (fn (first, tail) => first :: tail)
+                             (
+                               scanField tyConEnv,
+                               PC.zeroOrMore
+                                   (PC.seqWith
+                                        #2 (PC.char #",", scanField tyConEnv))
+                             )),
+                    PC.char #"}"
+                  )
+            )
+            getc strm
+
+    and scanProdTy tyConEnv getc strm  =
         PC.seqWith (fn (x,y) => 
                     Types.RECORDty (#2 (foldl (fn (x,(n,fl)) =>
                                      (n+1,SEnv.insert(fl,Int.toString n,x)))
                               (1,SEnv.empty)
                               (x@[y]))))
-        (PC.oneOrMore scanTyStar,
-         PC.seqWith #2
-         (PC.zeroOrMore(PC.token Char.isSpace),
-          scanAtty))
+        (PC.oneOrMore (scanTyStar tyConEnv),
+         skipSP (scanAtty tyConEnv))
         getc strm
 
-    and scanTyArrow getc strm =
+    and scanTyArrow tyConEnv getc strm =
         PC.seqWith #1
-        (scanProdOrAtty,
-         PC.seq(PC.zeroOrMore (PC.token Char.isSpace), 
-                PC.string "->"))
+        (scanProdOrAtty tyConEnv,
+         skipSP (PC.string "->"))
         getc strm
 
-    and scanFunTy getc strm =        
+    and scanFunTy tyConEnv getc strm =        
         PC.seqWith (fn (x,y) => Types.FUNMty([x],y))
-        (scanTyArrow,scanTy)
+        (scanTyArrow tyConEnv,scanTy tyConEnv)
         getc strm
 
-    and scanTyComma getc strm =
+    and scanTyComma tyConEnv getc strm =
         PC.seqWith #1 
-        (PC.or(scanTy,
-               scanParenedTy),
-         PC.seq(PC.zeroOrMore (PC.token Char.isSpace), 
-                PC.char #","))
+        (PC.or(scanTy tyConEnv,
+               scanParenedTy tyConEnv),
+         skipSP (PC.char #","))
         getc strm
 
-    and scanTyParen getc strm =
+    and scanTyParen tyConEnv getc strm =
         PC.seqWith #1
-        (scanTy,
+        (scanTy tyConEnv,
          PC.char #")")
         getc strm
 
-    and scanTyCon getc strm = 
-        PC.seqWith
-        #2
-        (
-          PC.zeroOrMore (PC.token Char.isSpace),
-          PC.or'
-          [
-            PC.seqWith #2 (PC.string "ref",PC.result SE.refTyCon),
-            PC.seqWith #2 (PC.string "list",PC.result SE.listTyCon),
-            PC.seqWith #2 (PC.string "array",PC.result SE.arrayTyCon),
-            PC.seqWith #2 (PC.string "option",PC.result SE.optionTyCon),
-            PC.failure
-          ]
-        )
-        getc strm
+    and scanTyCon tyConEnv getc strm = 
+        skipSP
+          (PC.bind
+               (
+                 scanId,
+                 fn id =>
+                    case SEnv.find (tyConEnv, id)
+                     of SOME (TY.TYCON tyCon) => PC.result tyCon
+                      | NONE => PC.failure
+               ))
+          getc strm
 
-    and scanTyargs getc strm =
+    and scanTyargs tyConEnv getc strm =
         PC.seqWith #2
         (PC.char #"(",
          PC.seqWith (fn (tyList, ty) => tyList @[ty])
-         (PC.zeroOrMore scanTyComma,
-          scanTyParen))
+         (PC.zeroOrMore (scanTyComma tyConEnv),
+          scanTyParen tyConEnv))
         getc strm
 
-    and scanConty getc strm =
-        PC.seqWith #2 
-        (PC.zeroOrMore (PC.token Char.isSpace),
-         PC.seqWith (fn (args, tyCon) => TY.CONty {tyCon=tyCon, args=args})
-         (scanTyargs,
-          scanTyCon))
-        getc strm
+    and scanConty tyConEnv getc strm =
+        skipSP
+            (PC.seqWith
+                 (fn (args, tyCon) => TY.CONty {tyCon=tyCon, args=args})
+                 (scanTyargs tyConEnv,
+                  scanTyCon tyConEnv))
+            getc strm
 
-    and scanParenedTy getc strm = 
+    and scanParenedTy tyConEnv getc strm = 
         PC.seqWith #2 
         (skipSP(PC.char #"("),
-         PC.seqWith #1 (scanTy,
+         PC.seqWith #1 (scanTy tyConEnv,
                         skipSP(PC.char #")")))
         getc strm
 (*
@@ -207,21 +226,21 @@ in
         PC.failure)))))))
         getc strm
 *)
-    and scanOverloadedKind getc strm =
+    and scanOverloadedKind tyConEnv getc strm =
       PC.or
        (PC.seqWith #2
          (PC.string "#{",
           (PC.seqWith (fn (L,x) => L@[x])
-           (PC.zeroOrMore (PC.seqWith #1 (scanTid, PC.char #",")),
-            PC.seqWith #1 (scanTid, PC.char #"}")))),
+           (PC.zeroOrMore (PC.seqWith #1 (scanTid tyConEnv, PC.char #",")),
+            PC.seqWith #1 (scanTid tyConEnv, PC.char #"}")))),
          PC.failure)
          getc strm
 
-    and scanBtvKind getc strm =
+    and scanBtvKind tyConEnv getc strm =
       PC.seqWith (fn ((btvid, eqKind), SOME L) => (btvid, {recKind=TY.OVERLOADED L, eqKind = eqKind})
                    | ((btvid, eqKind), NONE) => (btvid, {recKind=TY.UNIV, eqKind = eqKind}))
       (scanBtvKindBtv,
-       PC.option scanOverloadedKind)
+       PC.option (scanOverloadedKind tyConEnv))
       getc strm
 
     and scanBtvKindBtv getc strm =
@@ -258,7 +277,7 @@ in
            PC.failure))))))))))))))
         getc strm
 
-    and scanBtvEnv getc strm =
+    and scanBtvEnv tyConEnv getc strm =
         PC.seqWith (fn (tvKindinfoList, _) => 
                     #2
                     (foldr (fn ((btvid, {recKind,eqKind}),(n,btvEnv)) =>
@@ -272,24 +291,24 @@ in
                      tvKindinfoList))
         (PC.seqWith
              (fn (L,x) => L@[x])
-             (PC.zeroOrMore (PC.seqWith #1 (scanBtvKind, PC.char #",")),
-              scanBtvKind),
+             (PC.zeroOrMore (PC.seqWith #1 (scanBtvKind tyConEnv, PC.char #",")),
+              scanBtvKind tyConEnv),
          PC.char #".")
         getc strm
 
-    and scanPolyTy getc strm = 
+    and scanPolyTy tyConEnv getc strm = 
         PC.seqWith #2
         (skipSP(PC.char #"["),
          PC.seqWith #1
          (PC.seqWith (fn (btvEnv, body) => TY.POLYty {boundtvars=btvEnv, body=body})
-          (scanBtvEnv,
-           scanTy),
+          (scanBtvEnv tyConEnv,
+           scanTy tyConEnv),
           skipSP(PC.char #"]")))
         getc strm
 
-    and scanTy getc strm =
-        PC.or(scanFunTy,
-              scanProdOrAtty)
+    and scanTy tyConEnv getc strm =
+        PC.or(scanFunTy tyConEnv,
+              scanProdOrAtty tyConEnv)
         getc strm
 
     fun usedBtvarNum ty = 
@@ -303,14 +322,14 @@ in
     | TY.CONty {tyCon, args} => foldr (fn (ty,n) => n + usedBtvarNum ty) 0 args
     | TY.POLYty {boundtvars, body} =>
       IEnv.numItems boundtvars + usedBtvarNum body
-    | TY.BOXEDty => raise Control.Bug "usedBtvarNum in StaticEnv"
-    | _ =>  raise Control.Bug "usedBtvarNum in StaticEnv"
+    | TY.BOXEDty => raise Control.Bug "usedBtvarNum in TypeParser"
+    | _ =>  raise Control.Bug "usedBtvarNum in TypeParser"
 
   exception TypeFormat of string
-  fun readTy s = 
+  fun readTy tyConEnv s = 
       let
         val ty = 
-          case ((skipSP scanTy) Substring.getc (Substring.all s))
+          case ((skipSP (scanTy tyConEnv)) Substring.getc (Substring.all s))
             of SOME (x,y) => if (Substring.isEmpty y) then x else raise TypeFormat s
              | NONE => raise TypeFormat s
           val _ = TY.advanceBTid (usedBtvarNum ty)

@@ -1,0 +1,30 @@
+include(SRCDIR/LICENSE)
+
+=================================================================
+
+Standard ML Basis Library and SML/NJ Library are licensed under the
+following terms:
+
+include(SRCDIR/src/lib/SMLNJ/LICENSE)
+
+=================================================================
+
+Executable files in this package are compiled by MLton and statically
+linked with MLton runtime library, gdtoa library, and GNU MP library.
+
+
+MLton is licensed under the following terms:
+
+include(MLton-LICENSE)
+
+=================================================================
+
+gdtoa library is licensed under the following terms:
+
+include(gdtoa-LICENSE)
+
+=================================================================
+
+GNU MP library is licensed under GNU LGPL:
+
+include(GMP-LICENSE)

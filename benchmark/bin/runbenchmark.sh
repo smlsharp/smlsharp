@@ -3,7 +3,7 @@
 set +x
 
 # A script for running benchmark
-# $Id: runbenchmark.sh,v 1.8 2006/02/24 14:14:25 kiyoshiy Exp $
+# $Id: runbenchmark.sh,v 1.10 2007/01/26 09:33:15 kiyoshiy Exp $
 #
 # Example:
 #   ./runonebenchmark.sh -html -usebasis -d D:/tmp/imlbench boyer/load.sml
@@ -13,7 +13,7 @@ USAGE=\
 "usage: $0 \
 {-html} \
 {-remote|-emulator} \
-{-usebasis} \
+{-minimum|-usebasis|} \
 [-d dir] \
 filename ..."
 
@@ -31,7 +31,7 @@ fi
 PRINTER=HTML
 RUNTIME=Remote
 # use default prelude (non Basis)
-PRELUDE=../../src/lib/minimum.sml
+PRELUDE=""
 
 while true
 do
@@ -48,6 +48,9 @@ do
     "-emulator")
 	RUNTIME="Emulator"
 	shift;;
+    "-minimum")
+        PRELUDE=../../src/lib/minimum.sml
+        shift;;
     "-usebasis")
 	PRELUDE=../../src/lib/basis.sml
 	shift;;
@@ -88,22 +91,8 @@ done
 
 ###############################################################################
 
-case `uname` in
-CYGWIN*) 
-	HEAPIMAGE_SUFFIX=.x86-win32 
-        SML=sml.bat 
-	;; 
-*) 
-	HEAPIMAGE_SUFFIX= 
-        SML=sml 
-esac 
+script="OS.FileSys.chDir \"../../bin\"; \
+        ${MAIN}.main \
+          (\"imlbench\", [\"${PRELUDE}\",\"${RESULTDIR}\" ${SOURCEPATHS}]);"
 
-###############################################################################
-
-echo "OS.FileSys.chDir \"../driver/main\"; \
-    CM.make(); \
-    OS.FileSys.chDir \"../../bin\"; \
-    ${MAIN}.main \
-        (\"imlbench\", [\"${PRELUDE}\",\"${RESULTDIR}\" ${SOURCEPATHS}]);"\
- | ${SML}
-
+(cd ../driver/main && exec $SHELL ../../../mksmlheap --exec "$script")

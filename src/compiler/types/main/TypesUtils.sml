@@ -2,7 +2,7 @@
  * utility functions for manupilating types (needs re-writing).
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypesUtils.sml,v 1.5 2006/03/02 12:54:08 bochao Exp $
+ * @version $Id: TypesUtils.sml,v 1.18 2007/03/05 02:38:53 kiyoshiy Exp $
  *)
 (*
 TODO:
@@ -12,38 +12,24 @@ structure TypesUtils =
 struct
 
   local 
-    open Types StaticEnv
-    structure SE = StaticEnv
+    structure T = Types 
   in
 
   exception ExSpecTyCon of string
   exception ExIllegalTyFunToTyName of string
   exception CoerceFun 
 
-  fun derefTy (TYVARty(ref (SUBSTITUTED ty))) = derefTy ty
-    | derefTy (ALIASty (ty1, ty2)) = derefTy ty2
+  fun derefTy (T.TYVARty(ref (T.SUBSTITUTED ty))) = derefTy ty
+    | derefTy (T.ALIASty (ty1, ty2)) = derefTy ty2
     | derefTy ty = ty
 
   fun pruneTy ty = 
       case ty of
-        TYVARty (ref(SUBSTITUTED ty)) => pruneTy ty
-      | ALIASty (ty1, ty2) => pruneTy ty2
-      | POLYty {boundtvars, body = TYVARty(ref(SUBSTITUTED ty))} =>
-        pruneTy (POLYty {boundtvars = boundtvars, body = ty})
+        T.TYVARty (ref(T.SUBSTITUTED ty)) => pruneTy ty
+      | T.ALIASty (ty1, ty2) => pruneTy ty2
+      | T.POLYty {boundtvars, body = T.TYVARty(ref(T.SUBSTITUTED ty))} =>
+        pruneTy (T.POLYty {boundtvars = boundtvars, body = ty})
       | _ => ty
-
-  fun constTy const =
-      case const of
-        INT _ => intty
-      | WORD _ => wordty
-      | REAL _ => realty
-      | STRING _ => stringty
-      | CHAR _ => charty
-
-  fun tyConId (conInfo:tyCon) = #id conInfo
-
-  fun eqTyCon (conInfo1 : tyCon, conInfo2 : tyCon) =
-      (tyConId conInfo1) = (tyConId conInfo2)
 
   local
     exception NotAdmitEq
@@ -52,16 +38,16 @@ struct
       (TypeTransducer.foldTyPreOrder
          (fn (ty, _) =>
              case ty of
-               ALIASty (ty1,ty2) => (admitEqTy ty2,false)
-             | FUNMty _ => raise NotAdmitEq
-	     | CONty {tyCon = {name = "ref",...},...} =>
+               T.ALIASty (ty1,ty2) => (admitEqTy ty2,false)
+             | T.FUNMty _ => raise NotAdmitEq
+	     | T.CONty {tyCon = {name = "ref",...},...} =>
 	       (true,false)
-             | CONty {tyCon = {name = "array",...},...} =>
+             | T.CONty {tyCon = {name = "array",...},...} =>
 	       (true,false)
-             | CONty {tyCon = {eqKind = ref NONEQ, ...}, ...} =>
+             | T.CONty {tyCon = {eqKind = ref T.NONEQ, ...}, ...} =>
                raise NotAdmitEq
-	     | ABSSPECty (specTy,_) => (admitEqTy specTy,false)
-             | TYVARty (ref(TVAR {eqKind = NONEQ, ...})) => raise NotAdmitEq
+	     | T.ABSSPECty (specTy,_) => (admitEqTy specTy,false)
+             | T.TYVARty (ref(T.TVAR {eqKind = T.NONEQ, ...})) => raise NotAdmitEq
              | _ => (true, true))
          true
          ty)
@@ -72,16 +58,16 @@ struct
 
   fun admitEqTyBindInfo tyBindInfo =
       case tyBindInfo of
-	TYSPEC {spec = {eqKind = EQ,...},...} => true
-      | TYCON {eqKind = ref EQ,...} => true
-      | TYFUN tyFun => admitEqTyFun tyFun
+	T.TYSPEC {spec = {eqKind = T.EQ,...},...} => true
+      | T.TYCON {eqKind = ref T.EQ,...} => true
+      | T.TYFUN tyFun => admitEqTyFun tyFun
       | _ => false
 
   (*
    * Returns a new generative type constructor. 
    *)
   fun newTyCon {name, strpath, abstract, tyvars, eqKind, boxedKind, datacon} = 
-      let val id = SE.newTyConId()
+      let val id = T.newTyConId()
       in
         {
           name = name,
@@ -92,39 +78,23 @@ struct
           datacon = datacon,
 	  boxedKind = boxedKind,
           id = id
-        } : Types.tyCon
+        } : T.tyCon
       end
 
   fun extractAliasTyImpl aliasTy =
       case aliasTy of
-	ALIASty(_,ty) => extractAliasTyImpl ty
+	T.ALIASty(_,ty) => extractAliasTyImpl ty
       | ty => ty
       
-  (* 
-   * the tagid is the integer position of the datatype declaration starting
-   * with 0.
-   *)
-  fun computeTagId
-      {
-        name = conName,
-        funtyCon,
-        ty,
-        tag,
-        tyCon
-      } =  INT tag
-
-
-  fun tyconSpan ({datacon = ref datacon,...}:tyCon) = SEnv.numItems datacon
-
-
+  fun tyconSpan ({datacon = ref datacon,...}:T.tyCon) = SEnv.numItems datacon
 
   fun typeOfIdstate idstate =
       case idstate of
-        VARID varPathInfo => #ty varPathInfo
-      | CONID conPathInfo => #ty conPathInfo
-      | PRIM primInfo => #ty primInfo
-      | OPRIM oprimInfo => #ty oprimInfo
-
+        T.CONID conPathInfo => #ty conPathInfo
+      | T.OPRIM oprimInfo => #ty oprimInfo
+      | T.PRIM primInfo => #ty primInfo
+      | T.VARID varPathInfo => #ty varPathInfo
+      | T.RECFUNID (varPathInfo, int) => #ty varPathInfo
 
   (**
    * Substitute bound type variables in a type.
@@ -134,15 +104,14 @@ struct
    * @param subst substitution. The domain is an integer interval.
    * @return
    *)
-
   fun applyMatch subst ty =
       if IEnv.isEmpty subst
       then ty
       else 
         TypeTransducer.mapTyPreOrder
-            (fn (ty as BOUNDVARty n) =>
+            (fn (ty as T.BOUNDVARty n) =>
                 ((valOf (IEnv.find(subst, n))) handle Option => ty, true)
-              | (ty as POLYty _) => (ty, false)
+              | (ty as T.POLYty _) => (ty, false)
               | ty => (ty, true))
             ty
 
@@ -160,7 +129,7 @@ struct
          *)
         fun preVisitor (ty, substs as (subst :: _)) =
             case ty of
-              POLYty{boundtvars, body} =>
+              T.POLYty{boundtvars, body} =>
               let
                 (* make a new subst by addin boundtvars,
                  * and push it on the subst stack. *)
@@ -181,7 +150,7 @@ struct
                         IEnv.map (substBTvarBTKind newSubst) boundtvars
                   in
                     (
-                      POLYty{boundtvars = newBoundtvars, body = body},
+                      T.POLYty{boundtvars = newBoundtvars, body = body},
                       newSubst :: substs,
                       true
                     )
@@ -192,8 +161,8 @@ struct
         (* pop a newSubst pushed by preVisitor from the substs stack. *)
         fun postVisitor (ty, substs as (subst :: _)) =
             case ty of
-              POLYty _ => (ty, tl substs)
-            | (ty as BOUNDVARty n) =>
+              T.POLYty _ => (ty, tl substs)
+            | (ty as T.BOUNDVARty n) =>
               let
                 val newTy =
                     case IEnv.find(subst, n) of SOME ty' => ty' | _ => ty
@@ -220,7 +189,7 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    *)
   and substBTvarRecKind subst recKind =
       case recKind of
-	REC fields => REC (SEnv.map (substBTvar subst) fields)
+	T.REC fields => T.REC (SEnv.map (substBTvar subst) fields)
       | k => k
   and substBTvarBTKind subst {index, recKind, eqKind} =
       {
@@ -239,7 +208,7 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
   (**
    * Perform imperative implace substitutrion.
    *)
-  fun performSubst (TYVARty (r as ref(TVAR _)), ty) = r := SUBSTITUTED ty
+  fun performSubst (T.TYVARty (r as ref(T.TVAR _)), ty) = r := T.SUBSTITUTED ty
     | performSubst _ = raise Control.Bug "performSubst"
 
   (**
@@ -257,25 +226,26 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
       let
         val newSubst =
             IEnv.map
-            (fn x => newty 
+            (fn x => T.newty 
                          {
-                          recKind = UNIV,
-                          eqKind = NONEQ,
+                          recKind = T.UNIV,
+                          eqKind = T.NONEQ,
                           tyvarName = NONE
                           })
             boundEnv
 	val _ =
             IEnv.appi
-                (fn (i,TYVARty(r as ref (TVAR {id, tyvarName, ...}))) => 
+                (fn (i, T.TYVARty(r as ref (T.TVAR {id, tyvarName, ...}))) => 
 		    r := 
 		    (case IEnv.find(boundEnv, i) of
 		       SOME {index, recKind, eqKind} => 
                        (case recKind of 
-                            REC _ => kindedTyvarList := r :: (!kindedTyvarList)
-                          | OVERLOADED _ => kindedTyvarList := r :: (!kindedTyvarList)
+                            T.REC _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                          | T.OVERLOADED _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
                           | _ => ();
-		       TVAR
+		       T.TVAR
                            {
+                             lambdaDepth = T.infiniteDepth,
                              id = id, 
 			     recKind = substBTvarRecKind newSubst recKind,
 			     eqKind = eqKind,
@@ -287,39 +257,6 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
       in
 	newSubst
       end
-  (*
-    exception CoerceFunM
-  *)
-  fun coerceFunM (ty, tyList) =
-      case derefTy ty of
-       newTy as TYVARty (ref (TVAR {id, recKind = UNIV, eqKind, tyvarName})) => 
-        let 
-          val tyList = map (fn x => newty univKind) tyList
-          val ty2 = newty univKind
-          val _ = performSubst (newTy, FUNMty(tyList, ty2))
-        in
-          (tyList, ty2, nil)
-        end
-      | TYVARty (ref(SUBSTITUTED ty)) => coerceFunM (ty, tyList)
-      | FUNMty (tyList, ty2) => (tyList, ty2, nil)
-      | POLYty {boundtvars, body} =>
-        (case derefTy body of
-              FUNMty(tyList,ty2) =>
-                let val subst1 = freshSubst boundtvars
-                in
-                  (
-                   map (substBTvar subst1) tyList,
-                   substBTvar subst1 ty2,
-                   IEnv.listItems subst1
-                   )
-                end
-            | ERRORty => (map (fn x => ERRORty) tyList, ERRORty, nil)
-            | ALIASty(_, ty) => coerceFunM (ty, tyList)
-            | _ => raise CoerceFun
-         )
-      | ALIASty(_, ty) => coerceFunM (ty, tyList)
-      | ERRORty => (map (fn x => ERRORty) tyList, ERRORty, nil)
-      | _ => raise CoerceFun
 
 
   (*
@@ -330,30 +267,31 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
       let
         val newSubst =
             IEnv.map
-            (fn x => newty
+            (fn x => T.newty
                          {
-                          recKind = UNIV,
-                          eqKind = NONEQ,
+                          recKind = T.UNIV,
+                          eqKind = T.NONEQ,
                           tyvarName = SOME "RIGID"
                           })
             boundEnv
 	val _ =
             IEnv.appi
-                (fn (i,TYVARty(r as ref (TVAR {id, tyvarName, ...}))) => 
+                (fn (i,T.TYVARty(r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
 		    r := 
 		    (case IEnv.find(boundEnv, i) of
 		       SOME {index, recKind, eqKind} => 
                          (case recKind of 
-                            REC _ => kindedTyvarList := r :: (!kindedTyvarList)
-                          | OVERLOADED _ => kindedTyvarList := r :: (!kindedTyvarList)
+                            T.REC _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                          | T.OVERLOADED _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
                           | _ => ();		
-                          TVAR
-                            {
-                             id = id, 
-			     recKind = substBTvarRecKind newSubst recKind,
-			     eqKind = eqKind,
-			     tyvarName = tyvarName
-                             }
+                              T.TVAR
+                              {
+                               lambdaDepth = lambdaDepth,
+                               id = id, 
+                               recKind = substBTvarRecKind newSubst recKind,
+                               eqKind = eqKind,
+                               tyvarName = tyvarName
+                               }
                           )
                      | _ => raise Control.Bug "fresh Subst")
                   | _ => raise Control.Bug "freshSubst")
@@ -380,10 +318,10 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
                       (
                         Env,
                         i,
-                        newty
+                        T.newty
                         {
-                         recKind = UNIV,
-                         eqKind = NONEQ,
+                         recKind = T.UNIV,
+                         eqKind = T.NONEQ,
                          tyvarName = NONE
                          }
                       ))
@@ -391,23 +329,24 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
 	        boundEnv
 	val _ =
             IEnv.appi
-                (fn (i, TYVARty(r as ref (TVAR {id, tyvarName, ...}))) => 
+                (fn (i, T.TYVARty(r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
                    r := 
                      (case IEnv.find(boundEnv, i) of
 		       SOME {index, recKind, eqKind} => 
                          (case recKind of 
-                            REC _ => kindedTyvarList := r :: (!kindedTyvarList)
-                          | OVERLOADED _ => kindedTyvarList := r :: (!kindedTyvarList)
+                            T.REC _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                          | T.OVERLOADED _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
                           | _ => ();
-                         TVAR
-                            {
-                             id = id, 
-			     recKind = substBTvarRecKind newSubst recKind,
-			     eqKind = eqKind,
-			     tyvarName = tyvarName
-                             })
-                          | _ => raise Control.Bug "fresh Subst")
-                | _ => raise Control.Bug "complementBSubst")
+                              T.TVAR
+                              {
+                               lambdaDepth = lambdaDepth,
+                               id = id, 
+                               recKind = substBTvarRecKind newSubst recKind,
+                               eqKind = eqKind,
+                               tyvarName = tyvarName
+                               })
+                     | _ => raise Control.Bug "fresh Subst")
+                 | _ => raise Control.Bug "complementBSubst")
 	        newSubst
       in
 	IEnv.unionWith 
@@ -423,8 +362,8 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    *)
   fun monoTy ty =
       TypeTransducer.foldTyPreOrder
-          (fn (POLYty _, _) => raise FALSE
-            | (BOUNDVARty _, _) => raise FALSE
+          (fn (T.POLYty _, _) => raise FALSE
+            | (T.BOUNDVARty _, _) => raise FALSE
             | _ => (true, true))
           true
           ty
@@ -438,21 +377,22 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    * @params ty 
    * @param ty type
    * @return tvKind ref OTSet.set
-   *)
+
+  The following is prohibitively inefficient.
   fun EFTV ty =
       TypeTransducer.foldTyPostOrder
-          (fn (TYVARty (ref(TVAR {recKind = OVERLOADED _,...})), set)  => set
-            | (TYVARty (tyvarRef as (ref(TVAR tvKind))), set)  => 
+          (fn (T.TYVARty (ref(T.TVAR {recKind = T.OVERLOADED _,...})), set)  => set
+            | (T.TYVARty (tyvarRef as (ref(T.TVAR tvKind))), set)  => 
               let
                 fun EFTVKind set =
 	            case tvKind of
-		      {recKind = UNIV, ...} => set
-	            | {recKind = REC fields, ...} => 
+		      {recKind = T.UNIV, ...} => set
+	            | {recKind = T.REC fields, ...} => 
 		      SEnv.foldl
                           (fn (ty, set) => OTSet.union(set, EFTV ty))
 		          set
 		          fields
-                    | {recKind = OVERLOADED _, ...} => raise Control.Bug "EFTV Overloaded"
+                    | {recKind = T.OVERLOADED _, ...} => raise Control.Bug "EFTV Overloaded"
               in 
                 OTSet.union(set, EFTVKind (OTSet.singleton tyvarRef))
               end
@@ -461,17 +401,157 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
           OTSet.empty
           ty;
 
-  fun EFTVInVarInfo (VARID {ty, ...}) = EFTV ty
-    | EFTVInVarInfo (CONID _) = OTSet.empty (* datacon must be closed *)
-    | EFTVInVarInfo (PRIM _) = OTSet.empty (* primitive must be closed *)
-    | EFTVInVarInfo (OPRIM _) =
-      OTSet.empty (* overloaded primitive must be closed *)
-    | EFTVInVarInfo (FFID _) = OTSet.empty (* foreign fun must be closed *)
-    | EFTVInVarInfo (RECFUNID ({ty,...}, _)) = EFTV ty
+   *)
 
-  fun TEnvClosure (btvEnv : btvEnv) ty =
+  fun EFTV ty =
+    let
+      fun traverseTy (ty,set) =
+        case ty of
+          T.ERRORty => set
+        | T.DUMMYty int => set
+        | T.TYVARty (ref(T.TVAR {recKind = T.OVERLOADED _,...})) => set
+        | T.TYVARty (ref(T.SUBSTITUTED ty)) => traverseTy (ty,set)
+        | T.TYVARty (tyvarRef as (ref(T.TVAR tvKind))) => 
+            if OTSet.member(set, tyvarRef) then set
+            else traverseTvKind (tvKind, OTSet.add(set, tyvarRef))
+        | T.BOUNDVARty int => set
+        | T.FUNMty (tyList, ty) => traverseTy (ty, foldl traverseTy set tyList)
+        | T.RECORDty tySEnvMap => 
+            SEnv.foldl (fn (ty, set) => traverseTy (ty,set)) set tySEnvMap
+        | T.CONty {tyCon = tyCon, args = tyList} => foldl traverseTy set tyList
+        | T.POLYty {boundtvars = btvKindIEnvMap, body=ty} => traverseTy (ty,set)
+        | T.BOXEDty => set
+        | T.ATOMty => set
+        | T.GENERICty => set
+        | T.INDEXty (ty, string) => traverseTy (ty,set)
+        | T.BMABSty (tyList, ty) => traverseTy (ty, foldl traverseTy set tyList)
+        | T.BITMAPty tyList => foldl traverseTy set tyList
+        | T.ALIASty (aliasTy,realTy) => traverseTy (realTy, traverseTy(aliasTy,set))
+        | T.BITty int => set
+        | T.UNBOXEDty => set
+        | T.DBLUNBOXEDty => set
+        | T.OFFSETty tyList => foldl traverseTy set tyList
+        | T.TAGty int => set
+        | T.SIZEty int => set
+        | T.DOUBLEty => set
+        | T.PADty tyList => foldl traverseTy set tyList
+        | T.PADCONDty (tyList, int) => foldl traverseTy set tyList
+        | T.FRAMEBITMAPty intList => set
+        | T.ABSSPECty (specTy, realTy) => traverseTy(realTy,traverseTy (specTy,set))
+        | T.SPECty ty => traverseTy(ty,set)
+        | T.ABSTRACTty => set
+      and traverseTvKind (kind, set) =
+            case kind of
+              {recKind = T.UNIV, ...} => set
+            | {recKind = T.REC fields, ...} => 
+                SEnv.foldl
+                (fn (ty, set) => traverseTy (ty,set))
+                set
+                fields
+            | {recKind = T.OVERLOADED _, ...} => raise Control.Bug "EFTV Overloaded"
+    in
+      traverseTy (ty, OTSet.empty)
+    end
+
+
+  fun EFTVInVarInfo (T.VARID {ty, ...}) = EFTV ty
+    | EFTVInVarInfo (T.CONID _) = OTSet.empty (* datacon must be closed *)
+    | EFTVInVarInfo (T.PRIM _) = OTSet.empty (* primitive must be closed *)
+    | EFTVInVarInfo (T.OPRIM _) =
+       OTSet.empty (* overloaded primitive must be closed *)
+    | EFTVInVarInfo (T.RECFUNID ({ty,...}, _)) = EFTV ty
+
+  fun adjustDepthInTy contextDepth ty = 
+    let
+      val tyset = EFTV ty
+    in
+      OTSet.app
+      (fn (tyvarRef as (ref (T.TVAR {
+                                     lambdaDepth=tyvarDepth, 
+                                     id, 
+                                     recKind, 
+                                     eqKind, 
+                                     tyvarName
+                                     }))) =>
+         if T.strictlyYoungerDepth(tyvarDepth, contextDepth) then
+           tyvarRef := T.TVAR {
+                               lambdaDepth=contextDepth, 
+                               id = id, 
+                               recKind = recKind, 
+                               eqKind = eqKind, 
+                               tyvarName = tyvarName
+                               }
+         else ())
+      tyset
+    end
+
+  fun adjustDepthInVarPathInfo contextDepth {name, strpath, ty} = 
+    adjustDepthInTy contextDepth ty;
+  fun adjustDepthInConPathInfo contextDepth {name, strpath, funtyCon,ty,tag,tyCon} = 
+    adjustDepthInTy contextDepth ty
+  fun adjustDepthInPrimInfo contextDepth {name, ty} = 
+    adjustDepthInTy contextDepth ty
+  fun adjustDepthInOPrimInfo _ _ = 
+      raise (Control.Bug "adjustDepthInOprimInfo should never be called.")
+  fun adjustDepthInVarPathInfo contextDepth {name, strpath, ty} =
+    adjustDepthInTy contextDepth ty
+  fun adjustDepthInIdstate contextDepth idState = 
+    case idState of
+      T.VARID varPathInfo =>
+        adjustDepthInVarPathInfo contextDepth varPathInfo
+    | T.CONID conPathInfo =>
+        adjustDepthInConPathInfo contextDepth conPathInfo
+    | T.PRIM primInfo =>
+        adjustDepthInPrimInfo contextDepth primInfo
+    | T.OPRIM oprimInfo =>
+        adjustDepthInOPrimInfo contextDepth oprimInfo
+    | T.RECFUNID (varPathInfo,int) =>
+        adjustDepthInVarPathInfo contextDepth varPathInfo
+
+
+  (*
+    exception CoerceFunM
+  *)
+  fun coerceFunM (ty, tyList) =
+      case derefTy ty of
+        newTy as T.TYVARty (ref (T.TVAR {lambdaDepth, id, recKind = T.UNIV, eqKind, tyvarName})) => 
+          let 
+            val tyList = map (fn x => T.newty {recKind = T.UNIV, eqKind=eqKind, tyvarName=tyvarName}) tyList
+(*
+            val tyList = map (fn x => T.newty T.univKind) tyList
+*)
+            val ty2 = T.newty T.univKind
+            val resTy = T.FUNMty(tyList, ty2)
+            val _ = adjustDepthInTy lambdaDepth resTy
+            val _ = performSubst (newTy, resTy)
+          in
+            (tyList, ty2, nil)
+          end
+      | T.TYVARty (ref(T.SUBSTITUTED ty)) => coerceFunM (ty, tyList)
+      | T.FUNMty (tyList, ty2) => (tyList, ty2, nil)
+      | T.POLYty {boundtvars, body} =>
+        (case derefTy body of
+              T.FUNMty(tyList,ty2) =>
+                let val subst1 = freshSubst boundtvars
+                in
+                  (
+                   map (substBTvar subst1) tyList,
+                   substBTvar subst1 ty2,
+                   IEnv.listItems subst1
+                   )
+                end
+            | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil)
+            | T.ALIASty(_, ty) => coerceFunM (ty, tyList)
+            | _ => raise CoerceFun
+         )
+      | T.ALIASty(_, ty) => coerceFunM (ty, tyList)
+      | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil)
+      | _ => raise CoerceFun
+
+
+  fun TEnvClosure (btvEnv : T.btvEnv) ty =
       TypeTransducer.foldTyPreOrder
-      (fn (BOUNDVARty n, btvEnv) =>
+      (fn (T.BOUNDVARty n, btvEnv) =>
 	  (case IEnv.find(btvEnv, n) of
 	     SOME btvKind =>
              (
@@ -479,29 +559,31 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
                true
              )
 	   | NONE => (btvEnv, true))
-        | (POLYty _, btvEnv) => (btvEnv, false) (* not go inside body *)
+        | (T.POLYty _, btvEnv) => (btvEnv, false) (* not go inside body *)
         | (_, btvEnv) => (btvEnv, true))
       btvEnv
       ty
-  and TEnvClosureOfBTVKind (btvEnv : btvEnv) (btvKind : btvKind) =
+
+  and TEnvClosureOfBTVKind (btvEnv : T.btvEnv) (btvKind : T.btvKind) =
       case btvKind of
-        {recKind = UNIV, ...} => btvEnv
-      | {recKind = REC fields, ...} => 
+        {recKind = T.UNIV, ...} => btvEnv
+      | {recKind = T.REC fields, ...} => 
 	SEnv.foldr 
 	    (fn (ty, set) => IEnv.unionWith #1 (TEnvClosure btvEnv ty, set))
 	    btvEnv
 	    fields
-     | {recKind = OVERLOADED _, ...} => raise Control.Bug "OVERLOADED kind given to TEnvClosureOfBTVKind"
+     | {recKind = T.OVERLOADED _, ...} => raise Control.Bug "OVERLOADED kind given to TEnvClosureOfBTVKind"
 
+(*
   datatype rk = ONE | ZERO | NIL
 
-  fun mergeRank (ZERO, _) = ZERO
-    | mergeRank (_, ZERO) = ZERO
-    | mergeRank (NIL, NIL) = NIL
-    | mergeRank _ = ONE
+  fun mergeRank (T.ZERO, _) = T.ZERO
+    | mergeRank (_, ZERO) = T.ZERO
+    | mergeRank (T.NIL, T.NIL) = T.NIL
+    | mergeRank _ = T.ONE
+*)
 
-
-  fun dataTag ({displayName, tyCon = {datacon = ref vEnv, ...}, ...} : conInfo) =
+  fun dataTag ({displayName, tyCon = {datacon = ref vEnv, ...}, ...} : T.conInfo) =
       let val idlist = SEnv.listKeys vEnv
       in {id = Basics.findIndex displayName idlist, span = length idlist}
       end
@@ -525,9 +607,9 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
       end
 
   fun tpappTy (ty, nil) = ty
-    | tpappTy (Types.TYVARty (ref (Types.SUBSTITUTED ty)), tyl) =
+    | tpappTy (T.TYVARty (ref (T.SUBSTITUTED ty)), tyl) =
       tpappTy (ty, tyl)
-    | tpappTy (Types.POLYty{boundtvars, body, ...}, tyl) = 
+    | tpappTy (T.POLYty{boundtvars, body, ...}, tyl) = 
       let
         val subst = 
             ListPair.foldr
@@ -545,29 +627,29 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
              concat(map (fn x => (TypeFormatter.tyToString x ^ ",")) tyl) ^
              "|")
 
-  fun polyBodyTy (Types.POLYty {body, ...}) = body
-    | polyBodyTy (Types.TYVARty (ref (Types.SUBSTITUTED ty))) = polyBodyTy ty
+  fun polyBodyTy (T.POLYty {body, ...}) = body
+    | polyBodyTy (T.TYVARty (ref (T.SUBSTITUTED ty))) = polyBodyTy ty
     | polyBodyTy ty =
       raise Control.Bug ("polyBodyTy:" ^ TypeFormatter.tyToString ty)
 
-  fun ranTy (Types.FUNMty(_, ty)) = ty
-    | ranTy (Types.TYVARty (ref (Types.SUBSTITUTED ty))) = ranTy ty
+  fun ranTy (T.FUNMty(_, ty)) = ty
+    | ranTy (T.TYVARty (ref (T.SUBSTITUTED ty))) = ranTy ty
     | ranTy ty = raise Control.Bug ("ranTy:" ^ TypeFormatter.tyToString ty)
-  fun domTy (Types.FUNMty(tyList, _)) = tyList
-    | domTy (Types.TYVARty (ref (Types.SUBSTITUTED ty))) = domTy ty
+  fun domTy (T.FUNMty(tyList, _)) = tyList
+    | domTy (T.TYVARty (ref (T.SUBSTITUTED ty))) = domTy ty
     | domTy ty = raise Control.Bug ("domTy:" ^ TypeFormatter.tyToString ty)
 (*
-  fun ranTyI (Types.IABSty(ty1, ty2)) = ty2
-    | ranTyI (Types.TYVARty (ref (Types.SUBSTITUTED ty))) = ranTyI ty
+  fun ranTyI (T.IABSty(ty1, ty2)) = ty2
+    | ranTyI (T.TYVARty (ref (T.SUBSTITUTED ty))) = ranTyI ty
     | ranTyI ty = raise Control.Bug ("ranTyM:" ^ TypeFormatter.tyToString ty)
-  fun domTyI (Types.IABSty(n, ty2)) = n
-    | domTyI (Types.TYVARty (ref (Types.SUBSTITUTED ty))) = domTyI ty
+  fun domTyI (T.IABSty(n, ty2)) = n
+    | domTyI (T.TYVARty (ref (T.SUBSTITUTED ty))) = domTyI ty
     | domTyI ty = raise Control.Bug ("domTyM:" ^ TypeFormatter.tyToString ty)
 *)
   (* The following are for printer code generation. *)
   fun substituteBTV (srcBTVID, destTy) ty=
       substBTvar (IEnv.singleton(srcBTVID, destTy)) ty
-  fun instantiate {boundtvars : btvEnv, body : ty} =
+  fun instantiate {boundtvars : T.btvEnv, body : T.ty} =
       let val subst = freshSubst boundtvars
       in (substBTvar subst body, subst) end
 (*
@@ -584,14 +666,14 @@ So be careful in using this.
       then ty
       else
         case ty 
-	 of (POLYty{boundtvars,body,...}) =>
+	 of (T.POLYty{boundtvars,body,...}) =>
 	    let 
 	      val subst = freshSubst boundtvars
 	      val bty = substBTvar subst body
 	    in  freshInstTy bty
 	    end
-	  | FUNMty (tyList,ty) =>FUNMty(tyList, freshInstTy ty)
-	  | RECORDty fl => RECORDty (SEnv.map freshInstTy fl)
+	  | T.FUNMty (tyList,ty) => T.FUNMty(tyList, freshInstTy ty)
+	  | T.RECORDty fl => T.RECORDty (SEnv.map freshInstTy fl)
 	  | ty => ty
 
   (**
@@ -602,31 +684,32 @@ So be careful in using this.
       then ty
       else
         case ty 
-	 of (POLYty{boundtvars,body,...}) =>
+	 of (T.POLYty{boundtvars,body,...}) =>
 	    let 
 	      val subst = freshRigidSubst boundtvars
 	      val bty = substBTvar subst body
 	    in  freshRigidInstTy bty
 	    end
-	  | FUNMty (tyList,ty) =>FUNMty(tyList, freshRigidInstTy ty)
-	  | RECORDty fl => RECORDty (SEnv.map freshRigidInstTy fl)
+	  | T.FUNMty (tyList,ty) => T.FUNMty(tyList, freshRigidInstTy ty)
+	  | T.RECORDty fl => T.RECORDty (SEnv.map freshRigidInstTy fl)
 	  | ty => ty
 
   (**
    *)
+  fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
   fun eliminateVacuousTyvars () =
     let
       fun instanticateTv tv =
         case tv of
-          ref(TVAR {recKind = OVERLOADED (h :: tl), ...}) =>
-            tv := SUBSTITUTED h
-        | ref(TVAR {recKind = REC tyFields, ...}) => 
-            tv := SUBSTITUTED (RECORDty tyFields)
+          ref(T.TVAR {recKind = T.OVERLOADED (h :: tl), ...}) =>
+            tv := T.SUBSTITUTED h
+        | ref(T.TVAR {recKind = T.REC tyFields, ...}) => 
+            tv := T.SUBSTITUTED (T.RECORDty tyFields)
         | _ => ()
     in
       (
-       List.app instanticateTv (!kindedTyvarList);
-       kindedTyvarList := nil
+       List.app instanticateTv (!T.kindedTyvarList);
+       T.kindedTyvarList := nil
        )
     end
 
@@ -635,31 +718,23 @@ So be careful in using this.
    * Type generalizer.
    * This must be called top level, i.e. de Bruijn 0
    *)
-  fun generalizer (ty, varEnv, utvarEnv) =
+  fun generalizer (ty, contextLambdaDepth) =
       let 
 	val freeTvs = EFTV ty
-        val context =
-            SEnv.foldr
-                (fn (x, set) => OTSet.union (EFTVInVarInfo x, set))
-                (SEnv.foldr
-                     (fn (tvStateRef, set) => OTSet.add(set, tvStateRef))
-                     OTSet.empty
-                     utvarEnv)
-                varEnv
         val tids = 
             OTSet.foldr 
                 (fn (
                       r as
                         ref
-                        (TVAR(k as {id, recKind = OVERLOADED (h :: tl), ...})),
+                        (T.TVAR(k as {id, recKind = T.OVERLOADED (h :: tl), ...})),
                         tids
                     ) => tids
-(*
-                    (r := SUBSTITUTED h; tids)
-*)
                   | (r, tids) => OTSet.add(tids, r))
                 OTSet.empty
-                (OTSet.difference (freeTvs, context))
+                (OTSet.filter 
+                 (fn (ref (T.TVAR {lambdaDepth = tyvarLambdaDepth,...})) => 
+                  T.youngerDepth {contextDepth = contextLambdaDepth, tyvarDepth = tyvarLambdaDepth})
+                 freeTvs)
 
 	(* fix the bug 187
 	 * when typeinference phase does type instantiation for the more polymorphic
@@ -675,14 +750,6 @@ So be careful in using this.
 	 * So in this way we generates the new bounded type variables in the order as that of
 	 * original bounded type variables.
 	 *)
-(*
-	val orderedTidEnv =
-	    foldl (fn (r as ref(TVAR (k as {id, ...})), orderedTidEnv) =>
-			    IEnv.insert(orderedTidEnv,id,r)
-			    )
-			IEnv.empty
-			(OTSet.listItems tids)
-*)
       in
 	if OTSet.isEmpty tids
         then {boundEnv = IEnv.empty, removedTyIds = OTSet.empty}
@@ -690,12 +757,12 @@ So be careful in using this.
           let
             val (_, btvs) =
                 OTSet.foldl
-                    (fn (r as ref(TVAR (k as {id, ...})), (next, btvs)) =>
+                    (fn (r as ref(T.TVAR (k as {id, ...})), (next, btvs)) =>
                         let 
-                          val btvid = nextBTid()
+                          val btvid = T.nextBTid()
                         in
                           (
-                            r := SUBSTITUTED (BOUNDVARty btvid);
+                            r := T.SUBSTITUTED (T.BOUNDVARty btvid);
                             (
                               next + 1,
                               IEnv.insert
@@ -730,7 +797,7 @@ So be careful in using this.
    *)
   fun generalize ty =
     {
-     boundtvEnv = #boundEnv(generalizer (ty, SEnv.empty, SEnv.empty)),
+     boundtvEnv = #boundEnv(generalizer (ty, T.toplevelDepth)),
      body = ty
      }
 
@@ -739,43 +806,40 @@ So be careful in using this.
 
   fun coerceBoxedKind boxedKind =
       case boxedKind of
-	DOUBLEty => BOXEDty
+	T.DOUBLEty => T.BOXEDty
       | _ => boxedKind
 
-  fun boxedKindValueOfTyCon (tyCon as {name,strpath,id,boxedKind = ref boxedKindOpt ,...}:tyCon) =
-      case boxedKindOpt of
-	NONE => raise ExSpecTyCon ((Path.pathToString(strpath)^"."^name^
-				    "("^(ID.toString(id)^") isBoxedDataInSignature")))
-      | SOME boxedKind  => 
-        if (!Control.enableUnboxedFloat) then
+  fun boxedKindOfTyCon (tyCon as {name,strpath,id,boxedKind = ref boxedKind ,...}:T.tyCon) =
+      if (!Control.enableUnboxedFloat) then
 	  boxedKind
-        else
+      else
 	  coerceBoxedKind boxedKind
 
-  fun boxedKindOptOfTyCon (tyCon:tyCon) =
-      (SOME (boxedKindValueOfTyCon tyCon)) handle ExSpecTyCon _ => NONE
-
+  (* ToDo : this function can be rewritten by using
+   * TypeTransducer.foldTyPreOrder ? *)
   fun computeTy computeFun ty = 
       case derefTy ty of 
-        TYVARty (ref (TVAR {recKind = REC _,...})) => computeFun BOXEDty
-      | TYVARty _  => computeFun ATOMty  
-      | BOUNDVARty tid  => computeFun (BOUNDVARty tid)
-      | FUNMty _  => computeFun BOXEDty 
-      | ABSSPECty (_, ty) => computeTy computeFun ty
+        T.TYVARty (ref (T.TVAR {recKind = T.REC _,...})) => computeFun T.BOXEDty
+      | T.TYVARty _  => computeFun T.ATOMty  
+      | T.BOUNDVARty tid  => computeFun (T.BOUNDVARty tid)
+      | T.FUNMty _  => computeFun T.BOXEDty 
+      | T.ABSSPECty (_, ty) => computeTy computeFun ty
       | (* imported type specificiation *)
-        SPECty specTy => computeFun (SPECty specTy)
-      | RECORDty _  => computeFun BOXEDty 
-      | CONty {tyCon as {datacon,...}, args} =>
-        if isSameTyCon (refTyCon, tyCon) then computeFun BOXEDty
+         T.SPECty specTy => computeFun (T.SPECty specTy)
+      | T.RECORDty _  => computeFun T.BOXEDty 
+      | T.CONty {tyCon as {datacon,...}, args} =>
+(* ToDo : 
+        if T.isSameTyCon (PT.refTyCon, tyCon) then computeFun T.BOXEDty
         else 
+*)
           (
-           case boxedKindValueOfTyCon tyCon of
-             BOUNDVARty tid =>
+           case boxedKindOfTyCon tyCon of
+             T.BOUNDVARty tid =>
              (
               case SEnv.listItems (!datacon) of
-                [CONID{ty=POLYty{boundtvars,body},...}] =>
+                [T.CONID{ty = T.POLYty{boundtvars,body},...}] =>
                 let
-                  val ty' = POLYty{boundtvars=boundtvars,body=BOUNDVARty tid}
+                  val ty' = T.POLYty{boundtvars = boundtvars,body = T.BOUNDVARty tid}
                 in
                   computeTy computeFun (tpappTy (ty',args))
                 end
@@ -783,88 +847,94 @@ So be careful in using this.
              )
            | boxedKind => computeFun boxedKind
           )
-      | POLYty{boundtvars,body}  => 
+      | T.POLYty{boundtvars,body}  => 
         (
          case derefTy body of
-           BOUNDVARty tid =>
+           T.BOUNDVARty tid =>
            (
             case IEnv.find(boundtvars,tid) of
-              SOME _ => computeFun BOXEDty   (* \forall{t}.t --> BOXED *)
-            | _ => computeFun (BOUNDVARty tid)
+              SOME _ => computeFun T.BOXEDty   (* \forall{t}.t --> BOXED *)
+            | _ => computeFun (T.BOUNDVARty tid)
            )
          | _ => computeTy computeFun body
         )
-      | DUMMYty _ => computeFun ATOMty
-      | BOXEDty => computeFun BOXEDty
-      | ATOMty => computeFun ATOMty
-      | INDEXty _ => computeFun ATOMty
-      | ALIASty (_,actualTy) => computeTy computeFun actualTy
-      | BITMAPty _ => computeFun ATOMty
-      | FRAMEBITMAPty _ => computeFun ATOMty
-      | OFFSETty _ => computeFun ATOMty
-      | DOUBLEty => computeFun DOUBLEty
-      | TAGty _ => computeFun ATOMty
-      | SIZEty _ => computeFun ATOMty
-      | PADty _ => computeFun ATOMty
-      | PADCONDty _ => computeFun ATOMty
-      | ERRORty  => computeFun ATOMty 
-      | _ => raise Control.Bug "illegal type in computeTy"
+      | T.DUMMYty _ => computeFun T.ATOMty
+      | T.BOXEDty => computeFun T.BOXEDty
+      | T.ATOMty => computeFun T.ATOMty
+      | T.INDEXty _ => computeFun T.ATOMty
+      | T.ALIASty (_,actualTy) => computeTy computeFun actualTy
+      | T.BITMAPty _ => computeFun T.ATOMty
+      | T.FRAMEBITMAPty _ => computeFun T.ATOMty
+      | T.OFFSETty _ => computeFun T.ATOMty
+      | T.DOUBLEty => computeFun T.DOUBLEty
+      | T.TAGty _ => computeFun T.ATOMty
+      | T.SIZEty _ => computeFun T.ATOMty
+      | T.PADty _ => computeFun T.ATOMty
+      | T.PADCONDty _ => computeFun T.ATOMty
+      | T.ERRORty  => computeFun T.ATOMty 
+      | _ =>
+        raise
+          Control.Bug
+              ("illegal type in computeTy" ^ TypeFormatter.tyToString ty)
 
-  (* compact a type 
-   * to one of following  ATOMty,DOUBLEty,BOXEDty and BOUNDVARty
+  (* compact a type to one of the following:
+   * ATOMty, DOUBLEty, BOXEDty, BOUNDVARty and GENERICty
    *)
   fun compactTy ty = 
       let
-        val resultTy = computeTy (fn x => x) ty
+          val resultTy = computeTy (fn x => x) ty
       in
-        case resultTy of
-          SPECty specTy => computeTy (fn x => x) specTy
-        | ATOMty => resultTy
-        | BOXEDty => resultTy
-        | DOUBLEty => resultTy
-        | BOUNDVARty _ => resultTy
-        | _ => raise Control.Bug "ilegal result in compactTy"
+          case resultTy of
+              T.SPECty specTy => computeTy (fn x => x) specTy
+            | T.ATOMty => resultTy
+            | T.BOXEDty => resultTy
+            | T.DOUBLEty => resultTy
+            | T.BOUNDVARty _ => resultTy
+            | _ =>
+              raise
+                Control.Bug
+                    ("ilegal result in compactTy:"
+                     ^ TypeFormatter.tyToString resultTy)
       end
 	     
-  fun boxedKindValueOfType ty = compactTy ty
+  fun boxedKindOfType ty = compactTy ty
        
-  fun boxedKindOptOfType ty =
-      SOME (boxedKindValueOfType ty) handle ExSpecTyCon _ => NONE
-	
   fun isBoxed boxedKind =
       case boxedKind of
-	DOUBLEty => if (!Control.enableUnboxedFloat) then false else true
-      | ATOMty   => false
-      | BOXEDty  => true
+	T.DOUBLEty => if (!Control.enableUnboxedFloat) then false else true
+      | T.ATOMty   => false
+      | T.BOXEDty  => true
       | _        => raise Control.Bug "illegal value inside boxedKind"
 
-  fun isBoxedType ty = isBoxed (boxedKindValueOfType ty)
+  fun isBoxedType ty = isBoxed (boxedKindOfType ty)
 
 (*
   fun isBoxedType 
 	(CONty { tyCon as {boxedKind = ref boxedKind, datacon = ref datacon,...}, ...}) = 
 	isBoxedTyCon tyCon
-    | isBoxedType (Types.POLYty{body, ...}) = isBoxedType body
-    | isBoxedType (Types.TYVARty(ref (Types.SUBSTITUTED ty))) = isBoxedType ty
-    | isBoxedType (Types.ALIASty(_, actual)) = isBoxedType actual
+    | isBoxedType (T.POLYty{body, ...}) = isBoxedType body
+    | isBoxedType (T.TYVARty(ref (T.SUBSTITUTED ty))) = isBoxedType ty
+    | isBoxedType (T.ALIASty(_, actual)) = isBoxedType actual
     | isBoxedType _ = true
 *)
 
-  fun boxedKindOptOfTyBindInfo tyBindInfo =
+  fun boxedKindOfTyBindInfo tyBindInfo =
       case tyBindInfo of
-	TYFUN{body,...} => boxedKindOptOfType body
-      | TYCON tyCon => boxedKindOptOfTyCon tyCon
-      | TYSPEC {spec = {boxedKind,...},...} => boxedKind
+	T.TYFUN{body,...} => boxedKindOfType body
+      | T.TYCON tyCon => boxedKindOfTyCon tyCon
+      | T.TYSPEC {spec = {boxedKind,...},...} => boxedKind
 
   fun calcTyConBoxedKind datacon =
-   (***rcompTy in RecordCompile.sml loop bug****
+   (*
+      rcompTy in RecordCompile.sml loop bug
+    *
     We supress this optimization 
       case (SEnv.listItems datacon) of
-        [CONID {name, strpath, funtyCon = true, ty, tag, tyCon}] =>
+        [T.CONID {name, strpath, funtyCon = true, ty, tag, tyCon}] =>
         (
 	 case ty of 
-           FUNty(ty1,_ ) => compactTy ty1
-         | POLYty{body = FUNty(ty1,_),...} => compactTy ty1
+           T.FUNty(ty1,_ ) => compactTy ty1
+         | T.POLYty{body = T.FUNty(ty1,_),...} => compactTy ty1
 	 | _ => raise Control.Bug "should be function type of CONID"
 	)
       | [CONID {name, strpath, funtyCon = false, ty, tag, tyCon}] => ATOMty
@@ -875,18 +945,14 @@ So be careful in using this.
               foldl
 		  (fn (v, S) => 
 		      (case v of 
-			 CONID {name, strpath, funtyCon, ty, tag, tyCon} => funtyCon
+			 T.CONID {name, strpath, funtyCon, ty, tag, tyCon} => funtyCon
 		       | _ => raise Control.Bug "Not CONID in datacon")
 		      orelse S)
 		  false
                   (SEnv.listItems datacon)
         in 
-	  if isBoxed then BOXEDty else ATOMty
+	  if isBoxed then T.BOXEDty else T.ATOMty
         end
-
-  fun calcTyConBoxedKindOpt datacon =
-      (SOME (calcTyConBoxedKind datacon))
-      handle ExSpecTyCon _ => NONE
 
   fun fixPointUpdateTyCons modifier tyCons =
       let
@@ -906,18 +972,18 @@ So be careful in using this.
         update ()
       end
 
-  fun compareBoxedKind (NONE,NONE) = true
-    | compareBoxedKind (SOME ATOMty,SOME ATOMty) = true
-    | compareBoxedKind (SOME BOXEDty,SOME BOXEDty) = true
-    | compareBoxedKind (SOME DOUBLEty,SOME DOUBLEty) = true
-    | compareBoxedKind (SOME (BOUNDVARty tid1),SOME (BOUNDVARty tid2)) = tid1 = tid2
+  fun compareBoxedKind (T.GENERICty, T.GENERICty) = true
+    | compareBoxedKind (T.ATOMty, T.ATOMty) = true
+    | compareBoxedKind (T.BOXEDty, T.BOXEDty) = true
+    | compareBoxedKind (T.DOUBLEty, T.DOUBLEty) = true
+    | compareBoxedKind ((T.BOUNDVARty tid1), (T.BOUNDVARty tid2)) = tid1 = tid2
     | compareBoxedKind (_,_) = false
 
-  fun boxedKindModifier (tyCon as {boxedKind as ref boxedKindOpt,datacon = ref cons,...} : tyCon) =
+  fun boxedKindModifier (tyCon as {boxedKind as ref boxedKindValue,datacon = ref cons,...} : T.tyCon) =
       let
-        val newBoxedKind = calcTyConBoxedKindOpt cons
+        val newBoxedKind = calcTyConBoxedKind cons
       in
-        if compareBoxedKind(newBoxedKind,boxedKindOpt)
+        if compareBoxedKind(newBoxedKind,boxedKindValue)
         then false
         else (boxedKind:=newBoxedKind;true)
       end
@@ -929,32 +995,32 @@ So be careful in using this.
 
   fun isATOMty ty =
       case ty of
-	ATOMty => true
+	T.ATOMty => true
       | _      => false
 
 	
-  fun isTyNameOfTyFun ({name,tyargs,body}:tyFun) = 
+  fun isTyNameOfTyFun ({name,tyargs,body} : T.tyFun) = 
       let
 	fun isTyName ty = 		
 	    case ty of
-	      CONty {tyCon, args} => true
-	    | ALIASty (_,ty) => isTyName ty
-            | SPECty ty => isTyName ty
-	    | ABSSPECty(ty,_) => isTyName ty
+	      T.CONty {tyCon, args} => true
+	    | T.ALIASty (_,ty) => isTyName ty
+            | T.SPECty ty => isTyName ty
+	    | T.ABSSPECty(ty,_) => isTyName ty
 	    | _ => false
       in
 	isTyName body
       end
 
-  fun tyFunToTyName ({name,tyargs,body}:tyFun) = 
+  fun tyFunToTyName ({name,tyargs,body}:T.tyFun) = 
       let
 	fun extractCONty ty = 
 	    case  ty of
-	      CONty { tyCon = {name,strpath,abstract,tyvars,
+	      T.CONty { tyCon = {name,strpath,abstract,tyvars,
 			       id,eqKind,boxedKind,datacon},
 		      args = _ } => 
-	      {name = name, tyvars = tyvars, id = id, eqKind = eqKind}
-	    | ALIASty (_,ty) => extractCONty ty
+	        {name = name, tyvars = tyvars, id = id, eqKind = eqKind}
+	    | T.ALIASty (_,ty) => extractCONty ty
 	    | _ => raise ExIllegalTyFunToTyName(name)
       in
 	 extractCONty body
@@ -962,15 +1028,21 @@ So be careful in using this.
 
   fun strPathOptOfTyBindInfo tyBindInfo =
       case tyBindInfo of
-	TYSPEC {spec = {strpath,...},...}  =>  strpath
-      | TYCON  {strpath,...} =>  strpath
-      | TYFUN  ({body = ALIASty(CONty{tyCon = {strpath,...},...},_),...}) => strpath
-      | TYFUN  _ => raise Control.Bug "TYFUN is not well-formed: body = ALIASty(CONty,_)"
+	T.TYSPEC {spec = {strpath,...},...}  =>  strpath
+      | T.TYCON  {strpath,...} =>  strpath
+      | T.TYFUN  ({body = T.ALIASty(T.CONty{tyCon = {strpath,...},...},_),...}) => strpath
+      | T.TYFUN  _ => raise Control.Bug "TYFUN is not well-formed: body = T.ALIASty(T.CONty,_)"
 
   fun peelTySpec tyBindInfo =
       case tyBindInfo of
-	TYSPEC {spec,impl = SOME impl} => peelTySpec impl
+	T.TYSPEC {spec,impl = SOME impl} => peelTySpec impl
       |  _   => tyBindInfo
 
+  fun isNotGenericBoxedKind boxedKindValue =
+      case boxedKindValue of
+          T.GENERICty => false
+        | _ => true
+
+  
 end
 end

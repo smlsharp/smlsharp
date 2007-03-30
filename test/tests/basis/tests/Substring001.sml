@@ -71,35 +71,35 @@ val substring_2_1_2 =
     checkSS(Substring.substring("ab", 1, 2)) handle Subscript => NONE;
 
 (********************)
-val all_empty = checkSS(Substring.all "");
-val all_1 = checkSS(Substring.all "a");
-val all_2 = checkSS(Substring.all "ab");
-val all_10 = checkSS(Substring.all "abcdefghij");
+val full_empty = checkSS(Substring.full "");
+val full_1 = checkSS(Substring.full "a");
+val full_2 = checkSS(Substring.full "ab");
+val full_10 = checkSS(Substring.full "abcdefghij");
 
 (********************)
-val isEmpty_0 = Substring.isEmpty(Substring.all "");
+val isEmpty_0 = Substring.isEmpty(Substring.full "");
 val isEmpty_1_0_N = Substring.isEmpty(Substring.extract("a", 0, NONE));
 val isEmpty_1_0_0 = Substring.isEmpty(Substring.extract("a", 0, SOME 0));
 val isEmpty_1_0_1 = Substring.isEmpty(Substring.extract("a", 0, SOME 1));
 val isEmpty_1_1_N = Substring.isEmpty(Substring.extract("a", 1, NONE));
 
 (********************)
-val getc_0 = Substring.getc(Substring.all "");
+val getc_0 = Substring.getc(Substring.full "");
 val getc_1_0_N = Substring.getc(Substring.extract("a", 0, NONE));
 val getc_1_0_0 = Substring.getc(Substring.extract("a", 0, SOME 0));
 val getc_1_0_1 = Substring.getc(Substring.extract("a", 0, SOME 1));
 val getc_1_1_N = Substring.getc(Substring.extract("a", 1, NONE));
 
 (********************)
-val first_0 = Substring.first(Substring.all "");
+val first_0 = Substring.first(Substring.full "");
 val first_1_0_N = Substring.first(Substring.extract("a", 0, NONE));
 val first_1_0_0 = Substring.first(Substring.extract("a", 0, SOME 0));
 val first_1_0_1 = Substring.first(Substring.extract("a", 0, SOME 1));
 val first_1_1_N = Substring.first(Substring.extract("a", 1, NONE));
 
 (********************)
-val triml_0_0 = checkSS(Substring.triml 0 (Substring.all ""));
-val triml_1_0 = checkSS(Substring.triml 1 (Substring.all ""));(* safe *)
+val triml_0_0 = checkSS(Substring.triml 0 (Substring.full ""));
+val triml_1_0 = checkSS(Substring.triml 1 (Substring.full ""));(* safe *)
 val triml_0_1 = checkSS(Substring.triml 0 (Substring.substring("abc", 1, 1)));
 val triml_1_1 = checkSS(Substring.triml 1 (Substring.substring("abc", 1, 1)));
 val triml_2_1 = checkSS(Substring.triml 2 (Substring.substring("abc", 1, 1)));
@@ -111,8 +111,8 @@ val triml_3_2 = checkSS(Substring.triml 3 (Substring.substring("abcd", 1, 2)));
 val triml_m1 = SOME(Substring.triml ~1) handle Subscript => NONE;
 
 (********************)
-val trimr_0_0 = checkSS(Substring.trimr 0 (Substring.all ""));
-val trimr_1_0 = checkSS(Substring.trimr 1 (Substring.all ""));(* safe *)
+val trimr_0_0 = checkSS(Substring.trimr 0 (Substring.full ""));
+val trimr_1_0 = checkSS(Substring.trimr 1 (Substring.full ""));(* safe *)
 val trimr_0_1 = checkSS(Substring.trimr 0 (Substring.substring("abc", 1, 1)));
 val trimr_1_1 = checkSS(Substring.trimr 1 (Substring.substring("abc", 1, 1)));
 val trimr_2_1 = checkSS(Substring.trimr 2 (Substring.substring("abc", 1, 1)));
@@ -305,7 +305,7 @@ val collate_2_2_gt =
 
 (********************)
 fun splitFun char = char = #"A";
-val splitl_0 = check2SS(Substring.splitl splitFun (Substring.all ""));
+val splitl_0 = check2SS(Substring.splitl splitFun (Substring.full ""));
 val splitl_1_f =
     check2SS(Substring.splitl splitFun (Substring.substring ("abc", 1, 1)));
 val splitl_1_t =
@@ -325,7 +325,7 @@ val splitl_3_1 =
 val splitl_3_2 =
     check2SS(Substring.splitl splitFun (Substring.substring ("abcAe", 1, 3)));
 
-val splitr_0 = check2SS(Substring.splitr splitFun (Substring.all ""));
+val splitr_0 = check2SS(Substring.splitr splitFun (Substring.full ""));
 val splitr_1_f =
     check2SS(Substring.splitr splitFun (Substring.substring ("abc", 1, 1)));
 val splitr_1_t =
@@ -346,19 +346,19 @@ val splitr_3_2 =
     check2SS(Substring.splitr splitFun (Substring.substring ("abcAe", 1, 3)));
 
 (********************)
-val splitAt_0_0 = check2SS(Substring.splitAt(Substring.all "", 0));
+val splitAt_0_0 = check2SS(Substring.splitAt(Substring.full "", 0));
 val splitAt_0_m1 =
-    check2SS(Substring.splitAt(Substring.all "", ~1))
+    check2SS(Substring.splitAt(Substring.full "", ~1))
     handle General.Subscript => NONE;
 val splitAt_0_1 =
-    check2SS(Substring.splitAt(Substring.all "", 1))
+    check2SS(Substring.splitAt(Substring.full "", 1))
     handle General.Subscript => NONE;
 val splitAt_1_0 =
     check2SS(Substring.splitAt(Substring.substring ("abc", 1, 1), 0));
 val splitAt_1_1 =
     check2SS(Substring.splitAt(Substring.substring ("abc", 1, 1), 1));
 val splitAt_1_2 =
-    check2SS(Substring.splitAt(Substring.substring ("abc", 1, 1), 1))
+    check2SS(Substring.splitAt(Substring.substring ("abc", 1, 1), 2))
     handle General.Subscript => NONE;
 val splitAt_1_m1 =
     check2SS(Substring.splitAt(Substring.substring ("abc", 1, 1), ~1))
@@ -392,7 +392,7 @@ val splitAt_3_m1 =
 
 (********************)
 val dropFun = splitFun;
-val dropl_0 = checkSS(Substring.dropl dropFun (Substring.all ""));
+val dropl_0 = checkSS(Substring.dropl dropFun (Substring.full ""));
 val dropl_1_f =
     checkSS(Substring.dropl dropFun (Substring.substring ("abc", 1, 1)));
 val dropl_1_t =
@@ -412,7 +412,7 @@ val dropl_3_1 =
 val dropl_3_2 =
     checkSS(Substring.dropl dropFun (Substring.substring ("abcAe", 1, 3)));
 
-val dropr_0 = checkSS(Substring.dropr dropFun (Substring.all ""));
+val dropr_0 = checkSS(Substring.dropr dropFun (Substring.full ""));
 val dropr_1_f =
     checkSS(Substring.dropr dropFun (Substring.substring ("abc", 1, 1)));
 val dropr_1_t =
@@ -434,7 +434,7 @@ val dropr_3_2 =
 
 (********************)
 val takeFun = splitFun;
-val takel_0 = checkSS(Substring.takel takeFun (Substring.all ""));
+val takel_0 = checkSS(Substring.takel takeFun (Substring.full ""));
 val takel_1_f =
     checkSS(Substring.takel takeFun (Substring.substring ("abc", 1, 1)));
 val takel_1_t =
@@ -454,7 +454,7 @@ val takel_3_1 =
 val takel_3_2 =
     checkSS(Substring.takel takeFun (Substring.substring ("abcAe", 1, 3)));
 
-val taker_0 = checkSS(Substring.taker takeFun (Substring.all ""));
+val taker_0 = checkSS(Substring.taker takeFun (Substring.full ""));
 val taker_1_f =
     checkSS(Substring.taker takeFun (Substring.substring ("abc", 1, 1)));
 val taker_1_t =
@@ -523,7 +523,7 @@ fun makeSpanSS string (leftStart, leftLength) (rightStart, rightLength) =
     let
       val left = Substring.substring (string, leftStart, leftLength)
       val right = Substring.substring (string, rightStart, rightLength)
-    in check2SS (left, right)
+    in checkSS (Substring.span (left, right))
     end;
 (*
   (ls, le): the start index and the end index of left substring.

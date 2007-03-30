@@ -1,20 +1,27 @@
 Group is
+#if defined(NEW_CM)
+	$/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+	$/ml-yacc-lib.cm
+#else
+	ml-yacc-lib.cm
+#endif
+
         Utility.sml
+        ErrorQueue.sml
 
 	AST.sig
 	Ast.sml
 	ASTUTIL.sig
 	AstUtil.sml
 
+        Constants_SMLNJ.sml
 	ml.lex
 	TokenTable.sml
-
 	ml.grm
-
 	MLPARSER.sig
 	MLParser.sml
-
-	ml-yacc-lib.cm
 
         FormatTemplate.sml
         FORMATTER_GENERATOR.sig

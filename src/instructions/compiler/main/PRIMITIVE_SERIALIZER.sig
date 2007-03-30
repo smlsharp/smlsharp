@@ -1,7 +1,7 @@
 (**
  * provides serialize/deserialize of bytes to/from a byte array.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PRIMITIVE_SERIALIZER.sig,v 1.4 2005/12/31 10:22:00 kiyoshiy Exp $
+ * @version $Id: PRIMITIVE_SERIALIZER.sig,v 1.5 2006/09/28 08:58:08 katsuu Exp $
  *)
 signature PRIMITIVE_SERIALIZER =
 sig
@@ -10,6 +10,7 @@ sig
 
   type reader = unit -> Word8.word
   type writer = Word8.word -> unit
+  type word64 = IEEE754.word64
 
   (** the byte order which this serializer assumes. *)
   val byteOrder : SystemDefTypes.byteOrder
@@ -30,6 +31,20 @@ sig
    * @return a value obtained out of the array
    *)
   val readBytes : int -> reader -> Word32.word
+
+  (**
+   * combine two 32bit integer into one 64bit integer.
+   * @params (n1, n2)
+   * @return a combined 64bit integer
+   *)
+  val toWord64 : Word32.word * Word32.word -> word64
+
+  (**
+   * split one 64bit integer to two 32bit integer.
+   * @params n
+   * @return a pair of 32bit integers
+   *)
+  val fromWord64 : word64 -> Word32.word * Word32.word
 
   (***************************************************************************)
 

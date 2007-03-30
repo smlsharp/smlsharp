@@ -1,31 +1,34 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author OSAKA Satoshi
- * @version $Id: MatchData.sml,v 1.4 2006/02/28 16:11:02 kiyoshiy Exp $
+ * @version $Id: MatchData.sml,v 1.9 2007/02/11 16:39:51 kiyoshiy Exp $
  *)
 structure MatchData = 
 struct
-  structure SE = StaticEnv
+  structure CT = ConstantTerm
   structure T = Types
   structure TFC = TypedFlatCalc
   structure VIdMap = TypedFlatCalcUtils.VIdEnv
 
   datatype kind = Bind | Match | Handle of TFC.varIdInfo
     
-  type con = T.constant
+  type con = ConstantTerm.constant
   type tag = T.conInfo
+
 
   structure ConOrd : ordsig = 
   struct
     type ord_key = con
-    fun compare (T.INT i1, T.INT i2) = Int32.compare (i1, i2)
-      | compare (T.STRING s1, T.STRING s2) = String.compare (s1, s2)
-      | compare (T.REAL r1, T.REAL r2) = String.compare (r1, r2)
-      | compare (T.INT _, _) = LESS
-      | compare (T.STRING _, T.REAL _) = LESS
+    fun compare (CT.INT i1, CT.INT i2) = Int32.compare (i1, i2)
+      | compare (CT.WORD w1, CT.WORD w2) = Word32.compare (w1, w2)
+      | compare (CT.STRING s1, CT.STRING s2) = String.compare (s1, s2)
+      | compare (CT.REAL r1, CT.REAL r2) = String.compare (r1, r2)
+      | compare (CT.FLOAT r1, CT.FLOAT r2) = String.compare (r1, r2)
+      | compare (CT.CHAR c1, CT.CHAR c2) = Char.compare (c1, c2)
+      | compare (CT.INT _, _) = LESS
+      | compare (CT.STRING _, CT.REAL _) = LESS
       | compare (_, _) = GREATER
   end
-
 
   structure TagOrd : ordsig = 
    (* Ohori: I will double check to make sure that this is should be OK.
@@ -84,7 +87,7 @@ struct
   | RecNode of TFC.varIdInfo * string * tree
   | UnivNode of TFC.varIdInfo * tree
 
-  val unitExp = RecordCalc.RCRECORD {fields=SEnv.empty, recordTy=SE.unitty, loc=Loc.noloc}
+  val unitExp = RecordCalc.RCCONSTANT(CT.UNIT, Loc.noloc)
 
   val expDummy = unitExp
     

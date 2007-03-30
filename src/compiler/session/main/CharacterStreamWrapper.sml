@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: CharacterStreamWrapper.sml,v 1.4 2006/02/28 16:11:04 kiyoshiy Exp $
+ * @version $Id: CharacterStreamWrapper.sml,v 1.5 2007/02/19 14:11:55 kiyoshiy Exp $
  *)
 structure CharacterStreamWrapper :
 sig
@@ -45,7 +45,7 @@ struct
 
   (***************************************************************************)
 
-  local open BasicTypes
+  local structure BT = BasicTypes
   in
   fun wrapIn (inputChannel : ChannelTypes.InputChannel) =
       let
@@ -53,7 +53,7 @@ struct
             case #receive inputChannel () of
               NONE => List.rev characters
             | SOME byte =>
-              (case Char.chr(UInt8ToInt byte) of
+              (case Char.chr(BT.UInt8ToInt byte) of
                  #"\n" => List.rev (#"\n" :: characters)
                | char => getUntilEOL (char :: characters))
         fun getLine () = String.implode(getUntilEOL [])
@@ -64,7 +64,7 @@ struct
   fun wrapOut (outputChannel : ChannelTypes.OutputChannel) =
       let
         fun print string =
-            let val (array, length) = StringToUInt8Array string
+            let val (array, length) = BT.StringToUInt8Array string
             in #sendArray outputChannel array end
       in
         {print = print} : OutputStream

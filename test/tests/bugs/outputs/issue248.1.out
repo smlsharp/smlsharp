@@ -1,0 +1,2 @@
+../tests/bugs/tests/issue248.1.sml:1.5-1.5 Error:
+  non-constructor applied to argument in pattern: _

@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: InstructionParserTypes.sml,v 1.2 2004/09/20 13:27:58 kiyoshiy Exp $
+ * @version $Id: InstructionParserTypes.sml,v 1.3 2007/01/10 09:43:45 katsu Exp $
  *)
 structure InstructionParserTypes = 
 struct
@@ -17,6 +17,7 @@ struct
          | SInt24 (** signed 24 bit integer *)
          | UInt32 (** unsigned 32 bit integer *)
          | SInt32 (** signed 32 bit integer *)
+         | Real32 (** 32 bit real *)
          | Real64 (** 64 bit real *)
          | List of operandType (** list *)
 

@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @author $Id: VariableOptimizer.sml,v 1.6 2006/02/28 17:05:50 duchuu Exp $
+ * @author $Id: VariableOptimizer.sml,v 1.7 2006/04/15 08:40:42 ohori Exp $
  *)
 
 structure VariableOptimizer = struct
@@ -141,7 +141,7 @@ structure VariableOptimizer = struct
   fun optimizedVariables ({tyMap,varMap} : varSet) =
       VMap.foldri
           (fn (id,varInfo,L) =>
-              if id = (#id varInfo) then varInfo::L else L
+              if ID.eq(id, #id varInfo) then varInfo::L else L
           )
           []
           varMap

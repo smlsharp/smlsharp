@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<TITLE>EASY_HTML_PARSER</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLDoc</em>
+</TD></TR></TABLE>
+<HR>
+<H2>EASY_HTML_PARSER</H2>
+<DL>
+<DT> <B>All Known Implementing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="StrEasyHTMLParser.html">EasyHTMLParser</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigEASY_HTML_PARSER.html">EASY_HTML_PARSER</A>&nbsp;=<br>
+sig&nbsp;val&nbsp;<A HREF="SigEASY_HTML_PARSER.html#ValgetBodyOfHTML">getBodyOfHTML</A>&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>)&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;end</CODE>
+<P>
+
+<DL>
+<DD>
+  This module provides functions parsing HTML documents.
+  The supposed usage of them are parse of files which users of SMLDoc
+ specifies in the command line options, such as --overview, --helpfile.
+  Full spec parser like those in the HTML library of SMLNJ is not
+ required to parse Overview file or Help file the user specifies.
+
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Author:</B>
+<DD>
+YAMATODANI Kiyoshi
+
+<DT> <B>Version:</B>
+<DD>
+$Id: SigEASY_HTML_PARSER.html,v 1.9 2007/02/17 07:01:57 kiyoshiy Exp $
+ 
+
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValgetBodyOfHTML"><!-- --></A>
+<H3>getBodyOfHTML</H3>
+<P>
+<CODE>fun&nbsp;getBodyOfHTML&nbsp;warn&nbsp;HTML&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>)&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+ retrieves the content of BODY tag.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>warn</CODE>
+<DD>
+ a function which should be called to display warning message.
+
+<DT> <CODE>HTML</CODE>
+<DD>
+ the text in HTML format to be parsed.
+
+</DL>
+<DT> <B>Returns:</B>
+<DD>
+the content of BODY tag in the <code>HTML</code>
+   
+
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLDoc: Documentation generator for SML</em>
+</TD></TR></TABLE>
+</BODY></HTML>

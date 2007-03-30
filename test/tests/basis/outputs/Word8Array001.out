@@ -1,5 +1,5 @@
-val L2A = fn : int List.list -> Word8Array.array
-val L2V = fn : int List.list -> Word8Vector.vector
+val L2A = fn : int list -> Word8Array.array
+val L2V = fn : int list -> Word8Vector.vector
 val A2L = fn : Word8Array.array -> int list
 val V2L = fn : Word8Vector.vector -> int list
 val array_0i = [] : int list

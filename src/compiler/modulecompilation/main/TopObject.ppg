@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TopObject.ppg,v 1.1 2006/03/02 12:47:29 bochao Exp $
+ * @version $Id: TopObject.ppg,v 1.4 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure TopObject =
 struct
@@ -11,7 +11,6 @@ struct
         structure TFC = TypedFlatCalc
         structure T = Types 
         structure ITC = InitialTypeContext
-        structure SE = StaticEnv
         structure BT = BasicTypes
    in
 
@@ -103,7 +102,9 @@ struct
         val TOP_DOUBLE_PREFIX = "$TOPDOUBLEARRAY$"
         val TOP_ABSTRACT_PREFIX = "$TOPABSTRACTARRAY$"
 
-
+        (* shared by 3 top arrays *)
+        val initialFreeGlobalArrayIndex = 0w4 : BT.UInt32 
+        val abstractGlobalArrayIndex = 0w3 : BT.UInt32
         val initialFreeEntryPointer = 
             IEnv.insert
             (
@@ -117,15 +118,13 @@ struct
                    ),
                 DOUBLE_PAGE_KIND,(0w2:BT.UInt32,0)
                ),
-             ABSTRACT_PAGE_KIND, (0w3:BT.UInt32,0)
+             ABSTRACT_PAGE_KIND, (abstractGlobalArrayIndex, 0)
             )
                 
-        (* shared by 3 top arrays *)
-        val initialFreeGlobalArrayIndex = 0w3 : BT.UInt32 
 
         (*******utilities*********)
         fun convertTyToPageKind ty = 
-            if !Control.doSeparateCompilation then
+            if !Control.doCompileObj then
               ABSTRACT_PAGE_KIND
             else
               case TypesUtils.compactTy ty of

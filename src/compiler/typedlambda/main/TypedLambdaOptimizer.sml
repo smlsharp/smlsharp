@@ -5,14 +5,14 @@
  *  so that bound and free variables are all unique.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypedLambdaOptimizer.sml,v 1.13 2006/02/28 16:11:08 kiyoshiy Exp $
+ * @version $Id: TypedLambdaOptimizer.sml,v 1.15 2007/01/21 13:41:33 kiyoshiy Exp $
  *)
 structure TypedLambdaOptimizer =
 struct
 
   local
     open TypedLambda TypedLambdaUtils 
-    structure SE = StaticEnv
+    structure T = Types
   in
   fun occursOnce v vset = 
       case VEnv.find(vset, v) of
@@ -43,7 +43,6 @@ struct
       | TLPOLY (btvEnv, ty, exp, loc) => isValue exp
       | TLTAPP (exp, ty, tyl, loc)  => isValue exp
       | TLTERMVAR _ => true
-      | TLFFIVAL _ => true
       | _ => false
 
   fun optimizePrim (prim as {name, ty}, tyl, expList, loc) =
@@ -106,7 +105,7 @@ struct
                           occursOnce v vars
                         then (VEnv.insert(subst, v, newExp), newbinds)
 		        else
-		          let val newv = Vars.newTLVar (SE.newVarId(),#ty v)
+		          let val newv = Vars.newTLVar (T.newVarId(),#ty v)
 		          in
 			    ((* ToDo : pass correct loc of v. *)
                               VEnv.insert(subst, v, TLVAR (newv, loc)),
@@ -179,7 +178,7 @@ struct
 	  val (newsubst, newvs) = 
 	    foldr
                 (fn (v, (newsubst, newvs)) => 
-		    let val newv = Vars.newTLVar (SE.newVarId(), #ty v)
+		    let val newv = Vars.newTLVar (T.newVarId(), #ty v)
 		    in
                       (
                         VEnv.insert(newsubst, v, TLVAR (newv, loc)),
@@ -193,7 +192,7 @@ struct
 	end
       | TLFN (v, ty, e, loc) => 
 	let
-          val newv = Vars.newTLVar (SE.newVarId(),#ty v)
+          val newv = Vars.newTLVar (T.newVarId(),#ty v)
           val locOfE = getLocOfExp e
           val optimizedE =
               optimizeExp (VEnv.insert(subst, v, TLVAR (newv, locOfE))) e
@@ -227,7 +226,6 @@ struct
       | TLSEQ (es, tyl, loc) => TLSEQ(map (optimizeExp subst) es, tyl, loc)
       | TLCAST (e, ty, loc) => TLCAST(optimizeExp subst e, ty, loc)
       | TLOFFSET(recordTy, label, loc) => exp
-      | TLFFIVAL _ => exp
 
   and optimizeDec subst dec vars =
       case dec of
@@ -257,7 +255,7 @@ struct
                               (Types.VALIDENTWILD ty, newExp) :: newbinds
                             )
                           else
-                            let val newv = Vars.newTLVar (SE.newVarId(),#ty v)
+                            let val newv = Vars.newTLVar (T.newVarId(),#ty v)
                             in
                               (
                                 VEnv.insert
@@ -290,7 +288,7 @@ struct
 	      foldr
                   (fn ((v, ty, e), (extrasubst, newrecbind)) =>
 		      let
-                        val newv = Vars.newTLVar (SE.newVarId(),#ty v)
+                        val newv = Vars.newTLVar (T.newVarId(),#ty v)
                         val locOfE = getLocOfExp e
 		      in
                         (
@@ -323,7 +321,7 @@ struct
 	      foldr
                   (fn ((v, ty, e), (extrasubst, newrecbind)) =>
 		      let
-                        val newv = Vars.newTLVar (SE.newVarId(),#ty v)
+                        val newv = Vars.newTLVar (T.newVarId(),#ty v)
                         val locOfE = getLocOfExp e
 		      in
                         (

@@ -5,7 +5,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Absyn.ppg,v 1.4 2006/03/02 12:42:40 bochao Exp $
+ * @version $Id: Absyn.ppg,v 1.13 2007/02/28 17:57:20 katsu Exp $
  *)
 structure Absyn : ABSYN = 
 struct
@@ -71,6 +71,12 @@ struct
        * @format(value * loc) "#\"" value "\""
        *)
       CHAR of char * loc
+    | (*%
+       * @format(loc) "()"
+       *)
+      UNITCONST of loc
+
+
     (*%
      * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
      *)
@@ -79,6 +85,33 @@ struct
       * @format({name:id, ifeq:ifeq:binaryChoice}) ifeq()("''" id, "'" id)
       *)
      {name:string, ifeq:bool}
+
+   (*%
+    *)
+   datatype specKind = 
+            (*% 
+             * @format "atom" 
+             *)
+            ATOM 
+          | (*% 
+             * @format "double" 
+             *)
+            DOUBLE 
+          | (*% 
+             * @format "boxed" 
+             *)
+            BOXED
+          | (*% 
+             * @format "generic" 
+             *)
+            GENERIC
+
+    (*%
+     *)
+    datatype callingConvention =
+             (*% @format "" *) CC_DEFAULT
+           | (*% @format "_cdecl" *) CC_CDECL
+           | (*% @format "_stdcall" *) CC_STDCALL
 
   (*%
    *)
@@ -106,6 +139,12 @@ struct
        * @format(dom * result * loc) R1{ {dom} +d "->" 2[ +1 {result} ] }
        *)
       TYFUN of ty * ty * loc
+    | (*%
+       * @format(cconv * dom doms * ret * loc)
+       *           R1{ cconv + "(" doms(dom)("," + ) ")" +d "->"
+       *               2[ +1 {ret} ] }
+       *)
+      TYFFI of callingConvention * ty list * ty * loc
 
     (*%
      * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
@@ -150,6 +189,10 @@ struct
          * @format(pat1 * pat2 * loc) {pat1} +d "as" +d {pat2}
          *)
         PATLAYERED of pat * pat * loc
+      | (*%
+         * @format(pat1 * pat2 * loc) "(" {pat1} +d "|" +d {pat2} ")"
+         *)
+        PATORPAT of pat * pat * loc
 
     and patrow =
         (*%
@@ -309,17 +352,38 @@ struct
          *)
         EXPLET of dec list * exp list * loc
       | (*%
-         * @format({funExp:funExp, libExp:libExp, argTyList:argty argtys, resultTy:resultty, loc:loc})
-         *       "_external" + funExp +d "of" +d libExp +1
-         *       ":" + "{" {argtys(argty)("," +)} "}" "->" {resultty}
-         *)
-        EXPFFIVAL of {funExp: exp, libExp:exp, argTyList:ty list, resultTy: ty, loc:loc}
-      | (*%
          * @format(aexp * loc)
          *       "_cast" + aexp
          *)
         EXPCAST of exp * loc
-      
+      | (*%
+         * @format(exp * ty * loc)
+         *     N0{ {exp} + ":" +1 "_import" +2 {ty} }
+         *)
+        EXPFFIIMPORT of exp * ty * loc
+      | (*%
+         * @format(exp * ty * loc)
+         *     N0{ {exp} + ":" +1 "_export" +2 {ty} }
+         *)
+        EXPFFIEXPORT of exp * ty * loc
+      | (*%
+         * @format(cconv * exp * arg args * ty * loc)
+         *     N0{ "_ffiapply" + cconv + exp + "(" args(arg)("," +) ")"
+         *         + ":" + ty}
+         *)
+        EXPFFIAPPLY of callingConvention * exp * ffiArg list * ty * loc
+
+    and ffiArg =
+        (*%
+         * @format(exp * ty)  exp + ":" + ty
+         *)
+        FFIARG of exp * ty
+      | (*%
+         * @format(ty * exp opt:prependedOpt)
+         *   "_sizeof(" ty ")" {opt(exp)(+d "*" +)}
+         *)
+        FFIARGSIZEOF of ty * exp option
+
     and dec =
         (*%
          * @format(var vars:enclosedList * bind binds * loc)
@@ -492,10 +556,10 @@ struct
       (*%
        * @format(typdesc typdescs * loc)
        * "type" + {typdescs(typdesc)(~4[ +1 "and"] +)}
-       * @format:typdesc(tyvar tyvars:enclosedList * tyCon) 
-       * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+       * @format:typdesc(tyvar tyvars:enclosedList * tyCon * kind) 
+       * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} "::" {kind}}
        *)
-      SPECTYPE of (tvar list * string) list * loc (* type *)
+      SPECTYPE of (tvar list * string * specKind) list * loc (* type *)
       |
       (*%
        * @format(derivedtyp derivedtyps * loc)
@@ -508,10 +572,10 @@ struct
       (*%
        * @format(typdesc typdescs * loc)
        * "eqtype" + {typdescs(typdesc)(~4[ +1 "and"] +)}
-       * @format:typdesc(tyvar tyvars:enclosedList * tyCon) 
-       * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+       * @format:typdesc(tyvar tyvars:enclosedList * tyCon * kind) 
+       * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} "::" {kind}}
        *)
-      SPECEQTYPE of (tvar list * string) list * loc (* eqtype *)
+      SPECEQTYPE of (tvar list * string * specKind) list * loc (* eqtype *)
       |
       (*%
        * @format(datdesc datdescs * loc)
@@ -623,6 +687,11 @@ struct
          * !N0{ "import" + spec }
          *) 
         TOPDECIMPORT of spec * loc 
+      | (*%
+         * @format (spec * loc)
+         * !N0{ "import" + spec }
+         *) 
+        TOPDECEXPORT of spec * loc 
 
   (*%
    *)
@@ -648,6 +717,7 @@ struct
       | TYCONSTRUCT (_, _, loc) => loc
       | TYTUPLE(_, loc) => loc
       | TYFUN (_, _, loc) => loc
+      | TYFFI (_, _, _, loc) => loc
 
   fun getLocPat pat =
       case pat of 
@@ -683,8 +753,9 @@ struct
     | EXPCASE (exp1, rules, _) =>EXPCASE (exp1, rules, loc)
     | EXPFN (rules, _) =>EXPFN (rules, loc)
     | EXPLET (decList,expList,_) =>EXPLET (decList,expList,loc)
-    | EXPFFIVAL {funExp, libExp, argTyList, resultTy, ...} =>
-      EXPFFIVAL {funExp = funExp, libExp = libExp, argTyList = argTyList, resultTy = resultTy, loc = loc}
     | EXPCAST (aexp, _) => EXPCAST(aexp, loc)
+    | EXPFFIIMPORT (exp,ty,_) =>EXPFFIIMPORT (exp,ty,loc)
+    | EXPFFIEXPORT (exp,ty,_) =>EXPFFIEXPORT (exp,ty,loc)
+    | EXPFFIAPPLY (cconv,id,args,ty,_) => EXPFFIAPPLY (cconv,id,args,ty,loc)
 
 end

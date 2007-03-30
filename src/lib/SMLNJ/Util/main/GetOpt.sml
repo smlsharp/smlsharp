@@ -181,7 +181,7 @@ structure GetOpt :> GET_OPT =
 		  (* end case *)
 		end
 	    | get (arg::rest, opts, nonOpts) = let
-		val arg' = SS.all arg
+		val arg' = SS.full arg
 		fun addOpt (Opt opt, rest) = get(rest, opt::opts, nonOpts)
 		  | addOpt (NonOpt, rest) = get(rest, opts, arg::nonOpts)
 		in

@@ -2,8 +2,8 @@ structure AS : ARRAY_SLICE
 structure A : ARRAY
 structure VS : VECTOR_SLICE
 structure V : VECTOR
-val Ints2AS = fn : int List.list -> int AS.slice
-val Ints2VS = fn : int List.list -> int VS.slice
+val Ints2AS = fn : int list  -> int AS.slice
+val Ints2VS = fn : int list  -> int VS.slice
 val S2AS = fn : string -> char AS.slice
 val AS2L = fn : ['a .'a AS.slice -> 'a list]
 val VS2L = fn : ['a .'a VS.slice -> 'a list]
@@ -33,7 +33,9 @@ val copy_3_4_m1 = ([~1],[~1]) : int list * int list
 val copy_3_4_0 = ([1,2,3],[1,2,3,6]) : int list * int list
 val copy_3_4_1 = ([1,2,3],[9,1,2,3]) : int list * int list
 val copy_3_4_2 = ([~1],[~1]) : int list * int list
-val testCopyVec = fn : int VS.slice * int Array.array * int -> int list * int list
+val testCopyVec =
+    fn
+    : int VS.slice * int Array.array * int  -> int list * int list
 val copyVec_0_3_0 = ([],[9,8,7]) : int list * int list
 val copyVec_1_3_0 = ([1],[1,8,7]) : int list * int list
 val copyVec_2_3_0 = ([1,2],[1,2,7]) : int list * int list

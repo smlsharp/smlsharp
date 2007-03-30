@@ -1,0 +1,566 @@
+<HTML>
+<HEAD>
+<TITLE>BinIOFn.StreamIO</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>BinIOFn.StreamIO</H2>
+<DL>
+<DT> <B>Enclosing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="FctBinIOFn.html">BinIOFn</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html">StreamIO</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;=&nbsp;<A HREF="StrWord8Vector.html#Typevector">V.vector</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeelem">elem</A>&nbsp;=&nbsp;<A HREF="StrWord8Vector.html#Typeelem">V.elem</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typereader">reader</A>&nbsp;=&nbsp;<A HREF="SigPRIM_IO.html#Typereader">PIO.reader</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typewriter">writer</A>&nbsp;=&nbsp;<A HREF="SigPRIM_IO.html#Typewriter">PIO.writer</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A>&nbsp;=&nbsp;<A HREF="SigPRIM_IO.html#Typepos">PIO.pos</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;=&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrISTRM">ISTRM</A>&nbsp;of&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrIBUF">IBUF</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{basePos&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,&nbsp;more&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A>&nbsp;ref,&nbsp;data&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>,&nbsp;info&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinfo">info</A>}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A>&nbsp;=&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrMORE">MORE</A>&nbsp;of&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;|&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrEOS">EOS</A>&nbsp;of&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;|&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrNOMORE">NOMORE</A>&nbsp;|&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrTERMINATED">TERMINATED</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinfo">info</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrINFO">INFO</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reader&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typereader">reader</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readVec&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readVecNB&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;closed&nbsp;:&nbsp;bool&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;getPos&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tail&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A>&nbsp;ref&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cleanTag&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">CleanIO.tag</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrOSTRM">OSTRM</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">A.array</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pos&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;closed&nbsp;:&nbsp;bool&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bufferMode&nbsp;:&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writer&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typewriter">writer</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writeArr&nbsp;:&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">A.array</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;sz&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writeVec&nbsp;:&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Vector.html#Typevector">V.vector</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;sz&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cleanTag&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">CleanIO.tag</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeout_pos">out_pos</A>&nbsp;=&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrOUTP">OUTP</A>&nbsp;of&nbsp;{pos&nbsp;:&nbsp;<A HREF="SigPRIM_IO.html#Typepos">PIO.pos</A>,&nbsp;strm&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>}<br>
+&nbsp;&nbsp;exception&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ExceptionWouldBlock">WouldBlock</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValinfoOfIBuf">infoOfIBuf</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValchunkSzOfIBuf">chunkSzOfIBuf</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValreadVec">readVec</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValinputExn">inputExn</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValextendStream">extendStream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValgetBuffer">getBuffer</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValreadChunk">readChunk</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValgeneralizedInput">generalizedInput</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Valterminate">terminate</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Valinput">input</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Valinput1">input1</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;(<A HREF="FctBinIOFn-StrStreamIO.html#Typeelem">elem</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValinputN">inputN</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValinputAll">inputAll</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValcanInput">canInput</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValcloseIn">closeIn</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValendOfStream">endOfStream</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValmkInstream">mkInstream</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typereader">reader</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValgetReader">getReader</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typereader">reader</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValfilePosIn">filePosIn</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValoutputExn">outputExn</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValisClosedOut">isClosedOut</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValflushBuffer">flushBuffer</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Valoutput">output</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Valoutput1">output1</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeelem">elem</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValflushOut">flushOut</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValcloseOut">closeOut</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValmkOutstream">mkOutstream</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typewriter">writer</A>&nbsp;*&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValgetWriter">getWriter</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typewriter">writer</A>&nbsp;*&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValgetPosOut">getPosOut</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeout_pos">out_pos</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValfilePosOut">filePosOut</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeout_pos">out_pos</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValsetPosOut">setPosOut</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeout_pos">out_pos</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValsetBufferMode">setBufferMode</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ValgetBufferMode">getBufferMode</A>&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typevector"><!-- --></A>
+<H3>vector</H3>
+<P>
+<CODE>type&nbsp;vector&nbsp;=&nbsp;<A HREF="StrWord8Vector.html#Typevector">V.vector</A></CODE>
+
+<HR>
+<A NAME="Typeelem"><!-- --></A>
+<H3>elem</H3>
+<P>
+<CODE>type&nbsp;elem&nbsp;=&nbsp;<A HREF="StrWord8Vector.html#Typeelem">V.elem</A></CODE>
+
+<HR>
+<A NAME="Typereader"><!-- --></A>
+<H3>reader</H3>
+<P>
+<CODE>type&nbsp;reader&nbsp;=&nbsp;<A HREF="SigPRIM_IO.html#Typereader">PIO.reader</A></CODE>
+
+<HR>
+<A NAME="Typewriter"><!-- --></A>
+<H3>writer</H3>
+<P>
+<CODE>type&nbsp;writer&nbsp;=&nbsp;<A HREF="SigPRIM_IO.html#Typewriter">PIO.writer</A></CODE>
+
+<HR>
+<A NAME="Typepos"><!-- --></A>
+<H3>pos</H3>
+<P>
+<CODE>type&nbsp;pos&nbsp;=&nbsp;<A HREF="SigPRIM_IO.html#Typepos">PIO.pos</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeinstream"><!-- --></A>
+<H3>instream</H3>
+<P>
+<CODE>datatype&nbsp;instream&nbsp;=&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrISTRM">ISTRM</A>&nbsp;of&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Typein_buffer"><!-- --></A>
+<H3>in_buffer</H3>
+<P>
+<CODE>datatype&nbsp;in_buffer&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrIBUF">IBUF</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{basePos&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,&nbsp;more&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A>&nbsp;ref,&nbsp;data&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>,&nbsp;info&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinfo">info</A>}</CODE>
+
+<HR>
+<A NAME="Typemore"><!-- --></A>
+<H3>more</H3>
+<P>
+<CODE>datatype&nbsp;more&nbsp;=&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrMORE">MORE</A>&nbsp;of&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;|&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrEOS">EOS</A>&nbsp;of&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;|&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrNOMORE">NOMORE</A>&nbsp;|&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrTERMINATED">TERMINATED</A></CODE>
+
+<HR>
+<A NAME="Typeinfo"><!-- --></A>
+<H3>info</H3>
+<P>
+<CODE>datatype&nbsp;info&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrINFO">INFO</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reader&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typereader">reader</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readVec&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readVecNB&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;closed&nbsp;:&nbsp;bool&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;getPos&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tail&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A>&nbsp;ref&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cleanTag&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">CleanIO.tag</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</CODE>
+
+<HR>
+<A NAME="Typeoutstream"><!-- --></A>
+<H3>outstream</H3>
+<P>
+<CODE>datatype&nbsp;outstream&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrOSTRM">OSTRM</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">A.array</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pos&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;closed&nbsp;:&nbsp;bool&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bufferMode&nbsp;:&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writer&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typewriter">writer</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writeArr&nbsp;:&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">A.array</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;sz&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writeVec&nbsp;:&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Vector.html#Typevector">V.vector</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;sz&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cleanTag&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">CleanIO.tag</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</CODE>
+
+<HR>
+<A NAME="Typeout_pos"><!-- --></A>
+<H3>out_pos</H3>
+<P>
+<CODE>datatype&nbsp;out_pos&nbsp;=&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#ConstrOUTP">OUTP</A>&nbsp;of&nbsp;{pos&nbsp;:&nbsp;<A HREF="SigPRIM_IO.html#Typepos">PIO.pos</A>,&nbsp;strm&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>}</CODE>
+<DL>
+<DD>
+Position operations on outstreams *
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrISTRM"><!-- --></A>
+<H3>ISTRM</H3>
+<P>
+<CODE>constructor&nbsp;ISTRM&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ConstrIBUF"><!-- --></A>
+<H3>IBUF</H3>
+<P>
+<CODE>constructor&nbsp;IBUF<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;basePos&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;more&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;info&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinfo">info</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A></CODE>
+
+<HR>
+<A NAME="ConstrMORE"><!-- --></A>
+<H3>MORE</H3>
+<P>
+<CODE>constructor&nbsp;MORE&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A></CODE>
+
+<HR>
+<A NAME="ConstrEOS"><!-- --></A>
+<H3>EOS</H3>
+<P>
+<CODE>constructor&nbsp;EOS&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typein_buffer">in_buffer</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A></CODE>
+
+<HR>
+<A NAME="ConstrNOMORE"><!-- --></A>
+<H3>NOMORE</H3>
+<P>
+<CODE>constructor&nbsp;NOMORE&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A></CODE>
+
+<HR>
+<A NAME="ConstrTERMINATED"><!-- --></A>
+<H3>TERMINATED</H3>
+<P>
+<CODE>constructor&nbsp;TERMINATED&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A></CODE>
+
+<HR>
+<A NAME="ConstrINFO"><!-- --></A>
+<H3>INFO</H3>
+<P>
+<CODE>constructor&nbsp;INFO<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reader&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typereader">reader</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readVec&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readVecNB&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;closed&nbsp;:&nbsp;bool&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;getPos&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tail&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typemore">more</A>&nbsp;ref&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cleanTag&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">CleanIO.tag</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinfo">info</A></CODE>
+
+<HR>
+<A NAME="ConstrOSTRM"><!-- --></A>
+<H3>OSTRM</H3>
+<P>
+<CODE>constructor&nbsp;OSTRM<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">A.array</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pos&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;closed&nbsp;:&nbsp;bool&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bufferMode&nbsp;:&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writer&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typewriter">writer</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writeArr&nbsp;:&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">A.array</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;sz&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writeVec&nbsp;:&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Vector.html#Typevector">V.vector</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;sz&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cleanTag&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">CleanIO.tag</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A></CODE>
+
+<HR>
+<A NAME="ConstrOUTP"><!-- --></A>
+<H3>OUTP</H3>
+<P>
+<CODE>constructor&nbsp;OUTP&nbsp;:&nbsp;{pos&nbsp;:&nbsp;<A HREF="SigPRIM_IO.html#Typepos">PIO.pos</A>,&nbsp;strm&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>}&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeout_pos">out_pos</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValinfoOfIBuf"><!-- --></A>
+<H3>infoOfIBuf</H3>
+<P>
+<CODE>val&nbsp;infoOfIBuf</CODE>
+
+<HR>
+<A NAME="ValchunkSzOfIBuf"><!-- --></A>
+<H3>chunkSzOfIBuf</H3>
+<P>
+<CODE>val&nbsp;chunkSzOfIBuf</CODE>
+
+<HR>
+<A NAME="ValreadVec"><!-- --></A>
+<H3>readVec</H3>
+<P>
+<CODE>val&nbsp;readVec</CODE>
+
+<HR>
+<A NAME="ValinputExn"><!-- --></A>
+<H3>inputExn</H3>
+<P>
+<CODE>val&nbsp;inputExn</CODE>
+
+<HR>
+<A NAME="ValextendStream"><!-- --></A>
+<H3>extendStream</H3>
+<P>
+<CODE>val&nbsp;extendStream</CODE>
+
+<HR>
+<A NAME="ValgetBuffer"><!-- --></A>
+<H3>getBuffer</H3>
+<P>
+<CODE>val&nbsp;getBuffer</CODE>
+
+<HR>
+<A NAME="ValreadChunk"><!-- --></A>
+<H3>readChunk</H3>
+<P>
+<CODE>val&nbsp;readChunk</CODE>
+
+<HR>
+<A NAME="ValgeneralizedInput"><!-- --></A>
+<H3>generalizedInput</H3>
+<P>
+<CODE>val&nbsp;generalizedInput</CODE>
+
+<HR>
+<A NAME="Valterminate"><!-- --></A>
+<H3>terminate</H3>
+<P>
+<CODE>val&nbsp;terminate</CODE>
+
+<HR>
+<A NAME="Valinput"><!-- --></A>
+<H3>input</H3>
+<P>
+<CODE>val&nbsp;input&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="Valinput1"><!-- --></A>
+<H3>input1</H3>
+<P>
+<CODE>val&nbsp;input1&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;(<A HREF="FctBinIOFn-StrStreamIO.html#Typeelem">elem</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValinputN"><!-- --></A>
+<H3>inputN</H3>
+<P>
+<CODE>val&nbsp;inputN&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ValinputAll"><!-- --></A>
+<H3>inputAll</H3>
+<P>
+<CODE>val&nbsp;inputAll&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ValcanInput"><!-- --></A>
+<H3>canInput</H3>
+<P>
+<CODE>val&nbsp;canInput&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValcloseIn"><!-- --></A>
+<H3>closeIn</H3>
+<P>
+<CODE>val&nbsp;closeIn&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValendOfStream"><!-- --></A>
+<H3>endOfStream</H3>
+<P>
+<CODE>val&nbsp;endOfStream&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValmkInstream"><!-- --></A>
+<H3>mkInstream</H3>
+<P>
+<CODE>val&nbsp;mkInstream&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typereader">reader</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ValgetReader"><!-- --></A>
+<H3>getReader</H3>
+<P>
+<CODE>val&nbsp;getReader&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typereader">reader</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A></CODE>
+
+<HR>
+<A NAME="ValfilePosIn"><!-- --></A>
+<H3>filePosIn</H3>
+<P>
+<CODE>val&nbsp;filePosIn&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A></CODE>
+
+<HR>
+<A NAME="ValoutputExn"><!-- --></A>
+<H3>outputExn</H3>
+<P>
+<CODE>val&nbsp;outputExn</CODE>
+
+<HR>
+<A NAME="ValisClosedOut"><!-- --></A>
+<H3>isClosedOut</H3>
+<P>
+<CODE>val&nbsp;isClosedOut</CODE>
+
+<HR>
+<A NAME="ValflushBuffer"><!-- --></A>
+<H3>flushBuffer</H3>
+<P>
+<CODE>val&nbsp;flushBuffer</CODE>
+
+<HR>
+<A NAME="Valoutput"><!-- --></A>
+<H3>output</H3>
+<P>
+<CODE>val&nbsp;output&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typevector">vector</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valoutput1"><!-- --></A>
+<H3>output1</H3>
+<P>
+<CODE>val&nbsp;output1&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeelem">elem</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValflushOut"><!-- --></A>
+<H3>flushOut</H3>
+<P>
+<CODE>val&nbsp;flushOut&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValcloseOut"><!-- --></A>
+<H3>closeOut</H3>
+<P>
+<CODE>val&nbsp;closeOut&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValmkOutstream"><!-- --></A>
+<H3>mkOutstream</H3>
+<P>
+<CODE>val&nbsp;mkOutstream&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typewriter">writer</A>&nbsp;*&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A></CODE>
+
+<HR>
+<A NAME="ValgetWriter"><!-- --></A>
+<H3>getWriter</H3>
+<P>
+<CODE>val&nbsp;getWriter&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typewriter">writer</A>&nbsp;*&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A></CODE>
+
+<HR>
+<A NAME="ValgetPosOut"><!-- --></A>
+<H3>getPosOut</H3>
+<P>
+<CODE>val&nbsp;getPosOut&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeout_pos">out_pos</A></CODE>
+
+<HR>
+<A NAME="ValfilePosOut"><!-- --></A>
+<H3>filePosOut</H3>
+<P>
+<CODE>val&nbsp;filePosOut&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeout_pos">out_pos</A>&nbsp;->&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typepos">pos</A></CODE>
+
+<HR>
+<A NAME="ValsetPosOut"><!-- --></A>
+<H3>setPosOut</H3>
+<P>
+<CODE>val&nbsp;setPosOut&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeout_pos">out_pos</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValsetBufferMode"><!-- --></A>
+<H3>setBufferMode</H3>
+<P>
+<CODE>val&nbsp;setBufferMode&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValgetBufferMode"><!-- --></A>
+<H3>getBufferMode</H3>
+<P>
+<CODE>val&nbsp;getBufferMode&nbsp;:&nbsp;<A HREF="FctBinIOFn-StrStreamIO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="StrIO.html#Typebuffer_mode">IO.buffer_mode</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Exception detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ExceptionWouldBlock"><!-- --></A>
+<H3>WouldBlock</H3>
+<P>
+<CODE>exception&nbsp;WouldBlock</CODE>
+
+<P>
+
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

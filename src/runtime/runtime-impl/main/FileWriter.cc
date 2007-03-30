@@ -8,6 +8,16 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 ///////////////////////////////////////////////////////////////////////////////
 
 FileWriter::
+FileWriter(const char* fileName, FILE* stream, BoolValue DontClose)
+    :Writer(),
+     fileName_(fileName),
+     stream_(stream),
+     DontClose_(DontClose)
+{
+    descriptor_ = fileno(stream);
+}
+
+FileWriter::
 FileWriter(const char* fileName, int descriptor, BoolValue DontClose)
     :Writer(),
      fileName_(fileName),

@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.63 2006/02/27 04:40:44 kiyoshiy Exp $
+ * @version $Id: Main.sml,v 1.66 2007/02/19 14:11:56 kiyoshiy Exp $
  *)
 structure Main =
 struct
@@ -20,14 +20,16 @@ struct
   val tracePrelude = ref false
   val useBasis = ref false
 
-  val doPickle = ref false
-
   val _ = Control.printBinds := true
   val _ = Control.switchTrace := true
 
+(*
   val libdir = Configuration.SourceRoot ^ "/src/lib/"
-  val minimumPreludePath = libdir ^ Configuration.MinimumPreludeFileName
-  val PreludePath = libdir ^ Configuration.PreludeFileName
+*)
+  val libdir = Configuration.LibDirectory
+  val minimumPreludePath = libdir ^ "/" ^ Configuration.MinimumPreludeFileName
+  val PreludePath = libdir ^ "/" ^ Configuration.PreludeFileName
+  val compiledPreludePath = libdir ^ "/" ^ Configuration.CompiledPreludeFileName
 
   (* initialize virtual machine *)
   val heapSize = ref (0w1000000 : BasicTypes.UInt32)
@@ -35,11 +37,78 @@ struct
   val handlerStackSize = ref (0w10000 : BasicTypes.UInt32)
   val globalCount = ref (0w10000 : BasicTypes.UInt32)
 
-  fun main () =
+  fun compilePrelude (parameter : Top.contextParameter) preludePath = 
       let
-        val preludePath = if !useBasis then PreludePath else minimumPreludePath
+        val context = Top.initialize parameter
+
         val preludeDir = 
             OS.FileSys.fullPath(#dir(PathUtility.splitDirFile preludePath))
+        val preludeChannel = FileChannel.openIn {fileName = preludePath}
+
+        val currentSwitchTrace = !Control.switchTrace
+        val currentPrintBinds = !Control.printBinds
+      in
+        Control.switchTrace := !tracePrelude;
+        Control.printBinds := !printPrelude;
+        Top.run
+            context
+            {
+              interactionMode = Top.Prelude,
+              initialSource = preludeChannel,
+              initialSourceName = preludePath,
+              getBaseDirectory = fn () => preludeDir
+            }
+            handle e =>
+                   (
+                     #close preludeChannel ();
+                     Control.switchTrace := currentSwitchTrace;
+                     Control.printBinds := currentPrintBinds;
+                     raise e
+                   );
+
+        Control.switchTrace := currentSwitchTrace;
+        Control.printBinds := currentPrintBinds;
+
+        #close preludeChannel ();
+
+        context
+      end
+
+  fun resumePrelude (parameter : Top.contextParameter) preludePath = 
+      let
+        val preludeChannel = FileChannel.openIn {fileName = preludePath}
+        fun reader () =
+            case #receive preludeChannel () of
+              SOME byte => byte
+            | NONE => raise Fail "unexpected EOF of library"
+        val _ = print "restoring static environment..."
+        val context =
+            Top.unpickle parameter (Pickle.makeInstream reader)
+            handle exn =>
+                   raise Fail ("malformed compiled code:" ^ exnMessage exn)
+        val _ = print "done\n"
+
+        val session = #session parameter
+        fun execute () =
+            case StandAloneSession.loadExecutable preludeChannel of
+              SOME executable => (#execute session executable; execute ())
+            | NONE => ()
+        val _ = print "restoring dynamic environment..."
+        val _ = execute ()
+        val _ = print "done\n"
+      in
+        #close preludeChannel ();
+        context
+      end
+
+  fun main () =
+      let
+        val _ = #reset Counter.root ()
+
+        val (isCompiledPrelude, preludePath) =
+            if !useBasis
+            then (true, compiledPreludePath)
+            else (false, minimumPreludePath)
 
         val VM =
             VM.initialize
@@ -69,64 +138,14 @@ struct
               loadPathList = ["."],
               getVariable = OS.Process.getEnv
             }
-        val context = Top.initialize topInitializeParameter
-        val preludeChannel = FileChannel.openIn {fileName = preludePath}
-
-        val currentSwitchTrace = !Control.switchTrace
-        val currentPrintBinds = !Control.printBinds
+        val context =
+            if !loadPrelude
+            then
+              if isCompiledPrelude
+              then resumePrelude topInitializeParameter preludePath
+              else compilePrelude topInitializeParameter preludePath
+            else Top.initialize topInitializeParameter
       in
-        Control.switchTrace := !tracePrelude;
-        Control.printBinds := !printPrelude;
-        if !loadPrelude
-        then
-          (Top.run
-           context
-           {
-             interactionMode = Top.NonInteractive {stopOnError = true},
-             initialSource = preludeChannel,
-             initialSourceName = preludePath,
-             getBaseDirectory = fn () => preludeDir
-           })
-          handle e =>
-                 (
-                   #close preludeChannel ();
-                   Control.switchTrace := currentSwitchTrace;
-                   Control.printBinds := currentPrintBinds;
-                   raise e
-                 )
-        else true;
-        #close preludeChannel ();
-
-        Control.switchTrace := currentSwitchTrace;
-        Control.printBinds := currentPrintBinds;
-
-        if !doPickle
-        then
-          (
-            let
-              val outfile = BinIO.openOut "foo.pickle"
-              val outstream =
-                  Pickle.makeOutstream
-                      (fn byte => BinIO.output1 (outfile, byte))
-            in
-              print "begin pickle...";
-              Top.pickle context outstream;
-              print "done\n";
-              BinIO.closeOut outfile
-            end;
-            let
-              val infile = BinIO.openIn "foo.pickle"
-              val instream =
-                  Pickle.makeInstream (fn _ => valOf(BinIO.input1 infile))
-              val _ = print "begin unpickle...";
-                  val newContext = Top.unpickle topInitializeParameter instream
-                  val _ = print "done\n";
-            in
-              BinIO.closeIn infile; newContext
-            end;
-            ()
-          )
-        else ();
 
         if !Control.doProfile
         then (print "\n"; print (Counter.dump ()))

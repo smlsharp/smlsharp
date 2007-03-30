@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: BUCCALC.sig,v 1.4 2006/02/28 16:11:00 kiyoshiy Exp $
+ * @version $Id: BUCCALC.sig,v 1.8 2007/02/11 16:39:50 kiyoshiy Exp $
  *)
 
 
@@ -10,6 +10,7 @@ signature BUCCALC = sig
   type loc 
   type ty 
   type id
+  type callingConvention
   datatype varKind =
 	   ARG 
          | LOCAL
@@ -26,7 +27,9 @@ signature BUCCALC = sig
   type primInfo 
   type btvKind  
 
-  datatype constant =  datatype Types.constant
+  datatype constant =  datatype ConstantTerm.constant
+
+  type funInfo
 
   datatype bucexp =
            BUCCONSTANT of {value : constant, loc : loc}
@@ -86,6 +89,7 @@ signature BUCCALC = sig
                funExp : bucexp,
                argExpList : bucexp list,
                argTyList : ty list,
+               convention : callingConvention,
                loc : loc
              }
 
@@ -223,16 +227,6 @@ signature BUCCALC = sig
 
          | BUCCAST of {exp : bucexp, expTy : ty, loc : loc}
 
-         | BUCFFIVAL of 
-             {
-              funExp : bucexp,
-              libExp : bucexp,
-              argTyList : ty list,
-              resultTy : ty,
-              funTy : ty,
-              loc : loc
-             }
-
        and bucdecl =
            BUCVAL of 
             {
@@ -261,16 +255,6 @@ signature BUCCALC = sig
              }
 
          | BUCEMPTY of loc
-
                    
-  withtype funInfo =
-           {
-            tyvars:ty list,
-            bitmapFree : bucexp,
-            tagArgs : varInfo list,
-            sizevals : bucexp list,
-            args:varInfo list,
-            resultTy:ty
-           }
 end
 

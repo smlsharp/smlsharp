@@ -14,8 +14,8 @@ IMLPrim_Real_toStringImpl(UInt32Value argsCount,
                           Cell* argumentRefs[],
                           Cell* resultRef)
 {
-    Real64Value realValue = PrimitiveSupport::cellRefToReal64(argumentRefs[0]);
-
+  Real64Value realValue = PrimitiveSupport::cellRefToReal64(argumentRefs[0]);
+    
     char buffer[32];
     sprintf(buffer, "%g", realValue);
     if('-' == buffer[0]){buffer[0] = '~';}
@@ -188,6 +188,33 @@ IMLPrim_Real_classImpl(UInt32Value argsCount,
     return;
 };
 
+/*
+ * val class : real -> float
+ */
+void
+IMLPrim_Real_toFloatImpl(UInt32Value argsCount,
+                         Cell* argumentRefs[],
+                         Cell* resultRef)
+{
+    Real64Value realValue = PrimitiveSupport::cellRefToReal64(argumentRefs[0]);
+    resultRef->real32 = (Real32Value)realValue;
+    return;
+};
+
+/*
+ * val class : float -> real
+ */
+void
+IMLPrim_Real_fromFloatImpl(UInt32Value argsCount,
+                           Cell* argumentRefs[],
+                           Cell* resultRef)
+{
+    Real32Value realValue = argumentRefs[0]->real32;
+    Real64Value resultValue = (Real64Value)realValue;
+    PrimitiveSupport::real64ToCellRef(resultValue, resultRef);
+    return;
+};
+
 Primitive IMLPrim_Real_toString = IMLPrim_Real_toStringImpl;
 Primitive IMLPrim_Real_fromInt = IMLPrim_Real_fromIntImpl;
 Primitive IMLPrim_Real_floor = IMLPrim_Real_floorImpl;
@@ -200,6 +227,8 @@ Primitive IMLPrim_Real_fromManExp = IMLPrim_Real_fromManExpImpl;
 Primitive IMLPrim_Real_copySign = IMLPrim_Real_copySignImpl;
 Primitive IMLPrim_Real_equal = IMLPrim_Real_equalImpl;
 Primitive IMLPrim_Real_class = IMLPrim_Real_classImpl;
+Primitive IMLPrim_Real_toFloat = IMLPrim_Real_toFloatImpl;
+Primitive IMLPrim_Real_fromFloat = IMLPrim_Real_fromFloatImpl;
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -1,3 +1,8 @@
+(**
+ * Real structure.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: Real.sml,v 1.18.2.1 2007/03/26 09:18:50 katsu Exp $
+ *)
 structure Real =
 struct
 
@@ -160,6 +165,9 @@ struct
   val fromInt = Real_fromInt
   val fromLargeInt = Real_fromInt
 
+  val toFloat = Real_toFloat
+  val fromFloat = Real_fromFloat
+
   fun toLarge real = real
   fun fromLarge roundingMode real = real
 
@@ -268,20 +276,43 @@ struct
         | _ =>
           let
             val exp = trunc (Math.log10 (abs real))
-            (* man = 123.456 / (10.0 ^ exp) *)
-            val man = real / Math.pow (10.0, fromInt exp)
+            (* man = 123.456 * (0.1 ^ exp) *)
+            (* Note :
+             * There found a case that (B) results more precisely than (A).
+             * A) man = 123.456 / (10.0 ^ exp)
+             * B) man = 123.456 * (0.1 ^ exp)
+             *)
+            val man = real * Math.pow (0.1, fromInt exp)
           in {man = man, exp = exp}
           end
 
-    (* fracToString 0.123 2 [] ==> "12" *)
-    fun fracToString real 0 result = concat (rev result)
-      | fracToString real max result =
-        fracToString
-            (realMod real * 10.0)
-            (Int.-(max, 1))
-            ((Int.toString (trunc real)) :: result)
+    fun dropZero (#"0" :: list) = dropZero list
+      | dropZero list = list
 
-    fun signString real = if signBit real then "~" else ""
+    (*
+     * fracToString _ 0.123 2 [] ==> "12"
+     * fracToString true 0.123 4 [] ==> "1230"
+     * fracToString false 0.123 4 [] ==> "123"
+     *)
+    fun fracToString withTrailingZeros real 0 result =
+        implode
+            (rev
+                 (if withTrailingZeros
+                  then result
+                  else dropZero result))
+      | fracToString withTrailingZeros real max result =
+        let val {whole, frac} = split (real * 10.0)
+        in
+          fracToString
+              withTrailingZeros
+              frac
+              (Int.-(max, 1))
+              (charOfNum (trunc whole) :: result)
+        end
+
+    fun signToString real =
+        (if ~1 = sign real then "~" else "")
+        handle General.Domain => "" (* if real is nan. *)
 
     (* wholeToString 123.000 ==> "123" *)
     fun wholeToString real =
@@ -299,56 +330,98 @@ struct
           else (accum (abs real) [])
         end
 
-    fun normalToString maxFrac real =
+    (*
+     * normalToString _ 3 0.1239 ==> "0.124"
+     * normalToString false 3 0.1294 ==> "0.129"
+     * normalToString false 3 0.1295 ==> "0.130"
+     * normalToString true 3 0.1294 ==> "0.129"
+     * normalToString true 3 0.1295 ==> "0.13"
+     *)
+    fun normalToString withTrailingZeros maxFrac real =
         let
+          (* round to the 0.1^maxFrac *)
+          val real =
+              real
+              + fromInt(sign real)
+                * 5.0
+                * Math.pow (0.1, fromInt maxFrac + 1.0)
           val {whole, frac} = split real
           val frac = abs frac
+          val signString = signToString real
           val wholeString = wholeToString whole
+          val fracString =
+              if 0 = maxFrac
+              then ""
+              else
+                let val str = fracToString withTrailingZeros frac maxFrac []
+                in
+                  if (not withTrailingZeros) andalso str = ""
+                  then ""
+                  else "." ^ str
+                end
         in
-          (signString real)
+          signString
           ^ wholeString
-          ^ (if 0 = maxFrac 
-             then ""
-             else "." ^ (fracToString (frac * 10.0) maxFrac []))
+          ^ fracString
         end
 
+    fun fmtImpl withTrailingZeros mode real =
+        case class real of
+          IEEEReal.INF => signToString real ^ "inf"
+        | IEEEReal.NAN _ => signToString real ^ "nan"
+        | _ =>
+          case mode of
+            StringCvt.SCI maxFracOpt =>
+            let
+              val {man, exp} = toManExp10 real
+              val maxFrac = getOpt (maxFracOpt, 6)
+            in
+              if Int.<(maxFrac, 0)
+              then raise General.Size
+              else
+                (normalToString withTrailingZeros maxFrac man)
+                ^ "E" ^ (Int.toString exp)
+            end
+          | StringCvt.FIX maxFracOpt =>
+            let val maxFrac = getOpt (maxFracOpt, 6)
+            in
+              if Int.<(maxFrac, 0)
+              then raise General.Size
+              else normalToString withTrailingZeros maxFrac real
+            end
+          | StringCvt.EXACT => raise Unimplemented "Real.fmt EXACT"
+          | StringCvt.GEN _ => raise Fail "Bug: fmtImpl"
   in
   fun fmt mode real =
-    case class real of
-      IEEEReal.INF => signString real ^ "inf"
-    | IEEEReal.NAN _ => signString real ^ "nan"
-    | _ =>
-    case mode of
-      StringCvt.SCI maxFracOpt =>
-      let
-        val {man, exp} = toManExp10 real
-        val maxFrac = getOpt (maxFracOpt, 6)
-      in
-        if Int.<(maxFrac, 0)
-        then raise General.Size
-        else (normalToString maxFrac man) ^ "E" ^ (Int.toString exp)
-      end
-    | StringCvt.FIX maxFracOpt =>
-      let val maxFrac = getOpt (maxFracOpt, 6)
-      in
-        if Int.<(maxFrac, 0)
-        then raise General.Size
-        else normalToString maxFrac real
-      end
-    | StringCvt.GEN maxDigitsOpt =>
-      let
-        val maxDigits = getOpt (maxDigitsOpt, 12)
-        val {whole, frac} = split real
-        val wholeNumDecimals =
-            if isZero whole then 0 else ceil (Math.log10 (abs whole))
-        val mode = 
-            if Int.<=(wholeNumDecimals, maxDigits)
-            then StringCvt.FIX (SOME(Int.-(maxDigits, wholeNumDecimals)))
-            else StringCvt.SCI (SOME(Int.-(maxDigits, 1)))
-      in
-        fmt mode real
-      end
-    | StringCvt.EXACT => raise Unimplemented "Real.fmt EXACT"
+      case mode of
+        StringCvt.GEN maxDigitsOpt =>
+        let
+          val maxDigits = getOpt (maxDigitsOpt, 12)
+          val _ = if Int.<(maxDigits, 1) then raise Size else ()
+          val {whole, frac} = split real
+          (* the number of digits of whole. *)
+          val wholeNumDecimals =
+              if isZero whole then 0 else floor (Math.log10 (abs whole)) + 1
+          (* the number of leading zeros of frac. (ex. 2 for 0.003) *)
+          val fracNumZeros =
+              if isZero frac then 0 else Int.abs(ceil (Math.log10 (abs frac)))
+          (* precision for FIX mode *)
+          val prec =
+              if wholeNumDecimals = 0
+              then Int.+(maxDigits, fracNumZeros)
+              else
+                if wholeNumDecimals < maxDigits
+                then Int.-(maxDigits, wholeNumDecimals)
+                else 0
+          (* GEN is almostly same to FIX or SCI, but does not allow trailing
+           * zeros. *)
+          val fix = fmtImpl false (StringCvt.FIX (SOME prec)) real
+          val sci =
+              fmtImpl false (StringCvt.SCI (SOME(Int.-(maxDigits, 1)))) real
+        in
+          if size fix <= size sci then fix else sci
+        end
+      | _ => fmtImpl true mode real
   end
 
   fun toString real = fmt (StringCvt.GEN NONE) real

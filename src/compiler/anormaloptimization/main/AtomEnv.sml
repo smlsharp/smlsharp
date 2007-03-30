@@ -1,11 +1,12 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: AtomEnv.sml,v 1.4 2006/02/28 16:10:59 kiyoshiy Exp $
+ * @version $Id: AtomEnv.sml,v 1.6 2007/02/11 16:39:50 kiyoshiy Exp $
  *)
 structure AtomEnv = struct
 
   open ANormal
+  structure CT = ConstantTerm
   structure T = Types
 
   fun wordPairCompare ((x1,y1),(x2,y2)) =
@@ -14,34 +15,12 @@ structure AtomEnv = struct
       | EQUAL => Word32.compare(y1,y2)
       | LESS => LESS
                 
-  fun constantCompare (x,y) = 
-      case (x,y) of
-        (T.INT i1, T.INT i2) => Int32.compare(i1, i2)
-      | (T.INT _, _) => LESS
-      | (T.WORD _,T.INT _) => GREATER
-      | (T.WORD w1,T.WORD w2) => Word32.compare(w1,w2)
-      | (T.WORD w1,_) => LESS
-      | (T.STRING _, T.INT _) => GREATER
-      | (T.STRING _, T.WORD _) => GREATER
-      | (T.STRING s1, T.STRING s2) => String.compare (s1, s2)
-      | (T.STRING _, _) => LESS
-      | (T.REAL r1, T.INT _) => GREATER
-      | (T.REAL r1, T.WORD _) => GREATER
-      | (T.REAL r1, T.STRING _) => GREATER
-      | (T.REAL r1, T.REAL r2) => String.compare(r1, r2)
-      | (T.REAL r1, _) => LESS
-      | (T.CHAR _, T.INT _) => GREATER
-      | (T.CHAR _, T.WORD _) => GREATER
-      | (T.CHAR _, T.STRING _) => GREATER
-      | (T.CHAR _, T.REAL _) => GREATER
-      | (T.CHAR c1, T.CHAR c2) => Char.compare(c1,c2)
-                                  
   structure Atom_ord:ordsig = struct 
     type ord_key = anexp
     fun compare (x,y) =
         case (x,y) of
           (ANCONSTANT {value=c1,...}, ANCONSTANT {value=c2,...}) =>
-          constantCompare (c1,c2)
+          CT.compare (c1,c2)
         | (ANCONSTANT _, _) =>  LESS
 
         | (ANENVACC _,ANCONSTANT _ ) => GREATER

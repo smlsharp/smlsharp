@@ -3,7 +3,7 @@
  * Copyright 1989,1992 by AT&T Bell Laboratories
  *)
 
-open SMLPP.FormatExpression
+open SMLFormat.FormatExpression
 
   %%
   %term
@@ -18,13 +18,13 @@ open SMLPP.FormatExpression
     | FORMATINDICATOR of
       {
         space : bool,
-        newline : {priority : SMLPP.FormatExpression.priority} option
+        newline : {priority : SMLFormat.FormatExpression.priority} option
       }
     | ASSOCINDICATOR of
       {
         cut : bool,
         strength : int,
-        direction : SMLPP.FormatExpression.assocDirection
+        direction : SMLFormat.FormatExpression.assocDirection
       }
     | STARTOFINDENT of int
 

@@ -81,6 +81,8 @@ eol = ("\013\010"|"\010"|"\013");
     (Tokens.UINT32(left(yypos, args), right(yypos, yytext, args)));
 <INITIAL>SInt32 =>
     (Tokens.SINT32(left(yypos, args), right(yypos, yytext, args)));
+<INITIAL>Real32 =>
+    (Tokens.REAL32(left(yypos, args), right(yypos, yytext, args)));
 <INITIAL>Real64 =>
     (Tokens.REAL64(left(yypos, args), right(yypos, yytext, args)));
 <INITIAL>list => (Tokens.LIST(left(yypos, args), right(yypos, yytext, args)));

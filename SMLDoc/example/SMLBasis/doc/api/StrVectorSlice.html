@@ -1,0 +1,298 @@
+<HTML>
+<HEAD>
+<TITLE>VectorSlice</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>VectorSlice</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrVectorSlice.html">VectorSlice</A>&nbsp;:>&nbsp;<A HREF="SigVECTOR_SLICE.html">VECTOR_SLICE</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;datatype&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;=&nbsp;<A HREF="StrVectorSlice.html#ConstrSL">SL</A>&nbsp;of&nbsp;{base&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>,&nbsp;start&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;stop&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Val--">--</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Val++">++</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valusub">usub</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valvlength">vlength</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Vallength">length</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valsub">sub</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;'a<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valfull">full</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valslice">slice</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valsubslice">subslice</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valbase">base</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valvector">vector</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#ValisEmpty">isEmpty</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#ValgetItem">getItem</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;('a&nbsp;*&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valappi">appi</A>&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valapp">app</A>&nbsp;:&nbsp;('a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valfoldli">foldli</A>&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;*&nbsp;'b&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'b&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valfoldl">foldl</A>&nbsp;:&nbsp;('a&nbsp;*&nbsp;'b&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'b&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valfoldri">foldri</A>&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;*&nbsp;'b&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'b&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valfoldr">foldr</A>&nbsp;:&nbsp;('a&nbsp;*&nbsp;'b&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'b&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valconcat">concat</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valmapi">mapi</A>&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valmap">map</A>&nbsp;:&nbsp;('a&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valfindi">findi</A>&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;->&nbsp;bool)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valfind">find</A>&nbsp;:&nbsp;('a&nbsp;->&nbsp;bool)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'a&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valexists">exists</A>&nbsp;:&nbsp;('a&nbsp;->&nbsp;bool)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valall">all</A>&nbsp;:&nbsp;('a&nbsp;->&nbsp;bool)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrVectorSlice.html#Valcollate">collate</A>&nbsp;:&nbsp;('a&nbsp;*&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A>)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeslice"><!-- --></A>
+<H3>slice</H3>
+<P>
+<CODE>datatype&nbsp;'a&nbsp;slice&nbsp;=&nbsp;<A HREF="StrVectorSlice.html#ConstrSL">SL</A>&nbsp;of&nbsp;{base&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>,&nbsp;start&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;stop&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>}</CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrSL"><!-- --></A>
+<H3>SL</H3>
+<P>
+<CODE>constructor&nbsp;SL&nbsp;:&nbsp;{base&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>,&nbsp;start&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;stop&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>}&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Val--"><!-- --></A>
+<H3>--</H3>
+<P>
+<CODE>val&nbsp;--</CODE>
+
+<HR>
+<A NAME="Val++"><!-- --></A>
+<H3>++</H3>
+<P>
+<CODE>val&nbsp;++</CODE>
+
+<HR>
+<A NAME="Valusub"><!-- --></A>
+<H3>usub</H3>
+<P>
+<CODE>val&nbsp;usub</CODE>
+
+<HR>
+<A NAME="Valvlength"><!-- --></A>
+<H3>vlength</H3>
+<P>
+<CODE>val&nbsp;vlength</CODE>
+
+<HR>
+<A NAME="Vallength"><!-- --></A>
+<H3>length</H3>
+<P>
+<CODE>val&nbsp;length&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valsub"><!-- --></A>
+<H3>sub</H3>
+<P>
+<CODE>val&nbsp;sub&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;'a</CODE>
+
+<HR>
+<A NAME="Valfull"><!-- --></A>
+<H3>full</H3>
+<P>
+<CODE>val&nbsp;full&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A></CODE>
+
+<HR>
+<A NAME="Valslice"><!-- --></A>
+<H3>slice</H3>
+<P>
+<CODE>val&nbsp;slice&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A></CODE>
+
+<HR>
+<A NAME="Valsubslice"><!-- --></A>
+<H3>subslice</H3>
+<P>
+<CODE>val&nbsp;subslice&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A></CODE>
+
+<HR>
+<A NAME="Valbase"><!-- --></A>
+<H3>base</H3>
+<P>
+<CODE>val&nbsp;base&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valvector"><!-- --></A>
+<H3>vector</H3>
+<P>
+<CODE>val&nbsp;vector&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A></CODE>
+
+<HR>
+<A NAME="ValisEmpty"><!-- --></A>
+<H3>isEmpty</H3>
+<P>
+<CODE>val&nbsp;isEmpty&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValgetItem"><!-- --></A>
+<H3>getItem</H3>
+<P>
+<CODE>val&nbsp;getItem&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;('a&nbsp;*&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Valappi"><!-- --></A>
+<H3>appi</H3>
+<P>
+<CODE>val&nbsp;appi&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valapp"><!-- --></A>
+<H3>app</H3>
+<P>
+<CODE>val&nbsp;app&nbsp;:&nbsp;('a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valfoldli"><!-- --></A>
+<H3>foldli</H3>
+<P>
+<CODE>val&nbsp;foldli&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;*&nbsp;'b&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'b&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b</CODE>
+
+<HR>
+<A NAME="Valfoldl"><!-- --></A>
+<H3>foldl</H3>
+<P>
+<CODE>val&nbsp;foldl&nbsp;:&nbsp;('a&nbsp;*&nbsp;'b&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'b&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b</CODE>
+
+<HR>
+<A NAME="Valfoldri"><!-- --></A>
+<H3>foldri</H3>
+<P>
+<CODE>val&nbsp;foldri&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;*&nbsp;'b&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'b&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b</CODE>
+
+<HR>
+<A NAME="Valfoldr"><!-- --></A>
+<H3>foldr</H3>
+<P>
+<CODE>val&nbsp;foldr&nbsp;:&nbsp;('a&nbsp;*&nbsp;'b&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'b&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b</CODE>
+
+<HR>
+<A NAME="Valconcat"><!-- --></A>
+<H3>concat</H3>
+<P>
+<CODE>val&nbsp;concat&nbsp;:&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A></CODE>
+
+<HR>
+<A NAME="Valmapi"><!-- --></A>
+<H3>mapi</H3>
+<P>
+<CODE>val&nbsp;mapi&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A></CODE>
+
+<HR>
+<A NAME="Valmap"><!-- --></A>
+<H3>map</H3>
+<P>
+<CODE>val&nbsp;map&nbsp;:&nbsp;('a&nbsp;->&nbsp;'b)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'b&nbsp;<A HREF="StrVector.html#Typevector">Vector.vector</A></CODE>
+
+<HR>
+<A NAME="Valfindi"><!-- --></A>
+<H3>findi</H3>
+<P>
+<CODE>val&nbsp;findi&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;->&nbsp;bool)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Valfind"><!-- --></A>
+<H3>find</H3>
+<P>
+<CODE>val&nbsp;find&nbsp;:&nbsp;('a&nbsp;->&nbsp;bool)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;'a&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Valexists"><!-- --></A>
+<H3>exists</H3>
+<P>
+<CODE>val&nbsp;exists&nbsp;:&nbsp;('a&nbsp;->&nbsp;bool)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valall"><!-- --></A>
+<H3>all</H3>
+<P>
+<CODE>val&nbsp;all&nbsp;:&nbsp;('a&nbsp;->&nbsp;bool)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valcollate"><!-- --></A>
+<H3>collate</H3>
+<P>
+<CODE>val&nbsp;collate&nbsp;:&nbsp;('a&nbsp;*&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A>)&nbsp;->&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrVectorSlice.html#Typeslice">slice</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

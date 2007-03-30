@@ -1,0 +1,8 @@
+Group is
+        ../main/sources.cm
+        ../smlunitlib.cm
+
+        MBStringTest0001.sml
+        MBSubstringTest0001.sml
+
+        MultiByteStringTest.sml

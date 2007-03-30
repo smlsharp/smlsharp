@@ -2,7 +2,7 @@
  * entry point of the debugger.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.8 2006/02/28 16:11:01 kiyoshiy Exp $
+ * @version $Id: Main.sml,v 1.9 2007/02/19 04:06:09 kiyoshiy Exp $
  *)
 structure Main =
 struct
@@ -26,7 +26,6 @@ struct
   val _ = Control.generateDebugInfo := true
 
   val minimumPreludePath = Configuration.MinimumPreludePath
-  val BasisPath = Configuration.BasisPath
 
   fun isSourceFile fileName =
       case PU.splitBaseExt fileName of
@@ -38,7 +37,10 @@ struct
   fun compile sourceFileName =
       let
         (* NOTE: useBasis may have been updated by parseArguments. *)
+        val preludePath = minimumPreludePath
+(*
         val preludePath = if !useBasis then BasisPath else minimumPreludePath
+*)
         val preludeDir = 
             OS.FileSys.fullPath(#dir(PathUtility.splitDirFile preludePath))
 

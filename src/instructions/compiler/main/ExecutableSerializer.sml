@@ -1,22 +1,23 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: ExecutableSerializer.sml,v 1.9 2005/12/31 12:34:00 kiyoshiy Exp $
+ * @version $Id: ExecutableSerializer.sml,v 1.12.4.1 2007/03/23 05:43:04 katsu Exp $
  *)
 structure ExecutableSerializer : EXECUTABLE_SERIALIZER =
 struct
 
   (***************************************************************************)
 
-  open BasicTypes
   structure BT = BasicTypes
   structure E = Executable
   structure BTS = BasicTypeSerializer
   structure BTSNet = BasicTypeSerializerForNetworkByteOrder
+  structure SD = SystemDef
+  structure SDT = SystemDefTypes
 
   (***************************************************************************)
 
-  val SIZE_OF_LOCATION_TABLE_ENTRY = 0w6 : UInt32
-  val SIZE_OF_NAMESLOT_TABLE_ENTRY = 0w4 : UInt32
+  val SIZE_OF_LOCATION_TABLE_ENTRY = 0w6 : BT.UInt32
+  val SIZE_OF_NAMESLOT_TABLE_ENTRY = 0w4 : BT.UInt32
 
   (***************************************************************************)
 
@@ -33,7 +34,10 @@ struct
       end
 
   fun wordsOfStringLength length = 
-      IntToUInt32(BT.StringLengthToPaddedUInt8ListLength (UInt32ToInt length))
+      (BT.IntToUInt32
+       o BT.StringLengthToPaddedUInt8ListLength
+       o BT.UInt32ToInt)
+          length
 
   fun serializeString {length, string} writer =
       (
@@ -212,23 +216,27 @@ struct
 
   fun deserialize buffer =
       let
-        val bufferLength = Word8Array.length buffer
-(*
-val _ = print ("bufferLength: " ^ UInt32.toString (IntToUInt32 bufferLength) ^ "\n")
-*)
+        val bufferLength = Word8Vector.length buffer
         val pos = ref 0
         fun reader () =
-            Word8Array.sub (buffer, !pos) before pos := !pos + 1
+            Word8Vector.sub (buffer, !pos) before pos := !pos + 1
+
+        (* byteOrder should be SD.NativeByteOrder *)
+        val byteOrder =
+            (SDT.wordToByteOrder o BT.UInt32ToWord o BTS.deserializeUInt32)
+                reader
+        val _ = if byteOrder <> SD.NativeByteOrder
+                then
+                  raise
+                    Fail "deserializeExecutable expects NativeByteOrder."
+                else ()
 
         val instructionsSize = BTS.deserializeUInt32 reader
-(*
-val _ = print ("instructionsSize: " ^ UInt32.toString instructionsSize ^ "\n")
-*)
         val bytesOfInstructionsSize = UInt32.toInt instructionsSize * 4
 
         val instructionsArray = Word8Array.array (bytesOfInstructionsSize, 0w0)
         val _ =
-            Word8Array.copy
+            Word8Array.copyVec
                 {
                   src = buffer,
                   si = !pos,
@@ -239,15 +247,9 @@ val _ = print ("instructionsSize: " ^ UInt32.toString instructionsSize ^ "\n")
         val _ = pos := (!pos) + bytesOfInstructionsSize
 
         val locationTableWords = BTS.deserializeUInt32 reader
-(*
-val _ = print ("locationTableWords: " ^ UInt32.toString locationTableWords ^ "\n")
-*)
         val locationTable = deserializeLocationTable reader
 
         val nameSlotTableWords = BTS.deserializeUInt32 reader
-(*
-val _ = print ("nameSlotTableWords: " ^ UInt32.toString nameSlotTableWords ^ "\n")
-*)
         val nameSlotTable = deserializeNameSlotTable reader
 
         val _ =
@@ -255,11 +257,12 @@ val _ = print ("nameSlotTableWords: " ^ UInt32.toString nameSlotTableWords ^ "\n
             then
               raise
                 Fail
-                    ("deserialize: deserialized = " ^ Int.toString (!pos)
-                     ^ ", buffer = " ^ Int.toString (Word8Array.length buffer))
+                    ("deserialize: deserialized=" ^ Int.toString (!pos) ^ ","
+                     ^ "buffer=" ^ Int.toString (Word8Vector.length buffer))
             else ()
       in
         {
+          byteOrder = byteOrder,
           instructionsSize = instructionsSize,
           instructionsArray = instructionsArray,
           locationTable = locationTable,
@@ -268,13 +271,20 @@ val _ = print ("nameSlotTableWords: " ^ UInt32.toString nameSlotTableWords ^ "\n
       end
 
   fun serialize
-          {instructionsSize, instructions, locationTable, nameSlotTable} =
+          ({
+            byteOrder,
+            instructionsSize,
+            instructions,
+            locationTable,
+            nameSlotTable
+           } : Executable.executable) =
       let
         val locationTableWords = sizeOfLocationTable locationTable
         val nameSlotTableWords = sizeOfNameSlotTable nameSlotTable
 
-        val totalWords = 
-            0w1 (* instructionSize *)
+        val totalWords =
+            0w1 (* byte order *)
+            + 0w1 (* instructionSize *)
             + instructionsSize (* instructions *)
             + 0w1 (* locationTableWords *)
             + locationTableWords
@@ -282,20 +292,25 @@ val _ = print ("nameSlotTableWords: " ^ UInt32.toString nameSlotTableWords ^ "\n
             + nameSlotTableWords
         val totalBytes = totalWords * 0w4
 
-        val buffer = Word8Array.array (UInt32.toInt totalBytes, 0w0 : UInt8)
+        val buffer = Word8Array.array (UInt32.toInt totalBytes, 0w0)
         val pos = ref 0
         fun writer byte =
             Word8Array.update (buffer, !pos, byte) before pos := !pos + 1
 
+        (* byteOrder *)
+        val _ = if byteOrder <> SD.NativeByteOrder
+                then
+                  raise Fail "serializeExecutable expects NativeByteOrder."
+                else ()
+        val _ =
+            BTSNet.serializeUInt32
+                (BT.WordToUInt32(SDT.byteOrderToWord byteOrder)) writer
+
         (* instructions *)
-(*
-val _ = print ("totalWords: " ^ UInt32.toString totalWords ^ "\n")
-val _ = print ("instructionsSize: " ^ UInt32.toString instructionsSize ^ "\n")
-*)
         val _ = BTS.serializeUInt32 instructionsSize writer
         val _ = InstructionSerializer.serialize instructions writer
         val _ =
-            if !pos <> (UInt32.toInt instructionsSize * 4) + 4
+            if !pos <> 4 + 4 + (UInt32.toInt instructionsSize * 4)
             then
               raise
                 Fail
@@ -306,16 +321,10 @@ val _ = print ("instructionsSize: " ^ UInt32.toString instructionsSize ^ "\n")
 
         (* location table *)
         val _ = BTS.serializeUInt32 locationTableWords writer
-(*
-val _ = print ("locationTableWords: " ^ UInt32.toString locationTableWords ^ "\n")
-*)
         val _ = serializeLocationTable locationTable writer
 
         (* nameSlot table *)
         val _ = BTS.serializeUInt32 nameSlotTableWords writer
-(*
-val _ = print ("nameSlotTableWords: " ^ UInt32.toString nameSlotTableWords ^ "\n")
-*)
         val _ = serializeNameSlotTable nameSlotTable writer
 
         val _ =
@@ -328,7 +337,7 @@ val _ = print ("nameSlotTableWords: " ^ UInt32.toString nameSlotTableWords ^ "\n
                      ", buffer = " ^ Int.toString (UInt32.toInt totalBytes))
             else ()
       in
-        buffer
+        Word8Array.extract (buffer, 0, NONE)
       end
 
   (***************************************************************************)

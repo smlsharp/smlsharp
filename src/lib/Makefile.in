@@ -5,7 +5,12 @@ top_builddir = @top_builddir@
 
 include @top_builddir@commonrule
 
-SUBDIRS = Script
+SUBDIRS = basis \
+	  FFI \
+	  LMLML \
+	  Script \
+	  SMLSharp \
+          CConfig
 
 VPATH = $(srcdir)
 
@@ -16,9 +21,12 @@ INSTALL_FILES = ./basis \
                 ./basis.sml \
                 ./FFI \
                 ./FFI.sml \
+		./LMLML.sml \
+		./LMLML \
                 ./minimum \
                 ./minimum.sml \
                 ./ml-yacc \
+                ./ml-yacc-lib.sml \
 		./prelude.sml \
 		./Script \
 		./script.sml \
@@ -26,20 +34,25 @@ INSTALL_FILES = ./basis \
                 ./SMLNJ \
                 ./smlnj-lib.sml \
 		./smlunitlib.sml \
-
+		./CConfig
 
 all: $(TARGETS)
 
 clean:
 	-rm -f $(srcdir)/CM
 	-rm -f $(TARGETS)
+	-rm -f $(srcdir)/smlformatlib.sml $(srcdir)/smlunitlib.sml
+
+config: $(srcdir)/smlformatlib.sml $(srcdir)/smlunitlib.sml
+
+mlton: config
 
 install: $(TARGETS)
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
 	$(INSTALL_DATA) prelude.smc '$(DESTDIR)$(libdir_smlsharp)'
 	@cd $(srcdir); \
 	find $(INSTALL_FILES) -type d -print \
-	| $(EGREP) -v '.svn|CVS' \
+	| $(EGREP) -v '\.svn|CVS' \
 	| (while read i; do \
 	    echo $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/'$$i; \
 	    $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/'$$i \
@@ -47,7 +60,7 @@ install: $(TARGETS)
 	done)
 	@cd $(srcdir); \
 	find $(INSTALL_FILES) -type f -print \
-	| $(EGREP) -v '.svn|CVS|.cvsignore' \
+	| $(EGREP) -v '\.svn|CVS|\.cvsignore|\~$$|\.in$$|Makefile' \
 	| (while read i; do \
 	    echo $(INSTALL_DATA) $$i '$(DESTDIR)$(libdir_smlsharp)/'$$i; \
 	    $(INSTALL_DATA) $$i '$(DESTDIR)$(libdir_smlsharp)/'$$i \
@@ -57,4 +70,15 @@ install: $(TARGETS)
 # ToDO : 
 # prelude depends on many files in Basis and other libraries.
 prelude.smc: prelude.sml $(SMLSHARP)
-	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/prelude.sml --make-library --output=$@ --stdin
+	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/prelude.sml --make-compiled-prelude --output=$@ --stdin
+
+
+$(srcdir)/smlformatlib.sml: smlformatlib.sml.in Makefile \
+                            $(top_builddir)mksmlpath
+	sed -e "s,%SMLFORMAT_SML%,`$(SHELL) $(top_builddir)mksmlpath -sh '$(SMLFORMATDIR)/smlformatlib.sml'`," \
+	    $(srcdir)/smlformatlib.sml.in > $@
+
+$(srcdir)/smlunitlib.sml: smlunitlib.sml.in Makefile \
+                          $(top_builddir)mksmlpath
+	sed -e "s,%SMLUNIT_SML%,`$(SHELL) $(top_builddir)/mksmlpath -sh '$(SMLUNITDIR)/smlunitlib.sml'`," \
+	    $(srcdir)/smlunitlib.sml.in > $@

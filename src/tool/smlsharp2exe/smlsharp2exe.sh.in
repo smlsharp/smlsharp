@@ -1,0 +1,224 @@
+#!/bin/sh
+
+########################################
+# generate an executable file from SML source code.
+# $Id: smlsharp2exe.sh.in,v 1.8 2007/02/22 02:00:02 kiyoshiy Exp $
+# usage : $0 [options] FILE
+# options:
+#         -o FILE | --output=FILE     output file name
+#         other                       options for smlsharp
+
+TEMP_FILES=
+on_exit () {
+  [ "x$TEMP_FILES" = "x" ] || rm -f $TEMP_FILES
+}
+trap on_exit 0
+
+SME_FILE=$$.sme
+DEST_FILE=$$.o
+DATA_C_NAME=$$_sme
+MAIN_C_FILE=$$_main.cc
+
+CXXFLAGS=${CXXFLAGS:--O}
+HEAP_SIZE=4096000
+STACK_SIZE=4096000
+
+case "%target_os%" in
+  *cygwin*|*mingw*)
+    METHOD=objcopy
+    OUTPUT_TARGET=elf32-i386
+    BINARY_ARCHITECTURE=i386
+    SYMBOL_PREFIX=
+    ;;
+  *solaris*)
+    METHOD=objcopy
+    OUTPUT_TARGET=elf32-sparc
+    BINARY_ARCHITECTURE=sparc
+    SYMBOL_PREFIX=_
+    ;;
+  *linux*)
+    METHOD=objcopy
+    OUTPUT_TARGET=elf32-i386
+    BINARY_ARCHITECTURE=i386
+    SYMBOL_PREFIX=_
+    ;;
+  *darwin*)
+    METHOD=as
+    AS_SYMBOL_PREFIX=_
+    AS_GLOBAL=.globl
+    AS_LITERAL4=.literal4
+    AS_LITERAL4_ALIGN='.align 2'
+    AS_DATA=.data
+    SYMBOL_PREFIX=
+    ;;
+  *)
+    echo "Sorry, %target_os% is not supported."
+    exit 1
+    ;;
+esac
+
+OBJCOPY=${OBJCOPY:-objcopy}
+AS=${AS:-as}
+CXX=${CXX:-%CXX%}
+SMLSHARP=${SMLSHARP:-%BINDIR%/smlsharp}
+LIB_PATH=${LIB_PATH:-%LIBDIR%}
+
+##########
+
+args=
+
+while [ $# != 0 ]
+do
+
+  case $1 in
+  --*=*)
+    ac_option=`expr "x$1" : 'x\([^=]*\)='`
+    ac_optarg=`expr "x$1" : 'x[^=]*=\(.*\)'`
+    ac_shift=:
+    ac_orgarg=$1
+    ;;
+  -*)
+    ac_option=$1
+    ac_optarg=$2
+    ac_shift=shift
+    ac_orgarg="$1 $2"
+    ;;
+  *)
+    ac_option=$1
+    ac_optarg=
+    ac_shift=:
+    ac_orgarg=$1
+     ;;
+  esac
+
+  # pick out some arguments.
+  case ${ac_option} in
+  --xVMHeapSize)
+    HEAP_SIZE=${ac_optarg}
+    ;;
+  --xVMStackSize)
+    STACK_SIZE=${ac_optarg}
+    ;;
+  -o|--output)
+    OUTPUT_FILE=${ac_optarg}
+    ;;
+  -h|--help)
+    ${SMLSHARP} --help
+    exit 1
+    ;;
+  -X)
+    ${SMLSHARP} -X
+    exit 1
+    ;;
+  --)
+    args="${args} $*"
+    break
+    ;;
+  *)
+    args="${args} ${ac_orgarg}"
+    ;;
+  esac
+
+  shift       # shift current option
+  ${ac_shift} # shift argument
+
+done
+
+########################################
+
+${SMLSHARP} --xheaderOfExecutable= -o ${SME_FILE} -c ${args} \
+|| exit 1
+TEMP_FILES="$TEMP_FILES $SME_FILE"
+
+case "$METHOD" in
+  objcopy)
+    ${OBJCOPY} \
+        --input-target=binary \
+        --output-target=${OUTPUT_TARGET} \
+        --binary-architecture=${BINARY_ARCHITECTURE} \
+        ${SME_FILE} \
+        ${DEST_FILE} \
+    || exit 1
+    SIZE_TYPE=data
+    ;;
+
+  as)
+    size=`wc -c "$SME_FILE" | awk '{print $1}'`
+    TEMP_FILES="$TEMP_FILES $$.s"
+    od -v -b "$SME_FILE" | \
+    sed '
+s,^[^ ]* *,.byte ,
+s/ \([0-9]\)/ 0\1/g
+s/\([0-9]\)  *\([0-9]\)/\1,\2/g
+/^\.byte *\$/d
+1i\
+'"$AS_GLOBAL"' '"$AS_SYMBOL_PREFIX"'binary_'"$DATA_C_NAME"'_size\
+'"$AS_LITERAL4"'\
+'"$AS_LITERAL4_ALIGN"'\
+'"$AS_SYMBOL_PREFIX"'binary_'"$DATA_C_NAME"'_size:\
+.long '"$size"'\
+'"$AS_GLOBAL"' '"$AS_SYMBOL_PREFIX"'binary_'"$DATA_C_NAME"'_start\
+'"$AS_DATA"'\
+'"$AS_SYMBOL_PREFIX"'binary_'"$DATA_C_NAME"'_start:
+' > "$$.s" \
+    || exit 1
+    "$AS" "$$.s" -o "$DEST_FILE" \
+    || exit 1
+    SIZE_TYPE=int
+    ;;
+esac
+TEMP_FILES="$TEMP_FILES $DEST_FILE"
+
+TEMP_FILES="$TEMP_FILES $MAIN_C_FILE"
+cat > ${MAIN_C_FILE} <<EOF
+extern "C"
+{
+void smlsharp_initialize(int heapSize,
+                         int stackSize,
+                         int isInteractive,
+                         const char* name,
+                         int argsCount,
+                         const char** args,
+                         int pinnedBuffer);
+int smlsharp_evalExecutionRequestMessages(int bufferByteLength, char* buffer);
+void smlsharp_finalize();
+
+typedef char data[];
+extern data ${SYMBOL_PREFIX}binary_${DATA_C_NAME}_start;
+extern ${SIZE_TYPE} ${SYMBOL_PREFIX}binary_${DATA_C_NAME}_size;
+}
+
+int main(int argc, const char** argv)
+{
+    char* start = ${SYMBOL_PREFIX}binary_${DATA_C_NAME}_start;
+    int size = (int)${SYMBOL_PREFIX}binary_${DATA_C_NAME}_size;
+
+    smlsharp_initialize(${HEAP_SIZE},
+                        ${STACK_SIZE},
+                        0, /* non-interactive mode. */
+                        argv[0],
+                        argc - 1, 
+                        argv + 1,
+                        1 /* pinned buffer */);
+    smlsharp_evalExecutionRequestMessages(size, start);
+    smlsharp_finalize();
+
+    return 0;
+}
+EOF
+
+if test x${OUTPUT_FILE} != x;
+then
+  OUTPUT_OPT="-o ${OUTPUT_FILE}"
+else
+  OUTPUT_OPT=
+fi
+
+${CXX} \
+    -L${LIB_PATH} \
+    ${CXXFLAGS} \
+    ${OUTPUT_OPT} \
+    ${MAIN_C_FILE} \
+    ${DEST_FILE} \
+    -lsmlsharp -ldl -lm \
+    && echo "generated ${OUTPUT_FILE}."

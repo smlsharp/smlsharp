@@ -6,10 +6,11 @@
 #include "InputChannel.hh"
 #include "ExecutablePreProcessor.hh"
 #include "Executable.hh"
-#include "VariableLengthArray.hh"
 #include "WordOperations.hh"
 #include "Log.hh"
 #include "Debug.hh"
+
+#include <list>
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
@@ -23,6 +24,10 @@ class SessionBase
      public WordOperations 
 {
     ///////////////////////////////////////////////////////////////////////////
+
+    typedef std::list<ExecutablePreProcessor*> PreProcessorList;
+
+    ///////////////////////////////////////////////////////////////////////////
   protected:
 
     Reader* standardInputReader_;
@@ -34,7 +39,7 @@ class SessionBase
     /**
      * the list of executable preprocessors.
      */
-    VariableLengthArray executablePreProcessors_;
+    PreProcessorList executablePreProcessors_;
 
     /**
      * log writer
@@ -68,7 +73,7 @@ class SessionBase
     Writer* getStandardErrorWriter();
 
     virtual
-    int addExecutablePreProcessor(ExecutablePreProcessor* preProcessor);
+    void addExecutablePreProcessor(ExecutablePreProcessor* preProcessor);
 
     ///////////////////////////////////////////////////////////////////////////
   protected:
@@ -90,6 +95,13 @@ class SessionBase
      * @return an executable
      */
     Executable* receiveExecutable(InputChannel* channel);
+
+    /**
+     *  get an executable from serialized form of ExecutionRequest message
+     * body.
+     * buffer is advanced on return.
+     */
+    Executable* deserializeExecutionRequestFromBuffer(UInt32Value* &buffer);
 
     /**
      *  releases resources which the executable occupies.

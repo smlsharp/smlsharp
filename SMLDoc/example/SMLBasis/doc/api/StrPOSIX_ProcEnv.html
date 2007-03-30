@@ -1,0 +1,435 @@
+<HTML>
+<HEAD>
+<TITLE>POSIX_ProcEnv</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>POSIX_ProcEnv</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_ProcEnv.html">POSIX_ProcEnv</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrPOSIX_ProcEnv-StrFS.html">FS</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys.html">POSIX_FileSys</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrPOSIX_ProcEnv-StrP.html">P</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_Process.html">POSIX_Process</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Typepid">pid</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_Process.html#Typepid">P.pid</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Typeuid">uid</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys.html#Typeuid">FS.uid</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Typegid">gid</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys.html#Typegid">FS.gid</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Typefile_desc">file_desc</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys.html#Typefile_desc">FS.file_desc</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Types_int">s_int</A>&nbsp;=&nbsp;<A HREF="StrInt31Imp.html#Typeint">SysInt.int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valcfun">cfun</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#ValuidToWord">uidToWord</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#ValwordToUid">wordToUid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#ValgidToWord">gidToWord</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#ValwordToGid">wordToGid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetpid'">getpid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetppid'">getppid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetpid">getpid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetppid">getppid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetuid'">getuid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgeteuid'">geteuid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetgid'">getgid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetegid'">getegid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetuid">getuid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgeteuid">geteuid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetgid">getgid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetegid">getegid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsetuid'">setuid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsetgid'">setgid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsetuid">setuid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsetgid">setgid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetgroups'">getgroups'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetgroups">getgroups</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetlogin">getlogin</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetpgrp'">getpgrp'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsetsid'">setsid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsetpgid'">setpgid'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetpgrp">getpgrp</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsetsid">setsid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsetpgid">setpgid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valuname">uname</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valsysconf">sysconf</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valtime'">time'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valtime">time</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valtimes'">times'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#ValticksPerSec">ticksPerSec</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valtimes">times</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valgetenv">getenv</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valenviron">environ</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valctermid">ctermid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valttyname'">ttyname'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valttyname">ttyname</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valisatty'">isatty'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_ProcEnv.html#Valisatty">isatty</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typepid"><!-- --></A>
+<H3>pid</H3>
+<P>
+<CODE>type&nbsp;pid&nbsp;=&nbsp;<A HREF="StrPOSIX_Process.html#Typepid">P.pid</A></CODE>
+
+<HR>
+<A NAME="Typeuid"><!-- --></A>
+<H3>uid</H3>
+<P>
+<CODE>type&nbsp;uid&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys.html#Typeuid">FS.uid</A></CODE>
+
+<HR>
+<A NAME="Typegid"><!-- --></A>
+<H3>gid</H3>
+<P>
+<CODE>type&nbsp;gid&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys.html#Typegid">FS.gid</A></CODE>
+
+<HR>
+<A NAME="Typefile_desc"><!-- --></A>
+<H3>file_desc</H3>
+<P>
+<CODE>type&nbsp;file_desc&nbsp;=&nbsp;<A HREF="StrPOSIX_FileSys.html#Typefile_desc">FS.file_desc</A></CODE>
+
+<HR>
+<A NAME="Types_int"><!-- --></A>
+<H3>s_int</H3>
+<P>
+<CODE>type&nbsp;s_int&nbsp;=&nbsp;<A HREF="StrInt31Imp.html#Typeint">SysInt.int</A></CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valcfun"><!-- --></A>
+<H3>cfun</H3>
+<P>
+<CODE>val&nbsp;cfun</CODE>
+
+<HR>
+<A NAME="ValuidToWord"><!-- --></A>
+<H3>uidToWord</H3>
+<P>
+<CODE>val&nbsp;uidToWord</CODE>
+
+<HR>
+<A NAME="ValwordToUid"><!-- --></A>
+<H3>wordToUid</H3>
+<P>
+<CODE>val&nbsp;wordToUid</CODE>
+
+<HR>
+<A NAME="ValgidToWord"><!-- --></A>
+<H3>gidToWord</H3>
+<P>
+<CODE>val&nbsp;gidToWord</CODE>
+
+<HR>
+<A NAME="ValwordToGid"><!-- --></A>
+<H3>wordToGid</H3>
+<P>
+<CODE>val&nbsp;wordToGid</CODE>
+
+<HR>
+<A NAME="Valgetpid'"><!-- --></A>
+<H3>getpid'</H3>
+<P>
+<CODE>val&nbsp;getpid'</CODE>
+
+<HR>
+<A NAME="Valgetppid'"><!-- --></A>
+<H3>getppid'</H3>
+<P>
+<CODE>val&nbsp;getppid'</CODE>
+
+<HR>
+<A NAME="Valgetpid"><!-- --></A>
+<H3>getpid</H3>
+<P>
+<CODE>val&nbsp;getpid</CODE>
+
+<HR>
+<A NAME="Valgetppid"><!-- --></A>
+<H3>getppid</H3>
+<P>
+<CODE>val&nbsp;getppid</CODE>
+
+<HR>
+<A NAME="Valgetuid'"><!-- --></A>
+<H3>getuid'</H3>
+<P>
+<CODE>val&nbsp;getuid'</CODE>
+
+<HR>
+<A NAME="Valgeteuid'"><!-- --></A>
+<H3>geteuid'</H3>
+<P>
+<CODE>val&nbsp;geteuid'</CODE>
+
+<HR>
+<A NAME="Valgetgid'"><!-- --></A>
+<H3>getgid'</H3>
+<P>
+<CODE>val&nbsp;getgid'</CODE>
+
+<HR>
+<A NAME="Valgetegid'"><!-- --></A>
+<H3>getegid'</H3>
+<P>
+<CODE>val&nbsp;getegid'</CODE>
+
+<HR>
+<A NAME="Valgetuid"><!-- --></A>
+<H3>getuid</H3>
+<P>
+<CODE>val&nbsp;getuid</CODE>
+
+<HR>
+<A NAME="Valgeteuid"><!-- --></A>
+<H3>geteuid</H3>
+<P>
+<CODE>val&nbsp;geteuid</CODE>
+
+<HR>
+<A NAME="Valgetgid"><!-- --></A>
+<H3>getgid</H3>
+<P>
+<CODE>val&nbsp;getgid</CODE>
+
+<HR>
+<A NAME="Valgetegid"><!-- --></A>
+<H3>getegid</H3>
+<P>
+<CODE>val&nbsp;getegid</CODE>
+
+<HR>
+<A NAME="Valsetuid'"><!-- --></A>
+<H3>setuid'</H3>
+<P>
+<CODE>val&nbsp;setuid'</CODE>
+
+<HR>
+<A NAME="Valsetgid'"><!-- --></A>
+<H3>setgid'</H3>
+<P>
+<CODE>val&nbsp;setgid'</CODE>
+
+<HR>
+<A NAME="Valsetuid"><!-- --></A>
+<H3>setuid</H3>
+<P>
+<CODE>val&nbsp;setuid</CODE>
+
+<HR>
+<A NAME="Valsetgid"><!-- --></A>
+<H3>setgid</H3>
+<P>
+<CODE>val&nbsp;setgid</CODE>
+
+<HR>
+<A NAME="Valgetgroups'"><!-- --></A>
+<H3>getgroups'</H3>
+<P>
+<CODE>val&nbsp;getgroups'</CODE>
+
+<HR>
+<A NAME="Valgetgroups"><!-- --></A>
+<H3>getgroups</H3>
+<P>
+<CODE>val&nbsp;getgroups</CODE>
+
+<HR>
+<A NAME="Valgetlogin"><!-- --></A>
+<H3>getlogin</H3>
+<P>
+<CODE>val&nbsp;getlogin</CODE>
+
+<HR>
+<A NAME="Valgetpgrp'"><!-- --></A>
+<H3>getpgrp'</H3>
+<P>
+<CODE>val&nbsp;getpgrp'</CODE>
+
+<HR>
+<A NAME="Valsetsid'"><!-- --></A>
+<H3>setsid'</H3>
+<P>
+<CODE>val&nbsp;setsid'</CODE>
+
+<HR>
+<A NAME="Valsetpgid'"><!-- --></A>
+<H3>setpgid'</H3>
+<P>
+<CODE>val&nbsp;setpgid'</CODE>
+
+<HR>
+<A NAME="Valgetpgrp"><!-- --></A>
+<H3>getpgrp</H3>
+<P>
+<CODE>val&nbsp;getpgrp</CODE>
+
+<HR>
+<A NAME="Valsetsid"><!-- --></A>
+<H3>setsid</H3>
+<P>
+<CODE>val&nbsp;setsid</CODE>
+
+<HR>
+<A NAME="Valsetpgid"><!-- --></A>
+<H3>setpgid</H3>
+<P>
+<CODE>val&nbsp;setpgid</CODE>
+
+<HR>
+<A NAME="Valuname"><!-- --></A>
+<H3>uname</H3>
+<P>
+<CODE>val&nbsp;uname</CODE>
+
+<HR>
+<A NAME="Valsysconf"><!-- --></A>
+<H3>sysconf</H3>
+<P>
+<CODE>val&nbsp;sysconf</CODE>
+
+<HR>
+<A NAME="Valtime'"><!-- --></A>
+<H3>time'</H3>
+<P>
+<CODE>val&nbsp;time'</CODE>
+
+<HR>
+<A NAME="Valtime"><!-- --></A>
+<H3>time</H3>
+<P>
+<CODE>val&nbsp;time</CODE>
+
+<HR>
+<A NAME="Valtimes'"><!-- --></A>
+<H3>times'</H3>
+<P>
+<CODE>val&nbsp;times'</CODE>
+
+<HR>
+<A NAME="ValticksPerSec"><!-- --></A>
+<H3>ticksPerSec</H3>
+<P>
+<CODE>val&nbsp;ticksPerSec</CODE>
+
+<HR>
+<A NAME="Valtimes"><!-- --></A>
+<H3>times</H3>
+<P>
+<CODE>val&nbsp;times</CODE>
+
+<HR>
+<A NAME="Valgetenv"><!-- --></A>
+<H3>getenv</H3>
+<P>
+<CODE>val&nbsp;getenv</CODE>
+
+<HR>
+<A NAME="Valenviron"><!-- --></A>
+<H3>environ</H3>
+<P>
+<CODE>val&nbsp;environ</CODE>
+
+<HR>
+<A NAME="Valctermid"><!-- --></A>
+<H3>ctermid</H3>
+<P>
+<CODE>val&nbsp;ctermid</CODE>
+
+<HR>
+<A NAME="Valttyname'"><!-- --></A>
+<H3>ttyname'</H3>
+<P>
+<CODE>val&nbsp;ttyname'</CODE>
+
+<HR>
+<A NAME="Valttyname"><!-- --></A>
+<H3>ttyname</H3>
+<P>
+<CODE>val&nbsp;ttyname</CODE>
+
+<HR>
+<A NAME="Valisatty'"><!-- --></A>
+<H3>isatty'</H3>
+<P>
+<CODE>val&nbsp;isatty'</CODE>
+
+<HR>
+<A NAME="Valisatty"><!-- --></A>
+<H3>isatty</H3>
+<P>
+<CODE>val&nbsp;isatty</CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

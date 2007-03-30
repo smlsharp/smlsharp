@@ -1,6 +1,18 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
         ../../format/sources.cm
+#if defined(NEW_CM)
+        $/smlformatlib.cm
+#else
         ../../../smlformatlib.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
+        smlnj-lib.cm
+#endif
         ../../absyn/sources.cm
         ../../parser/sources.cm
         ../../control/sources.cm
@@ -9,8 +21,8 @@ Group is
         ../../types/sources.cm
         ../../env/sources.cm
         ../../name/sources.cm
-	../../systemdef/sources.cm	
-        smlnj-lib.cm
+	../../systemdef/sources.cm
+        ../../../primitives/compiler/sources.cm
 
         TYPEDFLATCALC.sig
         TypedFlatCalc.ppg.sml

@@ -1,0 +1,1 @@
+structure LargeInt = Int32

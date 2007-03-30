@@ -1,0 +1,28 @@
+case 2:
+ *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, destination)) = 
+   ((Real64Value (*)
+     (
+      Real64Value, 
+      Real64Value
+      )
+   )
+    function)
+  (
+   *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndexes[0])),
+   *(Real64Value*)(FRAME_ENTRY_ADDRESS(SP, argIndexes[1]))
+  );
+break;
+
+case 3:
+  FRAME_ENTRY(SP, destination).uint32 = 
+  ((UInt32Value (*)
+   (
+    UInt32Value, 
+    UInt32Value, 
+    UInt32Value)
+    )
+   function)
+   (FRAME_ENTRY(SP, argIndexes[0]).uint32,
+    FRAME_ENTRY(SP, argIndexes[1]).uint32,
+    FRAME_ENTRY(SP, argIndexes[2]).uint32);
+break;

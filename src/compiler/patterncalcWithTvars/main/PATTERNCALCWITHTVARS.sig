@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: PATTERNCALCWITHTVARS.sig,v 1.6 2006/03/02 12:48:46 bochao Exp $
+ * @version $Id: PATTERNCALCWITHTVARS.sig,v 1.13 2007/02/28 17:57:20 katsu Exp $
  *)
 signature PATTERNCALCWITHTVARS = sig
 
@@ -13,6 +13,7 @@ signature PATTERNCALCWITHTVARS = sig
  type tvarNameSet
  type caseKind
  datatype constant = datatype Absyn.constant
+ type callingConvention = Absyn.callingConvention
  type longid
  type tvar
 
@@ -37,6 +38,12 @@ signature PATTERNCALCWITHTVARS = sig
    | PTSELECT of string * ptexp * loc
    | PTSEQ of ptexp list * loc
    | PTCAST of ptexp * loc
+   | PTFFIIMPORT of ptexp * ty * loc
+   | PTFFIEXPORT of ptexp * ty * loc
+   | PTFFIAPPLY of callingConvention * ptexp * ffiArg list * ty * loc
+ and ffiArg =
+     PTFFIARG of ptexp * ty
+   | PTFFIARGSIZEOF of ty * ptexp option
  and ptdecl = 
      PTVAL of tvarNameSet * tvarNameSet * (ptpat * ptexp ) list * loc 
    | PTDECFUN of tvarNameSet * tvarNameSet * (ptpat * (ptpat list * ptexp) list) list * loc 
@@ -57,7 +64,6 @@ signature PATTERNCALCWITHTVARS = sig
    | PTINFIXDEC of int * string list * loc
    | PTINFIXRDEC of int * string list * loc
    | PTNONFIXDEC of string list * loc
-   | PTFFIVAL of {name:string, funExp:ptexp, libExp:ptexp, argTyList:ty list, resultTy:ty, loc:loc}
    | PTEMPTY 
 
  and ptpat = 
@@ -68,6 +74,7 @@ signature PATTERNCALCWITHTVARS = sig
    | PTPATRECORD of bool * (string * ptpat) list * loc
    | PTPATLAYERED of string * ty option * ptpat * loc
    | PTPATTYPED of ptpat * ty * loc
+   | PTPATORPAT of ptpat * ptpat * loc
 
  and ptstrdec =
      PTCOREDEC of ptdecl * loc
@@ -89,9 +96,9 @@ signature PATTERNCALCWITHTVARS = sig
 
  and ptspec =
      PTSPECVAL of (string * ty) list * loc 
-   | PTSPECTYPE of (tvar list * string) list * loc 
+   | PTSPECTYPE of (tvar list * string * Absyn.specKind) list * loc 
    | PTSPECTYPEEQUATION of (tvar list * string * ty) * loc
-   | PTSPECEQTYPE of (tvar list * string) list * loc 
+   | PTSPECEQTYPE of (tvar list * string * Absyn.specKind) list * loc 
    | PTSPECDATATYPE of
      (tvar list * string * (string * ty option) list ) list * loc 
    | PTSPECREPLIC of string * longid * loc 
@@ -108,10 +115,12 @@ signature PATTERNCALCWITHTVARS = sig
    | PTTOPDECSIG of  ( string * ptsigexp ) list * loc 
    | PTTOPDECFUN of  ( string * string * ptsigexp  * ptstrexp * loc ) list * loc 
    | PTTOPDECIMPORT of ptspec * loc 
+   | PTTOPDECEXPORT of ptspec * loc 
 
   val getLocExp : ptexp -> loc
   val getLocPat : ptpat -> loc
   val getLocDec : ptdecl -> loc
+  val getLocTopDec : pttopdec -> loc
 
   val emptyTvarNameSet : tvarNameSet
   val format_caseKind : caseKind -> SMLFormat.FormatExpression.expression list

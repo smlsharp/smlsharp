@@ -22,5 +22,5 @@ libimlruntimecore.$(LIBEXT): $(OBJECTS)
 	$(AR) rcu $@ $(OBJECTS)
 	-$(RANLIB) $@
 
-# FIXME: dependency
-Log.$(OBJEXT): Log.hh
+##---- dependency (automatically generated) ----
+Log.$(OBJEXT): Log.cc SystemDef.hh ../../../.././config.h Log.hh SystemDef.hh

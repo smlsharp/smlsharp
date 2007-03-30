@@ -1,2 +1,1 @@
-- stdIn:13.9-13.23 Error: int constant too large
-- 
+../tests/bugs/tests/issue241.1.sml:1.9-1.22 Error: overflow

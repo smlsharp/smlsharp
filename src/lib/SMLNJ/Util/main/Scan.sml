@@ -92,7 +92,7 @@ structure Scan : SCAN =
 		      (* end case *)
 		    end
 	  in
-	    scan (SS.all str, [])
+	    scan (SS.full str, [])
 	  end
 
 (** NOTE: for the time being, this ignores flags and field width **)

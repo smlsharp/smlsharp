@@ -1,6 +1,17 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
 	../../../smlformatlib.cm
+#endif
+#if defined(NEW_CM)
+	$/smlnj-lib.cm
+#else
 	smlnj-lib.cm
+#endif
         ../../absyn/sources.cm
         ../../control/sources.cm
         ../../types/sources.cm
@@ -10,6 +21,7 @@ Group is
         ../../typedcalc/sources.cm
         ../../typedlambda/sources.cm
 	../../buccalc/sources.cm
+        ../../../primitives/compiler/sources.cm
 
 	BUCCOMPILECONTEXT.sig
 	BUCCompileContext.sml

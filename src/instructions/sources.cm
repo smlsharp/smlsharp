@@ -1,1 +1,2 @@
-Alias compiler/main/sources.cm
+Group is
+	compiler/main/sources.cm

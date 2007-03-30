@@ -1,14 +1,26 @@
 Group is
-        ../../format/sources.cm
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+       $/smlnj-lib.cm
+#else
+       smlnj-lib.cm
+#endif
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
 	../../../smlformatlib.cm
+#endif
         ../../parser/sources.cm
         ../../control/sources.cm
         ../../absyn/sources.cm
+        ../../format/sources.cm
         ../../util/sources.cm
 	../../types/sources.cm
 	../../env/sources.cm
   	../../name/sources.cm
-       smlnj-lib.cm
+        ../../../primitives/compiler/sources.cm
 
        TYPEDCALC.sig
        TypedCalc.ppg.sml

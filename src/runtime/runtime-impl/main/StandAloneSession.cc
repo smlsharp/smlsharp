@@ -8,16 +8,28 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+StandAloneSession::StandAloneSession()
+    : SessionBase(),
+      executableInputChannel_(NULL)
+{
+    standardInputReader_ =
+    new FileReader("stdin", stdin, BOOLVALUE_TRUE);
+    standardOutputWriter_ =
+    new FileWriter("stdout", stdout, BOOLVALUE_TRUE);
+    standardErrorWriter_ =
+    new FileWriter("stderr", stderr, BOOLVALUE_TRUE);
+}
+
 StandAloneSession::StandAloneSession(InputChannel* executableInputChannel)
     : SessionBase(),
       executableInputChannel_(executableInputChannel)
 {
     standardInputReader_ =
-    new FileReader("stdin", STDIN_FILENO, BOOLVALUE_TRUE);
+    new FileReader("stdin", stdin, BOOLVALUE_TRUE);
     standardOutputWriter_ =
-    new FileWriter("stdout", STDOUT_FILENO, BOOLVALUE_TRUE);
+    new FileWriter("stdout", stdout, BOOLVALUE_TRUE);
     standardErrorWriter_ =
-    new FileWriter("stderr", STDERR_FILENO, BOOLVALUE_TRUE);
+    new FileWriter("stderr", stderr, BOOLVALUE_TRUE);
 }
 
 StandAloneSession::~StandAloneSession()
@@ -30,18 +42,55 @@ StandAloneSession::~StandAloneSession()
 ///////////////////////////////////////////////////////////////////////////////
 
 SInt32Value
+StandAloneSession::run(UInt32Value bufferByteLength, UInt32Value* buffer)
+    throw(IMLRuntimeException,
+          UserException,
+          SystemError)
+{
+    try{
+        UInt32Value* current = buffer;
+        while(((char*)current - (char*)buffer) < bufferByteLength){
+            // current is updated by getExecutableFromBuffer.
+            Executable* executable =
+                deserializeExecutionRequestFromBuffer(current);
+            linkAndExecute(executable);
+        }
+        fflush(stdout);
+        fflush(stderr);
+
+        return 0;
+    }
+    catch(IMLException &exception){
+        fflush(stdout);
+        fflush(stderr);
+        throw;
+    }
+}
+
+SInt32Value
 StandAloneSession::start()
     throw(IMLRuntimeException,
           UserException,
           SystemError)
 {
-    while(BOOLVALUE_FALSE == executableInputChannel_->isEOF())
-    {
-        Executable* executable = receiveExecutable(executableInputChannel_);
+    try{
+        while(BOOLVALUE_FALSE == executableInputChannel_->isEOF())
+        {
+            Executable* executable =
+                receiveExecutable(executableInputChannel_);
 
-        linkAndExecute(executable);
+            linkAndExecute(executable);
+
+            fflush(stdout);
+            fflush(stderr);
+        }
+        return 0;
     }
-    return 0;
+    catch(IMLException &exception){
+        fflush(stdout);
+        fflush(stderr);
+        throw;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

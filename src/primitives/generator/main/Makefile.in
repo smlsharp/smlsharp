@@ -17,9 +17,9 @@ TARGETS = $(TEMPLATES:.in=)
 
 all: $(TARGETS)
 
-$(TARGETS): $(TEMPLATES)
-	cd $(srcdir) && (echo 'CM.make(); main();' | $(SMLCM))
+$(TARGETS): $(TEMPLATES) $(srcdir)/../../primitives.csv $(srcdir)/../../constants.csv
+	cd $(srcdir) && $(SHELL) $(BUILD_ROOT)/mksmlheap --exec 'Main.main();'
 
 clean:
-	-rm -rf $(srcdir)/CM
+	-rm -rf $(srcdir)/CM $(srcdir)/.cm
 	-rm -f $(TEMPLATES:.in=)

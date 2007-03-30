@@ -17,7 +17,7 @@ signature SUBSTRING =
     val extract : (string * int * int option) -> substring
     val substring : (string * int * int) -> substring
 
-    val all : string -> substring
+    val full : string -> substring
 
     val isEmpty : substring -> bool
 
@@ -39,6 +39,8 @@ signature SUBSTRING =
     val explode : substring -> char list
 
     val isPrefix : string -> substring -> bool
+    val isSubstring : string -> substring -> bool
+    val isSuffix    : string -> substring -> bool
 
     val compare : (substring * substring) -> order
 

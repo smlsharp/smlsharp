@@ -7,9 +7,15 @@ structure FormatExpression{
  val assocToString
  val priorityToString
  val toString
+ val parse
 }
 structure PrinterParameter{
- type printerParameter
+ type parameter
+ val defaultNewline
+ val defaultSpace
+ val defaultColumns
+ val defaultGuardLeft
+ val defaultGuardRight
 }
 structure PrettyPrinter{
  structure FE{
@@ -21,6 +27,15 @@ structure PrettyPrinter{
   val assocToString
   val priorityToString
   val toString
+  val parse
+ }
+ structure PP{
+  type parameter => structure PrinterParameter
+  val defaultNewline
+  val defaultSpace
+  val defaultColumns
+  val defaultGuardLeft
+  val defaultGuardRight
  }
  type environmentEntry
  type environment
@@ -41,9 +56,11 @@ structure PreProcessor{
   val assocToString
   val priorityToString
   val toString
+  val parse
  }
  structure PP{
   structure FE => structure PrettyPrinter . structure FE
+  structure PP => structure PrettyPrinter . structure PP
   type environmentEntry => structure PrettyPrinter
   type environment => structure PrettyPrinter
   type symbol => structure PrettyPrinter
@@ -53,6 +70,14 @@ structure PreProcessor{
   exception UnMatchEndOfIndent
   exception IndentUnderFlow
  }
+ structure Param{
+  type parameter => structure PrinterParameter
+  val defaultNewline
+  val defaultSpace
+  val defaultColumns
+  val defaultGuardLeft
+  val defaultGuardRight
+ }
  structure Environment{
   type entry
   type environment
@@ -61,6 +86,7 @@ structure PreProcessor{
   val map
   val removeEntry
  }
+ type parameter
  type context
  val calculate
  val removeAssoc
@@ -78,6 +104,7 @@ structure BasicFormatters{
   val assocToString
   val priorityToString
   val toString
+  val parse
  }
  type expression
  type formatter
@@ -108,9 +135,15 @@ structure SMLFormat{
   val assocToString
   val priorityToString
   val toString
+  val parse
  }
  structure PrinterParameter{
-  type printerParameter => structure PrinterParameter
+  type parameter => structure PrinterParameter
+  val defaultNewline
+  val defaultSpace
+  val defaultColumns
+  val defaultGuardLeft
+  val defaultGuardRight
  }
  structure BasicFormatters{
   structure FE => structure BasicFormatters . structure FE
@@ -133,6 +166,7 @@ structure SMLFormat{
   val format_order
   val format_list
  }
+ type parameter
  val prettyPrint
  exception Fail
 }
@@ -145,9 +179,15 @@ signature FORMAT_EXPRESSION{
  val assocToString
  val priorityToString
  val toString
+ val parse
 }
 signature PRINTER_PARAMETER{
- type printerParameter
+ type parameter
+ val defaultNewline
+ val defaultSpace
+ val defaultColumns
+ val defaultGuardLeft
+ val defaultGuardRight
 }
 signature PRETTYPRINTER{
  type environmentEntry
@@ -190,9 +230,15 @@ signature SMLFORMAT{
   val assocToString
   val priorityToString
   val toString
+  val parse
  }
  structure PrinterParameter{
-  type printerParameter => signature PRINTER_PARAMETER
+  type parameter => signature PRINTER_PARAMETER
+  val defaultNewline
+  val defaultSpace
+  val defaultColumns
+  val defaultGuardLeft
+  val defaultGuardRight
  }
  structure BasicFormatters{
   type expression => signature BASIC_FORMATTERS
@@ -214,6 +260,7 @@ signature SMLFORMAT{
   val format_order
   val format_list
  }
+ type parameter
  val prettyPrint
  exception Fail
 }

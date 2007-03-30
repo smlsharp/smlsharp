@@ -8,9 +8,39 @@ include @top_builddir@commonrule
 SUBDIRS = configuration \
           primitives \
           instructions \
+          runtime \
           compiler \
           lib \
-          runtime
+	  tool
+
+CONFIG = $(srcdir)/smlformatlib.cm \
+         $(srcdir)/smlunitlib.cm \
+         $(srcdir)/preludes.mlb
+
+clean:
+	-rm -f $(CONFIG)
 
 distclean:
-	-rm -f smlformatlib.cm
+	-rm -f $(CONFIG)
+
+config: $(CONFIG)
+
+mlton:
+	$(MAKE) all
+	cd compiler && $(MAKE) mlton
+
+$(srcdir)/smlformatlib.cm: $(srcdir)/smlformatlib.cm.in Makefile \
+                           $(top_builddir)mksmlpath
+	sed -e "s,%SMLFORMAT_CM%,`$(MKSMLPATH) -cm -sh '$(SMLFORMATDIR)/smlformatlib.cm'`," \
+	    $(srcdir)/smlformatlib.cm.in > $@
+
+$(srcdir)/smlunitlib.cm: $(srcdir)/smlunitlib.cm.in Makefile \
+                         $(top_builddir)mksmlpath
+	sed -e "s,%SMLUNIT_CM%,`$(MKSMLPATH) -cm -sh '$(SMLUNITDIR)/smlunitlib.cm'`," \
+	    $(srcdir)/smlunitlib.cm.in > $@
+
+$(srcdir)/preludes.mlb: $(srcdir)/preludes.mlb.in Makefile \
+                        $(top_builddir)mksmlpath
+	sed -e "s,%SMLFORMAT_MLB%,`$(MKSMLPATH) -sh '$(SMLFORMATDIR)/smlformatlib.mlb'`," \
+	    -e "s,%BASIS_MLB%,`$(MKSMLPATH) -sh '$(BASISDIR)/basis_compat.mlb'`," \
+	    $(srcdir)/preludes.mlb.in > $@

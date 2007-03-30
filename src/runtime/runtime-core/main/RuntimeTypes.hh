@@ -41,6 +41,9 @@ typedef union U_Cell
     /** unsigned integer value */
     UInt32Value uint32;
 
+    /** single precision floating point value */
+    Real32Value real32;
+
 } Cell;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -147,6 +150,22 @@ class RootTracer
     void trace(Cell** roots, int count)
         throw(IMLRuntimeException)
         = 0;
+
+    /**
+     * Traces root.
+     *
+     * <p>
+     * You can invoke this method only from RootSet::trace().
+     * </p>
+     *
+     * @param root a pointer a block.
+     * @return a pointer to block which may be at new location.
+     */
+    virtual
+    Cell* trace(Cell* roots)
+        throw(IMLRuntimeException)
+        = 0;
+
 };
 
 ////////////////////////////////////////
@@ -175,6 +194,17 @@ class RootSet
     virtual
     void trace(RootTracer* tracer)
         throw(IMLRuntimeException)
+        = 0;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+class FinalizerExecutor
+{
+  public:
+
+    virtual
+    void executeFinalizer(Cell* finalizable)
         = 0;
 };
 

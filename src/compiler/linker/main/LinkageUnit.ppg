@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University. 
  * @author Liu Bochao
- * @version $Id: LinkageUnit.ppg,v 1.2 2006/03/03 05:35:18 bochao Exp $
+ * @version $Id: LinkageUnit.ppg,v 1.6 2006/03/21 10:49:51 bochao Exp $
  *)
 structure LinkageUnit :
           sig
@@ -14,35 +14,53 @@ structure LinkageUnit :
                       list -> linkageUnit -> SMLFormat.FormatExpression.expression list
               val getLocLinkageUnit :
                   linkageUnit -> Loc.loc
+              val emptyLinkageUnit : linkageUnit
           end
   =
 struct
+  local
+      structure TO = TopObject
+  in
+      (*%
+       * @params(btvEnv)
+       * @formatter(StaticTypeEnv.staticTypeEnv) StaticTypeEnv.format_staticTypeEnv
+       * @formatter(StaticModuleEnv.staticModuleEnv) StaticModuleEnv.format_staticModuleEnv
+       * @formatter(TypedLambda.tldecl) TypedLambda.format_tldecl
+       * @formatter(format_pathdot) Path.format_pathWithDotend
+       * @formatter(TO.globalIndex) TO.format_globalIndex
+       * @formatter(Types.ty) Types.format_ty
+       *)
+      type linkageUnit = 
+           (*%
+            * @format({fileName, 
+                       staticTypeEnv, 
+                       staticModuleEnv, 
+                       hiddenValIndexList: valIndex valIndexes,
+                       code:tfpdec tfpdecs})
+            * "fileName :" + fileName +1
+            * "staticTypeEnv :" +1 2[staticTypeEnv()(btvEnv)] +1
+            * "staticModuleEnv :" +1 2[staticModuleEnv()(btvEnv)] +1
+            * "hiddenValIndexList :" +1 2[valIndexes(valIndex)(+1)] +1
+            * "code :" +1 2[tfpdecs(tfpdec()(btvEnv))(+1)]
+            * @format:valIndex((path * name) * index * ty) 
+            *  "(" path:format_pathdot name "," index ","  ty()(btvEnv) ")"
+            *)
+           {fileName : string,
+            staticTypeEnv : StaticTypeEnv.staticTypeEnv ,
+            staticModuleEnv : StaticModuleEnv.staticModuleEnv,
+            hiddenValIndexList : ((Path.path * string) * TO.globalIndex * Types.ty) list,
+            code : TypedLambda.tldecl list}
+           
+      fun getLocLinkageUnit (linkageUnit:linkageUnit) =
+          case (#code linkageUnit) of 
+              nil => Loc.noloc
+            | (tldec :: tail) => TypedLambdaUtils.getLocOfDec tldec
 
-   (*%
-    * @params(btvEnv)
-    * @formatter(TypeContext.staticTypeEnv) TypeContext.format_staticTypeEnv
-    * @formatter(StaticModuleEnv.staticModuleEnv) StaticModuleEnv.format_staticModuleEnv
-    * @formatter(TypedLambda.tldecl) TypedLambda.format_tldecl
-    *)
-   type linkageUnit = 
-        (*%
-         * @format({fileName, 
-                    staticTypeEnv, 
-                    staticModuleEnv, 
-                    code:tfpdec tfpdecs})
-         * "fileName :" + fileName +1
-         * "staticTypeEnv :" +1 2[staticTypeEnv()(btvEnv)] +1
-         * "staticModuleEnv :" +1 2[staticModuleEnv()(btvEnv)] +1
-         * "code :" +1 2[tfpdecs(tfpdec()(btvEnv))(+1)]
-         *)
-        {fileName : string,
-         staticTypeEnv : TypeContext.staticTypeEnv ,
-         staticModuleEnv : StaticModuleEnv.staticModuleEnv,
-         code : TypedLambda.tldecl list}
-
-   fun getLocLinkageUnit (linkageUnit:linkageUnit) =
-       case (#code linkageUnit) of 
-           nil => Loc.noloc
-         | (tldec :: tail) => TypedLambdaUtils.getLocOfDec tldec
-
+      val emptyLinkageUnit =
+          {fileName = "",
+           staticTypeEnv = StaticTypeEnv.emptyStaticTypeEnv,
+           staticModuleEnv = StaticModuleEnv.emptyStaticModuleEnv,
+           hiddenValIndexList = nil,
+           code = nil}
+  end
 end

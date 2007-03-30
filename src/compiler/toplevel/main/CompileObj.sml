@@ -1,7 +1,7 @@
 (**
  * compilation of linkage unit
  * @author Liu Bochao
- * @version $Id: CompileObj.sml,v 1.4 2006/03/03 07:38:53 ohori Exp $
+ * @version $Id: CompileObj.sml,v 1.20 2007/01/21 13:41:33 kiyoshiy Exp $
  *)
 structure CompileObj =
 struct
@@ -11,10 +11,9 @@ struct
   structure C = Control
   structure CT = Counter
   structure UE = UserError
-  structure SE = StaticEnv
   structure PU = PathUtility
   structure P = Pickle
-
+  structure STE = StaticTypeEnv
   (***************************************************************************)
 
   type topTypeContext = InitialTypeContext.topTypeContext
@@ -37,57 +36,10 @@ struct
          interactionMode : interactionMode,
          initialSource : ChannelTypes.InputChannel,
          initialSourceName : string,
+         interfaceSourceOpt : ChannelTypes.InputChannel option,
+         interfaceSourceName : string,
          getBaseDirectory : unit -> string
        }
-
-  (***************************************************************************)
-
-  val CT.CounterSet TopCounterSet =
-      #addSet CT.root ("Top", CT.ORDER_OF_ADDITION)
-  val CT.CounterSet ElapsedCounterSet =
-      #addSet TopCounterSet ("elapsed time", CT.ORDER_OF_ADDITION)
-  val CT.ElapsedTimeCounter parseTimeCounter =
-      #addElapsedTime ElapsedCounterSet "parse"
-  val CT.ElapsedTimeCounter compilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "compilation (after parse)"
-  val CT.ElapsedTimeCounter elaborationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "elaboration"
-  val CT.ElapsedTimeCounter valRecOptimizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "val rec optimize"
-  val CT.ElapsedTimeCounter UncurryOptimizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "uncurry optimize"
-  val CT.ElapsedTimeCounter setTVarsTimeCounter =
-      #addElapsedTime ElapsedCounterSet "set tvars"
-  val CT.ElapsedTimeCounter typeInferenceTimeCounter =
-      #addElapsedTime ElapsedCounterSet "type inference"
-  val CT.ElapsedTimeCounter printerGenerationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "printer generation"
-  val CT.ElapsedTimeCounter moduleCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "module compilation"
-  val CT.ElapsedTimeCounter matchCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "match compilation"
-  val CT.ElapsedTimeCounter recordCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "record compilation"
-  val CT.ElapsedTimeCounter lambdaOptimizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "lambda optimization"
-  val CT.ElapsedTimeCounter bitmapCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "bitmap compilation"
-  val CT.ElapsedTimeCounter untypedBitmapCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "untyped bitmap compilation"
-  val CT.ElapsedTimeCounter linearizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "linearize"
-  val CT.ElapsedTimeCounter assembleTimeCounter =
-      #addElapsedTime ElapsedCounterSet "assemble"
-  val CT.ElapsedTimeCounter serializeTimeCounter =
-      #addElapsedTime ElapsedCounterSet "serialize"
-  val CT.ElapsedTimeCounter executeTimeCounter =
-      #addElapsedTime ElapsedCounterSet "execute"
-  val CT.ElapsedTimeCounter pickleEnvsCounter =
-      #addElapsedTime ElapsedCounterSet "pickle environments"
-  val CT.ElapsedTimeCounter unpickleEnvsCounter =
-      #addElapsedTime ElapsedCounterSet "unpickle environments"
-
-  (****************************************)
 
   fun initialize 
       {
@@ -97,7 +49,6 @@ struct
         getVariable
       } =
       let
-        val _ = StaticEnv.init()
         val _ = Vars.initVars()
         val _ = Types.init()
         val _ = #reset Counter.root ()
@@ -108,6 +59,16 @@ struct
           loadPathList = loadPathList,
           getVariable = getVariable
         } : context
+      end
+
+  fun fileNameWithoutSuffix fileName = 
+      let
+          val suffixLength = 
+              case (OS.Path.ext fileName) of
+                  SOME suffix => size(suffix) + 1
+                | NONE => 0
+      in
+          substring(fileName, 0, size(fileName) - suffixLength)
       end
 
   fun run
@@ -121,6 +82,8 @@ struct
          interactionMode,
          initialSource,
          initialSourceName,
+         interfaceSourceOpt,
+         interfaceSourceName,
          getBaseDirectory
        } : source) =
       let 
@@ -184,360 +147,441 @@ struct
                 then (print line; #flush standardOutput ())
                 else ();
 
-                (* parseTimeCounter is stopped after Parser.parse returns. *)
-                #start parseTimeCounter ();
-
                 line
               end
             )
 
-        fun compile' decs =
-            let
-              val _ =
-                  if !C.printSource andalso !C.switchTrace then
-                    (
-                      printError "Source expr:\n";
-                      app
-                          (fn dec =>
-                              (
-                                printError (AbsynFormatter.topdecToString dec);
-                                printError "\n"
-                              ))
-                          decs
-                    )
-                  else ()
+        local
+            fun printDecs decFormatter decs =
+                app (fn dec => 
+                        (printError (decFormatter dec);
+                         printError "\n")) 
+                    decs
 
-              (* elaborateion *)
-              val _ = #start elaborationTimeCounter ()
-              val (pldecs, newFixEnv, warnings) =
-                  Elaborator.elaborate SEnv.empty decs
-              val _ = #stop elaborationTimeCounter ()
+            fun printAbsyn (linkageUnitDecs, interfaceDecsOpt) =
+                if !C.printSource andalso !C.switchTrace then
+                    (printError "Source expr:\n";
+                     printDecs AbsynFormatter.topdecToString linkageUnitDecs;
+                     Option.map (printDecs AbsynFormatter.topdecToString)  interfaceDecsOpt;
+                     ())
+                else ()
 
-              val _ = printWarnings warnings
-              val _ =
-                  if !C.printPL andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nElaborated to:\n";
-                      app
-                      (fn dec =>
-                          printError
-                          ((PatternCalcFormatter.pltopdecToString dec) ^ "\n"))
-                      pldecs
-                    )
-                  else ()
-                       
-             (* VAL REC optimization *)
-              val _ = #start valRecOptimizationTimeCounter ()
-              val pldecs = VALREC_Optimizer.optimize InitialTypeContext.initialTopTypeContext  pldecs
-              val _ = #stop valRecOptimizationTimeCounter ()
+            fun elaborate (linkageUnitDecs, interfaceDecsOpt) =
+                let
+                    val (pldecs, newFixEnv1, warnings1) =
+                        Elaborator.elaborate
+                            Fixity.initialFixEnv linkageUnitDecs
+                    val (plInterfaceDecsOpt, warnings2) =
+                        case
+                          Option.map
+                              (Elaborator.elaborate Fixity.initialFixEnv) 
+                              interfaceDecsOpt
+                         of
+                            NONE => (NONE, nil)
+                          | SOME (decs, _, warnings) => (SOME decs, warnings)
+                    val _ = printWarnings (warnings1 @ warnings2)
+                    val _ =
+                        if !C.printPL andalso !C.switchTrace
+                        then
+                            (
+                             printError "\nElaborated to:\n";
+                             printDecs PatternCalcFormatter.pltopdecToString pldecs;
+                             Option.map (printDecs PatternCalcFormatter.pltopdecToString) 
+                                        plInterfaceDecsOpt;
+                             ()
+                             )
+                        else ()
+                in
+                    (pldecs, plInterfaceDecsOpt)
+                end
 
-              val _ =
-                  if !C.printPL andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nVAL REC optimize to:\n";
-                      app
-                      (fn dec =>
-                          printError
-                          ((PatternCalcFormatter.pltopdecToString dec) ^ "\n"))
-                      pldecs
-                    )
-                  else ()
+            fun valRecOptimizer pldecs =
+                let
+                    val pldecs = 
+                        VALREC_Optimizer.optimize InitialTypeContext.initialTopTypeContext  pldecs
+                    val _ =
+                        if !C.printPL andalso !C.switchTrace
+                        then (printError "\nVAL REC optimize to:\n";
+                              printDecs PatternCalcFormatter.pltopdecToString pldecs)
+                        else ()
+                in 
+                    pldecs
+                end
 
-             (* Uncurrying  optimization *)
-              val pldecs = 
+            fun unCurryOptimizer pldecs =
                 if !C.doUncurryOptimization then
-                  pldecs
+                    pldecs
                 else
-                  TransFundecl.transTopDeclList pldecs
+                    TransFundecl.transTopDeclList pldecs
 
-              (* process user type declaration *)
-              val _ = #start setTVarsTimeCounter ()
-              val ptdecs = map (SetTVars.settopdec SEnv.empty) pldecs
-              val _ = #stop setTVarsTimeCounter ()
+            fun setTVars (pldecs, plInterfaceDecsOpt) =
+                let
+                    val ptdecs = map (SetTVars.settopdec SEnv.empty) pldecs
+                    val ptInterfaceDecsOpt = 
+                        Option.map (map (SetTVars.settopdec SEnv.empty)) 
+                                   plInterfaceDecsOpt
+                    val _ =
+                        if !C.printPL andalso !C.switchTrace
+                        then (printError "\nUser Tyvar Proceed:\n";
+                              printDecs PatternCalcWithTvarsFormatter.pttopdecToString ptdecs;
+                              Option.map 
+                                  (printDecs PatternCalcWithTvarsFormatter.pttopdecToString)
+                                  ptInterfaceDecsOpt;
+                              ())
+                        else ()
+                in
+                    (ptdecs, ptInterfaceDecsOpt)
+                end
 
-              val _ =
-                  if !C.printPL andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nUser Tyvar Proceed:\n";
-                      app
-                      (fn dec =>
-                          printError
-                          ((PatternCalcWithTvarsFormatter.pttopdecToString dec)
-                           ^ "\n"))
-                      ptdecs
-                    )
-                  else ()
+            fun typeInfer (ptdecs, ptInterfaceDecsOpt) =
+                let
+                    val (staticTypeEnv, tpdecs, warnings1) =
+                        TypeInferencer.inferLinkageUnit ptdecs
+                    val (exportSigOpt, warnings2) =
+                        case
+                            Option.map (TypeInferencer.inferInterface
+                                            (#importTypeEnv staticTypeEnv))
+                                       ptInterfaceDecsOpt
+                         of
+                            NONE => (NONE, nil)
+                          | SOME (exportSig, warnings) => 
+                            (SOME exportSig, warnings)
+                    val (exportStaticTypeEnv, warnings3, tyInstTopDecs) = 
+                        case exportSigOpt of
+                            NONE => (staticTypeEnv, nil, nil)
+                          | SOME exportSig => 
+                            let
+                                val loc =
+                                    case valOf(ptInterfaceDecsOpt) of
+                                        nil => Loc.noloc
+                                      | [pttopdec] =>  
+                                        PatternCalcWithTvars.getLocTopDec pttopdec
+                                      | _ => raise Control.Bug "multiple top level export constructs"
+                                val (newExportTypeEnv, warnings) =
+                                    TypeInferencer.exportSigCheck
+                                        (#exportTypeEnv staticTypeEnv, exportSig, loc)
+                                (* below deal with type instantiation declarations *)
+                                val tyInstDecs = 
+                                    TypeInstantiationTerm.generateInstantiatedStructure 
+                                        (Path.NilPath, loc)
+                                        (STE.typeEnvToEnv (#exportTypeEnv staticTypeEnv),
+                                         STE.typeEnvToEnv newExportTypeEnv)
+                            in
+                                (STE.injectExportTypeEnvInStaticTypeEnv 
+                                     (newExportTypeEnv,  staticTypeEnv),
+                                 warnings,
+                                 map (fn x => TypedCalc.TPMDECSTR (x, loc)) tyInstDecs)
+                            end
+                    val _ = printWarnings (warnings1 @ warnings2 @ warnings3)
+                    val _ =
+                        if !C.printTP andalso !C.switchTrace
+                        then
+                            (
+                             printError "\nStatically evaluated to:\n";
+                             printDecs (TypedCalcFormatter.tptopdecToString nil) tpdecs;
+                             printError "\nGenerated static bindings:\n";
+                             printError (Control.prettyPrint 
+                                             (StaticTypeEnv.format_staticTypeEnv nil staticTypeEnv))
+                             )
+                        else ()
+                in
+                    (exportStaticTypeEnv, tpdecs @ tyInstTopDecs)
+                end
 
-              (* type inference *)
-              val _ = #start typeInferenceTimeCounter ()
-              val (typeEnv, tpdecs, warnings) =
-                  TypeInferencer.inferLinkageUnit ptdecs
-              val _ = #stop typeInferenceTimeCounter ()
+            fun printCodeGeneration (staticTypeEnv, tpdecs) =
+                let
+                    val (staticTypeEnv, tpdecs) =
+                        if !C.skipPrinter
+                        then (staticTypeEnv, tpdecs)
+                        else
+                            PrinterGenerator.generateForSeparateCompile
+                                {
+                                 newTypeEnv = staticTypeEnv,
+                                 printBinds = !C.printBinds,
+                                 declarations = tpdecs
+                                 }
+                    val _ =
+                        if !C.printTP andalso !C.switchTrace andalso false = !C.skipPrinter
+                        then
+                            (printError "\n Print Code Generation:\n";
+                             printDecs (TypedCalcFormatter.tptopdecToString nil) tpdecs;
+                             printError "\nGenerated static bindings:\n";
+                             printError (Control.prettyPrint 
+                                             (StaticTypeEnv.format_staticTypeEnv nil staticTypeEnv))
+                             )
+                    else ()
+                in
+                    (staticTypeEnv, tpdecs)
+                end
 
-              val _ = printWarnings warnings
-              val _ =
-                  if !C.printTP andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nStatically evaluated to:\n";
-                      app
-                      (fn dec =>
-                          printError
-                          (TypedCalcFormatter.tptopdecToString [] dec ^ "\n"))
-                      tpdecs;
-                      printError "\nGenerated static bindings:\n";
-                      printError (Control.prettyPrint (TypeContext.format_staticTypeEnv nil typeEnv))
-                    )
-                  else ()
+            fun moduleCompile (staticTypeEnv, tpdecs) =
+                let
+                    val (staticModuleEnv, tpflatdecs) =
+                        ModuleCompiler.compileLinkageUnit tpdecs
+                    val newStaticModuleEnv = 
+                        ModuleCompileUtils.filterStaticModuleEnv (staticModuleEnv, staticTypeEnv)
+                    val _ =
+                        if !C.printTFP andalso !C.switchTrace
+                        then (printError "\nModule Compiled to:\n";
+                              printDecs (PrintTFP.tfpdecToString nil) tpflatdecs)
+                        else ()
+                in
+                    (newStaticModuleEnv, tpflatdecs)
+                end
 
-	      (* module compile *)
-              val _ = #start moduleCompilationTimeCounter ()
-              val (moduleEnv, tpflatdecs) =
-                  ModuleCompiler.compileLinkageUnit tpdecs
-              val _ = #stop moduleCompilationTimeCounter ()
+            fun matchCompile tpflatdecs =
+                let
+                    val (rcdecs, warnings) = MatchCompiler.compile tpflatdecs
+                    val _ = printWarnings warnings
+                    val _ =
+                        if !C.printRC andalso !C.switchTrace
+                        then (printError "\nMatch Compiled to:\n";
+                              printDecs (RecordCalcFormatter.rcdecToString nil) rcdecs)
+                        else ()
+                in
+                    rcdecs
+                end
 
-              val _ =
-                  if !C.printTFP andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nModule Compiled to:\n";
-                      app
-                      (fn dec =>
-                          printError(PrintTFP.tfpdecToString nil dec ^ "\n"))
-                      tpflatdecs
-                    )
-                  else ()
-              (* match compile *)
+            fun recordCompile rcdecs =
+                let
+                    val tldecs = RecordCompiler.compile rcdecs
+                    val _ =
+                        if !C.printTL andalso !C.switchTrace
+                        then (printError "\nRecord Compiled to:\n";
+                              printDecs (TypedLambdaFormatter.tldecToString nil) tldecs)
+                        else ()
+                in
+                    tldecs
+                end
 
-              val _ = #start matchCompilationTimeCounter ()
-              val (rcdecs, warnings) = MatchCompiler.compile tpflatdecs
-              val _ = #stop matchCompilationTimeCounter ()
-
-              val _ = printWarnings warnings
-              val _ =
-                  if !C.printRC andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nMatch Compiled to:\n";
-                      app
-                      (fn dec =>
-                          printError
-                          (RecordCalcFormatter.rcdecToString nil dec ^ "\n"))
-                      rcdecs
-                    )
-                  else ()
-              (* record compile *)
-
-              val _ = #start recordCompilationTimeCounter ()
-              val tldecs = RecordCompiler.compile rcdecs
-              val _ = #stop recordCompilationTimeCounter ()
-
-              val _ =
-                  if !C.printTL andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nRecord Compiled to:\n";
-                      app
-                      (fn dec =>
-                          printError
-                          (TypedLambdaFormatter.tldecToString [] dec ^ "\n"))
-                      tldecs
-                    )
-                  else ()
-
-              val optimizedTldecs = tldecs
-
-              (* type check *)
-              val _ =
-                  if !C.checkType
-                  then
+            fun typeCheck tldecs =
+                if !C.checkType
+                then
                     let
-                      val diagnoses =
-                          TypeCheckTypedLambda.typechekTypedLambda
-                              optimizedTldecs
-                      val _ = printDiagnoses diagnoses
+                        val diagnoses =
+                            TypeCheckTypedLambda.typechekTypedLambda
+                                tldecs
+                        val _ = printDiagnoses diagnoses
                     in
-                      ()
+                        ()
                     end
-                  else ()
-
-            (* pickling *)
-              local 
-                  val objName = 
-                      let
-                          fun isSuffix left right =
-                              let
-                                  val leftSize = size left
-                                  val rightSize = size right
-                              in
-                                  if rightSize < leftSize
-                                  then false
-                                  else left = substring (right, rightSize - leftSize, leftSize)
-                              end
-                          val _ = 
-                              if isSuffix ".sml" initialSourceName then ()
-                              else 
-                                  raise Control.Bug
-                                            ("illegal file name ending without .sml:"^initialSourceName)
-                          val objNameWithoutSuffix =
-                              substring(initialSourceName, 0, size(initialSourceName)-4)
-                      in
-                          objNameWithoutSuffix^".smo"
-                      end
-                val linkageUnit =
-                    {fileName = objName,
-                     staticTypeEnv = typeEnv,
-                     staticModuleEnv = moduleEnv,
-                     code = tldecs}
-                val outfile = BinIO.openOut objName
-                val outstream =
-                    Pickle.makeOutstream
-                        (fn byte => BinIO.output1 (outfile, byte)) 
-              in
-                val _ = print "[begin pickle ................"
-                val _ = P.pickle LinkageUnitPickler.linkageUnit linkageUnit outstream 
-                val _ = print "done]\n"
-                val _ = BinIO.closeOut outfile
-              end
-(*
-
-              (* buc transformation *)
-              val _ = #start bitmapCompilationTimeCounter ()
-              val bucdecls =
-                  BUCTransformer.transform optimizedTldecs 
-              val _ = #stop bitmapCompilationTimeCounter ()
-
-              val _ =
-                  if !C.printBUC andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nBUC transform to:\n";
-                      app
-                      (fn decl =>
+                else ()
+        in
+            fun compileTopdecs (linkageUnitDecs, interfaceDecsOpt) =
+                let
+                    val _ = printAbsyn (linkageUnitDecs, interfaceDecsOpt)
+                            
+                    (* elaboration *)
+                    val (pldecs, plInterfaceDecsOpt) = 
+                        elaborate (linkageUnitDecs, interfaceDecsOpt)                       
+                        
+                    (* VAL REC optimization *)
+                    val pldecs = valRecOptimizer pldecs
+                                 
+                    (* Uncurrying  optimization *)
+                    val pldecs = unCurryOptimizer pldecs
+                                 
+                    (* process user type declaration *)
+                    val (ptdecs, ptInterfaceDecsOpt) = setTVars (pldecs, plInterfaceDecsOpt)
+                                                       
+                    (* type inference *)
+                    val (staticTypeEnv, tpdecs) = typeInfer (ptdecs, ptInterfaceDecsOpt)
+                                                  
+                    (* print code generation *)
+                    val (staticTypeEnv, tpdecs) = printCodeGeneration (staticTypeEnv, tpdecs)
+                                                  
+	            (* module compile *)
+                    val (staticModuleEnv, tpflatdecs) = moduleCompile (staticTypeEnv, tpdecs)
+                                                  
+                    (* match compile *)
+                    val rcdecs = matchCompile tpflatdecs
+                                 
+                    (* record compile *)
+                    val tldecs = recordCompile rcdecs                
+                                 
+                    (* type check *)
+                    val _ = typeCheck tldecs
+                                      
+                    (* pickling *)
+                    local 
+                        val objName = (fileNameWithoutSuffix initialSourceName) ^ ".smo"
+                        val linkageUnit =
+                            {fileName = objName,
+                             staticTypeEnv = staticTypeEnv,
+                             staticModuleEnv = staticModuleEnv,
+                             hiddenValIndexList = nil,
+                             code = tldecs}
+                        val outfile = BinIO.openOut objName
+                        val outstream =
+                            Pickle.makeOutstream
+                                (fn byte => BinIO.output1 (outfile, byte)) 
+                    in
+                        val _ = print "[begin pickle ................"
+                        val _ = P.pickle LinkageUnitPickler.linkageUnit linkageUnit outstream 
+                        val _ = print "done]\n"
+                        val _ = print "\n[******** compiled object *************]\n"
+                        val _ = print 
+                                    (Control.prettyPrint 
+                                         (LinkageUnit.format_linkageUnit nil linkageUnit))
+                        val _ = print "\n[**************************************]\n"
+                        val _ = BinIO.closeOut outfile
+                    end
+                        
+                (*
+                 (* buc transformation *)
+                 val _ = #start bitmapCompilationTimeCounter ()
+                 val bucdecls =
+                     BUCTransformer.transform optimizedTldecs 
+                 val _ = #stop bitmapCompilationTimeCounter ()
+                         
+                 val _ =
+                     if !C.printBUC andalso !C.switchTrace
+                     then
+                         (
+                          printError "\nBUC transform to:\n";
+                          app
+                              (fn decl =>
+                                  printError
+                                      (BUCCalcFormatter.bucdeclToString [] decl
+                                       ^ "\n"))
+                              bucdecls
+                              )
+                     else ()
+                          
+                 (* Anormalization *)
+                          
+                 val _ = #start untypedBitmapCompilationTimeCounter ()
+                 val anexp = ANormalTranslator.translate bucdecls
+                 val _ = #stop untypedBitmapCompilationTimeCounter ()
+                         
+                 val _ =
+                     if !C.printAN andalso !C.switchTrace
+                     then
+                         (
+                          printError "\nUntyped bitmap compiled to:\n";
                           printError
-                              (BUCCalcFormatter.bucdeclToString [] decl
-                               ^ "\n"))
-                      bucdecls
-                    )
-                  else ()
-
-              (* Anormalization *)
-
-              val _ = #start untypedBitmapCompilationTimeCounter ()
-              val anexp = ANormalTranslator.translate bucdecls
-              val _ = #stop untypedBitmapCompilationTimeCounter ()
-
-              val _ =
-                  if !C.printAN andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nUntyped bitmap compiled to:\n";
-                      printError
-                      (ANormalFormatter.anexpToString anexp ^ "\n")
-                    )
-                  else ()
-
-              (* linearize *)
-              val _ = #start linearizationTimeCounter ()
-              val symbolicCode as {functions, ...} =
-                  Linearizer.linearize anexp
-              val _ = #stop linearizationTimeCounter ()
-
-              val _ =
-                  if !C.printLS andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nLinearized to:\n";
-                      app
-                      (printError
-                       o (fn string => string ^ "\n")
-                       o SymbolicInstructionsFormatter.functionCodeToString)
-                      functions
-                    )
-                  else ()
-
-              (* code optimization *)
-              val symbolicCode as {functions, ...} =
-                  {
-                    mainFunctionName = #mainFunctionName symbolicCode,
-                    functions =
-                    if !C.doCodeOptimization
-                    then
-                      map
-                          CodeOptimizer.optimize
-                          functions
-                    else functions
-                  }
-
-              val _ =
-                  if !C.printLS andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nCode Optimized to:\n";
-                      app
-                      (printError
-                       o (fn string => string ^ "\n")
-                       o SymbolicInstructionsFormatter.functionCodeToString)
-                      functions
-                      )
-                  else ()
-
-              (* assemble *)
-              val _ = #start assembleTimeCounter ()
-              val executable as {instructions, locationTable, ...} =
-                  Assembler.assemble symbolicCode
-              val _ = #stop assembleTimeCounter ()
-
-              val _ =
-                  if !C.printIS andalso !C.switchTrace
-                  then
-                    (
-                      printError "\nAssembled to:\n";
-                      app
-                      (printError
-                       o (fn string => string ^ "\n")
-                       o Instructions.toString)
-                      instructions;
-                      printError
-                          (Executable.locationTableToString locationTable)
-                    )
-                  else ()
-
-              (* serialize *)
-              val _ = #start serializeTimeCounter ()
-              val codeBlock = ExecutableSerializer.serialize executable
-              val _ = #stop serializeTimeCounter ()
-*)
-            in
-              ( (* codeBlock *) )
-            end
-
+                              (ANormalFormatter.anexpToString anexp ^ "\n")
+                              )
+                     else ()
+                          
+                 (* linearize *)
+                 val _ = #start linearizationTimeCounter ()
+                 val symbolicCode as {functions, ...} =
+                     Linearizer.linearize anexp
+                 val _ = #stop linearizationTimeCounter ()
+                         
+                 val _ =
+                     if !C.printLS andalso !C.switchTrace
+                     then
+                         (
+                          printError "\nLinearized to:\n";
+                          app
+                              (printError
+                               o (fn string => string ^ "\n")
+                               o SymbolicInstructionsFormatter.functionCodeToString)
+                              functions
+                              )
+                     else ()
+                          
+                 (* code optimization *)
+                 val symbolicCode as {functions, ...} =
+                     {
+                      mainFunctionName = #mainFunctionName symbolicCode,
+                      functions =
+                      if !C.doCodeOptimization
+                      then
+                          map
+                              CodeOptimizer.optimize
+                              functions
+                      else functions
+                           }
+                     
+                 val _ =
+                     if !C.printLS andalso !C.switchTrace
+                     then
+                         (
+                          printError "\nCode Optimized to:\n";
+                          app
+                              (printError
+                               o (fn string => string ^ "\n")
+                               o SymbolicInstructionsFormatter.functionCodeToString)
+                              functions
+                              )
+                     else ()
+                          
+                 (* assemble *)
+                 val _ = #start assembleTimeCounter ()
+                 val executable as {instructions, locationTable, ...} =
+                     Assembler.assemble symbolicCode
+                 val _ = #stop assembleTimeCounter ()
+                         
+                 val _ =
+                     if !C.printIS andalso !C.switchTrace
+                     then
+                         (
+                          printError "\nAssembled to:\n";
+                          app
+                              (printError
+                               o (fn string => string ^ "\n")
+                               o Instructions.toString)
+                              instructions;
+                              printError
+                                  (Executable.locationTableToString locationTable)
+                                  )
+                     else ()
+                          
+                 (* serialize *)
+                 val _ = #start serializeTimeCounter ()
+                 val codeBlock = ExecutableSerializer.serialize executable
+                 val _ = #stop serializeTimeCounter ()
+                 *)
+                in
+                    () (* codeBlock *) 
+                end
+        end
         (****************************************)
 
         val onParseError = printError o Parser.errorToString
 
-        val initialSource =
-              {
-                interactionMode = interactionMode,
-                getBaseDirectory = getBaseDirectory,
-                fileName = initialSourceName,
-                stream = initialSource,
-                promptMode =
-                case interactionMode of Interactive => true | _ => false,
-                printInput = false
-              } : parseSource
-
-        val initialParseContext = 
-            (Parser.createContext
-                 {
-                   sourceName = initialSourceName,
-                   onError = onParseError,
-                   getLine = getLine initialSource
-                 })
-
+        fun makeParseSourceAndParseContext  (source, sourceName)
+          = 
+          let
+              val parseSource = 
+                  {
+                   interactionMode = interactionMode,
+                   getBaseDirectory = getBaseDirectory,
+                   fileName = sourceName,
+                   stream = source,
+                   promptMode =
+                   case interactionMode of Interactive => true | _ => false,
+                   printInput = false
+                   } : parseSource
+          in
+              (parseSource,
+               (Parser.createContext {
+                                      isPrelude = false,
+                                      sourceName = sourceName,
+                                      onError = onParseError,
+                                      getLine = getLine parseSource
+                                      }
+                )
+               )
+          end
+          
+        val (initialSource, initialParseContext) =
+            makeParseSourceAndParseContext (initialSource, initialSourceName)
+        val (interfaceSourceOpt, interfaceParseContextOpt) =
+            case interfaceSourceOpt of
+                SOME src => 
+                let
+                    val (parsrc, parcon) = 
+                        makeParseSourceAndParseContext 
+                            (src, interfaceSourceName)
+                in
+                    (SOME parsrc, SOME parcon)
+                end 
+              | NONE => (NONE, NONE)
+                        
         fun useInput (currentSource : parseSource) (fileName, loc) = 
             let
               val currentBaseDirectory = #getBaseDirectory currentSource ()
@@ -562,32 +606,19 @@ struct
               val newParseContext =
                   Parser.createContext
                       {
-                        sourceName = fileName,
-                        onError = onParseError,
-                        getLine = getLine newSource
-                      }
+                       isPrelude = false,
+                       sourceName = fileName,
+                       onError = onParseError,
+                       getLine = getLine newSource
+                       }
             in
               (newSource, newParseContext)
             end
 
         fun flush parseContext = 
-(*
-            if (#fileName (!currentSource)) = "stdIn"
-            then
-              case TextIO.canInput(TextIO.stdIn, 4096) of
-                NONE =>
-                currentLexer:=
-                CoreMLParser.makeLexer (getLine (!currentSource)) (!currentSource)
-              | (SOME 0) =>
-                currentLexer:=
-                CoreMLParser.makeLexer (getLine (!currentSource)) (!currentSource)
-              | (SOME _) =>
-                (ignore (TextIO.input TextIO.stdIn); flush())
-            else
-*)
            Parser.resumeContext parseContext
 
-        fun errorHandler (currentSource : parseSource) parseContext exn =
+        fun errorHandler exn =
             (
               #flush standardOutput ();
               case exn of
@@ -650,6 +681,7 @@ struct
                | (** The process of the current source should continue. *)
                  Continue of 'a
 
+
         (** true if process of the current source should be stopped when any
          * error occurs. *)
         fun isStopOnError (source : parseSource) =
@@ -664,121 +696,74 @@ struct
          * @return true if the process of the source should continue.
          *)
         fun processParseResult (source, parseResult) =
-            (case parseResult of
-               Absyn.USE (fileName, loc) => 
-               (let
-                  val (innerSource, innerParseContext) =
-                      useInput source (fileName, loc)
-                in
-                  ((if processSource (innerSource, innerParseContext)
-                    then true
-                    else not(isStopOnError source))
-                   handle exn =>
-                          (#close (#stream innerSource) (); raise exn))
-                  before (#close (#stream innerSource) ())
-                end)
-             | Absyn.TOPDECS (topdecs,loc) =>
-               let
-                 val _= #start compilationTimeCounter ();
-                 val ((* codeBlock *)) = compile' topdecs
-                 val _= #stop compilationTimeCounter ();
-
-
-(*
-                 val _ = #start executeTimeCounter ()
-                 val _ = #execute session codeBlock
-                 val _ = #stop executeTimeCounter ()
-*)
-               in
-                 true (* SUCCESS *)
-               end)
+            case parseResult of
+                Absyn.USE (fileName, loc) => 
+                (let
+                     val (innerSource, innerParseContext) =
+                         useInput source (fileName, loc)
+                 in
+                     ((processSource (innerSource, innerParseContext))
+                      handle exn =>
+                             (#close (#stream innerSource) (); raise exn))
+                     before (#close (#stream innerSource) ())
+                 end)
+              | Absyn.TOPDECS (topdecs,loc) => topdecs
+              | Absyn.USEOBJ (_, loc) => 
+                raise UE.UserErrors [(loc, 
+                                      UE.Error, 
+                                      TopLevelError.UseObjOccurInLinkageUnit)]
+        
 
         and processCompileUnit source parseContext =
             (
-              let
-                (* An exception that is raised if any error occurs in
-                 * the CURRENT source.
-                 * Errors which occur in other sources "use"d by this
-                 * source are handled in the process of that source and
-                 * are not propagated to here.
-                 *)
-                exception CompileError of exn * Parser.context option
-
-              in
-                let
-                  val newParseContextOpt =
-                      SOME(Parser.parse parseContext)
-                      handle Parser.EndOfParse => NONE
-                           | exn =>
-                             (
-                               #stop parseTimeCounter ();
-                               raise CompileError(exn, NONE)
-                             )
-                  (* parseTimeCounter is started in the getLine function *)
-                  val _ = #stop parseTimeCounter ()
-                in
-                  case newParseContextOpt of
-                    NONE => Finish (* End Of Source *)
-                  | SOME(parseResult, newParseContext) =>
-                    (if processParseResult (source, parseResult)
-                     then Continue newParseContext
-                     else StopByError)
-                    handle exn =>
-                           raise CompileError (exn, SOME newParseContext)
-                end
-                  handle CompileError (exn, newParseContextOpt) =>
-                         let
-                           val newParseContext =
-                               case newParseContextOpt of
-                                 NONE =>
-                                 (* error raised in parse. *) parseContext
-                               | SOME context =>
-                                 (* error raised after parse. *) context
-                         in
-                           errorHandler source newParseContext exn;
-                           if isStopOnError source
-                           then StopByError
-                           else Continue(flush newParseContext)
-                         end
-              end
+             let
+                 val newParseContextOpt =
+                     SOME(Parser.parse parseContext)
+                     handle Parser.EndOfParse => NONE
+                          | exn => raise exn
+             (* parseTimeCounter is started in the getLine function *)
+             in
+                 case newParseContextOpt of
+                     NONE => (nil, Finish) (* End Of Source *)
+                   | SOME(parseResult, newParseContext) =>
+                     (processParseResult (source, parseResult), Continue newParseContext)
+             end
             )
 
         (**
-         * parse, compile and execute a source.
-         * @return true if the process succeeds. false otherwise.
+         * parse loops 
+         * @return abstract syntax tree
          *)
         and processSource (source, parseContext) =
             let
-              fun loop parseContext =
-                  let
-                    val doCount =
-                        Interactive = #interactionMode source
-                        andalso !C.doProfile
-                    val _ =
-                        if doCount
-                        then #reset Counter.root ()
-                        else ()
-
-                    val result = processCompileUnit source parseContext
-                  in
-                    if doCount
-                    then (print "\n"; print (Counter.dump ()))
-                    else ();
-
-                    case result of
-                      Finish => true
-                    | StopByError => false
-                    | Continue(newParseContext) =>
-                      (* loop again, because the process of the source has
-                       * not finished nor aborted. *)
-                      loop newParseContext
+                fun loop parseContext code =
+                    let
+                        val (topdecs, result) = 
+                            processCompileUnit source parseContext
+                    in
+                        case result of
+                            Finish => code
+                          | StopByError => code
+                          | Continue(newParseContext) =>
+                            (* loop again, because the process of the source has
+                             * not finished nor aborted. *)
+                            loop newParseContext (code @ topdecs)
                   end
             in
-              (* begin a loop of processing compile units. *)
-              loop parseContext
+              (* begin a loop of parsing compile units. *)
+                loop parseContext nil
             end
       in
-        processSource (initialSource, initialParseContext)
+          let
+              val linkageUnitTopdecs = 
+                  processSource (initialSource, initialParseContext) 
+              val interfaceTopDecsOpt =
+                  case (interfaceSourceOpt, interfaceParseContextOpt) of
+                      (SOME src, SOME parcon) => SOME (processSource (src, parcon))
+                    | _ => NONE
+          in
+              compileTopdecs (linkageUnitTopdecs, interfaceTopDecsOpt)
+          end handle exn => errorHandler exn
       end
 
   fun compile fileName =
@@ -787,7 +772,7 @@ struct
 
           val _ = C.printBinds := true
           val _ = C.switchTrace := true
-          val _ = C.doSeparateCompilation := true
+          val _ = C.doCompileObj := true
                   
           val currentDir = 
               OS.FileSys.fullPath(#dir(PathUtility.splitDirFile "./"))
@@ -805,26 +790,34 @@ struct
           val context = initialize topInitializeParameter
 
           val sourceFileChannel = FileChannel.openIn {fileName = fileName}
-                               
+          val interfaceFileName = (fileNameWithoutSuffix fileName)^ ".smi"
+          val interfaceFileChannelOpt = 
+              SOME (FileChannel.openIn {fileName = interfaceFileName})
+              handle IO.Io _ => NONE
+                   | ex => raise ex
+
           val currentSwitchTrace = !C.switchTrace
           val currentPrintBinds = !C.printBinds
       in
-        run
-          context
-          {
-           interactionMode = NonInteractive {stopOnError = true},
-           initialSource = sourceFileChannel,
-           initialSourceName = fileName,
-           getBaseDirectory = fn () => currentDir
-          }
-          handle e =>
-                 (
-                   #close sourceFileChannel ();
-                   C.switchTrace := currentSwitchTrace;
-                   C.printBinds := currentPrintBinds;
-                   raise e
-                 )
+          run
+              context
+              {
+               interactionMode = NonInteractive {stopOnError = true},
+               initialSource = sourceFileChannel,
+               initialSourceName = fileName,
+               interfaceSourceOpt = interfaceFileChannelOpt,
+               interfaceSourceName = interfaceFileName,
+               getBaseDirectory = fn () => currentDir
+              }
+              handle e =>
+                     (
+                      #close sourceFileChannel ();
+                      C.switchTrace := currentSwitchTrace;
+                      C.printBinds := currentPrintBinds;
+                      raise e
+                            )
       end
+
 
   (***************************************************************************)
 end

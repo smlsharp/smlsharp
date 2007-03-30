@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # A script for running through test
-# $Id: runtest.sh,v 1.15 2006/02/24 14:14:27 kiyoshiy Exp $
+# $Id: runtest.sh,v 1.18 2007/01/26 09:33:15 kiyoshiy Exp $
 #
 # Example:
 #   ./runtest.sh -html -usebasis -d D:/tmp/imltest coresml
@@ -23,7 +23,7 @@ TESTSDIR=../tests/
 PRINTER=HTML
 RUNTIME=ML
 # use default prelude (non Basis)
-PRELUDE=../../src/lib/minimum.sml
+PRELUDE=""
 
 while true
 do
@@ -40,8 +40,11 @@ do
     "-emulator")
 	RUNTIME="ML"
 	shift;;
+    "-minimum")
+        PRELUDE=../../src/lib/minimum.sml
+        shift;;
     "-usebasis")
-	PRELUDE=../../src/lib/basis.sml
+	PRELUDE=../../src/lib/prelude.sml
 	shift;;
     *)
 	break;;
@@ -87,5 +90,6 @@ esac
 
 ###############################################################################
 
-echo "OS.FileSys.chDir \"../driver/main\"; CM.make(); OS.FileSys.chDir \"../../bin\"; ${MAIN}.main(\"imltest\", [\"${PRELUDE}\",\"${EXPECTEDDIR}\",\"${RESULTDIR}\",\"${SOURCEDIR}\"]);" | ${SML}
+script="OS.FileSys.chDir \"../../bin\"; ${MAIN}.main (\"imltest\", [\"${PRELUDE}\",\"${EXPECTEDDIR}\",\"${RESULTDIR}\",\"${SOURCEDIR}\"]);"
 
+(cd ../driver/main && exec $SHELL ../../../mksmlheap --exec "$script")

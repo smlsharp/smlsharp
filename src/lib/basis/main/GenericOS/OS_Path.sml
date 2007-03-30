@@ -2,7 +2,7 @@
  * OS_Path structure.
  * @author AT&T Bell Laboratories.
  * @author YAMATODANI Kiyoshi
- * @version $Id: OS_Path.sml,v 1.2 2005/08/18 00:45:19 kiyoshiy Exp $
+ * @version $Id: OS_Path.sml,v 1.4 2006/12/04 04:21:03 kiyoshiy Exp $
  *)
 (* os-path.sml
  *
@@ -12,12 +12,18 @@
  *
  *)
 local
+
+  structure SS = Substring
+
   structure OSPathOperations =
   struct
 
     exception Path
 
     datatype arc_kind = Null | Parent | Current | Arc of string
+
+    fun trPath path =
+        String.translate (fn #"\\" => "/" | c => String.str c) path
 
     fun classify "" = Null
       | classify "." = Current
@@ -30,17 +36,27 @@ local
 
     fun validVolume (_, vol)= Substring.isEmpty vol
 
-    val volSS = Substring.all ""
+    val volSS = Substring.full ""
 
     (* Note: we are guaranteed that this is never called with "" *)
     fun splitVolPath s =
-        if (CharVector.sub(s, 0) = #"/")
-        then (true, volSS, Substring.triml 1 (Substring.all s))
-        else (false, volSS, Substring.all s)
+        let val ss = SS.full (trPath s)
+        in
+          if (SS.sub(ss, 0) = #"/")
+          then (true, volSS, Substring.triml 1 ss)
+          else
+            if (2 < SS.size ss) andalso (SS.sub(ss, 1) = #":")
+            then
+              let val (volSS, pathSS) = SS.splitAt (ss, 2)
+              in (true, volSS, pathSS)
+              end
+            else (false, volSS, ss)
+        end
 
     fun joinVolPath (true, "", "") = "/"
       | joinVolPath (true, "", s) = "/" ^ s
       | joinVolPath (false, "", s) = s
+      | joinVolPath (true, vol, s) = vol ^ "/" ^ s
       | joinVolPath _ = raise Path (* invalid volume *)
 
     val arcSepChar = #"/"

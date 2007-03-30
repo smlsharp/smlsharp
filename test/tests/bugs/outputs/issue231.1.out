@@ -1,0 +1,2 @@
+../tests/bugs/tests/issue231.1.sml:1.1-1.27 Error:
+  duplicate type parameter name in datatype declaration: a

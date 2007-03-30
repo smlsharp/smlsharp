@@ -4,16 +4,19 @@
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @author Satoshi Osaka
- * @version $Id: TypedFlatCalcUtils.sml,v 1.5 2006/02/27 06:31:09 bochao Exp $
+ * @version $Id: TypedFlatCalcUtils.sml,v 1.9 2007/02/28 15:31:26 katsu Exp $
  *)
 structure TypedFlatCalcUtils  = 
 struct
 local 
+    datatype valIdent = datatype Types.valIdent
     open TypedFlatCalc 
 in
   fun getLocOfExp exp =
       case exp of
         TFPFOREIGNAPPLY {loc,...} => loc
+      | TFPEXPORTCALLBACK {loc,...} => loc
+      | TFPSIZEOF (_, loc) => loc
       | TFPCONSTANT (_, loc) => loc
       | TFPVAR (_, loc) => loc
       | TFPGETGLOBAL (field, ty, loc) => loc
@@ -37,7 +40,6 @@ in
       | TFPPOLY {loc,...} => loc
       | TFPTAPP {loc,...} => loc
       | TFPSEQ {loc,...} => loc
-      | TFPFFIVAL {loc,...} => loc
       | TFPCAST (tfpexp,ty,loc) => loc
 
   structure VIdOrd : ordsig =
@@ -92,8 +94,10 @@ in
       env
       vars
 
-  fun getFV (TFPFOREIGNAPPLY {funExp, argExp,...}) =
-      getFV funExp ++ getFV argExp
+  fun getFV (TFPFOREIGNAPPLY {funExp, argExpList,...}) =
+      getFV funExp ++ foldlUnion getFV argExpList
+    | getFV (TFPEXPORTCALLBACK {funExp,...}) = getFV funExp
+    | getFV (TFPSIZEOF _) = VIdSet.empty
     | getFV (TFPCONSTANT _) = VIdSet.empty
     | getFV (TFPVAR (var, loc)) = VIdSet.singleton var
     | getFV (TFPGETGLOBAL _) = VIdSet.empty
@@ -144,12 +148,25 @@ in
       argVarList
     | getFV (TFPPOLY {exp,...}) =  getFV exp
     | getFV (TFPTAPP {exp, ...}) = getFV exp
-    | getFV (TFPSEQ {expList,...}) = 
-        foldlUnion getFV expList
-    | getFV (TFPFFIVAL _) = VIdSet.empty
+    | getFV (TFPSEQ {expList,...}) = foldlUnion getFV expList
     | getFV (TFPCAST (exp, ty, loc)) =  getFV exp
 
   and getDecFVBV (TFPVAL (binds, loc)) =
+      foldl
+      (fn ( (VALIDENT var, exp ), ( FV, BV ) ) =>
+          ( 
+	    FV ++ (VIdSetDelete ( getFV exp, var )),
+	    VIdSet.add ( BV, var )
+	  )
+      | ( (VALIDENTWILD _, exp), ( FV, BV) ) => 
+          ( 
+	    FV ++ (getFV exp), 
+	    BV
+	  )
+          )
+      ( VIdSet.empty, VIdSet.empty )
+      binds
+(*
       foldl
       (fn ( (VALDECIDENT var, exp ), ( FV, BV ) ) =>
           ( 
@@ -164,6 +181,7 @@ in
           )
       ( VIdSet.empty, VIdSet.empty )
       binds
+*)
     | getDecFVBV (TFPVALREC (decs, loc)) = 
       let
 	val BV = 
@@ -204,8 +222,14 @@ in
   and getDecsFV decs = #1 (getDecsFVBV decs)
 
   and getBV (TFPVAL (decs, loc)) = 
+(*
       foldl (fn ( (VALDECIDENT var, _ ), BV ) => VIdSet.add ( BV, var )
              | ((VALDECIDENTWILD _, _), BV) => BV
+             ) 
+      VIdSet.empty decs
+*)
+      foldl (fn ( (VALIDENT var, _ ), BV ) => VIdSet.add ( BV, var )
+             | ((VALIDENTWILD _, _), BV) => BV
              ) 
       VIdSet.empty decs
     | getBV (TFPVALREC (decs, loc)) =

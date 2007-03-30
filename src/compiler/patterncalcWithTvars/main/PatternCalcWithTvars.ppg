@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: PatternCalcWithTvars.ppg,v 1.5 2006/03/02 12:48:46 bochao Exp $
+ * @version $Id: PatternCalcWithTvars.ppg,v 1.15 2007/02/28 17:57:20 katsu Exp $
  *)
 structure PatternCalcWithTvars : PATTERNCALCWITHTVARS = struct
 
@@ -58,6 +58,12 @@ type caseKind =
     *)
     Absyn.tvar
 
+  datatype specKind = datatype Absyn.specKind
+
+  (*%
+   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+   *)
+  type callingConvention = Absyn.callingConvention
 
  (*%
  * @formatter(constant) Absyn.format_constant
@@ -66,6 +72,7 @@ type caseKind =
  * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
  * @formatter(enclosedOpt) SmlppgUtil.formatEnclosedOpt
  * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+ * @formatter(specKind) Absyn.format_specKind
  *)
  datatype ptexp = 
      (*%
@@ -156,7 +163,33 @@ type caseKind =
      * @format(exp * loc) "_cast" "(" exp ")"
      *)
      PTCAST of ptexp * loc
+   | (*%
+      * @format(exp * ty * loc)
+      *     N0{ {exp} + ":" +1 "_import" +2 {ty} }
+      *)
+     PTFFIIMPORT of ptexp * ty * loc
+   | (*%
+      * @format(exp * ty * loc)
+      *     N0{ {exp} + ":" +1 "_export" +2 {ty} }
+      *)
+     PTFFIEXPORT of ptexp * ty * loc
+   | (*%
+      * @format(cconv * exp * arg args * ty * loc)
+      *     N0{ "_ffiapply" + cconv + exp + "(" args(arg)("," +) ")" + ":" + ty}
+      *)
+     PTFFIAPPLY of callingConvention * ptexp * ffiArg list * ty * loc
 
+ and ffiArg =
+    (*%
+     * @format(exp * ty)  exp + ":" + ty	
+     *)    
+     PTFFIARG of ptexp * ty
+   | (*%
+      * @format(ty * exp opt:prependedOpt)
+      *   "_sizeof(" ty ")" {opt(exp)(+d "*" +)}
+      *)
+     PTFFIARGSIZEOF of ty * ptexp option
+  
  and ptdecl = 
      (*%
       * @format(tvars1 * tvars2 * bind binds * loc)
@@ -179,7 +212,7 @@ type caseKind =
       PTDECFUN of tvarNameSet * tvarNameSet * (ptpat * (ptpat list * ptexp) list) list * loc 
    | (*%
          * @format(tvars1 * tvars2 * dec * loc)
-         *  "nonrecfun" + tvars1 +d {dec}
+         *  "nonrecfun" + tvars1 + "[" tvars2 "]" +d {dec}
          * @format:dec(fpat * rules) {fpat + rules}
          * @format:rules(rule rules) {rules(rule)(~2[ +1"|"] +)}
          * @format:rule(pat pats *  exp)
@@ -259,22 +292,6 @@ type caseKind =
       *)
      PTNONFIXDEC of string list * loc
    | (*%
-      * @format({name:name,funExp:funExp, libExp:libExp, argTyList:argty argtys, resultTy:resultty,loc:loc})
-      *       "val" + "import" + name + "=" +1
-      *       funExp +d "of" +d
-      *       libExp +2
-      *       ":" + "{" {argtys(argty)("," +)} "}" "->" {resultty}
-      *)
-     PTFFIVAL of 
-     {
-       name:string, 
-       funExp:ptexp, 
-       libExp:ptexp,
-       argTyList:ty list, 
-       resultTy:ty, 
-       loc:loc
-      }
-   | (*%
       * @format ""
       *)
      PTEMPTY 
@@ -289,7 +306,7 @@ type caseKind =
       *)
      PTPATID of longid * loc
    | (*%
-      * @format(const * loc) const
+      * @format(const:constant * loc) const
       *)
      PTPATCONSTANT of constant * loc
    | (*%
@@ -310,6 +327,10 @@ type caseKind =
       * @format(pat * ty * loc) {pat} + ":" +d {ty}
       *)
      PTPATTYPED of ptpat * ty * loc
+   | (*%
+      * @format(pat1 * pat2 * loc) "(" pat1 "|" pat2 ")"
+      *)
+     PTPATORPAT of ptpat * ptpat * loc
 
  and ptexbind =
           (*%
@@ -397,10 +418,10 @@ type caseKind =
    |
    (*%
     * @format(typdesc typdescs * loc)  "type" + {typdescs(typdesc)(~4[ +1 "and"] +)}
-    * @format:typdesc(tyvar tyvars:enclosedList * tyCon) 
-    * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+    * @format:typdesc(tyvar tyvars:enclosedList * tyCon * kind) 
+    * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} "::" kind}
     *)
-     PTSPECTYPE of (tvar list * string) list  * loc (* type *)
+     PTSPECTYPE of (tvar list * string * specKind) list  * loc (* type *)
    |
     (*%
     * @format(derivedtyp  * loc)  derivedtyp
@@ -410,10 +431,10 @@ type caseKind =
    |
    (*%
     * @format(typdesc typdescs * loc)  "eqtype" + {typdescs(typdesc)(~4[ +1 "and"] +)}
-    * @format:typdesc(tyvar tyvars:enclosedList * tyCon) 
-    * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+    * @format:typdesc(tyvar tyvars:enclosedList * tyCon * kind) 
+    * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon}  "::" kind}
     *)
-   PTSPECEQTYPE of (tvar list * string) list * loc (* eqtype *)
+   PTSPECEQTYPE of (tvar list * string * specKind) list * loc (* eqtype *)
    |
    (*%
     * @format(datdesc datdescs * loc)  "datatype" + {datdescs(datdesc)(~4[ +1 "and"] +)}
@@ -486,9 +507,14 @@ and pttopdec =
     PTTOPDECFUN of (string * string * ptsigexp  * ptstrexp * loc) list * loc
   | (*%
      * @format (spec * loc)
-     * !N0{ "import" + spec }
+     * !N0{ "import" + spec + "end"}
      *) 
     PTTOPDECIMPORT of ptspec * loc 
+  | (*%
+     * @format (spec * loc)
+     * !N0{ "export" + spec + "end" }
+     *) 
+    PTTOPDECEXPORT of ptspec * loc 
 
 
  fun getLocExp ptexp =
@@ -510,6 +536,9 @@ and pttopdec =
    | PTSELECT(_, _, loc) => loc
    | PTSEQ(_, loc) => loc
    | PTCAST(_, loc) => loc
+   | PTFFIIMPORT(_, _, loc) => loc
+   | PTFFIEXPORT(_, _, loc) => loc
+   | PTFFIAPPLY(_, _, _, _, loc) => loc
 
  fun getLocDec ptdecl =
      case ptdecl of
@@ -528,7 +557,6 @@ and pttopdec =
    | PTINFIXDEC (_, _, loc) => loc
    | PTINFIXRDEC (_, _, loc) => loc
    | PTNONFIXDEC (_, loc) => loc
-   | PTFFIVAL {loc,...} => loc
    | PTEMPTY => Loc.noloc
 
  fun getLocPat ptpat =
@@ -540,6 +568,15 @@ and pttopdec =
      | PTPATRECORD (_, _, loc) => loc
      | PTPATLAYERED (_, _, _, loc) => loc
      | PTPATTYPED (_, _, loc) => loc
+     | PTPATORPAT (_, _, loc) => loc
+
+ fun getLocTopDec pttopdec =
+     case pttopdec of
+         PTTOPDECSTR (_, loc) => loc
+       | PTTOPDECSIG (_, loc) => loc
+       | PTTOPDECFUN (_, loc) => loc
+       | PTTOPDECIMPORT (_, loc) => loc
+       | PTTOPDECEXPORT (_, loc) => loc
 
   val emptyTvarNameSet = SEnv.empty : tvarNameSet
 

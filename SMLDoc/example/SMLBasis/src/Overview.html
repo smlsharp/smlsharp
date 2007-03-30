@@ -1,0 +1,35 @@
+<HTML>
+<BODY>
+<P>
+These web pages contain the interface specifications for the modules of
+the <B>SML Basis Library</B>, which is a standard library for the 1997
+Revision of SML<B>[CITE]</B>. The SML Basis Library provides interfaces and
+operations for basic types, such as integers and strings, support for
+input and output (I/O), interfaces to basic operating system interfaces, 
+and support for standard datatypes, such as options and lists. 
+The Library does <EM>not</EM> attempt to define higher-level APIs, 
+such as collection types or graphical user-interface components. 
+These APIs are left for other libraries.
+<P>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy. The SML Basis Library is also published as 
+a book by <EM><A HREF="http://www.cup.org">Cambridge University Press</A></EM>.
+ In addition to the manual pages, the book also contains tutorial descriptions
+ of programming techniques and idioms for effective use of the Library's
+ interfaces.
+<P>
+The design philosophy of the SML Basis Library is to use the SML module system
+ as an organizing tool. All type, exception, and value identifiers are bound
+ in some module. A small number of these, which are called <EM>pervasive
+ identifiers</EM>, are also bound at top-level (<I>i.e.</I>, without
+ qualification). In addition, the top-level environment defines overloading
+ of some identifiers.
+<P>
+The components (<I>i.e.</I>, signatures, structures, and functors) of the SML
+ Basis Library are divided into <EM>required</EM> and <EM>optional</EM>
+ components. Required components must be provided by all SML implementations, 
+while optional components are just that. In some cases, support for one
+ optional component entails providing support for others.
+</BODY>
+</HTML>

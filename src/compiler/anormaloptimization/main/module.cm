@@ -1,5 +1,12 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
 
         ../../control/sources.cm
         ../../systemdef/sources.cm
@@ -9,6 +16,7 @@ Group is
         ../../types/sources.cm
         ../../util/sources.cm
 	../../anormal/sources.cm
+        ../../../primitives/compiler/sources.cm
 
         ANormalOptimizer.sml
         AtomEnv.sml

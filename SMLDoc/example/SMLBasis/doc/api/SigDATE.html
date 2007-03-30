@@ -1,0 +1,418 @@
+<HTML>
+<HEAD>
+<TITLE>DATE</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>DATE</H2>
+<DL>
+<DT> <B>All Known Implementing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="StrDate.html">Date</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigDATE.html">DATE</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigDATE.html#Typedate">date</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A>&nbsp;=&nbsp;<A HREF="SigDATE.html#ConstrMon">Mon</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrTue">Tue</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrWed">Wed</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrThu">Thu</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrFri">Fri</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrSat">Sat</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrSun">Sun</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="SigDATE.html#Typemonth">month</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigDATE.html#ConstrJan">Jan</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrFeb">Feb</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrMar">Mar</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrApr">Apr</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrMay">May</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrJun">Jun</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrJul">Jul</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrAug">Aug</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrSep">Sep</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrOct">Oct</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrNov">Nov</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrDec">Dec</A><br>
+&nbsp;&nbsp;exception&nbsp;<A HREF="SigDATE.html#ExceptionDate">Date</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valyear">year</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valmonth">month</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF="SigDATE.html#Typemonth">month</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valday">day</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valhour">hour</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valminute">minute</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valsecond">second</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#ValweekDay">weekDay</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#ValyearDay">yearDay</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#ValisDst">isDst</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;bool&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valoffset">offset</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;Time.time&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#VallocalOffset">localOffset</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;Time.time<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valdate">date</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;year&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;month&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;day&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hour&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;minute&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;second&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;offset&nbsp;:&nbsp;Time.time&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigDATE.html#Typedate">date</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#ValfromTimeLocal">fromTimeLocal</A>&nbsp;:&nbsp;Time.time&nbsp;->&nbsp;<A HREF="SigDATE.html#Typedate">date</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#ValfromTimeUniv">fromTimeUniv</A>&nbsp;:&nbsp;Time.time&nbsp;->&nbsp;<A HREF="SigDATE.html#Typedate">date</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#ValtoTime">toTime</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;Time.time<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valfmt">fmt</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#ValfromString">fromString</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valscan">scan</A>&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="SigDATE.html#Typedate">date</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigDATE.html#Valcompare">compare</A>&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;*&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typedate"><!-- --></A>
+<H3>date</H3>
+<P>
+<CODE>type&nbsp;date</CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeweekday"><!-- --></A>
+<H3>weekday</H3>
+<P>
+<CODE>datatype&nbsp;weekday&nbsp;=&nbsp;<A HREF="SigDATE.html#ConstrMon">Mon</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrTue">Tue</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrWed">Wed</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrThu">Thu</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrFri">Fri</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrSat">Sat</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrSun">Sun</A></CODE>
+
+<HR>
+<A NAME="Typemonth"><!-- --></A>
+<H3>month</H3>
+<P>
+<CODE>datatype&nbsp;month&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigDATE.html#ConstrJan">Jan</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrFeb">Feb</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrMar">Mar</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrApr">Apr</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrMay">May</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrJun">Jun</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrJul">Jul</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrAug">Aug</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrSep">Sep</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrOct">Oct</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrNov">Nov</A>&nbsp;|&nbsp;<A HREF="SigDATE.html#ConstrDec">Dec</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrMon"><!-- --></A>
+<H3>Mon</H3>
+<P>
+<CODE>constructor&nbsp;Mon&nbsp;:&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A></CODE>
+
+<HR>
+<A NAME="ConstrTue"><!-- --></A>
+<H3>Tue</H3>
+<P>
+<CODE>constructor&nbsp;Tue&nbsp;:&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A></CODE>
+
+<HR>
+<A NAME="ConstrWed"><!-- --></A>
+<H3>Wed</H3>
+<P>
+<CODE>constructor&nbsp;Wed&nbsp;:&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A></CODE>
+
+<HR>
+<A NAME="ConstrThu"><!-- --></A>
+<H3>Thu</H3>
+<P>
+<CODE>constructor&nbsp;Thu&nbsp;:&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A></CODE>
+
+<HR>
+<A NAME="ConstrFri"><!-- --></A>
+<H3>Fri</H3>
+<P>
+<CODE>constructor&nbsp;Fri&nbsp;:&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A></CODE>
+
+<HR>
+<A NAME="ConstrSat"><!-- --></A>
+<H3>Sat</H3>
+<P>
+<CODE>constructor&nbsp;Sat&nbsp;:&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A></CODE>
+
+<HR>
+<A NAME="ConstrSun"><!-- --></A>
+<H3>Sun</H3>
+<P>
+<CODE>constructor&nbsp;Sun&nbsp;:&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A></CODE>
+
+<HR>
+<A NAME="ConstrJan"><!-- --></A>
+<H3>Jan</H3>
+<P>
+<CODE>constructor&nbsp;Jan&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrFeb"><!-- --></A>
+<H3>Feb</H3>
+<P>
+<CODE>constructor&nbsp;Feb&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrMar"><!-- --></A>
+<H3>Mar</H3>
+<P>
+<CODE>constructor&nbsp;Mar&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrApr"><!-- --></A>
+<H3>Apr</H3>
+<P>
+<CODE>constructor&nbsp;Apr&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrMay"><!-- --></A>
+<H3>May</H3>
+<P>
+<CODE>constructor&nbsp;May&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrJun"><!-- --></A>
+<H3>Jun</H3>
+<P>
+<CODE>constructor&nbsp;Jun&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrJul"><!-- --></A>
+<H3>Jul</H3>
+<P>
+<CODE>constructor&nbsp;Jul&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrAug"><!-- --></A>
+<H3>Aug</H3>
+<P>
+<CODE>constructor&nbsp;Aug&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrSep"><!-- --></A>
+<H3>Sep</H3>
+<P>
+<CODE>constructor&nbsp;Sep&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrOct"><!-- --></A>
+<H3>Oct</H3>
+<P>
+<CODE>constructor&nbsp;Oct&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrNov"><!-- --></A>
+<H3>Nov</H3>
+<P>
+<CODE>constructor&nbsp;Nov&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="ConstrDec"><!-- --></A>
+<H3>Dec</H3>
+<P>
+<CODE>constructor&nbsp;Dec&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valyear"><!-- --></A>
+<H3>year</H3>
+<P>
+<CODE>val&nbsp;year&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valmonth"><!-- --></A>
+<H3>month</H3>
+<P>
+<CODE>val&nbsp;month&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF="SigDATE.html#Typemonth">month</A></CODE>
+
+<HR>
+<A NAME="Valday"><!-- --></A>
+<H3>day</H3>
+<P>
+<CODE>val&nbsp;day&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valhour"><!-- --></A>
+<H3>hour</H3>
+<P>
+<CODE>val&nbsp;hour&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valminute"><!-- --></A>
+<H3>minute</H3>
+<P>
+<CODE>val&nbsp;minute&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valsecond"><!-- --></A>
+<H3>second</H3>
+<P>
+<CODE>val&nbsp;second&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValweekDay"><!-- --></A>
+<H3>weekDay</H3>
+<P>
+<CODE>val&nbsp;weekDay&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF="SigDATE.html#Typeweekday">weekday</A></CODE>
+
+<HR>
+<A NAME="ValyearDay"><!-- --></A>
+<H3>yearDay</H3>
+<P>
+<CODE>val&nbsp;yearDay&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValisDst"><!-- --></A>
+<H3>isDst</H3>
+<P>
+<CODE>val&nbsp;isDst&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;bool&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Valoffset"><!-- --></A>
+<H3>offset</H3>
+<P>
+<CODE>val&nbsp;offset&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;Time.time&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="VallocalOffset"><!-- --></A>
+<H3>localOffset</H3>
+<P>
+<CODE>val&nbsp;localOffset&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;Time.time</CODE>
+
+<HR>
+<A NAME="Valdate"><!-- --></A>
+<H3>date</H3>
+<P>
+<CODE>val&nbsp;date<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;year&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;month&nbsp;:&nbsp;<A HREF="SigDATE.html#Typemonth">month</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;day&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hour&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;minute&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;second&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;offset&nbsp;:&nbsp;Time.time&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigDATE.html#Typedate">date</A></CODE>
+
+<HR>
+<A NAME="ValfromTimeLocal"><!-- --></A>
+<H3>fromTimeLocal</H3>
+<P>
+<CODE>val&nbsp;fromTimeLocal&nbsp;:&nbsp;Time.time&nbsp;->&nbsp;<A HREF="SigDATE.html#Typedate">date</A></CODE>
+
+<HR>
+<A NAME="ValfromTimeUniv"><!-- --></A>
+<H3>fromTimeUniv</H3>
+<P>
+<CODE>val&nbsp;fromTimeUniv&nbsp;:&nbsp;Time.time&nbsp;->&nbsp;<A HREF="SigDATE.html#Typedate">date</A></CODE>
+
+<HR>
+<A NAME="ValtoTime"><!-- --></A>
+<H3>toTime</H3>
+<P>
+<CODE>val&nbsp;toTime&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;Time.time</CODE>
+
+<HR>
+<A NAME="ValtoString"><!-- --></A>
+<H3>toString</H3>
+<P>
+<CODE>val&nbsp;toString&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valfmt"><!-- --></A>
+<H3>fmt</H3>
+<P>
+<CODE>val&nbsp;fmt&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValfromString"><!-- --></A>
+<H3>fromString</H3>
+<P>
+<CODE>val&nbsp;fromString&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Valscan"><!-- --></A>
+<H3>scan</H3>
+<P>
+<CODE>val&nbsp;scan&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="SigDATE.html#Typedate">date</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+
+<HR>
+<A NAME="Valcompare"><!-- --></A>
+<H3>compare</H3>
+<P>
+<CODE>val&nbsp;compare&nbsp;:&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;*&nbsp;<A HREF="SigDATE.html#Typedate">date</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Exception detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ExceptionDate"><!-- --></A>
+<H3>Date</H3>
+<P>
+<CODE>exception&nbsp;Date</CODE>
+
+<P>
+
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

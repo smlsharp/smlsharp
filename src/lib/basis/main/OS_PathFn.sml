@@ -2,7 +2,7 @@
  * A functorized implementation of the OS.Path structure.
  * @author AT&T Bell Laboratories.
  * @author YAMATODANI Kiyoshi
- * @version $Id: OS_PathFn.sml,v 1.1 2005/08/12 07:58:23 kiyoshiy Exp $
+ * @version $Id: OS_PathFn.sml,v 1.3 2006/12/04 04:21:03 kiyoshiy Exp $
  *)
 (* os-path-fn.sml
  *
@@ -62,12 +62,12 @@ struct
     | concatArcs ([""], al2) = al2
     | concatArcs (a::al1, al2) = a :: concatArcs(al1, al2)
 
-  fun validVolume {isAbs, vol} = P.validVolume(isAbs, SS.all vol)
+  fun validVolume {isAbs, vol} = P.validVolume(isAbs, SS.full vol)
 
   fun fromString "" = {isAbs = false, vol = "", arcs = []}
     | fromString p =
       let
-        val fields = SS.fields (fn c => (c = P.arcSepChar))
+        val fields = SS.tokens (fn c => (c = P.arcSepChar)) (* Use tokens *)
         val (isAbs, vol, rest) = P.splitVolPath p
       in
         {
@@ -140,7 +140,7 @@ struct
   fun splitBaseExt p =
       let
         val {dir, file} = splitDirFile p
-        val (file', ext') = SS.splitr (fn c => c <> #".") (SS.all file)
+        val (file', ext') = SS.splitr (fn c => c <> #".") (SS.full file)
         val fileLen = SS.size file'
         val (file, ext) =
             if (fileLen <= 1) orelse (SS.isEmpty ext')

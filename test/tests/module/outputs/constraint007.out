@@ -1,0 +1,18 @@
+signature SIG = sig structure T : sig type t val x : t end end
+structure S : sig type t = int val x : int end
+structure STR : SIG
+structure S : sig type t = int val x : t end
+val it = 1 : S.t
+signature SIG = sig structure T : sig type t val x : t end end
+structure S : sig type t = int val x : int end
+structure STR : SIG
+structure S : sig type t val x : t end
+val it = - : S.t
+structure S : sig type t = int val x : int end
+structure STR : sig structure T : sig type t val x : t end end
+structure S : sig type t = int val x : t end
+val it = 1 : S.t
+structure S : sig type t = int val x : int end
+structure STR : sig structure T : sig type t val x : t end end
+structure S : sig type t val x : t end
+val it = - : S.t

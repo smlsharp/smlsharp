@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.7 2006/02/15 09:18:00 kiyoshiy Exp $
+ * @version $Id: Main.sml,v 1.9 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
 functor Main(structure Printer : RESULT_PRINTER
              structure RuntimeRunner : RUNTIME_RUNNER) =
@@ -15,8 +15,14 @@ struct
                    structure BenchmarkRunner = BenchmarkRunner(RuntimeRunner)
                    structure Printer = Printer
                  )
+  structure U = Utility
 
   (***************************************************************************)
+
+  val libdir = Configuration.LibDirectory
+  val minimumPreludePath = libdir ^ "/" ^ Configuration.MinimumPreludeFileName
+  val PreludePath = libdir ^ "/" ^ Configuration.PreludeFileName
+  val compiledPreludePath = libdir ^ "/" ^ Configuration.CompiledPreludeFileName
 
   val USAGE = "prelude resultDirectory sourcePath1 ..."
 
@@ -24,16 +30,25 @@ struct
           (_, prelude :: resultDirectory :: sourcePaths) =
       (
         Control.switchTrace := false;
+        Control.printBinds := false;
+        Control.printWarning := false;
+        Control.checkType := false;
+        Control.generateExnHistory := true;
+
         C.setControlOptions "IML_" OS.Process.getEnv;
+
         VM.instTrace := false;
         VM.stateTrace := false;
         VM.heapTrace := false;
+
         Driver.runBenchmarks
         {
-          prelude = prelude,
+          prelude = if prelude = "" then compiledPreludePath else prelude,
+          isCompiledPrelude = prelude = "" orelse U.isSuffix(prelude, "smc"),
           sourcePaths = sourcePaths,
           resultDirectory = resultDirectory
         };
+
         OS.Process.success
       )
     | main _ = (print USAGE; OS.Process.failure)
