@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
- * @version $Id: TypeCheckTypedLambdaError.ppg,v 1.3 2006/02/28 16:11:08 kiyoshiy Exp $
+ * @version $Id: TypeCheckTypedLambdaError.ppg,v 1.4 2007/06/19 22:19:12 ohori Exp $
  *)
 structure TypeCheckTypedLambdaError =
 struct
@@ -35,6 +35,21 @@ struct
    *)
    InstanceArityMisMatch of {polyArity : int, numTyargs:int}
    
+  and
+  (*%
+   * @format({consExpTy, newTailExpTy, listTy})
+   * "SetTail" +d "type" +d "mismatch."
+     +1
+     "consExpTy:" + consExpTy
+     +1
+     "newTailExpTy:" + newTailExpTy
+     +1
+     "listTy:" + listTy
+   *)
+   SetTailMismatch of {consExpTy : Types.ty, 
+                       newTailExpTy :Types.ty,
+                       listTy : Types.ty}	       
+
    and
   (*%
    * @format({annotation, expType})

@@ -1,7 +1,7 @@
 (**
  * user errors detected in type inference phase.
  * @author OHORI Atsushi
- * @version $Id: TypeInferenceError.ppg,v 1.64 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: TypeInferenceError.ppg,v 1.65 2007/06/19 22:19:12 ohori Exp $
  *)
 structure TypeInferenceError =
 struct
@@ -51,6 +51,18 @@ struct
    * "path" +d longid +d "is" +d "not" +d "a" +d "constructor"
    *)
   NonConstructorPathInPat of longid
+
+  and
+  (**
+      [1, true]
+   *)
+  (*%
+   * @format({prevTy, nextTy})  
+   * "inconsistent" +d "list" +d "element" +d "type:" 
+   *  + 1 "this element:" +d {nextTy} 
+   *  + 1 "other elements:" +d {prevTy} 
+   *)
+ InconsistentListElementType of {prevTy:Types.ty, nextTy:Types.ty}
 
   and
   (**

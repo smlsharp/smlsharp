@@ -7,24 +7,22 @@ Group is
 #else
         smlnj-lib.cm
 #endif
-        ../../absyn/sources.cm
-        ../../format/sources.cm
 #if defined(NEW_CM)
 	$/smlformatlib.cm 
 #else
 	../../../smlformatlib.cm 
 #endif
+
+        ../../absyn/sources.cm
+        ../../format/sources.cm
         ../../control/sources.cm
         ../../env/sources.cm
         ../../name/sources.cm
-        ../../types/sources.cm
-	../../typedlambda/sources.cm
 	../../systemdef/sources.cm
         ../../../primitives/compiler/sources.cm
 
-        anormal.sig
-        anormal.ppg.sml
-	ANORMAL_UTILS.sig
+        ANormal.ppg.sml
+	ANORMALUTILS.sig
 	ANormalUtils.sml
-        ANORMAL_FORMATTER.sig
+        ANORMALFORMATTER.sig
         ANormalFormatter.sml

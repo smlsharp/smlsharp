@@ -1,1 +1,1 @@
-use "fibonacci.sml";
+use "./fibonacci.sml";

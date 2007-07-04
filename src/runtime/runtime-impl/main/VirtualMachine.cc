@@ -1,7 +1,7 @@
 /**
  * Implementation of IML Virtual Machine.
  * @author YAMATODANI Kiyoshi
- * @version $Id: VirtualMachine.cc,v 1.72 2007/03/09 06:39:57 kiyoshiy Exp $
+ * @version $Id: VirtualMachine.cc,v 1.77 2007/06/11 00:47:57 kiyoshiy Exp $
  */
 #include <stdio.h>
 #include <string>
@@ -32,6 +32,9 @@ const int CLOSURE_ENTRYPOINT_INDEX = 0;
 const int CLOSURE_ENV_INDEX = 1;
 const int CLOSURE_BITMAP = 2;
 const int CLOSURE_FIELDS_COUNT = 2;
+const int FUNENTRY_FRAMESIZE_INDEX = 1;
+const int FUNENTRY_STARTADDRESS_INDEX = 2;
+const int FUNENTRY_ARGDESTS_INDEX = 4;
 
 const int FINALIZABLE_BITMAP = 3;
 
@@ -44,6 +47,10 @@ UInt32Value * const RETURN_ADDRESS_OF_INITIAL_FRAME = (UInt32Value*)-1;
 
 #define HEAP_GETFIELD(block, index) \
 (block)[(index)]
+
+#define HEAP_GETREAL64FIELD(block, index) \
+*(Real64Value*)((block) + (index))
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -58,6 +65,7 @@ VirtualMachine* VirtualMachine::instance_ = 0;
 Session* VirtualMachine::session_ = 0;
 
 const char* VirtualMachine::name_ = 0;
+const char* VirtualMachine::executableImageName_ = NULL;
 int VirtualMachine::argumentsCount_ = 0;
 const char** VirtualMachine::arguments_ = 0;
 
@@ -134,11 +142,13 @@ UInt32Value arithmeticRightShift(UInt32Value left, UInt32Value right)
 }
 
 VirtualMachine::VirtualMachine(const char* name,
+                               const char* executableImageName,
                                const int argumentsCount,
                                const char** arguments,
                                const int stackSize)
 {
     name_ = name;
+    executableImageName_ = executableImageName;
     argumentsCount_ = argumentsCount;
     arguments_ = arguments;
     DBGWRAP(LOG.debug("VM: argc = %d", argumentsCount_);)
@@ -439,57 +449,6 @@ VirtualMachine::printStackTrace(UInt32Value *PC, UInt32Value* SP)
     }
 }
 
-/**
- * a variation of getFunInfo specialized for self recursive call.
- */
-INLINE_FUN
-UInt32Value*
-VirtualMachine::getFunInfoForSelfRecursiveCall(UInt32Value *entryPoint,
-                                               UInt32Value &frameSize,
-                                               UInt32Value* &argDests,
-                                               UInt32Value * &funInfoAddress)
-{
-    /* get function parameter out of FunEntry instruction */
-    UInt32Value *PC = entryPoint;
-    funInfoAddress = entryPoint;
-    PC += 1;
-    frameSize = getWordAndInc(PC);
-    UInt32Value* startAddress = (UInt32Value*)getWordAndInc(PC);
-    UInt32Value arity = getWordAndInc(PC);
-//    ASSERT(1 == arity);// arity must be 1
-    argDests = PC; // argDests does not include ENV.
-    // bitmap informations are ignored.
-    return startAddress;
-}
-
-/**
- * a variation of getFunInfo specialized for non-self recursive call.
- */
-INLINE_FUN
-UInt32Value*
-VirtualMachine::getFunInfoForRecursiveCall(UInt32Value *entryPoint,
-                                           UInt32Value &frameSize,
-                                           UInt32Value &arity,
-                                           UInt32Value* &argDests,
-                                           UInt32Value &bitmapvalsFreesCount,
-                                           UInt32Value &bitmapvalsFree,
-                                           UInt32Value * &funInfoAddress)
-{
-    /* get function parameter out of FunEntry instruction */
-    UInt32Value *PC = entryPoint;
-    funInfoAddress = entryPoint;
-    PC += 1;
-    frameSize = getWordAndInc(PC);
-    UInt32Value* startAddress = (UInt32Value*)getWordAndInc(PC);
-    arity = getWordAndInc(PC); // arity does not include ENV.
-    argDests = PC; // argDests does not include ENV.
-    PC += arity;
-    bitmapvalsFreesCount = getWordAndInc(PC);
-    bitmapvalsFree = *PC;// only the first bitmapvalsFrees is used.
-    // bitmapvalsArgs are ignored.
-    return startAddress;
-}
-
 INLINE_FUN
 UInt32Value*
 VirtualMachine::getFunInfo(UInt32Value *entryPoint,
@@ -603,37 +562,143 @@ VirtualMachine::getFunInfoAndBitmap(UInt32Value* SP,
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForTailCall_S(UInt32Value* funInfoAddress,
-                                       UInt32Value frameSize,
-                                       Bitmap bitmap,
-                                       UInt32Value argIndex,
-                                       UInt32Value argDest,
-                                       UInt32Value* SP)
+void
+VirtualMachine::tailCallFunction_0(UInt32Value* &PC,
+                                   UInt32Value* &SP,
+                                   Cell* &ENV,
+                                   UInt32Value *entryPoint,
+                                   Cell* calleeENV)
 {
-    Cell savedArg = FRAME_ENTRY(SP, argIndex);
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests; 
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             (UInt32Value *)NULL,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    SP = FrameStack::replaceFrame(SP, frameSize, bitmap, funInfoAddress);
+
+    /* set registers */
+    ENV = calleeENV;
+}
+
+
+INLINE_FUN
+void
+VirtualMachine::callFunction_0(UInt32Value* &PC,
+                               UInt32Value* &SP,
+                               Cell* &ENV,
+                               UInt32Value *entryPoint,
+                               Cell* calleeENV,
+                               UInt32Value* returnAddress)
+{
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests; 
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             (UInt32Value *)NULL,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    ASSERT(returnAddress);
+    /* allocate new frame for non tail-call */
+    SP = FrameStack::allocateFrame(SP,
+                                   frameSize,
+                                   bitmap,
+                                   funInfoAddress,
+                                   returnAddress);
     
+    /* set registers */
+    ENV = calleeENV;
+}
+
+
+INLINE_FUN
+void
+VirtualMachine::tailCallFunction_S(UInt32Value* &PC,
+                                   UInt32Value* &SP,
+                                   Cell* &ENV,
+                                   UInt32Value *entryPoint,
+                                   Cell* calleeENV,
+                                   UInt32Value argIndex)
+{
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             &argIndex,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+
+    Cell savedArg = FRAME_ENTRY(SP, argIndex);    
+
     /* replace frame for tail call */
     UInt32Value* calleeSP =
     FrameStack::replaceFrame(SP, frameSize, bitmap, funInfoAddress);
 
     /* copy arguments from the caller to the callee */
-    FRAME_ENTRY(calleeSP, argDest) = savedArg;
-    ASSERT_VALID_FRAME_VAR(calleeSP, argDest);
+    FRAME_ENTRY(calleeSP, *argDests) = savedArg;
+    ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
 
-    return calleeSP;
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForNonTailCall_S(UInt32Value* funInfoAddress,
-                                          UInt32Value frameSize,
-                                          Bitmap bitmap,
-                                          UInt32Value argIndex,
-                                          UInt32Value argDest,
-                                          UInt32Value* returnAddress,
-                                          UInt32Value* SP)
+void
+VirtualMachine::callFunction_S(UInt32Value* &PC,
+                               UInt32Value* &SP,
+                               Cell* &ENV,
+                               UInt32Value *entryPoint,
+                               Cell* calleeENV,
+                               UInt32Value argIndex,
+                               UInt32Value* returnAddress)
 {
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             &argIndex,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    ASSERT(returnAddress);
     /* allocate new frame for non tail-call */
     UInt32Value* calleeSP = FrameStack::allocateFrame(SP,
                                                       frameSize,
@@ -642,22 +707,42 @@ VirtualMachine::fillFrameForNonTailCall_S(UInt32Value* funInfoAddress,
                                                       returnAddress);
 
     /* copy arguments from the caller to the callee */
-    ASSERT_SAME_TYPE_SLOTS(calleeSP, argDest, SP, argIndex);
-    FRAME_ENTRY(calleeSP, argDest) = FRAME_ENTRY(SP, argIndex);
-    ASSERT_VALID_FRAME_VAR(calleeSP, argDest);
+    ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, argIndex);
+    FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, argIndex);
+    ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
 
-    return calleeSP;
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForTailCall_D(UInt32Value* funInfoAddress,
-                                       UInt32Value frameSize,
-                                       Bitmap bitmap,
-                                       UInt32Value argIndex,
-                                       UInt32Value argDest,
-                                       UInt32Value* SP)
+void
+VirtualMachine::tailCallFunction_D(UInt32Value* &PC,
+                                   UInt32Value* &SP,
+                                   Cell* &ENV,
+                                   UInt32Value *entryPoint,
+                                   Cell* calleeENV,
+                                   UInt32Value argIndex)
 {
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             &argIndex,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+
     Real64Value savedArg;
     ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
     savedArg = *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, argIndex);
@@ -667,24 +752,44 @@ VirtualMachine::fillFrameForTailCall_D(UInt32Value* funInfoAddress,
     FrameStack::replaceFrame(SP, frameSize, bitmap, funInfoAddress);
 
     /* copy arguments from the caller to the callee */
-    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, argDest));
-    *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, argDest) = savedArg;
-    ASSERT_VALID_FRAME_VAR(calleeSP, argDest);
-    ASSERT_VALID_FRAME_VAR(calleeSP, argDest + 1);
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
+    *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = savedArg;
+    ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+    ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
 
-    return calleeSP;
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForNonTailCall_D(UInt32Value* funInfoAddress,
-                                          UInt32Value frameSize,
-                                          Bitmap bitmap,
-                                          UInt32Value argIndex,
-                                          UInt32Value argDest,
-                                          UInt32Value* returnAddress,
-                                          UInt32Value* SP)
+void
+VirtualMachine::callFunction_D(UInt32Value* &PC,
+                               UInt32Value* &SP,
+                               Cell* &ENV,
+                               UInt32Value *entryPoint,
+                               Cell* calleeENV,
+                               UInt32Value argIndex,
+                               UInt32Value* returnAddress)
 {
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             &argIndex,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    ASSERT(returnAddress);
     /* allocate new frame for non tail-call */
     UInt32Value* calleeSP = FrameStack::allocateFrame(SP,
                                                       frameSize,
@@ -693,29 +798,47 @@ VirtualMachine::fillFrameForNonTailCall_D(UInt32Value* funInfoAddress,
                                                       returnAddress);
 
     /* copy arguments from the caller to the callee */
-    ASSERT_SAME_TYPE_SLOTS(calleeSP, argDest, SP, argIndex);
-    ASSERT_SAME_TYPE_SLOTS(calleeSP, argDest + 1, SP, argIndex + 1);
+    ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, argIndex);
+    ASSERT_SAME_TYPE_SLOTS(calleeSP, (*argDests) + 1, SP, argIndex + 1);
 
-    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, argDest));
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
     ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
-    *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, argDest) =
+    *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) =
     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, argIndex);
-    ASSERT_VALID_FRAME_VAR(calleeSP, argDest);
-    ASSERT_VALID_FRAME_VAR(calleeSP, argDest + 1);
+    ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+    ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
 
-    return calleeSP;
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForTailCall_ML_S(UInt32Value* funInfoAddress,
-                                          UInt32Value frameSize,
-                                          UInt32Value arity,
-                                          Bitmap bitmap,
-                                          UInt32Value* argIndexes,
-                                          UInt32Value* argDests,
-                                          UInt32Value* SP)
+void
+VirtualMachine::tailCallFunction_MS(UInt32Value* &PC,
+                                    UInt32Value* &SP,
+                                    Cell* &ENV,
+                                    UInt32Value *entryPoint,
+                                    Cell* calleeENV,
+                                    UInt32Value* argIndexes)
 {
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             argIndexes,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
     Cell savedArgs[arity];
     for(int index = 0; index < arity; index += 1){
         savedArgs[index] = FRAME_ENTRY(SP, *argIndexes);
@@ -732,20 +855,41 @@ VirtualMachine::fillFrameForTailCall_ML_S(UInt32Value* funInfoAddress,
         ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
         argDests += 1;
     }
-    return calleeSP;
+
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
 }
 
+
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForNonTailCall_ML_S(UInt32Value* funInfoAddress,
-                                             UInt32Value frameSize,
-                                             UInt32Value arity,
-                                             Bitmap bitmap,
-                                             UInt32Value* argIndexes,
-                                             UInt32Value* argDests,
-                                             UInt32Value* returnAddress,
-                                             UInt32Value* SP)
+void
+VirtualMachine::callFunction_MS(UInt32Value* &PC,
+                                UInt32Value* &SP,
+                                Cell* &ENV,
+                                UInt32Value *entryPoint,
+                                Cell* calleeENV,
+                                UInt32Value* argIndexes,
+                                UInt32Value* returnAddress)
 {
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             argIndexes,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    ASSERT(returnAddress);
     /* allocate new frame for non tail-call */
     UInt32Value* calleeSP = FrameStack::allocateFrame(SP,
                                                       frameSize,
@@ -761,58 +905,101 @@ VirtualMachine::fillFrameForNonTailCall_ML_S(UInt32Value* funInfoAddress,
         argIndexes += 1;
         argDests += 1;
     }
-    return calleeSP;
+
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForTailCall_ML_D(UInt32Value* funInfoAddress,
-                                          UInt32Value frameSize,
-                                          UInt32Value arity,
-                                          Bitmap bitmap,
-                                          UInt32Value* argIndexes,
-                                          UInt32Value* argDests,
-                                          UInt32Value* SP)
+void
+VirtualMachine::tailCallFunction_MLD(UInt32Value* &PC,
+                                     UInt32Value* &SP,
+                                     Cell* &ENV,
+                                     UInt32Value *entryPoint,
+                                     Cell* calleeENV,
+                                     UInt32Value* argIndexes)
 {
-    Cell savedArgs[arity - 1];
-    for(int index = 0; index < arity - 1; index += 1){
-        savedArgs[index] = FRAME_ENTRY(SP, *argIndexes);
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             argIndexes,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    Cell savedArgs[arity+1];
+    Cell *ptr = savedArgs;
+    for(int index = 1; index < arity; index += 1){
+        *ptr = FRAME_ENTRY(SP, *argIndexes);
         argIndexes += 1;
+        ptr += 1;
     }
     ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argIndexes));
-    Real64Value savedLastArg =
-        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
+    *ptr = FRAME_ENTRY(SP, *argIndexes);
+    *(ptr + 1) = FRAME_ENTRY(SP, (*argIndexes) + 1);
+
+
     
     /* replace frame for tail call */
     UInt32Value* calleeSP =
     FrameStack::replaceFrame(SP, frameSize, bitmap, funInfoAddress);
 
     /* copy arguments from the caller to the callee */
-    for(int index = 0; index < arity - 1; index += 1){
-        FRAME_ENTRY(calleeSP, *argDests) = savedArgs[index];
+    ptr = savedArgs;
+    for(int index = 1; index < arity; index += 1){
+        FRAME_ENTRY(calleeSP, *argDests) = *ptr;
         ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
         argDests += 1;
+        ptr += 1;
     }
-
     ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
-    *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = savedLastArg;
+    FRAME_ENTRY(calleeSP, *argDests) = *ptr;
+    FRAME_ENTRY(calleeSP, (*argDests) + 1) = *(ptr + 1);
     ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
     ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
+    SP = calleeSP;
 
-    return calleeSP;
+    /* set registers */
+    ENV = calleeENV;
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForNonTailCall_ML_D(UInt32Value* funInfoAddress,
-                                             UInt32Value frameSize,
-                                             UInt32Value arity,
-                                             Bitmap bitmap,
-                                             UInt32Value* argIndexes,
-                                             UInt32Value* argDests,
-                                             UInt32Value* returnAddress,
-                                             UInt32Value* SP)
+void
+VirtualMachine::callFunction_MLD(UInt32Value* &PC,
+                                 UInt32Value* &SP,
+                                 Cell* &ENV,
+                                 UInt32Value *entryPoint,
+                                 Cell* calleeENV,
+                                 UInt32Value* argIndexes,
+                                 UInt32Value* returnAddress)
 {
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             argIndexes,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    ASSERT(returnAddress);
     /* allocate new frame for non tail-call */
     UInt32Value* calleeSP = FrameStack::allocateFrame(SP,
                                                       frameSize,
@@ -821,46 +1008,199 @@ VirtualMachine::fillFrameForNonTailCall_ML_D(UInt32Value* funInfoAddress,
                                                       returnAddress);
 
     /* copy arguments from the caller to the callee */
-    for(int index = 0; index < arity - 1; index += 1){
+    for(int index = 1; index < arity; index += 1){
         ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
         FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, *argIndexes);
         ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
         argIndexes += 1;
         argDests += 1;
     }
-
     ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
     ASSERT_SAME_TYPE_SLOTS(calleeSP, (*argDests) + 1, SP, (*argIndexes) + 1);
-    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
     ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argIndexes));
-
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
     *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
     *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
-
     ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
     ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
+    SP = calleeSP;
 
-    return calleeSP;
+    /* set registers */
+    ENV = calleeENV;
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForTailCall_M(UInt32Value* funInfoAddress,
-                                       UInt32Value frameSize,
-                                       UInt32Value arity,
-                                       Bitmap bitmap,
-                                       UInt32Value* argIndexes,
-                                       UInt32Value* argSizeIndexes,
-                                       UInt32Value* argDests,
-                                       UInt32Value* SP)
+void
+VirtualMachine::tailCallFunction_MF(UInt32Value* &PC,
+                                    UInt32Value* &SP,
+                                    Cell* &ENV,
+                                    UInt32Value *entryPoint,
+                                    Cell* calleeENV,
+                                    UInt32Value* argIndexes,
+                                    UInt32Value* argSizes)
 {
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             argIndexes,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    Cell savedArgs[arity * 2];
+    Cell *ptr = savedArgs;
+    for(int index = 0; index < arity; index += 1){
+        UInt32Value argSize = argSizes[index];
+        ASSERT((1 == argSize) || (2 == argSize));
+        if ( 1 == argSize) {
+            *ptr = FRAME_ENTRY(SP, *argIndexes);
+            ptr += 1;
+        } else {
+            ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argIndexes));
+            *ptr = FRAME_ENTRY(SP, *argIndexes);
+            *(ptr + 1) = FRAME_ENTRY(SP, (*argIndexes) + 1);
+            ptr += 2;
+        }
+        argIndexes += 1;
+    }
+    
+    /* replace frame for tail call */
+    UInt32Value* calleeSP =
+    FrameStack::replaceFrame(SP, frameSize, bitmap, funInfoAddress);
+
+    /* copy arguments from the caller to the callee */
+    ptr = savedArgs;
+    for(int index = 0; index < arity; index += 1){
+        if (1 == argSizes[index]) {
+            FRAME_ENTRY(calleeSP, *argDests) = *ptr;
+            ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+            ptr += 1;
+        } else {
+            ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
+            FRAME_ENTRY(calleeSP, *argDests) = *ptr;
+            FRAME_ENTRY(calleeSP, (*argDests) + 1) = *(ptr + 1);
+            ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+            ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
+            ptr += 2;
+        }
+        argDests += 1;
+    }
+
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
+}
+
+INLINE_FUN
+void
+VirtualMachine::callFunction_MF(UInt32Value* &PC,
+                                UInt32Value* &SP,
+                                Cell* &ENV,
+                                UInt32Value *entryPoint,
+                                Cell* calleeENV,
+                                UInt32Value* argIndexes,
+                                UInt32Value* argSizes,
+                                UInt32Value* returnAddress)
+{
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             argIndexes,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    ASSERT(returnAddress);
+    /* allocate new frame for non tail-call */
+    UInt32Value* calleeSP = FrameStack::allocateFrame(SP,
+                                                      frameSize,
+                                                      bitmap,
+                                                      funInfoAddress,
+                                                      returnAddress);
+
+    /* copy arguments from the caller to the callee */
+    for(int index = 0; index < arity; index += 1){
+        UInt32Value argSize = argSizes[index];
+        ASSERT((1 == argSize) || (2 == argSize));
+        ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
+        if (1 == argSize) {
+            FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, *argIndexes);
+            ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+        } else {
+            ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argIndexes));
+            ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
+            *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
+            *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
+            ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+            ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
+        }
+        argIndexes += 1;
+        argDests += 1;
+    }
+
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
+}
+
+INLINE_FUN
+void
+VirtualMachine::tailCallFunction_MV(UInt32Value* &PC,
+                                    UInt32Value* &SP,
+                                    Cell* &ENV,
+                                    UInt32Value *entryPoint,
+                                    Cell* calleeENV,
+                                    UInt32Value* argIndexes,
+                                    UInt32Value* argSizeIndexes)
+{
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             argIndexes,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
     Cell savedArgs[arity * 2];
     UInt32Value savedArgSizes[arity];
+    Cell *ptr = savedArgs;
     for(int index = 0; index < arity; index += 1){
         UInt32Value argSize = FRAME_ENTRY(SP, argSizeIndexes[index]).uint32;
         ASSERT((1 == argSize) || (2 == argSize));
-        for(int i = 0; i < argSize; i += 1){
-            savedArgs[index * 2 + i] = FRAME_ENTRY(SP, (*argIndexes) + i);
+        if (1 == argSize) {
+            *ptr = FRAME_ENTRY(SP, *argIndexes);
+            ptr += 1;
+        } else {
+            ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argIndexes));
+            *ptr = FRAME_ENTRY(SP, *argIndexes);
+            *(ptr + 1) = FRAME_ENTRY(SP, (*argIndexes) + 1);
+            ptr += 2;
         }
         savedArgSizes[index] = argSize;
         argIndexes += 1;
@@ -871,30 +1211,58 @@ VirtualMachine::fillFrameForTailCall_M(UInt32Value* funInfoAddress,
     FrameStack::replaceFrame(SP, frameSize, bitmap, funInfoAddress);
 
     /* copy arguments from the caller to the callee */
+    ptr = savedArgs;
     for(int index = 0; index < arity; index += 1){
         UInt32Value argSize = savedArgSizes[index];
-        for(int i = 0; i < argSize; i += 1){
-            FRAME_ENTRY(calleeSP, (*argDests) + i) = savedArgs[index * 2 + i];
-            ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + i);
+        if (1 == argSize) {
+            FRAME_ENTRY(calleeSP, *argDests) = *ptr;
+            ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+            ptr += 1;
+        } else {
+            ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
+            FRAME_ENTRY(calleeSP, *argDests) = *ptr;
+            FRAME_ENTRY(calleeSP, (*argDests) + 1) = *(ptr + 1);
+            ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+            ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
+            ptr += 2;
         }
         argDests += 1;
     }
 
-    return calleeSP;
+    SP = calleeSP;
+
+    /* set registers */
+    ENV = calleeENV;
 }
 
 INLINE_FUN
-UInt32Value*
-VirtualMachine::fillFrameForNonTailCall_M(UInt32Value* funInfoAddress,
-                                          UInt32Value frameSize,
-                                          UInt32Value arity,
-                                          Bitmap bitmap,
-                                          UInt32Value* argIndexes,
-                                          UInt32Value* argSizeIndexes,
-                                          UInt32Value* argDests,
-                                          UInt32Value* returnAddress,
-                                          UInt32Value* SP)
+void
+VirtualMachine::callFunction_MV(UInt32Value* &PC,
+                                UInt32Value* &SP,
+                                Cell* &ENV,
+                                UInt32Value *entryPoint,
+                                Cell* calleeENV,
+                                UInt32Value* argIndexes,
+                                UInt32Value* argSizeIndexes,
+                                UInt32Value* returnAddress)
 {
+    UInt32Value frameSize;
+    UInt32Value arity;
+    UInt32Value* argDests;
+    UInt32Value *funInfoAddress;
+    Bitmap bitmap;
+
+    PC = getFunInfoAndBitmap(SP,
+                             entryPoint,
+                             calleeENV,
+                             argIndexes,
+                             frameSize,
+                             arity,
+                             argDests,
+                             funInfoAddress,
+                             bitmap);
+
+    ASSERT(returnAddress);
     /* allocate new frame for non tail-call */
     UInt32Value* calleeSP = FrameStack::allocateFrame(SP,
                                                       frameSize,
@@ -907,708 +1275,89 @@ VirtualMachine::fillFrameForNonTailCall_M(UInt32Value* funInfoAddress,
         ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
         UInt32Value argSize = FRAME_ENTRY(SP, argSizeIndexes[index]).uint32;
         ASSERT((1 == argSize) || (2 == argSize));
-        for(int i = 0; i < argSize; i += 1){
-            FRAME_ENTRY(calleeSP, (*argDests) + i) =
-            FRAME_ENTRY(SP, (*argIndexes) + i);
-            ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + i);
+        if (1 == argSize) {
+            FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, *argIndexes);
+            ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+        } else {
+            ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argIndexes));
+            ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
+            *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
+            *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
+            ASSERT_VALID_FRAME_VAR(calleeSP, *argDests);
+            ASSERT_VALID_FRAME_VAR(calleeSP, (*argDests) + 1);
         }
         argIndexes += 1;
         argDests += 1;
     }
 
-    return calleeSP;
-}
-
-INLINE_FUN
-void
-VirtualMachine::callFunction_S(bool isTailCall,
-                               UInt32Value* &PC,
-                               UInt32Value* &SP,
-                               Cell* &ENV,
-                               UInt32Value *entryPoint,
-                               Cell* calleeENV,
-                               UInt32Value argIndex,
-                               UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-    Bitmap bitmap;
-
-    PC = getFunInfoAndBitmap(SP,
-                             entryPoint,
-                             calleeENV,
-                             &argIndex,
-                             frameSize,
-                             arity,
-                             argDests,
-                             funInfoAddress,
-                             bitmap);
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        SP = fillFrameForTailCall_S(funInfoAddress,
-                                    frameSize,
-                                    bitmap,
-                                    argIndex,
-                                    *argDests,
-                                    SP);
-    }
-    else{
-        ASSERT(returnAddress);
-        SP = fillFrameForNonTailCall_S(funInfoAddress,
-                                       frameSize,
-                                       bitmap,
-                                       argIndex,
-                                       *argDests,
-                                       returnAddress,
-                                       SP);
-    }
-
-    /* set registers */
-    ENV = calleeENV;
-}
-
-INLINE_FUN
-void
-VirtualMachine::callFunction_D(bool isTailCall,
-                               UInt32Value* &PC,
-                               UInt32Value* &SP,
-                               Cell* &ENV,
-                               UInt32Value *entryPoint,
-                               Cell* calleeENV,
-                               UInt32Value argIndex,
-                               UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-    Bitmap bitmap;
-
-    PC = getFunInfoAndBitmap(SP,
-                             entryPoint,
-                             calleeENV,
-                             &argIndex,
-                             frameSize,
-                             arity,
-                             argDests,
-                             funInfoAddress,
-                             bitmap);
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        SP = fillFrameForTailCall_D(funInfoAddress,
-                                    frameSize,
-                                    bitmap,
-                                    argIndex,
-                                    *argDests,
-                                    SP);
-    }
-    else{
-        ASSERT(returnAddress);
-        SP = fillFrameForNonTailCall_D(funInfoAddress,
-                                       frameSize,
-                                       bitmap,
-                                       argIndex,
-                                       *argDests,
-                                       returnAddress,
-                                       SP);
-    }
-
-    /* set registers */
-    ENV = calleeENV;
-}
-
-INLINE_FUN
-void
-VirtualMachine::callFunction_V(bool isTailCall,
-                               UInt32Value* &PC,
-                               UInt32Value* &SP,
-                               Cell* &ENV,
-                               UInt32Value *entryPoint,
-                               Cell* calleeENV,
-                               UInt32Value argIndex,
-                               UInt32Value argSize,
-                               UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-    Bitmap bitmap;
-
-    PC = getFunInfoAndBitmap(SP,
-                             entryPoint,
-                             calleeENV,
-                             &argIndex,
-                             frameSize,
-                             arity,
-                             argDests,
-                             funInfoAddress,
-                             bitmap);
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        if(1 == argSize){
-            SP = fillFrameForTailCall_S(funInfoAddress,
-                                        frameSize,
-                                        bitmap,
-                                        argIndex,
-                                        *argDests,
-                                        SP);
-        }
-        else{
-            ASSERT(2 == argSize);
-            SP = fillFrameForTailCall_D(funInfoAddress,
-                                        frameSize,
-                                        bitmap,
-                                        argIndex,
-                                        *argDests,
-                                        SP);
-        }
-    }
-    else{
-        ASSERT(returnAddress);
-        if(1 == argSize){
-            SP = fillFrameForNonTailCall_S(funInfoAddress,
-                                           frameSize,
-                                           bitmap,
-                                           argIndex,
-                                           *argDests,
-                                           returnAddress,
-                                           SP);
-        }
-        else{
-            ASSERT(2 == argSize);
-            SP = fillFrameForNonTailCall_D(funInfoAddress,
-                                           frameSize,
-                                           bitmap,
-                                           argIndex,
-                                           *argDests,
-                                           returnAddress,
-                                           SP);
-        }
-    }
-
-    /* set registers */
-    ENV = calleeENV;
-}
-
-INLINE_FUN
-void
-VirtualMachine::callFunction_ML_S(bool isTailCall,
-                                  UInt32Value* &PC,
-                                  UInt32Value* &SP,
-                                  Cell* &ENV,
-                                  UInt32Value *entryPoint,
-                                  Cell* calleeENV,
-                                  UInt32Value* argIndexes,
-                                  UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-    Bitmap bitmap;
-
-    PC = getFunInfoAndBitmap(SP,
-                             entryPoint,
-                             calleeENV,
-                             argIndexes,
-                             frameSize,
-                             arity,
-                             argDests,
-                             funInfoAddress,
-                             bitmap);
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        SP = fillFrameForTailCall_ML_S(funInfoAddress,
-                                       frameSize,
-                                       arity,
-                                       bitmap,
-                                       argIndexes,
-                                       argDests,
-                                       SP);
-    }
-    else{
-        ASSERT(returnAddress);
-        SP = fillFrameForNonTailCall_ML_S(funInfoAddress,
-                                          frameSize,
-                                          arity,
-                                          bitmap,
-                                          argIndexes,
-                                          argDests,
-                                          returnAddress,
-                                          SP);
-    }
-
-    /* set registers */
-    ENV = calleeENV;
-}
-
-INLINE_FUN
-void
-VirtualMachine::callFunction_ML_D(bool isTailCall,
-                                  UInt32Value* &PC,
-                                  UInt32Value* &SP,
-                                  Cell* &ENV,
-                                  UInt32Value *entryPoint,
-                                  Cell* calleeENV,
-                                  UInt32Value* argIndexes,
-                                  UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-    Bitmap bitmap;
-
-    PC = getFunInfoAndBitmap(SP,
-                             entryPoint,
-                             calleeENV,
-                             argIndexes,
-                             frameSize,
-                             arity,
-                             argDests,
-                             funInfoAddress,
-                             bitmap);
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        SP = fillFrameForTailCall_ML_D(funInfoAddress,
-                                       frameSize,
-                                       arity,
-                                       bitmap,
-                                       argIndexes,
-                                       argDests,
-                                       SP);
-    }
-    else{
-        ASSERT(returnAddress);
-        SP = fillFrameForNonTailCall_ML_D(funInfoAddress,
-                                          frameSize,
-                                          arity,
-                                          bitmap,
-                                          argIndexes,
-                                          argDests,
-                                          returnAddress,
-                                          SP);
-    }
-
-    /* set registers */
-    ENV = calleeENV;
-}
-
-INLINE_FUN
-void
-VirtualMachine::callFunction_ML_V(bool isTailCall,
-                                  UInt32Value* &PC,
-                                  UInt32Value* &SP,
-                                  Cell* &ENV,
-                                  UInt32Value *entryPoint,
-                                  Cell* calleeENV,
-                                  UInt32Value* argIndexes,
-                                  UInt32Value lastArgSize,
-                                  UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-    Bitmap bitmap;
-
-    PC = getFunInfoAndBitmap(SP,
-                             entryPoint,
-                             calleeENV,
-                             argIndexes,
-                             frameSize,
-                             arity,
-                             argDests,
-                             funInfoAddress,
-                             bitmap);
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        if(1 == lastArgSize){
-            SP = fillFrameForTailCall_ML_S(funInfoAddress,
-                                           frameSize,
-                                           arity,
-                                           bitmap,
-                                           argIndexes,
-                                           argDests,
-                                           SP);
-        }
-        else{
-            ASSERT(2 == lastArgSize);
-            SP = fillFrameForTailCall_ML_D(funInfoAddress,
-                                           frameSize,
-                                           arity,
-                                           bitmap,
-                                           argIndexes,
-                                           argDests,
-                                           SP);
-        }
-    }
-    else{
-        ASSERT(returnAddress);
-        if(1 == lastArgSize){
-            SP = fillFrameForNonTailCall_ML_S(funInfoAddress,
-                                              frameSize,
-                                              arity,
-                                              bitmap,
-                                              argIndexes,
-                                              argDests,
-                                              returnAddress,
-                                              SP);
-        }
-        else{
-            ASSERT(2 == lastArgSize);
-            SP = fillFrameForNonTailCall_ML_D(funInfoAddress,
-                                              frameSize,
-                                              arity,
-                                              bitmap,
-                                              argIndexes,
-                                              argDests,
-                                              returnAddress,
-                                              SP);
-        }
-    }
-
-    /* set registers */
-    ENV = calleeENV;
-}
-
-INLINE_FUN
-void
-VirtualMachine::callFunction_M(bool isTailCall,
-                               UInt32Value* &PC,
-                               UInt32Value* &SP,
-                               Cell* &ENV,
-                               UInt32Value *entryPoint,
-                               Cell* calleeENV,
-                               UInt32Value* argIndexes,
-                               UInt32Value* argSizeIndexes,
-                               UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-    Bitmap bitmap;
-
-    PC = getFunInfoAndBitmap(SP,
-                             entryPoint,
-                             calleeENV,
-                             argIndexes,
-                             frameSize,
-                             arity,
-                             argDests,
-                             funInfoAddress,
-                             bitmap);
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        SP = fillFrameForTailCall_M(funInfoAddress,
-                                    frameSize,
-                                    arity,
-                                    bitmap,
-                                    argIndexes,
-                                    argSizeIndexes,
-                                    argDests,
-                                    SP);
-    }
-    else{
-        ASSERT(returnAddress);
-        SP = fillFrameForNonTailCall_M(funInfoAddress,
-                                       frameSize,
-                                       arity,
-                                       bitmap,
-                                       argIndexes,
-                                       argSizeIndexes,
-                                       argDests,
-                                       returnAddress,
-                                       SP);
-    }
+    SP = calleeSP;
 
     /* set registers */
     ENV = calleeENV;
 }
 
 /**
- * Recursive function call can reuse the frame bitmap of the caller frame.
- */
-INLINE_FUN
-void
-VirtualMachine::callRecursiveFunction_S(bool isTailCall,
-                                        UInt32Value* &PC,
-                                        UInt32Value* &SP,
-                                        Cell* &ENV,
-                                        UInt32Value *entryPoint,
-                                        UInt32Value argIndex,
-                                        UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-
-    UInt32Value bitmapvalsFreesCount;
-    UInt32Value bitmapvalsFree;
-
-    PC = getFunInfoForRecursiveCall(entryPoint,
-                                    frameSize,
-                                    arity,
-                                    argDests,
-                                    bitmapvalsFreesCount,
-                                    bitmapvalsFree,
-                                    funInfoAddress);
-
-    Bitmap bitmap = 0;
-    if(bitmapvalsFreesCount){
-        bitmap = HEAP_GETFIELD(ENV, bitmapvalsFree).uint32;
-    }
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        SP = fillFrameForTailCall_S(funInfoAddress,
-                                    frameSize,
-                                    bitmap,
-                                    argIndex,
-                                    *argDests,
-                                    SP);
-    }
-    else{
-        ASSERT(returnAddress);
-        SP = fillFrameForNonTailCall_S(funInfoAddress,
-                                       frameSize,
-                                       bitmap,
-                                       argIndex,
-                                       *argDests,
-                                       returnAddress,
-                                       SP);
-    }
-}
-
-INLINE_FUN
-void
-VirtualMachine::callRecursiveFunction_D(bool isTailCall,
-                                        UInt32Value* &PC,
-                                        UInt32Value* &SP,
-                                        Cell* &ENV,
-                                        UInt32Value *entryPoint,
-                                        UInt32Value argIndex,
-                                        UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-
-    UInt32Value bitmapvalsFreesCount;
-    UInt32Value bitmapvalsFree;
-
-    PC = getFunInfoForRecursiveCall(entryPoint,
-                                    frameSize,
-                                    arity,
-                                    argDests,
-                                    bitmapvalsFreesCount,
-                                    bitmapvalsFree,
-                                    funInfoAddress);
-
-    Bitmap bitmap = 0;
-    if(bitmapvalsFreesCount){
-        bitmap = HEAP_GETFIELD(ENV, bitmapvalsFree).uint32;
-    }
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        SP = fillFrameForTailCall_D(funInfoAddress,
-                                    frameSize,
-                                    bitmap,
-                                    argIndex,
-                                    *argDests,
-                                    SP);
-    }
-    else{
-        ASSERT(returnAddress);
-        SP = fillFrameForNonTailCall_D(funInfoAddress,
-                                       frameSize,
-                                       bitmap,
-                                       argIndex,
-                                       *argDests,
-                                       returnAddress,
-                                       SP);
-    }
-}
-
-INLINE_FUN
-void
-VirtualMachine::callRecursiveFunction_V(bool isTailCall,
-                                        UInt32Value* &PC,
-                                        UInt32Value* &SP,
-                                        Cell* &ENV,
-                                        UInt32Value *entryPoint,
-                                        UInt32Value argIndex,
-                                        UInt32Value lastArgSize,
-                                        UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-
-    UInt32Value bitmapvalsFreesCount;
-    UInt32Value bitmapvalsFree;
-
-    PC = getFunInfoForRecursiveCall(entryPoint,
-                                    frameSize,
-                                    arity,
-                                    argDests,
-                                    bitmapvalsFreesCount,
-                                    bitmapvalsFree,
-                                    funInfoAddress);
-
-    Bitmap bitmap = 0;
-    if(bitmapvalsFreesCount){
-        bitmap = HEAP_GETFIELD(ENV, bitmapvalsFree).uint32;
-    }
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        if(1 == lastArgSize){
-            SP = fillFrameForTailCall_S(funInfoAddress,
-                                        frameSize,
-                                        bitmap,
-                                        argIndex,
-                                        *argDests,
-                                        SP);
-        }
-        else{
-            ASSERT(2 == lastArgSize);
-            SP = fillFrameForTailCall_D(funInfoAddress,
-                                        frameSize,
-                                        bitmap,
-                                        argIndex,
-                                        *argDests,
-                                        SP);
-        }
-    }
-    else{
-        ASSERT(returnAddress);
-        if(1 == lastArgSize){
-            SP = fillFrameForNonTailCall_S(funInfoAddress,
-                                           frameSize,
-                                           bitmap,
-                                           argIndex,
-                                           *argDests,
-                                           returnAddress,
-                                           SP);
-        }
-        else{
-            ASSERT(2 == lastArgSize);
-            SP = fillFrameForNonTailCall_D(funInfoAddress,
-                                           frameSize,
-                                           bitmap,
-                                           argIndex,
-                                           *argDests,
-                                           returnAddress,
-                                           SP);
-        }
-    }
-}
-
-INLINE_FUN
-void
-VirtualMachine::callRecursiveFunction_M(bool isTailCall,
-                                        UInt32Value* &PC,
-                                        UInt32Value* &SP,
-                                        Cell* &ENV,
-                                        UInt32Value *entryPoint,
-                                        UInt32Value *argIndexes,
-                                        UInt32Value *argSizeIndexes,
-                                        UInt32Value* returnAddress)
-{
-    UInt32Value frameSize;
-    UInt32Value arity;
-    UInt32Value* argDests;
-    UInt32Value *funInfoAddress;
-
-    UInt32Value bitmapvalsFreesCount;
-    UInt32Value bitmapvalsFree;
-
-    PC = getFunInfoForRecursiveCall(entryPoint,
-                                    frameSize,
-                                    arity,
-                                    argDests,
-                                    bitmapvalsFreesCount,
-                                    bitmapvalsFree,
-                                    funInfoAddress);
-
-    Bitmap bitmap = 0;
-    if(bitmapvalsFreesCount){
-        bitmap = HEAP_GETFIELD(ENV, bitmapvalsFree).uint32;
-    }
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        SP = fillFrameForTailCall_M(funInfoAddress,
-                                    frameSize,
-                                    arity,
-                                    bitmap,
-                                    argIndexes,
-                                    argSizeIndexes,
-                                    argDests,
-                                    SP);
-    }
-    else{
-        ASSERT(returnAddress);
-        SP = fillFrameForNonTailCall_M(funInfoAddress,
-                                       frameSize,
-                                       arity,
-                                       bitmap,
-                                       argIndexes,
-                                       argSizeIndexes,
-                                       argDests,
-                                       returnAddress,
-                                       SP);
-    }
-}
-
-/**
- * Self recursive call can optimize frame allocation.
+ * recursive call can optimize frame allocation.
  * Tail call can reuse the caller frame.
  * Non-tail call has only to copy the caller frame.
  */
 INLINE_FUN
 void
-VirtualMachine::callSelfRecursiveFunction_S(bool isTailCall,
-                                            UInt32Value* &PC,
+VirtualMachine::tailCallRecursiveFunction_0(UInt32Value* &PC,
+                                            UInt32Value *entryPoint)
+{
+    PC = (UInt32Value *)(entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
+}
+
+INLINE_FUN
+void
+VirtualMachine::callRecursiveFunction_0(UInt32Value* &PC,
+                                        UInt32Value* &SP,
+                                        UInt32Value *entryPoint,
+                                        UInt32Value* returnAddress)
+{
+    UInt32Value frameSize =  entryPoint[FUNENTRY_FRAMESIZE_INDEX];
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
+    ASSERT(returnAddress);
+    SP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
+}
+
+INLINE_FUN
+void
+VirtualMachine::tailCallRecursiveFunction_S(UInt32Value* &PC,
                                             UInt32Value* &SP,
                                             UInt32Value *entryPoint,
-                                            UInt32Value argIndex,
-                                            UInt32Value* returnAddress)
+                                            UInt32Value argIndex)
 {
-    UInt32Value frameSize;
-    UInt32Value *argDests;
-    UInt32Value *funInfoAddress;
 
-    PC = getFunInfoForSelfRecursiveCall(entryPoint,
-                                        frameSize,
-                                        argDests,
-                                        funInfoAddress);
+
+//     UInt32Value frameSize;
+//     UInt32Value* argDests;
+//     UInt32Value* funInfoAddress;
+//     PC = getFunInfoForSelfRecursiveCall(entryPoint,frameSize,argDests,funInfoAddress);
+
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
+
+    ASSERT_SAME_TYPE_SLOTS(SP, *argDests, SP, argIndex);
+    FRAME_ENTRY(SP, *argDests) = FRAME_ENTRY(SP, argIndex);
+}
+
+INLINE_FUN
+void
+VirtualMachine::callRecursiveFunction_S(UInt32Value* &PC,
+                                        UInt32Value* &SP,
+                                        UInt32Value *entryPoint,
+                                        UInt32Value argIndex,
+                                        UInt32Value* returnAddress)
+{
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    UInt32Value frameSize =  entryPoint[FUNENTRY_FRAMESIZE_INDEX];
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
 
     UInt32Value* calleeSP;
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        calleeSP = SP;
-    }
-    else{
-        ASSERT(returnAddress);
-        calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
-    }
+    ASSERT(returnAddress);
+    calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
 
     ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, argIndex);
     FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, argIndex);
@@ -1618,36 +1367,41 @@ VirtualMachine::callSelfRecursiveFunction_S(bool isTailCall,
 
 INLINE_FUN
 void
-VirtualMachine::callSelfRecursiveFunction_D(bool isTailCall,
-                                            UInt32Value* &PC,
+VirtualMachine::tailCallRecursiveFunction_D(UInt32Value* &PC,
                                             UInt32Value* &SP,
                                             UInt32Value *entryPoint,
-                                            UInt32Value argIndex,
-                                            UInt32Value* returnAddress)
+                                            UInt32Value argIndex)
 {
-    UInt32Value frameSize;
-    UInt32Value *argDests;
-    UInt32Value *funInfoAddress;
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
 
-    PC = getFunInfoForSelfRecursiveCall(entryPoint,
-                                        frameSize,
-                                        argDests,
-                                        funInfoAddress);
+    ASSERT_SAME_TYPE_SLOTS(SP, *argDests, SP, argIndex);
+    ASSERT_SAME_TYPE_SLOTS(SP, (*argDests) + 1, SP, argIndex + 1);
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, *argDests));
+    ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
+
+    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argDests) = 
+    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, argIndex);
+}
+
+INLINE_FUN
+void
+VirtualMachine::callRecursiveFunction_D(UInt32Value* &PC,
+                                        UInt32Value* &SP,
+                                        UInt32Value *entryPoint,
+                                        UInt32Value argIndex,
+                                        UInt32Value* returnAddress)
+{
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    UInt32Value frameSize =  entryPoint[FUNENTRY_FRAMESIZE_INDEX];
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
 
     UInt32Value* calleeSP;
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        calleeSP = SP;
-        // assert that source and dest do not overlap partially.
-        ASSERT(!((*argDests + 1 == argIndex) || (argIndex + 1 == *argDests)));
-    }
-    else{
-        ASSERT(returnAddress);
-        calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
-    }
+    ASSERT(returnAddress);
+    calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
 
     ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, argIndex);
-    ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests + 1, SP, argIndex + 1);
+    ASSERT_SAME_TYPE_SLOTS(calleeSP, (*argDests) + 1, SP, argIndex + 1);
     ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
     ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
 
@@ -1659,56 +1413,49 @@ VirtualMachine::callSelfRecursiveFunction_D(bool isTailCall,
 
 INLINE_FUN
 void
-VirtualMachine::callSelfRecursiveFunction_V(bool isTailCall,
-                                            UInt32Value* &PC,
-                                            UInt32Value* &SP,
-                                            UInt32Value *entryPoint,
-                                            UInt32Value argIndex,
-                                            UInt32Value lastArgSize,
-                                            UInt32Value* returnAddress)
+VirtualMachine::tailCallRecursiveFunction_MS(UInt32Value* &PC,
+                                             UInt32Value* &SP,
+                                             UInt32Value *entryPoint,
+                                             UInt32Value argsCount,
+                                             UInt32Value *argIndexes)
 {
-    UInt32Value frameSize;
-    UInt32Value *argDests;
-    UInt32Value *funInfoAddress;
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
 
-    PC = getFunInfoForSelfRecursiveCall(entryPoint,
-                                        frameSize,
-                                        argDests,
-                                        funInfoAddress);
+    Cell savedArgs[argsCount];
+    for(int index = 0; index < argsCount; index += 1){
+        savedArgs[index] = FRAME_ENTRY(SP, *argIndexes);
+        argIndexes += 1;
+    }
+
+    for(int index = 0; index < argsCount; index += 1){
+        FRAME_ENTRY(SP, *argDests) = savedArgs[index];
+        argDests += 1;
+    }
+}
+
+INLINE_FUN
+void
+VirtualMachine::callRecursiveFunction_MS(UInt32Value* &PC,
+                                         UInt32Value* &SP,
+                                         UInt32Value *entryPoint,
+                                         UInt32Value argsCount,
+                                         UInt32Value *argIndexes,
+                                         UInt32Value* returnAddress)
+{
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    UInt32Value frameSize =  entryPoint[FUNENTRY_FRAMESIZE_INDEX];
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
 
     UInt32Value* calleeSP;
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-        calleeSP = SP;
-        // assert that source and dest do not overlap partially.
-        ASSERT((1 == lastArgSize)
-               || (!((*argDests + 1 == argIndex)
-                     || (argIndex + 1 == *argDests))));
-    }
-    else{
-        ASSERT(returnAddress);
-        calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
-    }
-
-    switch(lastArgSize){
-      case 1:
-        ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, argIndex);
-        FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, argIndex);
-        break;
-      case 2:
-        ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, argIndex);
-        ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests + 1, SP, argIndex + 1);
-        ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(calleeSP, *argDests));
-        ASSERT_REAL64_ALIGNED(FRAME_ENTRY_ADDRESS(SP, argIndex));
-
-        *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
-        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, argIndex);
-
-        break;
-      default:
-        DBGWRAP(LOG.error
-                  ("callSelfRecursiveFunction_V::IllegalArgumentException");)
-        throw IllegalArgumentException();// IllegalArgument???
+    ASSERT(returnAddress);
+    calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
+        
+    for(int index = 0; index < argsCount; index += 1){
+        ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
+        FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, *argIndexes);
+        argIndexes += 1;
+        argDests += 1;
     }
 
     SP = calleeSP;
@@ -1716,68 +1463,222 @@ VirtualMachine::callSelfRecursiveFunction_V(bool isTailCall,
 
 INLINE_FUN
 void
-VirtualMachine::callSelfRecursiveFunction_M(bool isTailCall,
-                                            UInt32Value* &PC,
-                                            UInt32Value* &SP,
-                                            UInt32Value *entryPoint,
-                                            UInt32Value argsCount,
-                                            UInt32Value *argIndexes,
-                                            UInt32Value *argSizeIndexes,
-                                            UInt32Value* returnAddress)
+VirtualMachine::tailCallRecursiveFunction_MLD(UInt32Value* &PC,
+                                              UInt32Value* &SP,
+                                              UInt32Value *entryPoint,
+                                              UInt32Value argsCount,
+                                              UInt32Value *argIndexes)
 {
-    UInt32Value frameSize;
-    UInt32Value *argDests;
-    UInt32Value *funInfoAddress;
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
 
-    PC = getFunInfoForSelfRecursiveCall(entryPoint,
-                                        frameSize,
-                                        argDests,
-                                        funInfoAddress);
-
-    if(isTailCall){
-        ASSERT(NULL == returnAddress);
-
-        Cell savedArgs[argsCount * 2];
-        UInt32Value argSizes[argsCount];
-
-        for(int index = 0; index < argsCount; index += 1){
-            UInt32Value argSize = FRAME_ENTRY(SP, *argSizeIndexes).uint32;
-            for(int i = 0; i < argSize; i += 1){
-                savedArgs[index * 2 + i] = FRAME_ENTRY(SP, (*argIndexes) + i);
-            }
-            argSizes[index] = argSize;
-            argIndexes += 1;
-            argSizeIndexes += 1;
-        }
-
-        for(int index = 0; index < argsCount; index += 1){
-            UInt32Value argSize = argSizes[index];
-            for(int i = 0; i < argSize; i += 1){
-                FRAME_ENTRY(SP, (*argDests) + i) = savedArgs[index * 2 + i];
-            }
-            argDests += 1;
-        }
+    Cell savedArgs[argsCount + 1];
+    Cell *ptr = savedArgs;
+    for(int index = 1; index < argsCount; index += 1){
+        *ptr = FRAME_ENTRY(SP, *argIndexes);
+        argIndexes += 1;
+        ptr += 1;
     }
-    else{
-        UInt32Value* calleeSP;
-        ASSERT(returnAddress);
-        calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
+    *ptr = FRAME_ENTRY(SP, *argIndexes);
+    *(ptr + 1) = FRAME_ENTRY(SP, (*argIndexes) + 1);
+
+    ptr = savedArgs;
+    for(int index = 1; index < argsCount; index += 1){
+        FRAME_ENTRY(SP, *argDests) = *ptr;
+        argDests += 1;
+        ptr += 1;
+    }
+    FRAME_ENTRY(SP, *argDests) = *ptr;
+    FRAME_ENTRY(SP, (*argDests) + 1) = *(ptr + 1);
+}
+
+INLINE_FUN
+void
+VirtualMachine::callRecursiveFunction_MLD(UInt32Value* &PC,
+                                          UInt32Value* &SP,
+                                          UInt32Value *entryPoint,
+                                          UInt32Value argsCount,
+                                          UInt32Value *argIndexes,
+                                          UInt32Value* returnAddress)
+{
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    UInt32Value frameSize =  entryPoint[FUNENTRY_FRAMESIZE_INDEX];
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
+
+    UInt32Value* calleeSP;
+    ASSERT(returnAddress);
+    calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
         
-        for(int index = 0; index < argsCount; index += 1){
-            UInt32Value argSize = FRAME_ENTRY(SP, *argSizeIndexes).uint32;
-            for(int i = 0; i < argSize; i += 1){
-                ASSERT_SAME_TYPE_SLOTS
-                (calleeSP, (*argDests) + i, SP, (*argIndexes) + i);
-                FRAME_ENTRY(calleeSP, (*argDests) + i) =
-                FRAME_ENTRY(SP, (*argIndexes) + i);
-            }
-            argIndexes += 1;
-            argSizeIndexes += 1;
-            argDests += 1;
-        }
-
-        SP = calleeSP;
+    for(int index = 1; index < argsCount; index += 1){
+        ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
+        FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, *argIndexes);
+        argIndexes += 1;
+        argDests += 1;
     }
+    *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
+    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
+
+    SP = calleeSP;
+}
+
+INLINE_FUN
+void
+VirtualMachine::tailCallRecursiveFunction_MF(UInt32Value* &PC,
+                                             UInt32Value* &SP,
+                                             UInt32Value *entryPoint,
+                                             UInt32Value argsCount,
+                                             UInt32Value *argIndexes,
+                                             UInt32Value *argSizes)
+{
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
+
+    Cell savedArgs[argsCount * 2];
+    Cell *ptr = savedArgs;
+    for(int index = 0; index < argsCount; index += 1){
+        UInt32Value argSize = argSizes[index];
+        ASSERT((argSize == 1) || (argSize == 2))
+        if (1 == argSize) {
+            *ptr = FRAME_ENTRY(SP, *argIndexes);
+            ptr += 1;
+        } else {
+            *ptr = FRAME_ENTRY(SP, *argIndexes);
+            *(ptr + 1) = FRAME_ENTRY(SP, (*argIndexes) + 1);
+            ptr += 2;
+        }
+        argIndexes += 1;
+    }
+    ptr = savedArgs;
+    for(int index = 0; index < argsCount; index += 1){
+        UInt32Value argSize = argSizes[index];
+        if (1 == argSize) {
+            FRAME_ENTRY(SP, *argDests) = *ptr;
+            ptr += 1;
+        } else {
+            FRAME_ENTRY(SP, *argDests) = *ptr;
+            FRAME_ENTRY(SP, (*argDests) + 1) = *(ptr + 1);
+            ptr += 2;
+        }
+        argDests += 1;
+    }
+}
+
+INLINE_FUN
+void
+VirtualMachine::callRecursiveFunction_MF(UInt32Value* &PC,
+                                         UInt32Value* &SP,
+                                         UInt32Value *entryPoint,
+                                         UInt32Value argsCount,
+                                         UInt32Value *argIndexes,
+                                         UInt32Value *argSizes,
+                                         UInt32Value* returnAddress)
+{
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    UInt32Value frameSize =  entryPoint[FUNENTRY_FRAMESIZE_INDEX];
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
+
+    UInt32Value* calleeSP;
+    ASSERT(returnAddress);
+    calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
+        
+    for(int index = 0; index < argsCount; index += 1){
+        UInt32Value argSize = argSizes[index];
+        ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
+        ASSERT((argSize == 1) || (argSize == 2))
+        if (1 == argSize) {
+            FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, *argIndexes);
+        } else {
+            *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
+            *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
+        }
+        argIndexes += 1;
+        argDests += 1;
+    }
+
+    SP = calleeSP;
+}
+
+INLINE_FUN
+void
+VirtualMachine::tailCallRecursiveFunction_MV(UInt32Value* &PC,
+                                             UInt32Value* &SP,
+                                             UInt32Value *entryPoint,
+                                             UInt32Value argsCount,
+                                             UInt32Value *argIndexes,
+                                             UInt32Value *argSizeIndexes)
+{
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
+
+    Cell savedArgs[argsCount * 2];
+    UInt32Value argSizes[argsCount];
+    Cell *ptr = savedArgs;
+    for(int index = 0; index < argsCount; index += 1){
+        UInt32Value argSize = FRAME_ENTRY(SP, *argSizeIndexes).uint32;
+        ASSERT((argSize == 1) || (argSize == 2))
+        if (1 == argSize) {
+            *ptr = FRAME_ENTRY(SP, *argIndexes);
+            ptr += 1;
+        } else {
+            *ptr = FRAME_ENTRY(SP, *argIndexes);
+            *(ptr + 1) = FRAME_ENTRY(SP, (*argIndexes) + 1);
+            ptr += 2;
+        }
+        argSizes[index] = argSize;
+        argIndexes += 1;
+        argSizeIndexes += 1;
+    }
+    ptr = savedArgs;
+    for(int index = 0; index < argsCount; index += 1){
+        UInt32Value argSize = argSizes[index];
+        if (1 == argSize) {
+            FRAME_ENTRY(SP, *argDests) = *ptr;
+            ptr += 1;
+        } else {
+            FRAME_ENTRY(SP, *argDests) = *ptr;
+            FRAME_ENTRY(SP, (*argDests) + 1) = *(ptr + 1);
+            ptr += 2;
+        }
+        argDests += 1;
+    }
+}
+
+INLINE_FUN
+void
+VirtualMachine::callRecursiveFunction_MV(UInt32Value* &PC,
+                                         UInt32Value* &SP,
+                                         UInt32Value *entryPoint,
+                                         UInt32Value argsCount,
+                                         UInt32Value *argIndexes,
+                                         UInt32Value *argSizeIndexes,
+                                         UInt32Value* returnAddress)
+{
+    UInt32Value *argDests = entryPoint + FUNENTRY_ARGDESTS_INDEX;
+    UInt32Value frameSize =  entryPoint[FUNENTRY_FRAMESIZE_INDEX];
+    PC = (UInt32Value *) (entryPoint[FUNENTRY_STARTADDRESS_INDEX]);
+
+    UInt32Value* calleeSP;
+    ASSERT(returnAddress);
+    calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
+        
+    for(int index = 0; index < argsCount; index += 1){
+        UInt32Value argSize = FRAME_ENTRY(SP, *argSizeIndexes).uint32;
+        ASSERT((argSize == 1) || (argSize == 2))
+        if (1 == argSize) {
+            ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
+            FRAME_ENTRY(calleeSP, *argDests) = FRAME_ENTRY(SP, *argIndexes);
+        } else {
+            ASSERT_SAME_TYPE_SLOTS(calleeSP, *argDests, SP, *argIndexes);
+            ASSERT_SAME_TYPE_SLOTS(calleeSP, (*argDests + 1), SP, (*argIndexes) + 1);
+            *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *argDests) = 
+            *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *argIndexes);
+        }
+        argIndexes += 1;
+        argSizeIndexes += 1;
+        argDests += 1;
+    }
+
+    SP = calleeSP;
 }
 
 INLINE_FUN
@@ -1840,9 +1741,7 @@ VirtualMachine::getNestedBlock(Cell* block, UInt32Value nestLevel)
 
 void
 VirtualMachine::execute(Executable* executable)
-    throw(UserException,
-          IMLRuntimeException,
-          SystemError)
+    throw(IMLException)
 {
     // initialize machine registers
     PC_ = (UInt32Value*)(executable->code_);
@@ -1865,14 +1764,13 @@ VirtualMachine::execute(Executable* executable)
     // the main function never refers to arguments
     UInt32Value argIndexes[] = {0, 0};
     Cell* emptyENV = 0;
-    callFunction_ML_S(false, // non tail-call
-		      PC_,
-		      SP_,
-		      ENV_,
-		      entryPoint,
-		      emptyENV,
-		      argIndexes,
-		      RETURN_ADDRESS_OF_INITIAL_FRAME);
+    callFunction_MS(PC_,
+                    SP_,
+                    ENV_,
+                    entryPoint,
+                    emptyENV,
+                    argIndexes,
+                    RETURN_ADDRESS_OF_INITIAL_FRAME);
 
     executeLoop();
 }
@@ -1883,9 +1781,7 @@ UInt32Value VirtualMachine::executeFunction(UncaughtExceptionHandleMode mode,
                                             Cell *returnValue,
                                             bool returnBoxed,
                                             FFI::Arguments &args)
-    throw(UserException,
-          IMLRuntimeException,
-          SystemError)
+    throw(IMLException)
 {
     /* Calculate layout of caller stack frame */
     UInt32Value arity = args.arity();
@@ -1976,15 +1872,14 @@ UInt32Value VirtualMachine::executeFunction(UncaughtExceptionHandleMode mode,
 
     /* Apply_M */
     FrameStack::storeENV(SP_, ENV_);
-    callFunction_M(false,                      /* non tail call */
-                   PC_,                        /* PC */
-                   SP_,                        /* SP */
-                   ENV_,                       /* ENV */
-                   entryPoint,                 /* entryPoint */
-                   env,                        /* calleeENV */
-                   &FRAME_ENTRY(SP_, argIndexes).uint32,    /* argIndexes */
-                   &FRAME_ENTRY(SP_, argSizeIndexes).uint32,/* argSizeIndexes */
-                   returnAddress);             /* returnAddress */
+    callFunction_MV(PC_,                        /* PC */
+                    SP_,                        /* SP */
+                    ENV_,                       /* ENV */
+                    entryPoint,                 /* entryPoint */
+                    env,                        /* calleeENV */
+                    &FRAME_ENTRY(SP_, argIndexes).uint32,    /* argIndexes */
+                    &FRAME_ENTRY(SP_, argSizeIndexes).uint32,/* argSizeIndexes */
+                    returnAddress);             /* returnAddress */
     executeLoop();
     
     /* check whether exception was raised */
@@ -2025,9 +1920,7 @@ class SinglePointerArgument
 UInt32Value VirtualMachine::executeClosure_PA(UncaughtExceptionHandleMode mode,
                                               Cell closure,
                                               Cell *arg)
-    throw(UserException,
-          IMLRuntimeException,
-          SystemError)
+    throw(IMLException)
 {
     Cell ret[2];
     // Note : initialize args with a pointer to the argument.
@@ -2049,9 +1942,7 @@ UInt32Value VirtualMachine::executeClosure_PA(UncaughtExceptionHandleMode mode,
 
 void
 VirtualMachine::executeLoop()
-    throw(UserException,
-          IMLRuntimeException,
-          SystemError)
+    throw(IMLException)
 {
     register UInt32Value* PC;
     register UInt32Value* SP;
@@ -2208,13 +2099,15 @@ VirtualMachine::executeLoop()
                     ASSERT(!FrameStack::isPointerSlot(SP, variableSizeIndex));
                     UInt32Value variableSize =
                     FRAME_ENTRY(SP, variableSizeIndex).uint32;
-
-                    for(int index = 0; index < variableSize; index += 1){
-                        ASSERT_SAME_TYPE_SLOTS(SP, destination + index,
-                                               SP, variableIndex + index);
-                        FRAME_ENTRY(SP, destination + index) =
-                        FRAME_ENTRY(SP, variableIndex + index);
-                    }
+                    if (1 == variableSize) {
+                        ASSERT_SAME_TYPE_SLOTS(SP, destination, SP, variableIndex);
+                        FRAME_ENTRY(SP, destination) = FRAME_ENTRY(SP, variableIndex);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOTS(SP, destination, SP, variableIndex);
+                        ASSERT_SAME_TYPE_SLOTS(SP, destination + 1, SP, variableIndex + 1);
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) = 
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
+                    } 
                     break;
                 }
               case AccessEnv_S:
@@ -2258,71 +2151,14 @@ VirtualMachine::executeLoop()
                     UInt32Value variableSize =
                         FRAME_ENTRY(SP, variableSizeIndex).uint32;
 
-                    for(int index = 0; index < variableSize; index += 1){
-                        ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination + index, ENV, variableIndex + index);
-                        FRAME_ENTRY(SP, destination + index) =
-                        HEAP_GETFIELD(ENV, variableIndex + index);
-                    }
-                    break;
-                }
-              case AccessEnvIndirect_S:
-                {
-                    UInt32Value indirectOffset = getWordAndInc(PC);
-                    UInt32Value destination = getWordAndInc(PC);
-
-                    ASSERT(!Heap::isPointerField(ENV, indirectOffset));
-                    UInt32Value variableIndex = 
-                        HEAP_GETFIELD(ENV, indirectOffset).uint32;
-
-                    ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination, ENV, variableIndex);
-
-                    FRAME_ENTRY(SP, destination) =
-                        HEAP_GETFIELD(ENV, variableIndex);
-                    break;
-                }
-              case AccessEnvIndirect_D:
-                {
-                    UInt32Value indirectOffset = getWordAndInc(PC);
-                    UInt32Value destination = getWordAndInc(PC);
-
-                    ASSERT(!Heap::isPointerField(ENV, indirectOffset));
-                    UInt32Value variableIndex = 
-                        HEAP_GETFIELD(ENV, indirectOffset).uint32;
-
-                    ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination, ENV, variableIndex);
-                    ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination + 1, ENV, variableIndex + 1);
-                    ASSERT_REAL64_ALIGNED
-                        (FRAME_ENTRY_ADDRESS(SP, destination));
-
-                    FRAME_ENTRY(SP, destination) =
-                        HEAP_GETFIELD(ENV, variableIndex);
-                    FRAME_ENTRY(SP, destination + 1) =
-                        HEAP_GETFIELD(ENV, variableIndex + 1);
-
-                    break;
-                }
-              case AccessEnvIndirect_V:
-                {
-                    UInt32Value indirectOffset = getWordAndInc(PC);
-                    UInt32Value variableSizeIndex = getWordAndInc(PC);
-                    UInt32Value destination = getWordAndInc(PC);
-
-                    ASSERT(!FrameStack::isPointerSlot(SP, variableSizeIndex));
-                    UInt32Value variableSize =
-                        FRAME_ENTRY(SP, variableSizeIndex).uint32;
-
-                    ASSERT(!Heap::isPointerField(ENV, indirectOffset));
-                    UInt32Value variableIndex = 
-                        HEAP_GETFIELD(ENV, indirectOffset).uint32;
-                    for(int index = 0; index < variableSize; index += 1){
-                        ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination + index, ENV, variableIndex + index);
-                        FRAME_ENTRY(SP, destination + index) =
-                            HEAP_GETFIELD(ENV, variableIndex + index);
+                    if (1 == variableSize) {
+                        ASSERT_SAME_TYPE_SLOT_FIELD(SP, destination, ENV, variableIndex);
+                        FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(ENV, variableIndex);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD(SP, destination, ENV, variableIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD(SP, destination + 1, ENV, variableIndex + 1);
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) = 
+                        HEAP_GETREAL64FIELD(ENV, variableIndex);
                     }
                     break;
                 }
@@ -2375,82 +2211,18 @@ VirtualMachine::executeLoop()
                     UInt32Value variableSize =
                         FRAME_ENTRY(SP, variableSizeIndex).uint32;
 
-                    for(int index = 0; index < variableSize; index += 1){
+                    if (1 == variableSize) {
                         ASSERT_SAME_TYPE_SLOT_FIELD
-                            (SP, destination + index,
-                             block, variableIndex + index);
-
-                        FRAME_ENTRY(SP, destination + index) =
-                            HEAP_GETFIELD(block, variableIndex + index);
-                    }
-                    break;
-                }
-              case AccessNestedEnvIndirect_S:
-                {
-                    UInt32Value nestLevel = getWordAndInc(PC);
-                    UInt32Value indirectOffset = getWordAndInc(PC);
-                    UInt32Value destination = getWordAndInc(PC);
-
-                    Cell* block = getNestedBlock(ENV, nestLevel);
-                    ASSERT(!Heap::isPointerField(block, indirectOffset));
-                    UInt32Value variableIndex = 
-                        HEAP_GETFIELD(block, indirectOffset).uint32;
-
-                    ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination, block, variableIndex);
-
-                    FRAME_ENTRY(SP, destination) =
-                        HEAP_GETFIELD(block, variableIndex);
-                    break;
-                }
-              case AccessNestedEnvIndirect_D:
-                {
-                    UInt32Value nestLevel = getWordAndInc(PC);
-                    UInt32Value indirectOffset = getWordAndInc(PC);
-                    UInt32Value destination = getWordAndInc(PC);
-
-                    Cell* block = getNestedBlock(ENV, nestLevel);
-                    ASSERT(!Heap::isPointerField(block, indirectOffset));
-                    UInt32Value variableIndex = 
-                        HEAP_GETFIELD(block, indirectOffset).uint32;
-
-                    ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination, block, variableIndex);
-                    ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination + 1, block, variableIndex + 1);
-                    ASSERT_REAL64_ALIGNED
-                        (FRAME_ENTRY_ADDRESS(SP, destination));
-
-                    FRAME_ENTRY(SP, destination) =
-                        HEAP_GETFIELD(block, variableIndex);
-                    FRAME_ENTRY(SP, destination + 1) =
-                        HEAP_GETFIELD(block, variableIndex + 1);
-
-                    break;
-                }
-              case AccessNestedEnvIndirect_V:
-                {
-                    UInt32Value nestLevel = getWordAndInc(PC);
-                    UInt32Value indirectOffset = getWordAndInc(PC);
-                    UInt32Value variableSizeIndex = getWordAndInc(PC);
-                    UInt32Value destination = getWordAndInc(PC);
-
-                    Cell* block = getNestedBlock(ENV, nestLevel);
-                    ASSERT(!Heap::isPointerField(block, indirectOffset));
-                    UInt32Value variableIndex = 
-                        HEAP_GETFIELD(block, indirectOffset).uint32;
-
-                    ASSERT(!FrameStack::isPointerSlot(SP, variableSizeIndex));
-                    UInt32Value variableSize =
-                        FRAME_ENTRY(SP, variableSizeIndex).uint32;
-
-                    for(int index = 0; index < variableSize; index += 1){
+                            (SP, destination,block, variableIndex);
+                        FRAME_ENTRY(SP, destination) =
+                            HEAP_GETFIELD(block, variableIndex);
+                    } else {
                         ASSERT_SAME_TYPE_SLOT_FIELD
-                            (SP, destination + index,
-                             block, variableIndex + index);
-
-                        FRAME_ENTRY(SP, destination + index) =
-                            HEAP_GETFIELD(block, variableIndex + index);
+                            (SP, destination,block, variableIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                            (SP, destination + 1,block, variableIndex + 1);
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
+                            HEAP_GETREAL64FIELD(block, variableIndex);
                     }
                     break;
                 }
@@ -2489,11 +2261,9 @@ VirtualMachine::executeLoop()
                         (SP, destination + 1, block, fieldIndex + 1);
                     ASSERT_REAL64_ALIGNED
                         (FRAME_ENTRY_ADDRESS(SP, destination));
-                    ASSERT_REAL64_ALIGNED
-                        (&HEAP_GETFIELD(block, fieldIndex));
 
-                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                        *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
+                    FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldIndex);
+                    FRAME_ENTRY(SP, destination + 1) = HEAP_GETFIELD(block, fieldIndex + 1);
 
                     break;
                 }
@@ -2514,12 +2284,18 @@ VirtualMachine::executeLoop()
 
                     ASSERT((fieldIndex + fieldSize - 1)
                            < Heap::getPayloadSize(block));
-                    for(int index = 0; index < fieldSize; index += 1){
+                    if (1 == fieldSize) {
                         ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination + index, block, fieldIndex + index);
-
-                        FRAME_ENTRY(SP, destination + index) =
-                            HEAP_GETFIELD(block, fieldIndex + index);
+                          (SP, destination, block, fieldIndex);
+                        FRAME_ENTRY(SP, destination) =
+                            HEAP_GETFIELD(block, fieldIndex);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                          (SP, destination, block, fieldIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                          (SP, destination + 1, block, fieldIndex + 1);
+                        FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldIndex);
+                        FRAME_ENTRY(SP, destination + 1) = HEAP_GETFIELD(block, fieldIndex + 1);
                     }
                     break;
                 }
@@ -2541,8 +2317,7 @@ VirtualMachine::executeLoop()
                     ASSERT_SAME_TYPE_SLOT_FIELD
                         (SP, destination, block, fieldIndex);
 
-                    FRAME_ENTRY(SP, destination) =
-                        HEAP_GETFIELD(block, fieldIndex);
+                    FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldIndex);
                     break;
                 }
               case GetFieldIndirect_D:
@@ -2565,10 +2340,9 @@ VirtualMachine::executeLoop()
                         (SP, destination + 1, block, fieldIndex + 1);
                     ASSERT_REAL64_ALIGNED
                         (FRAME_ENTRY_ADDRESS(SP, destination));
-                    ASSERT_REAL64_ALIGNED(&HEAP_GETFIELD(block, fieldIndex));
 
-                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                        *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
+                    FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldIndex);
+                    FRAME_ENTRY(SP, destination + 1) = HEAP_GETFIELD(block, fieldIndex + 1);
 
                     break;
                 }
@@ -2593,13 +2367,101 @@ VirtualMachine::executeLoop()
 
                     ASSERT((fieldIndex + fieldSize - 1)
                            < Heap::getPayloadSize(block));
-
-                    for(int index = 0; index < fieldSize; index += 1){
+                    ASSERT((fieldSize == 1) || (fieldSize == 2))
+                    if (1 == fieldSize) {
                         ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination + index, block, fieldIndex + index);
+                        (SP, destination, block, fieldIndex);
+                        FRAME_ENTRY(SP, destination) =
+                            HEAP_GETFIELD(block, fieldIndex);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, destination, block, fieldIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, destination + 1, block, fieldIndex + 1);
+                        FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldIndex);
+                        FRAME_ENTRY(SP, destination + 1) = HEAP_GETFIELD(block, fieldIndex + 1);
+                    }
+                    break;
+                }
+              case GetNestedField_S:
+                {
+                    UInt32Value nestLevel = getWordAndInc(PC);
+                    UInt32Value fieldOffset = getWordAndInc(PC);
+                    UInt32Value blockIndex = getWordAndInc(PC);
+                    UInt32Value destination = getWordAndInc(PC);
 
-                        FRAME_ENTRY(SP, destination + index) =
-                            HEAP_GETFIELD(block, fieldIndex + index);
+                    ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
+                    Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(root));
+
+                    Cell* block = getNestedBlock(root, nestLevel);
+
+                    ASSERT(fieldOffset < Heap::getPayloadSize(block));
+                    ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, destination, block, fieldOffset);
+                    FRAME_ENTRY(SP, destination) =
+                        HEAP_GETFIELD(block, fieldOffset);
+                    break;
+                }
+              case GetNestedField_D:
+                {
+                    UInt32Value nestLevel = getWordAndInc(PC);
+                    UInt32Value fieldOffset = getWordAndInc(PC);
+                    UInt32Value blockIndex = getWordAndInc(PC);
+                    UInt32Value destination = getWordAndInc(PC);
+
+                    ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
+                    Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(root));
+
+                    Cell* block = getNestedBlock(root, nestLevel);
+
+                    ASSERT(fieldOffset + 1 < Heap::getPayloadSize(block));
+                    ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, destination, block, fieldOffset);
+                    ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, destination + 1, block, fieldOffset + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, destination));
+
+                    FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldOffset);
+                    FRAME_ENTRY(SP, destination + 1) = HEAP_GETFIELD(block, fieldOffset + 1);
+
+                    break;
+                }
+              case GetNestedField_V:
+                {
+                    UInt32Value nestLevel = getWordAndInc(PC);
+                    UInt32Value fieldOffset = getWordAndInc(PC);
+                    UInt32Value fieldSizeIndex = getWordAndInc(PC);
+                    UInt32Value blockIndex = getWordAndInc(PC);
+                    UInt32Value destination = getWordAndInc(PC);
+
+                    ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
+                    UInt32Value fieldSize =
+                        FRAME_ENTRY(SP, fieldSizeIndex).uint32;
+
+                    ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
+                    Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(root));
+
+                    Cell* block = getNestedBlock(root, nestLevel);
+
+                    ASSERT((fieldOffset + fieldSize - 1)
+                           < Heap::getPayloadSize(block));
+
+                    if (1 == fieldSize) {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                          (SP, destination, block, fieldOffset);
+                        FRAME_ENTRY(SP, destination) =
+                          HEAP_GETFIELD(block, fieldOffset);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                          (SP, destination, block, fieldOffset);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                          (SP, destination + 1, block, fieldOffset + 1);
+                        FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldOffset);
+                        FRAME_ENTRY(SP, destination + 1) = HEAP_GETFIELD(block, fieldOffset + 1);
                     }
                     break;
                 }
@@ -2659,10 +2521,9 @@ VirtualMachine::executeLoop()
                         (SP, destination + 1, block, fieldIndex + 1);
                     ASSERT_REAL64_ALIGNED
                         (FRAME_ENTRY_ADDRESS(SP, destination));
-                    ASSERT_REAL64_ALIGNED(&HEAP_GETFIELD(block, fieldIndex));
 
-                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) =
-                        *(Real64Value*)&HEAP_GETFIELD(block, fieldIndex);
+                    FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldIndex);
+                    FRAME_ENTRY(SP, destination + 1) = HEAP_GETFIELD(block, fieldIndex + 1);
 
                     break;
                 }
@@ -2694,13 +2555,19 @@ VirtualMachine::executeLoop()
 
                     ASSERT((fieldIndex + fieldSize - 1)
                            < Heap::getPayloadSize(block));
-
-                    for(int index = 0; index < fieldSize; index += 1){
+                    
+                    if (1 == fieldSize) {
                         ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, destination + index, block, fieldIndex + index);
-
-                        FRAME_ENTRY(SP, destination + index) =
-                            HEAP_GETFIELD(block, fieldIndex + index);
+                          (SP, destination, block, fieldIndex);
+                        FRAME_ENTRY(SP, destination) =
+                          HEAP_GETFIELD(block, fieldIndex);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                          (SP, destination, block, fieldIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                          (SP, destination + 1, block, fieldIndex + 1);
+                        FRAME_ENTRY(SP, destination) = HEAP_GETFIELD(block, fieldIndex);
+                        FRAME_ENTRY(SP, destination + 1) = HEAP_GETFIELD(block, fieldIndex + 1);
                     }
                     break;
                 }
@@ -2761,15 +2628,20 @@ VirtualMachine::executeLoop()
 
                     ASSERT((fieldIndex + fieldSize - 1)
                            < Heap::getPayloadSize(block));
-
-                    for(int index = 0; index < fieldSize; index += 1){
+                    if ( 1 == fieldSize) {
                         ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, variableIndex + index, block, fieldIndex + index);
+                        (SP, variableIndex, block, fieldIndex);
 
-                        Cell variableValue =
-                            FRAME_ENTRY(SP, variableIndex + index);
-                        Heap::updateField
-                            (block, fieldIndex + index, variableValue);
+                        Cell variableValue = FRAME_ENTRY(SP, variableIndex);
+                        Heap::updateField(block, fieldIndex, variableValue);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex, block, fieldIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex + 1, block, fieldIndex + 1);
+
+                        Real64Value variableValue = *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
+                        Heap::updateField_D(block, fieldIndex, variableValue);
                     }
                     break;
                 }
@@ -2844,13 +2716,107 @@ VirtualMachine::executeLoop()
                     ASSERT((fieldIndex + fieldSize - 1)
                            < Heap::getPayloadSize(block));
 
-                    for(int index = 0; index < fieldSize; index += 1){
+                    if ( 1 == fieldSize) {
                         ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, variableIndex + index, block, fieldIndex + index);
-                        Cell variableValue =
-                            FRAME_ENTRY(SP, variableIndex + index);
-                        Heap::updateField
-                            (block, fieldIndex + index, variableValue);
+                        (SP, variableIndex, block, fieldIndex);
+
+                        Cell variableValue = FRAME_ENTRY(SP, variableIndex);
+                        Heap::updateField(block, fieldIndex, variableValue);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex, block, fieldIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex + 1, block, fieldIndex + 1);
+
+                        Real64Value variableValue = *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
+                        Heap::updateField_D(block, fieldIndex, variableValue);
+                    }
+                    break;
+                }
+              case SetNestedField_S:
+                {
+                    UInt32Value nestLevel = getWordAndInc(PC);
+                    UInt32Value fieldIndex = getWordAndInc(PC);
+                    UInt32Value blockIndex = getWordAndInc(PC);
+                    UInt32Value variableIndex = getWordAndInc(PC);
+
+                    ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
+                    Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(root));
+
+                    Cell* block = getNestedBlock(root, nestLevel);
+                    ASSERT(Heap::isValidBlockPointer(block));
+
+                    ASSERT(fieldIndex < Heap::getPayloadSize(block));
+                    ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex, block, fieldIndex);
+                    Cell variableValue = FRAME_ENTRY(SP, variableIndex);
+                    Heap::updateField(block, fieldIndex, variableValue);
+                    break;
+                }
+              case SetNestedField_D:
+                {
+                    UInt32Value nestLevel = getWordAndInc(PC);
+                    UInt32Value fieldIndex = getWordAndInc(PC);
+                    UInt32Value blockIndex = getWordAndInc(PC);
+                    UInt32Value variableIndex = getWordAndInc(PC);
+
+                    ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
+                    Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(root));
+
+                    Cell* block = getNestedBlock(root, nestLevel);
+                    ASSERT(Heap::isValidBlockPointer(block));
+
+                    ASSERT(fieldIndex + 1 < Heap::getPayloadSize(block));
+                    ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex, block, fieldIndex);
+                    ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex + 1, block, fieldIndex + 1);
+                    ASSERT_REAL64_ALIGNED
+                        (FRAME_ENTRY_ADDRESS(SP, variableIndex));
+
+                    Real64Value fieldValue =
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
+                    Heap::updateField_D(block, fieldIndex, fieldValue);
+
+                    break;
+                }
+              case SetNestedField_V:
+                {
+                    UInt32Value nestLevel = getWordAndInc(PC);
+                    UInt32Value fieldIndex = getWordAndInc(PC);
+                    UInt32Value fieldSizeIndex = getWordAndInc(PC);
+                    UInt32Value blockIndex = getWordAndInc(PC);
+                    UInt32Value variableIndex = getWordAndInc(PC);
+
+                    ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
+                    UInt32Value fieldSize =
+                        FRAME_ENTRY(SP, fieldSizeIndex).uint32;
+
+                    ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
+                    Cell* root = FRAME_ENTRY(SP, blockIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(root));
+
+                    Cell* block = getNestedBlock(root, nestLevel);
+                    ASSERT(Heap::isValidBlockPointer(block));
+
+                    ASSERT((fieldIndex + fieldSize - 1)
+                           < Heap::getPayloadSize(block));
+                    if ( 1 == fieldSize) {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex, block, fieldIndex);
+
+                        Cell variableValue = FRAME_ENTRY(SP, variableIndex);
+                        Heap::updateField(block, fieldIndex, variableValue);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex, block, fieldIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex + 1, block, fieldIndex + 1);
+
+                        Real64Value variableValue = *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
+                        Heap::updateField_D(block, fieldIndex, variableValue);
                     }
                     break;
                 }
@@ -2948,20 +2914,27 @@ VirtualMachine::executeLoop()
 
                     ASSERT((fieldIndex + fieldSize - 1)
                            < Heap::getPayloadSize(block));
-                    for(int index = 0; index < fieldSize; index += 1){
+                    if ( 1 == fieldSize) {
                         ASSERT_SAME_TYPE_SLOT_FIELD
-                        (SP, variableIndex + index, block, fieldIndex + index);
-                        Cell variableValue =
-                            FRAME_ENTRY(SP, variableIndex + index);
-                        Heap::updateField
-                            (block, fieldIndex + index, variableValue);
+                        (SP, variableIndex, block, fieldIndex);
+
+                        Cell variableValue = FRAME_ENTRY(SP, variableIndex);
+                        Heap::updateField(block, fieldIndex, variableValue);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex, block, fieldIndex);
+                        ASSERT_SAME_TYPE_SLOT_FIELD
+                        (SP, variableIndex + 1, block, fieldIndex + 1);
+
+                        Real64Value variableValue = *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, variableIndex);
+                        Heap::updateField_D(block, fieldIndex, variableValue);
                     }
                     break;
                 }
               case CopyBlock:
                 {
-                    UInt32Value nestLevelOffset = getWordAndInc(PC);
                     UInt32Value blockIndex = getWordAndInc(PC);
+                    UInt32Value nestLevelOffset = getWordAndInc(PC);
                     UInt32Value destinationIndex = getWordAndInc(PC);
 
                     ASSERT(!FrameStack::isPointerSlot(SP, nestLevelOffset));
@@ -3157,8 +3130,34 @@ VirtualMachine::executeLoop()
                     }
                     break;
                 }
+              case Apply_0_0:
+              case Apply_0_1:
+              case Apply_0_M:
+                {
+                    UInt32Value closureIndex = getWordAndInc(PC);
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
 
-              case Apply_S:
+                    /* expand closure */
+                    UInt32Value* entryPoint;
+                    Cell* restoredENV;
+                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    /* jump to the function */
+                    callFunction_0(PC,
+                                   SP,
+                                   ENV,
+                                   entryPoint,
+                                   restoredENV,
+                                   returnAddress);
+                    break;
+                }
+              case Apply_S_0:
+              case Apply_S_1:
+              case Apply_S_M:
                 {
                     UInt32Value closureIndex = getWordAndInc(PC);
                     UInt32Value argIndex = getWordAndInc(PC);
@@ -3174,8 +3173,7 @@ VirtualMachine::executeLoop()
                     FrameStack::storeENV(SP, ENV);
 
                     /* jump to the function */
-                    callFunction_S(false,
-                                   PC,
+                    callFunction_S(PC,
                                    SP,
                                    ENV,
                                    entryPoint,
@@ -3184,35 +3182,9 @@ VirtualMachine::executeLoop()
                                    returnAddress);
                     break;
                 }
-              case Apply_ML_S:
-                {
-                    UInt32Value closureIndex = getWordAndInc(PC);
-                    UInt32Value argsCount = getWordAndInc(PC);
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    /* expand closure */
-                    UInt32Value* entryPoint;
-                    Cell* restoredENV;
-                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    /* jump to the function */
-                    callFunction_ML_S(false,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      restoredENV,
-                                      argIndexes,
-                                      returnAddress);
-                    break;
-                }
-              case Apply_D:
+              case Apply_D_0:
+              case Apply_D_1:
+              case Apply_D_M:
                 {
                     UInt32Value closureIndex = getWordAndInc(PC);
                     UInt32Value argIndex = getWordAndInc(PC);
@@ -3228,8 +3200,7 @@ VirtualMachine::executeLoop()
                     FrameStack::storeENV(SP, ENV);
 
                     /* jump to the function */
-                    callFunction_D(false,
-                                   PC,
+                    callFunction_D(PC,
                                    SP,
                                    ENV,
                                    entryPoint,
@@ -3238,35 +3209,9 @@ VirtualMachine::executeLoop()
                                    returnAddress);
                     break;
                 }
-              case Apply_ML_D:
-                {
-                    UInt32Value closureIndex = getWordAndInc(PC);
-                    UInt32Value argsCount = getWordAndInc(PC);
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    /* expand closure */
-                    UInt32Value* entryPoint;
-                    Cell* restoredENV;
-                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    /* jump to the function */
-                    callFunction_ML_D(false,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      restoredENV,
-                                      argIndexes,
-                                      returnAddress);
-                    break;
-                }
-              case Apply_V:
+              case Apply_V_0:
+              case Apply_V_1:
+              case Apply_V_M:
                 {
                     UInt32Value closureIndex = getWordAndInc(PC);
                     UInt32Value argIndex = getWordAndInc(PC);
@@ -3285,29 +3230,35 @@ VirtualMachine::executeLoop()
                     FrameStack::storeENV(SP, ENV);
 
                     /* jump to the function */
-                    callFunction_V(false,
-                                   PC,
-                                   SP,
-                                   ENV,
-                                   entryPoint,
-                                   restoredENV,
-                                   argIndex,
-                                   argSize,
-                                   returnAddress);
+                    if ( 1 == argSize ) {
+                        callFunction_S(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       restoredENV,
+                                       argIndex,
+                                       returnAddress);
+                    } else {
+                        callFunction_D(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       restoredENV,
+                                       argIndex,
+                                       returnAddress);
+                    }
                     break;
                 }
-              case Apply_ML_V:
+              case Apply_MS_0:
+              case Apply_MS_1:
+              case Apply_MS_M:
                 {
                     UInt32Value closureIndex = getWordAndInc(PC);
                     UInt32Value argsCount = getWordAndInc(PC);
                     UInt32Value* argIndexes = PC;
                     PC += argsCount;
-                    UInt32Value lastArgSizeIndex = getWordAndInc(PC);
                     // now, PC points to destination operand.
                     UInt32Value* returnAddress = PC;
-
-                    UInt32Value lastArgSize =
-                    FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
 
                     /* expand closure */
                     UInt32Value* entryPoint;
@@ -3318,18 +3269,122 @@ VirtualMachine::executeLoop()
                     FrameStack::storeENV(SP, ENV);
 
                     /* jump to the function */
-                    callFunction_ML_V(false,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      restoredENV,
-                                      argIndexes,
-                                      lastArgSize,
-                                      returnAddress);
+                    callFunction_MS(PC,
+                                    SP,
+                                    ENV,
+                                    entryPoint,
+                                    restoredENV,
+                                    argIndexes,
+                                    returnAddress);
                     break;
                 }
-              case Apply_M:
+              case Apply_MLD_0:
+              case Apply_MLD_1:
+              case Apply_MLD_M:
+                {
+                    UInt32Value closureIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    /* expand closure */
+                    UInt32Value* entryPoint;
+                    Cell* restoredENV;
+                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    /* jump to the function */
+                    callFunction_MLD(PC,
+                                     SP,
+                                     ENV,
+                                     entryPoint,
+                                     restoredENV,
+                                     argIndexes,
+                                     returnAddress);
+                    break;
+                }
+              case Apply_MLV_0:
+              case Apply_MLV_1:
+              case Apply_MLV_M:
+                {
+                    UInt32Value closureIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value lastArgSizeIndex = getWordAndInc(PC);
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    UInt32Value lastArgSize = FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
+
+                    /* expand closure */
+                    UInt32Value* entryPoint;
+                    Cell* restoredENV;
+                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    /* jump to the function */
+                    if (1 == lastArgSize) {
+                        callFunction_MS(PC,
+                                        SP,
+                                        ENV,
+                                        entryPoint,
+                                        restoredENV,
+                                        argIndexes,
+                                        returnAddress);
+
+                    } else {
+                        callFunction_MLD(PC,
+                                         SP,
+                                         ENV,
+                                         entryPoint,
+                                         restoredENV,
+                                         argIndexes,
+                                         returnAddress);
+                    }
+                    break;
+                }
+              case Apply_MF_0:
+              case Apply_MF_1:
+              case Apply_MF_M:
+                {
+                    UInt32Value closureIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value* argSizes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    /* expand closure */
+                    UInt32Value* entryPoint;
+                    Cell* restoredENV;
+                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    /* jump to the function */
+                    callFunction_MF(PC,
+                                    SP,
+                                    ENV,
+                                    entryPoint,
+                                    restoredENV,
+                                    argIndexes,
+                                    argSizes,
+                                    returnAddress);
+                    break;
+                }
+              case Apply_MV_0:
+              case Apply_MV_1:
+              case Apply_MV_M:
                 {
                     UInt32Value closureIndex = getWordAndInc(PC);
                     UInt32Value argsCount = getWordAndInc(PC);
@@ -3349,15 +3404,30 @@ VirtualMachine::executeLoop()
                     FrameStack::storeENV(SP, ENV);
 
                     /* jump to the function */
-                    callFunction_M(false,
-                                   PC,
-                                   SP,
-                                   ENV,
-                                   entryPoint,
-                                   restoredENV,
-                                   argIndexes,
-                                   argSizeIndexes,
-                                   returnAddress);
+                    callFunction_MV(PC,
+                                    SP,
+                                    ENV,
+                                    entryPoint,
+                                    restoredENV,
+                                    argIndexes,
+                                    argSizeIndexes,
+                                    returnAddress);
+                    break;
+                }
+              case TailApply_0:
+                {
+                    UInt32Value closureIndex = getWordAndInc(PC);
+
+                    /* expand closure */
+                    UInt32Value* entryPoint;
+                    Cell* restoredENV;
+                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
+
+                    tailCallFunction_0(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       restoredENV);
                     break;
                 }
               case TailApply_S:
@@ -3370,36 +3440,12 @@ VirtualMachine::executeLoop()
                     Cell* restoredENV;
                     expandClosure(SP, closureIndex, entryPoint, restoredENV);
 
-                    callFunction_S(true,
-                                   PC,
-                                   SP,
-                                   ENV,
-                                   entryPoint,
-                                   restoredENV,
-                                   argIndex,
-                                   NULL);
-                    break;
-                }
-              case TailApply_ML_S:
-                {
-                    UInt32Value closureIndex = getWordAndInc(PC);
-                    UInt32Value argsCount = getWordAndInc(PC);
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-
-                    /* expand closure */
-                    UInt32Value* entryPoint;
-                    Cell* restoredENV;
-                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
-
-                    callFunction_ML_S(true,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      restoredENV,
-                                      argIndexes,
-                                      NULL);
+                    tailCallFunction_S(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       restoredENV,
+                                       argIndex);
                     break;
                 }
               case TailApply_D:
@@ -3412,36 +3458,12 @@ VirtualMachine::executeLoop()
                     Cell* restoredENV;
                     expandClosure(SP, closureIndex, entryPoint, restoredENV);
 
-                    callFunction_D(true,
-                                   PC,
-                                   SP,
-                                   ENV,
-                                   entryPoint,
-                                   restoredENV,
-                                   argIndex,
-                                   NULL);
-                    break;
-                }
-              case TailApply_ML_D:
-                {
-                    UInt32Value closureIndex = getWordAndInc(PC);
-                    UInt32Value argsCount = getWordAndInc(PC);
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-
-                    /* expand closure */
-                    UInt32Value* entryPoint;
-                    Cell* restoredENV;
-                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
-
-                    callFunction_ML_D(true,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      restoredENV,
-                                      argIndexes,
-                                      NULL);
+                    tailCallFunction_D(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       restoredENV,
+                                       argIndex);
                     break;
                 }
               case TailApply_V:
@@ -3457,18 +3479,64 @@ VirtualMachine::executeLoop()
                     Cell* restoredENV;
                     expandClosure(SP, closureIndex, entryPoint, restoredENV);
 
-                    callFunction_V(true,
-                                   PC,
-                                   SP,
-                                   ENV,
-                                   entryPoint,
-                                   restoredENV,
-                                   argIndex,
-                                   argSize,
-                                   NULL);
+                    if ( 1 == argSize ) {
+                        tailCallFunction_S(PC,
+                                           SP,
+                                           ENV,
+                                           entryPoint,
+                                           restoredENV,
+                                           argIndex);
+                    } else {
+                        tailCallFunction_D(PC,
+                                           SP,
+                                           ENV,
+                                           entryPoint,
+                                           restoredENV,
+                                           argIndex);
+                    }
                     break;
                 }
-              case TailApply_ML_V:
+              case TailApply_MS:
+                {
+                    UInt32Value closureIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+
+                    /* expand closure */
+                    UInt32Value* entryPoint;
+                    Cell* restoredENV;
+                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
+
+                    tailCallFunction_MS(PC,
+                                        SP,
+                                        ENV,
+                                        entryPoint,
+                                        restoredENV,
+                                        argIndexes);
+                    break;
+                }
+              case TailApply_MLD:
+                {
+                    UInt32Value closureIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+
+                    /* expand closure */
+                    UInt32Value* entryPoint;
+                    Cell* restoredENV;
+                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
+
+                    tailCallFunction_MLD(PC,
+                                         SP,
+                                         ENV,
+                                         entryPoint,
+                                         restoredENV,
+                                         argIndexes);
+                    break;
+                }
+              case TailApply_MLV:
                 {
                     UInt32Value closureIndex = getWordAndInc(PC);
                     UInt32Value argsCount = getWordAndInc(PC);
@@ -3476,26 +3544,55 @@ VirtualMachine::executeLoop()
                     PC += argsCount;
                     UInt32Value lastArgSizeIndex = getWordAndInc(PC);
 
-                    UInt32Value lastArgSize =
-                    FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
+                    UInt32Value lastArgSize = FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
 
                     /* expand closure */
                     UInt32Value* entryPoint;
                     Cell* restoredENV;
                     expandClosure(SP, closureIndex, entryPoint, restoredENV);
 
-                    callFunction_ML_V(true,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      restoredENV,
-                                      argIndexes,
-                                      lastArgSize,
-                                      NULL);
+                    if (1 == lastArgSize) {
+                        tailCallFunction_MS(PC,
+                                            SP,
+                                            ENV,
+                                            entryPoint,
+                                            restoredENV,
+                                            argIndexes);
+
+                    } else {
+                        tailCallFunction_MLD(PC,
+                                             SP,
+                                             ENV,
+                                             entryPoint,
+                                             restoredENV,
+                                             argIndexes);
+                    }
                     break;
                 }
-              case TailApply_M:
+              case TailApply_MF:
+                {
+                    UInt32Value closureIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value* argSizes = PC;
+                    PC += argsCount;
+
+                    /* expand closure */
+                    UInt32Value* entryPoint;
+                    Cell* restoredENV;
+                    expandClosure(SP, closureIndex, entryPoint, restoredENV);
+
+                    tailCallFunction_MF(PC,
+                                        SP,
+                                        ENV,
+                                        entryPoint,
+                                        restoredENV,
+                                        argIndexes,
+                                        argSizes);
+                    break;
+                }
+              case TailApply_MV:
                 {
                     UInt32Value closureIndex = getWordAndInc(PC);
                     UInt32Value argsCount = getWordAndInc(PC);
@@ -3509,31 +3606,21 @@ VirtualMachine::executeLoop()
                     Cell* restoredENV;
                     expandClosure(SP, closureIndex, entryPoint, restoredENV);
 
-                    callFunction_M(true,
-                                   PC,
-                                   SP,
-                                   ENV,
-                                   entryPoint,
-                                   restoredENV,
-                                   argIndexes,
-                                   argSizeIndexes,
-                                   NULL);
+                    tailCallFunction_MV(PC,
+                                        SP,
+                                        ENV,
+                                        entryPoint,
+                                        restoredENV,
+                                        argIndexes,
+                                        argSizeIndexes);
                     break;
                 }
-              case CallStatic_ML_S:
-              case CallStatic_S:
+              case CallStatic_0_0:
+              case CallStatic_0_1:
+              case CallStatic_0_M:
                 {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value* entryPoint = (UInt32Value*)(getWordAndInc(PC));
                     UInt32Value ENVIndex = getWordAndInc(PC);
-                    UInt32Value argsCount;
-                    switch(opcode){
-                      case CallStatic_ML_S:
-                        argsCount = getWordAndInc(PC); break;
-                      case CallStatic_S: argsCount = 1; break;
-                    }
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
                     // now, PC points to destination operand.
                     UInt32Value* returnAddress = PC;
 
@@ -3545,220 +3632,474 @@ VirtualMachine::executeLoop()
                     /* save ENV registers to the current frame. */
                     FrameStack::storeENV(SP, ENV);
 
-                    callFunction_ML_S(false,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      calleeENV,
-                                      argIndexes,
-                                      returnAddress);
-                    break;
-                }
-              case CallStatic_ML_D:
-              case CallStatic_D:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value ENVIndex = getWordAndInc(PC);
-                    UInt32Value argsCount;
-                    switch(opcode){
-                      case CallStatic_ML_D:
-                        argsCount = getWordAndInc(PC); break;
-                      case CallStatic_D: argsCount = 1; break;
-                    }
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    // get the ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
-                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
-                    ASSERT(Heap::isValidBlockPointer(calleeENV));
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    callFunction_ML_D(false,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      calleeENV,
-                                      argIndexes,
-                                      returnAddress);
-                    break;
-                }
-              case CallStatic_ML_V:
-              case CallStatic_V:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value ENVIndex = getWordAndInc(PC);
-                    UInt32Value argsCount;
-                    switch(opcode){
-                      case CallStatic_ML_V:
-                        argsCount = getWordAndInc(PC); break;
-                      case CallStatic_V: argsCount = 1; break;
-                    }
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    UInt32Value lastArgSizeIndex = getWordAndInc(PC);
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    UInt32Value lastArgSize =
-                    FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
-
-                    // get the ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
-                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
-                    ASSERT(Heap::isValidBlockPointer(calleeENV));
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    callFunction_ML_V(false,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      calleeENV,
-                                      argIndexes,
-                                      lastArgSize,
-                                      returnAddress);
-                    break;
-                }
-              case CallStatic_M:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value ENVIndex = getWordAndInc(PC);
-                    UInt32Value argsCount = getWordAndInc(PC);
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    UInt32Value* argSizeIndexes = PC;
-                    PC += argsCount;
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    // get the ENV block for callee.
-                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
-                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
-                    ASSERT(Heap::isValidBlockPointer(calleeENV));
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    callFunction_M(false,
-                                   PC,
+                    callFunction_0(PC,
                                    SP,
                                    ENV,
                                    entryPoint,
                                    calleeENV,
-                                   argIndexes,
-                                   argSizeIndexes,
                                    returnAddress);
                     break;
                 }
-              case TailCallStatic_ML_S:
+
+              case CallStatic_S_0:
+              case CallStatic_S_1:
+              case CallStatic_S_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argIndex = getWordAndInc(PC);
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callFunction_S(PC,
+                                   SP,
+                                   ENV,
+                                   entryPoint,
+                                   calleeENV,
+                                   argIndex,
+                                   returnAddress);
+                    break;
+                }
+              case CallStatic_D_0:
+              case CallStatic_D_1:
+              case CallStatic_D_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argIndex = getWordAndInc(PC);
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callFunction_D(PC,
+                                   SP,
+                                   ENV,
+                                   entryPoint,
+                                   calleeENV,
+                                   argIndex,
+                                   returnAddress);
+                    break;
+                }
+              case CallStatic_V_0:
+              case CallStatic_V_1:
+              case CallStatic_V_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argIndex = getWordAndInc(PC);
+                    UInt32Value argSizeIndex = getWordAndInc(PC);
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    UInt32Value argSize =
+                    FRAME_ENTRY(SP, argSizeIndex).uint32;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    if (1 == argSize) {
+                        callFunction_S(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       calleeENV,
+                                       argIndex,
+                                       returnAddress);
+                    } else {
+                        callFunction_D(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       calleeENV,
+                                       argIndex,
+                                       returnAddress);
+                    }
+                    break;
+                }
+              case CallStatic_MS_0:
+              case CallStatic_MS_1:
+              case CallStatic_MS_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callFunction_MS(PC,
+                                    SP,
+                                    ENV,
+                                    entryPoint,
+                                    calleeENV,
+                                    argIndexes,
+                                    returnAddress);
+                    break;
+                }
+              case CallStatic_MLD_0:
+              case CallStatic_MLD_1:
+              case CallStatic_MLD_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callFunction_MLD(PC,
+                                     SP,
+                                     ENV,
+                                     entryPoint,
+                                     calleeENV,
+                                     argIndexes,
+                                     returnAddress);
+                    break;
+                }
+              case CallStatic_MLV_0:
+              case CallStatic_MLV_1:
+              case CallStatic_MLV_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value lastArgSizeIndex = getWordAndInc(PC);
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    UInt32Value lastArgSize = FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+                    if ( 1 == lastArgSize) {
+                        callFunction_MS(PC,
+                                        SP,
+                                        ENV,
+                                        entryPoint,
+                                        calleeENV,
+                                        argIndexes,
+                                        returnAddress);
+                    } else {
+                        callFunction_MLD(PC,
+                                         SP,
+                                         ENV,
+                                         entryPoint,
+                                         calleeENV,
+                                         argIndexes,
+                                         returnAddress);
+                    }
+                    break;
+                }
+              case CallStatic_MF_0:
+              case CallStatic_MF_1:
+              case CallStatic_MF_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value* argSizes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callFunction_MF(PC,
+                                    SP,
+                                    ENV,
+                                    entryPoint,
+                                    calleeENV,
+                                    argIndexes,
+                                    argSizes,
+                                    returnAddress);
+                    break;
+                }
+              case CallStatic_MV_0:
+              case CallStatic_MV_1:
+              case CallStatic_MV_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value* argSizeIndexes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callFunction_MV(PC,
+                                    SP,
+                                    ENV,
+                                    entryPoint,
+                                    calleeENV,
+                                    argIndexes,
+                                    argSizeIndexes,
+                                    returnAddress);
+                    break;
+                }
+              case TailCallStatic_0:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    tailCallFunction_0(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       calleeENV);
+                    break;
+                }
               case TailCallStatic_S:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
                     UInt32Value ENVIndex = getWordAndInc(PC);
-                    UInt32Value argsCount;
-                    switch(opcode){
-                      case TailCallStatic_ML_S:
-                        argsCount = getWordAndInc(PC); break;
-                      case TailCallStatic_S: argsCount = 1; break;
-                    }
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
+                    UInt32Value argIndex = getWordAndInc(PC);
 
                     // get the ENV block for callee.
                     ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
                     Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
-                    callFunction_ML_S(true,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      calleeENV,
-                                      argIndexes,
-                                      NULL);
+                    tailCallFunction_S(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       calleeENV,
+                                       argIndex);
                     break;
                 }
-              case TailCallStatic_ML_D:
               case TailCallStatic_D:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
                     UInt32Value ENVIndex = getWordAndInc(PC);
-                    UInt32Value argsCount;
-                    switch(opcode){
-                      case TailCallStatic_ML_D:
-                        argsCount = getWordAndInc(PC); break;
-                      case TailCallStatic_D: argsCount = 1; break;
-                    }
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    UInt32Value lastArgSize;
+                    UInt32Value argIndex = getWordAndInc(PC);
 
                     // get the ENV block for callee.
                     ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
                     Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
-                    callFunction_ML_D(true,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      calleeENV,
-                                      argIndexes,
-                                      NULL);
+                    tailCallFunction_D(PC,
+                                       SP,
+                                       ENV,
+                                       entryPoint,
+                                       calleeENV,
+                                       argIndex);
                     break;
                 }
-              case TailCallStatic_ML_V:
               case TailCallStatic_V:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
                     UInt32Value ENVIndex = getWordAndInc(PC);
-                    UInt32Value argsCount;
-                    switch(opcode){
-                      case TailCallStatic_ML_V:
-                        argsCount = getWordAndInc(PC); break;
-                      case TailCallStatic_V: argsCount = 1; break;
-                    }
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    UInt32Value lastArgSizeIndex = getWordAndInc(PC);
+                    UInt32Value argIndex = getWordAndInc(PC);
+                    UInt32Value argSizeIndex = getWordAndInc(PC);
 
-                    UInt32Value lastArgSize =
-                    FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
+                    UInt32Value argSize =
+                    FRAME_ENTRY(SP, argSizeIndex).uint32;
 
                     // get the ENV block for callee.
                     ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
                     Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
-                    callFunction_ML_V(true,
-                                      PC,
-                                      SP,
-                                      ENV,
-                                      entryPoint,
-                                      calleeENV,
-                                      argIndexes,
-                                      lastArgSize,
-                                      NULL);
+                    if ( 1 == argSize ) {
+                        tailCallFunction_S(PC,
+                                           SP,
+                                           ENV,
+                                           entryPoint,
+                                           calleeENV,
+                                           argIndex);
+                    } else {
+                        tailCallFunction_D(PC,
+                                           SP,
+                                           ENV,
+                                           entryPoint,
+                                           calleeENV,
+                                           argIndex);
+                    }
                     break;
                 }
-              case TailCallStatic_M:
+              case TailCallStatic_MS:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    tailCallFunction_MS(PC,
+                                        SP,
+                                        ENV,
+                                        entryPoint,
+                                        calleeENV,
+                                        argIndexes);
+                    break;
+                }
+              case TailCallStatic_MLD:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    tailCallFunction_MLD(PC,
+                                         SP,
+                                         ENV,
+                                         entryPoint,
+                                         calleeENV,
+                                         argIndexes);
+                    break;
+                }
+              case TailCallStatic_MLV:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value lastArgSizeIndex = getWordAndInc(PC);
+
+                    UInt32Value lastArgSize = FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    if (1 == lastArgSize) {
+                        tailCallFunction_MS(PC,
+                                            SP,
+                                            ENV,
+                                            entryPoint,
+                                            calleeENV,
+                                            argIndexes);
+                    } else {
+                       tailCallFunction_MLD(PC,
+                                            SP,
+                                            ENV,
+                                            entryPoint,
+                                            calleeENV,
+                                            argIndexes);
+                    }
+                    break;
+                }
+              case TailCallStatic_MF:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value ENVIndex = getWordAndInc(PC);
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value* argSizes = PC;
+                    PC += argsCount;
+
+                    // get the ENV block for callee.
+                    ASSERT(FrameStack::isPointerSlot(SP, ENVIndex));
+                    Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
+                    ASSERT(Heap::isValidBlockPointer(calleeENV));
+
+                    tailCallFunction_MF(PC,
+                                        SP,
+                                        ENV,
+                                        entryPoint,
+                                        calleeENV,
+                                        argIndexes,
+                                        argSizes);
+                    break;
+                }
+              case TailCallStatic_MV:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
@@ -3774,18 +4115,36 @@ VirtualMachine::executeLoop()
                     Cell* calleeENV = FRAME_ENTRY(SP, ENVIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(calleeENV));
 
-                    callFunction_M(true,
-                                   PC,
-                                   SP,
-                                   ENV,
-                                   entryPoint,
-                                   calleeENV,
-                                   argIndexes,
-                                   argSizeIndexes,
-                                   NULL);
+                    tailCallFunction_MV(PC,
+                                        SP,
+                                        ENV,
+                                        entryPoint,
+                                        calleeENV,
+                                        argIndexes,
+                                        argSizeIndexes);
                     break;
                 }
-              case RecursiveCallStatic_S:
+              case RecursiveCallStatic_0_0:
+              case RecursiveCallStatic_0_1:
+              case RecursiveCallStatic_0_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callRecursiveFunction_0(PC,
+                                            SP,
+                                            entryPoint,
+                                            returnAddress);
+                    break;
+                }
+              case RecursiveCallStatic_S_0:
+              case RecursiveCallStatic_S_1:
+              case RecursiveCallStatic_S_M:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
@@ -3796,16 +4155,16 @@ VirtualMachine::executeLoop()
                     /* save ENV registers to the current frame. */
                     FrameStack::storeENV(SP, ENV);
 
-                    callRecursiveFunction_S(false,
-                                            PC,
+                    callRecursiveFunction_S(PC,
                                             SP,
-                                            ENV,
                                             entryPoint,
                                             argIndex,
                                             returnAddress);
                     break;
                 }
-              case RecursiveCallStatic_D:
+              case RecursiveCallStatic_D_0:
+              case RecursiveCallStatic_D_1:
+              case RecursiveCallStatic_D_M:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
@@ -3816,16 +4175,16 @@ VirtualMachine::executeLoop()
                     /* save ENV registers to the current frame. */
                     FrameStack::storeENV(SP, ENV);
 
-                    callRecursiveFunction_D(false,
-                                            PC,
+                    callRecursiveFunction_D(PC,
                                             SP,
-                                            ENV,
                                             entryPoint,
                                             argIndex,
                                             returnAddress);
                     break;
                 }
-              case RecursiveCallStatic_V:
+              case RecursiveCallStatic_V_0:
+              case RecursiveCallStatic_V_1:
+              case RecursiveCallStatic_V_M:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
@@ -3839,17 +4198,128 @@ VirtualMachine::executeLoop()
                     /* save ENV registers to the current frame. */
                     FrameStack::storeENV(SP, ENV);
 
-                    callRecursiveFunction_V(false,
-                                            PC,
-                                            SP,
-                                            ENV,
-                                            entryPoint,
-                                            argIndex,
-                                            argSize,
-                                            returnAddress);
+                    if ( 1 == argSize ) {
+                        callRecursiveFunction_S(PC,
+                                                SP,
+                                                entryPoint,
+                                                argIndex,
+                                                returnAddress);
+                    } else {
+                        callRecursiveFunction_D(PC,
+                                                SP,
+                                                entryPoint,
+                                                argIndex,
+                                                returnAddress);
+                    }
                     break;
                 }
-              case RecursiveCallStatic_M:
+              case RecursiveCallStatic_MS_0:
+              case RecursiveCallStatic_MS_1:
+              case RecursiveCallStatic_MS_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callRecursiveFunction_MS(PC,
+                                             SP,
+                                             entryPoint,
+                                             argsCount,
+                                             argIndexes,
+                                             returnAddress);
+                    break;
+                }
+              case RecursiveCallStatic_MLD_0:
+              case RecursiveCallStatic_MLD_1:
+              case RecursiveCallStatic_MLD_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callRecursiveFunction_MLD(PC,
+                                              SP,
+                                              entryPoint,
+                                              argsCount,
+                                              argIndexes,
+                                              returnAddress);
+                    break;
+                }
+              case RecursiveCallStatic_MLV_0:
+              case RecursiveCallStatic_MLV_1:
+              case RecursiveCallStatic_MLV_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value lastArgSizeIndex = getWordAndInc(PC);
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+                    UInt32Value lastArgSize = FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+                    if (1 == lastArgSize) {
+                        callRecursiveFunction_MS(PC,
+                                                 SP,
+                                                 entryPoint,
+                                                 argsCount,
+                                                 argIndexes,
+                                                 returnAddress);
+                    } else {
+                        callRecursiveFunction_MLD(PC,
+                                                  SP,
+                                                  entryPoint,
+                                                  argsCount,
+                                                  argIndexes,
+                                                  returnAddress);
+                    }
+                    break;
+                }
+              case RecursiveCallStatic_MF_0:
+              case RecursiveCallStatic_MF_1:
+              case RecursiveCallStatic_MF_M:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value* argSizes = PC;
+                    PC += argsCount;
+                    // now, PC points to destination operand.
+                    UInt32Value* returnAddress = PC;
+
+                    /* save ENV registers to the current frame. */
+                    FrameStack::storeENV(SP, ENV);
+
+                    callRecursiveFunction_MF(PC,
+                                             SP,
+                                             entryPoint,
+                                             argsCount,
+                                             argIndexes,
+                                             argSizes,
+                                             returnAddress);
+                    break;
+                }
+              case RecursiveCallStatic_MV_0:
+              case RecursiveCallStatic_MV_1:
+              case RecursiveCallStatic_MV_M:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
@@ -3864,29 +4334,34 @@ VirtualMachine::executeLoop()
                     /* save ENV registers to the current frame. */
                     FrameStack::storeENV(SP, ENV);
 
-                    callRecursiveFunction_M(false,
-                                            PC,
-                                            SP,
-                                            ENV,
-                                            entryPoint,
-                                            argIndexes,
-                                            argSizeIndexes,
-                                            returnAddress);
+                    callRecursiveFunction_MV(PC,
+                                             SP,
+                                             entryPoint,
+                                             argsCount,
+                                             argIndexes,
+                                             argSizeIndexes,
+                                             returnAddress);
+                    break;
+                }
+              case RecursiveTailCallStatic_0:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+
+                    tailCallRecursiveFunction_0(PC,
+                                                entryPoint);
                     break;
                 }
               case RecursiveTailCallStatic_S:
                 {
+
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
                     UInt32Value argIndex = getWordAndInc(PC);
-
-                    callRecursiveFunction_S(true,
-                                            PC,
-                                            SP,
-                                            ENV,
-                                            entryPoint,
-                                            argIndex,
-                                            NULL);
+                    tailCallRecursiveFunction_S(PC,
+                                                SP,
+                                                entryPoint,
+                                                argIndex);
                     break;
                 }
               case RecursiveTailCallStatic_D:
@@ -3895,13 +4370,10 @@ VirtualMachine::executeLoop()
                     (UInt32Value*)(getWordAndInc(PC));
                     UInt32Value argIndex = getWordAndInc(PC);
 
-                    callRecursiveFunction_D(true,
-                                            PC,
-                                            SP,
-                                            ENV,
-                                            entryPoint,
-                                            argIndex,
-                                            NULL);
+                    tailCallRecursiveFunction_D(PC,
+                                                SP,
+                                                entryPoint,
+                                                argIndex);
                     break;
                 }
               case RecursiveTailCallStatic_V:
@@ -3913,17 +4385,94 @@ VirtualMachine::executeLoop()
 
                     UInt32Value argSize = FRAME_ENTRY(SP, argSizeIndex).uint32;
 
-                    callRecursiveFunction_V(true,
-                                            PC,
-                                            SP,
-                                            ENV,
-                                            entryPoint,
-                                            argIndex,
-                                            argSize,
-                                            NULL);
+                    if ( 1 == argSize ) {
+                        tailCallRecursiveFunction_S(PC,
+                                                    SP,
+                                                    entryPoint,
+                                                    argIndex);
+                    } else {
+                        tailCallRecursiveFunction_D(PC,
+                                                    SP,
+                                                    entryPoint,
+                                                    argIndex);
+                    }
                     break;
                 }
-              case RecursiveTailCallStatic_M:
+              case RecursiveTailCallStatic_MS:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+
+                    tailCallRecursiveFunction_MS(PC,
+                                                 SP,
+                                                 entryPoint,
+                                                 argsCount,
+                                                 argIndexes);
+                    break;
+                }
+              case RecursiveTailCallStatic_MLD:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+
+                    tailCallRecursiveFunction_MLD(PC,
+                                                  SP,
+                                                  entryPoint,
+                                                  argsCount,
+                                                  argIndexes);
+                    break;
+                }
+              case RecursiveTailCallStatic_MLV:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value lastArgSizeIndex = getWordAndInc(PC);
+
+                    UInt32Value lastArgSize = FRAME_ENTRY(SP, lastArgSizeIndex).uint32;
+
+                    if ( 1 == lastArgSize) {
+                        tailCallRecursiveFunction_MS(PC,
+                                                     SP,
+                                                     entryPoint,
+                                                     argsCount,
+                                                     argIndexes);
+                    } else {
+                        tailCallRecursiveFunction_MLD(PC,
+                                                      SP,
+                                                      entryPoint,
+                                                      argsCount,
+                                                      argIndexes);
+                    }
+                    break;
+                }
+              case RecursiveTailCallStatic_MF:
+                {
+                    UInt32Value* entryPoint =
+                    (UInt32Value*)(getWordAndInc(PC));
+                    UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value* argIndexes = PC;
+                    PC += argsCount;
+                    UInt32Value* argSizes = PC;
+                    PC += argsCount;
+
+                    tailCallRecursiveFunction_MF(PC,
+                                                 SP,
+                                                 entryPoint,
+                                                 argsCount,
+                                                 argIndexes,
+                                                 argSizes);
+                    break;
+                }
+              case RecursiveTailCallStatic_MV:
                 {
                     UInt32Value* entryPoint =
                     (UInt32Value*)(getWordAndInc(PC));
@@ -3933,166 +4482,12 @@ VirtualMachine::executeLoop()
                     UInt32Value* argSizeIndexes = PC;
                     PC += argsCount;
 
-                    callRecursiveFunction_M(true,
-                                            PC,
-                                            SP,
-                                            ENV,
-                                            entryPoint,
-                                            argIndexes,
-                                            argSizeIndexes,
-                                            NULL);
-                    break;
-                }
-              case SelfRecursiveCallStatic_S:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value argIndex = getWordAndInc(PC);
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    callSelfRecursiveFunction_S(false,
-                                                PC,
-                                                SP,
-                                                entryPoint,
-                                                argIndex,
-                                                returnAddress);
-                    break;
-                }
-              case SelfRecursiveCallStatic_D:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value argIndex = getWordAndInc(PC);
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    callSelfRecursiveFunction_D(false,
-                                                PC,
-                                                SP,
-                                                entryPoint,
-                                                argIndex,
-                                                returnAddress);
-                    break;
-                }
-              case SelfRecursiveCallStatic_V:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value argIndex = getWordAndInc(PC);
-                    UInt32Value argSizeIndex = getWordAndInc(PC);
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    UInt32Value argSize = FRAME_ENTRY(SP, argSizeIndex).uint32;
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    callSelfRecursiveFunction_V(false,
-                                                PC,
-                                                SP,
-                                                entryPoint,
-                                                argIndex,
-                                                argSize,
-                                                returnAddress);
-                    break;
-                }
-              case SelfRecursiveCallStatic_M:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value argsCount = getWordAndInc(PC);
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    UInt32Value* argSizeIndexes = PC;
-                    PC += argsCount;
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    /* save ENV registers to the current frame. */
-                    FrameStack::storeENV(SP, ENV);
-
-                    callSelfRecursiveFunction_M(false,
-                                                PC,
-                                                SP,
-                                                entryPoint,
-                                                argsCount,
-                                                argIndexes,
-                                                argSizeIndexes,
-                                                returnAddress);
-                    break;
-                }
-              case SelfRecursiveTailCallStatic_S:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value argIndex = getWordAndInc(PC);
-
-                    callSelfRecursiveFunction_S(true,
-                                                PC,
-                                                SP,
-                                                entryPoint,
-                                                argIndex,
-                                                NULL);
-                    break;
-                }
-              case SelfRecursiveTailCallStatic_D:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value argIndex = getWordAndInc(PC);
-
-                    callSelfRecursiveFunction_D(true,
-                                                PC,
-                                                SP,
-                                                entryPoint,
-                                                argIndex,
-                                                NULL);
-                    break;
-                }
-              case SelfRecursiveTailCallStatic_V:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value argIndex = getWordAndInc(PC);
-                    UInt32Value argSizeIndex = getWordAndInc(PC);
-
-                    UInt32Value argSize = FRAME_ENTRY(SP, argSizeIndex).uint32;
-
-                    callSelfRecursiveFunction_V(true,
-                                                PC,
-                                                SP,
-                                                entryPoint,
-                                                argIndex,
-                                                argSize,
-                                                NULL);
-                    break;
-                }
-              case SelfRecursiveTailCallStatic_M:
-                {
-                    UInt32Value* entryPoint =
-                    (UInt32Value*)(getWordAndInc(PC));
-                    UInt32Value argsCount = getWordAndInc(PC);
-                    UInt32Value* argIndexes = PC;
-                    PC += argsCount;
-                    UInt32Value* argSizeIndexes = PC;
-                    PC += argsCount;
-
-                    callSelfRecursiveFunction_M(true,
-                                                PC,
-                                                SP,
-                                                entryPoint,
-                                                argsCount,
-                                                argIndexes,
-                                                argSizeIndexes,
-                                                NULL);
+                    tailCallRecursiveFunction_MV(PC,
+                                                 SP,
+                                                 entryPoint,
+                                                 argsCount,
+                                                 argIndexes,
+                                                 argSizeIndexes);
                     break;
                 }
               case MakeBlock:
@@ -4129,16 +4524,100 @@ VirtualMachine::executeLoop()
                         ASSERT(!FrameStack::isPointerSlot(SP, fieldSizeIndex));
                         UInt32Value fieldSize =
                         FRAME_ENTRY(SP, fieldSizeIndex).uint32;
-                        for(int index = 0; index < fieldSize; index += 1){
+                        ASSERT((1 == fieldSize) || (2 == fieldSize) || (0 == fieldSize));
+                        switch (fieldSize) {
+                        case 0: break;
+                        case 1: 
+                          {
                             ASSERT_SAME_TYPE_SLOT_FIELD
-                                (SP, fieldValueIndex + index,
-                                 block, fieldOffset + index);
+                                (SP, fieldValueIndex,
+                                 block, fieldOffset);
                             Cell fieldValue =
-                            FRAME_ENTRY(SP, fieldValueIndex + index);
+                            FRAME_ENTRY(SP, fieldValueIndex);
                             Heap::initializeField
-                            (block, fieldOffset + index, fieldValue);
+                            (block, fieldOffset, fieldValue);
+                            break;
+                          }
+                        case 2:
+                          {
+                            ASSERT(!FrameStack::isPointerSlot (SP, fieldValueIndex))
+                            ASSERT(!FrameStack::isPointerSlot (SP, fieldValueIndex + 1))
+                            ASSERT(!Heap::isPointerField (block, fieldOffset));
+                            ASSERT(!Heap::isPointerField (block, fieldOffset + 1));
+
+                            ASSERT_SAME_TYPE_SLOT_FIELD
+                                (SP, fieldValueIndex,
+                                 block, fieldOffset);
+                            ASSERT_SAME_TYPE_SLOT_FIELD
+                                (SP, fieldValueIndex + 1,
+                                 block, fieldOffset + 1);
+                            Real64Value fieldValue =
+                            *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, fieldValueIndex);
+                            Heap::initializeField_D
+                            (block, fieldOffset, fieldValue);
+                            break;
+                          }
+                        default: ASSERT(false);break;
                         }
                         fieldOffset += fieldSize;
+                    }
+                    ASSERT(FrameStack::isPointerSlot(SP, destination));
+                    FRAME_ENTRY(SP, destination).blockRef = block;
+                    break;
+                }
+              case MakeFixedSizeBlock:
+                {
+                    UInt32Value bitmapIndex = getWordAndInc(PC);
+                    UInt32Value size = getWordAndInc(PC);
+                    UInt32Value fieldsCount = getWordAndInc(PC);
+                    UInt32Value *fieldValueIndexes = PC;
+                    PC += fieldsCount;
+                    UInt32Value *fieldSizes = PC;
+                    PC += fieldsCount;
+                    UInt32Value destination = getWordAndInc(PC);
+
+                    ASSERT(!FrameStack::isPointerSlot(SP, bitmapIndex));
+                    Bitmap bitmap =
+                    (Bitmap)(FRAME_ENTRY(SP, bitmapIndex).uint32);
+
+                    Cell* block;
+                    ALLOCATE_RECORDBLOCK(block, bitmap, size);
+
+                    UInt32Value fieldOffset = 0;
+                    for(int index = 0; index < fieldsCount; index += 1)
+                    {
+                        UInt32Value fieldValueIndex = *fieldValueIndexes;
+                        UInt32Value fieldSize = *fieldSizes;
+                        ASSERT((1 == fieldSize) || (2 == fieldSize) || (0 == fieldSize));
+                        switch (fieldSize) {
+                        case 0: break;
+                        case 1: 
+                          {
+                            ASSERT_SAME_TYPE_SLOT_FIELD
+                                (SP, fieldValueIndex,
+                                 block, fieldOffset);
+                            Cell fieldValue =
+                            FRAME_ENTRY(SP, fieldValueIndex);
+                            Heap::initializeField
+                            (block, fieldOffset, fieldValue);
+                            break;
+                          }
+                        case 2:
+                          {
+                            ASSERT_SAME_TYPE_SLOT_FIELD
+                                (SP, fieldValueIndex,
+                                 block, fieldOffset);
+                            Cell fieldValue = FRAME_ENTRY(SP, fieldValueIndex);
+                            Heap::initializeField(block, fieldOffset, fieldValue);
+                            fieldValue = FRAME_ENTRY(SP, fieldValueIndex + 1);
+                            Heap::initializeField(block, fieldOffset + 1, fieldValue);
+                            break;
+                          }
+                        default: ASSERT(false);break;
+                        }
+                        fieldOffset += fieldSize;
+                        fieldValueIndexes += 1;
+                        fieldSizes += 1;
                     }
                     ASSERT(FrameStack::isPointerSlot(SP, destination));
                     FRAME_ENTRY(SP, destination).blockRef = block;
@@ -4169,9 +4648,44 @@ VirtualMachine::executeLoop()
                     }
                     ASSERT(FrameStack::isPointerSlot(SP, destination));
                     FRAME_ENTRY(SP, destination).blockRef = block;
+
                     break;
                 }
               case MakeArray_S:
+                {
+                    UInt32Value bitmapIndex = getWordAndInc(PC);
+                    UInt32Value sizeIndex = getWordAndInc(PC);
+                    UInt32Value initialValueIndex = getWordAndInc(PC);
+                    UInt32Value destination = getWordAndInc(PC);
+
+                    ASSERT(!FrameStack::isPointerSlot(SP, bitmapIndex));
+                    Bitmap bitmap =
+                    (Bitmap)(FRAME_ENTRY(SP, bitmapIndex).uint32);
+
+                    ASSERT(!FrameStack::isPointerSlot(SP, sizeIndex));
+                    UInt32Value size = FRAME_ENTRY(SP, sizeIndex).uint32;
+
+                    Cell* block;
+                    if(0 == bitmap){
+                        ALLOCATE_SINGLEATOMARRAY(block, size);
+                    }
+                    else {
+                        ALLOCATE_POINTERARRAY(block, size);
+                    }
+                    Cell initialValue = FRAME_ENTRY(SP, initialValueIndex);
+#ifdef IML_DEBUG
+                    if(bitmap){
+                        ASSERT(FrameStack::isPointerSlot (SP, initialValueIndex));
+                        ASSERT(Heap::isValidBlockPointer (initialValue.blockRef));
+                    }
+#endif
+                    for(int index = 0; index < size; index += 1){
+                        Heap::initializeField(block, index, initialValue);
+                    }
+                    ASSERT(FrameStack::isPointerSlot(SP, destination));
+                    FRAME_ENTRY(SP, destination).blockRef = block;
+                    break;
+                }
               case MakeArray_D:
                 {
                     UInt32Value bitmapIndex = getWordAndInc(PC);
@@ -4187,61 +4701,14 @@ VirtualMachine::executeLoop()
                     UInt32Value size = FRAME_ENTRY(SP, sizeIndex).uint32;
 
                     Cell* block;
-                    switch(opcode){
-                      case MakeArray_S:
-                        {
-                            if(0 == bitmap){
-                                ALLOCATE_SINGLEATOMARRAY(block, size);
-                            }
-                            else{ALLOCATE_POINTERARRAY(block, size);}
+                    ASSERT(0 == bitmap);
+                    ALLOCATE_DOUBLEATOMARRAY(block, size);
 
-                            Cell initialValue =
-                            FRAME_ENTRY(SP, initialValueIndex);
-#ifdef IML_DEBUG
-                            if(bitmap){
-                                ASSERT(FrameStack::isPointerSlot
-                                       (SP, initialValueIndex));
-                                ASSERT(Heap::isValidBlockPointer
-                                       (initialValue.blockRef));
-                            }
-#endif
-                            for(int index = 0; index < size; index += 1){
-                                Heap::initializeField
-                                (block, index, initialValue);
-                            }
-                            break;
-                        }
-                      case MakeArray_D:
-                        {
-                            ASSERT(0 == bitmap);
-                            ALLOCATE_DOUBLEATOMARRAY(block, size);
-
-                            Cell initialValue1 =
-                            FRAME_ENTRY(SP, initialValueIndex);
-                            Cell initialValue2 =
-                            FRAME_ENTRY(SP, initialValueIndex + 1);
-#ifdef IML_DEBUG
-                            if(bitmap){// expected to never happen
-                                ASSERT(FrameStack::isPointerSlot
-                                       (SP, initialValueIndex));
-                                ASSERT(FrameStack::isPointerSlot
-                                       (SP, initialValueIndex + 1));
-                                ASSERT(Heap::isValidBlockPointer
-                                       (initialValue1.blockRef));
-                                ASSERT(Heap::isValidBlockPointer
-                                       (initialValue2.blockRef));
-                            }
-#endif
-                            for(int index = 0; index < size; index += 2){
-                                Heap::initializeField
-                                (block, index, initialValue1);
-                                Heap::initializeField
-                                (block, index + 1, initialValue2);
-                            }
-                            break;
-                        }
+                    Real64Value initialValue =
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, initialValueIndex);
+                    for(int index = 0; index < size; index += 2){
+                        Heap::initializeField_D(block, index, initialValue);
                     }
-
                     ASSERT(FrameStack::isPointerSlot(SP, destination));
                     FRAME_ENTRY(SP, destination).blockRef = block;
                     break;
@@ -4267,46 +4734,33 @@ VirtualMachine::executeLoop()
                     FRAME_ENTRY(SP, initialValueSizeIndex).uint32;
 
                     Cell* block;
-                    if(0 == bitmap){
-                        switch(initialValueSize){
-                          case 1:
-                            ALLOCATE_SINGLEATOMARRAY(block, size);
-                            break;
-                          case 2:
-                            ALLOCATE_DOUBLEATOMARRAY(block, size);
-                            break;
-                          default:
-                            ASSERT(false);
+                    if ( 1 == initialValueSize ) {
+                        if (0 == bitmap) {
+                           ALLOCATE_SINGLEATOMARRAY(block, size);
+                        } else {
+                           ALLOCATE_POINTERARRAY(block, size);
                         }
-                    }
-                    else{ALLOCATE_POINTERARRAY(block, size);}
-
-                    // get initial values
-                    Cell initialValues[initialValueSize];
-                    for(int index = 0; index < initialValueSize; index += 1){
-                        initialValues[index] = 
-                        FRAME_ENTRY(SP, initialValueIndex + index);
-                    }
+                        Cell initialValue = FRAME_ENTRY(SP, initialValueIndex);
 #ifdef IML_DEBUG
-                    // assert runtime type
-                    if(bitmap){
-                        for(int index = 0;
-                            index < initialValueSize;
-                            index += 1)
-                        {
+                        // assert runtime type
+                        if(bitmap){
                             ASSERT(FrameStack::isPointerSlot
-                                       (SP, initialValueIndex + index));
+                                   (SP, initialValueIndex));
                             ASSERT(Heap::isValidBlockPointer
-                                       (initialValues[index].blockRef));
+                                   (initialValue.blockRef));
                         }
-                    }
 #endif
-                    // copy initial values into the array.
-                    for(int index = 0; index < size; index += initialValueSize)
-                    {
-                        for(int i = 0; i < initialValueSize; i += 1){
+                        for(int index = 0; index < size; index += 1) {
                             Heap::initializeField
-                            (block, index + i, initialValues[i]);
+                              (block, index, initialValue);
+                        }
+                    } else {
+                        ALLOCATE_DOUBLEATOMARRAY(block, size);
+                        Real64Value initialValue = 
+                          *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, initialValueIndex);
+                        for(int index = 0; index < size; index += 2) {
+                            Heap::initializeField_D
+                              (block, index, initialValue);
                         }
                     }
 
@@ -4534,13 +4988,22 @@ VirtualMachine::executeLoop()
                 {
                     goto EXIT_LOOP;
                 }
+              case Return_0:
+                {
+                    UInt32Value* calleeSP = SP;
+                    FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
+                    FrameStack::loadENV(SP, ENV);
+
+                    /* The destination operand of caller CallStatic/Apply
+                       instruction is stored at the return address. */
+                    break;
+                }
               case Return_S:
                 {
                     UInt32Value variableIndex = getWordAndInc(PC);
 
                     UInt32Value* calleeSP = SP;
                     ASSERT_VALID_FRAME_VAR(SP, variableIndex);
-                    Cell returnValue = FRAME_ENTRY(SP, variableIndex);
                     FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
                     FrameStack::loadENV(SP, ENV);
 
@@ -4549,7 +5012,7 @@ VirtualMachine::executeLoop()
                     UInt32Value destination = getWordAndInc(PC);
                     ASSERT_SAME_TYPE_SLOTS(calleeSP, variableIndex,
                                            SP, destination);
-                    FRAME_ENTRY(SP, destination) = returnValue;
+                    FRAME_ENTRY(SP, destination) = FRAME_ENTRY(calleeSP,variableIndex);
                     break;
                 }
               case Return_D:
@@ -4559,8 +5022,6 @@ VirtualMachine::executeLoop()
                     UInt32Value *calleeSP = SP;
                     ASSERT_VALID_FRAME_VAR(SP, variableIndex);
                     ASSERT_VALID_FRAME_VAR(SP, variableIndex + 1);
-                    Cell returnValue1 = FRAME_ENTRY(SP, variableIndex);
-                    Cell returnValue2 = FRAME_ENTRY(SP, variableIndex + 1);
                     FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
                     FrameStack::loadENV(SP, ENV);
 
@@ -4572,8 +5033,8 @@ VirtualMachine::executeLoop()
                     ASSERT_SAME_TYPE_SLOTS(calleeSP, variableIndex + 1,
                                            SP, destination + 1);
 
-                    FRAME_ENTRY(SP, destination) = returnValue1;
-                    FRAME_ENTRY(SP, destination + 1) = returnValue2;
+                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) = 
+                    *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, variableIndex);
                     break;
                 }
               case Return_V:
@@ -4585,12 +5046,6 @@ VirtualMachine::executeLoop()
                     UInt32Value variableSize =
                     FRAME_ENTRY(SP, variableSizeIndex).uint32;
 
-                    Cell returnValues[variableSize];
-                    for(int index = 0; index < variableSize; index += 1){
-                        ASSERT_VALID_FRAME_VAR(SP, variableIndex + index);
-                        returnValues[index] =
-                        FRAME_ENTRY(SP, variableIndex + index);
-                    }
                     UInt32Value *calleeSP = SP;
                     FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
                     FrameStack::loadENV(SP, ENV);
@@ -4598,11 +5053,186 @@ VirtualMachine::executeLoop()
                     /* The destination operand of caller CallStatic/Apply
                        instruction is stored at the return address. */
                     UInt32Value destination = getWordAndInc(PC);
-                    for(int index = 0; index < variableSize; index += 1){
-                        ASSERT_SAME_TYPE_SLOTS(calleeSP, variableIndex + index,
-                                               SP, destination + index);
-                        FRAME_ENTRY(SP, destination + index) =
-                        returnValues[index];
+                    if ( 1 == variableSize) {
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, variableIndex,
+                                               SP, destination);
+                        FRAME_ENTRY(SP, destination) = FRAME_ENTRY(calleeSP,variableIndex);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, variableIndex,
+                                               SP, destination);
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, variableIndex + 1,
+                                               SP, destination + 1);
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, destination) = 
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, variableIndex);
+                    }
+                    break;
+                }
+              case Return_MS:
+                {
+                    UInt32Value variablesCount = getWordAndInc(PC);
+                    UInt32Value *variableIndexes = PC;
+                    PC += variablesCount;
+
+                    UInt32Value *calleeSP = SP;
+                    FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
+                    FrameStack::loadENV(SP, ENV);
+
+                    /* The destination operand of caller CallStatic/Apply
+                       instruction is stored at the return address. */
+                    PC += 1; /**/
+                    UInt32Value *destIndexes = PC;
+                    PC += variablesCount;
+                    for (int index = 0 ; index < variablesCount ; index += 1) {
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                               SP, *destIndexes);
+                        FRAME_ENTRY(SP, *destIndexes) = FRAME_ENTRY(calleeSP, *variableIndexes);
+                        destIndexes += 1;
+                        variableIndexes += 1;
+                    }
+                    break;
+                }
+              case Return_MLD:
+                {
+                    UInt32Value variablesCount = getWordAndInc(PC);
+                    UInt32Value *variableIndexes = PC;
+                    PC += variablesCount;
+
+                    UInt32Value *calleeSP = SP;
+                    FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
+                    FrameStack::loadENV(SP, ENV);
+
+                    /* The destination operand of caller CallStatic/Apply
+                       instruction is stored at the return address. */
+                    PC += 1; /**/
+                    UInt32Value *destIndexes = PC;
+                    PC += variablesCount;
+                    for (int index = 1 ; index < variablesCount ; index += 1) {
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                               SP, *destIndexes);
+                        FRAME_ENTRY(SP, *destIndexes) = FRAME_ENTRY(calleeSP, *variableIndexes);
+                        destIndexes += 1;
+                        variableIndexes += 1;
+                    }
+                    ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                           SP, *destIndexes);
+                    ASSERT_SAME_TYPE_SLOTS(calleeSP, (*variableIndexes) + 1,
+                                           SP, (*destIndexes) + 1);
+                    *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *destIndexes) = 
+                    *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *variableIndexes);
+                    break;
+                }
+              case Return_MLV:
+                {
+                    UInt32Value variablesCount = getWordAndInc(PC);
+                    UInt32Value *variableIndexes = PC;
+                    PC += variablesCount;
+                    UInt32Value lastVariableSizeIndex = getWordAndInc(PC);
+
+                    ASSERT(!FrameStack::isPointerSlot(SP, lastVariableSizeIndex));
+                    UInt32Value lastVariableSize =
+                    FRAME_ENTRY(SP, lastVariableSizeIndex).uint32;
+
+
+                    UInt32Value *calleeSP = SP;
+                    FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
+                    FrameStack::loadENV(SP, ENV);
+
+                    /* The destination operand of caller CallStatic/Apply
+                       instruction is stored at the return address. */
+                    PC += 1; /**/
+                    UInt32Value *destIndexes = PC;
+                    PC += variablesCount;
+                    for (int index = 1 ; index < variablesCount ; index += 1) {
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                               SP, *destIndexes);
+                        FRAME_ENTRY(SP, *destIndexes) = FRAME_ENTRY(calleeSP, *variableIndexes);
+                        destIndexes += 1;
+                        variableIndexes += 1;
+                    }
+                    if ( 1 == lastVariableSize) {
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                               SP, *destIndexes);
+                        FRAME_ENTRY(SP, *destIndexes) = FRAME_ENTRY(calleeSP, *variableIndexes);
+                    } else {
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                               SP, *destIndexes);
+                        ASSERT_SAME_TYPE_SLOTS(calleeSP, (*variableIndexes) + 1,
+                                               SP, (*destIndexes) + 1);
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *destIndexes) = 
+                        *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *variableIndexes);
+                    }
+                    break;
+                }
+              case Return_MF:
+                {
+                    UInt32Value variablesCount = getWordAndInc(PC);
+                    UInt32Value *variableIndexes = PC;
+                    PC += variablesCount;
+                    UInt32Value *variableSizes = PC;
+                    PC += variablesCount;
+
+                    UInt32Value *calleeSP = SP;
+                    FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
+                    FrameStack::loadENV(SP, ENV);
+
+                    /* The destination operand of caller CallStatic/Apply
+                       instruction is stored at the return address. */
+                    PC += 1; /**/
+                    UInt32Value *destIndexes = PC;
+                    PC += variablesCount;
+                    for (int index = 0 ; index < variablesCount ; index += 1) {
+                        if (1 == (*variableSizes)) {
+                            ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                                   SP, *destIndexes);
+                            FRAME_ENTRY(SP, *destIndexes) = FRAME_ENTRY(calleeSP, *variableIndexes);
+                        } else {
+                            ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                                   SP, *destIndexes);
+                            ASSERT_SAME_TYPE_SLOTS(calleeSP, (*variableIndexes) + 1,
+                                                   SP, (*destIndexes) + 1);
+                            *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *destIndexes) = 
+                            *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *variableIndexes);
+                        }
+                        variableIndexes += 1;
+                        destIndexes += 1;
+                        variableSizes += 1;
+                    }
+                    break;
+                }
+              case Return_MV:
+                {
+                    UInt32Value variablesCount = getWordAndInc(PC);
+                    UInt32Value *variableIndexes = PC;
+                    PC += variablesCount;
+                    UInt32Value *variableSizeIndexes = PC;
+                    PC += variablesCount;
+
+                    UInt32Value *calleeSP = SP;
+                    FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
+                    FrameStack::loadENV(SP, ENV);
+
+                    /* The destination operand of caller CallStatic/Apply
+                       instruction is stored at the return address. */
+                    PC += 1; /**/
+                    UInt32Value *destIndexes = PC;
+                    PC += variablesCount;
+                    for (int index = 0 ; index < variablesCount ; index += 1) {
+                        UInt32Value variableSize = FRAME_ENTRY(calleeSP, *variableSizeIndexes).uint32;
+                        if (1 == variableSize) {
+                            ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                                   SP, *destIndexes);
+                            FRAME_ENTRY(SP, *destIndexes) = FRAME_ENTRY(calleeSP, *variableIndexes);
+                        } else {
+                            ASSERT_SAME_TYPE_SLOTS(calleeSP, *variableIndexes,
+                                                   SP, *destIndexes);
+                            ASSERT_SAME_TYPE_SLOTS(calleeSP, (*variableIndexes) + 1,
+                                                   SP, (*destIndexes) + 1);
+                            *(Real64Value*)FRAME_ENTRY_ADDRESS(SP, *destIndexes) = 
+                            *(Real64Value*)FRAME_ENTRY_ADDRESS(calleeSP, *variableIndexes);
+                        }
+                        variableIndexes += 1;
+                        destIndexes += 1;
+                        variableSizeIndexes += 1;
                     }
                     break;
                 }
@@ -4880,7 +5510,7 @@ VirtualMachine::executeLoop()
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 SInt32Value arg2 = (SInt32Value)getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
-                bool result = FRAME_ENTRY(SP, argIndex1).sint32 op arg2 \
+                bool result = FRAME_ENTRY(SP, argIndex1).sint32 op arg2; \
                 FRAME_ENTRY(SP, destination) = \
                   PrimitiveSupport::boolToCell(result); \
                 break; \
@@ -4912,7 +5542,7 @@ VirtualMachine::executeLoop()
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value arg2 = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
-                bool result = FRAME_ENTRY(SP, argIndex1).uint32 op arg2 \
+                bool result = FRAME_ENTRY(SP, argIndex1).uint32 op arg2; \
                 FRAME_ENTRY(SP, destination) = \
                   PrimitiveSupport::boolToCell(result); \
                 break; \
@@ -5085,28 +5715,68 @@ VirtualMachine::executeLoop()
               case AbsInt: PRIMITIVE_I_I_op(ABS_SINT32);
               case AbsReal: PRIMITIVE_R_R_op(ABS_REAL64);
               case LtInt: PRIMITIVE_II_B_op(<);
+              case LtInt_Const_1: PRIMITIVE_II_B_Const_1_op(<);
+              case LtInt_Const_2: PRIMITIVE_II_B_Const_2_op(<);
               case LtReal: PRIMITIVE_RR_B_op(<);
+              case LtReal_Const_1: PRIMITIVE_RR_B_Const_1_op(<);
+              case LtReal_Const_2: PRIMITIVE_RR_B_Const_2_op(<);
               case LtWord: PRIMITIVE_WW_B_op(<);
+              case LtWord_Const_1: PRIMITIVE_WW_B_Const_1_op(<);
+              case LtWord_Const_2: PRIMITIVE_WW_B_Const_2_op(<);
               case LtByte: PRIMITIVE_WW_B_op(<);
+              case LtByte_Const_1: PRIMITIVE_WW_B_Const_1_op(<);
+              case LtByte_Const_2: PRIMITIVE_WW_B_Const_2_op(<);
               case LtChar: PRIMITIVE_WW_B_op(<);
+              case LtChar_Const_1: PRIMITIVE_WW_B_Const_1_op(<);
+              case LtChar_Const_2: PRIMITIVE_WW_B_Const_2_op(<);
               case LtString: PRIMITIVE_COMPARE_SS_B_op(< 0);
               case GtInt: PRIMITIVE_II_B_op(>);
+              case GtInt_Const_1: PRIMITIVE_II_B_Const_1_op(>);
+              case GtInt_Const_2: PRIMITIVE_II_B_Const_2_op(>);
               case GtReal: PRIMITIVE_RR_B_op(>);
+              case GtReal_Const_1: PRIMITIVE_RR_B_Const_1_op(>);
+              case GtReal_Const_2: PRIMITIVE_RR_B_Const_2_op(>);
               case GtWord: PRIMITIVE_WW_B_op(>);
+              case GtWord_Const_1: PRIMITIVE_WW_B_Const_1_op(>);
+              case GtWord_Const_2: PRIMITIVE_WW_B_Const_2_op(>);
               case GtByte: PRIMITIVE_WW_B_op(>);
+              case GtByte_Const_1: PRIMITIVE_WW_B_Const_1_op(>);
+              case GtByte_Const_2: PRIMITIVE_WW_B_Const_2_op(>);
               case GtChar: PRIMITIVE_WW_B_op(>);
+              case GtChar_Const_1: PRIMITIVE_WW_B_Const_1_op(>);
+              case GtChar_Const_2: PRIMITIVE_WW_B_Const_2_op(>);
               case GtString: PRIMITIVE_COMPARE_SS_B_op(> 0);
               case LteqInt: PRIMITIVE_II_B_op(<=);
+              case LteqInt_Const_1: PRIMITIVE_II_B_Const_1_op(<=);
+              case LteqInt_Const_2: PRIMITIVE_II_B_Const_2_op(<=);
               case LteqReal: PRIMITIVE_RR_B_op(<=);
+              case LteqReal_Const_1: PRIMITIVE_RR_B_Const_1_op(<=);
+              case LteqReal_Const_2: PRIMITIVE_RR_B_Const_2_op(<=);
               case LteqWord: PRIMITIVE_WW_B_op(<=);
+              case LteqWord_Const_1: PRIMITIVE_WW_B_Const_1_op(<=);
+              case LteqWord_Const_2: PRIMITIVE_WW_B_Const_2_op(<=);
               case LteqByte: PRIMITIVE_WW_B_op(<=);
+              case LteqByte_Const_1: PRIMITIVE_WW_B_Const_1_op(<=);
+              case LteqByte_Const_2: PRIMITIVE_WW_B_Const_2_op(<=);
               case LteqChar: PRIMITIVE_WW_B_op(<=);
+              case LteqChar_Const_1: PRIMITIVE_WW_B_Const_1_op(<=);
+              case LteqChar_Const_2: PRIMITIVE_WW_B_Const_2_op(<=);
               case LteqString: PRIMITIVE_COMPARE_SS_B_op(<= 0);
               case GteqInt: PRIMITIVE_II_B_op(>=);
+              case GteqInt_Const_1: PRIMITIVE_II_B_Const_1_op(>=);
+              case GteqInt_Const_2: PRIMITIVE_II_B_Const_2_op(>=);
               case GteqReal: PRIMITIVE_RR_B_op(>=);
+              case GteqReal_Const_1: PRIMITIVE_RR_B_Const_1_op(>=);
+              case GteqReal_Const_2: PRIMITIVE_RR_B_Const_2_op(>=);
               case GteqWord: PRIMITIVE_WW_B_op(>=);
+              case GteqWord_Const_1: PRIMITIVE_WW_B_Const_1_op(>=);
+              case GteqWord_Const_2: PRIMITIVE_WW_B_Const_2_op(>=);
               case GteqByte: PRIMITIVE_WW_B_op(>=);
+              case GteqByte_Const_1: PRIMITIVE_WW_B_Const_1_op(>=);
+              case GteqByte_Const_2: PRIMITIVE_WW_B_Const_2_op(>=);
               case GteqChar: PRIMITIVE_WW_B_op(>=);
+              case GteqChar_Const_1: PRIMITIVE_WW_B_Const_1_op(>=);
+              case GteqChar_Const_2: PRIMITIVE_WW_B_Const_2_op(>=);
               case GteqString: PRIMITIVE_COMPARE_SS_B_op(>= 0);
               case Word_toIntX: PRIMITIVE_W_W_op(+);// argument unchanged
               case Word_fromInt: PRIMITIVE_W_W_op(+);// argument unchanged
@@ -5259,7 +5929,7 @@ VirtualMachine::executeLoop()
     }
     catch(IMLException &exception)
     {
-        DBGWRAP(LOG.debug("instruction = %s",
+        DBGWRAP(LOG.debug("IMLException at instruction = %s",
                           instructionToString
                           (static_cast<instruction>
                            (*previousPC)));)
@@ -5282,6 +5952,11 @@ VirtualMachine::executeLoop()
         throw;
     }
     catch(...) {
+        DBGWRAP(LOG.debug("exception at instruction = %s",
+                          instructionToString
+                          (static_cast<instruction>
+                           (*previousPC)));)
+
 	PC_ = PC;
 	SP_ = SP;
 	ENV_ = ENV;
@@ -5337,7 +6012,7 @@ VirtualMachine::resetSignalHandler()
 
 void
 VirtualMachine::trace(RootTracer* tracer)
-    throw(IMLRuntimeException)
+    throw(IMLException)
 {
     // registers
     if(ENV_){
@@ -5374,7 +6049,7 @@ VirtualMachine::trace(RootTracer* tracer)
 
 void
 VirtualMachine::executeFinalizer(Cell* finalizable)
-        throw(IMLRuntimeException)
+        throw(IMLException)
 {
     /* A finalizable has a type of
      * 'a ref * ('a ref -> unit) ref

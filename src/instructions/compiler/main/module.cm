@@ -3,6 +3,7 @@ Group is
         $/basis_compat.cm
 #endif
         ../../../compiler/systemdef/sources.cm
+        ../../../configuration/sources.cm
 
         PRIMITIVE_SERIALIZER.sig
         PrimitiveSerializerLittleEndian.sml

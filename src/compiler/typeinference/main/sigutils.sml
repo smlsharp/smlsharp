@@ -2,7 +2,7 @@
  * signature check utility for module.
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: sigutils.sml,v 1.73 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: sigutils.sml,v 1.74 2007/04/23 00:51:50 bochao Exp $
  *)
 structure SigUtils =
 struct 
@@ -92,8 +92,7 @@ in
                | _ => idstate
               )
             | T.CONID {name,strpath,funtyCon,ty,tag,tyCon = {id,...}} =>
-              if ID.eq(id, PT.exnTyConid) then
-                (case SEnv.find(enrichedVE, varName) of
+              (case SEnv.find(enrichedVE, varName) of
                    SOME  (T.CONID {tag,tyCon,...}) => 
                    T.CONID({ 
                             name = name,
@@ -104,9 +103,8 @@ in
                             tyCon = tyCon
                             }
                            )
-                 | _ => idstate
-                )
-              else idstate
+                 | _ => (* error case captured by signature matching *)
+                   idstate)
             | _ => idstate
        )
         absVE

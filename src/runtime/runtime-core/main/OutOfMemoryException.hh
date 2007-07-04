@@ -2,20 +2,19 @@
 #define OutOfMemoryException_hh_
 
 #include "SystemDef.hh"
-#include "IMLException.hh"
-#include "IMLRuntimeException.hh"
+#include "SystemError.hh"
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml)
 
 class OutOfMemoryException
-    : public IMLRuntimeException
+    : public SystemError
 {
     ///////////////////////////////////////////////////////////////////////////
 
   public:
 
     OutOfMemoryException()
-        : IMLRuntimeException()
+        : SystemError()
     {
     }
 

@@ -2,12 +2,14 @@
  * a map from a slot index to a bound name in the source code.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SourceNameSlotMap.sml,v 1.4 2006/02/28 16:11:00 kiyoshiy Exp $
+ * @version $Id: SourceNameSlotMap.sml,v 1.5 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure SourceNameSlotMap : SOURCE_NAME_SLOT_MAP =
 struct
 
   (***************************************************************************)
+
+  structure BT = BasicTypes
 
   (**
    *  an ordered set of Executable.nameSlotTableEntry.
@@ -25,11 +27,11 @@ struct
      type ord_key = Executable.nameSlotTableEntry
      fun compare (left : ord_key, right : ord_key) =
          case
-           UInt32.compare
+           BT.UInt32.compare
                (#lifeTimeBeginOffset left, #lifeTimeBeginOffset right)
           of EQUAL =>
              (case
-                UInt32.compare
+                BT.UInt32.compare
                     (#lifeTimeEndOffset left, #lifeTimeEndOffset right)
                of EQUAL => LESS (* never return EQUAL *)
                 | order => order)

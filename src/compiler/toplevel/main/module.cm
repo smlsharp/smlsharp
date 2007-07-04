@@ -23,35 +23,41 @@ Group is
         ../../util/sources.cm
         ../../env/sources.cm
         ../../name/sources.cm
-        ../../valrecoptimization/sources.cm
-        ../../typedcalc/sources.cm
-        ../../typedlambda/sources.cm
+
         ../../patterncalc/sources.cm
-        ../../elaborate/sources.cm
         ../../patterncalcWithTvars/sources.cm
-        ../../settvars/sources.cm
+        ../../typedcalc/sources.cm
+	../../typedflatcalc/sources.cm
         ../../recordcalc/sources.cm
+        ../../typedlambda/sources.cm
+        ../../annotatedtypes/sources.cm
+        ../../annotatedcalc/sources.cm
+        ../../multiplevaluecalc/sources.cm
+        ../../clustercalc/sources.cm
+        ../../rbucalc/sources.cm
+        ../../anormal/sources.cm
+        ../../intermediatelanguage/sources.cm
+        ../../symbolicinstructions/sources.cm
+        ../../../instructions/compiler/sources.cm
+
+        ../../elaborate/sources.cm
+        ../../settvars/sources.cm
+        ../../valrecoptimization/sources.cm
         ../../typeinference/sources.cm
         ../../printergeneration/sources.cm
-(*
-        ../../typecheck/sources.cm
-*)
-	../../typedflatcalc/sources.cm
 	../../modulecompilation/sources.cm
         ../../matchcompilation/sources.cm
-        ../../recordcompilation/sources.cm
-
-	../../buccalc/sources.cm
-	../../buctransformation/sources.cm
-	../../anormal/sources.cm
-	../../anormaltransform/sources.cm
-	../../anormaloptimization/sources.cm
-
-        ../../linearize/sources.cm
-	../../sioptimization/sources.cm
-        ../../symbolicinstructions/sources.cm
+        ../../tlnormalization/sources.cm
+        ../../staticanalysis/sources.cm
+        ../../recordunboxing/sources.cm
+        ../../mvoptimization/sources.cm
+        ../../clustering/sources.cm
+        ../../rbutransformation/sources.cm
+        ../../anormalization/sources.cm
+        ../../iltransformation/sources.cm
+        ../../sigenerator/sources.cm
+        ../../sioptimization/sources.cm	
         ../../assemble/sources.cm
-        ../../../instructions/compiler/sources.cm
 	../../linker/sources.cm
         ../../session/sources.cm
 

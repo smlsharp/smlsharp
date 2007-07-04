@@ -1,7 +1,7 @@
 (**
  * Real structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Real.sml,v 1.18.2.1 2007/03/26 09:18:50 katsu Exp $
+ * @version $Id: Real.sml,v 1.19 2007/03/25 12:52:35 kiyoshiy Exp $
  *)
 structure Real =
 struct

@@ -63,9 +63,7 @@ class InteractiveSession
 
     virtual
     SInt32Value start()
-        throw(IMLRuntimeException,
-              UserException,
-              SystemError);
+        throw(IMLException);
 
     virtual
     void sendExitRequest(SInt32Value exitCode);

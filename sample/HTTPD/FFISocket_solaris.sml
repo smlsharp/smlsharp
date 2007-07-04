@@ -1,7 +1,7 @@
 (**
  * an implementation of FFI_SOCKET for sparc-solaris environment.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FFISocket_solaris.sml,v 1.2.2.1 2007/03/26 11:23:23 sasano Exp $
+ * @version $Id: FFISocket_solaris.sml,v 1.3 2007/04/02 09:42:29 katsu Exp $
  *)
 structure FFISocket : FFI_SOCKET =
 struct

@@ -1,0 +1,143 @@
+SML# Version 0.30 (released on 2007-07-02)
+
+1. Overview
+
+The major change from SML# 0.20 is implementation of several
+optimization phases in the SML# compiler, among which the most
+significant is Record Unboxig described below.
+
+
+2. Distribution Package
+
+The SML# distribution package is re-organized to contain the SML#
+compiler and its supporting tools in one package. The distribution
+package is available in the following forms.
+(a) Source tar file.
+  smlsharp-0.30.tar.gz
+(b) Mac OS X universal binary (after 10.4)
+  smlsharp-0.30-Universal-Installer.dmg
+(c) Windows binary installer
+   smlsharp-0.30-mingw.exe
+Each of the above package contains the following:
+* the SML# compiler and its supporting library including LMLML
+* SMLFormat (a pretty printer generator)
+* SMLDoc (a document generation tool)
+* SMLUnit (a unit test support tool)
+
+3. Contact information and mailing list
+- The contact address of the SML# development team.
+  smlsharp @ pllab . riec . tohoku . ac . jp 
+- The SML# mailing list:
+  smlsharp-list @ pllab . riec . tohoku . ac . jp  
+  This list is for general discussions on the SML# language, the
+  compiler and its supporting tools. This is open to everyone.
+  For more details, visit the "Contact Us" page of the SML# web.
+
+
+4. New Features of the SML# compiler
+4.1 Printer Control
+The following structure is added to control the printer used to print
+binding information in the interactive session
+
+SMLSharp.Control.Printer 
+: sig
+    val getColumns : unit  -> int
+    val getMaxDepth : unit  -> int option
+    val getMaxRefDepth : unit  -> int
+    val getMaxWidth : unit  -> int option
+    val setColumns : int  -> unit
+    val setMaxDepth : int option  -> unit
+    val setMaxRefDepth : int  -> unit
+    val setMaxWidth : int option  -> unit
+  end
+
+4.2 Optimization
+The following optimization phases have been implemented.
+
+(a) Record Unboxing
+This optimization attempts to "unbox" tuples/records by flattening
+component tuples and changing top-level tuples to multiple value
+passing. It is a type-directed source-to-source transformation that
+does not seem to be considered in existing literature or compiler.
+The required type based analysis is quite simple but shown to be very
+effective. Experiments on this technique shown a 27% speed-up in the
+lexgen benchmark and a 21% speed-up in mlyacc benchmark. The compiler
+switch 
+ --xdoRecordUnboxing=yes/no 
+enables/disables this optimization. It is enabled by default. 
+
+(b) Record Alignment
+To meat architecture requirements, the SML# compiler aligns record
+component such as (unboxed) floating point values to double-word
+boundary by inserting padding words. This would introduce some runtime
+overhead, especially in the presence of polymorphism. The Record
+Alignment optimization attempts to minimize this overhead cost as much
+as possible. The compiler switch 
+  --xalignRecord=yes/no
+enables/disables this optimization. It is enabled by default. 
+
+(c) Representation Analysis
+This optimization attempts to reduce the overhead due to type-directed
+compilation for those polymorphic functions that are instantiated to
+types representing the same runtime property by statically computing
+the type attributes. The compiler switch 
+ --xdoRepresentationAnalysis=yes/no
+enables/disables this optimization. It is enabled by default. 
+
+(d) Other Conventional Optimizations.
+In addition to those new type-based optimization, the version 0.30
+also implements the following conventional optimizations.
+ Optimization                   Compiler Switch 
+ constant folding               --xdoConstantFolding=yes/no
+ common expression elimination  --xdoCommonExpressionElimination=yes/no
+ useless code elimination       --xdoUselessCodeElimination=yes/no
+ stack slot minimization        --xdoStackReallocation=yes/no
+
+4.3 Other Changes
+(a) SML# executable file name
+In the batch-mode, the current SML# executable file name can be
+obtained by the function:
+  SMLSharp.CommandLine.executableImageName : unit -> string option
+In the interactive mode, it returns NONE.
+
+(b) "Shebang" line in a source file.
+ By default, the SML# compiler ignores the first if it begins "#!"
+ (shebang line). This feature is used to execute SML# file in a Unix 
+ shell as shown in the following example.
+   $ cat foo.sml
+   #!/usr/local/bin/smlsharp
+   print "foo\n";
+   $ ./foo.sml
+   foo
+The compiler switch 
+  --xskipShebang=yes/no
+enables/disables this feature. It is enabled by default.
+
+4.4 bug fixes
+Several minor bugs are fixed:
+* Make & install fails on Free BSD
+* Make fails for SMLUnit, SMLDoc, and SMLFormat on Unix/Linux due to
+  improper newline codes in their source files.
+* Tests and benchmarks fail in the system made with SML/NJ 110.63
+* "smlsharp -c" command does not report error messages properly.
+* Functions fromLarge, toLarge, toLargeX were missing in Word[N] structures.
+* TextIO.flushOut sometimes fails to flush the output buffer
+* Signature mismatch error due to difference of constructor order in
+  datatype def and spec.
+* Missing error check for a layered pattern with a long id as its left pattern
+
+
+5. Tools
+5.1 SMLFormat
+Three constructors, MaxDepthOfGuards, MaxWidthOfGuards and CutOverTail,
+have been added to SMLFormat.parameter datatype. These can be used to
+limit the size of the formatted string.
+
+5.2 SMLUnit
+The following two assert functions have been added to SMLUnit.Assert
+structure. 
+ val assert : string -> bool -> unit
+ val assertSameArray : 'a array assertEqual
+
+-----------------------------------------------------------------------------
+SML# Version 0.20 (released  on 2007-03-30)

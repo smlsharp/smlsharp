@@ -91,11 +91,11 @@ signature SOCKET =
     val recvArr' : ('a,active stream) sock * Word8Array.array buf * in_flags
                    -> int
     val recvVecFrom : ('a,dgram) sock * int
-                      -> Word8Vector.vector * 'b sock_addr
+                      -> Word8Vector.vector * 'a sock_addr
     val recvArrFrom : ('a,dgram) sock * {buf:Word8Array.array, i:int}
                       -> int * 'a sock_addr
     val recvVecFrom' : ('a,dgram) sock * int * in_flags
-                       -> Word8Vector.vector * 'b sock_addr
+                       -> Word8Vector.vector * 'a sock_addr
     val recvArrFrom' : ('a,dgram) sock * {buf:Word8Array.array, i:int}
                        * in_flags
                        -> int * 'a sock_addr

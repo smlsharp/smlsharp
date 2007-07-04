@@ -74,12 +74,12 @@ fun '_format_char' arg =
  *)
 local
   val depthRef = ref 1
-  val MaxDepth = 5
 in
 fun '_format_ref' format_arg (ref (arg : 'a)) =
     (* Note: '!' and 'before' are not defined yet here. *)
-    case depthRef of
-      ref depth => 
+    (* Control_maxRefDepth is defined in prelude.sml. *)
+    case (depthRef, Control_maxRefDepth) of
+      (ref depth, ref MaxDepth) => 
       if MaxDepth <= depth
       then Term(7, "ref ...")
       else
@@ -136,13 +136,23 @@ fun '_format_exn' exn = case '_format_exnRef' of ref format => format exn;
 
 fun '_format_list' format_element list =
     let
-      fun format [] = []
-        | format [last] = [format_element last]
-        | format (head :: tail) =
-          format_element head
-          :: Term(1, ",")
-          :: Indicator{space = true, newline = SOME{priority = Preferred 1}}
-          :: format tail
+      val isCutOff =
+          case Control_maxWidth
+           of ref NONE => (fn _ => false)
+            | ref (SOME maxWidth) => (fn w => maxWidth <= w)
+      fun format _ [] = []
+        | format n (head :: tail) =
+          if isCutOff n
+          then [Term(3, "...")]
+          else
+            case tail of
+              [] => [format_element head]
+            | _ => 
+              format_element head
+              :: Term(1, ",")
+              :: Indicator
+                     {space = true, newline = SOME{priority = Preferred 1}}
+              :: format (n + 1) tail
     in
       Guard
           (
@@ -150,13 +160,13 @@ fun '_format_list' format_element list =
             Term(1, "[")
             :: StartOfIndent 2
             :: Indicator{space = false, newline = SOME{priority = Preferred 1}}
-            :: format list
-            @ [
-                EndOfIndent,
-                Indicator
-                    {space = false, newline = SOME{priority = Preferred 1}},
-                Term(1, "]")
-              ]
+            :: Guard(NONE, format 0 list)
+            :: [
+                 EndOfIndent,
+                 Indicator
+                     {space = false, newline = SOME{priority = Preferred 1}},
+                 Term(1, "]")
+               ]
           )
     end;
 

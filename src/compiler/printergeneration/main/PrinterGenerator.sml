@@ -456,7 +456,7 @@ G E [x] ty = let val f = F E ty in [print f x] end
 
  * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
- * @version $Id: PrinterGenerator.sml,v 1.173 2007/02/11 16:39:51 kiyoshiy Exp $
+ * @version $Id: PrinterGenerator.sml,v 1.175 2007/06/19 22:19:12 ohori Exp $
  *)
 structure PrinterGenerator : PRINTER_GENERATOR =
 struct
@@ -667,6 +667,7 @@ struct
       | TP.TPPOLYFNM _ => true
       | TP.TPPOLY {exp, ...} => isSafeExpression exp
       | TP.TPTAPP {exp, ...} => isSafeExpression exp
+      | TP.TPLIST {expList=exps, ...} => List.all isSafeExpression exps
       | TP.TPSEQ {expList=exps, ...} => List.all isSafeExpression exps
       | _ => false
 
@@ -697,7 +698,7 @@ struct
           val exnVarInfo = {name = exnVarName, ty = PT.exnty}
           val exnVarPathInfo = U.varInfoToVarPathInfo exnVarInfo
           val exnFormatterExp =
-              FG.generateFormatterOfTy context path [] [] loc PT.exnty
+              FG.generateFormatterOfTy context path NONE [] [] loc PT.exnty
           val exnFormatterTy = OC.formatterOfTyTy PT.exnty
           val handlerBodyExp =
               TP.TPSEQ
@@ -866,6 +867,9 @@ struct
                 instTyList = instTyList,
                 loc = loc
               }
+        | TP.TPLIST {expList, listTy, loc} => 
+          TP.TPLIST
+              {expList = map visit expList, listTy = listTy, loc = loc}
         | TP.TPSEQ {expList, expTyList, loc} => 
           TP.TPSEQ
               {expList = map visit expList, expTyList = expTyList, loc = loc}

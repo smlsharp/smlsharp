@@ -7,7 +7,7 @@
  * </p>
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PathUtility_MLton.sml,v 1.1.2.1 2007/03/25 15:27:04 kiyoshiy Exp $
+ * @version $Id: PathUtility_MLton.sml,v 1.2 2007/04/02 09:42:28 katsu Exp $
  *)
 structure PathUtility : PATH_UTILITY =
 struct
@@ -37,7 +37,7 @@ struct
               in OP.mkAbsolute (path, absDir) end
       in
         (* OS.SysErr is raised if not exist *)
-        OS.FileSys.fileSize absPath;
+        OS.FileSys.isDir absPath;
         absPath
       end
         handle OS.SysErr (message, err) => raise Fail (message ^ ":" ^ path)

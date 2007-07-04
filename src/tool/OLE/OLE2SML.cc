@@ -27,7 +27,7 @@
  *
  * @copyright (c) 2007, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: OLE2SML.cc,v 1.24 2007/03/15 03:48:32 kiyoshiy Exp $
+ * @version $Id: OLE2SML.cc,v 1.27 2007/05/06 10:21:21 kiyoshiy Exp $
  */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -115,10 +115,16 @@ bool isSMLKeyword(std::string string)
 
 std::string SMLID(std::string name)
 {
-    // ML identifier of type, variable and structure must start.
+    /* ensures that ID starts with an alphabet, because SML identifier of type,
+     * variable and structure must start with an alphabet.
+     */
     if(!isalnum(name[0])){
         name = 'x' + name + '\'';
     }
+    /* modifies ID which collides with a reserved word of SML.
+     * For example, 'open' must be renamed because it is a reserved word of
+     * SML.
+     */
     if(isSMLKeyword(name)){
         name += '\'';
     }
@@ -141,7 +147,7 @@ void CHECKRESULT(HRESULT hresult)
                       (LPTSTR)&buffer,
                       0,
                       NULL);
-        printf("COMERROR:%s\n", buffer);
+        fprintf(stderr, "COMERROR:%s\n", buffer);
         LocalFree(buffer);
         exit(-1);
     }
@@ -196,7 +202,7 @@ ITypeInfo* findDefaultInterface(ITypeInfo* pTypeInfo)
     pTypeInfo->ReleaseTypeAttr(pTypeAttr);
 
     if(pDefaultInterface){return pDefaultInterface;}
-    else{return pTypeInfo;}
+    else{pTypeInfo->AddRef(); return pTypeInfo;}
 }
 
 std::string getTypeInfoName(ITypeInfo* pTypeInfo)
@@ -740,16 +746,23 @@ std::string fromVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
 
 std::string toVariant(ITypeInfo* pTypeInfo, ELEMDESC* pElemDesc)
 {
+    std::string function;
     USHORT flags = pElemDesc->paramdesc.wParamFlags;
     if(flags & PARAMFLAG_FIN){
     }
     if(flags & PARAMFLAG_FOUT){
-        throw Unsupported("PARAMFLAG_FOUT");
     }
     if(flags & PARAMFLAG_FRETVAL){
         throw Unsupported("PARAMFLAG_FRETVAL");
     }
-    std::string function = toVariant(pTypeInfo, &pElemDesc->tdesc);
+
+    if(flags & PARAMFLAG_FOUT){
+        function = "OLE.BYREFOUT ";
+    }
+    else{
+        function = toVariant(pTypeInfo, &pElemDesc->tdesc);
+    }
+
     if(flags & PARAMFLAG_FOPT){
         function = "optionalParam (" + function + ")";
     }
@@ -763,7 +776,6 @@ std::string MLTypeOfELEMDESC(ITypeInfo* pTypeInfo, ELEMDESC* pElemDesc)
     if(flags & PARAMFLAG_FIN){
     }
     if(flags & PARAMFLAG_FOUT){
-        throw Unsupported("PARAMFLAG_FOUT");
     }
     if(flags & PARAMFLAG_FRETVAL){
         throw Unsupported("PARAMFLAG_FRETVAL");
@@ -778,7 +790,12 @@ std::string MLTypeOfELEMDESC(ITypeInfo* pTypeInfo, ELEMDESC* pElemDesc)
         throw Unsupported("VARFLAG_FNONBROWSABLE");
     }
 
-    oss << MLTypeOfTYPEDESC(pTypeInfo, &pElemDesc->tdesc);
+    if(flags & PARAMFLAG_FOUT){
+        oss << "OLE.variant ref";
+    }
+    else{
+        oss << MLTypeOfTYPEDESC(pTypeInfo, &pElemDesc->tdesc);
+    }
     if(flags & PARAMFLAG_FOPT){
         oss << " option";
     }

@@ -4,7 +4,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: InteractiveSession.sml,v 1.22 2007/03/13 05:34:55 kiyoshiy Exp $
+ * @version $Id: InteractiveSession.sml,v 1.25 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure InteractiveSession : SESSION = 
 struct
@@ -12,6 +12,8 @@ struct
   (***************************************************************************)
 
   structure BT = BasicTypes
+  structure C = Constants
+  structure ST = SessionTypes
   structure SU = SignalUtility
   structure RTP = RuntimeProxyTypes
 
@@ -88,9 +90,10 @@ struct
 
   fun wrapByHandler wrapee arg =
       (wrapee arg)
-      handle exn as (SessionTypes.Error _) => raise exn
-           | exn as (SessionTypes.Exit _) => raise exn
-           | exn => raise (SessionTypes.Error exn)
+      handle exn as (ST.Failure _) => raise exn
+           | exn as (ST.Fatal _) => raise exn
+           | exn as (ST.Exit _) => raise exn
+           | exn => raise (ST.Failure exn)
 
   fun handleInternalError exn =
       (
@@ -123,9 +126,9 @@ messaging between the compiler and the runtime.
           fun out uint32 = #send channel (BT.UInt32ToUInt8 uint32)
       in
           (
-            out (UInt32.>> (uint32, 0w24));
-            out (UInt32.>> (uint32, 0w16));
-            out (UInt32.>> (uint32, 0w8));
+            out (BT.UInt32.>> (uint32, 0w24));
+            out (BT.UInt32.>> (uint32, 0w16));
+            out (BT.UInt32.>> (uint32, 0w8));
             out uint32
           )
       end
@@ -196,8 +199,8 @@ messaging between the compiler and the runtime.
           val byte2 = receive()
           val byte3 = receive()
           val byte4 = receive()
-          val orb = UInt32.orb
-          val << = UInt32.<<
+          val orb = BT.UInt32.orb
+          val << = BT.UInt32.<<
           infix orb
       in
           (
@@ -242,13 +245,23 @@ messaging between the compiler and the runtime.
   fun receiveResult (channel : ChannelTypes.InputChannel) =
       case #receive channel () of
           NONE => raise MessageFormatException "cannot receive MajorCode"
-        | SOME(0w0) => Success
-        | SOME(majorCode) =>
-          case #receive channel() of
-              NONE => raise MessageFormatException "cannot receive MinorCode"
+        | SOME majorCode =>
+          if majorCode = Word8.fromInt C.MAJOR_CODE_SUCCESS
+          then Success
+          else
+            case #receive channel() of
+              NONE =>
+              raise
+                (ST.Fatal(MessageFormatException "cannot receive MinorCode"))
             | SOME(minorCode) =>
               let val description = receiveByteVector channel
-              in Failure(majorCode, minorCode, description)
+              in
+                if majorCode = Word8.fromInt C.MAJOR_CODE_FATAL
+                then
+                  raise
+                    ST.Fatal
+                        (ExecutionException(majorCode, minorCode, description))
+                else Failure(majorCode, minorCode, description)
               end
 
   fun receiveInitializationResult channel = receiveResult channel
@@ -278,18 +291,25 @@ messaging between the compiler and the runtime.
       case #receive channel () of
           NONE => raise MessageFormatException "cannot receive messageType."
         | SOME(messageType) =>
-          case messageType of
-              0w0 => InitializationResult(receiveInitializationResult channel)
-            | 0w1 => ExitRequest(receiveExitRequest channel)
-            | 0w3 => ExecutionResult(receiveExecutionResult channel)
-            | 0w4 => OutputRequest(receiveOutputRequest channel)
-            | 0w6 => InputRequest(receiveInputRequest channel)
-            | 0w8 =>
-              ChangeDirectoryRequest(receiveChangeDirectoryRequest channel)
-            | _ =>
+          let val messageType = Word8.toInt messageType
+          in
+            if messageType = C.MESSAGE_TYPE_INITIALIZATION_RESULT
+            then InitializationResult(receiveInitializationResult channel)
+            else if messageType = C.MESSAGE_TYPE_EXIT_REQUEST
+            then ExitRequest(receiveExitRequest channel)
+            else if messageType = C.MESSAGE_TYPE_EXECUTION_RESULT
+            then ExecutionResult(receiveExecutionResult channel)
+            else if messageType = C.MESSAGE_TYPE_OUTPUT_REQUEST
+            then OutputRequest(receiveOutputRequest channel)
+            else if messageType = C.MESSAGE_TYPE_INPUT_REQUEST
+            then InputRequest(receiveInputRequest channel)
+            else if messageType = C.MESSAGE_TYPE_CHANGE_DIRECTORY_REQUEST
+            then ChangeDirectoryRequest(receiveChangeDirectoryRequest channel)
+            else
               raise
                 MessageFormatException
-                    ("unknown messageType:" ^ Word8.toString messageType)
+                    ("unknown messageType:" ^ Int.toString messageType)
+          end
 
   (****************************************)
 
@@ -333,7 +353,7 @@ messaging between the compiler and the runtime.
                 in
                   case receive () of
                     ExecutionResult result => result
-                  | ExitRequest {exitCode} => raise SessionTypes.Exit exitCode
+                  | ExitRequest {exitCode} => raise ST.Exit exitCode
                   | InputRequest {length} =>
                     let
                       val input =
@@ -360,9 +380,10 @@ messaging between the compiler and the runtime.
                                raise
                                  ProtocolException
                                      ("invalid descriptor:" ^
-                                      (UInt32.toString descriptor))
+                                      (BT.UInt32.toString descriptor))
                        in
-                         #sendVector channel data
+                         #sendVector channel data;
+                         #flush channel ()
                        end)
                       handle e => (handleInternalError e; ());
                       sendMessage messageOutputChannel (OutputResult Success);

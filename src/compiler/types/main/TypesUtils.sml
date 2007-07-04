@@ -2,7 +2,7 @@
  * utility functions for manupilating types (needs re-writing).
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypesUtils.sml,v 1.18 2007/03/05 02:38:53 kiyoshiy Exp $
+ * @version $Id: TypesUtils.sml,v 1.19 2007/06/08 21:58:15 ohori Exp $
  *)
 (*
 TODO:
@@ -210,6 +210,30 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    *)
   fun performSubst (T.TYVARty (r as ref(T.TVAR _)), ty) = r := T.SUBSTITUTED ty
     | performSubst _ = raise Control.Bug "performSubst"
+
+  (**
+   * Make a fresh copy of a bound type environment by allocating a new btvid
+   * @params  boundEnv
+   * @return subst bound type variable substitution
+   *)
+  fun copyBoundEnv boundEnv = 
+      let
+        val newSubst =
+            IEnv.map
+            (fn _  => T.BOUNDVARty (T.nextBTid()))
+            boundEnv
+	val newBoundEnv =
+          IEnv.foldri
+          (fn (oldId, {index, recKind, eqKind}, newBoundEnv) =>
+           (case IEnv.find(newSubst, oldId) of
+              SOME (T.BOUNDVARty newId) =>
+                IEnv.insert(newBoundEnv, newId, {index=index, recKind=substBTvarRecKind newSubst recKind, eqKind=eqKind})
+            | _ => raise Control.Bug "copyBoundEnv"))
+          IEnv.empty
+          boundEnv
+      in
+	(newSubst, newBoundEnv)
+      end
 
   (**
    * Make a fresh instance of a bound type Environment.

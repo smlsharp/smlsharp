@@ -1,5 +1,6 @@
 (**
  * @copyright (c) 2006, Tohoku University.
+ * @author Huu-Duc NGUYEN
  *)
 structure TypedLambdaUtils = struct
 local 
@@ -9,20 +10,19 @@ in
      case exp of
        TLFOREIGNAPPLY {loc,...} => loc
      | TLEXPORTCALLBACK {loc,...} => loc
-     | TLSIZEOF {loc,...} => loc
      | TLCONSTANT {loc,...} => loc
      | TLEXCEPTIONTAG {loc,...} => loc
+     | TLSIZEOF {loc,...} => loc
      | TLVAR {loc,...} => loc
-     | TLGETGLOBAL (string, ty, loc) => loc
      | TLGETFIELD {loc,...} => loc
      | TLSETFIELD {loc,...} => loc
-     | TLGETGLOBALVALUE{loc,...} => loc
-     | TLSETGLOBALVALUE{loc,...} => loc
+     | TLSETTAIL {loc,...} => loc
+     | TLGETGLOBAL{loc,...} => loc
+     | TLSETGLOBAL{loc,...} => loc
      | TLINITARRAY{loc,...} => loc
      | TLARRAY {loc,...} => loc
      | TLPRIMAPPLY {loc,...} => loc
      | TLAPPM {loc,...} => loc
-     | TLMONOLET {loc,...} => loc
      | TLLET {loc,...} => loc
      | TLRECORD {loc=loc,...} => loc
      | TLSELECT {loc,...} => loc
@@ -33,18 +33,12 @@ in
      | TLPOLY {loc,...} => loc
      | TLTAPP {loc,...} => loc
      | TLSWITCH {loc,...} => loc
-     | TLSEQ {loc,...} => loc
      | TLCAST {loc,...} => loc
-     | TLOFFSET {loc,...} => loc
 
    fun getLocOfDec dec =
        case dec of
            TLVAL {loc,...} => loc
          | TLVALREC {loc,...} => loc
          | TLVALPOLYREC {loc,...} => loc
-         | TLLOCALDEC {loc,...} => loc
-         | TLSETGLOBAL (string, tlexp, loc) => loc
-         | TLEMPTY loc => loc
 end
 end
-

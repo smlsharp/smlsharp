@@ -3,11 +3,18 @@
 structure Configuration =
 struct
 
-  (* version number of SML# compiler *)
-  val Version = "0.20"
+  (* version number of SML# compiler.
+   * NOTE: When it is changed, you should update Configuration.hh also.
+   *)
+  val Version = "0.30"
+
+  (* Version numbers of SML# executable binary format. 
+   * NOTE: When it is changed, you should update Configuration.hh also.
+   *)
+  val BinaryVersion = {major = 0w0, minor = 0w30}
 
   (* release date *)
-  val ReleaseDate = "2007-03-30 10:47:08 JST"
+  val ReleaseDate = "2007-07-03 16:16:12 JST"
 
   (* absolute path to the build directory of development *)
   val BuildRoot = "%BUILD_ROOT%"
@@ -38,5 +45,7 @@ struct
 
   (* path to the minimum prelude *)
   val MinimumPreludePath = LibDirectory ^ "/" ^ MinimumPreludeFileName
+
+  val Platform = "%SMLSHARP_PLATFORM%"
 
 end

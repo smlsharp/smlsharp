@@ -5,7 +5,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Absyn.ppg,v 1.13 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: Absyn.ppg,v 1.14 2007/05/11 06:57:23 kiyoshiy Exp $
  *)
 structure Absyn : ABSYN = 
 struct
@@ -31,7 +31,10 @@ struct
         in
           longidToStr longid ""
         end
-         
+
+    fun isShortId [_] = true
+      | isShortId _ = false
+
     fun getLastIdOfLongid nil =
         raise Control.Bug "nil longid"
       | getLastIdOfLongid [id] = id

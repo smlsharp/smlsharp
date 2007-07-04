@@ -1,7 +1,7 @@
 (**
  * @author YAMATODANI Kiyoshi
  * @copyright (c) 2006, Tohoku University.
- * @version $Id: Script.sml,v 1.11 2006/10/27 14:06:25 kiyoshiy Exp $
+ * @version $Id: Script.sml,v 1.12 2007/04/01 02:30:42 kiyoshiy Exp $
  *)
 structure Script : SCRIPT =
 struct
@@ -368,7 +368,7 @@ struct
       in OS.Process.system command
       end
 
-  val exit = OS.Process.exit
+  val exit = ignore o OS.Process.exit
 
   val sleep = OS.Process.sleep o Time.fromSeconds o LargeInt.fromInt
 

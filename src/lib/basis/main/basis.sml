@@ -1,7 +1,7 @@
 (*
  * loads modules of Basis library.
  * @author YAMATODANI Kiyoshi
- * @version $Id: basis.sml,v 1.78 2007/03/17 11:39:26 kiyoshiy Exp $
+ * @version $Id: basis.sml,v 1.79 2007/05/13 06:29:48 kiyoshiy Exp $
  *)
 
 (* NOTE : Prefix "../main/" is specified in order to enable SML/NJ to load
@@ -272,7 +272,8 @@ sig
   sharing type AS.array = A.array
   sharing type AS.vector = V.vector
   sharing type AS.vector_slice = VS.slice
-end;
+end
+  where type 'a A.array = 'a array;
 local
   structure S :> S =
   struct

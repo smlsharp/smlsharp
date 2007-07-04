@@ -7,7 +7,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: VM.sml,v 1.113 2006/12/10 01:50:38 kiyoshiy Exp $
+ * @version $Id: VM.sml,v 1.115 2007/06/20 14:59:46 ducnh Exp $
  *)
 structure VM :> VM =
 struct
@@ -623,10 +623,10 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
 
         (********************)
         fun rshift (w1 : UInt32, w2 : UInt32) =
-            UInt32.>>(w1, Word.fromLargeWord w2)
+            UInt32.>>(w1, UInt32ToWord w2)
 
         fun lshift (w1 : UInt32, w2 : UInt32) =
-            UInt32.<<(w1, Word.fromLargeWord w2)
+            UInt32.<<(w1, UInt32ToWord w2)
 
         fun doPrimitive1 name argSize operation =
             let
@@ -648,7 +648,7 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
 
         fun doCharPrimitive1 name 0w1 operation =
             doPrimitive1 name 0w1 (fn [Word value] => [Word (operation value)])
-        val doBytePrimitive1 = doCharPrimitive1
+        val doBytePrimitive1 = doWordPrimitive1
 
         fun doRealPrimitive1 name operation =
             doPrimitive1 
@@ -794,8 +794,8 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val _ = FS.store (frameStack, destination, resultValue)
             in () end
 
-        val doBytePrimitiveConst2_1  = doCharPrimitiveConst2_1
-        val doBytePrimitiveConst2_2  = doCharPrimitiveConst2_2
+        val doBytePrimitiveConst2_1  = doWordPrimitiveConst2_1
+        val doBytePrimitiveConst2_2  = doWordPrimitiveConst2_2
 
 
         fun doIntPrimitive2 name operation =
@@ -818,7 +818,7 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                 (0w1,0w1)
                 (fn ([Word left], [Word right]) =>
                     [Word (operation (left, right))])
-        val doBytePrimitive2 = doCharPrimitive2
+        val doBytePrimitive2 = doWordPrimitive2
 
         fun doRealPrimitive2 name operation =
             doPrimitive2
@@ -876,7 +876,7 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                 name
                 (0w1,0w1)
                 (fn ([Word left], [Word right]) => operation (left, right))
-        val doBytePredicate2 = doCharPredicate2
+        val doBytePredicate2 = doWordPredicate2
 
         fun doRealPredicate2 name operation =
             doPredicate2
@@ -906,6 +906,145 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                       val rightString =
                           UInt8ArrayToString (SLD.expandStringBlock heap right)
                     in operation (leftString, rightString) end)
+
+        fun doIntPredicateConst2_1 name operation =
+            let
+              val argValue1 = getSInt32 ()
+              val argOffset2 = getUInt32 ()
+              val destination = getUInt32 ()
+
+              val argValue2 = 
+                  intOf
+                      name
+                      (FS.load (frameStack,argOffset2))
+              val resultValue = 
+                  if operation (argValue1, argValue2)
+                  then SLD.boolToValue heap true
+                  else SLD.boolToValue heap false
+              val _ = FS.store (frameStack, destination, resultValue)
+            in () end
+
+        fun doIntPredicateConst2_2 name operation =
+            let
+              val argOffset1 = getUInt32 ()
+              val argValue2 = getSInt32 ()
+              val destination = getUInt32 ()
+
+              val argValue1 = 
+                  intOf
+                      name
+                      (FS.load (frameStack,argOffset1))
+              val resultValue = 
+                  if operation (argValue1, argValue2)
+                  then SLD.boolToValue heap true
+                  else SLD.boolToValue heap false
+              val _ = FS.store (frameStack, destination, resultValue)
+            in () end
+
+        fun doWordPredicateConst2_1 name operation =
+            let
+              val argValue1 = getUInt32 ()
+              val argOffset2 = getUInt32 ()
+              val destination = getUInt32 ()
+
+              val argValue2 = 
+                  wordOf
+                      name
+                      (FS.load (frameStack,argOffset2))
+              val resultValue = 
+                  if operation (argValue1, argValue2)
+                  then SLD.boolToValue heap true
+                  else SLD.boolToValue heap false
+              val _ = FS.store (frameStack, destination, resultValue)
+            in () end
+
+        fun doWordPredicateConst2_2 name operation =
+            let
+              val argOffset1 = getUInt32 ()
+              val argValue2 = getUInt32 ()
+              val destination = getUInt32 ()
+
+              val argValue1 = 
+                  wordOf
+                      name
+                      (FS.load (frameStack,argOffset1))
+              val resultValue = 
+                  if operation (argValue1, argValue2)
+                  then SLD.boolToValue heap true
+                  else SLD.boolToValue heap false
+              val _ = FS.store (frameStack, destination, resultValue)
+            in () end
+
+        fun doCharPredicateConst2_1 name operation =
+            let
+              val argValue1 = getUInt32 ()
+              val argOffset2 = getUInt32 ()
+              val destination = getUInt32 ()
+
+              val argValue2 = 
+                  charOf
+                      name
+                      (FS.load (frameStack,argOffset2))
+              val resultValue = 
+                  if operation (argValue1, argValue2)
+                  then SLD.boolToValue heap true
+                  else SLD.boolToValue heap false
+              val _ = FS.store (frameStack, destination, resultValue)
+            in () end
+
+        fun doCharPredicateConst2_2 name operation =
+            let
+              val argOffset1 = getUInt32 ()
+              val argValue2 = getUInt32 ()
+              val destination = getUInt32 ()
+
+              val argValue1 = 
+                  charOf
+                      name
+                      (FS.load (frameStack,argOffset1))
+              val resultValue = 
+                  if operation (argValue1, argValue2)
+                  then SLD.boolToValue heap true
+                  else SLD.boolToValue heap false
+              val _ = FS.store (frameStack, destination, resultValue)
+            in () end
+
+        fun doRealPredicateConst2_1 name operation =
+            let
+              val argValue1 = getReal64 ()
+              val argOffset2 = getUInt32 ()
+              val destination = getUInt32 ()
+
+              val argValue2 = 
+                  realOf
+                      name
+                      (FS.load_N (frameStack,argOffset2,0w2))
+              val resultValue = 
+                  if operation (argValue1, argValue2)
+                  then SLD.boolToValue heap true
+                  else SLD.boolToValue heap false
+              val _ = FS.store (frameStack, destination, resultValue)
+            in () end
+
+        fun doRealPredicateConst2_2 name operation =
+            let
+              val argOffset1 = getUInt32 ()
+              val argValue2 = getReal64 ()
+              val destination = getUInt32 ()
+
+              val argValue1 = 
+                  realOf
+                      name
+                      (FS.load_N (frameStack,argOffset1,0w2))
+              val resultValue = 
+                  if operation (argValue1, argValue2)
+                  then SLD.boolToValue heap true
+                  else SLD.boolToValue heap false
+              val _ = FS.store (frameStack, destination, resultValue)
+            in () end
+
+        val doBytePredicateConst2_1 = doWordPredicateConst2_1
+        val doBytePredicateConst2_2 = doWordPredicateConst2_2
 
         (****************************************)
 
@@ -952,22 +1091,6 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val _ = FS.store_N (frameStack, destination, value)
             in () end
 
-        fun doAccessEnvIndirect sizeLoader =
-            let
-              val indirectOffset = getUInt32 ()
-              val variableSize = sizeLoader ()
-              val destination = getUInt32 ()
-
-              val ENVAddress = pointerOf "ENV" (!ENV)
-              val offset =
-                  wordOf
-                      ("variable offset in AccessEnvIndirect")
-                      (H.getField heap (ENVAddress, indirectOffset))
-
-              val value = H.getFields heap (ENVAddress, offset, variableSize)
-              val _ = FS.store_N (frameStack, destination, value)
-            in () end
-
         fun doAccessNestedEnv sizeLoader =
             let
               val nestLevel = getUInt32 ()
@@ -983,27 +1106,6 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val value = H.getFields heap (blockAddress, offset, variableSize)
               val _ = FS.store_N (frameStack, destination, value)
             in () end
-
-        fun doAccessNestedEnvIndirect sizeLoader =
-            let
-              val nestLevel = getUInt32 ()
-              val indirectOffset = getUInt32 ()
-              val variableSize = sizeLoader ()
-              val destination = getUInt32 ()
-
-              val ENVAddress = pointerOf "ENV" (!ENV)
-              val blockAddress =
-                  getNestedBlock(UInt32.toInt nestLevel, ENVAddress)
-
-              val offset =
-                  wordOf
-                      ("variable offset in AccessNestedEnvIndirect")
-                      (H.getField heap (blockAddress, indirectOffset))
-
-              val value = H.getFields heap (blockAddress, offset, variableSize)
-              val _ = FS.store_N (frameStack, destination, value)
-            in () end
-
 
         fun doGetField sizeLoader =
             let
@@ -1036,6 +1138,27 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                   pointerOf
                       "block in GetFieldIndirect"
                       (FS.load (frameStack, blockOffset))
+              val fieldValue =
+                  H.getFields heap (blockAddress, fieldOffset, fieldSize)
+              val _ = FS.store_N (frameStack, destination, fieldValue)
+            in () end
+
+        fun doGetNestedField sizeLoader =
+            let
+              val nestLevel = getUInt32 ()
+              val fieldOffset = getUInt32 ()
+              val fieldSize = sizeLoader ()
+              val blockOffset = getUInt32 ()
+              val destination = getUInt32 ()
+
+              val rootBlockAddress =
+                  pointerOf
+                      "root block in GetNestedFieldIndirect"
+                      (FS.load (frameStack, blockOffset))
+
+              val blockAddress =
+                  getNestedBlock(UInt32.toInt nestLevel, rootBlockAddress)
+
               val fieldValue =
                   H.getFields heap (blockAddress, fieldOffset, fieldSize)
               val _ = FS.store_N (frameStack, destination, fieldValue)
@@ -1101,6 +1224,26 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                   pointerOf
                       "block in SetFieldIndirect"
                       (FS.load (frameStack, blockOffset))
+              val value = FS.load_N (frameStack, valueOffset, fieldSize)
+              val _ = H.setFields heap (blockAddress, fieldOffset, value)
+            in () end
+
+        fun doSetNestedField sizeLoader =
+            let
+              val nestLevel = getUInt32 ()
+              val fieldOffset = getUInt32 ()
+              val fieldSize = sizeLoader ()
+              val blockOffset = getUInt32 ()
+              val valueOffset = getUInt32 ()
+
+              val rootBlockAddress =
+                  pointerOf
+                      "root block in SetNestedFieldIndirect"
+                      (FS.load (frameStack, blockOffset))
+
+              val blockAddress =
+                  getNestedBlock(UInt32.toInt nestLevel, rootBlockAddress)
+
               val value = FS.load_N (frameStack, valueOffset, fieldSize)
               val _ = H.setFields heap (blockAddress, fieldOffset, value)
             in () end
@@ -1204,17 +1347,65 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val _ = GT.set globalTableBoxed (globalArrayIndex, Pointer blockAddress)
             in () end
 
-        fun doApply_S sizeLoader =
+        fun doApply_0 () =
+            let
+              val closureOffset = getUInt32 ()
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp} 
+                                
+              val (entryAddress, restoredENV) = expandClosure closureOffset
+                  
+              val _ = FS.storeENV (frameStack, !ENV)
+                      
+              val _ =
+                  callFunction
+                      (
+                        entryAddress,
+                        [ [restoredENV] ],
+                        returnAddress
+                      )
+            in 
+              ()
+            end
+
+
+        fun doApply_1 sizeLoader =
             let
               val closureOffset = getUInt32 ()
               val argOffset = getUInt32 ()
               val argSize = sizeLoader ()
               val returnAddress = (* the address of the destination *)
                   {executable = !CurCb, offset = !cp} 
-              val destination = getUInt32 () (* this is not used here. *)
                                 
               val (entryAddress, restoredENV) = expandClosure closureOffset
               val argValues = [FS.load_N (frameStack, argOffset, argSize)]
+                  
+              val _ = FS.storeENV (frameStack, !ENV)
+                      
+              val _ =
+                  callFunction
+                      (
+                        entryAddress,
+                        [restoredENV] :: argValues,
+                        returnAddress
+                      )
+            in 
+              ()
+            end
+
+        fun doApply_MS () =
+            let
+              val closureOffset = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp} 
+
+              val (entryAddress, restoredENV) = expandClosure closureOffset
+              val argValues =
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
                   
               val _ = FS.storeENV (frameStack, !ENV)
                       
@@ -1238,13 +1429,13 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val lastArgSize = sizeLoader ()
               val returnAddress = (* the address of the destination *)
                   {executable = !CurCb, offset = !cp} 
-              val destination = getUInt32 () (* this is not used here. *)
-                                
+
               val (entryAddress, restoredENV) = expandClosure closureOffset
               val argValues =
-                  map (fn offset => [FS.load (frameStack, offset)]) argOffsets
-              val lastArgValue =
-                  FS.load_N (frameStack, lastArgOffset, lastArgSize)
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
+              val lastArgValue = FS.load_N (frameStack, lastArgOffset, lastArgSize)
                   
               val _ = FS.storeENV (frameStack, !ENV)
                       
@@ -1252,14 +1443,42 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                   callFunction
                       (
                         entryAddress,
-                        [restoredENV] :: (argValues @ [lastArgValue]),
+                        [restoredENV] :: (argValues @ [lastArgValue]), 
                         returnAddress
                       )
             in 
               ()
             end
 
-        fun doApply_M () =
+        fun doApply_MF () =
+            let
+              val closureOffset = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val argSizes = getUInt32List argsCount
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp} 
+
+              val (entryAddress, restoredENV) = expandClosure closureOffset
+              val argValues =
+                  ListPair.map 
+                      (fn (offset,size) => FS.load_N (frameStack, offset, size)) 
+                      (argOffsets,argSizes)
+                  
+              val _ = FS.storeENV (frameStack, !ENV)
+                      
+              val _ =
+                  callFunction
+                      (
+                        entryAddress,
+                        [restoredENV] :: argValues,
+                        returnAddress
+                      )
+            in 
+              ()
+            end
+
+        fun doApply_MV () =
             let
               val closureOffset = getUInt32 ()
               val argsCount = getUInt32 ()
@@ -1267,7 +1486,6 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val argSizeOffsets = getUInt32List argsCount
               val returnAddress = (* the address of the destination *)
                   {executable = !CurCb, offset = !cp} 
-              val destination = getUInt32 () (* this is not used here. *)
 
               val (entryAddress, restoredENV) = expandClosure closureOffset
               val argSizes =
@@ -1296,7 +1514,27 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doTailApply_S sizeLoader =
+        fun doTailApply_0 () =
+            let
+              val closureOffset = getUInt32 ()
+                                
+              val (entryAddress, restoredENV) = expandClosure closureOffset
+
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ =
+                  callFunction
+                      (
+                        entryAddress,
+                        [ [restoredENV] ],
+                        returnAddress
+                      )
+            in 
+              ()
+            end
+
+        fun doTailApply_1 sizeLoader =
             let
               val closureOffset = getUInt32 ()
               val argOffset = getUInt32 ()
@@ -1304,6 +1542,32 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                                 
               val (entryAddress, restoredENV) = expandClosure closureOffset
               val argValues = [FS.load_N (frameStack, argOffset, argSize)]
+
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ =
+                  callFunction
+                      (
+                        entryAddress,
+                        [restoredENV] :: argValues,
+                        returnAddress
+                      )
+            in 
+              ()
+            end
+
+        fun doTailApply_MS () =
+            let
+              val closureOffset = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+                                
+              val (entryAddress, restoredENV) = expandClosure closureOffset
+              val argValues =
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)])
+                      argOffsets
 
               val returnAddress =
                   FS.popFrame frameStack (* caller of current *)
@@ -1329,9 +1593,10 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                                 
               val (entryAddress, restoredENV) = expandClosure closureOffset
               val argValues =
-                  map (fn offset => [FS.load (frameStack, offset)]) argOffsets
-              val lastArgValue =
-                  FS.load_N (frameStack, lastArgOffset, lastArgSize)
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
+              val lastArgValue = FS.load_N (frameStack, lastArgOffset, lastArgSize)
 
               val returnAddress =
                   FS.popFrame frameStack (* caller of current *)
@@ -1347,7 +1612,34 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doTailApply_M () =
+        fun doTailApply_MF () =
+            let
+              val closureOffset = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val argSizes = getUInt32List argsCount
+                                
+              val (entryAddress, restoredENV) = expandClosure closureOffset
+              val argValues =
+                  ListPair.map 
+                      (fn (offset,size) => FS.load_N (frameStack, offset,size)) 
+                      (argOffsets,argSizes)
+
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ =
+                  callFunction
+                      (
+                        entryAddress,
+                        [restoredENV] :: argValues,
+                        returnAddress
+                      )
+            in 
+              ()
+            end
+
+        fun doTailApply_MV () =
             let
               val closureOffset = getUInt32 ()
               val argsCount = getUInt32 ()
@@ -1382,7 +1674,29 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doCallStatic_S sizeLoader =
+        fun doCallStatic_0 () =
+            let
+              val entryPoint = getUInt32 ()
+              val envOffset = getUInt32 ()
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp}
+
+              val envBlock = FS.load (frameStack,envOffset)
+                  
+              val _ = FS.storeENV (frameStack, !ENV)
+
+              val _ =
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [ [envBlock] ],
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doCallStatic_1 sizeLoader =
             let
               val entryPoint = getUInt32 ()
               val envOffset = getUInt32 ()
@@ -1390,11 +1704,37 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val argSize = sizeLoader ()
               val returnAddress = (* the address of the destination *)
                   {executable = !CurCb, offset = !cp}
-              val destination = getUInt32 () (* this is not used here. *)
 
               val envBlock = FS.load (frameStack,envOffset)
               val argValues = [FS.load_N (frameStack, argOffset, argSize)]
                   
+              val _ = FS.storeENV (frameStack, !ENV)
+
+              val _ =
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [envBlock]::argValues,
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doCallStatic_MS () =
+            let
+              val entryPoint = getUInt32 ()
+              val envOffset = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp}
+
+              val envBlock = FS.load (frameStack,envOffset)
+              val argValues = 
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
               val _ = FS.storeENV (frameStack, !ENV)
 
               val _ =
@@ -1418,13 +1758,14 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val lastArgSize = sizeLoader ()
               val returnAddress = (* the address of the destination *)
                   {executable = !CurCb, offset = !cp}
-              val destination = getUInt32 () (* this is not used here. *)
 
               val envBlock = FS.load (frameStack,envOffset)
-              val argValues = 
-                  map (fn offset => [FS.load (frameStack, offset)]) argOffsets
-              val lastArgValue =
-                  FS.load_N (frameStack, lastArgOffset, lastArgSize)
+              val argValues =
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
+              val lastArgValue = FS.load_N (frameStack, lastArgOffset, lastArgSize)
+
               val _ = FS.storeENV (frameStack, !ENV)
 
               val _ =
@@ -1438,7 +1779,35 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doCallStatic_M () =
+        fun doCallStatic_MF () =
+            let
+              val entryPoint = getUInt32 ()
+              val envOffset = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val argSizes = getUInt32List argsCount
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp}
+
+              val envBlock = FS.load (frameStack,envOffset)
+              val argValues = 
+                  ListPair.map 
+                      (fn (offset,size) => FS.load_N (frameStack, offset,size)) 
+                      (argOffsets,argSizes)
+              val _ = FS.storeENV (frameStack, !ENV)
+
+              val _ =
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [envBlock]::argValues,
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doCallStatic_MV () =
             let
               val entryPoint = getUInt32 ()
               val envOffset = getUInt32 ()
@@ -1447,7 +1816,6 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val argSizeOffsets = getUInt32List argsCount
               val returnAddress = (* the address of the destination *)
                   {executable = !CurCb, offset = !cp}
-              val destination = getUInt32 () (* this is not used here. *)
 
               val envBlock = FS.load (frameStack,envOffset)
               val argSizes =
@@ -1475,7 +1843,28 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doTailCallStatic_S sizeLoader =
+        fun doTailCallStatic_0 () =
+            let
+              val entryPoint = getUInt32 ()
+              val envOffset = getUInt32 ()
+
+              val envBlock = FS.load (frameStack,envOffset)
+                  
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ = 
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [ [envBlock] ],
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doTailCallStatic_1 sizeLoader =
             let
               val entryPoint = getUInt32 ()
               val envOffset = getUInt32 ()
@@ -1485,6 +1874,32 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val envBlock = FS.load (frameStack,envOffset)
               val argValues = [FS.load_N (frameStack, argOffset, argSize)]
                   
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ = 
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [envBlock]::argValues,
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doTailCallStatic_MS () =
+            let
+              val entryPoint = getUInt32 ()
+              val envOffset = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+
+              val envBlock = FS.load (frameStack,envOffset)
+              val argValues =
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
               val returnAddress =
                   FS.popFrame frameStack (* caller of current *)
 
@@ -1510,9 +1925,10 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
 
               val envBlock = FS.load (frameStack,envOffset)
               val argValues =
-                  map (fn offset => [FS.load (frameStack, offset)]) argOffsets
-              val lastArgValue =
-                  FS.load_N (frameStack, lastArgOffset, lastArgSize)
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
+              val lastArgValue = FS.load_N (frameStack, lastArgOffset, lastArgSize)
               val returnAddress =
                   FS.popFrame frameStack (* caller of current *)
 
@@ -1527,7 +1943,34 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doTailCallStatic_M () =
+        fun doTailCallStatic_MF () =
+            let
+              val entryPoint = getUInt32 ()
+              val envOffset = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val argSizes = getUInt32List argsCount
+
+              val envBlock = FS.load (frameStack,envOffset)
+              val argValues =
+                  ListPair.map 
+                      (fn (offset,size) => FS.load_N (frameStack, offset,size)) 
+                      (argOffsets,argSizes)
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ = 
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [envBlock]::argValues,
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doTailCallStatic_MV () =
             let
               val entryPoint = getUInt32 ()
               val envOffset = getUInt32 ()
@@ -1562,14 +2005,32 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doRecursiveCallStatic_S sizeLoader =
+        fun doRecursiveCallStatic_0 () =
+            let
+              val entryPoint = getUInt32 ()
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp}
+
+              val _ = FS.storeENV (frameStack, !ENV)
+
+              val _ =
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [ [!ENV] ],
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doRecursiveCallStatic_1 sizeLoader =
             let
               val entryPoint = getUInt32 ()
               val argOffset = getUInt32 ()
               val argSize = sizeLoader ()
               val returnAddress = (* the address of the destination *)
                   {executable = !CurCb, offset = !cp}
-              val destination = getUInt32 () (* this is not used here. *)
 
               val argValue = FS.load_N (frameStack, argOffset, argSize)
               val _ = FS.storeENV (frameStack, !ENV)
@@ -1585,7 +2046,86 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doRecursiveCallStatic_M () =
+        fun doRecursiveCallStatic_MS () =
+            let
+              val entryPoint = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp}
+
+              val argValues = 
+                  map
+                      (fn offset => [FS.load (frameStack, offset)])
+                      argOffsets
+              val _ = FS.storeENV (frameStack, !ENV)
+
+              val _ =
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [!ENV] :: argValues,
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doRecursiveCallStatic_ML sizeLoader =
+            let
+              val entryPoint = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List (argsCount - 0w1)
+              val lastArgOffset = getUInt32 ()
+              val lastArgSize = sizeLoader ()
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp}
+
+              val argValues =
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
+              val lastArgValue = FS.load_N (frameStack, lastArgOffset, lastArgSize)
+              val _ = FS.storeENV (frameStack, !ENV)
+
+              val _ =
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [!ENV] :: (argValues @ [lastArgValue]),
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doRecursiveCallStatic_MF () =
+            let
+              val entryPoint = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val argSizes = getUInt32List argsCount
+              val returnAddress = (* the address of the destination *)
+                  {executable = !CurCb, offset = !cp}
+
+              val argValues = 
+                  ListPair.map
+                      (fn (offset,size) => FS.load_N (frameStack, offset, size))
+                      (argOffsets,argSizes)
+              val _ = FS.storeENV (frameStack, !ENV)
+
+              val _ =
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [!ENV] :: argValues,
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doRecursiveCallStatic_MV () =
             let
               val entryPoint = getUInt32 ()
               val argsCount = getUInt32 ()
@@ -1593,7 +2133,6 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val argSizeOffsets = getUInt32List argsCount
               val returnAddress = (* the address of the destination *)
                   {executable = !CurCb, offset = !cp}
-              val destination = getUInt32 () (* this is not used here. *)
 
               val argSizes =
                   map 
@@ -1620,7 +2159,25 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
-        fun doRecursiveTailCallStatic_S sizeLoader =
+        fun doRecursiveTailCallStatic_0 () =
+            let
+              val entryPoint = getUInt32 ()
+
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ = 
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [ [!ENV] ],
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doRecursiveTailCallStatic_1 sizeLoader =
             let
               val entryPoint = getUInt32 ()
               val argOffset = getUInt32 ()
@@ -1641,8 +2198,82 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               ()
             end
 
+        fun doRecursiveTailCallStatic_MS () =
+            let
+              val entryPoint = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
 
-        fun doRecursiveTailCallStatic_M () =
+              val argValues = 
+                  map
+                      (fn offset => [FS.load (frameStack, offset)])
+                      argOffsets     
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ = 
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [!ENV] :: argValues,
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doRecursiveTailCallStatic_ML sizeLoader =
+            let
+              val entryPoint = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List (argsCount - 0w1)
+              val lastArgOffset = getUInt32 ()
+              val lastArgSize = sizeLoader ()
+
+              val argValues =
+                  map 
+                      (fn offset => [FS.load (frameStack, offset)]) 
+                      argOffsets
+              val lastArgValue = FS.load_N (frameStack, lastArgOffset, lastArgSize)
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ = 
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [!ENV] :: (argValues @ [lastArgValue]),
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doRecursiveTailCallStatic_MF () =
+            let
+              val entryPoint = getUInt32 ()
+              val argsCount = getUInt32 ()
+              val argOffsets = getUInt32List argsCount
+              val argSizes = getUInt32List argsCount
+              val argValues = 
+                  ListPair.map
+                      (fn (offset,size) => FS.load_N (frameStack, offset, size))
+                      (argOffsets,argSizes)     
+              val returnAddress =
+                  FS.popFrame frameStack (* caller of current *)
+
+              val _ = 
+                  callFunction
+                      (
+                        {executable = !CurCb, offset = entryPoint},
+                        [!ENV] :: argValues,
+                        returnAddress
+                      )
+            in
+              ()
+            end
+
+        fun doRecursiveTailCallStatic_MV () =
             let
               val entryPoint = getUInt32 ()
               val argsCount = getUInt32 ()
@@ -1674,18 +2305,6 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
             in
               ()
             end
-
-        fun doSelfRecursiveCallStatic_S sizeLoader =
-            doRecursiveCallStatic_S sizeLoader
-
-        fun doSelfRecursiveCallStatic_M () =
-            doRecursiveCallStatic_M ()
-
-        fun doSelfRecursiveTailCallStatic_S sizeLoader =
-            doRecursiveTailCallStatic_S sizeLoader
-
-        fun doSelfRecursiveTailCallStatic_M () =
-            doRecursiveTailCallStatic_M ()
 
         fun doMakeArray sizeLoader =
             let
@@ -1748,7 +2367,19 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
                   FS.store (frameStack, destination, Pointer blockAddress)
             in () end
 
-        fun doReturn sizeLoader =
+        fun doReturn_0 () =
+            let
+              val _ =
+                  HS.popHandlersOfCurrentFrame
+                      (handlerStack, FS.getCurrentFrame frameStack)
+
+              val {executable, offset} = FS.popFrame frameStack
+              val _ = CurCb := executable
+              val _ = cp := offset
+              val _ = ENV := FS.loadENV frameStack
+            in () end
+
+        fun doReturn_1 sizeLoader =
             let
               val variableOffset = getUInt32 ()
               val variableSize = sizeLoader ()
@@ -1765,6 +2396,140 @@ val _ = TextIO.print ("composed bitmap = " ^ UInt32.toString bitmap ^ "\n")
               val storeOffset = getUInt32 ()
               val _ = FS.store_N (frameStack, storeOffset, value)
             in () end
+
+        fun doReturn_MS () =
+            let
+              val variablesCount = getUInt32 ()
+              val variableOffsets = getUInt32List variablesCount
+                                 
+              val _ =
+                  HS.popHandlersOfCurrentFrame
+                      (handlerStack, FS.getCurrentFrame frameStack)
+
+              val values = 
+                  map
+                      (fn offset =>
+                          [FS.load (frameStack, offset)]
+                      )
+                      variableOffsets
+
+              val {executable, offset} = FS.popFrame frameStack
+              val _ = CurCb := executable
+              val _ = cp := offset
+              val _ = ENV := FS.loadENV frameStack
+              val _ = getUInt32 () (* variablesCount and destsCount should have the same value*)
+              val storeOffsets = getUInt32List variablesCount
+              val _ = 
+                  ListPair.app
+                      (fn (offset,value) =>
+                          FS.store_N (frameStack, offset, value)
+                      )
+                      (storeOffsets, values)
+            in () end
+
+        fun doReturn_ML sizeLoader =
+            let
+              val variablesCount = getUInt32 ()
+              val variableOffsets = getUInt32List (variablesCount - 0w1)
+              val lastVariableOffset = getUInt32 ()
+              val lastVariableSize = sizeLoader ()
+                                 
+              val _ =
+                  HS.popHandlersOfCurrentFrame
+                      (handlerStack, FS.getCurrentFrame frameStack)
+
+              val values = 
+                  map
+                      (fn offset => FS.load (frameStack, offset))
+                      variableOffsets
+              val lastValue = FS.load_N (frameStack, lastVariableOffset,lastVariableSize)
+
+              val {executable, offset} = FS.popFrame frameStack
+              val _ = CurCb := executable
+              val _ = cp := offset
+              val _ = ENV := FS.loadENV frameStack
+              val _ = getUInt32 () (* variablesCount and destsCount should have the same value*)
+              val storeOffsets = getUInt32List (variablesCount - 0w1)
+              val lastStoreOffset = getUInt32 ()
+              val _ = 
+                  ListPair.app
+                      (fn (offset,value) => FS.store (frameStack, offset, value))
+                      (storeOffsets, values)
+              val _ = FS.store_N (frameStack, lastStoreOffset, lastValue)
+            in () end
+
+
+        fun doReturn_MF () =
+            let
+              val variablesCount = getUInt32 ()
+              val variableOffsets = getUInt32List variablesCount
+              val variableSizes = getUInt32List variablesCount
+                                 
+              val _ =
+                  HS.popHandlersOfCurrentFrame
+                      (handlerStack, FS.getCurrentFrame frameStack)
+
+              val values = 
+                  ListPair.map
+                      (fn (offset,size) =>
+                          FS.load_N (frameStack, offset, size)
+                      )
+                      (variableOffsets,variableSizes)
+
+              val {executable, offset} = FS.popFrame frameStack
+              val _ = CurCb := executable
+              val _ = cp := offset
+              val _ = ENV := FS.loadENV frameStack
+              val _ = getUInt32 () (* variablesCount and destsCount should have the same value*)
+              val storeOffsets = getUInt32List variablesCount
+              val _ = 
+                  ListPair.app
+                      (fn (offset,value) =>
+                          FS.store_N (frameStack, offset, value)
+                      )
+                      (storeOffsets, values)
+            in () end
+
+        fun doReturn_MV () =
+            let
+              val variablesCount = getUInt32 ()
+              val variableOffsets = getUInt32List variablesCount
+              val variableSizeOffsets = getUInt32List variablesCount
+
+              val variableSizes =
+                  map 
+                      (fn offset =>
+                          wordOf
+                              "Apply"
+                              (FS.load (frameStack,offset))
+                      )
+                      variableSizeOffsets
+                                 
+              val _ =
+                  HS.popHandlersOfCurrentFrame
+                      (handlerStack, FS.getCurrentFrame frameStack)
+
+              val values = 
+                  ListPair.map
+                      (fn (offset,size) =>
+                          FS.load_N (frameStack, offset, size)
+                      )
+                      (variableOffsets,variableSizes)
+
+              val {executable, offset} = FS.popFrame frameStack
+              val _ = CurCb := executable
+              val _ = cp := offset
+              val _ = ENV := FS.loadENV frameStack
+              val _ = getUInt32 () (* variablesCount and destsCount should have the same value*)
+              val storeOffsets = getUInt32List variablesCount
+              val _ = 
+                  ListPair.app
+                      (fn (offset,value) =>
+                          FS.store_N (frameStack, offset, value)
+                      )
+                      (storeOffsets, values)
+            in () end
+
 
         fun doRaiseException exceptionValue =
             if HS.isEmpty handlerStack
@@ -1920,89 +2685,103 @@ val _ = TextIO.print "begin\n"
               | I.OPCODE_AccessEnv_D => doAccessEnv loadDoubleSize
               | I.OPCODE_AccessEnv_V => doAccessEnv loadVariantSize
 
-              | I.OPCODE_AccessEnvIndirect_S =>
-                doAccessEnvIndirect loadSingleSize
-              | I.OPCODE_AccessEnvIndirect_D =>
-                doAccessEnvIndirect loadDoubleSize
-              | I.OPCODE_AccessEnvIndirect_V =>
-                doAccessEnvIndirect loadVariantSize
-
               | I.OPCODE_AccessNestedEnv_S => doAccessNestedEnv loadSingleSize
               | I.OPCODE_AccessNestedEnv_D => doAccessNestedEnv loadDoubleSize
               | I.OPCODE_AccessNestedEnv_V => doAccessNestedEnv loadVariantSize
-
-              | I.OPCODE_AccessNestedEnvIndirect_S =>
-                doAccessNestedEnvIndirect loadSingleSize
-              | I.OPCODE_AccessNestedEnvIndirect_D =>
-                doAccessNestedEnvIndirect loadDoubleSize
-              | I.OPCODE_AccessNestedEnvIndirect_V =>
-                doAccessNestedEnvIndirect loadVariantSize
 
               | I.OPCODE_GetField_S => doGetField loadSingleSize
               | I.OPCODE_GetField_D => doGetField loadDoubleSize
               | I.OPCODE_GetField_V => doGetField loadVariantSize
                   
-              | I.OPCODE_GetFieldIndirect_S =>
-                doGetFieldIndirect loadSingleSize
-              | I.OPCODE_GetFieldIndirect_D =>
-                doGetFieldIndirect loadDoubleSize
-              | I.OPCODE_GetFieldIndirect_V =>
-                doGetFieldIndirect loadVariantSize
+              | I.OPCODE_GetFieldIndirect_S => doGetFieldIndirect loadSingleSize
+              | I.OPCODE_GetFieldIndirect_D => doGetFieldIndirect loadDoubleSize
+              | I.OPCODE_GetFieldIndirect_V => doGetFieldIndirect loadVariantSize
 
-              | I.OPCODE_GetNestedFieldIndirect_S =>
-                doGetNestedFieldIndirect loadSingleSize
-              | I.OPCODE_GetNestedFieldIndirect_D =>
-                doGetNestedFieldIndirect loadDoubleSize
-              | I.OPCODE_GetNestedFieldIndirect_V =>
-                doGetNestedFieldIndirect loadVariantSize
+              | I.OPCODE_GetNestedField_S => doGetNestedField loadSingleSize
+              | I.OPCODE_GetNestedField_D => doGetNestedField loadDoubleSize
+              | I.OPCODE_GetNestedField_V => doGetNestedField loadVariantSize
+
+              | I.OPCODE_GetNestedFieldIndirect_S => doGetNestedFieldIndirect loadSingleSize
+              | I.OPCODE_GetNestedFieldIndirect_D => doGetNestedFieldIndirect loadDoubleSize
+              | I.OPCODE_GetNestedFieldIndirect_V => doGetNestedFieldIndirect loadVariantSize
 
               | I.OPCODE_SetField_S => doSetField loadSingleSize
               | I.OPCODE_SetField_D => doSetField loadDoubleSize
               | I.OPCODE_SetField_V => doSetField loadVariantSize
 
-              | I.OPCODE_SetFieldIndirect_S =>
-                doSetFieldIndirect loadSingleSize
-              | I.OPCODE_SetFieldIndirect_D =>
-                doSetFieldIndirect loadDoubleSize
-              | I.OPCODE_SetFieldIndirect_V =>
-                doSetFieldIndirect loadVariantSize
+              | I.OPCODE_SetFieldIndirect_S => doSetFieldIndirect loadSingleSize
+              | I.OPCODE_SetFieldIndirect_D => doSetFieldIndirect loadDoubleSize
+              | I.OPCODE_SetFieldIndirect_V => doSetFieldIndirect loadVariantSize
 
-              | I.OPCODE_SetNestedFieldIndirect_S =>
-                doSetNestedFieldIndirect loadSingleSize
-              | I.OPCODE_SetNestedFieldIndirect_D =>
-                doSetNestedFieldIndirect loadDoubleSize
-              | I.OPCODE_SetNestedFieldIndirect_V =>
-                doSetNestedFieldIndirect loadVariantSize
+              | I.OPCODE_SetNestedField_S => doSetNestedField loadSingleSize
+              | I.OPCODE_SetNestedField_D => doSetNestedField loadDoubleSize
+              | I.OPCODE_SetNestedField_V => doSetNestedField loadVariantSize
+
+              | I.OPCODE_SetNestedFieldIndirect_S => doSetNestedFieldIndirect loadSingleSize
+              | I.OPCODE_SetNestedFieldIndirect_D => doSetNestedFieldIndirect loadDoubleSize
+              | I.OPCODE_SetNestedFieldIndirect_V => doSetNestedFieldIndirect loadVariantSize
 
               | I.OPCODE_CopyBlock =>
                 let
                   val blockOffset = getUInt32 ()
+                  val nestLevelOffset = getUInt32 ()
                   val destination = getUInt32 ()
 
-                  val blockAddress =
-                      pointerOf
-                          "block in CopyBlock"
-                          (FS.load (frameStack, blockOffset))
-                  val newBlockAddress =
-		      H.allocateBlock
-		          heap
-		          {
-		           size = H.getSize heap blockAddress,
-		           bitmap = H.getBitmap heap blockAddress,
-		           blockType = H.getBlockType heap blockAddress
-		          }
+                  val nestLevel =
+                      wordOf
+                          "block offset in CopyBlock"
+                          (FS.load (frameStack, nestLevelOffset))
 
-                  val blockAddress =
-                      pointerOf
-                          "block in CopyBlock"
-                          (FS.load (frameStack, blockOffset))
+                  fun duplicateBlock n =
+                      let
+                        val sourceRootAddress =
+                            pointerOf
+                                "block in CopyBlock"
+                                (FS.load (frameStack, blockOffset))
+                        val sourceBlockAddress = getNestedBlock (n, sourceRootAddress)
+                        val newBlockAddress =
+		            H.allocateBlock
+		                heap
+		                {
+		                 size = H.getSize heap sourceBlockAddress,
+		                 bitmap = H.getBitmap heap sourceBlockAddress,
+		                 blockType = H.getBlockType heap sourceBlockAddress
+		                }
+                        (*update the source block address since GC may occur*)
+                        val sourceRootAddress =
+                            pointerOf
+                                "block in CopyBlock"
+                                (FS.load (frameStack, blockOffset))
+                        val sourceBlockAddress = getNestedBlock (n, sourceRootAddress)
+                        (*copying*)
+                        val _ = H.copyBlock heap (sourceBlockAddress,newBlockAddress)
+                      in
+                        if n = 0
+                        then (* update frame slot*)
+                          FS.store(frameStack, destination, Pointer newBlockAddress)
+                        else (* update nest pointer*)
+                          let
+                            val targetRootAddress =
+                                pointerOf
+                                    "block in CopyBlock"
+                                    (FS.load (frameStack, destination))
+                            val targetParentBlockAddress = getNestedBlock (n - 1, targetRootAddress)
+                          in
+                            H.setField heap (targetParentBlockAddress, INDEX_OF_NEST_POINTER, Pointer newBlockAddress)
+                          end
+                      end
 
-                  val _ = 
-                      H.copyBlock heap (blockAddress,newBlockAddress)
-                  val _ =
-                      FS.store
-                          (frameStack, destination, Pointer newBlockAddress)
-                in () end
+                  fun duplicateBlocks n =
+                      (
+                       duplicateBlock n;
+                       if (UInt32.fromInt n) = nestLevel
+                       then ()
+                       else duplicateBlocks (n + 1)
+                      )
+
+                  val _ = duplicateBlocks 0
+
+               in () end
 
 (*
               | I.OPCODE_CopyAndUpdateField =>
@@ -2344,6 +3123,50 @@ val _ = TextIO.print "begin\n"
               | I.OPCODE_QuotInt_Const_1 => doIntPrimitiveConst2_1 "quotIntConst1" (SInt32.quot )
               | I.OPCODE_QuotInt_Const_2 => doIntPrimitiveConst2_2 "quotIntConst2" (SInt32.quot )
 
+              | I.OPCODE_LtInt_Const_1 => doIntPredicateConst2_1 "ltIntConst1" (op < )
+              | I.OPCODE_LtInt_Const_2 => doIntPredicateConst2_2 "ltIntConst2" (op < )
+              | I.OPCODE_LtWord_Const_1 => doWordPredicateConst2_1 "ltWordConst1" (op < )
+              | I.OPCODE_LtWord_Const_2 => doWordPredicateConst2_2 "ltWordConst2" (op < )
+              | I.OPCODE_LtReal_Const_1 => doRealPredicateConst2_1 "ltRealConst1" (op < )
+              | I.OPCODE_LtReal_Const_2 => doRealPredicateConst2_2 "ltRealConst2" (op < )
+              | I.OPCODE_LtChar_Const_1 => doCharPredicateConst2_1 "ltCharConst1" (op < )
+              | I.OPCODE_LtChar_Const_2 => doCharPredicateConst2_2 "ltCharConst2" (op < )
+              | I.OPCODE_LtByte_Const_1 => doBytePredicateConst2_1 "ltByteConst1" (op < )
+              | I.OPCODE_LtByte_Const_2 => doBytePredicateConst2_2 "ltByteConst2" (op < )
+
+              | I.OPCODE_GtInt_Const_1 => doIntPredicateConst2_1 "gtIntConst1" (op > )
+              | I.OPCODE_GtInt_Const_2 => doIntPredicateConst2_2 "gtIntConst2" (op > )
+              | I.OPCODE_GtWord_Const_1 => doWordPredicateConst2_1 "gtWordConst1" (op > )
+              | I.OPCODE_GtWord_Const_2 => doWordPredicateConst2_2 "gtWordConst2" (op > )
+              | I.OPCODE_GtReal_Const_1 => doRealPredicateConst2_1 "gtRealConst1" (op > )
+              | I.OPCODE_GtReal_Const_2 => doRealPredicateConst2_2 "gtRealConst2" (op > )
+              | I.OPCODE_GtChar_Const_1 => doCharPredicateConst2_1 "gtCharConst1" (op > )
+              | I.OPCODE_GtChar_Const_2 => doCharPredicateConst2_2 "gtCharConst2" (op > )
+              | I.OPCODE_GtByte_Const_1 => doBytePredicateConst2_1 "gtByteConst1" (op > )
+              | I.OPCODE_GtByte_Const_2 => doBytePredicateConst2_2 "gtByteConst2" (op > )
+
+              | I.OPCODE_LteqInt_Const_1 => doIntPredicateConst2_1 "lteqIntConst1" (op <= )
+              | I.OPCODE_LteqInt_Const_2 => doIntPredicateConst2_2 "lteqIntConst2" (op <= )
+              | I.OPCODE_LteqWord_Const_1 => doWordPredicateConst2_1 "lteqWordConst1" (op <= )
+              | I.OPCODE_LteqWord_Const_2 => doWordPredicateConst2_2 "lteqWordConst2" (op <= )
+              | I.OPCODE_LteqReal_Const_1 => doRealPredicateConst2_1 "lteqRealConst1" (op <= )
+              | I.OPCODE_LteqReal_Const_2 => doRealPredicateConst2_2 "lteqRealConst2" (op <= )
+              | I.OPCODE_LteqChar_Const_1 => doCharPredicateConst2_1 "lteqCharConst1" (op <= )
+              | I.OPCODE_LteqChar_Const_2 => doCharPredicateConst2_2 "lteqCharConst2" (op <= )
+              | I.OPCODE_LteqByte_Const_1 => doBytePredicateConst2_1 "lteqByteConst1" (op <= )
+              | I.OPCODE_LteqByte_Const_2 => doBytePredicateConst2_2 "lteqByteConst2" (op <= )
+
+              | I.OPCODE_GteqInt_Const_1 => doIntPredicateConst2_1 "gteqIntConst1" (op >= )
+              | I.OPCODE_GteqInt_Const_2 => doIntPredicateConst2_2 "gteqIntConst2" (op >= )
+              | I.OPCODE_GteqWord_Const_1 => doWordPredicateConst2_1 "gteqWordConst1" (op >= )
+              | I.OPCODE_GteqWord_Const_2 => doWordPredicateConst2_2 "gteqWordConst2" (op >= )
+              | I.OPCODE_GteqReal_Const_1 => doRealPredicateConst2_1 "gteqRealConst1" (op >= )
+              | I.OPCODE_GteqReal_Const_2 => doRealPredicateConst2_2 "gteqRealConst2" (op >= )
+              | I.OPCODE_GteqChar_Const_1 => doCharPredicateConst2_1 "gteqCharConst1" (op >= )
+              | I.OPCODE_GteqChar_Const_2 => doCharPredicateConst2_2 "gteqCharConst2" (op >= )
+              | I.OPCODE_GteqByte_Const_1 => doBytePredicateConst2_1 "gteqByteConst1" (op >= )
+              | I.OPCODE_GteqByte_Const_2 => doBytePredicateConst2_2 "gteqByteConst2" (op >= )
+
               | I.OPCODE_RemInt_Const_1 => doIntPrimitiveConst2_1 "remIntConst1" (SInt32.rem )
               | I.OPCODE_RemInt_Const_2 => doIntPrimitiveConst2_2 "remIntConst2" (SInt32.rem )
 
@@ -2408,73 +3231,125 @@ val _ =
                   FS.store (frameStack, destination, Word 0w0)
                  end
 
-              | I.OPCODE_Apply_S => doApply_S loadSingleSize
-              | I.OPCODE_Apply_D => doApply_S loadDoubleSize
-              | I.OPCODE_Apply_V => doApply_S loadVariantSize
-              | I.OPCODE_Apply_ML_S => doApply_ML loadSingleSize
-              | I.OPCODE_Apply_ML_D => doApply_ML loadDoubleSize
-              | I.OPCODE_Apply_ML_V => doApply_ML loadVariantSize
-              | I.OPCODE_Apply_M => doApply_M ()
+              | I.OPCODE_Apply_0_0 => doApply_0 ()
+              | I.OPCODE_Apply_S_0 => doApply_1 loadSingleSize
+              | I.OPCODE_Apply_D_0 => doApply_1 loadDoubleSize
+              | I.OPCODE_Apply_V_0 => doApply_1 loadVariantSize
+              | I.OPCODE_Apply_MS_0 => doApply_MS ()
+              | I.OPCODE_Apply_MLD_0 => doApply_ML loadDoubleSize
+              | I.OPCODE_Apply_MLV_0 => doApply_ML loadVariantSize
+              | I.OPCODE_Apply_MF_0 => doApply_MF ()
+              | I.OPCODE_Apply_MV_0 => doApply_MV ()
 
-              | I.OPCODE_TailApply_S => doTailApply_S loadSingleSize
-              | I.OPCODE_TailApply_D => doTailApply_S loadDoubleSize
-              | I.OPCODE_TailApply_V => doTailApply_S loadVariantSize
-              | I.OPCODE_TailApply_ML_S => doTailApply_ML loadSingleSize
-              | I.OPCODE_TailApply_ML_D => doTailApply_ML loadDoubleSize
-              | I.OPCODE_TailApply_ML_V => doTailApply_ML loadVariantSize
-              | I.OPCODE_TailApply_M => doTailApply_M ()
+              | I.OPCODE_Apply_0_1 => doApply_0 ()
+              | I.OPCODE_Apply_S_1 => doApply_1 loadSingleSize
+              | I.OPCODE_Apply_D_1 => doApply_1 loadDoubleSize
+              | I.OPCODE_Apply_V_1 => doApply_1 loadVariantSize
+              | I.OPCODE_Apply_MS_1 => doApply_MS ()
+              | I.OPCODE_Apply_MLD_1 => doApply_ML loadDoubleSize
+              | I.OPCODE_Apply_MLV_1 => doApply_ML loadVariantSize
+              | I.OPCODE_Apply_MF_1 => doApply_MF ()
+              | I.OPCODE_Apply_MV_1 => doApply_MV ()
 
-              | I.OPCODE_CallStatic_S => doCallStatic_S loadSingleSize
-              | I.OPCODE_CallStatic_D => doCallStatic_S loadDoubleSize
-              | I.OPCODE_CallStatic_V => doCallStatic_S loadVariantSize
-              | I.OPCODE_CallStatic_ML_S => doCallStatic_ML loadSingleSize
-              | I.OPCODE_CallStatic_ML_D => doCallStatic_ML loadDoubleSize
-              | I.OPCODE_CallStatic_ML_V => doCallStatic_ML loadVariantSize
-              | I.OPCODE_CallStatic_M => doCallStatic_M ()
+              | I.OPCODE_Apply_0_M => doApply_0 ()
+              | I.OPCODE_Apply_S_M => doApply_1 loadSingleSize
+              | I.OPCODE_Apply_D_M => doApply_1 loadDoubleSize
+              | I.OPCODE_Apply_V_M => doApply_1 loadVariantSize
+              | I.OPCODE_Apply_MS_M => doApply_MS ()
+              | I.OPCODE_Apply_MLD_M => doApply_ML loadDoubleSize
+              | I.OPCODE_Apply_MLV_M => doApply_ML loadVariantSize
+              | I.OPCODE_Apply_MF_M => doApply_MF ()
+              | I.OPCODE_Apply_MV_M => doApply_MV ()
 
-              | I.OPCODE_TailCallStatic_S => doTailCallStatic_S loadSingleSize
-              | I.OPCODE_TailCallStatic_D => doTailCallStatic_S loadDoubleSize
-              | I.OPCODE_TailCallStatic_V => doTailCallStatic_S loadVariantSize
-              | I.OPCODE_TailCallStatic_ML_S => doTailCallStatic_ML loadSingleSize
-              | I.OPCODE_TailCallStatic_ML_D => doTailCallStatic_ML loadDoubleSize
-              | I.OPCODE_TailCallStatic_ML_V => doTailCallStatic_ML loadVariantSize
-              | I.OPCODE_TailCallStatic_M => doTailCallStatic_M ()
+              | I.OPCODE_TailApply_0 => doTailApply_0 ()
+              | I.OPCODE_TailApply_S => doTailApply_1 loadSingleSize
+              | I.OPCODE_TailApply_D => doTailApply_1 loadDoubleSize
+              | I.OPCODE_TailApply_V => doTailApply_1 loadVariantSize
+              | I.OPCODE_TailApply_MS => doTailApply_MS ()
+              | I.OPCODE_TailApply_MLD => doTailApply_ML loadDoubleSize
+              | I.OPCODE_TailApply_MLV => doTailApply_ML loadVariantSize
+              | I.OPCODE_TailApply_MF => doTailApply_MF ()
+              | I.OPCODE_TailApply_MV => doTailApply_MV ()
 
-              | I.OPCODE_RecursiveCallStatic_S =>
-                doRecursiveCallStatic_S loadSingleSize
-              | I.OPCODE_RecursiveCallStatic_D =>
-                doRecursiveCallStatic_S loadDoubleSize
-              | I.OPCODE_RecursiveCallStatic_V =>
-                doRecursiveCallStatic_S loadVariantSize
-              | I.OPCODE_RecursiveCallStatic_M =>
-                doRecursiveCallStatic_M ()
+              | I.OPCODE_CallStatic_0_0 => doCallStatic_0 ()
+              | I.OPCODE_CallStatic_S_0 => doCallStatic_1 loadSingleSize
+              | I.OPCODE_CallStatic_D_0 => doCallStatic_1 loadDoubleSize
+              | I.OPCODE_CallStatic_V_0 => doCallStatic_1 loadVariantSize
+              | I.OPCODE_CallStatic_MS_0 => doCallStatic_MS ()
+              | I.OPCODE_CallStatic_MLD_0 => doCallStatic_ML loadDoubleSize
+              | I.OPCODE_CallStatic_MLV_0 => doCallStatic_ML loadVariantSize
+              | I.OPCODE_CallStatic_MF_0 => doCallStatic_MF ()
+              | I.OPCODE_CallStatic_MV_0 => doCallStatic_MV ()
 
-              | I.OPCODE_RecursiveTailCallStatic_S =>
-                doRecursiveTailCallStatic_S loadSingleSize
-              | I.OPCODE_RecursiveTailCallStatic_D =>
-                doRecursiveTailCallStatic_S loadDoubleSize
-              | I.OPCODE_RecursiveTailCallStatic_V =>
-                doRecursiveTailCallStatic_S loadVariantSize
-              | I.OPCODE_RecursiveTailCallStatic_M =>
-                doRecursiveTailCallStatic_M ()
+              | I.OPCODE_CallStatic_0_1 => doCallStatic_0 ()
+              | I.OPCODE_CallStatic_S_1 => doCallStatic_1 loadSingleSize
+              | I.OPCODE_CallStatic_D_1 => doCallStatic_1 loadDoubleSize
+              | I.OPCODE_CallStatic_V_1 => doCallStatic_1 loadVariantSize
+              | I.OPCODE_CallStatic_MS_1 => doCallStatic_MS ()
+              | I.OPCODE_CallStatic_MLD_1 => doCallStatic_ML loadDoubleSize
+              | I.OPCODE_CallStatic_MLV_1 => doCallStatic_ML loadVariantSize
+              | I.OPCODE_CallStatic_MF_1 => doCallStatic_MF ()
+              | I.OPCODE_CallStatic_MV_1 => doCallStatic_MV ()
 
-              | I.OPCODE_SelfRecursiveCallStatic_S =>
-                doSelfRecursiveCallStatic_S loadSingleSize
-              | I.OPCODE_SelfRecursiveCallStatic_D =>
-                doSelfRecursiveCallStatic_S loadDoubleSize
-              | I.OPCODE_SelfRecursiveCallStatic_V =>
-                doSelfRecursiveCallStatic_S loadVariantSize
-              | I.OPCODE_SelfRecursiveCallStatic_M =>
-                doSelfRecursiveCallStatic_M ()
+              | I.OPCODE_CallStatic_0_M => doCallStatic_0 ()
+              | I.OPCODE_CallStatic_S_M => doCallStatic_1 loadSingleSize
+              | I.OPCODE_CallStatic_D_M => doCallStatic_1 loadDoubleSize
+              | I.OPCODE_CallStatic_V_M => doCallStatic_1 loadVariantSize
+              | I.OPCODE_CallStatic_MS_M => doCallStatic_MS ()
+              | I.OPCODE_CallStatic_MLD_M => doCallStatic_ML loadDoubleSize
+              | I.OPCODE_CallStatic_MLV_M => doCallStatic_ML loadVariantSize
+              | I.OPCODE_CallStatic_MF_M => doCallStatic_MF ()
+              | I.OPCODE_CallStatic_MV_M => doCallStatic_MV ()
 
-              | I.OPCODE_SelfRecursiveTailCallStatic_S =>
-                doSelfRecursiveTailCallStatic_S loadSingleSize
-              | I.OPCODE_SelfRecursiveTailCallStatic_D =>
-                doSelfRecursiveTailCallStatic_S loadDoubleSize
-              | I.OPCODE_SelfRecursiveTailCallStatic_V =>
-                doSelfRecursiveTailCallStatic_S loadVariantSize
-              | I.OPCODE_SelfRecursiveTailCallStatic_M =>
-                doSelfRecursiveTailCallStatic_M ()
+              | I.OPCODE_TailCallStatic_0 => doTailCallStatic_0 ()
+              | I.OPCODE_TailCallStatic_S => doTailCallStatic_1 loadSingleSize
+              | I.OPCODE_TailCallStatic_D => doTailCallStatic_1 loadDoubleSize
+              | I.OPCODE_TailCallStatic_V => doTailCallStatic_1 loadVariantSize
+              | I.OPCODE_TailCallStatic_MS => doTailCallStatic_MS ()
+              | I.OPCODE_TailCallStatic_MLD => doTailCallStatic_ML loadDoubleSize
+              | I.OPCODE_TailCallStatic_MLV => doTailCallStatic_ML loadVariantSize
+              | I.OPCODE_TailCallStatic_MF => doTailCallStatic_MF ()
+              | I.OPCODE_TailCallStatic_MV => doTailCallStatic_MV ()
+
+              | I.OPCODE_RecursiveCallStatic_0_0 => doRecursiveCallStatic_0 ()
+              | I.OPCODE_RecursiveCallStatic_S_0 => doRecursiveCallStatic_1 loadSingleSize
+              | I.OPCODE_RecursiveCallStatic_D_0 => doRecursiveCallStatic_1 loadDoubleSize
+              | I.OPCODE_RecursiveCallStatic_V_0 => doRecursiveCallStatic_1 loadVariantSize
+              | I.OPCODE_RecursiveCallStatic_MS_0 => doRecursiveCallStatic_MS ()
+              | I.OPCODE_RecursiveCallStatic_MLD_0 => doRecursiveCallStatic_ML loadDoubleSize
+              | I.OPCODE_RecursiveCallStatic_MLV_0 => doRecursiveCallStatic_ML loadVariantSize
+              | I.OPCODE_RecursiveCallStatic_MF_0 => doRecursiveCallStatic_MF ()
+              | I.OPCODE_RecursiveCallStatic_MV_0 => doRecursiveCallStatic_MV ()
+
+              | I.OPCODE_RecursiveCallStatic_0_1 => doRecursiveCallStatic_0 ()
+              | I.OPCODE_RecursiveCallStatic_S_1 => doRecursiveCallStatic_1 loadSingleSize
+              | I.OPCODE_RecursiveCallStatic_D_1 => doRecursiveCallStatic_1 loadDoubleSize
+              | I.OPCODE_RecursiveCallStatic_V_1 => doRecursiveCallStatic_1 loadVariantSize
+              | I.OPCODE_RecursiveCallStatic_MS_1 => doRecursiveCallStatic_MS ()
+              | I.OPCODE_RecursiveCallStatic_MLD_1 => doRecursiveCallStatic_ML loadDoubleSize
+              | I.OPCODE_RecursiveCallStatic_MLV_1 => doRecursiveCallStatic_ML loadVariantSize
+              | I.OPCODE_RecursiveCallStatic_MF_1 => doRecursiveCallStatic_MF ()
+              | I.OPCODE_RecursiveCallStatic_MV_1 => doRecursiveCallStatic_MV ()
+
+              | I.OPCODE_RecursiveCallStatic_0_M => doRecursiveCallStatic_0 ()
+              | I.OPCODE_RecursiveCallStatic_S_M => doRecursiveCallStatic_1 loadSingleSize
+              | I.OPCODE_RecursiveCallStatic_D_M => doRecursiveCallStatic_1 loadDoubleSize
+              | I.OPCODE_RecursiveCallStatic_V_M => doRecursiveCallStatic_1 loadVariantSize
+              | I.OPCODE_RecursiveCallStatic_MS_M => doRecursiveCallStatic_MS ()
+              | I.OPCODE_RecursiveCallStatic_MLD_M => doRecursiveCallStatic_ML loadDoubleSize
+              | I.OPCODE_RecursiveCallStatic_MLV_M => doRecursiveCallStatic_ML loadVariantSize
+              | I.OPCODE_RecursiveCallStatic_MF_M => doRecursiveCallStatic_MF ()
+              | I.OPCODE_RecursiveCallStatic_MV_M => doRecursiveCallStatic_MV ()
+
+              | I.OPCODE_RecursiveTailCallStatic_0 => doRecursiveTailCallStatic_0 ()
+              | I.OPCODE_RecursiveTailCallStatic_S => doRecursiveTailCallStatic_1 loadSingleSize
+              | I.OPCODE_RecursiveTailCallStatic_D => doRecursiveTailCallStatic_1 loadDoubleSize
+              | I.OPCODE_RecursiveTailCallStatic_V => doRecursiveTailCallStatic_1 loadVariantSize
+              | I.OPCODE_RecursiveTailCallStatic_MS => doRecursiveTailCallStatic_MS ()
+              | I.OPCODE_RecursiveTailCallStatic_MLD => doRecursiveTailCallStatic_ML loadDoubleSize
+              | I.OPCODE_RecursiveTailCallStatic_MLV => doRecursiveTailCallStatic_ML loadVariantSize
+              | I.OPCODE_RecursiveTailCallStatic_MF => doRecursiveTailCallStatic_MF ()
+              | I.OPCODE_RecursiveTailCallStatic_MV => doRecursiveTailCallStatic_MV ()
 
               | I.OPCODE_MakeBlock =>
                 let
@@ -2528,6 +3403,48 @@ val _ =
                   val _ = 
                       ListPair.foldl
                           storeField 0w0 (fieldIndexes, fieldSizeIndexes)
+                  val _ =
+                      FS.store (frameStack, destination, Pointer blockAddress)
+                in () end
+
+              | I.OPCODE_MakeFixedSizeBlock =>
+                let
+                  val bitmapIndex = getUInt32 ()
+                  val sizeValue = getUInt32 ()
+                  val fieldsCount = getUInt32 ()
+                  val fieldIndexes = getUInt32List fieldsCount
+                  val fixedFieldSizeValues = getUInt32List fieldsCount
+                  val destination = getUInt32 ()
+
+                  val bitmapValue =
+                      wordOf
+                          "bitmap in MakeBlock"
+                          (FS.load (frameStack, bitmapIndex))
+                  val blockAddress =
+                      H.allocateBlock
+                          heap
+                          {
+                            size = sizeValue,
+                            bitmap = bitmapValue,
+                            blockType = RecordBlock
+                          }
+
+                  fun storeField (fieldIndex, fieldSize, offset) =
+                      if fieldSize = 0w0 
+                      then offset
+                      else
+                        let
+                          val fieldValue =
+                              FS.load_N (frameStack,fieldIndex,fieldSize)
+                          val _ =
+                              H.setFields
+                                  heap (blockAddress, offset, fieldValue)
+                        in
+                          offset + fieldSize
+                        end
+                  val _ = 
+                      ListPair.foldl
+                          storeField 0w0 (fieldIndexes, fixedFieldSizeValues)
                   val _ =
                       FS.store (frameStack, destination, Pointer blockAddress)
                 in () end
@@ -2628,9 +3545,16 @@ val _ =
 
               | I.OPCODE_Exit => raise Exit
 
-              | I.OPCODE_Return_S => doReturn loadSingleSize
-              | I.OPCODE_Return_D => doReturn loadDoubleSize
-              | I.OPCODE_Return_V => doReturn loadVariantSize
+              | I.OPCODE_Return_0 => doReturn_0 ()
+              | I.OPCODE_Return_S => doReturn_1 loadSingleSize
+              | I.OPCODE_Return_D => doReturn_1 loadDoubleSize
+              | I.OPCODE_Return_V => doReturn_1 loadVariantSize
+              | I.OPCODE_Return_MS => doReturn_MS ()
+              | I.OPCODE_Return_MLD => doReturn_ML loadDoubleSize
+              | I.OPCODE_Return_MLV => doReturn_ML loadVariantSize
+              | I.OPCODE_Return_MF => doReturn_MF ()
+              | I.OPCODE_Return_MV => doReturn_MV ()
+
               | I.OPCODE_DebuggerBreak =>
                 (case debuggerOpt of
                    NONE => ()

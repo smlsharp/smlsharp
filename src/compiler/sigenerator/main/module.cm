@@ -1,0 +1,27 @@
+Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
+        smlnj-lib.cm
+#endif
+
+        ../../control/sources.cm
+        ../../systemdef/sources.cm
+        ../../env/sources.cm
+        ../../util/sources.cm
+        ../../name/sources.cm
+        ../../../instructions/compiler/sources.cm
+        ../../../primitives/compiler/sources.cm
+        ../../anormal/sources.cm
+        ../../intermediatelanguage/sources.cm
+        ../../symbolicinstructions/sources.cm
+
+        SIGCONTEXT.sig
+        SIGContext.sml
+        SIOPTIMIZER.sig
+        SIOptimizer.sml
+        SIGENERATOR.sig
+        SIGenerator.sml

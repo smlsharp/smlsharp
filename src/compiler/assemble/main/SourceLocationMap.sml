@@ -1,7 +1,7 @@
 (**
  * a map from the offset of an instruction to the location in the source code.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SourceLocationMap.sml,v 1.7 2005/11/22 09:18:42 kiyoshiy Exp $
+ * @version $Id: SourceLocationMap.sml,v 1.8 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure SourceLocationMap : SOURCE_LOCATION_MAP =
 struct
@@ -9,10 +9,11 @@ struct
   (***************************************************************************)
 
   structure A = Absyn
+  structure BT = BasicTypes
 
   (***************************************************************************)
 
-  type offset = BasicTypes.UInt32
+  type offset = BT.UInt32
 
   type fileName = string
 
@@ -55,8 +56,8 @@ struct
             raise
               Control.Bug
                   ("SourceLocationMap.append: \
-                   \offset(" ^ UInt32.toString offset ^
-                   " <= lastOffset(" ^ UInt32.toString lastOffset ^ ")")
+                   \offset(" ^ BT.UInt32.toString offset ^
+                   " <= lastOffset(" ^ BT.UInt32.toString lastOffset ^ ")")
           else 
             if isSameLoc (lastLoc, loc)
             then map (* unchanged *)
@@ -82,11 +83,11 @@ struct
         fun toLocationTableEntry (offset, loc : Loc.loc, fileIndex) =
             {
               offset = offset,
-              fileNameIndex = UInt32.fromInt fileIndex,
-              leftLine = UInt32.fromInt (Loc.lineOfPos (#1 loc)),
-              leftCol = UInt32.fromInt (Loc.colOfPos (#1 loc)),
-              rightLine = UInt32.fromInt (Loc.lineOfPos (#2 loc)),
-              rightCol = UInt32.fromInt (Loc.colOfPos (#2 loc))
+              fileNameIndex = BT.UInt32.fromInt fileIndex,
+              leftLine = BT.UInt32.fromInt (Loc.lineOfPos (#1 loc)),
+              leftCol = BT.UInt32.fromInt (Loc.colOfPos (#1 loc)),
+              rightLine = BT.UInt32.fromInt (Loc.lineOfPos (#2 loc)),
+              rightCol = BT.UInt32.fromInt (Loc.colOfPos (#2 loc))
             } : Executable.locationTableEntry
         val locationTableEntries = List.map toLocationTableEntry (List.rev map)
         val sortedFileNameMap =

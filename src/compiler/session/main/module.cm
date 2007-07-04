@@ -5,6 +5,7 @@ Group is
         ../../systemdef/sources.cm
         ../../control/sources.cm
         ../../../instructions/sources.cm
+        ../../../primitives/sources.cm
 
         ChannelTypes.sml
         ChannelUtility.sml

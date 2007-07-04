@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University. 
  * @author Liu Bochao
- * @version $Id: Linker.sml,v 1.22 2007/01/21 13:41:32 kiyoshiy Exp $
+ * @version $Id: Linker.sml,v 1.23 2007/04/19 05:06:52 ducnh Exp $
  *)
 structure Linker:
           sig
@@ -1574,24 +1574,21 @@ struct
             val initializationCode =
                 foldl (fn (arrayHdElemIndex, iniArrayCodes) =>
                           let
-                              open TypedLambda
+                              val id = ID.generate()
                           in
                               iniArrayCodes  @ 
-                              [TLVAL
+                              [TypedLambda.TLVAL
                                    {
-                                   bindList =
-                                   [{
-                                     boundValIdent = Types.VALIDENTWILD PT.unitty,
-                                     boundExp = 
-                                     TLINITARRAY
-                                         { 
-                                          arrayIndex = TO.getPageArrayIndex(arrayHdElemIndex), 
-                                          size = TO.getPageSize(),
-                                          elemTy = TO.pageKindToType(TO.getPageKind(arrayHdElemIndex)), 
-                                          loc = loc
-                                          }
-                                         }],
-                                   loc = loc
+                                    boundVar = {id = id, displayName = "S" ^ (ID.toString id), ty = PT.unitty},
+                                    boundExp =
+                                    TypedLambda.TLINITARRAY
+                                        { 
+                                         arrayIndex = TO.getPageArrayIndex(arrayHdElemIndex), 
+                                         size = TO.getPageSize(),
+                                         elementTy = TO.pageKindToType(TO.getPageKind(arrayHdElemIndex)), 
+                                         loc = loc
+                                        },
+                                    loc = loc
                                    }]
                           end)
                       nil

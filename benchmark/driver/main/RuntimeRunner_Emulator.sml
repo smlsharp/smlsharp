@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: RuntimeRunner_Emulator.sml,v 1.3 2005/10/24 07:28:23 kiyoshiy Exp $
+ * @version $Id: RuntimeRunner_Emulator.sml,v 1.4 2007/06/01 09:40:59 kiyoshiy Exp $
  *)
 structure RuntimeRunner_Emulator : RUNTIME_RUNNER =
 struct
@@ -58,7 +58,8 @@ struct
         app (fn executable => #execute session executable) executables;
         OS.Process.success
       end
-        handle SessionTypes.Error exn => raise exn
+        handle SessionTypes.Failure exn => raise exn
+             | SessionTypes.Fatal exn => raise exn
 
   (***************************************************************************)
 

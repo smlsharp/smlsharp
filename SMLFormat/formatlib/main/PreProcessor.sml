@@ -2,7 +2,7 @@
  *  This module translates FormatExpression.expression into
  * PrettyPrinter.symbol.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PreProcessor.sml,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
+ * @version $Id: PreProcessor.sml,v 1.4 2007/06/01 01:04:34 kiyoshiy Exp $
  *)
 structure PreProcessor :> PREPROCESSOR =
 struct
@@ -34,7 +34,13 @@ struct
   (***************************************************************************)
 
   type parameter =
-       {spaceString : string, guardLeft : string, guardRight : string}
+       {
+         spaceString : string,
+         guardLeft : string,
+         guardRight : string,
+         maxDepthOfGuards : int option,
+         maxWidthOfGuards : int option
+       }
 
   (**
    * global shared information.
@@ -498,6 +504,61 @@ struct
 
   (***************************************************************************)
 
+  local
+    val elision =
+(*
+        FE.Term (3, "...")
+*)
+        FE.Guard
+            (
+              NONE,
+              [
+                FE.Indicator
+                    {space = true, newline = SOME{priority = FE.Deferred}},
+                FE.Term (3, "...")
+              ]
+            )
+  in
+  fun cutOff (parameter : parameter) symbol =
+      let
+        val isCutOffDepth =
+            case #maxDepthOfGuards parameter of
+              NONE => (fn _ => false)
+            | SOME depth => (fn d => depth <= d)
+        fun keepSymbol (FE.StartOfIndent _) = true
+          | keepSymbol FE.EndOfIndent = true
+          | keepSymbol _ = false
+        fun takeHead _ accum [] = List.rev accum
+          | takeHead 0 accum symbols =
+            (List.rev accum) @ elision :: (List.filter keepSymbol symbols)
+          | takeHead w accum ((symbol as FE.Term _) :: symbols) =
+            takeHead (w - 1) (symbol :: accum) symbols
+          | takeHead w accum ((symbol as FE.Guard _) :: symbols) =
+            takeHead (w - 1) (symbol :: accum) symbols
+          | takeHead w accum (symbol :: symbols) =
+            takeHead w (symbol :: accum) symbols
+        fun visit depth (FE.Guard (enclosedAssocOpt, symbols)) =
+            if isCutOffDepth depth
+            then elision
+            else
+              let
+                val symbols' = 
+                    map
+                        (visit (depth + 1)) 
+                        (case #maxWidthOfGuards parameter of
+                           NONE => symbols
+                         | SOME width => takeHead width [] symbols)
+              in
+                FE.Guard (enclosedAssocOpt, symbols')
+              end
+          | visit depth symbol = symbol
+      in
+        visit 0 symbol
+      end
+  end
+
+  (***************************************************************************)
+
   fun removeAssoc (parameter : parameter) symbol =
       let
         (**
@@ -654,20 +715,32 @@ struct
    * @param symbol a format expression
    * @return a PrettyPrinter.symbol translated from the symbol.
    *)
-  fun preProcess parameterList symbol =
+  fun preProcess parameterList =
       let
-        val (spaceString, guardLeft, guardRight) =
+        val (
+              spaceString,
+              guardLeft,
+              guardRight,
+              maxDepthOfGuards,
+              maxWidthOfGuards
+            ) =
             List.foldl
-                (fn (param, (space, left, right)) =>
+                (fn (param, (space, left, right, depth, width)) =>
                   case param
-                   of Param.Space s => (s, left, right)
-                    | Param.GuardLeft s => (space, s, right)
-                    | Param.GuardRight s => (space, left, s)
-                    | _ => (space, left, right))
+                   of Param.Space s => (s, left, right, depth, width)
+                    | Param.GuardLeft s => (space, s, right, depth, width)
+                    | Param.GuardRight s => (space, left, s, depth, width)
+                    | Param.MaxDepthOfGuards no =>
+                      (space, left, right, no, width)
+                    | Param.MaxWidthOfGuards no =>
+                      (space, left, right, depth, no)
+                    | _ => (space, left, right, depth, width))
                 (
                   Param.defaultSpace,
                   Param.defaultGuardLeft,
-                  Param.defaultGuardRight
+                  Param.defaultGuardRight,
+                  Param.defaultMaxDepthOfGuards,
+                  Param.defaultMaxWidthOfGuards
                 )
                 parameterList
 
@@ -675,24 +748,31 @@ struct
             {
               spaceString = spaceString,
               guardLeft = guardLeft,
-              guardRight = guardRight
+              guardRight = guardRight,
+              maxDepthOfGuards = maxDepthOfGuards,
+              maxWidthOfGuards = maxWidthOfGuards
             } : parameter
-
-        val initialENV = Environment.create ()
-        val initialContext =
-            {
-              totalIndent = 0,
-              indentStack = [0],
-              countOfEndOfIndent = 0,
-              charsAfterNewline = ref 0
-            }
-        val assocRemoved = removeAssoc parameter symbol
-        val (ENV, context, result) =
-            calculate parameter initialENV initialContext assocRemoved
-            handle UnMatchEndOfIndent message =>
-                   raise Fail (message ^ ":" ^ FE.toString assocRemoved)
       in
-        result
+        (* avoid to hold unnecessary references to format expression which can
+         * be very large. *)
+        #3
+        o (fn symbol =>
+              let
+                val initialENV = Environment.create ()
+                val initialContext =
+                    {
+                      totalIndent = 0,
+                      indentStack = [0],
+                      countOfEndOfIndent = 0,
+                      charsAfterNewline = ref 0
+                    }
+              in
+                calculate parameter initialENV initialContext symbol
+              end)
+        o (removeAssoc parameter)
+        o (if isSome(maxDepthOfGuards) orelse isSome(maxWidthOfGuards)
+           then cutOff parameter
+           else (fn symbol => symbol))
       end
 
   (***************************************************************************)

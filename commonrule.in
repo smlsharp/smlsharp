@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 #
 # commonrules
-# $Id: commonrule.in,v 1.7.4.2 2007/03/24 14:51:07 katsu Exp $
+# $Id: commonrule.in,v 1.10 2007/06/05 13:32:09 kiyoshiy Exp $
 #
 
 SHELL = @SHELL@
@@ -29,6 +29,7 @@ DEFS = @DEFS@
 CPPFLAGS_ORIG = @CPPFLAGS@
 CPPFLAGS = @CPPFLAGS@ \
            -I$(top_builddir)/. \
+           -I$(CONFIGURATION_SRCDIR)/. \
            -I$(RUNTIME_CORE_SRCDIR)/main \
            -I$(RUNTIME_IMPL_SRCDIR)/main \
            -I$(PRIMITIVES_SRCDIR)/runtime/main \
@@ -90,6 +91,7 @@ FFI_MAX_ARGS = @FFI_MAX_ARGS@
 
 BUILD_ROOT = @abs_top_builddir@
 SRC_ROOT = @abs_top_srcdir@
+CONFIGURATION_SRCDIR = $(top_srcdir)/src/configuration
 RUNTIME_CORE_SRCDIR = $(top_srcdir)/src/runtime/runtime-core
 RUNTIME_IMPL_SRCDIR = $(top_srcdir)/src/runtime/runtime-impl
 PRIMITIVES_SRCDIR   = $(top_srcdir)/src/primitives
@@ -99,6 +101,7 @@ LIBSMLSHARP_O = $(top_builddir)src/runtime/byterun/main/libsmlsharp.$(OBJEXT)
 
 MKSMLPATH = $(SHELL) $(top_builddir)mksmlpath
 
+SMLSHARP_PLATFORM = @SMLSHARP_PLATFORM@
 
 .SUFFIXES:
 .SUFFIXES: .c .cc .hh .@OBJEXT@ .@LIBEXT@ .@DLLIBEXT@ @EXEEXT@ \

@@ -1,4 +1,4 @@
-use "ratio-regions.sml";
+use "./ratio-regions.sml";
 
 Main.doit ();
 print "Done";

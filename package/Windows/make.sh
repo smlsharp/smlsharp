@@ -2,7 +2,7 @@
 
 set -e -x
 
-SMLSHARP_VERSION=0.20
+SMLSHARP_VERSION=0.30
 
 ISCC="c:/Program Files/Inno Setup 5/ISCC.exe"
 srcdir=../..
@@ -35,6 +35,42 @@ fi
 
 (cd build/src/compiler && make mlton)
 (cd build && make install DESTDIR="$PWD/dist" prefix=)
+
+# -------- build and install SMLFormat, SMLDoc and SMLUnit
+
+(
+  cd ../../SMLFormat
+  make clean
+  ./configure
+  make
+  cd ../package/Windows/build
+  cp "../../../SMLFormat/bin/smlformat.exe" "$PWD/dist/bin"
+  (cd ../../../SMLFormat && \
+   tar cf - `find smlformatlib.sml formatlib/main -type f -print \
+             | egrep -v '\.svn|CVS|\.cvsignore|\~\$|\.in\$|Makefile|CM|\.cm'`) \
+  | (cd dist/lib/smlsharp && mkdir SMLFormat && cd SMLFormat && tar xf -)
+)
+
+(
+  cd ../../SMLDoc
+  make clean
+  ./configure
+  make
+  cd ../package/Windows/build
+  cp "../../../SMLDoc/bin/smldoc.exe" "$PWD/dist/bin"
+)
+
+(
+  #cd ../..
+  (cd ../../SMLUnit && \
+   tar cf - `find smlunitlib.sml src/main -type f -print \
+             | egrep -v '\.svn|CVS|\.cvsignore|\~\$|\.in\$|Makefile|CM|\.cm'`) \
+  | (cd build/dist/lib/smlsharp && mkdir SMLUnit && cd SMLUnit && tar xf -)
+  # smlunitlib.sml src/main
+)
+
+echo 'use "./SMLFormat/smlformatlib.sml";' > build/dist/lib/smlsharp/smlformatlib.sml
+echo 'use "./SMLUnit/smlunitlib.sml";' > build/dist/lib/smlsharp/smlunitlib.sml
 
 # -------- make and setup documents
 

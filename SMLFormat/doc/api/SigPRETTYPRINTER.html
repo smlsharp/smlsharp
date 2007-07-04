@@ -44,7 +44,7 @@ sig<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRETTYPRINTER.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRETTYPRINTER.html#ConstrEndOfIndent">EndOfIndent</A><br>
 &nbsp;&nbsp;exception&nbsp;<A HREF="SigPRETTYPRINTER.html#ExceptionFail">Fail</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigPRETTYPRINTER.html#Valformat">format</A>&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPRETTYPRINTER.html#Valformat">format</A>&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 end</CODE>
 <P>
 
@@ -63,7 +63,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: SigPRETTYPRINTER.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
+$Id: SigPRETTYPRINTER.html,v 1.5 2007/03/27 15:03:01 kiyoshiy Exp $
  
 
 </DL>
@@ -157,7 +157,7 @@ $Id: SigPRETTYPRINTER.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
 <A NAME="ConstrTerm"><!-- --></A>
 <H3>Term</H3>
 <P>
-<CODE>constructor&nbsp;Term&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A></CODE>
+<CODE>constructor&nbsp;Term&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;-&gt;&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A></CODE>
 <DL>
 <DD>
 the term string literal 
@@ -177,7 +177,7 @@ the term string literal
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* the list of symbols *)</I></FONT>&nbsp;symbols&nbsp;:&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(*  the environment consisting of entries for preferred indicators.*)</I></FONT><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;environment&nbsp;:&nbsp;<A HREF="SigPRETTYPRINTER.html#Typeenvironment">environment</A><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A></CODE>
 <DL>
 <DD>
@@ -198,7 +198,7 @@ non terminal
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* true if the space indicator is specified.*)</I></FONT>&nbsp;space&nbsp;:&nbsp;bool,<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* become true if a newline should begin at this indicator.*)</I></FONT><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;newline&nbsp;:&nbsp;bool&nbsp;ref<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A></CODE>
 <DL>
 <DD>
@@ -220,7 +220,7 @@ the format indicators
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(*  the number of columns required to print the text without
  inserting newlines at this indicator.*)</I></FONT><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;requiredColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A></CODE>
 <DL>
 <DD>
@@ -236,7 +236,7 @@ the format indicators with deferred newline priority
 <A NAME="ConstrStartOfIndent"><!-- --></A>
 <H3>StartOfIndent</H3>
 <P>
-<CODE>constructor&nbsp;StartOfIndent&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A></CODE>
+<CODE>constructor&nbsp;StartOfIndent&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;-&gt;&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A></CODE>
 <DL>
 <DD>
 the width of indent. 
@@ -274,7 +274,7 @@ the end of indent scope
 <H3>format</H3>
 <P>
 <CODE>fun&nbsp;format&nbsp;parameter&nbsp;symbol<br>
-&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 <DL>
 <DD>
   translates the symbol into a text representation which fits within the

@@ -2,7 +2,7 @@
  * a map from variable name to its slot index.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SlotMap.sml,v 1.9 2006/02/28 16:10:59 kiyoshiy Exp $
+ * @version $Id: SlotMap.sml,v 1.10 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure SlotMap : SLOT_MAP =
 struct
@@ -80,7 +80,7 @@ struct
       ^ ","
       ^ displayName
       ^ ","
-      ^ UInt32.toString slot
+      ^ BT.UInt32.toString slot
       ^ ","
       ^ (ID.toString beginLabel)
       ^ "-"

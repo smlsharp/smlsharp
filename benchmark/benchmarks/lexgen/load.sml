@@ -1,4 +1,4 @@
-use "lexgen.sml";
+use "./lexgen.sml";
 
 Main.doit ();
 print "Done";

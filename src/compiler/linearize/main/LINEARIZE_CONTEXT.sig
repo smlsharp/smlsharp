@@ -1,7 +1,8 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LINEARIZE_CONTEXT.sig,v 1.14 2007/01/09 15:07:21 kiyoshiy Exp $
+ * @author NGUYEN Huu-Duc
+ * @version $Id: LINEARIZE_CONTEXT.sig,v 1.15 2007/04/19 05:06:52 ducnh Exp $
  *)
 signature LINEARIZE_CONTEXT =
 sig
@@ -21,7 +22,12 @@ sig
            (** no more computation in function. *) Tail
          | (** value is returned to the caller. *) Result
          | (** value is bound to a variable. *)
-           Bound of SymbolicInstructions.varInfo * ANormal.ty
+           Bound of 
+             {
+              boundVarInfoList : SymbolicInstructions.varInfo list,
+              boundTyList : ANormal.ty list,
+              variableSizeList : SymbolicInstructions.size list
+             }
 
   (***************************************************************************)
 
@@ -39,7 +45,7 @@ sig
    *)
   val createContext
       : context
-        -> (SymbolicInstructions.varid * ANormal.funInfo * Loc.loc)
+        -> (ANormal.funDecl * Loc.loc)
         -> context
 
   (** create a label unique within this linearization
@@ -65,7 +71,7 @@ sig
   val getPosition : context -> position
   val notTailPosition : context -> context
   val setBoundPosition
-      : (context * SymbolicInstructions.varInfo * ANormal.ty)
+      : (context * SymbolicInstructions.varInfo list * ANormal.ty list * SymbolicInstructions.size list)
         -> context
   (**
    *  creates a new context for linearization of an expression guarded by
@@ -96,7 +102,9 @@ sig
   val getLocOfEnclosingExp : context -> Loc.loc
 
   (** get the type of the result of the function which is now linearized. *)
-  val getResultType : context -> ANormal.ty
+  val getResultTypeList : context -> ANormal.ty list
+
+  val getResultSizeList : context -> SymbolicInstructions.size list
 
   (** add constant and returns its label. *)
   val addStringConstant : context -> string -> label
@@ -104,18 +112,12 @@ sig
   val getConstantInstructions
       : context -> SymbolicInstructions.instruction list
 
-  (** add function code *)
-  val addFunctionCode : context -> SymbolicInstructions.functionCode -> unit
-
-  (** the functions are ordered in reverse order *)
-  val getFunctionCodes : context -> SymbolicInstructions.functionCode list
-
-  (**
-   * get the size of a value of the type.
-   *)
-  val getSize : context -> ANormal.ty  -> SymbolicInstructions.size
-
   val getEnclosingHandlers : context -> label list
+
+
+  val ANVarInfoToVarInfo : ANormal.varInfo -> SymbolicInstructions.varInfo
+
+  val ANExpToSize : ANormal.anexp -> SymbolicInstructions.size
 
   (***************************************************************************)
                                     

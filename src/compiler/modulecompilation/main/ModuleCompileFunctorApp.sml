@@ -4,7 +4,7 @@
  * 
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompileFunctorApp.sml,v 1.46 2007/02/28 15:31:25 katsu Exp $
+ * @version $Id: ModuleCompileFunctorApp.sml,v 1.47 2007/06/19 22:19:11 ohori Exp $
  *)
 structure ModuleCompileFunctorApp  = 
 struct
@@ -309,7 +309,6 @@ in
          in
            newTfpexp
          end 
-       | TFPGETGLOBAL _ => tfpexp
        | TFPGETFIELD (tfpexp, int, ty, loc) => 
          TFPGETFIELD (substituteHoleTfpexp 
                         pathHoleIdEnv pathIdEnv substTyEnv exnTagSubst tfpexp, 
@@ -695,6 +694,18 @@ in
                    tfpexps
          in           
            TFPSEQ {expList=newTfpexps, expTyList=map (FAU.instantiateTy substTyEnv) tys, loc=loc}
+         end
+       | TFPLIST {expList=tfpexps, listTy, loc} =>
+         let
+           val newTfpexps =
+               map ( fn tfpexp =>
+                        substituteHoleTfpexp 
+                          pathHoleIdEnv pathIdEnv substTyEnv 
+                          exnTagSubst tfpexp
+                        )
+                   tfpexps
+         in           
+           TFPLIST {expList=newTfpexps, listTy= FAU.instantiateTy substTyEnv listTy, loc=loc}
          end
        | TFPCAST (tfpexp,ty,loc) => 
          let

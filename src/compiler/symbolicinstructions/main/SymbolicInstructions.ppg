@@ -9,7 +9,7 @@
  * </p>
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SymbolicInstructions.ppg,v 1.49 2007/02/22 08:13:41 katsu Exp $
+ * @version $Id: SymbolicInstructions.ppg,v 1.52 2007/06/19 12:19:23 kiyoshiy Exp $
  *)
 structure SymbolicInstructions =
 struct
@@ -63,7 +63,7 @@ struct
            VARIANT of varInfo
 
   (*%
-   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+   * @formatter(Absyn.callingConvenvtion) Absyn.format_callingConvenvtion
    *)
   type callingConvention = Absyn.callingConvention
         
@@ -131,33 +131,11 @@ struct
            AccessEnv of
            {offset : UInt32, variableSize : size, destination : entry}
          | (*%
-            * @format({offset, variableSize, destination})
-            * destination + "=" + "AccessEnvIndirect" + offset + variableSize
-            *)
-           AccessEnvIndirect of
-           {
-             offset : UInt32,
-             variableSize : size,
-             destination : entry
-           }
-         | (*%
             * @format({nestLevel, offset, variableSize, destination})
             * destination + "="
             * + "AccessNestedEnv" + nestLevel + offset + variableSize
             *)
            AccessNestedEnv of
-           {
-             nestLevel : UInt32, 
-             offset : UInt32, 
-             variableSize : size, 
-             destination : entry
-           }
-         | (*%
-            * @format({nestLevel, offset, variableSize, destination})
-            * destination + "="
-            * + "AccessNestedEnvIndirect" + nestLevel + offset + variableSize
-            *)
-           AccessNestedEnvIndirect of
            {
              nestLevel : UInt32, 
              offset : UInt32, 
@@ -177,13 +155,34 @@ struct
              destination : entry
            }
          | (*%
-            * @format({fieldEntry, fieldSize, blockEntry, destination})
+            * @format({fieldOffsetEntry, fieldSize, blockEntry, destination})
             * destination + "="
-            * + "GetFieldIndirect" + fieldEntry + fieldSize + blockEntry
+            * + "GetFieldIndirect" + fieldOffsetEntry + fieldSize + blockEntry
             *)
            GetFieldIndirect of
            {
-             fieldEntry : entry,
+             fieldOffsetEntry : entry,
+             fieldSize : size,
+             blockEntry : entry,
+             destination : entry
+           }
+         | (*%
+            * @format
+            *  ({
+            *     nestLevel,
+            *     fieldOffset,
+            *     fieldSize,
+            *     blockEntry,
+            *     destination
+            *   })
+            * destination + "="
+            * + "GetNestedField"
+            * + nestLevel + fieldOffset + fieldSize + blockEntry
+            *)
+           GetNestedField of
+           {
+             nestLevel : UInt32,
+             fieldOffset : UInt32,
              fieldSize : size,
              blockEntry : entry,
              destination : entry
@@ -192,19 +191,19 @@ struct
             * @format
             *  ({
             *     nestLevelEntry,
-            *     offsetEntry,
+            *     fieldOffsetEntry,
             *     fieldSize,
             *     blockEntry,
             *     destination
             *   })
             * destination + "="
             * + "GetNestedFieldIndirect"
-            * + nestLevelEntry + offsetEntry + fieldSize + blockEntry
+            * + nestLevelEntry + fieldOffsetEntry + fieldSize + blockEntry
             *)
            GetNestedFieldIndirect of
            {
              nestLevelEntry : entry,
-             offsetEntry : entry,
+             fieldOffsetEntry : entry,
              fieldSize : size,
              blockEntry : entry,
              destination : entry
@@ -221,13 +220,34 @@ struct
              newValueEntry : entry
            }
          | (*%
-            * @format({fieldEntry, fieldSize, blockEntry, newValueEntry})
+            * @format({fieldOffsetEntry, fieldSize, blockEntry, newValueEntry})
             * "SetFieldIndirect"
-            * + fieldEntry + fieldSize + blockEntry + newValueEntry
+            * + fieldOffsetEntry + fieldSize + blockEntry + newValueEntry
             *)
            SetFieldIndirect of
            {
-             fieldEntry : entry,
+             fieldOffsetEntry : entry,
+             fieldSize : size,
+             blockEntry : entry,
+             newValueEntry : entry
+           }
+         | (*%
+            * @format
+            *  ({
+            *     nestLevel,
+            *     fieldOffset,
+            *     fieldSize,
+            *     blockEntry,
+            *     newValueEntry
+            *   })
+            * "SetNestedField"
+            * + nestLevel + fieldOffset + fieldSize + blockEntry
+            * + newValueEntry
+            *)
+           SetNestedField of
+           {
+             nestLevel : UInt32,
+             fieldOffset : UInt32,
              fieldSize : size,
              blockEntry : entry,
              newValueEntry : entry
@@ -236,19 +256,19 @@ struct
             * @format
             *  ({
             *     nestLevelEntry,
-            *     offsetEntry,
+            *     fieldOffsetEntry,
             *     fieldSize,
             *     blockEntry,
             *     newValueEntry
             *   })
             * "SetNestedFieldIndirect"
-            * + nestLevelEntry + offsetEntry + fieldSize + blockEntry
+            * + nestLevelEntry + fieldOffsetEntry + fieldSize + blockEntry
             * + newValueEntry
             *)
            SetNestedFieldIndirect of
            {
              nestLevelEntry : entry,
-             offsetEntry : entry,
+             fieldOffsetEntry : entry,
              fieldSize : size,
              blockEntry : entry,
              newValueEntry : entry
@@ -259,8 +279,8 @@ struct
             *)
            CopyBlock of
 	   {
-             nestLevelEntry : entry,
              blockEntry : entry,
+             nestLevelEntry : entry,
              destination : entry
            }
          | (*%
@@ -327,68 +347,50 @@ struct
            GetEnv of {destination : entry}
          | (*%
             * @format({
-            *           argsCount,
             *           primitive,
             *           argEntries : argEntry argEntries,
-            *           argSizes : argSize argSizes,
-            *           resultSize,
             *           destination
             *         })
             * destination + "=" +
             * {
             *     "CallPrim"
             *     4[
-            *         +1 argsCount
             *         +1 primitive
             *         +1 "[" argEntries(argEntry)(",") "]"
-            *         +1 "[" argSizes(argSize)(",") "]"
-            *         +1 resultSize
             *      ]
             * }
             *)
            CallPrim of
            {
-             argsCount : UInt32,
              primitive : Primitives.primitive,
              argEntries : entry list,
-             argSizes : size list,
-             resultSize : size,
              destination : entry
            }
          | (*%
             * @format({
-            *           argsCount,
             *           switchTag,
             *           convention,
             *           closureEntry,
             *           argEntries : argEntry argEntries,
-            *           argSizes : argSize argSizes,
-            *           resultSize,
             *           destination
             *         })
             * destination + "=" +
             * {
             *     "ForeignApply"
             *     4[
-            *         +2 argsCount
             *         +2 switchTag
             *         +2 convention
             *         +2 closureEntry
             *         +2 "[" argEntries(argEntry)(",") "]"
-            *         +2 "[" argSizes(argSize)(",") "]"
-            *         +2 resultSize
             *      ]
             * }
             *)
            ForeignApply of
            {
-             argsCount : UInt32,
              switchTag : UInt32,
              convention : callingConvention,
              closureEntry : entry,
              argEntries : entry list,
-             argSizes : size list,
-             resultSize : size,
              destination : entry
            }
          | (*%
@@ -411,13 +413,31 @@ struct
          | (*%
             * @format({
             *           closureEntry,
+            *           destinations : dest dests
+            *         })
+            * "[" dests(dest)(",") "]" + "=" +
+            * {
+            *     "Apply_0"
+            *     4[
+            *          +2 closureEntry
+            *      ]
+            * }
+            *)
+           Apply_0 of
+           {
+             closureEntry : entry,
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *           closureEntry,
             *           argEntry,
             *           argSize,
-            *           destination
+            *           destinations : dest dests
             *         })
-            * destination + "=" +
+            * "[" dests(dest)(",") "]" + "=" +
             * {
-            *     "Apply_S"
+            *     "Apply_1"
             *     4[
             *          +2 closureEntry
             *          +2 argEntry
@@ -425,66 +445,120 @@ struct
             *      ]
             * }
             *)
-           Apply_S of
+           Apply_1 of
            {
              closureEntry : entry,
              argEntry : entry,
              argSize : size,
-             destination : entry
+             destinations : entry list
            }
          | (*%
             * @format({
-            *           argsCount,
             *           closureEntry,
-            *           argEntries : argEntry argEntries,
-            *           lastArgSize,
-            *           destination
+            *           argEntries: arg args,
+            *           destinations : dest dests
             *         })
-            * destination + "=" +
+            * "[" dests(dest)(",") "]" + "=" +
             * {
-            *    "Apply_ML"
-            *    4[
-            *        +2 argsCount
-            *        +2 closureEntry
-            *        +2 "[" argEntries(argEntry)(",") "]"
-            *        +2 lastArgSize
-            *     ]
+            *     "Apply_MS"
+            *     4[
+            *          +2 closureEntry
+            *          +2 "[" args(arg)(",") "]"
+            *      ]
+            * }
+            *)
+           Apply_MS of
+           {
+             closureEntry : entry,
+             argEntries : entry list,
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *           closureEntry,
+            *           argEntries: arg args,
+            *           lastArgSize : size,
+            *           destinations : dest dests
+            *         })
+            * "[" dests(dest)(",") "]" + "=" +
+            * {
+            *     "Apply_ML"
+            *     4[
+            *          +2 closureEntry
+            *          +2 "[" args(arg)(",") "]"
+            *          +2  size
+            *      ]
             * }
             *)
            Apply_ML of
            {
-             argsCount : UInt32,
              closureEntry : entry,
              argEntries : entry list,
              lastArgSize : size,
-             destination : entry
+             destinations : entry list
            }
          | (*%
             * @format({
-            *           argsCount,
             *           closureEntry,
-            *           argEntries : argEntry argEntries,
-            *           argSizeEntries : argSize argSizes,
-            *           destination
+            *           argEntries: arg args,
+            *           argSizes : size sizes,
+            *           destinations : dest dests
             *         })
-            * destination + "=" +
+            * "[" dests(dest)(",") "]" + "=" +
             * {
-            *     "Apply_M"
+            *     "Apply_MF"
             *     4[
-            *         +2 argsCount
-            *         +2 closureEntry
-            *         +2 "[" argEntries(argEntry)(",") "]"
-            *         +2 "[" argSizes(argSize)(",") "]"
+            *          +2 closureEntry
+            *          +2 "[" args(arg)(",") "]"
+            *          +2 "[" sizes(size)(",") "]"
             *      ]
             * }
             *)
-           Apply_M of
+           Apply_MF of
            {
-             argsCount : UInt32,
+             closureEntry : entry,
+             argEntries : entry list,
+             argSizes : UInt32 list,
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *           closureEntry,
+            *           argEntries: arg args,
+            *           argSizeEntries : size sizes,
+            *           destinations : dest dests
+            *         })
+            * "[" dests(dest)(",") "]" + "=" +
+            * {
+            *     "Apply_MV"
+            *     4[
+            *          +2 closureEntry
+            *          +2 "[" args(arg)(",") "]"
+            *          +2 "[" sizes(size)(",") "]"
+            *      ]
+            * }
+            *)
+           Apply_MV of
+           {
              closureEntry : entry,
              argEntries : entry list,
              argSizeEntries : entry list,
-             destination : entry
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *           closureEntry
+            *         })
+            * {
+            *     "TailApply_0"
+            *     4[
+            *         +2 closureEntry
+            *      ]
+            * }
+            *)
+           TailApply_0 of
+           {
+             closureEntry : entry
            }
          | (*%
             * @format({
@@ -493,7 +567,7 @@ struct
             *           argSize
             *         })
             * {
-            *     "TailApply_S"
+            *     "TailApply_1"
             *     4[
             *         +2 closureEntry
             *         +2 argEntry
@@ -501,7 +575,7 @@ struct
             *      ]
             * }
             *)
-           TailApply_S of
+           TailApply_1 of
            {
              closureEntry : entry,
              argEntry : entry,
@@ -509,51 +583,105 @@ struct
            }
          | (*%
             * @format({
-            *           argsCount,
+            *           closureEntry,
+            *           argEntries : argEntry argEntries
+            *         })
+            * {
+            *     "TailApply_MS"
+            *     4[
+            *         +2 closureEntry
+            *         +2 "[" argEntries(argEntry)(",") "]"
+            *      ]
+            * }
+            *)
+           TailApply_MS of
+           {
+             closureEntry : entry,
+             argEntries : entry list
+           }
+         | (*%
+            * @format({
             *           closureEntry,
             *           argEntries : argEntry argEntries,
-            *           lastArgSize
+            *           lastArgSize : size
             *         })
             * {
             *     "TailApply_ML"
             *     4[
-            *         +2 argsCount
             *         +2 closureEntry
             *         +2 "[" argEntries(argEntry)(",") "]"
-            *         +2 lastArgSize
+            *         +2 size
             *      ]
             * }
             *)
            TailApply_ML of
            {
-             argsCount : UInt32,
              closureEntry : entry,
              argEntries : entry list,
              lastArgSize : size
            }
          | (*%
             * @format({
-            *           argsCount,
             *           closureEntry,
             *           argEntries : argEntry argEntries,
-            *           argSizeEntries : argSize argSizes
+            *           argSizes : argSize argSizes
             *         })
             * {
-            *     "TailApply_M"
+            *     "TailApply_MF"
             *     4[
-            *         +2 argsCount
             *         +2 closureEntry
             *         +2 "[" argEntries(argEntry)(",") "]"
             *         +2 "[" argSizes(argSize)(",") "]"
             *      ]
             * }
             *)
-           TailApply_M of
+           TailApply_MF of
            {
-             argsCount : UInt32,
+             closureEntry : entry,
+             argEntries : entry list,
+             argSizes : UInt32 list
+           }
+         | (*%
+            * @format({
+            *           closureEntry,
+            *           argEntries : argEntry argEntries,
+            *           argSizeEntries : argSize argSizes
+            *         })
+            * {
+            *     "TailApply_MV"
+            *     4[
+            *         +2 closureEntry
+            *         +2 "[" argEntries(argEntry)(",") "]"
+            *         +2 "[" argSizes(argSize)(",") "]"
+            *      ]
+            * }
+            *)
+           TailApply_MV of
+           {
              closureEntry : entry,
              argEntries : entry list,
              argSizeEntries : entry list
+           }
+         | (*%
+            * @format({
+            *           entryPoint,
+            *           envEntry,
+            *           destinations : destEntry destEntries
+            *         })
+            * "[" destEntries(destEntry)(",") "]" + "=" +
+            * {
+            *     "CallStatic_0"
+            *     4[
+            *          +2 entryPoint
+            *          +2 envEntry
+            *      ]
+            * }
+            *)
+           CallStatic_0 of
+           {
+             entryPoint : address,
+             envEntry : entry,
+             destinations : entry list
            }
          | (*%
             * @format({
@@ -561,11 +689,11 @@ struct
             *           envEntry,
             *           argEntry,
             *           argSize,
-            *           destination
+            *           destinations : destEntry destEntries
             *         })
-            * destination + "=" +
+            * "[" destEntries(destEntry)(",") "]" + "=" +
             * {
-            *     "CallStatic_S"
+            *     "CallStatic_1"
             *     4[
             *          +2 entryPoint
             *          +2 envEntry
@@ -574,58 +702,77 @@ struct
             *      ]
             * }
             *)
-           CallStatic_S of
+           CallStatic_1 of
            {
              entryPoint : address,
              envEntry : entry,
              argEntry : entry,
              argSize : size,
-             destination : entry
+             destinations : entry list
            }
          | (*%
             * @format({
-            *           argsCount,
             *           entryPoint,
             *           envEntry,
             *           argEntries : argEntry argEntries,
-            *           lastArgSize,
-            *           destination
+            *           destinations : destEntry destEntries
             *         })
-            * destination + "=" +
+            * "[" destEntries(destEntry)(",") "]" + "=" +
             * {
-            *    "CallStatic_ML"
-            *    4[
-            *         +2 argsCount
-            *         +2 entryPoint
-            *         +2 envEntry
-            *         +2 "[" argEntries(argEntry)(",") "]"
-            *         +2 lastArgSize
-            *     ]
+            *      "CallStatic_MS"
+            *      4[
+            *           +2 entryPoint
+            *           +2 envEntry
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *       ]
+            * }
+            *)
+           CallStatic_MS of
+           {
+             entryPoint : address,
+             envEntry : entry,
+             argEntries : entry list,
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *           entryPoint,
+            *           envEntry,
+            *           argEntries : argEntry argEntries,
+            *           lastArgSize : size,
+            *           destinations : destEntry destEntries
+            *         })
+            * "[" destEntries(destEntry)(",") "]" + "=" +
+            * {
+            *      "CallStatic_ML"
+            *      4[
+            *           +2 entryPoint
+            *           +2 envEntry
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 size
+            *       ]
             * }
             *)
            CallStatic_ML of
            {
-             argsCount : UInt32,
              entryPoint : address,
              envEntry : entry,
              argEntries : entry list,
              lastArgSize : size,
-             destination : entry
+             destinations : entry list
            }
          | (*%
             * @format({
-            *           argsCount,
             *           entryPoint,
             *           envEntry,
             *           argEntries : argEntry argEntries,
-            *           argSizeEntries : argSize argSizes,
-            *           destination
+            *           argSizes : argSize argSizes,
+            *           destinations : destEntry destEntries
             *         })
-            * destination + "=" +
+            * "[" destEntries(destEntry)(",") "]" + "=" +
             * {
-            *      "CallStatic_M"
+            *      "CallStatic_MF"
             *      4[
-            *           +2 argsCount
             *           +2 entryPoint
             *           +2 envEntry
             *           +2 "[" argEntries(argEntry)(",") "]"
@@ -633,14 +780,58 @@ struct
             *       ]
             * }
             *)
-           CallStatic_M of
+           CallStatic_MF of
            {
-             argsCount : UInt32,
+             entryPoint : address,
+             envEntry : entry,
+             argEntries : entry list,
+             argSizes : UInt32 list,
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *           entryPoint,
+            *           envEntry,
+            *           argEntries : argEntry argEntries,
+            *           argSizeEntries : argSize argSizes,
+            *           destinations : destEntry destEntries
+            *         })
+            * "[" destEntries(destEntry)(",") "]" + "=" +
+            * {
+            *      "CallStatic_MV"
+            *      4[
+            *           +2 entryPoint
+            *           +2 envEntry
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 "[" argSizes(argSize)(",") "]"
+            *       ]
+            * }
+            *)
+           CallStatic_MV of
+           {
              entryPoint : address,
              envEntry : entry,
              argEntries : entry list,
              argSizeEntries : entry list,
-             destination : entry
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *           entryPoint,
+            *           envEntry
+            *         })
+            * {
+            *     "TailCallStatic_0"
+            *     4[
+            *         +2 entryPoint
+            *         +2 envEntry
+            *      ]
+            * }
+            *)
+           TailCallStatic_0 of 
+           {
+             entryPoint : address,
+             envEntry : entry
            }
          | (*%
             * @format({
@@ -650,7 +841,7 @@ struct
             *           argSize
             *         })
             * {
-            *     "TailCallStatic_S"
+            *     "TailCallStatic_1"
             *     4[
             *         +2 entryPoint
             *         +2 envEntry
@@ -659,7 +850,7 @@ struct
             *      ]
             * }
             *)
-           TailCallStatic_S of 
+           TailCallStatic_1 of 
            {
              entryPoint : address,
              envEntry : entry,
@@ -668,26 +859,44 @@ struct
            }
          | (*%
             * @format({
-            *           argsCount,
+            *           entryPoint,
+            *           envEntry,
+            *           argEntries : argEntry argEntries
+            *         })
+            * {
+            *     "TailCallStatic_MS"
+            *     4[
+            *          +2 entryPoint
+            *          +2 envEntry
+            *          +2 "[" argEntries(argEntry)(",") "]"
+            *      ]
+            * }
+            *)
+           TailCallStatic_MS of 
+           {
+             entryPoint : address,
+             envEntry : entry,
+             argEntries : entry list
+           }
+         | (*%
+            * @format({
             *           entryPoint,
             *           envEntry,
             *           argEntries : argEntry argEntries,
-            *           lastArgSize
+            *           lastArgSize : size
             *         })
             * {
             *     "TailCallStatic_ML"
             *     4[
-            *          +2 argsCount
             *          +2 entryPoint
             *          +2 envEntry
             *          +2 "[" argEntries(argEntry)(",") "]"
-            *          +2 lastArgSize
+            *          +2 size
             *      ]
             * }
             *)
            TailCallStatic_ML of 
            {
-             argsCount : UInt32,
              entryPoint : address,
              envEntry : entry,
              argEntries : entry list,
@@ -695,16 +904,14 @@ struct
            }
          | (*%
             * @format({
-            *           argsCount,
             *           entryPoint,
             *           envEntry,
             *           argEntries : argEntry argEntries,
-            *           argSizeEntries : argSize argSizes
+            *           argSizes : argSize argSizes
             *         })
             * {
-            *     "TailCallStatic_M"
+            *     "TailCallStatic_MF"
             *     4[
-            *          +2 argsCount
             *          +2 entryPoint
             *          +2 envEntry
             *          +2 "[" argEntries(argEntry)(",") "]"
@@ -712,19 +919,57 @@ struct
             *      ]
             * }
             *)
-           TailCallStatic_M of 
+           TailCallStatic_MF of 
            {
-             argsCount : UInt32,
+             entryPoint : address,
+             envEntry : entry,
+             argEntries : entry list,
+             argSizes : UInt32 list
+           }
+         | (*%
+            * @format({
+            *           entryPoint,
+            *           envEntry,
+            *           argEntries : argEntry argEntries,
+            *           argSizeEntries : argSize argSizes
+            *         })
+            * {
+            *     "TailCallStatic_MV"
+            *     4[
+            *          +2 entryPoint
+            *          +2 envEntry
+            *          +2 "[" argEntries(argEntry)(",") "]"
+            *          +2 "[" argSizes(argSize)(",") "]"
+            *      ]
+            * }
+            *)
+           TailCallStatic_MV of 
+           {
              entryPoint : address,
              envEntry : entry,
              argEntries : entry list,
              argSizeEntries : entry list
            }
          | (*%
-            * @format({entryPoint, argEntry, argSize, destination})
-            * destination + "=" +
+            * @format({entryPoint, destinations : destEntry destEntries})
+            * "[" destEntries(destEntry)(",") "]" + "=" +
             * {
-            *      "RecursiveCallStatic_S"
+            *      "RecursiveCallStatic_0"
+            *      4[
+            *         +2 entryPoint
+            *       ]
+            * }
+            *)
+           RecursiveCallStatic_0 of
+           {
+             entryPoint : address,
+             destinations : entry list
+           }
+         | (*%
+            * @format({entryPoint, argEntry, argSize, destinations : destEntry destEntries})
+            * "[" destEntries(destEntry)(",") "]" + "=" +
+            * {
+            *      "RecursiveCallStatic_1"
             *      4[
             *         +2 entryPoint
             *         +2 argEntry
@@ -732,44 +977,123 @@ struct
             *       ]
             * }
             *)
-           RecursiveCallStatic_S of
+           RecursiveCallStatic_1 of
            {
              entryPoint : address,
              argEntry : entry,
              argSize : size,
-             destination : entry
+             destinations : entry list
            }
          | (*%
             * @format({
-            *          argsCount, 
             *          entryPoint, 
             *          argEntries : argEntry argEntries, 
-            *          argSizeEntries : argSize argSizes, 
-            *          destination
+            *          destinations : destEntry destEntries
             *        })
-            * destination + "=" +
+            * "[" destEntries(destEntry)(",") "]" + "=" +
             * {
-            *      "RecursiveCallStatic_M"
+            *      "RecursiveCallStatic_MS"
             *      4[
-            *           +2 argsCount
+            *           +2 entryPoint
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *       ]
+            * }
+            *)
+           RecursiveCallStatic_MS of
+           {
+             entryPoint : address,
+             argEntries : entry list,
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          lastArgSize : size,
+            *          destinations : destEntry destEntries
+            *        })
+            * "[" destEntries(destEntry)(",") "]" + "=" +
+            * {
+            *      "RecursiveCallStatic_ML"
+            *      4[
+            *           +2 entryPoint
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 size
+            *       ]
+            * }
+            *)
+           RecursiveCallStatic_ML of
+           {
+             entryPoint : address,
+             argEntries : entry list,
+             lastArgSize : size,
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          argSizes : argSize argSizes, 
+            *          destinations : destEntry destEntries
+            *        })
+            * "[" destEntries(destEntry)(",") "]" + "=" +
+            * {
+            *      "RecursiveCallStatic_MF"
+            *      4[
             *           +2 entryPoint
             *           +2 "[" argEntries(argEntry)(",") "]"
             *           +2 "[" argSizes(argSize)(",") "]"
             *       ]
             * }
             *)
-           RecursiveCallStatic_M of
+           RecursiveCallStatic_MF of
            {
-             argsCount : UInt32,
+             entryPoint : address,
+             argEntries : entry list,
+             argSizes : UInt32 list,
+             destinations : entry list
+           }
+         | (*%
+            * @format({
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          argSizeEntries : argSize argSizes, 
+            *          destinations : destEntry destEntries
+            *        })
+            * "[" destEntries(destEntry)(",") "]" + "=" +
+            * {
+            *      "RecursiveCallStatic_MV"
+            *      4[
+            *           +2 entryPoint
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 "[" argSizes(argSize)(",") "]"
+            *       ]
+            * }
+            *)
+           RecursiveCallStatic_MV of
+           {
              entryPoint : address,
              argEntries : entry list,
              argSizeEntries : entry list,
-             destination : entry
+             destinations : entry list
+           }
+         | (*%
+            * @format({entryPoint})
+            * {
+            *     "RecursiveTailCallStatic_0"
+            *     4[
+            *          +2 entryPoint
+            *      ]
+            * }
+            *)
+           RecursiveTailCallStatic_0 of
+           {
+             entryPoint : address
            }
          | (*%
             * @format({entryPoint, argEntry, argSize})
             * {
-            *     "RecursiveTailCallStatic_S"
+            *     "RecursiveTailCallStatic_1"
             *     4[
             *          +2 entryPoint
             *          +2 argEntry
@@ -777,7 +1101,7 @@ struct
             *      ]
             * }
             *)
-           RecursiveTailCallStatic_S of
+           RecursiveTailCallStatic_1 of
            {
              entryPoint : address,
              argEntry : entry,
@@ -785,118 +1109,87 @@ struct
            }
          | (*%
             * @format({
-            *          argsCount, 
             *          entryPoint, 
-            *          argEntries : argEntry argEntries, 
-            *          argSizeEntries : argSize argSizes
+            *          argEntries : argEntry argEntries
             *        })
             * {
-            *      "RecursiveTailCallStatic_M"
+            *      "RecursiveTailCallStatic_MS"
             *      4[
-            *           +2 argsCount
+            *           +2 entryPoint
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *       ]
+            * }
+            *)
+           RecursiveTailCallStatic_MS of
+           {
+             entryPoint : address,
+             argEntries : entry list
+           }
+         | (*%
+            * @format({
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          lastArgSize : size
+            *        })
+            * {
+            *      "RecursiveTailCallStatic_ML"
+            *      4[
+            *           +2 entryPoint
+            *           +2 "[" argEntries(argEntry)(",") "]"
+            *           +2 size
+            *       ]
+            * }
+            *)
+           RecursiveTailCallStatic_ML of
+           {
+             entryPoint : address,
+             argEntries : entry list,
+             lastArgSize : size
+           }
+         | (*%
+            * @format({
+            *          entryPoint, 
+            *          argEntries : argEntry argEntries, 
+            *          argSizes : argSize argSizes
+            *        })
+            * {
+            *      "RecursiveTailCallStatic_MF"
+            *      4[
             *           +2 entryPoint
             *           +2 "[" argEntries(argEntry)(",") "]"
             *           +2 "[" argSizes(argSize)(",") "]"
             *       ]
             * }
             *)
-           RecursiveTailCallStatic_M of
+           RecursiveTailCallStatic_MF of
            {
-             argsCount : UInt32,
              entryPoint : address,
              argEntries : entry list,
-             argSizeEntries : entry list
-           }
-         | (*%
-            * @format({entryPoint, argEntry, argSize, destination})
-            * destination + "=" +
-            * {
-            *      "SelfRecursiveCallStatic_S"
-            *      4[
-            *            +2 entryPoint
-            *            +2 argEntry
-            *            +2 argSize
-            *       ]
-            * }
-            *)
-           SelfRecursiveCallStatic_S of
-           {
-             entryPoint : address,
-             argEntry : entry,
-             argSize : size,
-             destination : entry
+             argSizes : UInt32 list
            }
          | (*%
             * @format({
-            *          argsCount, 
-            *          entryPoint, 
-            *          argEntries : argEntry argEntries, 
-            *          argSizeEntries : argSize argSizes, 
-            *          destination
-            *        })
-            * destination + "=" +
-            * {
-            *     "SelfRecursiveCallStatic_M"
-            *     4[
-            *          +2 argsCount
-            *          +2 entryPoint
-            *          +2 "[" argEntries(argEntry)(",") "]"
-            *          +2 "[" argSizes(argSize)(",") "]"
-            *      ]
-            * }
-            *)
-           SelfRecursiveCallStatic_M of
-           {
-             argsCount : UInt32,
-             entryPoint : address,
-             argEntries : entry list,
-             argSizeEntries : entry list,
-             destination : entry
-           }
-         | (*%
-            * @format({entryPoint, argEntry, argSize})
-            * {
-            *     "SelfRecursiveTailCallStatic_S"
-            *     4[
-            *          +2 entryPoint
-            *          +2 argEntry
-            *          +2 argSize
-            *      ]
-            * }
-            *)
-           SelfRecursiveTailCallStatic_S of
-           {
-             entryPoint : address,
-             argEntry : entry,
-             argSize : size
-           }
-         | (*%
-            * @format({
-            *          argsCount, 
             *          entryPoint, 
             *          argEntries : argEntry argEntries, 
             *          argSizeEntries : argSize argSizes
             *        })
             * {
-            *      "SelfRecursiveTailCallStatic_M"
+            *      "RecursiveTailCallStatic_MV"
             *      4[
-            *           +2 argsCount
             *           +2 entryPoint
             *           +2 "[" argEntries(argEntry)(",") "]"
             *           +2 "[" argSizes(argSize)(",") "]"
             *       ]
             * }
             *)
-           SelfRecursiveTailCallStatic_M of
+           RecursiveTailCallStatic_MV of
            {
-             argsCount : UInt32,
              entryPoint : address,
              argEntries : entry list,
              argSizeEntries : entry list
            }
          | (*%
             * @format({
-            *           fieldsCount,
             *           bitmapEntry,
             *           sizeEntry,
             *           fieldEntries : fieldEntry fieldEntries,
@@ -904,16 +1197,17 @@ struct
             *           destination
             *         })
             * destination + "="
-            * + "MakeBlock"
-            * + fieldsCount
-            * + bitmapEntry
-            * + sizeEntry
-            * + "[" fieldEntries(fieldEntry)(",") "]"
-            * + "[" fieldSizeEntries(fieldSizeEntry)(",") "]"
+            * + {"MakeBlock"
+            *   4[
+            *      +2 bitmapEntry
+            *      +2 sizeEntry
+            *      +2 "[" fieldEntries(fieldEntry)(",") "]"
+            *      +2 "[" fieldSizeEntries(fieldSizeEntry)(",") "]"
+            *      +1
+            *    ]}
             *)
            MakeBlock of
            {
-             fieldsCount : UInt32,
              bitmapEntry : entry,
              sizeEntry : entry,
              fieldEntries : entry list,
@@ -922,20 +1216,46 @@ struct
            }
          | (*%
             * @format({
-            *           fieldsCount,
+            *           bitmapEntry,
+            *           size,
+            *           fieldEntries : fieldEntry fieldEntries,
+            *           fieldSizes : fixedSize fixedSizes,
+            *           destination
+            *         })
+            * destination + "="
+            * + {"MakeFixedSizeBlock"
+            *    4[
+            *       +2 bitmapEntry
+            *       +2 size
+            *       +2 "[" fieldEntries(fieldEntry)(",") "]"
+            *       +2 "[" fixedSizes(fixedSize)(",") "]"
+            *       +1
+            *     ]}
+            *)
+           MakeFixedSizeBlock of
+           {
+             bitmapEntry : entry,
+             size : UInt32,
+             fieldEntries : entry list,
+             fieldSizes : UInt32 list,
+             destination : entry
+           }
+         | (*%
+            * @format({
             *           bitmapEntry,
             *           fieldEntries : fieldEntry fieldEntries,
             *           destination
             *         })
             * destination + "="
-            * + "MakeBlockOfSingleValues"
-            * + fieldsCount
-            * + bitmapEntry
-            * + "[" fieldEntries(fieldEntry)(",") "]"
+            * + {"MakeBlockOfSingleValues"
+            *    4[
+            *      +2 bitmapEntry
+            *      +2 "[" fieldEntries(fieldEntry)(",") "]"
+            *      +1
+            *     ]}
             *)
            MakeBlockOfSingleValues of
            {
-             fieldsCount : UInt32,
              bitmapEntry : entry,
              fieldEntries : entry list,
              destination : entry
@@ -964,11 +1284,11 @@ struct
              destination : entry
            }
          | (*%
-            * @format({entryPoint, ENVEntry, destination})
-            * destination + "=" + "MakeClosure" + entryPoint + ENVEntry
+            * @format({entryPoint, envEntry, destination})
+            * destination + "=" + "MakeClosure" + entryPoint + envEntry
             *)
            MakeClosure of
-           {entryPoint : address, ENVEntry : entry, destination : entry}
+           {entryPoint : address, envEntry : entry, destination : entry}
          | (*%
             * @format({exceptionEntry})
             * "Raise" + exceptionEntry
@@ -991,16 +1311,19 @@ struct
          | (*% @format(address) address ":" *) Label of address
          | (*% @format(loc) loc *) Location of loc
          | (*%
-            * @format({targetEntry, casesCount, cases : acase cases, default})
+            * @format({targetEntry, cases : acase cases, default})
             * "SwitchInt"
-            * + targetEntry + casesCount + "[" cases(acase)(",") "]" + default
+            * + {
+            *      targetEntry
+            *      +1 "[" 2[ 2 cases(acase)("," +2) ] 2 "]"
+            *      +1 default
+            *   }
             * @format:acase({const, destination})
             * "{" const + "=>" + destination "}"
             *)
            SwitchInt of
            {
              targetEntry : entry,
-             casesCount : UInt32,
              (** cases must be sorted in ascending order of const value.
               * CAUTION: To sort const values, they are treated as unsigned
               *      integer. For instance, A list [~2, ~1, 0, 1, 2] is
@@ -1010,46 +1333,55 @@ struct
              default : address
            }
          | (*%
-            * @format({targetEntry, casesCount, cases : acase cases, default})
+            * @format({targetEntry, cases : acase cases, default})
             * "SwitchWord"
-            * + targetEntry + casesCount + "[" cases(acase)(",") "]" + default
+            * + {
+            *      targetEntry
+            *      +1 "[" 2[ 2 cases(acase)("," +2) ] 2 "]"
+            *      +1 default
+            *   }
             * @format:acase({const, destination})
             * "{" const + "=>" + destination "}"
             *)
            SwitchWord of
            {
              targetEntry : entry,
-             casesCount : UInt32,
              (** cases must be sorted in ascending order of const value. *)
              cases : {const : UInt32, destination : address} list,
              default : address
            }
          | (*%
-            * @format({targetEntry, casesCount, cases : acase cases, default})
+            * @format({targetEntry, cases : acase cases, default})
             * "SwitchChar"
-            * + targetEntry + casesCount + "[" cases(acase)(",") "]" + default
+            * + {
+            *      targetEntry
+            *      +1 "[" 2[ 2 cases(acase)("," +2) ] 2 "]"
+            *      +1 default
+            *   }
             * @format:acase({const, destination})
             * "{" const + "=>" + destination "}"
             *)
            SwitchChar of
            {
              targetEntry : entry,
-             casesCount : UInt32,
              (** cases must be sorted in ascending order of const value. *)
              cases : {const : UInt32, destination : address} list,
              default : address
            }
          | (*%
-            * @format({targetEntry, casesCount, cases : acase cases, default})
+            * @format({targetEntry, cases : acase cases, default})
             * "SwitchString"
-            * + targetEntry + casesCount + "[" cases(acase)(",") "]" + default
+            * + {
+            *      targetEntry
+            *      +1 "[" 2[ 2 cases(acase)("," +2) ] 2 "]"
+            *      +1 default
+            *   }
             * @format:acase({const, destination})
             * "{" const + "=>" + destination "}"
             *)
            SwitchString of
            {
              targetEntry : entry,
-             casesCount : UInt32,
              (** cases must be sorted in ascending order of const value. *)
              cases : {const : address, destination : address} list,
              default : address
@@ -1058,10 +1390,52 @@ struct
            Jump of {destination : address}
          | Exit
          | (*%
-            * @format({variableEntry, variableSize})
-            * "Return" + variableEntry + variableSize
+            * @format "Return_0"
             *)
-           Return of {variableEntry : entry, variableSize : size}
+           Return_0
+         | (*%
+            * @format({variableEntry, variableSize})
+            * "Return_S" + variableEntry + variableSize
+            *)
+           Return_1 of {variableEntry : entry, variableSize : size}
+         | (*%
+            * @format({
+            *          variableEntries : entry entries
+            *         })
+            * "Return_MS" 
+            *  +1 "[" entries(entry)(",") "]"
+            *)
+           Return_MS of {variableEntries : entry list}
+         | (*%
+            * @format({
+            *          variableEntries : entry entries, 
+            *          lastVariableSize : size
+            *         })
+            * "Return_ML" 
+            *  +1 "[" entries(entry)(",") "]"
+            *  +1 size
+            *)
+           Return_ML of {variableEntries : entry list, lastVariableSize : size}
+         | (*%
+            * @format({
+            *          variableEntries : entry entries, 
+            *          variableSizes : size sizes
+            *         })
+            * "Return_MF" 
+            *  +1 "[" entries(entry)(",") "]"
+            *  +1 "[" sizes(size)(",") "]"
+            *)
+           Return_MF of {variableEntries : entry list, variableSizes : UInt32 list}
+         | (*%
+            * @format({
+            *          variableEntries : entry entries, 
+            *          variableSizeEntries : size sizes
+            *         })
+            * "Return_MV" 
+            *  +1 "[" entries(entry)(",") "]"
+            *  +1 "[" sizes(size)(",") "]"
+            *)
+           Return_MV of {variableEntries : entry list, variableSizeEntries : entry list}
          | (*% @format({string}) "ConstString" + string *)
            ConstString of {string : string}
          | (*%
@@ -1365,8 +1739,6 @@ struct
            RemInt_Const_2 of
            {argEntry1 : entry, argValue2 : SInt32, destination : entry}
 
-(* Temporarily disable
-
          | (*%
             * @format({argValue1, argEntry2, destination})
             * destination + "="
@@ -1651,8 +2023,6 @@ struct
            GteqChar_Const_2 of
            {argEntry1 : entry, argValue2 : UInt32, destination : entry}
 
-*)
-
          | (*%
             * @format({argValue1, argEntry2, destination})
             * destination + "="
@@ -1744,6 +2114,18 @@ struct
            {argEntry1 : entry, argValue2 : UInt32, destination : entry}
 
 
+  (*% *)
+  type clusterLivesProg = ((entry list) * instruction) list list 
+  
+  (*% *)
+  type allocateMap = (((int * int) list) * ((int * int) list) * ((int * int) list)) list  
+
+  (*% *)
+  type varAlloc = ((entry * entry) list) list  
+
+  (*% *)
+  type clusterCFGs = ((int * int) list) list
+
   (*%
    * @formatter(UInt32) BasicTypeFormatters.format_UInt32
    *)
@@ -1780,13 +2162,10 @@ struct
    * free variables stored in the ENV block argument.
    * </p>
    *)
-  type funInfo = 
+
+  type frameInfo =
        {
-         (** variables into which arguments are stored. *)
-         args : varInfo list,
-         (** sources from which the bitmap of frame is built. *)
-         bitmapvals
-         :
+         bitmapvals :
            {
              (** argument variables which constitute the bitmap. *)
              args : varInfo list,
@@ -1824,29 +2203,64 @@ struct
    * @formatter(instructions) format_instructions
    *)
   type functionCode =
-  (*%
-   * @format({name, loc, funInfo, instructions : instructions})
-   * "{"
-   *    2[
-   *       1 name
-   *       +1 loc
-   *       +1 funInfo
-   *       2[ +1 instructions:instructions ]
-   *     ] 1
-   * "}"
-   *)
+       (*%
+        * @format({name, loc, args:arg args, instructions})
+        * "{"
+        *    2[
+        *       1 name
+        *       +1 loc
+        *       +1 "args = [" args(arg)(",") "]"
+        *       2[ +1 instructions:instructions ]
+        *     ] 1
+        * "}"
+        *)
        {
          (** function name *)
          name : varInfo,
          (** location *)
          loc : loc,
          (** function information *)
-         funInfo : funInfo,
+         args : varInfo list,
          (** instructions of function body. *)
          instructions : instruction list
        }
 
+  (*%
+   *)
+  type clusterCode =
+       (*%
+        * @format({frameInfo, functionCodes: code codes, loc})
+        * "Cluster"
+        * +1 "{"
+        * +1 loc
+        * +1 "frameInfo =" + {frameInfo}
+        * +1 "functions =" + {codes(code)(+1)}
+        * +1 "}"
+        *)
+       {
+        frameInfo : frameInfo,
+        functionCodes : functionCode list,
+        loc : loc
+       }
+
   end (* local *)
+
+  (*temporary define for assembler*)
+  type funInfo =
+       {
+         args : varInfo list,
+         bitmapvals
+         :
+           {
+             args : varInfo list,
+             frees : UInt32 list
+           },
+         pointers : varInfo list,
+         atoms : varInfo list,
+         doubles : varInfo list,
+         records : varInfo list list
+       }
+
 
   (***************************************************************************)
 

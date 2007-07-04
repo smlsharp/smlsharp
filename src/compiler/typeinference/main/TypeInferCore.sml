@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypeInferCore.sml,v 1.86.2.1 2007/03/23 03:01:02 ohori Exp $
+ * @version $Id: TypeInferCore.sml,v 1.88 2007/06/19 22:19:12 ohori Exp $
  *)
 structure TypeInferCore  =
 struct
@@ -277,6 +277,12 @@ in
       | TPPOLYFNM _ => false
       | TPPOLY {exp=tpexp,...} => expansive tpexp
       | TPTAPP {exp, ...} => expansive exp
+      | TPLIST {expList,...} => 
+          foldl
+          (fn (tpexp1, isExpansive) =>
+           isExpansive orelse expansive tpexp1)
+          false
+          expList
       | TPSEQ _ => true
       | TPCAST _ => true
 
@@ -2462,6 +2468,42 @@ in
                         (T.ERRORty, TPERROR)
                       )
              end
+         end
+       | PT.PTLIST (ptexpList, loc) =>
+         let
+           val lambdaDepth = incDepth ()
+           val elemTy = T.newtyWithLambdaDepth(lambdaDepth, T.univKind)
+           val tpexpList =
+               foldr 
+               (fn (ptexp, tpexpList) =>
+                let
+                  val (ty, tpexp) =
+                    typeinfExp lambdaDepth applyDepth currentContext ptexp
+                  val (ty, tpexp) = TPU.freshInst(ty, tpexp)
+                  val _ = U.unify [(elemTy, ty)]
+                    handle U.Unify =>
+                      E.enqueueError (loc, E.InconsistentListElementType {prevTy=elemTy, nextTy=ty})
+                in 
+                  tpexp :: tpexpList
+                end)
+               nil
+               ptexpList
+           val resultTy = T.CONty{tyCon = PDT.listTyCon, args = [elemTy]}
+           val newTermBody = TPLIST {expList=tpexpList, listTy=resultTy, loc=loc}
+         in
+            if iszero applyDepth andalso not (expansive newTermBody) then
+              let 
+                val {boundEnv, ...} = generalizer (resultTy, lambdaDepth)
+              in
+                if IEnv.isEmpty boundEnv then
+                  (resultTy, newTermBody)
+                 else
+                   (
+                     T.POLYty{boundtvars = boundEnv, body = resultTy},
+                     TPPOLY{btvEnv=boundEnv, expTyWithoutTAbs=resultTy, exp=newTermBody, loc=loc}
+                     )
+              end
+            else (resultTy, newTermBody)
          end
        | PT.PTSEQ (ptexpList, loc) =>
          let

@@ -1,7 +1,16 @@
 SMLFormat (Pretty Printer for SML)
 
 @author YAMATODANI Kiyoshi
-@version $Id: README.txt,v 1.7 2006/02/23 05:45:45 kiyoshiy Exp $
+@version $Id: README.txt,v 1.8 2007/04/12 05:50:27 kiyoshiy Exp $
+
+ This directory contains SMLFormat.
+
+ This software has been developed as a part of the SML# project.
+It is distributed under the BSD-style SMLSharp license, which is
+included in the file LICENSE in this directory.
+
+ For the details of SML# project, consult the web page at:
+  http://www.pllab.riec.tohoku.ac.jp/smlsharp/
 
  The SMLFormat consists of two components:
    formatlib (Pretty Printer library for SML)

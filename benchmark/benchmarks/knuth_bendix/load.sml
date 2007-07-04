@@ -1,4 +1,4 @@
-use "knuth-bendix.sml";
+use "./knuth-bendix.sml";
 
 Main.doit ();
 print "Done";

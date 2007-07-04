@@ -1,0 +1,623 @@
+(**
+ * Intermediate Language.
+ * @copyright (c) 2006, Tohoku University.
+ * @author NGUYEN Huu-Duc
+ * @version $Id: IntermediateLanguage.ppg,v 1.3 2007/06/19 22:19:11 ohori Exp $ 
+ *)
+structure IntermediateLanguage = struct
+
+  structure BT = BasicTypes
+  type loc = Loc.loc
+
+  fun formatId id =
+      let
+        val s = "$" ^ ID.toString id
+      in
+        SMLFormat.BasicFormatters.format_string s
+      end
+
+  fun formatLabel id =
+      let
+        val s = "L" ^ ID.toString id
+      in
+        SMLFormat.BasicFormatters.format_string s
+      end
+
+  (*%
+   * @formatter(Absyn.callingConvenvtion) Absyn.format_callingConvenvtion
+   *)
+  type callingConvention = Absyn.callingConvention
+
+  type id = ID.id
+
+  (*%
+   *)
+  type tid = 
+       (*%
+        * @format(tid) "t" tid
+        *)
+       int
+
+  (*%
+   * @formatter(ANormal.ty) ANormal.format_ty
+   *)
+  type ty =
+       (*%
+        * @format(ty) ty
+        *)
+       ANormal.ty
+
+  (*%
+   * @params(id) 
+   *)
+  datatype varKind =
+           (*%
+            * @format "reg(" id ")"
+            *)
+           REGISTER
+         | (*%
+            * @format "arg(" id ")"
+            *)
+           ARG 
+         | (*%
+            * @format "local(" id ")"
+            *)
+           LOCAL
+         | (*%
+            * @format({globalArrayIndex, offset}) "global(" id ")"
+            *)
+           GLOBAL of {globalArrayIndex : BT.UInt32, offset : BT.UInt32}
+
+  datatype constant = datatype ConstantTerm.constant
+
+  (*%
+   * @formatter(formatId) formatId
+   *)
+  type varInfo = 
+       (*%
+        * @format({id:id:formatId,displayName,ty,varKind}) 
+        *   varKind()(id) + ":" + ty
+        *)  
+       {id : id, displayName : string, ty : ty, varKind : varKind}
+
+  (*%
+   * @formatter(formatId) formatId
+   *)
+  type varInfoWithoutType = 
+       (*%
+        * @format({id:id:formatId,displayName,ty,varKind}) 
+        *    varKind()(id)
+        *)  
+       {id : id, displayName : string, ty : ty, varKind : varKind}
+
+  (*%
+   * @formatter(formatVarInfoWithoutType) format_varInfoWithoutType
+   * @formatter(formatConst) ConstantTerm.format_constant
+   * @formatter(BT.UInt32) BasicTypeFormatters.format_UInt32
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(formatListWithEnclosureIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+   * @formatter(formatLabel) formatLabel
+   *)
+  datatype expression =
+           (*%
+            * @format(varInfo:formatVarInfoWithoutType) varInfo 
+            *)
+           Variable of varInfo
+         | (*%
+            * @format(const:formatConst) const
+            *)
+           Constant of constant
+         | (*%
+            * @format(const) "ExceptionTag(" const ")"
+            *)
+           ExceptionTag of BT.UInt32
+         | (*%
+            * @format(id:formatLabel) id
+            *)
+           Label of id
+         | (*%
+            * @format({nestLevelExp, offsetExp}) 
+            *   {"ENV("  
+            *      2[+1 nestLevelExp "," 
+            *        +1 offsetExp 
+            *       ]")"}
+            *)
+           AccessEnv of 
+           {
+            nestLevelExp : expression, 
+            offsetExp : expression
+           }
+         | (*%
+            * @format({arrayExp, offsetExp}) 
+            *    {"ArraySub(" 
+            *       2[+1 arrayExp ","
+            *         +1 offsetExp 
+            *        ] ")"}
+            *)
+           ArraySub of 
+           {
+            arrayExp : expression,
+            offsetExp : expression
+           }
+         | (*%
+            * @format({recordExp, nestLevelExp, fieldOffsetExp}) 
+            *    {"RecordSelect(" 
+            *       2[+1 recordExp ","
+            *         +1 nestLevelExp "," 
+            *         +1 fieldOffsetExp
+            *        ] ")"}
+            *)
+           RecordSelect of
+           {
+            recordExp : expression,
+            nestLevelExp : expression,
+            fieldOffsetExp : expression
+           }
+         | (*%
+            * @format({primName, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList}) 
+            *    {"CallPrim(" 
+            *       2[+2 primName ","
+            *         +2 args(arg)(","1,"[","]")
+            *        ] ")"}
+            *)
+           CallPrim of
+           {
+            primName : string,
+            argExpList : expression list,
+            argTyList : ty list,
+            argSizeExpList : expression list
+           }
+         | (*%
+            * @format({funExp, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList,convention}) 
+            *    {"ForeignApply(" 
+            *       2[+2 funExp ","
+            *         +2 args(arg)(","1,"[","]")
+            *        ] ")"}
+            *)
+           ForeignApply of
+           {
+            funExp : expression,
+            argExpList : expression list,
+            argTyList : ty list,
+            argSizeExpList : expression list,
+            convention : callingConvention
+           }
+         | (*%
+            * @format({funExp, argSizeExpList, resultSizeExpList}) 
+            *    {"ExportCallback(" 
+            *       2[+1 funExp
+            *        ] ")"}
+            *)
+           ExportCallback of
+           {
+            funExp : expression,
+            argSizeExpList : expression list,
+            resultSizeExpList : expression list
+           }
+         | (*%
+            * @format({funExp, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList}) 
+            *    {"Apply(" 
+            *       2[+2 funExp ","
+            *         +2 args(arg)(","1,"[","]")
+            *        ] ")"}
+            *)
+           Apply of
+           {
+            funExp : expression,
+            argExpList : expression list,
+            argTyList : ty list,
+            argSizeExpList : expression list
+           }
+         | (*%
+            * @format({funLabelExp, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList}) 
+            *    {"RecursiveCall(" 
+            *       2[+2 funLabelExp ","
+            *         +2 args(arg)(","1,"[","]")
+            *        ] ")"}
+            *)
+           RecursiveCall of
+           {
+            funLabelExp : expression,
+            argExpList : expression list,
+            argTyList : ty list,
+            argSizeExpList : expression list
+           }
+         | (*%
+            * @format({funLabelExp, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList}) 
+            *    {"InnerCall(" 
+            *       2[+2 funLabelExp ","
+            *         +2 args(arg)(","1,"[","]")
+            *        ] ")"}
+            *)
+           InnerCall of
+           {
+            funLabelExp : expression,
+            argExpList : expression list,
+            argTyList : ty list,
+            argSizeExpList : expression list
+           }
+         | (*%
+            * @format({bitmapExp, sizeExp, fieldExpList:field fields:formatListWithEnclosure, fieldTyList, fieldSizeExpList}) 
+            *    {"MakeBlock(" 
+            *       2[+2 bitmapExp ";"
+            *         +2 fields(field)(","1,"[","]")
+            *        ] ")"}
+            *)
+           MakeBlock of
+           {
+            bitmapExp : expression,
+            sizeExp : expression,
+            fieldExpList : expression list,
+            fieldSizeExpList : expression list,
+            fieldTyList : ty list            
+           }
+         | (*%
+            * @format({bitmapExp, 
+            *          sizeExp, 
+            *          fieldExpList:field fields:formatListWithEnclosure, 
+            *          fieldTyList, 
+            *          fieldSizeExpList,
+            *          fixedSizeExpList: size sizes:formatListWithEnclosure
+            *         }) 
+            *    {"MakeFixedSizeBlock(" 
+            *       2[+2 bitmapExp ";"
+            *         +2 fields(field)(","1,"[","]")
+            *         +2 sizes(size)(","1,"[","]")
+            *        ] ")"}
+            *)
+           MakeFixedSizeBlock of
+           {
+            bitmapExp : expression,
+            sizeExp : expression,
+            fieldExpList : expression list,
+            fieldSizeExpList : expression list,
+            fixedSizeExpList : expression list,
+            fieldTyList : ty list            
+           }
+         | (*%
+            * @format({bitmapExp, sizeExp, initialValueExp, elementSizeExp, elementTy}) 
+            *    {"MakeArray(" 
+            *       2[+2 bitmapExp ";"
+            *         +2 sizeExp ";"
+            *         +2 initialValueExp
+            *        ] ")"}
+            *)
+           MakeArray of
+           {
+            bitmapExp : expression,
+            sizeExp : expression,
+            initialValueExp : expression,
+            elementTy : ty,
+            elementSizeExp : expression
+           }
+         | (*%
+            * @format({funLabelExp, envExp}) 
+            *    {"MakeClosure(" 
+            *       2[+2 funLabelExp ";"
+            *         +2 envExp
+            *        ] ")"}
+            *)
+           MakeClosure of
+           {
+            funLabelExp : expression,
+            envExp : expression
+           }
+         | (*%
+            * @format({recordExp, nestLevelExp}) 
+            *    {"CopyBlock(" 
+            *       2[+2 recordExp ","
+            *         +2 nestLevelExp
+            *        ] ")"}
+            *)
+           CopyBlock of
+           {
+            recordExp : expression,
+            nestLevelExp : expression
+           }
+         | (*%
+            * @format "GetEnv"
+            *)
+           GetEnv
+
+  (*%
+   * @formatter(formatVarInfoWithoutType) format_varInfoWithoutType
+   * @formatter(formatConst) ConstantTerm.format_constant
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(formatListWithEnclosureIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+   *)
+  datatype statement =
+           (*%
+            * @format({variableList: var vars:formatListWithEnclosureIfMoreThanOne, variableSizeExpList, valueExp, loc}) 
+            *    {
+            *     {vars(var)(","1,"{|","|}")} "=" 2[+1 {valueExp}]
+            *    }
+            *)
+           Assign of 
+             {
+              variableList : varInfo list, 
+              variableSizeExpList : expression list, 
+              valueExp : expression, 
+              loc : loc
+             }
+         | (*%
+            * @format({statements: stat stats, loc}) stats(stat)(+1)
+            *)
+           Sequence of {statements : statement list, loc : loc}
+         | (*%
+            * @format({switchExp, expTy, branches : rule rules, defaultBranch, loc})
+            *         {"Switch" + switchExp 
+            *             1 "of" + rules(rule)(+1 " | ")
+                      +1 " | _ =>"  + {defaultBranch} }
+            * @format:rule({constant:constant:formatConst,statement}) 
+            *   constant + "=>" + {statement}
+	    *)
+           Switch of 
+           {
+            switchExp : expression,
+            expTy : ty,
+            branches : {constant : constant, statement : statement} list,
+            defaultBranch : statement,
+            loc : loc
+           }
+         | (*%
+            * @format({arrayExp, offsetExp, newValueExp, newValueTy, newValueSizeExp, loc}) 
+            *    {"ArrayUpdate(" 
+            *       2[+1 arrayExp ","
+            *         +1 offsetExp ","
+            *         +1 newValueExp 
+            *        ] ")"}
+            *)
+           ArrayUpdate of
+           {
+            arrayExp : expression,
+            offsetExp : expression,
+            newValueExp : expression,
+            newValueTy : ty,
+            newValueSizeExp : expression,
+            loc : loc
+           }
+         | (*%
+            * @format({recordExp, nestLevelExp, fieldOffsetExp, newValueExp, fieldTy, fieldSizeExp, loc}) 
+            *    {"RecordUpdate(" 
+            *       2[+1 recordExp ","
+            *         +1 nestLevelExp ","
+            *         +1 fieldOffsetExp ","
+            *         +1 newValueExp 
+            *        ] ")"}
+            *)
+           RecordUpdate of 
+           {
+            recordExp : expression,
+            nestLevelExp : expression,
+            fieldOffsetExp : expression,
+            newValueExp : expression,
+            fieldTy : ty,
+            fieldSizeExp : expression,
+            loc : loc
+           }
+         | (*%
+            * @format({consExp, offsetExp, newTailExp, nestLevelExp, loc}) 
+            *    {"SetTail(" 
+            *       2[+1 consExp ","
+            *         +1 offsetExp ","
+            *         +1 nestLevelExp ","
+            *         +1 newTailExp 
+            *        ] ")"}
+            *)
+           SetTail of 
+           {
+            consExp : expression,
+            offsetExp : expression,
+            nestLevelExp : expression,
+            newTailExp : expression,
+            loc : loc
+           }
+         | (*%
+            * @format({exnExp, loc}) 
+            *    {"Raise("  
+            *       2[+1 exnExp 
+            *        ] ")"}
+            *)
+           Raise of {exnExp : expression , loc : loc}
+         | (*%
+	    * @format({mainCode, exnVar, handlerCode, loc})
+            * {"Handle" 2[+1 {mainCode}] +1 "with letexp" + exnVar + "in" 2[+1 {handlerCode}]}
+	    *)
+           Handle of
+           {
+            mainCode : statement,
+            exnVar : varInfo,
+            handlerCode : statement,
+            loc : loc
+           }
+         | (*%
+	    * @format({valueExpList: exp exps:formatListWithEnclosureIfMoreThanOne, valueTyList, valueSizeExpList, loc})
+            *    {"Return" +   
+            *       2[+2 exps(exp)(","+1,"[","]")
+            *        ] ")"}
+            *)
+           Return of 
+           {
+            valueExpList : expression list,
+            valueTyList : ty list,
+            valueSizeExpList : expression list,
+            loc : loc
+           }
+         | (*%
+            * @format(loc) "Exit"
+            *)
+           Exit of loc
+         | (*%
+            * @format({funExp, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList, loc}) 
+            *    {"Apply(" 
+            *       2[+2 funExp ","
+            *         +2 args(arg)(","1,"[","]")
+            *        ] ")"}
+            *)
+           
+           TailApply of
+           {
+            funExp : expression,
+            argExpList : expression list,
+            argTyList : ty list,
+            argSizeExpList : expression list,
+            loc : loc
+           }
+         | (*%
+            * @format({funLabelExp, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList, loc}) 
+            *    {"RecursiveTailCall(" 
+            *       2[+2 funLabelExp ","
+            *         +2 args(arg)(","1,"[","]")
+            *        ] ")"}
+            *)
+           RecursiveTailCall of
+           {
+            funLabelExp : expression,
+            argExpList : expression list,
+            argTyList : ty list,
+            argSizeExpList : expression list,
+            loc : loc
+           }
+         | (*%
+            * @format({funLabelExp, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList, loc}) 
+            *    {"InnerTailCall(" 
+            *       2[+2 funLabelExp ","
+            *         +2 args(arg)(","1,"[","]")
+            *        ] ")"}
+            *)
+           InnerTailCall of
+           {
+            funLabelExp : expression,
+            argExpList : expression list,
+            argTyList : ty list,
+            argSizeExpList : expression list,
+            loc : loc
+           }
+         | (*%
+            * @format({arrayIndexExp, arraySizeExp, elementTy, loc}) 
+            *    {"InitGlobalArray(" 
+            *       2[+2 arrayIndexExp ","
+            *         +2 arraySizeExp ","
+            *         +2 elementTy
+            *        ] ")"}
+            *)
+           InitGlobalArray of
+           {
+            arrayIndexExp : expression,
+            arraySizeExp : expression,
+            elementTy : ty,
+            loc : loc
+           }
+
+  (*%
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(formatVarInfoWithoutType) format_varInfoWithoutType
+   * @formatter(formatEnclosedOpt) SmlppgUtil.formatEnclosedOpt
+   * @formatter(BT.UInt32) BasicTypeFormatters.format_UInt32
+   *)
+  type frameInfo =
+       (*%
+        * @format({tyvars : tid tids:formatListWithEnclosure,
+        *          bitmapFree:a b:formatEnclosedOpt,
+        *          tagArgs: tag tags: formatListWithEnclosure
+        *         })
+        * { "{"
+        *    2[+2  "tyvars = " {tids(tid)(","1,"[","]")} ","
+        *      +2  "bitmapFree = " b(a)("ENV[","]") ","
+        *      +2  "bitTagArgs = " {tags(tag:formatVarInfoWithoutType)(","1,"[","]")} 
+        *     ] + "}"
+        * }
+        *)
+       (* frameInfo describes the layout of a stack frame.
+        * In this compilation scheme, functions belong to a cluster
+        * share the same stack frame layout, therefore share the same 
+        * frameInfo.
+        * bitmapFree and bitTagArgs are neccessary information for  
+        * generating bitmap of stack frame. In future, we may eliminate 
+        * this part. Instead, a bitmap computation code will be generated
+        * at the begining of each function entry. 
+        *)
+       {
+        tyvars : tid list,
+        bitmapFree : BT.UInt32 option,
+        tagArgs : varInfo list
+       }
+
+  (*%
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(formatLabel) formatLabel
+   *)
+  type functionCode =
+       (*%
+        * @format({functionLabel:functionLabel:formatLabel,
+        *          argVarList: arg args: formatListWithEnclosure,
+        *          bodyCode,
+        *          resultSizeExpList,
+        *          resultTyList,
+        *          loc
+        *         })
+        * { "function" + functionLabel + "= {"
+        *    2[+1  "args = " {args(arg)(",","[","]")} 
+        *      +1  "body = " 2[+1 {bodyCode}]
+        *     ] + "}"
+        * }
+        *)
+       {
+        functionLabel : id,
+        argVarList : varInfo list,
+        bodyCode : statement,
+        resultSizeExpList : expression list,
+        resultTyList : ty list,
+        loc : loc
+       }
+
+  (*%
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(formatLabel) formatLabel
+   *)
+  type clusterCode =
+       (*%
+        * @format({
+        *          clusterLabel:clusterLabel:formatLabel,
+        *          frameInfo, 
+        *          entryFunctions: entry entries:formatListWithEnclosure, 
+        *          innerFunctions: inner inners:formatListWithEnclosure, 
+        *          isRecursive,
+        *          loc
+        *         })
+        *  {
+        *    "cluster" + clusterLabel 
+        *      2[+1 "frameInfo =" 2[+1 {frameInfo}]
+        *        +1 "entries =" 2[+1 {entries(entry)(+1,"","")}]
+        *        +1 "inners =" 2[+1 {inners(inner)(+1,"","")}]
+        *       ]
+        *  }
+        *)
+       {
+        clusterLabel : id,
+        frameInfo : frameInfo,
+        entryFunctions : functionCode list,
+        innerFunctions : functionCode list,
+        isRecursive : bool,
+        loc : loc
+       }
+
+  (*%
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(formatLabel) formatLabel
+   *)
+  type moduleCode =
+       (*%
+        * @format({
+        *          clusterCodes: cluster clusters:formatListWithEnclosure, 
+        *          initFunctionLabel:initLabel:formatLabel
+        *         })
+        * {"INIT = " initLabel} +1
+        * {clusters(cluster)(+1,"","")}
+        *)
+       {
+        clusterCodes : clusterCode list,
+        initFunctionLabel : id
+       }
+
+end

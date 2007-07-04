@@ -3,7 +3,7 @@
  * which is the target of compilation.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ObjectCode.sml,v 1.23 2007/02/11 16:39:51 kiyoshiy Exp $
+ * @version $Id: ObjectCode.sml,v 1.24 2007/06/01 01:25:11 kiyoshiy Exp $
  *)
 structure ObjectCode =
 struct
@@ -185,6 +185,43 @@ struct
               funExp = printFormatExp,
               funTy = printFormatTy,
               argExpList = [expression],
+              loc = loc
+            }
+      end
+
+  (* fun printFormatOfValBinding (name, valExp, typeExp) = ... *)
+  val printFormatOfValBindingName = "printFormatOfValBinding"
+  val printFormatOfValBindingTy =
+      TY.FUNMty
+          (
+            [U.listToTupleTy
+                 [PT.stringty, formatExpressionTy, formatExpressionTy]],
+            PT.unitty
+          )
+  val printFormatOfValBindingVarPathInfo =
+      {
+        name = printFormatOfValBindingName,
+        strpath = P.topStrPath,
+        ty = printFormatOfValBindingTy
+      }
+  val printFormatOfValBindingExp =
+      TP.TPVAR(printFormatOfValBindingVarPathInfo, Loc.noloc)
+  fun printFormatOfValBinding (name, valueExp, typeExp, loc) =
+      let
+        val argExp =
+            U.listToTupleExp
+                [
+                  (constStringExp name, PT.stringty),
+                  (valueExp, formatExpressionTy),
+                  (typeExp, formatExpressionTy)
+                ]
+                loc
+      in
+        TP.TPAPPM
+            {
+              funExp = printFormatOfValBindingExp,
+              funTy = printFormatOfValBindingTy,
+              argExpList = [argExp],
               loc = loc
             }
       end

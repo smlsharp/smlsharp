@@ -1,6 +1,6 @@
 How to define pickler for your defined type/datatype.
 
-$Id: README.txt,v 1.1 2006/12/20 05:12:18 kiyoshiy Exp $
+$Id: README.txt,v 1.2 2007/06/14 07:39:27 kiyoshiy Exp $
 $Author: kiyoshiy $
 
  Pickle structure defines 'a pu, which is combinator to Pickle and Unpickle values of 'a types.
@@ -94,6 +94,14 @@ Last, compose them by using 'data' to define a combinator for the datatype.
 Each function pu_d for a value constructor d takes an argument, which is a pickle combinator for the datatype for which pu is defined now. As seen in body of pu_F, this passed pickle combinator is used to construct pu for recursively defined datatype.
 
 It is a point to notice that if dtToInt returns n for a constructor d, pu_d must be the n-th element of the combinators list.
+You have to take care to match two arguments for 'Pickle.data' consistent.
+In this example, the first argument 'dtToInt' returns integer between 0 and 2, so, the second argument should have 3 elements. It has 3 elements [pu_D, pu_E, pu_F] actually.
+If there is inconsistency in your defined pickler, you will encounter an Subscript error in unpickling as follows
+
+  $ smlsharp
+  Error:subscript out of bounds
+  Main.sml:656.58-656.61
+  ../../../pickle/main/Pickle.sml:421.27-421.37
 
 ----------
 - mutual-recursive datatypes
@@ -142,4 +150,3 @@ Combinators for them are defined as follows.
 
 Then, we obtain true combinators pu_dt1 and pu_dt2.
 
-----------

@@ -2,7 +2,7 @@
  * resolve the scope of user declaraed type variables.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: SetTVars.sml,v 1.13 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: SetTVars.sml,v 1.14 2007/06/19 22:19:12 ohori Exp $
  *)
 structure SetTVars : SETTVARS = struct
 local
@@ -146,6 +146,18 @@ in
              plexpList
        in
          (PTTUPLE(ptexpList, loc), tvarset)
+       end
+   | PLLIST (plexpList , loc) => 
+       let
+         val (ptexpList, tvarset) = 
+             foldr (fn (plexp, (ptexpList, tvarset)) => 
+                    let val (ptexp , tvarset1) = setExp env plexp
+                    in (ptexp::ptexpList, tvarNameSetUnion(tvarset, tvarset1))
+                    end)
+             (nil, SEnv.empty)
+             plexpList
+       in
+         (PTLIST(ptexpList, loc), tvarset)
        end
    | PLRAISE (plexp , loc) => 
        let 

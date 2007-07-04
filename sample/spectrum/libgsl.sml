@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006-2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: libgsl.sml,v 1.1.2.1 2007/03/26 06:26:50 katsu Exp $
+ * @version $Id: libgsl.sml,v 1.4 2007/06/18 08:42:07 katsu Exp $
  *)
 
 structure GSL =
@@ -18,6 +18,11 @@ struct
     (* Mac OS X *)
     val libgslName = "/sw/lib/libgsl.0.dylib"
 *)
+(*
+    (* MinGW *)
+    val libgslName = "libgsl.dll"
+*)
+
     val libgsl = dlopen libgslName
 
   in

@@ -1,6 +1,6 @@
 /**
  * @author UENO Katsuhiro
- * @version $Id: FFI.hh,v 1.2 2007/03/03 16:47:24 katsu Exp $
+ * @version $Id: FFI.hh,v 1.4 2007/06/11 00:47:57 kiyoshiy Exp $
  */
 #ifndef FFI_hh_
 #define FFI_hh_
@@ -52,18 +52,16 @@ class FFI
     }
 
     virtual void trace(RootTracer *tracer)
-        throw(IMLRuntimeException) = 0;
+        throw(IMLException) = 0;
 
     virtual void call(Cell *returnValue, void *function, UInt32Value *SP,
                       UInt32Value switchTag, UInt32Value convention,
                       UInt32Value *argIndexes, UInt32Value argsCount)
-        throw(UserException,
-              IMLRuntimeException,
-              SystemError) = 0;
+        throw(IMLException) = 0;
     
     virtual void *callback(UInt32Value *entryPoint, Cell *env,
                            UInt32Value sizeTag)
-        throw(IMLRuntimeException) = 0;
+        throw(IMLException) = 0;
 
     class Arguments
     /*

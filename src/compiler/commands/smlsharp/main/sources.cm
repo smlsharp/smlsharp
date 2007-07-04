@@ -21,5 +21,6 @@ Group is
         FileSysUtil_Windows.sml
         InteractiveSessionFactory_General.sml
 #endif
+        Platform.sml
 
         Main.sml

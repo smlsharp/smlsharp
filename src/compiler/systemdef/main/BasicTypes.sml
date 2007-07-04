@@ -7,16 +7,6 @@ struct
   open W
   val toString = (fn string => "0x" ^ string) o W.toString
 end;
-structure UInt8 = UIntFun(Word8);
-structure SInt8 = Int;
-structure UInt16 = UIntFun(Word);
-structure SInt16 = Int;
-structure UInt24 = UIntFun(Word);
-structure SInt24 = Int;
-structure UInt32 = UIntFun(Word32);
-structure SInt32 = Int32;
-structure Real32 = Real64;
-structure Real64 = Real64;
 
 (**
  * This structure declares basic types
@@ -25,6 +15,17 @@ structure BasicTypes =
 struct
 
   (***************************************************************************)
+
+  structure UInt8 = UIntFun(Word8)
+  structure SInt8 = Int
+  structure UInt16 = UIntFun(Word)
+  structure SInt16 = Int
+  structure UInt24 = UIntFun(Word)
+  structure SInt24 = Int
+  structure UInt32 = UIntFun(Word32)
+  structure SInt32 = Int32
+  structure Real32 = Real64
+  structure Real64 = Real64
 
   (** unsigned 8 bit integer *)
   type UInt8 = Word8.word;

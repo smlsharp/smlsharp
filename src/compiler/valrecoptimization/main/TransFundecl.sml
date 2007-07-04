@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
- * @version $Id: TransFundecl.sml,v 1.7 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: TransFundecl.sml,v 1.8 2007/06/19 22:19:12 ohori Exp $
  *)
 structure TransFundecl = struct
 local
@@ -73,6 +73,8 @@ in
                          loc)
     | PLTUPLE (plexpList, loc) =>
         PLTUPLE (map transExp plexpList, loc)
+    | PLLIST (plexpList, loc) =>
+        PLLIST (map transExp plexpList, loc)
     | PLRAISE (plexp, loc) => PLRAISE (transExp plexp, loc)
     | PLHANDLE (plexp, plpatPlexpList, loc) =>
         PLHANDLE (transExp plexp, map (fn (pat, exp) => (pat, transExp exp)) plpatPlexpList, 

@@ -1461,6 +1461,7 @@ cat >>confdefs.h <<_ACEOF
 #define SMLSHARP_PLATFORM "${target_cpu}-${target_os}"
 _ACEOF
 
+SMLSHARP_PLATFORM="${target_cpu}-${target_os}"
 
 
 # Checks for programs.
@@ -11771,10 +11772,11 @@ rm -f conftest.data
 
 
 
+
 for ac_func in bzero floor getcwd gettimeofday localtime_r memmove \
                 memset mkdir modf pow rmdir socket sqrt strerror utime \
                 sigaction sigprocmask sleep \
-                fpclass
+                fpclass dlopen
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5

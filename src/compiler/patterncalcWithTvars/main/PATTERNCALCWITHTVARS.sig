@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: PATTERNCALCWITHTVARS.sig,v 1.13 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: PATTERNCALCWITHTVARS.sig,v 1.14 2007/06/19 22:19:12 ohori Exp $
  *)
 signature PATTERNCALCWITHTVARS = sig
 
@@ -29,6 +29,7 @@ signature PATTERNCALCWITHTVARS = sig
    | PTRECORD of (string * ptexp) list * loc
    | PTRECORD_UPDATE of ptexp * (string * ptexp) list * loc
    | PTTUPLE of ptexp list * loc
+   | PTLIST of ptexp list * loc
    | PTRAISE of ptexp * loc
    | PTHANDLE of ptexp * (ptpat * ptexp) list * loc
    | PTFNM of tvarNameSet * (ptpat list * ptexp) list * loc

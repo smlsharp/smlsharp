@@ -1,5 +1,5 @@
 # Makefile for SMLDoc
-# $Id: Makefile.in,v 1.9.2.1 2007/03/26 09:36:38 katsu Exp $
+# $Id: Makefile.in,v 1.10 2007/04/02 09:42:28 katsu Exp $
 
 prefix=@prefix@
 exec_prefix=@exec_prefix@

@@ -2,7 +2,7 @@
 
 ########################################
 # generate an executable file from SML source code.
-# $Id: smlsharp2exe.sh.in,v 1.8 2007/02/22 02:00:02 kiyoshiy Exp $
+# $Id: smlsharp2exe.sh.in,v 1.9 2007/06/22 02:16:10 kiyoshiy Exp $
 # usage : $0 [options] FILE
 # options:
 #         -o FILE | --output=FILE     output file name
@@ -79,9 +79,18 @@ do
     ;;
   -*)
     ac_option=$1
-    ac_optarg=$2
-    ac_shift=shift
-    ac_orgarg="$1 $2"
+    case $2 in       # checks whether an argument follows this option $1.
+    -*)
+        ac_optarg=
+        ac_shift=:
+        ac_orgarg=$1
+        ;;
+    *)
+        ac_optarg=$2
+        ac_shift=shift
+        ac_orgarg="$1 $2"
+        ;;
+    esac
     ;;
   *)
     ac_option=$1

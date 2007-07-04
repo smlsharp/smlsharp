@@ -162,25 +162,19 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LINEARIZER.sig,v 1.11 2007/01/09 15:07:21 kiyoshiy Exp $
+ * @version $Id: LINEARIZER.sig,v 1.12 2007/04/19 05:06:52 ducnh Exp $
  *)
 signature LINEARIZER =
 sig
 
   (**
-   * translates an expression of untyped bitmap calc into sequences of
+   * translates a list of declarations in anormal form into sequences of
    * symbolic instructions.
-   * A sequence is generated for each function in the source expression.
+   * A sequence is generated for each function in the source declaration.
    *)
   val linearize :
-      (** the expression to be linearized *)
-      ANormal.anexp ->
-      {
-        (** main function name *)
-         mainFunctionName : SymbolicInstructions.varid,
-        (** function code list *)
-         functions : SymbolicInstructions.functionCode list
-      }
+      (** the list of declaration to be linearized *)
+      (ANormal.andecl list) -> (SymbolicInstructions.clusterCode list)
   
   (***************************************************************************)
 

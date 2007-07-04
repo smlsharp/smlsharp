@@ -1,0 +1,4 @@
+Group
+        structure SIGenerator
+is
+        main/module.cm

@@ -297,6 +297,11 @@ signature TYPES  =
                                 IEnv.map) list
                            -> {displayName:string, id:'a, ty:ty}
                               -> SMLFormat.FormatExpression.expression list
+    val format_varIdInfoWithoutType : (int
+                            * {eqKind:eqKind, index:int, recKind:recKind} 
+                                IEnv.map) list
+                           -> {displayName:string, id:'a, ty:ty}
+                              -> SMLFormat.FormatExpression.expression list
     val format_varPathInfo : (int
                               * {eqKind:eqKind, index:int, recKind:recKind} 
                                   IEnv.map) list
@@ -324,7 +329,6 @@ signature TYPES  =
     val newExnTag : unit -> int
     val nextExnTag : unit -> int
     val maxSystemExnTag : int
-    val exnConIdSequenceRef : SequentialNumber.sequence ref
     val dummyStructureId : id
     val newStructureId : unit -> id
     val eqTyCon : tyCon * tyCon -> bool
@@ -342,4 +346,8 @@ signature TYPES  =
     val peekTid : unit -> tid
     val tyIdName : int -> string
     val univKind : {eqKind:eqKind, recKind:recKind, tyvarName:'a option}
+
+    type moduleState
+    val getModuleState : unit -> moduleState
+    val restoreModuleState : moduleState -> unit
   end

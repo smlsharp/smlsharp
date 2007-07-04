@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: ANormalTranslator.sml,v 1.18 2007/02/11 16:39:50 kiyoshiy Exp $
+ * @version $Id: ANormalTranslator.sml,v 1.19 2007/06/19 22:19:11 ohori Exp $
  *)
 
 
@@ -603,6 +603,25 @@ structure ANormalTranslator : ANORMAL_TRANSLATOR = struct
                 nestLevel = nestLevel',
                 offset = offset',
                 valueExp = valueExp',
+                loc = loc
+               }
+          )
+        end
+      | BC.BUCSETTAIL {consExp, offsetExp, newTailExp,loc} =>
+        let
+          val (atomEnv',binds,[newConsExp, newOffsetExp, newNewTailExp]) =
+              compileExpList
+                  atomEnv
+                  ([consExp, offsetExp, newTailExp],[BOXED,ATOM, BOXED])
+        in
+          (
+           atomEnv', 
+           binds, 
+           ANSETTAIL
+               {
+                consExp = newConsExp,
+                newTailExp = newNewTailExp,
+                offsetExp = newOffsetExp,
                 loc = loc
                }
           )

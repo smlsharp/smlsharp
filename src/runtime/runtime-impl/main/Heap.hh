@@ -270,15 +270,15 @@ class Heap
 
         virtual
         void trace(Cell*** roots, int count)
-            throw(IMLRuntimeException);
+            throw(IMLException);
 
         virtual
         void trace(Cell** roots, int count)
-            throw(IMLRuntimeException);
+            throw(IMLException);
 
         virtual
         Cell* trace(Cell* root)
-            throw(IMLRuntimeException);
+            throw(IMLException);
 
     };
     friend class Tracer;
@@ -490,7 +490,7 @@ class Heap
 
     static
     void invokeGC(GCMode mode)
-      throw(IMLRuntimeException);
+      throw(IMLException);
 
     static
     void addFinalizable(Cell* block);
@@ -1068,25 +1068,25 @@ class Heap
 
     static
     void clear()
-        throw(IMLRuntimeException);
+        throw(IMLException);
 
     INLINE_FUN static
     int getPayloadSize(Cell* block)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         return getPayloadCells(BLOCK_TO_HEADER(block));
     }
 
     static
     Bitmap getBitmap(Cell* block)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         return getBitmapTag(BLOCK_TO_HEADER(block));
     }
 
     static
     void setBitmap(Cell* block, Bitmap bitmap)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         return setBitmapTag(BLOCK_TO_HEADER(block), bitmap);
     }
@@ -1099,7 +1099,7 @@ class Heap
 
     INLINE_FUN static
     void initializeField(Cell* block, int index, const Cell& value)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         INVOKE_ON_HEAP_MONITORS(beforeInitializeField(block, index, value));
         ASSERT(isValidBlockField(BLOCK_TO_HEADER(block), index));
@@ -1112,8 +1112,23 @@ class Heap
     }
 
     INLINE_FUN static
+    void initializeField_D(Cell* block, int index, const Real64Value& value)
+        throw(IMLException)
+    {
+        INVOKE_ON_HEAP_MONITORS(beforeInitializeField(block, index, value));
+        ASSERT(isValidBlockField(BLOCK_TO_HEADER(block), index));
+        ASSERT(isValidBlockPointer(block));
+        BlockHeader* header = BLOCK_TO_HEADER(block);
+        ASSERT((!isPointerField(header, index)) ||
+               (!isPointerField(header, index + 1)));
+        Cell* fieldAddress = block + index;
+        *(Real64Value*)fieldAddress = value;
+        INVOKE_ON_HEAP_MONITORS(afterInitializeField(block, index, value));
+    }
+
+    INLINE_FUN static
     void updateField(Cell* block, int index, const Cell& value)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         INVOKE_ON_HEAP_MONITORS(beforeUpdateField(block, index, value));
         ASSERT(isValidBlockPointer(block));
@@ -1148,7 +1163,7 @@ class Heap
 
     INLINE_FUN static
     void updateField_D(Cell* block, int index, const double& value)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
 // ToDo : add beforeUpdateField_D
 //        INVOKE_ON_HEAP_MONITORS(beforeUpdateField(block, index, value));
@@ -1167,7 +1182,7 @@ class Heap
 
     INLINE_FUN static
     Cell* allocRecordBlock(Bitmap bitmap, int fields)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         INVOKE_ON_HEAP_MONITORS(beforeAllocRecordBlock(bitmap, fields));
         int totalSize = fields + 1;
@@ -1185,7 +1200,7 @@ class Heap
 
     INLINE_FUN static
     Cell* allocAtomBlock(int fields)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         INVOKE_ON_HEAP_MONITORS(beforeAllocAtomBlock(fields));
         BlockHeader* header = allocRawBlock(fields);
@@ -1198,7 +1213,7 @@ class Heap
 
     INLINE_FUN static
     Cell* allocPointerBlock(int fields)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         INVOKE_ON_HEAP_MONITORS(beforeAllocPointerBlock(fields));
         BlockHeader* header = allocRawBlock(fields);
@@ -1211,7 +1226,7 @@ class Heap
 
     INLINE_FUN static
     Cell* allocSingleAtomArray(int fields)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         INVOKE_ON_HEAP_MONITORS(beforeAllocAtomArray(fields));
         BlockHeader* header = allocRawBlock(fields);
@@ -1225,7 +1240,7 @@ class Heap
 
     INLINE_FUN static
     Cell* allocDoubleAtomArray(int fields)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         INVOKE_ON_HEAP_MONITORS(beforeAllocAtomArray(fields));
         BlockHeader* header = allocRawBlock(fields);
@@ -1239,7 +1254,7 @@ class Heap
 
     INLINE_FUN static
     Cell* allocPointerArray(int fields)
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         INVOKE_ON_HEAP_MONITORS(beforeAllocPointerArray(fields));
         BlockHeader* header = allocRawBlock(fields);
@@ -1252,13 +1267,13 @@ class Heap
 
     INLINE_FUN static
     Cell* allocEmptyBlock()
-        throw(IMLRuntimeException)
+        throw(IMLException)
     {
         return unitBlock_;
     }
 
     INLINE_FUN static
-    Cell* fixedCopy(Cell* block)
+    Cell* allocateFLOB(Cell* block, bool doCopy)
     {
         BlockHeader* header = BLOCK_TO_HEADER(block);
         BlockSize numBytes = sizeof(UInt32Value) * getTotalWords(header);
@@ -1267,12 +1282,21 @@ class Heap
         ASSERT(NULL != memory);
         BlockHeader* newHeader = alignHeaderAddress((BlockHeader*)memory);
         Cell* newBlock = HEADER_TO_BLOCK(newHeader);
-        COPY_MEMORY(newHeader, header, numBytes);
+        if(doCopy){
+            COPY_MEMORY(newHeader, header, numBytes);
+        }
 
         FLOBInfo* info = new FLOBInfo(memory);
         FLOBInfoMap_[newBlock] = info;
 
         DBGWRAP(LOG.debug("fixedCopy: %x", newBlock));
+        return newBlock;
+    }
+
+    INLINE_FUN static
+    Cell* fixedCopy(Cell* block)
+    {
+        Cell* newBlock = allocateFLOB(block, true);
         return newBlock;
     }
 
@@ -1285,6 +1309,41 @@ class Heap
         }
         i->second->isReleased_ = true;
         DBGWRAP(LOG.debug("releaseFLOB: %x", block));
+    }
+
+    /**
+     * allocates a new heap block which has enough size to hold the payload
+     * and trailers of the argument block.
+     */
+    INLINE_FUN static
+    Cell* reserveCopy(Cell* block)
+    {
+        BlockHeader* header = BLOCK_TO_HEADER(block);
+        BlockHeader header_value = *header;
+        BlockHeader* newHeader;
+        if(isFLOBPointer(header)){
+            newHeader = BLOCK_TO_HEADER(allocateFLOB(block, false));
+        }
+        else{
+            int payloadAndTrailers = getTotalWords(header) - WORDS_OF_HEADER;
+            newHeader = allocRawBlock(payloadAndTrailers);
+        }
+        /* Note: 'block' now may be made invalid by GC. */
+        *newHeader = header_value;
+
+        Cell* newBlock = HEADER_TO_BLOCK(newHeader);
+        return newBlock;
+    }
+
+    /**
+     * copy the payload and trailers of srcBlock to dstBlock.
+     */
+    INLINE_FUN static
+    void copyBlock(Cell* srcBlock, Cell* dstBlock)
+    {
+        int payloadAndTrailers =
+            getTotalWords(BLOCK_TO_HEADER(srcBlock)) - WORDS_OF_HEADER;
+        COPY_MEMORY(dstBlock, srcBlock, sizeof(Cell) * payloadAndTrailers);
     }
 
     static

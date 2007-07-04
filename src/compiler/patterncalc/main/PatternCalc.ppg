@@ -4,7 +4,7 @@
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: PatternCalc.ppg,v 1.10 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: PatternCalc.ppg,v 1.11 2007/06/19 22:19:12 ohori Exp $
  *)
 structure PatternCalc : PATTERNCALC = struct
 
@@ -153,6 +153,11 @@ structure PatternCalc : PATTERNCALC = struct
       * values(value()(expFormatter,patFormatter))("," +, + "(", ")")
       *)
      PLTUPLE of plexp list * loc
+   | (*%
+      * @format(value values * loc)
+      *      {"[" 2[ 1 values(value()(expFormatter,patFormatter))("," +1) ] 1 "]"}
+      *)
+     PLLIST of plexp list * loc
    | (*%
       * @format(exp * loc) N0{ "raise" +d {exp()(expFormatter,patFormatter)} }
       *)
@@ -611,6 +616,7 @@ and pltopdec =
    | PLRECORD x => #1 (#2 x)
    | PLRECORD_UPDATE x => #1 (#3 x)
    | PLTUPLE x => #1 (#2 x)
+   | PLLIST x => #1 (#2 x)
    | PLRAISE x => #1 (#2 x)
    | PLHANDLE x => #1 (#3 x)
    | PLFNM x => #1 (#2 x)
@@ -633,6 +639,7 @@ and pltopdec =
    | PLRECORD x => #2 (#2 x)
    | PLRECORD_UPDATE x => #2 (#3 x)
    | PLTUPLE x => #2 (#2 x)
+   | PLLIST x => #2 (#2 x)
    | PLRAISE x => #2 (#2 x)
    | PLHANDLE x => #2 (#3 x)
    | PLFNM x => #2 (#2 x)

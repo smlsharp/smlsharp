@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
  * @author YAMATODANI Kiyoshi
- * @version $Id: PredefinedTypes.sml,v 1.9.2.1 2007/03/22 16:30:34 katsu Exp $
+ * @version $Id: PredefinedTypes.sml,v 1.10 2007/04/02 09:42:29 katsu Exp $
  *)
 structure PredefinedTypes =
 struct

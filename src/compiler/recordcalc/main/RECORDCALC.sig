@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: RECORDCALC.sig,v 1.10 2007/02/28 15:31:25 katsu Exp $
+ * @version $Id: RECORDCALC.sig,v 1.11 2007/06/19 22:19:12 ohori Exp $
  *)
 signature RECORDCALC = sig
 
@@ -98,6 +98,7 @@ signature RECORDCALC = sig
    | RCPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:rcexp, loc:loc}
    | RCTAPP of {exp:rcexp, expTy:ty, instTyList:ty list, loc:loc}
    | RCSEQ of {expList:rcexp list, expTyList:ty list, loc:loc}
+   | RCLIST of {expList:rcexp list, listTy:ty, loc:loc}
    | RCCAST of rcexp * ty * loc
 
  and rcdecl 

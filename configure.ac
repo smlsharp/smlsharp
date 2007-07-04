@@ -10,6 +10,7 @@ AC_ARG_PROGRAM
 
 AC_DEFINE_UNQUOTED(SMLSHARP_PLATFORM, "${target_cpu}-${target_os}",
                    [platform identifier])
+SMLSHARP_PLATFORM="${target_cpu}-${target_os}"
 AC_SUBST(SMLSHARP_PLATFORM)
 
 # Checks for programs.
@@ -457,7 +458,7 @@ AC_FUNC_UTIME_NULL
 AC_CHECK_FUNCS([bzero floor getcwd gettimeofday localtime_r memmove \
                 memset mkdir modf pow rmdir socket sqrt strerror utime \
                 sigaction sigprocmask sleep \
-                fpclass])
+                fpclass dlopen])
 
 if test "x$ac_cv_func_fpclass" != "xyes"; then
   AC_LIBOBJ(fpclass.c)

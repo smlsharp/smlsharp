@@ -21,7 +21,7 @@ ARITHI  int10/R8 := zero/R0 iadd 10
 NOP
 NOP
 NOP
-GETREAL real3.0/R9 := 3.00000000000
+GETREAL real3.0/R9 := 3
 NOP
 NOP
 NOP
@@ -196,7 +196,7 @@ ARITHI  int10/R8 := zero/R0 iadd 10
 NOP
 NOP
 NOP
-GETREAL real4.0/R9 := 4.00000000000
+GETREAL real4.0/R9 := 4
 NOP
 NOP
 NOP
@@ -346,7 +346,7 @@ ARITHI  closure/R11 := allocptr/R1 iadd 0
 NOP
 NOP
 NOP
-GETREAL real0.0/R10 := ~0.000000000000
+GETREAL real0.0/R10 := 0
 NOP
 NOP
 NOP

@@ -2,7 +2,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author YAMATODANI Kiyoshi
- * @version $Id: Top.sml,v 1.164 2007/02/19 14:11:56 kiyoshiy Exp $
+ * @version $Id: Top.sml,v 1.173 2007/06/19 22:19:12 ohori Exp $
  *)
 structure Top :> TOP =
 struct
@@ -81,16 +81,28 @@ struct
       #addElapsedTime ElapsedCounterSet "module compilation"
   val CT.ElapsedTimeCounter matchCompilationTimeCounter =
       #addElapsedTime ElapsedCounterSet "match compilation"
-  val CT.ElapsedTimeCounter recordCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "record compilation"
-  val CT.ElapsedTimeCounter lambdaOptimizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "lambda optimization"
-  val CT.ElapsedTimeCounter bitmapCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "bitmap compilation"
-  val CT.ElapsedTimeCounter untypedBitmapCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "untyped bitmap compilation"
-  val CT.ElapsedTimeCounter linearizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "linearize"
+  val CT.ElapsedTimeCounter typedLambdaNormalizationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "typed lambda normalization"
+  val CT.ElapsedTimeCounter staticAnalysisTimeCounter =
+      #addElapsedTime ElapsedCounterSet "static annalysis"
+  val CT.ElapsedTimeCounter recordUnboxingTimeCounter =
+      #addElapsedTime ElapsedCounterSet "record unboxing"
+  val CT.ElapsedTimeCounter mvOptimizationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "multiple value optimization"
+  val CT.ElapsedTimeCounter clusteringTimeCounter =
+      #addElapsedTime ElapsedCounterSet "clustering"
+  val CT.ElapsedTimeCounter rbuTransformationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "rbuTransformation"
+  val CT.ElapsedTimeCounter anormalizationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "anormalization"
+  val CT.ElapsedTimeCounter iltransformationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "iltransformation"
+  val CT.ElapsedTimeCounter sigenerationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "sigeneration"
+  
+  val CT.ElapsedTimeCounter stackReallocationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "stack reallocation"
+
   val CT.ElapsedTimeCounter assembleTimeCounter =
       #addElapsedTime ElapsedCounterSet "assemble"
   val CT.ElapsedTimeCounter serializeTimeCounter =
@@ -129,12 +141,6 @@ struct
         } : context
       end
 
-  (* ToDo :
-   * StaticEnv.exnConIdSequenceRef is pickled, because it contains
-   * global information to generate global unique exception tag.
-   * But this seems ad-hoc.
-   * 
-   *)
   local
     val pickleEnvs =
         P.tuple4
@@ -142,7 +148,7 @@ struct
               EnvPickler.SEnv(TypesPickler.fixity),
               TypeContextPickler.topTypeContext,
               ModuleCompilationPickler.moduleEnv,
-              NamePickler.sequence
+              TypesPickler.moduleState
             )
   in
   fun pickle (context : context) outstream =
@@ -155,7 +161,7 @@ struct
               !(#fixEnvRef context),
               !(#topTypeContextRef context),
               !(#moduleEnvRef context),
-              !(T.exnConIdSequenceRef)
+              T.getModuleState ()
             )
             outstream;
         #stop pickleEnvsCounter ()
@@ -178,12 +184,12 @@ struct
               fixEnv,
               topTypeContext,
               moduleEnv,
-              exnConIdSequence
+              typesState
             ) =
             P.unpickle pickleEnvs instream
         val _ = #stop unpickleEnvsCounter ()
 
-        val _ = T.exnConIdSequenceRef := exnConIdSequence
+        val _ = T.restoreModuleState typesState
       in
         {
           session = session,
@@ -513,19 +519,19 @@ struct
         (rcdecs, fn _ => ())
       end
 
-  fun doRecordCompilation context rcdecs =
+  fun doTypedLambdaNormalization context rcdecs =
       let
         (* record compile *)
-        val _ = #start recordCompilationTimeCounter ()
-        val tldecs = RecordCompiler.compile rcdecs
-        val _ = #stop recordCompilationTimeCounter ()
+        val _ = #start typedLambdaNormalizationTimeCounter ()
+        val tldecs = TLNormalization.normalize rcdecs
+        val _ = #stop typedLambdaNormalizationTimeCounter ()
 
         val _ =
             if !C.printTL andalso !C.switchTrace
             then
               printIntermediateCodes
                   context
-                  "Record Compiled"
+                  "TypedLambda normalization"
                   (TypedLambdaFormatter.tldecToString [])
                   tldecs
             else ()
@@ -541,7 +547,7 @@ struct
             then
               let
                 val diagnoses =
-                    TypeCheckTypedLambda.typechekTypedLambda tldecs
+                    TypeCheckTypedLambda.typecheck tldecs
                 val _ = 
                   if ! C.printDiagnosis then
                     case diagnoses of
@@ -561,109 +567,220 @@ struct
         (tldecs, fn _ => ())
       end
 
-  fun doBUCTransformation context tldecs =
+  fun doStaticAnalysis context tldecs =
       let
-        (* buc transformation *)
-        val _ = #start bitmapCompilationTimeCounter ()
-        val bucdecls = BUCTransformer.transform tldecs
-        val _ = #stop bitmapCompilationTimeCounter ()
+        (* static analysis *)
+        val _ = #start staticAnalysisTimeCounter ()
+        val acdecs = StaticAnalysis.analyse tldecs
+        val _ = #stop staticAnalysisTimeCounter ()
+
+        val _ =
+            if !C.printAC andalso !C.switchTrace
+            then
+              printIntermediateCodes
+                  context
+                  "Static analysis"
+                  (AnnotatedCalcFormatter.acdeclToString)
+                  acdecs
+            else ()
+      in
+        (acdecs, fn _ => ())
+      end
+
+  fun doRecordUnboxing context acdecs =
+      let
+        (* record unboxing *)
+        val _ = #start recordUnboxingTimeCounter ()
+        val mvdecs = RecordUnboxing.transform acdecs
+        val _ = #stop recordUnboxingTimeCounter ()
+
+        val _ =
+            if !C.printMV andalso !C.switchTrace
+            then
+              printIntermediateCodes
+                  context
+                  "Record unboxing"
+                  (MultipleValueCalcFormatter.mvdeclToString)
+                  mvdecs
+            else ()
+      in
+        (mvdecs, fn _ => ())
+      end
+
+  fun doMultipleValueOptimization context mvdecs =
+      if !C.doMultipleValueOptimization
+      then
+        let
+          val _ = #start mvOptimizationTimeCounter ()
+          val mvdecs = MVOptimization.optimize mvdecs
+          val _ = #stop mvOptimizationTimeCounter ()
+
+          val _ =
+              if !C.printMV andalso !C.switchTrace
+              then
+                printIntermediateCodes
+                    context
+                    "Multiple value optimization"
+                    (MultipleValueCalcFormatter.mvdeclToString)
+                    mvdecs
+              else ()
+        in
+          (mvdecs, fn _ => ())
+        end
+      else (mvdecs, fn _ => ())
+
+  fun doMVTypeCheck context mvdecs =
+      let
+        (* type check *)
+        val _ =
+            if !C.checkType
+            then
+              let
+                val diagnoses =
+                    MVTypeCheck.typecheck mvdecs
+                val _ = 
+                  if ! C.printDiagnosis then
+                    case diagnoses of
+                      nil => ()
+                    | _ =>
+                        printIntermediateCodes
+                        context
+                        "Diagnoses"
+                        (C.prettyPrint o UE.format_errorInfo)
+                        diagnoses
+                  else ()
+              in
+                ()
+              end
+            else ()
+      in
+        (mvdecs, fn _ => ())
+      end
+
+
+  fun doClustering context mvdecs =
+      let
+        val _ = #start clusteringTimeCounter ()
+        val ccdecs = Clustering.transform mvdecs
+        val _ = #stop clusteringTimeCounter ()
                 
         val _ =
-            if !C.printBUC andalso !C.switchTrace
+            if !C.printCC andalso !C.switchTrace
             then
               printIntermediateCodes
                   context
-                  "BUC transformed"
-                  (BUCCalcFormatter.bucdeclToString [])
-                  bucdecls
+                  "Clustering"
+                  (ClusterCalcFormatter.ccdeclToString)
+                  ccdecs
             else ()
       in
-        (bucdecls, fn _ => ())
+        (ccdecs, fn _ => ())
       end
 
-  fun doANormalization context bucdecls =
+  fun doRBUTransformation context ccdecs =
       let
-        (* Anormalization *)
-        val _ = #start untypedBitmapCompilationTimeCounter ()
-        val anexp = ANormalTranslator.translate bucdecls
-        val _ = #stop untypedBitmapCompilationTimeCounter ()
+        val _ = #start rbuTransformationTimeCounter ()
+        val rbudecs = RBUTransformation.transform ccdecs
+        val _ = #stop rbuTransformationTimeCounter ()
+                
+        val _ =
+            if !C.printRBU andalso !C.switchTrace
+            then
+              printIntermediateCodes
+                  context
+                  "RBU transformation"
+                  (RBUCalcFormatter.rbudeclToString)
+                  rbudecs
+            else ()
+      in
+        (rbudecs, fn _ => ())
+      end
 
+  fun doANormalization context rbudecs =
+      let
+        val _ = #start anormalizationTimeCounter ()
+        val andecs = ANormalization.normalize rbudecs
+        val _ = #stop anormalizationTimeCounter ()
+                
         val _ =
             if !C.printAN andalso !C.switchTrace
             then
               printIntermediateCodes
-                context
-                "Untyped bitmap compiled"
-                ANormalFormatter.anexpToString
-                [anexp]
+                  context
+                  "ANormalization"
+                  (ANormalFormatter.andeclToString)
+                  andecs
             else ()
       in
-        (anexp, fn _ => ())
+        (andecs, fn _ => ())
       end
-        
-  fun doANormalOptimization context anexp =
-      let
-        (* Anormal optimization*)
-        val anexp = ANormalOptimizer.optimize anexp
 
+
+  fun doILTransformation context andecls =
+      let
+        val _ = #start iltransformationTimeCounter ()
+        val ilcode = ILTransformation.transform andecls
+        val _ = #stop iltransformationTimeCounter ()
+                
         val _ =
-            if !C.printAN andalso !C.switchTrace
+            if !C.printIL andalso !C.switchTrace
             then
               printIntermediateCodes
                   context
-                  "Anormal optimized"
-                  ANormalFormatter.anexpToString
-                  [anexp]
+                  "ILTransformation"
+                  ILFormatter.moduleCodeToString
+                  [ilcode]
             else ()
       in
-        (anexp, fn _ => ())
+        (ilcode, fn _ => ())
       end
 
-  fun doLinearization context anexp =
+  fun doSIGeneration context ilcode =
       let
-        (* linearize *)
-        val _ = #start linearizationTimeCounter ()
-        val symbolicCode as {functions, ...} = Linearizer.linearize anexp
-        val _ = #stop linearizationTimeCounter ()
+        (* SIGeneration *)
+        val _ = #start sigenerationTimeCounter ()
+        val symbolicCode = SIGenerator.generate ilcode
+        val _ = #stop sigenerationTimeCounter ()
 
         val _ =
             if !C.printLS andalso !C.switchTrace
             then
               printIntermediateCodes
                   context
-                  "Linearized"
-                  SymbolicInstructionsFormatter.functionCodeToString
-                  functions
+                  "SIGeneration"
+                  SymbolicInstructionsFormatter.clusterCodeToString
+                  symbolicCode
             else ()
       in
         (symbolicCode, fn _ => ())
       end
 
-  fun doSymbolicInstructionsOptimization
-          context (symbolicCode as {functions, mainFunctionName}) =
+  fun doStackReallocation context symbolicCode = 
       let
-        (* symbolic instructions optimization *)
-        val newSymbolicCode as {functions, ...} =
-            {
-              mainFunctionName = #mainFunctionName symbolicCode,
-              functions =
-              if !C.doSymbolicInstructionsOptimization
-              then map SymbolicInstructionsOptimizer.optimize functions
-              else functions
-            }
+	  (* stack reallocation *)
+	  val _ = #start stackReallocationTimeCounter ()
+	  val newSymbolicCode = 
+	      if !C.doStackReallocation 
+	      then map 
+		       Reallocater.clusterGraphColoring  symbolicCode
+	      else symbolicCode
+	  val _ = 
+	      if !C.printSR andalso !C.switchTrace
+	      then 
+		       printIntermediateCodes
+		       context
+		       "StackReallocation"
+		       SymbolicInstructionsFormatter.clusterCodeToString (*clusterCodeToString*) (*livesProgToString*) (*cfgToString*) 
+		       (*map Reallocater.printLivenessClusters newSymbolicCode*) 
+		       (*map Reallocater.printCFGClusters newSymbolicCode*) 
+		       (newSymbolicCode)
+	      else
+		  ()
+	  val _ = #stop stackReallocationTimeCounter ()
+		  
+      in (newSymbolicCode, fn _ => ())
+      end 
 
-        val _ =
-            if !C.printLS andalso !C.switchTrace
-            then
-              printIntermediateCodes
-                  context
-                  "SymbolicInstructions Optimized"
-                  SymbolicInstructionsFormatter.functionCodeToString
-                  functions
-            else ()
-      in
-        (newSymbolicCode, fn _ => ())
-      end
 
   fun doAssemble context symbolicCode =
       let
@@ -784,6 +901,26 @@ struct
   (********************)
 
   infix ==>
+  fun (prev ==> (phase, next)) context code =
+      let
+        val (code1, onFinish1) = prev context code
+        val (code2, onFinish2) = 
+          if C.doPhase phase then
+            case code1 of
+              NONE => (NONE, fn _ => ())
+            | SOME code1 => 
+              let
+                val (code2, onFinish2) = next context code1
+              in
+                (SOME code2, onFinish2)
+              end
+          else
+            (NONE, fn _ => ())
+      in
+        (code2, fn _ => (onFinish1 (); onFinish2 ()))
+      end
+(*
+  infix ==>
   fun (prev ==> next) context code =
       let
         val (code1, onFinish1) = prev context code
@@ -791,11 +928,15 @@ struct
       in
         (code2, fn _ => (onFinish1 (); onFinish2 ()))
       end
-(*
   fun makeObj context initialSourceName decs =
       let
         val phases =
-            doSource 
+            (fn context => fn (SOME code) => 
+            let
+              val (code, onFinish) = doSource context code
+            in
+              (SOME code, onFinish)
+            end)
                 ==> doElaboration
                 ==> doVALRECOptimization
                 ==> doFundeclElaboration
@@ -809,48 +950,68 @@ struct
                 ==> doTypeCheck
                 ==> doMakeObj initialSourceName
       in
-        phases context decs
+        phases context (SOME decs)
       end
 *)
   fun compile context decs =
       let
         val phases =
-            doSource 
-                ==> doElaboration
-                ==> doVALRECOptimization
-                ==> doFundeclElaboration
-                ==> doSetTvars
-                ==> doTypeInference
-                ==> doUncurryOptimization
-                ==> doPrinterGeneration
-                ==> doModuleCompilation
-                ==> doMatchCompilation
-                ==> doRecordCompilation
-                ==> doTypeCheck
-                ==> doBUCTransformation
-                ==> doANormalization
-                ==> doANormalOptimization
-                ==> doLinearization
-                ==> doSymbolicInstructionsOptimization
-                ==> doAssemble
-                ==> doSerialize
+            (fn context => fn (SOME code) => 
+            let
+              val (code, onFinish) = doSource context code
+            in
+              (SOME code, onFinish)
+            end)
+                ==> (C.Elab, doElaboration)
+                ==> (C.FunOpt, doVALRECOptimization)
+                ==> (C.FunOpt, doFundeclElaboration)
+                ==> (C.TVar, doSetTvars)
+                ==> (C.TyInf,doTypeInference)
+                ==> (C.LayoutOpt, doUncurryOptimization)
+                ==> (C.Print, doPrinterGeneration)
+                ==> (C.Module, doModuleCompilation)
+                ==> (C.MatchComp, doMatchCompilation)
+                ==> (C.Lambda, doTypedLambdaNormalization)
+                ==> (C.Lambda, doTypeCheck)
+                ==> (C.Static, doStaticAnalysis)
+                ==> (C.Unbox, doRecordUnboxing)
+                ==> (C.DeadCode,doMultipleValueOptimization)
+                ==> (C.DeadCode, doMVTypeCheck)
+                ==> (C.Cluster, doClustering)
+                ==> (C.RBUComp, doRBUTransformation)
+                ==> (C.Anormal,doANormalization)
+                ==> (C.SI, doILTransformation)
+                ==> (C.SI, doSIGeneration)
+		==> (C.SIOpt, doStackReallocation)
+                ==> (C.Assem, doAssemble)
+                ==> (C.Code, doSerialize)
       in
-        phases context decs
+        phases context (SOME decs)
       end
 
   fun compileObject context object =
       let
         val phases =
-            doRestoreObject
-                ==> doBUCTransformation
-                ==> doANormalization
-                ==> doANormalOptimization
-                ==> doLinearization
-                ==> doSymbolicInstructionsOptimization
-                ==> doAssemble
-                ==> doSerialize
+            (fn context => fn (SOME code) => 
+            let
+              val (code, onFinish) = doRestoreObject context code
+            in
+              (SOME code, onFinish)
+            end)
+                ==> (C.Static, doStaticAnalysis)
+                ==> (C.Unbox, doRecordUnboxing)
+                ==> (C.DeadCode, doMultipleValueOptimization)
+                ==> (C.DeadCode, doMVTypeCheck)
+                ==> (C.Cluster, doClustering)
+                ==> (C.RBUComp, doRBUTransformation)
+                ==> (C.Anormal, doANormalization)
+                ==> (C.SI, doILTransformation)
+                ==> (C.SI, doSIGeneration)
+		==> (C.SIOpt, doStackReallocation)
+                ==> (C.Assem, doAssemble)
+                ==> (C.Code, doSerialize)
       in
-        phases context object
+        phases context (SOME object)
       end
 
   (****************************************)
@@ -1071,7 +1232,7 @@ struct
                       (fn line => printError context (line ^ "\n"))
                       (SMLofNJ.exnHistory exn)
                 )
-              | SessionTypes.Error cause =>
+              | SessionTypes.Failure cause =>
                 printError context ("RuntimeError:" ^ exnMessage cause ^ "\n")
               | IO.Io ioError =>
                 let
@@ -1180,10 +1341,16 @@ struct
                  val (codeBlock, onFinish) = 
                      compileObject context object
                  val _= #stop compilationTimeCounter ()
-                 val _ = #start executeTimeCounter ()
-                 val _ = #execute session codeBlock
-                 val _ = #stop executeTimeCounter ()
-                           
+                 val _ =
+                   if C.doPhase C.Run then
+                     case codeBlock of
+                       SOME codeBlock =>
+                         (#start executeTimeCounter ();
+                          #execute session codeBlock;
+                          #stop executeTimeCounter ();
+                          ())
+                       | _ => ()
+                   else ()
                  (* update contexts *)
                  val _ = onFinish ()
                in
@@ -1194,11 +1361,16 @@ struct
                  val _= #start compilationTimeCounter ()
                  val (codeBlock, onFinish) = compile context topdecs
                  val _= #stop compilationTimeCounter ()
-
-                 val _ = #start executeTimeCounter ()
-                 val _ = #execute session codeBlock
-                 val _ = #stop executeTimeCounter ()
-
+                 val _ =
+                   if C.doPhase C.Run then
+                     case codeBlock of
+                       SOME codeBlock =>
+                         (#start executeTimeCounter ();
+                          #execute session codeBlock;
+                          #stop executeTimeCounter ();
+                          ())
+                       | _ => ()
+                   else ()
                  (* update contexts *)
                  val _ = onFinish ()
                in
@@ -1341,11 +1513,16 @@ struct
 
         val (codeBlock, onFinish) = compileObject context object
         val _= #stop compilationTimeCounter ()
-                          
-        val _ = #start executeTimeCounter ()
-        val _ = #execute session codeBlock
-        val _ = #stop executeTimeCounter ()
-                           
+        val _ =
+          if C.doPhase C.Run then
+            case codeBlock of
+              SOME codeBlock =>
+                (#start executeTimeCounter ();
+                 #execute session codeBlock;
+                 #stop executeTimeCounter ();
+                 ())
+            | _ => ()
+          else ()
         (* update contexts *)
         val _ = onFinish ()
       in

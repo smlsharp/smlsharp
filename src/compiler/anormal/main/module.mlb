@@ -8,15 +8,12 @@ in
         ../../control/main/module.mlb
         ../../env/main/module.mlb
         ../../name/main/module.mlb
-        ../../types/main/module.mlb
-	../../typedlambda/main/module.mlb
 	../../systemdef/main/module.mlb
         ../../../primitives/compiler/main/module.mlb
 
-        anormal.sig
-        anormal.ppg.sml
-	ANORMAL_UTILS.sig
+        ANormal.ppg.sml
+	ANORMALUTILS.sig
 	ANormalUtils.sml
-        ANORMAL_FORMATTER.sig
+        ANORMALFORMATTER.sig
         ANormalFormatter.sml
 end

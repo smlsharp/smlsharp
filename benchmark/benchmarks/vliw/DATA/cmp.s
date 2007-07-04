@@ -1,7 +1,7 @@
 LABEL   entry/L4:      ( /R5 /R3 /R2 /R0 )
 LABEL   node0/L227:      ( /R5 /R3 /R2 /R0 )
 NOP
-GETREAL real3.0/R9 := 3.00000000000
+GETREAL real3.0/R9 := 3
 ARITHI  int10/R8 := zero/R0 iadd 10
 GETLAB  v/R6 := node119/L0
 ARITHI  new_allocptr/R1 := zero/R0 iadd 257
@@ -150,7 +150,7 @@ NOP
 LABEL   entry/L0:      ( /R1 /R3 /R2 /R4 /R5 /R0 )
 LABEL   node119/L70:      ( /R1 /R3 /R2 /R4 /R5 /R0 )
 NOP
-GETREAL real4.0/R9 := 4.00000000000
+GETREAL real4.0/R9 := 4
 ARITHI  int10/R8 := zero/R0 iadd 10
 GETLAB  v/R6 := node143/L3
 NOP
@@ -288,7 +288,7 @@ LABEL   entry/L3:      ( /R0 /R2 /R3 /R4 /R5 /R1 )
 LABEL   node143/L67:      ( /R0 /R2 /R3 /R4 /R5 /R1 )
 NOP
 ARITHI  new_allocptr/R12 := allocptr/R1 iadd 2
-GETREAL real0.0/R10 := ~0.000000000000
+GETREAL real0.0/R10 := 0
 ARITHI  closure/R11 := allocptr/R1 iadd 0
 GETLAB  v/R6 := node213/L2
 NOP

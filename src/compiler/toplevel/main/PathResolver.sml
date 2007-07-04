@@ -2,7 +2,7 @@
  * a simple interpreter of file path string.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PathResolver.sml,v 1.9 2006/11/20 06:39:30 kiyoshiy Exp $
+ * @version $Id: PathResolver.sml,v 1.13 2007/04/19 13:50:43 kiyoshiy Exp $
  *)
 structure PathResolver : PATH_RESOLVER =
 struct
@@ -43,10 +43,14 @@ struct
             getVariable o implode
           )
           reader stream
+  (* "$$" is interpreted as a '$'. *)
+  fun scanEscape reader stream =
+      PC.wrap (PC.string "$$", fn _ => "$") reader stream
   fun scan getVariable reader stream =
       PC.wrap
           (
-            PC.oneOrMore(PC.or' [scanVariable getVariable, scanPath]),
+            PC.oneOrMore
+                (PC.or' [scanEscape, scanVariable getVariable, scanPath]),
             String.concat
           )
           reader stream
@@ -57,18 +61,16 @@ struct
     fun isFileExists path =
         (OS.FileSys.access (path, [OS.FileSys.A_READ]))
         handle OS.SysErr (message, err) => false
-    fun findFileInPathList baseDir path [] = NONE
-      | findFileInPathList baseDir path (loadPath :: loadPaths) =
-        case 
-          (PU.makeAbsolute
-               {
-                 dir = baseDir,
-                 path = (PU.joinDirFile {dir = loadPath, file = path})
-               })
+    fun findFileInPathList path [] = NONE
+      | findFileInPathList path (loadPath :: loadPaths) =
+        case
+          (* If loadPath is not absolute path, makeAbsolute interpretes it as
+           * relative to the current working directory. *)
+          (PU.makeAbsolute { dir = loadPath, path = path })
           handle OS.Path.Path => NONE
          of
           SOME absPath => SOME absPath
-        | NONE => findFileInPathList baseDir path loadPaths
+        | NONE => findFileInPathList path loadPaths
   in
   (**
    * resolves a path to an existing file.
@@ -108,6 +110,8 @@ struct
    *      Assumed that /mom/pap/foo/bar and /doo/bee/bar exist and that there
    *     are no other file, these are resolved to /mom/pap/foo/bar and
    *     /doo/bee/bar, respectively.
+   *     Every path in the load path list is interpreted as relative to the
+   *     current working directory if it is not an absolute path.
    *     </dd>
    * </dl>
    * </p>
@@ -117,6 +121,8 @@ struct
    *                    third form path.
    * @param baseDir a base directory, which is used to resolve the second
    *               form path.
+   *               baseDir must be either an absolute path or an relative path
+   *               from current directory of compiler process.
    * @param path a path
    * @return an absolute path to an existing file.
    * @exception TopLevelError.InvalidPath if no existing file is found.
@@ -128,42 +134,55 @@ struct
                case getVariable name of
                  SOME value => value
                | NONE => raise TE.InvalidPath ("undefined variable: " ^ name)
+        fun substPath path = 
+            case StringCvt.scanString (scan getVariable') path
+             of NONE =>
+                raise TE.InvalidPath ("invalid path format: " ^ path)
+              | SOME path => path
+        fun toAbsoluteLoadPath baseDir path =
+            if PU.isAbsolute path
+            then path
+            else
+              if isRelativePath path
+              then OS.Path.concat (baseDir, path)
+              else OS.Path.concat (OS.FileSys.getDir (), path)
       in
         fn baseDir =>
            fn path =>
-              case StringCvt.scanString (scan getVariable') path of
-                 NONE => raise TE.InvalidPath "invalid path format"
-               | SOME parsedPath =>
-                 (if PU.isAbsolute parsedPath
-                  then (* 1st form *)
-                    if isFileExists parsedPath
-                    then parsedPath
-                    else
-                      raise
-                        TE.InvalidPath
-                            ("absolute path not found: " ^ parsedPath)
-                  else
-                    if isRelativePath parsedPath
-                    then (* 2nd form *)
-                      case PU.makeAbsolute {dir = baseDir, path = parsedPath}
+              let
+                val parsedPath = substPath path
+                val loadPathList =
+                    map (toAbsoluteLoadPath baseDir o substPath) loadPathList
+              in
+                (if PU.isAbsolute parsedPath
+                 then (* 1st form *)
+                   if isFileExists parsedPath
+                   then parsedPath
+                   else
+                     raise
+                       TE.InvalidPath
+                           ("absolute path not found: " ^ parsedPath)
+                 else
+                   if isRelativePath parsedPath
+                   then (* 2nd form *)
+                     case PU.makeAbsolute {dir = baseDir, path = parsedPath}
                       of SOME absPath => absPath
                        | NONE =>
-                        raise
-                          TE.InvalidPath
-                              ("file not found:" ^ parsedPath
-                               ^ " in " ^ baseDir)
-                    else
-                      (* 3rd form *)
-                      case 
-                        findFileInPathList baseDir parsedPath loadPathList
-                       of
-                        SOME absPath => absPath
-                      | NONE =>
-                        raise
-                          TE.InvalidPath
-                              ("file not found in path list: " ^ path))
-                 handle OS.SysErr (message, err) =>
-                        raise TE.InvalidPath ("file not found: " ^ parsedPath)
+                         raise
+                           TE.InvalidPath
+                               ("file not found:" ^ parsedPath
+                                ^ " in " ^ baseDir)
+                   else
+                     (* 3rd form *)
+                     case findFileInPathList parsedPath loadPathList of
+                       SOME absPath => absPath
+                     | NONE =>
+                       raise
+                         TE.InvalidPath
+                             ("file not found in path list: " ^ path))
+                handle OS.SysErr (message, err) =>
+                       raise TE.InvalidPath ("file not found: " ^ parsedPath)
+              end
       end
   end
 

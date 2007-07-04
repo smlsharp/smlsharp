@@ -161,6 +161,7 @@ smlsharp_initialize(int heapSize,
 
     Heap::initialize(heapSize);
     vm_ = new VirtualMachine(commandName,
+                             NULL,
                              commandArgsCount,
                              commandArgs,
                              stackSize);

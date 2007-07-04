@@ -18,7 +18,7 @@ IMLPrim_DynamicLink_dlopenImpl(UInt32Value argsCount,
 
     DLL_HANDLE dllHandle = DLL_OPEN(libName);
     if(0 == dllHandle){
-        char* message = DLL_ERROR();
+        const char* message = DLL_ERROR();
         Cell exception = PrimitiveSupport::constructExnSysErr(0, message);
         VirtualMachine::getInstance()->setPrimitiveException(exception);
         return;
@@ -33,7 +33,7 @@ IMLPrim_DynamicLink_dlcloseImpl(UInt32Value argsCount,
 {
     DLL_HANDLE dllHandle = (DLL_HANDLE)(argumentRefs[0]->uint32);
     if(0 != DLL_CLOSE(dllHandle)){
-        char* message = DLL_ERROR();
+        const char* message = DLL_ERROR();
         Cell exception = PrimitiveSupport::constructExnSysErr(0, message);
         VirtualMachine::getInstance()->setPrimitiveException(exception);
         return;
@@ -51,7 +51,7 @@ IMLPrim_DynamicLink_dlsymImpl(UInt32Value argsCount,
 
     UInt32Value function = (UInt32Value)(DLL_GET_SYM(dllHandle, funName));
     if(0 == function){
-        char* message = DLL_ERROR();
+        const char* message = DLL_ERROR();
         Cell exception = PrimitiveSupport::constructExnSysErr(0, message);
         VirtualMachine::getInstance()->setPrimitiveException(exception);
         return;

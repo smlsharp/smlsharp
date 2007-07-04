@@ -1,4 +1,4 @@
-use "life.sml";
+use "./life.sml";
 
 Main.doit ();
 print "Done";

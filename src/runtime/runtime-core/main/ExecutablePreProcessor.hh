@@ -27,8 +27,7 @@ class ExecutablePreProcessor
      */
     virtual
     void process(Executable* executable)
-        throw(IMLRuntimeException,
-              SystemError)
+        throw(IMLException)
         = 0;
 };
 

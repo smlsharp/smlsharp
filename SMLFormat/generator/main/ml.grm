@@ -1128,6 +1128,16 @@ typepat_field : selector (selector, (VarTyPat selector))
               | selector COLON typepat (selector, typepat)
 
 templates : template templates (template :: templates)
+          | STARTOFINDENT templates RBRACKET templates
+            (marktemplate
+             (
+              StartOfIndent STARTOFINDENT,
+              STARTOFINDENTleft,
+              STARTOFINDENTright
+             ) ::
+             templates1 @
+             [marktemplate (EndOfIndent, RBRACKETleft, RBRACKETright)] @
+             templates2)
           | ([])
 
 template : STRING (marktemplate(Term STRING, STRINGleft, STRINGright))
@@ -1147,14 +1157,6 @@ template : STRING (marktemplate(Term STRING, STRINGleft, STRINGright))
               FORMATINDICATORleft,
               FORMATINDICATORright
             ))
-         | STARTOFINDENT
-           (marktemplate
-            (
-              StartOfIndent STARTOFINDENT,
-              STARTOFINDENTleft,
-              STARTOFINDENTright
-            ))
-         | RBRACKET (marktemplate(EndOfIndent, RBRACKETleft, RBRACKETright))
          | inst (marktemplate(Instance inst, instleft, instright))
 
 inst : ID opt_typed

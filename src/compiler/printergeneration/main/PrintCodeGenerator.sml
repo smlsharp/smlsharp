@@ -2,7 +2,7 @@
  * This structure generates codes which print binding informations.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrintCodeGenerator.sml,v 1.36.2.1 2007/03/27 03:33:41 kiyoshiy Exp $
+ * @version $Id: PrintCodeGenerator.sml,v 1.39 2007/06/13 15:25:18 kiyoshiy Exp $
  *)
 structure PrintCodeGenerator =
 struct
@@ -142,7 +142,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
                 (OC.translateFormatExpressions (formatTy path ty))
         (* exp which is formatter for the type. *)
         val formatterExp =
-            FG.generateFormatterOfTy context path [] [] loc varTy
+            FG.generateFormatterOfTy context path NONE [] [] loc varTy
         (* exp which formats value. *)
         val formatValueExp =
             TP.TPAPPM
@@ -158,25 +158,8 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
             {
               expList =
               [
-                OC.printFormat
-                    (OC.concatFormatExpressions
-                         (OC.translateFormatExpressions
-                               [FE.Term(3, "val"), U.s_Indicator]
-                          @ [OC.makeGuard
-                                 (
-                                   NONE,
-                                   (OC.translateFormatExpressions
-                                        [
-                                          FE.Term(size name, name),
-                                          U.s_Indicator,
-                                          FE.Term(1, "="),
-                                          U.s_1_Indicator
-                                        ])
-                                   @ [formatValueExp]
-                                   @ OC.translateFormatExpressions
-                                         [U.s_1_Indicator, FE.Term(2, ": ")]
-                                   @ [formatTypeExp]
-                                 )])),
+                OC.printFormatOfValBinding
+                    (name, formatValueExp, formatTypeExp, loc),
                 OC.printString
                     (TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
               ],

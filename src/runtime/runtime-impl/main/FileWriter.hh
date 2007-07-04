@@ -17,15 +17,12 @@ class FileWriter
 
     const char* fileName_;
     int descriptor_;
-    FILE* stream_;
     BoolValue DontClose_;
 
     ///////////////////////////////////////////////////////////////////////////
   public:
 
     FileWriter(const char* fileName, int descriptor, BoolValue DontClose);
-
-    FileWriter(const char* fileName, FILE* stream, BoolValue DontClose);
 
     virtual
     ~FileWriter();

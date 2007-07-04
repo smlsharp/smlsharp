@@ -5,7 +5,7 @@
  *  Copyright (c) 2006, Tohoku University.
  * </p>
  * @author Atsushi Ohori 
- * @version $Id: ABSYN.sig,v 1.14 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: ABSYN.sig,v 1.15 2007/05/11 06:57:23 kiyoshiy Exp $
  *)
 signature ABSYN = 
 sig
@@ -156,6 +156,7 @@ sig
   val getLocTy : ty -> Loc.loc
   val getLocPat : pat -> Loc.loc
   val format_longid : longid ->SMLFormat.FormatExpression.expression list
+  val isShortId : longid -> bool
   val longidToString : longid -> string
   val getLastIdOfLongid : longid -> string
   val getParentIdsOfLongid : longid -> longid

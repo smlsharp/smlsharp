@@ -1,7 +1,7 @@
 (**
  * Word8 structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Word8.sml,v 1.4 2005/12/12 14:54:24 kiyoshiy Exp $
+ * @version $Id: Word8.sml,v 1.5 2007/04/02 09:42:29 katsu Exp $
  *)
 structure Word8 =
 struct
@@ -16,19 +16,21 @@ struct
 
   fun Word8_toWord (byte : byte) = _cast (byte) : Word.word
   fun Word8_fromWord (word : Word.word) = _cast (word) : byte
-  val toLargeWord = Word.toLargeWord o Word8_toWord
-  val toLargeWordX = Word.toLargeWordX o Word8_toWord
 
-  val fromLargeWord = Word8_fromWord o Word.fromLargeWord
+  val toLarge = Word.toLargeWord o Word8_toWord
+  val toLargeX = Word.toLargeWordX o Word8_toWord
+  val fromLarge = Word8_fromWord o Word.fromLargeWord
+
+  val toLargeWord = toLarge
+  val toLargeWordX = toLargeX
+  val fromLargeWord = fromLarge
 
   val toLargeInt = Word.toLargeInt o Word8_toWord
   val toLargeIntX = Word.toLargeIntX o Word8_toWord
-
   val fromLargeInt = Word8_fromWord o Word.fromLargeInt
 
   val toInt = Word.toInt o Word8_toWord
   val toIntX = Word.toIntX o Word8_toWord
-
   val fromInt = Word8_fromWord o Word.fromInt
 
   fun cast1_1 f word1 = Word8_fromWord(f (Word8_toWord word1));

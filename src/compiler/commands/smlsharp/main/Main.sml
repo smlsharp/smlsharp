@@ -2,7 +2,7 @@
  * run the interactive session with runtime
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.48 2007/02/28 14:55:36 katsu Exp $
+ * @version $Id: Main.sml,v 1.57 2007/06/01 09:40:59 kiyoshiy Exp $
  *)
 structure Main :
           sig
@@ -17,6 +17,8 @@ struct
 
   (***************************************************************************)
 
+  structure BV = Word8Vector
+  structure BA = Word8Array
   structure C = Control
   structure CT = Counter
   structure G = GetOpt
@@ -53,6 +55,7 @@ struct
          | Runtime of string
          | Quiet
          | ShowVersion
+         | ShowControl
          | StdIn
 
   (**
@@ -151,6 +154,12 @@ struct
         }
       end
 
+  fun printControlOptions () =
+      SEnv.appi
+          (fn (name, switch) =>
+              app print [name, " = [", C.switchToString switch, "]\n"])
+          C.switchTable
+
   (********************)
 
   val optionDescsStandard =
@@ -183,7 +192,7 @@ struct
           short = "X",
           long = [],
           desc = G.NoArg HelpEx,
-          help = "Display non-standard command line options"
+          help = "Display non-standard options"
         },
         {
           short = "I",
@@ -213,7 +222,7 @@ struct
           short = "",
           long = ["no-printbind"],
           desc = G.NoArg NoPrintBinds,
-          help = "Suppress printing binding information."
+          help = "Suppress printing generated binds."
         },
         {
           short = "o",
@@ -250,6 +259,12 @@ struct
           long = ["version"],
           desc = G.NoArg ShowVersion,
           help = "Print version number and exit."
+        },
+        {
+          short = "",
+          long = ["showX"],
+          desc = G.NoArg ShowControl,
+          help = "Print values of non-standard options."
         }
       ]
   val optionDescsExtra =
@@ -275,6 +290,34 @@ struct
       then
         (TextIO.output (TextIO.stdErr, message); TextIO.flushOut TextIO.stdErr)
       else ()
+
+  local
+    val SHARP = Word8.fromInt(Char.ord #"#")
+    val BANG = Word8.fromInt(Char.ord #"!")
+    val NL = Word8.fromInt(Char.ord #"\n")
+    exception Found of int
+  in
+  (** if vector begins with a shebang line, returns the index of next to the
+   * end-of-line of shebang line. *)
+  fun skipShebang vector =
+      if
+        2 < BV.length vector
+        andalso SHARP = BV.sub (vector, 0)
+        andalso BANG = BV.sub (vector, 1)
+      then
+        (BV.foldli
+             (fn (index, byte, len) =>
+                 if NL = byte then raise Found index else len)
+             (BV.length vector)
+             (vector, 2, NONE))
+        handle Found index => (index + 1)
+      else 0
+  end
+
+  fun getEnv "PWD" = SOME(OS.FileSys.getDir ())
+    | getEnv "SMLSHARP_OS" = SOME(Platform.OSName)
+    | getEnv "SMLSHARP_ARCH" = SOME(Platform.ArchName)
+    | getEnv name = OS.Process.getEnv name
 
   fun getSourceOfStdIn interactionMode () =
       {
@@ -307,7 +350,10 @@ struct
         (* This buffering makes unpickling prelude fast slightly. *)
         val contents = ChannelUtility.getAll fileChannel
         val _ = #close fileChannel ()
-        val sourceChannel = ByteVectorChannel.openIn {buffer = contents}
+        val start = if !C.skipShebang then skipShebang contents else 0
+        val sourceChannel =
+            ByteVectorChannel.openSliceIn
+                {buffer = contents, start = start, lenOpt = NONE}
 (*
         val sourceChannel = fileChannel
 *)
@@ -357,7 +403,7 @@ struct
           | processOpt Help = (print usage; raise Quit)
           | processOpt HelpEx = (print usageExtra; raise Quit)
           | processOpt (LibraryDirectory directory) =
-            (* prepend to the list *)
+            (* prepend to the list. libPaths is reversed later. *)
             (#libPaths parameters) := directory :: !(#libPaths parameters)
           | processOpt MakeCompiledLibrary =
             #mode parameters := MakeCompiledLibraryMode
@@ -383,6 +429,8 @@ struct
                @ [getSourceOfStdIn (Top.NonInteractive {stopOnError = true})]
           | processOpt ShowVersion =
             (print (VersionInfoMessage ^ "\n"); raise Quit)
+          | processOpt ShowControl =
+            (printControlOptions (); raise Quit)
 
         val _ = app processOpt options
 
@@ -390,8 +438,9 @@ struct
         fun getSourceOfName "-" =
             getSourceOfStdIn (Top.NonInteractive {stopOnError = true})
           | getSourceOfName fileName =
-            getSourceOfFile
-                OS.Process.getEnv (!(#libPaths parameters)) fileName
+            (* Do not deref libPaths before all parameters are processed. *)
+            fn () =>
+               getSourceOfFile getEnv (!(#libPaths parameters)) fileName ()
 
       in
         (* Binding information is printed only if
@@ -508,19 +557,39 @@ struct
 
   fun getBatchSession (parameters : parameters) =
       let
-        val outputFileName = !(#outputFileName parameters)
-        val outputChannel = FileChannel.openOut {fileName = outputFileName}
+        (* generated executables are bufferred into this bufferOptRef. *)
+        val bufferOptRef = ref (NONE : BA.array option)
+        val outputChannel = ByteArrayChannel.openOut {buffer = bufferOptRef}
 
-        val _ = FileSysUtil.setFileModeExecutable outputFileName
-
-        val _ = (* inserts header *)
-            #print
-                (CharacterStreamWrapper.wrapOut outputChannel)
-                (!C.headerOfExecutable)
         val session =
             StandAloneSession.openSession {outputChannel = outputChannel}
 
-        fun cleanUp _ = #close outputChannel ()
+        (*
+         * cleanUp function is called after session finishes.
+         * Its argument is a context option.
+         * SOME indicates that session finishes successfully.
+         * NONE indicates that session abors for any error.
+         *)
+        fun cleanUp (SOME _) = 
+            let
+              val _ = #close outputChannel ()
+              val outputFileName = !(#outputFileName parameters)
+              val outputFileChannel =
+                  FileChannel.openOut {fileName = outputFileName}
+
+              val _ = FileSysUtil.setFileModeExecutable outputFileName
+
+              val _ = (* inserts header *)
+                  #print
+                      (CharacterStreamWrapper.wrapOut outputFileChannel)
+                      (!C.headerOfExecutable)
+              val _ = #sendArray outputFileChannel (valOf(!bufferOptRef))
+              val _ = #close outputFileChannel ()
+            in
+              ()
+            end
+          | cleanUp NONE = ()
+            
       in
         (session, cleanUp)
       end
@@ -528,7 +597,7 @@ struct
   fun getMakeCompiledLibrarySession (parameters : parameters) =
       let
         (* generated executables are bufferred into this bufferOptRef. *)
-        val bufferOptRef = ref (NONE : Word8Array.array option)
+        val bufferOptRef = ref (NONE : BA.array option)
         val outputChannel = ByteArrayChannel.openOut {buffer = bufferOptRef}
 
         val session =
@@ -579,7 +648,7 @@ struct
         val parameters =
             {
               extraArgs = ref [],
-              libPaths = ref (libPaths @ [InstallLibDirectory, "."]),
+              libPaths = ref [],
               mode =
               ref
                   (if !compileOnly
@@ -595,6 +664,13 @@ struct
 
         (* update parameter to user specified *)                
         val _ = parseArguments parameters arguments
+
+        (* reverse directories specified by -I options here, because they are
+         * examined from left to right. *)
+        val _ = #libPaths parameters :=
+                (rev (!(#libPaths parameters))
+                 @ libPaths
+                 @ [InstallLibDirectory, "."])
         val _ =
             app
                 (fn libPath => trace ("libpath: " ^ libPath ^ "\n"))
@@ -613,7 +689,7 @@ struct
               standardOutput = STDOUTChannel,
               standardError = STDERRChannel,
               loadPathList = !(#libPaths parameters),
-              getVariable = OS.Process.getEnv
+              getVariable = getEnv
             }
 
         val currentSwitchTrace = !C.switchTrace
@@ -630,8 +706,7 @@ struct
         C.printBinds := !printPrelude;
         let
           fun getSource fileName =
-              getSourceOfFile
-                  OS.Process.getEnv (!(#libPaths parameters)) fileName
+              getSourceOfFile getEnv (!(#libPaths parameters)) fileName
 
           val context = 
               if !loadPrelude
@@ -665,9 +740,12 @@ struct
           C.switchTrace := currentSwitchTrace;
           C.printBinds := currentPrintBinds;
 
-          List.all (* stop if any compilation fails. *)
+          if
+            List.all (* stop if any compilation fails. *)
               (fn getSource => Top.run context (getSource ()))
-              (!(#sources parameters));
+              (!(#sources parameters))
+          then ()
+          else raise Fail "Compilation fails.";
 
           #close session ();
           cleanUp (SOME context);
@@ -690,7 +768,8 @@ struct
                let
                  val exn = 
                      case exn of
-                       SessionTypes.Error exn => exn
+                       SessionTypes.Failure exn => exn
+                     | SessionTypes.Fatal exn => exn
                      | _ => exn
                  val message =
                      case exn of

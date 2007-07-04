@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: SystemDef.hh,v 1.15.4.1 2007/03/24 14:39:54 katsu Exp $
+ * @version $Id: SystemDef.hh,v 1.16.6.1 2007/07/04 06:45:14 katsu Exp $
  */
 #ifndef SystemDef_hh_
 #define SystemDef_hh_
@@ -143,7 +143,7 @@ int IEEEREAL_CLASS(double realValue)
  *     returns 0 if succeeded, non-zero if failed.
  */
 
-#ifdef HAVE_LIBDL
+#ifdef HAVE_DLOPEN
 
 #include <dlfcn.h>
 typedef void* DLL_HANDLE;
@@ -154,7 +154,7 @@ typedef void* DLL_HANDLE;
 #define DLL_GET_SYM(dllHandle, name) dlsym((dllHandle), (name))
 #define DLL_ERROR() dlerror()
 
-#else /* HAVE_LIBDL */
+#else /* HAVE_DLOPEN */
 #if defined(__MINGW32__)
 
 typedef HMODULE DLL_HANDLE;
@@ -190,7 +190,7 @@ typedef void* DLL_HANDLE;
 #define DLL_ERROR() ("not implemented")
 
 #endif /* defined(__MINGW32__) */
-#endif /* HAVE_LIBDL */
+#endif /* HAVE_DLOPEN */
 
 ///////////////////////////////////////////////////////////////////////////////
 

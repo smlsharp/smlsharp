@@ -1,0 +1,27 @@
+Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
+        smlnj-lib.cm
+#endif
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
+	../../../smlformatlib.cm
+#endif
+        ../../absyn/sources.cm
+        ../../control/sources.cm
+        ../../format/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+	../../systemdef/sources.cm
+        ../../../primitives/compiler/sources.cm
+        ../../annotatedtypes/sources.cm
+
+
+        AnnotatedCalc.ppg.sml
+        ANNOTATEDCALCFORMATTER.sig
+        AnnotatedCalcFormatter.sml

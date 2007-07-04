@@ -41,7 +41,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Satoshi Osaka 
  * @author Atsushi Ohori
- * @version $Id: MatchCompiler.sml,v 1.51 2007/02/28 15:31:25 katsu Exp $
+ * @version $Id: MatchCompiler.sml,v 1.53 2007/06/19 22:19:11 ohori Exp $
  *)
 
 structure MatchCompiler : MATCH_COMPILER = 
@@ -96,7 +96,7 @@ struct
           if n > !C.limitOfInlineCaseBranch then false
           else
             case item of 
-              Exp rcepx => limitCheckExp tfpexp itemList n 
+              Exp rcepx => limitCheckExp rcepx itemList n 
             | Decl tfpdecl => limitCheckDecl tfpdecl itemList n 
 
       and limitCheckExp tfpexp itemList n = 
@@ -123,7 +123,6 @@ struct
         | TFPSIZEOF _ => limitCheck itemList (n + 1)
         | TFPCONSTANT (constant,loc) => limitCheck itemList (n + 1)
         | TFPVAR (varIdInfo,loc) => limitCheck itemList (n + 1)
-        | TFPGETGLOBAL (string,ty,loc) => limitCheck itemList (n + 1)
         | TFPGETGLOBALVALUE (arrayIndex, offset, ty, loc) => limitCheck itemList (n + 1)
         | TFPGETFIELD (tfpexp1, int, ty, loc) => 
             limitCheck (Exp tfpexp1::itemList) (n + 1)
@@ -199,6 +198,8 @@ struct
             limitCheck (Exp tfpexp :: itemList) (n + 1)
         | TFPTAPP {exp=tfpexp, expTy=ty1, instTyList=tylist, loc} => 
             limitCheck (Exp tfpexp :: itemList) (n + 1)
+        | TFPLIST {expList, ...} =>
+            limitCheck (map Exp expList @ itemList) (n + 1)
         | TFPSEQ {expList, ...} =>
             limitCheck (map Exp expList @ itemList) (n + 1)
         | TFPCAST (tfpexp, ty, loc) => limitCheck (Exp tfpexp :: itemList) (n + 1)
@@ -863,7 +864,6 @@ struct
          (case (VIdMap.find (varEnv, var)) of
             SOME v => RCVAR(v, loc)
           | NONE => RCVAR (var, loc) )
-       | TFPGETGLOBAL (string, ty, loc) => RCGETGLOBAL(string, ty, loc)
        | TFPGETGLOBALVALUE (arrayIndex, offset, ty, loc) => 
          RCGETGLOBALVALUE (arrayIndex, offset, ty, loc)
        | TFPGETFIELD (e1, int, ty, loc) =>
@@ -1094,6 +1094,12 @@ struct
               loc=loc
              }
        | TFPCAST (exp, ty, loc) => RCCAST(tfpexpToRcexp varEnv btvEnv exp, ty, loc)
+       | TFPLIST {expList, listTy, loc} =>
+         RCLIST {
+                 expList=map (tfpexpToRcexp varEnv btvEnv) expList, 
+                 listTy=listTy, 
+                 loc=loc
+                }
        | TFPSEQ {expList, expTyList, loc} =>
          RCSEQ {
                 expList=map (tfpexpToRcexp varEnv btvEnv) expList, 

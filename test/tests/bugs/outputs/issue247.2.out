@@ -6,36 +6,35 @@ val it = A12_1 (B12_1 1.23) : ['a .(real, 'a) d12_1]
 datatype ('a, 'b) d12_2
 con A12_2 : ['a,'b.('a, 'b) d12_2  -> ('b, 'a) d12_2]
 con B12_2 : ['a,'b.'b  -> ('b, 'a) d12_2]
-val it = A12_2 (B12_2 1) : ['a .(int, 'a) d12_2]
-val it = A12_2 (B12_2 1.23) : ['a .(real, 'a) d12_2]
+val it = A12_2 ... : ['a .('a, int) d12_2]
+val it = A12_2 ... : ['a .('a, real) d12_2]
 datatype 'a d21_1
 con A21_1 : ['a .'a e21_1  -> 'a d21_1]
 con B21_1 : ['a .'a  -> 'a d21_1]
 datatype 'a e21_1
 con C21_1 : ['a .'a d21_1  -> 'a e21_1]
-val it = C21_1 (A21_1 (C21_1 (B21_1 1))) : int e21_1
+val it = C21_1 ... : int e21_1
 datatype 'a d21_2
 con A21_2 : ['a .'a e21_2  -> 'a d21_2]
 con B21_2 : ['a .'a  -> 'a d21_2]
 datatype 'a e21_2
 con C21_2 : ['a .int d21_2  -> 'a e21_2]
-val it = C21_2 (A21_2 (C21_2 (B21_2 1))) : int e21_2
+val it = C21_2 ... : ['a .'a e21_2]
 datatype ('a, 'b) d22_1
 con A22_1 : ['a,'b.('b, 'a) e22_1  -> ('b, 'a) d22_1]
 con B22_1 : ['a,'b.'b  -> ('b, 'a) d22_1]
 datatype ('a, 'b) e22_1
 con C22_1 : ['a,'b.('b, 'a) d22_1  -> ('b, 'a) e22_1]
-val it = C22_1 (A22_1 (C22_1 (B22_1 1))) : ['a .(int, 'a) e22_1]
+val it = C22_1 ... : ['a .(int, 'a) e22_1]
 datatype ('a, 'b) d22_2
 con A22_2 : ['a,'b.('b, 'a) e22_2  -> ('b, 'a) d22_2]
 con B22_2 : ['a,'b.'b  -> ('b, 'a) d22_2]
 datatype ('a, 'b) e22_2
 con C22_2 : ['a,'b.('a, 'b) d22_2  -> ('b, 'a) e22_2]
-val it = C22_2 (A22_2 (C22_2 (B22_2 1))) : ['a .(int, 'a) e22_2]
+val it = C22_2 ... : ['a .(int, 'a) e22_2]
 datatype ('a, 'b) d22_3
 con A22_3 : ['a,'b.('a, 'b) e22_3  -> ('b, 'a) d22_3]
 con B22_3 : ['a,'b.'b  -> ('b, 'a) d22_3]
 datatype ('a, 'b) e22_3
 con C22_3 : ['a,'b.('a, 'b) d22_3  -> ('b, 'a) e22_3]
-val it = C22_3 (A22_3 (C22_3 (B22_3 1))) : ['a .(int, 'a) e22_3]
-
+val it = C22_3 ... : ['a .('a, int) e22_3]

@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006-2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: display_glut.sml,v 1.2.2.1 2007/03/26 06:26:50 katsu Exp $
+ * @version $Id: display_glut.sml,v 1.3 2007/04/02 09:42:29 katsu Exp $
  *)
 
 structure Display : DISPLAY =

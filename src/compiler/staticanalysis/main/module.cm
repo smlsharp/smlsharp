@@ -1,0 +1,31 @@
+Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
+	../../../smlformatlib.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
+        smlnj-lib.cm
+#endif
+
+        ../../control/sources.cm
+        ../../format/sources.cm
+        ../../env/sources.cm
+	../../name/sources.cm
+        ../../../primitives/compiler/sources.cm
+        ../../types/sources.cm
+        ../../typedlambda/sources.cm
+        ../../annotatedtypes/sources.cm
+        ../../annotatedcalc/sources.cm
+
+        STATICANALYSIS.sig
+        StaticAnalysis.sml
+        SACONTEXT.sig
+        SAContext.sml
+        SACONSTRAINT.sig
+        SAConstraint.sml

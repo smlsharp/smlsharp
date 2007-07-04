@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: ExecutableSerializer.sml,v 1.12.4.1 2007/03/23 05:43:04 katsu Exp $
+ * @version $Id: ExecutableSerializer.sml,v 1.15 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure ExecutableSerializer : EXECUTABLE_SERIALIZER =
 struct
@@ -48,7 +48,7 @@ struct
   fun deserializeString reader =
       let
         val bytes = BTS.deserializeUInt32 reader
-        val bytesOfPadded = UInt32.toInt(wordsOfStringLength bytes) * 4
+        val bytesOfPadded = BT.UInt32.toInt(wordsOfStringLength bytes) * 4
         val string =
             deserializeSequence BTS.deserializeUInt8 bytesOfPadded reader
       in {length = bytes, string = string} end
@@ -112,15 +112,15 @@ struct
         val locationsCount = BTS.deserializeUInt32 reader
         val locations =
             deserializeSequence
-                deserializeTableEntry (UInt32.toInt locationsCount) reader
+                deserializeTableEntry (BT.UInt32.toInt locationsCount) reader
         val fileNamesCount = BTS.deserializeUInt32 reader
 
         val fileNameOffsets =
             deserializeSequence
-                BTS.deserializeUInt32 (UInt32.toInt fileNamesCount) reader
+                BTS.deserializeUInt32 (BT.UInt32.toInt fileNamesCount) reader
         val fileNames = 
             deserializeSequence
-                deserializeString (UInt32.toInt fileNamesCount) reader
+                deserializeString (BT.UInt32.toInt fileNamesCount) reader
         val locationTable =
             {
               locationsCount = locationsCount,
@@ -189,15 +189,15 @@ struct
         val nameSlotsCount = BTS.deserializeUInt32 reader
         val nameSlots =
             deserializeSequence
-                deserializeTableEntry (UInt32.toInt nameSlotsCount) reader
+                deserializeTableEntry (BT.UInt32.toInt nameSlotsCount) reader
         val boundNamesCount = BTS.deserializeUInt32 reader
 
         val boundNameOffsets =
             deserializeSequence
-                BTS.deserializeUInt32 (UInt32.toInt boundNamesCount) reader
+                BTS.deserializeUInt32 (BT.UInt32.toInt boundNamesCount) reader
         val boundNames = 
             deserializeSequence
-                deserializeString (UInt32.toInt boundNamesCount) reader
+                deserializeString (BT.UInt32.toInt boundNamesCount) reader
         val nameSlotTable =
             {
               nameSlotsCount = nameSlotsCount,
@@ -221,6 +221,22 @@ struct
         fun reader () =
             Word8Vector.sub (buffer, !pos) before pos := !pos + 1
 
+        (* magic *)
+        val magic1 = BTSNet.deserializeUInt8 reader
+        val magic2 = BTSNet.deserializeUInt8 reader
+        val magic3 = BTSNet.deserializeUInt8 reader
+        val magic4 = BTSNet.deserializeUInt8 reader
+        val _ =
+            if
+              (magic1, magic2, magic3, magic4)
+              = (0wx53, 0wx4d, 0wx4c, 0wx23) (* 'S','M','L','#' *)
+            then ()
+            else raise Fail "bad magic number."
+
+        (* minor, major *)
+        val minor = BTSNet.deserializeUInt16 reader
+        val major = BTSNet.deserializeUInt16 reader
+
         (* byteOrder should be SD.NativeByteOrder *)
         val byteOrder =
             (SDT.wordToByteOrder o BT.UInt32ToWord o BTS.deserializeUInt32)
@@ -232,7 +248,7 @@ struct
                 else ()
 
         val instructionsSize = BTS.deserializeUInt32 reader
-        val bytesOfInstructionsSize = UInt32.toInt instructionsSize * 4
+        val bytesOfInstructionsSize = BT.UInt32.toInt instructionsSize * 4
 
         val instructionsArray = Word8Array.array (bytesOfInstructionsSize, 0w0)
         val _ =
@@ -283,7 +299,9 @@ struct
         val nameSlotTableWords = sizeOfNameSlotTable nameSlotTable
 
         val totalWords =
-            0w1 (* byte order *)
+            0w1 (* magic *)
+            + 0w1 (* minor, major version *)
+            + 0w1 (* byte order *)
             + 0w1 (* instructionSize *)
             + instructionsSize (* instructions *)
             + 0w1 (* locationTableWords *)
@@ -292,10 +310,22 @@ struct
             + nameSlotTableWords
         val totalBytes = totalWords * 0w4
 
-        val buffer = Word8Array.array (UInt32.toInt totalBytes, 0w0)
+        val buffer = Word8Array.array (BT.UInt32.toInt totalBytes, 0w0)
         val pos = ref 0
         fun writer byte =
             Word8Array.update (buffer, !pos, byte) before pos := !pos + 1
+
+        (* magic *)
+        val _ =
+            List.app
+                (fn b => BTSNet.serializeUInt8 b writer)
+                [0wx53, 0wx4d, 0wx4c, 0wx23] (* 'S','M','L','#' *)
+
+        (* minor, major *)
+        val _ =
+            BTSNet.serializeUInt16 (#minor Configuration.BinaryVersion) writer
+        val _ =
+            BTSNet.serializeUInt16 (#major Configuration.BinaryVersion) writer
 
         (* byteOrder *)
         val _ = if byteOrder <> SD.NativeByteOrder
@@ -310,13 +340,14 @@ struct
         val _ = BTS.serializeUInt32 instructionsSize writer
         val _ = InstructionSerializer.serialize instructions writer
         val _ =
-            if !pos <> 4 + 4 + (UInt32.toInt instructionsSize * 4)
+            (* magic, version, byteOrder, size *)
+            if !pos <> 4 + 4 + 4 + 4 + (BT.UInt32.toInt instructionsSize * 4)
             then
               raise
                 Fail
                     ("serialize: serialized = " ^ Int.toString (!pos)
                      ^ ", instsize = "
-                     ^ Int.toString (UInt32.toInt instructionsSize))
+                     ^ Int.toString (BT.UInt32.toInt instructionsSize))
             else ()
 
         (* location table *)
@@ -328,13 +359,13 @@ struct
         val _ = serializeNameSlotTable nameSlotTable writer
 
         val _ =
-            if !pos <> UInt32.toInt totalBytes
+            if !pos <> BT.UInt32.toInt totalBytes
             then
               raise
                 Fail
                     ("serialize: serialized = "
                      ^ Int.toString (!pos) ^
-                     ", buffer = " ^ Int.toString (UInt32.toInt totalBytes))
+                     ", buffer = " ^ Int.toString (BT.UInt32.toInt totalBytes))
             else ()
       in
         Word8Array.extract (buffer, 0, NONE)

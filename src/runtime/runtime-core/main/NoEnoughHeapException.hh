@@ -2,10 +2,10 @@
 #define NoEnoughHeapException_hh_
 
 #include "SystemDef.hh"
-#include "IMLRuntimeException.hh"
+#include "SystemError.hh"
 
 #ifdef USE_NAMESPACE
-using jp_ac_jaist_iml::IMLRuntimeException;
+using jp_ac_jaist_iml::SystemError;
 #endif
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml)
@@ -15,14 +15,14 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml)
  * requested size in heap area.
  */
 class NoEnoughHeapException
-    : public IMLRuntimeException
+    : public SystemError
 {
     ///////////////////////////////////////////////////////////////////////////
 
   public:
     
     NoEnoughHeapException()
-        : IMLRuntimeException()
+        : SystemError()
     {
     }
 

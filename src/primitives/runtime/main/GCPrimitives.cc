@@ -95,11 +95,47 @@ IMLPrim_GC_addressOfFLOBImpl(UInt32Value argsCount,
     resultRef->blockRef = FLOB;
 }
 
+void
+IMLPrim_GC_copyBlockImpl(UInt32Value argsCount,
+                         Cell* argumentRefs[],
+                         Cell* resultRef)
+{
+    Cell* refBlock = argumentRefs[0]->blockRef;
+    if(!ensureRefOfBlock(refBlock)){return;}
+    Cell* newBlock = Heap::reserveCopy(refBlock[0].blockRef);
+    /* Note: Don't use refBlock, because GC might have made it invalid in
+     *      Heap::reserveCopy. */
+    Heap::copyBlock(argumentRefs[0]->blockRef[0].blockRef, newBlock);
+    resultRef->blockRef = newBlock;
+}
+
+void
+IMLPrim_GC_isAddressOfBlockImpl(UInt32Value argsCount,
+                               Cell* argumentRefs[],
+                               Cell* resultRef)
+{
+    Cell* block = argumentRefs[0]->blockRef;
+    *resultRef
+        = PrimitiveSupport::boolToCell(Heap::isValidBlockPointer(block));
+}
+
+void
+IMLPrim_GC_isAddressOfFLOBImpl(UInt32Value argsCount,
+                               Cell* argumentRefs[],
+                               Cell* resultRef)
+{
+    Cell* block = argumentRefs[0]->blockRef;// this may be not valid Cell*
+    *resultRef = PrimitiveSupport::boolToCell(Heap::isFLOB(block));
+}
+
 Primitive IMLPrim_GC_addFinalizable = IMLPrim_GC_addFinalizableImpl;
 Primitive IMLPrim_GC_doGC = IMLPrim_GC_doGCImpl;
 Primitive IMLPrim_GC_fixedCopy = IMLPrim_GC_fixedCopyImpl;
 Primitive IMLPrim_GC_releaseFLOB = IMLPrim_GC_releaseFLOBImpl;
 Primitive IMLPrim_GC_addressOfFLOB = IMLPrim_GC_addressOfFLOBImpl;
+Primitive IMLPrim_GC_copyBlock = IMLPrim_GC_copyBlockImpl;
+Primitive IMLPrim_GC_isAddressOfBlock = IMLPrim_GC_isAddressOfBlockImpl;
+Primitive IMLPrim_GC_isAddressOfFLOB = IMLPrim_GC_isAddressOfFLOBImpl;
 
 ///////////////////////////////////////////////////////////////////////////////
 

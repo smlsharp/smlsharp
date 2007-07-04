@@ -5,7 +5,7 @@
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: PATTERNCALC.sig,v 1.12 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: PATTERNCALC.sig,v 1.13 2007/06/19 22:19:12 ohori Exp $
  *)
 signature PATTERNCALC = sig
 
@@ -32,6 +32,7 @@ signature PATTERNCALC = sig
    | PLRECORD of (string * plexp) list * loc
    | PLRECORD_UPDATE of plexp * (string * plexp) list * loc
    | PLTUPLE of plexp list * loc
+   | PLLIST of plexp list * loc
    | PLRAISE of plexp * loc
    | PLHANDLE of plexp * (plpat * plexp) list * loc
    | PLFNM of (plpat list * plexp) list * loc

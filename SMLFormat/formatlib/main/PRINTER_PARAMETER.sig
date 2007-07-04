@@ -1,7 +1,7 @@
 (**
  * parameter for pretty-printer.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PRINTER_PARAMETER.sig,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
+ * @version $Id: PRINTER_PARAMETER.sig,v 1.4 2007/06/18 13:30:43 kiyoshiy Exp $
  *)
 signature PRINTER_PARAMETER =
 sig
@@ -18,6 +18,12 @@ sig
   val defaultGuardLeft : string
   (** Its value is ")". *)
   val defaultGuardRight : string
+  (** Its value is NONE. *)
+  val defaultMaxDepthOfGuards : int option
+  (** Its value is NONE. *)
+  val defaultMaxWidthOfGuards : int option
+  (** Its value is false. *)
+  val defaultCutOverTail : bool
 
   datatype parameter =
            (** a string used to begin a new line. 
@@ -43,6 +49,20 @@ sig
             * The specified string is considered to occupy 1 column in the
             * formatted output. *)
            GuardRight of string
+         | (** specifies the maximum depth of nests of Guards to be formatted.
+            * Guards nested at deeper than specified are discarded.
+            * If NONE, Guards at every depth are formatted.
+            *)
+           MaxDepthOfGuards of int option
+         | (** specifies the maximum elements of Guards to be formatted.
+            * Only first elements of specified number are formatted.
+            * If NONE, all of elements of Guards are formatted.
+            *)
+           MaxWidthOfGuards of int option
+         | (** specifies whether to truncate tail-characters of each line
+            * if they over the specified number of columns.
+            *)
+           CutOverTail of bool
 
   (***************************************************************************)
 

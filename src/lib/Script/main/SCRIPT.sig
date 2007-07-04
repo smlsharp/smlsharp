@@ -1,7 +1,7 @@
 (**
  * @author YAMATODANI Kiyoshi
  * @copyright (c) 2006, Tohoku University.
- * @version $Id: SCRIPT.sig,v 1.11 2006/03/14 06:01:25 kiyoshiy Exp $
+ * @version $Id: SCRIPT.sig,v 1.12 2007/04/01 02:30:42 kiyoshiy Exp $
  *)
 signature SCRIPT =
 sig
@@ -28,12 +28,12 @@ sig
 
   (**
    * exits the current process.
-   * This is a shorthand of <code>OS.Process.exit</code>.
+   * This is a shorthand of <code>ignore o OS.Process.exit</code>.
    * @params status
    * @param status exit code.
    * @return This function does not return if success.
    *)
-  val exit : OS.Process.status -> 'a
+  val exit : OS.Process.status -> unit
 
   (**
    * suspends execution of the current process.

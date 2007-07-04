@@ -1,7 +1,7 @@
 (**
  * implementation of primitives on unmanaged memory.
  * @author YAMATODANI Kiyoshi
- * @version $Id: UnmanagedMemoryPrimitives.sml,v 1.4.4.1 2007/03/22 16:57:42 katsu Exp $
+ * @version $Id: UnmanagedMemoryPrimitives.sml,v 1.6 2007/04/02 09:42:29 katsu Exp $
  *)
 structure UnmanagedMemoryPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct

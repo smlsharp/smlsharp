@@ -20,22 +20,28 @@ MLTON_OBJDIR=mlton_$(MLTON_TARGET_PLATFORM)
 MLTON_TARGET=$(MLTON_OBJDIR)/smlsharp$(EXEEXT)
 
 SOURCES = $(srcdir)/absyn/main/Absyn.ppg \
-          $(srcdir)/anormal/main/anormal.ppg \
+          $(srcdir)/anormal/main/ANormal.ppg \
+          $(srcdir)/annotatedtypes/main/AnnotatedTypes.ppg \
+          $(srcdir)/annotatedcalc/main/AnnotatedCalc.ppg \
           $(srcdir)/assemble/main/AssembleError.ppg \
-          $(srcdir)/buccalc/main/BUCCalc.ppg \
           $(srcdir)/control/main/UserError.ppg \
+          $(srcdir)/clustercalc/main/ClusterCalc.ppg \
           $(srcdir)/elaborate/main/ElaborateError.ppg \
           $(srcdir)/format/main/SmlppgUtil.ppg \
+          $(srcdir)/intermediatelanguage/main/IntermediateLanguage.ppg \
           $(srcdir)/linker/main/LinkageUnit.ppg \
           $(srcdir)/linker/main/LinkageError.ppg \
           $(srcdir)/matchcompilation/main/MatchError.ppg \
           $(srcdir)/modulecompilation/main/PathEnv.ppg \
           $(srcdir)/modulecompilation/main/StaticModuleEnv.ppg \
           $(srcdir)/modulecompilation/main/TopObject.ppg \
+          $(srcdir)/multiplevaluecalc/main/MultipleValueCalc.ppg \
+          $(srcdir)/multiplevaluecalc/main/MVTypeCheckError.ppg \
           $(srcdir)/name/main/ID.ppg \
           $(srcdir)/name/main/Loc.ppg \
           $(srcdir)/patterncalc/main/PatternCalc.ppg \
           $(srcdir)/patterncalcWithTvars/main/PatternCalcWithTvars.ppg \
+          $(srcdir)/rbucalc/main/RBUCalc.ppg \
           $(srcdir)/recordcalc/main/RecordCalc.ppg \
           $(srcdir)/settvars/main/SetTVarsError.ppg \
           $(srcdir)/symbolicinstructions/main/SymbolicInstructions.ppg \
@@ -122,6 +128,7 @@ $(MLTON_TARGET): $(MLTON_OBJDIR)/MLTON_COMPILED_O \
 	         -link-opt '$(LIBSMLSHARP_O)' $$flags $(MLTON_FLAGS) \
 	         $(MLTON_OBJDIR)/sources.*.$(OBJEXT)
 
+# NOTE: ls is needed to emulate nullglub option of bash in portable way.
 mlton_o: $(MLTON_OBJDIR)/MLTON_COMPILED_G
 	test ! -f $(MLTON_OBJDIR)/MLTON_COMPILED_O
 	-rm -f $@ $(MLTON_OBJDIR)/sources.*.$(OBJEXT)
@@ -129,7 +136,7 @@ mlton_o: $(MLTON_OBJDIR)/MLTON_COMPILED_G
 	$(MLTON) -verbose 2 -cc '$(CC)' \
 	         -target $(MLTON_TARGET_PLATFORM) \
 	         -keep o -stop o $(MLTON_FLAGS) \
-	         sources.*.c `ls -d -v sources.*.[sS] 2> /dev/null`
+	         sources.*.c `ls -d sources.*.[sS] 2> /dev/null`
 	-rm -f $(MLTON_OBJDIR)/MLTON_COMPILED_O
 	: > $(MLTON_OBJDIR)/MLTON_COMPILED_O
 
@@ -208,6 +215,7 @@ $(srcdir)/buccalc/main/BUCCalc.ppg.sml: buccalc/main/BUCCalc.ppg
 $(srcdir)/control/main/UserError.ppg.sml: control/main/UserError.ppg
 $(srcdir)/elaborate/main/ElaborateError.ppg.sml: elaborate/main/ElaborateError.ppg
 $(srcdir)/format/main/SmlppgUtil.ppg.sml: format/main/SmlppgUtil.ppg
+$(srcdir)/intermediatelanguage/main/IntermediateLanguage.ppg.sml: intermediatelanguage/main/IntermediateLanguage.ppg
 $(srcdir)/linker/main/LinkageUnit.ppg.sml: linker/main/LinkageUnit.ppg
 $(srcdir)/linker/main/LinkageError.ppg.sml: linker/main/LinkageError.ppg
 $(srcdir)/matchcompilation/main/MatchError.ppg.sml: matchcompilation/main/MatchError.ppg

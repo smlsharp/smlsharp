@@ -2,7 +2,7 @@
  * heap implementation.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Heap.sml,v 1.23 2006/02/28 16:11:12 kiyoshiy Exp $
+ * @version $Id: Heap.sml,v 1.25 2007/06/08 15:21:54 ducnh Exp $
  *)
 structure Heap :> HEAP =
 struct
@@ -198,7 +198,7 @@ struct
         UInt32.andb (UInt32.>>(bitmap, UInt32ToWord index), 0w1 : UInt32)
   in
   fun assertValidValue (h : heap) (value as (Pointer address)) =
-      if #reservep h = address
+      if RM.==(#reservep h, address)
       then value
       else (checkPointerInFromArea h address; value)
     | assertValidValue h value = value
@@ -209,7 +209,10 @@ struct
         (case getBitOfIndex bitmap index of
            0w0 => 
            if isPointerValue value
+           then ()
+(* temporary disable for fixed size record
            then failNonPointerExpect (RM.load address, index, bitmap, value)
+*)
            else ()
          | _ =>
            if isPointerValue value

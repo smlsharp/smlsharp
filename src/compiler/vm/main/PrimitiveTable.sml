@@ -2,7 +2,7 @@
  * table of implemetation of primitive operators.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrimitiveTable.sml,v 1.19.4.1 2007/03/22 16:57:42 katsu Exp $
+ * @version $Id: PrimitiveTable.sml,v 1.20 2007/03/22 01:32:24 kiyoshiy Exp $
  *)
 structure PrimitiveTable
           : sig

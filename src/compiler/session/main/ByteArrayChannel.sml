@@ -2,21 +2,26 @@
  * implementation of channel on a byte array.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ByteArrayChannel.sml,v 1.5 2007/02/19 04:06:09 kiyoshiy Exp $
+ * @version $Id: ByteArrayChannel.sml,v 1.6 2007/05/01 02:21:26 kiyoshiy Exp $
  *)
 structure ByteArrayChannel =
 struct
 
   (***************************************************************************)
 
+  structure V = Word8Vector
+  structure A = Word8Array
+
+  (***************************************************************************)
+
   type InitialOutputParameter =
        {
-         buffer : Word8Array.array option ref
+         buffer : A.array option ref
        }
 
   type InitialInputParameter =
        {
-         buffer : Word8Array.array
+         buffer : A.array
        }
 
   (***************************************************************************)
@@ -26,18 +31,18 @@ struct
         val bufferListRef = ref ([] : Word8.word list)
         fun send word = bufferListRef := (word :: (!bufferListRef))
         fun sendArray array =
-            Word8Array.foldl
+            A.foldl
                 (fn (word, ()) => bufferListRef := (word :: (!bufferListRef)))
                 ()
                 array
         fun sendVector vector=
-            Word8Vector.foldl
+            V.foldl
                 (fn (word, ()) => bufferListRef := (word :: (!bufferListRef)))
                 ()
                 vector
         fun flush () = ()
         fun close () =
-            buffer := SOME(Word8Array.fromList(rev (!bufferListRef)))
+            buffer := SOME(A.fromList(rev (!bufferListRef)))
       in
         {
           send = send,
@@ -48,22 +53,33 @@ struct
         } : ChannelTypes.OutputChannel
       end
 
-  fun openIn {buffer} =
+  fun openSliceIn {buffer, start, lenOpt} =
       let
-        val bufferSize = Word8Array.length buffer
-        val next = ref 0
+        val bufferLength = A.length buffer
+        val next =
+            if 0 <= start andalso start <= bufferLength
+            then ref start
+            else raise General.Subscript
+        (* index next to the last element. *)
+        val last = 
+            case lenOpt
+             of NONE => bufferLength
+              | SOME len =>
+                if start + len <= bufferLength
+                then start + len
+                else raise General.Subscript
         fun receive () =
-            if bufferSize = (!next)
-            then NONE
-            else SOME (Word8Array.sub (buffer, !next)) before next := !next + 1
+            if !next < last
+            then SOME (A.sub (buffer, !next)) before next := !next + 1
+            else NONE
         fun receiveArray required =
             let
-              val available = bufferSize - (!next)
+              val available = last - (!next)
               val returnSize =
                   if available <= required then available else required
-              val returnArray = Word8Array.array (returnSize, 0w0)
+              val returnArray = A.array (returnSize, 0w0)
               val _ =
-                  Word8Array.copy
+                  A.copy
                   {
                     src = buffer,
                     si = !next,
@@ -77,17 +93,17 @@ struct
             end
         fun receiveVector required =
             let
-              val available = bufferSize - (!next)
+              val available = last - (!next)
               val returnSize =
                   if available <= required then available else required
               val returnVector =
-                  Word8Array.extract (buffer, !next, SOME returnSize)
+                  A.extract (buffer, !next, SOME returnSize)
               val _ = next := (!next) + returnSize
             in
               returnVector
             end
         fun close () = ()
-        fun isEOF () = (!next) = bufferSize
+        fun isEOF () = (!next) = last
       in
         {
           receive = receive,
@@ -97,6 +113,8 @@ struct
           isEOF = isEOF
         } : ChannelTypes.InputChannel
       end          
+
+  fun openIn {buffer} = openSliceIn {buffer = buffer, start = 0, lenOpt = NONE}
 
   (***************************************************************************)
 

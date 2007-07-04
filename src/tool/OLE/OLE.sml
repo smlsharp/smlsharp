@@ -3,7 +3,7 @@
  * It wraps IDispatch interface of COM object in a record.
  * @copyright (c) 2007, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: OLE.sml,v 1.22.2.1 2007/03/27 13:41:01 kiyoshiy Exp $
+ * @version $Id: OLE.sml,v 1.27 2007/05/24 07:04:42 kiyoshiy Exp $
  *)
 signature OLE = 
 sig
@@ -52,6 +52,8 @@ sig
          | (** BYREF can be used to construct an argument to a parameter
             * of [in] attribute with no [out] attribute. *)
            BYREF of variant
+         | (** parameter of VT_BYREF type with [out] attribute. *)
+           BYREFOUT of variant ref
          | (** corresponds to (VT_ARRAY | VT_VARIANT).
             * Second component is the numbers of elements of each
             * dimension.
@@ -181,7 +183,9 @@ end;
 structure OLE : OLE =
 struct
 
+  structure Finalizable = SMLSharp.Finalizable
   structure FLOB = SMLSharp.FLOB
+  structure NDT = NativeDataTransporter
   structure OLEString = UTF16LECodec.String
   structure UM = UnmanagedMemory
   structure Word16 = Word32
@@ -410,11 +414,13 @@ struct
 
     val fptrCLSIDFromProgID = DynamicLink.dlsym (ole32, "CLSIDFromProgID")
     val CLSIDFromProgID =
-        fptrCLSIDFromProgID : _import _stdcall (LPOLESTR, LPCLSID) -> HRESULT
+        fptrCLSIDFromProgID
+            : _import _stdcall (LPOLESTR, UM.address) -> HRESULT
 
     val fptrCLSIDFromString = DynamicLink.dlsym (ole32, "CLSIDFromString")
     val CLSIDFromString =
-        fptrCLSIDFromString : _import _stdcall (LPOLESTR, LPCLSID) -> HRESULT
+        fptrCLSIDFromString
+            : _import _stdcall (LPOLESTR, UM.address) -> HRESULT
 
     val fptrCoCreateInstance = DynamicLink.dlsym (ole32, "CoCreateInstance")
     val CoCreateInstance =
@@ -569,6 +575,7 @@ struct
          | INT of Int32.int
          | UINT of Word32.word
          | BYREF of variant
+         | BYREFOUT of variant ref
          | VARIANTARRAY of variant array * word list
          | NULLUNKNOWN
          | NULLDISPATCH
@@ -760,6 +767,14 @@ struct
   val BytesOfWord = Word.wordSize div 8
   val productOfWords = List.foldl (op * ) 0w1
 
+  (**********)
+  (* serializing Variant. *)
+
+  fun emptyVariant () =
+      let val resultBuffer = Array.array (WordsOfVariant, 0w0)
+      in resultBuffer
+      end
+
   (*
    * serialize array of SAFEARRAYBOUNDs.
    * SAFEARRAYBOUND is declared in oaidl.h as follows:
@@ -785,8 +800,8 @@ struct
 
   fun VariantArrayToSAFEARRAY (array, lengths) =
       let
-        val cleaners = ref ([] : (unit -> unit) list)
-        fun addCleaner cleaner = cleaners := cleaner :: (!cleaners)
+        val finishers = ref ([] : (unit -> unit) list)
+        fun addFinisher finisher = finishers := finisher :: (!finishers)
 
         (* setup SAFEARRAYBOUND[] *)
         val arrayLen = Array.length array
@@ -795,7 +810,7 @@ struct
             then raise Fail "incorrect lengths in VARIANTARRAY."
             else ()
         val BOUNDS = FLOB.fixedCopy (serializeSAFEARRAYBOUNDs lengths)
-        val _ = addCleaner (fn _ => FLOB.release BOUNDS)
+        val _ = addFinisher (fn _ => FLOB.release BOUNDS)
 
         (* create array *)
         val safearray =
@@ -821,16 +836,16 @@ struct
         fun update (wordOffset, value) =
             UM.updateWord
                 (UM.advance(!refData, BytesOfWord * wordOffset), value)
-        val _ = Array.foldl (serializeVariant addCleaner update) 0 array
+        val _ = Array.foldl (serializeVariant addFinisher update) 0 array
 
         (* clean up *)
         val _ = checkHRESULT(W.SafeArrayUnaccessData(safearray))
-        fun cleaner () = List.app (fn f => f ()) (!cleaners)
+        fun finisher () = List.app (fn f => f ()) (!finishers)
       in
-        (safearray, cleaner)
+        (safearray, finisher)
       end
 
-  and decompVariant addCleaner variant =
+  and decompVariant addFinisher variant =
       case variant of
         EMPTY => (W.VT_EMPTY, 0w0, 0w0)
       | NULL => (W.VT_NULL, 0w0, 0w0)
@@ -841,7 +856,7 @@ struct
         end
       | BSTR olestr =>
         let val bstr = OLESTRToBSTR olestr
-        in addCleaner (fn () => W.SysFreeString bstr); (W.VT_BSTR, bstr, 0w0)
+        in addFinisher (fn () => W.SysFreeString bstr); (W.VT_BSTR, bstr, 0w0)
         end
       | DISPATCH {this, ...} =>
         (W.VT_DISPATCH, UM.addressToWord(Finalizable.getValue this), 0w0)
@@ -858,29 +873,66 @@ struct
       | UINT word => (W.VT_UINT, word, 0w0)
       | BYREF(VARIANT v) =>
         let
-          val (array, cleaner) = variantsToArray [v]
+          val (array, finisher) = variantsToArray [v]
           val FLOB = FLOB.fixedCopy array
           val FLOBaddress = UM.addressToWord(FLOB.addressOf FLOB)
-          val _ = addCleaner cleaner
+          val _ = addFinisher finisher
           (* ToDo : Is it safe to release memory by client ? *)
-          val _ = addCleaner (fn _ => FLOB.release FLOB)
+          val _ = addFinisher (fn _ => FLOB.release FLOB)
         in
           (Word.orb (W.VT_BYREF, W.VT_VARIANT), FLOBaddress, 0w0)
         end
       | BYREF(v) =>
         let
-          val (tag, word1, word2) = decompVariant addCleaner v
+          val (tag, word1, word2) = decompVariant addFinisher v
           val array = Array.fromList [word1, word2]
           val FLOB = FLOB.fixedCopy array
           val FLOBaddress = UM.addressToWord(FLOB.addressOf FLOB)
-          val _ = addCleaner (fn _ => FLOB.release FLOB)
+          val _ = addFinisher (fn _ => FLOB.release FLOB)
+        in
+          (Word.orb (W.VT_BYREF, tag), FLOBaddress, 0w0)
+        end
+      | BYREFOUT(r as ref(VARIANT v)) =>
+        let
+          val (array, finisher) = variantsToArray [v]
+          val FLOB = FLOB.fixedCopy array
+          val FLOBaddress = UM.addressToWord(FLOB.addressOf FLOB)
+          val _ = addFinisher finisher
+          val _ =
+              addFinisher
+                  (fn _ =>
+                      (
+                        case FLOB.app arrayToVariants FLOB
+                         of [v'] => r := VARIANT v'
+                          | _ => () (* error? *);
+                        FLOB.release FLOB
+                      ))
+        in
+          (Word.orb (W.VT_BYREF, W.VT_VARIANT), FLOBaddress, 0w0)
+        end
+      | BYREFOUT(r as ref(v)) =>
+        let
+          val (tag, word1, word2) = decompVariant addFinisher v
+          val array = Array.fromList [word1, word2]
+          val FLOB = FLOB.fixedCopy array
+          val FLOBaddress = UM.addressToWord(FLOB.addressOf FLOB)
+          val _ =
+              addFinisher
+                  (fn _ =>
+                      let
+                        val word1 = FLOB.app (fn a => Array.sub (a, 0)) FLOB
+                        val word2 = FLOB.app (fn a => Array.sub (a, 1)) FLOB
+                      in
+                        r := constructVariant (tag, word1, word2);
+                        FLOB.release FLOB
+                      end)
         in
           (Word.orb (W.VT_BYREF, tag), FLOBaddress, 0w0)
         end
       | VARIANTARRAY (array, lengths) =>
         let
-          val (safearray, cleaner) = VariantArrayToSAFEARRAY (array, lengths)
-          val _ = addCleaner cleaner
+          val (safearray, finisher) = VariantArrayToSAFEARRAY (array, lengths)
+          val _ = addFinisher finisher
           (* safearray will be released by callee. (exactly?) *)
         in
           (Word.orb(W.VT_ARRAY, W.VT_VARIANT), UM.addressToWord safearray, 0w0)
@@ -888,9 +940,9 @@ struct
       | NULLUNKNOWN => (W.VT_UNKNOWN, 0w0, 0w0)
       | NULLDISPATCH => (W.VT_DISPATCH, 0w0, 0w0)
                            
-  and serializeVariant addCleaner update (variant, offset) =
+  and serializeVariant addFinisher update (variant, offset) =
       let
-        val (tag, word1, word2) = decompVariant addCleaner variant
+        val (tag, word1, word2) = decompVariant addFinisher variant
         val _ = update (offset, tag)
         val _ = update (offset + 2, word1)
         val _ = update (offset + 3, word2)
@@ -902,26 +954,22 @@ struct
       let
         val numWords = length variants * WordsOfVariant
         val array : Word.word Array.array = Array.array (numWords, 0w0)
-        val cleaners = ref ([] : (unit -> unit) list)
-        fun addCleaner cleaner = cleaners := cleaner :: (!cleaners);
+        val finishers = ref ([] : (unit -> unit) list)
+        fun addFinisher finisher = finishers := finisher :: (!finishers);
         fun update (offset, value) = Array.update (array, offset, value)
       in
-        List.foldl (serializeVariant addCleaner update) 0 variants;
-        (array, fn () => List.app (fn f => f ()) (!cleaners))
-      end
-
-  fun emptyVariant () =
-      let val resultBuffer = Array.array (WordsOfVariant, 0w0)
-      in resultBuffer
+        List.foldl (serializeVariant addFinisher update) 0 variants;
+        (array, fn () => List.app (fn f => f ()) (!finishers))
       end
 
   (**********)
+  (* deserializing Variant. *)
 
   (**
    * converts a SAFEARRAY of which element is VARIANT, and which may have
    * multiple dimensions, into a single dimension array.
    *)
-  fun SAFEARRAYToVariantArray safeArray =
+  and SAFEARRAYToVariantArray safeArray =
       let
         val vtref = ref (0w0 : W.VARTYPE)
         val _ = checkHRESULT(W.SafeArrayGetVartype(safeArray, vtref))
@@ -1063,6 +1111,8 @@ struct
       in
         deserialize (0, [])
       end
+
+  (**********)
 
   and wrapDispatch (Unknown : Unknown) =
       let
@@ -1533,22 +1583,28 @@ struct
       in
         wrapDispatch (wrapUnknown this)
       end
+    val CLSIDTransporter =
+        NDT.boxed (NDT.tuple4 (NDT.word, NDT.word, NDT.word, NDT.word))
+    val CLSIDBuffer = NDT.export CLSIDTransporter (0w0, 0w0, 0w0, 0w0)
   in        
   fun createInstanceOfProgID progID =
       let
-        val CLSID = (0w0, 0w0, 0w0, 0w0) : W.LPCLSID
         val _ =
-            checkHRESULT (W.CLSIDFromProgID (OLEString.toBytes progID, CLSID))
+            checkHRESULT
+                (W.CLSIDFromProgID
+                     (OLEString.toBytes progID, NDT.addressOf CLSIDBuffer))
+        val CLSID = NDT.import CLSIDBuffer
       in
         create CLSID
       end
 
   fun createInstanceOfCLSID CLSIDString =
       let
-        val CLSID = (0w0, 0w0, 0w0, 0w0) : W.LPCLSID
         val _ =
             checkHRESULT
-            (W.CLSIDFromString (OLEString.toBytes CLSIDString, CLSID))
+                (W.CLSIDFromString
+                     (OLEString.toBytes CLSIDString, NDT.addressOf CLSIDBuffer))
+        val CLSID = NDT.import CLSIDBuffer
       in
         create CLSID
       end

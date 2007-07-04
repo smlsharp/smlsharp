@@ -1,0 +1,268 @@
+structure Assert{
+ type assertEqual
+ type valueFormatter
+ type failure
+ val fail
+ val failByNotEqual
+ val assertEqualCompare
+ val assertEqual
+ val assertEqualUnit
+ val assertEqualInt
+ val assertEqualWord
+ val assertEqualWord8
+ val assertEqualWord32
+ val assertEqualReal
+ val assertEqualChar
+ val assertEqualString
+ val assertEqualSubstring
+ val assertEqualExceptionName
+ val assertEqualRef
+ val assertSameRef
+ val assertEqualBool
+ val assertTrue
+ val assertFalse
+ val assertEqualOption
+ val assertEqualIntOption
+ val assertEqualWordOption
+ val assertEqualWord8Option
+ val assertEqualWord32Option
+ val assertEqualRealOption
+ val assertEqualCharOption
+ val assertEqualStringOption
+ val assertEqualSubstringOption
+ val assertSome
+ val assertNone
+ val assertEqualOrder
+ val assertEqual2Tuple
+ val assertEqual3Tuple
+ val assertEqualContainer
+ val assertEqualVector
+ val assertEqualWord8Vector
+ val assertEqualCharVector
+ val assertEqualArray
+ val assertEqualWord8Array
+ val assertEqualCharArray
+ val assertEqualList
+ val assertEqualIntList
+ val assertEqualWordList
+ val assertEqualWord8List
+ val assertEqualWord32List
+ val assertEqualRealList
+ val assertEqualCharList
+ val assertEqualStringList
+ val assertEqualSubstringList
+ exception Fail
+}
+structure Test{
+ type testFunction
+ type test
+ val labelTests
+}
+structure TextUITestRunner{
+ type parameter
+ type test
+ type testResult
+ val separator
+ val doTest
+ val printTestResult
+ val runTest
+}
+structure SMLUnit{
+ structure Assert{
+  type assertEqual => structure Assert
+  type valueFormatter => structure Assert
+  type failure => structure Assert
+  val fail
+  val failByNotEqual
+  val assertEqualCompare
+  val assertEqual
+  val assertEqualUnit
+  val assertEqualInt
+  val assertEqualWord
+  val assertEqualWord8
+  val assertEqualWord32
+  val assertEqualReal
+  val assertEqualChar
+  val assertEqualString
+  val assertEqualSubstring
+  val assertEqualExceptionName
+  val assertEqualRef
+  val assertSameRef
+  val assertEqualBool
+  val assertTrue
+  val assertFalse
+  val assertEqualOption
+  val assertEqualIntOption
+  val assertEqualWordOption
+  val assertEqualWord8Option
+  val assertEqualWord32Option
+  val assertEqualRealOption
+  val assertEqualCharOption
+  val assertEqualStringOption
+  val assertEqualSubstringOption
+  val assertSome
+  val assertNone
+  val assertEqualOrder
+  val assertEqual2Tuple
+  val assertEqual3Tuple
+  val assertEqualContainer
+  val assertEqualVector
+  val assertEqualWord8Vector
+  val assertEqualCharVector
+  val assertEqualArray
+  val assertEqualWord8Array
+  val assertEqualCharArray
+  val assertEqualList
+  val assertEqualIntList
+  val assertEqualWordList
+  val assertEqualWord8List
+  val assertEqualWord32List
+  val assertEqualRealList
+  val assertEqualCharList
+  val assertEqualStringList
+  val assertEqualSubstringList
+  exception Fail
+ }
+ structure Test{
+  type testFunction => structure Test
+  type test => structure Test
+  val labelTests
+ }
+ structure TextUITestRunner{
+  type parameter => structure TextUITestRunner
+  type test => structure TextUITestRunner
+  type testResult => structure TextUITestRunner
+  val separator
+  val doTest
+  val printTestResult
+  val runTest
+ }
+}
+signature ASSERT{
+ type assertEqual
+ type valueFormatter
+ type failure
+ val assertEqual
+ val fail
+ val failByNotEqual
+ val assertEqualUnit
+ val assertEqualInt
+ val assertEqualWord
+ val assertEqualWord8
+ val assertEqualWord32
+ val assertEqualReal
+ val assertEqualChar
+ val assertEqualString
+ val assertEqualSubstring
+ val assertEqualExceptionName
+ val assertEqualRef
+ val assertSameRef
+ val assertEqualBool
+ val assertTrue
+ val assertFalse
+ val assertEqualOption
+ val assertEqualIntOption
+ val assertEqualWordOption
+ val assertEqualWord8Option
+ val assertEqualWord32Option
+ val assertEqualRealOption
+ val assertEqualCharOption
+ val assertEqualStringOption
+ val assertEqualSubstringOption
+ val assertSome
+ val assertNone
+ val assertEqualOrder
+ val assertEqual2Tuple
+ val assertEqual3Tuple
+ val assertEqualContainer
+ val assertEqualVector
+ val assertEqualWord8Vector
+ val assertEqualCharVector
+ val assertEqualArray
+ val assertEqualWord8Array
+ val assertEqualCharArray
+ val assertEqualList
+ val assertEqualIntList
+ val assertEqualWordList
+ val assertEqualWord8List
+ val assertEqualWord32List
+ val assertEqualRealList
+ val assertEqualCharList
+ val assertEqualStringList
+ val assertEqualSubstringList
+ exception Fail
+}
+signature TEST{
+ type testFunction
+ type test
+ val labelTests
+}
+signature TESTRUNNER{
+ type parameter
+ val runTest
+}
+signature SMLUNIT{
+ structure Assert{
+  type assertEqual => signature ASSERT
+  type valueFormatter => signature ASSERT
+  type failure => signature ASSERT
+  val assertEqual
+  val fail
+  val failByNotEqual
+  val assertEqualUnit
+  val assertEqualInt
+  val assertEqualWord
+  val assertEqualWord8
+  val assertEqualWord32
+  val assertEqualReal
+  val assertEqualChar
+  val assertEqualString
+  val assertEqualSubstring
+  val assertEqualExceptionName
+  val assertEqualRef
+  val assertSameRef
+  val assertEqualBool
+  val assertTrue
+  val assertFalse
+  val assertEqualOption
+  val assertEqualIntOption
+  val assertEqualWordOption
+  val assertEqualWord8Option
+  val assertEqualWord32Option
+  val assertEqualRealOption
+  val assertEqualCharOption
+  val assertEqualStringOption
+  val assertEqualSubstringOption
+  val assertSome
+  val assertNone
+  val assertEqualOrder
+  val assertEqual2Tuple
+  val assertEqual3Tuple
+  val assertEqualContainer
+  val assertEqualVector
+  val assertEqualWord8Vector
+  val assertEqualCharVector
+  val assertEqualArray
+  val assertEqualWord8Array
+  val assertEqualCharArray
+  val assertEqualList
+  val assertEqualIntList
+  val assertEqualWordList
+  val assertEqualWord8List
+  val assertEqualWord32List
+  val assertEqualRealList
+  val assertEqualCharList
+  val assertEqualStringList
+  val assertEqualSubstringList
+  exception Fail
+ }
+ structure Test{
+  type testFunction => signature TEST
+  type test => signature TEST
+  val labelTests
+ }
+ structure TextUITestRunner{
+  type parameter => signature TESTRUNNER
+  val runTest
+ }
+}

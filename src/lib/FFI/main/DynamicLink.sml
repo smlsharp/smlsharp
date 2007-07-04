@@ -1,7 +1,7 @@
 (**
  * access to dynamic link library.
  * @author YAMATODANI Kiyoshi
- * @version $Id: DynamicLink.sml,v 1.4.2.2 2007/03/22 04:30:44 ohori Exp $
+ * @version $Id: DynamicLink.sml,v 1.5 2007/04/02 09:42:29 katsu Exp $
  *)
 structure DynamicLink = 
 struct

@@ -7,6 +7,8 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+static const UInt32Value EXECUTABLE_HEADER_MAGIC = 0x534d4c23UL;
+
 /**
  * This data structure contains VM instructions sequence.
  *

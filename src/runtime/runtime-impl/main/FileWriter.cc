@@ -2,20 +2,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <unistd.h>
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
 ///////////////////////////////////////////////////////////////////////////////
-
-FileWriter::
-FileWriter(const char* fileName, FILE* stream, BoolValue DontClose)
-    :Writer(),
-     fileName_(fileName),
-     stream_(stream),
-     DontClose_(DontClose)
-{
-    descriptor_ = fileno(stream);
-}
 
 FileWriter::
 FileWriter(const char* fileName, int descriptor, BoolValue DontClose)
@@ -24,12 +15,10 @@ FileWriter(const char* fileName, int descriptor, BoolValue DontClose)
      descriptor_(descriptor),
      DontClose_(DontClose)
 {
-    stream_ = fdopen(descriptor, "wb");
 }
 
 FileWriter::~FileWriter()
 {
-    fflush(stream_);
 }
 
 const char*
@@ -47,11 +36,21 @@ FileWriter::getChunkSize()
 UInt32Value
 FileWriter::write(UInt32Value length, const ByteValue* buffer)
 {
-    UInt32Value writtenBytes = fwrite(buffer, 1, length, stream_);
-    if(0 == writtenBytes){
-        fprintf(stderr, "%d\n", ferror(stream_));
+    const ByteValue* currentPosition = buffer;
+    int	leftLength;
+    int writtenLength;
+
+    leftLength = length;
+    while (leftLength > 0) {
+        writtenLength = ::write(descriptor_, currentPosition, leftLength);
+        if(writtenLength <= 0){
+            return(writtenLength);
+        }
+        
+        leftLength -= writtenLength;
+        currentPosition += writtenLength;
     }
-    return writtenBytes;
+    return(length - leftLength);
 }
 
 UInt32Value
@@ -72,12 +71,12 @@ BoolValue FileWriter::canOutput()
 
 UInt32Value FileWriter::getPos()
 {
-    return ftell(stream_);
+    return lseek(descriptor_, 0, SEEK_CUR);
 }
 
 void FileWriter::setPos(UInt32Value position)
 {
-    fseek(stream_, position, SEEK_SET);
+    lseek(descriptor_, position, SEEK_SET);
 }
 
 UInt32Value FileWriter::endPos()
@@ -96,7 +95,7 @@ UInt32Value FileWriter::verifyPos()
 void FileWriter::close()
 {
     if(BOOLVALUE_FALSE == DontClose_){
-        fclose(stream_);
+        ::close(descriptor_);
     }
 }
 

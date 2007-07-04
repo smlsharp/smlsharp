@@ -3,7 +3,7 @@ smlsharp2exe
  smlsharp2exe is a tool that compiles a SML source code to a 'native' executable file which does not require smlsharprun.exe to run.
 
 @author YAMATODANI Kiyoshi
-@version $Id: README.txt,v 1.1.2.2 2007/03/26 09:14:17 katsu Exp $
+@version $Id: README.txt,v 1.1 2007/03/26 00:12:57 kiyoshiy Exp $
 
 ----------
 Usage
