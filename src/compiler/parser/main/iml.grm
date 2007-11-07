@@ -1,7 +1,7 @@
 (* a grammar for the raw symtax of IML.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori, Kiyoshi Yamatodani, Liu Bochao
- * @version $Id: iml.grm,v 1.56 2007/02/28 18:04:01 katsu Exp $
+ * @version $Id: iml.grm,v 1.56.8.3 2007/11/05 13:27:02 bochao Exp $
 *)
 %%
 %eop EOF SEMICOLON
@@ -806,14 +806,16 @@ atomicspec : VAL valdesc
                 (Absyn.SPECEXCEPTION(exdesc,(EXCEPTIONleft,exdescright)))
            | STRUCTURE strdesc
                 (Absyn.SPECSTRUCT(strdesc,(STRUCTUREleft,strdescright)))
-           | INCLUDE sigexp
-                (Absyn.SPECINCLUDE(sigexp,(INCLUDEleft,sigexpright)))
+           | INCLUDE SIG spec END
+                (Absyn.SPECINCLUDE(Absyn.SIGEXPBASIC(spec,(SIGleft,ENDright)),(INCLUDEleft,ENDright)))
+           | INCLUDE sigexpwhere
+                (Absyn.SPECINCLUDE(sigexpwhere,(INCLUDEleft,sigexpwhereright)))
            | INCLUDE sigidseq
                 (Absyn.SPECDERIVEDINCLUDE
                      (sigidseq,(INCLUDEleft,sigidseqright)))
 
-sigidseq : id id ([id1,id2])
-         | id id sigidseq (id1::id2::sigidseq)
+sigidseq : id ([id1])
+         | id sigidseq (id1::sigidseq)
                          
 valdesc : id COLON ty ([(id,ty)])
         | id COLON ty AND valdesc ((id,ty)::valdesc)

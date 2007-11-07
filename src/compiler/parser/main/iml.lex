@@ -6,7 +6,7 @@
  * @author Atsushi Ohori
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: iml.lex,v 1.36 2007/02/28 15:31:25 katsu Exp $
+ * @version $Id: iml.lex,v 1.36.8.1 2007/11/05 12:57:37 ohori Exp $
  *)
 
 structure T = Tokens
@@ -170,7 +170,7 @@ idchars={alpha}|{digit}|{quote}|{underscore};
 id=({alpha}|{quote}){idchars}*;
 ws=("\012"|[\t\ ])*;
 eol=("\013\010"|"\010"|"\013");
-sym=[!%&$+/:<=>?@~|#*]|\-|\^;
+sym=[!%&$+/:<=>?@~`|#*]|\-|\^;
 symbol={sym}|\\;
 num=[0-9]+;
 frac="."{num};

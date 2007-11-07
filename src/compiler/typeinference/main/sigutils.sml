@@ -2,7 +2,7 @@
  * signature check utility for module.
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: sigutils.sml,v 1.74 2007/04/23 00:51:50 bochao Exp $
+ * @version $Id: sigutils.sml,v 1.74.6.2 2007/11/06 01:02:36 bochao Exp $
  *)
 structure SigUtils =
 struct 
@@ -19,11 +19,11 @@ local
 
   fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
 in
-  fun longTyConId currentContext longTyCon = 
+  fun longTyConIdEqKind currentContext longTyCon = 
     case TIC.lookupLongTyCon (currentContext, longTyCon) of
       (_,NONE) => raise E.TyConNotFoundInShare ({tyCon = Absyn.longidToString(longTyCon)})
-    | (_,SOME(T.TYCON({id, ...}))) => id
-    | (_,SOME(T.TYSPEC({spec = {id,...},impl}))) => id
+    | (_,SOME(T.TYCON({id, eqKind, ...}))) => (id, !eqKind)
+    | (_,SOME(T.TYSPEC({spec = {id, eqKind, ...},impl}))) => (id, eqKind)
     | (_,SOME(T.TYFUN({name,...}))) => raise (E.SharingOnTypeFun {tyConName = name})
 
 
@@ -34,6 +34,34 @@ in
         ID.Map.unionWith (fn x => raise Control.Bug "sigutils.extendTyConIdSubst:Duplicate")
                        (newSubst, revisedOldSubst)
       end
+
+  fun extendTyConIdEqSubst (newSubst, oldSubst) =
+      let
+          val revisedOldSubst = 
+              ID.Map.map (fn (oldId, oldEqKind) =>
+                             case ID.Map.find(newSubst, oldId) of
+                                 NONE => (oldId, oldEqKind)
+                               | SOME (newId, newEqKind) =>
+                                 (newId,
+                                  if oldEqKind = T.EQ orelse newEqKind = T.EQ then 
+                                      T.EQ 
+                                  else T.NONEQ)
+                                 ) 
+                         oldSubst
+      in
+          ID.Map.unionWith (fn x => raise Control.Bug "sigutils.extendTyConIdSubst:Duplicate")
+                           (newSubst, revisedOldSubst)
+      end
+
+  fun equateTyConIdEqInContext 
+        tyConIdEqSubst {tyConEnv, varEnv, strEnv = T.STRUCTURE strEnvCont, sigEnv, funEnv}
+    =
+    {tyConEnv = #2 (TCU.substTyConIdEqInTyConEnv ID.Set.empty tyConIdEqSubst tyConEnv),
+     varEnv = #2 (TCU.substTyConIdEqInVarEnv ID.Set.empty tyConIdEqSubst varEnv),
+     strEnv = T.STRUCTURE (#2 (TCU.substTyConIdEqInStrEnvCont ID.Set.empty tyConIdEqSubst strEnvCont)),
+     sigEnv = sigEnv,
+     funEnv = funEnv
+     } : TC.context
 
   fun equateTyConIdInContext 
         tyConIdSubst {tyConEnv, varEnv, strEnv = T.STRUCTURE strEnvCont, sigEnv, funEnv}
@@ -287,13 +315,13 @@ in
                        args
              val newTy = 
                  case ID.Map.find(tyConSubst, #id tyCon) of
-                   NONE => specTy
+                   NONE => T.SPECty specTy
                  | SOME tyBindInfo => 
                    case (TU.peelTySpec tyBindInfo) of
                       T.TYFUN tyFun => 
-                      T.ABSSPECty(T.CONty{tyCon=tyCon,args=args}, TU.betaReduceTy (tyFun,args))
+                      T.ABSSPECty(specTy, TU.betaReduceTy (tyFun,args))
                     | T.TYCON newTyCon => 
-                      T.ABSSPECty(T.CONty{tyCon=tyCon,args=args}, T.CONty {tyCon = newTyCon, args = args})
+                      T.ABSSPECty(specTy, T.CONty {tyCon = newTyCon, args = args})
                     | T.TYSPEC _ => 
                       raise Control.Bug "after peelTySpec there should be no TYSPEC"
            in
@@ -303,41 +331,31 @@ in
 
      and instABSSPECty visited boxedKindSubst strPathSubst tyConSubst ty =
          case ty of
-           T.ABSSPECty (specTy as T.CONty {tyCon, args}, implTy) =>
-           let
-             val tyBindInfo =
-                 case ID.Map.find(tyConSubst, #id tyCon) of
-                   NONE => NONE
-                 | SOME tyBindInfo => SOME (TU.peelTySpec tyBindInfo)
-             val (specTy', visited) = 
-                 instSigTy visited boxedKindSubst strPathSubst ID.Map.empty specTy
-           in
-             case tyBindInfo of
-               NONE => 
-               let
-                 val (implTy',visited) = 
-                     let
-                       val (newImplTy,visited) =
-                           instSigTy visited boxedKindSubst strPathSubst tyConSubst implTy
-                     in
-                       (newImplTy, visited)
-                     end
-               in
-                 (visited, T.ABSSPECty(specTy',implTy'))
-               end
-             | SOME (T.TYFUN tyFun) =>
-               let
-                 val implTy = TU.betaReduceTy (tyFun,args)
-               in
-                 (visited, T.ABSSPECty(specTy', implTy))
-               end
-             | SOME (T.TYCON tyCon) => 
-               (visited, T.ABSSPECty(specTy', (T.CONty {tyCon = tyCon, args = args})))
-             | SOME (T.TYSPEC _ ) => 
-               raise Control.Bug "after peelTySpec there should be no TYSPEC"
-           end          
-         | _ => raise Control.Bug "ill-formed ABSSPECty"
-           
+             T.ABSSPECty (specTy as T.CONty {tyCon, args}, implTy) =>
+             let
+                 val (visited, newTyCon) =
+                     instSigTyCon visited boxedKindSubst strPathSubst
+                                  tyConSubst tyCon
+                 val (visited, newArgs ) =
+                     instSigTyList visited boxedKindSubst strPathSubst
+                                   tyConSubst args
+                 val newSpecTy = T.CONty {tyCon = newTyCon, args = newArgs}
+                 val (newImplTy,visited) =
+                     instSigTy visited boxedKindSubst strPathSubst tyConSubst implTy
+             in
+                 (visited, T.ABSSPECty(newSpecTy, newImplTy))
+             end
+
+     and instSigTyList visited boxedKindSubst strPathSubst tyConSubst tyList =           
+         foldr (fn (ty, (visited, newTys)) =>
+                   let
+                       val (newTy, visited) = instSigTy visited boxedKindSubst strPathSubst tyConSubst ty 
+                   in
+                       (visited, newTy :: newTys)
+                   end)
+               (visited, nil)
+               tyList
+
      and instSigTy visited boxedKindSubst strPathSubst tyConSubst ty =
          TypeTransducer.transTyPreOrder
            (fn (ty, visited) =>
@@ -367,15 +385,10 @@ in
                  end
                | T.SPECty ty =>
                  let
-                   val (vsisited, newTy1) =
-                       instSPECty
-                         visited boxedKindSubst strPathSubst tyConSubst ty
-                   val newTy2 = case newTy1 of
-                                    T.ABSSPECty _ => newTy1
-                                  | T.CONty _ => T.SPECty newTy1
-                                  | _ => raise Control.Bug "illegal specTy form"
+                     val (visited, newTy1) =
+                         instSPECty visited boxedKindSubst strPathSubst tyConSubst ty
                  in
-                   (newTy2, visited, false)
+                     (newTy1, visited, false)
                  end
                | T.POLYty {boundtvars, body} => 
                  let

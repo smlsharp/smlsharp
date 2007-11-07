@@ -2,7 +2,7 @@
  * A functorized implementation of the OS.Path structure.
  * @author AT&T Bell Laboratories.
  * @author YAMATODANI Kiyoshi
- * @version $Id: OS_PathFn.sml,v 1.3 2006/12/04 04:21:03 kiyoshiy Exp $
+ * @version $Id: OS_PathFn.sml,v 1.3.10.1 2007/11/06 14:39:51 kiyoshiy Exp $
  *)
 (* os-path-fn.sml
  *
@@ -67,7 +67,7 @@ struct
   fun fromString "" = {isAbs = false, vol = "", arcs = []}
     | fromString p =
       let
-        val fields = SS.tokens (fn c => (c = P.arcSepChar)) (* Use tokens *)
+        val fields = SS.fields (fn c => (c = P.arcSepChar))
         val (isAbs, vol, rest) = P.splitVolPath p
       in
         {

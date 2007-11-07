@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypeInferCore.sml,v 1.88 2007/06/19 22:19:12 ohori Exp $
+ * @version $Id: TypeInferCore.sml,v 1.88.2.1 2007/11/05 13:27:03 bochao Exp $
  *)
 structure TypeInferCore  =
 struct
@@ -3701,10 +3701,12 @@ in
              
            (* if the above error check fails then we change the pattern to wild pattern and continue compiling
             *)
+(*
            val ptpatPtexpList =
              if E.isError() then  
                map (fn (ptPat,ptExp) => (PT.PTPATWILD (PT.getLocPat ptPat),ptExp)) ptpatPtexpList
              else ptpatPtexpList
+*)
 
            val (localBinds, patternVarBinds, extraBinds) = 
                foldr
