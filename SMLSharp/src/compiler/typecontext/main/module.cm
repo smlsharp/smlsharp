@@ -1,0 +1,30 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../absyn/sources.cm
+        ../../control/sources.cm
+        ../../patterncalc/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../primitive/sources.cm
+
+(*
+        ../../typedcalc/sources.cm
+*)
+        ../../pickle/sources.cm
+
+        InitialTypeContext.sml
+        TypeContext.ppg.sml
+        TypeContextUtils.sml    
+        TypeContextPickler.sml
+(*
+        StaticTypeEnvPickler.sml                
+        StaticTypeEnv.ppg.sml
+        StaticTypeEnvUtils.sml
+*)
+        InitialNameMap.sml

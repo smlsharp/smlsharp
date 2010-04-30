@@ -1,0 +1,41 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../systemdef/sources.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../pickle/sources.cm
+        ../../types/sources.cm
+        ../../primitive/sources.cm
+        ../../typecontext/sources.cm
+        ../../constantterm/sources.cm
+        ../../absyn/sources.cm
+        ../../patterncalc/sources.cm
+        ../../typedcalc/sources.cm
+        ../../typedflatcalc/sources.cm
+
+	Counters.sml
+        UniqueIdAllocation.sml
+        UNIQUEIDALLOCATION.sig
+        UniqueIdAllocationCore.sml
+        UniqueIdAllocationMod.sml
+        UniqueIdAllocationUtils.sml
+        UniqueIdAllocationContext.sml
+(*
+	StaticUniqueIdAllocationEnv.ppg
+	ModuleCompileFunctorApp.sml
+	PathEnvFormatter.sml
+        InitialUniqueIdAllocationContext.sml
+        INITIALUNIQUEIDALLOCATIONCONTEXT.sig
+*)
+        FunctorApplyUtils.sml
+	ExternalIdAllocator.sml
+        UniqueIdAllocationPickler.sml
+	

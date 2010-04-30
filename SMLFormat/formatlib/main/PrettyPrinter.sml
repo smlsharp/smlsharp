@@ -2,14 +2,15 @@
  *  This module translates the symbols into a text representation which fits
  * within the specified column width.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrettyPrinter.sml,v 1.4 2007/06/18 13:30:43 kiyoshiy Exp $
+ * @version $Id: PrettyPrinter.sml,v 1.5 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-structure PrettyPrinter :> PRETTYPRINTER =
+functor PrettyPrinter(FE : FORMAT_EXPRESSION) : PRETTYPRINTER =
 struct
 
   (***************************************************************************)
 
-  structure FE = FormatExpression
+  structure FormatExpression = FE
+
   structure PP = PrinterParameter
 
   (***************************************************************************)

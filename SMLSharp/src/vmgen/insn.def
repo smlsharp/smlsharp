@@ -1,0 +1,1470 @@
+
+/*
+ * Each operand is fetched by pointer dereference, especially to fetch
+ * value in register and stack frame, dereference is needed twice.
+ * Be careful of the notion of "sequence point" of C and potential aliasing.
+ * To achive good performance, do not keep live registers beyond function
+ * application, or the compiler consumes caller-save registers, which
+ * should be used for virtual system registers. (IP, SP, etc.)
+ *
+ * For example,
+ *
+ *   tmpvar x;
+ *   x = FUNC(arg1, arg2);
+ *   dst = x;
+ *
+ * is better than
+ *
+ *   dst = FUNC(arg1, arg2);
+ */
+
+/*
+ * NOP : no operation
+ */
+nop () {
+  semantics:
+}
+
+/*
+ * MOV : move value
+ */
+mov{w,l,n,nl,f,fs,fl,p} (varD, varA) {
+  semantics:
+    VAR(varD):ty = VAR(varA):ty;
+}
+
+/*
+ * MOVX : move value with fixed size
+ */
+movx (size, varD, varA) {
+  semantics:
+    #variations size == 4 || size == 8 || size == 16
+    COPY(&VAR(varD), &VAR(varA), size);
+}
+
+/*
+ * MVI : move immediate value
+ * Use LDM to load fl (long double). That is too large as immediate value.
+ */
+mvi{w,l,n,nl,f,fs,p} (varD, imm) {
+  semantics:
+    #variations ((ty == w || ty == n) && imm == 0)
+    VAR(varD):ty = imm;
+}
+
+/*
+ * NULL : load NULL pointer
+ */
+null (varA) {
+  semantics:
+    VAR(varA):p = NULL;
+}
+
+/*
+ * LEA : load effective address
+ */
+lea (varD, varB, displacement) {
+  syntax:
+    #if displacement == 0
+      varD "," "[" varB "]"
+    #else
+      varD "," "[" varB "+" displacement "]"
+
+  semantics:
+    VAR(varD):p = &VAR(varB):p[displacement];
+}
+
+/*
+ * LEAI : load effective address indexed
+ */
+leai (varD, varB, varC, scale) {
+  syntax:
+    #if scale == 1
+      varD "," "[" varB "+" varC "]"
+    #else
+      varD "," "[" varB "+" varC "*" scale "]"
+
+  semantics:
+    #variations scale == 1
+    VAR(varD):p = &VAR(varB):p[VAR(varC), scale];
+}
+
+/*
+ * LDS : load small integer
+ */
+lds<b,h> (varD, varB, displacement) {
+  syntax:
+    #if displacement == 0
+      varD "," "[" varB "]"
+    #else
+      varD "," "[" varB "+" displacement "]"
+
+  semantics:
+    #if suffix == b
+      VAR(varD):w = (w)(VAR(varB):p[displacement]:b);
+    #else /* suffix == h */
+      VAR(varD):w = (w)(VAR(varB):p[displacement]:h);
+}
+
+/*
+ * LDSI : load small integer indexed
+ */
+ldsi<b,h> (varD, varB, varC) {
+  syntax:
+    varD "," "[" varB "+" varC "]"
+
+  semantics:
+    #if suffix == b
+      VAR(varD):w = (w)(VAR(varB):p[VAR(varC)]:b);
+    #else
+      VAR(varD):w = (w)(VAR(varB):p[VAR(varC)]:h);
+}
+
+/*
+ * LDM : load memory
+ */
+ldm{w,l,n,nl,f,fs,fl,p} (varD, varB, displacement) {
+  syntax:
+    #if displacement == 0
+      varD "," "[" varB "]"
+    #else
+      varD "," "[" varB "+" displacement "]"
+
+  semantics:
+    #variations (ty == w && displacement == -4) || displacement == 0
+    VAR(varD):ty = VAR(varB):p[displacement]:ty;
+}
+
+/*
+ * LDMI : load memory indexed
+ */
+ldmi{w,l,n,nl,f,fs,fl,p} (varD, varB, varC, scale) {
+  syntax:
+    #if scale == 1
+      varD "," "[" varB "+" varC "]"
+    #else
+      varD "," "[" varB "+" varC "*" scale "]"
+
+  semantics:
+    #variations (ty == w  && scale == 4)
+             || (ty == l  && scale == 8)
+             || (ty == n  && scale == 4)
+             || (ty == nl && scale == 8)
+             || (ty == f  && scale == 4)
+             || (ty == fs && scale == 8)
+             || (ty == fl && scale == 16)
+             || (ty == p  && scale == 4)
+             || scale == 1
+    VAR(varD):ty = VAR(varB):p[VAR(varC), scale]:ty;
+}
+
+/*
+ * LDMX : load memory fixed-size
+ */
+ldmx (size, varD, varB, displacement) {
+  syntax:
+    #if displacement == 0
+      size "," varD "," "[" varB "]"
+    #else
+      size "," varD "," "[" varB "+" displacement "]"
+
+  semantics:
+    #variations (size == 4 || size == 8) && displacement == 0
+    COPY(&VAR(varD), &VAR(varB):p[displacement], size);
+}
+
+/*
+ * LDMXI : load memory fixed-size indexed
+ */
+ldmxi (size, varD, varB, varC, scale) {
+  syntax:
+    #if scale == 1
+      size "," varD "," "[" varB "+" varC "]"
+    #else
+      size "," varD "," "[" varB "+" varC "*" scale "]"
+
+  semantics:
+    #variations (size == 4 || size == 8) && scale == 1
+    COPY(&VAR(varD), &VAR(varB):p[VAR(varC), scale], size);
+}
+
+/*
+ * LDMV : load memory variable-size
+ */
+ldmv (varA, varD, varB, displacement) {
+  syntax:
+    #if displacement == 0
+      varA "," varD "," "[" varB "]"
+    #else
+      varA "," varD "," "[" varB "+" displacement "]"
+
+  semantics:
+    #variations displacement == 0
+    COPY(&VAR(varD), &VAR(varB):p[displacement], VAR(varA):sz);
+}
+
+/*
+ * LDMVI : load memory variable-size indexed
+ */
+ldmvi (varA, varD, varB, varC, scale) {
+  syntax:
+    #if scale == 1
+      varA "," varD "," "[" varB "+" varC "]"
+    #else
+      varA "," varD "," "[" varB "+" varC "*" scale "]"
+
+  semantics:
+    #variations scale == 1
+    COPY(&VAR(varD), &VAR(varB):p[VAR(varC), scale], VAR(varA):sz);
+}
+
+/*
+ * STI : store immediate value into memory
+ */
+sti{w,l,n,nl,f,fs,p} (varB, displacement, imm) {
+  syntax:
+    #if displacement == 0
+      "[" varB "]" "," imm
+    #else
+      "[" varB "+" displacement "]" "," imm
+
+  semantics:
+    #variations (ty == w && displacement == -4)
+    VAR(varB):p[displacement]:ty = imm;
+}
+
+/*
+ * STII : store immediate value into memory indexed
+ */
+stii{w,l,n,nl,f,fs,p} (varB, varC, scale, imm) {
+  syntax:
+    #if scale == 1
+      "[" varB "+" varC "]" "," imm
+    #else
+      "[" varB "+" varC "*" scale "]" "," imm
+
+  semantics:
+    #variations (ty == w  && scale == 4)
+             || (ty == l  && scale == 8)
+             || (ty == n  && scale == 4)
+             || (ty == nl && scale == 8)
+             || (ty == f  && scale == 4)
+             || (ty == fs && scale == 8)
+             || (ty == fl && scale == 16)
+             || (ty == p  && scale == 4)
+             || scale == 1
+    VAR(varB):p[VAR(varC), scale]:ty = imm;
+}
+
+/*
+ * STS : store small integer
+ */
+sts<b,h> (varD, varB, displacement) {
+  syntax:
+    #if displacement == 0
+      "[" varB "]" "," varD
+    #else
+      "[" varB "+" displacement "]" "," varD
+
+  semantics:
+    #if suffix == b
+      VAR(varB):p[displacement]:b = (b)(VAR(varD):w);
+    #else /* suffix == h */
+      VAR(varB):p[displacement]:h = (h)(VAR(varD):w);
+}
+
+/*
+ * STSI : store small integer indexed
+ */
+stsi<b,h> (varD, varB, varC) {
+  syntax:
+    varD "," "[" varB "+" varC "]"
+
+  semantics:
+    #if suffix == b
+      VAR(varB):p[VAR(varC)]:b = (b)(VAR(varD):w);
+    #else /* suffix == h */
+      VAR(varB):p[VAR(varC)]:h = (h)(VAR(varD):w);
+}
+
+/*
+ * STM : store into memory
+ */
+stm{w,l,n,nl,f,fs,fl,p} (varB, varA, displacement) {
+  syntax:
+    #if displacement == 0
+      "[" varB "]" "," varA
+    #else
+      "[" varB "+" displacement "]" "," varA
+
+  semantics:
+    #variations (ty == w && displacement == -4) || displacement == 0
+    VAR(varB):p[displacement]:ty = VAR(varA):ty;
+}
+
+/*
+ * STMI : store into memory indexed
+ */
+stmi{w,l,n,nl,f,fs,fl,p} (varB, varC, varA, scale) {
+  syntax:
+    #if scale == 1
+      "[" varB "+" varC "]" "," varA
+    #else
+      "[" varB "+" varC "*" scale "]" "," varA
+
+  semantics:
+    #variations scale == 1
+    VAR(varB):p[VAR(varC), scale]:ty = VAR(varA):ty;
+}
+
+/*
+ * STMX : store memory fixed-size
+ */
+stmx (size, varB, varA, displacement) {
+  syntax:
+    #if displacement == 0
+      size "," "[" varB "]" "," varA
+    #else
+      size "," "[" varB "+" displacement "]" "," varA
+
+  semantics:
+    #variations (size == 4 || size == 8) && displacement == 0
+    COPY(&VAR(varB):p[displacement], &VAR(varA), size);
+}
+
+/*
+ * STMXI : store memory fixed-size indexed
+ */
+stmxi (size, varB, varC, varA, scale) {
+  syntax:
+    #if scale == 1
+      size "," "[" varB "+" varC "]" "," varA
+    #else
+      size "," "[" varB "+" varC "*" scale "]" "," varA
+
+  semantics:
+    #variations (size == 4 || size == 8) && scale == 1
+    COPY(&VAR(varB):p[VAR(varC), scale], &VAR(varA), size);
+}
+
+/*
+ * STMV : store memory variable-size
+ */
+stmv (varA, varB, varD, displacement) {
+  syntax:
+    #if displacement == 0
+      varA "," "[" varB "]" "," varD
+    #else
+      varA "," "[" varB "+" displacement "]" "," varD
+
+  semantics:
+    #variations displacement == 0
+    COPY(&VAR(varB):p[displacement], &VAR(varD), VAR(varA):sz);
+}
+
+/*
+ * STMVI : store memory variable-size indexed
+ */
+stmvi (varA, varB, varC, varD, scale) {
+  syntax:
+    #if scale == 1
+      varA "," "[" varB "+" varC "]" "," varD
+    #else
+      varA "," "[" varB "+" varC "*" scale "]" "," varD
+
+  semantics:
+    #variations scale == 1
+    COPY(&VAR(varB):p[VAR(varC), scale], &VAR(varD), VAR(varA):sz);
+}
+
+/*
+ * WBAR : write barrier
+ */
+wbar (varB, displacement) {
+  syntax:
+    #if displacement == 0
+      "[" varB "]"
+    #else
+      "[" varB "+" displacement "]"
+
+  semantics:
+    BARRIER(VAR(varB):p, &VAR(varB):p[displacement]);
+}
+
+/*
+ * WBARI : write barrier indexed
+ */
+wbari (varB, varC, scale) {
+  syntax:
+    #if scale == 1
+      "[" varB "+" varC "]"
+    #else
+      "[" varB "+" varC "*" scale "]"
+
+  semantics:
+    BARRIER(VAR(varB):p, &VAR(varB):p[VAR(varC), scale]);
+}
+
+/*
+ * WBARV : write barrier with bit-tag
+ */
+wbarv (varA, varB, displacement) {
+  syntax:
+    #if displacement == 0
+      varA "," "[" varB "]"
+    #else
+      varA "," "[" varB "+" displacement "]"
+
+  semantics:
+    if (VAR(varA):w == 0) { NEXT; }
+    BARRIER(VAR(varB):p, &VAR(varB):p[displacement]);
+}
+
+/*
+ * WBARVI : write barrier with bit-tag indexed
+ */
+wbarvi (varA, varB, varC, scale) {
+  syntax:
+    #if scale == 1
+      varA "," "[" varB "+" varC "]"
+    #else
+      varA "," "[" varB "+" varC "*" scale "]"
+
+  semantics:
+    if (VAR(varA):w == 0) { NEXT; }
+    BARRIER(VAR(varB):p, &VAR(varB):p[VAR(varC), scale]);
+}
+
+/*
+ * Operations on l, nl, and fl are defined as primitives. Use FFCALLn.
+ */
+
+/*
+ * CVT : convert between primitive types
+ * CVT<from><to>
+ */
+cvt<w,n>{f,fs} (varD, varA) {
+  semantics:
+    #if suffix == w
+      VAR(varD):ty = (ty)(VAR(varA):w);
+    #else /* suffix == n */
+      VAR(varD):ty = (ty)(VAR(varA):n);
+}
+
+cvtf{w,n,fs} (varD, varA) {
+  semantics:
+    VAR(varD):ty = (ty)(VAR(varA):f);
+}
+
+cvtfs{w,n,f} (varD, varA) {
+  semantics:
+    VAR(varD):ty = (ty)(VAR(varA):fs);
+}
+
+/*
+ * EXT : extend small integer to integer
+ * EXT<from><to>
+ */
+ext<b,h>{w,n} (varD, varA) {
+  semantics:
+    #if suffix == b
+      VAR(varD):ty = (ty)(VAR(varA):b);
+    #else /* suffix == h */
+      VAR(varD):ty = (ty)(VAR(varA):h);
+}
+
+/*
+ * NEG : negate
+neg{n,f,fs} (varD, varA) {
+  semantics:
+    tmpvar x:ty;
+    x = 0 - VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+ */
+
+/*
+ * NEGO : negate with overflow check
+nego{n} (varD, varA) {
+  semantics:
+    tmpvar x:ty;
+    x = 0 `subo` VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+ */
+
+/*
+ * ABS : absolute
+abs{n,f,fs} (varD, varA) {
+  semantics:
+    tmpvar x:ty;
+    x = ABS(VAR(varA):ty);
+    VAR(varD):ty = x;
+}
+ */
+
+/*
+ * ABSO : absolute with overflow check
+abso{n} (varD, varA) {
+  semantics:
+    tmpvar x:ty;
+    x = ABSO(VAR(varA):ty);
+    VAR(varD):ty = x;
+}
+ */
+
+/*
+ * ADD : add
+ */
+add{w,n,f,fs} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty + VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * ADDI : add immediate value
+ */
+addi{w,n,f,fs} (varD, varA, imm) {
+  semantics:
+    #variations ((ty == w || ty == n) && imm == 0)
+    tmpvar x:ty;
+    x = VAR(varA):ty + imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * ADDO : add with overflow check
+ */
+addo{n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `addo` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * ADDIO : add immediate value with overflow check
+ */
+addio{n} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `addo` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SUB : subtract
+ */
+sub{w,n,f,fs} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty - VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SUBI : subtract immediate value
+ */
+subi{w,n,f,fs} (varD, varA, imm) {
+  semantics:
+    #variations ((ty == w || ty == n) && imm == 0)
+    tmpvar x:ty;
+    x = VAR(varA):ty - imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SUBR : subtract from immediate value
+ */
+subr{w,n,f,fs} (varD, varA, imm) {
+  syntax:
+    varD "," imm "," varA
+
+  semantics:
+    tmpvar x:ty;
+    x = imm - VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SUBO : subtract with overflow check
+ */
+subo{n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `subo` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SUBIO : subtract immediate value with overflow check
+ */
+subio{n} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `subo` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SUBRO : subtract from immediate value with overflow check
+ */
+subro{n} (varD, varA, imm) {
+  syntax:
+    varD "," imm "," varA
+
+  semantics:
+    tmpvar x:ty;
+    x = imm `subo` VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * MUL : multiply
+ */
+mul{w,n,f,fs} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty * VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * MULI : multiply with immediate value
+ */
+muli{w,n,f,fs} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty * imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * MULO : multiply with overflow check
+ */
+mulo{n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `mulo` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * MULIO : multiply with immediate value with overflow check
+ */
+mulio{n} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `mulo` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * DIV : divide
+ */
+div{w,n,f,fs} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `div` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * DIVI : divide by immediate value
+ */
+divi{w,n,f,fs} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `div` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * DIVR : divide from immediate value
+ */
+divr{w,n,f,fs} (varD, varA, imm) {
+  syntax:
+    varD "," imm "," varA
+
+  semantics:
+    tmpvar x:ty;
+    x = imm `div` VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * DIVO : divide with overflow check
+ */
+divo{n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `divo` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * DIVIO : divide by immediate value with overflow check
+ */
+divio{n} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `divo` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * DIVRO : divide from immediate value with overflow check
+ */
+divro{n} (varD, varA, imm) {
+  syntax:
+    varD "," imm "," varA
+
+  semantics:
+    tmpvar x:ty;
+    x = imm `divo` VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * MOD : modulo
+ */
+mod{w,n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `mod` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * MODI : modulo by immediate value
+ */
+modi{w,n} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `mod` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * MODR : modulo from immediate value
+ */
+modr{w,n} (varD, varA, imm) {
+  syntax:
+    varD "," imm "," varA
+
+  semantics:
+    tmpvar x:ty;
+    x = imm `mod` VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * DVMD : divide and modulo
+dvmd{w,n} (varD, varA, varB, varC) {
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = VAR(varB):ty `dvmd` VAR(varC):ty;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * DVMDI : divide and modulo by immediate value
+dvmdi{w,n} (varD, varA, varB, imm) {
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = VAR(varB):ty `dvmd` imm;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * DVMDR : divide and modulo from immediate value
+dvmdr{w,n} (varD, varA, varB, imm) {
+  syntax:
+    varD "," varA "," imm "," varB
+
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = imm `dvmd` VAR(varB):ty;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * DVMDO : divide and modulo with overflow check
+dvmdo{n} (varD, varA, varB, varC) {
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = VAR(varB):ty `dvmdo` VAR(varC):ty;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * DVMDIO : divide and modulo by immediate value with overflow check
+dvmdio{n} (varD, varA, varB, imm) {
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = VAR(varB):ty `dvmdo` imm;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * DVMDRO : divide and modulo from immediate value with overflow check
+dvmdro{n} (varD, varA, varB, imm) {
+  syntax:
+    varD "," varA "," imm "," varB
+
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = imm `dvmdo` VAR(varB):ty;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * QUOT : quotient
+ */
+quot{n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `quot` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * QUOTI : quotient by immediate value
+ */
+quoti{n} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `quot` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * QUOTR : quotient from immediate value
+ */
+quotr{n} (varD, varA, imm) {
+  syntax:
+    varD "," imm "," varA
+
+  semantics:
+    tmpvar x:ty;
+    x = imm `quot` VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * QUOTO : quotient with overflow check
+ */
+quoto{n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `quoto` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * QUOTIO : quotient by immediate value with overflow check
+ */
+quotio{n} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `quoto` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * QUOTRO : quotient from immediate value with overflow check
+ */
+quotro{n} (varD, varA, imm) {
+  syntax:
+    varD "," imm "," varA
+
+  semantics:
+    tmpvar x:ty;
+    x = imm `quoto` VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * REM : remainder
+ */
+rem{n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `rem` VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * REMI : remainder by immediate value
+ */
+remi{n} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty `rem` imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * REMR : remainder from immediate value
+ */
+remr{n} (varD, varA, imm) {
+  syntax:
+    varD "," imm "," varA
+
+  semantics:
+    tmpvar x:ty;
+    x = imm `rem` VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * QTRM : quotient and remainder
+qtrm{n} (varD, varA, varB, varC) {
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = VAR(varB):ty `qtrm` VAR(varC):ty;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * QTRMI : quotient and remainder by immediate value
+qtrmi{n} (varD, varA, varB, imm) {
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = VAR(varB):ty `qtrm` imm;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * QTRMR : quotient and remainder from immediate value
+qtrmr{n} (varD, varA, varB, imm) {
+  syntax:
+    varD "," varA "," imm "," varB
+
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = imm `qtrm` VAR(varB):ty;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * QTRMO : quotient and remainder with overflow check
+qtrmo{n} (varD, varA, varB, varC) {
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = VAR(varB):ty `qtrmo` VAR(varC):ty;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * QTRMIO : quotient and remainder by immediate value with overflow check
+qtrmio{n} (varD, varA, varB, imm) {
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = VAR(varB):ty `qtrmo` imm;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * QTRMRO : quotient and remainder from immediate value with overflow check
+qtrmro{n} (varD, varA, varB, imm) {
+  syntax:
+    varD "," varA "," imm "," varB
+
+  semantics:
+    tmpvar q:ty, r:ty;
+    q, r = imm `qtrmo` VAR(varB):ty;
+    VAR(varD):ty = q;
+    VAR(varA):ty = r;
+}
+ */
+
+/*
+ * AND : logical and
+ */
+and{w} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty & VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * ANDI : logical and with immediate value
+ */
+andi{w} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty & imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * OR : logical or
+ */
+or{w} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty | VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * ORI : logical or with immediate value
+ */
+ori{w} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty | imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * XOR : logical exclusive or
+ */
+xor{w} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty ^ VAR(varB):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * XORI : logical exclusive or with immediate value
+ */
+xori{w} (varD, varA, imm) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty ^ imm;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SHL : left logical shift
+ */
+shl{w} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty << VAR(varB):sh;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SHLI : left logical shift with immediate count
+ */
+shli{w} (varD, varA, shift) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty << shift;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SHR : right logical shift
+ */
+shr{w} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty >> VAR(varB):sh;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SHRI : right logical shift with immediate count
+ */
+shri{w} (varD, varA, shift) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty >> shift;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SAR : right arithmetic shift
+ */
+sar{w,n} (varD, varA, varB) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty >>> VAR(varB):sh;
+    VAR(varD):ty = x;
+}
+
+/*
+ * SARI : right arithmetic shift with immediate count
+ */
+sari{w,n} (varD, varA, shift) {
+  semantics:
+    tmpvar x:ty;
+    x = VAR(varA):ty >>> shift;
+    VAR(varD):ty = x;
+}
+
+/*
+ * NOT : one's compliment
+ */
+not{w} (varD, varA) {
+  semantics:
+    tmpvar x:ty;
+    x = ~VAR(varA):ty;
+    VAR(varD):ty = x;
+}
+
+/*
+ * CP : compare
+ */
+cpeq{w,n,f,fs,p} (varD, varA, varB) {
+  semantics:
+    tmpvar x:w;
+    x = (VAR(varA):ty == VAR(varB):ty);
+    VAR(varD):w = x;
+}
+
+/*
+ * a > b   ==  b < a
+ * a >= b  ==  b <= a
+ */
+cp<gt,ge>{w,n,f,fs} (varD, varA, varB) {
+  semantics:
+    #if suffix == gt
+      tmpvar x:w;
+      x = (VAR(varA):ty > VAR(varB):ty);
+      VAR(varD):w = x;
+    #else /* suffix == ge */
+      tmpvar x:w;
+      x = (VAR(varA):ty >= VAR(varB):ty);
+      VAR(varD):w = x;
+}
+
+/*
+ * CPI : compare with immediate value
+ */
+cpieq{w,n,f,fs,p} (varD, varA, imm) {
+  semantics:
+    #variations ((ty == w || ty == n) && imm == 0)
+    VAR(varD):w = VAR(varA):ty == imm;
+}
+
+cpi<lt,le,gt,ge>{w,n,f,fs} (varD, varA, imm) {
+  semantics:
+    #variations (ty == n && imm == 0)
+    #if suffix == lt
+      tmpvar x:w;
+      x = VAR(varA):ty < imm;
+      VAR(varD):w = x;
+    #elif suffix == le
+      tmpvar x:w;
+      x = VAR(varA):ty <= imm;
+      VAR(varD):w = x;
+    #elif suffix == gt
+      tmpvar x:w;
+      x = VAR(varA):ty > imm;
+      VAR(varD):w = x;
+    #else /* suffix == ge */
+      tmpvar x:w;
+      x = VAR(varA):ty >= imm;
+      VAR(varD):w = x;
+}
+
+/*
+ * BRC : branch conditional
+ */
+brceq{w,n,f,fs,p} (varA, varB, label) {
+  semantics:
+    if (VAR(varA):ty == VAR(varB):ty) { IP = LABEL(label); CONTINUE; }
+}
+
+brc<lt,le>{w,n,f,fs} (varA, varB, label) {
+  semantics:
+    #if suffix == lt
+      if (VAR(varA):ty < VAR(varB):ty) { IP = LABEL(label); CONTINUE; }
+    #else /* suffix == le */
+      if (VAR(varA):ty <= VAR(varB):ty) { IP = LABEL(label); CONTINUE; }
+}
+
+/*
+ * BRCI : branch conditional with immediate value
+ */
+brcieq{w,n,f,fs,p} (varA, label, imm) {
+  syntax:
+    varA "," imm "," label
+
+  semantics:
+    #variations ((ty == w || ty == n) && imm == 0)
+    if (VAR(varA):ty == imm) { IP = LABEL(label); CONTINUE; }
+}
+
+/*
+ * a < b  == not (b > a)
+ * a <= b == not (b >= a)
+ */
+brci<lt,le>{w,n,f,fs} (varA, label, imm) {
+  syntax:
+    varA "," imm "," label
+
+  semantics:
+    #variations (ty == n && imm == 0)
+    #if suffix == lt
+      if (VAR(varA):ty < imm) { IP = LABEL(label); CONTINUE; }
+    #else /* suffix == le */
+      if (VAR(varA):ty <= imm) { IP = LABEL(label); CONTINUE; }
+}
+
+/*
+ * BR : branch
+ */
+br (label) {
+  semantics:
+    IP = LABEL(label);
+    CONTINUE;
+}
+
+/*
+ * BRI : branch indirect
+ */
+bri (varA) {
+  semantics:
+    IP = VAR(varA):p;
+    CONTINUE;
+}
+
+/*
+ * ALLOC : alloc memory
+ *
+ * varA: entire size of heap object
+ */
+alloc (varD, varA) {
+  semantics:
+    tmpvar obj:p;
+    ALLOC(obj, VAR(varA));
+    VAR(varD):p = obj;
+}
+
+/*
+ * ALLOCX : alloc memory with fixed-size
+ *
+ * lsizeA: entire size of heap object
+ */
+allocx (varD, lsizeA) {
+  semantics:
+    tmpvar obj:p;
+    ALLOC(obj, lsizeA);
+    VAR(varD):p = obj;
+}
+
+/*
+ * MVFIP : move from IP register
+ */
+mvfip (varA, label) {
+  semantics:
+    VAR(varA):p = LABEL(label);
+}
+
+/*
+ * CATCH : set current stack pointer to exception handling register
+ */
+catch () {
+  semantics:
+    HR = SP;
+}
+
+/*
+ * UNWIND : set stack pointer from exception handling register
+ */
+unwind () {
+  semantics:
+    SP = HR;
+}
+
+/*
+ * MVFHR : move from exception handling register
+ */
+mvfhr (varA) {
+  semantics:
+    VAR(varA):p = HR;
+}
+
+/*
+ * MVTHR : move to exception handling register
+ */
+mvthr (varA) {
+  semantics:
+    HR = VAR(varA):p;
+}
+
+/*
+ * PUSHTRAP : push stack pointer and exception handler
+ */
+pushtrap (label) {
+  semantics:
+    PUSHTRAP(LABEL(label));
+}
+
+/*
+ * POPTRAP : cancel the latest exception handler
+ */
+poptrap () {
+  semantics:
+    POPTRAP();
+}
+
+/*
+ * RAISE : unwind and jump to the latest exception handler
+ */
+raise () {
+  semantics:
+    RAISE();
+}
+
+/*
+ * ENTER : allocate new stack frame
+ */
+enter (lsizeA) {
+  semantics:
+    /* SP = SP - lsizeA; */
+    ENTER(lsizeA);
+}
+
+/*
+ * LEAVE : deallocate stack frame
+ */
+leave (lsizeA) {
+  semantics:
+    /* SP = SP + lsizeA; */
+    LEAVE(lsizeA);
+}
+
+/*
+ * SYSCALL : call system (builtin) primitive
+ *
+ * externA : builtin function
+ */
+syscall (externA) {
+  semantics:
+    SYSCALL(externA);
+}
+
+/*
+ * FFCALL1 : foreign function call with 1 argument
+ *
+ * externA : foreign function type descriptor
+ * externB : entry point
+ * varD : destination
+ * varA : argument
+ *
+ * varD may be a register if return value is signle.
+ * If callee returns structure, varB must be stack frame slot with
+ * appropriate size.
+ */
+ffcall1 (externA, externB, varD, varA) {
+  preprocess:
+    PREP_FFCALL1(externA)
+  semantics:
+    FFCALL(externA, externB, &VAR(varD))(&VAR(varA));
+  alternate:
+    FUNCALL(externA)(externB, &VAR(varD), &VAR(varA));
+}
+
+/*
+ * FFCALL2 : foreign function call with 2 arguments
+ *
+ * externA : foreign function type descriptor
+ * externB : entry point
+ * varD : destination
+ * varA : destination
+ * varB : destination
+ *
+ * varD may be a register if return value is signle.
+ * If callee returns structure, varD must be stack frame slot with
+ * appropriate size.
+ */
+ffcall2 (externA, externB, varD, varA, varB) {
+  preprocess:
+    PREP_FFCALL2(externA)
+  semantics:
+    FFCALL(externA, externB, &VAR(varD))(&VAR(varA), &VAR(varB));
+  alternate:
+    FUNCALL(externA)(externB, &VAR(varD), &VAR(varA), &VAR(varB));
+}
+
+/*
+ * FFCALL3 : foreign function call with 3 arguments
+ *
+ * externA : foreign function type descriptor
+ * externB : entry point
+ * varD : destination
+ * varA : destination
+ * varB : destination
+ * varC : destination
+ *
+ * varD may be a register if return value is signle.
+ * If callee returns structure, varD must be stack frame slot with
+ * appropriate size.
+ */
+ffcall3 (externA, externB, varD, varA, varB, varC) {
+  preprocess:
+    PREP_FFCALL3(externA)
+  semantics:
+    FFCALL(externA, externB, &VAR(varD))(&VAR(varA), &VAR(varB), &VAR(varC));
+  alternate:
+    FUNCALL(externA)(externB, &VAR(varD), &VAR(varA), &VAR(varB), &VAR(varC));
+}
+
+/*
+ * FFCALL : foreign function call with arbitrary number of arguments
+ *
+ * externA : foreign function type descriptor
+ * varA : entry point
+ * varD : destination
+ * arguments are set to specified registers.
+ *
+ * varD may be a register if return value is signle.
+ * If callee returns structure, varB must be stack frame slot with
+ * appropriate size.
+ */
+ffcall (externA, varA, varD) {
+  preprocess:
+    PREP_FFTYPE(externA)
+  semantics:
+    FFCALL(externA, VAR(varA):p, &VAR(varD))();
+}
+
+/*
+ * FFEXPORT : foreign function export
+ *
+ * varA  : entry point
+ * varB  : closure environment
+ * externA : foreign function type descriptor
+ * arguments are set to specified registers.
+ */
+ffexport (externA, varD, varA, varB) {
+  preprocess:
+    PREP_FFTYPE(externA)
+  semantics:
+    tmpvar ptr:p;
+    ptr = FFEXPORT(externA, VAR(varA):p, VAR(varB):p);
+    VAR(varD):p = ptr;
+}

@@ -1,0 +1,168 @@
+(**
+ * linkage units dependency DAG
+ * The node of DAG is a pair of index (to the element of a unit list)
+ * and fileName (of the element of a unit list).
+ * @copyright (c) 2008, Tohoku University. 
+ * @author Liu Bochao
+ * @version $Id: DAG.ppg,v 1.2 2008/02/28 07:36:06 bochao Exp $
+ *)
+structure DAG =
+struct
+   structure Graph =
+   struct
+         (*%*)
+         type index = int
+
+         (*%*)
+         type displayName = string
+
+         (*%*)
+         type nodeInfo = 
+              (*%
+               * @format(index * name) name
+               *)
+              index * displayName
+              
+         structure NodeOrd: ORD_KEY =
+         struct 
+               type ord_key = nodeInfo
+               fun compare ((index1, name1), (index2, name2)) = 
+                   Int.compare(index1, index2) 
+         end
+         structure NodeInfoEnv = BinaryMapFn(NodeOrd)
+         structure NodeIndexSet = 
+         let
+             structure S = BinarySetFn(NodeOrd) 
+         in
+             struct
+                   open S
+                   fun removeElement set = 
+                       if isEmpty set then (NONE, set)
+                       else 
+                           let
+                               fun isMember item = member (set, item)
+                           in
+                               case (find isMember set) of
+                                   NONE => raise Control.Bug "nonEmpty set must have elements"
+                                 | SOME item => (SOME item, delete (set, item))
+                           end
+             end
+         end
+
+         fun formatNodeInfoEnvMap params nodeInfoEnv =
+             let
+                 val newNodeNameEnv =
+                     NodeInfoEnv.foldli (fn ((index, name), nodeInfo, nodeNameEnv) =>
+                                             SEnv.insert(nodeNameEnv, name, nodeInfo))
+                                         SEnv.empty
+                                         nodeInfoEnv
+             in
+                 SmlppgUtil.formatGenericSmapExp params newNodeNameEnv
+             end
+         (*%                
+          * @formatter(nodeInfoEnvMap) formatNodeInfoEnvMap
+          *)
+         type graph = 
+              (*%
+               * @format(nodeInfos nodeInfoEnvMap:nodeInfoEnvMap) 
+               *  nodeInfoEnvMap(nodeInfos)("is referenced by", +1) "\n"
+               * @format:nodeInfos(nodeInfo nodeInfos) nodeInfos(nodeInfo)(","+)
+               *)
+              (nodeInfo list) NodeInfoEnv.map
+   end
+
+   local
+       open Graph
+   in
+       fun sort graph = 
+           let 
+	       val initialDependentNodeCountEnv = NodeInfoEnv.map (fn _ => 0) graph
+	       (* number of immediate dependent predecessors of each Node *)
+	       val dependentNodeCountEnv = 
+	           NodeInfoEnv.foldl
+                       (fn (successorIndexes, dependentNodeCountEnv) =>
+		           foldl (fn (successorIndex, dependentNodeCountEnv) =>
+			             let
+			                 val newCount = 
+			                     valOf(NodeInfoEnv.find(dependentNodeCountEnv, successorIndex))
+			                 val newNodeCountEnv = 
+			                     NodeInfoEnv.insert(dependentNodeCountEnv,
+                                                                 successorIndex,
+                                                                 newCount + 1)
+			             in
+			                 newNodeCountEnv
+			             end)
+		                 dependentNodeCountEnv
+		                 successorIndexes
+		       )
+	               initialDependentNodeCountEnv
+	               graph
+                                      
+               (* put the roots into the set first *)
+	       val dagRootSet = 
+	           NodeInfoEnv.foldli (fn (nodeIndex, count, set) =>
+		                           if count = 0 
+                                           then (* Node is a root *) 
+                                               NodeIndexSet.add(set, nodeIndex)
+		                           else set
+		                       )
+	                               NodeIndexSet.empty
+	                               dependentNodeCountEnv
+
+	       fun visit dependentNodeCountEnv dagRootSet resultDAGList = 
+	           if  NodeIndexSet.isEmpty dagRootSet 
+                   then resultDAGList
+	           else
+	               let
+		           val (nodeInfo as (nodeIndex, fileName), newDagRootSet) = 
+                               case NodeIndexSet.removeElement dagRootSet of
+                                   (NONE, _) => raise Control.Bug ("nonEmpty set must have elements")
+                                 | (SOME nodeInfo, newDagRootSet) =>
+                                   (nodeInfo, newDagRootSet)
+                           val newResultDAGList = resultDAGList @ [nodeInfo]
+		           val successors = 
+                               case NodeInfoEnv.find(graph, nodeInfo) of
+                                   NONE => 
+                                   raise Control.Bug 
+                                             ("graph does not contain index:"^fileName)
+                                 | SOME successors => successors
+		           val (dependentNodeCountEnv, newDagRootSet) = 
+		               foldl (fn (nodeInfo as (nodeIndex, fileName), (dependentNodeCountEnv, dagRootSet)) =>
+			                 let
+			                     val oldCount = 
+				                 case NodeInfoEnv.find(dependentNodeCountEnv, nodeInfo) of
+                                                     NONE => 
+                                                     raise Control.Bug 
+                                                               ("count envionment does not contain" ^ fileName)
+                                                   | SOME count => count
+			                     val newCount = oldCount - 1
+			                     val newDagRootSet = 
+				                 if newCount = 0 
+                                                 then NodeIndexSet.add(newDagRootSet, nodeInfo)
+				                 else dagRootSet
+			                 in
+			                     (NodeInfoEnv.insert(dependentNodeCountEnv, nodeInfo, newCount),
+			                      newDagRootSet)
+			                 end
+			             )
+		                     (dependentNodeCountEnv, newDagRootSet)
+		                     successors
+	               in
+                           visit dependentNodeCountEnv newDagRootSet newResultDAGList
+                       end
+           in
+	       visit dependentNodeCountEnv dagRootSet nil
+           end 
+           
+       fun cyclicGraph nonCyclicNodeList graph =
+           foldl (fn (rootNode, graph) => 
+                     #1 (NodeInfoEnv.remove (graph, rootNode)))
+                 graph
+                 nonCyclicNodeList
+
+       fun hasCyclicNodes nonCyclicNodeList graph =
+           if length(nonCyclicNodeList) < NodeInfoEnv.numItems graph 
+           then true
+           else false
+   end
+end

@@ -2,9 +2,14 @@ Group is
 (*
   to build this example, see ../../README.txt
 *)
+
+(*
 #if defined(NEW_CM)
 	$/basis_compat.cm
 #endif
+*)
+
+$/basis.cm
 
         ../../smlformatlib.cm
 

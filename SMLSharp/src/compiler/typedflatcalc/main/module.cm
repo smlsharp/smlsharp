@@ -1,0 +1,31 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+        ../../absyn/sources.cm
+        ../../parser/sources.cm
+        ../../control/sources.cm
+        ../../parser/sources.cm
+        ../../util/sources.cm
+        ../../pickle/sources.cm
+        ../../types/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../patterncalc/sources.cm
+        ../../systemdef/sources.cm
+        ../../primitive/sources.cm
+        ../../constantterm/sources.cm
+(*
+OHORI: why MVcalc is needed?
+	../../multiplevaluecalc/sources.cm
+*)
+
+        TYPEDFLATCALC.sig
+        TypedFlatCalc.ppg.sml
+        TypedFlatCalcUtils.sml
+        PRINTTFP.sig
+        PrintTFP.sml
+        TypedFlatCalcPickler.sml

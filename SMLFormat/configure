@@ -8,23 +8,20 @@
 #
 # @author UENO Katsuhiro
 # @author YAMATODANI Kiyoshi
-# @version $Id: configure,v 1.17 2007/04/02 09:42:28 katsu Exp $
+# @version $Id: configure,v 1.23 2007/11/08 03:09:50 katsu Exp $
 
 ###############################################################################
 
 pwd=`pwd`
 host_os=`uname -s|sed y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/`
-prefix=/usr/local
-smlunitdir="$pwd/../SMLUnit"
-if test -d ${pwd}/basis_compat ;then
-basisdir="$pwd/basis_compat"
-else
-basisdir="$pwd/../basis_compat"
-fi
+srcdirname=SMLFORMATDIR
+appname=smlformat
+unittestdir=formatlib
 
+prefix=/usr/local
+smlformatdir="$pwd"
+smlunitdir="$pwd/../SMLUnit"
 compiler=mlton
-MLTON=mlton
-SMLSHARP=smlsharp
 
 ###############################################################################
 
@@ -35,11 +32,11 @@ Options:
   --prefix=DIR          install files to DIR [default=$prefix]
   --exec-prefix=DIR     isntall executables to DIR [default=$prefix]
   --with-smlunit=DIR    use SMLUnit [default=$smlunitdir]
-  --with-basis=DIR      use basis [default=$basisdir]
   --with-smlnj          use SML/NJ [default=no]
   --with-mlton          use MLton [default=yes]
   --with-smlsharp       use SML# [default=no]
 "
+#  --with-smlformat=DIR  use SMLFormat [default=$smlformatdir]
 
 for opt in "$@"
 do
@@ -55,14 +52,14 @@ do
     --exec_prefix=*)
       exec_prefix="$optarg"
       ;;
+#    --with-smlformatdir=*)
+#      smlformatdir="$optarg"
+#      ;;
     --with-smlunit=*)
       smlunitdir="$optarg"
       ;;
     --without-smlunit)
       smlunitdir=
-      ;;
-    --with-basis=*)
-      basisdir="$optarg"
       ;;
     --with-smlnj)
       compiler=smlnj
@@ -81,7 +78,7 @@ do
   esac
 done
 
-echo "SML compiler for building smlformat... $compiler"
+echo "SML compiler for building $appname... $compiler"
 
 ###############################################################################
 
@@ -123,8 +120,8 @@ fi
 smlunitlib_cm="$smlunitdir/smlunitlib.cm"
 if test -f "$smlunitlib_cm"; then
   smlunitlib_cm=`cmpath "$smlunitlib_cm"`
-  echo 'creating formatlib/smlunitlib.cm'
-  echo "Alias \"$smlunitlib_cm\"" > ./formatlib/smlunitlib.cm
+  echo 'creating $unittestdir/smlunitlib.cm'
+  echo "Alias \"$smlunitlib_cm\"" > ./$unittestdir/smlunitlib.cm
 else
   echo '*** NOTICE: --with-smlunit option is not specified.' 1>&2
   echo '***         generation for SMLUnit is skipped.' 1>&2
@@ -132,67 +129,92 @@ fi
 
 ###############################################################################
 
-SMLFORMATDIR="$pwd"
-BASISDIR="$basisdir/main"
+SMLFORMATDIR="$smlformatdir"
+SMLUNITDIR="$smlunitdir"
 EXEEXT=
+MKSMLRUN=:
+MKSMLHEAP=:
 
 case "$host_os" in
 *cygwin*)
   SMLFORMATDIR=`cygpath -am "$SMLFORMATDIR"`
-  BASISDIR=`cygpath -am "$BASISDIR"`
+  SMLUNITDIR=`cygpath -am "$SMLUNITDIR"`
   EXEEXT=.exe
+  # make requires UNIX path
+  abspath=`cygpath -au "$pwd"`
   ;;
 *mingw*)
   SMLFORMATDIR=`msyspath "$SMLFORMATDIR"`
-  BASISDIR=`msyspath "$BASISDIR"`
+  SMLUNITDIR=`msyspath "$SMLUNITDIR"`
   EXEEXT=.exe
+  abspath=`msyspath "$pwd"`
   ;;
 *)
+  abspath="$pwd"
   ;;
 esac
+
+###############################################################################
 
 case "$compiler" in
 mlton)
   ;;
 
-smlnj)
-  HEAPNAME="$pwd/bin/smlformat-heap"
-  MAINFUNC=Main.main
+smlsharp)
+  ;;
 
+smlnj)
   case "$host_os" in
   *cygwin*)
     if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
       SML=sml.bat
-      HEAPNAME="$HEAPNAME.x86-win32"
+      SML_HEAP_SUFFIX=x86-win32
       MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
     else
       SML=sml
-      HEAPNAME="$HEAPNAME.x86-cygwin"
+      SML_HEAP_SUFFIX=x86-cygwin
+      MAINFUNC=Main.main
     fi
     SMLCM=sml-cm.bat
-    HEAPNAME=`cygpath -am "$HEAPNAME"`
     ;;
   *mingw*)
     # we don't support the combination of mingw and cygwin runtime.
     if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
-      HEAPNAME="$HEAPNAME.x86-win32"
-      MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
       SML='cmd /c sml.bat'
       SMLCM='cmd /c sml-cm.bat'
-      HEAPNAME=`msyspath "$HEAPNAME"`
+      SML_HEAP_SUFFIX=x86-win32
+      MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
     else
       echo 'cygwin runtime on mingw is not supported.' 1>&2
       exit 1
     fi
+    RUNSML="sml.bat"
+    EXEC='cmd /c \"\$$SML @SMLload=\$$HEAPNAME \$$*\"'
     ;;
   *)
     SML=sml
     SMLCM=sml-cm
+    SML_HEAP_SUFFIX='*'
+    MAINFUNC=Main.main
     ;;
   esac
-  ;;
 
-smlsharp)
+  echo 'checking for new CM... '
+  if echo 'CM.make;' | $SML | grep 'string ->' > /dev/null; then
+    echo 'new CM detected.'
+    CM_MAKE_ARG='\"sources.cm\"'
+    SMLCM="$SML"
+  else
+    echo 'old CM detected.'
+    CM_MAKE_ARG='()'
+  fi
+
+  test "x$RUNSML" = "x" && RUNSML="$SML"
+  test "x$EXEC" = "x" && EXEC='exec \"\$$SML\" @SMLload=\"\$$HEAPNAME\" \"\$$@\"'
+
+  MKSMLHEAP='$(SHELL) -c '"'"'set -x;echo "CM.make '"$CM_MAKE_ARG"';SMLofNJ.exportFn(\"$$0\",'"$MAINFUNC"');"|$(SMLCM)'"'"
+
+  MKSMLRUN='$(SHELL) -c '"'"'{ set -x;q="'"'\\''"'";echo "\#!/bin/sh"|sed "s/\\\\//";echo "SML=$${q}'"$RUNSML"'$${q}";echo "HEAPNAME=$${q}$$1/$$0$${q}";echo "'"$EXEC"'"; } > "$$2" && chmod +x "$$2"'"'"
   ;;
 
 *)
@@ -202,44 +224,48 @@ esac
 
 ###############################################################################
 
-case "$compiler" in
-smlnj)
-  echo 'checking for new CM... '
-  if echo 'CM.make;' | $SML | grep 'string ->' > /dev/null; then
-    echo 'new CM detected.'
-    CM_MAKE_ARG='"newcm.cm"'
-    SMLCM="$SML"
-  else
-    echo 'old CM detected.'
-    CM_MAKE_ARG='()'
-  fi
-  ;;
-esac
-
-###############################################################################
+echo "creating commonrule"
+cat > commonrule <<EOF
+# This file is automatically generated by configure script.
+host_os = $host_os
+prefix = $prefix
+exec_prefix = $exec_prefix
+bindir = \$(exec_prefix)/bin
+libdir = \$(prefix)/lib
+libdir_$appname = \$(libdir)/$appname
+heapdir = \$(libdir_${appname})/heap
+#DESTDIR =
+EXEEXT = $EXEEXT
+SMLFORMATDIR = $SMLFORMATDIR
+SMLUNITDIR = $SMLUNITDIR
+EGREP = egrep
+INSTALL = install
+INSTALL_PROGRAM = \$(INSTALL)
+INSTALL_DATA = \$(INSTALL)
+MLTON = mlton
+MLTON_YACC = mlyacc
+MLTON_LEX = mllex
+SML = $SML
+SMLCM = $SMLCM
+SML_HEAP_SUFFIX = $SML_HEAP_SUFFIX
+MKSMLRUN = $MKSMLRUN
+MKSMLHEAP = $MKSMLHEAP
+EOF
+cat >> commonrule <<\EOF
+MKSMLPATH = $(SHELL) -c 'echo "$$1" | sed s/\\\\\\\\/\\\\\\\\\\\\\\\\/g\\;s/\\"/\\\\\\\\\\"/g\\;s/\\\\\\\\/\\\\\\\\\\\\\\\\/g\\;s/\\"/\\\\\\\\\\"/g\\;s/\\\\\\$$/\\\\\\\\\\$$/g'
+# commonrule ends here.
+EOF
 
 for i in \
-  generator/main/newcm.cm \
-  generator/mlton/preludes.mlb \
-  generator/main/sources.sml \
   Makefile
 do
   echo "creating $i"
   sed "
-s,@host_os@,$host_os,
-s,@prefix@,$prefix,
-s,@exec_prefix@,$exec_prefix,
-s,@SML@,$SML,
-s,@SMLCM@,$SMLCM,
-s!@MAINFUNC@!$MAINFUNC!
-s,@CM_MAKE_ARG@,$CM_MAKE_ARG,
-s,@HEAPNAME@,$HEAPNAME,
-s,@BASISDIR@,$BASISDIR,
-s,@SMLFORMATDIR@,$SMLFORMATDIR,
-s,@EXEEXT@,$EXEEXT,
-s,@MLTON@,$MLTON,
-s,@COMPILER@,$compiler,
-s,@SMLSHARP@,$SMLSHARP,
+s|@${srcdirname}@|.|
+s|@builddir@|$abspath|
+s|@top_srcdir@|$abspath|
+s|@top_builddir@|$abspath|
+s|@DEFAULT_SML_COMPILER@|$compiler|
   " "$i.in" > "$i"
 done
 

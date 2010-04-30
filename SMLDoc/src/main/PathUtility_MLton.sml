@@ -7,7 +7,7 @@
  * </p>
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PathUtility_MLton.sml,v 1.2 2007/04/02 09:42:28 katsu Exp $
+ * @version $Id: PathUtility_MLton.sml,v 1.3 2007/09/19 05:28:55 matsu Exp $
  *)
 structure PathUtility : PATH_UTILITY =
 struct
@@ -30,11 +30,12 @@ struct
             then path
             else
               let
+		val mkAbs = fn (path, dir) => OP.mkAbsolute {path = path, relativeTo = dir} 
                 val absDir =
                     if isAbsolute dir
                     then dir
-                    else OP.mkAbsolute (dir, OS.FileSys.getDir ())
-              in OP.mkAbsolute (path, absDir) end
+                    else mkAbs (dir, OS.FileSys.getDir ())
+              in mkAbs (path, absDir) end
       in
         (* OS.SysErr is raised if not exist *)
         OS.FileSys.isDir absPath;
@@ -52,8 +53,8 @@ struct
               NONE => sourceFiles
             | SOME entryName =>
                *)
-              "" => List.rev sourceNames
-            | entryName =>
+              NONE (*""*) => List.rev sourceNames
+            | SOME entryName =>
               if filter entryName
               then collect (entryName :: sourceNames)
               else collect sourceNames

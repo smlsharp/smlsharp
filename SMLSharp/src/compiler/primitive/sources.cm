@@ -1,0 +1,8 @@
+group
+        structure BuiltinPrimitive
+        structure BuiltinPrimitivePickler
+        structure BuiltinPrimitiveUtils
+        structure BuiltinContext
+        structure PredefinedTypes
+is
+        main/module.cm

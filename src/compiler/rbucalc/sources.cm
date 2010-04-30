@@ -1,6 +1,0 @@
-Group
-        structure RBUCalc
-        structure RBUCalcFormatter
-        structure RBUUtils
-is
-	main/module.cm

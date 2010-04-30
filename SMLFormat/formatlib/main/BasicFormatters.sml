@@ -6,14 +6,10 @@
  * formatter to the formatters environment.
  *
  * @author YAMATODANI Kiyoshi
- * @version $Id: BasicFormatters.sml,v 1.2 2006/02/25 12:19:05 kiyoshiy Exp $
+ * @version $Id: BasicFormatters.sml,v 1.3 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-structure BasicFormatters : BASIC_FORMATTERS =
+functor BasicFormatters(FE : FORMAT_EXPRESSION) : BASIC_FORMATTERS =
 struct
-
-  (***************************************************************************)
-
-  structure FE = FormatExpression
 
   (***************************************************************************)
 

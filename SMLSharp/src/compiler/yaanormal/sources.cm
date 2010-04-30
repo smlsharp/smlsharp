@@ -1,0 +1,7 @@
+Group
+        structure YAANormal
+        structure YAANormalUtils
+        structure YAANormalFormatter
+        structure YAANormalTypeCheck
+is
+        main/module.cm

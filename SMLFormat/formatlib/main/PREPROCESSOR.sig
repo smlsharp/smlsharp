@@ -2,10 +2,15 @@
  *  This module translates FormatExpression.expression into
  * PrettyPrinter.symbol.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PREPROCESSOR.sig,v 1.3 2007/05/30 14:18:31 kiyoshiy Exp $
+ * @version $Id: PREPROCESSOR.sig,v 1.4 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 signature PREPROCESSOR =
 sig
+
+  (***************************************************************************)
+
+  structure FormatExpression : FORMAT_EXPRESSION
+  structure PrettyPrinter : PRETTYPRINTER
 
   (***************************************************************************)
 

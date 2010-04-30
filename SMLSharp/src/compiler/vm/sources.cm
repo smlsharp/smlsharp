@@ -1,0 +1,6 @@
+Group 
+    structure VM
+    structure PrimitiveTable
+    structure VMSession      
+is
+    main/module.cm

@@ -1,0 +1,4 @@
+signature S11 = sig exception e1 end
+signature S12 = sig exception e2 exception e1 end
+signature S21 = sig exception e2 exception e1 end
+signature S22 = sig exception e2 exception e1 exception f1 exception f2 end

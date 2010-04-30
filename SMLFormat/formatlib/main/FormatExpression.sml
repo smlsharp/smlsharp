@@ -1,34 +1,15 @@
 (**
- *  This module defines types which represents format expressions.
+ *  This module defines types which represents format expressions and operators
+ * on them.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FormatExpression.sml,v 1.2 2007/01/17 04:51:34 kiyoshiy Exp $
+ * @version $Id: FormatExpression.sml,v 1.4 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-structure FormatExpression : FORMAT_EXPRESSION =
+functor FormatExpression(T : FORMAT_EXPRESSION_TYPES) : FORMAT_EXPRESSION =
 struct
 
   (***************************************************************************)
 
-  datatype priority =
-           Preferred of int
-         | Deferred
-
-  datatype assocDirection = Left | Right | Neutral
-  type assoc = {cut : bool, strength : int, direction : assocDirection}
-
-  datatype expression =
-           Term of (int * string)
-         | Guard of (assoc option) * (expression list)
-         | Indicator of
-           {
-             space : bool,
-             newline :
-             {
-               priority : priority
-             }
-             option
-           }
-         | StartOfIndent of int
-         | EndOfIndent
+  open T
 
   (***************************************************************************)
 
@@ -48,6 +29,7 @@ struct
     | priorityToString Deferred = "d"
 
   fun toString (Term (columns, text)) = "\"" ^ text ^ "\""
+    | toString Newline = "\\n"
     | toString (Guard(assocOpt, expressions)) =
       (case assocOpt of
          NONE => "{"
@@ -82,6 +64,10 @@ struct
             (fn (_, (cs, _)) => let val s = concat cs in Term(size s, s) end)
             (PC.char #"\"", PC.seq(PC.zeroOrMore escapedChar, PC.char #"\""))
             getc stream
+  
+    (* "\\n" *)
+    fun newline getc stream =
+        PC.wrap (PC.string "\\n", fn _ => Newline) getc stream
   
     (*
      * "!"?[LRN]("~")?{num}
@@ -163,7 +149,15 @@ struct
   
     and expression getc stream =
         PC.or'
-            [string, guard, startOfIndent, endOfIndent, indicator] getc stream
+            [
+              string,
+              newline,
+              guard,
+              startOfIndent,
+              endOfIndent,
+              indicator
+            ]
+            getc stream
   
     and expressions getc stream =
         PC.seqWith

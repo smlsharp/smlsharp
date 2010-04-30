@@ -1,0 +1,10 @@
+Group
+(*
+        signature TOP
+*)
+        structure Top
+(*
+        structure CompileObject
+*)
+is
+        main/module.cm

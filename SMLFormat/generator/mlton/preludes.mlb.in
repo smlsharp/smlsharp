@@ -2,4 +2,4 @@ $(SML_LIB)/basis/basis.mlb
 $(SML_LIB)/basis/sml-nj.mlb
 $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
 
-"@BASISDIR@/basis_compat.mlb"
+

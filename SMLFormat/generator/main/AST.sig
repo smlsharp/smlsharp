@@ -29,6 +29,8 @@ sig
          (** custom formatters *) formatters : (string * string) list,
          (** header of generated function *) funHeaderOpt : string option,
          (** additional parameter names *) params : string list,
+         (** ditto format comments (EXPERIMENTAL EXTENSION by Ueno) *)
+         ditto : string list,
          (** prefix of formatter name *) prefix : string
        }
 

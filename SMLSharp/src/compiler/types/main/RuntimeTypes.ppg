@@ -1,0 +1,30 @@
+(**
+ * runtime types
+ *
+ * @copyright (c) 2008, Tohoku University.
+ * @author UENO Katsuhiro
+ * @version $Id: RuntimeTypes.ppg,v 1.1 2008/11/19 19:57:44 ohori Exp $
+ *)
+structure RuntimeTypes =
+struct
+
+  (*% *)
+  datatype interoperableKind =
+      INTEROPERABLE
+    | IMPORT_ONLY
+    | EXPORT_ONLY
+    | UNINTEROPERABLE
+
+  (*% *)
+  datatype ty =
+      UCHARty      (* unsigned char *)
+    | INTty        (* int *)
+    | UINTty       (* unsigned int *)
+    | BOXEDty      (* heap object pointer *)
+    | POINTERty    (* void * *)
+    | DOUBLEty     (* double precision floating-point *)
+    | FLOATty      (* single precision floating-point *)
+    | EXNTAGty     (* exception tag *)
+      (* FIXME: EXNTAGty is not needed if its representation is fixed... *)
+
+end

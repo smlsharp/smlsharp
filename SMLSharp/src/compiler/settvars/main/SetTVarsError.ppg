@@ -1,0 +1,31 @@
+(**
+ * @copyright (c) 2006, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: SetTVarsError.ppg,v 1.5 2008/03/11 08:53:55 katsu Exp $
+ *)
+structure SetTVarsError =
+struct
+
+  (***************************************************************************)
+
+  (*% 
+   *)
+  exception 
+   
+   (*%
+    * @format({name, tvar1, tvar2}) 
+        "type" + "variable" + name + "has" + "inconsistent" + "equality" + "attribute"
+    *)
+   DifferentEqattrivOfSameTvar of {name : string, tvar1 : Absyn.eq ,tvar2 : Absyn.eq} 
+
+   and
+
+   (*%
+    * @format({name}) 
+        "duplicate" + "user" + "type" + "variabl" + "in" + "declaration:"  + name
+    *)
+   DuplicateUserTvars of {name : string} 
+
+  (***************************************************************************)
+
+end

@@ -1,0 +1,19 @@
+Group is
+        $/basis.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../util/sources.cm
+        ../../pickle/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+	../../multiplevaluecalc/sources.cm
+	../../annotatedtypes/sources.cm
+
+	Counters.sml
+	INLINE.sig
+	Inline.sml
+	InlineEnv.sml
+	InlinePickler.sml
+	InlineUtils.sml

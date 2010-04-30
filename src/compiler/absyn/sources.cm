@@ -1,6 +1,0 @@
-Group
-        structure Absyn
-        structure AbsynFormatter
-        structure AbsynPickler
-is
-	main/module.cm

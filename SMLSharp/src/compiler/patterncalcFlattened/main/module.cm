@@ -1,0 +1,15 @@
+Group is
+       $/basis.cm
+
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../absyn/sources.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../util/sources.cm
+        ../../name/sources.cm
+        ../../patterncalc/sources.cm
+
+        PATTERNCALCFLATTENED.sig
+        PatternCalcFlattened.ppg.sml
+        PATTERNCALCFLATTENED_FORMATTER.sig
+        PatternCalcFlattenedFormatter.sml 

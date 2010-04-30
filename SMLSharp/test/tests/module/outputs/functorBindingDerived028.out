@@ -1,0 +1,21 @@
+signature SStructure = sig structure T : sig datatype dt = D end end
+structure PStructure : sig structure T : sig datatype dt con D : dt end end
+functor FStructure ('X : sig structure T : sig datatype dt = D end end) :
+sig structure T : sig datatype dt con D : 'X.T.dt end end
+structure TStructure
+: sig structure T : sig datatype dt con D : PStructure.T.dt end end
+structure SStructure : sig datatype dt con D : TStructure.PStructure.T.dt end
+val xStructure = - : TStructure.'X.T.dt
+functor FStructureTrans ('X : sig structure T : sig datatype dt = D end end) :
+SStructure
+structure TStructureTrans
+: sig structure T : sig datatype dt con D : PStructure.T.dt end end
+structure SStructureTrans
+: sig datatype dt con D : TStructureTrans.PStructure.T.dt end
+val xStructureTrans = - : TStructureTrans.'X.T.dt
+functor FStructureOpaq ('X : sig structure T : sig datatype dt = D end end) :
+SStructure
+structure TStructureOpaq
+: sig structure T : sig datatype dt con D : 'X.T.dt end end
+structure SStructureOpaq : sig datatype dt con D : TStructureOpaq.'X.T.dt end
+val xStructureOpaq = - : TStructureOpaq.'X.T.dt

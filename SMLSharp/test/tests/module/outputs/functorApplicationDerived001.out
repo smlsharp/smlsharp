@@ -1,0 +1,40 @@
+functor FEmpty (S : sig end) : sig end
+structure TEmpty : sig end
+functor FVal (S : sig val x : int end) : sig val y : int end
+structure TVal : sig val y : int end
+val xVal = 2 : int
+functor FType (S : sig type t end) : sig datatype dt con D : S.t -> dt end
+structure TType : sig datatype dt con D : X?.t -> dt end
+datatype dtType
+con DType : TType.dt -> dtType
+val xType = D - : TType.dt
+functor FEqType (S : sig eqtype t end) : sig datatype dt con D : S.t -> dt end
+structure TEqType : sig datatype dt con D : X?.t -> dt end
+datatype dtEqType
+con DEqType : TEqType.dt -> dtEqType
+val xEqType = D - : TEqType.dt
+functor FDatatype (S : sig datatype dt = D end) :
+sig datatype dt con E : S.dt -> dt datatype et con D : et end
+structure TDatatype
+: sig datatype dt con E : S.dt -> dt datatype et con D : X?.dt end
+datatype dtDatatype
+con DDatatype : TDatatype.dt -> dtDatatype
+val xDatatype = E D : TDatatype.dt
+datatype dtDatatypeRep
+con DDatatypeRep : dtDatatypeRep
+functor FDatatypeRep (S : sig datatype dt = datatype dtDatatypeRep end) :
+sig datatype dt con D : S.dt -> dt datatype et con DDatatypeRep : et end
+structure TDatatypeRep
+: sig datatype dt con D : S.dt -> dt datatype et con DDatatypeRep : X?.dt end
+val xDatatypeRep = D DDatatypeRep : TDatatypeRep.dt
+val yDatatypeRep = DDatatypeRep : TDatatypeRep.et
+functor FException (S : sig exception E of real end) :
+sig exception F : real -> exn val f : ['a .real -> 'a] end
+structure TException
+: sig exception F : real -> exn val f : ['a .real -> 'a] end
+val xException = 1.23 : real
+functor FStructure (S : sig structure T : sig datatype dt = D end end) :
+sig structure T : sig datatype dt con D : dt end end
+structure TStructure : sig structure T : sig datatype dt con D : X?.T.dt end end
+structure SStructure : sig datatype dt con D : TStructure.X?.T.dt end
+val xStructure = D : TStructure.T.dt

@@ -1,0 +1,6 @@
+Group
+        structure EffectCalc
+        structure EffectCalcPickler
+        structure EffectCalcEvaluator
+is
+	main/module.cm

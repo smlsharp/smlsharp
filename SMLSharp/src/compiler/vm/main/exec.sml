@@ -1,0 +1,35 @@
+  Control.switchTrace :=  true;
+  Control.doFunctionLocalize :=  true;
+  Control.printRBU :=  true;
+  Control.printAN :=  true;
+  Control.useAI :=  true;
+  Control.doInlining := false;
+  Control.doUntil := Control.Anormal;
+(*
+  Main.tracePrelude := true;
+  Main.printPrelude := true;
+  Control.tracePrelude :=  true;
+  Control.printSource :=  true;
+  Control.printMV :=  true;
+  Control.printCC :=  true;
+  Control.printMV :=  true;
+  Control.printAC :=  true;
+  Main.tracePrelude := true;
+  Main.printPrelude := true;
+  Control.tracePrelude :=  true;
+  Control.traceFileLoad :=  true;
+  Control.printAN :=  true;
+  Control.printPL :=  true;
+  Control.printUC :=  true;
+  Control.printTP :=  true;
+  Control.printTFP :=  true;
+  Control.printRC :=  true;
+  Control.printTL :=  true;
+  Control.printIL :=  true;
+  Control.printLS :=  true;
+  Control.printIS :=  true;
+  Control.printSR :=  true;
+  Control.checkType :=  true;
+*)
+  Control.skipPrinter :=  true;
+Main.main();

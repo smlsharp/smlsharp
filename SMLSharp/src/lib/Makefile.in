@@ -1,0 +1,79 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@/commonrule
+
+SUBDIRS = basis \
+	  FFI \
+	  LMLML \
+	  Script \
+	  SMLSharp \
+          CConfig
+
+VPATH = @srcdir@
+
+TARGETS = prelude.smc @NATIVE_PRELUDE@
+
+# ./ is required to avoid PATH substitution on Solaris make.
+INSTALL_FILES = ./basis \
+                ./basis.sml \
+                ./FFI \
+                ./FFI.sml \
+		./LMLML.sml \
+		./LMLML \
+                ./minimum \
+                ./minimum.sml \
+                ./ml-yacc \
+                ./ml-yacc-lib.sml \
+		./prelude.sml \
+		./Script \
+		./script.sml \
+                ./SMLNJ \
+		./CConfig \
+		./SMLSharp \
+		./SMLSharp.sml
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(srcdir)/CM
+	-rm -f $(TARGETS)
+
+mlton: config
+
+install: $(TARGETS)
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_DATA) prelude.smc '$(DESTDIR)$(libdir_smlsharp)'
+	[ -z "@NATIVE_PRELUDE@" ] || \
+	$(INSTALL_DATA) ntprelude.$(OBJEXT) '$(DESTDIR)$(libdir_smlsharp)'
+	[ -z "@NATIVE_PRELUDE@" ] || \
+	$(INSTALL_DATA) ntprelude.smc '$(DESTDIR)$(libdir_smlsharp)'
+	@set -x; \
+	cd $(srcdir); \
+	find $(INSTALL_FILES) -type d -print \
+	| $(EGREP) -v '\.svn|CVS' \
+	| (while read i; do \
+	    $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/'$$i \
+	    || exit $$?; \
+	done)
+	@set -x; \
+	cd $(srcdir); \
+	find $(INSTALL_FILES) -type f -print \
+	| $(EGREP) -v '\.svn|CVS|\.cvsignore|\~$$|\.in$$|Makefile' \
+	| (while read i; do \
+	    $(INSTALL_DATA) $$i '$(DESTDIR)$(libdir_smlsharp)/'$$i \
+	    || exit $$?; \
+	done)
+
+# ToDO : 
+# prelude depends on many files in Basis and other libraries.
+prelude.smc: rtprelude.sml prelude.sml $(SMLSHARP)
+	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/rtprelude.sml --make-compiled-prelude --output=$@ --stdin
+
+ntprelude.smc: yaprelude.sml prelude.sml $(SMLSHARP)
+	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=$(NATIVE_TARGET) --make-compiled-prelude --output=ntprelude.o --stdin --xswitchTrace=yes --xtracePrelude=yes --xtraceFileLoad=yes
+
+yaprelude.smo: yaprelude.sml prelude.sml $(SMLSHARP)
+	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=newvm --make-compiled-prelude --output=$@ --stdin

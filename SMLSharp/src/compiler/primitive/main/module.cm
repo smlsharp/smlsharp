@@ -1,0 +1,16 @@
+group is
+        $/basis.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../../primitives/primitives.cm
+        primitive.cm
+
+        BuiltinPrimitiveInfo.sml
+        BuiltinPrimitiveType.sml
+        BuiltinPrimitiveUtils.sml
+        BuiltinContextMaker.sml
+        BuiltinContext.sml
+        PREDEFINED_TYPES.sig
+        PredefinedTypes.sml

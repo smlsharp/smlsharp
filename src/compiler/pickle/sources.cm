@@ -1,7 +1,0 @@
-Group
-        signature PICKLE
-        structure Pickle
-        functor OrdSetPickler
-        functor OrdMapPickler
-is
-        main/module.cm

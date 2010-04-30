@@ -1,0 +1,8 @@
+Group
+        structure X86Mnemonic
+	structure X86CodeSelection
+        structure X86Formatter
+        structure X86RegisterAllocation
+        structure X86CodeGeneration
+is
+        main/module.cm

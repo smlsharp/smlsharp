@@ -1,0 +1,7 @@
+structure S11 : sig datatype dt con E : dt end
+signature S11 = sig datatype dt = D val x : dt end
+signature S12 = sig datatype dt = datatype S11.dt val x : dt val y : S11.dt end
+structure S21 : sig datatype dt con E : dt end
+structure S22 : sig datatype dt con F : dt end
+signature S21 = sig datatype dt = datatype S21.dt val x : dt val y : S21.dt end
+signature S22 = sig datatype dt = datatype S22.dt val x : dt val y : S22.dt end

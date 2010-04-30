@@ -1,5 +1,0 @@
-Group
-        structure BasicTypes
-is
-        $/basis_compat.cm
-        BasicTypes.sml

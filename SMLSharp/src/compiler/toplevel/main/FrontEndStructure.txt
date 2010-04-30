@@ -1,0 +1,101 @@
+As of June 12 2008.
+
+phase				input			output
+-------------------------------------------------------------------------------
+doElaboration			Absyn			PatternCalc
+doModuleCompilation		PatternCalc		PatternCalcFlattened
+doVALRECOptimization		PatternCalcFlattened	PatternCalcFlattened
+doFundeclElaboration		PatternCalcFlattened	PatternCalcFlattened
+doSetTvars			PatternCalcFlattened	PatternCalcWithTvars
+doTypeInference			PatternCalcWithTvars	TypedCalc
+doPrinterGeneration		TypedCalc		TypedCalc
+doUncurryOptimization		TypedCalc		TypedCalc
+doUniqueIDAllocation		TypedCalc		TypedFlatCalc
+doMatchCompilation		TypedFlatCalc		RecordCalc
+doTypedLambdaNormalization	RecordCalc		TypedLambda
+doTypeCheck			TypedLambda		TypedLambda
+doStaticAnalysis		TypedLambda		AnnotatedCalc
+doRecordUnboxing		AnnotatedCalc		MultipleValueCalc
+doInlining			MultipleValueCalc	MultipleValueCalc
+doMultipleValueOptimization	MultipleValueCalc	MultipleValueCalc
+doFunctionLocalize		MultipleValueCalc	MultipleValueCalc
+doMVTypeCheck			MultipleValueCalc	MultipleValueCalc
+doFunctorLinker			MultipleValueCalc	MultipleValueCalc
+doClustering			MultipleValueCalc	ClusterCalc
+doRBUTransformation		ClusterCalc		RBUCalc
+
+
+name structures
+
+type		definde			contents
+-----------------------------------------------------
+longin		absyn/Absyn.ppg		string list
+path		name/Path.sml		datatype (similar to string list)
+namePath	types/NameMap.ppg	string * path
+varPathInfo	types/Types.ppg		{namePath : NameMap.namePath, ty : ty}
+dataTyInfo	types/Types.ppg		{tyCon:tyCon, datacon:idState SEnv.map}
+idState		types/Types.ppg		VARID of varPathInfo, CONID of conPathInfo, PRIM of primInfo etc
+varIdInfo	types/Types.ppg		{displayName : string, ty : ty, varId : varId}
+varId		types/Types.ppg		EXTERNAL of ID, INTERNAL of id
+conPathInfo	types/Types.ppg		{namePath:namePath, tag:int, tyCon:tyCon, ...}
+conInfo		types/Types.ppg		{tag:int, tyCon: tyCon, ...}
+varInfo		annotatedtypes/		{displayName : string, ty : ty, varId : Types.varId}
+		                        where ty is an Annotatedty.ty
+id		names/ID.ppg		int
+ID		names/GlobalID.ppg	NONEXPORT of {key : key, displayName : string},
+					EXPORT of Namespace.namespace * string
+namespace	names/Namespace.ppg	string list
+
+Absyn				
+          var: longid
+        patid: longid
+datatype name: string
+ datatype con: string
+
+PatternCalc
+          var: longid
+        patid: longid
+datatype name: string
+ datatype con: string
+
+PatternCalcFlattened	
+          var: namePath
+        patid: namePath
+datatype name: path
+ datatype con: namePath
+
+PatternCalcWithTvars
+          var: namePath
+        patid: namePath
+datatype name: path
+ datatype con: namePath
+
+TypedCalc
+          var: namePath * ty (varPathInfo)
+       patvar: namePath * ty (varPathInfo)
+ constructCon: conPathInfo
+
+TypedFlatCalc
+          var: varIdInfo
+        patid: varIdInfo
+ constructCon: conInfo
+
+RecordCalc
+          var: varIdInfo
+          con: conInfo
+
+TypedLambda
+          var: varIdInfo
+
+AnnotatedCalc
+          var: varInfo
+
+Multiplevaluecalc
+          var: varInfo
+
+ClusterCalc
+          var: varInfo
+
+RBUCalc
+          var: varInfo
+

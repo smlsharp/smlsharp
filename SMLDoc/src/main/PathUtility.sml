@@ -7,7 +7,7 @@
  * </p>
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PathUtility.sml,v 1.2 2007/01/01 05:03:59 kiyoshiy Exp $
+ * @version $Id: PathUtility.sml,v 1.3 2007/09/19 05:28:55 matsu Exp $
  *)
 structure PathUtility : PATH_UTILITY =
 struct
@@ -66,8 +66,8 @@ struct
               NONE => sourceFiles
             | SOME entryName =>
                *)
-              "" => List.rev sourceNames
-            | entryName =>
+              NONE (*""*) => List.rev sourceNames
+            | SOME entryName =>
               if filter entryName
               then collect (entryName :: sourceNames)
               else collect sourceNames

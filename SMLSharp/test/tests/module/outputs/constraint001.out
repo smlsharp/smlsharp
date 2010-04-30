@@ -1,0 +1,34 @@
+datatype dt
+con D : dt
+signature SType = sig type t val x : t end
+signature SDatatype = sig datatype dt = E val x : dt end
+signature SReplication = sig datatype dtr = datatype dt val x : dtr end
+structure SType : sig type t = int val x : int end
+structure STypeTrans1 : SType
+structure STypeTrans2 : SType
+val eqSTypeTrans = true : bool
+structure STypeOpaque1 : SType
+structure STypeOpaque2 : SType
+../tests/module/tests/constraint001.sml:49.21-49.51 Error:
+  operator and operand don't agree
+  operator domain: ''A * ''A
+  operand: STypeOpaque1.t * STypeOpaque2.t
+
+structure SDatatype : sig datatype dt con E : dt val x : dt end
+structure SDatatypeTrans1 : SDatatype
+structure SDatatypeTrans2 : SDatatype
+val eqSDatatypeTrans = true : bool
+structure SDatatypeOpaque1 : SDatatype
+structure SDatatypeOpaque2 : SDatatype
+../tests/module/tests/constraint001.sml:61.25-61.63 Error:
+  operator and operand don't agree
+  operator domain: SDatatypeOpaque1.dt * SDatatypeOpaque1.dt
+  operand: SDatatypeOpaque1.dt * SDatatypeOpaque2.dt
+
+structure SReplication : sig datatype dtr con D : dtr val x : dtr end
+structure SReplicationTrans1 : SReplication
+structure SReplicationTrans2 : SReplication
+val eqSReplicationTrans = true : bool
+structure SReplicationOpaque1 : SReplication
+structure SReplicationOpaque2 : SReplication
+val eqSReplicationOpaque = true : bool

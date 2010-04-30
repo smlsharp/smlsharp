@@ -1,0 +1,11 @@
+datatype gdt
+con D : int -> gdt
+con E : gdt
+functor F (S : sig datatype dt = datatype gdt end) :
+sig datatype dt con D : S.dt -> dt val x : S.dt end
+structure P : sig datatype dt con D : int -> dt con E : dt end
+structure S : sig datatype dt con D : S.dt -> dt val x : S.dt end
+val x = D 1 : P.dt
+val y = 1 : int
+val a = D (D 1) : S.dt
+val b = 1 : int

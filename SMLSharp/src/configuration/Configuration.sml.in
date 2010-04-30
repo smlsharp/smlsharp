@@ -1,0 +1,59 @@
+(* -*- sml -*- *)
+
+structure Configuration =
+struct
+
+  (* version number of SML# compiler. *)
+  val Version = "%VERSION%"
+
+  (* Version numbers of SML# executable binary format. *)
+  val BinaryVersion = {major = 0w%VERSION_MAJOR%, minor = 0w%VERSION_MINOR%}
+
+  (* release date *)
+  val ReleaseDate = "2010-04-30 22:11:29"
+
+  (* absolute path to the build directory of development *)
+  val BuildRoot = "%BUILD_ROOT%"
+
+  (* absolute path to the 'src' directory of development *)
+  val SourceRoot = "%SRC_ROOT%"
+
+  (* filename of runtime executable file *)
+  val RuntimeFileName = "smlsharprun%EXEEXT%"
+
+  (* absolute path to the runtime executable *)
+  val RuntimePath = "%BINDIR%/" ^ RuntimeFileName
+
+  (* absolute path to the runtime DLL *)
+  (* NOTE: %DLEXT% does not include '.' . *)
+  val RuntimeDLLPath = "%LIBDIR%/libsmlsharp.%DLEXT%"
+
+  (* absolute path to the SML lib directory *)
+  val LibDirectory = "%SMLLIBDIR%"
+
+  (* filename of full prelude *)
+  val PreludeFileName = "prelude.sml"
+
+  (* filename of compiled full prelude *)
+  val CompiledPreludeFileName = "prelude.smc"
+
+  (* path to the prelude library *)
+  val PreludePath = LibDirectory ^ "/" ^ PreludeFileName
+
+  (* filename of minimum prelude *)
+  val MinimumPreludeFileName = "minimum.sml"
+
+  (* path to the minimum prelude *)
+  val MinimumPreludePath = LibDirectory ^ "/" ^ MinimumPreludeFileName
+
+  val Platform = "%SMLSHARP_PLATFORM%"
+  val NativeTarget = "%NATIVE_TARGET%"
+
+  val CC = "%CC%"
+  val LD = "%LD%"
+  val AR = "%AR%"
+  val RANLIB = "%RANLIB%"
+  val LDFLAGS = "%LDFLAGS%"
+  val LIBS = "%LIBS%"
+
+end

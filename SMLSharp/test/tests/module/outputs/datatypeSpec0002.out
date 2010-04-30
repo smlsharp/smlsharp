@@ -1,0 +1,5 @@
+signature S11 = sig datatype 'a t = D end
+signature S12 = sig datatype 'c t = D datatype 'b s = E end
+signature S21 = sig datatype ('b,'a) t = D end
+signature S31 = sig datatype ('b,'c,'a) t = D end
+signature S32 = sig datatype ('b,'c,'a) t = D datatype ('z,'y,'x) s = E end

@@ -1,0 +1,4 @@
+signature S1 =
+sig structure S : sig type t datatype dt = D of t val x : dt end end
+signature T2 = sig type t datatype dt = D of t val x : dt end
+signature S2 = sig structure S : T2 end

@@ -38,7 +38,7 @@ val eof = fn ({comLevel, error, stringStart, ...}:arg) =>
 
 local
   fun cvt radix (s, i) =
-      #1(valOf(Int.scan radix Substring.getc (Substring.triml i (Substring.all s))))
+      #1(valOf(Int.scan radix Substring.getc (Substring.triml i (Substring.full s))))
       handle Overflow => ((* print "overflow ignored.\n"; *) 0)
 in
 val atoi = cvt StringCvt.DEC

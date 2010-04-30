@@ -1,0 +1,53 @@
+(**
+ *
+ * location in the source code.
+ * @copyright (c) 2006, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: Loc.ppg,v 1.1 2007/08/12 06:32:55 ohori Exp $
+ *)
+structure Loc :> LOC =
+struct
+
+    (*************************************************************************)
+
+    (*%
+     * @prefix format_head_
+     *)
+    (*%
+     * @prefix format_tail_
+     *)
+    type pos 
+    = (*%
+       * @prefix format_head_
+       * @format({fileName, line, col}) fileName ":" line "." col
+       *)
+      (*%
+       * @prefix format_tail_
+       * @format({fileName, line, col}) line "." col
+       *)
+      {fileName : string, line : int, col : int}
+
+    (*%
+     * @formatter(head) format_head_pos
+     * @formatter(tail) format_tail_pos
+     *)
+    type loc 
+    = (*%
+       * @format(head * tail) head : head "-" tail : tail
+       *)
+      pos * pos
+
+    (*************************************************************************)
+
+    val nopos = {fileName = "none", line = 0, col = 0}
+    val noloc = (nopos, nopos)
+    fun makePos {fileName, line, col} =
+        {fileName = fileName, line = line, col = col}
+    fun fileNameOfPos (pos : pos) = #fileName pos
+    fun lineOfPos (pos : pos) = #line pos
+    fun colOfPos (pos : pos) = #col pos
+    fun mergeLocs ((pos11, pos12), (pos21, pos22)) = (pos11, pos22)
+
+    (*************************************************************************)
+
+end

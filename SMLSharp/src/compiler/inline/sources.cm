@@ -1,0 +1,7 @@
+Group
+        structure Inline
+	structure InlineEnv
+	structure InlinePickler
+	structure InlineUtils
+is
+	main/module.cm

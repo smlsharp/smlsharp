@@ -1,0 +1,8 @@
+signature S =
+  sig
+  datatype dt0 = D0
+  datatype 'a dt1 = D1 of 'a
+  datatype ('a,'b) dt2 = D2 of 'a * 'b
+  end
+structure STrans : S
+structure SOpaque : S

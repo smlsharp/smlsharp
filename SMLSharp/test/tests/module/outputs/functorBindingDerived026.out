@@ -1,0 +1,38 @@
+datatype dtDatatypeRep
+con DDatatypeRep : dtDatatypeRep
+signature SDatatypeRep =
+sig datatype et = D of dtDatatypeRep datatype ft = datatype dtDatatypeRep end
+structure PDatatypeRep : sig datatype dt con DDatatypeRep : dt end
+functor FDatatypeRep ('X : sig datatype dt = datatype dtDatatypeRep end) :
+sig datatype et con D : 'X.dt -> et datatype ft con DDatatypeRep : ft end
+structure TDatatypeRep
+: sig
+  datatype et
+    con D : 'X.dt -> et
+    datatype ft
+  con DDatatypeRep : PDatatypeRep.dt
+  end
+val xDatatypeRep = D DDatatypeRep : TDatatypeRep.et
+val yDatatypeRep = DDatatypeRep : TDatatypeRep.ft
+functor FDatatypeRepTrans ('X : sig datatype dt = datatype dtDatatypeRep end) :
+SDatatypeRep
+structure TDatatypeRepTrans
+: sig
+  datatype et
+    con D : 'X.dt -> et
+    datatype ft
+  con DDatatypeRep : PDatatypeRep.dt
+  end
+val xDatatypeRepTrans = D DDatatypeRep : TDatatypeRepTrans.et
+val yDatatypeRepTrans = DDatatypeRep : TDatatypeRepTrans.ft
+functor FDatatypeRepOpaq ('X : sig datatype dt = datatype dtDatatypeRep end) :
+SDatatypeRep
+structure TDatatypeRepOpaq
+: sig
+  datatype et
+    con D : dtDatatypeRep -> et
+    datatype ft
+  con DDatatypeRep : PDatatypeRep.dt
+  end
+val xDatatypeRepOpaq = D DDatatypeRep : TDatatypeRepOpaq.et
+val yDatatypeRepOpaq = DDatatypeRep : TDatatypeRepOpaq.ft

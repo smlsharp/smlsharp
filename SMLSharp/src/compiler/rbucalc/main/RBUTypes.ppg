@@ -1,0 +1,88 @@
+(**
+ * annotated type structures.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori
+ * @author Huu-Duc Nguyen 
+ * @version $Id: RBUTypes.ppg,v 1.2 2008/01/28 03:12:11 katsu Exp $
+ *)
+
+structure RBUTypes =
+struct
+
+  (*%                
+   * @formatter(BasicTypes.UInt32) BasicTypeFormatters.format_UInt32
+   *)
+  datatype ty =
+           (*% 
+            * @format(value) "t" value
+            *)
+           BOUNDVARty of int
+         | (*% 
+            * @format "BOXEDty" 
+            *)
+           BOXEDty (* generic boxed type *)
+         | (*% 
+            * @format "ATOMty" 
+            *)
+           ATOMty (* generic unboxed type *)
+         | (*% 
+            * @format "DOUBLEty" 
+            *)
+           DOUBLEty
+         | (*%
+            * @format(tid) "<" !N0{ tid } ">"
+            *)
+           TAGty of int
+         | (*%
+            * @format(tid) "|" !N0{ tid } "|"
+            *)
+           SIZEty of int
+         | (*%
+            * @format({label, recordTy})
+            * "INDEXty(" !N0{ label +1 "of" +d recordTy } ")"
+            *)
+           INDEXty of {label : string, recordTy : ty}
+         | (*%
+            * @format(ty tys)
+            * "<<" !N0{ tys(ty)("," +1) } ">>"
+            *)
+           BITMAPty of ty list
+         | (*%
+            * @format(ty tys)
+            * "||" !N0{ tys(ty)("," +1) } "||"
+            *)
+           OFFSETty of ty list
+         | (*%
+            * @format({condTy, tyList:ty tys})
+            * "PADty(" !N0{ tys(ty)("," +1) +1 "~" +d condTy } ")"
+            *)
+           PADty of {condTy : ty, tyList : ty list}
+         | (*%
+            * @format({condTy, tyList:ty tys})
+            * "|" !N0{ tys(ty)("," +1) +1 "~" +d condTy } "|"
+            *)
+           PADSIZEty of {condTy : ty, tyList : ty list}
+         | (*%
+            * @format(tid tids)
+            * "F<<" !N0{ tids(tid)("," +1) } ">>"
+            *)
+           FRAMEBITMAPty of int list
+         | (*%
+            * @format({tyList:ty tys, fixedSizeList:sz szs})
+            * "E" { "<<"
+            *       2[ !N0{ tys(ty)("," +1) } ]
+            *       1[ +1 "||" +d !N0{ szs(sz)("," +1) } ]
+            *       ">>" }
+            *)
+           ENVBITMAPty of
+           {tyList : ty list, fixedSizeList : BasicTypes.UInt32 list}
+         | (*%
+            * @format(tid) "S" tid
+            *)
+           SINGLEty of int
+         | (*%
+            * @format(tid) "U" tid
+            *)
+           UNBOXEDty of int
+
+end

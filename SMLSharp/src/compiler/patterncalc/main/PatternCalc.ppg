@@ -1,0 +1,679 @@
+(**
+ * The Untyped Pattern Calculus 
+ *
+ * @author Atsushi Ohori 
+ * @author Liu Bochao
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: PatternCalc.ppg,v 1.26 2008/08/24 03:54:41 ohori Exp $
+ *)
+structure PatternCalc : PATTERNCALC = 
+struct
+local
+  type loc = Loc.loc
+  type constant = Absyn.constant
+  type ty =  Absyn.ty
+  type longid = Absyn.longid
+  type tvar = Absyn.tvar
+  type kindedTvar = Absyn.kindedTvar
+  type ffiAttributes = Absyn.ffiAttributes
+in
+  (*%
+   *)
+  datatype caseKind =
+    (*%
+     * @format "bindCase"
+     *)
+    BIND
+  | (*%
+     * @format "matchCase"
+     *)
+    MATCH
+  | (*%
+     * @format "handleCase"
+     *)
+    HANDLE
+
+  (*%
+   * @formatter(ty) Absyn.format_ty
+   * @formatter(longid) Absyn.format_longid
+   * @formatter(option) SmlppgUtil.formatPrependedOpt
+   *)
+  datatype plexbind =
+    (*%
+     * @format(bool * string * ty option * loc)
+     *          {string} {option(ty)(+d "of" +)}
+     *)            
+    PLEXBINDDEF of bool * string * ty option * loc
+  | (*%
+     * @format(bool1 * string1 * bool2 * string2 * loc)
+     *          {string1} +d "=" +2 {string2}
+     *)
+    PLEXBINDREP of bool * string * bool * longid * loc
+
+(*
+  SMLFormat.BasicFormatters.format_list
+   nil => ""
+   [e] => e
+   [e1,...,en] => e1,...,en
+  SmlppgUtil.formatListWithEnclosure
+   nil => ""
+   [e] => [e]
+   [e1,...,en] => [e1,...,en]
+  SmlppgUtil.formatListWithEnclosureOne
+   nil => ""
+   [e] => e
+   [e1,...,en] => [e1,...,en]
+  SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+   nil => ""
+   [e] => e
+   [e1,...,en] => [e1,...,en]
+  SmlppgUtil.formatListWithEnclosureIfNotOne
+   nil => []
+   [e] => e
+   [e1,...,en] => [e1,...,en]
+*)
+
+  (*%
+   * @params(expFormatter,patFormatter)
+   * @formatter(constant) Absyn.format_constant
+   * @formatter(ty) Absyn.format_ty
+   * @formatter(longid) Absyn.format_longid
+   * @formatter(tvar) Absyn.format_tvar
+   * @formatter(kindedTvar) Absyn.format_kindedTvar
+   * @formatter(option) SmlppgUtil.formatPrependedOpt
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(formatListWithEnclosureOne) 
+       SmlppgUtil.formatListWithEnclosureOne
+   * @formatter(formatGenericFieldsExp) SmlppgUtil.formatGenericFieldsExp
+   *)
+  datatype plexp = 
+    (*%
+     * @format(const * loc) {const}
+     *)
+    PLCONSTANT of constant * loc
+  | (*%
+     * @format(name * gk * loc) {name}
+     *)
+    PLGLOBALSYMBOL of string * Absyn.globalSymbolKind * loc
+  | (*%
+     * @format(longid * loc) {longid}
+     *)
+    PLVAR of longid  * loc
+  | (*%
+     * @format(plexp * ty * loc)
+     * N0{ {plexp()(expFormatter,patFormatter)} + ":" {ty}}
+     *)
+    PLTYPED of plexp *  ty * loc
+  | (*%
+     * @format(plexp1 * plexp2 list:formatListWithEnclosureOne * loc)
+     * L10{
+     *      plexp1()(expFormatter,patFormatter) +
+     *      list(plexp2()(expFormatter,patFormatter))(","+1, "{"1, 1"}")
+     *    }
+     *)
+    PLAPPM of plexp * plexp list * loc
+  | (*%
+     * @format(pldec pldecs * plexp plexps * loc)
+     * !N0{
+     *      {"let" 2[ +1 pldecs(pldec()(expFormatter,patFormatter))(+1) ]} +1
+     *      {
+     *        "in" 2[ +2 plexps(plexp()(expFormatter,patFormatter))( +3 ) ] +2
+     *        "end"
+     *      }
+     *    }
+     *)
+    PLLET of pdecl list * plexp list * loc
+  | (*%
+     * @format(fields:formatGenericFieldsExp * loc) fields()(expFormatter,"=",",")
+     *)
+    PLRECORD of (string * plexp) list * loc
+  | (*%
+     * @format(plexp * field list * loc)
+     * N0{
+     *     {plexp()(expFormatter,patFormatter)} +
+     *     "#" + "{" 2[ 1 list(field)( "," +1) ] 1 "}"
+     *   }
+     * @format:field(label * plexp)
+     * {{label} +d "=" +2 {plexp()(expFormatter,patFormatter)}}
+     *)
+    PLRECORD_UPDATE of plexp * (string * plexp) list * loc
+  | (*%
+     * @format(value values:formatListWithEnclosure * loc)
+     * values(value()(expFormatter,patFormatter))("," +, + "(", ")")
+     *)
+    PLTUPLE of plexp list * loc
+  | (*%
+     * @format(value values * loc)
+     *      {"[" 2[ 1 values(value()(expFormatter,patFormatter))("," +1) ] 1 "]"}
+     *)
+    PLLIST of plexp list * loc
+  | (*%
+     * @format(exp * loc) N0{ "raise" +d {exp()(expFormatter,patFormatter)} }
+     *)
+    PLRAISE of plexp * loc
+  | (*%
+     * @format(exp * rule rules * loc)
+     * N0{
+     *     {exp()(expFormatter,patFormatter)} +1
+     *     "handle" +d rules(rule)( ~2[ +1 "|"] +)
+     *   }
+     * @format:rule(pat * exp)
+     * {pat()(expFormatter,patFormatter)} + "=>" +1
+     * {exp()(expFormatter,patFormatter)}
+     *)
+    PLHANDLE of plexp * (plpat * plexp) list * loc
+  | (*%
+     * @format(rule rules * loc) !N0{ "fn" + {rules(rule)(~2[ +1 "|"] +)} }
+     * @format:rule(pat pats:formatListWithEnclosureOne * exp)
+     * {pats(pat()(expFormatter,patFormatter))(","+1, "{", "}")} + "=>" +1
+     * {exp()(expFormatter,patFormatter)}
+     *)
+    PLFNM of (plpat list * plexp) list * loc 
+  | (*%
+     * @format(exp exps:formatListWithEnclosureOne * rule rules * caseKind * loc)
+     * N0{
+     *     caseKind 2[ +d {exps(exp()(expFormatter,patFormatter))(",","{","}")} ]
+     *     2[ +1 "of" ]+ {rules(rule)(~2[ +1 "|" ]+)}
+     *   }
+     * @format:rule(pat pats:formatListWithEnclosureOne * exp)
+     * {{pats(pat()(expFormatter,patFormatter))(",","{","}")} + "=>" +1
+     * {exp()(expFormatter,patFormatter)}}
+     *)
+    PLCASEM of plexp list *  (plpat list * plexp) list * caseKind * loc  (* primitive; caseKind added *)
+  | (*%
+     * @format(selector * loc)  {"#"{selector}}
+     *)
+    PLRECORD_SELECTOR of string * loc 
+  | (*%
+     * @format(selector * exp * loc)
+     * L10{"#"{selector} + {exp()(expFormatter,patFormatter)}}
+     *)
+    PLSELECT of string * plexp * loc  (* this must be kept as a primitive *)
+  | (*%
+     * @format(exp exps * loc)
+     * !N0{ "(" 2[ 1 exps(exp()(expFormatter,patFormatter))(";" +1) ] 1 ")" }
+     *)
+    PLSEQ of plexp list * loc
+  | (*%
+     * @format(exp * loc) "_cast" "(" exp()(expFormatter,patFormatter) ")"
+     *)
+    PLCAST of plexp * loc
+  | (*%
+     * @format(exp * ty * loc)
+     *     N0{ {exp()(expFormatter,patFormatter)}
+     *         + ":" +1 "_import" +2 {ty} }
+     *)
+    PLFFIIMPORT of plexp * ty * loc
+  | (*%
+     * @format(exp * ty * loc)
+     *     N0{ {exp()(expFormatter,patFormatter)}
+     *         + ":" +1 "_export" +2 {ty} }
+     *)
+    PLFFIEXPORT of plexp * ty * loc
+  | (*%
+     * @format(cconv * exp * arg args * ty * loc)
+     *     N0{ "_ffiapply" + exp()(expFormatter,patFormatter)
+     *         + "(" args(arg()(expFormatter,patFormatter))("," +) ")"
+     *         + ":" + ty}
+     *)
+    PLFFIAPPLY of ffiAttributes * plexp * ffiArg list * ty * loc
+  and ffiArg =
+    (*%
+     * @format(exp * ty * loc)  exp()(expFormatter,patFormatter) + ":" + ty
+     *)    
+    PLFFIARG of plexp * ty * loc
+  | (*%
+     * @format(ty * exp opt * loc)
+     *   "_sizeof(" ty ")" {opt(exp()(expFormatter,patFormatter))(+d "*" +)}
+     *)
+    PLFFIARGSIZEOF of ty * plexp option * loc
+
+  and pdecl = 
+    (*%
+     * @format(var vars:formatListWithEnclosure * bind binds * loc)
+     *       "val" {vars(var)("," +, + "(", ")")} +
+     *             {binds(bind)(~4[ +1 "and"] +)}
+     * @format:bind(pat * exp)
+     * {pat()(expFormatter,patFormatter)} +d "=" +2
+     * {exp()(expFormatter,patFormatter)}
+     *)
+    PDVAL of kindedTvar list * (plpat * plexp ) list * loc 
+  | (*%
+     * @format(var vars:formatListWithEnclosure * dec binds * loc)
+     *  "fun" {vars(var)("," +, + "(", ")")} + 
+     *                   {binds(dec)(~4[ +1 "and"] +)}
+     * @format:dec(fid * rules) {fid()(expFormatter,patFormatter) + rules}
+     * @format:rules(rule rules) {rules(rule)(~2[ +1"|"] +)}
+     * @format:rule(pat pats *  exp)
+     *    {pats(pat()(expFormatter,patFormatter))(+d)} +d "=" +1 {exp()(expFormatter,patFormatter)}
+     *)
+    PDDECFUN of kindedTvar list * (plpat * (plpat list * plexp) list) list * loc 
+  | (*%
+     * @format(var vars:formatListWithEnclosure * dec * loc)
+     *  "nonrecfun" {vars(var)("," +, + "(", ")")} + {dec}
+     * @format:dec(fid * rules) {fid()(expFormatter,patFormatter) + rules}
+     * @format:rules(rule rules) {rules(rule)(~2[ +1"|"] +)}
+     * @format:rule(pat pats *  exp)
+     *    {pats(pat()(expFormatter,patFormatter))(+d)} +d "=" +1 {exp()(expFormatter,patFormatter)}
+     *)
+    PDNONRECFUN of kindedTvar list * (plpat * (plpat list * plexp) list) * loc 
+  | (*%
+     * @format(var vars:formatListWithEnclosure * bind binds * loc)
+     *  "val" {vars(var)("," +, + "(", ")")} +d
+     *          "rec" +d {binds(bind)(~4[ +1 "and"] +)}
+     * @format:bind(pat * exp)
+     * {pat()(expFormatter,patFormatter)} +d "=" +2
+     * {exp()(expFormatter,patFormatter)}
+     *)
+    PDVALREC of kindedTvar list * (plpat * plexp ) list * loc
+  | (*%
+     * @format(id ids * dec decs * loc)
+     "valrecgroup" +1 2[decs(dec()(expFormatter,patFormatter))(+ 1)] +1
+     "endvalrecgroup"
+     *)
+    PDVALRECGROUP of string list * pdecl list * loc
+  | (*%
+     * @format(bind binds * loc) "type" + {binds(bind)(~4[ +1 "and"] +)}
+     * @format:bind(tyvar tyvars:formatListWithEnclosure * name * ty)
+     *            {tyvars(tyvar)("," +, "(", ")" +)} {name} +d "=" +2 {ty}
+     *)
+    PDTYPE of (tvar list * string * ty) list * loc
+  | (*%
+     * @format(bind binds * loc)
+     *                 "datatype" + {binds(bind)(~4[ +1 "and" ] +)}
+     * @format:bind(tyvar tyvars:formatListWithEnclosure * tyCon * valcon valcons)
+     * {tyvars(tyvar)("," +, "(", ")" +) {tyCon} + "=" +1
+     *                                {valcons(valcon)(~2[ +1 "|" ] +)}}
+     * @format:valcon(b * name * ty option)
+     *          {b()("op" +, "")} {name} {option(ty)(~2[ +d "of" ] +)}
+     *)
+    PDDATATYPE of (tvar list * string * (bool * string * ty option) list) list 
+                * loc
+  | (*%  
+     * @format(tyCon * longid * loc)
+     *     "datatype" + tyCon + "=" + "datatype" + longid
+     *)
+    PDREPLICATEDAT of string * longid * loc (* replication *)
+  | (*%
+     * @format(bind binds * decl decls * loc) 
+     *                 "abstype" + {binds(bind)(~4[ +1 "and" ] +)}
+     * @format:bind(tyvar tyvars:formatListWithEnclosure * tyCon * valcon valcons)
+     * {tyvars(tyvar)("," +, "(", ")" +) {tyCon} + "=" +1
+     *                {valcons(valcon)(~2[ +1 "|" ] +)}}
+     * @format:valcon(b * name * ty option)
+     *          {b()("op" +, "")} {name} {option(ty)(~2[ +d "of" ] +)}
+     * +d "with" +d
+     *  decls(decl()(expFormatter,patFormatter))(+)
+     * +d "end"
+     *)
+    PDABSTYPE of (tvar list * string * (bool * string * ty option) list) list 
+               * pdecl list
+               * loc
+  | (*%
+     * @format(plexbind list * loc)
+     * "exception" + {list(plexbind)(~4[ +1 "and" ]+)}
+     *)
+    PDEXD of plexbind list * loc
+  | (*%
+     * @format(localdec list1 * dec list2 * loc)
+     *  "local"
+     *    2[ +2 list1(localdec()(expFormatter,patFormatter))(+d) ] +1
+     *  "in"
+     *    2[ +2 list2(dec()(expFormatter,patFormatter))(+3) ] +2
+     *  "end"
+     *)
+    PDLOCALDEC of pdecl list * pdecl list * loc
+  | (*%
+      * @format(longid list * loc)
+      *                "open" +  list(longid)(5[+1])
+      *)
+     PDOPEN of longid list * loc
+  | (*%
+      * @format(int * name list * loc)
+      *                   "infix" +d {int} +d list(name)(+d)
+      *)
+     PDINFIXDEC of int * string list * loc
+  | (*%
+      * @format(int * name list * loc)
+      *                   "infixr" +d {int} +d list(name)(+d)
+      *)
+     PDINFIXRDEC of int * string list * loc
+  | (*%
+     * @format(name list * loc) "nonfix" +d list(name)(+d)
+     *)
+     PDNONFIXDEC of string list * loc
+  | (*%
+     * @format ""
+     *)
+     PDEMPTY 
+
+  and plpat = 
+    (*%
+     * @format(loc) "_"
+     *)
+    PLPATWILD of loc
+  | (*%
+     * @format(longid * loc) longid
+     *)
+    PLPATID of longid * loc
+  | (*%
+     * @format(const * loc) const
+     *)
+    PLPATCONSTANT of constant * loc
+  | (*%
+     * @format(pat1 * pat2 * loc)
+     * R1{d
+     *      {pat1()(expFormatter,patFormatter)} +
+     *      "(" + N0{pat2()(expFormatter,patFormatter)} ")"
+     *   }
+     *)
+    PLPATCONSTRUCT of plpat * plpat * loc
+  | (*%
+     * @format(b * value:formatGenericFieldsExp * loc) value()(patFormatter,+"=",","+1)
+     *)
+    PLPATRECORD of bool * (string * plpat) list * loc
+  | (*%
+     * @format(id * ty opt * pat2 * loc)
+     * {id} +d "as" +d {pat2()(expFormatter,patFormatter)}
+     *)
+    PLPATLAYERED of string * ty option * plpat * loc
+  | (*%
+     * @format(pat * ty * loc)
+     * {pat()(expFormatter,patFormatter)} + ":" +d {ty}
+     *)
+    PLPATTYPED of plpat * ty * loc
+  | (*%
+     * @format(pat1 * pat2 * loc)
+     * "(" pat1()(expFormatter,patFormatter) + "|" + pat2()(expFormatter,patFormatter) ")"
+     *)
+    PLPATORPAT of plpat * plpat * loc
+ 
+  and plstrdec =
+    (*%
+     * @format(dec * loc) dec()(expFormatter,patFormatter)
+     *)
+    PLCOREDEC of pdecl * loc
+  | (*%
+     * @format(strbind list * loc)
+     * "structure" +d 4[list(strbind)(~2[ +1 "and"] +)] 
+     * @format:strbind(strid * strexp)
+     * strid + "=" +1 strexp()(expFormatter,patFormatter)
+     *)
+    PLSTRUCTBIND of (string * plstrexp) list * loc
+  | (*%
+     * @format(localstrdec list1  * strdec list2 * loc)
+     * "local"
+     *    2[ +2 list1(localstrdec()(expFormatter,patFormatter))(+d) ] +1
+     * "in" 2[ +2 list2(strdec()(expFormatter,patFormatter))(+3) ] +2
+     * "end"
+     *)
+     PLSTRUCTLOCAL of plstrdec list * plstrdec list * loc
+
+  and plstrexp =
+    (*%
+     * @format(strdec list * loc)
+     * "struct"  2[ +1 list(strdec()(expFormatter,patFormatter))(+1)] +1
+     * "end"
+     *)
+    PLSTREXPBASIC of plstrdec list * loc (*basic*)
+  | (*%
+     * @format(longid * loc) longid
+     *)
+     PLSTRID of longid * loc (*structure identifier*)
+  | (*%
+     * @format(strexp * sigexp * loc)
+     * strexp()(expFormatter,patFormatter) +
+     * ":" +  sigexp()(expFormatter,patFormatter)
+     *)
+     PLSTRTRANCONSTRAINT of plstrexp * plsigexp * loc (*transparent constraint*)
+  | (*%
+     * @format(strexp * sigexp * loc)
+     * strexp()(expFormatter,patFormatter) +
+     * ":>" + sigexp()(expFormatter,patFormatter)
+     *)
+     PLSTROPAQCONSTRAINT of plstrexp * plsigexp * loc (*opaque constraint*)
+  | (*%
+     * @format(functorid * strexp * loc)
+     * {functorid} {+d "(" strexp()(expFormatter,patFormatter) ")"}
+     *)
+     PLFUNCTORAPP of string * plstrexp * loc (* functor application*)
+  | (*%
+     * @format(strdec list * strexp * loc) 
+     * !N0{
+     *      {"let" 2[ +1 list(strdec()(expFormatter,patFormatter))(+1) ]} +1
+     *      {"in" 2[ +2 strexp()(expFormatter,patFormatter) ] +2 "end"}
+     *    }
+     *)
+     PLSTRUCTLET  of plstrdec list * plstrexp * loc (*local declaration*)
+
+  and plsigexp = 
+    (*%
+     * @format(spec * loc)
+     * "sig" 2[+1 spec()(expFormatter,patFormatter) ] +1 "end"  
+     *)
+    PLSIGEXPBASIC of plspec * loc (*basic*)
+  | (*%
+     * @format(sigid * loc) {sigid} 
+     *)
+    PLSIGID of string * loc (*signature identifier*)
+  | (*%
+     * @format(sigexp * rlstn list1 * loc)
+     * sigexp()(expFormatter,patFormatter) +1
+     * "where" + "type" + list1(rlstn)(+1 "where" + "type")
+     * @format:rlstn(tyvarseq * longid * ty) tyvarseq + longid +  "=" + ty
+     * @format:tyvarseq(tyvar list2:formatListWithEnclosure)
+     * list2(tyvar) ("," +, "(", ")" +)
+     *)
+    PLSIGWHERE of plsigexp * (tvar list * longid * ty) list * loc (* type realisation *) 
+
+  and plspec =
+    (*%
+     * @format(specval specvals * loc)
+     * "val" + {specvals(specval)(~4[ +1 "and"] +)} 
+     * @format:specval(vid * ty) {{vid} + ":" +1 {ty}}
+     *)
+    PLSPECVAL of (string * ty) list * loc (* value *)
+  | (*%
+     * @format(typdesc list1 * loc)
+     * "type" + {list1(typdesc)(~4[ +1 "and"] +)}
+     * @format:typdesc(tyvar list2:formatListWithEnclosure * tyCon) 
+     * {list2(tyvar) ("," +, "(", ")" +) {tyCon} }
+     *)
+    PLSPECTYPE of (tvar list * string) list * loc (* type *)
+  | (*%
+     * @format(derivedtyp * loc)  derivedtyp
+     * @format:derivedtyp(tyvar tyvars:formatListWithEnclosure * tyCon * ty)
+     * "type" + {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} } + "=" + ty
+     *)
+    PLSPECTYPEEQUATION of (tvar list * string * ty) * loc
+  | (*%
+     * @format(typdesc typdescs * loc)
+     * "eqtype" + {typdescs(typdesc)(~4[ +1 "and"] +)}
+     * @format:typdesc(tyvar tyvars:formatListWithEnclosure * tyCon) 
+     * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon}}
+     *)
+    PLSPECEQTYPE of (tvar list * string) list * loc (* eqtype *)
+  | (*%
+     * @format(datdesc list1 * loc)
+     * "datatype" + {list1(datdesc)(~4[ +1 "and"] +)}
+     * @format:datdesc(tyvar list2:formatListWithEnclosure * tyCon * condesc condescs) 
+     * {list2(tyvar) ("," +, "(", ")" +) {tyCon} + "=" +1
+     *                                 {condescs(condesc)(~2[ +1 "|" ] +)}}
+     * @format:condesc(vid * ty option)
+     * {vid} {option(ty)(~2[ +d "of" ] +)}
+     *)
+    PLSPECDATATYPE of (tvar list * string * (string * ty option) list ) list * loc (* datatype*)
+  | (*%
+     * @format(tyCon * longid * loc)
+     * "datatype" + tyCon + "=" + "datatype" + longid
+     *)
+    PLSPECREPLIC of string * longid * loc (* replication *)
+  | (*%
+     * @format(exdesc list * loc)
+     * "exception" + {list(exdesc)(~4[ +1 "and" ]+)}
+     * @format:exdesc(vid * ty option)
+     * {vid} {option(ty)(+d "of" +)}
+     *)
+    PLSPECEXCEPTION of (string * ty option) list * loc (* exception *)
+  | (*%
+     * @format(strdesc list * loc)
+     * !N0{ "structure" + {list(strdesc)(~2[ +1 "and" ] +)}}
+     * @format:strdesc(strid * sigexp)
+     * !N0{ strid ":" +d sigexp()(expFormatter,patFormatter)}
+     *)
+    PLSPECSTRUCT of (string * plsigexp) list * loc (* structure *)
+  | (*%
+     * @format(sigexp * loc)
+     * !N0{"include" + {sigexp()(expFormatter,patFormatter)}}
+     *)
+    PLSPECINCLUDE of plsigexp * loc (* include *)
+  | (*%
+     * @format(spec1 * spec2 * loc)
+     * spec1()(expFormatter,patFormatter) + ";" +1
+     * spec2()(expFormatter,patFormatter)
+     *)
+    PLSPECSEQ of plspec * plspec * loc 
+  | (*%
+     * @format(spec * longid longids * loc)
+     * spec()(expFormatter,patFormatter) +
+     * !N0{ "sharing type" + {longids(longid)(~2[ +1 "="] +)} }
+     *)
+    PLSPECSHARE of plspec * longid list * loc 
+  | (*%
+     * @format(spec * longid list * loc)
+     * spec()(expFormatter,patFormatter) +
+     * !N0{ "sharing" + {list(longid)(~2[ +1 "="] +)} }
+     *)
+    PLSPECSHARESTR of plspec * longid list * loc 
+(*
+  | (*%
+     * @format(fundesc list * loc)
+     * !N0{ "functor" + {list(fundesc)(~2[ +1 "and" ] +)}}
+     * @format:fundesc(funid * sigexp1 * sigexp2) 
+     * funid ":" +d sigexp1()(expFormatter,patFormatter) +d
+     *  "=>" sigexp2()(expFormatter,patFormatter)
+     *)
+    PLSPECFUNCTOR of (string * plsigexp * plsigexp) list * loc 
+*)
+  | (*%
+     * @format 
+     *)
+    PLSPECEMPTY
+
+  and pltopdec = 
+    (*%
+     * @format (strdec * loc) strdec()(expFormatter,patFormatter)
+     *)
+    PLTOPDECSTR of plstrdec * loc (* structure-level declaration *)
+  | (*%
+     * @format(sigdec list * loc)
+     * "signature" + {list(sigdec)(~4[ +1 "and"] +)}
+     * @format:sigdec(sigid * sigexp)
+     * sigid +d "=" +1 sigexp()(expFormatter,patFormatter)
+     *)
+    PLTOPDECSIG of ( string * plsigexp ) list * loc 
+  | (*%
+     * @format(funbind list * loc)
+     * !N0{ "functor" + {list(funbind)(~2[ +1 "and"] +)} }
+     * @format:funbind(funid * strid * sigexp1 * strexp * loc) 
+     * funid + "(" strid + sigexp1()(expFormatter,patFormatter) +")"
+     *       +  "=" +1 4[strexp()(expFormatter,patFormatter)]
+     *)
+    PLTOPDECFUN of  (string * string * plsigexp  * plstrexp * loc) list * loc 
+
+  fun getLeftPosExp plexp =
+      case plexp of
+     PLCONSTANT x => #1 (#2 x)
+   | PLGLOBALSYMBOL x => #1 (#3 x)
+   | PLVAR x => #1 (#2 x)
+   | PLTYPED x => #1 (#3 x)
+   | PLAPPM x => #1 (#3 x)
+   | PLLET x => #1 (#3 x)
+   | PLRECORD x => #1 (#2 x)
+   | PLRECORD_UPDATE x => #1 (#3 x)
+   | PLTUPLE x => #1 (#2 x)
+   | PLLIST x => #1 (#2 x)
+   | PLRAISE x => #1 (#2 x)
+   | PLHANDLE x => #1 (#3 x)
+   | PLFNM x => #1 (#2 x)
+   | PLCASEM x => #1 (#4 x)
+   | PLRECORD_SELECTOR x => #1 (#2 x)
+   | PLSELECT x => #1 (#3 x)
+   | PLSEQ x => #1 (#2 x)
+   | PLCAST x => #1 (#2 x)
+   | PLFFIIMPORT x => #1 (#3 x)
+   | PLFFIEXPORT x => #1 (#3 x)
+   | PLFFIAPPLY x => #1 (#5 x)
+
+  fun getRightPosExp plexp =
+      case plexp of
+     PLCONSTANT x => #2 (#2 x)
+   | PLGLOBALSYMBOL x => #2 (#3 x)
+   | PLVAR x => #2 (#2 x)
+   | PLTYPED x => #2 (#3 x)
+   | PLAPPM x => #2 (#3 x)
+   | PLLET x => #2 (#3 x)
+   | PLRECORD x => #2 (#2 x)
+   | PLRECORD_UPDATE x => #2 (#3 x)
+   | PLTUPLE x => #2 (#2 x)
+   | PLLIST x => #2 (#2 x)
+   | PLRAISE x => #2 (#2 x)
+   | PLHANDLE x => #2 (#3 x)
+   | PLFNM x => #2 (#2 x)
+   | PLCASEM x => #2 (#4 x)
+   | PLRECORD_SELECTOR x => #2 (#2 x)
+   | PLSELECT x => #2 (#3 x)
+   | PLSEQ x => #2 (#2 x)
+   | PLCAST x => #2 (#2 x)
+   | PLFFIIMPORT x => #2 (#3 x)
+   | PLFFIEXPORT x => #2 (#3 x)
+   | PLFFIAPPLY x => #2 (#5 x)
+
+  fun getLocExp exp = (getLeftPosExp exp, getRightPosExp exp)
+
+  fun getLeftPosPat pat =
+      case pat of
+     PLPATWILD x => #1 x
+   | PLPATID x => #1 (#2 x)
+   | PLPATCONSTANT x => #1 (#2 x)
+   | PLPATCONSTRUCT x => #1 (#3 x)
+   | PLPATRECORD x => #1 (#3 x)
+   | PLPATLAYERED x => #1 (#4 x)
+   | PLPATTYPED x => #1 (#3 x)
+   | PLPATORPAT x => #1 (#3 x)
+        
+  fun getRightPosPat pat =
+      case pat of
+     PLPATWILD x => #2 x
+   | PLPATID x => #2 (#2 x)
+   | PLPATCONSTANT x => #2 (#2 x)
+   | PLPATCONSTRUCT x => #2 (#3 x)
+   | PLPATRECORD x => #2 (#3 x)
+   | PLPATLAYERED x => #2 (#4 x)
+   | PLPATTYPED x => #2 (#3 x)
+   | PLPATORPAT x => #2 (#3 x)
+        
+ fun getLocPat pat = (getLeftPosPat pat, getRightPosPat pat)
+
+ fun getLocDec dec =
+     case dec of
+     PDVAL (_, _, loc) => loc
+   | PDDECFUN (_, _, loc) => loc
+   | PDNONRECFUN (_, _, loc) => loc
+   | PDVALREC (_, _, loc) => loc
+   | PDVALRECGROUP (_, _, loc) => loc
+   | PDTYPE (_, loc) => loc
+   | PDABSTYPE (_, _, loc) => loc
+   | PDDATATYPE (_, loc) => loc
+   | PDREPLICATEDAT (_, _, loc) => loc
+   | PDEXD (_, loc) => loc
+   | PDLOCALDEC (_, _, loc) => loc
+   | PDOPEN (_, loc) => loc
+   | PDINFIXDEC (_, _, loc) => loc
+   | PDINFIXRDEC (_, _, loc) => loc
+   | PDNONFIXDEC (_, loc) => loc
+   | PDEMPTY => Loc.noloc
+
+end
+end

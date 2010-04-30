@@ -1,0 +1,11 @@
+CM
+.cm
+iml.lex.sml
+iml.grm.sml
+iml.grm.sig
+iml.grm.desc
+interface.lex.sml
+interface.grm.sml
+interface.grm.sig
+interface.grm.desc
+*.ppg.sml

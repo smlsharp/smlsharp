@@ -56,7 +56,13 @@ print {"jugemu" +2 "jugemu"} +1 {"gokounosurikire" +2 "kaijarisuigyono"};
 (* 2.6.3 *)
 set columns "30";
 print "jugemu" + { "jugemu" 5[ +1 "gokounosurikire" ] ~3[ +1 "kaijarisuigyono" ]};
-print "jugemu" 3[ +d { "jugemu" 5[ 1 "gokounosurikire"] ~3[ 1 "kaijarisuigyono"]}];
+print "jugemu" 3[ +1 { "jugemu" 5[ +1 "gokounosurikire"] ~3[ +1 "kaijarisuigyono"]}];
+
+(* 2.7 *)
+set columns "20";
+print "jugemu" \n "jugemu";
+set columns "50";
+print "jugemu" 1 { 4[ "jugemu" +2 "gokounosurikire" \n "kaijarisuigyono" ] };
 
 (* 3.2.4 *)
 print L2{ L1{ "x" "+" "y" } + "*" + L1{ "v" + "w" } };

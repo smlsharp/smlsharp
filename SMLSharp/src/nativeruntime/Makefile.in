@@ -1,0 +1,86 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@/commonrule
+
+VPATH = @srcdir@
+
+DTOA_CPPFLAGS = -DIEEE_8087 -DMALLOC=xmalloc
+
+LOCAL_DEFS = -DHOST_CPU_i386 -DMAXALIGN=16 $(HEAPIMPL_DEFS)
+LOCAL_CPPFLAGS =
+LOCAL_LIBS =
+
+HEAPIMPL_HEADERS = heap_cheney.h heap_bitmap.h heap_otomo.h
+HEAPIMPL_SOURCES = $(HEAPIMPL_HEADERS:.h=.c)
+HEAPIMPL_OBJECTS = $(HEAPIMPL_SOURCES:.c=.$(OBJEXT))
+HEAPIMPL = $(NATIVE_HEAPIMPL)
+HEAPSOURCES = heap_$(HEAPIMPL).c
+HEAPHEADER = heap_$(HEAPIMPL).h
+HEAPIMPL_DEFS = -DHEAP_IMPL_H='"$(HEAPHEADER)"'
+HEAPOBJECTS = $(HEAPSOURCES:.c=.$(OBJEXT))
+
+LIBSOURCES = dtoa.c error.c obstack.c object.c thread.c objspace.c \
+             splay.c exn.c prim.c init.c
+LIBOBJECTS = $(LIBSOURCES:.c=.$(OBJEXT))
+
+ENTRYSOURCES = main.c
+ENTRYOBJECTS = $(ENTRYSOURCES:.c=.$(OBJEXT))
+
+SOURCES = $(HEAPIMPL_SOURCES) $(LIBSOURCES) $(ENTRYSOURCES)
+OBJECTS = $(HEAPIMPL_OBJECTS) $(LIBOBJECTS) $(ENTRYOBJECTS)
+TARGETS = libsmlsharp.$(LIBEXT) libsmlsharp_entry.$(LIBEXT)
+
+all: $(TARGETS)
+
+# FIXME: renamed to avoid conflict.
+cdepend:
+	$(MAKE) $(srcdir)/_cdepend HEAPIMPL_DEFS=
+$(srcdir)/_cdepend: Makefile.in $(SOURCES)
+	sed -e '/^##---- depend/q' $(srcdir)/Makefile.in > $@
+	for i in $(SOURCES); do \
+	  $(CPP) -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i \
+          | perl -npe 's,^[^:. ]*(\.[^: ]*: *)([^. ]*)\.c,\2\1\2\.c,; \
+                       s, /[^ ]*\.h(?= ),,g; \
+                       s, heap.h((?= )|$$),$$& \$$(HEAPHEADER),g'; \
+	done >> $@
+	mv $@ $(srcdir)/Makefile.in
+
+clean:
+	-rm -f $(OBJECTS) $(TARGETS)
+
+libsmlsharp.$(LIBEXT): $(HEAPOBJECTS) $(LIBOBJECTS)
+	$(AR) cru $@ $(HEAPOBJECTS) $(LIBOBJECTS)
+	-$(RANLIB) $@
+
+libsmlsharp_entry.$(LIBEXT): $(ENTRYOBJECTS)
+	$(AR) cru $@ $(ENTRYOBJECTS)
+	-$(RANLIB) $@
+
+dtoa.o: netlib/dtoa.c
+	$(CC) $(CFLAGS) $(DTOA_CPPFLAGS) $(srcdir)/netlib/dtoa.c -c -o $@
+
+install: $(TARGETS)
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_PROGRAM) -m 644 libsmlsharp.$(LIBEXT) '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_PROGRAM) -m 644 libsmlsharp_entry.$(LIBEXT) '$(DESTDIR)$(libdir_smlsharp)'
+
+##---- dependenices ----##
+heap_cheney.o: heap_cheney.c smlsharp.h object.h objspace.h heap.h $(HEAPHEADER)
+heap_bitmap.o: heap_bitmap.c smlsharp.h object.h objspace.h heap.h $(HEAPHEADER)
+heap_otomo.o: heap_otomo.c smlsharp.h object.h objspace.h heap.h $(HEAPHEADER)
+dtoa.o: netlib/dtoa.c
+error.o: error.c smlsharp.h
+obstack.o: obstack.c smlsharp.h
+object.o: object.c smlsharp.h intinf.h object.h \
+  objspace.h heap.h $(HEAPHEADER)
+thread.o: thread.c smlsharp.h object.h thread.h objspace.h heap.h $(HEAPHEADER)
+objspace.o: objspace.c smlsharp.h object.h heap.h $(HEAPHEADER) objspace.h
+splay.o: splay.c smlsharp.h
+exn.o: exn.c smlsharp.h
+prim.o: prim.c smlsharp.h intinf.h object.h heap.h $(HEAPHEADER) \
+  prim.h ../../config.h
+init.o: init.c smlsharp.h objspace.h thread.h objspace.h heap.h $(HEAPHEADER)
+main.o: main.c smlsharp.h

@@ -1,0 +1,6 @@
+Group
+        structure AssemblyCode
+        structure AssemblyCodeFormatter
+        structure Assemble
+is
+        main/module.cm

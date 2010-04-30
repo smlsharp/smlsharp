@@ -1,0 +1,6 @@
+functor F (S : sig exception E of int end) :
+sig val f : bool -> int -> int end
+structure P : sig exception E : int -> exn end
+structure S : sig val f : bool -> int -> int end
+val x1 = 1 : int
+val x2 = 0 : int

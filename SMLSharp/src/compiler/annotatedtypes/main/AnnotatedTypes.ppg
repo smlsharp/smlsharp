@@ -1,0 +1,374 @@
+(**
+ * annotated type structures.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Huu-Duc Nguyen
+ * @version $Id: AnnotatedTypes.ppg,v 1.21 2008/08/06 17:23:39 ohori Exp $
+ *)
+
+structure AnnotatedTypes =
+struct
+
+  structure FE = SMLFormat.FormatExpression
+  structure BF = SMLFormat.BasicFormatters
+  structure PT = PredefinedTypes
+
+  (** formatter for 'a IEnv.map *)
+  fun format_IEnv (elementFormatter, separator, prefix, suffix) values =
+      SmlppgUtil.formatListWithEnclosureOne
+          (elementFormatter, separator, prefix, suffix)
+          (IEnv.listItems values)
+
+  fun formatLSet (separator, prefixIfNotNull, suffixIfNotNull) lset =
+      let
+      val L = map (fn i => "L" ^ (Int.toString i)) (ISet.listItems lset)
+      in
+         SmlppgUtil.formatListWithEnclosureOne
+         (
+           SMLFormat.BasicFormatters.format_string,
+           separator,
+           prefixIfNotNull,
+           suffixIfNotNull
+         )
+         L
+      end
+
+  fun formatRecordTy (elementFormatter, bindsep, itemsepRecord) smap =
+      let
+        val L = SEnv.listItemsi smap
+      in
+        SmlppgUtil.format_record(elementFormatter, bindsep, itemsepRecord) L
+      end
+
+  fun format_tyCon' tyCon = Types.format_tyCon nil tyCon
+
+  (*%
+   * @formatter(LocalVarID.id) LocalVarID.format_id
+   *)
+  type varid =
+       (*%
+        * @format(id) id
+        *)
+       LocalVarID.id
+
+  (*%
+   * @formatter(Types.tyCon) format_tyCon'
+   *)
+  type tyCon = Types.tyCon
+
+  (*%
+   * @formatter(Types.eqKind) Types.format_eqKind
+   *)
+  type eqKind = Types.eqKind
+
+  (*%
+   *)
+  type annotationLabel =
+       (*%
+        * @format(label) "L" label
+        *)
+       int
+
+  (*%
+   * @formatter(formatLSet) formatLSet
+   *)
+  datatype labelEquiv =
+           (*%
+            * @format(labels : formatLSet) labels()("," d,,)
+            *)
+           LE_LABELS of ISet.set
+         | (*%
+            * @format "G"
+            *)
+           LE_GENERIC
+         | (*%
+            * @format "U"
+            *)
+           LE_UNKNOWN
+
+  (*
+    A function is Escaped if it is defined at the top-level or used as a value,
+    otherwise belongs to the function that lexically surround it.
+   *)
+  (*%
+   * @params(id)
+   *)
+  datatype functionKind =
+    (*%
+     * @format "f" id    (* function *)
+     *)
+    CLOSURE
+  | (*%
+     * @format "c" id    (* code *)
+     *)
+    LOCAL
+  | (*%
+     * @format "g" id
+     *)
+    GLOBAL_FUNSTATUS
+
+  (*%
+   * @params(id)
+   *)
+   type codeStatus =
+    (*%
+     * @format(a b) b(a()(id))
+     *)
+    functionKind ref
+
+  (*
+   * This function term id.
+   *)
+  (*% *)
+  type functionId = int
+
+  (*% *)
+  type tid = int
+
+  (*%
+   *)
+  type owner =
+       (*%
+        * @format({ownerId, ownerCode}) ownerCode()(ownerId)
+        *)
+       {ownerId : functionId, ownerCode: codeStatus}
+
+  (*%
+   * @formatter(listWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   *)
+  type funStatus =
+       (*%
+        * @format({codeStatus,
+        *          owners : owner owners:listWithEnclosure,
+        *          functionId})
+        * codeStatus()(functionId) owners(owner)("," d, "[", "]")
+        *)
+       {
+        codeStatus:codeStatus,
+        owners: owner list,
+        functionId:functionId
+       }
+
+  (*%
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  type functionAnnotation =
+       (*%
+        * @format({labels, boxed})
+        * "{" { labels boxed()("," d "B",) "}" }
+        *)
+       {
+        labels : labelEquiv,
+        boxed : bool
+       }
+
+  (*%
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  type recordAnnotation =
+       (*%
+        * @format({labels,boxed,align})
+        * "{" { labels boxed()("," d "B",) align()("," d "A",) "}" }
+        *)
+       {
+        labels : labelEquiv,
+        boxed : bool,
+        align : bool
+       }
+
+  (*
+   * formatter precedence:
+   * L7 { x ^ y }    annotation
+   * N3 { e }        argument of type constructor
+   *                 (see also SmlppgUtil.formatTyConArgumentTypes)
+   * R2 { x -> y }   function
+   * L2 { x : y }    type annotation
+   *                 (FIXME: conflict with function due to N3)
+   *
+   * Precedence 0 is reserved for cut.
+   * Precedence 1 is reserved for expression terms.
+   *)
+
+  (*%
+   * @formatter(listWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
+   * @formatter(listWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(tyConArgTys) SmlppgUtil.formatTyConArgumentTypes
+   * @formatter(formatRecordTy) formatRecordTy
+   * @formatter(format_dummyTyId) Types.format_dummyTyId
+   * @formatter(formatIEnv) format_IEnv
+   * @formatter(smap) SmlppgUtil.formatSmap
+   * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+   * @formatter(optWithDefault) SmlppgUtil.formatOptWithDefault
+   * @formatter(format_freeTyId) Types.format_freeTyId
+   *)
+  datatype ty =
+           (*%
+            * @format "errorty"
+            *)
+           ERRORty
+         | (*%
+            * @format(id:format_dummyTyId)  id
+            *)
+           DUMMYty of int
+         | (*%
+            * @format(value) "t" value
+            *)
+           (* NOTE: tid is globally unique *)
+           BOUNDVARty of tid
+         | (*%
+            * @format({argTyList:argTy argTys:listWithEnclosureOne,
+            *          bodyTy,
+            *          annotation: ann annref,
+            *          funStatus})
+            * L7{
+            *   R2{
+            *     argTys(argTy)("," +1, "{", "}")
+            *     +1 "-" funStatus "->"
+            *     2[ +2 bodyTy ]
+            *   }
+            *   1 "^" d annref(ann)
+            * }
+            *)
+           FUNMty of
+            {
+             argTyList : ty list,
+             bodyTy : ty,
+             annotation : functionAnnotation ref,
+             funStatus : funStatus
+            }
+         | (*%
+            * @format(ty tys:listWithEnclosureOne)
+            * tys(ty)("," +1, "{", "}")
+            *)
+           MVALty of ty list
+         | (*%
+            * @format({fieldTypes:elm smap:formatRecordTy,
+            *          annotation: ann annref})
+            * L7{ smap(elm)(":", "," +1) 1 "^" d annref(ann) }
+            *)
+           RECORDty of {fieldTypes: ty SEnv.map,
+                        annotation : recordAnnotation ref }
+         | (*%
+            * @format({tyCon, args:arg args:tyConArgTys})
+            * { args(arg)("," +1, "(", ")") tyCon }
+            *)
+           (*
+            * FIXME:
+            * This comment is obsoleted. Need to rewrite.
+            *
+            * concrete type construction, either predefined type or
+            * user defined datatype. Some of RAWty are given special
+            * runtime representation by PredefinedTypes.runtimeTyEnv.
+            * Any other RAWty can be casted between RECORDty.
+            *
+            * Every user defined datatypes which can be optimized to int
+            * (or any other types than RECORDty) is translated into other
+            * types than RAWty before AnnotatedTypes.
+            *)
+           RAWty of {tyCon : tyCon, args : ty list}
+         | (*%
+            * @format({tyCon, args:arg args:tyConArgTys})
+            * "SPEC(" !N0{ args(arg)("," +1, "(", ")") tyCon } ")"
+            *)
+           (* types declared as formal argument of a functor, such as "type t".
+            * Functor linking substitutes this with actual type.
+            * Note that "id" of tyCon of SPECty is bound, not global.
+            *)
+           SPECty of {tyCon : tyCon, args : ty list}
+         | (*%
+            * @format({boundtvars : btvKind btvKindMap:formatIEnv, body})
+            * !N0{ "["
+            *   btvKindMap(btvKind)("," 2, "", "") "."
+            *   2[ 1 body ]
+            * "]" }
+            *)
+           POLYty of {boundtvars : btvKind IEnv.map, body : ty}
+
+       and recordKind =
+           (*% @format *)
+           UNIV
+         | (*%
+            * @format(ty smap:formatRecordTy)
+            * "#" d smap(ty)(":", "," +1)
+            *)
+           REC of ty SEnv.map
+
+  withtype btvKind =
+           (*%
+            * @format({id, recordKind, eqKind,
+            *          instancesRef: ity ilist iref})
+            * eqKind "t" id d recordKind
+            * d iref(ilist:listWithEnclosure(ity)("," +1, "<", ">"))
+            *)
+           {
+            id : tid,
+            recordKind : recordKind,
+            eqKind : eqKind,
+            instancesRef : ty list ref
+           }
+
+  (*% *)
+  (* for functor *)
+  datatype tyBindInfo =
+      (* NOTE: Before AnnotatedTypes, every TYOPAQUE is peeled. *)
+      TYCON of tyCon
+    | TYSPEC of tyCon
+    | TYFUN of {tyargs: btvKind IEnv.map, body: ty}
+
+  (*%
+   * @formatter(formatIEnv) format_IEnv
+   *)
+  type btvEnv =
+       (*%
+        * @format(a b:formatIEnv) b(a)("," 2, "", "")
+        *)
+       btvKind IEnv.map
+
+ (*%
+  * @formatter(Types.varId) Types.format_varId
+  *)
+ type varInfo =
+      (*%
+       * @format({displayName, ty, varId})
+       * L2{ L2{ displayName 1 ":" d varId } +1 ":" +d ty }
+       *)
+      {displayName : string, ty : ty, varId : Types.varId}
+
+ (*%
+  *)
+ type varInfoWithoutType =
+      (*%
+       * @format({displayName, ty, varId}) displayName
+       *)
+      {displayName : string, ty : ty, varId : Types.varId}
+
+ (*%
+  * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+  *)
+ type primInfo =
+      (*%
+       * @format({name,ty}) name
+       *)
+      {name : BuiltinPrimitive.primitive, ty : ty}
+
+ val intty = RAWty {tyCon = PT.intTyCon, args = []}
+ val largeIntty = RAWty {tyCon = PT.largeIntTyCon, args = []}
+ val wordty = RAWty {tyCon = PT.wordTyCon, args = []}
+ val bytety = RAWty {tyCon = PT.byteTyCon, args = []}
+ val realty = RAWty {tyCon = PT.realTyCon, args = []}
+ val floatty = RAWty {tyCon = PT.floatTyCon, args = []}
+ val stringty = RAWty {tyCon = PT.stringTyCon, args = []}
+ val charty = RAWty {tyCon = PT.charTyCon, args = []}
+ val unitty = RAWty {tyCon = PT.unitTyCon, args = []}
+ val exnty = RAWty {tyCon = PT.exnTyCon, args = []}
+ val boolty = RAWty {tyCon = PT.boolTyCon, args = []}
+ val foreignfunty = RAWty {tyCon = PT.ptrTyCon, args = [unitty]}
+ val sizeofty = wordty
+ val arrayindexty = wordty
+ val exntagty = RAWty {tyCon = PT.exntagTyCon, args = []}
+
+ fun arrayty ty = RAWty {tyCon = PT.arrayTyCon, args = [ty]}
+
+ fun arrayelemty (RAWty {args = [ty], ...}) = ty
+   | arrayelemty _ = raise Control.Bug "invalid array type"
+
+end

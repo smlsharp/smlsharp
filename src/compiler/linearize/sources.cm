@@ -1,5 +1,0 @@
-Group
-        signature LINEARIZER
-        structure Linearizer
-is
-        main/module.cm

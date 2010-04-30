@@ -2,7 +2,7 @@
  * definition of format template
  *
  * @author YAMATODANI Kiyoshi
- * @version $Id: FormatTemplate.sml,v 1.5 2006/12/07 13:43:12 kiyoshiy Exp $
+ * @version $Id: FormatTemplate.sml,v 1.6 2007/06/30 11:04:42 kiyoshiy Exp $
  *)
 structure FormatTemplate =
 struct
@@ -56,6 +56,7 @@ struct
    *)
   datatype template =
            (** literal *) Term of string
+         | (** alwasy newline *) Newline
          | (** guard *) Guard of (assoc option) * (template list)
          | (** space/newline indicator *)
            Indicator of

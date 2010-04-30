@@ -1,0 +1,9 @@
+Group
+        structure MultipleValueCalc
+        structure MultipleValueCalcFormatter
+        structure MultipleValueCalcUtils
+        structure MVTypeCheck
+        structure MVTypeCheckError       
+        structure MultipleValueCalcPickler
+is
+	main/module.cm

@@ -1,0 +1,10 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../control/sources.cm
+        ../../name/sources.cm
+
+        USER_ERROR.sig
+        UserError.ppg.sml

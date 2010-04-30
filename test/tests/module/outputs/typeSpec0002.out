@@ -1,4 +1,0 @@
-signature S11 = sig type 'a t end
-signature S21 = sig type ('a, 'b) t end
-signature S31 = sig type ('a, 'b, 'c) t end
-signature S32 = sig type ('a, 'b, 'c) t type ('a, 'b, 'c) s end

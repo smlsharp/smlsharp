@@ -1,0 +1,35 @@
+signature TEmpty = sig end
+signature SEmpty = sig include TEmpty end
+structure SEmptyTrans : SEmpty
+structure SEmptyOpaque : SEmpty
+signature TVal = sig val x : int end
+signature SVal = sig include TVal end
+structure SValTrans : SVal
+structure SValOpaque : SVal
+signature TType = sig type t end
+signature SType = sig include TType end
+structure STypeTrans : SType
+structure STypeOpaque : SType
+signature TEqtype = sig eqtype t end
+signature SEqtype = sig include TEqtype end
+structure SEqtypeTrans : SEqtype
+structure SEqtypeOpaque : SEqtype
+signature TDatatype = sig datatype dt = D end
+signature SDatatype = sig include TDatatype end
+structure SDatatypeTrans : SDatatype
+structure SDatatypeOpaque : SDatatype
+datatype dtDatatypeReplication
+con DDatatypeReplication : dtDatatypeReplication
+signature TDatatypeReplication =
+sig datatype dt = datatype dtDatatypeReplication end
+signature SDatatypeReplication = sig include TDatatypeReplication end
+structure SDatatypeReplicationTrans : SDatatypeReplication
+structure SDatatypeReplicationOpaque : SDatatypeReplication
+signature TException = sig exception E end
+signature SException = sig include TException end
+structure SExceptionTrans : SException
+structure SExceptionOpaque : SException
+signature TStructure = sig structure S : sig val x : int end end
+signature SStructure = sig include TStructure end
+structure SStructureTrans : SStructure
+structure SStructureOpaque : SStructure

@@ -1,0 +1,18 @@
+signature S = sig datatype dt = D of int | E of string end
+../tests/module/tests/datatypeSpecMatching0002.sml:25.11-28.3 Error:
+  Signature mismatch :Constructors F  only occur in structure
+
+../tests/module/tests/datatypeSpecMatching0002.sml:29.11-32.3 Error:
+  Signature mismatch :Constructors F  only occur in structure
+
+../tests/module/tests/datatypeSpecMatching0002.sml:34.11-38.3 Error:
+  Signature mismatch :Constructors E  only occur in signature
+
+../tests/module/tests/datatypeSpecMatching0002.sml:39.11-43.3 Error:
+  Signature mismatch :Constructors E  only occur in signature
+
+../tests/module/tests/datatypeSpecMatching0002.sml:45.11-48.3 Error:
+  Signature mismatch (tycon): dt
+                                                                     
+../tests/module/tests/datatypeSpecMatching0002.sml:49.11-52.3 Error:
+  Signature mismatch (tycon): dt

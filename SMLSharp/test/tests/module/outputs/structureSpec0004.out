@@ -1,0 +1,16 @@
+signature S111 = sig type t structure S : sig type s end where type s = t end
+signature S112 = sig type t structure S : sig type t end where type t = t end
+signature S121 =
+sig datatype dt = D structure S : sig type t end where type t = dt end
+signature S122 =
+sig datatype t = D structure S : sig type t end where type t = t end
+../tests/module/tests/structureSpec0004.sml:54.17-54.57 Error:
+  equality type required for: S.dt
+
+../tests/module/tests/structureSpec0004.sml:60.17-60.55 Error:
+  equality type required for: S.t
+
+signature S221 =
+sig datatype s = D structure S : sig datatype t = E end where type t = s end
+signature S222 =
+sig datatype t = D structure S : sig datatype t = E end where type t = t end

@@ -1,0 +1,555 @@
+(* -*- sml -*- *)
+(**
+ * sparc mnemonic
+ * @copyright (c) 2009, Tohoku University.
+ * @author UENO Katsuhiro
+ * @version $Id: $
+ *)
+
+structure SPARCAsm =
+struct
+
+  local
+
+  fun format_cnum_str str =
+      SMLFormat.BasicFormatters.format_string
+        (String.map (fn #"~" => #"-" | x => x) str)
+
+  fun format_cint fmt x = format_cnum_str (fmt StringCvt.DEC x)
+
+  fun format_chex fmt x =
+      SMLFormat.BasicFormatters.format_string
+        ("0x" ^ String.map Char.toLower (fmt StringCvt.HEX x))
+
+  fun format_int32 x = format_cint Int32.fmt x
+  fun format_word32_hex x = format_chex Word32.fmt x
+  fun format_word8_hex x = format_chex Word8.fmt x
+  fun format_word32_dec x = format_cint Word32.fmt x
+  fun format_word_dec x = format_chex Word.fmt x
+
+  fun format_int32_disp 0 = nil
+    | format_int32_disp x = format_int32 x
+  fun format_word32_disp 0w0 = nil
+    | format_word32_disp x = format_word32_dec x
+
+  fun format_int_log2 x =
+      let
+        val x = Real.floor (Math.ln(real x) / Math.ln(2.0))
+      in
+        SMLFormat.BasicFormatters.format_string (Int.fmt StringCvt.DEC x)
+      end
+
+  fun format_word_log2 x = format_int_log2 (Word.toInt x)
+
+  local
+    fun left (s,n) = substring (s, size s - n, n)
+    fun pad0 (s,n) = if size s > n then s else left ("0000" ^ s, n)
+    fun oct3 i = pad0 (Int.fmt StringCvt.OCT i, 3)
+    fun hex4 i = pad0 (Int.fmt StringCvt.HEX i, 4)
+  in
+  fun format_ascii s =
+      SMLFormat.BasicFormatters.format_string
+        ("\"" ^
+         String.translate
+          (fn #"\008" => "\\b"
+            | #"\012" => "\\f"
+            | #"\010" => "\\n"
+            | #"\013" => "\\r"
+            | #"\009" => "\\t"
+            | #"\\" => "\\\\"
+            | #"\"" => "\\\""
+            | c => if Char.isPrint c andalso ord c < 128 then str c
+                   else if ord c < 256 then "\\" ^ oct3 (ord c)
+                   else "\\u" ^ hex4 (ord c))
+          s ^
+        "\"")
+  end (* local *)
+
+  fun formatLines (formatItem,indent,break) nil = nil
+    | formatLines (formatItem,indent,break) (h::t) =
+      indent @ formatItem h @ break @ formatLines (formatItem,indent,break) t
+
+  in
+
+  (*% @formatter(Loc.loc) Loc.format_loc *)
+  type loc = Loc.loc
+
+  (*% @formatter(LocalVarID.id) LocalVarID.format_id *)
+  type localLabel =
+      (*% @prefix att_ @format(c * l) "." "F" c "." "L" l *)
+      LocalVarID.id * LocalVarID.id
+
+  (*% *)
+  type symbol = string
+
+  (*% *)
+  type linkPtrSymbol =
+      (*% @format(x) x "@GOT" *)
+      string
+
+  (*% *)
+  type linkStubSymbol =
+      (*% @format(x) x "@PLT" *)
+      string
+
+  (*% *)
+  datatype sectionName =
+      (*% @format ".text" *)
+      TextSection
+    | (*% @format ".data" *)
+      DataSection
+    | (*% @format ".rodata" *)
+      Literal4Section
+    | (*% @format ".rodata" *)
+      Literal8Section
+    | (*% @prefix att_ @format ".rodata" *)
+      CStringSection
+    | (*% @prefix att_ @format ".rodata" *)
+      ConstSection
+    | (*% @prefix att_ @format ".rodata" *)
+      ConstDataSection
+
+  (*% *)
+  (* integer condition code *)
+  datatype icc =
+      (*% @format "a" *)
+      A    (* always *)
+    | (*% @format "n" *)
+      N    (* never *)
+    | (*% @format "ne" *)
+      NE   (* not equal *)
+    | (*% @format "e" *)
+      E    (* equal *)
+    | (*% @format "g" *)
+      G    (* greater *)
+    | (*% @format "le" *)
+      LE   (* less or equal *)
+    | (*% @format "ge" *)
+      GE   (* greater or equal *)
+    | (*% @format "l" *)
+      L    (* less *)
+    | (*% @format "gu" *)
+      GU   (* greater unsigned *)
+    | (*% @format "leu" *)
+      LEU  (* less or equal unsigned *)
+    | (*% @format "cc" *)
+      CC   (* carry clear (greater or equal unsigned) *)
+    | (*% @format "cs" *)
+      CS   (* carry set (less than unsigned) *)
+    | (*% @format "pos" *)
+      POS  (* positive *)
+    | (*% @format "neg" *)
+      NEG  (* negative *)
+    | (*% @format "vc" *)
+      VC   (* overflow clear *)
+    | (*% @format "vs" *)
+      VS   (* overflow set *)
+
+  (*% *)
+  (* floating-point condition code *)
+  datatype fcc =
+      (*% @format "a" *)
+      F_A   (* always *)
+    | (*% @format "n" *)
+      F_N   (* never *)
+    | (*% @format "u" *)
+      F_U   (* unordered *)
+    | (*% @format "g" *)
+      F_G   (* greater *)
+    | (*% @format "ug" *)
+      F_UG  (* unordered or greater *)
+    | (*% @format "l" *)
+      F_L   (* less *)
+    | (*% @format "ul" *)
+      F_UL  (* unordered or less *)
+    | (*% @format "lg" *)
+      F_LG  (* less or greater *)
+    | (*% @format "ne" *)
+      F_NE  (* not equal *)
+    | (*% @format "e" *)
+      F_E   (* equal *)
+    | (*% @format "ue" *)
+      F_UE  (* unordered or equal *)
+    | (*% @format "ge" *)
+      F_GE  (* greater or equal *)
+    | (*% @format "uge" *)
+      F_UGE (* unordered or greater or equal *)
+    | (*% @format "le" *)
+      F_LE  (* less or equal *)
+    | (*% @format "ule" *)
+      F_ULE (* unordered or less or equal *)
+    | (*% @format "o" *)
+      F_O   (* ordered *)
+
+  (*% *)
+  datatype label =
+      (*% @format(x) x *)
+      LOCAL of localLabel
+    | (*% @format(x) x *)
+      SYMBOL of symbol
+    | (*% @format(x) x *)
+      LINKPTR of linkPtrSymbol
+    | (*% @format(x) x *)
+      LINKSTUB of linkStubSymbol
+    | (*% @format(x) x "@GOTOFF" *)
+      ELF_GOTOFF of label
+    | (*% @format(x) x "@GOT" *)
+      ELF_GOT of label
+    | (*% @format(x) "0" *)
+      NULL
+
+  (*% *)
+  datatype reg =
+      (*% @format(x) "%g" x *)
+      G of int   (* %g0 ... %g7; global registers; same as %r0 ... %r7 *)
+    | (*% @format(x) "%o" x *)
+      O of int   (* %o0 ... %o7; out registers;    same as %r8 ... %r15 *)
+    | (*% @format(x) "%l" x *)
+      L of int   (* %l0 ... %l7; local registers;  same as %r16 ... %r23 *)
+    | (*% @format(x) "%i" x *)
+      I of int   (* %i0 ... %i7; in registers;     same as %r24 ... %r31 *)
+    | (*% @format "%sp" *)
+      SP         (* stack pointer; same as %o6 *)
+    | (*% @format "%fp" *)
+      FP         (* frame pointer; same as %i6 *)
+
+  (*% *)
+  datatype freg =
+      (*% @format(x) "%f" x *)
+      F of int   (* %f0 ... %f31; floating-point registers *)
+
+  (*%
+   * @formatter(Int32.int) format_int32
+   * @formatter(Word32.word) format_word32_hex
+   *)
+  datatype imm =
+       (*% @prefix att_ @format(x) x *)
+       INT of Int32.int
+     | (*% @prefix att_ @format(x) x *)
+       WORD of Word32.word
+     | (*% @prefix att_ @format(l) l *)
+       LABEL of label
+     | (*% @prefix att_ @format(x * y) L5{ x "-" y } *)
+       CONSTSUB of imm * imm
+     | (*% @prefix att_ @format(x * y) L5{ x "+" y } *)
+       CONSTADD of imm * imm
+     | (*% @prefix att_ @format "." *)
+       CURRENTPOS
+
+  (*% *)
+  datatype reg_or_imm =
+      (*% @format(x) x *)
+      R of reg
+    | (*% @format(x) x *)
+      I of imm     (* sign-extended 13bit. (5bit for shift count) *)
+
+  (*% *)
+  datatype addr =
+      (*% @format(r) r *)
+      BASE of reg            (* equivarent to reg + %g0 *)
+    | (*% @format(base * index) base "+" index *)
+      INDEXED of reg * reg
+    | (*% @format(disp * base) disp "+" base *)
+      DISP of imm * reg      (* sign-extended 13bit. *)
+
+  (*%
+   * @formatter(Word8.word) format_word8_hex
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(log2) format_int_log2
+   * @formatter (ascii) format_ascii
+   *)
+  datatype instruction =
+      (*% @format(a * r) "\tldsb\t" a "," + r *)
+      LDSB of addr * reg    (* reg <- signext([addr]:b) *)
+    | (*% @format(a * r) "\tldsh\t" a "," + r *)
+      LDSH of addr * reg    (* reg <- signext([addr]:h) *)
+    | (*% @format(a * r) "\tldub\t" a "," + r *)
+      LDUB of addr * reg    (* reg <- zeroext([addr]:b) *)
+    | (*% @format(a * r) "\tlduh\t" a "," + r *)
+      LDUH of addr * reg    (* reg <- zeroext([addr]:h) *)
+    | (*% @format(a * r) "\tld\t" a "," + r *)
+      LD of addr * reg      (* reg <- [addr:w] *)
+    | (*% @format(a * r) "\tldd\t" a "," + r *)
+      LDD of addr * reg     (* (reg,reg+1):l <- [addr:l] *)
+    | (*% @format(a * r) "\tld\t" a "," + r *)
+      LDF of addr * freg    (* freg:s <- [addr:s] *)
+    | (*% @format(a * r) "\tldd\t" a "," + r *)
+      LDDF of addr * freg   (* freg:d <- [addr:d] *)
+    | (*% @format(a) "\tld\t" a ", %fsr" *)
+      LDFSR of addr         (* %fsr <- [addr:w] *)
+(*
+    | LDC
+    | LDDC
+    | LDCSR
+*)
+    | (*% @format(r * a) "\tstb\t" r "," + a *)
+      STB of reg * addr     (* [addr:b] <- reg *)
+    | (*% @format(r * a) "\tsth\t" r "," + a *)
+      STH of reg * addr     (* [addr:h] <- reg *)
+    | (*% @format(r * a) "\tst\t" r "," + a *)
+      ST of reg * addr      (* [addr:w] <- reg *)
+    | (*% @format(r * a) "\tstd\t" r "," + a *)
+      STD of reg * addr     (* [addr:w] <- reg, [addr+4:w] <- reg+1 *)
+    | (*% @format(r * a) "\tst\t" r "," + a *)
+      STF of freg * addr
+    | (*% @format(r * a) "\tstd\t" r "," + a *)
+      STDF of freg * addr
+    | (*% @format(a) "\tst\t" "%fsr" "," + a *)
+      STFSR of addr
+(*
+    | STDFQ
+    | STC
+    | STDC
+    | STCSR
+    | STDCQ
+*)
+(*
+    | (*% @format(a * r) "\tldstub\t" a "," + r *)
+      LDSTUB of addr * reg    (* atomic load-store unsigned byte *)
+    | (*% @format(a * r) "\tswap\t" a "," + r *)
+      SWAP of addr * reg      (* atomic swap register with memory *)
+*)
+    | (*% @format(c * r) "\tsethi\t" c "," + r *)
+      SETHI of imm * reg      (* reg <- high 22 bit of imm *)
+    | (*% @format "\tnop" *)
+      NOP
+    (* imm = sign extended 13 bit *)
+    | (*% @format (op1 * op2 * dst) "\tand\t" op1 "," + op2 "," + dst *)
+      AND of reg * reg_or_imm * reg    (* dst <- op1 & op2 *)
+    | (*% @format (op1 * op2 * dst) "\tandcc\t" op1 "," + op2 "," + dst *)
+      ANDCC of reg * reg_or_imm * reg  (* dst <- op1 & op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\tandn\t" op1 "," + op2 "," + dst *)
+      ANDN of reg * reg_or_imm * reg   (* dst <- op1 & ~op2 *)
+    | (*% @format (op1 * op2 * dst) "\tandncc\t" op1 "," + op2 "," + dst *)
+      ANDNCC of reg * reg_or_imm * reg (* dst <- op1 & ~op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\tor\t" op1 "," + op2 "," + dst *)
+      OR of reg * reg_or_imm * reg     (* dst <- op1 | op2 *)
+    | (*% @format (op1 * op2 * dst) "\torcc\t" op1 "," + op2 "," + dst *)
+      ORCC of reg * reg_or_imm * reg   (* dst <- op1 | op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\torn\t" op1 "," + op2 "," + dst *)
+      ORN of reg * reg_or_imm * reg    (* dst <- op1 | ~op2 *)
+    | (*% @format (op1 * op2 * dst) "\torncc\t" op1 "," + op2 "," + dst *)
+      ORNCC of reg * reg_or_imm * reg  (* dst <- op1 | ~op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\txor\t" op1 "," + op2 "," + dst *)
+      XOR of reg * reg_or_imm * reg    (* dst <- op1 ^ op2 *)
+    | (*% @format (op1 * op2 * dst) "\txorcc\t" op1 "," + op2 "," + dst *)
+      XORCC of reg * reg_or_imm * reg  (* dst <- op1 ^ op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\txnor\t" op1 "," + op2 "," + dst *)
+      XNOR of reg * reg_or_imm * reg   (* dst <- op1 ^ ~op2 *)
+    | (*% @format (op1 * op2 * dst) "\txnorcc\t" op1 "," + op2 "," + dst *)
+      XNORCC of reg * reg_or_imm * reg (* dst <- op1 ^ ~op2 (update ICC) *)
+(* shift count is 5bit *)
+    | (*% @format (op1 * op2 * dst) "\tsll\t" op1 "," + op2 "," + dst *)
+      SLL of reg * reg_or_imm * reg    (* dst <- op1 << op2 *)
+    | (*% @format (op1 * op2 * dst) "\tsrl\t" op1 "," + op2 "," + dst *)
+      SRL of reg * reg_or_imm * reg    (* dst <- op1 >> op2 *)
+    | (*% @format (op1 * op2 * dst) "\tsra\t" op1 "," + op2 "," + dst *)
+      SRA of reg * reg_or_imm * reg    (* dst <- op1 <<~ op2 *)
+    | (*% @format (op1 * op2 * dst) "\tadd\t" op1 "," + op2 "," + dst *)
+      ADD of reg * reg_or_imm * reg    (* dst <- op1 + op2 *)
+    | (*% @format (op1 * op2 * dst) "\taddcc\t" op1 "," + op2 "," + dst *)
+      ADDCC of reg * reg_or_imm * reg  (* dst <- op1 + op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\taddx\t" op1 "," + op2 "," + dst *)
+      ADDX of reg * reg_or_imm * reg   (* dst <- op1 + op2 *)
+    | (*% @format (op1 * op2 * dst) "\taddxcc\t" op1 "," + op2 "," + dst *)
+      ADDXCC of reg * reg_or_imm * reg (* dst <- op1 + op2 (update ICC) *)
+(*
+    | TADDCC
+    | TADDCCTV
+*)
+    | (*% @format (op1 * op2 * dst) "\tsub\t" op1 "," + op2 "," + dst *)
+      SUB of reg * reg_or_imm * reg    (* dst <- op1 - op2 *)
+    | (*% @format (op1 * op2 * dst) "\tsubcc\t" op1 "," + op2 "," + dst *)
+      SUBCC of reg * reg_or_imm * reg  (* dst <- op1 - op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\tsubx\t" op1 "," + op2 "," + dst *)
+      SUBX of reg * reg_or_imm * reg   (* dst <- op1 - op2 *)
+    | (*% @format (op1 * op2 * dst) "\tsubxcc\t" op1 "," + op2 "," + dst *)
+      SUBXCC of reg * reg_or_imm * reg (* dst <- op1 - op2 (update ICC) *)
+(*
+    | TSUBCC
+    | TSUBCCTV
+    | MULScc
+*)
+    | (*% @format (op1 * op2 * dst) "\tumul\t" op1 "," + op2 "," + dst *)
+      UMUL of reg * reg_or_imm * reg   (* (Y,dst) <- op1 * op2 *)
+    | (*% @format (op1 * op2 * dst) "\tumul\t" op1 "," + op2 "," + dst *)
+      UMULCC of reg * reg_or_imm * reg (* (Y,dst) <- op1 * op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\tsmul\t" op1 "," + op2 "," + dst *)
+      SMUL of reg * reg_or_imm * reg   (* (Y,dst) <- op1 * op2 *)
+    | (*% @format (op1 * op2 * dst) "\tsmul\t" op1 "," + op2 "," + dst *)
+      SMULCC of reg * reg_or_imm * reg (* (Y,dst) <- op1 * op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\tudiv\t" op1 "," + op2 "," + dst *)
+      UDIV of reg * reg_or_imm * reg   (* (Y,dst) <- op1 * op2 *)
+    | (*% @format (op1 * op2 * dst) "\tudiv\t" op1 "," + op2 "," + dst *)
+      UDIVCC of reg * reg_or_imm * reg (* (Y,dst) <- op1 * op2 (update ICC) *)
+    | (*% @format (op1 * op2 * dst) "\tsdiv\t" op1 "," + op2 "," + dst *)
+      SDIV of reg * reg_or_imm * reg   (* dst <- (Y,op1) / op2 *)
+    | (*% @format (op1 * op2 * dst) "\tsdiv\t" op1 "," + op2 "," + dst *)
+      SDIVCC of reg * reg_or_imm * reg (* dst <- (Y,op1) / op2 (update ICC) *)
+(*
+    | SAVE
+    | RESTORE
+*)
+(* disp is 22bit *)
+    | (*% @format (icc * {annul} * label) "\tb"icc annul()(,",a") "\t" label *)
+      B of icc * {annul:bool} * label
+    | (*% @format (fcc * {annul} * label) "\tfb"fcc annul()(,",a") "\t" label *)
+      FB of fcc * {annul:bool} * label
+(*
+    | CB of ccc
+*)
+(* disp is 30bit *)
+    | (* @format(label) "\tcall\t" label *)
+      CALL of label        (* r15 <- PC, PC <- label *)
+    | (* @format(a * r) "\tjmpl\t" a "," + r *)
+      JMPL of addr * reg   (* reg <- PC, PC <- addr *)
+(*
+    | RETT
+    | T of icc
+*)
+    | (*% @format(r) "\trd\t" "%y" "," + r *)
+      RDY of reg           (* reg <- Y *)
+(*
+    | RDASR
+    | RDPSR
+    | RDWIM
+    | RDTBR
+    | WRASR
+*)
+    | (*% @format(op1 * op2) "\twr\t" op1 "," + op2 "," + "%y" *)
+      WRY of reg * reg_or_imm      (* Y <- op1 ^ op2 *)
+(*
+    | WRPSR
+    | WRWIM
+    | WRTBR
+    | STBAR
+    | UNIMP
+    | FLUSH
+*)
+    | (*% @format(src * dst) "\tfitos\t" src "," + dst *)
+      FITOS of freg * freg       (* dst:s <- src:wi (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfitod\t" src "," + dst *)
+      FITOD of freg * freg       (* dst:d <- src:wi (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfitoq\t" src "," + dst *)
+      FITOQ of freg * freg       (* dst:q <- src:wi (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfstoi\t" src "," + dst *)
+      FSTOI of freg * freg       (* dst:wi <- src:s (round towards 0) *)
+    | (*% @format(src * dst) "\tfdtoi\t" src "," + dst *)
+      FDTOI of freg * freg       (* dst:wi <- src:d (round towards 0) *)
+    | (*% @format(src * dst) "\tfqtoi\t" src "," + dst *)
+      FQTOI of freg * freg       (* dst:wi <- src:q (round towards 0) *)
+    | (*% @format(src * dst) "\tfstod\t" src "," + dst *)
+      FSTOD of freg * freg       (* dst:d <- src:s (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfstoq\t" src "," + dst *)
+      FSTOQ of freg * freg       (* dst:q <- src:s (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfdtos\t" src "," + dst *)
+      FDTOS of freg * freg       (* dst:s <- src:d (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfdtoq\t" src "," + dst *)
+      FDTOQ of freg * freg       (* dst:q <- src:d (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfqtos\t" src "," + dst *)
+      FQTOS of freg * freg       (* dst:s <- src:q (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfqtod\t" src "," + dst *)
+      FQTOD of freg * freg       (* dst:d <- src:q (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfmovs\t" src "," + dst *)
+      FMOVS of freg * freg       (* dst:s <- src:s *)
+    | (*% @format(src * dst) "\tfnegs\t" src "," + dst *)
+      (* if src = dst, then FNEGS performs negation for any precision. *)
+      (* double-precision nagation is performed by an FNEGS and an FMOVS. *)
+      FNEGS of freg * freg       (* dst:s <- -src:s *)
+    | (*% @format(src * dst) "\tfabss\t" src "," + dst *)
+      (* if src = dst, then FABSS performs abs for any precision. *)
+      (* double-precision abs is performed by an FNEGS and an FMOVS. *)
+      FABSS of freg * freg       (* dst:s <- abs(src:s) *)
+    | (*% @format(src * dst) "\tfsqrts\t" src "," + dst *)
+      FSQRTS of freg * freg (* dst:s <- sqrt(src:s) (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfsqrtd\t" src "," + dst *)
+      FSQRTD of freg * freg (* dst:d <- sqrt(src:d) (round by RD of FSR) *)
+    | (*% @format(src * dst) "\tfsqrtq\t" src "," + dst *)
+      FSQRTQ of freg * freg (* dst:q <- sqrt(src:q) (round by RD of FSR) *)
+    | (*% @format(op1 * op2 * dst) "\tfadds\t" op1 "," + op2 "," + dst *)
+      FADDS of freg * freg * freg   (* dst:s <- op1:s + op2:s *)
+    | (*% @format(op1 * op2 * dst) "\tfaddd\t" op1 "," + op2 "," + dst *)
+      FADDD of freg * freg * freg   (* dst:d <- op1:d + op2:d *)
+    | (*% @format(op1 * op2 * dst) "\tfaddq\t" op1 "," + op2 "," + dst *)
+      FADDQ of freg * freg * freg   (* dst:q <- op1:q + op2:q *)
+    | (*% @format(op1 * op2 * dst) "\tfsubs\t" op1 "," + op2 "," + dst *)
+      FSUBS of freg * freg * freg   (* dst:s <- op1:s - op2:s *)
+    | (*% @format(op1 * op2 * dst) "\tfsubd\t" op1 "," + op2 "," + dst *)
+      FSUBD of freg * freg * freg   (* dst:d <- op1:d - op2:d *)
+    | (*% @format(op1 * op2 * dst) "\tfsubq\t" op1 "," + op2 "," + dst *)
+      FSUBQ of freg * freg * freg   (* dst:q <- op1:q - op2:q *)
+    | (*% @format(op1 * op2 * dst) "\tfmuls\t" op1 "," + op2 "," + dst *)
+      FMULS of freg * freg * freg   (* dst:s <- op1:s * op2:s *)
+    | (*% @format(op1 * op2 * dst) "\tfmuld\t" op1 "," + op2 "," + dst *)
+      FMULD of freg * freg * freg   (* dst:d <- op1:d * op2:d *)
+    | (*% @format(op1 * op2 * dst) "\tfmulq\t" op1 "," + op2 "," + dst *)
+      FMULQ of freg * freg * freg   (* dst:q <- op1:q * op2:q *)
+    | (*% @format(op1 * op2 * dst) "\tfdivs\t" op1 "," + op2 "," + dst *)
+      FDIVS of freg * freg * freg   (* dst:s <- op1:s / op2:s *)
+    | (*% @format(op1 * op2 * dst) "\tfdivd\t" op1 "," + op2 "," + dst *)
+      FDIVD of freg * freg * freg   (* dst:d <- op1:d / op2:d *)
+    | (*% @format(op1 * op2 * dst) "\tfdivq\t" op1 "," + op2 "," + dst *)
+      FDIVQ of freg * freg * freg   (* dst:q <- op1:q / op2:q *)
+    | (*% @format(op1 * op2 * dst) "\tfsmuld\t" op1 "," + op2 "," + dst *)
+      FSMULD of freg * freg * freg   (* dst:d <- op1:s * op2:s *)
+    | (*% @format(op1 * op2 * dst) "\tfdmulq\t" op1 "," + op2 "," + dst *)
+      FDMULQ of freg * freg * freg   (* dst:q <- op1:d * op2:d *)
+    | (*% @format(op1 * op2) "\tfcmps\t" op1 "," + op2 *)
+      FCMPS of freg * freg           (* FCC <- op1:s cmp op2:s *)
+    | (*% @format(op1 * op2) "\tfcmpd\t" op1 "," + op2 *)
+      FCMPD of freg * freg           (* FCC <- op1:d cmp op2:d *)
+    | (*% @format(op1 * op2) "\tfcmpq\t" op1 "," + op2 *)
+      FCMPQ of freg * freg           (* FCC <- op1:q cmp op2:q *)
+    | (*% @format(op1 * op2) "\tfcmpes\t" op1 "," + op2 *)
+      FCMPES of freg * freg          (* FCC <- op1:s cmpe op2:s *)
+    | (*% @format(op1 * op2) "\tfcmped\t" op1 "," + op2 *)
+      FCMPED of freg * freg          (* FCC <- op1:d cmpe op2:d *)
+    | (*% @format(op1 * op2) "\tfcmpeq\t" op1 "," + op2 *)
+      FCMPEQ of freg * freg          (* FCC <- op1:q cmpe op2:q *)
+(*
+    | CPop
+*)
+
+    (* pseudo instructions *)
+    | (*% @format(l) l ":" *)
+      Label of localLabel
+    | (*% @format(l) l ":" *)
+      Symbol of symbol
+    | (*% @format(l) "\t.globl\t" l *)
+      Global of symbol
+    | (*% @format(x) "\t;; .loc " x *)
+      Loc of loc
+    | (*% @format({align,filler}) "\t.align\t" align:log2 ", " filler *)
+      Align of {align:int, filler:word}    (* align must be 2^n *)
+    | (*% @format(x) "\t" x *)
+      (*% @prefix format_ @format(x) "\t.section" x *)
+      Section of sectionName
+    | (*% @format(x) "\t.long\t" x *)
+      (*% @prefix format_ @format(x) "\t.int\t" x *)
+      ImmData of imm
+    | (*% @format(x xs) "\t.byte\t" xs(x)("," +) *)
+      BytesData of Word8.word list
+    | (*% @format(x:ascii) "\t.ascii\t" x *)
+      AsciiData of string
+    | (*% @format(size) "\t.fill\t" size ", 1, 0" *)
+      SpaceData of int
+    | (*% @format(l * {size,align}) ".comm " size ", " l ", " align *)
+      Comm of symbol * {size: int, align: int}
+
+    | (* @format(sym) sym ": # FIXME: LinkPtrEntry" *)
+      LinkPtrEntry of symbol
+    | (* @format(sym) sym ": # FIXME: LinkStubEntry" *)
+      LinkStubEntry of symbol
+    | (* @format(sym) sym ": # FIXME: GET_PC_THUNK" *)
+      GET_PC_THUNK_Decl of symbol
+    | (*% @format(sym) sym ": # FIXME: NEXT_TOPLEVEL_STUB" *)
+      NEXT_TOPLEVEL_STUB_Decl of symbol
+
+  (*% @formatter(lines) formatLines *)
+  type program =
+      (*% @format(insn insns:lines) insns(insn)(,\n) *)
+       instruction list
+
+  end (* local *)
+
+end

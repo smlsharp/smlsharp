@@ -1,0 +1,23 @@
+signature S32 =
+sig
+  structure T1 : sig type t1 datatype t2 = D val x : t2 end
+  structure T2 : sig type t1 datatype t2 = D val x : t2 end
+  structure T3 : sig type t1 datatype t2 = D val x : t2 end
+  sharing T1 = T2 = T3
+  val x : T1.t2 * T2.t2 * T3.t2
+end
+structure S32
+: sig
+    val x : T1.t2 * T2.t2 * T3.t2
+    structure T1 : sig type t1 = int datatype t2 con D : t2 val x : t2 end
+    structure T2 : sig type t1 = int datatype t2 con D : t2 val x : t2 end
+    structure T3 : sig type t1 = int datatype t2 con D : t2 val x : t2 end
+  end
+structure S32Trans : S32
+val xTrans1 = D : S32Trans.T1.t2
+val xTrans2 = D : S32Trans.T1.t2
+val xTrans3 = D : S32Trans.T1.t2
+structure S32Opaque : S32
+val xOpaque1 = D : S32Opaque.T1.t2
+val xOpaque2 = D : S32Opaque.T2.t2
+val xOpaque3 = D : S32Opaque.T3.t2

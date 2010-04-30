@@ -1,5 +1,0 @@
-Group
-        structure AnnotatedTypes
-        structure AnnotatedTypesUtils
-is
-	main/module.cm

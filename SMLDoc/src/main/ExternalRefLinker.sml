@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: ExternalRefLinker.sml,v 1.4 2004/11/07 13:16:19 kiyoshiy Exp $
+ * @version $Id: ExternalRefLinker.sml,v 1.5 2007/09/19 05:28:55 matsu Exp $
  *)
 structure ExternalRefLinker : EXTERNALREF_LINKER =
 struct
@@ -46,7 +46,8 @@ struct
                 stringStart = ref 0
               }
 
-          fun getLine length = TextIO.inputLine sourceStream
+          fun getLine length = case TextIO.inputLine sourceStream of NONE => ""
+								   | SOME s => s
           val lexer = LinkFileParser.makeLexer getLine initialArg
 
           val (items, _) =

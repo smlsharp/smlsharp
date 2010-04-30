@@ -1,0 +1,21 @@
+Group is
+
+      $/basis.cm
+
+         ../../../../../SMLFormat/smlformatlib.cm
+         ../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../systemdef/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../constantterm/sources.cm
+        ../../primitive/sources.cm
+        ../../annotatedtypes/sources.cm
+        ../../rbucalc/sources.cm
+        ../../anormal/sources.cm
+
+	Counters.sml
+        ANORMALIZATION.sig
+        ANormalization.sml

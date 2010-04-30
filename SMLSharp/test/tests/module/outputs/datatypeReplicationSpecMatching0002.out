@@ -1,0 +1,16 @@
+datatype dt
+con D : dt
+signature S1 = sig datatype dt = datatype dt end
+../tests/module/tests/datatypeReplicationSpecMatching0002.sml:25.11-28.3 Error:
+  Signature mismatch (tycon): dt
+
+../tests/module/tests/datatypeReplicationSpecMatching0002.sml:29.11-32.3 Error:
+  Signature mismatch (tycon): dt
+
+signature S2 =
+sig structure S : sig datatype dt = D end datatype dt = datatype S.dt end
+../tests/module/tests/datatypeReplicationSpecMatching0002.sml:39.11-43.3 Error:
+  Signature mismatch (tycon): dt
+
+../tests/module/tests/datatypeReplicationSpecMatching0002.sml:44.11-48.3 Error:
+  Signature mismatch (tycon): dt

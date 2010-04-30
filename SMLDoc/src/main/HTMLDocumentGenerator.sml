@@ -1,7 +1,7 @@
 (**
  * This module generates HTML documents describing the given program.
  * @author YAMATODANI Kiyoshi
- * @version $Id: HTMLDocumentGenerator.sml,v 1.11 2007/02/17 07:01:58 kiyoshiy Exp $
+ * @version $Id: HTMLDocumentGenerator.sml,v 1.12 2007/09/19 05:28:55 matsu Exp $
  *)
 structure HTMLDocumentGenerator : DOCUMENT_GENERATOR =
 struct
@@ -2319,8 +2319,8 @@ struct
         val sourceStream = TextIO.openIn fileName
         fun scan lineNumber lineHTMLs =
             case TextIO.inputLine sourceStream of
-              "" => lineHTMLs
-            | line =>
+              NONE (*""*) => lineHTMLs
+            | SOME line =>
               let
                 val lineNumberString = makeLineAnchor lineNumber
                 val lineHTML =

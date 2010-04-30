@@ -1,0 +1,21 @@
+Group is
+(*
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+*)
+
+$/basis.cm
+
+        Tokens.lex
+        Parser.grm
+        InstructionParserTypes.sml
+        InstructionGenerator.sml
+        StringReplacer.sml
+#if defined(NEW_CM)
+        $/ml-yacc-lib.cm
+#else
+        ml-yacc-lib.cm
+#endif
+
+        main.sml

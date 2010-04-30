@@ -1,0 +1,18 @@
+signature SDatatype = sig type et type ft end
+structure PDatatype : sig datatype dt con D : dt end
+functor FDatatype ('X : sig datatype dt = D end) :
+sig datatype et con E : 'X.dt -> et datatype ft con D : ft end
+structure TDatatype
+: sig datatype et con E : 'X.dt -> et datatype ft con D : PDatatype.dt end
+datatype dtDatatype
+con DDatatype : TDatatype.et -> dtDatatype
+val xDatatype = E D : TDatatype.et
+functor FDatatypeTrans ('X : sig datatype dt = D end) : SDatatype
+structure TDatatypeTrans
+: sig datatype et con E : 'X.dt -> et datatype ft con D : PDatatype.dt end
+datatype dtDatatypeTrans
+con DDatatypeTrans : TDatatypeTrans.et -> dtDatatypeTrans
+functor FDatatypeOpaq ('X : sig datatype dt = D end) : SDatatype
+structure TDatatypeOpaq : sig type et type ft end
+datatype dtDatatypeOpaq
+con DDatatypeOpaq : TDatatypeOpaq.et -> dtDatatypeOpaq

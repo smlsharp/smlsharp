@@ -1,0 +1,28 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@/commonrule
+
+VPATH = @srcdir@
+
+SOURCES = Primitives.ppg \
+	  ConstantTerm.ppg \
+          RuntimeTypes.ppg
+
+DERIVED_FILES = $(srcdir)/Primitives.ppg \
+                $(srcdir)/Constants.sml \
+
+TARGETS = $(srcdir)/Primitives.ppg.sml 
+
+all: $(TARGETS)
+
+clean:
+	-rm -rf $(srcdir)/CM $(srcdir)/.cm
+	-rm -f $(TARGETS)
+	-rm -f $(DERIVED_FILES)
+
+$(srcdir)/Primitives.ppg.sml: Primitives.ppg
+$(srcdir)/ConstantTerm.ppg.sml: ConstantTerm.ppg
+$(srcdir)/RuntimeTypes.ppg.sml: RuntimeTypes.ppg

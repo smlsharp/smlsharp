@@ -1,0 +1,8 @@
+Group
+        structure AbstractInstruction2
+(*
+	structure AbstractInstruction2Utils
+*)
+        structure AbstractInstruction2Formatter
+is
+        main/module.cm

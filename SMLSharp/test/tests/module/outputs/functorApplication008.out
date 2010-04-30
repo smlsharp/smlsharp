@@ -1,0 +1,14 @@
+functor F (P : sig type dt val x : dt end) :
+sig datatype dt con F : P.dt -> dt val x : dt end
+functor F1 (P : sig type dt val x : dt end) :
+sig datatype dt con E : P.dt -> dt val x : dt end
+structure P : sig datatype dt con D : dt val x : dt end
+structure T1 : sig datatype dt con F : X?.dt -> dt val x : dt end
+val x1 = F - : T1.dt
+structure T2 : sig datatype dt con F : X?.dt -> dt val x : dt end
+val x2 = F - : T2.dt
+structure T31 : sig datatype dt con E : P.dt -> dt val x : dt end
+val x31 = E - : T31.dt
+structure T32 : sig datatype dt con F : T31.dt -> dt val x : dt end
+val x32 = F - : T32.dt
+val b = true : bool

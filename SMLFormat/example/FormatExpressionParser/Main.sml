@@ -279,7 +279,9 @@ struct
       	            TextIO.flushOut TextIO.stdOut
                   )
               else ();
-              TextIO.inputLine (#stream arg)
+              case TextIO.inputLine (#stream arg)
+               of NONE => ""
+                | SOME s => s
             )
 
         val lexer = FormatExpressionParser.makeLexer getLine arg

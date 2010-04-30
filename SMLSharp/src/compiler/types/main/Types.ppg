@@ -1,0 +1,1302 @@
+(**
+ * type structures.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori
+ * @author Liu Bochao
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: Types.ppg,v 1.69 2010/02/23 10:17:15 keita44 Exp $
+ *)
+
+(*
+  2006/11/3 (Ohori) Changed the representatuon of strEnv.
+  OLD:
+    and strBindInfo =  STRUCTURE of strPathInfo
+      ...
+    withtyp
+     ...
+    and strPathInfo = {id : id, name : string, strpath : path, env : Env}
+
+    and strEnv =  strBindInfo SEnv.map
+    and Env = tyConEnv * varEnv * strEnv
+
+   This is cryptic and induces unnecessary dependency between withtype
+   entries and datatype elements
+
+  NEW:
+
+   datatype strEnv =
+      STRUCTURE of ({id : id, name : string, strpath : path, env : Env} SEnv.map)
+   withtype Env =   tyConEnv * varEnv * strEnv
+
+   type strPathInfo =  {id : id, name : string, strpath : path, env : Env}
+
+  This is clearer. strEnv is recursive in its env component.
+  Note: "withtype Env" should be inlined and replace type Env.
+  Withtype is used here only to factor out the formatting comments.
+*)
+
+structure Types : TYPES =
+struct
+
+  (***************************************************************************)
+
+  structure FE = SMLFormat.FormatExpression
+  structure BF = SMLFormat.BasicFormatters
+  structure NM = NameMap
+  (***************************************************************************)
+
+  (*%
+   * @formatter(LocalVarID.id) LocalVarID.format_id
+   *)
+  type varid =
+     (*%
+      * @format(id) id
+      *)
+      LocalVarID.id
+
+  (*%
+   * @formatter(TyConID.id) TyConID.format_id
+   *)
+  type globalID =
+     (*%
+      * @format(id) id
+      *)
+       TyConID.id
+
+  (*% 
+   * @formatter(ExnTagID.id) ExnTagID.format_id
+   *)
+  type globalTag =
+       (*%
+        * @format(tag) tag
+        *)
+       ExnTagID.id
+     
+
+(*
+  (*% *)
+  type tid = int
+  val tidCompare = Int.compare
+  val tidToString = Int.toString
+  val initialTid = 0
+  fun tidToInt tid = tid
+  (* NOTE: this function is used only by pickler. *)
+  fun intToTid int = int
+*)
+
+(* this is a temporal definition *)
+  (*% *)
+  type lambdaDepth = int
+  val infiniteDepth = valOf Int.maxInt (* the largest wokd in SML/NJ *)
+  val toplevelDepth = 0
+  fun youngerDepth {contextDepth, tyvarDepth} = contextDepth <= tyvarDepth
+  fun strictlyYoungerDepth (tyvarDepth, contextDepth) = contextDepth < tyvarDepth
+
+  (*% *)
+  datatype eqKind =
+           (*% @format "''" *)
+           EQ
+         | (*% @format "'" *)
+           NONEQ
+
+  (**
+   * The canonical string representation for a bound type variable.
+   *)
+  fun tyIdName tid =
+      let
+        fun numeral n =
+            if n < 26
+            then [ord #"a" + n]
+            else
+              let val (msb, rest) = (n mod 26, n div 26 - 1)
+              in (ord #"a" + msb) :: (numeral  rest)
+              end
+      in (implode(map chr (rev (numeral tid))))
+      end
+
+  (**
+   * The canonical string representation for a bound free type variable.
+   *)
+  fun freeTyIdName tid =
+      let
+        fun numeral n =
+            if n < 26
+            then [ord #"A" + n]
+            else
+              let val (msb, rest) = (n mod 26, n div 26 - 1)
+              in (ord #"A" + msb) :: (numeral  rest)
+              end
+      in (implode(map chr (rev (numeral (FreeTypeVarID.toInt tid)))))
+      end                                
+
+  (**
+   * * The canonical string representation for a dummy type variable.
+   *)
+  fun dummyTyIdName tid = "X" ^ Int.toString tid
+
+  fun tyId2Doc (index,eqKind) =
+      let val prefix = case eqKind of EQ => "''" | NONEQ => "'"
+      in (prefix ^ tyIdName index)
+      end
+
+  fun freeTyIdToDoc ({id, recordKind, eqKind}) =
+      let val prefix = case eqKind of EQ => "''" | NONEQ => "'"
+      in (prefix ^ (freeTyIdName id))
+      end
+
+  fun format_freeTyId values = BF.format_string(freeTyIdName values)
+  fun format_dummyTyId values = BF.format_string(dummyTyIdName values)
+
+  local
+    exception FreeBoundTy
+  in
+    fun formatBoundtvar (formatter, btvEnvs) id =
+        let
+          fun findInfo nil = raise FreeBoundTy
+            (*
+             (1000,NONEQ)
+                    raise Control.Bug "TyIdToDoc, find index"
+             *)
+            | findInfo ((n, bEnv) :: rest) =
+              (case IEnv.find(bEnv, id) of
+                 SOME (tvKind as {index, eqKind, recordKind}) =>
+                 (n + index, eqKind)
+               | NONE => findInfo rest)
+          val (index, eqKind) = findInfo btvEnvs
+        in
+          BF.format_string (tyId2Doc (index, eqKind))
+        end
+          handle FreeBoundTy =>
+                 BF.format_string ("boundTvar(" ^ Int.toString id ^ ")")
+  end
+
+  (** formatter for 'a IEnv.map *)
+  fun format_bmap_int (elementFormatter, prefix, suffix) values =
+      let val separator = List.concat[[FE.Term(1, ",")]]
+      in
+        SmlppgUtil.formatListWithEnclosureOne
+            (elementFormatter, separator, prefix, suffix)
+            (IEnv.listItems values)
+      end
+
+  (** add bound type variable *)
+  fun createBtvKindMap nil vars = [(0, vars)]
+    | createBtvKindMap ((n, bEnv) :: rest) vars =
+      (n + IEnv.numItems bEnv, vars) :: (n, bEnv) :: rest
+
+  (** translate bound type variable to alphabet *)
+  fun format_tyId values =
+      let
+        fun tyIdName tid =
+            let
+              fun numeral n =
+                  if n < 26
+                  then [ord #"a" + n]
+                  else
+                    let val (msb, rest) = (n mod 26, (n div 26) - 1)
+                    in (ord #"a" + msb) :: (numeral  rest)
+                    end
+            in
+              (implode(map chr (rev (numeral tid))))
+            end
+      in
+        BF.format_string(tyIdName values)
+      end
+
+  fun format_btvKind_index nil index = format_tyId index
+    | format_btvKind_index ((n, bEnv) :: t) index = format_tyId (n + index)
+
+  datatype path = datatype Path.path
+
+(* 
+  unnecesarry ?
+  (*%
+   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+   *)
+  type callingConvention = Absyn.callingConvention
+*)
+
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(format_pathdot) Path.format_pathWithDotend
+   *)
+  type tyCon = (* used in type *)
+      (*% 
+       * @format({name, 
+                  strpath,
+		  abstract, 
+		  tyvars, 
+		  id, 
+		  eqKind,
+                  constructorHasArgFlagList
+                  })
+       * strpath:format_pathdot name
+       *)
+      (* Note for print id and boxedKind : id ",boxedkind=" bref(boxedKind()(btvEnv))
+       *)
+      {
+        name : string,
+        strpath : path,
+        tyvars : eqKind list,
+        id : globalID,
+	abstract : bool,       (* for abstype *)
+        eqKind : eqKind ref,
+(*
+	boxedKind : boxedKind ref,
+*)
+        (* list of data constructor status
+         * nil - none (for int etc) or infinite (for exn)
+         * (true|false)::t -  true => has argument , false => has no argment
+         *)
+	constructorHasArgFlagList : bool list
+(*
+        (* how many data constructors.
+         * NONE - either predefined or type specification
+         * SOME 0 - infinite (for exn)
+         * SOME n - number of constructors
+         *)
+        span : int option
+*)
+      }
+
+  (*%
+   *
+   * @params(btvEnv)
+   *
+   * @formatter(listWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
+   * @formatter(tyConArgTys) SmlppgUtil.formatTyConArgumentTypes
+   * @formatter(genericSmapTy) SmlppgUtil.formatGenericSmapTy
+   * @formatter(smap) SmlppgUtil.formatSmap
+   * @formatter(optWithDefault) SmlppgUtil.formatOptWithDefault
+   * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
+   * @formatter(formatBoundtvar) formatBoundtvar
+   * @formatter(format_freeTyId) format_freeTyId
+   * @formatter(format_dummyTyId) format_dummyTyId
+   * @formatter(format_bmap_int) format_bmap_int
+   * @formatter(createBtvKindMap) createBtvKindMap
+   * @formatter(format_btvKind_index) format_btvKind_index
+   * @formatter(format_pathdot) Path.format_pathWithDotend
+   * @formatter(NameMap.namePath) NameMap.format_namePath
+   * @formatter(BuiltinPrimitive.prim_or_special) BuiltinPrimitive.format_prim_or_special
+   *)
+  datatype recordKind =
+      (*% @format "" *)
+      UNIV
+    | (*%
+       * @format(ty smap:genericSmapTy)
+               {"#" 2[smap(ty()(btvEnv))(":", ",", ",")]}
+       *)
+      REC of ty SEnv.map
+    | (*%
+       * @format(ty tys:listWithEnclosureOne)
+                {"#" 2[tys(ty()(btvEnv))("," +, "{", "}")]}
+       *)
+      OVERLOADED of ty list
+
+  and tvState =
+      (*%
+       * @format(value) value()(btvEnv)
+       *)
+      TVAR of tvKind
+    | (*%
+       * @format(value) value()(btvEnv)
+       *)
+      SUBSTITUTED of ty
+
+  and ty =
+      (*%
+       * @format "errorty"
+       *)
+      ERRORty
+    | (*%
+       * @format(id:format_dummyTyId)  id
+       *)
+      DUMMYty of int
+    | (*%
+       * @format(a b) b(a()(btvEnv))
+       *)
+      TYVARty of tvState ref
+    | (*%
+       * @format(value:formatBoundtvar)
+       *     value(value:btvKindWithoutKindInfo)(btvEnv)
+       *)
+      BOUNDVARty of int   (* globally unique *)
+    | (*%
+       * @format(left lefts:listWithEnclosureOne * right)
+       * R1{
+       *     {lefts(left()(btvEnv))("," +, + "{", "}")} + "->"
+       *     2[+1 {right()(btvEnv)} ]
+       *   }
+       *)
+      FUNMty of ty list * ty
+    | (*%
+       * @format(elm smap:genericSmapTy)
+        *        smap(elm)(":", ",", "*")
+       * @format:elm(ty)
+            ty()(btvEnv)
+       *)
+      RECORDty of ty SEnv.map
+    | (*%
+       * @format({tyCon, args:arg args:tyConArgTys})
+       *   {args(arg()(btvEnv))("," +, "(", ")" +)} tyCon()(btvEnv)
+       *)
+      RAWty of
+      {
+        tyCon : tyCon,
+        args : ty list
+      }    (* for datatype *)
+
+(*
+    | (*%
+       * @format({tyCon, args:arg args:tyConArgTys})
+       *   {args(arg()(btvEnv))("," +, "(", ")" +)} tyCon()(btvEnv)
+       *)
+      PREDEFINEDty of
+      {
+        tyCon: tyCon,
+        args: ty list
+      }
+        (* for predefined types *)
+*)
+    | (*%
+       * @format({boundtvars:a:btvKind b, body})
+       * !N0{
+       *      "["
+       *         b:format_bmap_int(a()(b:createBtvKindMap()(btvEnv)))("","")
+       *         "."
+       *         2[1 body()(b:createBtvKindMap()(btvEnv))]
+       *      "]"
+       *    }
+       *)
+      (**
+       * boundtvars =
+       *      {..., btvid -> btvKind as {index, recordKind, eqKind}, ...}
+       * where idex is the location of the boundtvars used only for printing.
+       * btvid is the id of boundTvars used as i in BOUNDVARty(i)
+       *)
+      POLYty of {boundtvars : btvKind IEnv.map, body : ty}
+    | (*%
+       * @format(ty1 * ty2) ty1()(btvEnv) 
+       *)
+      ALIASty of ty * ty
+(*
+    | (*%
+       * @format(specty * realty)  specty()(btvEnv)
+       *)
+      ABSSPECty of ty * ty
+*)
+      (* instantiation of SPECty *)
+    | (*%
+       * @format({spec:spec, implTy})  spec
+       * @format:spec({tyCon, args:arg args:tyConArgTys})
+       *   {args(arg()(btvEnv))("," +, "(", ")" +)} tyCon()(btvEnv)
+       *)
+      (* id of tyCon is real id *)
+      OPAQUEty of {spec: {tyCon : tyCon, args : ty list}, implTy: ty}
+    | (*%
+       * @format({tyCon, args:arg args:tyConArgTys})
+       * {args(arg()(btvEnv))("," +, "(", ")" +)} tyCon()(btvEnv)
+       *)
+      (* type specification which only appears in either signature or functor body *)
+      SPECty of {tyCon : tyCon, args : ty list}
+      (* id of tyspec is bound id *)
+
+(*
+  and boxedKind =
+      (*%
+       * @format "BOXEDty"
+       *)
+      BOXEDty (* generic boxed type *)
+    | (*%
+       * @format "ATOMty"
+       *)
+      ATOMty (* generic unboxed type *)
+    | (*%
+       * @format "DOUBLEty"
+       *)
+      DOUBLEty
+    | (*%
+       * @format "GENERICty"
+       *)
+      GENERICty (* generic type *)
+*)
+
+  and idState =
+      (*%
+       * @format(var) var()(btvEnv)
+       *)
+      VARID of varPathInfo
+    | (*%
+       * @format(var) var()(btvEnv)
+       *)
+      CONID of conPathInfo
+    | (*%
+       * @format(var) var()(btvEnv)
+       *)
+      EXNID of exnPathInfo
+    | (*%
+       * @format(prim) prim()(btvEnv)
+       *)
+      PRIM of primInfo
+    | (*%
+       * @format(oprim) oprim()(btvEnv)
+       *)
+      OPRIM of oprimInfo
+    | (*%
+       * @format(var * arity) var()(btvEnv)
+       *)
+      RECFUNID of varPathInfo * int
+
+  withtype tvKind =
+      (*
+       Ohori: Dec 3, 2006.
+       lambdaDepth is introduce to speed up type generalization.
+       Initially, it is equal to the length of \Gamma at which a type
+       variable is introduced. The top level is therefore 0.
+       We then maintain the invariant:
+         lambdaDepth(t) is the minimal |\Gamma|  such that
+              \Gamma{x:\tau(t)}
+       A type variable is created with lambdaDepth = INFINITE.
+       When a type is entered in \Gamma{x:\tau}, the lambdaDepth of
+       each type variable t' in tau is set to |\Gamma|
+       Whenever (t,tau) is unified, the lambdaDepth of each type variable t'
+       in tau must be set to min(lambdaDepth(t), lambdaDepth(t')).
+      *)
+      (*%
+       * @format({lambdaDepth, 
+                  id:id:format_freeTyId,
+                  recordKind, eqKind,
+                  tyvarName:parenedName opt})
+       *  eqKind id opt(parenedName) recordKind()(btvEnv)
+       * @format:parenedName(string) "(" string ")"
+       *)
+      {
+       lambdaDepth : lambdaDepth,
+       id : FreeTypeVarID.id,
+       recordKind : recordKind,
+       eqKind : eqKind,
+       tyvarName : string option  (* SOME: user-defined type variable *)
+      }
+
+  and btvKind =
+      (*%
+       * @format({index, recordKind, eqKind})
+       *  eqKind index:format_btvKind_index()(btvEnv) recordKind()(btvEnv)
+       *)
+      (**
+        * index is the location within the btvEnv. use only for printing(?)
+       *)
+      {index : int, recordKind : recordKind, eqKind : eqKind}
+      (**
+       * this is a dummy type unsed only for printing
+       *)
+
+  and btvKindWithoutKindInfo =
+      (*%
+       * @format({index, recordKind, eqKind})
+       *     eqKind index:format_btvKind_index()(btvEnv)
+       *)
+      {index : int, recordKind : recordKind, eqKind : eqKind}
+
+  and dataTyInfo =
+      (* NOTE: strpath is absolute path. *)
+      (* Note for print id and boxedKind : ",id =" id ",boxedkind=" bref(boxedKind()(btvEnv)) *)
+      (*%
+       * @format(
+       *        {
+       *         tyCon, 
+       *         datacon
+       *        }
+       *        )
+       *     tyCon()(btvEnv)
+       *)
+      {
+        tyCon: tyCon,
+        datacon : idState SEnv.map
+      }
+
+  and varPathInfo =
+      (*%
+       * @format({namePath, ty})
+       *        namePath + ":" + ty()(btvEnv)
+       *)
+      {namePath : NameMap.namePath, ty : ty}
+
+  and primInfo =
+      (*%
+       * @format({name, ty}) name + ":" + ty()(btvEnv)
+       *)
+      {name : BuiltinPrimitive.prim_or_special, ty : ty}
+
+  and oprimInfo =
+      (*%
+       * @format({name, ty, instances}) name + ":" + ty()(btvEnv)
+       *)
+      {
+       name : string,
+       ty : ty,
+       (*
+        * instances : primInfo SEnv.map
+        * the instances are set of primInfos
+       * inlined here to break dependency among withtype entry
+       *)
+       instances : {name : BuiltinPrimitive.prim_or_special, ty : ty} TyConID.Map.map
+      }
+
+  (*
+   * @params(btvEnv)
+   * @formatter(NameMap.namePath) NameMap.format_namePath
+   *)
+  and conPathInfo =
+      (*%
+       * @format({namePath, funtyCon, ty, tag, tyCon})
+       * namePath + ":" + ty()(btvEnv)
+       *)
+      (* before unique id allocation; see also conInfo *)
+      {
+        namePath : NameMap.namePath,
+        funtyCon : bool,
+        ty : ty,
+        tag: int,
+        tyCon : tyCon
+      }
+
+  (*
+   * @params(btvEnv)
+   * @formatter(NameMap.namePath) NameMap.format_namePath
+   *)
+  and exnPathInfo =
+      (*%
+       * @format({namePath, funtyCon, ty, tag, tyCon})
+       * namePath + ":" + ty()(btvEnv)
+       *)
+      (* before unique id allocation; see also exnInfo *)
+      {
+        namePath : NameMap.namePath,
+        funtyCon : bool,
+        ty : ty,
+        tag: globalTag,
+        tyCon : tyCon
+      }
+
+  (**********************************************************************)
+  (* default fomrat_ty switches on the options
+   * Now the option only contains Path.sysPrintSwitch,
+   * which means whether to print the system structure path node or not.
+   *)
+(*
+  val format_tyWithoutSysPath = fn btvEnv => format_ty (false, btvEnv)
+  val format_ty = fn btvEnv => format_ty (true, btvEnv)
+  val format_tvKind = fn btvEnv => format_tvKind (true, btvEnv)
+  val format_btvKind = fn btvEnv => format_btvKind (true, btvEnv)
+  val format_recordKind = fn btvEnv => format_recordKind (true, btvEnv)
+  val format_btvKindWithoutKindInfo = fn btvEnv => format_btvKindWithoutKindInfo (true, btvEnv)
+  val format_tyCon = fn btvEnv => format_tyCon (true, btvEnv)
+  val format_varPathInfo = fn btvEnv => format_varPathInfo (true, btvEnv)
+  val format_primInfo = fn btvEnv => format_primInfo (true, btvEnv)
+  val format_oprimInfo = fn btvEnv => format_oprimInfo (true, btvEnv)
+  val format_idState = fn btvEnv => format_idState (true, btvEnv)
+  val format_tvState = fn btvEnv => format_tvState (true, btvEnv)
+  val format_conPathInfo = fn btvEnv => format_conPathInfo (true, btvEnv)
+  val format_exnPathInfo = fn btvEnv => format_exnPathInfo (true, btvEnv)
+  val format_dataTyInfo = fn btvEnv => format_dataTyInfo (true, btvEnv)
+*)
+
+
+  (**********************************************************************)
+  (*%
+   * @formatter(format_pathdot) Path.format_pathWithDotend
+   * @formatter(NameMap.namePath) NameMap.format_namePath
+   *)
+  (* for printing *)
+  type conPathInfoName =
+      (*%
+       * @format({namePath, funtyCon, ty, tag, tyCon})
+          namePath
+       *)
+      {
+        namePath : NameMap.namePath,
+        funtyCon : bool,
+        ty : ty,
+        tag : int,
+        tyCon : tyCon
+      }
+
+  (*%
+   * @formatter(format_pathdot) Path.format_pathWithDotend
+   * @formatter(NameMap.namePath) NameMap.format_namePath
+   *)
+  (* for printing *)
+  type exnPathInfoName =
+      (*%
+       * @format({namePath, funtyCon, ty, tag, tyCon})
+          namePath
+       *)
+      {
+        namePath : NameMap.namePath,
+        funtyCon : bool,
+        ty : ty,
+        tag : globalTag,
+        tyCon : tyCon
+      }
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(NameMap.namePath) NameMap.format_namePath
+   *)
+  (* for printing *)
+  type conPathInfoNameType =
+      (*%
+       * @format({namePath, funtyCon, ty, tag, tyCon})
+       *        namePath + ":" + ty()(btvEnv)
+       *)
+      {
+        namePath : NameMap.namePath,
+        funtyCon : bool,
+        ty : ty,
+        tag: int,
+        tyCon : tyCon
+      }
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(NameMap.namePath) NameMap.format_namePath
+   *)
+  (* for printing *)
+  type exnPathInfoNameType =
+      (*%
+       * @format({namePath, funtyCon, ty, tag, tyCon})
+       *        namePath + ":" + ty()(btvEnv)
+       *)
+      {
+        namePath : NameMap.namePath,
+        funtyCon : bool,
+        ty : ty,
+        tag: globalTag,
+        tyCon : tyCon
+      }
+
+
+(*
+ ***********************************************************************
+ * for type environments
+ ***********************************************************************
+*)
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(format_bmap_int) format_bmap_int
+   * @formatter(createBtvKindMap) createBtvKindMap
+   * @formatter(format_pathdot) Path.format_pathWithDotend
+   *)
+  type tyFun =
+      (*%
+       * @format({name, strpath, tyargs:a:btvKind b, body})
+       *    b:format_bmap_int(a()(b:createBtvKindMap()(btvEnv)))("(",") ")
+       *    strpath:format_pathdot name
+       *    +
+       *    "=" +d 2[1 body()(b:createBtvKindMap()(btvEnv))]
+       *)
+      {name : string, strpath : path, tyargs : btvKind IEnv.map, body : ty}
+
+(*
+  (*%
+   * @formatter(format_pathdot) Path.format_pathWithDotend
+   *)
+  type tySpec = (* = tyName - tagNum *)
+      {
+        name : string,
+        strpath : path,
+        tyvars : eqKind list,
+        id : globalID,           (* this id is bound before signature matching *)
+        eqKind : eqKind,
+        boxedKind : boxedKind
+      }
+*)
+
+(*
+   sig
+     structure S = sig eqtype ''a t end
+   end
+
+   static environment of this signature is:
+   strEnv = {
+     "S" |-> {
+       tyEnv = {
+         "t" |->
+
+   {
+     name = "t",
+     strpath = "S",
+     tyvars = [true],
+     boundId = #1,
+     eqKind = EQ,
+     boxedKind = GenericTy
+   }
+
+
+   sig
+     type ('a, ''b) foo
+   end
+
+   {
+     name = "foo"
+
+
+
+*)
+
+
+
+
+
+
+  (*%
+   * @params(btvEnv)
+   *)
+  datatype tyBindInfo =
+      (*%
+       * @format(tyCon) "tyCon{" + tyCon()(btvEnv) + "}"
+       *)
+      TYCON of dataTyInfo
+(*
+    |(*%
+       * @format(tyCon) "tyCon{" + tyCon()(btvEnv) + "}"
+       *)
+      PREDEFINEDTYCON of dataTyInfo
+*)
+    | (*%
+       * @format(tyFun) "tyFun{" + tyFun()(btvEnv) + "}"
+       *)
+      TYFUN of tyFun
+(*
+    | (*%
+       * @format({spec,impl: impl opt})
+       * N10{ "{"
+       *     "spec" + "=" + spec
+       *     +1
+       *     "impl" + "=" +d opt(impl()(btvEnv))
+       * "}" }
+       *)
+      TYSPEC of {spec : tySpec, impl : tyBindInfo option}
+*)
+    | (*%
+       * @format(spec) spec()(btvEnv)
+       *)
+      TYSPEC of tyCon   (* abstract type declaration in signature *)
+    | (*%
+       * @format({spec, impl}) spec()(btvEnv)
+       *)
+      TYOPAQUE of {spec: tyCon, impl: tyBindInfo}   (* opaque type specification after signature matching *)
+
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(npmap) NM.formatNPmap
+   *)
+  type tyConEnv =
+       (*%
+        * @format(tyBindInfo npmap:npmap)
+                 npmap(tyBindInfo()(btvEnv))("=",+1) "\n"
+        *)
+       tyBindInfo NM.NPEnv.map
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(smapWithEnclosure) SmlppgUtil.formatSmapWithEnclosure
+   *)
+  type topTyConEnv =
+       (*%
+        * @format(tyCon smap:smapWithEnclosure)
+            smap(tyCon()(btvEnv))("=", +1, "typebinds" + 1, "")
+        *)
+       tyBindInfo SEnv.map
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(smap) SmlppgUtil.formatSmap
+   *)
+  type utvEnv =
+      (*%
+       * @format(tvStateRef smap:smap) smap(tvStateRef)(":",+1) "\n"
+       * @format:tvStateRef(tvState r) r(tvState()(btvEnv))
+       *)
+      (tvState ref) SEnv.map
+
+
+(*
+ ***********************************************************************
+ * for value environments
+ ***********************************************************************
+*)
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(npmap) NM.formatNPmap
+   *)
+  type varEnv =
+      (*%
+       * @format(idState npmap:npmap) npmap(idState()(btvEnv))(":",+2) "\n"
+       *)
+      idState NameMap.NPEnv.map
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(smap) SmlppgUtil.formatSmap
+   *)
+  type topVarEnv =
+      (*%
+       * @format(idState smap:smap) smap(idState()(btvEnv))(":",+2) "\n"
+       *)
+      idState SEnv.map
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(smap) SmlppgUtil.formatSmap
+   * @formatter(format_path) Path.format_pathWithoutDotend
+   *)
+  type Env =
+      (*%
+       * @format(tyConEnv * varEnv)
+       *   "TCENV:" tyConEnv()(btvEnv) +1
+       *   "VARENV:" +1 varEnv()(btvEnv) +1
+       *)
+       tyConEnv * varEnv
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(smap) SmlppgUtil.formatSmap
+   * @formatter(format_path) Path.format_pathWithoutDotend
+   *)
+  type topEnv =
+      (*%
+       * @format(tyConEnv * varEnv)
+       *   "TCENV:" tyConEnv()(btvEnv) +1
+       *   "VARENV:" +1 varEnv()(btvEnv) +1
+       *)
+       topTyConEnv * topVarEnv
+
+  val emptyTopEnv = (SEnv.empty, SEnv.empty) : topEnv
+
+(*
+  (*%
+   *)
+  type strInfo =
+       (*%
+        * @format({id, name, env}) name
+        *)
+       {id : id, name : string, env : Env}
+*)
+
+  (*%
+   * @params(btvEnv)
+   *)
+  type strPathInfo =
+       (*%
+        * @format({name, env, nameMap})  name +1  env()(btvEnv)
+        *)
+       {name : string, env : Env, nameMap : NameMap.basicNameMap}
+
+  (*%
+   * @formatter(LocalVarID.id) LocalVarID.format_id
+   * @formatter(ExternalVarID.id) ExternalVarID.format_id
+   *)
+  datatype varId =
+           (*%
+            * @format(index)  "#G" index
+            *)
+           EXTERNAL of ExternalVarID.id
+         | (*%
+            * @format(id) "#I" id
+            *)
+           INTERNAL of LocalVarID.id
+
+  fun compareVarId (kind1, kind2) =
+      case (kind1, kind2) of
+          (INTERNAL id1, INTERNAL id2) => LocalVarID.compare(id1, id2)
+        | (INTERNAL _, EXTERNAL _) => LESS
+        | (EXTERNAL _, INTERNAL _) => GREATER
+        | (EXTERNAL id1, EXTERNAL id2) =>
+          ExternalVarID.compare(id1, id2)
+
+  (*%
+   * @params(btvEnv)
+   *)
+  type varIdInfo =
+      (*%
+       * @format({displayName, ty, varId}) { displayName "(" varId ")" + ":" +1 ty()(btvEnv) }
+       *)
+      {displayName : string, ty : ty, varId : varId}
+
+  (*%
+   * @params(btvEnv)
+   *)
+  type varIdInfoWithoutType =
+      (*%
+       * @format({displayName, ty, varId}) { displayName "(" varId ")" }
+       *)
+      {displayName : string, ty : ty, varId : varId}
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(NameMap.namePath) NameMap.format_namePath
+  *)
+  datatype valId =
+     (*%
+      * @format({namePath,ty:ty}) namePath
+      *)
+     (*
+      * @format({namePath,ty:ty}) namePath "[" ty()(btvEnv) "]"
+      *)
+     VALIDVAR of {namePath : NameMap.namePath, ty : ty}
+   | (*%
+      * @format(ty) "_"
+      *)
+     VALIDWILD of ty
+
+ (** used after modulecompilation **)
+ (*%
+   * @params(btvEnv)
+  *)
+ datatype valIdent =
+     (*%
+      * @format(varIdInfo) varIdInfo()(btvEnv)
+      *)
+     VALIDENT of varIdInfo
+   | (*%
+      * @format(ty) "_"
+      *)
+     VALIDENTWILD of ty
+
+
+  (*%
+   * @params(btvEnv)
+   *)
+  (* after unique id allocation; see also conPathInfo *)
+  type conInfo =
+      (*%
+       * @format({displayName, funtyCon, ty, tag, tyCon})
+       * displayName + ":" + ty()(btvEnv)
+       *)
+      {displayName : string, funtyCon : bool, ty : ty, tag: int, tyCon : tyCon}
+
+  (*%
+   * @params(btvEnv)
+   *)
+  (* for printing *)
+  type conInfoNameType =
+      (*%
+       * @format({displayName, funtyCon, ty, tag, tyCon}) displayName + ty()(btvEnv)
+       *)
+      {displayName : string, funtyCon : bool, ty : ty, tag: int, tyCon : tyCon}
+
+  (*%  *)
+  (** dummy type definition for formatter definiton *)
+  type conInfoName =
+      (*%
+       * @format({displayName, funtyCon, ty, tag, tyCon}) displayName
+       *)
+      {displayName : string, funtyCon : bool, ty : ty, tag : int, tyCon: tyCon}
+
+  (*%
+   * @params(btvEnv)
+   *)
+  type exnInfo =
+      (*%
+       * @format({displayName, funtyCon, ty, tag, tyCon})
+       * displayName + ":" + ty()(btvEnv) "<tag = " tag ">"
+       *)
+      {displayName : string, funtyCon : bool, ty : ty, tag: globalTag, tyCon : tyCon}
+
+  (*%
+   * @params(btvEnv)
+   *)
+  type exnInfoNameType =
+      (*%
+       * @format({displayName, funtyCon, ty, tag, tyCon}) displayName + ty()(btvEnv) "<tag = " tag ">"
+       *)
+      {displayName : string, funtyCon : bool, ty : ty, tag: globalTag, tyCon : tyCon}
+
+  (*%  *)
+  (** dummy type definition for formatter definiton *)
+  type exnInfoName =
+      (*%
+       * @format({displayName, funtyCon, ty, tag, tyCon}) displayName "<tag = " tag ">"
+       *)
+      {displayName : string, funtyCon : bool, ty : ty, tag : globalTag, tyCon: tyCon}
+
+  type subst = ty IEnv.map
+  type btvEnv = btvKind IEnv.map
+
+  val univKind = {recordKind = UNIV, eqKind = NONEQ, tyvarName = NONE}
+
+  local
+    fun format_eqkind (name, eqKind) =
+      case eqKind of
+        EQ => [FE.Term(2, "''"), FE.Term(size name, name)]
+      | _ => [FE.Term(1, "'"), FE.Term(size name, name)]
+    fun format_smap parm smap =
+        SmlppgUtil.formatListWithEnclosure parm (SEnv.listItemsi smap)
+  in
+  (*%
+   * @formatter(smap) format_smap
+   * @formatter(eqkind) format_eqkind
+   *)
+  type tvarNameSet =
+       (*%
+        * @format(eqkind:eqkind map:smap) map(eqkind)(",","(",") ")
+        *)
+       eqKind SEnv.map
+  end
+
+
+  fun format_TyConIDSet tyConIDSet = 
+      let 
+          val L = map TyConID.toString (TyConID.Set.listItems tyConIDSet)
+      in
+          SmlppgUtil.formatListWithEnclosureOne
+              (
+               SMLFormat.BasicFormatters.format_string,
+               [FE.Term(1, ",")],
+               [FE.Term(1, "(")],
+               [FE.Term(1, ")")]
+               )
+              L
+      end
+
+  (*%
+   * @formatter(TyConID.Set.set) format_TyConIDSet
+   *)
+  type tyConIdSet =
+       (*%
+        * @format(set) set
+        *)
+       TyConID.Set.set
+
+  (*********************************************)
+  (* liu : structure environment is only for printCodeGeneration *)
+  datatype strEntry =
+           STRUCTURE of {name : string,
+                         strpath : Path.path,
+                         wrapperSysStructure : string option,
+                         env : (tyConEnv * varEnv * strEntry SEnv.map)}
+
+  type strEnv = strEntry SEnv.map
+  (**********************************************)
+
+
+  (*%
+   * @params(btvEnv)
+   *)
+  datatype sigBindInfo =
+           (*%
+            * @format (tyConIdSet * {name, env}) name +1  env()(btvEnv)
+            *)
+           SIGNATURE of tyConIdSet * {name : string, env : Env}
+  (*%
+   * @params(btvEnv)
+   * @formatter(smap) SmlppgUtil.formatSmap
+   *)
+  type sigEnv =
+       (*%
+        * @format(sigma smap:smap) smap(sigma()(btvEnv))(":",+1) "\n"
+        *)
+       sigBindInfo SEnv.map
+
+  local
+      fun formatExnTagSet exnSet = 
+          let 
+              val L = map (fn globalTag => ExnTagID.toString globalTag)
+                          (ExnTagID.Set.listItems exnSet)
+          in
+              SmlppgUtil.formatListWithEnclosureOne
+                  (
+                   SMLFormat.BasicFormatters.format_string,
+                   [FE.Term(1, ",")],
+                   [FE.Term(1, "(")],
+                   [FE.Term(1, ")")]
+                   )
+                  L
+          end
+  in
+     (*%
+      * @formatter(formatExnTagSet) formatExnTagSet
+      *)
+     type exnTagSet =
+       (*%
+        * @format(exnTagSet:formatExnTagSet) exnTagSet
+        *)
+          ExnTagID.Set.set
+     val  emptyExnTagSet = ExnTagID.Set.empty
+  end
+
+  (*%
+   *)
+  type funBindInfo =
+       (*%
+        * @format({funName, argName, functorSig}) funName
+        *)
+       {
+	funName : string,
+	argName : string,
+	functorSig: {generativeExnTagSet : exnTagSet,
+		     argTyConIdSet : tyConIdSet,
+		     argSigEnv : Env,
+                     argStrPrefixedEnv : Env,
+		     body : tyConIdSet * Env
+                    }
+       }
+
+  (*%
+   * @formatter(funBindInfo) format_funBindInfo
+   * @formatter(smap) SmlppgUtil.formatSmap
+   *)
+  type funEnv =
+       (*%
+        * @format(funBindInfo smap:smap) smap(funBindInfo:funBindInfo)(":",+1) "\n"
+        *)
+       funBindInfo SEnv.map
+
+  (*%
+   * @params(btvEnv) 
+   *)
+  type interfaceEnv = 
+       (*%
+        * @format(topEnv * funEnv) 
+        * "topEnv:" +d topEnv()(btvEnv)
+        * "funEnv:" +d funEnv
+        *)
+       topEnv * funEnv
+
+  (*%
+   * @params(btvEnv) 
+   *)
+  type basicInterfaceSig =
+       (*% 
+        * @format({boundTyConIdSet, env})
+        *  "bound tyConID:" boundTyConIdSet +d 
+        *  "env : " env()(btvEnv)
+        *)           
+       {boundTyConIdSet : tyConIdSet, env : interfaceEnv}
+
+  val emptyVarEnv = NM.NPEnv.empty : varEnv
+  val emptyTyfield = SEnv.empty : ty SEnv.map
+  val emptyTyConEnv = NM.NPEnv.empty : tyConEnv
+  val emptySigEnv = SEnv.empty :sigEnv
+  val emptyFunEnv = SEnv.empty :funEnv
+  val emptyInterfaceEnv = ((SEnv.empty, SEnv.empty), SEnv.empty) : interfaceEnv
+  val emptyE = (emptyTyConEnv, emptyVarEnv) : Env
+  val emptySubst = IEnv.empty : subst
+
+(*
+  val tidSequenceRef = ref (SequentialNumber.generateSequence initialTid)
+  val btidSequenceRef = ref (SequentialNumber.generateSequence 0)
+  fun initTid () = SequentialNumber.init (!tidSequenceRef)
+  fun nextTid () = SequentialNumber.generate (!tidSequenceRef)
+  fun peekTid () = SequentialNumber.peek (!tidSequenceRef)
+  fun nextBTid () = SequentialNumber.generate (!btidSequenceRef)
+  fun peekBTid () = SequentialNumber.peek (!btidSequenceRef)
+  fun advanceBTid count = SequentialNumber.advance (!btidSequenceRef) count
+
+
+  fun nextTyConId namespace = GlobalID.peek namespace
+  fun newTyConId namespace = GlobalID.generate namespace
+
+  fun nextVarId () = ID.peek ()
+  fun newVarId () = ID.generate ()
+
+  val dummyStructureId = ID.reserve ()
+  fun nextStructureId () = ID.peek ()
+  fun newStructureId () = ID.generate ()
+*)
+
+  fun conPathInfoToConInfo (conpath : conPathInfo) =
+      let
+          val {namePath, funtyCon, ty, tag, tyCon} = conpath
+      in
+          {
+            displayName = NameMap.namePathToString(namePath),
+            funtyCon = funtyCon,
+            ty = ty,
+            tag = tag,
+            tyCon = tyCon
+          } : conInfo
+      end
+
+  fun exnPathInfoToExnInfo (exnpath : exnPathInfo) =
+      let
+          val {namePath, funtyCon, ty, tag, tyCon} = exnpath
+      in
+          {
+            displayName = NameMap.namePathToString(namePath),
+            funtyCon = funtyCon,
+            ty = ty,
+            tag = tag,
+            tyCon = tyCon
+          } : exnInfo
+      end
+
+  val kindedTyvarList = ref nil : tvState ref list ref
+
+  (** true if two tyCons are the same. *)
+  fun eqTyCon (left : tyCon, right : tyCon) = TyConID.eq(#id left, #id right)
+
+  fun eqTyConWithTyName (left : tyCon, right : tyCon) = TyConID.eq(#id left, #id right)
+
+
+  fun newTvStateRef {lambdaDepth, recordKind, eqKind, tyvarName} =
+      let
+          val newTyvarID = FreeTypeVarIDGen.generate ()
+          val newTv = (ref
+                           (TVAR
+                                {
+		                 lambdaDepth = lambdaDepth,
+                                 id = newTyvarID,
+                                 recordKind = recordKind,
+                                 eqKind = eqKind,
+                                 tyvarName = tyvarName
+                                 }))
+          val _ = kindedTyvarList := newTv::(!kindedTyvarList)
+      (*
+       case recordKind of
+	   UNIV => ()
+         | REC _ => kindedTyvarList := newTv::(!kindedTyvarList)
+	 | OVERLOADED _ => kindedTyvarList := newTv::(!kindedTyvarList)
+       *)
+      in
+          newTv
+      end
+
+  fun newty {recordKind, eqKind, tyvarName} =
+      TYVARty(newTvStateRef {lambdaDepth=infiniteDepth,
+	                     recordKind=recordKind,
+	                     eqKind=eqKind,
+	                     tyvarName=tyvarName})
+
+  fun newUtvar (lambdaDepth, eqKind, tvarName) =
+      newTvStateRef {
+                     lambdaDepth = lambdaDepth ,
+                     recordKind=UNIV,
+                     eqKind=eqKind,
+                     tyvarName= SOME tvarName
+                    }
+
+  fun newtyRaw {lambdaDepth, recordKind, eqKind, tyvarName} =
+      TYVARty(newTvStateRef {
+	                     lambdaDepth=lambdaDepth,
+	                     recordKind=recordKind,
+	                     eqKind=eqKind,
+	                     tyvarName=tyvarName
+	     })
+
+
+  fun newtyWithLambdaDepth (lambdaDepth, {recordKind, eqKind, tyvarName}) =
+      TYVARty(newTvStateRef {
+	                     lambdaDepth=lambdaDepth,
+	                     recordKind=recordKind,
+	                     eqKind=eqKind,
+	                     tyvarName=tyvarName
+	                    }
+             )
+end

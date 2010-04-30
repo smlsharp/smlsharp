@@ -1,0 +1,307 @@
+(**
+ * constant terms.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: ConstantTerm.ppg,v 1.1 2008/11/19 19:57:44 ohori Exp $
+ *)
+structure ConstantTerm =
+struct
+
+  structure P = Path
+  structure PT = PredefinedTypes
+  structure T = Types
+  structure TP = TypeParser
+  structure TU = TypesUtils
+  structure UE = UserError
+
+  (*%
+   * @formatter(Int32.int) SmlppgUtil.format_int32
+   * @formatter(Word32.word) SmlppgUtil.format_word32
+   * @formatter(BigInt.int) SmlppgUtil.format_BigInt
+   *)
+  datatype constant 
+    = (*%
+       * @format(value) value
+       *)
+      INT of Int32.int
+    | (*%
+       * @format(value) value
+       *)
+      LARGEINT of BigInt.int
+    | (*%
+       * @format(value) "0wx" value
+       *)
+      WORD of Word32.word
+    | (*%
+       * @format(value) "0wx" value
+       *)
+      BYTE of Word32.word
+    | (*%
+       * @format(value) "\"" value "\""
+       *)
+      STRING of string
+    | (*%
+       * @format(value) value
+       *)
+      REAL of string
+    | (*%
+       * @format(value) value "f"
+       *)
+      FLOAT of string
+    | (*%
+       * @format(value) "#\"" value "\""
+       *)
+      CHAR of char
+    | (*%
+       * @format(value) "()"
+       *)
+      UNIT 
+    | (*%
+       * @format(value) "NULL"
+       *)
+      NULL  (* null pointer *)
+
+  (*% *)
+  exception
+  (*%
+   * @format "too" +d "large" +d "constant"
+   *)
+  TooLargeConstant
+
+  fun compare (x,y) = 
+    (* Note: we pick the following ordering 
+        INT < LARGEINT < WORD < STRING < REAL < FLOAT < CHAR < NULL < UNIT
+       to make compare as a toral ordering.
+    *)
+      case (x,y) of
+        (INT i1, INT i2) => Int32.compare(i1, i2)
+      | (INT _, _) => LESS
+      | (LARGEINT _, INT _) => GREATER
+      | (LARGEINT i1, LARGEINT i2) => BigInt.compare(i1, i2)
+      | (LARGEINT _, _) => LESS
+      | (WORD _,INT _) => GREATER
+      | (WORD _,LARGEINT _) => GREATER
+      | (WORD w1,WORD w2) => Word32.compare(w1,w2)
+      | (WORD w1,_) => LESS
+      | (BYTE _, INT _) => GREATER
+      | (BYTE _, LARGEINT _) => GREATER
+      | (BYTE _, WORD _) => GREATER
+      | (BYTE s1, BYTE s2) => Word32.compare (s1, s2)
+      | (BYTE _, _) => LESS
+      | (STRING _, INT _) => GREATER
+      | (STRING _, LARGEINT _) => GREATER
+      | (STRING _, WORD _) => GREATER
+      | (STRING _, BYTE _) => GREATER
+      | (STRING s1, STRING s2) => String.compare (s1, s2)
+      | (STRING _, _) => LESS
+      | (REAL r1, INT _) => GREATER
+      | (REAL r1, LARGEINT _) => GREATER
+      | (REAL r1, WORD _) => GREATER
+      | (REAL r1, BYTE _) => GREATER
+      | (REAL r1, STRING _) => GREATER
+      | (REAL r1, REAL r2) => String.compare(r1, r2)
+      | (REAL _, _) => LESS
+      | (FLOAT r1, INT _) => GREATER
+      | (FLOAT r1, LARGEINT _) => GREATER
+      | (FLOAT r1, WORD _) => GREATER
+      | (FLOAT r1, BYTE _) => GREATER
+      | (FLOAT r1, STRING _) => GREATER
+      | (FLOAT _, REAL _) => GREATER
+      | (FLOAT r1, FLOAT r2) => String.compare(r1, r2)
+      | (FLOAT r1, _) => LESS
+      | (CHAR _, INT _) => GREATER
+      | (CHAR _, LARGEINT _) => GREATER
+      | (CHAR _, WORD _) => GREATER
+      | (CHAR _, BYTE _) => GREATER
+      | (CHAR _, STRING _) => GREATER
+      | (CHAR _, REAL _) => GREATER
+      | (CHAR _, FLOAT _) => GREATER
+      | (CHAR c1, CHAR c2) => Char.compare(c1,c2)
+      | (CHAR _, _) => LESS
+      | (NULL, INT _) => GREATER
+      | (NULL, LARGEINT _) => GREATER
+      | (NULL, WORD _) => GREATER
+      | (NULL, BYTE _) => GREATER
+      | (NULL, STRING _) => GREATER
+      | (NULL, REAL _) => GREATER
+      | (NULL, FLOAT _) => GREATER
+      | (NULL, NULL) => EQUAL
+      | (NULL, _) => LESS
+      | (UNIT, UNIT) => EQUAL
+      | (UNIT, _) => GREATER
+
+  local
+    structure OCord : ORD_KEY =
+      struct
+     (* Note: we pick the following ordering 
+          INT < LARGEINT < WORD < STRING < REAL < FLOAT < CHAR < NULL < UNIT
+         to make compare as a toral ordering.
+	 Anybody who add new constant type should make this comparison
+         function total!
+      *)
+        fun compare (INT _, INT _)             = EQUAL
+          | compare (INT _, _)                 = LESS
+          | compare (LARGEINT _, INT _)        = GREATER
+          | compare (LARGEINT _, LARGEINT _)   = EQUAL
+          | compare (LARGEINT _, _)            = LESS
+          | compare (WORD _, INT _)            = GREATER
+          | compare (WORD _, LARGEINT _)       = GREATER
+          | compare (WORD _, WORD _)           = EQUAL
+          | compare (WORD _, _)                = LESS
+          | compare (BYTE _, INT _)          = GREATER
+          | compare (BYTE _, LARGEINT _)     = GREATER
+          | compare (BYTE _, WORD _)         = GREATER
+          | compare (BYTE _, BYTE _)       = EQUAL
+          | compare (BYTE _,  _)             = LESS
+          | compare (STRING _, INT _)          = GREATER
+          | compare (STRING _, LARGEINT _)     = GREATER
+          | compare (STRING _, WORD _)         = GREATER
+          | compare (STRING _, BYTE _)         = GREATER
+          | compare (STRING _, STRING _)       = EQUAL
+          | compare (STRING _,  _)             = LESS
+          | compare (REAL _, UNIT)             = LESS
+          | compare (REAL _, NULL)             = LESS
+          | compare (REAL _, CHAR _)           = LESS
+          | compare (REAL _, FLOAT _)          = LESS
+          | compare (REAL _, REAL _)           = EQUAL
+          | compare (REAL _, _)                = GREATER
+          | compare (FLOAT _, UNIT)            = LESS
+          | compare (FLOAT _, NULL)            = LESS
+          | compare (FLOAT _, CHAR _)          = LESS
+          | compare (FLOAT _, FLOAT _)         = EQUAL
+          | compare (FLOAT _, _)               = GREATER
+          | compare (CHAR _, UNIT)             = LESS
+          | compare (CHAR _, NULL)             = LESS
+          | compare (CHAR _, CHAR _)           = EQUAL
+          | compare (CHAR _, _)                = GREATER
+          | compare (NULL, UNIT)               = LESS
+          | compare (NULL, NULL)               = EQUAL
+          | compare (NULL, _)                  = GREATER
+          | compare (UNIT, UNIT)               = EQUAL
+          | compare (UNIT, _)                  = GREATER
+        type ord_key = constant
+      end
+    structure OCMap = BinaryMapFn(OCord)
+    val constantTypeDefs =
+        [
+          (INT (0),  "['a#{int,IntInf.int}.'a]"),
+          (LARGEINT (BigInt.fromInt 0),  "['a#{int,IntInf.int}.'a]"),
+          (WORD (0w0), "['a#{word,Word8.word}.'a]"),
+          (STRING (""), "string"),
+          (REAL ("0.0"), "['a#{real,Real32.real}.'a]"),
+          (CHAR (#"c"),  "char"),
+          (UNIT,  "unit"),
+          (NULL, "(unit)ptr")
+        ]
+    val constantTypeMap =
+        foldl
+            (fn ((const, tyRep), constTypeMap) =>
+                let
+                    val newTy =  
+                        TP.readTy (#topTyConEnv BuiltinContext.builtinContext) tyRep
+(*
+                        TP.readTy (ReservedCounters.reservedBoundTypeVarIDSequence) PT.initialTopTyConEnv tyRep
+*)
+                in
+                    OCMap.insert (constTypeMap, const, newTy)
+                end)
+            OCMap.empty
+            constantTypeDefs
+  in
+    fun constTy const =
+        case OCMap.find(constantTypeMap, const) of
+          SOME ty => ty
+        | _ => raise (Control.Bug "InitialTypeContext constTy")
+  end
+
+  fun constDefaultTy const =
+      case const of
+        INT _ => PT.intty
+      | LARGEINT _ => PT.largeIntty
+      | WORD _ => PT.wordty
+      | BYTE _ => PT.bytety
+      | REAL _ => PT.realty
+      | FLOAT _ => PT.floatty
+      | STRING _ => PT.stringty
+      | CHAR _ => PT.charty
+      | UNIT => PT.unitty
+      | NULL => PT.ptrty
+
+  local
+    val bigIntToInt32 = Int32.fromLarge o BigInt.toLarge
+    val int32ToBigInt = BigInt.fromLarge o Int32.toLarge
+
+    val intRange =
+        (
+          BigInt.compare,
+          valOf(StringCvt.scanString (BigInt.scan StringCvt.HEX) "~80000000"),
+          valOf(StringCvt.scanString (BigInt.scan StringCvt.HEX) "7FFFFFFF")
+(* ToDo : smlformat command cannot handle 32-bit constant.
+          BigInt.fromLarge (Int32.toLarge ~0x80000000),
+          BigInt.fromLarge (Int32.toLarge  0x7FFFFFFF)
+*)
+        )
+    val byteRange = (Word32.compare, 0wx00 : Word32.word, 0wxFF : Word32.word)
+    val wordRange =
+        (
+          Word32.compare,
+          0wx00000000 : Word32.word,
+          valOf (Word32.fromString "0wxFFFFFFFF")
+(*
+          0wxFFFFFFFF : Word32.word
+*)
+        )
+
+    fun checkRange (compare, min, max) (v, loc) =
+        if compare (v, min) = LESS orelse compare (v, max) = GREATER
+        then raise UE.UserErrors [(loc, UE.Error, TooLargeConstant)]
+        else ()
+  in
+  (**
+   * fix the form of constant expression according to its type.
+   *)
+  fun fixConst (const, ty, loc) =
+      let
+        datatype constTy =
+                 INTty | WORDty | CHARty | STRINGty | REALty | FLOATty
+               | LARGEINTty | BYTEty | UNITty | PTRty
+        val constTy =
+            case TU.derefTy ty of
+              T.RAWty {tyCon={id,...}, args=[]} =>
+              if TyConID.eq (id, #id PT.intTyCon) then INTty
+              else if TyConID.eq (id, #id PT.wordTyCon) then WORDty
+              else if TyConID.eq (id, #id PT.charTyCon) then CHARty
+              else if TyConID.eq (id, #id PT.stringTyCon) then STRINGty
+              else if TyConID.eq (id, #id PT.realTyCon) then REALty
+              else if TyConID.eq (id, #id PT.floatTyCon) then FLOATty
+              else if TyConID.eq (id, #id PT.largeIntTyCon) then LARGEINTty
+              else if TyConID.eq (id, #id PT.byteTyCon) then BYTEty
+              else if TyConID.eq (id, #id PT.unitTyCon) then UNITty
+              else raise Control.Bug "castConst"
+            | T.RAWty {tyCon={id,...}, args=[_]} =>
+              if TyConID.eq (id, #id PT.ptrTyCon) then PTRty
+              else raise Control.Bug "castConst"
+            | _ => raise Control.Bug "castConst"
+      in
+        case (const, constTy) of
+          (INT x, INTty) => (checkRange intRange (int32ToBigInt x, loc); const)
+        | (INT x, LARGEINTty) => LARGEINT (int32ToBigInt x)
+        | (LARGEINT x, INTty) =>
+          (checkRange intRange (x, loc); INT (bigIntToInt32 x))
+        | (LARGEINT _, LARGEINTty) => const
+        | (WORD x, WORDty) => (checkRange wordRange (x, loc); const)
+        | (WORD x, BYTEty) => (checkRange byteRange (x, loc); BYTE x)
+        | (STRING _, STRINGty) => const
+        | (REAL _, REALty) => const
+        | (REAL x, FLOATty) => FLOAT x
+        | (FLOAT _, FLOATty) => const
+        | (FLOAT x, REALty) => REAL x
+        | (CHAR _, CHARty) => const
+        | (UNIT, UNITty) => const
+        | (NULL, PTRty) => const
+        | _ => raise Control.Bug "castConst"
+      end
+  end
+
+end

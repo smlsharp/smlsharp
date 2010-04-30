@@ -1,0 +1,6 @@
+structure S1 : sig val x : int end
+val x1 = 1 : int
+structure S2 : sig datatype dt con D : dt end
+val x2 = D : S2.dt
+structure S3 : sig exception E : exn end
+val x3 = S3.E : exn

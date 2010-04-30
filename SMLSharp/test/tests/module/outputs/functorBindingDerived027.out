@@ -1,0 +1,15 @@
+signature SException = sig exception F of real val f : real -> real end
+structure PException : sig exception E : real -> exn end
+functor FException ('X : sig exception E of real end) :
+sig exception F : real -> exn val f : ['a .real -> 'a] end
+structure TException
+: sig exception F : real -> exn val f : ['a .real -> 'a] end
+val xException = 1.23 : real
+functor FExceptionTrans ('X : sig exception E of real end) : SException
+structure TExceptionTrans
+: sig exception F : real -> exn val f : real -> real end
+val xExceptionTrans = 1.23 : real
+functor FExceptionOpaq ('X : sig exception E of real end) : SException
+structure TExceptionOpaq
+: sig exception F : real -> exn val f : real -> real end
+val xExceptionOpaq = 1.23 : real

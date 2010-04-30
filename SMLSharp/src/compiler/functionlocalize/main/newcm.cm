@@ -1,0 +1,3 @@
+Group is
+        module.cm (bind:(anchor:smlformatlib.cm value:/home/ohori/IMLProject/SMLFormat)
+                    bind:(anchor:basis_compat.cm value:/home/ohori/IMLProject/basis_compat/main))

@@ -1,0 +1,25 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../parser/sources.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../constantterm/sources.cm
+        ../../util/sources.cm
+        ../../types/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../primitive/sources.cm
+        ../../patterncalc/sources.cm
+        ../../patterncalcFlattened/sources.cm
+
+       TYPEDCALC.sig
+       TypedCalc.ppg.sml
+       TYPEDCALC_FORMATTER.sig
+       TypedCalcFormatter.sml
+       TYPEDCALCUTILS.sig
+       TypedCalcUtils.sml

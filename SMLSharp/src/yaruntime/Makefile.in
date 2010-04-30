@@ -1,0 +1,86 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@/commonrule
+
+VPATH = @srcdir@
+
+# FIXME: use config.h.
+YARUNTIME_DEFS = \
+       -DHAVE_CONFIG_H \
+       -DHOST_CPU_i386 \
+       -DSHIFT_COUNT_MASK=31 \
+       -DHEAP_H=\"$(GC_HEADER)\"
+
+# FIXME: overwrite some variables by GNU extension.
+CFLAGS := -O2 -Wall -W
+
+LOCAL_DEFS = $(YARUNTIME_DEFS)
+LOCAL_CPPFLAGS = -I$(top_builddir) -I../vmgen $(LIBFFI_CPPFLAGS)
+LOCAL_LIBS = $(LIBFFI_LIBS)
+
+#GC_SOURCES = [put .c files here]
+#GC_HEADER = [put .h file implementing the GC interface here]
+#GC_CPPFLAGS = [put cppflags here]
+
+# Ueno's GC
+GC_SOURCES = heap.c
+GC_HEADER = heap.h
+# Ohori's GC
+#GC_SOURCES = ../simpleGC/fail.c ../simpleGC/heap.c ../simpleGC/heaputils.c ../simpleGC/simpleGC.c
+#GC_HEADER = ../simpleGC/alloc.h
+# Matsu's GC
+#GC_SOURCES = gc_matsuno/matsuHeap.c
+#GC_HEADER = gc_matsuno/matsuHeap.h
+
+SOURCES = env.c file.c error.c memory.c prim.c exe.c loadelf.c \
+          main.c vm.c runtime.c arith.c foreign.c \
+          interact.c value.c intinf.c \
+          prep.c eval.c \
+          $(GC_SOURCES)
+
+OBJECTS = $(SOURCES:.c=.$(OBJEXT))
+
+TARGET = yasmlshrun
+
+all: $(TARGET)
+
+# FIXME: just for test use
+dbg:
+	$(MAKE)\
+	CPPFLAGS="-I../vmgen $(LIBFFI_CPPFLAGS) $(GMP_CPPFLAGS) -DNOASM -DDEBUG"\
+	CFLAGS="-g -Wall -W"
+dbg2:
+	$(MAKE)\
+	CPPFLAGS="-I../vmgen $(LIBFFI_CPPFLAGS) $(GMP_CPPFLAGS) -DNOASM"\
+	CFLAGS="-g -Wall -W"
+
+# FIXME: renamed to avoid conflict.
+cdepend:Makefile.in $(SOURCES)
+	sed -e '/^##---- depend/q' Makefile.in > $@
+	for i in $(SOURCES); do $(CPP) -MM $(DEFS) $(CPPFLAGS) $$i; done >> $@
+	mv $@ Makefile.in
+
+clean:
+	-rm -f depend
+	-rm -f $(SOURCES:.c=.o) $(TARGET)
+
+$(TARGET): $(SOURCES:.c=.o)
+	$(CC) $(LDFLAGS) $(LIBFFI_LDFLAGS) -o $@ $(SOURCES:.c=.o) \
+	$(LIBS) $(LIBFFI_LIBS)
+
+# FIXME: just for test use
+#eval.$(OBJEXT):
+#	$(CC) $(CFLAGS) $(DEFS) $(YARUNTIME_DEFS) $(CPPFLAGS) \
+#	-save-temps -o $@ -c $<
+
+
+yaprelude.smc: ../lib/yaprelude.sml $(SMLSHARP)
+	$(SMLSHARP) --xuseAI=yes --xnewvm=yes --make-compiled-prelude \
+	            --prelude=$(srcdir)/../lib/yaprelude.sml \
+	            --output=$@ --stdin < /dev/null
+
+
+##---- dependenices ----##

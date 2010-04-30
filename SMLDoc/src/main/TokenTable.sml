@@ -2,7 +2,7 @@
  * hash table for token recognition.
  * @author COPYRIGHT (c) 1996 Bell Laboratories.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TokenTable.sml,v 1.7 2007/03/04 13:26:57 kiyoshiy Exp $
+ * @version $Id: TokenTable.sml,v 1.8 2008/03/12 08:53:56 kiyoshiy Exp $
  *)
 functor TokenTable (Tokens:ML_TOKENS) : sig
 
@@ -41,21 +41,27 @@ functor TokenTable (Tokens:ML_TOKENS) : sig
 	  ("fn"	, fn yypos => Tokens.FN(yypos,yypos+2)),
 	  ("fun"	, fn yypos => Tokens.FUN(yypos,yypos+3)),
 	  ("functor"	, fn yypos => Tokens.FUNCTOR(yypos,yypos+7)),
+(*
 	  ("funsig"	, fn yypos => Tokens.FUNSIG(yypos,yypos+7)),
+*)
 	  ("handle"	, fn yypos => Tokens.HANDLE(yypos,yypos+6)),
 	  ("if"	, fn yypos => Tokens.IF(yypos,yypos+2)),
 	  ("in"	, fn yypos => Tokens.IN(yypos,yypos+2)),
 	  ("include"	, fn yypos => Tokens.INCLUDE(yypos,yypos+7)),
 	  ("infix"	, fn yypos => Tokens.INFIX(yypos,yypos+5)),
 	  ("infixr"	, fn yypos => Tokens.INFIXR(yypos,yypos+6)),
+(*
 	  ("lazy"	, fn yypos => Tokens.LAZY(yypos,yypos+4)),
+*)
 	  ("let"	, fn yypos => Tokens.LET(yypos,yypos+3)),
 	  ("local"	, fn yypos => Tokens.LOCAL(yypos,yypos+5)),
 	  ("nonfix"	, fn yypos => Tokens.NONFIX(yypos,yypos+6)),
 	  ("of"	, fn yypos => Tokens.OF(yypos,yypos+2)),
 	  ("op"	, fn yypos => Tokens.OP(yypos,yypos+2)),
 	  ("open"	, fn yypos => Tokens.OPEN(yypos,yypos+4)),
+(*
 	  ("overload"	, fn yypos => Tokens.OVERLOAD(yypos,yypos+8)),
+*)
 	  ("raise"	, fn yypos => Tokens.RAISE(yypos,yypos+5)),
 	  ("rec"	, fn yypos => Tokens.REC(yypos,yypos+3)),
 	  ("sharing"	, fn yypos => Tokens.SHARING(yypos,yypos+7)),

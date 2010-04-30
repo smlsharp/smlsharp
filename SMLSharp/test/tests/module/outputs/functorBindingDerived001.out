@@ -1,0 +1,57 @@
+signature PSIG =
+  sig
+    type t
+    eqtype et
+  datatype ('a,'b) dt = D | E of 'a * 'b
+    val x : (t,et) dt
+  exception F
+    structure S : sig val f : bool -> (t,et) dt end
+  end
+structure PSTR
+: sig
+  datatype ('a, 'b) dt
+  con D : ['a,'b.('b, 'a) dt]
+  con E : ['a,'b.'b * 'a -> ('b, 'a) dt]
+    type et = string
+    type t = real
+  exception F : exn
+    val x : (real,string) dt
+  structure S : sig val f : ['a,'b.bool -> ('b, 'a) dt] end
+  end
+signature FSIG =
+  sig
+    type s
+    eqtype es
+  datatype ('a,'b) ds = D | E of 'a * 'b
+    val x : (s,es) ds
+  exception F
+    structure S : sig val f : bool -> (s,es) ds end
+  end
+functor FTrans (S : PSIG) : FSIG
+structure TTrans
+: sig
+    datatype ('a, 'b) ds
+  con D : ['a,'b.('b, 'a) PSTR.dt]
+  con E : ['a,'b.'b * 'a -> ('b, 'a) PSTR.dt]
+  type es = PSTR.et
+  type s = PSTR.t
+  exception F : exn
+    val x : (s, es) ds
+    structure S : sig val f : bool -> (s, es) ds end
+  end
+val xTrans = E (1.23, "a") : (TTrans.s, TTrans.es) TTrans.ds
+val yTrans = E (1.23, "a") : (TTrans.s, TTrans.es) TTrans.ds
+functor FOpaq (S : PSIG) : FSIG
+structure TOpaq
+: sig
+  datatype ('a, 'b) ds
+  con D : ['a,'b.('b, 'a) ds]
+  con E : ['a,'b.'b * 'a -> ('b, 'a) ds]
+  eqtype es
+  type s
+  exception F : exn
+  val x : (s, es) ds
+  structure S : sig val f : bool -> (s, es) ds end
+  end
+val xOpaq = E ( -, - ) : (TOpaq.s, TOpaq.es) TOpaq.ds
+val yOpaq = E ( -, - ) : (TOpaq.s, TOpaq.es) TOpaq.ds

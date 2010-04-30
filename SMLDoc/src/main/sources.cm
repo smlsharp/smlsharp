@@ -1,25 +1,39 @@
 Group is
+(*
 #if defined(NEW_CM)
 	$/basis_compat.cm
 #endif
+*)
 
+$/basis.cm
+
+
+(*
 #if defined(NEW_CM)
         $/smlnj-lib.cm
 #else
         smlnj-lib.cm
 #endif
+*)
+        ../../../smlnj-lib/Util/smlnj-lib.cm
 
+(*
+../../../smlnj-lib/Util/smlnj-lib.cm
+*)
 #if defined(NEW_CM)
 	$/ml-yacc-lib.cm
 #else
 	ml-yacc-lib.cm
 #endif
 
+(*
 #if defined(NEW_CM)
         $/smlformatlib.cm
 #else
         ../smlformatlib.cm
 #endif
+*)
+        ../../../SMLFormat/smlformatlib.cm
 
         Utility.sml
         PATH_UTILITY.sig

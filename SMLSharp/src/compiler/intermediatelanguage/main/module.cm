@@ -1,0 +1,33 @@
+Group is
+
+      $/basis.cm
+
+(*
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
+        smlnj-lib.cm
+#endif
+*)
+
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../absyn/sources.cm
+        ../../constantterm/sources.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../util/sources.cm
+        ../../systemdef/sources.cm
+        ../../anormal/sources.cm
+        ../../types/sources.cm
+
+        IntermediateLanguage.ppg.sml
+        ILFORMATTER.sig
+        ILFormatter.sml
+        ILUTILS.sig
+        ILUtils.sml

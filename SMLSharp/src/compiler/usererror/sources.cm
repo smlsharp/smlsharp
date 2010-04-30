@@ -1,0 +1,4 @@
+Group
+        structure UserError
+is
+	main/module.cm

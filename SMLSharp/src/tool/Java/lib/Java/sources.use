@@ -1,0 +1,12 @@
+use "./JNI_TYPES.sig";
+use "./JNITypes.sml";
+use "./JNI.sig";
+use "./JNI.sml";
+use "./JAVA_VALUE.sig";
+use "./JavaValue.sml";
+use "./JAVA_CLASS_HELPER.sig";
+use "./JavaClassHelper.sml";
+use "./JAVA_ARRAY.sig";
+use "./JavaArray.sml";
+use "./JAVA.sig";
+use "./Java.sml";

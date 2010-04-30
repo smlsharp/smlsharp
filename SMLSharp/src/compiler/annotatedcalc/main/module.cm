@@ -1,0 +1,16 @@
+Group is
+        $/basis.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../name/sources.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../annotatedtypes/sources.cm
+        ../../systemdef/sources.cm
+        ../../util/sources.cm
+        ../../types/sources.cm
+        ../../constantterm/sources.cm
+
+        AnnotatedCalc.ppg.sml
+        ANNOTATEDCALCFORMATTER.sig
+        AnnotatedCalcFormatter.sml

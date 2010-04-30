@@ -1,0 +1,20 @@
+signature SStructure =
+sig structure S : sig datatype dt = D of int val x : int end end
+structure PStructure : sig datatype dt con D : int -> dt val x : int end
+functor FStructure1Trans (S : sig val x : int datatype dt = D of int end) :
+SStructure
+structure SStructure1Trans
+: sig structure S : sig datatype dt con D : int -> dt val x : int end end
+structure SSTrans : sig datatype dt con D : int -> dt val x : int end
+val xStructureTrans = 1 : int
+functor FStructure1Opaque (S : sig val x : int datatype dt = D of int end) :
+SStructure
+structure SStructure1Opaque
+: sig structure S : sig datatype dt con D : int -> dt val x : int end end
+structure SSOpaque : sig datatype dt con D : int -> dt val x : int end
+val xStructureOpaque = 1 : int
+../tests/module/tests/functorConstraint007.sml:46.1-46.23 Error:
+  Signature mismatch (undefined structure in structure): S
+
+../tests/module/tests/functorConstraint007.sml:49.1-49.24 Error:
+  Signature mismatch (undefined structure in structure): S

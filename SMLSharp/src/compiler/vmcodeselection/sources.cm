@@ -1,0 +1,6 @@
+Group
+        signature VMCODESELECTION
+        structure VMCodeSelection
+        structure VMCodeFormatter
+is
+        main/module.cm

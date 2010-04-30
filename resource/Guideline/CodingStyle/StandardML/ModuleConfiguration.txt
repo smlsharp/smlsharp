@@ -1,0 +1,305 @@
+Module configuration guideline.
+
+@author YAMATODANI Kiyoshi
+@version $Id: ModuleConfiguration.txt,v 1.1 2008/03/13 02:14:10 kiyoshiy Exp $
+
+========================================
+1. Introduction
+
+ The source codes constituting the system are organized into several modules.
+The configuration of each module should conform to the guideline described in this document.
+
+The purpose and policy of this guideline are:
+
+  * by standardizing configuration of modules, make it easier to understand
+   them
+  * make it possible to run and test code at each module directory
+  * make it easier to process automatically by Makefile or other scripts
+  * distinguish public entities and private entities
+  * simplify intermodule dependency
+
+
+========================================
+2. Module configuration
+
+====================
+2.1. directories and files
+
+ A sample module configuration is presented below.
+(${MODULE} should be the name of the module.)
+
+  ${MODULE}
+    +-- sources.cm         #
+    +-- main
+    |     +-- FOO.sig      *
+    |     +-- Foo.sml      *
+    |     +-- ${MODULE}.cm  #
+    |     +-- main.sml
+    |     +-- sources.cm
+    |
+    +-- test
+          +-- FooTest0001.sml   *
+          +-- TestMain.sml      #
+          +-- ${MODULE}.cm      #
+          +-- sources.cm
+
+ Among them, files marked with '*' are specific to this sample module.
+ Files marked with '#' are required in each module, even though their contents might be slightly different between modules.
+ Other files are for utility to run and test at each directory.
+
+
+====================
+2.2. main directory
+
+ The 'main' directory contains implementation files of the module.
+In this sample module, two files are included.
+
+   FOO.sig, Foo.sml:
+      source files which define SML modules.
+
+      -- main/FOO.sig --
+      signature FOO =
+      sig
+          :
+      end
+      ------------------
+
+      -- main/Foo.sml --
+      structure Foo : FOO =
+      struct
+        fun bar () = ...
+      end
+      ------------------
+
+The next file is required in each module:
+
+   ${MODULE}.cm:
+       This file contains a list of name of files which define SML modules.
+       For this sample module, 'FOO.sig' and 'Foo.sml' are included in it.
+       In addition, description files in other modules on which the SML modules
+      defined in the 'FOO.sig' and 'Foo.sml' depend are included in the list.
+
+      -- main/${MODULE}.cm --
+      Group is
+        ../../bar/sources.cm
+        FOO.sig
+        Foo.sml
+      -----------------------
+
+      In the above example, assumed that some SML modules defined in 'FOO.sig'
+     or 'Foo.sml' depend on some other SML modules defined in the module 'bar'.
+
+ And following two files are provided for utility of running codes at 'main' directories in each module.
+
+   Main.sml:
+       a source file which defines a dummy main function.
+      This function is just for local debugging.
+
+   sources.cm:
+       This description file refers to the '${MODULE}.cm', 'Main.sml' and
+      description files in other modules needed to compile the main function.
+
+      -- main/sources.cm --
+      Group is
+        ../../parser/sources.cm
+           :
+        ${MODULE}.cm
+        Main.sml
+      ---------------------
+
+====================
+2.3. test directory
+
+ The 'test' directory contains files for testing codes in the 'main' directory.
+
+   FooTest0001.sml:
+       a source file which contains unit test codes for the structure defined
+      in the 'Foo.sml'.
+       Besides test case functions, the structure has a function 'suite'.
+
+       -- test/FooTest0001.sml --
+       structure FooTest0001 =
+       struct
+         fun testBar0001 () = ...
+              :
+         fun testBar0010 () = ...
+         fun suite () = 
+             TestList
+             [
+               TestLabel ("testBar0001", testBar0001),
+                    :
+               TestLabel ("testBar0010", testBar0010),
+             ]
+       end
+       ----------------------------
+
+Following files are required to group test cases in this module.
+
+   ${MODULE}Test.sml:
+       This file contains definition of a function which gathers test cases
+      defined in source files in this directory (in this example,
+      'FooTest0001.sml')
+
+       -- test/${MODULE}Test.sml --
+       structure ${MODULE}Test =
+       struct
+         fun suite () =
+             TestList
+             [TestLabel ("FooTest0001", FooTest0001.suite ())]
+       end
+       ----------------------------
+
+   ${MODULE}.cm:
+       This description file contains a list of names of source files in
+      which unit test cases are defined.
+
+       -- test/${MODULE}.cm --
+       Group is
+         smlunitlib.cm
+         ../main/${MODULE}.cm
+         FooTest0001.sml
+       ---------------------
+
+In addition, each module contains a dummy main in its 'test' directory.
+Using them, unit tests can be run at this directory.
+
+   TestMain.sml:
+       This file defines a SML structure which passes the test cases grouped
+      by the '${MODULE}Test.sml' to a test runner of the SMLUnit, and run the
+      tests.
+
+       -- test/TestMain.sml --
+       structure TestMain =
+       struct
+         fun test () =
+             let val tests = ${MODULE}Test.suite ()
+             in SMLUnit.TextUITestRunner.runTest () tests
+         end
+       end
+       ------------------------
+
+   sources.cm:
+       This description file refers to the '${MODULE}.cm', 'TestMain.sml'.
+       This is provided for running unit test of this module.
+
+       -- test/sources.cm --
+       Group is
+         ${MODULE}.cm
+         TestMain.sml
+       ---------------------
+
+====================
+2.4. module top directory
+
+And at the '${MODULE}' directory, a description file is required.
+
+   sources.cm:
+       This description file specifies SML modules to be exported to other
+      modules and hides other modules private within this module.
+
+       -- sources.cm --
+       Library
+         signature FOO
+         structure Foo
+       is
+         main/${MODULE}.cm
+       ----------------
+
+========================================
+3. procedure
+
+====================
+3.1. compile of the module
+
+ Move to the 'main' directory, and compile using the 'sources.cm'.
+
+  $ cd main
+  $ sml
+  - CM.make();
+  - Top.top();
+
+
+====================
+3.2. unit test of the module
+
+ Move to the 'test' directory, compile using the 'sources.cm' and invoke the 'TestMain.test()'.
+
+  $ cd test
+  $ sml
+  - CM.make();
+  - TestMain.test();
+
+
+====================
+3.3. add new source code in the 'main' directory
+
+ Assume to add a source file 'Bar.sml' to the module.
+
+  -- main/Bar.sml --
+  structure Bar =
+  struct
+     :
+  end
+  ------------------
+
+ Add the name of the new file into the '${MODULE}.cm'.
+
+  -- main/${MODULE}.cm --
+  Group is
+      :
+    Bar.sml
+  ---------------------
+
+ If this file defines a SML module which should be exported to other modules, add the name of the module into the 'source.cm' at the top directory of this module.
+ Assume the new file 'Bar.sml' defines a structure 'Bar'.
+
+  -- sources.cm --
+  Library
+     :
+    structure Bar
+  is
+     main/sources.cm
+  ----------------
+
+
+====================
+3.4. add new unit test code in the 'test' directory
+
+ Assume to add a source file 'BarTest0001.sml' to the module.
+
+  -- test/BarTest0001.sml --
+  structure BarTest =
+  struct
+    fun testBaz0001 () = ...
+           :
+    fun suite () = ...
+  end
+  ------------------
+
+(The function 'suite' is required in the structure.)
+
+ Add the name of new file into the ${MODULE}.cm
+
+  -- test/${MODULE}.cm --
+  Group is
+      :
+    BarTest0001.sml
+  ---------------------
+
+ Modify the 'test/${MODULE}Test.sml' so as to add new test cases into the test list.
+
+  -- test/${MODULE}Test.sml --
+  structure ${MODULE}Test =
+  struct
+    fun suite () =
+        TestList
+        [
+          TestLabel ("FooTest0001", FooTest0001.suite ()),
+                  :
+          TestLabel ("BarTest0001", BarTest0001.suite ())   <-- new line
+        ]
+  end
+  ----------------------------
+
+
+========================================

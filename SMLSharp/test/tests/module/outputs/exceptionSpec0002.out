@@ -1,0 +1,2 @@
+signature S1 = sig exception e of int end
+signature S2 = sig exception e1 of string exception e2 of int * bool end
