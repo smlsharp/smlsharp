@@ -1,7 +1,7 @@
 Java/SML# interface tool.
 
 @author YAMATODANI Kiyoshi
-@version $Id: README.txt,v 1.8 2010/04/23 12:55:11 kiyoshiy Exp $
+@version $Id: README.txt,v 1.8.2.1 2010/05/05 05:42:42 kiyoshiy Exp $
 
  This tool consists of two components.
 
@@ -78,7 +78,7 @@ Load the generated wrapper code.
 Following code is for convenience.
 
   # val $ = Java.call;
-  # val $$ = Java.this;
+  # val $$ = Java.referenceOf;
 
 First, initialize Java/SML# interface.
 

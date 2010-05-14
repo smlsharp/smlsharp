@@ -22,9 +22,11 @@ local
           | C3 => 3
 
     val minOrdw = 0w0 : Word32.word
-    val maxOrdw = 0wxFFFFFF : Word32.word
+    val maxOrdw = 0wx8FFEFE : Word32.word
+
     fun getOrd (bytes, _) = PU.bytesToWord32 bytes
-    fun encodeChar charCode = PU.dropPrefixZeros (PU.word32ToBytes charCode)
+    fun encodeChar 0w0 = [0w0]
+      | encodeChar charCode = PU.dropPrefixZeros (PU.word32ToBytes charCode)
     fun convert targetCodec chars = raise Codecs.ConverterNotFound
 
     val table =
@@ -50,7 +52,7 @@ in
 (**
  * fundamental functions to access EUCJP encoded characters.
  * @author YAMATODANI Kiyoshi
- * @version $Id: EUCJPCodec.sml,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ * @version $Id: EUCJPCodec.sml,v 1.1.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure EUCJPCodec =
           Codec(VariableLengthCharPrimCodecBase(EUCJPCodecPrimArg))

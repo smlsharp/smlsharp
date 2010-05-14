@@ -1,173 +1,174 @@
 (**
- * The main user interface of the multibyte string library.
+ * MULTI_BYTE_STRING signature specifies manipulations on multibyte strings
+ * which encode sequences of multibyte characters in a particular encoding.
  * <p>
- * Features are:
- * <ul>
- *   <li>Codec can be selected at runtime.</li>
- *   <li>Multibyte character version of subsets of Basis String, Char and
- *      Substring are provided.</li>
- *   <li>Third party can extends the library by adding a new codec.</li>
- * </ul>
+ * This is almost similar to the STRING signature in Basis.
+ * For the detail of module members, see the document for Basis STRING
+ * signature.
  * </p>
  * @author YAMATODANI Kiyoshi
- * @version $Id: MULTI_BYTE_STRING.sig,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ * @version $Id: MULTI_BYTE_STRING.sig,v 1.1.28.4 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 signature MULTI_BYTE_STRING =
 sig
 
   (**
-   * indicates failure of decoding due to malformed byte sequence.
+   * The type of multibyte characters is not eqtype.
+   * There may be cases where two multibyte characters encoded in different
+   * byte sequences should be considered as semantically equal.
+   * Use the <tt>compare</tt> in the multibyte character module for the
+   * corresponding codec to check semantic equality.
    *)
-  exception BadFormat
+  type char
 
   (**
-   * indicates that two cursors on different byte arrays or two characters of
-   * different encodings are compared.
+   * The type of multibyte strings is not eqtype.
+   * There may be cases where two multibyte strings encoded in different
+   * byte sequences should be considered as semantically equal.
+   * Use the <tt>compare</tt> to check semantic equality.
    *)
-  exception Unordered
+  type string
 
   (**
-   * indicates no codec of the specified name is available.
+   * decodes a byte vector slice into a multibyte string according to default
+   * codec.
+   * <p>
+   * This is equivalent to
+   * <pre>
+   *   decodeBytesSlice (MultiByteString.getDefaultCodecName ()) .
+   * </pre>
+   * </p>
    *)
-  exception UnknownCodec
+  val bytesSliceToMBS : Word8VectorSlice.slice -> string
 
   (**
-   * returns a list of registered codec names.
+   * decodes a byte vector into a multibyte string according to default codec.
+   * <p>
+   * This is equivalent to
+   * <pre>
+   *   decodeBytes (MultiByteString.getDefaultCodecName ()) .
+   * </pre>
+   * </p>
    *)
-  val getCodecNames : unit -> string list
+  val bytesToMBS : Word8Vector.vector -> string
 
   (**
-   * changes the default codec.
-   * @params codec
-   * @param codec name of a codec
-   * @exception UnknownCodec raised if no codec of the specified name is found.
+   * decodes a Basis string into a multibyte string according to default codec.
+   * <p>
+   * This is equivalent to
+   * <pre>
+   *   bytesToMBS o Byte.stringToBytes
+   * </pre>
+   * </p>
    *)
-  val setDefaultCodecName : string -> unit
+  val stringToMBS : String.string -> string
 
   (**
-   * adds a listener function to receive changes of default codec.
-   * When the default codec is changed, all listeners are invoked with the
-   * name of new default codec as an argument .
+   * get a byte vector slice in which the string is encoded by the codec.
+   * It has prefix and suffix if necessary to make the string canonical with
+   * respect to the codec.
    *)
-  val addDefaultCodecChangeListener : (string -> unit) -> unit
+  val MBSToBytesSlice : string -> Word8VectorSlice.slice
 
   (**
-   * gets name of the current default codec.
-   * Initially, the default codec is "ASCII".
-   * The default codec can be changed by <code>setDefaultCodecName</code>
-   * function.
-   * @return name of the current default codec.
+   * get a byte array in which the string is encoded by the codec.
+   * <p>
+   * This is equivalent to
+   * <pre>
+   *   Word8VectorSlice.vector o MBSToBytesSlice
+   * </pre>
+   * </p>
    *)
-  val getDefaultCodecName : unit -> string
+  val MBSToBytes : string -> Word8Vector.vector
 
-  structure Char : 
-  sig 
+  (**
+   * convert a multibyte string to a Basis string.
+   * <p>
+   * This is equivalent to
+   * <pre>
+   *   Byte.bytesToString o MBSToBytes.
+   * </pre>
+   * </p>
+   *)
+  val MBSToString : string -> String.string
 
-    include MB_CHAR
+  (**
+   * converts a sequence of ASCII characters to a multibyte string.
+   * <p>
+   * This is equivalent to
+   * <pre>
+   *   implode o (map fromAsciiChar) o String.explode
+   * </pre>
+   * </p>
+   *)
+  val fromAsciiString : String.string -> string
 
-    (**
-     * Requirement that the following equation holds:
-     * <pre>
-     *   word == ordw (fromWord codec word)
-     * </pre>
-     * @params codec word
-     * @param codec the name of codec
-     * @param word a 32-bit word
-     *)
-    val fromWord : String.string -> Word32.word -> char
+  (**
+   * converts a multibyte string to a sequence of ASCII characters.
+   * Multibyte characters which are not in ASCII are converted to '?'.
+   * <p>
+   * This is equivalent to
+   * <pre>
+   *   String.implode
+   *    o map (fn copt => Option.getOpt(toAsciiChar copt, #"?"))
+   *    o explode
+   * </pre>
+   * </p>
+   *)
+  val toAsciiString : string -> String.string
 
-    (**
-     * decodes a byte vector slice into a multibyte character.
-     * @params codec slice
-     * @param codec codec name
-     * @param slice a byte vector slice
-     * @return the first character in the vector. NONE if the string is empty.
-     * @exception MultiByteString.UnknownCodec raised if any codec of the
-     *         specified name is not available.
-     *)
-    val decodeBytesSlice
-        : String.string -> Word8VectorSlice.slice -> char option
+(*
+  (**
+   * convert a string to another encoding.
+   * @params targetCodec string
+   * @param targetCodec the codec to which the mbs is converted.
+   * @param string a multibyte string of this codec.
+   * @return a byte vector slice in which the string is converted to the
+   *          targetCodec.
+   * @exception ConverterNotFound raised if targetCodec is not found.
+   *)
+  val convert : String.string -> string -> Word8VectorSlice.slice
+*)
+  val maxSize : int
+  val size : string -> int
+  val sub : string * int -> char
+  val extract : string * int * int option -> string
+  val substring : string * int * int -> string
+  val ^ : string * string -> string
+  val concat : string list -> string
+  val concatWith : string -> string list -> string
+  val str : char -> string
+  val implode : char list -> string
+  val explode : string -> char list
+  val map : (char -> char) -> string -> string
+  val translate : (char -> string) -> string -> string
+  val tokens : (char -> bool) -> string -> string list
+  val fields : (char -> bool) -> string -> string list
+  val isPrefix : string -> string -> bool
+  val isSubstring : string -> string -> bool
+  val isSuffix : string -> string -> bool
 
-    (**
-     * convert a byte array to a multibyte charcter.
-     * @params codec bytes
-     * @param codec codec name
-     * @param bytes a byte vector
-     * @return the first character in the vector. NONE if the string is empty.
-     * @exception MultiByteString.UnknownCodec raised if any codec of the
-     *         specified name is not available.
-     *)
-    val decodeBytes : String.string -> Word8Vector.vector -> char option
+  val < : string * string -> bool
+  val <= : string * string -> bool
+  val > : string * string -> bool
+  val >= : string * string -> bool
+  val compare : string * string -> order
+  val collate : (char * char -> order) -> string * string -> order
 
-    (**
-     * convert a Basis string to a multibyte charcter.
-     * <p>
-     * This is equivalent to
-     * <pre>
-     *   decodeBytes codecName o Byte.stringToBytes  .
-     * </pre>
-     * </p>
-     * @params codec string
-     * @param codec codec name
-     * @param string basis string
-     * @return the first character in the string. NONE if the string is empty.
-     * @exception MultiByteString.UnknownCodec raised if any codec of the
-     *         specified name is not available.
-     *)
-    val decodeString : String.string -> String.string -> char option
+(* FIXME
+   StringCvt should be multi-byted version, but cyclic-reference will be 
+  difficult to avoid.
+  val scan : (char, 'a) StringCvt.reader -> (string, 'a) StringCvt.reader
+*)
+  val fromString : String.string -> string option 
+  val toString : string -> String.string
+  val fromCString : String.string -> string option 
+  val toCString : string -> String.string
 
-  end
+  (**
+   * generates a string representation of internal data structure.
+   * This is for development utility.
+   *)
+  val dump : string -> String.string
 
-  structure String : 
-  sig
-
-    include MB_STRING
-
-    (**
-     * decodes a byte vector slice into a multibyte string.
-     * @params codec slice
-     * @param codec codec name
-     * @param slice a byte vector slice
-     * @exception MultiByteString.UnknownCodec raised if any codec of the
-     *         specified name is not available.
-     *)
-    val decodeBytesSlice : String.string -> Word8VectorSlice.slice -> string
-
-    (**
-     * decodes a byte vector into a multibyte string.
-     * <p>
-     * This is equivalent to
-     * <pre>
-     *   (decodeBytesSlice codec) o Word8VectorSlice.full
-     * </pre>
-     * </p>
-     * @params codec bytes
-     * @param codec codec name
-     * @param bytes a byte vector
-     * @exception MultiByteString.UnknownCodec raised if any codec of the
-     *         specified name is not available.
-     *)
-    val decodeBytes : String.string -> Word8Vector.vector -> string
-
-    (**
-     * decodes a Basis string into a multibyte string.
-     * <p>
-     * This is equivalent to
-     * <pre>
-     *   (decodeBytes codec) o Byte.stringToBytes
-     * </pre>
-     * </p>
-     * @params codec bytes
-     * @param codec codec name
-     * @param bytes a byte vector
-     * @exception MultiByteString.UnknownCodec raised if any codec of the
-     *         specified name is not available.
-     *)
-    val decodeString : String.string -> String.string -> string
-
-  end
-
-  sharing type Char.string = String.string
-  sharing type Char.char = String.char
-
-end;
+end

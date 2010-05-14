@@ -24,7 +24,8 @@ functor RegExpFn (
 		end
 	  (* end case *))
 
-    fun compileString str = (case (MBStringConverter.scanString P.scan str)
+    fun compileString str =
+        (case (MultiByteText.StringConverter.scanString P.scan str)
 	   of SOME r => E.compile (r) 
 	    | NONE => raise RegExpSyntax.CannotParse
 	  (* end case *))
@@ -33,7 +34,8 @@ functor RegExpFn (
     val find = E.find
 
     fun match l = let
-	  fun parse (s, f) = (case (MBStringConverter.scanString P.scan s)
+	  fun parse (s, f) =
+              (case (MultiByteText.StringConverter.scanString P.scan s)
 		 of SOME r => (r, f)
 		  | NONE => raise RegExpSyntax.CannotParse
 		(* end case *))

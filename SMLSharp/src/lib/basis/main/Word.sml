@@ -1,7 +1,7 @@
 (**
  * Word structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Word.sml,v 1.6 2007/10/22 08:26:27 kiyoshiy Exp $
+ * @version $Id: Word.sml,v 1.6.14.1 2010/05/05 05:39:17 kiyoshiy Exp $
  *)
 structure Word =
 struct
@@ -33,7 +33,22 @@ struct
 
   fun toLargeInt word = SMLSharp.Runtime.LargeInt_fromWord word
 
-  fun toLargeIntX word = SMLSharp.Runtime.LargeInt_fromWord word
+  (**
+   * interprets a 32bit word as a 2's complement signed integer.
+   * <ul>
+   *   <li>toLargeIntX 0wxFFFFFFFF => ~1
+   *   <li>toLargeIntX 0wx80000000 => ~0x80000000 (= 2147483648)
+   * </ul>
+   *)
+  fun toLargeIntX word =
+      (* FIXME: This should be implemented in native code as a primitive ? *)
+      let
+        val largeInt = SMLSharp.Runtime.LargeInt_fromWord word
+      in
+        if 0w0 = andb (0wx80000000, word)
+        then largeInt
+        else largeInt - 0xFFFFFFFF - 1
+      end;
 
   fun fromLargeInt largeInt = SMLSharp.Runtime.LargeInt_toWord largeInt
 

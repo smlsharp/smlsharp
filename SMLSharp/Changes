@@ -1,3 +1,21 @@
+SML# version 0.41 (released on 2010-05-14)
+
+1. Overview
+
+This is a bug-fix release of SML# 0.40. This version is still
+experimental and not intended to replace SML# 0.31.
+
+2. Changes and improvements
+
+* fixed problems of building SML# on Windows.
+* smlformat command now raises an error if no file is specified.
+* fixed a bug of isAlphaNum of LMLML.
+* fixed a bug of Word32.toLargeIntX.
+* fixed a bug of String.fromString and String.fromCString.
+* changed LMLML interface.
+* added and updated sample code for Java/SML#.
+
+-----------------------------------------------------------------------------
 SML# Version 0.40 (released on 2010-04-30)
 
 1. Overview

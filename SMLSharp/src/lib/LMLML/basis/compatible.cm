@@ -3,6 +3,8 @@ Library
         structure VectorSlice
         structure Word8VectorSlice
 is
+        $/basis.cm
+
         basis.sml
 
         VectorSlice.sml

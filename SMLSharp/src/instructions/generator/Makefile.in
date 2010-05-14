@@ -5,12 +5,20 @@ top_builddir = @top_builddir@
 
 include @top_builddir@/commonrule
 
+VPATH = @srcdir@
+
 TEMPLATES = $(srcdir)/../compiler/main/INSTRUCTION_SERIALIZER.sig.in \
             $(srcdir)/../compiler/main/InstructionSerializer.sml.in \
             $(srcdir)/../compiler/main/Instructions.sml.in \
             $(srcdir)/../runtime/main/Instructions.cc.in \
-            $(srcdir)/../runtime/main/Instructions.hh.in \
+            $(srcdir)/../runtime/main/Instructions.hh.in
+YACCFILES = $(srcdir)/Parser.grm
+LEXFILES  = $(srcdir)/Tokens.lex
 
+GENSOURCES = $(YACCFILES:.grm=.grm.sml) \
+             $(YACCFILES:.grm=.grm.sig) \
+             $(YACCFILES:.grm=.grm.desc) \
+             $(LEXFILES:.lex=.lex.sml)
 
 TARGETS = $(TEMPLATES:.in=)
 
@@ -18,16 +26,15 @@ DEFINITIONS = $(srcdir)/../Instructions.sml \
               $(srcdir)/../../primitives/primitives.csv \
               $(srcdir)/../../primitives/constants.csv \
 
-
 all: $(TARGETS)
 
-$(TARGETS): $(TEMPLATES) $(DEFINITIONS)
+$(TARGETS): $(GENSOURCES) $(TEMPLATES) $(DEFINITIONS)
 	cd $(srcdir) && $(SHELL) $(BUILD_ROOT)/mksmlheap --exec 'Main.main();'
 
 clean:
 	-rm -rf $(srcdir)/CM $(srcdir)/.cm
 	-rm -f $(TEMPLATES:.in=)
-	-rm -f $(srcdir)/Parser.grm.sig
-	-rm -f $(srcdir)/Parser.grm.sml
-	-rm -f $(srcdir)/Parser.grm.desc
-	-rm -f $(srcdir)/Tokens.lex.sml
+	-rm -f $(GENSOURCES)
+
+$(srcdir)/Parser.grm.sig $(srcdir)/Parser.grm.sml $(srcdir)/Parser.grm.desc: Parser.grm
+$(srcdir)/Tokens.lex.sml: Tokens.lex

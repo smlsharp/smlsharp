@@ -1,8 +1,21 @@
 Group is
+        $/basis.cm
+
         ../main/sources.cm
-        ../smlunitlib.cm
+        ../../../../../SMLUnit/smlunitlib.cm
+ 
+        LMLMLTestUtil.sml
 
-        MBStringTest0001.sml
-        MBSubstringTest0001.sml
+        CodecCharBaseTest0001.sml
+        CodecStringBaseTest0001.sml
+        CodecSubstringBaseTest0001.sml
 
-        MultiByteStringTest.sml
+        ASCIICodecTest.sml
+        EUCJPCodecTest.sml
+        GBKCodecTest.sml
+        GB2312CodecTest.sml
+        ISO2022JPCodecTest.sml
+        ShiftJISCodecTest.sml
+        UTF8CodecTest.sml
+        UTF16CodecTest.sml
+        MultiByteTextTest.sml

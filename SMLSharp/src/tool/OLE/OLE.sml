@@ -3,13 +3,13 @@
  * It wraps IDispatch interface of COM object in a record.
  * @copyright (c) 2007, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: OLE.sml,v 1.27 2007/05/24 07:04:42 kiyoshiy Exp $
+ * @version $Id: OLE.sml,v 1.27.22.2 2010/05/09 03:58:29 kiyoshiy Exp $
  *)
 signature OLE = 
 sig
 
   (** In COM/OLE, string is usually encoded in UTF16LE. *)
-  structure OLEString : MB_STRING
+  structure OLEString : MULTI_BYTE_STRING
                             where type string = UTF16LECodec.String.string
   type string = OLEString.string
 
@@ -630,6 +630,10 @@ struct
   fun UMSubWord word = UM.subWord (UM.wordToAddress word)
   fun UMImport (bstr, bytelen) = UM.import (UM.wordToAddress bstr, bytelen)
 
+  val int32ToWord32 = Word32.fromLargeInt o Int32.toLarge
+  val word32ToInt32 = Int32.fromLarge o Word32.toLargeInt
+  val word32ToInt32X = Int32.fromLarge o Word32.toLargeIntX
+
   fun realToWords real =
       let
         val vec = PackReal64Little.toBytes real
@@ -665,7 +669,7 @@ struct
                     (UM.wordToAddress(!bufferRef), Word.toInt numchars * 2)
             val _ = W.LocalFree (!bufferRef)
           in
-            OLEString.fromBytes bytes
+            OLEString.bytesToMBS bytes
           end
       end
 
@@ -683,14 +687,14 @@ struct
         | bytelen =>
           let
             val bytes = UMImport (bstr, bytelen)
-            val olestr = OLEString.fromBytes bytes
+            val olestr = OLEString.bytesToMBS bytes
           in
             olestr
           end
 
   fun OLESTRToBSTR olestr =
       let
-        val bytes = OLEString.toBytes olestr
+        val bytes = OLEString.MBSToBytes olestr
         val bstr =
             W.SysAllocStringByteLen
                 (bytes, Word.fromInt(Word8Vector.length bytes))
@@ -849,7 +853,7 @@ struct
       case variant of
         EMPTY => (W.VT_EMPTY, 0w0, 0w0)
       | NULL => (W.VT_NULL, 0w0, 0w0)
-      | I4 int => (W.VT_I4, (Word32.fromLargeInt int), 0w0)
+      | I4 int => (W.VT_I4, (int32ToWord32 int), 0w0)
       | R8 real =>
         let val (word1, word2) = realToWords real
         in (W.VT_R8, word1, word2)
@@ -860,7 +864,7 @@ struct
         end
       | DISPATCH {this, ...} =>
         (W.VT_DISPATCH, UM.addressToWord(Finalizable.getValue this), 0w0)
-      | ERROR scode => (W.VT_ERROR, Word32.fromLargeInt scode, 0w0)
+      | ERROR scode => (W.VT_ERROR, int32ToWord32 scode, 0w0)
       | BOOL bool => 
         (W.VT_BOOL, if bool then W.VARIANT_TRUE else W.VARIANT_FALSE, 0w0)
       | VARIANT v => raise OLEError(TypeMismatch "unexpected VARIANT.")
@@ -869,7 +873,7 @@ struct
       | I1 byte => (W.VT_I1, Word8.toLargeWord byte, 0w0)
       | UI1 byte => (W.VT_UI1, Word8.toLargeWord byte, 0w0)
       | UI4 word => (W.VT_UI4, word, 0w0)
-      | INT int => (W.VT_INT, Word32.fromLargeInt int, 0w0)
+      | INT int => (W.VT_INT, int32ToWord32 int, 0w0)
       | UINT word => (W.VT_UINT, word, 0w0)
       | BYREF(VARIANT v) =>
         let
@@ -1040,7 +1044,7 @@ struct
       then NULL
       else
       if tag = W.VT_I4
-      then I4 (Word32.toLargeInt word1)
+      then I4 (word32ToInt32 word1)
       else
       if tag = W.VT_R8
       then R8 (wordsToReal (word1, word2))
@@ -1055,7 +1059,7 @@ struct
         else NULLDISPATCH
       else
       if tag = W.VT_ERROR
-      then ERROR (Word32.toLargeInt word1)
+      then ERROR (word32ToInt32 word1)
       else
       if tag = W.VT_BOOL
       then BOOL (not (word1 = W.VARIANT_FALSE))
@@ -1076,7 +1080,7 @@ struct
       then UI4 word1
       else
       if tag = W.VT_INT
-      then INT (Word32.toLargeInt word1)
+      then INT (word32ToInt32 word1)
       else
       if tag = W.VT_UINT
       then UINT word1
@@ -1181,7 +1185,7 @@ struct
                            (
                              Finalizable.getValue this,
                              W.IID_NULL,
-                             ref (OLEString.toBytes name),
+                             ref (OLEString.MBSToBytes name),
                              0w1,
                              0w0,
                              DISPIDRef
@@ -1592,7 +1596,7 @@ struct
         val _ =
             checkHRESULT
                 (W.CLSIDFromProgID
-                     (OLEString.toBytes progID, NDT.addressOf CLSIDBuffer))
+                     (OLEString.MBSToBytes progID, NDT.addressOf CLSIDBuffer))
         val CLSID = NDT.import CLSIDBuffer
       in
         create CLSID
@@ -1603,7 +1607,7 @@ struct
         val _ =
             checkHRESULT
                 (W.CLSIDFromString
-                     (OLEString.toBytes CLSIDString, NDT.addressOf CLSIDBuffer))
+                     (OLEString.MBSToBytes CLSIDString, NDT.addressOf CLSIDBuffer))
         val CLSID = NDT.import CLSIDBuffer
       in
         create CLSID
@@ -1614,7 +1618,7 @@ struct
   fun getObject name =
       let
         val lp_IDispatch = ref UM.NULL
-        val nameBytes = OLEString.toBytes name
+        val nameBytes = OLEString.MBSToBytes name
         val _ =
             checkHRESULT
                 (W.CoGetObject (nameBytes, 0w0, W.IID_IDispatch, lp_IDispatch))
@@ -1626,7 +1630,7 @@ struct
 
   (* for user convenience *)
 
-  val NOPARAM = ERROR(Word32.toLargeIntX W.DISP_E_PARAMNOTFOUND)
+  val NOPARAM = ERROR(word32ToInt32X W.DISP_E_PARAMNOTFOUND)
   val L = OLEString.fromAsciiString
   val A = OLEString.toAsciiString
 

@@ -1,5 +1,5 @@
 (**
- * The entry point to smlformat for invokation as a standalone command.
+ * The entry point to smlformat for invocation as a standalone command.
  * @author YAMATODANI Kiyoshi
  * @version $Id: Main.sml,v 1.8 2008/08/10 13:44:01 kiyoshiy Exp $
  *)
@@ -36,6 +36,10 @@ struct
                 fn sourceFileName => OS.FileSys.remove (sourceFileName ^ ".sml")
               )
 
+        val _ =
+            if List.null sourceFileNames
+            then raise Fail "filename is required."
+            else ()
       in
         app
         (fn sourceFileName =>

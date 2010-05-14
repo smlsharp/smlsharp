@@ -26,7 +26,10 @@ mlton:
 	  test "x$$i" = "xSMLUnit" && continue; \
 	  (sed 's/^\([a-z]*\):\(.*\)-smlnj/\1:\2-mlton/' $$i/Makefile > tmp_mk \
 	   && mv tmp_mk $$i/Makefile) || exit $$?; \
-	  (cd $$i && $(MAKE) clean && $(MAKE)) || exit $$?; \
+	  (cd $$i \
+	   && $(MAKE) clean \
+	   && $(MAKE) MLLEX='$(MLTON_MLLEX)' MLYACC='$(MLTON_MLYACC)') \
+	  || exit $$?; \
 	done
 	$(MAKE) -C stublibs
 	$(MAKE) -C src mlton

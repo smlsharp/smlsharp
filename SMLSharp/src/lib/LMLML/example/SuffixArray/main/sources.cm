@@ -1,6 +1,7 @@
 Group
 is
-        smlnj-lib.cm
+        $/basis.cm
+        $/smlnj-lib.cm
 
         ../../../main/sources.cm
 

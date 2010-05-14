@@ -5,8 +5,18 @@ local
   structure V = Word8Vector
   structure VS = Word8VectorSlice
 
-  type string = Codecs.buffer
+  type string = Word8VectorSlice.slice
   type char = Word8.word
+
+  fun dumpString slice =
+      let
+        val strings = List.map Word8.toString (VS.foldr (op ::) [] slice)
+        val string = String.concatWith ", " strings
+      in
+        "[" ^ string ^ "]"
+      end
+      
+  fun dumpChar byte = Word8.toString byte
 
   val names =
       [
@@ -31,6 +41,7 @@ local
   fun substring (buffer, start, length) =
       VS.subslice (buffer, start, SOME length)
   val size = VS.length
+  val maxSize = V.maxLen
   fun concat strings = VS.full(VS.concat strings)
 
   local
@@ -66,7 +77,7 @@ in
 (**
  * fundamental functions to access ASCII encoded characters.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ASCIICodec.sml,v 1.2 2007/02/17 06:30:15 kiyoshiy Exp $
+ * @version $Id: ASCIICodec.sml,v 1.2.28.3 2010/05/11 07:08:03 kiyoshiy Exp $
  *)
 structure ASCIICodec = Codec(ASCIICodecPrim)
 

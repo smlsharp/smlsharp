@@ -23,12 +23,6 @@ if test "x$HEAPNAME" = "x--exec"; then
 else
   case "@target_os@" in
     *cygwin*|*mingw*)
-      case "@SML_HEAP_SUFFIX@" in
-        *win32*)
-          MAINFUNC="(fn (p1, _::ps) => $MAINFUNC (p1, ps))"
-          ;;
-        *)
-      esac
       HEAPNAME=`$SHELL @abs_top_builddir@/mksmlpath "$HEAPNAME"`
       ;;
   esac

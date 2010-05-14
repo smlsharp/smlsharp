@@ -1,9 +1,0 @@
-$(SML_LIB)/basis/basis.mlb
-
-PARSER_COMBINATOR.sig
-STRING_CONVERTER.sig
-SubstringBase.sml
-StringBase.sml
-StringConverterBase.sml
-ParserCombinatorBase.sml
-

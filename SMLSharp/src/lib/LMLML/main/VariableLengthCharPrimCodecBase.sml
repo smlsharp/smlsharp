@@ -11,7 +11,7 @@
  * </p>
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: VariableLengthCharPrimCodecBase.sml,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ * @version $Id: VariableLengthCharPrimCodecBase.sml,v 1.1.28.2 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 functor VariableLengthCharPrimCodecBase
             (P
@@ -59,6 +59,19 @@ struct
    * </p>
    *)
   type char = string * int
+
+  fun dumpString (MBS(bytes, offsets, last)) =
+      let
+        val byteTexts = List.map Word8.toString (BV.foldr (op ::) [] bytes)
+        val bytesText = String.concatWith ", " byteTexts
+        val offsetTexts = List.map Int.toString (VS.foldr (op ::) [] offsets)
+        val offsetsText = String.concatWith ", " offsetTexts
+      in
+        "([" ^ bytesText ^ "],[" ^ offsetsText ^ "]," ^ Int.toString last ^ ")"
+      end
+      
+  fun dumpChar (string, index) =
+      "(" ^ dumpString string ^ ", " ^ Int.toString index ^ ")"
 
   val emptyString = MBS(BV.fromList [], VS.full(V.fromList []), 0)
 
@@ -129,6 +142,14 @@ struct
       end
 
   fun size (MBS(_, offsets, _)) = VS.length offsets
+
+  (* The max size of string is decided as follows, 
+   * assuming that a string is held in a vector,
+   * and the average size of each character is 2 byte at most.
+   * Still, it is reduced to 90% for safety.
+   *)
+  (* FIXME: This should be provided from P for each codec. *)
+  val maxSize = (BV.maxLen div 2) div 10 * 9
 
   fun concat [] = emptyString
     | concat [string] = string

@@ -1,7 +1,7 @@
 (**
  * an implementation of full text search by using suffix array.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SuffixArray.sml,v 1.1 2006/12/11 11:01:53 kiyoshiy Exp $
+ * @version $Id: SuffixArray.sml,v 1.1.28.2 2010/05/09 03:58:28 kiyoshiy Exp $
  *)
 structure SuffixArray
   : sig
@@ -20,16 +20,16 @@ structure SuffixArray
           : string
             -> string
             -> string
-            -> (int * MBSubstring.substring) list
+            -> (int * MultiByteText.Substring.substring) list
 
       val main : string * string list -> OS.Process.status
 
     end =
 struct
 
-  structure MBS = MultiByteString.String
-  structure MBSS = MBSubstring
-  structure MBC = MultiByteString.Char
+  structure MBS = MultiByteText.String
+  structure MBSS = MultiByteText.Substring
+  structure MBC = MultiByteText.Char
 
   structure SuffixSetKey =
   struct
@@ -60,7 +60,7 @@ struct
         val instream = BinIO.openIn fileName
         val bytes = inputAll instream
         val _ = BinIO.closeIn instream
-        val mbs = MBS.fromBytes bytes
+        val mbs = MBS.bytesToMBS bytes
       in
         mbs
       end
@@ -265,10 +265,10 @@ struct
    *)
   fun find codec textFileName key =
       let
-        val _ = MultiByteString.setDefaultCodecName codec
+        val _ = MultiByteText.setDefaultCodec(MultiByteText.getCodec codec)
         val textFileModTime = OS.FileSys.modTime textFileName
 
-        val keyMBS = MBS.fromString key
+        val keyMBS = MBS.stringToMBS key
 
         val indexFileName = arrayFileNameOf textFileName codec
         val indexFileExists =

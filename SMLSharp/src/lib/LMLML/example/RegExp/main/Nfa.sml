@@ -45,7 +45,7 @@ structure Nfa : NFA =
 	structure I2 = Int2Set
 	structure M = MoveSet
 	structure C = CharSet
-        structure CH = MultiByteString.Char
+        structure CH = MultiByteText.Char
 	    
 	(* create sets from lists *)
 	fun iList l = I.addList (I.empty,l)

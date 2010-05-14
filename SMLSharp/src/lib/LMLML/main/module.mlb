@@ -2,19 +2,22 @@ ann
   "nonexhaustiveMatch ignore"
 in
 
-../basis/extension.mlb
-
 CODECS.sig
 Codecs.sml
 
-MB_CHAR.sig
-MB_STRING.sig
-MB_SUBSTRING.sig
+MULTI_BYTE_CHAR.sig
 MULTI_BYTE_STRING.sig
+MULTI_BYTE_SUBSTRING.sig
+MULTI_BYTE_PARSER_COMBINATOR.sig
+MULTI_BYTE_STRING_CONVERTER.sig
+MULTI_BYTE_TEXT.sig
 
 PRIM_CODEC.sig
 CodecStringBase.sml
+CodecSubstringBase.sml
 CodecCharBase.sml
+CodecStringConverterBase.sml
+CodecParserCombinatorBase.sml
 CODEC.sig
 Codec.sml
 
@@ -31,7 +34,7 @@ ShiftJISCodec.sml
 UTF8Codec.sml
 UTF16Codec.sml
 
-MultiByteString.sml
+MultiByteText.sml
 (*
 IConvFFI_${OS}.sml
 IConv.sml

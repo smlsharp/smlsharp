@@ -6,7 +6,7 @@ local
     val names = ["UTF-8"]
 
     val minOrdw = 0w0 : Word32.word
-    val maxOrdw = 0wx7FFFFFFF : Word32.word
+    val maxOrdw = 0wx10FFFF : Word32.word
 
     local
       structure V = Vector
@@ -189,7 +189,7 @@ in
 (**
  * fundamental functions to access UTF-8 encoded characters.
  * @author YAMATODANI Kiyoshi
- * @version $Id: UTF8Codec.sml,v 1.2 2007/02/17 06:30:15 kiyoshiy Exp $
+ * @version $Id: UTF8Codec.sml,v 1.2.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure UTF8Codec = Codec(FixedLengthCharPrimCodecBase(UTF8CodecPrimArg))
 

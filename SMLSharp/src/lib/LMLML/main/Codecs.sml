@@ -5,12 +5,10 @@
  * codec at runtime.
  * </p>
  * @author YAMATODANI Kiyoshi
- * @version $Id: Codecs.sml,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ * @version $Id: Codecs.sml,v 1.1.28.4 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure Codecs : CODECS =
 struct
-
-  type codecID = unit ref
 
   type char = exn
   type string = exn
@@ -48,7 +46,10 @@ struct
              isHexDigit : char -> bool,
              isPunct : char -> bool,
              isGraph : char -> bool,
-             isCntrl : char -> bool
+             isCntrl : char -> bool,
+
+             dumpChar : char -> String.string,
+             dumpString : string -> String.string
            }
 
   type converter = buffer -> buffer
@@ -62,29 +63,15 @@ struct
   exception ConverterNotFound
 
   local
-    fun toUpperString string = String.map Char.toUpper string
-
-    val aliasesRef = ref ([] : String.string list list)
-    fun registerAliases aliases =
-        aliasesRef := (List.map toUpperString aliases) :: (!aliasesRef)
-    (** gets aliases of a codec. *)
-    fun findAliases name =
-        let val name' = toUpperString name
-        in
-          Option.getOpt
-              (
-                List.find
-                    (isSome o (List.find (fn aliase => aliase = name')))
-                    (!aliasesRef),
-                []
-              )
-        end
-  in
-
-  local
     type entry =
          ((** codec name and aliases *) String.string list) * methods
 
+    fun toUpperString string = String.map Char.toUpper string
+
+    (* FIXME: List search is inefficient.
+     * Use association table, such as implementations of ORD_MAP
+     * (are those available on all platform ?).
+     *)
     val codecs = ref ([] : (String.string * entry) list)
 
     fun findEntry name =
@@ -98,7 +85,6 @@ struct
         val names' = List.map toUpperString names
         val entry = (names', makeCursor)
       in
-        registerAliases names';
         codecs := (List.map (fn name => (name, entry)) names') @ (!codecs)
       end
 
@@ -112,7 +98,5 @@ struct
   fun getCodecNames () = #1 (ListPair.unzip (!codecs))
 
   end (* local for codec registry *)
-
-  end (* local for codec aliases table *)
 
 end;

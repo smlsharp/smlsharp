@@ -1,11 +1,10 @@
-import java.net.URL;
-import java.net.URLConnection;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.net.*;
+import java.io.*;
 
 public class HTTPGet
 {
+    static PrintStream out = System.out;
+
     public static void main(String args[])
     {
         try{
@@ -16,11 +15,11 @@ public class HTTPGet
                 new BufferedReader(new InputStreamReader(inStream));
 
             while (input.ready()){
-                System.out.println(input.readLine());
+                out.println(input.readLine());
             }
         }
         catch(IOException e){
-            System.out.println(e.toString());
+            out.println(e.toString());
         }
         catch(Exception e){
             e.printStackTrace();

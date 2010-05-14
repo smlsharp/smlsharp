@@ -16,9 +16,10 @@ local
           | JIS_X_0208_1997 => 2
 
     val minOrdw = 0w0 : Word32.word
-    val maxOrdw = 0wxFFFF : Word32.word
+    val maxOrdw = 0wxEFFC : Word32.word
     fun getOrd (bytes, _) = PU.bytesToWord32 bytes
-    fun encodeChar charCode = PU.dropPrefixZeros (PU.word32ToBytes charCode)
+    fun encodeChar 0w0 = [0w0]
+      | encodeChar charCode = PU.dropPrefixZeros (PU.word32ToBytes charCode)
     fun convert targetCodec chars = raise Codecs.ConverterNotFound
 
     val table =
@@ -49,7 +50,7 @@ in
 (**
  * fundamental functions to access ShiftJIS encoded characters.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ShiftJISCodec.sml,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ * @version $Id: ShiftJISCodec.sml,v 1.1.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure ShiftJISCodec =
           Codec(VariableLengthCharPrimCodecBase(ShiftJISCodecPrimArg))

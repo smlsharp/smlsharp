@@ -96,31 +96,50 @@ AC_ARG_WITH(smlnj,
 AS_HELP_STRING([--with-smlnj=DIR],[specify SML/NJ directory]),
 [ PATH=${with_smlnj}/bin:$PATH ])
 
-AC_PATH_PROG(SML, sml)
-if test "x$SML" = "x"; then
-  case "$host_os" in
-    *cygwin*)
-      AC_PATH_PROG(SML, sml.bat)
-      SML_BAT="$SML"
-      ;;
-    *mingw*)
-      AC_PATH_PROG(SML, sml.bat)
-      if test "x$SML" != "x"; then
-        SML_BAT=`echo "$SML" | sed 's,^/\\([[a-zA-Z]]\\)/,\\1:/,;s,//*,/,g'`
-        if test -f "$SML_BAT"; then
-          SML="cmd /c $SML_BAT"
-        else
-          AC_MSG_ERROR([$SML is found, but $sml_bat is not found.])
+AC_DEFUN([SML_PATH_PROG_OR_BAT], [
+  AC_PATH_PROG($1, $2)
+  $1_BAT="${$1}"
+  if test "x${$1}" = "x"; then
+    case "$host_os" in
+      *cygwin*)
+        AC_PATH_PROG($1, $2.bat)
+        $1_BAT="${$1}"
+        ;;
+      *mingw*)
+        AC_PATH_PROG($1, $2.bat)
+        if test "x${$1}" != "x"; then
+          $1_BAT=`echo "${$1}" | sed 's,^/\\([[a-zA-Z]]\\)/,\\1:/,;s,//*,/,g'`
+          if test -f "${$1_BAT}"; then
+            $1="$SHELL $PWD/$srcdir/execbat.sh ${$1_BAT}"
+          else
+            AC_MSG_ERROR([$2 is found, but ${$1_BAT} is not found.])
+          fi
         fi
-      fi
-      ;;
-  esac
-  AC_SUBST(SML_BAT)
-fi
+        ;;
+    esac
+  fi
+])
+
+SML_PATH_PROG_OR_BAT(SML, sml)
+SML_PATH_PROG_OR_BAT(MLYACC, ml-yacc)
+SML_PATH_PROG_OR_BAT(MLLEX, ml-lex)
+AC_SUBST(SML_BAT)
 if test "x$SML" = "x"; then
   AC_MSG_ERROR([sml command is not found.])
 fi
+if test "x$MLYACC" = "x"; then
+  AC_MSG_ERROR([ml-yacc command is not found.])
+fi
+if test "x$MLLEX" = "x"; then
+  SML_PATH_PROG_OR_BAT(MLLEX, ml-ulex)
+  if test "x$MLLEX" = "x"; then
+    AC_MSG_ERROR([ml-lex command is not found.])
+  fi
+  MLLEX="$MLLEX --ml-lex-mode"
+fi
 AC_SUBST(SML)
+AC_SUBST(MLYACC)
+AC_SUBST(MLLEX)
 
 AC_MSG_CHECKING([for version of SML/NJ])
 SMLNJ_VERSION=`echo | $SML 2>&1`
@@ -293,27 +312,35 @@ SUBPROJECTS=""
 AC_SUBST(SUBPROJECTS)
 
 SUBPROJECTS="$SUBPROJECTS smlnj-lib"
-SMLNJLIBDIR="$PWD/$srcdir/../smlnj-lib"
+srcdir_smlnjlib="../$srcdir/../smlnj-lib"
+SMLNJLIBDIR='$(top_srcdir)/../smlnj-lib'
+AC_SUBST(srcdir_smlnjlib)
 AC_SUBST(SMLNJLIBDIR)
 AC_CONFIG_FILES([smlnj-lib/Makefile:../smlnj-lib/Makefile.in])
 
 #SUBPROJECTS="$SUBPROJECTS mllex"
-SMLLEXDIR="$PWD/$srcdir/../mllex"
+srcdir_mllex="../$srcdir/../mllex"
+SMLLEXDIR='$(top_srcdir)/../mllex'
 SMLLEX='$(top_builddir)/mllex/smllex'
+AC_SUBST(srcdir_mllex)
 AC_SUBST(SMLLEXDIR)
 AC_SUBST(SMLLEX)
 AC_CONFIG_FILES([mllex/Makefile:../mllex/Makefile.in])
 
 #SUBPROJECTS="$SUBPROJECTS mlyacc"
-SMLYACCDIR="$PWD/$srcdir/../mlyacc"
+srcdir_mlyacc="../$srcdir/../mlyacc"
+SMLYACCDIR='$(top_srcdir)/../mlyacc'
 SMLYACC='$(top_builddir)/mlyacc/smlyacc'
+AC_SUBST(srcdir_mlyacc)
 AC_SUBST(SMLYACCDIR)
 AC_SUBST(SMLYACC)
 AC_CONFIG_FILES([mlyacc/Makefile:../mlyacc/Makefile.in])
 
 SUBPROJECTS="$SUBPROJECTS SMLFormat"
-SMLFORMATDIR="$PWD/$srcdir/../SMLFormat"
+srcdir_smlformat="../$srcdir/../SMLFormat"
+SMLFORMATDIR='$(top_srcdir)/../SMLFormat'
 SMLFORMAT='$(top_builddir)/SMLFormat/smlformat'
+AC_SUBST(srcdir_smlformat)
 AC_SUBST(SMLFORMATDIR)
 AC_SUBST(SMLFORMAT)
 AC_CONFIG_FILES([SMLFormat/Makefile:../SMLFormat/Makefile.in])
@@ -325,8 +352,10 @@ if test "x$with_smldoc" = "xno"; then
   AC_MSG_RESULT([no])
 else
   SUBPROJECTS="$SUBPROJECTS SMLDoc"
-  SMLDOCDIR="$PWD/$srcdir/../SMLDoc"
+  srcdir_smldoc="../$srcdir/../SMLDoc"
+  SMLDOCDIR='$(top_srcdir)/../SMLDoc'
   SMLDOC='$(top_builddir)/SMLDoc/smldoc'
+  AC_SUBST(srcdir_smldoc)
   AC_SUBST(SMLDOCDIR)
   AC_SUBST(SMLDOC)
   AC_CONFIG_FILES([SMLDoc/Makefile:../SMLDoc/Makefile.in])
@@ -340,7 +369,9 @@ if test "x$with_smlunit" = "xno"; then
   AC_MSG_RESULT([no])
 else
   SUBPROJECTS="$SUBPROJECTS SMLUnit"
-  SMLUNITDIR="$PWD/$srcdir/../SMLUnit"
+  srcdir_smlunit="../$srcdir/../SMLUnit"
+  SMLUNITDIR='$(top_srcdir)/../SMLUnit'
+  AC_SUBST(srcdir_smlunit)
   AC_SUBST(SMLUNITDIR)
   AC_CONFIG_FILES([SMLUnit/Makefile:../SMLUnit/Makefile.in])
   AC_MSG_RESULT([yes])
@@ -353,7 +384,9 @@ AC_ARG_ENABLE(libffi,
 AS_HELP_STRING([--enable-libffi],[use libffi [[default=yes]]]))
 if test "x$enable_libffi" = "xyes"; then
   SUBPROJECTS="$SUBPROJECTS libffi"
-  LIBFFIDIR="$PWD/$srcdir/../libffi"
+  srcdir_libffi="../$srcdir/../libffi"
+  LIBFFIDIR='$(top_srcdir)/../libffi'
+  AC_SUBST(srcdir_libffi)
   AC_SUBST(LIBFFIDIR)
   AC_CONFIG_FILES([libffi/Makefile:../libffi/Makefile.in])
   AC_MSG_RESULT([yes])
@@ -658,6 +691,8 @@ AS_HELP_STRING([--enable-native],
     fi ;;
   xno)
     NATIVE_TARGET= ;;
+  *)
+    NATIVE_TARGET="$enable_native" ;;
   esac ])
 
 if test "x$NATIVE_TARGET" = "x"; then

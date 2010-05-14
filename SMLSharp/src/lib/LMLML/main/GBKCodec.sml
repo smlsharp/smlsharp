@@ -15,14 +15,15 @@ local
           | GBK => 2
 
     val minOrdw = 0w0 : Word32.word
-    val maxOrdw = 0wxFFFF : Word32.word
+    val maxOrdw = 0wxFEFE : Word32.word
     fun getOrd (bytes, _) = PU.bytesToWord32 bytes
-    fun encodeChar charCode = PU.dropPrefixZeros (PU.word32ToBytes charCode)
+    fun encodeChar 0w0 = [0w0]
+      | encodeChar charCode = PU.dropPrefixZeros (PU.word32ToBytes charCode)
     fun convert targetCodec chars = raise Codecs.ConverterNotFound
 
     val table =
         [
-          (PU.Byte(0w33, 0w126), ASCII),
+          (PU.Byte(0w0, 0w127), ASCII),
           (
             PU.Seq
                 [
@@ -40,7 +41,7 @@ in
 (**
  * fundamental functions to access GBK encoded characters.
  * @author YAMATODANI Kiyoshi
- * @version $Id: GBKCodec.sml,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ * @version $Id: GBKCodec.sml,v 1.1.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure GBKCodec = Codec(VariableLengthCharPrimCodecBase(GBKCodecPrimArg))
 
