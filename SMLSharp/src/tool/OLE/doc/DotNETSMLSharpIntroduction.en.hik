@@ -1,0 +1,140 @@
+Using OLE/SML#, you can access .NET objects from SML# world.
+
+Let's write a SML# code to access a .NET object implemented in the
+following C# code( HelloDotNetWorld.cs ).
+
+ using System.Runtime.InteropServices;
+ 
+ [InterfaceTypeAttribute(ComInterfaceType.InterfaceIsDual)]
+ public interface IHelloDotNetWorld
+ {
+    string greeting(string yourName);
+ }
+ 
+ [ClassInterface(ClassInterfaceType.None)]
+ public class HelloDotNetWorld : IHelloDotNetWorld
+ {
+    public HelloDotNetWorld(){
+        System.Console.WriteLine("I am a .NET object.");
+    }
+ 
+    public string greeting(string yourName)
+    {
+        return "Hello, " + yourName + " !";
+    }
+ };
+
+Compile this code by C# compiler to generate an assembly
+( HelloDotNetWorld.dll ).
+
+ $ csc.exe /t:library HelloDotNetWorld.cs
+
+Register the assembly.
+
+ $ RegAsm.exe /codebase HelloDotNetWorld.dll
+
+Then, generate a type-library ( HelloDotNetWorld.tlb ).
+
+ $ TlbExp.exe HelloDotNetWorld.dll
+
+From this type-library, generate a wrapper SML code ( HelloDotNetWorld.sml ).
+
+ $ OLE2SML.exe HelloDotNetWorld.tlb
+
+Finally, SML# code can access this .NET object as follows.
+
+ use "OLE.sml";
+ 
+ use "./HelloDotNetWorld.sml";
+ 
+ OLE.initialize [OLE.COINIT_MULTITHREADED];
+ 
+ val object = HelloDotNetWorld.newHelloDotNetWorld ();
+ val message = OLE.A (#greeting object (OLE.L "world"));
+ val _ = print message;
+
+You can see a message from .NET world.
+
+ $ /usr/local/bin/smlsharp
+ SML# 0.40 (2010-04-30 22:11:29 --)
+ # use "./UseHelloDotNetWorld.sml";
+          :
+ structure HelloDotNetWorld : HelloDotNetWorld
+ val it = () : unit
+ I am a .NET object.
+ val object =
+     {
+       AddRef = fn,
+       GetTypeInfo = fn,
+       GetTypeInfoCount = fn,
+       Release = fn,
+       addRef = fn,
+       greeting = fn,
+       release = fn,
+       this = fn
+     }
+     : HelloDotNetWorld.HelloDotNetWorld
+ val message = "Hello, world !" : String.string
+ Hello, world !
+
+In another way,
+
+ $ /usr/local/bin/smlsharp ./UseHelloDotNetWorld.sml
+ I am a .NET object.
+ Hello, world !
+
+Development of .NET/SML# just have started. 
+Interoperability is limited yet.
+As we will extend OLE/SML# interface, 
+higher level of interoperability with .NET will be possible.
+
+!!About deployment.
+The above example registers the assembly as follows:
+
+ $ RegAsm.exe /codebase HelloDotNetWorld.dll
+
+Although this is an easy procedure to access .NET object on the SML#
+interactive session, it is not a preferred way.
+You will see a warning from RegAsm.exe.
+
+ RegAsm warning: Registering an unsigned assembly with /codebase can
+ cause your assembly to interfere with other applications that may be
+ installed on the same computer. The /codebase switch is intended to
+ be used only with signed assemblies.Please give your assembly a strong
+ name and re-register it.
+
+http://msdn.microsoft.com/en-us/library/2h3sywsc.aspx says that
+an assembly should be located at
+* GAC(global assembly cache)(It points to C:\Windows\assembly)
+* the application's directory, in a subdirectory of the application's directory
+* directories specified in a configuration file
+
+Among these, the easiest is to locate the assembly at the application's
+directory.
+In our case, however, the application is SML# runtime smlsharprun.exe, 
+and it is inconvenient to install the assembly to the SML# install directory.
+
+If we can generate an executable file from the SML source code,
+the application can be located at the same directory with the assembly.
+
+Use smlsharp2exe.sh.
+
+ $ smlsharp2exe.sh -o UseHelloDotNetWorld.exe ./UseHelloDotNetWorld.sml
+
+The application ( UseHelloDotNetWorld.exe ) and the assembly
+( HelloDotNetWorld.dll ) are located at the same directory now.
+
+ $ ls
+ HelloDotNetWorld.cs   HelloDotNetWorld.tlb     UseHelloDotNetWorld.sml
+ HelloDotNetWorld.dll  Makefile
+ HelloDotNetWorld.sml  UseHelloDotNetWorld.exe
+
+This application can load the assembly and access a .NET object.
+
+ $ ./UseHelloDotNetWorld.exe
+ I am a .NET object.
+ Hello, world !
+
+!References.
+
+*[[mapping .NET and SML#|DotNETSMLSharpMapping]]

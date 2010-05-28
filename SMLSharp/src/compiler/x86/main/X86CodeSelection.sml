@@ -3212,6 +3212,7 @@ struct
       | AI.SInt n => (nil, I.I_ (I.INT (AI.Target.SIntToSInt32 n)))
       | AI.Nowhere => (nil, I.I_ nullValue)
       | AI.Null => (nil, I.I_ nullValue)
+      | AI.Empty => (nil, I.I_ nullValue)
       | AI.Const id => transformLabel context (I.LABEL (constLabel id))
       | AI.Init id => transformLabel context (I.LABEL (constLabel id))
       | AI.Entry {clusterId, entry} =>

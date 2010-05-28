@@ -238,6 +238,8 @@ struct
       Nowhere                     (* null code pointer *)
     | (*% *)
       Null                        (* null C pointer *)
+    | (*% *)
+      Empty                       (* null data pointer *)
     | (*% @format(id) "c" id *)
       Const of id                 (* constant heap object : BOXED *)
     | (*% @format(id) "i" id *)

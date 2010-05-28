@@ -47,7 +47,9 @@ struct
          CallShortMethodA : T.jclass * T.jmethodID * T.jvalueArray -> T.jshort,
          CallIntMethodA : T.jclass * T.jmethodID * T.jvalueArray -> T.jint,
          CallLongMethodA : T.jclass * T.jmethodID * T.jvalueArray -> T.jlong,
+(* FIXME: enable this when SML# FFI supports float.
          CallFloatMethodA : T.jclass * T.jmethodID * T.jvalueArray -> T.jfloat,
+*)
          CallDoubleMethodA
          : T.jclass * T.jmethodID * T.jvalueArray -> T.jdouble,
          CallVoidMethodA : T.jclass * T.jmethodID * T.jvalueArray -> void,
@@ -59,7 +61,9 @@ struct
          GetShortField : T.jobject * T.jfieldID -> T.jshort,
          GetIntField : T.jobject * T.jfieldID -> T.jint,
          GetLongField : T.jobject * T.jfieldID -> T.jlong,
+(* FIXME: enable this when SML# FFI supports float.
          GetFloatField : T.jobject * T.jfieldID -> T.jfloat,
+*)
          GetDoubleField : T.jobject * T.jfieldID -> T.jdouble,
          SetObjectField : T.jobject * T.jfieldID * T.jobject -> void,
          SetBooleanField : T.jobject * T.jfieldID * T.jboolean -> void,
@@ -85,8 +89,10 @@ struct
          : T.jclass * T.jmethodID * T.jvalueArray -> T.jint,
          CallStaticLongMethodA
          : T.jclass * T.jmethodID * T.jvalueArray -> T.jlong,
+(*
          CallStaticFloatMethodA
          : T.jclass * T.jmethodID * T.jvalueArray -> T.jfloat,
+*)
          CallStaticDoubleMethodA
          : T.jclass * T.jmethodID * T.jvalueArray -> T.jdouble,
          CallStaticVoidMethodA
@@ -100,7 +106,9 @@ struct
          GetStaticShortField : T.jobject * T.jfieldID -> T.jshort,
          GetStaticIntField : T.jobject * T.jfieldID -> T.jint,
          GetStaticLongField : T.jobject * T.jfieldID -> T.jlong,
+(* FIXME: enable this when SML# FFI supports float.
          GetStaticFloatField : T.jobject * T.jfieldID -> T.jfloat,
+*)
          GetStaticDoubleField : T.jobject * T.jfieldID -> T.jdouble,
          SetStaticObjectField : T.jobject * T.jfieldID * T.jobject -> void,
          SetStaticBooleanField : T.jobject * T.jfieldID * T.jboolean -> void,
@@ -252,7 +260,9 @@ struct
         val CallShortMethodA = (member 48) : _import _stdcall (JNIEnvPtr, T.jobject, T.jmethodID, T.jvalueArray) -> T.jshort
         val CallIntMethodA = (member 51) : _import _stdcall (JNIEnvPtr, T.jobject, T.jmethodID, T.jvalueArray) -> T.jint
         val CallLongMethodA = (member 54) : _import _stdcall (JNIEnvPtr, T.jobject, T.jmethodID, T.jvalueArray) -> T.jlong
+(* FIXME: enable this when SML# FFI supports float.
         val CallFloatMethodA = (member 57) : _import _stdcall (JNIEnvPtr, T.jobject, T.jmethodID, T.jvalueArray) -> T.jfloat
+*)
         val CallDoubleMethodA = (member 60) : _import _stdcall (JNIEnvPtr, T.jobject, T.jmethodID, T.jvalueArray) -> T.jdouble
         val CallVoidMethodA = (member 63) : _import _stdcall (JNIEnvPtr, T.jobject, T.jmethodID, T.jvalueArray) -> void
         val GetFieldID = (member 94) : _import _stdcall (JNIEnvPtr, T.jclass, string, string) -> T.jfieldID
@@ -263,7 +273,9 @@ struct
         val GetShortField = (member 99) : _import _stdcall (JNIEnvPtr, T.jobject, T.jfieldID) -> T.jshort
         val GetIntField = (member 100) : _import _stdcall (JNIEnvPtr, T.jobject, T.jfieldID) -> T.jint
         val GetLongField = (member 101) : _import _stdcall (JNIEnvPtr, T.jobject, T.jfieldID) -> T.jlong
+(* FIXME: enable this when SML# FFI supports float.
         val GetFloatField = (member 102) : _import _stdcall (JNIEnvPtr, T.jobject, T.jfieldID) -> T.jfloat
+*)
         val GetDoubleField = (member 103) : _import _stdcall (JNIEnvPtr, T.jobject, T.jfieldID) -> T.jdouble
         val SetObjectField = (member 104) : _import _stdcall (JNIEnvPtr, T.jobject, T.jfieldID, T.jobject) -> void
         val SetBooleanField = (member 105) : _import _stdcall (JNIEnvPtr, T.jobject, T.jfieldID, T.jboolean) -> void
@@ -283,7 +295,9 @@ struct
         val CallStaticShortMethodA = (member 128) : _import _stdcall (JNIEnvPtr, T.jclass, T.jmethodID, T.jvalueArray) -> T.jshort
         val CallStaticIntMethodA = (member 131) : _import _stdcall (JNIEnvPtr, T.jclass, T.jmethodID, T.jvalueArray) -> T.jint
         val CallStaticLongMethodA = (member 134) : _import _stdcall (JNIEnvPtr, T.jclass, T.jmethodID, T.jvalueArray) -> T.jlong
+(* FIXME: enable this when SML# FFI supports float.
         val CallStaticFloatMethodA = (member 137) : _import _stdcall (JNIEnvPtr, T.jclass, T.jmethodID, T.jvalueArray) -> T.jfloat
+*)
         val CallStaticDoubleMethodA = (member 140) : _import _stdcall (JNIEnvPtr, T.jclass, T.jmethodID, T.jvalueArray) -> T.jdouble 
         val CallStaticVoidMethodA = (member 143) : _import _stdcall (JNIEnvPtr, T.jclass, T.jmethodID, T.jvalueArray) -> void 
 
@@ -295,7 +309,9 @@ struct
         val GetStaticShortField = (member 149) : _import _stdcall (JNIEnvPtr, T.jclass, T.jfieldID) -> T.jshort
         val GetStaticIntField = (member 150) : _import _stdcall (JNIEnvPtr, T.jclass, T.jfieldID) -> T.jint
         val GetStaticLongField = (member 151) : _import _stdcall (JNIEnvPtr, T.jclass, T.jfieldID) -> T.jlong
+(*
         val GetStaticFloatField = (member 152) : _import _stdcall (JNIEnvPtr, T.jclass, T.jfieldID) -> T.jfloat
+*)
         val GetStaticDoubleField = (member 153) : _import _stdcall (JNIEnvPtr, T.jclass, T.jfieldID) -> T.jdouble
         val SetStaticObjectField = (member 154) : _import _stdcall (JNIEnvPtr, T.jclass, T.jfieldID, T.jobject) -> void
         val SetStaticBooleanField = (member 155) : _import _stdcall (JNIEnvPtr, T.jclass, T.jfieldID, T.jboolean) -> void
@@ -397,9 +413,11 @@ struct
           CallLongMethodA =
           fn (jobject, methodID, values) =>
              G(CallLongMethodA (JNIEnv, jobject, methodID, values)),
+(* FIXME: enable this when SML# FFI supports float.
           CallFloatMethodA =
           fn (jobject, methodID, values) =>
              G(CallFloatMethodA (JNIEnv, jobject, methodID, values)),
+*)
           CallDoubleMethodA =
           fn (jobject, methodID, values) =>
              G(CallDoubleMethodA (JNIEnv, jobject, methodID, values)),
@@ -431,9 +449,11 @@ struct
           GetLongField =
           fn (jobject, fieldID) =>
              G(GetLongField (JNIEnv, jobject, fieldID)),
+(* FIXME: enable this when SML# FFI supports float.
           GetFloatField =
           fn (jobject, fieldID) =>
              G(GetFloatField (JNIEnv, jobject, fieldID)),
+*)
           GetDoubleField =
           fn (jobject, fieldID) =>
              G(GetDoubleField (JNIEnv, jobject, fieldID)),
@@ -489,9 +509,11 @@ struct
           CallStaticLongMethodA =
           fn (class, methodID, values) =>
              G(CallStaticLongMethodA (JNIEnv, class, methodID, values)),
+(* FIXME: enable this when SML# FFI supports float.
           CallStaticFloatMethodA =
           fn (class, methodID, values) =>
              G(CallStaticFloatMethodA (JNIEnv, class, methodID, values)),
+*)
           CallStaticDoubleMethodA =
           fn (class, methodID, values) =>
              G(CallStaticDoubleMethodA (JNIEnv, class, methodID, values)),
@@ -523,9 +545,11 @@ struct
           GetStaticLongField =
           fn (jclass, fieldID) =>
              G(GetStaticLongField (JNIEnv, jclass, fieldID)),
+(* FIXME: enable this when SML# FFI supports float.
           GetStaticFloatField =
           fn (jclass, fieldID) =>
              G(GetStaticFloatField (JNIEnv, jclass, fieldID)),
+*)
           GetStaticDoubleField =
           fn (jclass, fieldID) =>
              G(GetStaticDoubleField (JNIEnv, jclass, fieldID)),

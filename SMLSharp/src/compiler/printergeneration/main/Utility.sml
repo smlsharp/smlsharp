@@ -358,12 +358,28 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
             TY.TYCON dataTyInfo
           )
 
-  (** returns true if the tyCon is hidden.
-   * A tyCon is "hidden" in either of the following two cases.
+  (** returns true if the tyCon is hidden in the context.
+   * A tyCon is not "hidden" in either of the following two cases.
    * <ul>
-   *   <li>not found in the context</li>
-   *   <li>overridden by another tyCon of the same name.</li>
+   *   <li>a tyCon of the same ID and the same name is found in the context.
+   *     </li>
+   *   <li>a tyFun of the same name which is just an identical replication of
+   *     the tyCon is found in the context.
+   *     </li>
    * </ul>
+   * Otherwise, the tyCon is considered hidden.
+   * <p>
+   * Example.
+   * <pre>
+   * datatype ('a, 'b) t = D of 'a * 'b;  (* A *)
+   * datatype ('a, 'b) t = D of 'a * 'b;  (* B *)
+   * type ('a, 'b) t = ('a, 'b) t;        (* C *)
+   * type ('a, 'b) t = ('b, 'a) t;        (* D *)
+   * type ('a) t = ('a, int) t;           (* E *)
+   * </pre>
+   * The tyCon <tt>t</tt> defined at A is hidden by
+   * the tyCon defined at B, the tyFuns defined at D and E,
+   * but not hidden by the tyFun defined at C.
    *)
   fun isHiddenTyCon basis path (tyCon : TY.tyCon) =
       let
@@ -375,7 +391,43 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
         orelse
 *)
         (case lookupTyConInBasis (basis, (name, strpath)) of
-           SOME (TY.TYCON dataTyInfo) => not (TyConID.eq(id, (#id (#tyCon dataTyInfo))))
+           SOME (TY.TYCON dataTyInfo) =>
+           not (TyConID.eq(id, (#id (#tyCon dataTyInfo)))) 
+         | SOME(TY.TYFUN {body,...}) =>
+           let
+             fun checkPath (P.NilPath, P.NilPath) = true
+               | checkPath (P.PUsrStructure (s1,path1),
+                            P.PUsrStructure(s2,path2)) = 
+                 s1 = s2 andalso checkPath(path1,path2)
+               | checkPath (P.PSysStructure (s1,path1),
+                            P.PSysStructure(s2,path2)) = 
+                 s1 = s2 andalso checkPath(path1,path2)
+               | checkPath _ = false
+             fun checkTyList (nil, nil) = true
+               | checkTyList (ty1::tyList1, ty2::tyList2) = 
+                 (case (getRealTy ty1, getRealTy ty2) of
+                    (TY.BOUNDVARty id1, TY.BOUNDVARty id2) =>
+                    id1 = id2 andalso checkTyList(tyList1, tyList2)
+                  | _ => false)
+               | checkTyList _ = false
+           in
+             case getRealTy body of
+               TY.ALIASty
+                 (
+                  TY.RAWty{tyCon={name=name1,
+                                  strpath=path1,...},
+                           args=tyList1},
+                  TY.RAWty{tyCon={name=name2,
+                                  strpath=path2,...},
+                           args=tyList2}
+                 )
+               =>
+               not(name1 = name2 andalso
+                   checkTyList(tyList1, tyList2) andalso
+                   checkPath(path1,path2)
+                  )
+             | _ => true
+           end
 (*
          | (_, SOME (TY.TYSPEC tySpec)) => id <> (#id tySpec)
 *)

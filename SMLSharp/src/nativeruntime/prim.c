@@ -369,8 +369,20 @@ prim_IntInf_toInt(sml_intinf_t *obj)
 unsigned int
 prim_IntInf_toWord(sml_intinf_t *obj)
 {
+	unsigned long n;
+
 	ASSERT(OBJ_TYPE(obj) == OBJTYPE_INTINF);
-	return sml_intinf_get_si(obj);
+
+	/* mpz_get_ui(op) returns least significant bits of absolute value
+	 * of "op" but this primitive requires to return least significant
+	 * bits of 2's complement form of "op". So we take 2's complement
+	 * of the return value of mpz_get_ui if "op" is negative.
+	 */
+	n = sml_intinf_get_ui(obj);
+	if (sml_intinf_sign(obj) < 0)
+		n = ~n + 1;
+
+	return n;
 }
 
 sml_intinf_t *
@@ -726,7 +738,6 @@ prim_Pack_packReal64Little(unsigned char byte0, unsigned char byte1,
 			   unsigned char byte6, unsigned char byte7)
 {
 	double result;
-	unsigned char *ptr = (unsigned char *)&result;
 
 #ifdef WORDS_BIGENDIAN
 	char src[8] = {byte7, byte6, byte5, byte4, byte3, byte2, byte1, byte0};
@@ -745,7 +756,6 @@ prim_Pack_packReal64Big(unsigned char byte0, unsigned char byte1,
 			unsigned char byte6, unsigned char byte7)
 {
 	double result;
-	unsigned char *ptr = (unsigned char *)&result;
 
 #ifdef WORDS_BIGENDIAN
 	char src[8] = {byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7};
@@ -1485,7 +1495,6 @@ void *
 prim_UnmanagedMemory_export(const char *str, unsigned int offset,
 			    unsigned int size)
 {
-	size_t length;
 	void *p;
 
 	ASSERT(OBJ_TYPE(str) == OBJTYPE_UNBOXED_VECTOR

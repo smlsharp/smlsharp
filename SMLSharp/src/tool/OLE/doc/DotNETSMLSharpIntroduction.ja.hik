@@ -1,0 +1,139 @@
+OLE/SML#を通して、.NETオブジェクトにSML#からアクセスすることができる。
+
+つぎのC#コード( HelloDotNetWorld.cs )で実装される.NETオブジェクトを
+SML#から操作してみよう。
+
+ using System.Runtime.InteropServices;
+ 
+ [InterfaceTypeAttribute(ComInterfaceType.InterfaceIsDual)]
+ public interface IHelloDotNetWorld
+ {
+    string greeting(string yourName);
+ }
+ 
+ [ClassInterface(ClassInterfaceType.None)]
+ public class HelloDotNetWorld : IHelloDotNetWorld
+ {
+    public HelloDotNetWorld(){
+        System.Console.WriteLine("I am a .NET object.");
+    }
+ 
+    public string greeting(string yourName)
+    {
+        return "Hello, " + yourName + " !";
+    }
+ };
+
+このコードを
+C#コンパイラでコンパイルしてアセンブリ( HelloDotNetWorld.dll )を生成する。
+
+ $ csc.exe /t:library HelloDotNetWorld.cs
+
+アセンブリを登録する。
+
+ $ RegAsm.exe /codebase HelloDotNetWorld.dll
+
+タイプライブラリ( HelloDotNetWorld.tlb )を生成する。
+
+ $ TlbExp.exe HelloDotNetWorld.dll
+
+タイプライブラリからラッパーSMLコード( HelloDotNetWorld.sml )を生成する。
+
+ $ OLE2SML.exe HelloDotNetWorld.tlb
+
+そして、SML#のコードから、この.NETオブジェクトを次(UseHelloDotNetWorld.sml)
+のように操作することができる。
+
+ use "OLE.sml";
+ 
+ use "./HelloDotNetWorld.sml";
+ 
+ OLE.initialize [OLE.COINIT_MULTITHREADED];
+ 
+ val object = HelloDotNetWorld.newHelloDotNetWorld ();
+ val message = OLE.A (#greeting object (OLE.L "world"));
+ val _ = print message;
+
+これを実行すると.NETオブジェクトからのメッセージが表示される。
+
+ $ /usr/local/bin/smlsharp
+ SML# 0.40 (2010-04-30 22:11:29 --)
+ # use "./UseHelloDotNetWorld.sml";
+          :
+ structure HelloDotNetWorld : HelloDotNetWorld
+ val it = () : unit
+ I am a .NET object.
+ val object =
+     {
+       AddRef = fn,
+       GetTypeInfo = fn,
+       GetTypeInfoCount = fn,
+       Release = fn,
+       addRef = fn,
+       greeting = fn,
+       release = fn,
+       this = fn
+     }
+     : HelloDotNetWorld.HelloDotNetWorld
+ val message = "Hello, world !" : String.string
+ Hello, world !
+
+あるいは
+
+ $ /usr/local/bin/smlsharp ./UseHelloDotNetWorld.sml
+ I am a .NET object.
+ Hello, world !
+
+.NET/SML#は開発を始めたばかりで機能は限定的である。
+今後のOLE/SML#の拡張とともに、より高度な.NETとの相互運用を目指していく。
+
+!!配置について
+上の例では
+
+ $ RegAsm.exe /codebase HelloDotNetWorld.dll
+
+のようにアセンブリを登録している。
+SML#のインタラクティブセッション上で.NETオブジェクトをアクセスするには
+これが簡単であるが、好ましい方法ではない。
+
+ RegAsm 警告 : 署名されていないアセンブリを /codebase を使用して登録すると、同じ
+ コンピュータにインストールされるそのほかのアプリケーションとの競合が生じる可能性
+ があります。/codebase スイッチは署名されたアセンブリのみに使用できます。アセンブ
+ リに厳密名を付けて、再登録してください。
+
+のように警告される。
+
+http://msdn.microsoft.com/en-us/library/2h3sywsc.aspxによれば
+アセンブリは
+* GAC(Global Assembly Cache)(物理的にはC:\Windows\assemblyを指す)
+* 実行ファイルと同じディレクトリ、あるいはそのサブディレクトリ
+* 構成ファイルで指定するディレクトリ
+に配置すべきである。
+
+このうち手軽なのは、実行ファイルと同じディレクトリにアセンブリを
+配置する方法である。
+ただし、この場合の実行ファイルとはSML#のランタイムsmlsharprun.exe
+であり、SML#のインストールディレクトリにアセンブリを配置するのは
+不便である。
+
+SMLソースコードから実行ファイルを生成できれば、アセンブリと
+同じディレクトリに実行ファイルを配置できる。
+
+そこで、smlsharp2exe.shを使う。
+
+ $ smlsharp2exe.sh -o UseHelloDotNetWorld.exe ./UseHelloDotNetWorld.sml
+
+実行ファイル( UseHelloDotNetWorld.exe )とアセンブリ( HelloDotNetWorld.dll )
+が同じディレクトリにある。
+
+ $ ls
+ HelloDotNetWorld.cs   HelloDotNetWorld.tlb     UseHelloDotNetWorld.sml
+ HelloDotNetWorld.dll  Makefile
+ HelloDotNetWorld.sml  UseHelloDotNetWorld.exe
+
+そしてこの実行ファイルは正しくアセンブリをロードして
+.NETオブジェクトにアクセスできる。
+
+ $ ./UseHelloDotNetWorld.exe
+ I am a .NET object.
+ Hello, world !

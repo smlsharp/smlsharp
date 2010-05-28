@@ -1,0 +1,4 @@
+use "./OLE_DECIMAL.sig";
+use "./OLE_Decimal.sml";
+use "./OLE.sig";
+use "./OLE.sml";

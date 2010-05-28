@@ -20,7 +20,7 @@ sig
   (* signed 64 bits *)
   type jlong = Real64.real
   (** 32 bits floating number *)
-  type jfloat = float
+  type jfloat = Real32.real
   (** 64 bits floating number *)
   type jdouble = real
   (** object reference *)

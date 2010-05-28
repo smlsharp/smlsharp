@@ -1,193 +1,28 @@
 (**
- * The OLE structure provides access to Microsoft OLE automation.
- * It wraps IDispatch interface of COM object in a record.
  * @copyright (c) 2007, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @version $Id: OLE.sml,v 1.27.22.2 2010/05/09 03:58:29 kiyoshiy Exp $
  *)
-signature OLE = 
-sig
-
-  (** In COM/OLE, string is usually encoded in UTF16LE. *)
-  structure OLEString : MULTI_BYTE_STRING
-                            where type string = UTF16LECodec.String.string
-  type string = OLEString.string
-
-  (** parameter to OLE.initialize. *)
-  datatype coinit =
-           COINIT_MULTITHREADED
-         | COINIT_APARTMENTTHREADED
-         | COINIT_DISABLE_OLE1DDE
-         | COINIT_SPEED_OVER_MEMORY
-
-  (** wrapper of IUnknown instance. *)
-  type Unknown
-
-  (** wrapper of IDispatch instance. *)
-  type Dispatch
-
-  (** wrapper of IEnumVARIANT instance. *)
-  type EnumVARIANT
-
-  (** wrapper of ITypeInfo instance. *)
-  type TypeInfo
-
-  (** representation of OLE VARIANT. *)
-  datatype variant =
-           EMPTY
-         | (** SQL NULL. *) NULL
-         | I4 of Int32.int
-         | R8 of Real64.real
-         | BSTR of string
-         | DISPATCH of Dispatch
-         | ERROR of Int32.int
-         | BOOL of bool
-         | VARIANT of variant
-         | UNKNOWN of Unknown
-         | I1 of Word8.word (* ToDo : should be Int8.int, if we have it. *)
-         | UI1 of Word8.word
-         | UI4 of Word32.word
-         | INT of Int32.int
-         | UINT of Word32.word
-         | (** BYREF can be used to construct an argument to a parameter
-            * of [in] attribute with no [out] attribute. *)
-           BYREF of variant
-         | (** parameter of VT_BYREF type with [out] attribute. *)
-           BYREFOUT of variant ref
-         | (** corresponds to (VT_ARRAY | VT_VARIANT).
-            * Second component is the numbers of elements of each
-            * dimension.
-            * <code>VARIANTARRAY(ar, [0w10, 0w20, 0w30])</code>
-            * corresponds to <code>VARIANT ar[10][20][30]</code> in C
-            * syntax, for example.
-            *)
-           VARIANTARRAY of variant array * word list
-
-         | (** a null pointer to IUnknown interface. *) NULLUNKNOWN
-         | (** a null pointer to IDispatch interface. *) NULLDISPATCH
-
-  (** specific information of error raised in the OLE structure. *)
-  datatype error = 
-           (* indicates an error occurs in COM API. *)
-           ComSystemError of String.string
-         | (** indicates an error occurs in an invocation of COM object
-            * method. *)
-           ComApplicationError
-           of {
-                code : word,
-                source : String.string,
-                description : String.string,
-                helpfile : String.string,
-                helpcontext : word
-              }
-         | (** raised if pointer passed to wrapXXX is null pointer. *)
-           NullObjectPointer
-         | (** indicates mismatch of Variant type. *)
-           TypeMismatch of String.string
-         | (** indicates unexpected result of method invocation.
-            * This is raised in a case, for example, that an object method
-            * returns no value although expected to return any value. *)
-           ResultMismatch of String.string
-
-  (** indicates an error occurrence in OLE structure. *)
-  exception OLEError of error
-
-  (** initialize COM for the current thread.
-   * You have to call this function before using other functions in this
-   * structure.
-   *)
-  val initialize : coinit list -> unit
-
-  (** uninitialize COM for the current thread. *)
-  val uninitialize : unit -> unit
-
-  (** obtain a new instance of COM class specified with a ProgID.
-   * The ProgID should specify a COM class which implements IDispatch.
-   * @params ProgID
-   * @param ProgID a text representation of a ProgID.
-   *             (ex. "Internet.Explorer")
-   * @return a wrapper of IDispatch instance of the COM class of the
-   *       specified ProgID.
-   *)
-  val createInstanceOfProgID : string -> Dispatch
-
-  (**
-   * obtain a new instance of COM class specified with a CLSID.
-   * The CLSID should specify a COM class which implements IDispatch.
-   * @params CLSID
-   * @param CLSID a text representation of a CLSID.
-   *               (ex. "{00024500-0000-0000-C000-000000000046}")
-   * @return a wrapper of IDispatch instance of the COM class of the
-   *       specified CLSID.
-   *)
-  val createInstanceOfCLSID : string -> Dispatch
-
-  (** obtain a reference to an instance located by a path name.
-   * <p>
-   * Example.
-   * <pre>
-   *   OLE.getObject (OLE.L "C:/home/yamato/doc/Sample.xls");
-   * </pre>
-   * </p>
-   *)
-  val getObject : string -> Dispatch
-
-  (**
-   * obtains IUnknown from a raw pointer.
-   * @params pointer
-   * @param pointer a pointer to IUnknown instance.
-   * @return a wrappr of an IUnknown interface of the argument object.
-   *)
-  val wrapUnknown : UnmanagedMemory.address -> Unknown
-
-  (**
-   * obtains IDispatch from an IUnknown instance.
-   * @params IUnknown
-   * @param IUnknown a IUnknown instance which should implement IDispatch.
-   * @return a wrappr of an IDispatch interface of the argument object.
-   *)
-  val wrapDispatch : Unknown -> Dispatch
-
-  (**
-   * obtains IEnumVARIANT from an IUnknown instance.
-   * @params IUnknown
-   * @param IUnknown a pointer to IUnknown instance which should
-   *               implement IEnumVARIANT.
-   * @return a wrappr of an IEnumVARIANT interface of the argument object.
-   *)
-  val wrapEnumVARIANT : Unknown -> EnumVARIANT
-
-  (* below functions are for user convenience. *)
-
-  (** special variant which is used to indicate the corresponding optional
-   * parameter is not specified. *)
-  val NOPARAM : variant
-                
-  (** converts ASCII string to OLE string (in UTF16LE). *)
-  val L : String.string -> string
-
-  (** converts OLE string (in UTF16LE) to ASCII string. *)
-  val A : string -> String.string
-
-  (** fold elements obtained from an enumerable object. *)
-  val fold_enum : (variant * 'accum -> 'accum) -> 'accum -> Dispatch -> 'accum
-
-  (** apply a function to elements obtained from an enumerable object. *)
-  val for_each : (variant -> unit) -> Dispatch -> unit
-
-  (** get all elements obtained from an enumerable object. *)
-  val enumAll : Dispatch -> variant list
-
-end;
-
 structure OLE : OLE =
 struct
+
+  (* reference:
+   *
+   * Interoperability between .NET Framework and COM components.
+   * http://msdn.microsoft.com/en-us/library/ms172270(VS.80).aspx
+   *
+   * VARIANT type.
+   * http://msdn.microsoft.com/en-us/library/ms221627(VS.80).aspx
+   *)
 
   structure Finalizable = SMLSharp.Finalizable
   structure FLOB = SMLSharp.FLOB
   structure NDT = NativeDataTransporter
   structure OLEString = UTF16LECodec.String
+  structure Decimal = OLE_Decimal
   structure UM = UnmanagedMemory
+  structure Int8 = Int32 (* FIXME : We should have Int8. *)
+  structure Int16 = Int32
   structure Word16 = Word32
 
   (**********************************************************************)
@@ -199,6 +34,8 @@ struct
     type WORD = word
     type LONG = Int32.int
     type PVOID = word
+    type LPVOID = word
+    type SIZE_T = int (* ? *)
 
     (* basetypes.h *)
     type LPGUID = Word32.word * Word32.word * Word32.word * Word32.word
@@ -434,6 +271,14 @@ struct
         : _import _stdcall
                   (Word8Vector.vector, DWORD, REFIID, UM.address ref) -> HRESULT
 
+    val fptrCoTaskMemAlloc = DynamicLink.dlsym (ole32, "CoTaskMemAlloc")
+    val CoTaskMemAlloc =
+        fptrCoTaskMemAlloc
+        : _import _stdcall (SIZE_T) -> LPVOID
+
+    val fptrCoTaskMemFree = DynamicLink.dlsym (ole32, "CoTaskMemFree")
+    val CoTaskMemFree = fptrCoTaskMemFree : _import _stdcall (LPVOID) -> unit
+
     (**********)
 
     val oleaut32 = DynamicLink.dlopen "oleaut32.dll"
@@ -535,6 +380,8 @@ struct
 
   type string = UTF16LECodec.String.string
 
+  type decimal = Decimal.decimal
+
   datatype coinit =
            COINIT_MULTITHREADED
          | COINIT_APARTMENTTHREADED
@@ -561,7 +408,9 @@ struct
   datatype variant =
            EMPTY
          | NULL
+         | I2 of Int32.int
          | I4 of Int32.int
+         | R4 of Real32.real
          | R8 of Real64.real
          | BSTR of string
          | DISPATCH of Dispatch
@@ -569,16 +418,18 @@ struct
          | BOOL of bool
          | VARIANT of variant
          | UNKNOWN of Unknown
-         | I1 of Word8.word (* ToDo : should be Int8.int, if we have it. *)
+         | DECIMAL of decimal
+         | I1 of Int8.int
          | UI1 of Word8.word
+         | UI2 of Word32.word
          | UI4 of Word32.word
+         | I8 of IntInf.int
+         | UI8 of IntInf.int
          | INT of Int32.int
          | UINT of Word32.word
          | BYREF of variant
          | BYREFOUT of variant ref
          | VARIANTARRAY of variant array * word list
-         | NULLUNKNOWN
-         | NULLDISPATCH
 
   withtype Dispatch =
            {
@@ -622,33 +473,152 @@ struct
          | NullObjectPointer
          | TypeMismatch of String.string
          | ResultMismatch of String.string
+         | Conversion of String.string
 
   exception OLEError of error
 
   (****************************************)
-
-  fun UMSubWord word = UM.subWord (UM.wordToAddress word)
-  fun UMImport (bstr, bytelen) = UM.import (UM.wordToAddress bstr, bytelen)
+  (* datatype conversion *)
 
   val int32ToWord32 = Word32.fromLargeInt o Int32.toLarge
   val word32ToInt32 = Int32.fromLarge o Word32.toLargeInt
   val word32ToInt32X = Int32.fromLarge o Word32.toLargeIntX
 
-  fun realToWords real =
+  val word32ToIntInf = IntInf.fromLarge o Word32.toLargeInt
+  val word32ToIntInfX = IntInf.fromLarge o Word32.toLargeIntX
+
+  local
+    val MaxInt8 = 0x7F : Int8.int
+    val MinInt8 = ~0x80 : Int8.int
+  in
+  fun int8ToWord32 (int8 : Int8.int) =
+      if (MaxInt8 < int8) orelse (int8 < MinInt8)
+      then raise OLEError (Conversion "cannot convert Int8 to Word32.")
+      else Word32.andb (0wxFF, int32ToWord32 int8)
+  fun word32ToInt8 word32 =
+      if Word32.andb (word32, 0wx80) = 0w0
+      then word32ToInt32 word32
+      else word32ToInt32X (Word32.orb (0wxFFFFFF00, word32)) : Int8.int
+  end
+
+  local
+    val MaxInt16 = 0x7FFF : Int16.int
+    val MinInt16 = ~0x8000 : Int16.int
+  in
+  fun int16ToWord32 (int16 : Int16.int) =
+      if (MaxInt16 < int16) orelse (int16 < MinInt16)
+      then raise OLEError (Conversion "cannot convert Int16 to Word32.")
+      else Word32.andb (0wxFFFF, int32ToWord32 int16)
+  fun word32ToInt16 word32 =
+      if Word32.andb (word32, 0wx8000) = 0w0
+      then word32ToInt32 word32
+      else word32ToInt32X (Word32.orb (0wxFFFF0000, word32)) : Int16.int
+  end
+
+  local
+    val MaxWord16 = 0wxFFFF : Word32.word
+  in
+  fun word16ToWord32 (word16 : Word16.word) =
+      if (MaxWord16 < word16)
+      then
+        raise
+          OLEError
+              (Conversion
+                   ("can't convert Word16(" ^ Word16.toString word16 ^ ")"))
+      else word16
+  fun word32ToWord16 word32 = Word32.andb (0wxFFFF, word32) : Word16.word
+  end
+
+  local
+    val MaxInt64 = 0x7FFFFFFFFFFFFFFF : IntInf.int
+(* FIXME: 
+   see http://www.pllab.riec.tohoku.ac.jp/hiki/smlsharp-dev/?Ticket-7
+    val MinInt64 = ~0x8000000000000000 : IntInf.int
+*)
+    val MinInt64 = ~1 * 0x8000000000000000 : IntInf.int
+  in
+  fun wordsToInt64 (word1, word2) =
       let
-        val vec = PackReal64Little.toBytes real
+        val higher = 
+            if Word32.andb (word2, 0wx80000000) = 0w0
+            then word32ToIntInf word2
+            else word32ToIntInfX word2
+        val lower = word32ToIntInf word1
+      in
+        IntInf.orb(IntInf.<< (higher, 0w32), lower)
+      end
+  fun int64ToWords int64 =
+      if (int64 < MinInt64) orelse (MaxInt64 < int64)
+      then
+        raise
+          OLEError
+            (Conversion("can't convert Int64(" ^ IntInf.toString int64 ^ ")"))
+      else
+        (
+          Word32.fromLargeInt (IntInf.andb (0xFFFFFFFF, int64)),
+          Word32.fromLargeInt (IntInf.~>> (int64, 0w32))
+        )
+  end
+
+  local
+    val MaxWord64 = 0xFFFFFFFFFFFFFFFF : IntInf.int
+    val MinWord64 = 0 : IntInf.int
+  in
+  fun wordsToWord64 (word1, word2) =
+      let
+        val higher = word32ToIntInf word2
+        val lower = word32ToIntInf word1
+      in
+        IntInf.orb(IntInf.<< (higher, 0w32), lower)
+      end
+  fun word64ToWords word64 =
+      if (word64 < MinWord64) orelse (MaxWord64 < word64)
+      then
+        raise
+          OLEError
+            (Conversion("can't convert Word64(" ^ IntInf.toString word64 ^ ")"))
+      else
+        (
+          Word32.fromLargeInt (IntInf.andb (0xFFFFFFFF, word64)),
+          Word32.fromLargeInt (IntInf.~>> (word64, 0w32))
+        )
+  end
+
+  fun real32ToWord real32 =
+      let
+        val vec = PackReal32Little.toBytes real32
+        val word = PackWord32Little.subVec (vec, 0)
+      in word
+      end
+
+  fun wordToReal32 word =
+      let
+        val array = Word8Array.array (4, 0w0)
+        val _ = PackWord32Little.update (array, 0, word)
+      in PackReal32Little.subArr(array, 0)
+      end
+
+  fun real64ToWords real64 =
+      let
+        val vec = PackReal64Little.toBytes real64
         val word1 = PackWord32Little.subVec (vec, 0)
         val word2 = PackWord32Little.subVec (vec, 4)
       in (word1, word2)
       end
 
-  fun wordsToReal (word1, word2) =
+  fun wordsToReal64 (word1, word2) =
       let
         val array = Word8Array.array (8, 0w0)
         val _ = PackWord32Little.update (array, 0, word1)
         val _ = PackWord32Little.update (array, 4, word2)
       in PackReal64Little.subArr(array, 0)
       end
+
+  (****************************************)
+  (* OLE specific utility functions *)
+
+  fun UMSubWord word = UM.subWord (UM.wordToAddress word)
+  fun UMImport (bstr, bytelen) = UM.import (UM.wordToAddress bstr, bytelen)
 
   fun formatMessage hresult =
       let
@@ -720,6 +690,17 @@ struct
   (****************************************)
   (* IUnknown *)
 
+  val NullUnknown =
+       {
+         addRef = fn () => raise OLEError NullObjectPointer,
+         release = fn () => raise OLEError NullObjectPointer,
+         queryInterface = fn _ => raise OLEError NullObjectPointer,
+         this = Finalizable.new (UM.NULL, fn _ => ())
+       } : Unknown
+
+  fun isNullUnknown ({this, ...} : Unknown) =
+      UM.isNULL (Finalizable.getValue this)
+
   fun wrapUnknown ptrUnknown =
       let
         type this = UM.address
@@ -771,13 +752,28 @@ struct
   val BytesOfWord = Word.wordSize div 8
   val productOfWords = List.foldl (op * ) 0w1
 
-  (**********)
-  (* serializing Variant. *)
+  val NullDispatch =
+      {
+        addRef = fn () => raise OLEError NullObjectPointer,
+        release = fn () => raise OLEError NullObjectPointer,
+        invoke = fn _ => fn _ => raise OLEError NullObjectPointer,
+        invokeByDISPID = fn _ => fn _ => raise OLEError NullObjectPointer,
+        get = fn _ => fn _ => raise OLEError NullObjectPointer,
+        getByDISPID = fn _ => fn _ => raise OLEError NullObjectPointer,
+        set = fn _ => fn _ => fn _ => raise OLEError NullObjectPointer,
+        setByDISPID = fn _ => fn _ => fn _ => raise OLEError NullObjectPointer,
+        setRef = fn _ => fn _ => fn _ => raise OLEError NullObjectPointer,
+        setRefByDISPID =
+        fn _ => fn _ => fn _ => raise OLEError NullObjectPointer,
+        getTypeInfo = fn _ => raise OLEError NullObjectPointer,
+        this = Finalizable.new (UM.NULL, fn _ => ())
+      } : Dispatch
 
-  fun emptyVariant () =
-      let val resultBuffer = Array.array (WordsOfVariant, 0w0)
-      in resultBuffer
-      end
+  fun isNullDispatch ({this, ...} : Dispatch) =
+      UM.isNULL (Finalizable.getValue this)
+
+  (**********)
+  (* serialize and deserialize SAFEARRAY. *)
 
   (*
    * serialize array of SAFEARRAYBOUNDs.
@@ -802,7 +798,7 @@ struct
         array
       end
 
-  fun VariantArrayToSAFEARRAY (array, lengths) =
+  fun arrayToSAFEARRAY (elementSerializer, elementVTtag) (array, lengths) =
       let
         val finishers = ref ([] : (unit -> unit) list)
         fun addFinisher finisher = finishers := finisher :: (!finishers)
@@ -820,7 +816,7 @@ struct
         val safearray =
             W.SafeArrayCreate
                 (
-                  W.VT_VARIANT,
+                  elementVTtag,
                   Word.fromInt(List.length lengths),
                   FLOB.addressOf BOUNDS
                 )
@@ -840,7 +836,7 @@ struct
         fun update (wordOffset, value) =
             UM.updateWord
                 (UM.advance(!refData, BytesOfWord * wordOffset), value)
-        val _ = Array.foldl (serializeVariant addFinisher update) 0 array
+        val _ = Array.foldl (elementSerializer addFinisher update) 0 array
 
         (* clean up *)
         val _ = checkHRESULT(W.SafeArrayUnaccessData(safearray))
@@ -849,13 +845,95 @@ struct
         (safearray, finisher)
       end
 
+  (**
+   * converts a SAFEARRAY of multiple dimensions to a single dimension array.
+   *)
+  fun SAFEARRAYToArray (elementDeserializer, constructor) safeArray =
+      let
+        val vtref = ref (0w0 : W.VARTYPE)
+        val _ = checkHRESULT(W.SafeArrayGetVartype(safeArray, vtref))
+        val vt = !vtref
+        val _ =
+            if vt <> W.VT_VARIANT
+            then
+              raise
+                OLEError
+                    (TypeMismatch
+                         ("array of unsupported VT 0wx" ^ Word.toString vt))
+            else ()
+
+        val dim = W.SafeArrayGetDim(safeArray)
+        fun getLengths level dims =
+            if dim < level
+            then List.rev dims
+            else
+              let
+                val lboundRef = ref 0
+                val _ =
+                    checkHRESULT
+                        (W.SafeArrayGetLBound(safeArray, level, lboundRef))
+                val uboundRef = ref 0
+                val _ =
+                    checkHRESULT
+                        (W.SafeArrayGetUBound (safeArray, level, uboundRef))
+              in
+                getLengths
+                    (level + 0w1)
+                    (Word.fromInt (!uboundRef - !lboundRef + 1) :: dims)
+              end
+        val lengths = getLengths 0w1 []
+        val elements = Word.toInt(productOfWords lengths)
+
+        val elemSize = Word.toInt(W.SafeArrayGetElemsize safeArray)
+        val _ =
+            if (elemSize div BytesOfWord) <> WordsOfVariant
+            then raise Fail ("BUG: elemeSize = " ^ Int.toString elemSize)
+            else ()
+
+        val BytesOfSafeArray = elements * WordsOfVariant * BytesOfWord
+
+        val refData = ref UM.NULL
+        val _ = checkHRESULT (W.SafeArrayAccessData(safeArray, refData))
+
+        fun deserialize 0 address vs = Array.fromList (List.rev vs)
+          | deserialize n address vs =
+            let
+              val tag = UM.subWord address
+              val word1 = UM.subWord (UM.advance(address, 2 * BytesOfWord))
+              val word2 = UM.subWord (UM.advance(address, 3 * BytesOfWord))
+              val v = elementDeserializer (tag, word1, word2)
+            in
+              deserialize (n - 1) (UM.advance(address, elemSize)) (v :: vs)
+            end
+        val array = deserialize elements (!refData) []
+      in
+        checkHRESULT(W.SafeArrayUnaccessData(safeArray));
+        constructor(array, lengths)
+      end
+
+  (**********)
+  (* serializing Variant. *)
+
+  fun emptyVariant () =
+      let val resultBuffer = Array.array (WordsOfVariant, 0w0)
+      in resultBuffer
+      end
+
+  fun VariantArrayToSAFEARRAY (array, lengths) =
+      arrayToSAFEARRAY (serializeVariant, W.VT_VARIANT) (array, lengths)
+
   and decompVariant addFinisher variant =
       case variant of
         EMPTY => (W.VT_EMPTY, 0w0, 0w0)
       | NULL => (W.VT_NULL, 0w0, 0w0)
+      | I2 int => (W.VT_I2, (int16ToWord32 int), 0w0)
       | I4 int => (W.VT_I4, (int32ToWord32 int), 0w0)
-      | R8 real =>
-        let val (word1, word2) = realToWords real
+      | R4 real32 =>
+        let val word = real32ToWord real32
+        in (W.VT_R4, word, 0w0)
+        end
+      | R8 real64 =>
+        let val (word1, word2) = real64ToWords real64
         in (W.VT_R8, word1, word2)
         end
       | BSTR olestr =>
@@ -870,9 +948,28 @@ struct
       | VARIANT v => raise OLEError(TypeMismatch "unexpected VARIANT.")
       | UNKNOWN {this, ...} =>
         (W.VT_UNKNOWN, UM.addressToWord(Finalizable.getValue this), 0w0)
-      | I1 byte => (W.VT_I1, Word8.toLargeWord byte, 0w0)
+      | DECIMAL decimal =>
+        let
+          val address = W.CoTaskMemAlloc Decimal.SIZE_OF_DECIMAL
+          val _ = Decimal.export decimal (UM.wordToAddress address)
+                  handle General.Overflow =>
+                         raise OLEError (Conversion "decimal")
+          val _ = addFinisher (fn _ => W.CoTaskMemFree address)
+        in
+          (Word.orb (W.VT_BYREF, W.VT_DECIMAL), address, 0w0)
+        end
+      | I1 int => (W.VT_I1, int8ToWord32 int, 0w0)
       | UI1 byte => (W.VT_UI1, Word8.toLargeWord byte, 0w0)
+      | UI2 word => (W.VT_UI2, word16ToWord32 word, 0w0)
       | UI4 word => (W.VT_UI4, word, 0w0)
+      | I8 int64 =>
+        let val (word1, word2) = int64ToWords int64
+        in (W.VT_I8, word1, word2)
+        end
+      | UI8 word64 =>
+        let val (word1, word2) = word64ToWords word64
+        in (W.VT_UI8, word1, word2)
+        end
       | INT int => (W.VT_INT, int32ToWord32 int, 0w0)
       | UINT word => (W.VT_UINT, word, 0w0)
       | BYREF(VARIANT v) =>
@@ -941,8 +1038,6 @@ struct
         in
           (Word.orb(W.VT_ARRAY, W.VT_VARIANT), UM.addressToWord safearray, 0w0)
         end
-      | NULLUNKNOWN => (W.VT_UNKNOWN, 0w0, 0w0)
-      | NULLDISPATCH => (W.VT_DISPATCH, 0w0, 0w0)
                            
   and serializeVariant addFinisher update (variant, offset) =
       let
@@ -969,72 +1064,8 @@ struct
   (**********)
   (* deserializing Variant. *)
 
-  (**
-   * converts a SAFEARRAY of which element is VARIANT, and which may have
-   * multiple dimensions, into a single dimension array.
-   *)
   and SAFEARRAYToVariantArray safeArray =
-      let
-        val vtref = ref (0w0 : W.VARTYPE)
-        val _ = checkHRESULT(W.SafeArrayGetVartype(safeArray, vtref))
-        val vt = !vtref
-        val _ =
-            if vt <> W.VT_VARIANT
-            then
-              raise
-                OLEError
-                    (TypeMismatch
-                         ("array of unsupported VT 0wx" ^ Word.toString vt))
-            else ()
-
-        val dim = W.SafeArrayGetDim(safeArray)
-        fun getLengths level dims =
-            if dim < level
-            then List.rev dims
-            else
-              let
-                val lboundRef = ref 0
-                val _ =
-                    checkHRESULT
-                        (W.SafeArrayGetLBound(safeArray, level, lboundRef))
-                val uboundRef = ref 0
-                val _ =
-                    checkHRESULT
-                        (W.SafeArrayGetUBound (safeArray, level, uboundRef))
-              in
-                getLengths
-                    (level + 0w1)
-                    (Word.fromInt (!uboundRef - !lboundRef + 1) :: dims)
-              end
-        val lengths = getLengths 0w1 []
-        val elements = Word.toInt(productOfWords lengths)
-
-        val elemSize = Word.toInt(W.SafeArrayGetElemsize safeArray)
-        val _ =
-            if (elemSize div BytesOfWord) <> WordsOfVariant
-            then raise Fail ("BUG: elemeSize = " ^ Int.toString elemSize)
-            else ()
-
-        val BytesOfSafeArray = elements * WordsOfVariant * BytesOfWord
-
-        val refData = ref UM.NULL
-        val _ = checkHRESULT (W.SafeArrayAccessData(safeArray, refData))
-
-        fun deserialize 0 address vs = Array.fromList (List.rev vs)
-          | deserialize n address vs =
-            let
-              val tag = UM.subWord address
-              val word1 = UM.subWord (UM.advance(address, 2 * BytesOfWord))
-              val word2 = UM.subWord (UM.advance(address, 3 * BytesOfWord))
-              val v = constructVariant (tag, word1, word2)
-            in
-              deserialize (n - 1) (UM.advance(address, elemSize)) (v :: vs)
-            end
-        val array = deserialize elements (!refData) []
-      in
-        checkHRESULT(W.SafeArrayUnaccessData(safeArray));
-        VARIANTARRAY(array, lengths)
-      end
+      SAFEARRAYToArray (constructVariant, VARIANTARRAY) safeArray
 
   and constructVariant (tag, word1, word2) =
       if tag = W.VT_EMPTY
@@ -1043,11 +1074,17 @@ struct
       if tag = W.VT_NULL
       then NULL
       else
+      if tag = W.VT_I2
+      then I2 (word32ToInt16 word1)
+      else
       if tag = W.VT_I4
-      then I4 (word32ToInt32 word1)
+      then I4 (word32ToInt32X word1)
+      else
+      if tag = W.VT_R4
+      then R4 (wordToReal32 word1)
       else
       if tag = W.VT_R8
-      then R8 (wordsToReal (word1, word2))
+      then R8 (wordsToReal64 (word1, word2))
       else
       if tag = W.VT_BSTR
       then BSTR (BSTRToOLESTR word1) before W.SysFreeString word1
@@ -1056,7 +1093,7 @@ struct
       then
         if 0w0 <> word1
         then DISPATCH (wrapDispatch (wrapUnknown (UM.wordToAddress word1)))
-        else NULLDISPATCH
+        else DISPATCH NullDispatch
       else
       if tag = W.VT_ERROR
       then ERROR (word32ToInt32 word1)
@@ -1068,16 +1105,31 @@ struct
       then
          if 0w0 <> word1
          then UNKNOWN (wrapUnknown (UM.wordToAddress word1))
-         else NULLUNKNOWN
+         else UNKNOWN NullUnknown
+      else
+      if tag = Word.orb(W.VT_BYREF, W.VT_DECIMAL)
+      then
+        (* FIXME: the buffer should be freed ? *)
+        DECIMAL (Decimal.import (UM.wordToAddress word1))
+        before W.CoTaskMemFree word1
       else
       if tag = W.VT_I1
-      then I1 (Word8.fromLargeWord word1)
+      then I1 (word32ToInt8 word1)
       else
       if tag = W.VT_UI1
       then UI1 (Word8.fromLargeWord word1)
       else
+      if tag = W.VT_UI2
+      then UI2 (word32ToWord16 word1)
+      else
       if tag = W.VT_UI4
       then UI4 word1
+      else
+      if tag = W.VT_I8
+      then I8 (wordsToInt64 (word1, word2))
+      else
+      if tag = W.VT_UI8
+      then UI8 (wordsToWord64 (word1, word2))
       else
       if tag = W.VT_INT
       then INT (word32ToInt32 word1)
@@ -1099,18 +1151,21 @@ struct
             if offset = Array.length array
             then List.rev variants
             else
-              let val tag = sub offset
-              in 
-                if tag = W.VT_EMPTY
-                then List.rev variants
-                else
-                  let
-                    val word1 = sub (offset + 2)
-                    val word2 = sub (offset + 3)
-                    val variant = constructVariant (tag, word1, word2)
-                  in
-                    deserialize (offset + 4, variant :: variants)
-                  end
+              let
+                val tag = Word32.andb(sub offset, 0wxFFFF)
+(*
+                val _ = print ("tag = " ^ Word.toString tag ^ "\n")
+*)
+                val variant = 
+                    if tag = W.VT_DECIMAL
+                    then DECIMAL (Decimal.importWordArray (array, offset))
+                    else
+                      let
+                        val word1 = sub (offset + 2)
+                        val word2 = sub (offset + 3)
+                      in constructVariant (tag, word1, word2) end
+              in
+                deserialize (offset + 4, variant :: variants)
               end
       in
         deserialize (0, [])

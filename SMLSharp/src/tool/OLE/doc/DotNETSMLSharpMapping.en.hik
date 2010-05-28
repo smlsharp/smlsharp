@@ -1,0 +1,32 @@
+// mapping .NET/SML#
+
+.NET/SML# is based on OLE/SML# and [[COM Interop|http://msdn.microsoft.com/en-us/library/sd10k43k.aspx]] feature of .NET.
+Mapping between .NET and SML# is also based on 
+[[mapping between COM and SML#|OLESMLSharpMapping]].
+
+This page describes a part of the mapping scheme which is specific to .NET object access.
+
+!data type mapping.
+
+Data types in C# are mapped to SML# data types as follows.
+
+||! C# types ||! SML# types
+||byte || Word8.word
+||sbyte || Int32.int
+||short || Int32.int
+||ushort || Word32.word
+||int || Int32.int
+||uint || Word32.word
+||long || IntInf.int
+||ulong || IntInf.int
+||float || Real32.real
+||double || Real64.real
+||decimal || OLE.decimal
+||char || Word32.word
+||string || OLE.string
+||bool || bool
+||object || OLE.variant
+||object[] || OLE.variant Array.array * word list
+||''t''[] || ''planned to support''
+
+

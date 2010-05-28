@@ -1,0 +1,122 @@
+// OLE/SML#
+
+''OLE/SML#'' is a support tool to enable SML code to access Microsoft COM/OLE objects.
+
+''OLE/SML#'' depends on SML# features including FFI, LMLML, Finalizer and FLOB.
+
+!Components.
+
+:OLE2SML.exe: Given a type library, this command generates SML# source code to access COM objects which are described in the type library.
+:OLE.sml: Base library to access Microsoft COM infrastructure.
+
+!Usage.
+
+OLE2SML.exe generates SML code from user specified type library.
+
+ $ OLE.exe [options] TYPELIB_FILENAME
+ $ OLE.exe [options] ProgID
+
+Type library can be specified by
+* file path of the type library, or
+* ProgID of a Coclass of which type information is described in the type library.
+
+Options:
+
+:-c CLASSNAME: generates wrapper codes for specified coclasses or dispatch interfaces only. You can use this option more than once. If no ''-c'' option is specified, wrappers for all coclasses and dispatch interfaces are generated. ''-o FILENAME'' writes wrapper code into the specified file name. If no ''-o'' option is specified, file name is ''TYPELIBNAME.sml'' .
+:-h: shows usage.
+
+!Example.
+
+For example, ProgID of Internet Explorer (= IE) is "InternetExplorer.Application".
+
+The following session creates an IE instance, navigates to Home page and obtains URL of Home page.
+
+ $ OLE2SML.exe -c InternetExplorer InternetExplorer.Application
+ generated SHDocVw.sml
+ $ OLE2SML.exe -c HTMLDocument -c HTMLHtmlElement \
+ >      "C:\\WINDOWS\\system32\\MSHTML.TLB"
+ generated MSHTML.sml
+ $ smlsharp
+ SML# 0.41 (2010-05-26 11:07:12 --)
+ # use "OLE.sml";
+     :
+ # OLE.initialize [OLE.COINIT_MULTITHREADED];
+ val it = () : unit
+ # use "./SHDocVw.sml";
+ signature SHDocVw =
+     :
+ end
+ structure SHDocVw : SHDocVw
+ # use "./MSHTML.sml";
+ signature MSHTML =
+ sig
+     :
+ end
+ structure MSHTML : MSHTML
+ # val IE = SHDocVw.newInternetExplorer ();
+ val IE =
+    {
+      :
+    }
+    : SHDocVw.InternetExplorer
+ # #getVisible IE ();
+ val it = false : bool
+ # #setVisible IE true;
+ val it = () : unit
+ # #GoHome IE ();
+ val it = () : unit
+ # val doc = MSHTML.HTMLDocument (#getDocument IE ());
+ val doc =
+     {
+       :
+     }
+     : MSHTML.HTMLDocument
+ # val body = MSHTML.HTMLHtmlElement (#getbody doc ());
+ val body =
+     {
+       :
+     }
+     : MSHTML.HTMLHtmlElement
+ # val bodyText = OLE.A (#getinnerText body ());
+ val bodyText =
+       :
+ # #release IE ();
+ val it = 0wx0 : Word32.word
+ # OLE.uninitialize ();
+ val it = () : unit
+ # exit 0;
+
+Instead of ProgID, you can specify file path of type library.
+
+ $ OLE2SML.exe "C:\\WINDOWS\\System32\\shdocvw.dll"
+
+The type library ''C:\WINDOWS\System32\shdocvw.dll'' defines COM objects implemented in Internet Explorer.
+
+By default, ''OLE2SML.exe'' generates code for every coclass and interfaces
+described in the specified type library.
+If you use only some of them, you can specify them with ''-c'' option to reduce the size of generated code.
+
+ $ OLE2SML.exe -c InternetExplorer "C:\\WINDOWS\\System32\\shdocvw.dll"
+
+Its generated code contains code for InternetExplorer coclass only.
+
+Other examples.
+*[[Internet Explorer|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/sample/SHDocVwSample.sml]]
+*[[Excel|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/sample/ExcelSample.sml]]
+*[[Windows Scripting|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/sample/ScriptingSample.sml]]
+*[[Late binding|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/sample/DotNetSample.sml]]
+
+!Reference.
+
+*[[mapping COM and SML#|OLESMLSharpMapping]]
+*[[API|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/doc/api/]]
+*[[COM in 3 minutes|OLESMLSharpMiniGuideOfCOM]]
+*[[Implementation overview|OLESMLSharpImplementationOverview]]
+
+!Restriction.
+
+OLE structure and OLE2SML ignore methods which satisfy any of following.
+
+* any of its parameters has [out] or [ret] attribute.
+* any of its parameters is variant type which is not included in OLE.variant.
+

@@ -13,6 +13,8 @@ JAVA_SOURCES= \
 	ExceptionTestee1Exception.java \
 	MethodCallTestee1.java \
 	MethodCallTestee1_Child.java \
+	RenameKeywordTestee1.java \
+	abstype/RenameKeywordTestee2.java \
 
 
 SOURCES = \
@@ -48,5 +50,7 @@ JDK.sml:
 .java.class:
 	$(JAVAC) $(JAVA_SOURCES)
 
+# FQN of the Java class is obtained from the path of the Java source file.
+# Ex. foo/bar/Baz.java ==> foo.bar.Baz
 .java.sml:
-	$(JAVA2SML) -o $@ $(<:.java=)
+	$(JAVA2SML) -o $@ $(subst /,.,$(<:.java=))

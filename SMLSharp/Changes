@@ -1,3 +1,27 @@
+SML# version 0.42 (released on 2010-05-28)
+
+1. Overview
+
+This is an bug-fix release of SML# 0.41. This version is still
+experimental and not intended to replace SML# 0.31.
+
+2. Changes and improvements
+
+* fixed a bug of hiding int values in result printings after open Int.
+* fixed a bug of user type variable unification.
+* fixed a bug of Word32.fromLargeWord.
+* fixed a bug of compiling negative IntInf constant literals.
+* fixed a bug of equality of exceptions.
+* suppressed diagnosis messages printed by native code backend.
+* improved result printing for hidden types.
+* implemented a few functions in Real32.real.
+* SMLUnit: added Assert.assertEqualByCompare.
+* Java/SML#: fixed conflictions between Java identifiers and SML keywords.
+* .NET/SML#: added support for all built-in datatypes of C#.
+* OLE/SML#: added support for I2, UI2, I8, UI8, R4 and DECIMAL.
+* OLE/SML#: fixed problems in passing I4 and I1.
+
+-----------------------------------------------------------------------------
 SML# version 0.41 (released on 2010-05-14)
 
 1. Overview

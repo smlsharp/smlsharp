@@ -19,6 +19,11 @@ class SMLCodeGenerator
         return classInfo.clazz_.getName().replace('.', '/');
     }
 
+    String FQNToFieldLabel(String FQN)
+    {
+        return FQN.replace('.', '\'').replace('$', '\'');
+    }
+
     void collectSuperClasses(Set classes, Class clazz)
     {
         classes.add(clazz);
@@ -309,7 +314,7 @@ class SMLCodeGenerator
         code += "         {\n";
         for(Iterator i = supers.iterator(); i.hasNext();){
             Class sup = (Class)i.next();
-            code += "           " + sup.getName().replace('.', '\'') + " : unit";
+            code += "           " + FQNToFieldLabel(sup.getName()) + " : unit";
             if(i.hasNext()){code += ",";}
             code += "\n";
         }

@@ -77,12 +77,7 @@ structure SIGenerator : SIGENERATOR = struct
         CT.INT value => SI.LoadInt{value = value, destination = destination}
       | CT.LARGEINT value =>
         let
-          (* convert the integer operand to a string in the pattern:
-           *   ('-')?[0-9]+
-           *)
-          val valueStr =
-              (if BigInt.sign value < 0 then "-" else "")
-              ^  BigInt.toString(BigInt.abs value)
+          val valueStr = BigInt.toCString value
           val label = CTX.addStringConstant context valueStr
         in
           SI.LoadLargeInt {value = label, destination = destination}
@@ -687,7 +682,7 @@ structure SIGenerator : SIGENERATOR = struct
                                let
                                  val label =
                                      CTX.addStringConstant
-                                         context (BigInt.toString const)
+                                         context (BigInt.toCString const)
                                in {const = label, destination = destination}
                                end
                              | _ => 

@@ -24,7 +24,7 @@ struct
 
   (* FIXME: replace Float_toString to Real32.toString,
       Float_equal to Real32.== *)
-  val assertEqualFloat = A.assertEqual Float_equal Float_toString
+  val assertEqualFloat = A.assertEqual Real32.== Real32.toString
 
   val assertEqualDouble = A.assertEqualReal
 
@@ -37,6 +37,8 @@ struct
           (fn obj =>
               Option.getOpt(JString.valueOf'Object obj, "NULL"))
   end
+
+  fun assertNotNull obj = A.assertFalse (Java.isNull obj)
 
   val assertEqualString = A.assertEqualOption A.assertEqualString
 

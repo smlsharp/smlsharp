@@ -2,7 +2,7 @@
  * utility functions for manupilating types (needs re-writing).
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypesUtils.sml,v 1.36 2009/10/11 13:32:20 katsu Exp $
+ * @version $Id: TypesUtils.sml,v 1.35.6.3 2009/10/10 07:05:41 katsu Exp $
  *)
 (*
 TODO:
@@ -40,17 +40,19 @@ struct
              case ty of
                T.ALIASty (ty1,ty2) => (admitEqTy ty2,false)
              | T.FUNMty _ => raise NotAdmitEq
-	     | T.RAWty {tyCon = {name = "ref",...},...} =>
-	       (true,false)
+             | T.RAWty {tyCon = {name = "ref",...},...} =>
+               (true,false)
              | T.RAWty {tyCon = {name = "array",...},...} =>
-	       (true,false)
+               (true,false)
              | T.RAWty {tyCon = {eqKind = ref T.NONEQ, ...}, ...} =>
                raise NotAdmitEq
-	     | T.OPAQUEty {spec = {tyCon = {eqKind = ref T.NONEQ, ...},...}, ...} => 
+             | T.OPAQUEty
+                 {spec = {tyCon = {eqKind = ref T.NONEQ, ...},...}, ...} => 
                raise NotAdmitEq
-	     | T.SPECty {tyCon = {eqKind = ref T.NONEQ, ...}, ...} => 
+             | T.SPECty {tyCon = {eqKind = ref T.NONEQ, ...}, ...} => 
                raise NotAdmitEq
-             | T.TYVARty (ref(T.TVAR {eqKind = T.NONEQ, ...})) => raise NotAdmitEq
+             | T.TYVARty
+                 (ref(T.TVAR {eqKind = T.NONEQ, ...})) => raise NotAdmitEq
              | _ => (true, true))
          true
          ty)
@@ -61,7 +63,7 @@ struct
 
   fun admitEqTyBindInfo tyBindInfo =
       case tyBindInfo of
-	  T.TYSPEC {eqKind = ref T.EQ, ...} => true
+          T.TYSPEC {eqKind = ref T.EQ, ...} => true
         | T.TYCON {tyCon = {eqKind = ref T.EQ,...}, ...} => true
         | T.TYFUN tyFun => admitEqTyFun tyFun
         | T.TYOPAQUE {spec = {eqKind = ref T.EQ,...}, ...}=> true
@@ -70,7 +72,9 @@ struct
   (*
    * Returns a new generative type constructor. 
    *)
-  fun newTyCon globalID {name, strpath, abstract, tyvars, eqKind, constructorHasArgFlagList} = 
+  fun newTyCon
+        globalID
+        {name, strpath, abstract, tyvars, eqKind, constructorHasArgFlagList} = 
       {
        name = name,
        strpath = strpath,
@@ -84,13 +88,14 @@ struct
 
   fun extractAliasTyImpl aliasTy =
       case aliasTy of
-	T.ALIASty(_,ty) => extractAliasTyImpl ty
+        T.ALIASty(_,ty) => extractAliasTyImpl ty
       | ty => ty
       
 (*
   fun tyconSpan ({datacon, ...}:T.tyCon) = SEnv.numItems datacon
 *)
 
+(*
   fun typeOfIdstate idstate =
       case idstate of
         T.CONID conPathInfo => #ty conPathInfo
@@ -99,6 +104,7 @@ struct
       | T.PRIM primInfo => #ty primInfo
       | T.VARID varPathInfo => #ty varPathInfo
       | T.RECFUNID (varPathInfo, int) => #ty varPathInfo
+*)
 
   (**
    * Substitute bound type variables in a type.
@@ -131,38 +137,39 @@ struct
         (* traverse the ty with a stack of substitution.
          * The stack is pushed/popped on enter/exit in POLYty.
          *)
-        fun preVisitor (ty, nil) = raise Control.Bug 
-                                   "nil stack to preVistor (types/main/TypesUtils.sml)"
-          | preVisitor (ty, substs as (subst :: _)) =
-            case ty of
-              T.POLYty{boundtvars, body} =>
-              let
-                (* make a new subst by addin boundtvars,
-                 * and push it on the subst stack. *)
-                val newSubst = 
-                    IEnv.foldli
-                        (fn (i, _, s) => #1 (IEnv.remove(s, i))
-                            handle LibBase.NotFound => s)
-                        subst
-                        boundtvars
-              in
-                if IEnv.isEmpty newSubst
-                then
-                  (* no traverse into the body. *)
-                  (ty, newSubst :: substs, false)
-                else
-                  let
-                    val newBoundtvars =
-                        IEnv.map (substBTvarBTKind newSubst) boundtvars
-                  in
-                    (
-                      T.POLYty{boundtvars = newBoundtvars, body = body},
-                      newSubst :: substs,
-                      true
-                    )
-                  end
-              end
-            | ty => (ty, substs, true)
+  fun preVisitor (ty, nil) = 
+      raise Control.Bug 
+              "nil stack to preVistor (types/main/TypesUtils.sml)"
+    | preVisitor (ty, substs as (subst :: _)) =
+      case ty of
+        T.POLYty{boundtvars, body} =>
+        let
+          (* make a new subst by addin boundtvars,
+           * and push it on the subst stack. *)
+           val newSubst = 
+               IEnv.foldli
+                 (fn (i, _, s) => #1 (IEnv.remove(s, i))
+                     handle LibBase.NotFound => s)
+                 subst
+                 boundtvars
+        in
+          if IEnv.isEmpty newSubst
+          then
+            (* no traverse into the body. *)
+              (ty, newSubst :: substs, false)
+          else
+            let
+              val newBoundtvars =
+                  IEnv.map (substBTvarBTKind newSubst) boundtvars
+            in
+              (
+               T.POLYty{boundtvars = newBoundtvars, body = body},
+               newSubst :: substs,
+               true
+              )
+            end
+        end
+      | ty => (ty, substs, true)
 
         (* pop a newSubst pushed by preVisitor from the substs stack. *)
         fun postVisitor (ty, nil) = 
@@ -188,9 +195,10 @@ struct
               case TypeTransducer.transTy preVisitor postVisitor [subst] ty of
                 (newTy, [_]) => newTy
               | (_, _) => 
-                   raise 
-                     Control.Bug 
-                     "non singleton returned by TypeTransducer.transTy (types/main/TypesUtils.sml)"
+                raise 
+                  Control.Bug 
+                    "non singleton returned by\
+                    \ TypeTransducer.transTy (types/main/TypesUtils.sml)"
 (*
 val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
 *)
@@ -204,8 +212,10 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    *)
   and substBTvarRecKind subst recordKind =
       case recordKind of
-	T.REC fields => T.REC (SEnv.map (substBTvar subst) fields)
-      | k => k
+        T.REC fields => T.REC (SEnv.map (substBTvar subst) fields)
+      | T.UNIV => T.UNIV
+      | T.OVERLOADED l => 
+        T.OVERLOADED (map (substBTvar subst) l)
 
   and substBTvarBTKind subst {index, recordKind, eqKind} =
       {
@@ -225,7 +235,8 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    * Perform imperative implace substitutrion.
    *)
   fun performSubst (T.TYVARty (r as ref(T.TVAR _)), ty) = r := T.SUBSTITUTED ty
-    | performSubst _ = raise Control.Bug "non TVAR in performSubst (types/mainTypesUtils.sml)"
+    | performSubst _ =
+      raise Control.Bug "non TVAR in performSubst (types/mainTypesUtils.sml)"
 
   (**
    * Make a fresh copy of a bound type environment by allocating a new btvid
@@ -234,30 +245,31 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    *)
   fun copyBoundEnv boundEnv = 
       let
-          val newSubst =
-              IEnv.map
-                  (fn _  => 
-                      let
-                          val newBoundVarId = BoundTypeVarIDGen.generate ()
-                      in 
-                          T.BOUNDVARty newBoundVarId
-                      end)
-                  boundEnv
-	  val newBoundEnv =
-              IEnv.foldri
-                  (fn (oldId, {index, recordKind, eqKind}, newBoundEnv) =>
-                      (case IEnv.find(newSubst, oldId) of
-                           SOME (T.BOUNDVARty newId) =>
-                           IEnv.insert(newBoundEnv, 
-                                       newId, 
-                                       {index=index, 
-                                        recordKind=substBTvarRecKind newSubst recordKind, 
-                                        eqKind=eqKind})
-                         | _ => raise Control.Bug "copyBoundEnv"))
-                  IEnv.empty
-                  boundEnv
+        val newSubst =
+            IEnv.map
+              (fn _  => 
+                  let
+                    val newBoundVarId = BoundTypeVarIDGen.generate ()
+                  in 
+                    T.BOUNDVARty newBoundVarId
+                  end)
+              boundEnv
+        val newBoundEnv =
+            IEnv.foldri
+              (fn (oldId, {index, recordKind, eqKind}, newBoundEnv) =>
+                  (case IEnv.find(newSubst, oldId) of
+                     SOME (T.BOUNDVARty newId) =>
+                     IEnv.insert
+                       (newBoundEnv, 
+                        newId, 
+                        {index=index, 
+                         recordKind=substBTvarRecKind newSubst recordKind, 
+                         eqKind=eqKind})
+                   | _ => raise Control.Bug "copyBoundEnv"))
+              IEnv.empty
+              boundEnv
       in
-	  (newSubst, newBoundEnv)
+        (newSubst, newBoundEnv)
       end
 
   (**
@@ -273,62 +285,64 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    *)
   fun freshSubst boundEnv = 
       let
-          val newSubst =
-              IEnv.map
-                  (fn x => 
-                      let
-                          val newTy = 
-                              T.newty {
-                                       recordKind = T.UNIV,
-                                       eqKind = T.NONEQ,
-                                       tyvarName = NONE
-                                       }
-                      in
-                          newTy
-                      end)
-                  boundEnv
-	  val _ =
-              IEnv.appi
-                  (fn (i, T.TYVARty(r as ref (T.TVAR {id, tyvarName, ...}))) => 
-		      r := 
-		      (case IEnv.find(boundEnv, i) of
-		           SOME {index, recordKind, eqKind} => 
-		            T.TVAR
-                                {
-                                 lambdaDepth = T.infiniteDepth,
-                                 id = id, 
-			         recordKind = substBTvarRecKind newSubst recordKind,
-			         eqKind = eqKind,
-			         tyvarName = tyvarName
-                                 }
-                         | _ => raise Control.Bug "fresh Subst")
-                    | _ => raise Control.Bug "freshSubst")
-	          newSubst
+        val newSubst =
+            IEnv.map
+              (fn x => 
+                  let
+                    val newTy = 
+                        T.newty {
+                        recordKind = T.UNIV,
+                        eqKind = T.NONEQ,
+                        tyvarName = NONE
+                        }
+                  in
+                    newTy
+                  end)
+              boundEnv
+        val _ =
+            IEnv.appi
+              (fn (i, T.TYVARty(r as ref (T.TVAR {id, tyvarName, ...}))) => 
+                  r := 
+                     (case IEnv.find(boundEnv, i) of
+                        SOME {index, recordKind, eqKind} => 
+                        T.TVAR
+                          {
+                           lambdaDepth = T.infiniteDepth,
+                           id = id, 
+                           recordKind = substBTvarRecKind newSubst recordKind,
+                           eqKind = eqKind,
+                           tyvarName = tyvarName
+                          }
+                      | _ => raise Control.Bug "fresh Subst")
+                | _ => raise Control.Bug "freshSubst")
+              newSubst
 (*
-	  val _ =
-              IEnv.appi
-                  (fn (i, T.TYVARty(r as ref (T.TVAR {id, tyvarName, ...}))) => 
-		      r := 
-		      (case IEnv.find(boundEnv, i) of
-		           SOME {index, recordKind, eqKind} => 
-                           (case recKind of 
-                                T.REC _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                              | T.OVERLOADED _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                              | _ => ();
-		            T.TVAR
-                                {
-                                 lambdaDepth = T.infiniteDepth,
-                                 id = id, 
-			         recordKind = substBTvarRecKind newSubst recordKind,
-			         eqKind = eqKind,
-			         tyvarName = tyvarName
-                                 })
-                         | _ => raise Control.Bug "fresh Subst")
-                    | _ => raise Control.Bug "freshSubst")
-	          newSubst
+        val _ =
+            IEnv.appi
+              (fn (i, T.TYVARty(r as ref (T.TVAR {id, tyvarName, ...}))) => 
+                  r := 
+                     (case IEnv.find(boundEnv, i) of
+                        SOME {index, recordKind, eqKind} => 
+                        (case recKind of 
+                           T.REC _ =>
+                           T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                         | T.OVERLOADED _ =>
+                           T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                         | _ => ();
+                         T.TVAR
+                           {
+                            lambdaDepth = T.infiniteDepth,
+                            id = id, 
+                            recordKind = substBTvarRecKind newSubst recordKind,
+                            eqKind = eqKind,
+                            tyvarName = tyvarName
+                        })
+                      | _ => raise Control.Bug "fresh Subst")
+                | _ => raise Control.Bug "freshSubst")
+              newSubst
 *)
       in
-	  newSubst
+        newSubst
       end
 
 
@@ -352,49 +366,55 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
                           newTy 
                       end)
                   boundEnv
-	val _ =
+        val _ =
             IEnv.appi
-                (fn (i,T.TYVARty(r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
-		    r := 
-		    (case IEnv.find(boundEnv, i) of
-		       SOME {index, recordKind, eqKind} => 
-                              T.TVAR
-                              {
-                               lambdaDepth = lambdaDepth,
-                               id = id, 
-                               recordKind = substBTvarRecKind newSubst recordKind,
-                               eqKind = eqKind,
-                               tyvarName = tyvarName
-                               }
+              (fn (i,
+                   T.TYVARty
+                     (r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
+                    r := 
+                    (case IEnv.find(boundEnv, i) of
+                       SOME {index, recordKind, eqKind} => 
+                       T.TVAR
+                         {
+                          lambdaDepth = lambdaDepth,
+                          id = id, 
+                          recordKind = substBTvarRecKind newSubst recordKind,
+                          eqKind = eqKind,
+                          tyvarName = tyvarName
+                         }
                      | _ => raise Control.Bug "fresh Subst")
-                  | _ => raise Control.Bug "freshSubst")
-	        newSubst
+                | _ => raise Control.Bug "freshSubst")
+              newSubst
 (*
-	val _ =
+        val _ =
             IEnv.appi
-                (fn (i,T.TYVARty(r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
-		    r := 
-		    (case IEnv.find(boundEnv, i) of
-		       SOME {index, recordKind, eqKind} => 
-                         (case recKind of 
-                            T.REC _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                          | T.OVERLOADED _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                          | _ => ();		
-                              T.TVAR
-                              {
-                               lambdaDepth = lambdaDepth,
-                               id = id, 
-                               recordKind = substBTvarRecKind newSubst recordKind,
-                               eqKind = eqKind,
-                               tyvarName = tyvarName
-                               }
-                          )
-                     | _ => raise Control.Bug "fresh Subst")
-                  | _ => raise Control.Bug "freshSubst")
-	        newSubst
+              (fn (i,
+                   T.TYVARty
+                     (r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
+                  r := 
+                 (case IEnv.find(boundEnv, i) of
+                    SOME {index, recordKind, eqKind} => 
+                    (case recKind of 
+                       T.REC _ =>
+                       T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                     | T.OVERLOADED _ =>
+                       T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                     | _ => ();         
+                     T.TVAR
+                       {
+                        lambdaDepth = lambdaDepth,
+                        id = id, 
+                        recordKind = substBTvarRecKind newSubst recordKind,
+                        eqKind = eqKind,
+                        tyvarName = tyvarName
+                       }
+                    )
+                  | _ => raise Control.Bug "fresh Subst")
+                | _ => raise Control.Bug "freshSubst")
+              newSubst
 *)
       in
-	  newSubst
+          newSubst
       end
 
 
@@ -405,71 +425,80 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
    *)
   fun complementBSubst BS boundEnv = 
       let
-          val newSubst = 
-	      IEnv.foldli 
-                  (fn (i, ty, Env) =>
-	              if IEnv.inDomain(BS, i)
-                      then Env
-		      else
-                          let
-                              val newTy =
-                                  T.newty {
-                                           recordKind = T.UNIV,
-                                           eqKind = T.NONEQ,
-                                           tyvarName = NONE
-                                           }
-                          in
-                              IEnv.insert (Env, i, newTy)
-                          end)
-	          IEnv.empty
-	          boundEnv
-	  val _ =
-              IEnv.appi
-                  (fn (i, T.TYVARty(r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
-                      r := 
-                      (case IEnv.find(boundEnv, i) of
-		           SOME {index, recordKind, eqKind} => 
-                            T.TVAR
-                                {
-                                 lambdaDepth = lambdaDepth,
-                                 id = id, 
-                                 recordKind = substBTvarRecKind newSubst recordKind,
-                                 eqKind = eqKind,
-                                 tyvarName = tyvarName
-                                 }
-                         | _ => raise Control.Bug "fresh Subst")
-                    | _ => raise Control.Bug "complementBSubst")
-	          newSubst
+        val newSubst = 
+            IEnv.foldli 
+              (fn (i, ty, Env) =>
+                  if IEnv.inDomain(BS, i)
+                  then Env
+                  else
+                    let
+                      val newTy =
+                          T.newty
+                            {
+                             recordKind = T.UNIV,
+                             eqKind = T.NONEQ,
+                             tyvarName = NONE
+                            }
+                    in
+                      IEnv.insert (Env, i, newTy)
+                    end)
+              IEnv.empty
+              boundEnv
+        val _ =
+            IEnv.appi
+              (fn (i,
+                   T.TYVARty
+                     (r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
+                  r := 
+                     (case IEnv.find(boundEnv, i) of
+                        SOME {index, recordKind, eqKind} => 
+                        T.TVAR
+                          {
+                           lambdaDepth = lambdaDepth,
+                           id = id, 
+                           recordKind = substBTvarRecKind newSubst recordKind,
+                           eqKind = eqKind,
+                           tyvarName = tyvarName
+                          }
+                      | _ => raise Control.Bug "fresh Subst")
+                | _ => raise Control.Bug "complementBSubst")
+              newSubst
 (* 
-	  val _ =
-              IEnv.appi
-                  (fn (i, T.TYVARty(r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
-                      r := 
-                      (case IEnv.find(boundEnv, i) of
-		           SOME {index, recordKind, eqKind} => 
-                           (case recKind of 
-                                T.REC _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                              | T.OVERLOADED _ => T.kindedTyvarList := r :: (!T.kindedTyvarList)
-                              | _ => ();
-                            T.TVAR
-                                {
-                                 lambdaDepth = lambdaDepth,
-                                 id = id, 
-                                 recordKind = substBTvarRecKind newSubst recordKind,
-                                 eqKind = eqKind,
-                                 tyvarName = tyvarName
-                                 })
-                         | _ => raise Control.Bug "fresh Subst")
-                    | _ => raise Control.Bug "complementBSubst")
-	          newSubst
+       val _ =
+           IEnv.appi
+             (fn (i,
+                  T.TYVARty
+                    (r as ref (T.TVAR{lambdaDepth,id,tyvarName, ...}))) => 
+                 r := 
+                    (case IEnv.find(boundEnv, i) of
+                       SOME {index, recordKind, eqKind} => 
+                       (case recKind of 
+                          T.REC _ =>
+                          T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                        | T.OVERLOADED _ =>
+                          T.kindedTyvarList := r :: (!T.kindedTyvarList)
+                        | _ => ();
+                        T.TVAR
+                          {
+                           lambdaDepth = lambdaDepth,
+                           id = id, 
+                           recordKind = substBTvarRecKind newSubst recordKind,
+                           eqKind = eqKind,
+                           tyvarName = tyvarName
+                       })
+                     | _ => raise Control.Bug "fresh Subst")
+               | _ => raise Control.Bug "complementBSubst")
+             newSubst
 *)
       in
-	  IEnv.unionWith (fn x => raise Control.Bug "complementBSubstSubst") (BS, newSubst)
+        IEnv.unionWith
+          (fn x => raise Control.Bug "complementBSubstSubst") (BS, newSubst)
       end
 
   local 
     exception FALSE 
   in
+
   (**
    * Check whether a type is a mono type or not.
    *)
@@ -494,25 +523,27 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
   The following is prohibitively inefficient.
   fun EFTV ty =
       TypeTransducer.foldTyPostOrder
-          (fn (T.TYVARty (ref(T.TVAR {recordKind = T.OVERLOADED _,...})), set)  => set
-            | (T.TYVARty (tyvarRef as (ref(T.TVAR tvKind))), set)  => 
-              let
-                fun EFTVKind set =
-	            case tvKind of
-		      {recordKind = T.UNIV, ...} => set
-	            | {recordKind = T.REC fields, ...} => 
-		      SEnv.foldl
-                          (fn (ty, set) => OTSet.union(set, EFTV ty))
-		          set
-		          fields
-                    | {recordKind = T.OVERLOADED _, ...} => raise Control.Bug "EFTV Overloaded"
-              in 
-                OTSet.union(set, EFTVKind (OTSet.singleton tyvarRef))
-              end
-            | (_, set) => set
-          )
-          OTSet.empty
-          ty;
+        (fn (T.TYVARty (ref(T.TVAR {recordKind = T.OVERLOADED _,...})), set)
+            => set
+          | (T.TYVARty (tyvarRef as (ref(T.TVAR tvKind))), set)  => 
+            let
+              fun EFTVKind set =
+                  case tvKind of
+                    {recordKind = T.UNIV, ...} => set
+                  | {recordKind = T.REC fields, ...} => 
+                    SEnv.foldl
+                      (fn (ty, set) => OTSet.union(set, EFTV ty))
+                      set
+                      fields
+                  | {recordKind = T.OVERLOADED _, ...} =>
+                    raise Control.Bug "EFTV Overloaded"
+            in 
+              OTSet.union(set, EFTVKind (OTSet.singleton tyvarRef))
+            end
+          | (_, set) => set
+        )
+        OTSet.empty
+        ty;
 
    *)
 
@@ -532,8 +563,10 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
         | T.RECORDty tySEnvMap => 
             SEnv.foldl (fn (ty, set) => traverseTy (ty,set)) set tySEnvMap
         | T.RAWty {tyCon, args = tyList} => foldl traverseTy set tyList
-        | T.POLYty {boundtvars = btvKindIEnvMap, body=ty} => traverseTy (ty,set)
-        | T.ALIASty (aliasTy,realTy) => traverseTy (realTy, traverseTy(aliasTy,set))
+        | T.POLYty {boundtvars = btvKindIEnvMap, body=ty} =>
+          traverseTy (ty,set)
+        | T.ALIASty (aliasTy,realTy) =>
+          traverseTy (realTy, traverseTy(aliasTy,set))
         | T.OPAQUEty {spec = {tyCon, args}, implTy} =>
           traverseTy(implTy, foldl traverseTy set args)
         | T.SPECty {tyCon, args} => foldl traverseTy set args
@@ -545,7 +578,8 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
                 (fn (ty, set) => traverseTy (ty,set))
                 set
                 fields
-            | {recordKind = T.OVERLOADED _, ...} => raise Control.Bug "EFTV Overloaded"
+            | {recordKind = T.OVERLOADED _, ...} =>
+              raise Control.Bug "EFTV Overloaded"
     in
       traverseTy (ty, OTSet.empty)
     end
@@ -617,7 +651,8 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
                                   eqKind = T.EQ, 
                                   tyvarName = tyvarName
                                   }
-            | _ => raise Control.Bug "non TVAR in adjustDepthInTy (TypesUtils.sml)"
+            | _ =>
+              raise Control.Bug "non TVAR in adjustDepthInTy (TypesUtils.sml)"
           )
           tyset
         end
@@ -665,13 +700,20 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
   *)
   fun coerceFunM (ty, tyList) =
       case derefTy ty of
-          newTy as T.TYVARty (ref (T.TVAR {lambdaDepth, id, recordKind = T.UNIV, eqKind, tyvarName})) => 
+          oldTy as T.TYVARty
+                (ref (T.TVAR {lambdaDepth,
+                              id,
+                              recordKind = T.UNIV,
+                              eqKind,
+                              tyvarName = NONE})) => 
           let 
-              val tyList = 
-                  map (fn x => 
-                          let
-                              val newTy = 
-                                  T.newty {recordKind = T.UNIV, eqKind=eqKind, tyvarName=tyvarName}
+            val tyList = 
+                map (fn x => 
+                        let
+                          val newTy = 
+                              T.newty {recordKind = T.UNIV,
+                                       eqKind=eqKind,
+                                       tyvarName = NONE}
                           in 
                               newTy
                           end)
@@ -682,10 +724,12 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
               val ty2 = T.newty T.univKind
               val resTy = T.FUNMty(tyList, ty2)
               val _ = adjustDepthInTy lambdaDepth resTy
-              val _ = performSubst (newTy, resTy)
+              val _ = performSubst (oldTy, resTy)
           in
               (tyList, ty2, nil)
           end
+        | T.TYVARty (ref (T.TVAR {tyvarName = SOME _,...})) => 
+           raise CoerceFun
         | T.TYVARty (ref(T.SUBSTITUTED ty)) => 
           coerceFunM (ty, tyList)
         | T.FUNMty (tyList, ty2) => 
@@ -716,13 +760,13 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
   fun TEnvClosure (btvEnv : T.btvEnv) ty =
       TypeTransducer.foldTyPreOrder
       (fn (T.BOUNDVARty n, btvEnv) =>
-	  (case IEnv.find(btvEnv, n) of
-	     SOME btvKind =>
+          (case IEnv.find(btvEnv, n) of
+             SOME btvKind =>
              (
                TEnvClosureOfBTVKind (IEnv.insert (btvEnv, n, btvKind)) btvKind,
                true
              )
-	   | NONE => (btvEnv, true))
+           | NONE => (btvEnv, true))
         | (T.POLYty _, btvEnv) => (btvEnv, false) (* not go inside body *)
         | (_, btvEnv) => (btvEnv, true))
       btvEnv
@@ -732,11 +776,12 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
       case btvKind of
         {recordKind = T.UNIV, ...} => btvEnv
       | {recordKind = T.REC fields, ...} => 
-	SEnv.foldr 
-	    (fn (ty, set) => IEnv.unionWith #1 (TEnvClosure btvEnv ty, set))
-	    btvEnv
-	    fields
-     | {recordKind = T.OVERLOADED _, ...} => raise Control.Bug "OVERLOADED kind given to TEnvClosureOfBTVKind"
+        SEnv.foldr 
+            (fn (ty, set) => IEnv.unionWith #1 (TEnvClosure btvEnv ty, set))
+            btvEnv
+            fields
+      | {recordKind = T.OVERLOADED _, ...} =>
+        raise Control.Bug "OVERLOADED kind given to TEnvClosureOfBTVKind"
 
 (*
   datatype rk = ONE | ZERO | NIL
@@ -824,8 +869,8 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
       end
 (*
 fun unify (ty1, ty2) = Unify.unify [(ty1,ty2)]
-Unify is imperative; i.e. it performs the unifier by updating the type variables.
-So be careful in using this.
+Unify is imperative; i.e. it performs the unifier by updating the type
+variables. So be careful in using this.
 *)
 
   (**
@@ -836,18 +881,18 @@ So be careful in using this.
       then ty
       else
           case ty 
-	   of (T.POLYty{boundtvars,body,...}) =>
-	      let 
-	          val subst = freshSubst boundtvars
-	          val bty = substBTvar subst body
-	      in  
+           of (T.POLYty{boundtvars,body,...}) =>
+              let 
+                  val subst = freshSubst boundtvars
+                  val bty = substBTvar subst body
+              in  
                   freshInstTy bty
-	      end
-	    | T.FUNMty (tyList,ty) => 
+              end
+            | T.FUNMty (tyList,ty) => 
               T.FUNMty(tyList, freshInstTy ty)
-	    | T.RECORDty fl => 
+            | T.RECORDty fl => 
               T.RECORDty (SEnv.map freshInstTy fl)
-	    | ty => ty
+            | ty => ty
 
   (**
    * Make a rigid fresh instance of a polytype and a term of that type.
@@ -857,22 +902,22 @@ So be careful in using this.
       then ty
       else
         case ty 
-	 of (T.POLYty{boundtvars,body,...}) =>
-	    let 
-	      val subst = freshRigidSubst boundtvars
-	      val bty = substBTvar subst body
-	    in  
+         of (T.POLYty{boundtvars,body,...}) =>
+            let 
+              val subst = freshRigidSubst boundtvars
+              val bty = substBTvar subst body
+            in  
                 freshRigidInstTy bty
-	    end
-	  | T.FUNMty (tyList,ty) => 
+            end
+          | T.FUNMty (tyList,ty) => 
             let
                 val newTy = freshRigidInstTy ty
             in
                 T.FUNMty(tyList, newTy)
             end
-	  | T.RECORDty fl => 
+          | T.RECORDty fl => 
             (T.RECORDty  (SEnv.map freshRigidInstTy fl))
-	  | ty => ty
+          | ty => ty
 
   (**
    *)
@@ -885,74 +930,84 @@ So be careful in using this.
    *)
   fun generalizer (ty, contextLambdaDepth) =
       let 
-	  val freeTvs = EFTV ty
-          val tids = 
-              OTSet.foldr 
-                  (fn (
-                       r as
-                         ref
-                         (T.TVAR(k as {id, recordKind = T.OVERLOADED (h :: tl), ...})),
-                         tids
-                         ) => tids
-                    | (r, tids) => OTSet.add(tids, r))
-                  OTSet.empty
-                  (OTSet.filter 
-                       (fn (ref (T.TVAR {lambdaDepth = tyvarLambdaDepth,...})) => 
-                           T.youngerDepth {contextDepth = contextLambdaDepth, tyvarDepth = tyvarLambdaDepth}
-                         | _ => raise Control.Bug "non TVAR found in freeTvs in generalizer (types/main/TypesUtils)"
-                                      )
-                       freeTvs)
+        val freeTvs = EFTV ty
+        val tids = 
+            OTSet.foldr 
+              (fn
+                (
+                 r as
+                   ref
+                   (T.TVAR(k as
+                             {id, recordKind = T.OVERLOADED (h :: tl), ...})),
+                 tids
+                ) => tids
+              | (r, tids) => OTSet.add(tids, r))
+              OTSet.empty
+              (OTSet.filter 
+                 (fn (ref (T.TVAR {lambdaDepth = tyvarLambdaDepth,...})) => 
+                     T.youngerDepth
+                       {contextDepth = contextLambdaDepth,
+                        tyvarDepth = tyvarLambdaDepth}
+                   | _ =>
+                     raise Control.Bug
+                             "non TVAR found in freeTvs in generalizer\
+                             \ (types/main/TypesUtils)"
+                 )
+                 freeTvs)
 
-      (* fix the bug 187
-       * when typeinference phase does type instantiation for the more polymorphic
-       * type in strucutre with the restricted type in signature, the bound type variables 
-       * of the new generated instantiated type should be in the same order as that specified at the 
-       * type in the signature. Since the type varialbes of a polymorphic val type
-       * in signature only bounded at toplevel, the order of these bounded type variables
-       * decides the order of type instantiation paramaters. When we do freshRigidInstTy 
-       * of a signature type, the rigid type variables are in the same incremental order as 
-       * bound variables. And then we generalize the instantiated structure 
-       * type (see function generateInstTermFunOnStructure in TypeInstantiationTerm.sml) by the 
-       * rigid type variables. Since it is always incremental we generate the orderedTidEnv below.
-       * So in this way we generates the new bounded type variables in the order as that of
-       * original bounded type variables.
-       *)
+(* fix the bug 187
+ * when typeinference phase does type instantiation for the more
+ * polymorphic type in strucutre with the restricted type in signature,
+ * the bound type variables of the new generated instantiated type
+ * should be in the same order as that specified at the type in the
+ * signature. Since the type varialbes of a polymorphic val type in
+ * signature only bounded at toplevel, the order of these bounded type
+ * variables decides the order of type instantiation paramaters. When we
+ * do freshRigidInstTy of a signature type, the rigid type variables are
+ * in the same incremental order as bound variables. And then we
+ * generalize the instantiated structure type (see function
+ * generateInstTermFunOnStructure in TypeInstantiationTerm.sml) by the
+ * rigid type variables. Since it is always incremental we generate the
+ * orderedTidEnv below.  So in this way we generates the new bounded
+ * type variables in the order as that of original bounded type
+ * variables.  
+*)
       in
-	  if OTSet.isEmpty tids
-          then ({boundEnv = IEnv.empty, removedTyIds = OTSet.empty})
-	  else
-              let
-                  val (_, btvs) =
-                      OTSet.foldl
-                          (fn (r as ref(T.TVAR (k as {id, ...})), (next, btvs)) =>
-                              let 
-                                  val btvid = BoundTypeVarIDGen.generate ()
-                              in
-                                  (
-                                   r := T.SUBSTITUTED (T.BOUNDVARty btvid);
-                                   (
-                                    next + 1,
-                                    IEnv.insert
-                                        (
-                                         btvs,
-                                         btvid,
-                                         {
-                                          index = next,
-                                          recordKind = (#recordKind k),
-                                          eqKind = (#eqKind k)
-                                          }
-                                         )
-                                        )
-                                   )
-                              end
-                            | _ => raise Control.Bug "generalizeTy")
-		          (0, IEnv.empty)
-		          tids
-	      in
-	          if OTSet.isEmpty tids
-                  then ({boundEnv = IEnv.empty, removedTyIds = OTSet.empty})
-	          else ({boundEnv = btvs, removedTyIds = tids})
-	      end
+        if OTSet.isEmpty tids
+        then ({boundEnv = IEnv.empty, removedTyIds = OTSet.empty})
+        else
+          let
+            val (_, btvs) =
+                OTSet.foldl
+                  (fn (r as ref(T.TVAR (k as {id, ...})), (next, btvs)) =>
+                      let 
+                        val btvid = BoundTypeVarIDGen.generate ()
+                      in
+                        (
+                         r := T.SUBSTITUTED (T.BOUNDVARty btvid);
+                         (
+                          next + 1,
+                          IEnv.insert
+                            (
+                             btvs,
+                             btvid,
+                             {
+                              index = next,
+                              recordKind = (#recordKind k),
+                              eqKind = (#eqKind k)
+                             }
+                            )
+                         )
+                        )
+                      end
+                    | _ => raise Control.Bug "generalizeTy")
+                  (0, IEnv.empty)
+                  tids
+          in
+            if OTSet.isEmpty tids
+            then ({boundEnv = IEnv.empty, removedTyIds = OTSet.empty})
+            else ({boundEnv = btvs, removedTyIds = tids})
+          end
       end
 
   (**
@@ -973,42 +1028,46 @@ So be careful in using this.
 
   fun isTyConOfTyFun ({name, strpath, tyargs, body} : T.tyFun) = 
       let
-	fun isTyCon ty = 		
-	    case ty of
+        fun isTyCon ty =                
+            case ty of
                 T.RAWty _ => true
-	      | T.ALIASty (_, ty) => isTyCon ty
+              | T.ALIASty (_, ty) => isTyCon ty
               | T.SPECty _ => true
-	      | T.OPAQUEty _ => true
-	      | _ => false
+              | T.OPAQUEty _ => true
+              | _ => false
       in
-	  isTyCon body
+          isTyCon body
       end
 
   fun tyFunToTyCon ({name, strpath, tyargs, body}:T.tyFun) = 
       let
-	fun extract ty = 
-	    case  ty of
-	        T.RAWty {tyCon, args} => tyCon
-	      | T.ALIASty (_, ty) => extract ty
+        fun extract ty = 
+            case  ty of
+                T.RAWty {tyCon, args} => tyCon
+              | T.ALIASty (_, ty) => extract ty
               | T.SPECty {tyCon, args} => tyCon
               | T.OPAQUEty {spec = {tyCon, args}, ...} => tyCon
-	      | _ => raise ExIllegalTyFunToTyCon(name)
+              | _ => raise ExIllegalTyFunToTyCon(name)
       in
-	  extract body
+          extract body
       end
 
   fun strPathOfTyBindInfo tyBindInfo =
       case tyBindInfo of
-	T.TYSPEC {strpath, ...}  =>  strpath
-      | T.TYCON  {tyCon = {strpath, ...} ,...} =>  strpath
-      | T.TYFUN  ({body = T.ALIASty(T.RAWty{tyCon = {strpath,...},...},_),...}) => strpath
+        T.TYSPEC {strpath, ...}  =>  strpath
+      | T.TYCON {tyCon = {strpath, ...} ,...} =>  strpath
+      | T.TYFUN
+          ({body = T.ALIASty(T.RAWty{tyCon = {strpath,...},...},_),
+            ...}) => strpath
       | T.TYOPAQUE  {spec = {strpath, ...}, ...} => strpath
-      | T.TYFUN  _ => raise Control.Bug "TYFUN is not well-formed: body = T.ALIASty(T.CONty,_)"
-
+      | T.TYFUN  _ =>
+        raise
+          Control.Bug
+            "TYFUN is not well-formed: body = T.ALIASty(T.CONty,_)"
 
   fun peelTyOPAQUE tyBindInfo =
       case tyBindInfo of
-	T.TYOPAQUE {spec,impl} => peelTyOPAQUE impl
+        T.TYOPAQUE {spec,impl} => peelTyOPAQUE impl
       |  _   => tyBindInfo
 
   fun stripSysStrpathRecordKind (recordKind : T.recordKind) =
@@ -1047,14 +1106,16 @@ So be careful in using this.
           T.FUNMty (map stripSysStrpathTy tys, stripSysStrpathTy ty)
         | T.RECORDty tys => T.RECORDty (SEnv.map stripSysStrpathTy tys)
         | T.RAWty {tyCon, args} =>
-          T.RAWty {tyCon = {name = #name tyCon, 
-                            strpath = Path.pathToUsrPath (#strpath tyCon), 
-                            abstract = #abstract tyCon, 
-                            tyvars = #tyvars tyCon, 
-		            id = #id tyCon, 
-		            eqKind = #eqKind tyCon,
-                            constructorHasArgFlagList = #constructorHasArgFlagList tyCon
-                           },
+          T.RAWty
+            {tyCon = {name = #name tyCon, 
+                      strpath = Path.pathToUsrPath (#strpath tyCon), 
+                      abstract = #abstract tyCon, 
+                      tyvars = #tyvars tyCon, 
+                      id = #id tyCon, 
+                      eqKind = #eqKind tyCon,
+                      constructorHasArgFlagList =
+                        #constructorHasArgFlagList tyCon
+                     },
                    args = map stripSysStrpathTy args}
         | T.POLYty {boundtvars, body} =>
           T.POLYty {boundtvars = IEnv.map stripSysStrpathBtvKind boundtvars,
@@ -1062,26 +1123,30 @@ So be careful in using this.
         | T.ALIASty (ty1, ty2) =>
           T.ALIASty (stripSysStrpathTy ty1, ty2) 
         | T.OPAQUEty {spec = {tyCon, args}, implTy} =>
-          T.OPAQUEty {spec = {tyCon = {name = #name tyCon, 
-                                       strpath = Path.pathToUsrPath (#strpath tyCon), 
-                                       abstract = #abstract tyCon, 
-                                       tyvars = #tyvars tyCon, 
-		                       id = #id tyCon, 
-		                       eqKind = #eqKind tyCon,
-                                       constructorHasArgFlagList = #constructorHasArgFlagList tyCon
-                                      },
-                              args = map stripSysStrpathTy args},
-                      implTy = implTy}
+          T.OPAQUEty
+            {spec =
+             {tyCon =
+              {name = #name tyCon, 
+               strpath = Path.pathToUsrPath (#strpath tyCon), 
+               abstract = #abstract tyCon, 
+               tyvars = #tyvars tyCon, 
+               id = #id tyCon, 
+               eqKind = #eqKind tyCon,
+               constructorHasArgFlagList = #constructorHasArgFlagList tyCon
+              },
+              args = map stripSysStrpathTy args},
+             implTy = implTy}
         | T.SPECty {tyCon, args} =>
-          T.SPECty {tyCon = {name = #name tyCon, 
-                             strpath = Path.pathToUsrPath (#strpath tyCon), 
-                             abstract = #abstract tyCon, 
-                             tyvars = #tyvars tyCon, 
-		             id = #id tyCon, 
-		             eqKind = #eqKind tyCon,
-                             constructorHasArgFlagList = #constructorHasArgFlagList tyCon
-                            },
-                    args = map stripSysStrpathTy args}
-             
+          T.SPECty
+            {tyCon =
+             {name = #name tyCon, 
+              strpath = Path.pathToUsrPath (#strpath tyCon), 
+              abstract = #abstract tyCon, 
+              tyvars = #tyvars tyCon, 
+              id = #id tyCon, 
+              eqKind = #eqKind tyCon,
+              constructorHasArgFlagList = #constructorHasArgFlagList tyCon
+             },
+             args = map stripSysStrpathTy args}
   end
 end

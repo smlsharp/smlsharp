@@ -2847,8 +2847,7 @@ struct
          *             p)
          *)
         let
-          val s = BigInt.fmt (StringCvt.DEC) n
-          val s = String.translate (fn #"~" => "-" | c => str c) s
+          val s = BigInt.toCString n
         in
           transformConst context (AI.ConstString s)
         end

@@ -45,9 +45,11 @@ sig
          CallLongMethodA
          : JNITypes.jclass * JNITypes.jmethodID * JNITypes.jvalueArray
            -> JNITypes.jlong,
+(* FIXME: enable this when SML# FFI supports float.
          CallFloatMethodA
          : JNITypes.jclass * JNITypes.jmethodID * JNITypes.jvalueArray
            -> JNITypes.jfloat,
+*)
          CallDoubleMethodA
          : JNITypes.jclass * JNITypes.jmethodID * JNITypes.jvalueArray
            -> JNITypes.jdouble,
@@ -68,8 +70,10 @@ sig
          : JNITypes.jobject * JNITypes.jfieldID -> JNITypes.jint,
          GetLongField
          : JNITypes.jobject * JNITypes.jfieldID -> JNITypes.jlong,
+(* FIXME: enable this when SML# FFI supports float.
          GetFloatField
          : JNITypes.jobject * JNITypes.jfieldID -> JNITypes.jfloat,
+*)
          GetDoubleField
          : JNITypes.jobject * JNITypes.jfieldID -> JNITypes.jdouble,
          SetObjectField
@@ -113,9 +117,11 @@ sig
          CallStaticLongMethodA
          : JNITypes.jclass * JNITypes.jmethodID * JNITypes.jvalueArray
            -> JNITypes.jlong,
+(* FIXME: enable this when SML# FFI supports float.
          CallStaticFloatMethodA
          : JNITypes.jclass * JNITypes.jmethodID * JNITypes.jvalueArray
            -> JNITypes.jfloat,
+*)
          CallStaticDoubleMethodA
          : JNITypes.jclass * JNITypes.jmethodID * JNITypes.jvalueArray
            -> JNITypes.jdouble,
@@ -138,8 +144,10 @@ sig
          : JNITypes.jclass * JNITypes.jfieldID -> JNITypes.jint,
          GetStaticLongField
          : JNITypes.jclass * JNITypes.jfieldID -> JNITypes.jlong,
+(* FIXME: enable this when SML# FFI supports float.
          GetStaticFloatField
          : JNITypes.jclass * JNITypes.jfieldID -> JNITypes.jfloat,
+*)
          GetStaticDoubleField
          : JNITypes.jclass * JNITypes.jfieldID -> JNITypes.jdouble,
          SetStaticObjectField

@@ -422,7 +422,8 @@ std::string MLLiteralOfVariant(VARIANT* variant)
     switch(V_VT(variant)){
 //      case VT_EMPTY: break;
 //      case VT_NULL: break;
-//      case VT_I2: oss << V_I2(variant); break;
+      case VT_I2: 
+        oss << (V_I2(variant) < 0 ? "~" : "") << abs(V_I2(variant)); break;
       case VT_I4: 
         oss << (V_I4(variant) < 0 ? "~" : "") << abs(V_I4(variant)); break;
 //      case VT_R4: oss << V_R4(variant); break;
@@ -437,10 +438,15 @@ std::string MLLiteralOfVariant(VARIANT* variant)
 //      case VT_DECIMAL: oss << V_DECIMAL(variant); break;
 //      case VT_RECORD: oss << V_RECORD(variant); break;
 //      case VT_UNKNOWN: oss << V_UNKNOWN(variant); break;
-      case VT_I1: oss << (unsigned int)(V_I1(variant)); break;
+      case VT_I1: 
+        oss << (V_I1(variant) < 0 ? "~" : "") << abs(V_I1(variant)); break;
       case VT_UI1: oss << "0wx" << V_UI1(variant); break;
-//      case VT_UI2: oss << V_UI2(variant); break;
+      case VT_UI2: oss << "0wx" << V_UI2(variant); break;
       case VT_UI4: oss << "0wx" << V_UI4(variant); break;
+      case VT_I8: 
+        oss << (V_I8(variant) < 0 ? "~" : "") << abs(V_I8(variant)); break;
+      case VT_UI8: 
+        oss << V_UI8(variant); break;
 //      case VT_INT:
 //        oss << (V_INT(variant) < 0 ? "~" : "") << abs(V_INT(variant)); break;
 //      case VT_UINT: oss << "0wx" << V_UINT(variant); break;
@@ -514,13 +520,10 @@ std::string MLTypeOfTYPEDESC(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
 
     switch(pTypeDesc->vt) {
         // VARIANT compatible types
-/*
-      case VT_I2: return "short";
-*/
+
+      case VT_I2: return "Int32.int";
       case VT_I4: return "Int32.int";
-/*
-      case VT_R4: return "float";
-*/
+      case VT_R4: return "Real32.real";
       case VT_R8: return "Real64.real";
 /*
       case VT_CY: return "CY";
@@ -536,18 +539,12 @@ std::string MLTypeOfTYPEDESC(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
       case VT_UNKNOWN: return "OLE.Unknown";
       case VT_UI1: return "Word8.word";
         // VARIANTARG compatible types
-/*
-      case VT_DECIMAL: return "DECIMAL";
-*/
-      case VT_I1: return "Word8.word";// ToDo : if we have Int8, use it.
-/*
-      case VT_UI2: return "USHORT";
-*/
+      case VT_DECIMAL: return "OLE.decimal";
+      case VT_I1: return "Int32.int";// ToDo : if we have Int8, use it.
+      case VT_UI2: return "Word32.word";
       case VT_UI4: return "Word32.word";
-/*
-      case VT_I8: return "__int64";
-      case VT_UI8: return "unsigned __int64";
-*/
+      case VT_I8: return "IntInf.int";
+      case VT_UI8: return "IntInf.int";
       case VT_INT: return "Int32.int";
       case VT_UINT: return "Word32.word";
 /*
@@ -607,13 +604,10 @@ std::string toVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
 
     switch(pTypeDesc->vt) {
         // VARIANT compatible types
-/*
-      case VT_I2: return "short";
-*/
+
+      case VT_I2: return "fromI2";
       case VT_I4: return "fromI4";
-/*
-      case VT_R4: return "float";
-*/
+      case VT_R4: return "fromR4";
       case VT_R8: return "fromR8";
 /*
       case VT_CY: return "CY";
@@ -629,18 +623,12 @@ std::string toVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
       case VT_UNKNOWN: return "fromUNKNOWN";
       case VT_UI1: return "fromUI1";
         // VARIANTARG compatible types
-/*
-      case VT_DECIMAL: return "DECIMAL";
-*/
+      case VT_DECIMAL: return "fromDECIMAL";
       case VT_I1: return "fromI1";
-/*
-      case VT_UI2: return "USHORT";
-*/
+      case VT_UI2: return "fromUI2";
       case VT_UI4: return "fromUI4";
-/*
-      case VT_I8: return "__int64";
-      case VT_UI8: return "unsigned __int64";
-*/
+      case VT_I8: return "fromI8";
+      case VT_UI8: return "fromUI8";
       case VT_INT: return "fromINT";
       case VT_UINT: return "fromUINT";
 /*
@@ -698,13 +686,10 @@ std::string fromVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
 
     switch(pTypeDesc->vt) {
         // VARIANT compatible types
-/*
-      case VT_I2: return "short";
-*/
+
+      case VT_I2: return "toI2";
       case VT_I4: return "toI4";
-/*
-      case VT_R4: return "float";
-*/
+      case VT_R4: return "toR4";
       case VT_R8: return "toR8";
 /*
       case VT_CY: return "CY";
@@ -720,18 +705,12 @@ std::string fromVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
       case VT_UNKNOWN: return "toUNKNOWN";
       case VT_UI1: return "toUI1";
         // VARIANTARG compatible types
-/*
-      case VT_DECIMAL: return "DECIMAL";
-*/
+      case VT_DECIMAL: return "toDECIMAL";
       case VT_I1: return "toI1";
-/*
-      case VT_UI2: return "USHORT";
-*/
+      case VT_UI2: return "toUI2";
       case VT_UI4: return "toUI4";
-/*
-      case VT_I8: return "__int64";
-      case VT_UI8: return "unsigned __int64";
-*/
+      case VT_I8: return "toI8";
+      case VT_UI8: return "toUI8";
       case VT_INT: return "toINT";
       case VT_UINT: return "toUINT";
 /*
@@ -917,7 +896,10 @@ std::string wrapMethodText(ITypeInfo* pTypeInfo, FUNCDESC* pFuncDesc)
         }
       case INVOKE_FUNC:
         if(VT_VOID == pFuncDesc->elemdescFunc.tdesc.vt){
-            oss << "NONE => ()" << std::endl;
+            // void method returns an EMPTY.
+            oss << "  SOME OLE.EMPTY => ()" << std::endl;
+            // FIXME: Perhaps, nothing is returned in some case (?).
+            oss << " | NONE => ()" << std::endl;
             oss << " | SOME _ => "
                 << "raise OLE.OLEError"
                 << "(OLE.ResultMismatch "
@@ -1174,8 +1156,12 @@ void emitForConstantVars(ITypeInfo* pTypeInfo,
 }
 
 const std::string HeaderBindings =
-" fun toI4 (OLE.I4 int) = int \n\
+" fun toI2 (OLE.I2 int) = int \n\
+    | toI2 _ = raise OLE.OLEError(OLE.TypeMismatch \"I2 expected\") \n\
+  fun toI4 (OLE.I4 int) = int \n\
     | toI4 _ = raise OLE.OLEError(OLE.TypeMismatch \"I4 expected\") \n\
+  fun toR4 (OLE.R4 float) = float \n\
+    | toR4 _ = raise OLE.OLEError(OLE.TypeMismatch \"R4 expected\") \n\
   fun toR8 (OLE.R8 real) = real \n\
     | toR8 _ = raise OLE.OLEError(OLE.TypeMismatch \"R8 expected\") \n\
   fun toBSTR (OLE.BSTR string) = string \n\
@@ -1188,12 +1174,20 @@ const std::string HeaderBindings =
     | toVARIANT _ = raise OLE.OLEError(OLE.TypeMismatch \"VARIANT expected\") \n\
   fun toUNKNOWN (OLE.UNKNOWN unknown) = unknown \n\
     | toUNKNOWN _ = raise OLE.OLEError(OLE.TypeMismatch \"UNKNOWN expected\") \n\
-  fun toI1 (OLE.I1 char) = char \n\
+  fun toDECIMAL (OLE.DECIMAL decimal) = decimal \n\
+    | toDECIMAL _ = raise OLE.OLEError(OLE.TypeMismatch \"DECIMAL expected\") \n\
+  fun toI1 (OLE.I1 sbyte) = sbyte \n\
     | toI1 _ = raise OLE.OLEError(OLE.TypeMismatch \"I1 expected\") \n\
   fun toUI1 (OLE.UI1 byte) = byte \n\
     | toUI1 _ = raise OLE.OLEError(OLE.TypeMismatch \"UI1 expected\") \n\
+  fun toUI2 (OLE.UI2 word) = word \n\
+    | toUI2 _ = raise OLE.OLEError(OLE.TypeMismatch \"UI2 expected\") \n\
   fun toUI4 (OLE.UI4 word) = word \n\
     | toUI4 _ = raise OLE.OLEError(OLE.TypeMismatch \"UI4 expected\") \n\
+  fun toI8 (OLE.I8 int) = int \n\
+    | toI8 _ = raise OLE.OLEError(OLE.TypeMismatch \"I8 expected\") \n\
+  fun toUI8 (OLE.UI8 word) = word \n\
+    | toUI8 _ = raise OLE.OLEError(OLE.TypeMismatch \"UI8 expected\") \n\
   fun toINT (OLE.INT int) = int \n\
     | toINT _ = raise OLE.OLEError(OLE.TypeMismatch \"INT expected\") \n\
   fun toUINT (OLE.UINT word) = word \n\
@@ -1203,16 +1197,22 @@ const std::string HeaderBindings =
   fun toVARIANTARRAY (OLE.VARIANTARRAY array) = array \n\
     | toVARIANTARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"VARIANTARRAY expected\") \n\
  \n\
+  val fromI2 = OLE.I2 \n\
   val fromI4 = OLE.I4 \n\
+  val fromR4 = OLE.R4 \n\
   val fromR8 = OLE.R8 \n\
   val fromBSTR = OLE.BSTR \n\
   val fromDISPATCH = OLE.DISPATCH \n\
   val fromBOOL = OLE.BOOL \n\
   val fromVARIANT = OLE.VARIANT \n\
   val fromUNKNOWN = OLE.UNKNOWN \n\
+  val fromDECIMAL = OLE.DECIMAL \n\
   val fromI1 = OLE.I1 \n\
   val fromUI1 = OLE.UI1 \n\
+  val fromUI2 = OLE.UI2 \n\
   val fromUI4 = OLE.UI4 \n\
+  val fromI8 = OLE.I8 \n\
+  val fromUI8 = OLE.UI8 \n\
   val fromINT = OLE.INT \n\
   val fromUINT = OLE.UINT \n\
   fun fromBYREF fromElement v = OLE.BYREF(fromElement v) \n\

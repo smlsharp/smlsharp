@@ -17,7 +17,7 @@ sig
   (** 64 bit integer. *)
   type long = IntInf.int
   type double = real
-  type float = float
+  type float = Real32.real
   (** reference to a Java object. *)
   type Object
   type String = string option
