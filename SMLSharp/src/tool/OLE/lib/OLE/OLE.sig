@@ -1,6 +1,5 @@
 (**
- * The OLE structure provides access to Microsoft OLE automation.
- * It wraps IDispatch interface of COM object in a record of functions.
+ * The OLE structure provides access to Microsoft COM and OLE automation.
  * @copyright (c) 2007, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @version $Id: OLE.sml,v 1.27.22.2 2010/05/09 03:58:29 kiyoshiy Exp $
@@ -15,6 +14,9 @@ sig
 
   structure Decimal : OLE_DECIMAL
   type decimal = Decimal.decimal
+
+  structure SafeArray : OLE_SAFEARRAY
+  type 'a safearray = 'a SafeArray.safearray
 
   (** parameter to OLE.initialize. *)
   datatype coinit =
@@ -95,14 +97,26 @@ sig
            BYREF of variant
          | (** parameter of VT_BYREF type with [out] attribute. *)
            BYREFOUT of variant ref
-         | (** corresponds to (VT_ARRAY | VT_VARIANT).
-            * Second component is the numbers of elements of each
-            * dimension.
-            * <code>VARIANTARRAY(ar, [0w10, 0w20, 0w30])</code>
-            * corresponds to <code>VARIANT ar[10][20][30]</code> in C
-            * syntax, for example.
-            *)
-           VARIANTARRAY of variant array * word list
+
+         | I2ARRAY of Int32.int safearray
+         | I4ARRAY of Int32.int safearray
+         | R4ARRAY of Real32.real safearray
+         | R8ARRAY of Real64.real safearray
+         | BSTRARRAY of OLEString.string safearray
+         | DISPATCHARRAY of Dispatch safearray
+         | ERRORARRAY of Int32.int safearray
+         | BOOLARRAY of bool safearray
+         | VARIANTARRAY of variant safearray
+         | UNKNOWNARRAY of Unknown safearray
+         | DECIMALARRAY of decimal safearray
+         | I1ARRAY of Int32.int safearray
+         | UI1ARRAY of Word8.word safearray
+         | UI2ARRAY of Word32.word safearray
+         | UI4ARRAY of Word32.word safearray
+         | I8ARRAY of IntInf.int safearray
+         | UI8ARRAY of IntInf.int safearray
+         | INTARRAY of Int32.int safearray
+         | UINTARRAY of Word32.word safearray
 
   (** specific information of error raised in the OLE structure. *)
   datatype error = 
@@ -200,6 +214,9 @@ sig
   val wrapEnumVARIANT : Unknown -> EnumVARIANT
 
   (* below functions are for user convenience. *)
+
+  (** makes a string representation of a variant. *)
+  val variantToString : variant -> String.string
 
   (** special variant which is used to indicate the corresponding optional
    * parameter is not specified. *)

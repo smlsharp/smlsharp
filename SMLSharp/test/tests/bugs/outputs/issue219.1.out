@@ -1,4 +1,6 @@
 ../tests/bugs/tests/issue219.1.sml:1.9-1.13 Error:
   operator and operand don't agree
-  operator domain: 'B#{int, real}
-  operand: 'A#{word, largeWord, byte}
+  operator domain: 'B#{int, IntInf.int, real, Real32.real}
+  operand: 'A#{word, Word8.word}
+
+

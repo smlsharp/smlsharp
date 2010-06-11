@@ -184,6 +184,48 @@ IMLPrim_Float_classImpl(UInt32Value argsCount,
     return;
 };
 
+/* FIXME: These functions are defined in RealPrimitives.cc.
+ * They should be moved to another source file to be shared by Real and Float.
+ */
+Cell
+realToMLString(Real64Value real, SInt32Value prec);
+bool
+MLStringToReal(Cell MLStringCell, Real64Value* resultValue);
+
+/*
+ * val dtoa : (float * int) -> string * int
+ * argument is real and precision.
+ * return is string and exponential.
+ */
+void
+IMLPrim_Float_dtoaImpl(UInt32Value argsCount,
+                       Cell* argumentRefs[],
+                       Cell* resultRef)
+{
+    Real32Value floatValue = argumentRefs[0]->real32;
+    SInt32Value prec = argumentRefs[1]->sint32;
+    // Note: realToMLString is defined in RealPrimitives.cc.
+    *resultRef = realToMLString((Real64Value)floatValue, prec);
+    return;
+};
+
+/*
+ * val strtod : string -> float
+ */
+void
+IMLPrim_Float_strtodImpl(UInt32Value argsCount,
+                         Cell* argumentRefs[],
+                         Cell* resultRef)
+{
+    Real64Value resultValue;
+    // Note: MLStringToReal is defined in RealPrimitives.cc.
+    if(MLStringToReal(*argumentRefs[0], &resultValue)){
+        resultRef->real32 = (Real32Value)resultValue;
+    }
+
+    return;
+}
+
 Primitive IMLPrim_Float_toString = IMLPrim_Float_toStringImpl;
 Primitive IMLPrim_Float_fromInt = IMLPrim_Float_fromIntImpl;
 Primitive IMLPrim_Float_floor = IMLPrim_Float_floorImpl;
@@ -196,6 +238,8 @@ Primitive IMLPrim_Float_fromManExp = IMLPrim_Float_fromManExpImpl;
 Primitive IMLPrim_Float_copySign = IMLPrim_Float_copySignImpl;
 Primitive IMLPrim_Float_equal = IMLPrim_Float_equalImpl;
 Primitive IMLPrim_Float_class = IMLPrim_Float_classImpl;
+Primitive IMLPrim_Float_dtoa = IMLPrim_Float_dtoaImpl;
+Primitive IMLPrim_Float_strtod = IMLPrim_Float_strtodImpl;
 
 ///////////////////////////////////////////////////////////////////////////////
 

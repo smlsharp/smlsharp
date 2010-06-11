@@ -1,15 +1,15 @@
-use "./DataTypes3Testee.sml";
+use "./MethodCall1Testee.sml";
 
 (*
  * test cases for arity and co-arity of COM object method.
  *)
-structure DataTypes3Tester =
+structure MethodCall1Tester =
 struct
 
   structure A = SMLUnit.Assert
   structure Test = SMLUnit.Test
 
-  structure T = DataTypes3Testee
+  structure T = MethodCall1Testee
 
   open AssertOLEValue
   open AssertDotNETValue
@@ -18,7 +18,7 @@ struct
 
   fun testArity1 () =
       let
-        val obj = T.newDataTypes3Testee ()
+        val obj = T.newMethodCall1Testee ()
         val _ = assertEqualI4 3 (#method_II_I obj (1, 2))
         val _ = assertEqualI4 3 (#method_ID_I obj (1, 2.34))
         val _ = assertEqualI4 3 (#method_DI_I obj (2.34, 1))
@@ -31,7 +31,7 @@ struct
 
   fun testCoArity1 () =
       let
-        val obj = T.newDataTypes3Testee ()
+        val obj = T.newMethodCall1Testee ()
         val _ = A.assertEqualUnit () (#method_V_V obj ())
         val _ = A.assertEqualUnit () (#method_I_V obj (123))
         val _ = A.assertEqualUnit () (#method_II_V obj (123, 456))

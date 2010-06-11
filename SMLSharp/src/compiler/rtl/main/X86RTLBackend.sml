@@ -4,7 +4,9 @@ structure X86RTLBackend : sig
       Counters.stamp
       -> int option   (* compile unit stamp *)
       -> AbstractInstruction2.program
-      -> Counters.stamp * SessionTypes.asmOutput
+      -> Counters.stamp *
+         {code: SessionTypes.asmOutput,
+          nextDummy: SessionTypes.asmOutput option}
 
 end =
 struct
@@ -219,23 +221,36 @@ val _ = Control.pl (Control.f2 (R.format_id, SMLFormat.BasicFormatters.format_in
             (ClusterID.Map.empty, nil)
             topdecls
 
-  fun asmgen program =
+  fun asmgen {code, nextDummy} =
       let
-        val formatFn =
+        val {format_code, format_nextDummy} =
             case #ossys (Control.targetInfo ()) of
-              "darwin" => X86Asm.darwin_instruction
-            | "linux" => X86Asm.att_instruction
-            | "freebsd" => X86Asm.att_instruction
-            | "openbsd" => X86Asm.att_instruction
-            | "netbsd" => X86Asm.att_instruction
+              "darwin"  => {format_code = X86Asm.darwin_program,
+                            format_nextDummy = X86Asm.darwin_nextDummy}
+            | "linux"   => {format_code = X86Asm.att_program,
+                            format_nextDummy = X86Asm.att_nextDummy}
+            | "freebsd" => {format_code = X86Asm.att_program,
+                            format_nextDummy = X86Asm.att_nextDummy}
+            | "openbsd" => {format_code = X86Asm.att_program,
+                            format_nextDummy = X86Asm.att_nextDummy}
+            | "netbsd"  => {format_code = X86Asm.att_program,
+                            format_nextDummy = X86Asm.att_nextDummy}
+            | "mingw"   => {format_code = X86Asm.att_program,
+                            format_nextDummy = X86Asm.att_nextDummy}
+            | "cygwin"  => {format_code = X86Asm.att_program,
+                            format_nextDummy = X86Asm.att_nextDummy}
             | x => raise Control.Bug ("unknown target os: " ^ x)
-        val asm = map (SMLFormat.prettyPrint nil o formatFn) program
+
+        fun output formatter code =
+            fn outFn =>
+               outFn (SMLFormat.prettyPrint nil (formatter code)) : unit
+
+        val nextDummyOut =
+            case nextDummy of
+              nil => NONE
+            | _::_ => SOME (output format_nextDummy nextDummy)
       in
-        fn outFn => app (fn s => (outFn s; outFn "\n")) asm
-(*
-        fn outFn => (SMLFormat.prettyPrint [SMLFormat.OutputFn outFn] format;
-                     ())
-*)
+        {code = output format_code code, nextDummy = nextDummyOut}
       end
 
   fun codegen stamp unitStamp aicode =

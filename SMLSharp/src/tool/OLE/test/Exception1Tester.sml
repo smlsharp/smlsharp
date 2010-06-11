@@ -1,15 +1,15 @@
-use "./DataTypes4Testee.sml";
+use "./Exception1Testee.sml";
 
 (*
  * test cases for handling exception thrown from COM/.NET object.
  *)
-structure DataTypes4Tester =
+structure Exception1Tester =
 struct
 
   structure A = SMLUnit.Assert
   structure Test = SMLUnit.Test
 
-  structure T = DataTypes4Testee
+  structure T = Exception1Testee
 
   open AssertOLEValue
   open AssertDotNETValue
@@ -18,7 +18,7 @@ struct
 
   fun testThrow1 () =
       let
-        val obj = T.newDataTypes4Testee ()
+        val obj = T.newException1Testee ()
         val _ =
             (#method_throw obj (); A.fail "exception is expected.")
             handle OLE.OLEError(OLE.ComApplicationError _) => ()

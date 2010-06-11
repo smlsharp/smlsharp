@@ -1,3 +1,9 @@
+(**
+ * interface to null-terminated strings allocated outside of the managed heap
+ * of SML#.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: UNMANAGED_STRING.sig,v 1.3 2006/11/04 13:16:37 kiyoshiy Exp $
+ *)
 structure UnmanagedString : UNMANAGED_STRING =
 struct
 
@@ -8,7 +14,7 @@ struct
   (***************************************************************************)
 
   (**
-   * string allocated outside of the managed heap.
+   * null-terminated string allocated outside of the managed heap.
    *)
   type unmanagedString = unit ptr
 
@@ -25,15 +31,12 @@ struct
       
   (**
    * copy a string to unmanaged memory.
-   * The retured unmanagedString must be released by releaseUnmanagedBlock
+   * The returned unmanagedString must be released by releaseUnmanagedBlock
    * after use.
    *)
-  val export = UM.export o Byte.stringToBytes
+  fun export string = (UM.export o Byte.stringToBytes) (string ^ "\000")
 
-  fun exportSubstring substring =
-      let val (string, start, length) = Substring.base substring
-      in UM.exportSlice (Byte.stringToBytes string, start, length)
-      end
+  val exportSubstring = export o Substring.string
 
   (**
    * release the memory allocated by exportBlock.

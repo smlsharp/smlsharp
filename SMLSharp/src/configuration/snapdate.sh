@@ -19,15 +19,16 @@ if [ -d "$dir/CVS" ]; then
   | sort -n -r \
   | head -n1
 elif [ -d "$dir/.hg" ]; then
-  (hg tip || date '+date: %a %b %d %H:%M:%S %Y %z') \
-  | awk '
+  rev=`hg summary | awk '/^parent:/{sub("^[0-9]*:","",$2);print $2}'`
+  (hg log -r"$rev" || date '+date: %a %b %d %H:%M:%S %Y %z') \
+  | awk -vREV="$rev" '
       BEGIN {
         m["Jan"] = 1; m["Feb"] = 2; m["Mar"] = 3; m["Apr"] = 4;
         m["May"] = 5; m["Jun"] = 6; m["Jul"] = 7; m["Aug"] = 8;
         m["Sep"] = 9; m["Oct"] = 10; m["Nov"] = 11; m["Dec"] = 12;
       }
       /^date:/ {
-        printf "%04d-%02d-%02d %s\n", $6, m[$3], $4, $5;
+        printf "%04d-%02d-%02d %s %s\n", $6, m[$3], $4, $5, REV;
       }
     '
 else

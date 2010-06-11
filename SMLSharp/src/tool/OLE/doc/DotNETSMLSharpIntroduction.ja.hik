@@ -1,3 +1,5 @@
+//.NET/SML#の紹介
+
 OLE/SML#を通して、.NETオブジェクトにSML#からアクセスすることができる。
 
 つぎのC#コード( HelloDotNetWorld.cs )で実装される.NETオブジェクトを
@@ -137,3 +139,8 @@ SMLソースコードから実行ファイルを生成できれば、アセンブリと
  $ ./UseHelloDotNetWorld.exe
  I am a .NET object.
  Hello, world !
+
+!.NET/SML#.に関する項目
+
+*[[DotNETSMLSharpIntroduction]]
+*[[mapping .NET and SML#|http://www.pllab.riec.tohoku.ac.jp/hiki/smlsharp/?DotNETSMLSharpMapping]]

@@ -19,7 +19,6 @@ if [ -d "$DESTDIR/$NAME" ]; then
 fi
 
 set -x
-TAG=tip
 
 hg archive -r "$TAG" smlsharp
 (

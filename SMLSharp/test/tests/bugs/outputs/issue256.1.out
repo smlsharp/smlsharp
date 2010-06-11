@@ -1,8 +1,8 @@
 structure STR : sig datatype dt con D : dt con E : dt con F : dt val x : dt end
-signature SIG1 = sig datatype dt con D : dt con E : dt con F : dt val x : dt end
+signature SIG1 = sig datatype dt = D | E | F val x : dt end
 structure STR1 : SIG1
 val r1 = true : bool
-signature SIG2 = sig datatype dt con D : dt con E : dt con F : dt val x : dt end
+signature SIG2 = sig datatype dt = E | F | D val x : dt end
 structure STR2 : SIG2
 val r2 = true : bool
 structure STR3 : SIG2

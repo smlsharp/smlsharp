@@ -8,7 +8,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if 0
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+#if defined(HAVE_CONFIG_H) && defined(HAVE_SYS_MMAN_H)
 #include <sys/mman.h>
+#endif /* HAVE_SYS_MMAN_H */
+#endif
+
 #include "smlsharp.h"
 #include "object.h"
 #include "objspace.h"
@@ -177,7 +186,11 @@ heap_space_swap()
 static void
 heap_space_free(struct heap_space *heap)
 {
+#if 0
 	munmap(heap->base, heap->limit - heap->base);
+#else
+	free(heap->base);
+#endif
 }
 
 static void

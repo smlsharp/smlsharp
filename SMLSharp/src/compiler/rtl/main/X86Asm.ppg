@@ -78,23 +78,13 @@ struct
   type loc = Loc.loc
 
   (*% @prefix att_
-   * @formatter(ClusterID.id) ClusterID.format_id *)
-  (*% @prefix format_ @ditto att_ *)
-  (*% @prefix darwin_ @ditto att_ *)
-  datatype labelScope =
-      (*% @prefix att_ @format(c) "C" c *)
-      CLUSTER of ClusterID.id
-    | (*% @prefix att_ @format *)
-      TOPLEVEL
-
-  (*% @prefix att_
    * @formatter(LocalVarID.id) LocalVarID.format_id
    * @formatter(ClusterID.id) ClusterID.format_id *)
   (*% @prefix format_ @ditto att_ *)
   (*% @prefix darwin_ @ditto att_ *)
   type localLabel =
-      (*% @prefix att_ @format(s * l) "." s "." "L" l *)
-      labelScope * LocalVarID.id
+      (*% @prefix att_ @format(c * l) ".C" c "." "L" l *)
+      ClusterID.id * LocalVarID.id
 
   (*% @prefix att_ *)
   (*% @prefix format_ @ditto att_ *)
@@ -902,15 +892,14 @@ struct
       FLDCW of mem
 
     (* pseudo instructions *)
-    | (*% @prefix att_ @format(l) l ":" *)
-      Label of localLabel
-    | (*% @prefix att_ @format(l) l ":" *)
-      Symbol of symbol
+    | (*% @prefix att_
+       *  @format(l * loc lo:withPrefix) l ":" lo(loc)("\t\t#" +) *)
+      Label of localLabel * loc option
+    | (*% @prefix att_
+       *  @format(l * loc lo:withPrefix) l ":" lo(loc)("\t\t#" +) *)
+      Symbol of symbol * loc option
     | (*% @prefix att_ @format(l) "\t.globl\t" l *)
       Global of symbol
-    | (*% @prefix att_ @format(x) "\t# .loc " x *)
-      (*% @prefix darwin_ @format(x) "\t# .loc " x *)
-      Loc of loc
     | (*% @prefix att_
        * @format({align,filler}) "\t.align\t" align ", " filler *)
       (*% @prefix darwin_
@@ -966,25 +955,6 @@ struct
        * sym ":"
        *)
       GET_PC_THUNK_Decl of symbol
-    | (*% @prefix att_ @format(sym)
-       * "\t.text" \n
-       * "\t.align\t4, 0x90" \n
-       * "\t.weak\t" sym \n
-       * sym ":" \n
-       * "\tret"
-       *)
-      (*% @prefix format_ @format(sym)
-       * sym ": # toplevel stub code"
-       *)
-      (*% @prefix darwin_ @format(sym)
-       * "\t.section __TEXT,__textcoal_nt,coalesced,pure_instructions" \n
-       * "\t.weak_definition" + sym \n
-       * (* "\t.private_extern" + sym \n *)
-       * "\t.globl" + sym \n
-       * "\t.align\t2, 0x90" \n
-       * sym ":"
-       *)
-      NEXT_TOPLEVEL_STUB_Decl of symbol
     | (*% @prefix att_ @format(l * {size,align})
        * ".comm " size ", " l ", " align *)
       Comm of symbol * {size: int, align: int}
@@ -995,6 +965,36 @@ struct
   type program =
       (*% @prefix att_ @format(insn insns:lines) insns(insn)(,\n) *)
        instruction list
+
+  (*% @prefix att_ *)
+  (*% @prefix format_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype dummyNextToplevel =
+      (*% @prefix att_ @format(sym)
+       * "\t.text" \n
+       * "\t.align\t4, 0x90" \n
+       * "\t.globl\t" sym \n
+       * sym ":" \n
+       * "\tret"
+       *)
+      (*% @prefix format_ @format(sym)
+       * sym ": # toplevel stub code"
+       *)
+      (*% @prefix darwin_ @format(sym)
+       * "\t.text" \n
+       * "\t.align\t2, 0x90" \n
+       * "\t.globl" + sym \n
+       * sym ":" \n
+       * "\tret"
+       *)
+      DUMMY_NEXT_TOPLEVEL of symbol
+
+  (*% @prefix att_ @formatter(lines) formatLines *)
+  (*% @prefix darwin_ @ditto att_ *)
+  (*% @prefix format_ @ditto att_ *)
+  type nextDummy =
+      (*% @prefix att_ @format(insn insns:lines) insns(insn)(,\n) *)
+      dummyNextToplevel list
 
   end (* local *)
 

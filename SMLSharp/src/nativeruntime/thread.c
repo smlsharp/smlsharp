@@ -52,6 +52,7 @@ sml_thread_env_init()
 	env->heap = NULL;
 	env->current_handler = NULL;
 	env->tmp_root = NULL;
+	env->exn_jmpbuf = NULL;
 	thread_env = env;
 	sml_heap_thread_init();
 	sml_add_rootset(thread_env_enum_ptr, env);
@@ -122,8 +123,8 @@ sml_load_frame_pointer()
  * [ebp - 4] is the relative address of frame info word.
  *
  * If the relative address of the frame info is 0, then the frame has no
- * info. If the previous frame pointer is NULL, the chain of frames is
- * terminated here.
+ * info. If the frame info address is 2, the chain of frames is terminated
+ * here.
  *
  *                                     :          :
  *            +--------+               | generics |
@@ -141,11 +142,14 @@ sml_load_frame_pointer()
  *                   |  prev  |        | boxed    |
  *                   +---|----+        | ....     |
  *                       |             |          |
- *                       |             :          :
- *                       :
+ *                       :             :          :
  *                       |
  *                       v
- *                      NULL
+ *                   +--------+
+ *                   | 0x0002 |
+ *                   +--------+
+ *                   |  prev  |
+ *                   +--------+
  *
  * infoaddr:
  *  31                            2    1    0
@@ -154,11 +158,13 @@ sml_load_frame_pointer()
  * +--------------------------------+----+----+
  * MSB                                      LSB
  *
- * if next is 0, address & 0xfffffffc is the offset of frame info of
+ * if next bit is 0, address & 0xfffffffc is the offset of frame info of
  * this frame from frame pointer.
- * if next is 1, address & 0xfffffffc is the absolute address of previous
+ * if next bit is 1, address & 0xfffffffc is the absolute address of previous
  * ML frame pointer. (this is used in callback function entry for gc to
- * skip C frames between ML frames.)
+ * skip C frames between ML frames.) If the address of previous frame is
+ * NULL, it means that ML frame stack is ended here.
+ * 
  * gc bit is reserved for gc. mutator must set it to 0.
  *
  * To make sure that we may use last 2 bits for the flags, frameAlign must

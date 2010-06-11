@@ -24,10 +24,10 @@ case "@target_os@" in
   ;;
 esac
 
-if expr "@SML@" : "cmd /c " > /dev/null 2>&1; then
+if test -n "@CMD@"; then
   cat <<END > "$DSTFILE"
 #!/bin/sh
-cmd /c "@SML_BAT@ @SMLload=$HEAPIMAGE \$*"
+'@CMD@' /c "@SML_BAT@ @SMLload=$HEAPIMAGE \$*"
 END
 else
   cat <<END > "$DSTFILE"

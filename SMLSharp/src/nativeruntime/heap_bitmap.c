@@ -10,7 +10,19 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_MMAN_H)
 #include <sys/mman.h>
+#endif /* HAVE_SYS_MMAN_H */
+#ifdef MINGW32
+#include <windows.h>
+#undef OBJ_BITMAP
+#endif /* MINGW32 */
+
 #include "smlsharp.h"
 #include "object.h"
 #include "objspace.h"
@@ -1078,7 +1090,11 @@ init_alloc_arena(size_t size)
 	unsigned int i;
 	struct heap_arena *arena;
 
+#ifdef MINGW32
+	pagesize = 64 * 1024;
+#else
 	pagesize = getpagesize();
+#endif /* MINGW32 */
 	if (ARENA_SIZE % pagesize != 0)
 		sml_fatal(0, "ARENA_SIZE is not aligned in page size.");
 
@@ -1087,6 +1103,25 @@ init_alloc_arena(size_t size)
 	if (allocsize / ARENA_SIZE == 0)
 		allocsize = ARENA_SIZE;
 
+#ifdef MINGW32
+	p = VirtualAlloc(NULL, ARENA_SIZE + allocsize, MEM_RESERVE,
+			 PAGE_NOACCESS);
+	if (p == NULL) {
+		sml_fatal(0, "VirtualAlloc: error %lu",
+			  (unsigned long)GetLastError());
+	}
+
+	freesize_post = (uintptr_t)p & (ARENA_SIZE - 1);
+	if (freesize_post == 0) {
+		VirtualFree(p + allocsize, ARENA_SIZE, MEM_RELEASE);
+	} else {
+		freesize_pre = ARENA_SIZE - freesize_post;
+		VirtualFree(p, freesize_pre, MEM_RELEASE);
+		p = (char*)p + freesize_pre;
+		VirtualFree(p + allocsize, freesize_post, MEM_RELEASE);
+	}
+	VirtualAlloc(p, allocsize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#else
 	/* mmap clears mapping with 0. */
 #ifdef DEBUG
 	p = mmap((void*)0x2000000, ARENA_SIZE + allocsize, PROT_NONE,
@@ -1108,6 +1143,7 @@ init_alloc_arena(size_t size)
 		munmap(p + allocsize, freesize_post);
 	}
 	mprotect(p, allocsize, PROT_READ | PROT_WRITE);
+#endif /* MINGW32 */
 
 	alloc_arena.begin = p;
 	alloc_arena.end = (char*)p + allocsize;
@@ -1143,7 +1179,11 @@ new_arena()
 static void
 free_arena(struct heap_arena *arena)
 {
+#ifdef MINGW32
+	VirtualFree(arena, ARENA_SIZE, MEM_RELEASE);
+#else
 	munmap(arena, ARENA_SIZE);
+#endif /* MINGW32 */
 }
 
 void

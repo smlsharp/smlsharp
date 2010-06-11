@@ -7,4 +7,4 @@ val it = 1 : int
 ../tests/bugs/tests/issue114.2.sml:5.1-5.3 Error:
   operator and operand don't agree
                                                   operator domain: X0
-  operand: 'A#{int, largeInt}
+  operand: 'A#{int, IntInf.int}

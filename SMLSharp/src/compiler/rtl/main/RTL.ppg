@@ -533,18 +533,26 @@ struct
   datatype first =
       (*% @format({label, align, loc}) label ":" *)
       BEGIN of {label: label, align: int, loc: Loc.loc}
-    | (*% @format({label, symbol, scope, align, preFrameSize, preFrameAligned,
+    | (*% @format({label, symbol, scope, align, preFrameSize,
+       *           stubOptions: stubOptions sopt,
        *           defs:def defs, loc})
        * "        " scope \n
        * {symbol ":\t" ".CODEENTRY"
        *  16[ \n ";" + "defs" + defs(def)("," +)
        *      \n ";" + "preFrameSize=" preFrameSize
-       *      \n ";" + "preFrameAligned=" preFrameAligned] \n
+       *      sopt(stubOptions)] \n
        * label ":"}
+       *
+       * @format:stubOptions({forceFrameAlign})
+       * \n ";" + "forceFrameAlign=" forceFrameAlign
        *)
+      (* If stubOptions is SOME, additional stub code which may allocate
+       * a stack frame is generated at code entry. Note that pre-frame
+       * is not placed immediately before the current stack if stubOptions
+       * is SOME. *)
       CODEENTRY of {label: label, symbol: symbol, scope: symbolScope,
-                    align: int,
-                    preFrameSize: int, preFrameAligned: bool,
+                    align: int, preFrameSize: int,
+                    stubOptions: {forceFrameAlign: bool} option,
                     defs: var list, loc: Loc.loc}
     | (*% @format({label, align, defs:def defs, loc})
        * label ":\t" ".HANDLERENTRY {" defs(def)("," +) "}" *)
@@ -903,13 +911,17 @@ struct
        *     \n ";" + "uses" + {us(u)("," +d)}]}
        *)
       TAILCALL_JUMP of {preFrameSize: int, jumpTo: addr, uses: var list}
-    | (*% @format({preFrameSize, preFrameAligned, uses:u us})
+    | (*% @format({preFrameSize, stubOptions: stubOptions sopt, uses:u us})
        * {"ret"
        * 8[ \n ";" + "preFrameSize=" preFrameSize
-       *    preFrameAligned()(\n ";" + "preFrameAligned",)
-       *    \n ";" + "uses" + {us(u)("," +d)}]}
+       *    \n ";" + "uses" + {us(u)("," +d)}
+       *    sopt(stubOptions)]}
+       * @format:stubOptions({forceFrameAlign})
+       * \n ";" + "forceFrameAlign=" forceFrameAlign()(,)
        *)
-      RETURN of {preFrameSize: int, preFrameAligned: bool, uses: var list}
+      RETURN of {preFrameSize: int,
+                 stubOptions: {forceFrameAlign: bool} option,
+                 uses: var list}
 (*
     | (*% @format({callTo, returnTo}) "call\t" callTo +"=>"+ returnTo *)
       X86JUMP_BY_CALL of {callTo: label, returnTo: label}

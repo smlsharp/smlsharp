@@ -1,4 +1,6 @@
-signature S = sig exception E : int -> exn end
-../tests/bugs/tests/issue104.2.sml:2.11-6.3 Error: data constructor required in
-                                                   signature: E
+signature S = sig exception E of int end
+../tests/bugs/tests/issue104.2.sml:2.11-6.3 Error:
+  data constructor required in signature: E
+
+
 

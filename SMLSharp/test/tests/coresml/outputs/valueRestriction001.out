@@ -9,7 +9,7 @@ val f2 = fn : ['a .'a dt -> int]
 val r11 = 0 : int
 val r12 = 0 : int
 val r21 = 0 : int
-../tests/coresml/tests/valueRestriction001.sml:24.11-24.15 Error:
+../tests/coresml/tests/valueRestriction001.sml:25.11-25.15 Error:
   operator and operand don't agree
   operator domain: 'A dt
   operand: X0 dt

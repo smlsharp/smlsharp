@@ -1,5 +1,5 @@
 type ('a, 'b) t = 'b * 'a
-signature SIG = sig val f : ['a,'b.('a, 'b) t -> 'b] end
+signature SIG = sig val f : ('a, 'b) t -> 'b end
 structure STR : SIG
 val it = fn : ['a,'b.('a, 'b) t -> 'b]
 val it = "a" : string

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 //[InterfaceTypeAttribute(ComInterfaceType.InterfaceIsDual)]
 [ClassInterface(ClassInterfaceType.AutoDual)]
-public class DataTypes3Testee
+public class MethodCall1Testee
 {
   // test for arity
   public int method_II_I(int x, int y){return x + y;}
@@ -18,5 +18,5 @@ public class DataTypes3Testee
   public void method_I_V(int x){}
   public void method_II_V(int x, int y){}
   
-  public DataTypes3Testee(){}
+  public MethodCall1Testee(){}
 }

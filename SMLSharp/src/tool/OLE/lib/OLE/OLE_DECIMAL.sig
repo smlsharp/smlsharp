@@ -42,18 +42,27 @@ sig
        }
 
   (** converts a decimal into the binary format which is compatible with
-   * OLE DECIMAL. *)
-  val export : decimal -> UnmanagedMemory.address -> unit
+   * OLE DECIMAL.
+   * <p>
+   * Structures DECIMAL and VARIANT are the same size.
+   * When a decimal is serialized as the contents embedded in a variant,
+   * its first reserved 2-byte is used to store the tag VT_DECIMAL.
+   * </p>
+   * @params embedInVariant (stream, decimal)
+   * @param embedInVariant if true, VT_DECIMAL is written in the first 2bytes.
+   * @param stream an outstream
+   * @param decimal a decimal
+   * @param new outstream after the decimal is written.
+   *)
+  val export
+      : bool
+        -> (OLE_BufferStream.outstream * decimal)
+        -> OLE_BufferStream.outstream
 
   (** obtains a decimal from the binary format which is compatible with
    * OLE DECIMAL. *)
-  val import : UnmanagedMemory.address -> decimal
-
-  val importWordArray : (Word32.word Array.array * int) -> decimal
-
-  val exportArray : decimal -> Word8Array.array
-
-  val importArray : Word8Array.array -> decimal
+  val import
+      : OLE_BufferStream.instream -> (decimal * OLE_BufferStream.instream)
 
   val toString : decimal -> string
 

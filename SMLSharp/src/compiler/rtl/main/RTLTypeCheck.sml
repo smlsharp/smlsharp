@@ -494,7 +494,7 @@ struct
         R.BEGIN {label, align, loc} =>
         (checkLabelConsist (label, key), emptyEnv)
       | R.CODEENTRY {label, symbol, scope, align, preFrameSize,
-                     preFrameAligned, defs, loc} =>
+                     stubOptions, defs, loc} =>
         let
           val err1 = checkLabelConsist (label, key)
           val err2 = checkDefs context defs
@@ -917,7 +917,7 @@ struct
         in
           (err1 @ err2 @ err3 @ err4, context)
         end
-      | R.RETURN {preFrameSize, preFrameAligned, uses} =>
+      | R.RETURN {preFrameSize, stubOptions, uses} =>
         let
           val err1 = checkUses context uses
           val preSize = #preFrameSize (#cluster context)
@@ -947,7 +947,7 @@ struct
             case first of
               R.BEGIN {label, align, loc} => SOME label
             | R.CODEENTRY {label, symbol, scope, align, preFrameSize,
-                           preFrameAligned, defs, loc} => SOME label
+                           stubOptions, defs, loc} => SOME label
             | R.HANDLERENTRY {label, align, defs, loc} => SOME label
             | R.ENTER => NONE
       in
@@ -960,7 +960,7 @@ struct
       case first of
         R.BEGIN {label, align, loc} => nil
       | R.CODEENTRY {label, symbol, scope, align, preFrameSize,
-                     preFrameAligned, defs, loc} => nil
+                     stubOptions, defs, loc} => nil
       | R.HANDLERENTRY {label, align, defs, loc} =>
         if RTLUtils.Var.isEmpty (minus (liveOut, defs))
         then nil
@@ -1055,7 +1055,7 @@ struct
       | R.JUMP {jumpTo, destinations} => nil
       | R.UNWIND_JUMP {jumpTo, sp, fp, uses, handler} => nil
       | R.TAILCALL_JUMP {preFrameSize, jumpTo, uses} => nil
-      | R.RETURN {preFrameSize, preFrameAligned, uses} => nil
+      | R.RETURN {preFrameSize, stubOptions, uses} => nil
       | R.EXIT => nil
 
   fun checkInsnList (context:context) (insn::insns) =

@@ -9,7 +9,8 @@ signature RTLEMIT = sig
 
   structure Target : sig
     type reg
-    type instruction
+    type program
+    type nextDummy
   end
 
   type env =
@@ -21,7 +22,8 @@ signature RTLEMIT = sig
         frameAllocSize: int
       }
 
-  val emit : env ClusterID.Map.map -> RTL.program -> Target.instruction list
+  val emit : env ClusterID.Map.map -> RTL.program
+             -> {code: Target.program, nextDummy: Target.nextDummy}
 (*
   val emitData : RTL.symbolDef -> Target.instruction list
 *)

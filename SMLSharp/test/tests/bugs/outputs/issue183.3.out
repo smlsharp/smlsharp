@@ -1,21 +1,15 @@
 signature LR_TABLE =
   sig
-    datatype state
-    con STATE : int -> state
-    datatype term
-    con T : int -> term
-    datatype action
-    con ACCEPT : action
-    con ERROR : action
-    con REDUCE : int -> action
-    con SHIFT : state -> action
+  datatype state = STATE of int
+  datatype term = T of int
+  datatype action = SHIFT of state | REDUCE of int | ACCEPT | ERROR
     type table = {x:int}
     val action : table -> state * term -> action
   end
 structure LrTable : LR_TABLE
 ../tests/bugs/tests/issue183.3.sml:34.7-34.51 Warning:
   match nonexhaustive
-           SHIFT state => ...
+           LrParser.SHIFT state => ...
 structure LrParser
 : sig
   datatype action

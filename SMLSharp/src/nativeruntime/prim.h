@@ -12,7 +12,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
+#endif /* HAVE_DLFCN_H */
 
 /*
  * Correspondence between ML types and C types:
@@ -75,6 +77,7 @@ sml_intinf_t *prim_IntInf_andb(sml_intinf_t *, sml_intinf_t *);
 sml_intinf_t *prim_IntInf_notb(sml_intinf_t *);
 STRING prim_Word_toString(unsigned int);
 int prim_Real_class(double);
+int prim_Float_class(float);
 void *prim_ya_String_allocateImmutableNoInit(unsigned int);
 void *prim_ya_String_allocateMutableNoInit(unsigned int);
 STRING prim_String_substring(const char *, int, int);
@@ -96,7 +99,7 @@ void *prim_GenericOS_opendir(const char *);
 STRING prim_GenericOS_readdir(void *);
 void prim_GenericOS_rewinddir(void *);
 int prim_GenericOS_closedir(void *);
-int prim_GenericOS_select(int[], int[], int[], int, int);
+int prim_GEnericOS_poll(int[], unsigned int[], int, int);
 STRING prim_GenericOS_errorName(int);
 int prim_GenericOS_syserror(const char *);
 int prim_Time_gettimeofday(int[]);
@@ -181,7 +184,14 @@ int rename(const char *, const char *);
 
 /* C99 */
 /* math.h */
-double copysign(double x, double y);
+double copysign(double, double);
+float copysignf(float, float);
+float ceilf(float);
+float floorf(float);
+float roundf(float);
+float ldexpf(float, int);
+float frexpf(float, int *);
+float modff(float, float *);
 
 /* POSIX */
 /* unistd.h */

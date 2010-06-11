@@ -1,5 +1,5 @@
-val it = "0" : string
-val it = "0" : string
+val it = "0.0" : string
+val it = "0.0" : string
 val it = "0.1" : string
 val it = "~0.1" : string
 val it = "10" : string

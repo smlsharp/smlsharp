@@ -31,7 +31,7 @@ ENTRYOBJECTS = $(ENTRYSOURCES:.c=.$(OBJEXT))
 
 SOURCES = $(HEAPIMPL_SOURCES) $(LIBSOURCES) $(ENTRYSOURCES)
 OBJECTS = $(HEAPIMPL_OBJECTS) $(LIBOBJECTS) $(ENTRYOBJECTS)
-TARGETS = libsmlsharp.$(LIBEXT) libsmlsharp_entry.$(LIBEXT)
+TARGETS = libsmlsharp.$(LIBEXT) smlsharp_entry.$(OBJEXT)
 
 all: $(TARGETS)
 
@@ -55,9 +55,8 @@ libsmlsharp.$(LIBEXT): $(HEAPOBJECTS) $(LIBOBJECTS)
 	$(AR) cru $@ $(HEAPOBJECTS) $(LIBOBJECTS)
 	-$(RANLIB) $@
 
-libsmlsharp_entry.$(LIBEXT): $(ENTRYOBJECTS)
-	$(AR) cru $@ $(ENTRYOBJECTS)
-	-$(RANLIB) $@
+smlsharp_entry.$(OBJEXT): $(ENTRYOBJECTS)
+	cp $(ENTRYOBJECTS) $@
 
 dtoa.o: netlib/dtoa.c
 	$(CC) $(CFLAGS) $(DTOA_CPPFLAGS) $(srcdir)/netlib/dtoa.c -c -o $@
@@ -65,7 +64,7 @@ dtoa.o: netlib/dtoa.c
 install: $(TARGETS)
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
 	$(INSTALL_PROGRAM) -m 644 libsmlsharp.$(LIBEXT) '$(DESTDIR)$(libdir_smlsharp)'
-	$(INSTALL_PROGRAM) -m 644 libsmlsharp_entry.$(LIBEXT) '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_PROGRAM) -m 644 smlsharp_entry.$(OBJEXT) '$(DESTDIR)$(libdir_smlsharp)'
 
 ##---- dependenices ----##
 heap_cheney.o: heap_cheney.c smlsharp.h object.h objspace.h heap.h $(HEAPHEADER)

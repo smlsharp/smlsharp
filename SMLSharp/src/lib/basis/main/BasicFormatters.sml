@@ -122,9 +122,21 @@ local
       Guard
         (
           NONE,
+          (* These predefined exceptions are ordered as the order of tags in 
+           * src/primitives/constants.csv *)
           case exn
-           of Match => [Term(5, "Match")]
-            | Bind => [Term(4, "Bind")]
+           of Bind => [Term(4, "Bind")]
+            | Match => [Term(5, "Match")]
+            | Subscript =>
+              [Term(9, "Subscript")]
+            | Size => [Term(4, "Size")]
+            | Overflow => [Term(8, "Overflow")]
+            | Div => [Term(3, "Div")]
+            | Domain => [Term(6, "Domain")]
+            | Fail(message) =>
+              [Term(4, "Fail"), Term(1, ":"), Term(size message, message)]
+            | OS.SysErr(message, syserrOpt) =>
+              [Term(6, "SysErr"), Term(1, ":"), Term(size message, message)]
             | SMLSharp.MatchCompBug message =>
               [
                 Term(12, "MatchCompBug"),
@@ -137,13 +149,7 @@ local
                 Term(1, ":"),
                 Term(size message, message)
               ]
-            | OS.SysErr(message, syserrOpt) =>
-              [Term(6, "SysErr"), Term(1, ":"), Term(size message, message)]
-            | Fail(message) =>
-              [Term(4, "Fail"), Term(1, ":"), Term(size message, message)]
-            | Subscript =>
-              [Term(9, "Subscript")]
-            | Bootstrap =>
+            | SMLSharp.Bootstrap =>
               [Term(9, "Bootstrap")]
         )
 in

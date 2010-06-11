@@ -4745,6 +4745,8 @@ struct
           ]
         end
 
+      | AI.RaiseExt {exn, attributes, loc} =>
+        selectInsn context (AI.Raise {exn = exn, loc = loc})
 
 
 

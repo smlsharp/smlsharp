@@ -425,7 +425,8 @@ std::string MLLiteralOfVariant(VARIANT* variant)
       case VT_I2: 
         oss << (V_I2(variant) < 0 ? "~" : "") << abs(V_I2(variant)); break;
       case VT_I4: 
-        oss << (V_I4(variant) < 0 ? "~" : "") << abs(V_I4(variant)); break;
+        oss << (V_I4(variant) < 0 ? "~" : "") << (ULONG)abs(V_I4(variant));
+        break;
 //      case VT_R4: oss << V_R4(variant); break;
 //      case VT_R8: oss << V_R8(variant); break;
 //      case VT_CY: oss << V_CY(variant); break;
@@ -487,10 +488,17 @@ std::string MLTypeOfTYPEDESC(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
         return MLTypeOfTYPEDESC(pTypeInfo, pTypeDesc->lptdesc);
     }
     if(pTypeDesc->vt == VT_SAFEARRAY) {
-        if(VT_VARIANT == pTypeDesc->lptdesc->vt){
+        return "(" + MLTypeOfTYPEDESC(pTypeInfo, pTypeDesc->lptdesc)
+        + " OLE.safearray)";
+/*
+        if(VT_I4 == pTypeDesc->lptdesc->vt){
+            return "(Int32.int array * word list)";
+        }
+        else if(VT_VARIANT == pTypeDesc->lptdesc->vt){
             return "(OLE.variant array * word list)";
         }
         throw Unsupported(TYPEDESCString(pTypeInfo, pTypeDesc));
+*/
 /*
         oss << "SAFEARRAY("
             << dumpTypeDesc(pTypeInfo, pTypeDesc->lptdesc)
@@ -572,10 +580,16 @@ std::string toVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
         }
     }
     if(pTypeDesc->vt == VT_SAFEARRAY) {
-        if(VT_VARIANT == pTypeDesc->lptdesc->vt){
+        return toVariant(pTypeInfo, pTypeDesc->lptdesc) + "ARRAY";
+/*
+        if(VT_I4 == pTypeDesc->lptdesc->vt){
+            return "fromI4ARRAY";
+        }
+        else if(VT_VARIANT == pTypeDesc->lptdesc->vt){
             return "fromVARIANTARRAY";
         }
         throw Unsupported(TYPEDESCString(pTypeInfo, pTypeDesc));
+*/
 /*
         oss << "SAFEARRAY("
             << dumpTypeDesc(pTypeInfo, pTypeDesc->lptdesc)
@@ -619,7 +633,7 @@ std::string toVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
       case VT_ERROR: return "SCODE";
 */
       case VT_BOOL: return "fromBOOL";
-      case VT_VARIANT: return "(fn x => x)"; // no wrap
+      case VT_VARIANT: return "fromVARIANT";
       case VT_UNKNOWN: return "fromUNKNOWN";
       case VT_UI1: return "fromUI1";
         // VARIANTARG compatible types
@@ -654,10 +668,16 @@ std::string fromVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
         }
     }
     if(pTypeDesc->vt == VT_SAFEARRAY) {
-        if(VT_VARIANT == pTypeDesc->lptdesc->vt){
+        return fromVariant(pTypeInfo, pTypeDesc->lptdesc) + "ARRAY";
+/*
+        if(VT_I4 == pTypeDesc->lptdesc->vt){
+            return "toI4ARRAY";
+        }
+        else if(VT_VARIANT == pTypeDesc->lptdesc->vt){
             return "toVARIANTARRAY";
         }
         throw Unsupported(TYPEDESCString(pTypeInfo, pTypeDesc));
+*/
 /*
         oss << "SAFEARRAY("
             << dumpTypeDesc(pTypeInfo, pTypeDesc->lptdesc)
@@ -701,7 +721,7 @@ std::string fromVariant(ITypeInfo* pTypeInfo, TYPEDESC* pTypeDesc)
       case VT_ERROR: return "SCODE";
 */
       case VT_BOOL: return "toBOOL";
-      case VT_VARIANT: return "(fn x => x)";
+      case VT_VARIANT: return "toVARIANT";
       case VT_UNKNOWN: return "toUNKNOWN";
       case VT_UI1: return "toUI1";
         // VARIANTARG compatible types
@@ -1170,8 +1190,7 @@ const std::string HeaderBindings =
     | toDISPATCH _ = raise OLE.OLEError(OLE.TypeMismatch \"DISPATCH expected\") \n\
   fun toBOOL (OLE.BOOL bool) = bool \n\
     | toBOOL _ = raise OLE.OLEError(OLE.TypeMismatch \"BOOL expected\") \n\
-  fun toVARIANT (OLE.VARIANT variant) = variant \n\
-    | toVARIANT _ = raise OLE.OLEError(OLE.TypeMismatch \"VARIANT expected\") \n\
+  fun toVARIANT (variant : OLE.variant) = variant \n\
   fun toUNKNOWN (OLE.UNKNOWN unknown) = unknown \n\
     | toUNKNOWN _ = raise OLE.OLEError(OLE.TypeMismatch \"UNKNOWN expected\") \n\
   fun toDECIMAL (OLE.DECIMAL decimal) = decimal \n\
@@ -1194,8 +1213,45 @@ const std::string HeaderBindings =
     | toUINT _ = raise OLE.OLEError(OLE.TypeMismatch \"UINT expected\") \n\
   fun toBYREF toelement (OLE.BYREF(v)) = toelement v \n\
     | toBYREF _ _ = raise OLE.OLEError(OLE.TypeMismatch \"BYREF expected\") \n\
+  \n\
+  fun toI2ARRAY (OLE.I2ARRAY array) = array \n\
+    | toI2ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"I2ARRAY expected\") \n\
+  fun toI4ARRAY (OLE.I4ARRAY array) = array \n\
+    | toI4ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"I4ARRAY expected\") \n\
+  fun toR4ARRAY (OLE.R4ARRAY array) = array \n\
+    | toR4ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"R4ARRAY expected\") \n\
+  fun toR8ARRAY (OLE.R8ARRAY array) = array \n\
+    | toR8ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"R8ARRAY expected\") \n\
+  fun toBSTRARRAY (OLE.BSTRARRAY array) = array \n\
+    | toBSTRARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"BSTRARRAY expected\") \n\
+  fun toDISPATCHARRAY (OLE.DISPATCHARRAY array) = array \n\
+    | toDISPATCHARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"DISPATCHARRAY expected\") \n\
+  fun toERRORARRAY (OLE.ERRORARRAY array) = array \n\
+    | toERRORARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"ERRORARRAY expected\") \n\
+  fun toBOOLARRAY (OLE.BOOLARRAY array) = array \n\
+    | toBOOLARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"BOOLARRAY expected\") \n\
   fun toVARIANTARRAY (OLE.VARIANTARRAY array) = array \n\
     | toVARIANTARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"VARIANTARRAY expected\") \n\
+  fun toUNKNOWNARRAY (OLE.UNKNOWNARRAY array) = array \n\
+    | toUNKNOWNARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"UNKNOWNARRAY expected\") \n\
+  fun toDECIMALARRAY (OLE.DECIMALARRAY array) = array \n\
+    | toDECIMALARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"DECIMALARRAY expected\") \n\
+  fun toI1ARRAY (OLE.I1ARRAY array) = array \n\
+    | toI1ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"I1ARRAY expected\") \n\
+  fun toUI1ARRAY (OLE.UI1ARRAY array) = array \n\
+    | toUI1ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"UI1ARRAY expected\") \n\
+  fun toUI2ARRAY (OLE.UI2ARRAY array) = array \n\
+    | toUI2ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"UI2ARRAY expected\") \n\
+  fun toUI4ARRAY (OLE.UI4ARRAY array) = array \n\
+    | toUI4ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"UI4ARRAY expected\") \n\
+  fun toI8ARRAY (OLE.I8ARRAY array) = array \n\
+    | toI8ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"I8ARRAY expected\") \n\
+  fun toUI8ARRAY (OLE.UI8ARRAY array) = array \n\
+    | toUI8ARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"UI8ARRAY expected\") \n\
+  fun toINTARRAY (OLE.INTARRAY array) = array \n\
+    | toINTARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"INTARRAY expected\") \n\
+  fun toUINTARRAY (OLE.UINTARRAY array) = array \n\
+    | toUINTARRAY _ = raise OLE.OLEError(OLE.TypeMismatch \"UINTARRAY expected\") \n\
  \n\
   val fromI2 = OLE.I2 \n\
   val fromI4 = OLE.I4 \n\
@@ -1204,7 +1260,7 @@ const std::string HeaderBindings =
   val fromBSTR = OLE.BSTR \n\
   val fromDISPATCH = OLE.DISPATCH \n\
   val fromBOOL = OLE.BOOL \n\
-  val fromVARIANT = OLE.VARIANT \n\
+  val fromVARIANT = fn v => v \n\
   val fromUNKNOWN = OLE.UNKNOWN \n\
   val fromDECIMAL = OLE.DECIMAL \n\
   val fromI1 = OLE.I1 \n\
@@ -1216,7 +1272,25 @@ const std::string HeaderBindings =
   val fromINT = OLE.INT \n\
   val fromUINT = OLE.UINT \n\
   fun fromBYREF fromElement v = OLE.BYREF(fromElement v) \n\
+  val fromI2ARRAY = OLE.I2ARRAY \n\
+  val fromI4ARRAY = OLE.I4ARRAY \n\
+  val fromR4ARRAY = OLE.R4ARRAY \n\
+  val fromR8ARRAY = OLE.R8ARRAY \n\
+  val fromBSTRARRAY = OLE.BSTRARRAY \n\
+  val fromDISPATCHARRAY = OLE.DISPATCHARRAY \n\
+  val fromERRORARRAY = OLE.ERRORARRAY \n\
+  val fromBOOLARRAY = OLE.BOOLARRAY \n\
   val fromVARIANTARRAY = OLE.VARIANTARRAY \n\
+  val fromUNKNOWNARRAY = OLE.UNKNOWNARRAY \n\
+  val fromDECIMALARRAY = OLE.DECIMALARRAY \n\
+  val fromI1ARRAY = OLE.I1ARRAY \n\
+  val fromUI1ARRAY = OLE.UI1ARRAY \n\
+  val fromUI2ARRAY = OLE.UI2ARRAY \n\
+  val fromUI4ARRAY = OLE.UI4ARRAY \n\
+  val fromI8ARRAY = OLE.I8ARRAY \n\
+  val fromUI8ARRAY = OLE.UI8ARRAY \n\
+  val fromINTARRAY = OLE.INTARRAY \n\
+  val fromUINTARRAY = OLE.UINTARRAY \n\
   fun optionalParam fromElement NONE = OLE.NOPARAM \n\
    |  optionalParam fromElement (SOME v) = fromElement v \n\
 ";

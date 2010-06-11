@@ -1,0 +1,10 @@
+../tests/bugs/tests/issue260.2.sml:8.9-8.31 Warning:
+  match nonexhaustive
+           1 => ...
+../tests/bugs/tests/issue260.2.sml:11.9-11.33 Warning:
+  match nonexhaustive
+           1 => ...
+../tests/bugs/tests/issue260.2.sml:14.9-14.35 Warning:
+  match nonexhaustive
+           1 => ...
+

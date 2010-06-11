@@ -878,10 +878,13 @@ struct
         val compileMode =
             case mode of
               CompileAndExecuteMode => NativeStandAloneSession.Executable
-            | CompileOnlyMode => NativeStandAloneSession.ObjectFile
+            | CompileOnlyMode =>
+              NativeStandAloneSession.ObjectFile {isPrelude = false}
             | MakeCompiledLibraryMode =>
-              (* TODO: make a static library *)
-              NativeStandAloneSession.ObjectFile
+              (* prelude library should be compiled as a partially-linked
+               * object file since there are mutual references between
+               * the library and user programs. *)
+              NativeStandAloneSession.ObjectFile {isPrelude = true}
 
         val session =
             NativeStandAloneSession.openSession

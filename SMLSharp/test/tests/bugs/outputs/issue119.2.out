@@ -4,4 +4,4 @@ con EEq : [''a .''a -> ''a dtEq]
 ../tests/bugs/tests/issue119.2.sml:2.1-2.8 Error:
   operator and operand don't agree
   operator domain: ''B
-  operand: ''A#{real, float}
+  operand: 'A#{real, Real32.real}

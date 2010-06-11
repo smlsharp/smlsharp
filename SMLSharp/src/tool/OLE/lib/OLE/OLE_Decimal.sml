@@ -6,11 +6,11 @@
 structure OLE_Decimal : OLE_DECIMAL =
 struct
 
+  structure BS = OLE_BufferStream
+
   structure WORD = Word32 (* 16 bit unsigned *)
   structure BYTE = Word8
   structure ULONG = Word32 (* 32 bit unsigned *)
-  structure BYTES = Word8Array
-  structure UM = UnmanagedMemory
 
   type decimal =
        {
@@ -49,46 +49,35 @@ struct
         (wReserved, sign, scale, Hi32, Lo32, Mid32)
       end
 
-  fun exportArray decimal =
-      let
-        val (wReserved, sign, scale, Hi32, Lo32, Mid32) = makeFields decimal
-        val buffer = BYTES.array (SIZE_OF_DECIMAL, 0w0)
-        val _ = BYTES.update (buffer, 2, scale)
-        val _ = BYTES.update (buffer, 3, sign)
-        val _ = PackWord32Little.update (buffer, 1, Hi32)
-        (* Serialize a 64bit unsigned as a sequence of two 32bit unsigned.
-         * Serialize the lower 32bit first, because little endian is assumed.
-         *)
-        val _ = PackWord32Little.update (buffer, 2, Lo32)
-        val _ = PackWord32Little.update (buffer, 3, Mid32)
-      in
-        buffer
-      end
+  val VT_DECIMAL = 0w14 : Word8.word
 
-  fun export decimal address =
+  fun export embedInVariant (outstream, decimal) =
       let
-        fun advance offset = UM.advance (address, offset)
         val (wReserved, sign, scale, Hi32, Lo32, Mid32) = makeFields decimal
-        val _ = UM.update (advance 2, scale)
-        val _ = UM.update (advance 3, sign)
-        val _ = UM.updateWord (advance 4, Hi32)
-        val _ = UM.updateWord (advance 8, Lo32)
-        val _ = UM.updateWord (advance 12, Mid32)
+        val outstream =
+            if embedInVariant
+            then BS.output (BS.output (outstream, VT_DECIMAL), 0w0)
+            else BS.skipOut (outstream, 2)
+        val outstream = BS.output (outstream, scale)
+        val outstream = BS.output (outstream, sign)
+        val outstream = BS.outputWord32 (outstream, Hi32)
+        val outstream = BS.outputWord32 (outstream, Lo32)
+        val outstream = BS.outputWord32 (outstream, Mid32)
       in
-        ()
+        outstream
       end
 
   val word32ToIntInf = IntInf.fromLarge o Word32.toLargeInt
-  val subArrWord32 = Word32.fromLargeWord o PackWord32Little.subArr
-  val subUMWord32 = UM.subWord
 
-  fun importArray buffer =
+  fun import instream =
       let
-        val scale = BYTES.sub (buffer, 2)
-        val sign = BYTES.sub (buffer, 3)
-        val Hi32 = subArrWord32 (buffer, 1)
-        val Lo32 = subArrWord32 (buffer, 2)
-        val Mid32 = subArrWord32 (buffer, 3)
+        val (_, instream) = BS.input instream
+        val (_, instream) = BS.input instream
+        val (scale, instream) = BS.input instream
+        val (sign, instream) = BS.input instream
+        val (Hi32, instream) = BS.inputWord32 instream
+        val (Lo32, instream) = BS.inputWord32 instream
+        val (Mid32, instream) = BS.inputWord32 instream
         val Hi32Int = word32ToIntInf Hi32
         val Lo32Int = word32ToIntInf Lo32
         val Mid32Int = word32ToIntInf Mid32
@@ -97,46 +86,7 @@ struct
             (if sign = 0w0 then 1 else ~1)
             * IntInf.orb (IntInf.<< (Hi32Int, 0w64), Lo64Int)
       in
-        {scale = scale, value = value}
-      end
-
-  fun importWordArray (buffer, offset) =
-      let
-        val scaleSign = Array.sub (buffer, offset)
-        val scaleWord = Word32.>>(Word32.andb (0wxFF0000, scaleSign), 0w16)
-        val scale = (Word8.fromLarge o Word32.toLarge) scaleWord
-        val sign = Word32.>>(Word32.andb (0wxFF000000, scaleSign), 0w24)
-        val Hi32 = Array.sub (buffer, offset + 1)
-        val Lo32 = Array.sub (buffer, offset + 2)
-        val Mid32 = Array.sub (buffer, offset + 3)
-        val Hi32Int = word32ToIntInf Hi32
-        val Lo32Int = word32ToIntInf Lo32
-        val Mid32Int = word32ToIntInf Mid32
-        val Lo64Int = IntInf.orb (IntInf.<< (Mid32Int, 0w32), Lo32Int)
-        val value =
-            (if sign = 0w0 then 1 else ~1)
-            * IntInf.orb (IntInf.<< (Hi32Int, 0w64), Lo64Int)
-      in
-        {scale = scale, value = value}
-      end
-
-  fun import address =
-      let
-        fun advance offset = UM.advance (address, offset)
-        val scale = UM.sub (advance 2)
-        val sign = UM.sub (advance 3)
-        val Hi32 = subUMWord32 (advance 4)
-        val Lo32 = subUMWord32 (advance 8)
-        val Mid32 = subUMWord32 (advance 12)
-        val Hi32Int = word32ToIntInf Hi32
-        val Lo32Int = word32ToIntInf Lo32
-        val Mid32Int = word32ToIntInf Mid32
-        val Lo64Int = IntInf.orb (IntInf.<< (Mid32Int, 0w32), Lo32Int)
-        val value =
-            (if sign = 0w0 then 1 else ~1)
-            * IntInf.orb (IntInf.<< (Hi32Int, 0w64), Lo64Int)
-      in
-        {scale = scale, value = value}
+        ({scale = scale, value = value}, instream)
       end
 
   fun toString {scale, value} =

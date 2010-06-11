@@ -232,6 +232,7 @@ struct
         RT.ATOMty => AN.ATOMty
       | RT.BOXEDty => AN.BOXED
       | RT.DOUBLEty => AN.DOUBLEty
+      | RT.FLOATty => AN.FLOAT
       | RT.BOUNDVARty tid => AN.GENERIC tid
       | RT.SINGLEty tid => AN.SINGLEty tid
       | RT.UNBOXEDty tid => AN.UNBOXEDty tid
@@ -1099,6 +1100,31 @@ struct
            :: mergePointDecl)
         end
 
+  and protectUncaughtException pos rbuexp loc =
+      let
+        val tryLabel = Counters.newLocalId ()
+        val handlerLabel = Counters.newLocalId ()
+        val labels = {tryLabel = tryLabel, handlerLabel = handlerLabel}
+        val {mergePointDecl, branchPos} = branchPoint pos NONE loc
+        val {mergePointDecl=tryMergePointDecl, branchPos=tryPos} =
+            forceBranch branchPos (SOME labels) loc
+        val leaveLabel = mergeLabel tryPos
+        val (clusters1, tryDecls) = normalizeExp tryPos rbuexp
+        val exnVar = newVar AN.LOCAL AN.BOXED
+      in
+        (clusters1,
+         AN.ANHANDLE {try = elimDeadCode tryDecls,
+                      exnVar = exnVar,
+                      handler = [AN.ANRAISE {value = AN.ANVAR exnVar,
+                                             loc = loc}],
+                      labels = {tryLabel = tryLabel,
+                                leaveLabel = leaveLabel,
+                                handlerLabel = handlerLabel},
+                      loc = loc}
+         :: tryMergePointDecl @
+         mergePointDecl)
+      end
+
   and normalizeDstVarList ((varInfo as {varId,varKind,ty,...})::varList)
                           (size::sizeList) (tag::tagList) =
       (
@@ -1225,7 +1251,10 @@ struct
                           decls = decls,
                           tys = anRetTyList,
                           sizes = siSizes}
-        val (clusters2, bodyDecls) = normalizeExp pos bodyExp
+        val (clusters2, bodyDecls) =
+            case ffiAttributes of
+              NONE => normalizeExp pos bodyExp
+            | SOME _ => protectUncaughtException pos bodyExp loc
         val bodyDecls = elimDeadCode bodyDecls
       in
         (clusters1 @ clusters2,
@@ -1288,13 +1317,18 @@ struct
       let
         val _ = Counters.init stamp
 
-        val (clusters, decls) = normalizeDeclList rbudecls
+        val pos = Return {returnKind = RETURN,
+                          decls = nil,
+                          tys = [AN.SINT],
+                          sizes = [sisizeof AN.SINT]}
+        val toplevelExp =
+            RBU.RBULET {localDeclList = rbudecls,
+                        mainExp = RBU.RBUCONSTANT {loc = Loc.noloc,
+                                                   value = CT.INT 0},
+                        loc = Loc.noloc}
+        val (clusters, decls) =
+            protectUncaughtException pos toplevelExp Loc.noloc
         val decls = elimDeadCode decls
-
-        val loc =
-            case decls of
-              decl::_ => YAANormalUtils.getLoc decl
-            | nil => Loc.noloc
 
         val topLevelEntryLabel = Counters.newLocalId ()
 
@@ -1312,13 +1346,10 @@ struct
                    codeId = topLevelEntryLabel,
                    argVarList = [],
                    argSizeList = [],
-                   body = decls @ [AN.ANRETURN {valueList = nil,
-                                                tyList = nil,
-                                                sizeList = nil,
-                                                loc = loc}],
+                   body = decls,
                    resultTyList = [],
-                   ffiAttributes = NONE,
-                   loc = loc
+                   ffiAttributes = SOME Absyn.defaultFFIAttributes,
+                   loc = Loc.noloc
                  }],
               hasClosureEnv = false,
               loc = Loc.noloc

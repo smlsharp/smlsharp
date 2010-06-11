@@ -51,6 +51,8 @@ local
   val libgl = dlopen libglName
   val libglu = if libglName = libgluName then libgl else dlopen libgluName
   val libglut = dlopen libglutName
+
+  type float = Real32.real
 in
 
 structure GLUT =

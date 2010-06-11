@@ -5,13 +5,11 @@
  *)
 structure CheckEq =
 struct
-
-  local
-    open Types TypesUtils
-    structure PT = PredefinedTypes
-  in
-
-  (***************************************************************************)
+local
+  structure T = Types
+  structure TU = TypesUtils
+  structure PT = PredefinedTypes
+in
 
   (** raised when checkEq fails *)
   exception Eqcheck
@@ -22,7 +20,7 @@ struct
       else if TyConID.eq(#id tyCon, #id(PT.arrayTyCon)) then ()
       else
           (
-           case #eqKind tyCon of ref NONEQ => raise Eqcheck | _ => ();
+           case #eqKind tyCon of ref T.NONEQ => raise Eqcheck | _ => ();
            foldr (fn (ty, ()) => checkEq ty) () args
           )
 
@@ -35,64 +33,66 @@ struct
    *)
   and checkEq ty =
       case ty of
-        ERRORty  => raise Eqcheck
-      | DUMMYty _  => raise Eqcheck
-      | TYVARty (r as ref(TVAR {lambdaDepth, id,recordKind,eqKind,tyvarName = NONE})) => 
+        T.ERRORty  => raise Eqcheck
+      | T.DUMMYty _  => raise Eqcheck
+      | T.TYVARty
+          (r
+             as
+             ref(T.TVAR {lambdaDepth, id,recordKind,eqKind,tyvarName = NONE}))
+        => 
         (case eqKind  of
-           NONEQ =>
+           T.NONEQ =>
              r :=
-             TVAR{
+             T.TVAR{
                   lambdaDepth = lambdaDepth, 
                   id = id, 
                   recordKind = recordKind, 
-                  eqKind = EQ, 
+                  eqKind = T.EQ, 
                   tyvarName = NONE
                   }
-           | EQ => ();
+           | T.EQ => ();
           case recordKind of 
-            OVERLOADED L =>
+            T.OVERLOADED L =>
               let
-                val newL = List.filter admitEqTy L 
+                val newL = List.filter TU.admitEqTy L 
               in
                 case newL of
                   nil => raise Eqcheck
                 | _ =>
                     r :=
-                    TVAR{
+                    T.TVAR{
                          lambdaDepth = lambdaDepth, 
                          id = id, 
-                         recordKind = OVERLOADED newL,
-                         eqKind = EQ, 
+                         recordKind = T.OVERLOADED newL,
+                         eqKind = T.EQ, 
                          tyvarName = NONE
                          }
               end
            | _ => ()
              )
-      | TYVARty (ref(TVAR {eqKind = EQ, tyvarName = SOME _, ...})) => ()
-      | TYVARty (ref(TVAR {eqKind = NONEQ, tyvarName = SOME _, ...})) =>
+      | T.TYVARty (ref(T.TVAR {eqKind = T.EQ, tyvarName = SOME _, ...})) => ()
+      | T.TYVARty (ref(T.TVAR {eqKind = T.NONEQ, tyvarName = SOME _, ...})) =>
         (*
           We cannot coerce user specified noneq type variable.
         *)
            raise Eqcheck
-      | TYVARty (ref(SUBSTITUTED ty)) => checkEq ty
-      | BOUNDVARty tid => ()
-      | FUNMty _ => raise Eqcheck
-      | RECORDty fl => SEnv.foldr (fn (ty,()) => checkEq ty) () fl
-      | RAWty {tyCon, args} =>
+      | T.TYVARty (ref(T.SUBSTITUTED ty)) => checkEq ty
+      | T.BOUNDVARty tid => ()
+      | T.FUNMty _ => raise Eqcheck
+      | T.RECORDty fl => SEnv.foldr (fn (ty,()) => checkEq ty) () fl
+      | T.RAWty {tyCon, args} =>
         checkEqTyConArgs tyCon args
-      | POLYty {boundtvars, body} =>
+      | T.POLYty {boundtvars, body} =>
         (
           IEnv.app 
               (fn {eqKind, ...} =>
-                  (case eqKind of NONEQ => raise Eqcheck | EQ => ()))
+                  (case eqKind of T.NONEQ => raise Eqcheck | T.EQ => ()))
               boundtvars;
           checkEq body
         )
-      | ALIASty(_,ty)  => checkEq ty
-      | OPAQUEty {spec = {tyCon, args}, ...} => 
+      | T.ALIASty(_,ty)  => checkEq ty
+      | T.OPAQUEty {spec = {tyCon, args}, ...} => 
         checkEqTyConArgs tyCon args
-      | SPECty {tyCon, args} => checkEqTyConArgs tyCon args
-  (***************************************************************************)
-
+      | T.SPECty {tyCon, args} => checkEqTyConArgs tyCon args
   end
 end

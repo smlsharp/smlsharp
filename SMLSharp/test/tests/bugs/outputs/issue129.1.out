@@ -1,4 +1,4 @@
-signature S = sig val f : ['a.'a -> 'a -> 'a] end
+signature S = sig val f : 'a -> 'a -> 'a end
 structure S : sig val f : ['a .'a -> ['b .'b -> 'b]] end
 val x = 2 : int
 structure S1 : S

@@ -73,7 +73,7 @@ prelude.smc: rtprelude.sml prelude.sml $(SMLSHARP)
 	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/rtprelude.sml --make-compiled-prelude --output=$@ --stdin
 
 ntprelude.smc: yaprelude.sml prelude.sml $(SMLSHARP)
-	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=$(NATIVE_TARGET) --make-compiled-prelude --output=ntprelude.o --stdin --xswitchTrace=yes --xtracePrelude=yes --xtraceFileLoad=yes
+	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=$(NATIVE_TARGET) --make-compiled-prelude --output=ntprelude.$(OBJEXT) --stdin --xswitchTrace=yes --xtracePrelude=yes --xtraceFileLoad=yes
 
 yaprelude.smo: yaprelude.sml prelude.sml $(SMLSHARP)
 	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=newvm --make-compiled-prelude --output=$@ --stdin

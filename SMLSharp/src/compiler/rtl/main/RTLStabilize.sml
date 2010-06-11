@@ -160,7 +160,7 @@ struct
         case first of
           R.BEGIN {label, align, loc} => result
         | R.CODEENTRY {label, symbol, scope, align, preFrameSize,
-                       preFrameAligned, defs, loc} => result
+                       stubOptions, defs, loc} => result
         | R.HANDLERENTRY {label, align, defs, loc} => stabilizeRequestAll result
         | R.ENTER => result
       end
@@ -263,7 +263,7 @@ struct
         | R.JUMP {jumpTo, destinations} => result
         | R.UNWIND_JUMP {jumpTo, sp, fp, uses, handler} => result
         | R.TAILCALL_JUMP {preFrameSize, jumpTo, uses} => result
-        | R.RETURN {preFrameSize, preFrameAligned, uses} => result
+        | R.RETURN {preFrameSize, stubOptions, uses} => result
         | R.EXIT => result
       end
 
@@ -292,7 +292,7 @@ end
       case first of
         R.BEGIN {label, align, loc} => result
       | R.CODEENTRY {label, symbol, scope, align, preFrameSize,
-                     preFrameAligned, defs, loc} =>
+                     stubOptions, defs, loc} =>
         actuallyLoaded (result, RTLUtils.Var.fromList defs)
       | R.HANDLERENTRY {label, align, defs, loc} =>
         actuallyLoaded (stabilizeActualAll result, RTLUtils.Var.fromList defs)
@@ -405,7 +405,7 @@ end
         | R.JUMP {jumpTo, destinations} => result
         | R.UNWIND_JUMP {jumpTo, sp, fp, uses, handler} => result
         | R.TAILCALL_JUMP {preFrameSize, jumpTo, uses} => result
-        | R.RETURN {preFrameSize, preFrameAligned, uses} => result
+        | R.RETURN {preFrameSize, stubOptions, uses} => result
         | R.EXIT => result
       end
 
@@ -476,7 +476,7 @@ end
           RTLEdit.insertLast (RTLEdit.insertBefore (focus, insns), last)
         | R.TAILCALL_JUMP {preFrameSize, jumpTo, uses} =>
           RTLEdit.insertLast (RTLEdit.insertBefore (focus, insns), last)
-        | R.RETURN {preFrameSize, preFrameAligned, uses} =>
+        | R.RETURN {preFrameSize, stubOptions, uses} =>
           RTLEdit.insertLast (RTLEdit.insertBefore (focus, insns), last)
         | R.EXIT =>
           RTLEdit.insertLast (RTLEdit.insertBefore (focus, insns), last)

@@ -9,14 +9,11 @@
 #include "smlsharp.h"
 
 /* entry point of SML# object file. */
-void *smlsharp_main(void);
+void smlsharp_main(void);
 
 int
 main(int argc, char **argv)
 {
-	void *exn;
-	int err = 0;
-
 	sml_init(argc, argv);
 
 #if 0
@@ -31,14 +28,8 @@ main(int argc, char **argv)
 			  : : : "edi", "eax", "ecx", "cc", "memory");
 #endif
 
-	exn = smlsharp_main();
-
-	if (exn) {
-		fprintf(stderr, "%s: unhandled exception: %s\n", argv[0],
-			**(char***)exn);
-		err = 1;
-	}
+	smlsharp_main();
 
 	sml_finish();
-	return err;
+	return 0;
 }

@@ -278,6 +278,8 @@ struct sml_thread_env {
 	void *current_handler;
 	/* temporary root slots of garbage collection. */
 	sml_obstack_t *tmp_root;
+	/* uncaught exception protection. */
+	struct sml_exn_jmpbuf *exn_jmpbuf;
 };
 
 struct sml_thread_env *sml_thread_env_get(void);
@@ -321,6 +323,8 @@ SML_PRIMITIVE void *sml_load_frame_pointer(void);
  */
 SML_PRIMITIVE void sml_push_handler(void *);
 SML_PRIMITIVE void *sml_pop_handler(void);
+SML_PRIMITIVE void sml_check_handler(void *exn);
+int sml_protect(void (*func)(void *), void *data);
 
 struct sml_exntag;
 extern struct sml_exntag sml_exn_Bind;
@@ -341,8 +345,5 @@ extern struct sml_exntag sml_exn_Bootstrap;
  */
 void sml_init(int argc, char **argv);
 void sml_finish(void);
-#if 0
-void *sml_protect(void (*func)(void *), void *data);
-#endif
 
 #endif /* SMLSHARP__SMLSHARP_H__ */

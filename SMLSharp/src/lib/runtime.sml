@@ -1,6 +1,8 @@
+use "./runtime.sig";
+
 structure SMLSharp = struct
 open SMLSharp
-structure Runtime = struct
+structure Runtime : SMLSHARP_RUNTIME = struct
 
 (* # List of primitive operators. *)
 (* # See README.txt. *)
@@ -126,23 +128,25 @@ val Real_fromManExp = _import "Real_fromManExp" : real * int -> real
 val Real_copySign = _import "Real_copySign" : real * real -> real
 (* Real_equal,,"real * real -> bool",2,,IMLPrim_Real_equal,effective *)
 val Real_class = _import "Real_class" : real -> int
-(* Real_toFloat,,"real -> float",1,,IMLPrim_Real_toFloat,effective *)
-(* Real_fromFloat,,"float -> real",1,,IMLPrim_Real_fromFloat,effective *)
 val Real_dtoa = _import "Real_dtoa" : (real * int) -> string * int
 val Real_strtod = _import "Real_strtod" : string -> real
+val Real_toFloat = _import "Real_toFloat" : real -> Real32.real
+val Real_fromFloat = _import "Real_fromFloat" : Real32.real -> real
 
 (* Float_fromInt,,"int -> float",1,,IMLPrim_Float_fromInt,effective *)
 val Float_toString = _import "Float_toString" : Real32.real -> string
-(* val Float_floor = _import "Float_floor" : Real32.real -> int *) (* unused *)
-(* val Float_ceil = _import "Float_ceil" : Real32.real -> int *) (* unused *)
-(* Float_trunc,,"float -> int",1,,IMLPrim_Float_trunc,effective *) (* unused *)
-(* val Float_round = _import "Float_round" : Real32.real -> int *) (* unused *)
-(* val Float_split = _import "Float_split" : Real32.real -> Real32.real * Real32.real *) (* unused *)
-(* val Float_toManExp = _import "Float_toManExp" : Real32.real -> Real32.real * int *) (* unused *)
-(* val Float_fromManExp = _import "Float_fromManExp" : Real32.real * int -> Real32.real *) (* unused *)
-(* val Float_copySign = _import "Float_copySign" : Real32.real * Real32.real -> Real32.real *) (* unused *)
+val Float_floor = _import "Float_floor" : Real32.real -> int
+val Float_ceil = _import "Float_ceil" : Real32.real -> int
+(* Float_trunc,,"float -> int",1,,IMLPrim_Float_trunc,effective *)
+val Float_round = _import "Float_round" : Real32.real -> int
+val Float_split = _import "Float_split" : Real32.real -> Real32.real * Real32.real
+val Float_toManExp = _import "Float_toManExp" : Real32.real -> Real32.real * int
+val Float_fromManExp = _import "Float_fromManExp" : Real32.real * int -> Real32.real
+val Float_copySign = _import "Float_copySign" : Real32.real * Real32.real -> Real32.real
 (* Float_equal,,"float * float -> bool",2,,IMLPrim_Float_equal,effective *)
-(* val Float_class = _import "Float_class" : Real32.real -> int *) (* unused *)
+val Float_class = _import "Float_class" : Real32.real -> int
+val Float_dtoa = _import "Float_dtoa" : (Real32.real * int) -> string * int
+val Float_strtod = _import "Float_strtod" : string -> Real32.real
 
 (* # Char_chr may raise Chr exception. *)
 val Char_toString = _import "Char_toString" : char -> string

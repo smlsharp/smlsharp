@@ -1,6 +1,6 @@
 structure S : sig exception E : exn end
 val f = fn : exn -> unit
 OKval it = () : unit
-signature S = sig exception E : exn end
+signature S = sig exception E end
 structure S1 : S
 OKval it = () : unit

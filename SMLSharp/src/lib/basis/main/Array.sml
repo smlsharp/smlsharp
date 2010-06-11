@@ -18,11 +18,11 @@ struct
   struct
     val maxLen = V.maxLen
     fun makeArray (intSize, initial) =
-        if maxLen < intSize
+        if intSize < 0 orelse maxLen < intSize
         then raise General.Size
         else SMLSharp.PrimArray.array(intSize, initial)
     fun makeVector (intSize, initial) =
-        if maxLen < intSize
+        if intSize < 0 orelse maxLen < intSize
         then raise General.Size
         else SMLSharp.PrimArray.vector(intSize, initial)
     (* ToDo : to create an empty array, new primitive should be added ? *)

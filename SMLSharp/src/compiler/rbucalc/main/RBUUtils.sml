@@ -70,6 +70,7 @@ structure RBUUtils : RBUUTILS = struct
           if !Control.enableUnboxedFloat
           then SOME 0w8
           else SOME 0w4
+        | RT.FLOATty => SOME 0w4
         | RT.BOUNDVARty tid =>
           if !Control.enableUnboxedFloat
           then NONE
@@ -110,6 +111,7 @@ structure RBUUtils : RBUUTILS = struct
         if !Control.enableUnboxedFloat
         then SOME 0w2
         else SOME 0w1
+      | RT.FLOATty => SOME 0w1
       | RT.BOUNDVARty tid =>
         if !Control.enableUnboxedFloat
         then NONE
@@ -148,6 +150,7 @@ structure RBUUtils : RBUUTILS = struct
         RT.ATOMty => SOME 0w0
       | RT.BOXEDty => SOME 0w1
       | RT.DOUBLEty => SOME 0w0
+      | RT.FLOATty => SOME 0w0
       | RT.BOUNDVARty _ => NONE
       | RT.SINGLEty _ => NONE
       | RT.UNBOXEDty _ => SOME 0w0
@@ -349,6 +352,7 @@ structure RBUUtils : RBUUTILS = struct
     | ATOM_REP
     | BOXED_REP
     | DOUBLE_REP
+    | FLOAT_REP
     | SINGLE_REP
     | UNBOXED_REP
 
@@ -361,30 +365,42 @@ structure RBUUtils : RBUUTILS = struct
       | (ATOM_REP,ATOM_REP) => ATOM_REP
       | (ATOM_REP,BOXED_REP) => SINGLE_REP
       | (ATOM_REP,DOUBLE_REP) => UNBOXED_REP
+      | (ATOM_REP,FLOAT_REP) => SINGLE_REP
       | (ATOM_REP,SINGLE_REP) => SINGLE_REP
       | (ATOM_REP,UNBOXED_REP) => UNBOXED_REP
 
       | (BOXED_REP,ATOM_REP) => SINGLE_REP
       | (BOXED_REP,BOXED_REP) => BOXED_REP
       | (BOXED_REP,DOUBLE_REP) => GENERIC_REP
+      | (BOXED_REP,FLOAT_REP) => SINGLE_REP
       | (BOXED_REP,SINGLE_REP) => SINGLE_REP
       | (BOXED_REP,UNBOXED_REP) => GENERIC_REP
 
       | (DOUBLE_REP,ATOM_REP) => UNBOXED_REP
       | (DOUBLE_REP,BOXED_REP) => GENERIC_REP
       | (DOUBLE_REP,DOUBLE_REP) => DOUBLE_REP
+      | (DOUBLE_REP,FLOAT_REP) => UNBOXED_REP
       | (DOUBLE_REP,SINGLE_REP) => GENERIC_REP
       | (DOUBLE_REP,UNBOXED_REP) => UNBOXED_REP
+
+      | (FLOAT_REP,ATOM_REP) => SINGLE_REP
+      | (FLOAT_REP,BOXED_REP) => SINGLE_REP
+      | (FLOAT_REP,DOUBLE_REP) => UNBOXED_REP
+      | (FLOAT_REP,FLOAT_REP) => FLOAT_REP
+      | (FLOAT_REP,SINGLE_REP) => SINGLE_REP
+      | (FLOAT_REP,UNBOXED_REP) => UNBOXED_REP
 
       | (SINGLE_REP,ATOM_REP) => SINGLE_REP
       | (SINGLE_REP,BOXED_REP) => SINGLE_REP
       | (SINGLE_REP,DOUBLE_REP) => GENERIC_REP
+      | (SINGLE_REP,FLOAT_REP) => SINGLE_REP
       | (SINGLE_REP,SINGLE_REP) => SINGLE_REP
       | (SINGLE_REP,UNBOXED_REP) => GENERIC_REP
 
       | (UNBOXED_REP,ATOM_REP) => UNBOXED_REP
       | (UNBOXED_REP,BOXED_REP) => GENERIC_REP
       | (UNBOXED_REP,DOUBLE_REP) => UNBOXED_REP
+      | (UNBOXED_REP,FLOAT_REP) => UNBOXED_REP
       | (UNBOXED_REP,SINGLE_REP) => GENERIC_REP
       | (UNBOXED_REP,UNBOXED_REP) => UNBOXED_REP
 
@@ -412,7 +428,7 @@ structure RBUUtils : RBUUTILS = struct
           | SOME RN.POINTERty => ATOM_REP
           | SOME RN.DOUBLEty =>
             if !Control.enableUnboxedFloat then DOUBLE_REP else BOXED_REP
-          | SOME RN.FLOATty => ATOM_REP
+          | SOME RN.FLOATty => FLOAT_REP
           | SOME RN.EXNTAGty =>
             if Control.nativeGen() andalso
                #cpu (Control.targetInfo ()) <> "newvm"
@@ -458,6 +474,7 @@ structure RBUUtils : RBUUTILS = struct
         (_, ATOM_REP) => RT.ATOMty
       | (_, BOXED_REP) => RT.BOXEDty
       | (_, DOUBLE_REP) => RT.DOUBLEty
+      | (_, FLOAT_REP) => RT.FLOATty
       | (AT.BOUNDVARty id, SINGLE_REP) => RT.SINGLEty id
       | (AT.BOUNDVARty id, UNBOXED_REP) => RT.UNBOXEDty id
       | (AT.BOUNDVARty id, GENERIC_REP) => RT.BOUNDVARty id
@@ -475,9 +492,14 @@ structure RBUUtils : RBUUTILS = struct
                 ATOM_REP => []
               | BOXED_REP => []
               | DOUBLE_REP => []
+              | FLOAT_REP => []
               | SINGLE_REP => [RT.TAGty id]
               | UNBOXED_REP => [RT.SIZEty id]
-              | _ => 
+              | GENERIC_REP => 
+                if !Control.enableUnboxedFloat
+                then [RT.TAGty id, RT.SIZEty id]
+                else [RT.TAGty id]
+              | UNKNOWN_REP => 
                 if !Control.enableUnboxedFloat
                 then [RT.TAGty id, RT.SIZEty id]
                 else [RT.TAGty id]

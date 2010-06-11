@@ -1,4 +1,5 @@
-functor F (S : sig datatype dt = D of int | E end) :
+functor F (S :
+sig datatype dt = D of int | E end) :
 sig datatype dt con D : S.dt -> dt val x : S.dt end
 structure P : sig datatype dt con D : int -> dt con E : dt end
 structure S : sig datatype dt con D : S.dt -> dt val x : S.dt end

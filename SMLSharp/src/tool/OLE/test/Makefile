@@ -18,8 +18,13 @@ SMLSHARP2EXE=smlsharp2exe.sh
 TESTER_SMLS= \
 	DataTypes1Tester.sml \
 	DataTypes2Tester.sml \
-	DataTypes3Tester.sml \
-	DataTypes4Tester.sml \
+	MethodCall1Tester.sml \
+	Exception1Tester.sml \
+	Property1Tester.sml \
+	Enum1Tester.sml \
+	Reference1Tester.sml \
+	Reference2Tester.sml \
+	Array1Tester.sml \
 
 
 TESTEE_CSHARPS= \

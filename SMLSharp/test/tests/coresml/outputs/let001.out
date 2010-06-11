@@ -4,11 +4,11 @@ type t = string
 val it = (1, false) : t
 datatype dt
 con C : int -> dt
-val it = - : dt
+val it = - : hidden(dt)
 datatype dt
 con D : int -> dt
 datatype ds
 con D : int * bool -> ds
-val it = - : dt
+val it = - : hidden(dt)
 exception F : int -> exn
 val it = F (3, false) : exn

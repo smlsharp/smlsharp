@@ -1,4 +1,4 @@
-// OLE/SML#
+// Oveview of OLE/SML#
 
 ''OLE/SML#'' is a support tool to enable SML code to access Microsoft COM/OLE objects.
 
@@ -22,101 +22,103 @@ Type library can be specified by
 
 Options:
 
-:-c CLASSNAME: generates wrapper codes for specified coclasses or dispatch interfaces only. You can use this option more than once. If no ''-c'' option is specified, wrappers for all coclasses and dispatch interfaces are generated. ''-o FILENAME'' writes wrapper code into the specified file name. If no ''-o'' option is specified, file name is ''TYPELIBNAME.sml'' .
+:-c CLASSNAME: generates wrapper codes for specified coclasses or dispatch interfaces only. You can use this option more than once. If no ''-c'' option is specified, wrappers for all coclasses and dispatch interfaces are generated. 
+:-o FILENAME: writes wrapper code into the specified file name. If no ''-o'' option is specified, file name is ''TYPELIBNAME.sml'' .
 :-h: shows usage.
 
 !Example.
 
-For example, ProgID of Internet Explorer (= IE) is "InternetExplorer.Application".
+For example, let's write a SML# code to operate Internet Explorer (=IE).
 
-The following session creates an IE instance, navigates to Home page and obtains URL of Home page.
+First, use OLE2SML.exe to generate a wrapper code for IE.
+
+OLE2SML takes a ProgID as its command line parameter.
+ProgID of IE is "InternetExplorer.Application".
+
+ $ OLE2SML.exe InternetExplorer.Application
+
+Instead of ProgID, you can specify the file path of the type library.
+
+ $ OLE2SML.exe "C:\\WINDOWS\\System32\\shdocvw.dll"
+
+The type library ''C:\WINDOWS\System32\shdocvw.dll'' defines COM objects 
+implemented in Internet Explorer.
+
+By default, ''OLE2SML.exe'' generates code for every coclass and interfaces
+described in the specified type library.
+If you use only some of them, you can specify them with ''-c'' option to reduce the size of generated code.
 
  $ OLE2SML.exe -c InternetExplorer InternetExplorer.Application
- generated SHDocVw.sml
- $ OLE2SML.exe -c HTMLDocument -c HTMLHtmlElement \
- >      "C:\\WINDOWS\\system32\\MSHTML.TLB"
- generated MSHTML.sml
- $ smlsharp
- SML# 0.41 (2010-05-26 11:07:12 --)
+ $ OLE2SML.exe -c InternetExplorer "C:\\WINDOWS\\System32\\shdocvw.dll"
+
+The generated code contains code for InternetExplorer coclass only.
+
+The following session creates an IE instance, navigates to Home page.
+
  # use "OLE.sml";
      :
  # OLE.initialize [OLE.COINIT_MULTITHREADED];
  val it = () : unit
+
+Loads and initializes the OLE library.
+
  # use "./SHDocVw.sml";
  signature SHDocVw =
      :
  end
  structure SHDocVw : SHDocVw
- # use "./MSHTML.sml";
- signature MSHTML =
- sig
-     :
- end
- structure MSHTML : MSHTML
+
+Loads the generated wrapper code for IE.
+The wrapper code defines a structure with the name of the type library.
+
  # val IE = SHDocVw.newInternetExplorer ();
  val IE =
     {
       :
     }
     : SHDocVw.InternetExplorer
+
+Creates an instance of IE.
+'''new'''''coclass'' is the constructor function of ''coclass''.
+
  # #getVisible IE ();
  val it = false : bool
  # #setVisible IE true;
  val it = () : unit
+
+Accesses the '''visible''' property of IE.
+
  # #GoHome IE ();
  val it = () : unit
- # val doc = MSHTML.HTMLDocument (#getDocument IE ());
- val doc =
-     {
-       :
-     }
-     : MSHTML.HTMLDocument
- # val body = MSHTML.HTMLHtmlElement (#getbody doc ());
- val body =
-     {
-       :
-     }
-     : MSHTML.HTMLHtmlElement
- # val bodyText = OLE.A (#getinnerText body ());
- val bodyText =
-       :
+
+Invokes the '''GoHome''' method of IE.
+
  # #release IE ();
  val it = 0wx0 : Word32.word
+
+COM manages the life cycle of objects by reference count.
+OLE/SML# manages reference count of each COM object internally, depending on
+GC of SML#, so you does not have to call '''addRef''' and '''release'''
+explicitly.
+In this example, however, the reference to an IE object is bound at global.
+Because a global binding will not become garbage in GC of SML#, 
+you have to call '''release''' after use, so that global binding is released.
+
  # OLE.uninitialize ();
  val it = () : unit
- # exit 0;
 
-Instead of ProgID, you can specify file path of type library.
+Clean-up OLE library.
 
- $ OLE2SML.exe "C:\\WINDOWS\\System32\\shdocvw.dll"
-
-The type library ''C:\WINDOWS\System32\shdocvw.dll'' defines COM objects implemented in Internet Explorer.
-
-By default, ''OLE2SML.exe'' generates code for every coclass and interfaces
-described in the specified type library.
-If you use only some of them, you can specify them with ''-c'' option to reduce the size of generated code.
-
- $ OLE2SML.exe -c InternetExplorer "C:\\WINDOWS\\System32\\shdocvw.dll"
-
-Its generated code contains code for InternetExplorer coclass only.
-
-Other examples.
+!!Other examples.
 *[[Internet Explorer|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/sample/SHDocVwSample.sml]]
 *[[Excel|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/sample/ExcelSample.sml]]
 *[[Windows Scripting|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/sample/ScriptingSample.sml]]
 *[[Late binding|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/sample/DotNetSample.sml]]
 
-!Reference.
+!Topics in OLE/SML#.
 
+*[[Oveview of OLE/SML#|OLESMLSharpOverview]]
 *[[mapping COM and SML#|OLESMLSharpMapping]]
 *[[API|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/doc/api/]]
 *[[COM in 3 minutes|OLESMLSharpMiniGuideOfCOM]]
 *[[Implementation overview|OLESMLSharpImplementationOverview]]
-
-!Restriction.
-
-OLE structure and OLE2SML ignore methods which satisfy any of following.
-
-* any of its parameters has [out] or [ret] attribute.
-* any of its parameters is variant type which is not included in OLE.variant.
-
