@@ -21,29 +21,26 @@ structure TypedLambda = struct
   *)
  type ty = 
   (*%
-   * @format(ty:tyformat) ty()(btvEnv)
+    * @format(ty:tyformat) ty()(btvEnv)
    *)
    Types.ty
 
  (*% 
   * @params(btvEnv)
-  * @formatter(tyConFormat) Types.format_tyCon
+  * @formatter(Types.tyCon) Types.format_tyCon
   *)
  type tyCon = 
-    (*%
-     * @format(tyCon:tyConFormat) tyCon()(btvEnv)
-     *)
     Types.tyCon
 
 (*
  (*% 
-  * @formatter(LocalVarID.id) LocalVarID.format_id
+  * @formatter(VarID.id) VarID.format_id
   *)
  type id = 
      (*%
       * @format(id) id
       *)
-      LocalVarID.id
+      VarID.id
 *)
 
  (*
@@ -52,19 +49,22 @@ structure TypedLambda = struct
   *)
  (*% 
   * @params(btvEnv)
-  * @formatter(typesValdInfo) Types.format_varIdInfoWithoutType
+  * @formatter(typesValdInfo) Types.format_varIdInfo
   *)
  (*% 
   * @prefix typed
   * @params(btvEnv)
-  * @formatter(typesValdInfo) Types.format_varIdInfo
+  * @formatter(typesValdInfoTyped) Types.format_varIdInfo
   *)
  type varIdInfo = 
      (*%
       * @format(id:typesValdInfo) id()(btvEnv)
       *)
+     (*% 
+      * @prefix typed
+      * @format(id:typesValdInfoTyped) id()(btvEnv)
+      *)
       Types.varIdInfo
-
  (*% 
   * @params(btvEnv) 
   * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
@@ -77,13 +77,11 @@ structure TypedLambda = struct
 
  (*%
   * @params(btvEnv)
-  * @formatter(btvKindFormat) Types.format_btvKind
+  * @formatter(Types.btvEnv) Types.format_btvEnv
   *)
- type btvKind = 
-     (*%
-      * @format(value:btvKindFormat) value()(btvEnv)
-      *)
-      Types.btvKind
+ type btvEnv =
+     (*% @format(btv) btv()(btvEnv) *)
+     Types.btvEnv
 
   (*% 
    * @formatter(ExnTagID.id) ExnTagID.format_id
@@ -104,7 +102,7 @@ structure TypedLambda = struct
  * @formatter(formatConst) ConstantTerm.format_constant
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(imap) SmlppgUtil.formatImap
- * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
  * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
  *)
 (*%
@@ -113,7 +111,7 @@ structure TypedLambda = struct
  *
  * @formatter(id) format_id
  * @formatter(ty) format_ty
- * @formatter(btvKind) format_btvKind
+ * @formatter(btvEnv) format_btvEnv
  * @formatter(primInfo) format_primInfo
  * @formatter(varIdInfo) format_varIdInfo
  * @formatter(enclosedListIfMoreThanOne)
@@ -121,7 +119,7 @@ structure TypedLambda = struct
  * @formatter(formatConst) ConstantTerm.format_constant
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(imap) SmlppgUtil.formatImap
- * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
  * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
  *)
  datatype tlexp 
@@ -462,10 +460,12 @@ structure TypedLambda = struct
    |
      (*%
       * @prefix typed
-      * @format({argExp, resultTy, loc}) N0{ "raise" +d {argExp()(btvEnv)} }
+      * @format({argExp, resultTy, loc})
+               N0{ "raise" +d {argExp()(btvEnv)} }
       *)
      (*%
-      * @format({argExp, resultTy, loc}) N0{ "raise" +d {argExp()(btvEnv)} }
+      * @format({argExp, resultTy, loc})
+               N0{ "raise" +d {argExp()(btvEnv) ":" resultTy()(btvEnv)} }
       *)
      TLRAISE of 
        {
@@ -520,28 +520,28 @@ structure TypedLambda = struct
    |
      (*%
       * @prefix typed
-      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs, exp, loc})
+      * @format({btvEnv:btv, expTyWithoutTAbs, exp, loc})
       *  {
-      *   "[" imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *   "[" btv()(btvEnv) "." 
       *      2[
       *        +1
-      *        {exp()(imap:createBtvKindMap()(btvEnv))}
+      *        {exp()(btv:extendBtvEnv()(btvEnv))}
       *        +1 
-      *        ":" + {expTyWithoutTAbs()(imap:createBtvKindMap()(btvEnv))}
+      *        ":" + {expTyWithoutTAbs()(btv:extendBtvEnv()(btvEnv))}
       *       ] 
       *    +1 
       *    "]"
       *  }
       *)
      (*%
-      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs, exp, loc})
+      * @format({btvEnv:btv, expTyWithoutTAbs, exp, loc})
       *  {
-      *   "[" imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *   "[" btv()(btvEnv) "." 
       *      2[
       *        +1
-      *        {exp()(imap:createBtvKindMap()(btvEnv))}
+      *        {exp()(btv:extendBtvEnv()(btvEnv))}
       *        +1 
-      *        ":" + {expTyWithoutTAbs()(imap:createBtvKindMap()(btvEnv))}
+      *        ":" + {expTyWithoutTAbs()(btv:extendBtvEnv()(btvEnv))}
       *       ] 
       *    +1 
       *    "]"
@@ -549,7 +549,7 @@ structure TypedLambda = struct
       *)
      TLPOLY of 
        {
-        btvEnv : btvKind IEnv.map,
+        btvEnv : btvEnv,
         expTyWithoutTAbs:ty, 
         exp:tlexp, 
         loc:loc
@@ -711,32 +711,32 @@ structure TypedLambda = struct
      (*%
       * @prefix typed
       * @format({
-      *          btvEnv:btvKind:btvKind imap, 
+      *          btvEnv:btv,
       *          recbindList : bind binds,
       *          loc : loc
       *         })
       *    {"[" 
       *       2[ 
-      *         imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *         btv()(btvEnv) "." 
       *          +1
       *          2["val rec" +d binds(bind)(~2[ +1 "and"] +)]
       *        ]
       *      1 "]"}
       * @format:bind({boundVar, boundExp})
-      *       boundVar()(imap:createBtvKindMap()(btvEnv)) +d "=" 
+      *       boundVar()(btv:extendBtvEnv()(btvEnv)) +d "=" 
       *       +2
-      *       {boundExp()(imap:createBtvKindMap()(btvEnv))}
+      *       {boundExp()(btv:extendBtvEnv()(btvEnv))}
       *)
      (*%
       * @format({
-      *          btvEnv:btvKind:btvKind imap, 
+      *          btvEnv:btv,
       *          recbindList : bind binds,
       *          loc : loc
       *         })
       *    {
       *     "[" 
       *       2[ 
-      *         imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *         btv()(btvEnv) "." 
       *          +1
       *          2[  
       *           "val rec" 
@@ -747,13 +747,13 @@ structure TypedLambda = struct
       *      1 "]"
       *   }
       * @format:bind({boundVar, boundExp})
-      *     boundVar()(imap:createBtvKindMap()(btvEnv)) +d "=" 
+      *     boundVar()(btv:extendBtvEnv()(btvEnv)) +d "=" 
       *     +1
-      *     {boundExp()(imap:createBtvKindMap()(btvEnv))}
+      *     {boundExp()(btv:extendBtvEnv()(btvEnv))}
       *)
      TLVALPOLYREC of 
        {
-        btvEnv : btvKind IEnv.map,
+        btvEnv : btvEnv,
         recbindList : {boundVar:varIdInfo, boundExp : tlexp } list,
         loc : loc
        }
@@ -823,6 +823,7 @@ structure TypedLambda = struct
            *  "{" +d 3[decs(dec)(+3)] +d "}"
            *)
           (*%
+           * @prefix typed
            * @format({name, formalAbstractTypeIDSet, formalVarIDSet, formalExnIDSet, 
                       generativeVarIDSet, generativeExnIDSet, bodyCode:dec decs})
            * "functor" + name +  "=" +d  

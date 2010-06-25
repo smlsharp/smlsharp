@@ -78,13 +78,13 @@ struct
   type loc = Loc.loc
 
   (*% @prefix att_
-   * @formatter(LocalVarID.id) LocalVarID.format_id
+   * @formatter(VarID.id) VarID.format_id
    * @formatter(ClusterID.id) ClusterID.format_id *)
   (*% @prefix format_ @ditto att_ *)
   (*% @prefix darwin_ @ditto att_ *)
   type localLabel =
       (*% @prefix att_ @format(c * l) ".C" c "." "L" l *)
-      ClusterID.id * LocalVarID.id
+      ClusterID.id * VarID.id
 
   (*% @prefix att_ *)
   (*% @prefix format_ @ditto att_ *)

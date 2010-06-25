@@ -65,15 +65,15 @@ struct
 
   fun newVar ty =
       let
-        val id = Counters.newLocalId ()
-        val displayName = "$" ^ LocalVarID.toString id
+        val id = VarID.generate ()
+        val displayName = "$" ^ VarID.toString id
       in
         {id = id, ty = ty, displayName = displayName} : I.varInfo
       end
 
   fun newArg (ty, argKind) =
       let
-        val id = Counters.newLocalId ()
+        val id = VarID.generate  ()
       in
         {id = id, ty = ty, argKind = argKind} : I.argInfo
       end

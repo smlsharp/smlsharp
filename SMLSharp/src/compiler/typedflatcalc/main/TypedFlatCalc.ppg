@@ -12,13 +12,13 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
 
 
  (*% 
-  * @formatter(LocalVarID.id) LocalVarID.format_id
+  * @formatter(VarID.id) VarID.format_id
   *)
  type id = 
       (*%
        * @format(id) id
        *)
-      LocalVarID.id
+      VarID.id
 
  type loc = Loc.loc
 
@@ -47,13 +47,9 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
     Absyn.tvar
 
  (*% 
-  * @params(btvEnv)
-  * @formatter(tyConFormat) Types.format_tyCon
+  * @formatter(Types.tyCon) Types.format_tyCon
   *)
  type tyCon = 
-    (*%
-     * @format(tyCon:tyConFormat) tyCon()(btvEnv)
-     *)
     Types.tyCon
 
  (*% 
@@ -150,13 +146,11 @@ OHORI: why this is here?
 
  (*%
   * @params(btvEnv)
-  * @formatter(btvKindFormat) Types.format_btvKind
+  * @formatter(Types.btvEnv) Types.format_btvEnv
   *)
- type btvKind = 
-     (*%
-      * @format(value:btvKindFormat) value()(btvEnv)
-      *)
-      Types.btvKind
+ type btvEnv =
+     (*% @format(btv) btv()(btvEnv) *)
+     Types.btvEnv
 
  (*%
  * @formatter(caseKindFormat) PatternCalc.format_caseKind
@@ -179,8 +173,7 @@ OHORI: why this is here?
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
- * @formatter(imap) SmlppgUtil.formatImap
- * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
  * @formatter(tyBindInfo) Types.format_tyBindInfo
  *)
 (*%
@@ -307,8 +300,7 @@ OHORI: why this is here?
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
- * @formatter(imap) SmlppgUtil.formatImap
- * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
  * @formatter(tyBindInfo) Types.format_tyBindInfo
  * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
  * @formatter(format_varIDIndexEnv) VarIDIndexEnv.format_varIDIndexEnv
@@ -406,10 +398,21 @@ OHORI: why this is here?
      *)
      TFPPRIMAPPLY of {primOp:primInfo, instTyList:ty list, argExpOpt:tfpexp option, loc:loc}
    | (*%
-      * @format({oprimOp:oprim,instances:ty tys:formatListWithEnclosure, argExpOpt:exp opt,loc:loc}) 
+      * @format({oprimOp:oprim,
+      *          keyTyList:kty ktys:formatListWithEnclosure,
+      *          instances:ty tys:formatListWithEnclosure,
+      *          argExpOpt:exp opt,
+      *          loc:loc}) 
         R1{d {oprim !N0{tys(ty()(btvEnv))(",","{","}")} opt(exp()(btvEnv))}}
      *)
-     TFPOPRIMAPPLY of {oprimOp:oprimInfo, instances:ty list, argExpOpt:tfpexp option, loc:loc}
+     TFPOPRIMAPPLY of
+       {
+        oprimOp:oprimInfo,
+        keyTyList:ty list,
+        instances:ty list,
+        argExpOpt:tfpexp option,
+        loc:loc
+       }
    | (*%
       * @format({con:con, instTyList:ty tys:formatListWithEnclosure, argExpOpt:exp opt, loc:loc}) 
          R1{d con  + opt(exp()(btvEnv))}
@@ -519,14 +522,14 @@ OHORI: why this is here?
      *)
      TFPFNM of {argVarList: varIdInfo list, bodyTy:ty, bodyExp:tfpexp, loc:loc}
    | (*%
-      * @format({btvEnv:btvKind:btvKind imap,
+      * @format({btvEnv:btv,
                  argVarList:var vars:enclosedListIfMoreThanOne,
                  bodyTy:ty,
                  bodyExp:exp,
                  loc:loc})
-      *         {"[" 2[1  imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
-                          !N0{"fn" + vars(var()(imap:createBtvKindMap()(btvEnv)))(",","{","}")
-			         2[+d "=>" +1 {exp()(imap:createBtvKindMap()(btvEnv))}]} 
+      *         {"[" 2[1  btv()(btvEnv) "." +
+                          !N0{"fn" + vars(var()(btv:extendBtvEnv()(btvEnv)))(",","{","}")
+			         2[+d "=>" +1 {exp()(btv:extendBtvEnv()(btvEnv))}]} 
                        ] 1 
                  "]"}
       *)
@@ -534,16 +537,16 @@ OHORI: why this is here?
         \forall t.\fn x => e 
       ty is the type of the function without type abstraction
       *)
-     TFPPOLYFNM of {btvEnv:btvKind IEnv.map, argVarList: varIdInfo list, bodyTy:ty, bodyExp:tfpexp, loc:loc}
+     TFPPOLYFNM of {btvEnv:btvEnv, argVarList: varIdInfo list, bodyTy:ty, bodyExp:tfpexp, loc:loc}
    | (*%
-      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs:ty, exp: exp,loc:loc})
+      * @format({btvEnv:btv, expTyWithoutTAbs:ty, exp: exp,loc:loc})
       * {
       *   "["
       *        2[
       *            1
-      *            imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
-      *            2[{exp()(imap:createBtvKindMap()(btvEnv))} ]
-      *            + ":" ty()(imap:createBtvKindMap()(btvEnv))
+      *            btv()(btvEnv) "." +
+      *            2[{exp()(btv:extendBtvEnv()(btvEnv))} ]
+      *            + ":" ty()(btv:extendBtvEnv()(btvEnv))
       *        ]
       *        1
       *   "]"
@@ -553,7 +556,7 @@ OHORI: why this is here?
        \forall t.e 
       ty is the type of tfpexp without type abstraction
       *)
-     TFPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tfpexp, loc:loc}
+     TFPPOLY of {btvEnv:btvEnv, expTyWithoutTAbs:ty, exp:tfpexp, loc:loc}
    | (*%
        * @format({exp:exp, expTy:ty1, instTyList:ty2 tys, loc:loc}) 
        * {
@@ -611,15 +614,15 @@ OHORI: why this is here?
      *)
      TFPVALREC of (varIdInfo * ty * tfpexp ) list * loc
    | (*%
-      * @format(btvKind:btvKind imap * bind binds * loc)
-      * {"[" 2[1  imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
+      * @format(btv * bind binds * loc)
+      * {"[" 2[1  btv()(btvEnv)  "." +
       *             "val rec" +d {binds(bind)(~4[ +1 "and"] +)} ] "]"}
       * @format:bind(id:varInfoWithType * ty * exp)
-           {id()(imap:createBtvKindMap()(btvEnv)) +d "=" 
-	      +2 2[{exp()(imap:createBtvKindMap()(btvEnv))} 
-                   +1 ":" + ty()(imap:createBtvKindMap()(btvEnv))]}
+           {id()(btv:extendBtvEnv()(btvEnv)) +d "=" 
+	      +2 2[{exp()(btv:extendBtvEnv()(btvEnv))} 
+                   +1 ":" + ty()(btv:extendBtvEnv()(btvEnv))]}
       *)
-     TFPVALPOLYREC of btvKind IEnv.map * (varIdInfo * ty * tfpexp) list * loc
+     TFPVALPOLYREC of btvEnv * (varIdInfo * ty * tfpexp) list * loc
    | (*%
       * @format(localdec localdecs * dec decs * loc)
       *            "local" 2[ +2 localdecs(localdec()(btvEnv))(+2) ] +1

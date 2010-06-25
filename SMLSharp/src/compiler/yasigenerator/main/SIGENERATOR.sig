@@ -7,9 +7,8 @@
 signature YASIGENERATOR = sig
 
   val generate
-      : Counters.stamp
-        -> (GlobalIndexEnv.arrayIndex * ANormal.ty) list
+      : (GlobalIndexEnv.arrayIndex * ANormal.ty) list
            * AbstractInstruction.program
-        -> (Counters.stamp * SymbolicInstructions.clusterCode list)
+         -> SymbolicInstructions.clusterCode list
 
 end

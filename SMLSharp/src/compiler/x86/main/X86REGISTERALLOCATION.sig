@@ -8,8 +8,6 @@ signature X86REGISTERALLOCATION =
 sig
 
   val allocate
-      : Counters.stamp ->
-        X86Mnemonic.program ->
-        Counters.stamp * X86Mnemonic.program
+      : X86Mnemonic.program -> X86Mnemonic.program
 
 end

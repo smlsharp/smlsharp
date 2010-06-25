@@ -72,6 +72,18 @@ cmtool/anchor.sml cmtool/ppg-ext.cm cmtool/smlformat-tool.sml: \
 	  $(srcdir)/"$$i".in > "$$i"; \
 	done
 
+doc:
+	-$(MAKE) smldoc
+
+smldoc: 
+	@if test 'x$(SMLDOC)' = 'x'; then \
+	  echo '*** smldoc not found.'; exit 1; \
+	fi
+	-rm -rf ./doc/api
+	mkdir -p ./doc/api
+	# overwrite --directory option specified in smldoc.cfg.
+	$(SMLDOC) -a $(srcdir)/formatlib/smldoc.cfg --directory=./doc/api
+
 # -------- Rules for SML# --------
 
 all-smlsharp: $(GENSOURCES)

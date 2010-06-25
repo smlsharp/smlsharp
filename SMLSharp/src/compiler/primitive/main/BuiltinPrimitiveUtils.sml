@@ -33,10 +33,16 @@ struct
   fun oldPrimitiveName prim =
       case P.P prim of
         P.S P.Assign => ":="
-      | P.S P.Array_array => "Array_mutableArray"
+      | P.S P.Array_first => "Array_first"
+      | P.S P.List_first => "List_first"
+      | P.S P.Int_first => "Int_first"
+      | P.S P.Real_second => "Real_second"
+      | P.S P.Array_second => "Array_second"
+      | P.S P.List_second => "List_second"
       | P.S P.Array_sub_unsafe => "Array_sub"
       | P.S P.Array_update_unsafe => "Array_update"
       | P.S P.Array_vector => "Array_immutableArray"
+      | P.S P.Array_array => raise Control.Bug "oldPrimitiveName: Array_array"
       | P.S P.Array_copy_unsafe => "Array_copy"
       | P.P (P.RuntimePrim name) => name
       | P.P P.PolyEqual => "="

@@ -17,6 +17,19 @@ structure SIGenerator : SIGENERATOR = struct
 
   (***************************************************************************)
 
+   fun newLocalId () = VarID.generate ()
+
+   fun newVar varKind ty = 
+       let
+           val id =  newLocalId ()
+       in
+         {varId = Types.INTERNAL id,
+          displayName = "$" ^ (VarID.toString id),
+          ty = ty,
+          varKind = varKind}
+       end
+
+
   val globalIndexEnvRef = ref GIE.initialGlobalIndexEnv
 
   fun lookupOrAddGlobalIndex (abstractIndex, ty) =
@@ -114,7 +127,7 @@ structure SIGenerator : SIGENERATOR = struct
         SOME entry => (context, [], entry)
       | NONE  =>
         let
-          val boundVarInfo = Counters.newVar IL.LOCAL (ILU.defaultConstantType const) 
+          val boundVarInfo = newVar IL.LOCAL (ILU.defaultConstantType const) 
           val entry = CTX.addLocalVariable context boundVarInfo
           val instruction = generateConstantInstruction context (const, entry)
           val newContext = CTX.addConstantBind context (const, entry)
@@ -536,7 +549,7 @@ structure SIGenerator : SIGENERATOR = struct
              loc
             } => 
         let
-          val intermediateVarInfo = Counters.newVar IL.LOCAL ty
+          val intermediateVarInfo = newVar IL.LOCAL ty
           val statement1 =
               IL.Assign
                   {
@@ -590,7 +603,7 @@ structure SIGenerator : SIGENERATOR = struct
              loc
             } => 
         let
-          val intermediateVarInfo = Counters.newVar IL.LOCAL ty
+          val intermediateVarInfo = newVar IL.LOCAL ty
           val statement1 =
               IL.Assign
                   {
@@ -624,12 +637,12 @@ structure SIGenerator : SIGENERATOR = struct
         let
           val context = CTX.setLocation context loc 
           val (context, switchCode, targetEntry) = transformArg context switchExp
-          val defaultLabel = Counters.newLocalId()
+          val defaultLabel = newLocalId()
           val (_, defaultCode) = transformStatement context defaultBranch
 
           fun transformCase ({constant, statement}, (cases, codes)) =
               let
-                val label = Counters.newLocalId ()
+                val label = newLocalId ()
                 val (_, code) = transformStatement context statement
                 val cases' = {const = constant, destination = label} :: cases
                 val codes' = (SI.Label label :: code) :: codes
@@ -772,7 +785,7 @@ structure SIGenerator : SIGENERATOR = struct
                 (* insert jumps to the instruction sequence which follows this
                  * Switch instruction. *)
                 let
-                  val tailLabel = Counters.newLocalId ()
+                  val tailLabel = newLocalId ()
                   fun appendJump code = code @ [SI.Jump{destination = tailLabel}]
                 in
                   (map appendJump caseCodes, [SI.Label tailLabel])
@@ -895,9 +908,9 @@ structure SIGenerator : SIGENERATOR = struct
         let
           val context = CTX.setLocation context loc
           val exnEntry = CTX.addLocalVariable context exnVar
-          val startLabel = Counters.newLocalId ()
-          val handlerLabel = Counters.newLocalId ()
-          val tailLabel = Counters.newLocalId ()
+          val startLabel = newLocalId ()
+          val handlerLabel = newLocalId ()
+          val tailLabel = newLocalId ()
           val (_, mainCode) = transformStatement (CTX.enterGuardedCode context startLabel) mainCode
           val (_,handlerCode) = transformStatement context handlerCode
         in
@@ -1000,7 +1013,7 @@ structure SIGenerator : SIGENERATOR = struct
         val funId = #functionLabel functionCode
       in
         {
-         name = {id = funId, displayName = "L" ^ LocalVarID.toString funId},
+         name = {id = funId, displayName = "L" ^ VarID.toString funId},
          loc = #loc functionCode,
          args = map varInfoToEntry (#argVarList functionCode),
          instructions = bodyCode @ constantCode
@@ -1080,11 +1093,9 @@ structure SIGenerator : SIGENERATOR = struct
       end
 
   fun generate (globalIndexEnv : GIE.globalIndexEnv, 
-                stamp : Counters.stamp,
                 {clusterCodes, initFunctionLabel} : IL.moduleCode) =
       let
-        val _ = Counters.init stamp
-        val _ = SIO.initialize_ALWAYS_Entry (Counters.newLocalId())
+        val _ = SIO.initialize_ALWAYS_Entry (newLocalId())
         val _ = GIE.startRecordingNewGlobalArrays ()
         val _ = globalIndexEnvRef := globalIndexEnv
 
@@ -1130,7 +1141,7 @@ structure SIGenerator : SIGENERATOR = struct
              loc = clusterLoc
             }
       in
-          (!globalIndexEnvRef, Counters.getCounterStamp(), SIInitialClusterCode::SIClusterCodes)
+          (!globalIndexEnvRef,  SIInitialClusterCode::SIClusterCodes)
       end
 
 end

@@ -15,6 +15,7 @@ signature SACONSTRAINT = sig
   val singleValueType : AnnotatedTypes.ty -> unit 
 
   val unify : AnnotatedTypes.ty * AnnotatedTypes.ty -> unit
+  exception Unify
 
   val addInstances : AnnotatedTypes.btvEnv * AnnotatedTypes.ty list -> unit
 

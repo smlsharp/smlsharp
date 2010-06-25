@@ -53,7 +53,7 @@
 structure YAANormalOptimization : YAANORMALOPTIMIZATION =
 struct
 
-  structure ID = LocalVarID
+  structure ID = VarID
   structure CT = ConstantTerm
   structure AN = YAANormal
   structure P = BuiltinPrimitive

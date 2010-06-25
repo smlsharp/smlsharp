@@ -17,6 +17,8 @@ sig
 
   val occurres : Types.tvState ref  -> Types.ty -> bool
 
+  val occurresTyList : Types.tvState ref  -> Types.ty list -> bool
+
   val patternUnify : (Types.ty * Types.ty) list -> unit
   (***************************************************************************)
 

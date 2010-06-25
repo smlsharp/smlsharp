@@ -80,11 +80,11 @@ struct
 
   (*%
    * @prefix att_
-   * @formatter(LocalVarID.id) LocalVarID.format_id
+   * @formatter(VarID.id) VarID.format_id
    *)
   (*% @prefix debug_ @ditto att_ *)
   (*% @prefix darwin_ @ditto att_ *)
-  type id = LocalVarID.id
+  type id = VarID.id
 
   (* local label *)
   (*% @prefix att_ *)

@@ -948,7 +948,7 @@ in
         end
       | A.EXPWHILE (condExp, bodyExp, loc) =>
         let
-          val newid = VarNameGen.generate ()
+          val newid = VarName.generate ()
           val condPl = elabExp env condExp
           val bodyPl = elabExp env bodyExp
           (* (fn _ => newid ()) body *)
@@ -1402,20 +1402,6 @@ in
               PC.PLSPECSTRUCT (elabLabeledSequence elabSigExp env strdescs, 
                                loc)
             end
-(*
-        | A.SPECFUNCTOR(fundescs, loc) =>
-          let
-              fun elabFunSigExp env (funName, argSigExp, bodySigExp) =
-                  (funName, 
-                   elabSigExp env argSigExp,
-                   elabSigExp env bodySigExp)
-              val _ = 
-                  checkNameDuplication
-                      #1 fundescs loc E.DuplicateFunctorDesc
-          in
-              PC.PLSPECFUNCTOR (map (elabFunSigExp env) fundescs, loc)
-          end
-*)
         | A.SPECINCLUDE(sigexp, loc)=>
           PC.PLSPECINCLUDE(elabSigExp env sigexp, loc)
         | A.SPECDERIVEDINCLUDE(sigids, loc) => 
@@ -1590,22 +1576,19 @@ in
       and elabTopDecs env topdecs = elabSequence elabTopDec env topdecs
 
       (* the top level function *)
-      fun elaborate fixEnv varNameState decs =
+      fun elaborate fixEnv decs =
         let        
           (* initiallize *)
           val _ = initializeErrorQueue ()
-          val _ = VarNameGen.init varNameState 
 
           val (ptopdecls, env) = elabTopDecs fixEnv decs
 
           (* finalizne *)
-          val newVarNameState = VarNameGen.reset ()
         in        
           case getErrors () of
             [] => (
                    ptopdecls, 
                    env, 
-                   newVarNameState,
                    getWarnings()
                    )
           | errors => raise UE.UserErrors (getErrorsAndWarnings ())

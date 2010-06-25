@@ -188,12 +188,12 @@ struct
   fun Bug prefix label =
       Control.Bug (prefix ^ ": " ^ Control.prettyPrint (I.format_label label))
 
-  fun newLabel () = Counters.newLocalId ()
+  fun newLabel () = VarID.generate ()
 
   fun firstLabel (I.BEGIN {label, ...}) = label
     | firstLabel (I.CODEENTRY {label, ...}) = label
     | firstLabel (I.HANDLERENTRY {label, ...}) = label
-    | firstLabel I.ENTER = newLabel ()
+    | firstLabel I.ENTER = NewLabel.newLabel ()
 
   fun singletonFirst first =
       {first=first, pre=nil, post=nil, last=I.EXIT,
@@ -201,11 +201,11 @@ struct
 
   fun singleton insn =
       {first=I.ENTER, pre=[insn], post=nil, last=I.EXIT,
-       context={label=newLabel (), graph=I.emptyGraph}} : focus
+       context={label=NewLabel.newLabel (), graph=I.emptyGraph}} : focus
 
   fun singletonLast last =
       {first=I.ENTER, pre=nil, post=nil, last=last,
-       context={label=newLabel (), graph=I.emptyGraph}} : focus
+       context={label=NewLabel.newLabel (), graph=I.emptyGraph}} : focus
 
   fun focusFirst (graph, label) =
       case I.LabelMap.find (graph, label) of
@@ -379,7 +379,7 @@ struct
   fun insertLastBefore ({first,pre,post,last,context={label,graph}}:focus,
                         lastFn) =
       let
-        val newLabel = Counters.newLocalId ()
+        val newLabel = NewLabel.newLabel()
         val newLast = lastFn newLabel
         val newFirst = I.BEGIN {label=newLabel, align=1, loc=Loc.noloc}
         val preBlock = unzip (first, pre, nil, newLast)
@@ -397,7 +397,7 @@ struct
       (insertLast (focus, lastFn label), label)
     | insertLastAfter ({first,pre,post,last,context={label,graph}}, lastFn) =
       let
-        val newLabel = Counters.newLocalId ()
+        val newLabel = NewLabel.newLabel ()
         val newLast = lastFn newLabel
         val newFirst = I.BEGIN {label=newLabel, align=1, loc=Loc.noloc}
         val postBlock = unzip (newFirst, nil, post, last)
@@ -864,7 +864,7 @@ fun mergeGraph (graph1, graph2) =
       in
         case I.LabelMap.find (graph, newLabel) of
           SOME _ => raise Control.Bug ("spliceHead: label already exist: "
-                                       ^ LocalVarID.toString newLabel)
+                                       ^ VarID.toString newLabel)
         | NONE => {first=first, pre=pre, post=post, last=last,
                    context={label=newLabel, graph=graph}} : focus
       end
@@ -877,7 +877,7 @@ fun mergeGraph (graph1, graph2) =
       in
         case I.LabelMap.find (graph, label) of
           SOME _ => raise Control.Bug ("spliceHead: label already exist: "
-                                       ^ LocalVarID.toString label)
+                                       ^ VarID.toString label)
         | NONE =>
           {first=first, pre=pre, post=post, last=last,
            context={label=label, graph=graph}} : focus
@@ -963,7 +963,7 @@ end
 (*
       case I.LabelMap.find (graph2, label) of
         SOME _ =>
-        raise Control.Bug ("mergeGraph: doubled " ^ LocalVarID.toString label)
+        raise Control.Bug ("mergeGraph: doubled " ^ VarID.toString label)
       | NONE =>
 *)
         {first=first, pre=pre, post=post, last=last,
@@ -1600,7 +1600,7 @@ struct
     | closeBlock _ = raise Exist
 
   fun firstLabel (I.BEGIN {label, ...}) = label
-    | firstLabel (I.ENTRY _) = Counters.newLocalId ()
+    | firstLabel (I.ENTRY _) = NewLabel.newLabel ()
     | firstLabel (I.WITH_PROLOGUE (_, first)) = firstLabel first
 
   fun newBlock (focus as {graph, cluster} : clusterFocus, first) =

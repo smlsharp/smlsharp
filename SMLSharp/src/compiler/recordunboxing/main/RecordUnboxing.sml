@@ -9,9 +9,18 @@ structure RecordUnboxing : RECORDUNBOXING = struct
   structure AC = AnnotatedCalc
   structure ATU = AnnotatedTypesUtils
   structure MVU = MultipleValueCalcUtils
-  structure VEnv = LocalVarID.Map
+  structure VEnv = VarID.Map
   structure T = Types
   open MultipleValueCalc
+
+   fun newVar ty = 
+       let
+           val id = VarID.generate ()
+       in
+           {displayName = "$" ^ VarID.toString id,
+            ty = ty,
+            varId = Types.INTERNAL id}
+       end
 
   (*====================================================================*)
   (* utilities *)
@@ -37,7 +46,14 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           
   fun transformType ty =
       case ty of
-        AT.ERRORty => ty
+        AT.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+        AT.INSTCODEty {oprimId = oprimId,
+                       oprimPolyTy = oprimPolyTy,
+                       name = name,
+                       keyTyList =  map transformType keyTyList,
+                       instTyList = map transformType instTyList
+                      }
+      | AT.ERRORty => ty
       | AT.DUMMYty _ => ty
       | AT.BOUNDVARty _ => ty
       | AT.FUNMty {argTyList, bodyTy, annotation, funStatus} =>
@@ -74,6 +90,21 @@ structure RecordUnboxing : RECORDUNBOXING = struct
       case recordKind
        of AT.UNIV => AT.UNIV
         | AT.REC flty => AT.REC (transformFieldTypes flty)
+        | AT.OPRIMkind {instances, operators} 
+          =>
+          AT.OPRIMkind
+          {instances = map transformType instances,
+           operators = 
+             map
+               (fn {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+                {oprimId = oprimId,
+                 oprimPolyTy = oprimPolyTy,
+                 name = name,
+                 keyTyList =  map transformType keyTyList,
+                 instTyList = map transformType instTyList}
+                )
+             operators
+            }
 
   and transformFieldTypes flty =
       SEnv.foldli
@@ -92,7 +123,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
   fun transformVar {displayName, ty, varId} =
       case flatTyList (transformType ty)
        of [ty] => [{displayName = displayName, ty = transformType ty, varId = varId}]
-        | tyList => map Counters.newVar tyList
+        | tyList => map newVar tyList
 
   fun indexesOf (label, recordTy) =
       case recordTy of
@@ -134,13 +165,13 @@ structure RecordUnboxing : RECORDUNBOXING = struct
   structure CTX =
   struct
 
-  type context = {varEnv : (AC.varInfo list) LocalVarID.Map.map, tyEnv : AT.btvKind IEnv.map}
+  type context = {varEnv : (AC.varInfo list) VarID.Map.map, tyEnv : AT.btvKind IEnv.map}
 
-  val empty = {varEnv = LocalVarID.Map.empty, tyEnv = IEnv.empty} : context
+  val empty = {varEnv = VarID.Map.empty, tyEnv = IEnv.empty} : context
 
   fun insertVariable ({varEnv, tyEnv}:context) (id, varList) = 
       {
-       varEnv = LocalVarID.Map.insert(varEnv,id,varList),
+       varEnv = VarID.Map.insert(varEnv,id,varList),
        tyEnv = tyEnv
       } : context
 
@@ -166,7 +197,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           )
         | _ => raise Control.Bug "invalid record type"
 
-  fun findVariable ({varEnv, tyEnv}:context, id) = LocalVarID.Map.find(varEnv,id)
+  fun findVariable ({varEnv, tyEnv}:context, id) = VarID.Map.find(varEnv,id)
 
   end
 
@@ -182,7 +213,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
              MVMVALUES {expList, tyList, loc} => (decls, expList, tyList)
            | _ =>
              let
-               val varInfoList = map Counters.newVar tyList
+               val varInfoList = map newVar tyList
                val loc = MVU.getLocOfExp newExp
                val decls = decls @ [MVVAL {boundVars = varInfoList, boundExp = newExp, loc = loc}]
                val expList = map (fn v => MVVAR {varInfo = v, loc = loc}) varInfoList
@@ -202,7 +233,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
            | MVCAST {exp = MVVAR _,...} => (decls, [newExp], [newTy])
            | MVCAST {exp, expTy, targetTy, loc} => 
              let
-               val varInfo = Counters.newVar expTy
+               val varInfo = newVar expTy
                val decls = decls @ [MVVAL {boundVars = [varInfo], boundExp = exp, loc = loc}]
                val newExp = MVCAST {exp = MVVAR {varInfo = varInfo, loc = loc}, expTy = expTy, targetTy = targetTy, loc = loc}
              in
@@ -210,7 +241,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
              end
            | _ =>
              let
-               val varInfo = Counters.newVar newTy
+               val varInfo = newVar newTy
                val loc = MVU.getLocOfExp newExp
                val decls = decls @ [MVVAL {boundVars = [varInfo], boundExp = newExp, loc = loc}]
              in
@@ -580,7 +611,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
                     | _ =>
                       let
                         val tyList = map fieldTy labels
-                        val varInfoList = map Counters.newVar tyList
+                        val varInfoList = map newVar tyList
                         val fieldDecls =
                             ListPair.map 
                                 (fn (varInfo, exp) => MVVAL {boundVars = [varInfo], boundExp = exp, loc = loc})
@@ -803,7 +834,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
                         MVVAR {varInfo, loc} => (varInfo :: L1,L2)
                       | _ =>
                         let
-                          val varInfo = Counters.newVar ty
+                          val varInfo = newVar ty
                           val decl = MVVAL {boundVars = [varInfo], boundExp = arg, loc = loc}
                         in
                           (varInfo :: L1, decl :: L2)
@@ -955,12 +986,11 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           (block1 :: blocks2, newContext)
       end
       
-  fun transform (stamp:Counters.stamp) blockList = 
+  fun transform  blockList = 
       let
-        val _ = Counters.init stamp
         val (newBlockList, _) = transformTopBlocks CTX.empty blockList
       in
-          (Counters.getCounterStamp(), newBlockList)
+        newBlockList
       end
 
 

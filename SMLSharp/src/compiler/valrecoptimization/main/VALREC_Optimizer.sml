@@ -456,12 +456,11 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
        (newIncContext, List.concat newTopDecs)
      end
 
- fun optimize (globalContext:VALREC_Utils.globalContext) (stamp:Counters.stamp) topdecs  = 
+ fun optimize (globalContext:VALREC_Utils.globalContext) topdecs  = 
      let
-         val _ = Counters.init stamp
          val (newContext, newTopDecs) =
              optimizetopdecList globalContext emptyContext topdecs
      in
-         (Counters.getCounterStamp(), newTopDecs)
+         newTopDecs
      end
 end

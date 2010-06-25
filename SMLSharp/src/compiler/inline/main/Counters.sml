@@ -7,28 +7,16 @@ structure Counters :
           sig
               type stamps
               val init : stamps -> unit
-              val newLocalID : unit -> LocalVarID.id
+              val newLocalID : unit -> VarID.id
               val getCountersStamps : unit -> stamps 
           end
   =
 struct
-   type stamps =
-        {
-         boundTypeVarIDStamp : int,
-         localVarIDStamp : LocalVarID.id
-        }
+   type stamps =int
 
-   fun init (stamps:stamps) =
-     (
-      LocalVarIDGen.init (#localVarIDStamp stamps);
-      BoundTypeVarIDGen.init (#boundTypeVarIDStamp stamps)
-     )
+   fun init stamps = BoundTypeVarID.init stamps
 
-   fun newLocalID () = LocalVarIDGen.generate ()
+   fun newLocalID () = VarID.generate ()
 
-   fun getCountersStamps () =
-       {
-        localVarIDStamp = LocalVarIDGen.reset (),
-        boundTypeVarIDStamp =  BoundTypeVarIDGen.reset ()
-       }
+   fun getCountersStamps () = BoundTypeVarID.reset ()
 end

@@ -6,7 +6,6 @@
 signature VALREC_OPTIMIZER =
 sig
   val optimize : VALREC_Utils.globalContext -> 
-                 Counters.stamp ->
                  PatternCalcFlattened.plftopdec list -> 
-                 (Counters.stamp * PatternCalcFlattened.plftopdec list)
+                 PatternCalcFlattened.plftopdec list
 end

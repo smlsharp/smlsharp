@@ -8,10 +8,8 @@ signature VMCODESELECTION =
 sig
 
   val select
-      : Counters.stamp
-        -> AbstractInstruction.program
-        -> Counters.stamp
-           * VMMnemonic.instruction list MachineLanguage.program
+      : AbstractInstruction.program
+        -> VMMnemonic.instruction list MachineLanguage.program
 
   val labelString
       : MachineLanguage.id -> string

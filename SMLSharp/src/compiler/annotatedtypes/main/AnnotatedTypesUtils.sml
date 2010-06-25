@@ -48,14 +48,25 @@ structure AnnotatedTypesUtils : ANNOTATEDTYPESUTILS = struct
     | argTyList _ = raise Control.Bug "function type is expected"
 
   fun expandFunTy (AT.FUNMty arg) = arg
-    | expandFunTy _ = raise Control.Bug "function type is expected"
+    | expandFunTy ty =
+      raise Control.Bug "function type is expected"
+before print (Control.prettyPrint (AT.format_ty ty))
 
   fun expandRecordTy (AT.RECORDty arg) = arg
     | expandRecordTy _ = raise Control.Bug "record type is expected"
  
   fun substitute subst ty =
       case ty of
-        AT.BOUNDVARty tid =>
+        AT.INSTCODEty {oprimId,oprimPolyTy,name,keyTyList,instTyList} =>
+        AT.INSTCODEty
+          {
+           oprimId = oprimId,
+           oprimPolyTy = oprimPolyTy,
+           name = name,
+           keyTyList =  map (substitute subst) keyTyList,
+           instTyList = map (substitute subst) instTyList
+          }
+      | AT.BOUNDVARty tid =>
         (case IEnv.find(subst,tid) of
            SOME ty => ty
          | NONE => ty
@@ -105,7 +116,21 @@ structure AnnotatedTypesUtils : ANNOTATEDTYPESUTILS = struct
       case recordKind of 
         AT.UNIV => AT.UNIV
       | AT.REC flty => AT.REC (SEnv.map (substitute subst) flty)
-
+      | AT.OPRIMkind {instances, operators}
+        => 
+        AT.OPRIMkind
+          {instances = map (substitute subst) instances,
+           operators =
+           map
+             (fn {oprimId, oprimPolyTy, name = name, keyTyList, instTyList} =>
+                 {oprimId = oprimId,
+                  oprimPolyTy = oprimPolyTy,
+                  name = name,
+                  keyTyList =  map (substitute subst) keyTyList,
+                  instTyList = map (substitute subst) instTyList}
+             )
+             operators
+          }
   fun makeSubst (btvEnv, tyList) =
       ListPair.foldr
           (fn ((i, _), ty, S) => IEnv.insert(S, i, ty))

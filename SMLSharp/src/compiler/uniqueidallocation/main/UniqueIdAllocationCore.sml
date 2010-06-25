@@ -317,7 +317,7 @@ in
          print "\n";
          raise Control.Bug "TPRECFUNVAR in module compiler"
         )
-      | TPPRIMAPPLY {primOp=primInfo as {name,ty},
+      | TPPRIMAPPLY {primOp=primInfo as {prim_or_special,ty},
                      instTyList=tys,
                      argExpOpt=tpexpop,
                      loc=loc} =>
@@ -335,10 +335,12 @@ in
           TFPPRIMAPPLY
             {primOp=primInfo, instTyList=tys, argExpOpt=tfpexpop, loc=loc}
         end
-      | TPOPRIMAPPLY {oprimOp=oprimInfo as {name,ty,instances}, 
-                      instances=tys, 
-                      argExpOpt=tpexpop,
-                      loc=loc} =>
+      | TPOPRIMAPPLY
+          {oprimOp=oprimInfo as {name,oprimPolyTy,oprimId},
+           keyTyList = ktys,
+           instances=tys, 
+           argExpOpt=tpexpop,
+           loc=loc} =>
         let
           val tfpexpop = 
               case tpexpop of
@@ -351,6 +353,7 @@ in
                 end
         in 
           TFPOPRIMAPPLY{oprimOp=oprimInfo,
+                        keyTyList = ktys,
                         instances=tys,
                         argExpOpt=tfpexpop,
                         loc=loc}
@@ -757,12 +760,14 @@ in
                       val replicationDec = 
                           TFPVAL ([(T.VALIDENT
                                       ({displayName = name,
-                                        ty = ty,
+                                        ty = T.POLYty
+                                               {boundtvars=btvEnv,body=ty},
                                         varId = T.INTERNAL exportVarID}
                                       ),
                                     TFPVAR
                                       ({displayName = name,
-                                        ty = ty,
+                                        ty = T.POLYty
+                                               {boundtvars=btvEnv,body=ty},
                                         varId = T.INTERNAL internalVarID}, 
                                        loc)
                                   )],

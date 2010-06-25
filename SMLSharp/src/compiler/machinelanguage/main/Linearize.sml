@@ -12,7 +12,7 @@ structure Linearize : sig
 end =
 struct
 
-  structure ID = LocalVarID
+  structure ID = VarID
   structure M = MachineLanguage
 
 (*

@@ -9,14 +9,14 @@ structure SIGContext : SIGCONTEXT = struct
   type ord_key = SI.entry
 
   fun compare ({id = id1, displayName = displayName1},{id = id2, displayName = displayName2}) =
-      LocalVarID.compare(id1,id2)
+      VarID.compare(id1,id2)
   end
 
   structure VarInfo_ord:ORD_KEY = struct 
   type ord_key = IL.varInfo
 
   fun compare ({varId = varId1, ...} : IL.varInfo, {varId = varId2, ...} : IL.varInfo) =
-      Types.compareVarId(varId1,varId2)
+      VarIdEnv.Key.compare(varId1,varId2)
   end
 
   structure Const_ord:ORD_KEY = struct 
@@ -157,7 +157,7 @@ structure SIGContext : SIGCONTEXT = struct
 
   fun addStringConstant
           (context as {constantInstructions, ...} : context) string =
-      let val label = Counters.newLocalId ()
+      let val label = VarID.generate ()
       in
         constantInstructions :=
         ([SI.Label label, SI.ConstString {string = string}]

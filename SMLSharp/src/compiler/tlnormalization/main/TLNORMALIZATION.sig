@@ -6,11 +6,8 @@
 signature TLNORMALIZATION =
 sig
     val normalize : 
-      Counters.stamp
-       -> RecordCalc.topBlock list
-          -> Counters.stamp * TypedLambda.topBlock list
+        RecordCalc.topBlock list -> TypedLambda.topBlock list
 
-    val isAtomicTyCon :
-        Types.tyCon -> bool
+    val isAtomicTyCon : Types.tyCon -> bool
 
 end

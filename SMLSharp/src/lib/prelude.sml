@@ -77,10 +77,10 @@ local
 *)
       ]
 
-  val s_Indicator = FE.Indicator{space = true, newline = NONE}
-  val s_1_Indicator =
-      FE.Indicator
-      {space = true, newline = SOME{priority = FE.Preferred 1}}
+  val dspace =
+      FE.Indicator {space = true, newline = SOME{priority = FE.Deferred}}
+  val space =
+      FE.Indicator {space = true, newline = SOME{priority = FE.Preferred 1}}
 
   local
     val elision =
@@ -140,29 +140,29 @@ fun printFormat exp =
 fun printFormatOfValBinding (name, valExp, tyExp) =
     let
       val valExp = cutOff valExp
+      fun peel (FE.Guard (NONE, [x])) = peel x
+        | peel (FE.Guard (NONE, l)) = l
+        | peel x = [x]
     in
       print
-          (SMLFormat.prettyPrint
-                (getPrinterParameters ())
-                [
-                  FE.Term(3, "val"),
-                  s_Indicator,
-                  FE.Guard
-                      (
-                        NONE,
-                        [
-                          FE.Term(size name, name),
-                          s_Indicator,
-                          FE.Term(1, "="),
-                          s_1_Indicator,
-                          valExp,
-                          s_1_Indicator,
-                          FE.Term(2, ": "),
-                          tyExp
-                        ]
-                      )
-                ])
-    end;
+        (SMLFormat.prettyPrint
+           (getPrinterParameters ())
+           ([FE.StartOfIndent 4,
+             FE.Term (3, "val"),
+             dspace,
+             FE.Guard
+               (NONE,
+                [FE.Term (size name, name),
+                 dspace,
+                 FE.Term (1, "="),
+                 space,
+                 valExp]),
+             space,
+             FE.Term (1, ":"),
+             dspace,
+             tyExp,
+             FE.EndOfIndent]))
+    end
 end;
 
 structure General : GENERAL =

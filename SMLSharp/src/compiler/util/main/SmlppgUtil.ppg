@@ -215,6 +215,10 @@ struct
           then format_tupleTy(elementFormatter, itemsep) L
           else format_record(elementFormatter, bindsep, itemsepRecord) L
       end
+    | formatGenericFieldsTy _ _ =
+      raise
+        Control.Bug
+          "SmlppgUtil:formatGenericFieldsTy:empty element formatter"
 
   fun formatGenericFieldsExp ([elementFormatter],bindsep,itemsep) L =
       let 
@@ -228,6 +232,11 @@ struct
         then format_tupleExp(elementFormatter,bindsep,itemsep) L
         else format_record(elementFormatter,bindsep,itemsep) L
       end
+    | formatGenericFieldsExp _ _ = 
+      raise
+        Control.Bug
+          "SmlppgUtil:formatGenericFieldsExp : empty element formatter"
+
 
   fun formatGenericSmapTy 
   (elementFormatter, bindsep, itemsepRecord, itemsep)
@@ -265,8 +274,17 @@ struct
       (SEnv.listItemsi smap)
 
   fun formatImap (elementFormatter) imap =
-      SMLFormat.BasicFormatters.format_list
-          (elementFormatter,makeToken ",") (IEnv.listItems imap)
+      let
+        val keys = IEnv.listKeys imap
+        val suf = [FE.Term(List.length keys + 2,
+                           "(" ^ (String.concat
+                                  (map (fn i => (Int.toString i ^ ",")) keys))
+                            ^   ")")]
+      in
+        (SMLFormat.BasicFormatters.format_list
+           (elementFormatter,makeToken ",") (IEnv.listItems imap))
+        (*  @ suf for debugging *)
+      end
 
   fun formatPrependedOpt (formatter, prefixIfSome) =
       fn NONE => [FE.Term (0, "")]

@@ -1,32 +1,20 @@
 exception e121a : exn
-../tests/coresml/tests/nameDuplication003.sml:28.1-28.38 Error: Duplicate
-                                                                constructor name
-                                                                in
-                                                                exception: e121
+../tests/coresml/tests/nameDuplication003.sml:28.1-28.38 Error:
+  Duplicate constructor name in exception: e121
 
-../tests/coresml/tests/nameDuplication003.sml:30.1-30.40 Error: Duplicate
-                                                                constructor name
-                                                                in
-                                                                exception: e122
+../tests/coresml/tests/nameDuplication003.sml:30.1-30.40 Error:
+  Duplicate constructor name in exception: e122
 
 exception e123a : exn
 exception e123b : exn
-../tests/coresml/tests/nameDuplication003.sml:33.1-33.39 Error: Duplicate
-                                                                constructor name
-                                                                in
-                                                                exception: e123
+../tests/coresml/tests/nameDuplication003.sml:33.1-33.39 Error:
+  Duplicate constructor name in exception: e123
 
-../tests/coresml/tests/nameDuplication003.sml:35.1-35.57 Error: Duplicate
-                                                                constructor name
-                                                                in
-                                                                exception: e132
+../tests/coresml/tests/nameDuplication003.sml:35.1-35.57 Error:
+  Duplicate constructor name in exception: e132
 
-../tests/coresml/tests/nameDuplication003.sml:37.1-37.78 Error: Duplicate
-                                                                constructor name
-                                                                in
-                                                                exception: e2221
-../tests/coresml/tests/nameDuplication003.sml:37.1-37.78 Error: Duplicate
-                                                                constructor name
-                                                                in
-                                                                exception: e2222
+../tests/coresml/tests/nameDuplication003.sml:37.1-37.78 Error:
+  Duplicate constructor name in exception: e2221
+../tests/coresml/tests/nameDuplication003.sml:37.1-37.78 Error:
+  Duplicate constructor name in exception: e2222
 

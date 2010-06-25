@@ -14,7 +14,7 @@ struct
 
   fun newVar ty =
       let
-        val id = Counters.newLocalId ()
+        val id = NewLabel.newLabel ()
       in
         {id = id, ty = ty} : I.var
       end

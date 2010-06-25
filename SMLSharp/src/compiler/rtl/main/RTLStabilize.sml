@@ -39,7 +39,7 @@ struct
     | mergeActual (CACHED, LOADED) = LOADED
     | mergeActual (LOADED, _) = LOADED
 
-  type 'a result = (R.ty * 'a) LocalVarID.Map.map
+  type 'a result = (R.ty * 'a) VarID.Map.map
   type 'a answer = 'a result RTLUtils.answer
 
   local
@@ -58,25 +58,25 @@ struct
         (fn (l,(x,y)) => R.format_id l @ s ":("
                          @ R.format_ty x @ s "," @ fmt y @ s ")",
          s ",")
-        (LocalVarID.Map.listItemsi map) @ s "}"
+        (VarID.Map.listItemsi map) @ s "}"
   fun format_answer fmt (ans:'a answer) =
       RTLUtils.format_answer (format_result fmt) ans
   end
 
   fun join merge (result1:'a result, result2) =
-      LocalVarID.Map.unionWith
+      VarID.Map.unionWith
         (fn ((ty,x), (_,y)) => (ty, merge (x, y)))
         (result1, result2)
 
   fun minus (result:'a result, vars) =
-      LocalVarID.Map.filteri
+      VarID.Map.filteri
         (fn (id, _) => not (RTLUtils.Var.inDomain (vars, id)))
         result
 
   fun isSubset merge (result1:'a result, result2) =
-      LocalVarID.Map.foldli
+      VarID.Map.foldli
         (fn (k, (_, s1), z) =>
-            z andalso (case LocalVarID.Map.find (result2, k) of
+            z andalso (case VarID.Map.find (result2, k) of
                          NONE => false
                        | SOME (_, s2) => merge (s1, s2) = s2))
         true
@@ -86,65 +86,65 @@ struct
       not (isSubset merge (new, old))
 
   fun singleton ({id, ty}:R.var, status:'a) =
-      LocalVarID.Map.singleton (id, (ty, status)) : 'a result
+      VarID.Map.singleton (id, (ty, status)) : 'a result
 
   fun setStatus1 (result:'a result, {id, ty}:R.var, status:'a) =
-      LocalVarID.Map.insert (result, id, (ty, status))
+      VarID.Map.insert (result, id, (ty, status))
 
   fun setStatus (result:'a result, vars, status:'a) =
       RTLUtils.Var.fold
-        (fn ({id, ty}:R.var, z) => LocalVarID.Map.insert (z, id, (ty, status)))
+        (fn ({id, ty}:R.var, z) => VarID.Map.insert (z, id, (ty, status)))
         result
         vars
 
   fun makeResult (vars, status) =
-      setStatus (LocalVarID.Map.empty, vars, status)
+      setStatus (VarID.Map.empty, vars, status)
 
   fun requestLoaded (result:request result, vars) =
       RTLUtils.Var.fold
         (fn ({id, ty}:R.var, z) =>
-            case LocalVarID.Map.find (z, id) of
+            case VarID.Map.find (z, id) of
               SOME _ => z
-            | NONE => LocalVarID.Map.insert (z, id, (ty, LOAD)))
+            | NONE => VarID.Map.insert (z, id, (ty, LOAD)))
         result
         vars
 
   fun actuallyLoaded (result:actual result, vars) =
       RTLUtils.Var.fold
         (fn ({id, ty}:R.var, z) =>
-            case LocalVarID.Map.find (z, id) of
+            case VarID.Map.find (z, id) of
               SOME (_, LOADED) => z
             | SOME (_, CACHED) => z
-            | SOME (ty, SAVED) => LocalVarID.Map.insert (z, id, (ty, CACHED))
-            | NONE => LocalVarID.Map.insert (z, id, (ty, LOADED)))
+            | SOME (ty, SAVED) => VarID.Map.insert (z, id, (ty, CACHED))
+            | NONE => VarID.Map.insert (z, id, (ty, LOADED)))
         result
         vars
 
   fun stabilizeRequestAll (result:request result) =
-      LocalVarID.Map.map (fn (ty, _) => (ty, SAVE)) result
+      VarID.Map.map (fn (ty, _) => (ty, SAVE)) result
 
   fun stabilizeRequestPtr (result:request result) =
-      LocalVarID.Map.map (fn (ty as R.Ptr R.Data, _) => (ty, SAVE)
+      VarID.Map.map (fn (ty as R.Ptr R.Data, _) => (ty, SAVE)
                            | (ty, v) => (ty, v))
                          result
 
   fun stabilizeActualAll (result:actual result) =
-      LocalVarID.Map.map (fn (ty, _) => (ty, SAVED)) result
+      VarID.Map.map (fn (ty, _) => (ty, SAVED)) result
 
   fun stabilizeActualPtr (result:actual result) =
-      LocalVarID.Map.map (fn (ty as R.Ptr R.Data, _) => (ty, SAVED)
+      VarID.Map.map (fn (ty as R.Ptr R.Data, _) => (ty, SAVED)
                            | (ty, v) => (ty, v))
                          result
 
   fun isStabilizedAll (result:actual result) =
-      LocalVarID.Map.foldl (fn ((_,SAVED),z) => z
+      VarID.Map.foldl (fn ((_,SAVED),z) => z
                              | ((_,CACHED),z) => z
                              | ((_,LOADED),z) => false)
                            true
                            result
 
   fun isStabilizedPtr (result:actual result) =
-      LocalVarID.Map.foldl (fn ((R.Ptr R.Data,SAVED),z) => z
+      VarID.Map.foldl (fn ((R.Ptr R.Data,SAVED),z) => z
                              | ((R.Ptr R.Data,CACHED),z) => z
                              | ((R.Ptr R.Data,LOADED),z) => false
                              | (_, z) => z)
@@ -312,11 +312,11 @@ end
         | R.REQUIRE_SLOT slot => result
         | R.USE vars => result
         | R.MOVE (ty, R.REG v, R.REF (_, R.MEM (_, R.SLOT s))) =>
-          if LocalVarID.eq (#id v, #id s)
+          if VarID.eq (#id v, #id s)
           then setStatus1 (result, v, CACHED)
           else result
         | R.MOVE (ty, R.MEM (_, R.SLOT s), R.REF (_, R.REG v)) =>
-          if LocalVarID.eq (#id v, #id s)
+          if VarID.eq (#id v, #id s)
           then setStatus1 (result, v, CACHED)
           else result
         | R.MOVE (ty, dst, op1) => result
@@ -537,7 +537,7 @@ end
                   in
                     join mergeActual (succ, #answerIn a)
                   end)
-              LocalVarID.Map.empty
+              VarID.Map.empty
               (RTLUtils.successors last)
 (*
 val _ = Control.ps "----last+load"
@@ -545,10 +545,10 @@ val _ = Control.p (format_result format_actual) answerOut
 val _ = Control.p (format_result format_actual) succ
 *)
         val vars =
-            LocalVarID.Map.foldli
+            VarID.Map.foldli
               (fn (id, (ty, s1), vars) =>
                   let
-                    val s2 = case LocalVarID.Map.find (succ, id) of
+                    val s2 = case VarID.Map.find (succ, id) of
                                SOME (_, s) => s
                              | NONE => raise Control.Bug ("insertLoadWithLoad "^Control.prettyPrint (R.format_id id))
                   in
@@ -573,7 +573,7 @@ val _ = Control.p (format_result format_actual) succ
   fun select f (result:'a result, varSet) =
       RTLUtils.Var.filter
         (fn {id,...}:R.var =>
-            case LocalVarID.Map.find (result, id) of
+            case VarID.Map.find (result, id) of
               SOME (_, x) => f x
             | NONE => false)
         varSet
@@ -629,7 +629,7 @@ val _ = Control.ps "----"
   fun stabilize graph =
       let
         val request = RTLUtils.analyzeFlowBackward
-                        {init = LocalVarID.Map.empty,
+                        {init = VarID.Map.empty,
                          join = join mergeRequest,
                          pass = passRequest,
                          filterIn = fn (_,x) => x,
@@ -644,20 +644,20 @@ val _ = Control.ps "----"
             case R.LabelMap.find (liveness, label) of
               NONE => map
             | SOME {answerIn=live,...} =>
-              LocalVarID.Map.filteri
-                (fn (i,_) => LocalVarID.Map.inDomain (live, i))
+              VarID.Map.filteri
+                (fn (i,_) => VarID.Map.inDomain (live, i))
                 map
 
         fun filterOut (label, map) =
             case R.LabelMap.find (liveness, label) of
               NONE => map
             | SOME {answerOut=live,...} =>
-              LocalVarID.Map.filteri
-                (fn (i,_) => LocalVarID.Map.inDomain (live, i))
+              VarID.Map.filteri
+                (fn (i,_) => VarID.Map.inDomain (live, i))
                 map
 
         val actual = RTLUtils.analyzeFlowForward
-                       {init = LocalVarID.Map.empty,
+                       {init = VarID.Map.empty,
                         join = join mergeActual,
                         pass = passActual,
                         filterIn = filterIn,

@@ -12,23 +12,12 @@ structure Counters :
           end
   =
 struct
-   type stamps = 
-        {
-         boundTypeVarIDStamp : int,
-         freeTypeVarIDStamp : FreeTypeVarID.id,
-         varNameStamp : VarNameID.id
-        }
+   type stamps = int
+
    fun init (stamps:stamps) =
-     (
-       VarNameGen.init (#varNameStamp stamps);
-       BoundTypeVarIDGen.init (#boundTypeVarIDStamp stamps);
-       FreeTypeVarIDGen.init (#freeTypeVarIDStamp stamps)
-     )
-   fun getCounterStamps () =
-       {
-        boundTypeVarIDStamp = BoundTypeVarIDGen.reset (),
-        freeTypeVarIDStamp = FreeTypeVarIDGen.reset (),
-        varNameStamp = VarNameGen.reset ()
-       }
-   fun newVarName () = VarNameGen.generate () 
+       BoundTypeVarID.init stamps
+
+   fun getCounterStamps () = BoundTypeVarID.reset ()
+
+   fun newVarName () = VarName.generate () 
 end

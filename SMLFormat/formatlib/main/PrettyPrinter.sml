@@ -1,40 +1,17 @@
 (**
- *  This module translates the symbols into a text representation which fits
+ *  This module translates the expressions into a text representation which fits
  * within the specified column width.
  * @author YAMATODANI Kiyoshi
  * @version $Id: PrettyPrinter.sml,v 1.5 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-functor PrettyPrinter(FE : FORMAT_EXPRESSION) : PRETTYPRINTER =
+functor PrettyPrinter(FormatExpression : FORMAT_EXPRESSION) =
 struct
 
   (***************************************************************************)
 
-  structure FormatExpression = FE
-
+  structure FE = FormatExpression
+  structure PE = PreProcessedExpression
   structure PP = PrinterParameter
-
-  (***************************************************************************)
-
-  type environmentEntry =
-       {
-         requiredColumns : int, 
-         newline : bool ref,
-         priority : FE.priority
-       }
-
-  type environment = environmentEntry list
-
-  datatype symbol =
-           Term of (int * string)
-         | List of
-           {
-             symbols : symbol list,
-             environment : environment
-           }
-         | Indicator of {space : bool, newline : bool ref}
-         | DeferredIndicator of {space : bool, requiredColumns : int ref}
-         | StartOfIndent of int
-         | EndOfIndent
 
   (***************************************************************************)
 
@@ -75,36 +52,24 @@ struct
   (****************************************)
 
   (**
-   *  translates the symbol into a text representation which fits within the
-   * specified column width.
+   *  translates the expression into a text representation which fits within
+   * the specified column width.
    * <p>
    *  This function tries to insert newline characters so that the text can
    * fit within the specified column width, but it may exceed the specified
    * column width if the column width is too small.
    * </p>
-   * @params parameter symbol
+   * @params parameter expression
    * @param parameter parameters which control the printer
-   * @param symbol the symbol to be translated.
-   * @return the text representation of the symbol.
+   * @param expression the expression to be translated.
+   * @return the text representation of the expression.
    *)
-  fun format parameters =
+  fun format (parameters : PP.parameterRecord) =
     let
-      val (initialCols, spaceString, newlineString, cutOverTail) =
-          List.foldl
-              (fn (param, (cols, space, newline, cuttail)) =>
-                  case param
-                   of PP.Newline s => (cols, space, s, cuttail)
-                    | PP.Space s => (cols, s, newline, cuttail)
-                    | PP.Columns n => (n, space, newline, cuttail)
-                    | PP.CutOverTail b => (cols, space, newline, b)
-                    | _ => (cols, space, newline, cuttail))
-              (
-                PP.defaultColumns,
-                PP.defaultSpace,
-                PP.defaultNewline,
-                PP.defaultCutOverTail
-              )
-              parameters
+      val initialCols = #columns parameters
+      val spaceString = #spaceString parameters
+      val newlineString = #newlineString parameters
+      val cutOverTail = #cutOverTail parameters
 
       datatype line =
                Unclosed of string
@@ -189,7 +154,7 @@ struct
             String.concat strings
           end
 
-      fun visit canMultiline (context : context) (Term (columns, text)) =
+      fun visit canMultiline (context : context) (PE.Term (columns, text)) =
           {
             cols = (#cols context) - columns,
             lines = appendToLine text (#lines context),
@@ -201,9 +166,9 @@ struct
         | visit
           canMultiline
           context
-          (List
+          (PE.List
            {
-             symbols,
+             expressions,
              environment = unsortedEnvironment
            }) =
           let
@@ -214,7 +179,7 @@ struct
             val environment =
                 sort
                 (fn (left, right) =>
-                    FE.isHigherThan (#priority left, #priority right))
+                    PE.isHigherThan (#priority left, #priority right))
                 unsortedEnvironment
 
             (*
@@ -240,8 +205,8 @@ struct
 
             val newContext =
                 foldl
-                    (fn (symbol, context) =>
-                        visit allPreferredMultiLined context symbol)
+                    (fn (expression, context) =>
+                        visit allPreferredMultiLined context expression)
                     {
                       cols = #cols context,
                       lines = #lines context,
@@ -250,7 +215,7 @@ struct
                       indentWidth = (initialCols - (#cols context)),
                       indentStack = []
                     }
-                    symbols
+                    expressions
 
           in
             {
@@ -262,7 +227,7 @@ struct
             }
           end
 
-        | visit canMultiline context (StartOfIndent indent) =
+        | visit canMultiline context (PE.StartOfIndent indent) =
           let
             val newIndentStack = indent :: (#indentStack context)
             val newIndentWidth = #indentWidth context + indent
@@ -279,7 +244,7 @@ struct
             }
           end
 
-        | visit canMultiline context (Indicator {space, newline}) =
+        | visit canMultiline context (PE.Indicator {space, newline}) =
           if ! newline
           then
             let
@@ -297,11 +262,11 @@ struct
             end
           else
             if space
-            then visit canMultiline context (Term (1, spaceString))
+            then visit canMultiline context (PE.Term (1, spaceString))
             else context
 
         | visit
-          canMultiline context (DeferredIndicator {space, requiredColumns}) =
+          canMultiline context (PE.DeferredIndicator{space, requiredColumns}) =
           if canMultiline andalso (#cols context) < (!requiredColumns) 
           then
             let
@@ -319,10 +284,10 @@ struct
             end
           else
             if space
-            then visit canMultiline context (Term (1, spaceString))
+            then visit canMultiline context (PE.Term (1, spaceString))
             else context
 
-        | visit _ context EndOfIndent =
+        | visit _ context PE.EndOfIndent =
           case #indentStack context
            of [] => raise UnMatchEndOfIndent
             | (indent :: newIndentStack) =>
@@ -352,5 +317,7 @@ struct
                indentStack = []
             })
     end
+
+  (***************************************************************************)
 
 end

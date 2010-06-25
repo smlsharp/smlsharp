@@ -1,6 +1,5 @@
 signature CLUSTERING = sig
 
-  val transform : Counters.stamp -> MultipleValueCalc.mvdecl list -> 
-                  (Counters.stamp * ClusterCalc.ccdecl list)
+  val transform : MultipleValueCalc.mvdecl list -> ClusterCalc.ccdecl list
 
 end

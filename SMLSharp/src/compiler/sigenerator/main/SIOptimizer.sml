@@ -13,7 +13,7 @@ structure SIOptimizer : SIOPTIMIZER = struct
   type ord_key = entry
 
   fun compare ({id = id1, displayName = displayName1},{id = id2, displayName = displayName2}) =
-      LocalVarID.compare(id1,id2)
+      VarID.compare(id1,id2)
   end
   
   structure EntryMap = BinaryMapMaker(Entry_ord)
@@ -641,7 +641,7 @@ structure SIOptimizer : SIOPTIMIZER = struct
  
   val ALWAYS_EntryOptRef = 
       (* must be initilized at the beginning of sigeneration *)
-      ref NONE : {id : LocalVarID.id, displayName : string } option ref
+      ref NONE : {id : VarID.id, displayName : string } option ref
 
   fun initialize_ALWAYS_Entry id = 
       ALWAYS_EntryOptRef := SOME {id = id, displayName = ""}

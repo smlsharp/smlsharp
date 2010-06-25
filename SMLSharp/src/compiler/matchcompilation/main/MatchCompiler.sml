@@ -46,8 +46,12 @@
 
 structure MatchCompiler : MATCH_COMPILER = 
 struct
-    val tyToString = TypeFormatter.tyToString
-    fun printTy ty = print (tyToString ty ^ "\n")
+  val tyToString = TypeFormatter.tyToString
+  fun printTy ty = print (tyToString ty ^ "\n")
+
+  fun newLocalId () = VarID.generate ()
+
+  fun newVarName () = VarName.generate ()
 
   val nextBranchId = ref 0
   fun newBranchId () = 
@@ -73,7 +77,7 @@ struct
                      funBodyTy : T.ty,
                      funLoc : Loc.loc,
                      funTy : (T.ty option) ref,
-                     funVarId : LocalVarID.id,
+                     funVarId : VarID.id,
                      funVarName : string,
                      isSmall : bool,
                      tfpexp: tfpexp, 
@@ -137,8 +141,12 @@ struct
         | TFPPRIMAPPLY {primOp=primInfo, instTyList=tyList, argExpOpt=NONE, loc} => limitCheck itemList (n + 1)
         | TFPPRIMAPPLY {primOp=primInfo, instTyList=tyList, argExpOpt=SOME tfpexp1, loc} => 
             limitCheck (Exp tfpexp1::itemList) (n + 1)
-        | TFPOPRIMAPPLY {oprimOp=oprimInfo, instances=tyList, argExpOpt=NONE, loc} => limitCheck itemList (n + 1)
+        | TFPOPRIMAPPLY {oprimOp=oprimInfo,
+                         keyTyList=keyTyList,
+                         instances=tyList,
+                         argExpOpt=NONE, loc} => limitCheck itemList (n + 1)
         | TFPOPRIMAPPLY {oprimOp=oprimInfo, 
+                         keyTyList=keyTyList,
                          instances=tyList, 
                          argExpOpt=SOME tfpexp1, 
                          loc} => limitCheck (Exp tfpexp1::itemList) (n + 1)
@@ -244,13 +252,13 @@ struct
 
   fun freshVarIdWithDisplayName (ty, name) =
       let
-        val id = Counters.newLocalId()
+        val id = newLocalId()
       in
         {displayName = name, ty = ty, varId = T.INTERNAL id} : TFC.varIdInfo
       end
 
   fun freshVarWithDisplayName (ty, name) =
-      {displayName = name, ty = ty, varId = T.INTERNAL (Counters.newLocalId())}
+      {displayName = name, ty = ty, varId = T.INTERNAL (newLocalId())}
       : T.varIdInfo
 
   fun makeVar (id, name, ty) =  {displayName = name,  ty = ty, varId = T.INTERNAL id} : T.varIdInfo
@@ -315,12 +323,12 @@ struct
     | getTyInPat (OrPat (pat, _)) = getTyInPat pat
 
   (* ADDED for type preservation *)
-  fun getDisplayNameInPat (WildPat _) = Counters.newVarName ()
+  fun getDisplayNameInPat (WildPat _) = newVarName ()
     | getDisplayNameInPat (VarPat ({displayName, ... })) = displayName
-    | getDisplayNameInPat (ConPat _) = Counters.newVarName ()
-    | getDisplayNameInPat (DataTagPat _) = Counters.newVarName ()
-    | getDisplayNameInPat (ExnTagPat _) = Counters.newVarName ()
-    | getDisplayNameInPat (RecPat _) = Counters.newVarName ()
+    | getDisplayNameInPat (ConPat _) = newVarName ()
+    | getDisplayNameInPat (DataTagPat _) = newVarName ()
+    | getDisplayNameInPat (ExnTagPat _) = newVarName ()
+    | getDisplayNameInPat (RecPat _) = newVarName ()
     | getDisplayNameInPat (LayerPat (pat, _)) = getDisplayNameInPat pat
     | getDisplayNameInPat (OrPat (pat, _)) = getDisplayNameInPat pat
 
@@ -336,7 +344,7 @@ struct
   fun makeNestedFun [] body bodyTy loc =
        (
         RCFNM {
-               argVarList = [freshVarWithDisplayName (PT.unitty, "unitExp(" ^ Counters.newVarName () ^ ")")],
+               argVarList = [freshVarWithDisplayName (PT.unitty, "unitExp(" ^ newVarName () ^ ")")],
                bodyTy=bodyTy, 
                bodyExp=body, 
                loc=loc
@@ -354,7 +362,7 @@ struct
        (
         RCFNM 
         {
-         argVarList=[freshVarWithDisplayName (PT.unitty,"unitExp(" ^ Counters.newVarName () ^ ")")], 
+         argVarList=[freshVarWithDisplayName (PT.unitty,"unitExp(" ^ newVarName () ^ ")")], 
          bodyTy=bodyTy, 
          bodyExp=body, 
          loc=loc
@@ -406,8 +414,8 @@ struct
                   tfpexp = tfpexp,
                   isSmall = isSmall tfpexp,
                   useCount = useCounter,
-                  funVarName = Counters.newVarName (),
-                  funVarId = Counters.newLocalId(),
+                  funVarName = newVarName (),
+                  funVarId = newLocalId(),
                   funBodyTy = branchTy,
                   funTy = ref NONE,
                   funLoc = loc,
@@ -1032,14 +1040,16 @@ struct
             }
        | TFPOPRIMAPPLY {
                         oprimOp=oprim, 
-                        instances=tys, 
+                        instances=tys,
+                        keyTyList = keyTyList,
                         argExpOpt=tfpexpOpt, 
                         loc
                         } =>
          RCOPRIMAPPLY 
            {
             oprimOp=oprim, 
-            instances=tys, 
+            instances=tys,
+            keyTyList = keyTyList,
             argExpOpt= case tfpexpOpt of
                              NONE => NONE
                            | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
@@ -1118,7 +1128,7 @@ struct
                     | _ => 
                       let
                         val newVar = freshVarIdWithDisplayName 
-                          (ty1, "caseExp(" ^ Counters.newVarName () ^ ")")
+                          (ty1, "caseExp(" ^ newVarName () ^ ")")
                         val rcexp = tfpexpToRcexp varEnv btvEnv exp
                       in
                         (newVar::topVarList, (newVar, rcexp)::topBinds)
@@ -1280,7 +1290,10 @@ struct
        | TFPVALPOLYREC (localBtvEnv, binds, loc) =>
          let
            fun toRcbind (var, ty, exp) =
-               {var=var, expTy = ty, exp = tfpexpToRcexp varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp}
+               {var=var,
+                expTy = ty,
+                exp = tfpexpToRcexp
+                        varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp}
          in
 	     [RCVALPOLYREC (localBtvEnv, map toRcbind binds, loc)]
          end
@@ -1329,16 +1342,16 @@ struct
                           generativeVarIDSet = generativeVarIDSet,
                           bodyCode = map (compileBasicBlock varEnv btvEnv) bodyCode}
           
-  fun compile (stamps:Counters.stamps) topBlockList =
+  fun compile topBlockList =
       let
-          val _ = Counters.init stamps
-          val _ = nextBranchId := 0
-	  val _ = ME.clearFlag ME.Redundant
-	  val _ = ME.clearErrorMessages ()
-	  val topBlockList = map (compileTopBlock VarEnv.empty IEnv.empty) topBlockList
+        val _ = nextBranchId := 0
+	val _ = ME.clearFlag ME.Redundant
+	val _ = ME.clearErrorMessages ()
+	val topBlockList =
+            map (compileTopBlock VarEnv.empty IEnv.empty) topBlockList
       in
 	  if ME.isRedundant ()
 	  then raise UE.UserErrors (rev (ME.getErrorMessages ()))
-	  else (Counters.getCountersStamps(), topBlockList, rev (ME.getErrorMessages ()))
+	  else (topBlockList, rev (ME.getErrorMessages ()))
       end
 end

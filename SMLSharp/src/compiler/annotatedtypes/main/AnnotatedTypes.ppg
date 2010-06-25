@@ -4,7 +4,6 @@
  * @author Huu-Duc Nguyen
  * @version $Id: AnnotatedTypes.ppg,v 1.21 2008/08/06 17:23:39 ohori Exp $
  *)
-
 structure AnnotatedTypes =
 struct
 
@@ -39,26 +38,27 @@ struct
         SmlppgUtil.format_record(elementFormatter, bindsep, itemsepRecord) L
       end
 
-  fun format_tyCon' tyCon = Types.format_tyCon nil tyCon
-
   (*%
-   * @formatter(LocalVarID.id) LocalVarID.format_id
+   * @formatter(VarID.id) VarID.format_id
    *)
   type varid =
        (*%
         * @format(id) id
         *)
-       LocalVarID.id
+       VarID.id
 
   (*%
-   * @formatter(Types.tyCon) format_tyCon'
+   * @formatter(Types.tyCon) Types.format_tyCon
    *)
   type tyCon = Types.tyCon
 
   (*%
+   * @params(tyvar)
    * @formatter(Types.eqKind) Types.format_eqKind
    *)
-  type eqKind = Types.eqKind
+  type eqKind =
+       (*% @format(k) k()(tyvar) *)
+       Types.eqKind
 
   (*%
    *)
@@ -193,7 +193,7 @@ struct
    * @formatter(listWithEnclosure) SmlppgUtil.formatListWithEnclosure
    * @formatter(tyConArgTys) SmlppgUtil.formatTyConArgumentTypes
    * @formatter(formatRecordTy) formatRecordTy
-   * @formatter(format_dummyTyId) Types.format_dummyTyId
+   * @formatter(Types.dummyTyID) Types.format_dummyTyID
    * @formatter(formatIEnv) format_IEnv
    * @formatter(smap) SmlppgUtil.formatSmap
    * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
@@ -202,13 +202,28 @@ struct
    *)
   datatype ty =
            (*%
+            * @format({oprimId,
+            *          oprimPolyTy,
+            *          name,
+            *          keyTyList,
+            *          instTyList:ty tys:listWithEnclosureOne
+            *         })
+            *      "code(" name ":" tys(ty)("," +1, "{", "}") ")"
+            *)
+            (* a singletonset denoting the instance function for a type 'a *)
+           INSTCODEty of {oprimId:OPrimID.id,
+                          oprimPolyTy:ty,
+                          keyTyList:ty list,
+                          name:string,
+                          instTyList:ty list}
+         | (*%
             * @format "errorty"
             *)
            ERRORty
          | (*%
-            * @format(id:format_dummyTyId)  id
+            * @format(id) id
             *)
-           DUMMYty of int
+           DUMMYty of Types.dummyTyID
          | (*%
             * @format(value) "t" value
             *)
@@ -287,6 +302,19 @@ struct
            (*% @format *)
            UNIV
          | (*%
+            * @format({instances:ty tys:listWithEnclosureOne, operators})
+                     {"#" 2[tys(ty)("," +, "{", "}")]}
+            *)
+           (* for overloaded operators *)
+           OPRIMkind of {instances : ty list,
+                         operators : {oprimId:OPrimID.id,
+                                      oprimPolyTy:ty,
+                                      name:string,
+                                      keyTyList:ty list,
+                                      instTyList:ty list}
+                                       list
+                        }
+         | (*%
             * @format(ty smap:formatRecordTy)
             * "#" d smap(ty)(":", "," +1)
             *)
@@ -296,7 +324,7 @@ struct
            (*%
             * @format({id, recordKind, eqKind,
             *          instancesRef: ity ilist iref})
-            * eqKind "t" id d recordKind
+            * eqKind()("t" id) d recordKind
             * d iref(ilist:listWithEnclosure(ity)("," +1, "<", ">"))
             *)
            {

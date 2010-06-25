@@ -7,7 +7,6 @@
 signature MATCH_COMPILER =
 sig
     val compile : 
-      Counters.stamps 
-      -> TypedFlatCalc.topBlock list
-         -> (Counters.stamps * RecordCalc.topBlock list * UserError.errorInfo list)
+        TypedFlatCalc.topBlock list
+         -> (RecordCalc.topBlock list * UserError.errorInfo list)
 end

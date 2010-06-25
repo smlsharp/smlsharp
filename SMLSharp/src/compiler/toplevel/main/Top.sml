@@ -4,7 +4,7 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: Top.sml,v 1.249 2008/11/19 20:04:38 ohori Exp $
  *)
-structure Top :> TOP =
+structure Top (* :> TOP *)=
 struct
 
   structure A = Absyn
@@ -78,6 +78,8 @@ struct
       #addElapsedTime ElapsedCounterSet "unique allocation"
   val matchCompilationTimeCounter =
       #addElapsedTime ElapsedCounterSet "match compilation"
+  val overloadCompilationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "overload compilation"
   val typedLambdaNormalizationTimeCounter =
       #addElapsedTime ElapsedCounterSet "typed lambda normalization"
   val staticAnalysisTimeCounter =
@@ -148,7 +150,7 @@ struct
              ),
            TyConID.pu_ID,
            ExnTagID.pu_ID,
-           BoundTypeVarID.pu_boundTypeVarID,
+           BoundTypeVarID.pu_ID,
            ExternalVarID.pu_ID,
 	   InlinePickler.globalInlineEnv,
            FunctorLinker.pu_functorEnv
@@ -333,17 +335,12 @@ val currentSourceFilename = ref ""
 *)
 
         val _ = #start elaborationTimeCounter ()
-        val (pldecs, newFixEnv, varNameStamp, warnings) =
+        val (pldecs, newFixEnv, warnings) =
             Elaborator.elaborate (#fixEnv (#context basis))
-                                 (#varNameStamp (#localStamps basis))
                                  decs
         val _ = #stop elaborationTimeCounter ()
         val contextUpdater = 
          fn context => TB.extendContextFixEnv context newFixEnv
-        val newBasis = TB.setBasisLocalStamps 
-                         basis 
-                         (TB.setLocalStampsVarNameStamp (#localStamps basis)
-                                                        varNameStamp)
         val _ = printWarnings (#sysParam basis) warnings
         val _ =
             if !C.printPL andalso !C.switchTrace
@@ -355,7 +352,7 @@ val currentSourceFilename = ref ""
                 pldecs
             else ()
       in
-        (pldecs, newBasis, contextUpdater)
+        (pldecs, basis, contextUpdater)
       end
 
   fun doModuleCompilation (basis : TB.basis) decs =
@@ -364,9 +361,8 @@ val currentSourceFilename = ref ""
      *)
       let
         val _ = #start moduleCompilationTimeCounter ()
-        val (exportCurrentNameMap, varNameStamp, plfdecs) = 
+        val (exportCurrentNameMap, plfdecs) = 
             ModuleCompiler.compile (#nameMap (#context basis))
-                                   (#varNameStamp (#localStamps basis))
                                    decs
         val _ = #stop moduleCompilationTimeCounter ()
         val flattenedNamePathEnv = 
@@ -379,15 +375,11 @@ val currentSourceFilename = ref ""
                 TB.extendContextNameMapWithCurrentNameMap
                   context
                   exportCurrentNameMap
-        val newLocalStamps = 
-            TB.setLocalStampsVarNameStamp
-              (#localStamps basis) varNameStamp
         val newLocalContext = 
             TB.setLocalContextFlattenedNamePathEnvOpt
               (#localContext basis) flattenedNamePathEnv
         val newBasis = 
-            TB.setBasisLocalStamps
-              (TB.setBasisLocalContext basis newLocalContext) newLocalStamps
+            TB.setBasisLocalContext basis newLocalContext
         val _ =
             if !C.printPL andalso !C.switchTrace
             then
@@ -408,15 +400,10 @@ val currentSourceFilename = ref ""
       let
         (* VAL REC optimization *)
         val _ = #start valRecOptimizationTimeCounter ()
-        val (varNameStamp, plfdecs) = 
+        val plfdecs = 
             VALREC_Optimizer.optimize (#nameMap (#context basis))
-                                      (#varNameStamp (#localStamps basis))
                                       plfdecs
         val _ = #stop valRecOptimizationTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsVarNameStamp (#localStamps basis) varNameStamp
-        val newBasis = 
-            TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printPL andalso !C.switchTrace
             then
@@ -427,7 +414,7 @@ val currentSourceFilename = ref ""
                 plfdecs
             else ()
       in
-        (plfdecs, newBasis, fn context => context)
+        (plfdecs, basis, fn context => context)
       end
 
   fun doFundeclElaboration basis pldecs =
@@ -474,11 +461,11 @@ val currentSourceFilename = ref ""
         (* type inference *)
         val _ = #start typeInferenceTimeCounter ()
         val stamps = 
-            {boundTypeVarIDStamp = #boundTypeVarIDStamp (#stamps basis),
-             freeTypeVarIDStamp = #freeTypeVarIDStamp (#localStamps basis),
+            {
+             boundTypeVarIDStamp = #boundTypeVarIDStamp (#stamps basis),
              exnTagIDKeyStamp = #exnTagIDKeyStamp (#stamps basis),
-             tyConIDKeyStamp = #tyConIDKeyStamp (#stamps basis),
-             varNameStamp = #varNameStamp (#localStamps basis)}
+             tyConIDKeyStamp = #tyConIDKeyStamp (#stamps basis)
+            }
         val flattenedNamePathEnv = 
             case (#flattenedNamePathEnvOpt (#localContext basis)) of
               NONE =>
@@ -501,15 +488,10 @@ val currentSourceFilename = ref ""
         val newLocalContext =
             TB.setLocalContextTypeContextOpt
               (#localContext basis) exportContext
-        val newLocalStamps =
-            TB.setLocalStampsVarNameStamp
-              (#localStamps basis) (#varNameStamp newStamps)
         val newBasis = 
-            TB.setBasisLocalStamps
-              (TB.setBasisLocalContext
-                 (TB.setBasisStamps basis newGlobalStamps)  
-                 newLocalContext)
-              newLocalStamps
+            TB.setBasisLocalContext
+              (TB.setBasisStamps basis newGlobalStamps)  
+              newLocalContext
         val contextUpdater = 
             fn context => 
                TB.extendContextTopTypeContextWithCurrentTypeContext
@@ -544,20 +526,15 @@ val currentSourceFilename = ref ""
         (* Uncurrying  optimization *)
         val _ = #start UncurryOptimizationTimeCounter ()
         val stamps = 
-            {boundTypeVarIDStamp = #boundTypeVarIDStamp (#stamps basis),
-             freeTypeVarIDStamp = #freeTypeVarIDStamp (#localStamps basis),
+            {
+             boundTypeVarIDStamp = #boundTypeVarIDStamp (#stamps basis),
              exnTagIDKeyStamp = #exnTagIDKeyStamp (#stamps basis),
-             tyConIDKeyStamp = #tyConIDKeyStamp (#stamps basis),
-             varNameStamp = #varNameStamp (#localStamps basis)} 
+             tyConIDKeyStamp = #tyConIDKeyStamp (#stamps basis)
+            }
         val (newStamps, tpdecs) = 
             if !C.doUncurryOptimization
             then UncurryFundecl.optimize stamps tpdecs
             else (stamps, tpdecs)
-        val newLocalStamps =
-            TB.setLocalStampsVarNameStamp
-              (#localStamps basis) (#varNameStamp newStamps)
-        val newBasis = 
-            TB.setBasisLocalStamps basis newLocalStamps
         val _ = #stop UncurryOptimizationTimeCounter ()
         val _ =
             if !C.printUC andalso !C.switchTrace
@@ -569,7 +546,7 @@ val currentSourceFilename = ref ""
                 tpdecs
             else ()
       in
-        (tpdecs, newBasis, fn context => context)
+        (tpdecs, basis, fn context => context)
       end
         
   fun doPrinterGeneration (basis : TB.basis) tpdecs =
@@ -585,12 +562,8 @@ val currentSourceFilename = ref ""
                 Control.Bug
                   "\nexpect type context for PrinterCodeGeneration\n"
             | SOME x => x
-        val stamps = 
-            {
-             varNameStamp = #varNameStamp (#localStamps basis),
-             boundTypeVarIDStamp = #boundTypeVarIDStamp (#stamps basis),
-             freeTypeVarIDStamp = #freeTypeVarIDStamp (#localStamps basis)
-            }
+        val stamps = #boundTypeVarIDStamp (#stamps basis)
+
         val flattenedNamePathEnv = 
             case (#flattenedNamePathEnvOpt (#localContext basis)) of
               NONE =>
@@ -614,21 +587,13 @@ val currentSourceFilename = ref ""
         val _ = #stop printerGenerationTimeCounter ()
                     
         val newGlobalStamps = 
-            TB.setStampsBoundTypeVarIDStamp (#stamps basis)
-                                            (#boundTypeVarIDStamp newStamps)
-        val newLocalStamps = 
-            TB.setLocalStampsFreeTypeVarIDStamp
-              (TB.setLocalStampsVarNameStamp (#localStamps basis)
-                                             (#varNameStamp newStamps))
-              (#freeTypeVarIDStamp newStamps)
+            TB.setStampsBoundTypeVarIDStamp (#stamps basis) newStamps
         val newLocalContext = 
             TB.setLocalContextFlattenedNamePathEnvOpt
               (#localContext basis) newFlattenedNamePathEnv
         val newBasis = 
             TB.setBasisLocalContext
-              (TB.setBasisLocalStamps
-                 (TB.setBasisStamps basis newGlobalStamps)
-                 newLocalStamps)
+              (TB.setBasisStamps basis newGlobalStamps)
               newLocalContext
         val _ =
             if
@@ -656,15 +621,11 @@ val currentSourceFilename = ref ""
 
   fun doUniqueIDAllocation (basis : TB.basis) tpdecs  =
      (*
-      TypedCalc => TypedFlatCalc
+      * TypedCalc => TypedFlatCalc
       *)
       let
         val _ = #start UniqueIdAllocationCounter ()
-        val stamps = 
-            {
-             localVarIDStamp = (#localVarIDStamp (#localStamps basis)),
-             externalVarIDKeyStamp = #externalVarIDKeyStamp (#stamps basis)
-            }
+        val stamps = #externalVarIDKeyStamp (#stamps basis)
         val flattenedNamePathEnv = 
             case (#flattenedNamePathEnvOpt (#localContext basis)) of
               NONE =>
@@ -681,54 +642,40 @@ val currentSourceFilename = ref ""
         val _ = #stop UniqueIdAllocationCounter ()
         val newBasis = 
             TB.setBasisStamps
-              (TB.setBasisLocalStamps 
-                 basis 
-                 (TB.setLocalStampsUniqueLocalIdentifierStamp
-                    (#localStamps basis)
-                    (#localVarIDStamp stamps)))
+              basis 
               (TB.setStampsExternalVarIDStamp
                  (#stamps basis)
-                 (#externalVarIDKeyStamp stamps))
-            val newLocalContext = 
-                TB.setLocalContextNewExternalVarIDBasisOpt
-                  (#localContext basis) deltaBasis
-            val newBasis = 
-                TB.setBasisLocalContext newBasis newLocalContext
-            val contextUpdater = 
-                fn context =>
-                   TB.extendContextWithExternalVarIDBasis context deltaBasis
-            val _ =
-                if !C.printTFP andalso !C.switchTrace
-                then
-                  printIntermediateCodes
-                    (#sysParam basis)
-                    "Unique ID Allocated"
-                    PrintTFP.tfpTopBlockToString
-                    tpflatdecs
-                else () 
+                 stamps)
+        val newLocalContext = 
+            TB.setLocalContextNewExternalVarIDBasisOpt
+              (#localContext basis) deltaBasis
+        val newBasis = 
+            TB.setBasisLocalContext newBasis newLocalContext
+        val contextUpdater = 
+         fn context =>
+            TB.extendContextWithExternalVarIDBasis context deltaBasis
+        val _ =
+            if !C.printTFP andalso !C.switchTrace
+            then
+              printIntermediateCodes
+                (#sysParam basis)
+                "Unique ID Allocated"
+                PrintTFP.tfpTopBlockToString
+                tpflatdecs
+            else () 
       in
         (tpflatdecs, newBasis, contextUpdater)
       end
 
   fun doMatchCompilation (basis : TB.basis) tpflatdecs =
     (*
-     TypedFlatCalc => RecordCalc
+     RecordCalc => RecordCalc
      *)
       let
-        val stamps = 
-            {localVarIDStamp = #localVarIDStamp (#localStamps basis),
-             varNameStamp = #varNameStamp (#localStamps basis)}
-        val _ = #start matchCompilationTimeCounter ()
-        val (newStamps, rcdecs, warnings) =
-            MatchCompiler.compile stamps tpflatdecs
-        val _ = #stop matchCompilationTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsVarNameStamp
-              (TB.setLocalStampsUniqueLocalIdentifierStamp
-                 (#localStamps basis)
-                 (#localVarIDStamp newStamps))
-              (#varNameStamp newStamps)
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
+        val _ = #start overloadCompilationTimeCounter ()
+        val (rcdecs, warnings) =
+            MatchCompiler.compile tpflatdecs
+        val _ = #stop overloadCompilationTimeCounter ()
         val _ = printWarnings (#sysParam basis) warnings
         val _ =
             if !C.printRC andalso !C.switchTrace
@@ -736,11 +683,45 @@ val currentSourceFilename = ref ""
               printIntermediateCodes
                 (#sysParam basis)
                 "Match Compiled"
-                (RecordCalcFormatter.topGroupToString)
+                (if !C.printWithType
+                 then RecordCalcFormatter.topGroupToString
+                 else RecordCalcFormatter.topGroupToStringWithoutType)
                 rcdecs
             else ()
       in
-        (rcdecs, newBasis, fn context => context)
+        (rcdecs, basis, fn context => context)
+      end
+
+  fun doOverloadCompilation (basis : TB.basis) rctopblocks =
+    (*
+     TypedFlatCalc => RecordCalc
+     *)
+      let
+        val stamps = #boundTypeVarIDStamp (#stamps basis)
+        val _ = #start matchCompilationTimeCounter ()
+        val (stamps, newrctopblocks) =
+            OverloadCompilation.compile
+              stamps
+              (#externalVarIDBasis (#context basis))
+              rctopblocks
+        val _ = #stop matchCompilationTimeCounter ()
+        val newGlobalStamps = 
+            TB.setStampsBoundTypeVarIDStamp
+               (#stamps basis) stamps
+        val newBasis = TB.setBasisStamps basis newGlobalStamps
+        val _ =
+            if !C.printRC andalso !C.switchTrace
+            then
+              printIntermediateCodes
+                (#sysParam basis)
+                "Overaload Compiled"
+                (if !C.printWithType
+                 then RecordCalcFormatter.topGroupToString
+                 else RecordCalcFormatter.topGroupToStringWithoutType)
+                newrctopblocks
+            else ()
+      in
+        (newrctopblocks, newBasis, fn context => context)
       end
 
   fun doTypedLambdaNormalization (basis : TB.basis) rcdecs =
@@ -749,14 +730,9 @@ val currentSourceFilename = ref ""
      *)
       let
         val _ = #start typedLambdaNormalizationTimeCounter ()
-        val (stamp, tldecs) = 
-            TLNormalization.normalize
-              (#localVarIDStamp (#localStamps basis)) rcdecs
+        val tldecs = 
+            TLNormalization.normalize rcdecs
         val _ = #stop typedLambdaNormalizationTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printTL andalso !C.switchTrace
             then
@@ -767,7 +743,7 @@ val currentSourceFilename = ref ""
                 tldecs
             else ()
       in
-        (tldecs, newBasis, fn context => context)
+        (tldecs, basis, fn context => context)
       end
 
   fun doTypeCheck (basis:TB.basis) tldecs =
@@ -821,20 +797,14 @@ val currentSourceFilename = ref ""
         (acdecs, basis, fn context => context)
       end
 
-  fun doRecordUnboxing basis acdecs =
+  fun doRecordUnboxing (basis:TB.basis) acdecs =
     (*
      AnnotatedCalc => MultipleValueCalc
      *)
       let
         val _ = #start recordUnboxingTimeCounter ()
-        val (stamp, mvdecs) = 
-            RecordUnboxing.transform
-              (#localVarIDStamp (#localStamps basis)) acdecs
+        val mvdecs =  RecordUnboxing.transform acdecs
         val _ = #stop recordUnboxingTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printMV andalso !C.switchTrace
             then
@@ -845,7 +815,7 @@ val currentSourceFilename = ref ""
                 mvdecs
             else ()
       in
-        (mvdecs, newBasis, fn context => context)
+        (mvdecs, basis, fn context => context)
       end
 
   fun doInlining (basis : TB.basis) mvdecs =
@@ -854,9 +824,7 @@ val currentSourceFilename = ref ""
      *)
       if !C.doInlining then
 	let
-          val stamps = 
-              {localVarIDStamp = #localVarIDStamp (#localStamps basis),
-               boundTypeVarIDStamp = #boundTypeVarIDStamp (#stamps basis)}
+          val stamps = #boundTypeVarIDStamp (#stamps basis)
 	  val _ = #start inliningTimeCounter()
 	  val (globalInlineEnv, newStamps, mvdecs) = 
 	      Inline.doInlining (#inlineEnv (#context basis)) stamps mvdecs
@@ -864,15 +832,9 @@ val currentSourceFilename = ref ""
           val newGlobalStamps = 
               TB.setStampsBoundTypeVarIDStamp
                 (#stamps basis)
-                (#boundTypeVarIDStamp newStamps)
-          val newLocalStamps = 
-              TB.setLocalStampsUniqueLocalIdentifierStamp
-                (#localStamps basis)
-                (#localVarIDStamp newStamps)
+                newStamps
           val newBasis = 
-              TB.setBasisLocalStamps
-                (TB.setBasisStamps basis newGlobalStamps)
-                newLocalStamps
+              TB.setBasisStamps basis newGlobalStamps
     (* 2008.2.7 liu : to support true separate compilation ,
      * inliner must return the incremental globalInlineEnv instead of an
      * already increased one. The current implementation  follows the latter
@@ -903,14 +865,9 @@ val currentSourceFilename = ref ""
       then
         let
           val _ = #start mvOptimizationTimeCounter ()
-          val (stamp, mvdecs) = 
-              MVOptimization.optimize 
-                (#localVarIDStamp (#localStamps basis)) mvdecs
+          val mvdecs = 
+              MVOptimization.optimize mvdecs
           val _ = #stop mvOptimizationTimeCounter ()
-          val newLocalStamps = 
-              TB.setLocalStampsUniqueLocalIdentifierStamp
-                (#localStamps basis) stamp
-          val newBasis = TB.setBasisLocalStamps basis newLocalStamps
           val _ =
               if !C.printMV andalso !C.switchTrace
               then
@@ -921,7 +878,7 @@ val currentSourceFilename = ref ""
                   mvdecs
               else ()
         in
-          (mvdecs, newBasis, fn context => context)
+          (mvdecs, basis, fn context => context)
         end
       else (mvdecs, basis, fn context => context)
              
@@ -956,15 +913,10 @@ val currentSourceFilename = ref ""
      *)
       let
         val _ = #start functorLinkerTimeCounter ()
-        val (newFunctorEnv, stamp, mvdecs) =
+        val (newFunctorEnv, mvdecs) =
             FunctorLinker.link (#functorEnv (#context basis))
-                               (#localVarIDStamp (#localStamps basis)) 
                                mvdecs
         val _ = #stop functorLinkerTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val contextUpdater =
          fn context => TB.extendContextFunctorEnv context newFunctorEnv
         val _ =
@@ -977,7 +929,7 @@ val currentSourceFilename = ref ""
                 mvdecs
             else ()
       in
-        (mvdecs, newBasis, contextUpdater)
+        (mvdecs, basis, contextUpdater)
       end
         
   fun doMVTypeCheck (basis : TB.basis) mvdecs =
@@ -1080,14 +1032,8 @@ val currentSourceFilename = ref ""
      *)
       let
         val _ = #start clusteringTimeCounter ()
-        val (stamp, ccdecs) = 
-            Clustering.transform
-              (#localVarIDStamp (#localStamps basis))  mvdecs
+        val ccdecs = Clustering.transform mvdecs
         val _ = #stop clusteringTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printCC andalso !C.switchTrace
             then
@@ -1098,7 +1044,7 @@ val currentSourceFilename = ref ""
                 ccdecs
             else ()
       in
-        (ccdecs, newBasis, fn context => context)
+        (ccdecs, basis, fn context => context)
       end
 
   fun doRBUTransformation (basis : TB.basis) ccdecs =
@@ -1107,15 +1053,9 @@ val currentSourceFilename = ref ""
      *)
       let
         val _ = #start rbuTransformationTimeCounter ()
-        val (stamp, rbudecs) = 
-            RBUTransformation.transform
-              (#localVarIDStamp (#localStamps basis)) ccdecs
+        val rbudecs = 
+            RBUTransformation.transform ccdecs
         val _ = #stop rbuTransformationTimeCounter ()
-
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printRBU andalso !C.switchTrace
             then
@@ -1126,20 +1066,15 @@ val currentSourceFilename = ref ""
                 rbudecs
             else ()
       in
-        (rbudecs, newBasis, fn context => context)
+        (rbudecs, basis, fn context => context)
       end
 
   fun doANormalization (basis : TB.basis) rbudecs =
       let
         val _ = #start anormalizationTimeCounter ()
-        val (stamp, andecs) = 
-            ANormalization.normalize
-              (#localVarIDStamp (#localStamps basis)) rbudecs
+        val andecs = 
+            ANormalization.normalize rbudecs
         val _ = #stop anormalizationTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printAN andalso !C.switchTrace
             then
@@ -1150,20 +1085,14 @@ val currentSourceFilename = ref ""
                 andecs
             else ()
       in
-        (andecs, newBasis, fn context => context)
+        (andecs, basis, fn context => context)
       end
 
   fun doILTransformation (basis : TB.basis) andecls =
       let
         val _ = #start iltransformationTimeCounter ()
-        val (stamp, ilcode) = 
-            ILTransformation.transform
-              (#localVarIDStamp (#localStamps basis)) andecls
+        val ilcode = ILTransformation.transform andecls
         val _ = #stop iltransformationTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printIL andalso !C.switchTrace
             then
@@ -1174,21 +1103,16 @@ val currentSourceFilename = ref ""
                 [ilcode]
             else ()
       in
-        (ilcode, newBasis, fn context => context)
+        (ilcode, basis, fn context => context)
       end
 
   fun doSIGeneration (basis : TB.basis) ilcode =
       let
-        val stamps = #localVarIDStamp (#localStamps basis)
         val _ = #start sigenerationTimeCounter ()
-        val (newGlobalIndexEnv, stamp, symbolicCode) = 
+        val (newGlobalIndexEnv, symbolicCode) = 
             SIGenerator.generate
-              (#globalIndexEnv (#context basis), stamps, ilcode)
+              (#globalIndexEnv (#context basis), ilcode)
         val _ = #stop sigenerationTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp (#localStamps basis)
-                                                        stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val contextUpdater =
          fn context => TB.setContextGlobalIndexEnv context newGlobalIndexEnv
         val _ =
@@ -1201,7 +1125,7 @@ val currentSourceFilename = ref ""
                 symbolicCode
             else ()
       in
-        (symbolicCode, newBasis, contextUpdater)
+        (symbolicCode, basis, contextUpdater)
       end
 
   fun doStackReallocation (basis : TB.basis) symbolicCode = 
@@ -1235,18 +1159,13 @@ val currentSourceFilename = ref ""
         val _ = #start anormalizationTimeCounter ()
         val (newCounter, andecs) = 
             YAANormalization.normalize
-              {localVarIDStamp = #localVarIDStamp (#localStamps basis),
-               clusterIDStamp = #clusterIDKeyStamp (#stamps basis)}
+              (#clusterIDKeyStamp (#stamps basis))
               rbudecs
         val _ = #stop anormalizationTimeCounter ()
         val newGlobalStamps = 
             TB.setStampsClusterGlobalIDStamp
-              (#stamps basis) (#clusterIDStamp newCounter)
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) (#localVarIDStamp newCounter)
+              (#stamps basis) newCounter
         val newBasis = TB.setBasisStamps basis newGlobalStamps
-        val newBasis = TB.setBasisLocalStamps newBasis newLocalStamps
         val _ =
             if !C.printAN andalso !C.switchTrace
             then
@@ -1345,9 +1264,8 @@ val currentSourceFilename = ref ""
               SOME {allocator, finish} => (SOME allocator, SOME finish)
             | NONE => (NONE, NONE)
         val _ = #start aigenerationTimeCounter ()
-        val (stamp, aicode) =
+        val aicode =
             AIGenerator.generate
-              (#localVarIDStamp (#localStamps basis))
               allocator
               andecls
         val _ = #stop aigenerationTimeCounter ()
@@ -1362,10 +1280,6 @@ val currentSourceFilename = ref ""
                     TB.setContextGlobalIndexEnv context newGlobalIndexEnv,
                  initGlobalArrays)
               end
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printAI andalso !C.switchTrace
             then
@@ -1376,21 +1290,14 @@ val currentSourceFilename = ref ""
                 [aicode]
             else ()
       in
-        ((initGlobalArrays, aicode), newBasis, contextUpdater)
+        ((initGlobalArrays, aicode), basis, contextUpdater)
       end
 
   fun doAIGeneration2 (basis : TB.basis) andecls =
       let
         val _ = #start aigenerationTimeCounter ()
-        val (stamp, aicode) =
-            AIGenerator2.generate
-              (#localVarIDStamp (#localStamps basis))
-              andecls
+        val aicode = AIGenerator2.generate andecls
         val _ = #stop aigenerationTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printAI andalso !C.switchTrace
             then
@@ -1401,21 +1308,15 @@ val currentSourceFilename = ref ""
                 [aicode]
             else ()
       in
-        (aicode, newBasis, fn context => context)
+        (aicode, basis, fn context => context)
       end
 
   fun doVMCodeSelection (basis : TB.basis) aicode =
       let
         val _ = #start vmcodeselectionTimeCounter ()
-        val (stamp, vmcode) = 
-            VMCodeSelection.select
-              (#localVarIDStamp (#localStamps basis))
-              aicode
+        val vmcode = 
+            VMCodeSelection.select aicode
         val _ = #stop vmcodeselectionTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printML andalso !C.switchTrace
             then
@@ -1426,7 +1327,7 @@ val currentSourceFilename = ref ""
                 [vmcode]
             else ()
       in
-        (vmcode, newBasis, fn context => context)
+        (vmcode, basis, fn context => context)
       end
 
   fun doStackAllocation (basis : TB.basis) mcode =
@@ -1504,33 +1405,23 @@ val currentSourceFilename = ref ""
   fun doX86RTLBackend (basis : TB.basis) aicode =
       let
         val _ = #start vmcodeselectionTimeCounter ()
-        val (stamp, asm) =
+        val asm =
             X86RTLBackend.codegen
-              (#localVarIDStamp (#localStamps basis))
               (SOME (#compileUnitStamp (#stamps basis)))
               aicode
         val _ = #stop vmcodeselectionTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
       in
-        (SessionTypes.ASMFILE asm, newBasis, fn context => context)
+        (SessionTypes.ASMFILE asm, basis, fn context => context)
       end
 
   fun doX86CodeSelection (basis : TB.basis) aicode =
       let
         val _ = #start vmcodeselectionTimeCounter ()
-        val (stamp, x86code) = 
+        val x86code = 
             X86CodeSelection.select
               (SOME (#compileUnitStamp (#stamps basis)))
-              (#localVarIDStamp (#localStamps basis))
               aicode
         val _ = #stop vmcodeselectionTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printML andalso !C.switchTrace
             then
@@ -1541,21 +1432,16 @@ val currentSourceFilename = ref ""
                 [x86code]
             else ()
       in
-        (x86code, newBasis, fn context => context)
+        (x86code, basis, fn context => context)
       end
 
   fun doX86RegisterAllocation (basis : TB.basis) x86code =
       let
         val _ = #start vmcodeselectionTimeCounter ()
-        val (stamp, x86code) = 
+        val x86code = 
             X86RegisterAllocation.allocate
-              (#localVarIDStamp (#localStamps basis))
               x86code
         val _ = #stop vmcodeselectionTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printML andalso !C.switchTrace
             then
@@ -1583,15 +1469,10 @@ val currentSourceFilename = ref ""
   fun doYASIGeneration (basis : TB.basis) (initGlobalArrays, aicode) =
       let
         val _ = #start yasigenerationTimeCounter ()
-        val (stamp, sicode) = 
+        val sicode = 
             YASIGenerator.generate
-              (#localVarIDStamp (#localStamps basis))
               (initGlobalArrays, aicode)
         val _ = #stop yasigenerationTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printLS andalso !C.switchTrace
             then
@@ -1602,22 +1483,15 @@ val currentSourceFilename = ref ""
                 sicode
             else ()
       in
-        (sicode, newBasis, fn context => context)
+        (sicode, basis, fn context => context)
       end
 
   fun doAssemble (basis : TB.basis) symbolicCode =
       let
         val _ = #start assembleTimeCounter ()
-        val (stamp, executable as {instructions, locationTable, ...}) =
-            Assembler.assemble
-              (#localVarIDStamp
-                (#localStamps basis))
-              symbolicCode
+        val executable as {instructions, locationTable, ...} =
+            Assembler.assemble symbolicCode
         val _ = #stop assembleTimeCounter ()
-        val newLocalStamps = 
-            TB.setLocalStampsUniqueLocalIdentifierStamp
-              (#localStamps basis) stamp
-        val newBasis = TB.setBasisLocalStamps basis newLocalStamps
         val _ =
             if !C.printIS andalso !C.switchTrace
             then
@@ -1633,7 +1507,7 @@ val currentSourceFilename = ref ""
               )
             else ()
       in
-        (executable, newBasis, fn context => context)
+        (executable, basis, fn context => context)
       end
 
   fun doSerialize basis executable =
@@ -1645,149 +1519,123 @@ val currentSourceFilename = ref ""
         (SessionTypes.CODEBLOCK codeBlock, basis, fn context => context)
       end
 
-  (********************)
-  infix ==>
-  fun (prev ==> (phasePosition, phase)) (basis: TB.basis) code = 
-      let
-        val (code1Opt, basis1, contextUpdater1) = prev basis code
-      in
-        if C.doPhase phasePosition then
-          case code1Opt of
-            NONE => (NONE, basis1, contextUpdater1)
-          | SOME code1 => 
+  infixr ==>
+  fun ((phasePosition, phase) ==> continue)
+        (codeOpt, basis: TB.basis, contextUpdater)
+        = 
+      if C.doPhase phasePosition then
+        case codeOpt of
+            NONE => (NONE, basis, contextUpdater)
+          | SOME code => 
             let
-              val (code2, basis2, contextUpdater2) = phase basis1 code1
+              val (code1, basis1, contextUpdater1) = phase basis code
             in
-              (SOME code2, basis2, contextUpdater2 o contextUpdater1)
+              continue (SOME code1, basis1, contextUpdater1 o contextUpdater)
             end
-        else
-          (NONE, basis1, contextUpdater1)
-      end
+      else
+        (NONE, basis, contextUpdater)
 
-  infix -->
-  fun (prev --> next) (basis : TB.basis) code =
+
+  fun return (codeOpt , basis:TB.basis, f :context -> context) =
+      (codeOpt, basis, f)
+
+  fun compile (context, stamps, sysParam) decs =
       let
-        val (code1Opt, basis1, contextUpdater1) = prev basis code
-      in
-        case code1Opt of
-          NONE => (NONE, basis1, contextUpdater1)
-        | SOME code1 => 
-          let
-            val (code2Opt, basis2, contextUpdater2) = next basis1 code1
-          in
-            (code2Opt, basis2, contextUpdater2 o contextUpdater1)
-          end
-      end
-
-  fun enter (basis : TB.basis) code = (SOME code, basis, fn context => context)
-
-
+        (* reset local counters *)
+        val _ =
+            (
+             FreeTypeVarID.reset();
+             VarID.reset();
+             VarName.reset()
+            )
+            
+        val phases =
+        (0, doSource)
+          ==> (C.Elab, doElaboration)
+          ==> (C.Elab, doModuleCompilation)
+          ==> (C.FunOpt, doVALRECOptimization)
+          ==> (C.FunOpt, doFundeclElaboration) (* cannot turn off *)
+          ==> (C.TVar, doSetTvars)
+          ==> (C.TyInf, doTypeInference)
+          ==> (C.Print, doPrinterGeneration)
+          ==> (C.LayoutOpt, doUncurryOptimization)
+          ==> (C.UniqueID, doUniqueIDAllocation)
+          ==> (C.MatchComp, doMatchCompilation)
+          ==> (C.OverloadComp, doOverloadCompilation)
+          ==> (C.Lambda, doTypedLambdaNormalization)
+          ==> (C.Lambda, doTypeCheck)
+          ==> (C.Static, doStaticAnalysis)
+          ==> (C.Unbox, doRecordUnboxing) (* cannot turn off *)
+	  ==> (C.Inline, doInlining)
+          ==> (C.DeadCode, doMultipleValueOptimization)(* cannot turn off *)
+          ==> (C.Localize, doFunctionLocalize)
+          ==> (C.Localize, doMVTypeCheck)
+          ==> (C.Functor, doFunctorLinker)
+          ==> (C.Cluster, doClustering)
+          ==> (C.RBUComp, doRBUTransformation)
+          ==> (if Control.nativeGen() then
+                 (C.Anormal, doYAANormalization)
+                   ==> (C.Anormal, doYAANormalOptimization)
+                   ==> (C.Anormal, doDeclarationRecovery)
 (*
-  doUncurryOptimization
-  doRecordUnboxing
-  doMultipleValueOptimization
-  doUselessCodeElimination
+                   ==> (C.Anormal, doYAANormalTypeCheck)
 *)
-  val phasesUpToTypeInferenceCompile =
-      enter ==> (0, doSource)
-            ==> (C.Elab, doElaboration)
-            ==> (C.Elab, doModuleCompilation)
-            ==> (C.FunOpt, doVALRECOptimization)
-            ==> (C.FunOpt, doFundeclElaboration) (* cannot turn off *)
-            ==> (C.TVar, doSetTvars)
-            ==> (C.TyInf, doTypeInference)
-
-(* liu : used for the continuous compilation of the type instantiation
- * declarations generated by require specification matching in separate
- * compilation
- *)
-  val phasesFromUnCurryOptimizationCompile =
-      enter ==> (C.Print, doPrinterGeneration)
-            ==> (C.LayoutOpt, doUncurryOptimization)
-            ==> (C.UniqueID, doUniqueIDAllocation)
-            ==> (C.MatchComp, doMatchCompilation)
-            ==> (C.Lambda, doTypedLambdaNormalization)
-            ==> (C.Lambda, doTypeCheck)
-            ==> (C.Static, doStaticAnalysis)
-            ==> (C.Unbox, doRecordUnboxing) (* cannot turn off *)
-	    ==> (C.Inline, doInlining)
-            ==> (C.DeadCode, doMultipleValueOptimization) (* cannot turn off *)
-            ==> (C.Localize, doFunctionLocalize)
-            ==> (C.Localize, doMVTypeCheck)
-            ==> (C.Functor, doFunctorLinker)
-            ==> (C.Cluster, doClustering)
-            ==> (C.RBUComp, doRBUTransformation)
-            --> (fn basis =>
-                   (
-                    if Control.nativeGen() then
-                      enter
-                        ==> (C.Anormal, doYAANormalization)
-                        ==> (C.Anormal, doYAANormalOptimization)
-                        ==> (C.Anormal, doDeclarationRecovery)
-(*
-                        ==> (C.Anormal, doYAANormalTypeCheck)
-*)
-                        --> (
-                        case #cpu (Control.targetInfo ()) of
+                   ==> (case #cpu (Control.targetInfo ()) of
                           "x86old" =>
-                          enter
-                            ==> (C.AI, doAIGeneration2)
+                          (C.AI, doAIGeneration2)
                             ==> (C.SI, doX86CodeSelection)
                             ==> (C.SI, doX86RegisterAllocation)
                             ==> (C.SI, doX86CodeGeneration)
+                            ==> return
                         | "x86" =>
-                          enter
-                            ==> (C.AI, doAIGeneration2)
+                          (C.AI, doAIGeneration2)
                             ==> (C.SI, doX86RTLBackend)
+                            ==> return
                         | "newvm" =>
-                          enter
-                            ==> (C.AI, doAIGeneration false)
-                            --> (fn b => fn (x, y) => (SOME y, b, fn x => x))
-                            ==> (C.SI, doVMCodeSelection)
+                          (C.AI, doAIGeneration false)
+                            ==> (C.SI, fn basis =>
+                                       fn (initGlobalArrays, aicode) =>
+                                          doVMCodeSelection basis aicode)
                             ==> (C.SI, doStackAllocation)
                             ==> (C.SI, doLinearize)
                             ==> (C.SI, doVMCodeEmission)
                             ==> (C.SI, doVMAssemble)
+                            ==> return
                         | "vm" =>
-                          enter
-                            ==> (C.AI, doAIGeneration true)
+                          (C.AI, doAIGeneration true)
                             ==> (C.SI, doYASIGeneration)
                             ==> (C.Assem, doAssemble)
                             ==> (C.Code, doSerialize)
+                            ==> return
                         | x =>
                           raise Fail ("unknown target cpu : " ^ x)
-                        )
-                    else
-                      enter
-                        ==> (C.Anormal, doANormalization)
-                        ==> (C.SI, doILTransformation)
-                        ==> (C.SI, doSIGeneration)
-		        ==> (C.SIOpt, doStackReallocation)
-                        ==> (C.Assem, doAssemble)
-                        ==> (C.Code, doSerialize)
-                   ) basis)
-
-  val phasesCompile  = 
-      phasesUpToTypeInferenceCompile --> phasesFromUnCurryOptimizationCompile
-
-  fun compile (context, stamps, sysParam) decs =
-      let
+                       )
+               else
+                 (C.Anormal, doANormalization)
+                   ==> (C.SI, doILTransformation)
+                   ==> (C.SI, doSIGeneration)
+		   ==> (C.SIOpt, doStackReallocation)
+                   ==> (C.Assem, doAssemble)
+                   ==> (C.Code, doSerialize)
+                   ==> return
+              )
         val initialBasis = 
             {
              context = context,
              stamps = stamps,
              localContext = TB.initializeLocalContext (),
-             localStamps = TB.initializeLocalStamps(),
              sysParam = sysParam
             }: TB.basis
+               
         val (codeOpt, newBasis, contextUpdater) =
-            phasesCompile initialBasis  decs
+            phases (SOME decs, initialBasis, fn (x:context) => x)
       in
         (
          codeOpt,
-         ((contextUpdater
-             (#context newBasis)) : TB.context,
-          TB.incrementCompileUnitStamp (#stamps newBasis) : TB.stamps)
+         (
+          contextUpdater (#context newBasis) : TB.context,
+          TB.incrementCompileUnitStamp (#stamps newBasis) : TB.stamps
+         )
         )
       end
 
@@ -2072,9 +1920,11 @@ val _ = currentSourceFilename := absoluteFilePath
   fun initializeContextAndStamps () =
       (TB.initializeContext (), TopBasis.initializeStamps ())
           
+(*
   fun initializeContextAndStampsWithNamespace namespace =
       (TB.initializeContext (),
        TopBasis.initializeStampsWithNamespace namespace)
+*)
 
   fun run (context : TB.context)
           (stamps : TB.stamps)
@@ -2085,7 +1935,7 @@ val _ = currentSourceFilename := absoluteFilePath
            initialSourceName,
            getBaseDirectory
            } : source) =
-      let 
+      let
         val initialParseSource =
             {
              interactionMode = interactionMode,

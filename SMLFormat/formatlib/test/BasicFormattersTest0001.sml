@@ -237,7 +237,7 @@ struct
   (********************)
 
   local
-    val TESTFORMATSUBSTRING0001_VALUE = Substring.all "abc"
+    val TESTFORMATSUBSTRING0001_VALUE = Substring.full "abc"
     val TESTFORMATSUBSTRING0001_EXPECTED = [FE.Term(3, "abc")]
   in
   fun testFormatSubstring0001 () =
@@ -250,7 +250,7 @@ struct
   end
 
   local
-    val TESTFORMATSUBSTRING0002_VALUE = Substring.all ""
+    val TESTFORMATSUBSTRING0002_VALUE = Substring.full ""
     val TESTFORMATSUBSTRING0002_EXPECTED = [FE.Term(0, "")]
   in
   fun testFormatSubstring0002 () =
@@ -263,7 +263,7 @@ struct
   end
 
   local
-    val TESTFORMATSUBSTRING0003_VALUE = Substring.all "a"
+    val TESTFORMATSUBSTRING0003_VALUE = Substring.full "a"
     val TESTFORMATSUBSTRING0003_EXPECTED = [FE.Term(1, "a")]
   in
   fun testFormatSubstring0003 () =

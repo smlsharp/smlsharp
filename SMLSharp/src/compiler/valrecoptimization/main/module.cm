@@ -14,7 +14,6 @@ Group is
         ../../types/sources.cm
         ../../name/sources.cm
 
-	Counters.sml
         VALREC_OPTIMIZER.sig
         VALREC_Optimizer.sml
         GRAPH.sig

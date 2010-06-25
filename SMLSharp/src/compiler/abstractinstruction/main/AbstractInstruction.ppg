@@ -23,7 +23,7 @@ struct
             nil map
 
     fun formatIDMap x y =
-        formatMap LocalVarID.Map.foldli LocalVarID.format_id x y
+        formatMap VarID.Map.foldli VarID.format_id x y
     fun formatSEnv x y =
         formatMap SEnv.foldli SMLFormat.BasicFormatters.format_string x y
   in
@@ -37,8 +37,8 @@ struct
   (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
-  (*% @formatter(LocalVarID.id) LocalVarID.format_id *)
-  type id = LocalVarID.id
+  (*% @formatter(VarID.id) VarID.format_id *)
+  type id = VarID.id
 
   (*% @formatter(ANormal.ffiAttributes) ANormal.format_ffiAttributes *)
   type ffiAttributes = ANormal.ffiAttributes
@@ -666,7 +666,7 @@ struct
       BoundaryCheckFailed
 
   (*%
-   * @formatter(LocalVarID.Map.map) formatIDMap
+   * @formatter(VarID.Map.map) formatIDMap
    *)
   type basicBlock =
       (*%
@@ -710,7 +710,7 @@ struct
        }
 
   (*%
-   * @formatter(LocalVarID.Map.map) formatIDMap
+   * @formatter(VarID.Map.map) formatIDMap
    * @formatter(SEnv.map) formatSEnv
    *)
   type program =
@@ -735,7 +735,7 @@ struct
        {
          toplevel: {clusterId: clusterId, funLabel: id} option,
          clusters: cluster list,
-         constants: const LocalVarID.Map.map,  (* constId -> const *)
+         constants: const VarID.Map.map,  (* constId -> const *)
          globals: ty SEnv.map,          (* globalLabel -> ty *)
          aliases: string list SEnv.map  (* globalLabel -> alias label list *)
        }

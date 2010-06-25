@@ -17,7 +17,7 @@ struct
     structure TU = TypesUtils
     structure TCU = TypedCalcUtils
     structure E = TypeInferenceError
-    (*    structure STE = StaticTypeEnv *)
+    (* structure STE = StaticTypeEnv *)
     structure NM = NameMap
     structure NPEnv = NameMap.NPEnv
   in
@@ -30,8 +30,13 @@ struct
       let
         fun instanticateTv tv =
             case tv of
-              ref(T.TVAR {recordKind = T.OVERLOADED (h :: tl), ...}) =>
+              ref(T.TVAR {recordKind = T.OCONSTkind (h::_), ...}) =>
               tv := T.SUBSTITUTED h
+            | ref(T.TVAR {recordKind = T.OPRIMkind
+                                         {instances = (h::_),...},
+                          ...}
+                 )
+              => tv := T.SUBSTITUTED h
             | ref(T.TVAR {recordKind = T.REC tyFields, ...}) => 
               tv := T.SUBSTITUTED (T.RECORDty tyFields)
             | ref(T.TVAR {recordKind = T.UNIV, ...}) => 
@@ -207,7 +212,7 @@ struct
                                 argExpOpt=NONE,
                                 loc=loc})
         end
-      | T.PRIM (primInfo as {name, ty}) =>
+      | T.PRIM (primInfo as {ty,...}) =>
         (case ty of
            T.POLYty{boundtvars, body = T.FUNMty([argTy], resultTy)} =>
            let
@@ -269,9 +274,16 @@ struct
          | T.FUNMty(_, ty) => raise Control.Bug "Uncurried fun type in OPRIM"
          | _ =>raise Control.Bug "datacon type"
         )
-      | T.OPRIM (oprimInfo as {name, ty, instances}) =>
+      | T.OPRIM (oprimInfo as {oprimPolyTy,...}) =>
         let
-          val (instTy, instTyList) = freshTopLevelInstTy ty
+          val (instTy, instTyList) = freshTopLevelInstTy oprimPolyTy
+          val keyTyList = 
+              List.filter
+              (fn ty =>
+                  case TU.derefTy ty of
+                    T.TYVARty(ref(T.TVAR{recordKind=T.OPRIMkind _,...}))=>true
+                  | _ => false)
+              instTyList
         in
           case instTy of
             T.FUNMty([argTy], resultTy) =>
@@ -290,7 +302,8 @@ struct
                     TPC.TPOPRIMAPPLY
                     {
                      oprimOp=oprimInfo,
-                     instances=instTyList,
+                     keyTyList = keyTyList,
+                     instances = instTyList,
                      argExpOpt=SOME (TPC.TPVAR (newVarPathInfo, loc)),
                      loc=loc
                     },
@@ -811,47 +824,60 @@ struct
         )
       end
           
-  and updateStrpathInBtvKind  {index, recordKind, eqKind} strPathPair =
+  and updateStrpathInBtvKind  {recordKind, eqKind} strPathPair =
       let
-        val (recordKind) =
+        val recordKind =
             case recordKind of 
               T.UNIV => T.UNIV
             | T.REC tySEnvMap => 
               let
-                val (tySEnvMap) = 
-                    (SEnv.foldli
-                       (fn (label, ty, (tySEnvMap)) =>
+                val tySEnvMap = 
+                    SEnv.foldli
+                       (fn (label, ty, tySEnvMap) =>
                            let
                              val ty = 
                                  updateStrpathInTy ty strPathPair
                            in
-                             (SEnv.insert(tySEnvMap, label, ty))
+                             SEnv.insert(tySEnvMap, label, ty)
                            end)
-                       (SEnv.empty)
-                       tySEnvMap)
+                       SEnv.empty
+                       tySEnvMap
               in
                 T.REC tySEnvMap
               end
-            | T.OVERLOADED tys =>
+            | T.OCONSTkind tys =>
               let
-                val (tys) = 
-                    (foldr
-                       (fn (ty, (tys)) =>
-                           let
-                             val (ty) = 
-                                 updateStrpathInTy ty strPathPair
-                           in
-                             (ty :: tys)
-                           end)
-                       (nil)
-                       tys)
+                val tys = 
+                    foldr
+                      (fn (ty, tys) =>
+                          let
+                            val ty = updateStrpathInTy ty strPathPair
+                          in
+                            ty :: tys
+                          end)
+                       nil
+                       tys
               in 
-                T.OVERLOADED tys
+                T.OCONSTkind tys
+              end
+            | T.OPRIMkind {instances, operators} =>
+              let
+                val instances = 
+                    foldr
+                      (fn (ty, tys) =>
+                          let
+                            val ty = updateStrpathInTy ty strPathPair
+                          in
+                            ty :: tys
+                          end)
+                       nil
+                       instances
+              in 
+                T.OPRIMkind {instances = instances, operators = operators}
               end
       in
         (
          {
-          index=index, 
           recordKind = recordKind,
           eqKind = eqKind
          }
@@ -871,7 +897,16 @@ struct
                 
   and updateStrpathInTy ty strPathPair = 
       case ty of
-        T.TYVARty (tvar as ref (T.TVAR tvKind)) => 
+        T.INSTCODEty {oprimId,name,oprimPolyTy, keyTyList, instTyList} =>
+        T.INSTCODEty 
+          {
+           oprimId = oprimId,
+           name = name,
+           oprimPolyTy = updateStrpathInTy oprimPolyTy strPathPair,
+           keyTyList = updateStrpathInTyList keyTyList strPathPair,
+           instTyList = updateStrpathInTyList instTyList strPathPair
+          }
+      | T.TYVARty (tvar as ref (T.TVAR tvKind)) => 
         let
           val tvKind =
               updateStrpathInTvKind tvKind strPathPair
@@ -983,7 +1018,7 @@ struct
               in 
                 (T.REC tySEnvMap)
               end
-            | T.OVERLOADED tys =>
+            | T.OCONSTkind tys =>
               let
                 val ( tys) = 
                     (foldr
@@ -997,7 +1032,24 @@ struct
                        ( nil)
                        tys)
               in 
-                T.OVERLOADED tys
+                T.OCONSTkind tys
+              end
+            | T.OPRIMkind {instances, operators} =>
+              let
+                val instances = 
+                    foldr
+                       (fn (ty, ( tys)) =>
+                           let
+                             val (ty) = 
+                                 updateStrpathInTy  ty strPathPair
+                           in
+                             ( ty :: tys)
+                           end)
+                       nil
+                       instances
+              in 
+                T.OPRIMkind {instances = instances, 
+                             operators = operators}
               end
       in
         (
@@ -1094,8 +1146,8 @@ struct
               int)
           )
         end
-      | T.PRIM _ => ( idstate)
-      | T.OPRIM _ => ( idstate)
+      | T.PRIM _ => idstate
+      | T.OPRIM _ => idstate
                          
   and updateStrpathInDatacon  dataCon strPathPair = 
       SEnv.foldli
@@ -1204,7 +1256,7 @@ struct
       end
           
   and addStrpathInBtvKind
-        updateCandidateSet strPath {index, recordKind, eqKind}  =
+        updateCandidateSet strPath {recordKind, eqKind}  =
       let
         val recordKind =
             case recordKind of 
@@ -1213,12 +1265,16 @@ struct
               T.REC
                 (SEnv.map
                    (addStrpathInTy updateCandidateSet strPath) tySEnvMap)
-            | T.OVERLOADED tys =>
-              T.OVERLOADED
+            | T.OCONSTkind tys =>
+              T.OCONSTkind
                 (map (addStrpathInTy updateCandidateSet strPath) tys)
+            | T.OPRIMkind {instances, operators} =>
+              T.OPRIMkind
+                {instances =
+                   map (addStrpathInTy updateCandidateSet strPath) instances,
+                 operators = operators}
       in
         {
-         index=index, 
          recordKind = recordKind,
          eqKind = eqKind
         }
@@ -1229,7 +1285,16 @@ struct
       
   and addStrpathInTy updateCandidateSet strPath ty  = 
       case ty of
-        T.TYVARty (tvar as ref (T.TVAR tvKind)) => 
+        T.INSTCODEty {oprimId,name,oprimPolyTy, keyTyList, instTyList}  =>
+        T.INSTCODEty
+         {
+          oprimId = oprimId,
+          name = name,
+          oprimPolyTy = addStrpathInTy updateCandidateSet strPath oprimPolyTy,
+          keyTyList = addStrpathInTyList updateCandidateSet strPath keyTyList,
+          instTyList = addStrpathInTyList updateCandidateSet strPath instTyList
+         }
+      | T.TYVARty (tvar as ref (T.TVAR tvKind)) => 
         let
           val tvKind = addStrpathInTvKind updateCandidateSet strPath tvKind 
           val _  = tvar := T.TVAR tvKind
@@ -1304,9 +1369,14 @@ struct
               T.REC
                 (SEnv.map
                    (addStrpathInTy updateCandidateSet strPath) tySEnvMap)
-            | T.OVERLOADED tys =>
-              T.OVERLOADED
+            | T.OCONSTkind tys =>
+              T.OCONSTkind
                 (map (addStrpathInTy updateCandidateSet strPath) tys)
+            | T.OPRIMkind {instances, operators} =>
+              T.OPRIMkind
+                {instances =
+                   map (addStrpathInTy updateCandidateSet strPath) instances,
+                 operators = operators}
       in
         {
          lambdaDepth = lambdaDepth,
@@ -1452,7 +1522,7 @@ struct
          funtyCon = funtyCon,
          ty = ty,
          tyCon = PredefinedTypes.exnTyCon,
-         tag = ExnTagIDKeyGen.generate ()
+         tag = ExnTagID.generate ()
         }
       end
 

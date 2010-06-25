@@ -1,3 +1,82 @@
+SML# version 0.50 (released on 2010-06-25)
+
+1. Overview
+
+An experimental release of a new feature of SML#. 
+Only the source package is provided. 
+
+2. The new feature
+
+The major new feature of SML# 0.50 is first-class overloading.
+
+First-class overloading may not be ardent wanted by ordinary SML
+programmers, but we find this feature essential in our development of
+seamless interoperability with database system, which we shall include
+in our near future release.
+
+This version implements a lightweight first-class overloading mechanism
+that is readily realized by SML#'s polymorphic record compilation.
+
+With this extension, overloaded operators such as + and > are now
+first-class values having a polymorphic type that represents their
+overloaded status, as seen in the following example:
+ # op +;
+ val it = fn
+     : ['a::{int, IntInf.int, real, Real32.real, word, Word8.word}.
+        'a * 'a -> 'a
+ # fun sumList nil z = z
+ >   | sumList (h::t) z = sumList t (h+z);
+ val sumList = fn
+     : ['a::{int, IntInf.int, real, Real32.real, word, Word8.word}.
+        'a list -> 'a -> 'a]
+ # sumList [1,2,3] 0;
+ val it = 6 : int
+ # sumList [1.1,2.2,3.3] 0.0;
+ val it = 6.6 : real
+where "::{....}" in 'a::{....} is an overload kind, restricting
+possible instances of type variable 'a.
+
+Any operator having the following two properties can be supported.
+1. Its overloaded nature is representable as a polymorphic type using
+   overload kinds. Its type can contain multiple overloaded type
+   variables. The instance types in their overload kinds may also
+   contain type variables possibly with overload kind restriction.
+2. Each instance corresponds to a set of type instances specified by
+   ground type constructors and wild card "_".
+For example, the type
+  ['a#{int, real, 'b list, 'c array}, 'b#{bool, char}, 'c#{int, bool}.
+   'a * 'a -> 'a]
+represents an overloaded binary operator having the instances for
+{int, real, bool list, char list, int array, bool array}. These
+correspond to the following instantiations of 'a, 'b, and 'c:
+  [int,_,_] for int op
+  [real,_,_] for real op
+  [bool list, bool, _] for bool list op
+  [char list, char, _] for bool list op
+  [int array, _, int] for int array op
+  [bool array, _, bool] for bool array op
+
+In the currently version, overloaded operator declaration is not yet
+made available to the programmer. We plan to include a special
+syntax for this purpose in future version.
+
+3. Oteher changes and improvements
+
+[SML#]
+* fixed a bug of pretty-printing for evaluation results in interactive mode.
+* fixed a bug of equality type inference.
+* fixed a bug of introducing dummy types due to value restrictions.
+* made type printers much prettier.
+
+[SMLFormat]
+* fixed a bug in handling newline indicators in nested guards.
+* updated documents.
+
+[OLE/SML#]
+* a minor-change of OLE_DECIMAL signature.
+* updated a sample code using MS Excel.
+
+-----------------------------------------------------------------------------
 SML# version 0.43 (released on 2010-06-11)
 
 1. Overview

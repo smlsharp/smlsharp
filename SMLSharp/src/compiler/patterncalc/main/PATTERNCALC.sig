@@ -50,8 +50,6 @@ signature PATTERNCALC = sig
    | PDDECFUN of Absyn.kindedTvar list * (plpat * (plpat list * plexp) list) list * Loc.loc 
    | PDNONRECFUN of Absyn.kindedTvar list * (plpat * (plpat list * plexp) list) * Loc.loc 
    | PDVALREC of Absyn.kindedTvar list * (plpat * plexp ) list * Loc.loc
-   | (** used only for PrinterGeneration to keep the original order of bindings. *)
-     PDVALRECGROUP of string list * pdecl list * Loc.loc
    | PDTYPE of (Absyn.tvar list * string * Absyn.ty) list * Loc.loc
    | PDDATATYPE of
      (Absyn.tvar list * string * (bool * string * Absyn.ty option) list) list * Loc.loc
@@ -109,9 +107,6 @@ signature PATTERNCALC = sig
    | PLSPECSEQ of plspec * plspec * Loc.loc 
    | PLSPECSHARE of plspec * Absyn.longid list * Loc.loc 
    | PLSPECSHARESTR of plspec * Absyn.longid list * Loc.loc 
-(*
-   | PLSPECFUNCTOR of (string * plsigexp * plsigexp) list * Loc.loc 
-*)
    | PLSPECEMPTY
 
  and pltopdec = 

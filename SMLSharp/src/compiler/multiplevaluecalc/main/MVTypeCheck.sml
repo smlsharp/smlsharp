@@ -31,7 +31,7 @@ local
   end
   structure BtvEquiv = BinarySetFn(btvEq)
 
-  fun formatCon (name,id) = name ^ "#" ^ (LocalVarID.toString id)
+  fun formatCon (name,id) = name ^ "#" ^ (VarID.toString id)
 
   (*
    * equivalence relation on bound type variabls 

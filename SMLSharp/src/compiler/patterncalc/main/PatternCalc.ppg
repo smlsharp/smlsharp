@@ -268,12 +268,6 @@ in
      *)
     PDVALREC of kindedTvar list * (plpat * plexp ) list * loc
   | (*%
-     * @format(id ids * dec decs * loc)
-     "valrecgroup" +1 2[decs(dec()(expFormatter,patFormatter))(+ 1)] +1
-     "endvalrecgroup"
-     *)
-    PDVALRECGROUP of string list * pdecl list * loc
-  | (*%
      * @format(bind binds * loc) "type" + {binds(bind)(~4[ +1 "and"] +)}
      * @format:bind(tyvar tyvars:formatListEnc * name * ty)
      *            {tyvars(tyvar)("," +, "(", ")" +)} {name} +d "=" +2 {ty}
@@ -552,16 +546,6 @@ in
      * !N0{ "sharing" + {list(longid)(~2[ +1 "="] +)} }
      *)
     PLSPECSHARESTR of plspec * longid list * loc 
-(*
-  | (*%
-     * @format(fundesc list * loc)
-     * !N0{ "functor" + {list(fundesc)(~2[ +1 "and" ] +)}}
-     * @format:fundesc(funid * sigexp1 * sigexp2) 
-     * funid ":" +d sigexp1()(expFormatter,patFormatter) +d
-     *  "=>" sigexp2()(expFormatter,patFormatter)
-     *)
-    PLSPECFUNCTOR of (string * plsigexp * plsigexp) list * loc 
-*)
   | (*%
      * @format 
      *)
@@ -668,7 +652,6 @@ in
    | PDDECFUN (_, _, loc) => loc
    | PDNONRECFUN (_, _, loc) => loc
    | PDVALREC (_, _, loc) => loc
-   | PDVALRECGROUP (_, _, loc) => loc
    | PDTYPE (_, loc) => loc
    | PDABSTYPE (_, _, loc) => loc
    | PDDATATYPE (_, loc) => loc

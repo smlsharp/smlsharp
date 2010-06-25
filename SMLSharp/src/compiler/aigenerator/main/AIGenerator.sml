@@ -7,12 +7,14 @@
 structure AIGenerator : AIGENERATOR =
 struct
 
-  structure ID = LocalVarID
+  structure ID = VarID
   structure CT = ConstantTerm
   structure AN = YAANormal
   structure AI = AbstractInstruction
   structure Target = AI.Target
   structure CA = CallAnalysis
+
+  fun newLocalId () = ID.generate ()
 
   (* FIXME: nested block; adjust with RBUTransformation *)
   val nestedBlockIndex = AI.UInt 0w0
@@ -46,7 +48,7 @@ struct
 
   fun newVar ty =
       let
-        val id = Counters.newLocalId ()
+        val id = newLocalId ()
         val displayName = "$" ^ ID.toString id
       in
         {id = id,
@@ -54,11 +56,11 @@ struct
          displayName = displayName} : AI.varInfo
        end
 
-  val newLabel = Counters.newLocalId
+  val newLabel = newLocalId
 
   fun newANVarInfo anty varKind =
       let
-        val id = Counters.newLocalId ()
+        val id = newLocalId ()
       in
         {id = id,
          displayName = "$" ^ ID.toString id,
@@ -178,7 +180,7 @@ struct
 
   fun addConst (context as {constants, ...}:context) const =
       let
-        val constid = Counters.newLocalId ()
+        val constid = newLocalId ()
       in
         ({
            boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
@@ -3072,9 +3074,8 @@ struct
         clusters = nil
       }
 
-  fun generate stamp globalIndexAllocator topdeclList =
+  fun generate globalIndexAllocator topdeclList =
       let
-        val _ = Counters.init stamp
         val _ = globalIndexAllocatorRef := globalIndexAllocator
 
         val clusters =
@@ -3084,7 +3085,7 @@ struct
         val funIdMap = makeFunIdMap clusters
         val program =  transformTopdeclList funIdMap topdeclList
       in
-        (Counters.getCounterStamp(), program)
+        program
       end
 
 end

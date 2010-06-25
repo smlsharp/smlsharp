@@ -74,6 +74,7 @@ sig
   val indicatorConPathInfo: Types.conPathInfo
   val startOfIndentConPathInfo: Types.conPathInfo
   val endOfIndentConPathInfo: Types.conPathInfo
+  val newlineConPathInfo: Types.conPathInfo
 
   val refConPathInfo : Types.conPathInfo
 

@@ -16,6 +16,19 @@ structure StaticAnalysis : STATICANALYSIS = struct
   structure CT = ConstantTerm
   open AnnotatedCalc
 
+  fun printTlexp tlexp =
+      (
+       print (Control.prettyPrint (TL.format_tlexp [] tlexp));
+       print "\n"
+      )
+  fun printTldecl tldecl =
+      (
+       print (Control.prettyPrint (TL.format_tldecl [] tldecl));
+       print "\n"
+      )
+  fun bug s =
+      Control.Bug ("StaticAnalysis:" ^ s)
+
   fun rootExp (TL.TLCAST {exp,...}) = rootExp exp
     | rootExp exp = exp
 
@@ -25,31 +38,33 @@ structure StaticAnalysis : STATICANALYSIS = struct
         let
           val (newFunExp, _) = inferExp context funExp
           val (newArgExpList, newArgTyList) = inferExpList context argExpList
-          (* arguments/return values, which are passed and received from a foreign function
-           * should have global type, e.g. record should  boxed and aligned
+          (* arguments/return values, which are passed and received from
+           * a foreign function should have global type, e.g. record should 
+           * boxed and aligned
            *)
           val _ = List.app CST.globalType newArgTyList
           val bodyTy =
               case funTy of
                 T.FUNMty (argTyList, bodyTy) => CST.convertGlobalType bodyTy
               | _ => raise Control.Bug "invalid foreign function type"
-          val newFunTy = AT.FUNMty 
-                             {
-                              argTyList = newArgTyList, 
-                              bodyTy = bodyTy, 
-                              funStatus = ATU.newClosureFunStatus(),
-                              annotation = ref {labels = AT.LE_GENERIC, boxed = true}
-                             }
+          val newFunTy =
+              AT.FUNMty 
+                {
+                 argTyList = newArgTyList, 
+                 bodyTy = bodyTy, 
+                 funStatus = ATU.newClosureFunStatus(),
+                 annotation = ref {labels = AT.LE_GENERIC, boxed = true}
+                }
         in
           (
            ACFOREIGNAPPLY
-               {
-                funExp = newFunExp,
-                funTy = newFunTy,
-                argExpList  = newArgExpList,
-                attributes = attributes,
-                loc = loc
-               },
+             {
+              funExp = newFunExp,
+              funTy = newFunTy,
+              argExpList  = newArgExpList,
+              attributes = attributes,
+              loc = loc
+             },
            bodyTy
           )
         end
@@ -72,17 +87,16 @@ structure StaticAnalysis : STATICANALYSIS = struct
           )
         end
 
-      | TL.TLEXCEPTIONTAG (v as {tagValue, loc}) => (ACEXCEPTIONTAG v, AT.exntagty)
-
-      | TL.TLCONSTANT (v as {value, loc}) => (ACCONSTANT v, ATU.constDefaultTy value)
-
+      | TL.TLEXCEPTIONTAG (v as {tagValue, loc}) =>
+        (ACEXCEPTIONTAG v, AT.exntagty)
+      | TL.TLCONSTANT (v as {value, loc}) =>
+        (ACCONSTANT v, ATU.constDefaultTy value)
       | TL.TLGLOBALSYMBOL {name,kind,ty,loc} =>
         let
           val newTy = CST.convertGlobalType ty
         in
           (ACGLOBALSYMBOL {name=name, kind=kind, ty=newTy, loc=loc}, newTy)
         end
-
       | TL.TLSIZEOF {ty, loc} =>
         let
           (* SIZEOF may appear only as an argument of FOREIGNAPPLY.
@@ -92,11 +106,11 @@ structure StaticAnalysis : STATICANALYSIS = struct
         in
           (ACSIZEOF {ty = newTy, loc = loc}, AT.intty)
         end
-
       | TL.TLVAR {varInfo as {varId = T.INTERNAL id,...}, loc} => 
         (* local variable*)
         let
-          val newVarInfo = CTX.lookupVariable context id (#displayName varInfo, loc)
+          val newVarInfo =
+              CTX.lookupVariable context id (#displayName varInfo, loc)
         in
           (ACVAR{varInfo = newVarInfo, loc = loc}, #ty newVarInfo)
         end
@@ -105,7 +119,8 @@ structure StaticAnalysis : STATICANALYSIS = struct
         (* gloval variable *)
         let
           val newTy = CST.convertGlobalType ty
-          val newVarInfo = {displayName = displayName, ty = newTy, varId = varId}
+          val newVarInfo =
+              {displayName = displayName, ty = newTy, varId = varId}
         in
           (ACVAR{varInfo = newVarInfo, loc = loc}, newTy)
         end
@@ -135,7 +150,9 @@ structure StaticAnalysis : STATICANALYSIS = struct
           val (newIndexExp, _) = inferExp context indexExp
           val (newValueExp, newValueTy) = inferExp context valueExp
           val _ = CST.unify (newValueTy, newElementTy)
-              
+              handle CST.Unify =>
+              (printTlexp tlexp;
+               raise bug "unification fail (1)")
         in
           (
            ACSETFIELD
@@ -150,7 +167,7 @@ structure StaticAnalysis : STATICANALYSIS = struct
           )
         end
 
-      | TL.TLSETTAIL {consExp, newTailExp, listTy, consRecordTy, tailLabel, loc} =>
+      | TL.TLSETTAIL {consExp,newTailExp,listTy,consRecordTy,tailLabel,loc} =>
         let
           val (newConsExp, newConsExpTy) = inferExp context consExp
           val _ = CST.globalType newConsExpTy
@@ -176,9 +193,10 @@ structure StaticAnalysis : STATICANALYSIS = struct
       | TL.TLARRAY {sizeExp, initialValue, elementTy, isMutable, loc} =>
         let
           val (newSizeExp, _) = inferExp context sizeExp
-          val (newInitialValue, newInitialValueTy) = inferExp context initialValue
-          (* array's elements should be single value, their outermost type constructer
-           * should be boxed (if this is record or function)
+          val (newInitialValue, newInitialValueTy) =
+              inferExp context initialValue
+          (* array's elements should be single value, their outermost type
+           * constructer should be boxed (if this is record or function)
            *)
           val _ = CST.singleValueType newInitialValueTy
           val newArrayTy = AT.arrayty newInitialValueTy
@@ -197,7 +215,8 @@ structure StaticAnalysis : STATICANALYSIS = struct
         end
 
       | TL.TLCOPYARRAY
-        {srcExp, srcIndexExp, dstExp, dstIndexExp, lengthExp, elementTy, loc} =>
+        {srcExp, srcIndexExp, dstExp,
+         dstIndexExp, lengthExp, elementTy, loc} =>
         let
           val (newSrcExp, srcTy) = inferExp context srcExp
           val newSrcElementTy = ATU.arrayElementTy srcTy
@@ -206,9 +225,11 @@ structure StaticAnalysis : STATICANALYSIS = struct
           val newDstElementTy = ATU.arrayElementTy dstTy
           val (newDstIndexExp, _) = inferExp context dstIndexExp
           val _ = CST.unify (newSrcElementTy, newDstElementTy)
+              handle CST.Unify =>
+              (printTlexp tlexp;
+               raise bug "unification fail(2)")
           (* ToDo : Should we unify elementTy and newSrcElementTy ? *)
           val (newLengthExp, _) = inferExp context lengthExp
-
         in
           (
            ACCOPYARRAY
@@ -237,12 +258,12 @@ structure StaticAnalysis : STATICANALYSIS = struct
               {
                name = name, 
                ty = AT.FUNMty
-                        {
-                         argTyList = newArgTyList, 
-                         bodyTy = resultTy, 
-                         funStatus = ATU.newClosureFunStatus(),
-                         annotation = ref {labels = AT.LE_GENERIC, boxed = true}
-                        }
+                      {
+                       argTyList = newArgTyList, 
+                       bodyTy = resultTy, 
+                       funStatus = ATU.newClosureFunStatus(),
+                       annotation = ref {labels = AT.LE_GENERIC, boxed = true}
+                      }
               }
           val newInstTyList = map CST.convertSingleValueType instTyList
         in
@@ -264,12 +285,9 @@ structure StaticAnalysis : STATICANALYSIS = struct
           val (newArgExpList, newArgTyList) = inferExpList context argExpList
           val {argTyList, bodyTy, ...} = ATU.expandFunTy newFunTy
           val _ = (ListPair.app CST.unify (argTyList, newArgTyList) )
-                  handle exn =>
-                         let
-                           val s = Control.prettyPrint (TL.format_tlexp [] tlexp)
-                         in
-                           print s; raise exn
-                         end
+              handle CST.Unify =>
+                       (printTlexp tlexp;
+                        raise bug "unification fail(3)")
         in
           (
            ACAPPM
@@ -285,7 +303,8 @@ structure StaticAnalysis : STATICANALYSIS = struct
 
       | TL.TLLET {localDeclList, mainExp, loc} =>
         let
-          val (newLocalDeclList, newContext) = inferDeclList context localDeclList
+          val (newLocalDeclList, newContext) =
+              inferDeclList context localDeclList
           val (newMainExp, newMainExpTy) = inferExp newContext mainExp
         in
           (
@@ -367,6 +386,10 @@ structure StaticAnalysis : STATICANALYSIS = struct
           val _ = CST.singleValueType newValueTy
           val newFieldTy = CTX.fieldType context (newRecordTy, label)
           val _ = CST.unify (newValueTy, newFieldTy)
+              handle CST.Unify =>
+                       (printTlexp tlexp;
+                        raise bug "unification fail(4)")
+
         in
           (
            ACMODIFY
@@ -404,10 +427,15 @@ structure StaticAnalysis : STATICANALYSIS = struct
         let
           val (newExp, newExpTy) = inferExp context exp
           val newExnVar = 
-              {displayName = displayName, ty = CST.convertGlobalType ty, varId = varId}
+              {displayName = displayName, ty = CST.convertGlobalType ty,
+               varId = varId}
           val newContext = CTX.insertVariable context newExnVar
           val (newHandler, newHandlerTy) = inferExp newContext handler
           val _ = CST.unify(newExpTy, newHandlerTy)
+              handle CST.Unify =>
+                       (printTlexp tlexp;
+                        raise bug "unification fail(5)")
+
         in
           (
            ACHANDLE
@@ -426,7 +454,9 @@ structure StaticAnalysis : STATICANALYSIS = struct
           val newArgVarList =
               map 
                   (fn {displayName, ty, varId} =>
-                      {displayName = displayName, ty = CST.convertLocalType ty, varId = varId}
+                      {displayName = displayName,
+                       ty = CST.convertLocalType ty,
+                       varId = varId}
                   )
                   argVarList
           val newContext = CTX.insertVariables context newArgVarList
@@ -482,8 +512,8 @@ structure StaticAnalysis : STATICANALYSIS = struct
       | TL.TLTAPP {exp, expTy, instTyList, loc} =>
         let
           val (newExp, newExpTy) = inferExp context exp
-          (* type variables are single value types, their instances should also
-           * be single value types
+          (* type variables are single value types, their instances should
+           * also be single value types
            *)
           val newInstTyList = map CST.convertSingleValueType instTyList
           val tvars = case newExpTy of
@@ -513,6 +543,9 @@ structure StaticAnalysis : STATICANALYSIS = struct
                 val (newConst, _) = inferExp context constant 
                 val (newExp, newTy) = inferExp context exp
                 val _ = CST.unify (newDefaultTy, newTy)
+                    handle CST.Unify =>
+                           (printTlexp tlexp;
+                            raise bug "unification fail(6)")
               in
                 {constant = newConst, exp = newExp}
               end
@@ -554,33 +587,43 @@ structure StaticAnalysis : STATICANALYSIS = struct
                                        
   and inferDecl context tldecl =
       case tldecl of
-        TL.TLVAL {boundVar as {displayName, ty, varId as T.INTERNAL _}, boundExp, loc} =>
+        TL.TLVAL {boundVar as {displayName, ty, varId as T.INTERNAL _},
+                  boundExp, loc} =>
         let
           val (newBoundExp, newBoundTy) = inferExp context boundExp
-          val newBoundVar = {displayName = displayName, ty = newBoundTy, varId = varId}
+          val newBoundVar = {displayName = displayName,
+                             ty = newBoundTy, varId = varId}
           val newContext = CTX.insertVariable context newBoundVar
         in
-          (ACVAL {boundVar = newBoundVar, boundExp = newBoundExp, loc = loc}, newContext)
+          (ACVAL {boundVar = newBoundVar, boundExp = newBoundExp, loc = loc},
+           newContext)
         end
 
-      | TL.TLVAL {boundVar as {displayName, ty, varId as T.EXTERNAL _}, boundExp, loc} =>
+      | TL.TLVAL {boundVar as {displayName, ty, varId as T.EXTERNAL _},
+                  boundExp, loc} =>
         let
           val (newBoundExp, newBoundTy) = inferExp context boundExp
           val _ = CST.globalType newBoundTy
-          val newBoundVar = {displayName = displayName, ty = newBoundTy, varId = varId}
+          val newBoundVar = {displayName = displayName,
+                             ty = newBoundTy, varId = varId}
           val newContext = CTX.insertVariable context newBoundVar
         in
-          (ACVAL {boundVar = newBoundVar, boundExp = newBoundExp, loc = loc}, newContext)
+          (ACVAL {boundVar = newBoundVar, boundExp = newBoundExp, loc = loc},
+           newContext)
         end
 
       | TL.TLVALREC {recbindList, loc} =>
         let
           val newBoundVarList =
-              map 
-                  (fn {boundVar as {displayName, ty, varId as T.INTERNAL _},...} =>
-                      {displayName = displayName, ty = CST.convertLocalType ty, varId = varId}
-                    | {boundVar as {displayName, ty, varId as T.EXTERNAL _},...} =>
-                       {displayName = displayName, ty = CST.convertGlobalType ty, varId = varId}
+              map
+                (fn {boundVar
+                       as {displayName, ty, varId as T.INTERNAL _},...} =>
+                    {displayName = displayName, ty = CST.convertLocalType ty,
+                     varId = varId}
+                  | {boundVar
+                       as {displayName, ty, varId as T.EXTERNAL _},...} =>
+                    {displayName = displayName, ty = CST.convertGlobalType ty,
+                     varId = varId}
                   )
                   recbindList
           val newContext = CTX.insertVariables context newBoundVarList
@@ -588,14 +631,19 @@ structure StaticAnalysis : STATICANALYSIS = struct
               let
                 val (newBoundExp, newBoundTy) = inferExp newContext boundExp
                 val _ = CST.unify (newBoundTy, #ty newBoundVar)
+                    handle CST.Unify =>
+                           (printTldecl tldecl;
+                            raise bug "unification fail(7)")
+
               in
                 {boundVar = newBoundVar, boundExp = newBoundExp}
               end
         in
           (
            ACVALREC
-               {
-                recbindList = ListPair.map inferBind (recbindList, newBoundVarList),
+             {
+              recbindList = ListPair.map
+                              inferBind (recbindList, newBoundVarList),
                 loc = loc
                },
            newContext
@@ -607,47 +655,55 @@ structure StaticAnalysis : STATICANALYSIS = struct
           val newBtvEnv = CST.convertLocalBtvEnv btvEnv
           val newBoundVarList =
               map 
-                  (fn {boundVar as {displayName, ty, varId},...} =>
-                      {displayName = displayName, ty = CST.convertLocalType ty, varId = varId}
+                (fn {boundVar as {displayName, ty, varId},...} =>
+                    {displayName = displayName, ty = CST.convertLocalType ty,
+                     varId = varId}
                   )
                   recbindList
-          val newContext = CTX.insertVariables (CTX.insertBtvEnv context newBtvEnv) newBoundVarList
+          val newContext =
+              CTX.insertVariables
+                (CTX.insertBtvEnv context newBtvEnv)
+                newBoundVarList
           fun inferBind ({boundExp,boundVar}, newBoundVar : varInfo) =
               let
                 val (newBoundExp, newBoundTy) = inferExp newContext boundExp
                 val _ = CST.unify (newBoundTy, #ty newBoundVar)
+                    handle CST.Unify =>
+                           (printTlexp boundExp;
+                            raise bug "unification fail(8)")
+
               in
                 {boundVar = newBoundVar, boundExp = newBoundExp}
               end
-          val recbindList = ListPair.map inferBind (recbindList, newBoundVarList)
-
+          val recbindList =
+              ListPair.map inferBind (recbindList, newBoundVarList)
           val newBoundVarList = 
               map
-                  (fn {displayName, ty, varId} =>
-                      let
-                        val ty = AT.POLYty {boundtvars = newBtvEnv, body = ty}
-                        val _ = 
-                            case varId of 
-                              T.EXTERNAL _ => CST.globalType ty
-                            | _ => ()
-                      in
-                        {
-                         displayName = displayName,
-                         ty = ty,
-                         varId = varId
-                        }
-                      end
-                  )
-                  newBoundVarList
+                (fn {displayName, ty, varId} =>
+                    let
+                      val ty = AT.POLYty {boundtvars = newBtvEnv, body = ty}
+                      val _ = 
+                          case varId of 
+                            T.EXTERNAL _ => CST.globalType ty
+                          | _ => ()
+                    in
+                      {
+                       displayName = displayName,
+                       ty = ty,
+                       varId = varId
+                      }
+                    end
+                )
+                newBoundVarList
           val newContext = CTX.insertVariables context newBoundVarList
         in
           (
            ACVALPOLYREC
-               {
-                btvEnv = newBtvEnv,
-                recbindList = recbindList,
-                loc = loc
-               },
+             {
+              btvEnv = newBtvEnv,
+              recbindList = recbindList,
+              loc = loc
+             },
            newContext
           )
         end
@@ -670,44 +726,50 @@ structure StaticAnalysis : STATICANALYSIS = struct
               (ACVALBLOCK {code = newCode, exnIDSet = exnIDSet},
                newContext)
           end
-        | TL.TLLINKFUNCTORBLOCK {name, actualArgName, typeResolutionTable, exnTagResolutionTable, 
-                                 externalVarIDResolutionTable, refreshedExceptionTagTable, 
-                                 refreshedExternalVarIDTable, loc} => 
-          (ACLINKFUNCTORBLOCK {name = name,
-                               actualArgName = actualArgName, 
-                               typeResolutionTable = 
-                               TyConID.Map.map (CST.convertTyBindInfo) typeResolutionTable, 
-                               exnTagResolutionTable = exnTagResolutionTable, 
-                               externalVarIDResolutionTable = externalVarIDResolutionTable, 
-                               refreshedExceptionTagTable = refreshedExceptionTagTable, 
-                               refreshedExternalVarIDTable = refreshedExternalVarIDTable, 
-                               loc = loc},
+        | TL.TLLINKFUNCTORBLOCK
+            {name, actualArgName,
+             typeResolutionTable,
+             exnTagResolutionTable, 
+             externalVarIDResolutionTable,
+             refreshedExceptionTagTable, 
+             refreshedExternalVarIDTable, loc} => 
+          (ACLINKFUNCTORBLOCK
+             {name = name,
+              actualArgName = actualArgName, 
+              typeResolutionTable = 
+                TyConID.Map.map (CST.convertTyBindInfo) typeResolutionTable, 
+              exnTagResolutionTable = exnTagResolutionTable, 
+              externalVarIDResolutionTable = externalVarIDResolutionTable, 
+              refreshedExceptionTagTable = refreshedExceptionTagTable, 
+              refreshedExternalVarIDTable = refreshedExternalVarIDTable, 
+              loc = loc},
            context)
 
   fun inferTopBlock context topBlock =
       case topBlock of
-          TL.TLBASICBLOCK basicBlock => 
-          let
-              val (basicBlock, context) = inferBasicBlock context basicBlock
-          in
-              (ACBASICBLOCK basicBlock, context)
-          end
-        | TL.TLFUNCTORBLOCK {name, formalAbstractTypeIDSet, formalVarIDSet, formalExnIDSet, 
-                             generativeExnIDSet,generativeVarIDSet, bodyCode} => 
-          let
-              val originalMode =  !Control.doFunctorCompile
-              val _ = Control.doFunctorCompile := true
-              val (newBodyCode, newContext) = inferBasicBlockList context bodyCode
-              val _ = Control.doFunctorCompile := originalMode
-          in
-              (ACFUNCTORBLOCK{name = name, 
-                              formalAbstractTypeIDSet = formalAbstractTypeIDSet, 
-                              formalVarIDSet = formalVarIDSet,
-                              formalExnIDSet = formalExnIDSet, 
-                              generativeExnIDSet = generativeExnIDSet,
-                              generativeVarIDSet = generativeVarIDSet,
-                              bodyCode = newBodyCode}, 
-               newContext)
+        TL.TLBASICBLOCK basicBlock => 
+        let
+          val (basicBlock, context) = inferBasicBlock context basicBlock
+        in
+          (ACBASICBLOCK basicBlock, context)
+        end
+      | TL.TLFUNCTORBLOCK
+          {name, formalAbstractTypeIDSet, formalVarIDSet, formalExnIDSet, 
+           generativeExnIDSet,generativeVarIDSet, bodyCode} => 
+        let
+          val originalMode =  !Control.doFunctorCompile
+          val _ = Control.doFunctorCompile := true
+          val (newBodyCode, newContext) = inferBasicBlockList context bodyCode
+          val _ = Control.doFunctorCompile := originalMode
+        in
+          (ACFUNCTORBLOCK{name = name, 
+                          formalAbstractTypeIDSet = formalAbstractTypeIDSet, 
+                          formalVarIDSet = formalVarIDSet,
+                          formalExnIDSet = formalExnIDSet, 
+                          generativeExnIDSet = generativeExnIDSet,
+                          generativeVarIDSet = generativeVarIDSet,
+                          bodyCode = newBodyCode}, 
+           newContext)
           end
 
   and inferBasicBlockList context ([]) = ([], context)

@@ -161,9 +161,6 @@ sig
     | SPECSEQ of spec * spec * Loc.loc 
     | SPECSHARE of spec * longTyCon list * Loc.loc 
     | SPECSHARESTR of spec * longid list * Loc.loc 
-(*
-    | SPECFUNCTOR of (string * sigexp * sigexp) list * Loc.loc 
-*)
     | SPECEMPTY
   and funbind =
       FUNBINDTRAN of string * string * sigexp  * sigexp * strexp * Loc.loc 

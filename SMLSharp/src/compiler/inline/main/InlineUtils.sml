@@ -71,20 +71,20 @@ fun globalPolyInlineCount displayName =
 fun printLoc loc = print ("Loc is " ^ Control.prettyPrint (Loc.format_loc loc) ^ "\n")
 
 fun printRenameEnv env =
-    LocalVarID.Map.appi 
+    VarID.Map.appi 
 	(fn (id,newId) => 
 	    (print ("  " ^
-		    Control.prettyPrint (LocalVarID.format_id id) ^
+		    Control.prettyPrint (VarID.format_id id) ^
 		    " |-> " ^
-		    Control.prettyPrint (LocalVarID.format_id newId) ^
+		    Control.prettyPrint (VarID.format_id newId) ^
 		    "\n")))
 	env
 
 fun printLocalEnv env =
-    LocalVarID.Map.appi 
+    VarID.Map.appi 
 	(fn (id,inlineInfo) => 
 	    (print ("  " ^
-		    Control.prettyPrint (LocalVarID.format_id id) ^
+		    Control.prettyPrint (VarID.format_id id) ^
 		    " |-> ");
 	     InlineEnv.printInlineInfo inlineInfo))
 	env
@@ -181,6 +181,23 @@ fun typeSubst subst ty =
       case recordKind of 
         AT.UNIV => AT.UNIV
       | AT.REC flty => AT.REC (SEnv.map (typeSubst subst) flty)
+      | AT.OPRIMkind {instances, operators} => 
+        AT.OPRIMkind
+          {instances = map (typeSubst subst) instances,
+           operators =
+             map
+               (fn {oprimId,oprimPolyTy,name,keyTyList,instTyList} =>
+                   {
+                    oprimId = oprimId,
+                    oprimPolyTy = typeSubst subst oprimPolyTy,
+                    name = name,
+                    keyTyList = map (typeSubst subst) keyTyList,
+                    instTyList = map (typeSubst subst) instTyList
+                   }
+               )
+               operators
+          }
+
 
   (* This function makes a copy of btvEnv with new bound type variables
    * and returns that with the substitution of bound type variables. 
@@ -190,7 +207,7 @@ fun typeSubst subst ty =
 	  val newSubst = 
               IEnv.map (fn _ => 
                            let
-                               val newBoundVarId = BoundTypeVarIDGen.generate ()
+                               val newBoundVarId = BoundTypeVarID.generate ()
                            in AT.BOUNDVARty (newBoundVarId) end) 
                        btvEnv
 	  val newBtvEnv = IEnv.foldri

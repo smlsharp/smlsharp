@@ -33,7 +33,8 @@ in
    *)
   and checkEq ty =
       case ty of
-        T.ERRORty  => raise Eqcheck
+        T.INSTCODEty _ => raise Eqcheck
+      | T.ERRORty  => raise Eqcheck
       | T.DUMMYty _  => raise Eqcheck
       | T.TYVARty
           (r
@@ -52,7 +53,7 @@ in
                   }
            | T.EQ => ();
           case recordKind of 
-            T.OVERLOADED L =>
+            T.OCONSTkind L =>
               let
                 val newL = List.filter TU.admitEqTy L 
               in
@@ -63,13 +64,30 @@ in
                     T.TVAR{
                          lambdaDepth = lambdaDepth, 
                          id = id, 
-                         recordKind = T.OVERLOADED newL,
+                         recordKind = T.OCONSTkind newL,
+                         eqKind = T.EQ, 
+                         tyvarName = NONE
+                         }
+              end
+          | T.OPRIMkind {instances, operators} =>
+              let
+                val instances = List.filter TU.admitEqTy instances
+              in
+                case instances of
+                  nil => raise Eqcheck
+                | _ =>
+                    r :=
+                    T.TVAR{
+                         lambdaDepth = lambdaDepth, 
+                         id = id, 
+                         recordKind = T.OPRIMkind {instances = instances,
+                                                   operators = operators},
                          eqKind = T.EQ, 
                          tyvarName = NONE
                          }
               end
            | _ => ()
-             )
+        )
       | T.TYVARty (ref(T.TVAR {eqKind = T.EQ, tyvarName = SOME _, ...})) => ()
       | T.TYVARty (ref(T.TVAR {eqKind = T.NONEQ, tyvarName = SOME _, ...})) =>
         (*

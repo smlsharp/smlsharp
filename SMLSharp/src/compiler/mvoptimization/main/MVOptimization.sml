@@ -14,6 +14,15 @@ structure MVOptimization : MVOPTIMIZATION = struct
   structure Float = Real
   structure P = BuiltinPrimitive
 
+  fun newVar ty = 
+      let
+        val id = VarID.generate ()
+      in
+        {displayName = "$" ^ VarID.toString id,
+         ty = ty,
+         varId = Types.INTERNAL id}
+      end
+
   structure MVExp_ord:ORD_KEY = struct
 
     type ord_key = MV.mvexp
@@ -32,7 +41,7 @@ structure MVOptimization : MVOPTIMIZATION = struct
         | (MV.MVVAR _, MV.MVEXCEPTIONTAG _) => GREATER
         | (MV.MVVAR _, MV.MVCONSTANT _) => GREATER
         | (MV.MVVAR {varInfo = {varId = varId1,...},...}, MV.MVVAR {varInfo = {varId = varId2,...},...}) =>
-          Types.compareVarId (varId1, varId2)
+          VarIdEnv.Key.compare (varId1, varId2)
         | (MV.MVGLOBALSYMBOL _, MV.MVEXCEPTIONTAG _) => GREATER
         | (MV.MVGLOBALSYMBOL _, MV.MVCONSTANT _) => GREATER
         | (MV.MVGLOBALSYMBOL _, MV.MVVAR _) => GREATER
@@ -739,7 +748,7 @@ structure MVOptimization : MVOPTIMIZATION = struct
 
             fun uncastedExp (exp, expTy, targetTy, expLoc) =
                 let 
-                  val varInfo = Counters.newVar expTy
+                  val varInfo = newVar expTy
                   val newDecl = MV.MVVAL{boundVars = [varInfo], boundExp = exp, loc = loc}
                   val castedExp = 
                       MV.MVCAST
@@ -1009,17 +1018,17 @@ structure MVOptimization : MVOPTIMIZATION = struct
           (topBlock1 :: topBlocks2, newVarEnv, newRecordEnv, newCommonExpEnv)
       end
 
-  fun optimize (stamp:Counters.stamp) topBlockList = 
+  fun optimize  topBlockList = 
       let 
-          val _ = Counters.init stamp
-          val (topBlockList, _, _, _) = 
-              optimizeTopBlockList VarIdEnv.empty VarIdEnv.empty CommonExpEnv.empty topBlockList
+        val (topBlockList, _, _, _) = 
+            optimizeTopBlockList
+              VarIdEnv.empty VarIdEnv.empty CommonExpEnv.empty topBlockList
           val newTopBlockList =
               if !Control.doUselessCodeElimination
               then UselessCodeElimination.optimize topBlockList
               else topBlockList
       in 
-          (Counters.getCounterStamp(), newTopBlockList)
+        newTopBlockList
       end
 
 end

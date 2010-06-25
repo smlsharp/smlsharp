@@ -13,11 +13,11 @@ struct
     fun format_ifCons (f, format) [] = []
       | format_ifCons (f, format) _ = format
     fun term s = SMLFormat.FormatExpression.Term (size s, s)
-    fun format_ID id = [term (LocalVarID.toString id)]
+    fun format_ID id = [term (VarID.toString id)]
   in
 
-  (*% @formatter(LocalVarID.id) format_ID *)
-  type id = LocalVarID.id
+  (*% @formatter(VarID.id) format_ID *)
+  type id = VarID.id
 
   (*% @formatter(ClusterID.id) ClusterID.format_id *)
   type clusterId = ClusterID.id

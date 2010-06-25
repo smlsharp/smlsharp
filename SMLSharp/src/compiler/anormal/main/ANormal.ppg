@@ -17,19 +17,19 @@ structure ANormal = struct
 
   fun formatLabel id =
       let
-        val s = "L" ^ LocalVarID.toString id
+        val s = "L" ^ VarID.toString id
       in
         SMLFormat.BasicFormatters.format_string s
       end
 
   (*%
-   * @formatter(idFormat) LocalVarID.format_id
+   * @formatter(idFormat) VarID.format_id
    *)
   type varid =
        (*%
         * @format(id:idFormat) id
         *)
-       LocalVarID.id
+       VarID.id
 
   (*%
    * @formatter(idFormat) Types.format_varId
@@ -76,7 +76,7 @@ structure ANormal = struct
     
   (*% 
    *  @params(id)
-   *  @formatter(LocalVarID.id) LocalVarID.format_id
+   *  @formatter(VarID.id) VarID.format_id
    *)
   datatype varKind =
 	   (*%
@@ -107,13 +107,13 @@ structure ANormal = struct
        {varId:varId, displayName:string, ty:ty, varKind:varKind}
 
   (*% 
-   *  @formatter(LocalVarID.id) LocalVarID.format_id
+   *  @formatter(VarID.id) VarID.format_id
    *)
   type varInfoWithoutKind = 
        (*%
         * @format({id, displayName, ty, varKind})  displayName
         *)
-       {id:LocalVarID.id, displayName:string, ty:ty, varKind:varKind}
+       {id:VarID.id, displayName:string, ty:ty, varKind:varKind}
 
   (*% 
    * @formatter(ExnTagID.id) ExnTagID.format_id
@@ -201,7 +201,7 @@ structure ANormal = struct
          | (*%
             * @format({codeId:codeId:formatLabel, loc}) codeId
             *)
-           ANLABEL of {codeId : LocalVarID.id, loc : loc}
+           ANLABEL of {codeId : VarID.id, loc : loc}
          | (*%
             * @format({arrayExp, offsetExp, loc})
             * arrayExp "[" offsetExp "]"
@@ -524,7 +524,7 @@ structure ANormal = struct
             *      }
             *) 
            {
-            codeId : LocalVarID.id,
+            codeId : VarID.id,
             argVarList : varInfo list, 
             argSizeExpList : anexp list,
             bodyExp : anexp,

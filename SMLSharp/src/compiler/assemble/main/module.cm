@@ -17,7 +17,6 @@ Group is
         ../../usererror/sources.cm
         ../../symbolicinstructions/sources.cm
 
-	Counters.sml
         AssembleError.ppg.sml
         AllocationInfo.sml
         LABEL_MAP.sig

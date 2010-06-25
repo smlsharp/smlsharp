@@ -129,9 +129,9 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
 
   infix ++
 
-  type 'a set = 'a LocalVarID.Map.map
+  type 'a set = 'a VarID.Map.map
   type 'a defuseSet = {defs: 'a set, uses: 'a set}
-  val emptySet = LocalVarID.Map.empty : 'a set
+  val emptySet = VarID.Map.empty : 'a set
 
   local
     open SMLFormat.BasicFormatters
@@ -139,48 +139,48 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
   fun format_set fmt set =
       format_string "{" @
       format_list
-        (fn (x,y) => LocalVarID.format_id x @ format_string ":" @ fmt y,
+        (fn (x,y) => VarID.format_id x @ format_string ":" @ fmt y,
          format_string ",")
-        (LocalVarID.Map.listItemsi set) @
+        (VarID.Map.listItemsi set) @
       format_string "}"
   end
 
   fun setUnion (set1:''a set, set2:''a set) : ''a set =
-      LocalVarID.Map.unionWith
+      VarID.Map.unionWith
         (fn (x,y) => if x = y then x else raise Control.Bug "union")
         (set1, set2)
 
   fun setMinus (set1:'a set, set2:'a set) : 'a set =
-      LocalVarID.Map.filteri
-        (fn (id, _) => not (LocalVarID.Map.inDomain (set2, id)))
+      VarID.Map.filteri
+        (fn (id, _) => not (VarID.Map.inDomain (set2, id)))
         set1
 (*
-      LocalVarID.Map.foldli
+      VarID.Map.foldli
         (fn (id, v, set) =>
-            case LocalVarID.Map.find (set2, id) of
-              NONE => LocalVarID.Map.insert (set, id, v)
+            case VarID.Map.find (set2, id) of
+              NONE => VarID.Map.insert (set, id, v)
             | SOME _ => set)
-        LocalVarID.Map.empty
+        VarID.Map.empty
         set1
 *)
 
   fun setIsSubset (set1:'a set, set2:'a set) =
-      LocalVarID.Map.foldli
-        (fn (id, _, b) => b andalso LocalVarID.Map.inDomain (set2, id))
+      VarID.Map.foldli
+        (fn (id, _, b) => b andalso VarID.Map.inDomain (set2, id))
         true
         set1
 
   fun singleton f (v:'a) =
-      LocalVarID.Map.singleton (f v, v) : 'a set
+      VarID.Map.singleton (f v, v) : 'a set
 
   fun varSet vars =
       foldl (fn (var as {id,...}:I.var, set) =>
-                LocalVarID.Map.insert (set, id, var))
+                VarID.Map.insert (set, id, var))
             emptySet vars
 
   fun slotSet slots =
       foldl (fn (slot as {id,...}:I.slot, set) =>
-                LocalVarID.Map.insert (set, id, slot))
+                VarID.Map.insert (set, id, slot))
             emptySet slots
 
   fun ({defs=d1, uses=u1}:''a defuseSet) ++ ({defs=d2, uses=u2}:''a defuseSet) =
@@ -243,7 +243,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
         | I.REQUIRE_SLOT slot => useSet (slotSet [slot])
         | I.USE ops => foldr (fn (x,z) => duOp x ++ z) duEmpty ops
         | I.COMPUTE_FRAME {uses, clobs} =>
-          useSet (varSet (LocalVarID.Map.listItems uses))
+          useSet (varSet (VarID.Map.listItems uses))
         | I.MOVE (ty, dst, op1) => duDst dst ++ duOp op1
         | I.MOVEADDR (ty, dst, addr) => duDst dst ++ duAddr addr
         | I.COPY {ty, dst:I.dst, src:I.operand, clobs} => duDst dst ++ duOp src
@@ -471,11 +471,11 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
     val setUnion = setUnion : set * set -> set
     val setMinus = setMinus : set * set -> set
     val setIsSubset = setIsSubset : set * set -> bool
-    val fold = LocalVarID.Map.foldl
-    val filter = LocalVarID.Map.filter
-    val inDomain = LocalVarID.Map.inDomain
-    val find = LocalVarID.Map.find
-    val isEmpty = LocalVarID.Map.isEmpty
+    val fold = VarID.Map.foldl
+    val filter = VarID.Map.filter
+    val inDomain = VarID.Map.inDomain
+    val find = VarID.Map.find
+    val isEmpty = VarID.Map.isEmpty
     val emptySet = emptySet : set
     val singleton = fn x => singleton #id x : set
     val fromList = varSet
@@ -503,11 +503,11 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
     val setUnion = setUnion : set * set -> set
     val setMinus = setMinus : set * set -> set
     val setIsSubset = setIsSubset : set * set -> bool
-    val fold = LocalVarID.Map.foldl
-    val filter = LocalVarID.Map.filter
-    val inDomain = LocalVarID.Map.inDomain
-    val find = LocalVarID.Map.find
-    val isEmpty = LocalVarID.Map.isEmpty
+    val fold = VarID.Map.foldl
+    val filter = VarID.Map.filter
+    val inDomain = VarID.Map.inDomain
+    val find = VarID.Map.find
+    val isEmpty = VarID.Map.isEmpty
     val emptySet = emptySet : set
     val singleton = fn x => singleton #id x : set
     val fromList = slotSet
@@ -892,7 +892,7 @@ val _ = count := !count + 1
 val _ = puts "== edges"
 val _ = I.LabelMap.appi
         (fn (id, {succs, preds}) =>
-            puts (LocalVarID.toString id ^ ": succs=" ^
+            puts (VarID.toString id ^ ": succs=" ^
                   foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" succs ^ " preds=" ^
                   foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" preds))
         edges
@@ -958,7 +958,7 @@ val _ = puts ("changed: " ^ (if changed {old=answerIn, new=newIn} then "true" el
 val _ = puts "== edges"
 val _ = I.LabelMap.appi
         (fn (id, {succs, preds}) =>
-            puts (LocalVarID.toString id ^ ": succs=" ^
+            puts (VarID.toString id ^ ": succs=" ^
                   foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" succs ^ " preds=" ^
                   foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" preds))
         edges

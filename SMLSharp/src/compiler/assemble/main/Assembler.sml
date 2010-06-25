@@ -3208,9 +3208,9 @@ struct
       let
         fun findi _ [] =
             raise
-              Control.Bug (LocalVarID.toString (#id arg) ^ " is not found in args.")
+              Control.Bug (VarID.toString (#id arg) ^ " is not found in args.")
           | findi index ((hdArg : SI.varInfo) :: tlArgs) =
-            if LocalVarID.eq(#id hdArg, #id arg)
+            if VarID.eq(#id hdArg, #id arg)
             then index
             else findi (index + 0w1) tlArgs
       in findi (0w0 : BT.UInt32) (#args funInfo) end
@@ -3411,9 +3411,8 @@ struct
    *                      symbolic instructions of the body of the function
    * @return a list of raw instructions
    *)
-  fun assemble (stamp:Counters.stamp) clusterList =
+  fun assemble  clusterList =
       let
-        val _ = Counters.init stamp
         val SIfunctionCodes = List.concat (map convertCluster clusterList)
         val _ = initializeErrorQueue ()
 
@@ -3490,7 +3489,7 @@ val _ = print "end\n\n"
       in
         case getErrors () of
           [] => 
-          (Counters.getCounterStamp(),
+          (
            {
             byteOrder = SD.NativeByteOrder,
             instructionsSize = lastOffset,

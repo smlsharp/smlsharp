@@ -17,7 +17,7 @@ Group is
         ../../absyn/sources.cm
         ../../session/sources.cm
 
-        Counters.sml
+        newlabel.sml
 (*
         X86Mnemonic.ppg.sml
         X86Formatter.sml

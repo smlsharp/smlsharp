@@ -77,21 +77,32 @@ struct
     | argSizesOfTy (TY.FUNMty([argty], _)) = map argSizeOfTy (argTys argty)
     | argSizesOfTy ty = raise Fail "PrimitiveTable.argSizesOfTy"
 
-  fun dummyTyState name =
+  fun dummyTyState arity name =
+      let
+        val tyvars = List.tabulate (arity, fn _ => Types.NONEQ)
+      in
       Types.TYCON {tyCon = {name = "",
                             strpath = Path.NilPath,
-                            id = TyConID.initialID,
+                            id = TyConID.generate(), (* initialID *)
                             abstract = false,
                             eqKind = ref Types.EQ,
-                            tyvars = [],
+                            tyvars = tyvars,
                             constructorHasArgFlagList = []},
                    datacon = SEnv.empty}
+      end
+  fun extendTyConEnv env arity tyconNames =
+      foldl
+          (fn (name,env) => SEnv.insert (env, name, dummyTyState arity name))
+          env
+          tyconNames
 
-  val dummyTopTyConEnv =
-      foldl (fn (name,env) => SEnv.insert (env, name, dummyTyState name))
-            SEnv.empty
-            ["string","unit","int","word","ptr","real","byte","byteArray",
-             "char","float","bool","option","array","ref"]
+  val arity0Tycons = 
+      ["string","unit","int","word","real","byte","byteArray","char","float",
+       "bool"]
+  val arity1Tycons = ["ptr","option","array","ref"]
+  val dummyTopTyConEnv = SEnv.empty
+  val dummyTopTyConEnv = extendTyConEnv dummyTopTyConEnv 0 arity0Tycons
+  val dummyTopTyConEnv = extendTyConEnv dummyTopTyConEnv 1 arity1Tycons
 
   fun readTy ty =
       TypeParser.readTy dummyTopTyConEnv ty
@@ -105,7 +116,7 @@ struct
 (*
                  raise
                    Fail
-                       ("Sorry! primitive " ^ bindName ^ " is not defined. ")
+                     ("Sorry! primitive " ^ bindName ^ " is not defined. ")
 *)
                   map
                        )

@@ -63,11 +63,11 @@ val _ = Control.p RTLUtils.Var.format_set liveOut
 
         (* simple spill scoring algorithm based on COINS's algorithm. *)
         fun add (setMap, id, v) =
-            case LocalVarID.Map.find (setMap, id) of
+            case VarID.Map.find (setMap, id) of
               NONE =>
-              LocalVarID.Map.insert (setMap, id, LocalVarID.Set.singleton v)
+              VarID.Map.insert (setMap, id, VarID.Set.singleton v)
             | SOME s =>
-              LocalVarID.Map.insert (setMap, id, LocalVarID.Set.add (s, v))
+              VarID.Map.insert (setMap, id, VarID.Set.add (s, v))
 
         val vars = RTLUtils.Var.setUnion (defs, uses)
         val disturbance =
@@ -86,7 +86,7 @@ val _ = Control.p RTLUtils.Var.format_set liveOut
 (*
         val {defs, uses} = RTLUtils.Var.defuse node
         fun add interference vars =
-            LocalVarID.Map.foldl
+            VarID.Map.foldl
               (fn (var, interference) =>
                   Interference.addVar (interference, var))
               interference
@@ -94,11 +94,11 @@ val _ = Control.p RTLUtils.Var.format_set liveOut
         val interference = add interference defs
         val interference = add interference liveSet
       in
-        LocalVarID.Map.foldl
+        VarID.Map.foldl
           (fn (var1, interference) =>
-              LocalVarID.Map.foldl
+              VarID.Map.foldl
                 (fn (var2, interference) =>
-                    if LocalVarID.eq (#id var1, #id var2)
+                    if VarID.eq (#id var1, #id var2)
                     then interference
                     else Interference.interfere (interference, var1, var2))
                 interference
@@ -113,10 +113,10 @@ val _ = Control.p RTLUtils.Var.format_set liveOut
         val (interference, disturbance) =
             RTLLiveness.foldBackward
               addInterference
-              (Interference.empty, LocalVarID.Map.empty)
+              (Interference.empty, VarID.Map.empty)
               (RTLLiveness.liveness graph)
         val spillScore =
-            LocalVarID.Map.map LocalVarID.Set.numItems disturbance
+            VarID.Map.map VarID.Set.numItems disturbance
       in
         (interference, spillScore)
       end
@@ -125,7 +125,7 @@ val _ = Control.p RTLUtils.Var.format_set liveOut
   local
 
     fun spillScore score ({id,...}:I.var) =
-        case LocalVarID.Map.find (score, id) of
+        case VarID.Map.find (score, id) of
           NONE => 0
         | SOME x => ~x
 
@@ -244,7 +244,7 @@ val _ = Control.ps "--interference--"
 val _ = Control.p (Interference.format_graph X86Asm.format_reg) interference
 val _ = Control.ps "---score---"
 val _ = Control.pl (Control.f2 (I.format_id, Control.fi))
-                   (LocalVarID.Map.listItemsi spillScore)
+                   (VarID.Map.listItemsi spillScore)
 val _ = Control.ps "---"
 *)
 
@@ -291,22 +291,22 @@ val _ = Control.ps "---"
                     val fmt = X86Emit.formatOf ty
                     val dst = I.MEM (ty, I.SLOT {id=slotId, format=fmt})
                   in
-                    (LocalVarID.Map.insert (spills, id, dst), alloc)
+                    (VarID.Map.insert (spills, id, dst), alloc)
                   end
                 | ({var={id, ty}, color=COLORED c, ...}, (spills, alloc)) =>
-                  (spills, LocalVarID.Map.insert (alloc, id, c)))
-              (LocalVarID.Map.empty, LocalVarID.Map.empty)
+                  (spills, VarID.Map.insert (alloc, id, c)))
+              (VarID.Map.empty, VarID.Map.empty)
               interference
 
 (*
 val _ = Control.ps "--alloc--"
-val _ = Control.pl (Control.f2 (I.format_id,X86Asm.format_reg)) (LocalVarID.Map.listItemsi alloc)
-val _ = Control.pl (Control.f2 (I.format_id,I.format_dst)) (LocalVarID.Map.listItemsi spills)
+val _ = Control.pl (Control.f2 (I.format_id,X86Asm.format_reg)) (VarID.Map.listItemsi alloc)
+val _ = Control.pl (Control.f2 (I.format_id,I.format_dst)) (VarID.Map.listItemsi spills)
 val _ = Control.ps "--"
 *)
 
       in
-        if LocalVarID.Map.isEmpty spills
+        if VarID.Map.isEmpty spills
         then (graph, alloc)
         else
           let
@@ -315,7 +315,7 @@ val _ = Control.ps " Substitute"
 *)
             val graph =
                 X86Subst.substitute
-                  (fn {id,...}:I.var => LocalVarID.Map.find (spills, id))
+                  (fn {id,...}:I.var => VarID.Map.find (spills, id))
                   graph
           in
             regallocLoop (graph, count - 0w1)

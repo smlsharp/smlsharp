@@ -4,12 +4,28 @@
  * @version $Id: $
  *)
 structure BuiltinContextMaker : sig
+  type decl
+  type context
+  val emptyContext : context
+  val getOPrimInstMap : context * OPrimID.id -> OPrimInstance.oprimInstMap
+  val getTyCon : context * string -> Types.tyCon
+  val getConPathInfo : context * string -> Types.conPathInfo
+  val getExnPathInfo : context * string -> Types.exnPathInfo
+  val define : context -> (string * decl) -> context
+end =
+struct
+
+  fun bug s = Control.Bug ("BuiltinContextMaker:" ^ s)
+
+  structure T = Types
+  structure TU = TypesUtils
+
 
   datatype decl =
       TYPE of
       {
-       eqKind: Types.eqKind,
-       tyvars: Types.eqKind list,
+       eqKind: T.eqKind,
+       tyvars: T.eqKind list,
        constructors: {name:string, hasArg:bool, ty:string, tag:int} list,
        runtimeTy: RuntimeTypes.ty option,
        interoperable: RuntimeTypes.interoperableKind
@@ -25,7 +41,8 @@ structure BuiltinContextMaker : sig
     | OPRIM of
       {
        ty: string,
-       instances: {instTy:string, name: BuiltinPrimitive.prim_or_special} list
+       instances: {instTyList:string list,
+                   instance: OPrimInstance.instance} list
       }
     (* ToDo: DUMMY is a nasty hack for printer code generation.
      *       Printer code generator should check whether required utilitity
@@ -38,54 +55,9 @@ structure BuiltinContextMaker : sig
        * DeclarationRecovery. Frontend phases should deal with global
        * symbols directly... *)
       {
-        topTyConEnv: Types.topTyConEnv,
-        topVarEnv: Types.topVarEnv,
-        basicNameMap: NameMap.basicNameMap,
-        topVarIDEnv: VarIDContext.topVarIDEnv,
-        exceptionGlobalNameMap: string ExnTagID.Map.map,
-        runtimeTyEnv : RuntimeTypes.ty TyConID.Map.map,
-        interoperableKindMap : RuntimeTypes.interoperableKind TyConID.Map.map
-      }
-
-  val emptyContext : context
-
-  val getTyCon : context * string -> Types.tyCon
-  val getConPathInfo : context * string -> Types.conPathInfo
-  val getExnPathInfo : context * string -> Types.exnPathInfo
-
-  val define : context -> (string * decl) -> context
-
-end =
-struct
-
-  datatype decl =
-      TYPE of
-      {
-       eqKind: Types.eqKind,
-       tyvars: Types.eqKind list,
-       constructors: {name:string, hasArg:bool, ty:string, tag:int} list,
-       runtimeTy: RuntimeTypes.ty option,
-       interoperable: RuntimeTypes.interoperableKind
-      }
-    | EXCEPTION of
-      {
-        hasArg: bool,
-        ty: string,
-        tag: ExnTagID.id,
-        extern: string
-      }
-    | PRIM of BuiltinPrimitive.prim_or_special
-    | OPRIM of
-      {
-       ty: string,
-       instances: {instTy:string, name: BuiltinPrimitive.prim_or_special} list
-      }
-    | DUMMY of {ty: string}
-
-  type context =
-      {
-        topTyConEnv: Types.topTyConEnv,
-        topVarEnv: Types.topVarEnv,
+        oprimEnv: OPrimInstance.oprimInstMap OPrimID.Map.map,
+        topTyConEnv: T.topTyConEnv,
+        topVarEnv: T.topVarEnv,
         basicNameMap: NameMap.basicNameMap,
         topVarIDEnv: VarIDContext.topVarIDEnv,
         exceptionGlobalNameMap: string ExnTagID.Map.map,
@@ -95,6 +67,7 @@ struct
 
   val emptyContext =
       {
+        oprimEnv = OPrimID.Map.empty,
         topTyConEnv = SEnv.empty,
         topVarEnv = SEnv.empty,
         basicNameMap = NameMap.emptyBasicNameMap,
@@ -104,22 +77,29 @@ struct
         interoperableKindMap = TyConID.Map.empty
       } : context
 
+  fun getOPrimInstMap ({oprimEnv, ...}:context, oprimId) =
+      case OPrimID.Map.find (oprimEnv, oprimId) of
+        SOME instmap => instmap
+      | _ => raise bug ("oprimInfo not found: " ^
+                         OPrimID.toString oprimId)
+before print (OPrimID.toString oprimId^"\n")
+
   fun getTyCon ({topTyConEnv, ...}:context, tyName) =
       case SEnv.find (topTyConEnv, tyName) of
-        SOME (Types.TYCON {tyCon, ...}) => tyCon
-      | _ => raise Control.Bug ("getTyCon: not found: " ^ tyName)
+        SOME (T.TYCON {tyCon, ...}) => tyCon
+      | _ => raise bug ("getTyCon: not found: " ^ tyName)
 before print (tyName^"\n")
 
   fun getConPathInfo ({topVarEnv, ...}:context, conName) =
       case SEnv.find (topVarEnv, conName) of
-        SOME (Types.CONID conPathInfo) => conPathInfo
-      | _ => raise Control.Bug ("getConPathInfo: not found: " ^ conName)
+        SOME (T.CONID conPathInfo) => conPathInfo
+      | _ => raise bug ("getConPathInfo: not found: " ^ conName)
 before print (conName^"\n")
 
   fun getExnPathInfo ({topVarEnv, ...}:context, exnName) =
       case SEnv.find (topVarEnv, exnName) of
-        SOME (Types.EXNID exnPathInfo) => exnPathInfo
-      | _ => raise Control.Bug ("getExnPathInfo: not found: " ^ exnName)
+        SOME (T.EXNID exnPathInfo) => exnPathInfo
+      | _ => raise bug ("getExnPathInfo: not found: " ^ exnName)
 before print (exnName^"\n")
 
   val toExternPath = NameMap.injectPathToExternPath
@@ -137,7 +117,9 @@ before print (exnName^"\n")
             | NONE => NameMap.emptyBasicNameMap
 
         val context =
-            {topTyConEnv = #topTyConEnv context,
+            {
+             oprimEnv = #oprimEnv context,
+             topTyConEnv = #topTyConEnv context,
              topVarEnv = #topVarEnv context,
              basicNameMap = basicNameMap,
              topVarIDEnv = #topVarIDEnv context,
@@ -145,7 +127,9 @@ before print (exnName^"\n")
              runtimeTyEnv = #runtimeTyEnv context,
              interoperableKindMap = #interoperableKindMap context}
 
-        val {topTyConEnv = topTyConEnv,
+        val {
+             oprimEnv = oprimEnv,
+             topTyConEnv = topTyConEnv,
              topVarEnv = topVarEnv,
              basicNameMap = basicNameMap,
              topVarIDEnv = topVarIDEnv,
@@ -160,7 +144,9 @@ before print (exnName^"\n")
                              parentPath = parentPath,
                              basicNameMap = basicNameMap}
       in
-        {topTyConEnv = topTyConEnv,
+        {
+         oprimEnv = oprimEnv,
+         topTyConEnv = topTyConEnv,
          topVarEnv = topVarEnv,
          basicNameMap = (tyNameMap,
                          varNameMap,
@@ -178,10 +164,11 @@ before print (exnName^"\n")
 
   fun defineName (context, longid) K =
       defineName' context Path.NilPath (stringToPath longid) K
-      
+
   fun define context (longid, decl) =
       defineName (context, longid)
-        (fn (context as {topTyConEnv = topTyConEnv,
+        (fn (context as {oprimEnv = oprimEnv,
+                         topTyConEnv = topTyConEnv,
                          topVarEnv = topVarEnv,
                          basicNameMap = (tyNameMap, varNameMap, strNameMap),
                          topVarIDEnv = topVarIDEnv,
@@ -192,7 +179,9 @@ before print (exnName^"\n")
             case decl of
               TYPE {eqKind, tyvars, constructors, runtimeTy, interoperable} =>
               let
-                val tyConId = ReservedTyConIDKeyGen.generate ()
+                val tyConId = 
+                    if name = "_" then OPrimInstance.wildCardTyConId
+                    else TyConID.generate ()
 
                 val hasArgList =
                     SEnv.listItems
@@ -209,11 +198,11 @@ before print (exnName^"\n")
                       abstract = false,
                       eqKind = ref eqKind,
                       constructorHasArgFlagList = hasArgList
-                    } : Types.tyCon
+                    } : T.tyCon
 
                 val tmpTyConEnv =
                     SEnv.insert (topTyConEnv, name,
-                                 Types.TYCON {tyCon=tyCon, datacon=SEnv.empty})
+                                 T.TYCON {tyCon=tyCon, datacon=SEnv.empty})
 
                 val (datacon, dataconNameMap) =
                     foldl
@@ -221,7 +210,7 @@ before print (exnName^"\n")
                           let
                             val ty = TypeParser.readTy tmpTyConEnv ty
                             val idState =
-                                Types.CONID {namePath = (name, path),
+                                T.CONID {namePath = (name, path),
                                              funtyCon = hasArg,
                                              ty = ty,
                                              tag = tag,
@@ -235,7 +224,7 @@ before print (exnName^"\n")
                       constructors
 
                 val tyState =
-                    Types.TYCON {tyCon=tyCon, datacon=datacon}
+                    T.TYCON {tyCon=tyCon, datacon=datacon}
                 val nameState =
                     if SEnv.isEmpty dataconNameMap
                     then NameMap.NONDATATY namePath
@@ -262,7 +251,8 @@ before print (exnName^"\n")
                     TyConID.Map.insert (interoperableKindMap, tyConId,
                                         interoperable)
               in
-                {topTyConEnv = topTyConEnv,
+                {oprimEnv = oprimEnv,
+                 topTyConEnv = topTyConEnv,
                  topVarEnv = topVarEnv,
                  basicNameMap = (tyNameMap, varNameMap, strNameMap),
                  topVarIDEnv = topVarIDEnv,
@@ -275,12 +265,12 @@ before print (exnName^"\n")
               let
                 val {tyCon, ...} =
                     case SEnv.find (topTyConEnv, "exn") of
-                      SOME (Types.TYCON x) => x
-                    | _ => raise Control.Bug "exn not defined"
+                      SOME (T.TYCON x) => x
+                    | _ => raise bug "exn not defined"
 
                 val ty = TypeParser.readTy topTyConEnv ty
                 val idState =
-                    Types.EXNID {namePath = namePath,
+                    T.EXNID {namePath = namePath,
                                  funtyCon = hasArg,
                                  ty = ty,
                                  tag = tag,
@@ -294,7 +284,8 @@ before print (exnName^"\n")
                 val exceptionGlobalNameMap =
                     ExnTagID.Map.insert (exceptionGlobalNameMap, tag, extern)
               in
-                {topTyConEnv = topTyConEnv,
+                {oprimEnv = oprimEnv,
+                 topTyConEnv = topTyConEnv,
                  topVarEnv = topVarEnv,
                  basicNameMap = (tyNameMap, varNameMap, strNameMap),
                  topVarIDEnv = topVarIDEnv,
@@ -306,7 +297,7 @@ before print (exnName^"\n")
             | PRIM prim =>
               let
                 val primInfo = BuiltinPrimitiveType.primInfo topTyConEnv prim
-                val idState = Types.PRIM primInfo
+                val idState = T.PRIM primInfo
                 val topName = toTopName namePath
 
                 val topVarEnv =
@@ -316,7 +307,8 @@ before print (exnName^"\n")
                 val topVarIDEnv =
                     SEnv.insert (topVarIDEnv, topName, VarIDContext.Dummy)
               in
-                {topTyConEnv = topTyConEnv,
+                {oprimEnv = oprimEnv,
+                 topTyConEnv = topTyConEnv,
                  topVarEnv = topVarEnv,
                  basicNameMap = (tyNameMap, varNameMap, strNameMap),
                  topVarIDEnv = topVarIDEnv,
@@ -328,7 +320,7 @@ before print (exnName^"\n")
             | DUMMY {ty} =>
               let
                 val ty = TypeParser.readTy topTyConEnv ty
-                val idState = Types.VARID {namePath = namePath, ty = ty}
+                val idState = T.VARID {namePath = namePath, ty = ty}
                 val topName = toTopName namePath
                 val topVarEnv =
                     SEnv.insert (topVarEnv, topName, idState)
@@ -337,7 +329,8 @@ before print (exnName^"\n")
                 val topVarIDEnv =
                     SEnv.insert (topVarIDEnv, topName, VarIDContext.Dummy)
               in
-                {topTyConEnv = topTyConEnv,
+                {oprimEnv = oprimEnv,
+                 topTyConEnv = topTyConEnv,
                  topVarEnv = topVarEnv,
                  basicNameMap = (tyNameMap, varNameMap, strNameMap),
                  topVarIDEnv = topVarIDEnv,
@@ -348,29 +341,73 @@ before print (exnName^"\n")
 
             | OPRIM {ty, instances} =>
               let
-                val oprimTy = TypeParser.readTy topTyConEnv ty
-
+                val oprimId = OPrimID.generate ()
+                val oprimPolyTy = TypeParser.readTy topTyConEnv ty
+                val (oprimPolyTyBtvEnv, oprimPolyTybody) =
+                    case TU.derefTy oprimPolyTy of
+                      T.POLYty{boundtvars, body} => (boundtvars, body)
+                    | _ => raise bug "non poly oprimTy" 
+                val btvIdKindList = IEnv.listItemsi oprimPolyTyBtvEnv
+                val oprimInstPolyTvarList =
+                    map (fn (i,_) => T.BOUNDVARty i) btvIdKindList
+                val btvIdKeyKindList =
+                    List.filter
+                      (fn (_, {recordKind = T.OPRIMkind _,...})
+                          => true
+                        | _ => false)
+                      btvIdKindList
+                val oprimKeyPolyTvarList =
+                    map (fn (i,_) => T.BOUNDVARty i) btvIdKeyKindList
+                val oprimPolyTyBtvEnv =
+                    IEnv.map
+                    (fn {recordKind = T.OPRIMkind {instances, ...}, eqKind}
+                        =>
+                        {
+                         recordKind =
+                           T.OPRIMkind
+                             {instances = instances,
+                              operators = [{oprimId = oprimId,
+                                            name = name,
+                                            oprimPolyTy = oprimPolyTy,
+                                            keyTyList = oprimKeyPolyTvarList,
+                                            instTyList = oprimInstPolyTvarList
+                                           }
+                                          ]
+                             },
+                         eqKind = eqKind
+                        }
+                      | btvKind => btvKind
+                    )
+                    oprimPolyTyBtvEnv
+                val oprimPolyTy =
+                    T.POLYty{boundtvars = oprimPolyTyBtvEnv,
+                             body = oprimPolyTybody}
                 val instMap =
                     foldl
-                      (fn ({instTy=tyName, name}, instMap) =>
+                      (fn ({instTyList, instance}, instMap) =>
                           let
-                            val instTy = TypeParser.readTy topTyConEnv tyName
-                            val id = case instTy of
-                                       Types.RAWty {tyCon,...} => #id tyCon
-                                     | _ => raise Control.Bug "OPRIM"
-                            val primTy = TypesUtils.tpappTy (oprimTy, [instTy])
-                            val prim = {name = name, ty = primTy}
+                            val instTyList =
+                                map (TypeParser.readTy topTyConEnv) instTyList
+                            val tyConIdList = 
+                                map
+                                (fn instTy => 
+                                    case TU.derefTy instTy of
+                                      T.RAWty {tyCon,...} => #id tyCon
+                                    | _ => raise bug "OPRIM")
+                                instTyList
+                            val oprimInst = {name = name, instance = instance}
                           in
-                            TyConID.Map.insert (instMap, id, prim)
-                          end)
-                      TyConID.Map.empty
+                            OPrimInstance.Map.insert (instMap,
+                                                      tyConIdList,
+                                                      oprimInst)
+                          end
+                      )
+                      OPrimInstance.Map.empty
                       instances
-
                 val idState =
-                    Types.OPRIM {name = name,
-                                 ty = oprimTy,
-                                 instances = instMap}
-
+                    T.OPRIM {name = name,
+                             oprimId = oprimId,
+                             oprimPolyTy = oprimPolyTy}
                 val topName = toTopName namePath
                 val topVarEnv =
                     SEnv.insert (topVarEnv, topName, idState)
@@ -378,8 +415,11 @@ before print (exnName^"\n")
                     SEnv.insert (varNameMap, name, NameMap.VARID namePath)
                 val varIDContext =
                     SEnv.insert (topVarIDEnv, topName, VarIDContext.Dummy)
+                val oprimEnv =
+                    OPrimID.Map.insert (oprimEnv, oprimId, instMap)
               in
-                {topTyConEnv = topTyConEnv,
+                {oprimEnv = oprimEnv,
+                 topTyConEnv = topTyConEnv,
                  topVarEnv = topVarEnv,
                  basicNameMap = (tyNameMap, varNameMap, strNameMap),
                  topVarIDEnv = topVarIDEnv,
@@ -387,5 +427,4 @@ before print (exnName^"\n")
                  runtimeTyEnv = runtimeTyEnv,
                  interoperableKindMap = interoperableKindMap}
               end)
-
 end

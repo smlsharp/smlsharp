@@ -370,7 +370,7 @@ in
           val items1 = SEnv.listItemsi varEnv1
           val items2 = SEnv.listItemsi varEnv2
           fun checkEquiv (nil,nil) = true
-            | checkEquiv ((name1,idstate1)::t1, (name2,idstate2)::t2) = 
+            | checkEquiv ((name1:string,idstate1)::t1, (name2,idstate2)::t2) = 
               if name1 = name2 andalso equivIdstate (idstate1,idstate2) then
                   checkEquiv (t1,t2)
               else false

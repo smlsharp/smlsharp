@@ -24,9 +24,9 @@ struct
 
   structure PrettyPrinter = PrettyPrinter(FE)
 
-  structure PreProcessor =
-            PreProcessor
-                (struct structure FE = FE structure PP = PrettyPrinter end)
+  structure Truncator = Truncator(FE)
+  structure AssocResolver = AssocResolver(FE)
+  structure PreProcessor = PreProcessor(FE)
 
   end
 
@@ -40,7 +40,6 @@ struct
 
   (***************************************************************************)
 
-  (* another module so that other modules PrettyPrinter, PreProcessor *)
   val traceLevel = ref 0
   fun trace phase f arg =
       if !traceLevel = 0
@@ -52,22 +51,24 @@ struct
           before print ("[SMLFormat] end " ^ phase ^ "\n")
         )
 
-  fun prettyPrint parameter expressions =
-      (trace
-           "pretty-print"
-           (PrettyPrinter.format parameter)
-           (trace
-                "preprocess"
-                (PreProcessor.preProcess parameter)
-                (FormatExpression.Guard(NONE, expressions))))
-      handle PreProcessor.Fail message =>
-             raise Fail ("in preoprocess:" ^ message)
-           | PreProcessor.UnMatchEndOfIndent message =>
-             raise Fail message
-           | PrettyPrinter.UnMatchEndOfIndent =>
-             raise Fail "unmatched EndOfIndent"
-           | PrettyPrinter.IndentUnderFlow indent =>
-             raise Fail ("indent underflow(" ^ Int.toString indent ^ ")")
+  fun prettyPrint parameters expressions =
+      let
+        val parameter = PrinterParameter.convert parameters
+      in
+        (trace "pretty-print" (PrettyPrinter.format parameter)
+         o trace "preprocess" (PreProcessor.preProcess parameter)
+         o trace "assocResolve" (AssocResolver.resolve parameter)
+         o trace "truncate" (Truncator.truncate parameter))
+            (FormatExpression.Guard(NONE, expressions))
+      end
+        handle PreProcessor.Fail message =>
+               raise Fail ("in preprocess:" ^ message)
+             | PreProcessor.UnMatchEndOfIndent message =>
+               raise Fail message
+             | PrettyPrinter.UnMatchEndOfIndent =>
+               raise Fail "unmatched EndOfIndent"
+             | PrettyPrinter.IndentUnderFlow indent =>
+               raise Fail ("indent underflow(" ^ Int.toString indent ^ ")")
 
   (***************************************************************************)
 

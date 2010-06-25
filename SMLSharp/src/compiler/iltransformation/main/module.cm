@@ -14,6 +14,5 @@ Group is
         ../../anormal/sources.cm
         ../../intermediatelanguage/sources.cm
 
-	Counters.sml
         ILTRANSFORMATION.sig
         ILTransformation.sml

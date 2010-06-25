@@ -1,11 +1,9 @@
 structure X86RTLBackend : sig
 
   val codegen :
-      Counters.stamp
-      -> int option   (* compile unit stamp *)
+      int option   (* compile unit stamp *)
       -> AbstractInstruction2.program
-      -> Counters.stamp *
-         {code: SessionTypes.asmOutput,
+      -> {code: SessionTypes.asmOutput,
           nextDummy: SessionTypes.asmOutput option}
 
 end =
@@ -182,7 +180,7 @@ val _ = puts "=="
           val postFrameOrigin =
               ~allocSize
           val slotIndex =
-              LocalVarID.Map.map (fn i => i - framePointerOffset) slotIndex
+              VarID.Map.map (fn i => i - framePointerOffset) slotIndex
 
 (*
 val _ = Control.ps ("frameSize = " ^ Int.toString frameSize)
@@ -190,7 +188,7 @@ val _ = Control.ps ("preFrameOrigin = " ^ Int.toString preFrameOrigin)
 val _ = Control.ps ("framePointerOffset = " ^ Int.toString framePointerOffset)
 val _ = Control.ps ("allocSize = " ^ Int.toString allocSize)
 val _ = Control.ps ("postFrameOrigin = " ^ Int.toString postFrameOrigin)
-val _ = Control.pl (Control.f2 (R.format_id, SMLFormat.BasicFormatters.format_int)) (LocalVarID.Map.listItemsi slotIndex)
+val _ = Control.pl (Control.f2 (R.format_id, SMLFormat.BasicFormatters.format_int)) (VarID.Map.listItemsi slotIndex)
 *)
 
           val env =
@@ -253,9 +251,8 @@ val _ = Control.pl (Control.f2 (R.format_id, SMLFormat.BasicFormatters.format_in
         {code = output format_code code, nextDummy = nextDummyOut}
       end
 
-  fun codegen stamp unitStamp aicode =
+  fun codegen unitStamp aicode =
       let
-        val _ = Counters.init stamp
 (*
 val _ =
 let
@@ -320,7 +317,7 @@ handle e =>
 let open FormatByHand in puts "==EMIT ERROR==";
 putf R.format_program program;
 pmap ClusterID.Map.foldri ClusterID.format_id
-     (pmap LocalVarID.Map.foldri LocalVarID.format_id
+     (pmap VarID.Map.foldri VarID.format_id
            X86Asm.format_reg o #regAlloc)
      env;
 raise e end
@@ -338,7 +335,7 @@ val _ = Control.ps asm
 val _ = Control.ps "=="
 *)
       in
-        (Counters.getCounterStamp(), asm)
+        asm
       end
 
 end

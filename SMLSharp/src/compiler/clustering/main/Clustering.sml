@@ -10,6 +10,19 @@ structure Clustering : CLUSTERING = struct
   structure ATU = AnnotatedTypesUtils
   open ClusterCalc
 
+
+   val newLocalId = VarID.generate
+
+   fun newVar ty = 
+      let
+          val id = newLocalId()
+      in
+        {displayName = "$" ^ VarID.toString id,
+         ty = ty,
+         varId = Types.INTERNAL id}
+      end
+
+
   fun isLocalFunTy ty =
     case ty of
       AT.FUNMty {funStatus = {codeStatus = ref AT.LOCAL,...},...} => true
@@ -36,7 +49,7 @@ structure Clustering : CLUSTERING = struct
                                                   ...},...},
                              attributes, loc} =>
         let
-          val entryName = Counters.newVar funTy
+          val entryName = newVar funTy
         in
           CCLET {localDeclList =
                    [CCCALLBACKCLUSTER
@@ -193,7 +206,7 @@ structure Clustering : CLUSTERING = struct
            annotation, 
            loc} => 
         let
-          val boundVar = Counters.newVar funTy
+          val boundVar = newVar funTy
           val newExp = 
               MV.MVLET
                   {
@@ -211,7 +224,7 @@ structure Clustering : CLUSTERING = struct
        | MV.MVPOLY {btvEnv, expTyWithoutTAbs, exp = bodyExp, loc} =>
         let
           val polyTy = AT.POLYty{boundtvars = btvEnv, body = expTyWithoutTAbs}
-          val boundVar = Counters.newVar polyTy
+          val boundVar = newVar polyTy
           val newExp = 
               MV.MVLET
                   {
@@ -463,13 +476,11 @@ structure Clustering : CLUSTERING = struct
   and transformTop declList =
       foldr (fn (x,z) => transformDecl x @ z) nil declList
 
-  fun transform (stamp:Counters.stamp) declList = 
+  fun transform declList = 
       let
-          val _ = Counters.init stamp
-          val newDecList = 
-              transformTop declList
+        val newDecList = transformTop declList
       in
-          (Counters.getCounterStamp(), newDecList )
+          newDecList
       end
 
 end

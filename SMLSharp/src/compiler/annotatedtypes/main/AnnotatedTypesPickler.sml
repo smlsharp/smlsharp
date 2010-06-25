@@ -23,7 +23,7 @@ in
 
   val eqKind = TP.eqKind (* This can be used. *)
 (*
-  val id = LocalVarID.pu_ID
+  val id = VarID.pu_ID
 *)
   val varId = TP.varId
   val varInfo = 
@@ -136,6 +136,26 @@ in
   val (tyBindInfoFunctions, tyBindInfo) = P.makeNullPu (AT.TYFUN dummyTyFun)
   val tyBindInfoOption = P.option tyBindInfo
 
+  val operator : {oprimId:OPrimID.id,
+                  oprimPolyTy:AT.ty,
+                  name:string,
+                  keyTyList:AT.ty list,
+                  instTyList:AT.ty list
+                 }
+                   P.pu =
+      P.conv
+        (
+         fn (oprimId, oprimPolyTy, name, keyTyList, instTyList) =>
+            {oprimId = oprimId,
+             oprimPolyTy = oprimPolyTy,
+             name = name,
+             keyTyList = keyTyList,
+             instTyList = instTyList},
+         fn {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+            (oprimId, oprimPolyTy, name, keyTyList, instTyList)
+        )
+        (P.tuple5(OPrimID.pu_ID, ty, P.string, (P.list ty), (P.list ty)))
+
 
   local
     val newTyBindInfo : AT.tyBindInfo P.pu =
@@ -179,16 +199,29 @@ in
 
     val newTy = 
       let
-        fun toInt (AT.ERRORty) = 0
-          | toInt (AT.DUMMYty _) = 1
-          | toInt (AT.BOUNDVARty _) = 2
-          | toInt (AT.FUNMty _) = 3
-          | toInt (AT.MVALty _) = 4
-          | toInt (AT.RECORDty _) = 5
-          | toInt (AT.RAWty _) = 6
-          | toInt (AT.POLYty _) = 7
-          | toInt (AT.SPECty _) = 8
+        fun toInt (AT.INSTCODEty _) = 0
+          | toInt (AT.ERRORty) = 1
+          | toInt (AT.DUMMYty _) = 2
+          | toInt (AT.BOUNDVARty _) = 3
+          | toInt (AT.FUNMty _) = 4
+          | toInt (AT.MVALty _) = 5
+          | toInt (AT.RECORDty _) = 6
+          | toInt (AT.RAWty _) = 7
+          | toInt (AT.POLYty _) = 8
+          | toInt (AT.SPECty _) = 9
           
+          fun pu_INSTCODEty pu =
+            P.con1
+            AT.INSTCODEty
+            (fn AT.INSTCODEty arg => arg
+              | _ =>
+                raise
+                  Control.Bug 
+                  "non INSTCODEty to pu_INSTCODEty\
+                  \ (types/main/TypesPickler.sml)"
+             )
+            operator
+
         fun pu_ERRORty pu = P.con0 AT.ERRORty pu
 
         fun pu_DUMMYty pu = 
@@ -326,6 +359,7 @@ in
       let
         fun toInt (AT.UNIV) = 0
           | toInt (AT.REC _) = 1
+          | toInt (AT.OPRIMkind _) = 2
         fun pu_UNIV pu = P.con0 AT.UNIV pu
         fun pu_REC pu = 
           P.con1 AT.REC
@@ -334,8 +368,22 @@ in
             | _ => raise Control.Bug "REC expected: AnnotatedTypesPickler"
            )
           (EP.SEnv ty)
+        fun pu_OPRIMkind pu =
+            P.con1 
+            AT.OPRIMkind
+            (fn AT.OPRIMkind arg => arg
+              | _ => raise
+                  Control.Bug
+                    "OPRIMkind expected: AnnotatedTypesPickler"
+            )
+            (P.conv
+               (fn (instances, operators) =>
+                   {instances = instances, operators = operators},
+                fn {instances, operators} =>(instances, operators)
+               )
+               (P.tuple2(P.list ty, P.list operator)))
       in
-        P.data (toInt, [pu_UNIV, pu_REC])
+        P.data (toInt, [pu_UNIV, pu_REC, pu_OPRIMkind])
       end
   in	
     val _ = P.updateNullPu tyFunctions newTy

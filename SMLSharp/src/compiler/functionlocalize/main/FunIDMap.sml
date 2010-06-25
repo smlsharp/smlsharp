@@ -93,9 +93,10 @@ in
   fun coereceEscapeFun fidMap = 
     let
       fun owned nil _ = false
-        | owned ({ownerId,ownerCode = ref AT.GLOBAL_FUNSTATUS}::tail) id = false
+        | owned ({ownerId,ownerCode=ref AT.GLOBAL_FUNSTATUS}::tail) id = false
         | owned ({ownerId,ownerCode = ref AT.CLOSURE}::tail) id = id = ownerId 
-        | owned ({ownerId,ownerCode = ref AT.LOCAL}::tail) id = id = ownerId orelse owned tail id
+        | owned ({ownerId,ownerCode = ref AT.LOCAL}::tail) (id:AT.functionId) =
+          id = ownerId orelse owned tail id
       fun coerse () =
         let
           val changed = ref false

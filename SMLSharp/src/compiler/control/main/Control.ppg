@@ -17,24 +17,25 @@ struct
   val Print     = 7
   val UniqueID  = 8
   val MatchComp = 9
-  val Lambda    = 10
-  val Static    = 11
-  val Unbox     = 12
-  val Inline    = 13
-  val RefElim   = 14
-  val DeadCode  = 15
-  val Localize  = 16
-  val Functor   = 17
-  val Cluster   = 18
-  val RBUComp   = 19
-  val Anormal   = 20
-  val SI        = 21
-  val SIOpt     = 22
-  val AI        = 21
-  val AIOpt     = 22
-  val Assem     = 23
-  val Code      = 24
-  val Run       = 25
+  val OverloadComp = 10
+  val Lambda    = 11
+  val Static    = 12
+  val Unbox     = 13
+  val Inline    = 14
+  val RefElim   = 15
+  val DeadCode  = 16
+  val Localize  = 17
+  val Functor   = 18
+  val Cluster   = 19
+  val RBUComp   = 20
+  val Anormal   = 21
+  val SI        = 22
+  val SIOpt     = 23
+  val AI        = 24
+  val AIOpt     = 25
+  val Assem     = 26
+  val Code      = 27
+  val Run       = 28
 
   val doUntil = ref Run
 
@@ -210,7 +211,7 @@ struct
   val checkType = ref false
 
   (** true if detailed type information should b printed. *)
-  val printWithType = ref true
+  val printWithType = ref false
 
   (** switch for abstract instruction generation. *)
   val printAI =  ref false
@@ -321,6 +322,7 @@ struct
 
   val switchTable : switchTable =
       [
+    ("doUntil", IntSwitch doUntil),
     ("alignRecord", BoolSwitch alignRecord),
     ("checkType", BoolSwitch checkType),
     ("debugCodeGen", BoolSwitch debugCodeGen),

@@ -112,8 +112,8 @@ struct
 
   (**
    * Substitute bound type variables in a type.
-   * only the monomorphic potion of the target contain the bound type variables
-   * to be substituted.
+   * only the monomorphic potion of the target contain the bound type
+   * variables to be substituted.
    * @params subst type 
    * @param subst substitution. The domain is an integer interval.
    * @return
@@ -218,12 +218,25 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
       case recordKind of
         T.REC fields => T.REC (SEnv.map (substBTvar subst) fields)
       | T.UNIV => T.UNIV
-      | T.OVERLOADED l => 
-        T.OVERLOADED (map (substBTvar subst) l)
+      | T.OCONSTkind l => 
+        T.OCONSTkind (map (substBTvar subst) l)
+      | T.OPRIMkind {instances, operators} =>
+        T.OPRIMkind 
+          {instances = map (substBTvar subst) instances,
+           operators =
+           map
+              (fn {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+                  {oprimId = oprimId,
+                   oprimPolyTy = oprimPolyTy, (* closed *)
+                   name = name,
+                   keyTyList = map (substBTvar subst) keyTyList,
+                   instTyList = map (substBTvar subst) instTyList}
+              )
+              operators
+          }
 
-  and substBTvarBTKind subst {index, recordKind, eqKind} =
+  and substBTvarBTKind subst {recordKind, eqKind} =
       {
-        index = index,
         recordKind = substBTvarRecKind subst recordKind,
         eqKind = eqKind
       }
@@ -253,21 +266,20 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
             IEnv.map
               (fn _  => 
                   let
-                    val newBoundVarId = BoundTypeVarIDGen.generate ()
+                    val newBoundVarId = BoundTypeVarID.generate ()
                   in 
                     T.BOUNDVARty newBoundVarId
                   end)
               boundEnv
         val newBoundEnv =
             IEnv.foldri
-              (fn (oldId, {index, recordKind, eqKind}, newBoundEnv) =>
+              (fn (oldId, {recordKind, eqKind}, newBoundEnv) =>
                   (case IEnv.find(newSubst, oldId) of
                      SOME (T.BOUNDVARty newId) =>
                      IEnv.insert
                        (newBoundEnv, 
                         newId, 
-                        {index=index, 
-                         recordKind=substBTvarRecKind newSubst recordKind, 
+                        {recordKind=substBTvarRecKind newSubst recordKind, 
                          eqKind=eqKind})
                    | _ => raise Control.Bug "copyBoundEnv"))
               IEnv.empty
@@ -308,7 +320,7 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
               (fn (i, T.TYVARty(r as ref (T.TVAR {id, tyvarName, ...}))) => 
                   r := 
                      (case IEnv.find(boundEnv, i) of
-                        SOME {index, recordKind, eqKind} => 
+                        SOME {recordKind, eqKind} => 
                         T.TVAR
                           {
                            lambdaDepth = T.infiniteDepth,
@@ -377,7 +389,7 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
                      (r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
                     r := 
                     (case IEnv.find(boundEnv, i) of
-                       SOME {index, recordKind, eqKind} => 
+                       SOME {recordKind, eqKind} => 
                        T.TVAR
                          {
                           lambdaDepth = lambdaDepth,
@@ -455,7 +467,7 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
                      (r as ref (T.TVAR {lambdaDepth, id, tyvarName, ...}))) => 
                   r := 
                      (case IEnv.find(boundEnv, i) of
-                        SOME {index, recordKind, eqKind} => 
+                        SOME {recordKind, eqKind} => 
                         T.TVAR
                           {
                            lambdaDepth = lambdaDepth,
@@ -555,15 +567,18 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
     let
       fun traverseTy (ty,set) =
         case ty of
-          T.ERRORty => set
+          T.INSTCODEty {oprimId, name, oprimPolyTy, keyTyList, instTyList} =>
+          foldl traverseTy set instTyList
+        | T.ERRORty => set
         | T.DUMMYty int => set
-        | T.TYVARty (ref(T.TVAR {recordKind = T.OVERLOADED _,...})) => set
         | T.TYVARty (ref(T.SUBSTITUTED ty)) => traverseTy (ty,set)
+        | T.TYVARty (ref(T.TVAR {recordKind=T.OCONSTkind _,...})) => set
         | T.TYVARty (tyvarRef as (ref(T.TVAR tvKind))) => 
             if OTSet.member(set, tyvarRef) then set
             else traverseTvKind (tvKind, OTSet.add(set, tyvarRef))
         | T.BOUNDVARty int => set
-        | T.FUNMty (tyList, ty) => traverseTy (ty, foldl traverseTy set tyList)
+        | T.FUNMty (tyList, ty) =>
+          traverseTy (ty, foldl traverseTy set tyList)
         | T.RECORDty tySEnvMap => 
             SEnv.foldl (fn (ty, set) => traverseTy (ty,set)) set tySEnvMap
         | T.RAWty {tyCon, args = tyList} => foldl traverseTy set tyList
@@ -578,16 +593,15 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
             case kind of
               {recordKind = T.UNIV, ...} => set
             | {recordKind = T.REC fields, ...} => 
-                SEnv.foldl
-                (fn (ty, set) => traverseTy (ty,set))
-                set
-                fields
-            | {recordKind = T.OVERLOADED _, ...} =>
-              raise Control.Bug "EFTV Overloaded"
+                SEnv.foldl traverseTy set fields
+            | {recordKind = T.OCONSTkind _, ...} =>
+              raise Control.Bug "OCONSTkind to travseTvKind"
+            | {recordKind = T.OPRIMkind {instances, operators},...}
+              =>
+              foldl traverseTy set instances
     in
       traverseTy (ty, OTSet.empty)
     end
-
 
   fun EFTVInVarInfo (T.VARID {ty, ...}) = EFTV ty
     | EFTVInVarInfo (T.CONID _) = OTSet.empty (* datacon must be closed *)
@@ -627,10 +641,12 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
     case kind of
       T.UNIV => ()
     | T.REC fields => 
-        SEnv.app
-        (fn ty => adjustDepthInTy contextDepth ty)
-        fields
-    | T.OVERLOADED _ => ()
+        SEnv.app (adjustDepthInTy contextDepth) fields
+    | T.OCONSTkind tyList => 
+        List.app (adjustDepthInTy contextDepth) tyList
+    | T.OPRIMkind {instances = tyList,...} => 
+        List.app (adjustDepthInTy contextDepth) tyList
+
 
   fun coerceReckindToEQ recKind = 
       let
@@ -672,22 +688,31 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
             case kind of
               T.UNIV => ()
             | T.REC fields => 
-              SEnv.app
-                (fn ty => adjustEqKindInTy eqKind ty)
-                fields
-            | T.OVERLOADED _ => ()
+              SEnv.app (adjustEqKindInTy eqKind) fields
+            | T.OCONSTkind tyList =>
+              List.app (adjustEqKindInTy eqKind) tyList
+            | T.OPRIMkind {instances = tyList,...} =>
+              List.app (adjustEqKindInTy eqKind) tyList
       in
         (adjustEqKindInRecKind T.EQ recKind;
          case recKind of
            T.UNIV => T.UNIV
          | T.REC fields => T.REC fields
-         | T.OVERLOADED L =>  
+         | T.OCONSTkind L =>  
            let
              val L = List.filter admitEqTy L
            in
              case L of 
                nil => raise CoerceRecKindToEQ 
-             | _ =>  T.OVERLOADED L
+             | _ =>  T.OCONSTkind L
+           end
+         | T.OPRIMkind {instances,operators} =>  
+           let
+             val instances = List.filter admitEqTy instances
+           in
+             case instances of 
+               nil => raise CoerceRecKindToEQ 
+             | _ =>  T.OPRIMkind {instances = instances, operators =operators} 
            end
         )
       end
@@ -698,7 +723,7 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
     adjustDepthInTy contextDepth ty
   fun adjustDepthInExnPathInfo contextDepth ({ty,...}:T.exnPathInfo) = 
     adjustDepthInTy contextDepth ty
-  fun adjustDepthInPrimInfo contextDepth {name, ty} = 
+  fun adjustDepthInPrimInfo contextDepth {prim_or_special, ty} = 
     adjustDepthInTy contextDepth ty
   fun adjustDepthInOPrimInfo _ _ = 
       raise (Control.Bug "adjustDepthInOprimInfo should never be called.")
@@ -932,9 +957,10 @@ variables. So be careful in using this.
         val freeTvs = EFTV ty
         val tids = 
             OTSet.filter 
-              (fn (ref(T.TVAR {id, recordKind = T.OVERLOADED _,...}))
+              (fn
+                  (ref(T.TVAR{id, recordKind = T.OCONSTkind _,...}))
                   => 
-                  raise Control.Bug "OVERLOADED ty to generalizer"
+                  raise Control.Bug "OCONSTkind ty to generalizer"
                 | (ref (T.TVAR {lambdaDepth = tyvarLambdaDepth,...})) => 
                   T.youngerDepth
                     {contextDepth = contextLambdaDepth,
@@ -968,22 +994,20 @@ variables. So be careful in using this.
         then ({boundEnv = IEnv.empty, removedTyIds = OTSet.empty})
         else
           let
-            val (_, btvs) =
+            val btvs =
                 OTSet.foldl
-                  (fn (r as ref(T.TVAR (k as {id, ...})), (next, btvs)) =>
+                  (fn (r as ref(T.TVAR (k as {id, ...})), btvs) =>
                       let 
-                        val btvid = BoundTypeVarIDGen.generate ()
+                        val btvid = BoundTypeVarID.generate ()
                       in
                         (
                          r := T.SUBSTITUTED (T.BOUNDVARty btvid);
                          (
-                          next + 1,
                           IEnv.insert
                             (
                              btvs,
                              btvid,
                              {
-                              index = next,
                               recordKind = (#recordKind k),
                               eqKind = (#eqKind k)
                              }
@@ -992,7 +1016,7 @@ variables. So be careful in using this.
                         )
                       end
                     | _ => raise Control.Bug "generalizeTy")
-                  (0, IEnv.empty)
+                  IEnv.empty
                   tids
           in
             if OTSet.isEmpty tids
@@ -1065,7 +1089,10 @@ variables. So be careful in using this.
      case recordKind of
          T.UNIV => recordKind
        | T.REC tys => T.REC (SEnv.map stripSysStrpathTy tys)
-       | T.OVERLOADED tys => T.OVERLOADED (map stripSysStrpathTy tys)
+       | T.OCONSTkind tys => T.OCONSTkind (map stripSysStrpathTy tys)
+       | T.OPRIMkind {instances,operators}
+         => T.OPRIMkind {instances = map stripSysStrpathTy instances,
+                         operators = operators}
       
   and stripSysStrpathTvKind (tvKind : T.tvKind) =
       {
@@ -1077,13 +1104,21 @@ variables. So be careful in using this.
       }
 
   and stripSysStrpathBtvKind (btvKind : T.btvKind) =
-      {index = #index btvKind, 
-       recordKind = stripSysStrpathRecordKind (#recordKind btvKind), 
+      {recordKind = stripSysStrpathRecordKind (#recordKind btvKind), 
        eqKind = #eqKind btvKind}
       
   and stripSysStrpathTy ty =
       case ty of
-          T.ERRORty => ty
+          T.INSTCODEty {oprimId, name, oprimPolyTy, keyTyList, instTyList} =>
+          T.INSTCODEty 
+          {
+           oprimId = oprimId,
+           name = name, 
+           oprimPolyTy = oprimPolyTy,
+           instTyList = map stripSysStrpathTy instTyList,
+           keyTyList = map stripSysStrpathTy keyTyList
+          }
+        | T.ERRORty => ty
         | T.DUMMYty _ => ty
         | T.TYVARty (tvStateRef as ref (T.TVAR tvKind)) =>
           let

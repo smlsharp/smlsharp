@@ -1,10 +1,8 @@
 datatype 'a dt111
-con D111 : ['a.int * 'a -> 'a dt111]
+con D111 : ['a. int * 'a -> 'a dt111]
 type t111 = bool * (int * int) dt111
-val x111 = (true,D111 (1,(2,3))) : t111
-datatype ('a,'b) dt112
-con D112 : ['a,'b.int * 'b * 'a -> ('b, 'a) dt112]
-type t112 = bool * (string,bool) dt112
-val x112 = (false,D112 (1,"abc",true)) : t112
-
-
+val x111 = (true, D111 (1, (2, 3))) : t111
+datatype ('a, 'b) dt112
+con D112 : ['a, 'b. int * 'a * 'b -> ('a, 'b) dt112]
+type t112 = bool * (string, bool) dt112
+val x112 = (false, D112 (1, "abc", true)) : t112

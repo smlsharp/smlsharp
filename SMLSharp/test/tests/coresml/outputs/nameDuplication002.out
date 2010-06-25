@@ -1,14 +1,11 @@
-../tests/coresml/tests/nameDuplication002.sml:20.1-20.49 Error: Duplicate type
-                                                                name in
-                                                                datatype: t12
+../tests/coresml/tests/nameDuplication002.sml:20.1-20.49 Error:
+  Duplicate type name in datatype: t12
 
-../tests/coresml/tests/nameDuplication002.sml:22.1-22.71 Error: Duplicate type
-                                                                name in
-                                                                datatype: t13
+../tests/coresml/tests/nameDuplication002.sml:22.1-22.71 Error:
+  Duplicate type name in datatype: t13
 
-../tests/coresml/tests/nameDuplication002.sml:24.1-27.22 Error: Duplicate type
-                                                                name in
-                                                                datatype: t221
-../tests/coresml/tests/nameDuplication002.sml:24.1-27.22 Error: Duplicate type
-                                                                name in
-                                                                datatype: t222
+../tests/coresml/tests/nameDuplication002.sml:24.1-27.22 Error:
+  Duplicate type name in datatype: t221
+../tests/coresml/tests/nameDuplication002.sml:24.1-27.22 Error:
+  Duplicate type name in datatype: t222
+

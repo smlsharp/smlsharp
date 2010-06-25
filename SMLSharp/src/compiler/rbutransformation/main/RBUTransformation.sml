@@ -679,7 +679,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
         (* this type only appear in the offset/bitmap type*)
         | RT.PADty {condTy, tyList} =>
           let
-            val varInfo = Counters.newRBUVar LOCAL (RT.PADSIZEty {condTy = condTy, tyList = tyList})
+            val varInfo = NewVar.newRBUVar LOCAL (RT.PADSIZEty {condTy = condTy, tyList = tyList})
             val (newVarInfo, newContext) = CTX.mergeVariable context varInfo
           in
             (RBUVAR {varInfo = newVarInfo, valueSizeExp = RBUU.constSizeExp (#ty newVarInfo,loc), loc = loc},
@@ -776,7 +776,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
       | RBUU.BO_TYVAR ty => generateTag context (ty,loc)
       | RBUU.BO_NONE =>
         let
-          val varInfo = Counters.newRBUVar LOCAL (RT.BITMAPty tyList)
+          val varInfo = NewVar.newRBUVar LOCAL (RT.BITMAPty tyList)
           val (newVarInfo, newContext) = CTX.mergeVariable context varInfo
         in
           (RBUVAR {varInfo = newVarInfo, valueSizeExp = RBUU.constSizeExp (#ty newVarInfo,loc), loc = loc},
@@ -787,7 +787,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
     | generateFrameBitmap context ([tid], loc) = generateTag context (RT.BOUNDVARty tid,loc)
     | generateFrameBitmap context (tidList, loc) =
       let
-        val varInfo = Counters.newRBUVar LOCAL (RT.FRAMEBITMAPty tidList)
+        val varInfo = NewVar.newRBUVar LOCAL (RT.FRAMEBITMAPty tidList)
         val (newVarInfo as {varId,...}, newContext) = CTX.mergeVariable context varInfo
         val _ = CTX.registerFrameBitmapID newContext varId
       in
@@ -801,7 +801,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
       | RBUU.BO_TYVAR ty => generateTag context (ty,loc)
       | RBUU.BO_NONE =>
         let
-          val varInfo = Counters.newRBUVar LOCAL (RT.ENVBITMAPty {tyList = tyList, fixedSizeList = fixedSizeList})
+          val varInfo = NewVar.newRBUVar LOCAL (RT.ENVBITMAPty {tyList = tyList, fixedSizeList = fixedSizeList})
           val (newVarInfo, newContext) = CTX.mergeVariable context varInfo
         in
           (RBUVAR {varInfo = newVarInfo, valueSizeExp = RBUU.constSizeExp (#ty newVarInfo,loc), loc = loc},
@@ -814,7 +814,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
       | RBUU.BO_TYVAR ty => generateSize context (ty,loc)
       | RBUU.BO_NONE =>
         let
-          val varInfo = Counters.newRBUVar LOCAL (RT.OFFSETty tyList)
+          val varInfo = NewVar.newRBUVar LOCAL (RT.OFFSETty tyList)
           val (newVarInfo, newContext) = CTX.mergeVariable context varInfo
         in
           (RBUVAR {varInfo = newVarInfo, valueSizeExp = RBUU.constSizeExp (#ty newVarInfo,loc), loc = loc},
@@ -1614,7 +1614,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                                     }
                         }
                    )
-             val argVarList = map Counters.newATVar argTyList
+             val argVarList = map NewVar.newATVar argTyList
              val bodyExp = 
                  CC.CCAPPM
                      {
@@ -1628,7 +1628,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                    [] => bodyExp
                  | _ =>
                    let
-                     val funVar = Counters.newATVar funTy
+                     val funVar = NewVar.newATVar funTy
                      val funDecl = 
                          {
                           funVar = funVar,
@@ -1912,7 +1912,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                           )
                      (nil, nil)
                      argVarList
-                 val codeLabel = Counters.newLocalId ()
+                 val codeLabel = NewVar.newLocalId ()
                  val codeVarInfo =
                    {
                     varId = varId, 
@@ -1993,7 +1993,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
       let
         fun generateLabel makeVarKind ({funVar = {displayName, ty, varId},...} : CC.funDecl) =
             let
-              val label = Counters.newLocalId ()
+              val label = NewVar.newLocalId ()
               val labelVarInfo =
                   {varId = varId, displayName = displayName, ty = RT.BOXEDty, varKind = ref (makeVarKind label)}
             in
@@ -2064,7 +2064,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                Control.Bug
                "RBUCLUSTER expected from transformCluster : (rbutransformation/main/RBUTransformation.sml)"
              
-        val envVar = Counters.newRBUVar LOCAL RT.BOXEDty
+        val envVar = NewVar.newRBUVar LOCAL RT.BOXEDty
         val envDecl = RBUVAL {boundVarList = [envVar], 
                               sizeExpList = [RBUU.constSizeExp (RT.BOXEDty,loc)],
                               tagExpList = [RBUU.constTagExp (RT.BOXEDty, loc)],
@@ -2229,7 +2229,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                             raise Control.Bug "non FUNMty of funVar :\
                               \(rbutransformation/main/RBUTransformation.sml)"
                       val argTyList = map (transformType C) argTyList
-                      val argVarList = map (Counters.newRBUVar ARG) argTyList
+                      val argVarList = map (NewVar.newRBUVar ARG) argTyList
                       val (argSizeExpList, C) = generateSizeList C (argTyList, loc)
                       val resultTyList = map (transformType C) (ATU.flatTyList bodyTy)
                       val (resultSizeExpList, C) = generateSizeList C (resultTyList, loc)
@@ -2253,7 +2253,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                               }
                       val wrapperFunction =
                           {
-                           codeId = Counters.newLocalId(),
+                           codeId = NewVar.newLocalId(),
                            argVarList = extraArgVarList @ argVarList,
                            argSizeExpList = extraArgSizeExpList @ argSizeExpList,
                            bodyExp = wrapperBodyExp,
@@ -2274,7 +2274,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
               [] => exp
             | _ => RBULET {localDeclList = extraCode, mainExp = exp, loc = loc} 
         val (wrapperEnvExp, newContext) = generateEnvBlock context (newWrapperContext, loc) 
-        val wrapperEnvVar = Counters.newRBUVar LOCAL RT.BOXEDty
+        val wrapperEnvVar = NewVar.newRBUVar LOCAL RT.BOXEDty
         val wrapperEnvDecl = 
             RBUVAL 
                 {
@@ -2442,7 +2442,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                          funStatus = ATU.newClosureFunStatus ()
                         }
                    )
-             val argVarList = map Counters.newATVar argTyList
+             val argVarList = map NewVar.newATVar argTyList
              val bodyExp =
                  case argTyList of 
                    [] => boundExp
@@ -2488,7 +2488,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
       | CC.CCPOLYCLUSTER {btvEnv, entryFunctions, innerFunctions, isRecursive, loc} =>
         let
           val extraArgTyList = RBUU.generateExtraArgTyList (#btvEnv (#staticEnv context)) btvEnv 
-          val extraArgVarList = map (Counters.newRBUVar ARG) extraArgTyList
+          val extraArgVarList = map (NewVar.newRBUVar ARG) extraArgTyList
           val wrapperContext = CTX.insertVariables (CTX.createContext context btvEnv) extraArgVarList
         in
           if isRecursive
@@ -2511,13 +2511,13 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
         (newDeclList @ newRest, newContext)
       end
 
-  fun transform (stamp:Counters.stamp) declList = 
+  fun transform declList = 
       let 
-          val _ = Counters.init stamp
-          val declList = changeKindDeclList VarIdSet.empty declList
-          val (newDeclList, _) = transformDeclList (CTX.createEmptyContext ()) declList
+        val declList = changeKindDeclList VarIdSet.empty declList
+        val (newDeclList, _) =
+            transformDeclList (CTX.createEmptyContext ()) declList
       in
-          (Counters.getCounterStamp(), newDeclList)
+        newDeclList
       end
 
 end

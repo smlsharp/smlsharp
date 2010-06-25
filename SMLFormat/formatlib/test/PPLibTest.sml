@@ -16,6 +16,7 @@ struct
         TestLabel("SMLFormatTest0008", SMLFormatTest0008.suite ()),
         TestLabel("SMLFormatTest0009", SMLFormatTest0009.suite ()),
         TestLabel("SMLFormatTest0010", SMLFormatTest0010.suite ()),
+        TestLabel("SMLFormatTest0011", SMLFormatTest0011.suite ()),
 
         TestLabel
         ("PrinterParameterTest0001", PrinterParameterTest0001.suite()),

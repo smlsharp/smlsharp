@@ -17,7 +17,7 @@ struct
     (*%               
      * @formatter(smap) SmlppgUtil.formatSmap
      * @formatter(ty) Types.format_ty
-     * @formatter(LocalVarID.id) LocalVarID.format_id
+     * @formatter(VarID.id) VarID.format_id
      * @formatter(ExternalVarID.id) ExternalVarID.format_id
      *)
     datatype varIDItem = 
@@ -30,7 +30,7 @@ struct
               * @format(id * ty)
               *  id 
               *)
-             Internal of LocalVarID.id * ty
+             Internal of VarID.id * ty
            | (*%
               *)
              (* dummy variable for bootstrap *)
@@ -111,7 +111,7 @@ struct
         (emptyFunctorEnv, emptyTopVarIDEnv) : topExternalVarIDBasis
 
     (****  For functor template instantiation *****)
-    type holeIdEnv = varIDItem LocalVarID.Map.map
+    type holeIdEnv = varIDItem VarID.Map.map
     (* refresh bounded id inside functor 
      *   functor F(A : S) =
      *    struct
@@ -123,17 +123,17 @@ struct
      **)
     type templateVarRenamingBasis = 
          (string *      (* displayName for debugging *)
-          LocalVarID.id (* unique id *)) LocalVarID.Map.map
+          VarID.id (* unique id *)) VarID.Map.map
     val emptyTemplateRenamingVarBasis = 
-      LocalVarID.Map.empty : templateVarRenamingBasis
+      VarID.Map.empty : templateVarRenamingBasis
                                                          
     fun mergeTemplateVarRenamingBasis 
             {new:templateVarRenamingBasis, old:templateVarRenamingBasis} =
-        LocalVarID.Map.unionWith #1 (new, old)
+        VarID.Map.unionWith #1 (new, old)
 
     fun lookupLocalIdInTemplateVarRenamingBasis
             (id, (templateVarRenamingBasis:templateVarRenamingBasis)) =
-            LocalVarID.Map.find(templateVarRenamingBasis, id)
+            VarID.Map.find(templateVarRenamingBasis, id)
 
     (************ prefix manipulation*********)
     fun getIdFromInternal item =
@@ -157,15 +157,15 @@ struct
         | Internal _ => raise Control.Bug "getFrom Current Item"
 *)
 
-    fun lookupPathIdEnv (idEnv, id) = LocalVarID.Map.find(idEnv, id)
+    fun lookupPathIdEnv (idEnv, id) = VarID.Map.find(idEnv, id)
                                       
-    fun lookupPathHoleIdEnv (idEnv, id) = LocalVarID.Map.find(idEnv, id)
+    fun lookupPathHoleIdEnv (idEnv, id) = VarID.Map.find(idEnv, id)
                                           
     fun mergePathHoleIdEnv (newPathHoleIdEnv, oldPathHoleIdEnv) =
-        LocalVarID.Map.unionWith #1 (newPathHoleIdEnv, oldPathHoleIdEnv)
+        VarID.Map.unionWith #1 (newPathHoleIdEnv, oldPathHoleIdEnv)
         
     fun mergePathIdEnv (newPathIdEnv, oldPathIdEnv) =
-        LocalVarID.Map.unionWith #1 (newPathIdEnv, oldPathIdEnv)
+        VarID.Map.unionWith #1 (newPathIdEnv, oldPathIdEnv)
         
     fun lookupVarInVarIDBasis (varIDBasis, namePath) =
         let
@@ -287,7 +287,7 @@ struct
         NPEnv.map (fn (Internal (id, _)) =>
                      let
                        val index = 
-                           case LocalVarID.Map.find(indexMap, id) of
+                           case VarID.Map.find(indexMap, id) of
                                SOME (string, index) => index
                              | NONE => raise Control.Bug ("non allocated")
                      in

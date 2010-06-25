@@ -47,6 +47,8 @@ in
  (* for debugging *)
   fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
 
+  fun bug s = Control.Bug ("TypeInferCode: " ^ s)
+
  (* type generalization *)
   fun generalizer (ty, lambdaDepth) =
     if E.isError()
@@ -60,7 +62,7 @@ in
 
   type rawty = A.ty
 
-  fun getRuleLocM nil = raise Control.Bug "emptyruke in getRuleLocM"
+  fun getRuleLocM nil = raise bug "empty rule in getRuleLocM"
     | getRuleLocM [(pat::_,exp)] =
         Loc.mergeLocs (PT.getLocPat pat, PT.getLocExp exp)
     | getRuleLocM rules =
@@ -70,7 +72,7 @@ in
               (pat1::_, _):: _ => pat1
             | _ =>
                 raise
-                  Control.Bug
+                  bug
                   "empty pattern in rules\
                   \ (typeinference/main/TypeInferCore.sml)"
           val (_, exp2) = List.last rules
@@ -110,7 +112,7 @@ in
            SEnv.empty
            stringRawtyList)
       | A.TYCONSTRUCT (rawtyList, namePath, loc) =>
-          raise Control.Bug "Absyn.TYCONSTRUCT in type inference"
+          raise bug "Absyn.TYCONSTRUCT"
       | A.TYCONSTRUCT_WITH_NAMEPATH (rawtyList, namePath, loc) =>
           let
             val tyList = map (evalRawty basis) rawtyList
@@ -212,7 +214,7 @@ in
                              implTy = T.SPECty {tyCon = tyCon', args = tyList}}
                       | (T.TYOPAQUE _) =>
                           raise
-                            Control.Bug "TYOPAQUE occurs after peelTyOPAQUE"
+                            bug "TYOPAQUE occurs after peelTyOPAQUE"
                   else
                     (
                      E.enqueueError
@@ -299,23 +301,21 @@ in
                *)
               evalKindedTvarSet T.infiniteDepth basis kindedTvarSet loc
             val newTy = evalRawty newBasis ty
-            val (_, btvs) =
+            val btvs =
               SEnv.foldl
               (
-               fn (r as ref(T.TVAR (k as {id, ...})), (next, btvs)) =>
+               fn (r as ref(T.TVAR (k as {id, ...})), btvs) =>
                   let 
                     val btvid = Counters.nextBTid ()
                   in
                     (
                      r := T.SUBSTITUTED (T.BOUNDVARty btvid);
                      (
-                      next + 1,
                       IEnv.insert
                       (
                        btvs,
                        btvid,
                        {
-                        index = next,
                         recordKind = (#recordKind k),
                         eqKind = (#eqKind k)
                         }
@@ -323,9 +323,9 @@ in
                       )
                      )
                   end
-               | _ => raise Control.Bug "generalizeTy"
+               | _ => raise bug "generalizeTy"
               )
-              (0, IEnv.empty)
+              IEnv.empty
               tids
           in
             T.POLYty {boundtvars = btvs, body = newTy}
@@ -351,9 +351,12 @@ in
   and evalKindedTvarSet lambdaDepth (basis:TIC.basis) kindedTvarSet  loc =
     let
       fun occurresTvarInReckind (tvstateRef, T.UNIV) = false
-        | occurresTvarInReckind (tvstateRef, T.OVERLOADED _) = false
+        | occurresTvarInReckind (tvstateRef, T.OCONSTkind tyList) =
+          Unify.occurresTyList tvstateRef tyList
+        | occurresTvarInReckind (tvstateRef, T.OPRIMkind {instances,...}) =
+          Unify.occurresTyList tvstateRef instances
         | occurresTvarInReckind (tvstateRef, T.REC fields) =
-            Unify.occurres tvstateRef (T.RECORDty fields)
+          Unify.occurres tvstateRef (T.RECORDty fields)
       fun setReckind (
                        tvstateRef
                          as (ref (T.TVAR{lambdaDepth,
@@ -378,7 +381,7 @@ in
                                    tyvarName = tyvarName
                                   }
         | setReckind _ =
-              raise Control.Bug "tvsteteRef must be TVAR in setRecKind"
+              raise bug "tvsteteRef must be TVAR in setRecKind"
       val (newBasis, newTvarReckindSEnv) =
         TIC.addUtvarOverride (lambdaDepth, basis, kindedTvarSet) loc
       val newTvarReckindSEnv =
@@ -417,7 +420,7 @@ in
           case ptexp of
             PT.PTVAR (path, loc) => (path, loc, rawTyList)
           | PT.PTTYPED (ptexp, rawty, _) => strip ptexp (rawty :: rawTyList)
-          | _ => raise Control.Bug "not var in stripRwaTy"
+          | _ => raise bug "not var in stripRwaTy"
       in
         strip ptexp nil
       end
@@ -566,9 +569,9 @@ in
       | PT.PTPATLAYERED (string, _, ptpat, loc) => 
         (case TIC.lookupVarInBasis(basis, (string, P.NilPath)) of
            SOME(T.CONID _) =>
-           raise Control.Bug "not id in layered pat in typeinf"
+           raise bug "not id in layered pat in typeinf"
          | SOME(T.EXNID _) =>
-           raise Control.Bug "not id in layered pat in typeinf"
+           raise bug "not id in layered pat in typeinf"
          | _ =>
            let val set1 = freeVarsInPat basis ptpat
            in
@@ -687,7 +690,7 @@ in
       in
         [(funPat, funBody)]
       end
-    | transFunDecl _ _ _ = raise Control.Bug "illegal fun decl "
+    | transFunDecl _ _ _ = raise bug "illegal fun decl "
 
 
   (* foreign function stub generation *)
@@ -805,7 +808,7 @@ in
                     let
                       val fieldTy = case SEnv.find (fieldTys, n) of
                           SOME ty => ty
-                        | NONE => raise Control.Bug ("explodeTuple: " ^ n)
+                        | NONE => raise bug ("explodeTuple: " ^ n)
                     in
                        (rawty,
                         fieldTy,
@@ -823,7 +826,7 @@ in
       | explodeTuple (rawtys, expTy, exp, loc) =
         if isUnitTy expTy
         then []
-        else raise Control.Bug "explodeTuple: not a record"
+        else raise bug "explodeTuple: not a record"
 
     fun implodeRecordTy nil = PDT.unitty
       | implodeRecordTy fields =
@@ -845,7 +848,7 @@ in
                          recordTy = T.RECORDty recordTy,
                          loc = loc})
             | implode _ =
-              raise Control.Bug "implodeRecord"
+              raise bug "implodeRecord"
         in
           implode (SEnv.empty, SEnv.empty, names, exps)
         end
@@ -855,7 +858,7 @@ in
              let
                val fieldTy = case SEnv.find (fieldTys, name) of
                    SOME ty => ty
-                 | NONE => raise Control.Bug ("explodeRecord: " ^ name)
+                 | NONE => raise bug ("explodeRecord: " ^ name)
              in
                 (rawty,
                  fieldTy,
@@ -873,7 +876,7 @@ in
       | explodeRecord (rawFieldTys, expTy, exp, loc) =
         if isUnitTy expTy
         then []
-        else raise Control.Bug "explodeRecord: not a record"
+        else raise bug "explodeRecord: not a record"
 
     fun stubUnit basis (expTy, exp, loc) =
         (U.unify [(PDT.unitty, expTy)];
@@ -1207,14 +1210,14 @@ in
 
         val name = case ptexp of
                      PT.PTGLOBALSYMBOL (name,_,_) => name
-                   | _ => raise Control.Bug "stubImportOldPrim"
+                   | _ => raise bug "stubImportOldPrim"
         val (argTy, retTy) =
             case ffirawty of
               A.TYFFI (_,_,[],retTy,_) =>
               (PDT.unitty, evalRawty basis retTy)
             | A.TYFFI (_,_,[argTy],retTy,_) =>
               (evalRawty basis argTy, evalRawty basis retTy)
-            | _ => raise Control.Bug "stubImportOldPrim"
+            | _ => raise bug "stubImportOldPrim"
         val stubTyBody = T.FUNMty ([argTy], retTy)
         val (stubBoundEnv, stubTy) = generalize stubTyBody
 
@@ -1222,7 +1225,7 @@ in
         val primTyBody = TU.substBTvar subst stubTyBody
         val (_, primTy) = generalize primTyBody
         val prim = BuiltinPrimitive.P (BuiltinPrimitive.RuntimePrim name)
-        val primInfo = {name = prim, ty = primTy}
+        val primInfo = {prim_or_special = prim, ty = primTy}
 
         val argVar = {namePath = (Counters.newVarName (), Path.NilPath),
                       ty = argTy}
@@ -1271,19 +1274,15 @@ in
     end
 
   fun mergeBoundEnvs (boundEnv1, boundEnv2) =
-    let
-      val shiftIndex = IEnv.numItems boundEnv2
-    in
       IEnv.unionWith
-      (fn _ => raise Control.Bug "duplicate boundtvars in mergeBoundEnvs")
+      (fn _ => raise bug "duplicate boundtvars in mergeBoundEnvs")
       (
        boundEnv2,
        IEnv.map 
-         (fn {index,recordKind,eqKind}
-            => {index=index+shiftIndex, recordKind=recordKind, eqKind=eqKind})
+         (fn {recordKind,eqKind}
+            => {recordKind=recordKind, eqKind=eqKind})
          boundEnv1
        )
-    end
 
   (*
     lambdaDepth : outer lambda depth
@@ -1347,7 +1346,7 @@ in
                                   exp=tpexp1,
                                   loc=loc1}
                            )
-                      | _ => raise Control.Bug "non polyty for TPPOLY"
+                      | _ => raise bug "non polyty for TPPOLY"
                      )
                  | TPPOLYFNM {btvEnv=boundEnv1, 
                               argVarList=argVarPathInfo, 
@@ -1367,7 +1366,7 @@ in
                               bodyExp=tpexp1,
                               loc=loc1}
                            )
-                      | _ => raise Control.Bug "non polyty for TPPOLY"
+                      | _ => raise bug "non polyty for TPPOLY"
                     )
                  | _ => (
                          T.POLYty
@@ -1491,7 +1490,7 @@ in
                       case tupleTy of 
                         T.RECORDty tyFields => SEnv.listItems tyFields
                       | T.ERRORty => map (fn x => T.ERRORty) resTuple
-                      | _ => raise Control.Bug "decompose"
+                      | _ => raise bug "decompose"
                     val (_, resBinds) = 
                       foldl
                       (fn ((varId, ty), (i, varIDTpexpList)) => 
@@ -1877,7 +1876,7 @@ in
                   (basis, ifGenTerm)
                   (ptpat, ptexp)
                 end
-            | _ => raise Control.Bug "non strictvalue pat in decompoes"
+            | _ => raise bug "non strictvalue pat in decompoes"
         end (* end of decpomose *)
 
     (* decomposeValbind body *)
@@ -1915,17 +1914,10 @@ in
           case varState of
             SOME v => v
           | NONE =>
-            (
-              E.enqueueError
-                (idloc, 
-                 E.VarNotFound {id = NM.usrNamePathToString(longvid)});
-              T.VARID
-                  {
-                   namePath = longvid,
-                   ty = T.ERRORty
-                  }
+            (E.enqueueError
+              (idloc,E.VarNotFound {id = NM.usrNamePathToString(longvid)});
+              T.VARID {namePath = longvid, ty = T.ERRORty}
             ) 
-
 (*
       val (tyList, tpexpList) = 
         foldr (fn (ptexp, (tyList, tpexpList)) =>
@@ -1980,7 +1972,7 @@ in
           val domty =
             case domtyList of
               [ty] => ty
-            | _ => raise Control.Bug "arity mismatch"
+            | _ => raise bug "arity mismatch"
           val newTermBody = 
             TPDATACONSTRUCT
             { 
@@ -2019,7 +2011,7 @@ in
         end
       | (T.CONID (conPathInfo
                    as {namePath, ty = ty, tyCon, funtyCon, tag}), _) =>
-          raise Control.Bug "CONID in multiple apply"
+          raise bug "CONID in multiple apply"
       | (T.EXNID (exnPathInfo
                    as {namePath, ty = ty, tyCon, funtyCon, tag}),
          [ptexp2]) =>
@@ -2061,7 +2053,7 @@ in
           val domty =
             case domtyList of
               [ty] => ty
-            | _ => raise Control.Bug "arity mismatch"
+            | _ => raise bug "arity mismatch"
           val newTermBody = 
               TPEXNCONSTRUCT
                   { 
@@ -2100,7 +2092,7 @@ in
         end
       | (T.EXNID (conPathInfo
                     as {namePath, ty = ty, tyCon, funtyCon, tag}), _) =>
-          raise Control.Bug "EXNID in multiple apply"
+          raise bug "EXNID in multiple apply"
       | (T.PRIM (primInfo as {ty = ty,...}), [ptexp2]) =>
         let 
           val (ty2, tpexp2) = typeinfExp lambdaDepth inf basis ptexp2
@@ -2131,7 +2123,7 @@ in
           val domty =
             case domtyList of
               [ty] => ty
-            | _ => raise Control.Bug "arity mismatch"
+            | _ => raise bug "arity mismatch"
           val newTermBody = 
               TPPRIMAPPLY
                {primOp=primInfo,
@@ -2151,50 +2143,51 @@ in
                  )
         end
       | (T.PRIM (primInfo as {ty = ty,...}), _) =>
-          raise Control.Bug "PrimOp in multiple apply"
-      | (T.OPRIM {name, ty = ty, instances}, [ptexp2]) =>
+          raise bug "PrimOp in multiple apply"
+      | (T.OPRIM {name, oprimPolyTy, oprimId}, [ptexp2]) =>
         let 
           val (ty2, tpexp2) = typeinfExp lambdaDepth inf basis ptexp2
           val (ty2, tpexp2) = TPU.freshInst (ty2, tpexp2)
-          val (instTy, instTyList) = TIU.freshTopLevelInstTy ty
-          val _ = 
-              foldl
-                  (fn (rawty, _) =>
-                      let val annotatedTy1 = evalRawty basis rawty
-                      in
-                        U.unify [(instTy, annotatedTy1)]
-                        handle U.Unify =>
-                               E.enqueueError
-                                 (
-                                  loc,
-                                  E.TypeAnnotationNotAgree
-                                  {ty = instTy, annotatedTy = annotatedTy1}
-                                  )
-                      end)
-                  ()
-                  rawTyList
+          val (instTy, instTyList) = TIU.freshTopLevelInstTy oprimPolyTy
+          fun findOperators nil = raise bug "operator not found"
+            | findOperators (ty::rest) = 
+              case TU.derefTy ty of
+                T.TYVARty(ref (T.TVAR {recordKind=T.OPRIMkind{operators,...},
+                                       ...})) => operators
+              | _ => findOperators rest
+          val operators = findOperators instTyList
+          fun findKeyTyList (nil:T.operator list) =
+                raise bug "oprimId not found"
+            | findKeyTyList (operator::rest) =
+              if OPrimID.eq(oprimId, #oprimId operator) then
+                (#keyTyList operator)
+              else findKeyTyList rest
+          val keyTyList = findKeyTyList operators
           val (domtyList, ranty, instlist) = TU.coerceFunM (instTy, [ty2])
-            handle TU.CoerceFun =>
-              (
-               E.enqueueError (idloc, E.NonFunction {ty = instTy});
-               ([T.ERRORty], T.ERRORty, nil)
-               )
+              handle TU.CoerceFun =>
+                     (
+                      E.enqueueError (idloc, E.NonFunction {ty = instTy});
+                      ([T.ERRORty], T.ERRORty, nil)
+                     )
           val domty =
-            case domtyList of
-              [ty] => ty
-            | _ => raise Control.Bug "arity mismatch"
+              case domtyList of
+                [ty] => ty
+              | _ => raise bug "arity mismatch"
           val newTermBody =
               TPOPRIMAPPLY
-                  {
-                    oprimOp={name = name, ty = ty, instances = instances},
-                    instances=instTyList, 
-                    argExpOpt=SOME tpexp2,
-                    loc=loc
-                  }
+                {
+                 oprimOp={name = name,
+                          oprimPolyTy = oprimPolyTy,
+                          oprimId = oprimId},
+                 instances=instTyList,
+                 keyTyList = keyTyList,
+                 argExpOpt=SOME tpexp2,
+                 loc=loc
+                }
         in
           (
-            U.unify [(ty2, domty)];
-            (ranty, newTermBody)
+           U.unify [(ty2, domty)];
+           (ranty, newTermBody)
           )
           handle U.Unify =>
                  (
@@ -2203,8 +2196,8 @@ in
                    (T.ERRORty, TPERROR)
                  )
         end
-      | (T.OPRIM {name, ty = ty, instances}, _) =>
-          raise Control.Bug "PrimOp in multiple apply"
+      | (T.OPRIM {name, oprimPolyTy, oprimId}, _) =>
+          raise bug "PrimOp in multiple apply"
       | (T.VARID {ty,...}, _) => 
         (
 	 let
@@ -2698,7 +2691,7 @@ in
                case TU.derefTy ruleTy of
                  T.FUNMty([domTy], ranTy)=>(domTy, ranTy)
                | T.ERRORty => (T.ERRORty, T.ERRORty)
-               | _ => raise Control.Bug "Case Type Inference"
+               | _ => raise bug "Case Type Inference"
            val newVarPathInfo = 
 	       {namePath = (Counters.newVarName (), Path.NilPath), 
                 ty = domTy}
@@ -2735,7 +2728,7 @@ in
          (case matchM of
             nil =>
               raise
-                Control.Bug
+                bug
                 "empty rule in PTFNM (typeinference/main/TypeInferCore.sml)" 
           | [(patList, exp)] =>
               let
@@ -2915,7 +2908,7 @@ in
                case TU.derefTy ruleTy of 
                  T.FUNMty(_, ranTy) => ranTy
                | T.ERRORty => T.ERRORty
-               | _ => raise Control.Bug "Case Type Inference"
+               | _ => raise bug "Case Type Inference"
          in
            (ranTy, TPCASEM{
                            expList=tpexpList, 
@@ -3113,7 +3106,7 @@ in
                   => length argTys < 2
                 | _ => false)
            then stubImportOldPrim basis lambdaDepth (ptexp, ffirawty, loc)
-           else raise Control.Bug "not supported"
+           else raise bug "not supported"
          else
          let
            val (expTy, tpExp) = typeinfExp lambdaDepth inf basis ptexp
@@ -3137,7 +3130,7 @@ in
             })
          end
        | PT.PTFFIIMPORT (ptexp, ffirawty, loc) =>
-         raise Control.Bug "PTFFIIMPORT: not a function type"
+         raise bug "PTFFIIMPORT: not a function type"
        | PT.PTFFIEXPORT (ptexp, ffirawty as A.TYFFI _, loc) =>
          let
            val (expTy, tpExp) = typeinfExp lambdaDepth inf basis ptexp
@@ -3159,7 +3152,7 @@ in
             })
          end
        | PT.PTFFIEXPORT (ptexp, ffirawty, loc) =>
-         raise Control.Bug "PTFFIEXPORT: not a function type"
+         raise bug "PTFFIEXPORT: not a function type"
        | PT.PTFFIAPPLY (attributes, ptfunExp, ptargs, rawRetTy, loc) =>
          let
            val (funTy, funExp) =
@@ -3313,7 +3306,7 @@ in
                )
       end
     | typeinfMatch _ _ argtyList basis nil = 
-      raise Control.Bug "typeinfMatch, empty rule"
+      raise bug "typeinfMatch, empty rule"
 
   (**
    * infer a mono type for a match
@@ -3349,7 +3342,7 @@ in
                )
       end
     | monoTypeinfMatch lambdaDepth argty basis nil =
-      raise Control.Bug "monoTypeinfMatch, empty rule"
+      raise bug "monoTypeinfMatch, empty rule"
 
 
   (**
@@ -3429,7 +3422,7 @@ in
                 varId)
                 | _ =>
                raise
-                 Control.Bug
+                 bug
                  "non VARID in varEnv1 or 2\
                  \ (typeinference/main/TypeInferCore.sml)"
               )
@@ -3689,7 +3682,7 @@ in
                        val domty =
                          case domtyList of
                            [ty] => ty
-                         | _ => raise Control.Bug "arity mismatch"
+                         | _ => raise bug "arity mismatch"
                        val _ =
                            U.unify [(patTy2, domty)]
                            handle U.Unify =>
@@ -3739,7 +3732,7 @@ in
                        val domty =
                          case domtyList of
                            [ty] => ty
-                         | _ => raise Control.Bug "arity mismatch"
+                         | _ => raise bug "arity mismatch"
                        val _ =
                            U.unify [(patTy2, domty)]
                            handle U.Unify =>
@@ -3798,7 +3791,7 @@ in
                              varId)
                              | _ =>
                                raise
-                                 Control.Bug
+                                 bug
                                  "non VARID in varEnv1 or 2\
                                  \ (typeinference/main/TypeInferCore.sml)"
                             )
@@ -3916,7 +3909,7 @@ in
                            )
                  | _ =>
                    raise
-                     Control.Bug
+                     bug
                      "non VARID in varEnv\
                      \ (typeinference/main/TypeInferCore.sml)"
                    )
@@ -4042,24 +4035,22 @@ in
                           (true, T.FUNMty([argTy], resultTy))
                         end
                     | NONE => (false, resultTy)
-                  val (_, btvs) =
+                  val btvs =
                     (
                      foldl
                      (
-                      fn (r as ref(T.TVAR (k as {id, ...})), (next, btvs)) =>
+                      fn (r as ref(T.TVAR (k as {id, ...})), btvs) =>
                           let
                             val btvid = Counters.nextBTid ()
                           in
                             (
                              r := T.SUBSTITUTED (T.BOUNDVARty btvid);
                              (
-                              next + 1,
                               IEnv.insert
                               (
                                btvs,
                                btvid,
                                {
-                                index = next,
                                 recordKind = (#recordKind k),
                                 eqKind = (#eqKind k)
                                 }
@@ -4067,9 +4058,9 @@ in
                               )
                              )
                           end
-                       | _ => raise Control.Bug "generalizeTy"
+                       | _ => raise bug "generalizeTy"
                           )
-                     (0, IEnv.empty)
+                     IEnv.empty
                      (OTSet.listItems (TU.EFTV tyBody))
                     )
                     handle x => raise x
@@ -4127,7 +4118,7 @@ in
                                  } 
                    of 
                      T.TYVARty newTy => newTy
-                   | _ => raise Control.Bug "newty returns non TYVARty"
+                   | _ => raise bug "newty returns non TYVARty"
              in
                (
                 n + 1,
@@ -4162,8 +4153,8 @@ in
             {tyCon = newTyCon, args = map T.TYVARty (IEnv.listItems tvarIEnv)}
         val ty = T.ALIASty(aliasTy,originTy)
         val btvEnv = 
-          IEnv.foldli
-          (fn (i, tvar as ref(T.TVAR (k as {id, ...})), btvEnv) => 
+          IEnv.foldl
+          (fn (tvar as ref(T.TVAR (k as {id, ...})), btvEnv) => 
              let 
                val btvid = Counters.nextBTid ()
              in
@@ -4174,7 +4165,6 @@ in
                  btvEnv,
                  btvid,
                  {
-                  index = i,
                   recordKind = (#recordKind k),
                   eqKind = (#eqKind k)
                   }
@@ -4183,7 +4173,7 @@ in
              end
            | _ =>
              raise
-             Control.Bug
+             bug
              "non TYVAR in tvarEnv (typeinference/main/TypeInferCore.sml)"
           )
           IEnv.empty
@@ -4317,7 +4307,7 @@ in
                     args
                | T.TYVARty tid => TyConID.Set.empty
                | T.BOUNDVARty _ => TyConID.Set.empty
-               | T.POLYty _ => raise Control.Bug "polyty in combind"
+               | T.POLYty _ => raise bug "polyty in combind"
                | T.RECORDty fl => 
                    SEnv.foldr
                    (fn (ty, depsep) => TyConID.Set.union (dep ty, depsep))
@@ -4339,7 +4329,7 @@ in
                       then TyConID.Set.singleton id
                     else TyConID.Set.empty)
                       args
-               | _ => raise Control.Bug "illegal type in combind")
+               | _ => raise bug "illegal type in combind")
         in 
           if funtyCon
             then
@@ -4348,8 +4338,8 @@ in
               | T.POLYty{body, ...} =>
                   (case body of
                      T.FUNMty([ty1], ty2) => dep ty1
-                   | _ => raise Control.Bug "depends")
-              | _ => raise Control.Bug "depends"
+                   | _ => raise bug "depends")
+              | _ => raise bug "depends"
           else TyConID.Set.empty
         end
 
@@ -4410,7 +4400,7 @@ in
                 SEnv.foldr
                 (fn (T.CONID conInfo, s) =>
                  TyConID.Set.union(depends conInfo,s)
-              | _ => raise Control.Bug "illegal data con")
+              | _ => raise bug "illegal data con")
                 TyConID.Set.empty
                 conbind)
          )
@@ -4422,6 +4412,8 @@ in
             (case ty of 
                T.FUNMty _ => false
              | T.RAWty {tyCon = {eqKind, id, ...}, args} =>
+               if TyConID.eq(id, #id (PredefinedTypes.refTyCon)) then true
+               else
                  if (foldr (fn (x,b) => eqCon x andalso b) true args)
                    then 
                      (if TyConID.Set.member(tyConSet, id)
@@ -4434,7 +4426,7 @@ in
                     {eqKind = T.EQ, ...} => true
                   | {eqKind = T.NONEQ, ...} => false)
              | T.BOUNDVARty _ => true
-             | T.POLYty _ => raise Control.Bug "polyty in combind"
+             | T.POLYty _ => raise bug "polyty in combind"
              | T.RECORDty fl =>
                  SEnv.foldr (fn (ty, b) => (eqCon ty) andalso b) true fl
              | T.ALIASty (_, ty) => eqCon ty
@@ -4453,7 +4445,7 @@ in
                         then true
                       else (case !eqKind of T.EQ => true | _ => false))
                  else false
-             | _ => raise Control.Bug "illegal type in combind")
+             | _ => raise bug "illegal type in combind")
         in
           if funtyCon
             then
@@ -4462,9 +4454,9 @@ in
               | T.POLYty{body, ...} =>
                   (case body of
                      T.FUNMty([ty1], ty2) => eqCon ty1
-                   | _ => raise Control.Bug "depends")
+                   | _ => raise bug "depends")
               | T.ERRORty => true
-              | _ => raise Control.Bug "depends"
+              | _ => raise bug "depends"
           else true
         end
       val eqEnv = 
@@ -4477,7 +4469,7 @@ in
           SEnv.foldr
           (fn (T.CONID conInfo, b) =>
                (admitEq conInfo) andalso b
-            | _ => raise Control.Bug "datatype, eqEnv")
+            | _ => raise bug "datatype, eqEnv")
           true
           conbind
           ))
@@ -4490,10 +4482,10 @@ in
          (fn (dependId, b) => 
               case TyConID.Map.find(eqEnv, dependId) of
                 SOME b1 => (b1 andalso b)
-              | _ => raise Control.Bug "eqflagus")
+              | _ => raise bug "eqflagus")
          (case TyConID.Map.find(eqEnv, originalId) of
             SOME b => b
-          | _ => raise Control.Bug "eqflagus")
+          | _ => raise bug "eqflagus")
             depset)
         depEnv
       val (tyConEnv2, newDataTyInfos) = 
@@ -4512,7 +4504,7 @@ in
            val _ =
              eqKind :=
              (if valOf(TyConID.Map.find(eqFlags, id)) then T.EQ else T.NONEQ)
-                handle Option => raise Control.Bug "datbind"
+                handle Option => raise bug "datbind"
            val newDataTyInfo = 
              {tyCon = {name = name, 
                        strpath = strpath, 
@@ -4734,7 +4726,7 @@ in
                         | _ => 
                           (
                            printType ty; 
-                           raise Control.Bug "SUBSTITUTED to Non BoundVarTy"
+                           raise bug "SUBSTITUTED to Non BoundVarTy"
                           )
                        )
                      | (tyname, tvstateRef as (ref (T.TVAR {eqKind,...})))  => 
@@ -4812,10 +4804,10 @@ in
                TIC.addUtvarIfNotthere(lambdaDepth, newBasis, tvarNameSet)
            fun getFunIdFromPat (PT.PTPATID (longid, _)) = longid
              | getFunIdFromPat (PT.PTPATTYPED(pat, _,_)) = getFunIdFromPat pat
-             | getFunIdFromPat _ = raise Control.Bug "non id pat in fundecl"
+             | getFunIdFromPat _ = raise bug "non id pat in fundecl"
            fun arityAndArgTyListOfMatch match =
              case match of
-               nil => raise Control.Bug "empty match in fundecl"
+               nil => raise bug "empty match in fundecl"
              | (patList,exp)::_ =>
                  (List.length patList,
                   map
@@ -4880,7 +4872,7 @@ in
                   bodyTy = case TU.derefTy tpmatchTy of
                              T.FUNMty (_, bodyTy) => bodyTy
                            | T.ERRORty =>  T.ERRORty
-                           | _ => raise Control.Bug "non fun type in fundecl",
+                           | _ => raise bug "non fun type in fundecl",
                   argTyList = argTyList,
                   ruleList = tpmatch
                   } ::funBindList
@@ -4916,7 +4908,7 @@ in
                       (
                        printType ty; 
                        raise
-                         Control.Bug
+                         bug
                            "illeagal utvar instance in\
                            \ UserTvarNotGeneralized  check"
                       )
@@ -5061,7 +5053,7 @@ in
                       | (PT.PTPATTYPED
                              (PT.PTPATID
                                   (longid, _),_,_),_) => longid
-                      | _ => raise Control.Bug "recvalnotid in typeinf")
+                      | _ => raise bug "recvalnotid in typeinf")
                     ptpatPtexpList
            val (tys, newBasis) = 
                foldr
@@ -5088,7 +5080,7 @@ in
                      val stringTy =
                          case TIC.lookupVarInBasis(newBasis, namePath) of
                            SOME (T.VARID{ty, ...}) => ty
-                         | _ => raise Control.Bug "typeinfRecbind" 
+                         | _ => raise bug "typeinfRecbind" 
                      val _ =
                          U.unify [(stringTy, ptexpTy)]
                          handle
@@ -5114,7 +5106,7 @@ in
                  | (PT.PTPATTYPED
                      (PT.PTPATID((string, Path.NilPath), _), _, _), ptexp) => 
                    inferRule ((string, Path.NilPath), ptexp)
-                 | _ => raise Control.Bug "typeinfRecbind, not a variable"
+                 | _ => raise bug "typeinfRecbind, not a variable"
                 )
                ptpatPtexpList
              end
@@ -5140,7 +5132,7 @@ in
                      )
                  | _ =>
                      raise
-                       Control.Bug
+                       bug
                        "illeagal utvar instance in\
                        \ UserTvarNotGeneralized  check"
                )
@@ -5488,14 +5480,16 @@ in
         (TC.emptyContext, [TPINFIXRDEC(n, idlist, loc)])
       | PT.PTNONFIXDEC (idlist, loc) =>
         (TC.emptyContext, [TPNONFIXDEC(idlist, loc)])
-      | PT.PTEMPTY => raise Control.Bug "try to infer type for the empty dec"
+      | PT.PTEMPTY => raise bug "try to infer type for the empty dec"
     )
    end
   
    fun typeinfTopPtdecl lambdaDepth (basis:TIC.basis) ptdecl =
      let
         val _ = maxDepth := T.toplevelDepth
+(*
         val _ = T.kindedTyvarList := nil
+*)
         val _ = ffiApplyTyvars := nil
         val (newContext, tpdeclList) =
           typeinfPtdecl lambdaDepth true basis ptdecl
@@ -5504,14 +5498,21 @@ in
          (newContext, tpdeclList)
        else
          let
+(*
            val tyvars = TypeContextUtils.tyvarsContext newContext
            val dummyTyList =
              (foldr
               (fn (r
                    as
                    ref(T.TVAR
-                        {recordKind = T.OVERLOADED (h :: tl), ...}),
-                       dummyTyList) => 
+                        {recordKind = T.OCONSTkind (h::_), ...}),
+                   dummyTyList) => 
+                  (r := T.SUBSTITUTED h; dummyTyList)
+                | (r
+                   as
+                   ref(T.TVAR
+                     {recordKind = T.OPRIMkind {instances = (h::_),...},...}),
+                   dummyTyList) => 
                   (r := T.SUBSTITUTED h; dummyTyList)
                 | (r as ref (T.TVAR {recordKind=T.UNIV, ...}), dummyTyList) =>
                   let
@@ -5531,7 +5532,7 @@ in
                 | (r as ref (T.SUBSTITUTED _), dummyTyList) => dummyTyList
                 | _ =>
                     raise
-                      Control.Bug
+                      bug
                       "non tvar in dummytyvars\
                       \ (typeinference/main/TypeInferCore.sml)"
              )
@@ -5547,6 +5548,7 @@ in
                  (PT.getLocDec ptdecl,
                   E.ValueRestriction {dummyTyList = dummyTyList})
            val _ = TIU.eliminateVacuousTyvars()
+*)
            val _ = List.app (fn (ty as T.TYVARty(ref(T.TVAR _)), loc) =>
                                 E.enqueueError (loc, E.FFIInvalidTyvar ty)
                               | _ => ())

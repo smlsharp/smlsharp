@@ -476,18 +476,6 @@ in
       * tyvars(tyvar) ("," +, "(", ")" +)
       *)
      PTSPECSIGWHERE of ptspec * (tvar list * namePath * ty) list * Loc.loc 
-(*
-   | (*%
-      * @format(fundesc fundescs * loc)
-      * !N0{ "functor" + {fundescs(fundesc)(~2[ +1 "and" ] +)}}
-      * @format:fundesc(funid * (sigexp1 * argNamePathEnv) * (sigexp2 * bodyNamePathEnv)) 
-      * funid ":" +d sigexp1 +d "=>" sigexp2
-      *)
-     PTSPECFUNCTOR of (string * 
-                       (ptspec * NameMap.basicNameNPEnv) * 
-                       (ptspec * NameMap.basicNameNPEnv)) list * 
-                      Loc.loc 
-*)
 
 and pttopdec = 
     (*%

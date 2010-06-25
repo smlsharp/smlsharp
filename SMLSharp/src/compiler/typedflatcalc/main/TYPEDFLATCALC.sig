@@ -18,7 +18,7 @@ signature TYPEDFLATCALC = sig
  type varIdInfo
  type primInfo
  type oprimInfo
- type btvKind
+ type btvEnv
  type caseKind
  datatype constant = datatype ConstantTerm.constant
  type fields
@@ -86,7 +86,12 @@ signature TYPEDFLATCALC = sig
 		  loc :loc
 		  }
    | TFPPRIMAPPLY of {primOp:primInfo, instTyList:ty list, argExpOpt:tfpexp option, loc:loc}
-   | TFPOPRIMAPPLY of {oprimOp:oprimInfo, instances:ty list, argExpOpt:tfpexp option, loc:loc}
+   | TFPOPRIMAPPLY of
+      {oprimOp:oprimInfo,
+       keyTyList:ty list,
+       instances:ty list,
+       argExpOpt:tfpexp option,
+       loc:loc}
    | TFPDATACONSTRUCT of {con:conInfo, instTyList:ty list, argExpOpt:tfpexp option,loc:loc}
    | TFPEXNCONSTRUCT of {exn:exnInfo, instTyList:ty list, argExpOpt:tfpexp option,loc:loc}
    | TFPAPPM of {funExp:tfpexp,funTy:ty, argExpList:tfpexp list,loc:loc}
@@ -115,8 +120,8 @@ signature TYPEDFLATCALC = sig
         loc:loc
         }
    | TFPFNM of {argVarList: varIdInfo list, bodyTy:ty, bodyExp:tfpexp, loc:loc}
-   | TFPPOLYFNM of {btvEnv:btvKind IEnv.map, argVarList: varIdInfo list, bodyTy:ty, bodyExp:tfpexp, loc:loc}
-   | TFPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tfpexp, loc:loc}
+   | TFPPOLYFNM of {btvEnv:btvEnv, argVarList: varIdInfo list, bodyTy:ty, bodyExp:tfpexp, loc:loc}
+   | TFPPOLY of {btvEnv:btvEnv, expTyWithoutTAbs:ty, exp:tfpexp, loc:loc}
    | TFPTAPP of {exp:tfpexp, expTy:ty, instTyList:ty list, loc:loc}
    | TFPSEQ of {expList:tfpexp list, expTyList:ty list, loc:loc}      (* this must be primitive *)
    | TFPLIST of {expList:tfpexp list, listTy:ty, loc:loc}
@@ -124,7 +129,7 @@ signature TYPEDFLATCALC = sig
  and tfpdecl 
    = TFPVAL of (valIdent * tfpexp) list * loc
    | TFPVALREC of (varIdInfo * ty * tfpexp ) list * loc
-   | TFPVALPOLYREC of btvKind IEnv.map * (varIdInfo * ty * tfpexp) list * loc
+   | TFPVALPOLYREC of btvEnv * (varIdInfo * ty * tfpexp) list * loc
    | TFPLOCALDEC of tfpdecl list * tfpdecl list * loc
    | TFPSETFIELD of tfpexp * tfpexp * int * ty * loc
    | TFPEXNBINDDEF of Types.exnInfo list
@@ -158,12 +163,12 @@ signature TYPEDFLATCALC = sig
                               bodyCode : basicBlock list}      
         | TFPBASICBLOCK of basicBlock
 
- val format_tfpdecl : (int * Types.btvEnv) list
+ val format_tfpdecl : Types.formatBtvEnv
                       -> tfpdecl SMLFormat.BasicFormatters.formatter
 			 
- val format_tfpexp : (int * Types.btvEnv) list
+ val format_tfpexp : Types.formatBtvEnv
                      -> tfpexp SMLFormat.BasicFormatters.formatter
- val format_tfppat : (int * Types.btvEnv) list
+ val format_tfppat : Types.formatBtvEnv
                      -> tfppat -> SMLFormat.FormatExpression.expression list
  val untypedformat_tfppat :
      tfppat -> SMLFormat.FormatExpression.expression list

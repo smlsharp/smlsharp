@@ -48,9 +48,8 @@ in
     fun injectPathToTop path = 
         P.PSysStructure(P.externStrName, P.pathToUsrPath path)
           
-    fun injectBtvKindToTop ({index, recordKind, eqKind} : TY.btvKind) =
+    fun injectBtvKindToTop ({recordKind, eqKind} : TY.btvKind) =
         {
-         index = index,
          recordKind = injectRecKindToTop recordKind,
          eqKind = eqKind
         }
@@ -58,7 +57,31 @@ in
     and injectRecKindToTop recordKind =
         case recordKind of
           TY.REC tyMap => TY.REC(SEnv.map injectTyToTop tyMap)
-        | TY.OVERLOADED tys => TY.OVERLOADED (map injectTyToTop tys)
+        | TY.OCONSTkind tys => TY.OCONSTkind (map injectTyToTop tys)
+        | TY.OPRIMkind {instances, operators} =>
+          TY.OPRIMkind
+            {instances = map injectTyToTop instances,
+             operators = 
+               map
+                 (fn 
+                  {
+                   oprimId,
+                   oprimPolyTy,
+                   name,
+                   keyTyList,
+                   instTyList
+                  } 
+                    =>
+                  {
+                   oprimId = oprimId,
+                   oprimPolyTy = injectTyToTop oprimPolyTy,
+                   name = name,
+                   keyTyList = map injectTyToTop keyTyList,
+                   instTyList = map injectTyToTop instTyList
+                  }
+                 )
+                 operators
+            }
         | TY.UNIV => TY.UNIV
                      
     and injectTyConToTop
@@ -84,7 +107,15 @@ in
 
     and injectTyToTop ty =
         case ty of
-          TY.TYVARty(tyRef as ref(TY.SUBSTITUTED destTy)) =>
+          TY.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+          TY.INSTCODEty
+            {oprimId = oprimId,
+             oprimPolyTy = injectTyToTop oprimPolyTy,
+             name = name,
+             keyTyList = map injectTyToTop keyTyList,
+             instTyList = map injectTyToTop instTyList
+            }
+        | TY.TYVARty(tyRef as ref(TY.SUBSTITUTED destTy)) =>
           (tyRef := TY.SUBSTITUTED(injectTyToTop destTy); ty)
         | TY.TYVARty(tyRef as ref(TY.TVAR _)) =>
           raise Control.Bug "free type varialbe in top level"

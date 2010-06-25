@@ -3,20 +3,20 @@
 Using OLE/SML#, you can access .NET objects from SML# world.
 
 Let's write a SML# code to access a .NET object implemented in the
-following C# code( HelloDotNetWorld.cs ).
+following C# code( HelloDotNETWorld.cs ).
 
  using System.Runtime.InteropServices;
  
  [InterfaceTypeAttribute(ComInterfaceType.InterfaceIsDual)]
- public interface IHelloDotNetWorld
+ public interface IHelloDotNETWorld
  {
     string greeting(string yourName);
  }
  
  [ClassInterface(ClassInterfaceType.None)]
- public class HelloDotNetWorld : IHelloDotNetWorld
+ public class HelloDotNETWorld : IHelloDotNETWorld
  {
-    public HelloDotNetWorld(){
+    public HelloDotNETWorld(){
         System.Console.WriteLine("I am a .NET object.");
     }
  
@@ -27,31 +27,31 @@ following C# code( HelloDotNetWorld.cs ).
  };
 
 Compile this code by C# compiler to generate an assembly
-( HelloDotNetWorld.dll ).
+( HelloDotNETWorld.dll ).
 
- $ csc.exe /t:library HelloDotNetWorld.cs
+ $ csc.exe /t:library HelloDotNETWorld.cs
 
 Register the assembly.
 
- $ RegAsm.exe /codebase HelloDotNetWorld.dll
+ $ RegAsm.exe /codebase HelloDotNETWorld.dll
 
-Then, generate a type-library ( HelloDotNetWorld.tlb ).
+Then, generate a type-library ( HelloDotNETWorld.tlb ).
 
- $ TlbExp.exe HelloDotNetWorld.dll
+ $ TlbExp.exe HelloDotNETWorld.dll
 
-From this type-library, generate a wrapper SML code ( HelloDotNetWorld.sml ).
+From this type-library, generate a wrapper SML code ( HelloDotNETWorld.sml ).
 
- $ OLE2SML.exe HelloDotNetWorld.tlb
+ $ OLE2SML.exe HelloDotNETWorld.tlb
 
 Finally, SML# code can access this .NET object as follows.
 
  use "OLE.sml";
  
- use "./HelloDotNetWorld.sml";
+ use "./HelloDotNETWorld.sml";
  
  OLE.initialize [OLE.COINIT_MULTITHREADED];
  
- val object = HelloDotNetWorld.newHelloDotNetWorld ();
+ val object = HelloDotNETWorld.newHelloDotNETWorld ();
  val message = OLE.A (#greeting object (OLE.L "world"));
  val _ = print message;
 
@@ -59,9 +59,9 @@ You can see a message from .NET world.
 
  $ /usr/local/bin/smlsharp
  SML# 0.40 (2010-04-30 22:11:29 --)
- # use "./UseHelloDotNetWorld.sml";
+ # use "./UseHelloDotNETWorld.sml";
           :
- structure HelloDotNetWorld : HelloDotNetWorld
+ structure HelloDotNETWorld : HelloDotNETWorld
  val it = () : unit
  I am a .NET object.
  val object =
@@ -75,13 +75,13 @@ You can see a message from .NET world.
        release = fn,
        this = fn
      }
-     : HelloDotNetWorld.HelloDotNetWorld
+     : HelloDotNETWorld.HelloDotNETWorld
  val message = "Hello, world !" : String.string
  Hello, world !
 
 In another way,
 
- $ /usr/local/bin/smlsharp ./UseHelloDotNetWorld.sml
+ $ /usr/local/bin/smlsharp ./UseHelloDotNETWorld.sml
  I am a .NET object.
  Hello, world !
 
@@ -93,7 +93,7 @@ higher level of interoperability with .NET will be possible.
 !!About deployment.
 The above example registers the assembly as follows:
 
- $ RegAsm.exe /codebase HelloDotNetWorld.dll
+ $ RegAsm.exe /codebase HelloDotNETWorld.dll
 
 Although this is an easy procedure to access .NET object on the SML#
 interactive session, it is not a preferred way.
@@ -121,19 +121,19 @@ the application can be located at the same directory with the assembly.
 
 Use smlsharp2exe.sh.
 
- $ smlsharp2exe.sh -o UseHelloDotNetWorld.exe ./UseHelloDotNetWorld.sml
+ $ smlsharp2exe.sh -o UseHelloDotNETWorld.exe ./UseHelloDotNETWorld.sml
 
-The application ( UseHelloDotNetWorld.exe ) and the assembly
-( HelloDotNetWorld.dll ) are located at the same directory now.
+The application ( UseHelloDotNETWorld.exe ) and the assembly
+( HelloDotNETWorld.dll ) are located at the same directory now.
 
  $ ls
- HelloDotNetWorld.cs   HelloDotNetWorld.tlb     UseHelloDotNetWorld.sml
- HelloDotNetWorld.dll  Makefile
- HelloDotNetWorld.sml  UseHelloDotNetWorld.exe
+ HelloDotNETWorld.cs   HelloDotNETWorld.tlb     UseHelloDotNETWorld.sml
+ HelloDotNETWorld.dll  Makefile
+ HelloDotNETWorld.sml  UseHelloDotNETWorld.exe
 
 This application can load the assembly and access a .NET object.
 
- $ ./UseHelloDotNetWorld.exe
+ $ ./UseHelloDotNETWorld.exe
  I am a .NET object.
  Hello, world !
 

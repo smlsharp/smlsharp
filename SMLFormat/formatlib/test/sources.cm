@@ -1,6 +1,8 @@
 Group is
+        $/basis.cm
+
         ../main/sources.cm
-        ../smlunitlib.cm
+        ../../../SMLUnit/smlunitlib.cm
 
         SMLFormatTestUtil.sml
 
@@ -15,6 +17,8 @@ Group is
         SMLFormatTest0008.sml
         SMLFormatTest0009.sml
         SMLFormatTest0010.sml
+
+        SMLFormatTest0011.sml
 
         PrinterParameterTest0001.sml
         PrinterParameterTest0002.sml

@@ -9,7 +9,7 @@ structure Aux = struct
   structure EntryOrd =
   struct 
   type ord_key = entry
-  fun  compare (e1:entry,e2:entry) = LocalVarID.compare (#id e1, #id e2)
+  fun  compare (e1:entry,e2:entry) = VarID.compare (#id e1, #id e2)
   end
   
   (* set of variables *)
@@ -34,7 +34,7 @@ structure CFG = SplaySetFn(CfgKey):ORD_SET
 structure adrOrd =
 struct 
 type ord_key = address
-fun  compare (e1:address,e2:address) = LocalVarID.compare (e1, e2)
+fun  compare (e1:address,e2:address) = VarID.compare (e1, e2)
 end
 
 structure ad_map = SplayMapFn(adrOrd)

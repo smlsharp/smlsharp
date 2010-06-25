@@ -9,7 +9,8 @@ structure BuiltinPrimitiveType : sig
 
   val primInfo : Types.topTyConEnv
                  -> BuiltinPrimitive.prim_or_special
-                 -> {name: BuiltinPrimitive.prim_or_special, ty: Types.ty}
+                 -> {prim_or_special: BuiltinPrimitive.prim_or_special,
+                     ty: Types.ty}
 
 end =
 struct
@@ -23,7 +24,8 @@ struct
               P.P prim => BuiltinPrimitiveInfo.primitive_info prim
             | P.S prim => BuiltinPrimitiveInfo.specialForm_info prim
       in
-        {name = builtin, ty = TypeParser.readTy topTyConEnv ty}
+        {prim_or_special = builtin,
+         ty = TypeParser.readTy topTyConEnv ty}
       end
 
 end

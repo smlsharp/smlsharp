@@ -28,13 +28,13 @@ structure MultipleValueCalc  = struct
 
 (*
  (*%
-  * @formatter(LocalVarID.id) LocalVarID.format_id
+  * @formatter(VarID.id) VarID.format_id
   *)
  (*%
   * @prefix typed
-  * @formatter(LocalVarID.id) LocalVarID.format_id
+  * @formatter(VarID.id) VarID.format_id
   *)
- type varid = LocalVarID.id
+ type varid = VarID.id
 *)
 
  (*%

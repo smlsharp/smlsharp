@@ -6,6 +6,7 @@ Group
         structure PathUtility
         structure ListSorter
         structure SmlppgUtil
+        structure TermFormat
         structure BigInt
 
         functor ExtensibleArray

@@ -31,37 +31,37 @@ struct
          endLabel : label
        }
 
-  type map = varInfo LocalVarID.Map.map
+  type map = varInfo VarID.Map.map
 
   (***************************************************************************)
 
-  val empty = LocalVarID.Map.empty : map
+  val empty = VarID.Map.empty : map
 
   fun find (map, SIVarInfo : SymbolicInstructions.varInfo) =
-      case LocalVarID.Map.find (map, #id SIVarInfo) of
+      case VarID.Map.find (map, #id SIVarInfo) of
         NONE =>
         raise
           Control.Bug
-              ("variable " ^ (LocalVarID.toString (#id SIVarInfo)) ^ " is not found")
+              ("variable " ^ (VarID.toString (#id SIVarInfo)) ^ " is not found")
       | SOME (varInfo : varInfo) => varInfo
 
   fun register (map, varInfo : varInfo) =
       let val varID = #id varInfo
       in
-        case LocalVarID.Map.find (map, varID) of
-          NONE => LocalVarID.Map.insert (map, varID, varInfo)
+        case VarID.Map.find (map, varID) of
+          NONE => VarID.Map.insert (map, varID, varInfo)
         | SOME _ =>
-          raise Control.Bug ("duplicated variable: " ^ (LocalVarID.toString varID))
+          raise Control.Bug ("duplicated variable: " ^ (VarID.toString varID))
       end
 
   fun union (map1, map2) =
-      LocalVarID.Map.unionWithi
+      VarID.Map.unionWithi
           (fn (id, _, _) =>
-              raise Control.Bug (LocalVarID.toString id ^ " is allocated twice"))
+              raise Control.Bug (VarID.toString id ^ " is allocated twice"))
           (map1, map2)
 
   fun shift (map, shift : BT.UInt32) =
-      LocalVarID.Map.map
+      VarID.Map.map
           (fn {id, displayName, slot, beginLabel, endLabel} : varInfo =>
               {
                 id = id,
@@ -72,21 +72,21 @@ struct
               })
           map
 
-  fun getAll map = LocalVarID.Map.listItems map
+  fun getAll map = VarID.Map.listItems map
 
   fun varInfoToString
           ({id, displayName, slot, beginLabel, endLabel} : varInfo) =
-      LocalVarID.toString id
+      VarID.toString id
       ^ ","
       ^ displayName
       ^ ","
       ^ BT.UInt32.toString slot
       ^ ","
-      ^ (LocalVarID.toString beginLabel)
+      ^ (VarID.toString beginLabel)
       ^ "-"
-      ^ (LocalVarID.toString endLabel)
+      ^ (VarID.toString endLabel)
 
-  fun mapToStrings map = List.map varInfoToString (LocalVarID.Map.listItems map)
+  fun mapToStrings map = List.map varInfoToString (VarID.Map.listItems map)
 
   (***************************************************************************)
 

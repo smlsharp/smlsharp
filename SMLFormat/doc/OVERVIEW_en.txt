@@ -255,7 +255,7 @@ The prettyPrint function has following type:
      ... 1  "abc" +3 "def" 4 "ghi" +3 "jkl" 2 ...
           <-------------------------------->
 
-    The L equals to 14 (= 3 + 1 + 3 + 0 + 3 + 1 + 3) columns which is required to output the format expressions between F and B without inserting newlines. And if newline is inserted at the F, the next line starts at the first column, it means that the W equals to the specified number of columns. As the result, if the specified number of columns is less than 14, it is required to start a newline at the B. 
+    The L equals to 14 (= 3 + 1 + 3 + 0 + 3 + 1 + 3) columns which is required to output the format expressions between F and B without inserting newlines. And if newline is inserted at the F, the next line starts at the first column, it means that the W equals to the specified number of columns. As the result, if the specified number of columns is less than 14, it is required to start a newline at the N. 
 
    3) Otherwise, no newline is inserted at the indicator.
 

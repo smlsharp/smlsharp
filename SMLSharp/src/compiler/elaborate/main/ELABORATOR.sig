@@ -18,10 +18,8 @@ sig
 
   val elaborate :
       Fixity.fixity SEnv.map
-      -> VarNameID.id
       -> Absyn.topdec list
       -> PatternCalc.pltopdec list
          * Fixity.fixity SEnv.map
-         * VarNameID.id
          * UserError.errorInfo list
 end

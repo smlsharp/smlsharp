@@ -27,13 +27,13 @@ structure AnnotatedCalc = struct
 
 (*
  (*% 
-  * @formatter(LocalVarID.id) LocalVarID.format_id
+  * @formatter(VarID.id) VarID.format_id
   *)
  type id = 
      (*%
       * @format(id) id
       *)
-      LocalVarID.id
+      VarID.id
 *)
 
  (*%

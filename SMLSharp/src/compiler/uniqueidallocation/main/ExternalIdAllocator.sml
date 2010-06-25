@@ -19,7 +19,7 @@ in
   fun allocateExternalVarIDForVarInfo (varIdInfo as {id,displayName}) =
        let
            val deltaMap = 
-               LocalVarID.Map.singleton (id, (displayName, Counters.newExternalID ()))
+               VarID.Map.singleton (id, (displayName, Counters.newExternalID ()))
        in
            deltaMap
        end
@@ -46,9 +46,9 @@ in
                          let
                              val deltaMap = allocateExternalVarIDForVarInfo varIdInfo
                          in
-                             LocalVarID.Map.unionWith #1 (deltaMap, accMap)
+                             VarID.Map.unionWith #1 (deltaMap, accMap)
                          end)
-                     LocalVarID.Map.empty
+                     VarID.Map.empty
                      visibleVars
        in
            deltaMap

@@ -139,13 +139,13 @@ in
           @ [FE.Term(1, ")")]
   in
   fun formatTyVarNames tyVarNames =
-      encloseList (map (fn name => [FE.Term(size name, name)]) tyVarNames)
+      encloseList tyVarNames
 
   fun formatBTVMap BTVMap =
       let
-        val BTVIndexes = IEnv.listKeys BTVMap
-        val formattedNames = 
-            map (TY.formatBoundtvar (fn x => x, [(0, BTVMap)])) BTVIndexes
+        val BTVIndexes = map TY.BOUNDVARty (IEnv.listKeys BTVMap)
+        val formatEnv = TermFormat.extendBtvEnv TermFormat.emptyBtvEnv BTVMap
+        val formattedNames = map (TY.format_ty formatEnv) BTVIndexes
       in
         encloseList formattedNames
       end
@@ -153,8 +153,14 @@ in
 
   fun formatTy path ty =
       let
+        (* NOTE: system strpath is stripped everytime when formatTy is called.
+         * It seems inefficient.
+         *)
+        val ty = TypesUtils.stripSysStrpathTy ty
+        val path = Path.pathToUsrPath path
         val newTy = U.makePathOfTyRelative path ty
-        val expressions = TY.format_ty [] (TypesUtils.stripSysStrpathTy newTy) 
+        val newTy = TypesUtils.stripSysStrpathTy newTy
+        val expressions = TY.format_ty [] newTy
       in
         expressions
       end
@@ -172,7 +178,8 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
   fun formatTyUnderBTV path BTVs ty =
       let
         val newTy = U.makePathOfTyRelative path ty
-        val expressions = TY.format_ty [(0, BTVs)] (TypesUtils.stripSysStrpathTy newTy)
+        val formatEnv = TermFormat.extendBtvEnv TermFormat.emptyBtvEnv BTVs
+        val expressions = TY.format_ty formatEnv (TypesUtils.stripSysStrpathTy newTy)
       in expressions end
 (*
         val tyString = OC.FEToString expressions
@@ -182,7 +189,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
   fun tyvarsToNames tyvars =
       map
           (fn (index, eq) =>
-              (if eq = TY.EQ then "''" else "'") ^ Types.tyIdName index)
+              TY.format_eqKind (TermFormat.formatFreeTyvar index) eq)
           (ListPair.zip (List.tabulate (length tyvars, fn n => n), tyvars))
      
 
@@ -263,8 +270,8 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
                OC.makeConstantTerm
                  ("hidden(" ^ (OC.FEToString (formatTy path ty)) ^ ")")
              else                                                                    
-               OC.makeConstantTerm (OC.FEToString (formatTy path ty))
-           | _ => OC.makeConstantTerm (OC.FEToString (formatTy path ty))
+               OC.preformat (formatTy path ty)
+           | _ => OC.preformat (formatTy path ty)
 (*
             OC.makeConstantTerm "<ty>"
 *)
@@ -461,6 +468,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
 
   (***************************************************************************)
 
+(*
   fun generatePrintCodeForOpen context currentPath loc strPathInfos =
       let
         fun generatePrintCodeForOpenOne
@@ -486,6 +494,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
       in
         TP.TPLOCALDEC(map generatePrintCodeForOpenOne strPathInfos, [], loc)
       end
+*)
 
   fun generatePrintCodeForIntro loc strPath =
       let
@@ -760,7 +769,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
               case idState of
                 (TY.VARID varPathInfo) => #ty varPathInfo
               | (TY.PRIM primInfo) => #ty primInfo
-              | (TY.OPRIM oprimInfo) => #ty oprimInfo
+              | (TY.OPRIM oprimInfo) => #oprimPolyTy oprimInfo
               | (TY.CONID conPathInfo) => #ty conPathInfo
               | (TY.EXNID conPathInfo) => #ty conPathInfo
               | (TY.RECFUNID (varPathInfo, int)) => #ty varPathInfo
@@ -790,8 +799,13 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
                   NM.usrNamePathToString(#namePath varPathInfo),
                   #ty varPathInfo
                 )
-              | (TY.PRIM primInfo) => (Control.prettyPrint (BuiltinPrimitive.format_prim_or_special (#name primInfo)), #ty primInfo)
-              | (TY.OPRIM oprimInfo) => (#name oprimInfo, #ty oprimInfo)
+              | (TY.PRIM primInfo) =>
+                (Control.prettyPrint
+                   (BuiltinPrimitive.format_prim_or_special
+                      (#prim_or_special primInfo)),
+                 #ty primInfo)
+              | (TY.OPRIM oprimInfo) =>
+                (#name oprimInfo, #oprimPolyTy oprimInfo)
               | (TY.CONID conPathInfo) =>
                 (
                   NM.usrNamePathToString(#namePath conPathInfo), 
@@ -1283,9 +1297,6 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
             ]
         end
       | PL.PLSPECEMPTY => nil
-(*
-      | PL.PLSPECFUNCTOR _ => raise Control.Bug "PLSPECFUNCTOR"
-*)
   and formatPlSigExp plSigExp =
       case plSigExp of
           PL.PLSIGEXPBASIC (plspec, loc) =>

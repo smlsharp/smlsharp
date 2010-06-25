@@ -113,7 +113,32 @@ struct
                   then
                     (* we must make all the case explicit here *)
                     case ty of
-                      TY.ERRORty => (ty, accum)
+                      TY.INSTCODEty
+                        {
+                         oprimId,
+                         name,
+                         oprimPolyTy,
+                         keyTyList,
+                         instTyList
+                        }
+                      =>
+                      let
+                        val (keyTyList,accum') = visitTys accum keyTyList
+                        val (instTyList,accum'') = visitTys accum' instTyList
+                      in
+                        (
+                         TY.INSTCODEty
+                           {
+                            oprimId = oprimId,
+                            name = name,
+                            oprimPolyTy = oprimPolyTy,
+                            keyTyList = keyTyList,
+                            instTyList = instTyList
+                           },
+                         accum''
+                         )
+                        end
+                    | TY.ERRORty => (ty, accum)
                     | TY.DUMMYty _ => (ty, accum)
                     | TY.TYVARty(ref(TY.TVAR _)) => (ty, accum)
                     | TY.TYVARty(ref(TY.SUBSTITUTED realTy)) =>

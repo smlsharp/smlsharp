@@ -113,12 +113,6 @@ signature PATTERNCALCFLATTENED = sig
    | PLFSPECEMPTY
    | PLFSPECPREFIXEDSIGID of NameMap.namePath * Loc.loc
    | PLFSPECSIGWHERE of plfspec * (Absyn.tvar list * NameMap.namePath * ty) list * Loc.loc
-(*
-   | PLFSPECFUNCTOR of (string * 
-                        (plfspec * NameMap.basicNameNPEnv) * 
-                        (plfspec * NameMap.basicNameNPEnv)) list * 
-                       Loc.loc 
-*)
  
 and plftopdec = 
      PLFDECSTR of pdfStrDecl list * Loc.loc

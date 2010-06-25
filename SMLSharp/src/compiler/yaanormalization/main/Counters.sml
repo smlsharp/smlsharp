@@ -8,26 +8,21 @@ structure Counters :
               type stamp
               val init : stamp -> unit
               val getCounterStamp : unit -> stamp
-              val newLocalId : unit -> LocalVarID.id
+              val newLocalId : unit -> VarID.id
               val newClusterId : unit -> ClusterID.id
           end
   =
 struct
 
-   type stamp =
-       {localVarIDStamp: LocalVarID.id,
-        clusterIDStamp: ClusterID.id}
+   type stamp = ClusterID.id
 
-   fun init {localVarIDStamp, clusterIDStamp} =
-       (LocalVarIDGen.init localVarIDStamp;
-        ClusterIDGen.init clusterIDStamp)
+   fun init clusterIDStamp =
+        ClusterID.init clusterIDStamp
 
-   fun getCounterStamp () =
-       {localVarIDStamp = LocalVarIDGen.reset (),
-        clusterIDStamp = ClusterIDGen.reset ()}
+   fun getCounterStamp () = ClusterID.reset ()
 
-   fun newLocalId () = LocalVarIDGen.generate ()
+   fun newLocalId () = VarID.generate ()
 
-   fun newClusterId () = ClusterIDGen.generate ()
+   fun newClusterId () = ClusterID.generate ()
 
 end

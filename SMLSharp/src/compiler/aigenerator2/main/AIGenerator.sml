@@ -8,12 +8,14 @@ structure AIGenerator2 : AIGENERATOR2 =
 struct
   structure AbstractInstruction = AbstractInstruction2
 
-  structure ID = LocalVarID
+  structure ID = VarID
   structure CT = ConstantTerm
   structure AN = YAANormal
   structure AI = AbstractInstruction
   structure Target = AI.Target
   structure CA = CallAnalysis
+
+  fun newLocalId () = VarID.generate()
 
   (* FIXME: nested block; adjust with RBUTransformation *)
   val nestedBlockIndex = AI.UInt 0w0
@@ -27,11 +29,11 @@ struct
   val SubscriptExceptionTag = AI.Extern "sml_exn_Subscript"
 
   fun newArg (ty, argKind) =
-      {id = Counters.newLocalId (), ty = ty, argKind = argKind} : AI.argInfo
+      {id = newLocalId (), ty = ty, argKind = argKind} : AI.argInfo
 
   fun newVar ty =
       let
-        val id = Counters.newLocalId ()
+        val id = newLocalId ()
         val displayName = "$" ^ ID.toString id
       in
         {id = id,
@@ -39,11 +41,11 @@ struct
          displayName = displayName} : AI.varInfo
        end
 
-  val newLabel = Counters.newLocalId
+  val newLabel = newLocalId
 
   fun newANVarInfo anty varKind =
       let
-        val id = Counters.newLocalId ()
+        val id = newLocalId ()
       in
         {id = id,
          displayName = "$" ^ ID.toString id,
@@ -130,7 +132,7 @@ struct
 
   fun addConst (context as {constants, ...}:context) const =
       let
-        val constid = Counters.newLocalId ()
+        val constid = newLocalId ()
       in
         ({
            boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
@@ -3243,9 +3245,8 @@ struct
       end
     | transformTopdeclList funIdMap nil = emptyProgram
 
-  fun generate stamp topdeclList =
+  fun generate topdeclList =
       let
-        val _ = Counters.init stamp
 
         val clusters =
             List.mapPartial (fn AN.ANCLUSTER x => SOME x | _ => NONE)
@@ -3275,7 +3276,7 @@ struct
             } : AI.program
 *)
       in
-        (Counters.getCounterStamp(), program)
+        program
       end
 
 end

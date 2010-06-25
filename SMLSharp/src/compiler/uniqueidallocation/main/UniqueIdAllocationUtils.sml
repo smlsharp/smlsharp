@@ -114,7 +114,7 @@ in
           val newId = 
               case varId of
                   Types.INTERNAL id =>
-                  (case LocalVarID.Map.find(IDMap, id) of
+                  (case VarID.Map.find(IDMap, id) of
                        SOME (_, index) => T.EXTERNAL index
                      | NONE => Types.INTERNAL id)
                 | Types.EXTERNAL _ => varId
@@ -124,7 +124,7 @@ in
            varId = newId}
       end
 
-  type vidFun = (string * ExternalVarID.id) LocalVarID.Map.map -> varIdInfo -> varIdInfo
+  type vidFun = (string * ExternalVarID.id) VarID.Map.map -> varIdInfo -> varIdInfo
 
   fun annotateExternalIdValIdent (annotateFunctionVarIdInfo:vidFun) IDMap valIdent =
       case valIdent of
@@ -176,19 +176,26 @@ in
               argExpOpt = Option.map (annotateExternalIdTfpexp annotateFunctionVarIdInfo IDIndexMap) tfpexpOpt,
               loc=loc
               }
-       | TFPOPRIMAPPLY {
-                        oprimOp=oprim, 
-                        instances=tys, 
-                        argExpOpt=tfpexpOpt, 
-                        loc
-                        } =>
+       | TFPOPRIMAPPLY
+           {
+            oprimOp=oprim,
+            keyTyList =ktys,
+            instances=tys,
+            argExpOpt=tfpexpOpt, 
+            loc
+           } =>
          TFPOPRIMAPPLY
-             {
-              oprimOp = oprim, 
-              instances = tys, 
-              argExpOpt = Option.map (annotateExternalIdTfpexp annotateFunctionVarIdInfo IDIndexMap) tfpexpOpt,
-              loc=loc
-              }
+           {
+            oprimOp = oprim,
+            keyTyList = ktys,
+            instances = tys,
+            argExpOpt =
+              Option.map
+                (annotateExternalIdTfpexp
+                   annotateFunctionVarIdInfo IDIndexMap)
+                tfpexpOpt,
+            loc=loc
+           }
        | TFPDATACONSTRUCT {con, instTyList = tys, argExpOpt = tfpexpOpt, loc} => 
          TFPDATACONSTRUCT
              {
@@ -434,8 +441,10 @@ in
         | TFPPRIMAPPLY {primOp = prim, instTyList = tys, argExpOpt = NONE, loc} => ExnTagID.Set.empty
         | TFPPRIMAPPLY {primOp = prim, instTyList = tys, argExpOpt = SOME exp, loc} => 
           collectDefExnIDTfpexp exp
-        | TFPOPRIMAPPLY {oprimOp, instances, argExpOpt = NONE, loc } => ExnTagID.Set.empty
-        | TFPOPRIMAPPLY {oprimOp, instances, argExpOpt = SOME exp, loc } => 
+        | TFPOPRIMAPPLY {oprimOp, keyTyList, instances, argExpOpt = NONE, loc}
+          => ExnTagID.Set.empty
+        | TFPOPRIMAPPLY
+            {oprimOp, keyTyList, instances, argExpOpt = SOME exp, loc} => 
           collectDefExnIDTfpexp exp
         | TFPDATACONSTRUCT {con, instTyList = tys, argExpOpt = NONE, loc} => ExnTagID.Set.empty
         | TFPDATACONSTRUCT {con, instTyList = tys, argExpOpt = SOME exp, loc} => 
@@ -625,7 +634,7 @@ in
                                   VIC.External externalID =>
                                   let
                                       val newID = 
-                                           ExternalVarIDKeyGen.generate ()
+                                           ExternalVarID.generate ()
                                   in
                                       (
                                        SEnv.insert(newTopVarEnv, 
@@ -646,11 +655,11 @@ in
       end
       
   fun IDMapJoinExternalVarIDMap IDMap externalVarIDMap =
-      LocalVarID.Map.foldli (fn (srcID, entry as (displayName1, objExternalID), newIDMap) =>
+      VarID.Map.foldli (fn (srcID, entry as (displayName1, objExternalID), newIDMap) =>
                         case ExternalVarID.Map.find(externalVarIDMap, objExternalID) of
-                            NONE => LocalVarID.Map.insert(newIDMap, srcID, entry)
-                          | SOME entry => LocalVarID.Map.insert(newIDMap, srcID, entry))
-                    LocalVarID.Map.empty
+                            NONE => VarID.Map.insert(newIDMap, srcID, entry)
+                          | SOME entry => VarID.Map.insert(newIDMap, srcID, entry))
+                    VarID.Map.empty
                     IDMap
 end
 end

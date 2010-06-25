@@ -7,6 +7,7 @@ structure TransFundecl : TRANS_FUNDECL = struct
 local
   structure VU = VALREC_Utils
   open PatternCalcFlattened
+  fun newVarName () = VarName.generate ()
 in
   fun transFunDecl loc (funPat, ruleList as (([pat], exp)::_)) =
          (funPat, PLFFNM(map (fn (patList,exp) => (patList, transExp exp)) ruleList, loc))
@@ -27,7 +28,7 @@ in
                  (fn (x, (n, y)) => (n + 1, y @ [(Int.toString n, x)]))
                  (1, nil)
                  list)
-              val newNames = map (fn x => Counters.newVarName()) patList 
+              val newNames = map (fn x => newVarName()) patList 
               val newVars = map (fn x => PLFVAR((x,Path.NilPath), loc)) newNames
               val newVarPats = map (fn x => PLFPATID((x, Path.NilPath), loc)) newNames
               val argRecord = PLFRECORD (listToTuple newVars, loc)

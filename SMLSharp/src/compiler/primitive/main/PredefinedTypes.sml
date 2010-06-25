@@ -84,6 +84,7 @@ struct
   val indicatorConPathInfo = getConPathInfo "SMLSharp.SMLFormat.Indicator"
   val startOfIndentConPathInfo = getConPathInfo "SMLSharp.SMLFormat.StartOfIndent"
   val endOfIndentConPathInfo = getConPathInfo "SMLSharp.SMLFormat.EndOfIndent"
+  val newlineConPathInfo = getConPathInfo "SMLSharp.SMLFormat.Newline"
 
   val assignPrimInfo =
       BuiltinPrimitiveType.primInfo

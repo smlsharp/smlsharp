@@ -6,11 +6,12 @@ FORMAT_EXPRESSION_TYPES.sig
 FORMAT_EXPRESSION.sig
 FormatExpressionTypes.sml
 FormatExpression.sml
+PreProcessedExpression.sml
 PRINTER_PARAMETER.sig
 PrinterParameter.sml
-PRETTYPRINTER.sig
 PrettyPrinter.sml
-PREPROCESSOR.sig
+Truncator.sml
+AssocResolver.sml
 PreProcessor.sml
 BASIC_FORMATTERS.sig
 BasicFormatters.sml

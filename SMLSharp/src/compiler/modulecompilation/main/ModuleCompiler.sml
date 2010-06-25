@@ -1085,28 +1085,6 @@ in
           ([PCF.PDFVALREC (kindedTvarList, plrules, loc)], 
            NM.injectVarNameMapInNameMap incVarNameMap)
         end
-      | PC.PDVALRECGROUP (idList, pldecls, loc) =>
-        let
-          val (ptdecls, _, nameMap) = 
-              foldl (fn (pldecl, (newPldecls, nameContext, nameMap)) => 
-                        let
-                          val (decs1, nameMap1) =
-                              compileDec nameContext pldecl
-                        in
-                          (
-                           newPldecls @ decs1,
-                           NM.extendNameContextWithCurrentNameMap 
-                             {nameContext = nameContext,
-                              nameMap = nameMap1},
-                           NM.mergeCurrentNameMap {old = nameMap,
-                                                   new = nameMap1}
-                          )
-                        end)
-                    (nil, nameContext, NM.emptyCurrentNameMap) 
-                    pldecls
-        in
-          ([PCF.PDFVALRECGROUP (idList, ptdecls, loc)], nameMap)
-        end
       | PC.PDTYPE (tvarsNameTyList, loc) =>
          let
            val (newTvarsNameTyList, tyNameMap) =
@@ -1532,7 +1510,7 @@ in
               foldl
                 (fn (strBind as (strName, strExp), (units, incNameMap)) => 
                     let
-                      val sysStructureName = VarNameGen.generate ()
+                      val sysStructureName = VarName.generate ()
                       val sysStrpath =
                           NM.appendStrLevel(#strLevel nameContext, 
                                             (sysStructureName, 
@@ -2045,83 +2023,6 @@ in
         in
           (seqSpec, NM.injectStrNameMapInNameMap strNameMap)
         end
-(*
-      | PC.PLSPECFUNCTOR (functorList, loc) =>
-        let
-          val (newFunctorList, functorNameMap) = 
-              foldl
-                (fn ((funName, argSigExp, bodySigExp),
-                     (newFunctorList, functorNameMap)) =>
-                    let
-        (* functor specification is the only one that involves
-         * unique structure name. One problematic example imposes
-         * this requirement:
-         * sig
-         *    structure S : sig type t end
-         *    structure K : sig type t end
-         *    functor F : sig structure S : sig type t val x : S.t end =>
-         *                sig structure K : sig type t val x : K.t end
-         *)
-                      val sysStructureName = VarNameGen.generate ()
-                      val newNameContext = 
-                          NM.updateStrLevel
-                            (nameContext, 
-                             Path.PSysStructure
-                               (sysStructureName, Path.NilPath))
-                      val (newArgSigExp, newArgNameMap) = 
-                          compileSigExp newNameContext argSigExp
-                      val basicArgSigNameMap =
-                          NM.extractBasicNameMapFromNameMap newArgNameMap
-                      val newNameContext = 
-                          NM.extendNameContextWithCurrentNameMap
-                            {nameContext = nameContext, 
-                             nameMap = NM.injectBasicNameMapInNameMap
-                                         basicArgSigNameMap}
-                      val sysStructureName = VarNameGen.generate ()
-                      val newNameContext = 
-                          NM.updateStrLevel (newNameContext, 
-                                             Path.PSysStructure
-                                               (sysStructureName,
-                                                Path.NilPath))
-                      val (newBodySigExp, bodyNameMap) = 
-                          compileSigExp newNameContext bodySigExp
-                      val basicBodyNameMap = 
-                          NM.extractBasicNameMapFromNameMap bodyNameMap
-                    in
-                      (newFunctorList
-                       @ [(funName, 
-                           (newArgSigExp, 
-                            NM.basicNameMapToFlattenedNamePathEnv
-                              basicArgSigNameMap),
-                           (newBodySigExp,
-                            NM.basicNameMapToFlattenedNamePathEnv
-                              basicBodyNameMap)
-                          )
-                         ],
-                       SEnv.insert
-                         (functorNameMap,
-                          funName,
-                          {arg = basicArgSigNameMap,
-                           body =
-                           NM.NAMEAUX
-                             {
-                              name = funName,
-                              wrapperSysStructure = NONE,
-                              parentPath = Path.NilPath,
-                              basicNameMap =
-                                NM.extractBasicNameMapFromNameMap bodyNameMap
-                             }
-                          }
-                         )
-                      )
-                    end)
-                (nil, SEnv.empty)
-                functorList
-        in
-          (PCF.PLFSPECFUNCTOR (newFunctorList, loc),
-           NM.injectFunNameMapInNameMap functorNameMap)
-        end
-*)
       | PC.PLSPECINCLUDE(sigExp,loc) => 
         let
           val (newSpec, nameMap) = compileSigExp nameContext sigExp
@@ -2364,7 +2265,7 @@ in
                 (fn ((funName, argStrName, argSigExp, bodyStrExp, loc), 
                      (funBinds, incNameMap)) => 
                     let
-                      val sysStructureName = VarNameGen.generate ()
+                      val sysStructureName = VarName.generate ()
                       val argStrPath = 
                           Path.PSysStructure
                             (
@@ -2464,9 +2365,8 @@ in
    * static rebindings. These kind of rebindings are eleminated 
    * by uniqueIdAllocation phase.
    *)
-  fun compile topNameMap (stamp: VarNameID.id) topDecs =
+  fun compile topNameMap topDecs =
       let
-        val _ = VarNameGen.init stamp
         val _ = E.initializeModuleCompilationError()
         val nameContext = {topNameMap = topNameMap,
                            currentNameMap = NM.emptyCurrentNameMap,
@@ -2479,7 +2379,6 @@ in
         else 
           (
            currentNameMap, 
-           VarNameGen.reset (), 
            decs
           )
       end

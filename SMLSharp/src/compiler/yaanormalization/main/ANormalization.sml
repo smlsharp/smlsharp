@@ -109,7 +109,7 @@ struct
       let
         val id = Counters.newLocalId ()
       in
-        {id = id, displayName = "$" ^ LocalVarID.toString id,
+        {id = id, displayName = "$" ^ VarID.toString id,
          varKind = varKind, ty = anty} : AN.varInfo
       end
 

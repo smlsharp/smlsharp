@@ -7,8 +7,6 @@
 structure TypesPickler 
   : sig
       val eqKind : Types.eqKind Pickle.pu
-      val path : Types.path Pickle.pu
-      val id : Types.varid Pickle.pu
       val tid : FreeTypeVarID.id Pickle.pu
       val recordKind : Types.recordKind Pickle.pu
       val tvState : Types.tvState Pickle.pu
@@ -34,7 +32,6 @@ structure TypesPickler
       val tySpec : Types.tySpec Pickle.pu
 *)
       val conPathInfo : Types.conPathInfo Pickle.pu
-      val conPathInfoNameType : Types.conPathInfoNameType Pickle.pu
       val varPathInfo : Types.varPathInfo Pickle.pu
       val varId : Types.varId Pickle.pu
       val primInfo : Types.primInfo Pickle.pu
@@ -42,15 +39,11 @@ structure TypesPickler
 (*
       val strBindInfo : Types.strBindInfo Pickle.pu               
 *)
-      val strPathInfo : Types.strPathInfo Pickle.pu               
 
-      val tyConIdSet : Types.tyConIdSet Pickle.pu
-      val exnTagSet : Types.exnTagSet Pickle.pu
       val sigBindInfo : Types.sigBindInfo Pickle.pu
       val utvEnv : Types.utvEnv Pickle.pu
 
       val conInfo : Types.conInfo Pickle.pu
-      val subst : Types.subst Pickle.pu
       val Env : Types.Env Pickle.pu
       val funBindInfo : Types.funBindInfo Pickle.pu
 
@@ -60,7 +53,6 @@ structure TypesPickler
       val funEnv : Types.funEnv Pickle.pu
       val sigEnv : Types.sigEnv Pickle.pu
       val btvEnv : Types.btvEnv Pickle.pu
-      val tvarNameSet : Types.tvarNameSet Pickle.pu
 
       val valId : Types.valId Pickle.pu
       val valIdent : Types.valIdent Pickle.pu
@@ -81,8 +73,6 @@ struct
 
   val path = NamePickler.path
 
-  val id = NamePickler.id
-
   val tyConID = TyConID.pu_ID
 
 (*
@@ -101,7 +91,7 @@ struct
        tyCon = {name = "",
                 strpath = Path.NilPath,
                 tyvars = [],
-                id = TyConID.initialID,
+                id = TyConID.generate() (* TyConID.initialID ??? *),
                 abstract = false,
                 eqKind = ref T.EQ,
                 constructorHasArgFlagList = []
@@ -165,12 +155,10 @@ struct
    * Tuple elements are sorted in alphabetic order of their type names.
    * But some of them are not sorted...
    *)
-  val id_string = P.tuple2 (id, P.string)
-  val id_string_ty = P.tuple3(id, P.string, ty)
   val namePath = P.tuple2(P.string, path)
   val namePath_ty = P.tuple2(namePath, ty)
   val string_ty = P.tuple2(P.string, ty)
-  val int_eqKind_recordKind = P.tuple3(P.int, eqKind, recordKind)
+  val eqKind_recordKind = P.tuple2(eqKind, recordKind)
   val path_string_ty = P.tuple3(path, P.string, ty)
   val string_path = P.tuple2(P.string, path)
   val ty_ty = P.tuple2 (ty, ty)
@@ -179,9 +167,30 @@ struct
   val tyList_int = P.tuple2 (tyList, P.int)
   (********************)
 
+  val operator :
+      {
+       oprimId : OPrimID.id,
+       oprimPolyTy : T.ty,
+       name : string,
+       keyTyList : T.ty list,
+       instTyList : T.ty list
+      } P.pu =
+      P.conv
+        (
+         fn (oprimId, oprimPolyTy, name, keyTyList, instTyList) =>
+            {oprimId=oprimId,
+             oprimPolyTy = oprimPolyTy,
+             name = name,
+             keyTyList=keyTyList,
+             instTyList=instTyList},
+         fn {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+            (oprimId, oprimPolyTy, name, keyTyList, instTyList)
+        )
+        (P.tuple5(OPrimID.pu_ID, ty, P.string, tyList, tyList))
+
   val tvKind : T.tvKind P.pu =
       P.conv
-          (
+        (
             fn (lambdaDepth, id, recordKind, eqKind, tyvarName) =>
                {
                  lambdaDepth = lambdaDepth,
@@ -223,7 +232,7 @@ struct
                         "non INTERNAL to pu_INTERNAL\
                         \ (types/main/TypesPickler.sml)"
                  )
-                id
+                NamePickler.id
       in
         P.data (toInt, [pu_EXTERNAL, pu_INTERNAL])
       end
@@ -243,12 +252,12 @@ struct
   val btvKind : T.btvKind P.pu =
       P.conv
           (
-            fn (index, eqKind, recordKind) =>
-               {index = index, eqKind = eqKind, recordKind = recordKind},
-            fn {index, eqKind, recordKind} =>
-               (index, eqKind, recordKind)
+            fn (eqKind, recordKind) =>
+               {eqKind = eqKind, recordKind = recordKind},
+            fn {eqKind, recordKind} =>
+               (eqKind, recordKind)
           )
-          int_eqKind_recordKind
+          eqKind_recordKind
   val btvKindIEnv = EnvPickler.IEnv btvKind
   val btvKindIEnv_ty = P.tuple2(btvKindIEnv, ty)
   val btvKindIEnv_string_path_ty = P.tuple4(btvKindIEnv, P.string, path, ty)
@@ -371,8 +380,6 @@ struct
           )
           bool_tag_namePath_ty_tyCon
 
-  val conPathInfoNameType : T.conPathInfoNameType P.pu = conPathInfo
-
   val varPathInfo : T.varPathInfo P.pu =
       P.conv
           (
@@ -386,21 +393,23 @@ struct
 
   val primInfo : T.primInfo P.pu =
       P.conv
-          (
-            fn (ty, name) => {ty = ty, name = name},
-            fn {ty, name} => (ty, name)
-          )
-          (P.tuple2 (ty, BuiltinPrimitivePickler.prim_or_special))
-  val primInfoSEnv = NamePickler.TyConIDMap primInfo
+        (
+         fn (ty, prim_or_special) =>
+            {ty = ty, prim_or_special = prim_or_special},
+         fn {ty, prim_or_special} => (ty, prim_or_special)
+        )
+        (P.tuple2 (ty, BuiltinPrimitivePickler.prim_or_special))
+  val primInfoTyConIDMap = NamePickler.TyConIDMap primInfo
 
   val oprimInfo : T.oprimInfo P.pu =
       P.conv
           (
-            fn ((ty, name), instances) =>
-               {ty = ty, name = name, instances = instances},
-            fn {ty, name, instances} => ((ty, name), instances)
+            fn ((oprimPolyTy, name), oprimId) =>
+               {oprimPolyTy = oprimPolyTy, oprimId = oprimId, name = name},
+            fn {oprimPolyTy, name, oprimId} => ((oprimPolyTy, name), oprimId)
           )
-          (P.tuple2(ty_string, primInfoSEnv)) (* use ty_string for share *)
+          (P.tuple2(ty_string, OPrimID.pu_ID))
+          (* use ty_string for share *)
 
   val tyCon_tyList = P.tuple2(tyCon, P.list ty)
   (********************)
@@ -408,20 +417,40 @@ struct
   local
     val newRecKind : T.recordKind P.pu =
         let
-          fun toInt (T.OVERLOADED _) = 0
-            | toInt (T.REC _) = 1
-            | toInt T.UNIV = 2
-          fun pu_OVERLOADED pu =
+          fun toInt (T.OCONSTkind _) = 0
+            | toInt (T.OPRIMkind _) = 1
+            | toInt (T.REC _) = 2
+            | toInt T.UNIV = 3
+
+          fun pu_OCONSTkind pu =
               P.con1 
-              T.OVERLOADED 
-              (fn T.OVERLOADED x => x
+              T.OCONSTkind
+              (fn T.OCONSTkind x => x
                  | _ => 
                    raise 
                      Control.Bug 
-                     "non OVERLOADED to pu_OVERLOADED\
+                     "non OCONSTkind to pu_OCONSTkind\
                      \ (types/main/TypesPickler.sml)"
-               ) 
-              tyList
+               )
+             tyList
+
+          fun pu_OPRIMkind pu =
+              P.con1 
+              T.OPRIMkind
+              (fn T.OPRIMkind x => x
+                 | _ => 
+                   raise 
+                     Control.Bug 
+                     "non OPRIMkind to pu_OPRIMkind\
+                     \ (types/main/TypesPickler.sml)"
+               )
+              (P.conv
+                 (fn (instances, operators) =>
+                     {instances = instances, operators = operators},
+                  fn {instances, operators} =>(instances, operators)
+                 )
+              (P.tuple2(P.list ty, P.list operator)))
+
           fun pu_REC pu = 
              P.con1 
              T.REC 
@@ -434,7 +463,12 @@ struct
              tySEnv
           fun pu_UNIV pu = P.con0 T.UNIV pu
         in
-          P.data (toInt, [pu_OVERLOADED, pu_REC, pu_UNIV])
+          P.data (toInt,
+                  [pu_OCONSTkind,   (* 0 *)
+                   pu_OPRIMkind,    (* 1 *)
+                   pu_REC,               (* 2 *)
+                   pu_UNIV               (* 3 *)
+                 ])
         end
     val newTvState : T.tvState P.pu =
         let
@@ -471,12 +505,13 @@ struct
             | toInt (T.DUMMYty _) = 2
             | toInt (T.ERRORty) = 3
             | toInt (T.FUNMty _) = 4
-            | toInt (T.OPAQUEty _) = 5
-            | toInt (T.POLYty _) = 6
-            | toInt (T.RAWty _) = 7
-            | toInt (T.RECORDty _) = 8
-            | toInt (T.SPECty _) = 9
-            | toInt (T.TYVARty _) = 10
+            | toInt (T.INSTCODEty _) = 5
+            | toInt (T.OPAQUEty _) = 6
+            | toInt (T.POLYty _) = 7
+            | toInt (T.RAWty _) = 8
+            | toInt (T.RECORDty _) = 9
+            | toInt (T.SPECty _) = 10
+            | toInt (T.TYVARty _) = 11
 (*
             | toInt (T.USERDEFINEDty _) = 11
 *)
@@ -486,6 +521,27 @@ struct
                 Control.Bug
                     ("TypesPicker.toInt found unknown ty: "
                      ^ TypeFormatter.tyToString ty)
+*)
+
+          fun pu_INSTCODEty pu =
+            P.con1
+            T.INSTCODEty
+            (fn T.INSTCODEty arg => arg
+              | _ =>
+                raise
+                  Control.Bug 
+                  "non INSTCODEty to pu_INSTCODEty\
+                  \ (types/main/TypesPickler.sml)"
+             )
+            operator
+(*
+            (P.conv
+             (
+              fn (instTy, operator) =>
+                 {instTy = instTy, operator = operator},
+              fn {instTy, operator} => (instTy, operator)
+             )
+             (P.tuple2(ty, operator)))
 *)
 
           fun pu_OPAQUEty pu =
@@ -622,7 +678,7 @@ struct
               | _ => 
                 raise 
                   Control.Bug 
-                  "non RAWty to pu_PREDEFINEDty (types/main/TypesPickler.sml)"
+                  "non RAWty to pu_RAWty (types/main/TypesPickler.sml)"
             )
             (P.conv
              (
@@ -641,12 +697,13 @@ struct
                  pu_DUMMYty, (* 2 *)
                  pu_ERRORty, (* 3 *)
                  pu_FUNMty, (* 4 *)
-                 pu_OPAQUEty, (* 5 *)
-                 pu_POLYty, (* 6 *)
-                 pu_RAWty, (* 7 *)
-                 pu_RECORDty, (* 8 *)
-                 pu_SPECty, (* 9 *)
-                 pu_TYVARty (* 10 *)
+                 pu_INSTCODEty, (* 5 *)
+                 pu_OPAQUEty, (* 6 *)
+                 pu_POLYty, (* 7 *)
+                 pu_RAWty, (* 8 *)
+                 pu_RECORDty, (* 9 *)
+                 pu_SPECty, (* 10 *)
+                 pu_TYVARty (* 11 *)
                 ]
               )
         end
@@ -679,6 +736,7 @@ struct
                   "non OPRIM to pu_OPRIM (types/main/TypesPickler.sml)"
             ) 
             oprimInfo
+
           fun pu_PRIM pu = 
             P.con1 
             T.PRIM 
@@ -812,15 +870,6 @@ struct
   val tyConEnv_VarEnv =
       P.tuple2 (tyConEnv, varEnv)
 
-  val strPathInfo : T.strPathInfo P.pu =
-      P.conv
-          (
-           fn (name, env, nameMap) =>
-               {name = name, env = env, nameMap = nameMap},
-            fn {name, env, nameMap} => (name, env, nameMap)
-          )
-          (P.tuple3(P.string, tyConEnv_VarEnv, NameMapPickler.basicNameMap))
-
   val name_env  =
       P.conv
           (
@@ -829,7 +878,6 @@ struct
             fn {name, env} => (name, env)
           )
           (P.tuple2(P.string, tyConEnv_VarEnv))
-  val strPathInfoSEnv = EnvPickler.SEnv strPathInfo
 
 (*
   local
@@ -854,7 +902,6 @@ struct
 (*
   val strEnv = strBindInfoSEnv
 *)
-  val tyConIdSet_strPathInfo = P.tuple2(tyConIdSet, strPathInfo)
 
   val sigBindInfo =
       let
@@ -884,8 +931,6 @@ struct
            (funtyCon, tag, displayName, ty, tyCon)
       )
       bool_int_string_ty_tyCon
-
-  val subst = EnvPickler.IEnv ty
 
   val Env = P.tuple2(tyConEnv, varEnv)
 
@@ -950,7 +995,6 @@ struct
   val funEnv = EnvPickler.SEnv funBindInfo
   val sigEnv = EnvPickler.SEnv sigBindInfo
   val btvEnv = btvKindIEnv
-  val tvarNameSet = EnvPickler.SEnv eqKind
 
   val valId =
       let

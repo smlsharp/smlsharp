@@ -35,6 +35,8 @@ structure BinarySearchCode : sig
 end =
 struct
 
+  fun newLocalId () = VarID.generate ()
+
   datatype 'a tree = NODE of 'a * 'a tree * 'a tree | LEAF
 
   (*
@@ -71,10 +73,10 @@ struct
             let
               val leftLabel =
                   case leftTree of
-                    NODE _ => SOME (Counters.newLocalId ()) | LEAF => NONE
+                    NODE _ => SOME (newLocalId ()) | LEAF => NONE
               val rightLabel =
                   case rightTree of
-                    NODE _ => SOME (Counters.newLocalId ()) | LEAF => NONE
+                    NODE _ => SOME (newLocalId ()) | LEAF => NONE
 
               val (context, code, newEnv, leftEnv, rightEnv) =
                   f (context, code, env, choice, label, leftLabel, rightLabel)

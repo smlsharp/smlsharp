@@ -71,12 +71,21 @@ Data types indicated by VARENUM are mapped to SML# datatype as follows.
 
 COM [[SAFEARRAY|http://msdn.microsoft.com/en-us/library/ms221482.aspx]] 
 can describe multi-dimension arrays.
-OLE/SML# maps SAFEARRAY to an array of single dimension.
+OLE/SML# maps a SAFEARRAY to '''OLE.safearray'''.
 For example, a three-dimensional SAFEARRAY
  VT_INT a[10][20][30]
-is mapped to '''Int32.int OLE.safearray''' which is a pair of an array of 
-'''Int32.int''' and a list of int.
- (a, [10, 20, 30]) : Int32.int array * int list
+is mapped to '''Int32.int OLE.safearray'''.
+ a : Int32.int OLE.safearray
+
+An element of a SAFEARRAY
+ a[1][2][3]
+is accessed as
+ OLE.SafeArray.sub (a, [1, 2, 3])
+
+In addition to using OLE.SafeArray, you can access an safearray directly.
+'''Int32.int OLE.safearray''' is a pair of an array of '''Int32.int''' and 
+a list of int.
+ (array, [10, 20, 30]) : Int32.int array * int list
 
 The elements of an array are stored in column major order.
 The first dimension changes first, and the last dimension changes last.
@@ -85,7 +94,7 @@ For example, an element of the above SAFEARRAY a
  a[1][2][3]
 is stored at the index of 3 * (10 * 20) + 2 * 10 + 1 = 621.
 It can be accessed from SML# as 
- Array.sub(a, 621)
+ Array.sub(array, 621)
 
 !method mapping.
 
@@ -152,8 +161,8 @@ is raised to SML# world.
 
 !Topics in OLE/SML#.
 
-*[[Oveview of OLE/SML#|OLESMLSharpOverview]]
-*[[mapping COM and SML#|OLESMLSharpMapping]]
+*[[OLESMLSharpOverview]]
+*[[OLESMLSharpMapping]]
 *[[API|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/doc/api/]]
-*[[COM in 3 minutes|OLESMLSharpMiniGuideOfCOM]]
-*[[Implementation overview|OLESMLSharpImplementationOverview]]
+*[[OLESMLSharpMiniGuideOfCOM]]
+*[[OLESMLSharpImplementationOverview]]

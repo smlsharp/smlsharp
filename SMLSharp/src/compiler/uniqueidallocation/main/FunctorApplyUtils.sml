@@ -57,7 +57,7 @@ in
                         =>
                         raise Control.Bug ("functor inner declared vaiable should be topItem:" ^ 
                                            (NameMap.namePathToString(varNamePath)) ^
-                                           LocalVarID.toString(id))
+                                           VarID.toString(id))
                       | (varNamePath, VIC.Dummy, newVarIDEnv) =>
                         raise Control.Bug ("functor inner declared variable should not be dummy:" ^ NameMap.namePathToString varNamePath)
                       | (varNamePath, VIC.External index, newVarIDEnv) =>
@@ -110,7 +110,7 @@ in
                                             val newExternalVarID = 
                                                 Counters.newExternalID ()
                                         in
-                                            (LocalVarID.Map.insert(IDMap, oldId, (NameMap.namePathToString namePath, newExternalVarID)),
+                                            (VarID.Map.insert(IDMap, oldId, (NameMap.namePathToString namePath, newExternalVarID)),
                                              NPEnv.insert(newVarIDEnv, 
                                                           namePath, 
                                                           (VIC.External (newExternalVarID))))
@@ -130,7 +130,7 @@ in
                                       | VIC.Dummy =>
                                         (IDMap, NPEnv.insert(newVarIDEnv, namePath, VIC.Dummy))
                                 )
-                                (LocalVarID.Map.empty, VIC.emptyVarIDEnv)
+                                (VarID.Map.empty, VIC.emptyVarIDEnv)
                                 varIDEnv
                val newTfpdecs = 
                    map (UIAU.annotateExternalIdTfpdec UIAU.externalizeVarIdInfo IDMap) tfpdecs

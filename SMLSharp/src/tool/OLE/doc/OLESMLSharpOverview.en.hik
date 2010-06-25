@@ -117,8 +117,8 @@ Clean-up OLE library.
 
 !Topics in OLE/SML#.
 
-*[[Oveview of OLE/SML#|OLESMLSharpOverview]]
-*[[mapping COM and SML#|OLESMLSharpMapping]]
+*[[OLESMLSharpOverview]]
+*[[OLESMLSharpMapping]]
 *[[API|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/doc/api/]]
-*[[COM in 3 minutes|OLESMLSharpMiniGuideOfCOM]]
-*[[Implementation overview|OLESMLSharpImplementationOverview]]
+*[[OLESMLSharpMiniGuideOfCOM]]
+*[[OLESMLSharpImplementationOverview]]

@@ -74,10 +74,10 @@ struct
   (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
-  (*% @formatter(LocalVarID.id) LocalVarID.format_id *)
+  (*% @formatter(VarID.id) VarID.format_id *)
   type localLabel =
       (*% @prefix att_ @format(c * l) "." "F" c "." "L" l *)
-      LocalVarID.id * LocalVarID.id
+      VarID.id * VarID.id
 
   (*% *)
   type symbol = string

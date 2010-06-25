@@ -19,7 +19,6 @@ Group is
         ../../symbolicinstructions/sources.cm
         ../../constantterm/sources.cm
 
-	Counters.sml
         GLOBALINDEXENV.sig
         GlobalIndexEnv.sml
         SIGCONTEXT.sig

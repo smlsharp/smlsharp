@@ -4,45 +4,42 @@ structure Counters :
               val init : stamps -> unit
               val getCountersStamps : unit -> stamps
               val newVarName  : unit -> string
-              val nextBTid : unit -> BoundTypeVarID.boundTypeVarID
+              val nextBTid : unit -> BoundTypeVarID.id
               val newTyConId : unit -> TyConID.id
               val newExnTagID : unit -> ExnTagID.id
           end
   =
 struct
 
-   type stamps = {boundTypeVarIDStamp : int, 
-                  freeTypeVarIDStamp : FreeTypeVarID.id, 
-                  exnTagIDKeyStamp : ExnTagID.id, 
-                  tyConIDKeyStamp : TyConID.id,
-                  varNameStamp : VarNameID.id}  
+   type stamps =
+        {
+         boundTypeVarIDStamp : int, 
+         exnTagIDKeyStamp : ExnTagID.id, 
+         tyConIDKeyStamp : TyConID.id
+        }
 
    fun init (stamps : stamps) =
        (
-        BoundTypeVarIDGen.init (#boundTypeVarIDStamp stamps);
-        FreeTypeVarIDGen.init (#freeTypeVarIDStamp stamps);
-        ExnTagIDKeyGen.init (#exnTagIDKeyStamp stamps);
-        TyConIDKeyGen.init (#tyConIDKeyStamp stamps);
-        VarNameGen.init (#varNameStamp stamps)
+        BoundTypeVarID.init (#boundTypeVarIDStamp stamps);
+        ExnTagID.init (#exnTagIDKeyStamp stamps);
+        TyConID.init (#tyConIDKeyStamp stamps)
        ) 
 
    fun getCountersStamps () =
      {
-      boundTypeVarIDStamp = BoundTypeVarIDGen.reset (),
-      freeTypeVarIDStamp = FreeTypeVarIDGen.reset () ,
-      exnTagIDKeyStamp = ExnTagIDKeyGen.reset (),
-      tyConIDKeyStamp = TyConIDKeyGen.reset (),
-      varNameStamp = VarNameGen.reset ()
+      boundTypeVarIDStamp = BoundTypeVarID.reset (),
+      exnTagIDKeyStamp = ExnTagID.reset (),
+      tyConIDKeyStamp = TyConID.reset ()
       }
        
-   fun newVarName () = VarNameGen.generate ()
+   fun newVarName () = VarName.generate ()
 
-   fun nextBTid () =  BoundTypeVarIDGen.generate ()
+   fun nextBTid () =  BoundTypeVarID.generate ()
                      
    fun newTyConId () = 
-       TyConIDKeyGen.generate ()
+       TyConID.generate ()
 
    fun newExnTagID () = 
-       ExnTagIDKeyGen.generate ()
+       ExnTagID.generate ()
 
 end

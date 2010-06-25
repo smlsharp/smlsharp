@@ -237,7 +237,16 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
                 let val newTyCon = makePathOfTyConRelative currentPath tyCon
                 in TY.RAWty {tyCon = newTyCon, args = args}
                 end
-              | _ => ty)
+              | TY.OPAQUEty{spec = {tyCon, args}, implTy} =>
+                let val newTyCon = makePathOfTyConRelative currentPath tyCon
+                in
+                  TY.OPAQUEty
+                      {spec = {tyCon = newTyCon, args = args}, implTy = implTy}
+                end
+              | TY.SPECty{tyCon, args} =>
+                let val newTyCon = makePathOfTyConRelative currentPath tyCon
+                in TY.SPECty{tyCon = newTyCon, args = args} end
+              | _ => ty) (* tyCon occurs in RAWty, OPAQUEty and SPECty only. *)
           ty
           
   fun getRealTy (TY.TYVARty(ref (TY.SUBSTITUTED ty))) = getRealTy ty

@@ -1,27 +1,16 @@
 (**
  *  This module translates FormatExpression.expression into
- * PrettyPrinter.symbol.
+ * PreProcessedExpression.expression.
  * @author YAMATODANI Kiyoshi
  * @version $Id: PreProcessor.sml,v 1.7 2010/02/09 07:53:18 katsu Exp $
  *)
-functor PreProcessor
-        (structure FE : FORMAT_EXPRESSION
-         structure PP : PRETTYPRINTER
-         sharing type FE.priority = PP.FormatExpression.priority
-         sharing type FE.assocDirection = PP.FormatExpression.assocDirection
-         sharing type FE.expression = PP.FormatExpression.expression)
-        :> PREPROCESSOR
-               where type FormatExpression.expression = FE.expression
-               where type FormatExpression.assocDirection = FE.assocDirection
-               where type FormatExpression.priority = FE.priority
-               where type PrettyPrinter.symbol = PP.symbol =
+functor PreProcessor(FormatExpression : FORMAT_EXPRESSION) =
 struct
 
   (***************************************************************************)
 
-  structure Param = PrinterParameter
-  structure FormatExpression = FE
-  structure PrettyPrinter = PP
+  structure FE = FormatExpression
+  structure PE = PreProcessedExpression
 
   (***************************************************************************)
 
@@ -43,20 +32,11 @@ struct
 
   (***************************************************************************)
 
-  type parameter =
-       {
-         spaceString : string,
-         guardLeft : string,
-         guardRight : string,
-         maxDepthOfGuards : int option,
-         maxWidthOfGuards : int option
-       }
-
   (**
    * global shared information.
    * <p>
    * The context is passed from the beginning to the end of the format
-   * expression list acrossing guards.
+   * expression list beyond guards.
    * </p>
    *)
   type context =
@@ -68,15 +48,23 @@ struct
          (** for error message *)
          countOfEndOfIndent : int,
          (** the number of chars between adjacent newline indicators
-            (maybe acrossing start/end of guard. *)
+            (maybe across start/end of guard. *)
          charsAfterNewline : int ref
        }
 
   (***************************************************************************)
 
   val MAX_PRIORITY = ~1
+  (** the priority of the Newline format expression. *)
   val NEWLINE_PRIORITY = 0
+  (** the highest priority that user can specify. *)
   val MAX_USER_PRIORITY = 1
+
+  infix 6 ++
+  (** addition of two integers.
+   * This operator clamps the result to the maxInt if Overflow occurs. *)
+  fun x ++ y = if SOME x = Int.maxInt then x
+               else (x + y) handle Overflow => valOf Int.maxInt
 
   (**
    * shared information within a guard.
@@ -90,14 +78,39 @@ struct
 
     (*************************************************************************)
 
+    (**
+     * Environment has an entry for each priority.
+     * <p>
+     * For example, assume the following format expression.
+     * <pre>
+     * 1 "abc" 2 "def" 3 "ghi" 1 "jkl" 2 "mno"
+     * </pre>
+     * At the end of this expresssion, the entry of priority 2 has the
+     * following field values.
+     * <pre>
+     *  {
+     *    total = 6,
+     *    max = 9,
+     *    subTotal = 3,
+     *      :
+     *  }
+     * </pre>
+     * The 'total' field is used to calculate the 'max' field.
+     * The 'max' field is used to calculate the number of columns required to
+     * print the strings without inserting newlines at the indicators of this
+     * priority.
+     * The 'subTotal' field is used to as the initial 'total' field for
+     * indicators of lower priority than this priority.
+     * </p>
+     *)
     type entry =
          {
            (** this entry records the counters for indicators of this
             * priority. *)
            priority : FE.priority,
 
-           (** indicates whether to insert newlines at the positions of these
-            * indicators. *)
+           (** indicates whether to insert newlines at the positions of 
+            * indicators of this priority. *)
            newline : bool ref,
 
            (** the number of characters after the last indicator whose priority
@@ -105,14 +118,16 @@ struct
             * that indicator is included. *)
            total : int,
 
-           (** the maximum of the number of characters among those between
-            * indicators of the higer priority than this priority. *)
+           (** the maximum of the number of characters between
+            * indicators of the higer priority than this priority.
+            * This is equal to the maximum number which the 'total' field of
+            * this entry has reached ever. *)
            max : int,
 
            (** The number of characters after the last indicator of this
             * priority. The indent width at that indicator is included in
             * this value. This field is used as the initial value of the
-            * 'total' field for the entries of the 'weaker' priority than this
+            * 'total' field for the entries of the lower priority than this
             * entry.*)
            subTotal : int
          }
@@ -120,6 +135,56 @@ struct
     type environment = (entry list * FE.priority)
 
     (*************************************************************************)
+
+    (**
+     * increments 'total' field of an entry. 
+     * 'max' filed must be updated if necessary.
+     *)
+    fun addTotal increment (entry : entry) =
+        let val newTotal = #total entry ++ increment
+        in
+          {
+            priority = #priority entry,
+            newline = #newline entry,
+            total = newTotal,
+            max = Int.max(#max entry, newTotal),
+            subTotal = #subTotal entry
+          } : entry
+        end
+    (**
+     * reset 'total' field of an entry. 
+     * 'max' filed must be updated if necessary.
+     *)
+    fun setTotal newTotal (entry : entry) = 
+        {
+          priority = #priority entry,
+          newline = #newline entry,
+          total = newTotal,
+          max = Int.max(#max entry, newTotal),
+          subTotal = #subTotal entry
+        } : entry
+    (**
+     * increments 'subTotal' field of an entry. 
+     *)
+    fun addSubTotal increment (entry : entry) =
+        {
+          priority = #priority entry,
+          newline = #newline entry,
+          total = #total entry,
+          max = #max entry,
+          subTotal = #subTotal entry ++ increment
+        } : entry
+    (**
+     * reset 'subTotal' field of an entry. 
+     *)
+    fun setSubTotal newSubTotal (entry : entry) = 
+        {
+          priority = #priority entry,
+          newline = #newline entry,
+          total = #total entry,
+          max = #max entry,
+          subTotal = newSubTotal
+        } : entry
 
     (** create new environment
      * @return new environment. *)
@@ -151,18 +216,19 @@ struct
         let
           (**
            *  Search the entry of the specified priority.
-           *  If not found, add new entry whose the 'total' and 'max' field are
-           * copied from the entry of the least priority in the entries of the
-           * higher priority than the specified priority.
+           *  If not found, 'find' adds a new entry whose the 'total' and
+           * 'max' field are copied from the entry of the least priority among
+           * the entries of higher priority than the specified priority.
            * @params (entries, scanned, maxOfLower, higerEntry)
            * @param entries the entries to be scanned
            * @param scanned the already scanned entries
-           * @param maxOfLower the maximum value in the values of 'max' fields
-           *     of entries of the lower priority than the specified priority.
+           * @param maxOfLower the maximum value among the values of 'max'
+           *          fields of entries of lower priority than the specified
+           *          priority.
            * @param higherEntry the entry whose priority is higher than the
            *          specified priority.
            * @return a pair of the entry for the specified entry and the
-           *      environment which may not equal to the initial env (E).
+           *      environment which may not be equal to the initial env (E).
            *)
           fun find
               ((entry : entry) :: entries, scanned, maxOfLower, higherEntry) =
@@ -248,59 +314,59 @@ struct
     fun getEntries (E, _) = E
     fun getLastPriority ((_, last) : environment) = last
     fun setLastPriority ((E, _) : environment) last = (E, last) : environment
-          
+
+    fun entryToString {priority, newline, total, max, subTotal} =
+        "{priority=" ^ FE.priorityToString priority
+        ^ ",newline=" ^ Bool.toString (!newline)
+        ^ ",total=" ^ Int.toString total
+        ^ ",max=" ^ Int.toString max
+        ^ ",subTotal=" ^ Int.toString subTotal
+        ^ "}"
+    fun toString (entries, priority) =
+        "[" ^ String.concatWith "," (List.map entryToString entries)
+        ^ "," ^ FE.priorityToString priority
+        ^ "]"
+
   end
   structure E = Environment
 
   (***************************************************************************)
-
-  infix 6 ++
-  fun x ++ y = if SOME x = Int.maxInt then x
-               else (x + y) handle Overflow => valOf Int.maxInt
 
   (**
    * calculates the length of the string and updates environment.
    * <p>
    * <ul>
    *   <li>calculates the column width which is required to display the
-   *      text representation of the symbol in one line.</li>
-   *   <li>updates the ENV by updates or insert entries in the passed ENV.</li>
+   *      string representation of the expression in one line.</li>
+   *   <li>updates the ENV by updating or inserting entries in the passed ENV.
+   *     </li>
    * </ul>
    * </p>
-   * @params parameter ENV context symbol
-   * @param parameter parameters which control the printer
+   * @params parameter ENV context expression
+   * @param parameter parameters to control the printer
    * @param ENV the environment which records counters for each newline
    *        priorities.
    * @param context the information about indents.
-   * @param symbol a format expression.
-   * @return a quad-tuple whose elements are:
+   * @param expression a format expression.
+   * @return a triple-tuple:
    *       <ul>
    *         <li>updated ENV</li>
    *         <li>updated context</li>
-   *         <li>the symbol of PrettyPrinter.symbol</li>
-   *         <li>ENV entries for the Deferred priority generated until each
-   *           FormatIndicator.</li>
+   *         <li>the expression of PrettyPrinter.expression</li>
    *       </ul>
    *)
   fun calculate
-      (parameter : parameter)
+      (parameter : PrinterParameter.parameterRecord)
       ENV
       (context : context)
       (FE.Term (columns, text)) =
       let
-        fun scanner (entry : E.entry) =
-            {
-              priority = #priority entry,
-              newline = #newline entry,
-              total = (#total entry) ++ columns,
-              max = #max entry,
-              subTotal = (#subTotal entry) ++ columns
-            }
+        val scanner = (E.addTotal columns) o (E.addSubTotal columns)
         val newENV = E.map scanner ENV
         val _ = #charsAfterNewline context :=
                 !(#charsAfterNewline context) ++ columns
       in
-        (newENV, context, PP.Term (columns, text))
+        (newENV, context, PE.Term (columns, text))
       end
 
     | calculate parameter ENV context (FE.StartOfIndent indent) =
@@ -312,7 +378,7 @@ struct
           countOfEndOfIndent = #countOfEndOfIndent context,
           charsAfterNewline = #charsAfterNewline context
         },
-        PP.StartOfIndent indent
+        PE.StartOfIndent indent
       )
 
     | calculate
@@ -324,17 +390,12 @@ struct
         val textLen = if space then 1 else 0
         fun scanner (entry : E.entry) =
             let
-              val (newMax, newTotal, newSubTotal) = 
+              val (newTotal, newSubTotal) = 
                   if FE.isHigherThan (#priority newline, #priority entry)
                   then
                     (* updates entries for lower priorities than the current
                       indicator. *)
                     (
-                      if
-                        FE.isHigherThan
-                            (E.getLastPriority ENV, #priority entry)
-                      then #max entry (* no change *)
-                      else Int.max (#total entry, #max entry),
                       #totalIndent context,
                       #totalIndent context
                     )
@@ -342,45 +403,17 @@ struct
                     (* treats this indicator as a whitespace for higher or
                       equal priorities than the current indicator. *)
                     (
-                      #max entry,
                       (#total entry) ++ textLen,
                       if (#priority newline) = (#priority entry)
                       then #totalIndent context
                       else (#subTotal entry) ++ textLen
                     )
-(*
-              val _ =
-                  print
-                  (FE.priorityToString (#priority entry) ^ ","
-                   ^ Int.toString (#total entry) ^ ","
-                   ^ Int.toString (#max entry) ^ ","
-                   ^ Int.toString (#subTotal entry) ^ " ==> ")
-              val _ =
-                  print
-                  (FE.priorityToString (#priority entry) ^ ","
-                   ^ Int.toString newTotal ^ ","
-                   ^ Int.toString newMax ^ ","
-                   ^ Int.toString newSubTotal ^ "\n")
-*)
             in
-              (* returns the entry of which the 'total' and 'max' fields are
-                updated. *)
-              {
-                priority = #priority entry,
-                newline = #newline entry,
-                total = newTotal,
-                max = newMax,
-                subTotal = newSubTotal
-              }
+              (* returns the entry of which the 'total' and 'subTotal' fields
+               * are updated. *)
+              ((E.setTotal newTotal) o (E.setSubTotal newSubTotal)) entry
             end
-(*
-        val _ = print "=============\n"
-        val _ = print (FE.priorityToString (#priority newline) ^ "\n")
-*)
         val newENV = E.setLastPriority (E.map scanner ENV) (#priority newline)
-(*
-        val _ = print "=============\n"
-*)
         val newContext = 
             {
               totalIndent = #totalIndent context,
@@ -394,10 +427,7 @@ struct
           let
             (* The current indent width is passed as the second argument.
                This will be ignored if a entry for this priority is already
-              contained in the newENV.
-               If the priority of this indicator is deferred one, a new entry
-              is always generated because any entry for deferred has been
-              removed by the just above code. *)
+              contained in the newENV. *)
             val (newENVEntry, newENV) =
                 E.getEntry
                 newENV
@@ -407,14 +437,14 @@ struct
             (
               newENV,
               newContext, 
-              PP.Indicator {space = space, newline = #newline newENVEntry}
+              PE.Indicator {space = space, newline = #newline newENVEntry}
             )
           end
         | FE.Deferred =>
           (
             newENV,
             newContext,
-            PP.DeferredIndicator
+            PE.DeferredIndicator
             {space = space, requiredColumns = #charsAfterNewline newContext}
           )
       end
@@ -429,7 +459,7 @@ struct
         calculate
         parameter ENV context (FE.Term (0, "")) (* exception ? *)
 
-    | calculate parameter ENV context (FE.Guard (NONE, symbols)) =
+    | calculate parameter ENV context (FE.Guard (NONE, expressions)) =
       let
         val guard =
             FE.Indicator
@@ -437,21 +467,27 @@ struct
                   space = false,
                   newline = SOME {priority = FE.Preferred MAX_PRIORITY}
                 }
+        (* calculates for inner expressions.
+         * A 'guard' indicator of MAX_PRIORITY is appended to the inner
+         * expressions.
+         * After the calculation, the sum of lengths of inner expressions is
+         * obtained in the entry of this MAX_PRIORITY.
+         *)
         val {
               ENV = innerENV,
               context = innerContext,
               result
             } =
             foldl
-            (fn (symbol, {ENV, context, result}) =>
+            (fn (expression, {ENV, context, result}) =>
                 let
-                  val (newENV, newContext, newSymbol) =
-                      calculate parameter ENV context symbol
+                  val (newENV, newContext, newExpression) =
+                      calculate parameter ENV context expression
                 in
                   {
                     ENV = newENV,
                     context = newContext,
-                    result = newSymbol :: result (* in reverse order *)
+                    result = newExpression :: result (* in reverse order *)
                   }
                 end)
             {
@@ -465,24 +501,18 @@ struct
               },
               result = []
             }
-            (symbols @ [guard]) (* append guard *)
+            (expressions @ [guard]) (* append guard *)
 
         (* separate the guard entry and the others *)
         val (guardEntry, innerENV) =
             E.removeEntry innerENV (FE.Preferred MAX_PRIORITY)
 
-        (* add the total size of inner symbols to each entries of outer env.
+        (* add the total size of inner expressions to each entries of outer
+          env.
           The total length of this list is stored in the total field of the
           guard. *)
         val totalSize = #total (valOf guardEntry)
-        fun scanner (entry : E.entry) =
-            {
-              priority = #priority entry,
-              newline = #newline entry,
-              total = (#total entry) ++ totalSize,
-              max = #max entry,
-              subTotal = #subTotal entry ++ totalSize
-            }
+        val scanner = (E.addTotal totalSize) o (E.addSubTotal totalSize)
         val newEnv = E.map scanner ENV
 
         (* translate ENVs of inner to formatEnvironment *)
@@ -490,12 +520,15 @@ struct
             {
               requiredColumns = #max srcEntry,
               newline = #newline srcEntry,
-              priority = #priority srcEntry
+              priority =
+              case #priority srcEntry of
+                FE.Preferred n => PE.Preferred n
+              | FE.Deferred => PE.Deferred
             }
-        val newSymbol =
-            PP.List
+        val newExpression =
+            PE.List
             {
-              symbols = List.rev (tl result), (* remove the guard *)
+              expressions = List.rev (tl result), (* remove the guard *)
               environment = E.getEntries (E.map translateENVEntry innerENV)
             }
 
@@ -508,11 +541,11 @@ struct
             countOfEndOfIndent = #countOfEndOfIndent innerContext,
             charsAfterNewline = #charsAfterNewline innerContext
           },
-          newSymbol
+          newExpression
         )
       end
 
-    | calculate parameter ENV context (FE.Guard (SOME _, symbols)) =
+    | calculate parameter ENV context (FE.Guard (SOME _, expressions)) =
       raise Fail "a bug: There is an assoc indicator unremoved."
 
     | calculate
@@ -554,7 +587,7 @@ struct
           countOfEndOfIndent = countOfEndOfIndent + 1,
           charsAfterNewline = charsAfterNewline
         },
-        PP.EndOfIndent
+        PE.EndOfIndent
       )
 
     | calculate parameter ENV context FE.Newline =
@@ -566,13 +599,7 @@ struct
                * large number, so that, in formatted string, line is broken at
                * all newline indicators in all guards enclosing the current
                * guard. *)
-              {
-                priority = #priority entry,
-                newline = #newline entry,
-                total = valOf Int.maxInt,
-                max = #max entry,
-                subTotal = #subTotal entry
-              }
+              E.setTotal (valOf Int.maxInt) entry
             else
               if #priority entry = FE.Preferred NEWLINE_PRIORITY
               then
@@ -580,13 +607,9 @@ struct
               else
                 (* reset entries of all newline indicators of other priorities.
                  *)
-                {
-                  priority = #priority entry,
-                  newline = #newline entry,
-                  total = #totalIndent context,
-                  max = Int.max (#total entry, #max entry),
-                  subTotal = #totalIndent context
-                }
+                (E.setTotal (#totalIndent context)
+                 o E.setSubTotal (#totalIndent context))
+                    entry
 
         val newENV = E.map scanner ENV
 
@@ -598,291 +621,32 @@ struct
                 (FE.Preferred NEWLINE_PRIORITY)
 
       in
-        (newENV, context, PP.Indicator {space = false, newline = ref true})
+        (newENV, context, PE.Indicator {space = false, newline = ref true})
       end
 
-  (***************************************************************************)
-
-  local
-    val elision =
-(*
-        FE.Term (3, "...")
-*)
-        FE.Guard
-            (
-              NONE,
-              [
-                FE.Indicator
-                    {space = true, newline = SOME{priority = FE.Deferred}},
-                FE.Term (3, "...")
-              ]
-            )
-  in
-  fun cutOff (parameter : parameter) symbol =
-      let
-        val isCutOffDepth =
-            case #maxDepthOfGuards parameter of
-              NONE => (fn _ => false)
-            | SOME depth => (fn d => depth <= d)
-        fun keepSymbol (FE.StartOfIndent _) = true
-          | keepSymbol FE.EndOfIndent = true
-          | keepSymbol _ = false
-        fun takeHead _ accum [] = List.rev accum
-          | takeHead 0 accum symbols =
-            (List.rev accum) @ elision :: (List.filter keepSymbol symbols)
-          | takeHead w accum ((symbol as FE.Term _) :: symbols) =
-            takeHead (w - 1) (symbol :: accum) symbols
-          | takeHead w accum ((symbol as FE.Guard _) :: symbols) =
-            takeHead (w - 1) (symbol :: accum) symbols
-          | takeHead w accum (symbol :: symbols) =
-            takeHead w (symbol :: accum) symbols
-        fun visit depth (FE.Guard (enclosedAssocOpt, symbols)) =
-            if isCutOffDepth depth
-            then elision
-            else
-              let
-                val symbols' = 
-                    map
-                        (visit (depth + 1)) 
-                        (case #maxWidthOfGuards parameter of
-                           NONE => symbols
-                         | SOME width => takeHead width [] symbols)
-              in
-                FE.Guard (enclosedAssocOpt, symbols')
-              end
-          | visit depth symbol = symbol
-      in
-        visit 0 symbol
-      end
-  end
-
-  (***************************************************************************)
-
-  fun removeAssoc (parameter : parameter) symbol =
-      let
-        (**
-         * compare two assocs.
-         * <p>
-         * The weakThan relation('<') on assocs is defined as follows:
-         * <ul>
-         *   <li>An < Bm if n < m (A,B is L,R or N)</li>
-         *   <li>Ln < Nn</li>
-         *   <li>Rn < Nn</li>
-         *   <li>p < q, if p < r and r < q</li>
-         * </ul>
-         * </p>
-         * @params (left, right)
-         * @param left a assoc to be compared.
-         * @param right another assoc to be compared.
-         * @return true if left < right
-         *)
-        fun weakThan (left : FE.assoc, right : FE.assoc) =
-            if #strength left < #strength right
-            then true
-            else
-              if #strength left = #strength right 
-              then
-                case (#direction left, #direction right) of
-                  (FE.Left, FE.Neutral) => true
-                | (FE.Right, FE.Neutral) => true
-                | _ => false
-              else false
-
-        (**
-         * enclose symbols in a pair of parentheses.
-         * @params symbols
-         * @param symbols a list of format expressions
-         * @return the symbols enclosed in a pair of parentheses.
-         *)
-        fun encloseSymbols symbols =
-            [
-              FE.Term (1, #guardLeft parameter),
-              FE.StartOfIndent 1
-(*
-              FE.Indicator
-              {
-                space = false,
-                newline =
-                SOME {priority = FE.Preferred 1}
-              }
-*)
-            ] @
-            symbols @
-            [
-(*
-              FE.EndOfIndent,
-              FE.Indicator
-              {
-                space = false,
-                newline =
-                SOME {priority = FE.Preferred 1}
-              },
-*)
-              FE.Term (1, #guardRight parameter),
-              FE.EndOfIndent
-            ]
-
-        (**
-         *  visit format expressions to remove assoc indicators and insert
-         * parentheses if needed.
-         * @params enclosingAssoc symbol
-         * @param  enclosingAssoc the assoc of the assoc indicator
-         *       which enclose this symbol.
-         * @param symbol the format expression to be visited.
-         * @return a symbol which contains no assoc indicator.
-         *)
-        fun visit
-            enclosingAssoc
-            (FE.Guard (enclosedAssocOpt, symbols)) =
-            let
-              (* the assoc to inherit to the (first) children *)
-              val inheritToFirstAssoc as {cut, strength, direction} =
-                  case enclosedAssocOpt of
-                    NONE => enclosingAssoc
-                  | SOME(enclosedAssoc) => enclosedAssoc
-              (* the assoc to inherit to the other children *)
-              val inheritToOtherAssoc = 
-                  {cut = cut, strength = strength, direction = FE.Neutral}
-
-              (**
-               *  Visit the children with specified assoc to inherit.
-               *
-               *  To the first Term of Guard, <code>toFirstChild</code> is
-               * inherited.  While the <code>toFirstChild</code> is inherited
-               * also to the FormatIndicator/EndOfIndent children between the
-               * head of list and the first Term/Guard, the inherited
-               * assocs are not considered in these visit.
-               *  To children after the first Term/Guard child,
-               * <code>toOther</code> is inherited.
-               *)
-              fun visitList (toFirstChild, toOther) children =
-                  let
-                    fun scan _ [] visited = List.rev visited
-                      | scan toInherit (head::others) visited =
-                        let
-                          val visited' = (visit toInherit head) :: visited
-                        in
-                          case head of
-                            (* switch the assoc to pass to children. *)
-                            FE.Guard _ => scan toOther others visited'
-                          | FE.Term _ => scan toOther others visited'
-                          | _ => scan toInherit others visited'
-                        end
-                  in
-                    scan toFirstChild children []
-                  end
-
-              val newSymbols =
-                  case direction of 
-                    FE.Left =>
-                    (* pass Ln to the left-most child Term/Guard,
-                     * Nn to the other following it. *)
-                    visitList
-                    (inheritToFirstAssoc, inheritToOtherAssoc)
-                    symbols
-
-                  | FE.Right =>
-                    (* pass Rn to the right-most child Term/Guard,
-                     * Nn to the other following it. *)
-                    List.rev
-                    (visitList
-                     (inheritToFirstAssoc, inheritToOtherAssoc)
-                     (List.rev symbols))
-
-                  | _ => List.map (visit inheritToFirstAssoc) symbols
-              val newSymbols = List.concat newSymbols
-            in
-              [
-                case enclosedAssocOpt of
-                  NONE => FE.Guard (NONE, newSymbols)
-                | SOME {cut = true, ...} => FE.Guard (NONE, newSymbols)
-                | SOME enclosedAssoc =>
-                  if weakThan (enclosingAssoc, enclosedAssoc) orelse
-                     enclosingAssoc = enclosedAssoc
-                  then FE.Guard (NONE, newSymbols)
-                  else FE.Guard (NONE, encloseSymbols newSymbols)
-              ]
-            end
-
-          | visit enclosing symbol = [symbol]
-      in
-        case
-          visit {cut = true, strength = ~1, direction = FE.Neutral} symbol
-         of
-          [symbol] => symbol
-        | symbols => FE.Guard(NONE, symbols)
-      end
-                 
   (***************************************************************************)
 
   (**
-   *  translates a FormatExpression.expression into a PrettyPrinter.symbol.
-   * @params parameter symbol
+   *  translates a FormatExpression.expression into a PrettyPrinter.expression.
+   * @params parameter expression
    * @param parameter parameters which control the printer
-   * @param symbol a format expression
-   * @return a PrettyPrinter.symbol translated from the symbol.
+   * @param expression a format expression
+   * @return a PrettyPrinter.expression translated from the expression.
    *)
-  fun preProcess parameterList =
+  fun preProcess parameter expression =
       let
-        val (
-              spaceString,
-              guardLeft,
-              guardRight,
-              maxDepthOfGuards,
-              maxWidthOfGuards
-            ) =
-            List.foldl
-                (fn (param, (space, left, right, depth, width)) =>
-                  case param
-                   of Param.Space s => (s, left, right, depth, width)
-                    | Param.GuardLeft s => (space, s, right, depth, width)
-                    | Param.GuardRight s => (space, left, s, depth, width)
-                    | Param.MaxDepthOfGuards no =>
-                      (space, left, right, no, width)
-                    | Param.MaxWidthOfGuards no =>
-                      (space, left, right, depth, no)
-                    | _ => (space, left, right, depth, width))
-                (
-                  Param.defaultSpace,
-                  Param.defaultGuardLeft,
-                  Param.defaultGuardRight,
-                  Param.defaultMaxDepthOfGuards,
-                  Param.defaultMaxWidthOfGuards
-                )
-                parameterList
-
-        val parameter =
+        val initialENV = E.create ()
+        val initialContext =
             {
-              spaceString = spaceString,
-              guardLeft = guardLeft,
-              guardRight = guardRight,
-              maxDepthOfGuards = maxDepthOfGuards,
-              maxWidthOfGuards = maxWidthOfGuards
-            } : parameter
+              totalIndent = 0,
+              indentStack = [0],
+              countOfEndOfIndent = 0,
+              charsAfterNewline = ref 0
+            }
       in
-        (* avoid to hold unnecessary references to format expression which can
-         * be very large. *)
-        #3
-        o (fn symbol =>
-              let
-                val initialENV = E.create ()
-                val initialContext =
-                    {
-                      totalIndent = 0,
-                      indentStack = [0],
-                      countOfEndOfIndent = 0,
-                      charsAfterNewline = ref 0
-                    }
-              in
-                calculate parameter initialENV initialContext symbol
-              end)
-        o (removeAssoc parameter)
-        o (if isSome(maxDepthOfGuards) orelse isSome(maxWidthOfGuards)
-           then cutOff parameter
-           else (fn symbol => symbol))
+        #3 (calculate parameter initialENV initialContext expression)
       end
 
   (***************************************************************************)
 
 end;
-

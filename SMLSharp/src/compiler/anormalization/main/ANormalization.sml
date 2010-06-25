@@ -12,10 +12,12 @@ structure ANormalization : ANORMALIZATION = struct
   structure ATU = AnnotatedTypesUtils
   structure BT = BasicTypes
   structure RBU = RBUCalc
-  structure VEnv = LocalVarID.Map
+  structure VEnv = VarID.Map
   structure ANU = ANormalUtils
 
   open ANormal
+
+  fun newLocalId () =  VarID.generate ()
 
   structure ANExp_ord:ORD_KEY = struct
 
@@ -35,13 +37,13 @@ structure ANormalization : ANORMALIZATION = struct
         | (ANVAR _, ANEXCEPTIONTAG _) => GREATER
         | (ANVAR _, ANCONSTANT _) => GREATER
         | (ANVAR {varInfo = {varId = varId1,...},...}, ANVAR {varInfo = {varId = varId2,...},...}) =>
-          Types.compareVarId (varId1,varId2) 
+          VarIdEnv.Key.compare (varId1,varId2) 
         | (ANVAR _, _) => LESS
 
         | (ANLABEL _, ANEXCEPTIONTAG _) => GREATER
         | (ANLABEL _, ANCONSTANT _) => GREATER
         | (ANLABEL _, ANVAR _) => GREATER
-        | (ANLABEL {codeId = codeId1,...}, ANLABEL {codeId=codeId2,...}) => LocalVarID.compare(codeId1,codeId2)
+        | (ANLABEL {codeId = codeId1,...}, ANLABEL {codeId=codeId2,...}) => VarID.compare(codeId1,codeId2)
         | _ => raise Control.Bug "invalid argument"
 
     fun argsCompare (argList1,argList2) = ATU.listCompare argCompare (argList1,argList2)
@@ -51,7 +53,7 @@ structure ANormalization : ANORMALIZATION = struct
     fun compare (x,y) =
         case (x,y) of
           (ANVAR {varInfo = {varId = varId1,...},...}, ANVAR {varInfo = {varId = varId2,...},...}) =>
-          Types.compareVarId(varId1,varId2)
+          VarIdEnv.Key.compare(varId1,varId2)
         | (ANVAR _, _) => LESS
 
         | (ANENVACC _, ANVAR _) => GREATER
@@ -129,9 +131,9 @@ structure ANormalization : ANORMALIZATION = struct
 
   fun newVar ty varKind =
       let
-        val id = Counters.newLocalId ()
+        val id = newLocalId ()
       in
-        {varId = Types.INTERNAL id, displayName = "$" ^ (LocalVarID.toString id), ty = ty, varKind = varKind}        
+        {varId = Types.INTERNAL id, displayName = "$" ^ (VarID.toString id), ty = ty, varKind = varKind}        
       end
 
   fun isGlobalVar {varId, displayName, ty, varKind = EXTERNAL} = true
@@ -1265,12 +1267,11 @@ structure ANormalization : ANORMALIZATION = struct
         (newDeclList @ newRestDeclList, newVEnv, newAEnv)
       end
 
-  fun normalize stamp declList =
+  fun normalize declList =
       let
-        val _ = Counters.init stamp 
         val _ = clusterListRef := []  
         val (newDeclList,_ , _) = normalizeDeclList VarIdEnv.empty AtomEnv.empty declList
-        val mainFunctionID = Counters.newLocalId ()
+        val mainFunctionID = newLocalId ()
         val mainFunctionLoc = 
             case newDeclList of
               [] => Loc.noloc
@@ -1316,7 +1317,7 @@ structure ANormalization : ANORMALIZATION = struct
                 }
         val newDecs = rev (mainCluster::(!clusterListRef))
       in
-          (Counters.getCounterStamp(), newDecs)
+          newDecs
       end
 
 end
