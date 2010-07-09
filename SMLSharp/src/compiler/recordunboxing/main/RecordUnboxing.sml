@@ -992,6 +992,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
       in
         newBlockList
       end
+      handle exn => raise exn
 
 
 end

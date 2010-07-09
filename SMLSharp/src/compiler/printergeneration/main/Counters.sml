@@ -5,19 +5,9 @@
  *)
 structure Counters : 
           sig
-              type stamps
-              val init : stamps -> unit
               val newVarName : unit -> string
-              val getCounterStamps : unit -> stamps
           end
   =
 struct
-   type stamps = int
-
-   fun init (stamps:stamps) =
-       BoundTypeVarID.init stamps
-
-   fun getCounterStamps () = BoundTypeVarID.reset ()
-
-   fun newVarName () = VarName.generate () 
+   fun newVarName () = 
 end

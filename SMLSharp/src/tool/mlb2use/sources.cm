@@ -1,7 +1,7 @@
 Group
 is
 
-basis_compatible.sml
+$/basis.cm
 
 FILE.sig
 File.sml
@@ -10,7 +10,7 @@ SourcePos.sml
 SOURCE.sig
 Source.sml
 
-ml-yacc-lib.cm
+$/ml-yacc-lib.cm
 mlb.grm
 mlb.lex
 

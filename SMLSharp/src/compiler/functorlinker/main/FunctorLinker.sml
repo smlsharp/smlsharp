@@ -714,5 +714,6 @@ in
               (functorEnv, SEnv.empty, nil)
               topBlocks
       in (incFunctorEnv, newTopBlocks) end
+      handle exn => raise exn
 end
 end

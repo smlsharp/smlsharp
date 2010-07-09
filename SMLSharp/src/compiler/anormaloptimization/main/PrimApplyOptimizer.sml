@@ -603,7 +603,9 @@ structure PrimApplyOptimizer = struct
        ("Math_tanh",genericOp_r_r (Math.tanh))
       ]
 
-  fun optimizePrimApply atomEnv (exp as ANPRIMAPPLY{primOp as {name,ty},argExpList,loc}) =
+  fun optimizePrimApply
+        atomEnv
+        (exp as ANPRIMAPPLY{primOp as {name,ty},argExpList,loc}) =
       if !Control.doConstantFolding 
       then 
         case SEnv.find(optimizers,name) of

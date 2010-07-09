@@ -1319,5 +1319,6 @@ structure ANormalization : ANORMALIZATION = struct
       in
           newDecs
       end
+      handle exn => raise exn
 
 end

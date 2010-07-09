@@ -1,0 +1,6 @@
+../tests/bugs/tests/Ticket-26.1.sml:1.47-1.47 Error:
+  operator is not a function: 'a(a)
+../tests/bugs/tests/Ticket-26.1.sml:1.52-1.52 Error:
+  operator is not a function: 'a(a)
+../tests/bugs/tests/Ticket-26.1.sml:1.1-1.61 Error:
+  User type variable cannot be generalized: 'a

@@ -1030,5 +1030,6 @@ structure MVOptimization : MVOPTIMIZATION = struct
       in 
         newTopBlockList
       end
+      handle exn => raise exn
 
 end

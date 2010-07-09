@@ -1,0 +1,2 @@
+structure S21 : sig datatype dt con D : dt end
+structure S21 : sig val x : S21.dt end

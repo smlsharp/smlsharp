@@ -1,0 +1,9 @@
+signature SIG =
+  sig
+    type 'a t
+    val x : 'a t
+    val f_t : 'a t -> string
+  end
+structure STR : SIG
+val x = C : 'a STR.t
+

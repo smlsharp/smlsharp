@@ -13,9 +13,7 @@ sig
   val allocateID :
       VarIDContext.topExternalVarIDBasis ->
       NameMap.varNameNPEnv -> 
-      Counters.stamps ->
       TypedCalc.tptopdecl list -> 
       (VarIDContext.topExternalVarIDBasis *
-       Counters.stamps *
        TypedFlatCalc.topBlock list)
 end

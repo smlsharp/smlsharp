@@ -3012,5 +3012,6 @@ struct
       in
           program
       end
+      handle exn => raise exn
 
 end

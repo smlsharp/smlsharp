@@ -1,0 +1,5 @@
+stdIn:1.2-1.5 Error: syntax error: deleting  INT0 EQUALOP
+stdIn:1.6-1.10 Error: syntax error: deleting  COMMA ID EQUALOP
+stdIn:1.10-1.13 Error: syntax error: deleting  INT RBRACE SEMICOLON
+stdIn:2.1-2.6 Error: syntax error: deleting  HASH INT ID
+

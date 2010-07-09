@@ -1173,6 +1173,7 @@ in
       in
           newBlockList
       end
+      handle exn => raise exn
 
 end
 end

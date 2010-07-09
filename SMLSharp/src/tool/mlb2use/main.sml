@@ -31,5 +31,6 @@ val files =
           rootMLBFile = rootMLBFile,
           verbose = !verboseRef
         };
-val _ = List.app (fn file => print ("use \"" ^ file ^ "\";\n")) files;
+(* use String.toString to convert a backslash to double backslashes. *)
+val _ = List.app (fn file => print ("use \"" ^ String.toString file ^ "\";\n")) files;
 

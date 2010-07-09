@@ -8,10 +8,12 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: BasicFormatters.sml,v 1.3 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-functor BasicFormatters(FE : FORMAT_EXPRESSION) : BASIC_FORMATTERS =
+structure BasicFormatters : BASIC_FORMATTERS =
 struct
 
   (***************************************************************************)
+
+  structure FE = FormatExpression
 
   type expression = FE.expression
 

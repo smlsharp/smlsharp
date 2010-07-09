@@ -549,14 +549,16 @@ struct
             }
         val _ = trace "restoring static environment..."
         val _ = #start restoreStaticEnvTimeCounter ()
-        val contextAndStamps =
+        val contextAndCompileUnitStamp =
             Top.unpickle (Pickle.makeInstream reader)
-            handle exn =>
+            handle exn => raise exn
+(*
                    raise Fail ("malformed compiled code:" ^ exnMessage exn)
+*)
         val _ = #stop restoreStaticEnvTimeCounter ()
         val _ = trace "done\n"
       in
-        contextAndStamps
+        contextAndCompileUnitStamp
       end
 
   (**
@@ -569,7 +571,7 @@ struct
   fun resume (parameter : Top.sysParam) (preludeSource : Top.source) =
       let
         val channel = #initialSourceChannel preludeSource
-        val contextAndStamps = unpickleContext channel
+        val contextAndCompileUnitStamp = unpickleContext channel
 
         val session = #session parameter
         fun execute () =
@@ -583,7 +585,7 @@ struct
         val _ = trace "done\n"
 
       in
-          contextAndStamps
+          contextAndCompileUnitStamp
       end
 
   fun newVMresume (parameter : Top.sysParam) (preludeSource : Top.source) =
@@ -603,7 +605,7 @@ struct
             | NONE => raise Fail "no compiler context exists"
 
         val channel = ByteVectorChannel.openIn {buffer = pickledContext}
-        val contextAndStamps = unpickleContext channel
+        val contextAndCompileUnitStamp = unpickleContext channel
 
         val session = #session parameter
 
@@ -613,7 +615,7 @@ struct
         val _ = #stop restoreDynamicEnvTimeCounter ()
         val _ = trace "done\n"
       in
-        contextAndStamps
+        contextAndCompileUnitStamp
       end
 
   (**
@@ -624,7 +626,8 @@ struct
    *)
   fun start (parameter : Top.sysParam) (preludeSource : Top.source) =
       let
-          val (context, stamps) = Top.initializeContextAndStamps ()
+          val (context, compileUnitStamp) =
+              Top.initializeContextAndCompileUnitStamp ()
           val preludeSource =
               {
                interactionMode = Top.Prelude,
@@ -632,11 +635,11 @@ struct
                initialSourceName = #initialSourceName preludeSource,
                getBaseDirectory = #getBaseDirectory preludeSource
               }
-          val (success, updateContextAndStamps) = 
-              Top.run context stamps parameter preludeSource
+          val (success, updateContextAndCompileUnitStamp) = 
+              Top.run context compileUnitStamp parameter preludeSource
       in
           if success
-          then updateContextAndStamps
+          then updateContextAndCompileUnitStamp
           else raise Fail "prelude cannot compile."
       end
 
@@ -924,9 +927,11 @@ struct
 
   fun main (commandName, arguments) =
     let
+      (* stop all the global counters *)
+      val _ = GlobalCounters.stop()
+              handle exn => raise exn
 
       val _ = #reset MainCounterSet ()
-
       val libPaths =
         case OS.Process.getEnv LibPathEnvVarName of
           NONE => []
@@ -1022,7 +1027,7 @@ struct
            getVariable = getEnv
            }
           
-        val contextAndStamps = 
+        val contextAndCompileUnitStamp = 
             let
               val loader =
                   case (!loadPrelude, !(#preludeFileName parameters)) of
@@ -1043,17 +1048,8 @@ struct
                     (getSource fileName ())
                     (contextCreator topParameter)
                     (fn source => #close (#initialSourceChannel source) ())
-                | NONE => Top.initializeContextAndStamps ()
+                | NONE => Top.initializeContextAndCompileUnitStamp ()
             end
-
-(* to be implemented for useObj:
-        val _ = 
-          if List.all
-            (fn fileName => Top.runObject context (getSource fileName ()))
-            (!(#objectFileNames parameters))
-            then ()
-          else raise Fail "loading object file fails.";
-*)
 
         val _ = C.switchTrace := currentSwitchTrace
         val _ = C.printBinds := currentPrintBinds
@@ -1064,16 +1060,16 @@ struct
                   then (print "\n"; print (Counter.dump ()))
                 else ()
 
-        val (successList, contextAndStamps) =
-          foldl (fn (getSource, (successList, (context, stamps))) => 
+        val (successList, contextAndCompileUnitStamp) =
+          foldl (fn (getSource, (successList, (context, compileUnitStamp))) => 
                  let
-                   val (success, contextAndStamps) =
-                     Top.run context stamps topParameter (getSource ())
+                   val (success, contextAndCompileUnitStamp) =
+                     Top.run context compileUnitStamp topParameter (getSource ())
                  in
                    (successList @ [success],
-                    contextAndStamps)
+                    contextAndCompileUnitStamp)
                  end)
-          (nil, contextAndStamps)
+          (nil, contextAndCompileUnitStamp)
           (!(#sources parameters))
 
         val _ = 
@@ -1083,7 +1079,7 @@ struct
           else raise Fail "Compilation fails.";
       in
         #close session ();
-        cleanUp (SOME contextAndStamps);
+        cleanUp (SOME contextAndCompileUnitStamp);
         OS.Process.success
       end
     handle exn =>

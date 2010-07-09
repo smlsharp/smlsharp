@@ -1,0 +1,5 @@
+val it = fn
+    : ['a::{int, IntInf.int, real, Real32.real, word, Word8.word}.
+       'a * 'a -> 'a]
+
+

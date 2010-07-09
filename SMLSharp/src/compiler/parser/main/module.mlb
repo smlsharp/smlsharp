@@ -12,9 +12,6 @@ in
 	iml.grm.mlton.sig
 	iml.grm.mlton.sml
 	iml.lex.mlton.sml
-	interface.grm.mlton.sig
-	interface.grm.mlton.sml
-	interface.lex.mlton.sml
 
         ParserConstants_MLton.sml
         PARSER.sig

@@ -117,8 +117,15 @@ sig
         -> ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i * 'j * 'k) pu
 
   val tuple12
-      : 'a pu * 'b pu * 'c pu * 'd pu * 'e pu * 'f pu * 'g pu * 'h pu * 'i pu * 'j pu * 'k pu * 'l pu
+      : 'a pu * 'b pu * 'c pu * 'd pu * 'e pu * 'f pu * 'g pu
+        * 'h pu * 'i pu * 'j pu * 'k pu * 'l pu
         -> ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i * 'j * 'k * 'l) pu
+
+  val tuple13
+      : 'a pu * 'b pu * 'c pu * 'd pu * 'e pu * 'f pu * 'g pu
+        * 'h pu * 'i pu * 'j pu * 'k pu * 'l pu * 'm pu
+        -> ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i * 'j * 'k * 'l * 'm) pu
+
 (*
   val vector : 'a pu -> 'a Vector.vector pu
 *)

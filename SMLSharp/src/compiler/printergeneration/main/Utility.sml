@@ -42,7 +42,7 @@ struct
       FE.Indicator
       {space = true, newline = SOME{priority = FE.Deferred}}
 
-  fun makeVarName () = Counters.newVarName()
+  fun makeVarName () = VarName.generate () 
 
   fun makeVar (ty, loc) =
       let

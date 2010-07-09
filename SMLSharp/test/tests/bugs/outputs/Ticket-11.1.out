@@ -1,0 +1,1 @@
+structure S : sig type 'a t val f : unit -> 'a t end

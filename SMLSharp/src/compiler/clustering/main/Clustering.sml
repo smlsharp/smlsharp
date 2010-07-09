@@ -482,5 +482,6 @@ structure Clustering : CLUSTERING = struct
       in
           newDecList
       end
+      handle exn => raise exn
 
 end

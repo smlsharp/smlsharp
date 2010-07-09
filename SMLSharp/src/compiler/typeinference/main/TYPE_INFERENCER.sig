@@ -9,12 +9,10 @@ sig
 
   val infer :
       InitialTypeContext.topTypeContext
-      -> Counters.stamps
       -> NameMap.basicNameNPEnv
       -> PatternCalcWithTvars.pttopdec list 
       -> (
           TypeContext.context *
-          Counters.stamps * 
           TypedCalc.tptopdecl list *
           UserError.errorInfo list
          )

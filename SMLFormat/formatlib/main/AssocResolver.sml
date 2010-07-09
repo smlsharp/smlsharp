@@ -4,7 +4,7 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: PreProcessor.sml,v 1.7 2010/02/09 07:53:18 katsu Exp $
  *)
-functor AssocResolver(FormatExpression : FORMAT_EXPRESSION) =
+structure AssocResolver =
 struct
 
   (***************************************************************************)

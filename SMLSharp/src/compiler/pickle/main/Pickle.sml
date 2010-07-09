@@ -319,23 +319,40 @@ struct
 
   fun tuple11 (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11) =
       conv
-          (
-           fn ((pu1, pu2, pu3, pu4, pu5), (pu6, pu7, pu8, pu9, pu10, pu11)) =>
-              (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11),
-            fn (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11) =>
-               ((pu1, pu2, pu3, pu4, pu5), (pu6, pu7, pu8, pu9, pu10, pu11))
-          )
-          (tuple2 (tuple5(pu1, pu2, pu3, pu4, pu5), tuple6(pu6, pu7, pu8, pu9, pu10, pu11)))
+        (
+      fn ((pu1, pu2, pu3, pu4, pu5), (pu6, pu7, pu8, pu9, pu10, pu11)) =>
+         (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11),
+      fn (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11) =>
+         ((pu1, pu2, pu3, pu4, pu5), (pu6, pu7, pu8, pu9, pu10, pu11))
+        )
+        (tuple2 (tuple5(pu1, pu2, pu3, pu4, pu5),
+                 tuple6(pu6, pu7, pu8, pu9, pu10, pu11)))
 
   fun tuple12 (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11, pu12) =
       conv
-          (
-           fn ((pu1, pu2, pu3, pu4, pu5, pu6), (pu7, pu8, pu9, pu10, pu11, pu12)) =>
-              (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11, pu12),
-            fn (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11, pu12) =>
-               ((pu1, pu2, pu3, pu4, pu5, pu6), (pu7, pu8, pu9, pu10, pu11, pu12))
-          )
-          (tuple2 (tuple6(pu1, pu2, pu3, pu4, pu5, pu6), tuple6(pu7, pu8, pu9, pu10, pu11, pu12)))
+        (
+      fn ((pu1, pu2, pu3, pu4, pu5, pu6), (pu7, pu8, pu9, pu10, pu11, pu12)) =>
+         (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11, pu12),
+      fn (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11, pu12) =>
+         ((pu1, pu2, pu3, pu4, pu5, pu6), (pu7, pu8, pu9, pu10, pu11, pu12))
+        )
+        (tuple2 (tuple6(pu1, pu2, pu3, pu4, pu5, pu6),
+                 tuple6(pu7, pu8, pu9, pu10, pu11, pu12)))
+
+  fun tuple13
+        (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11, pu12, pu13) =
+      conv
+        (
+      fn ((pu1, pu2, pu3, pu4, pu5, pu6),
+          (pu7, pu8, pu9, pu10, pu11, pu12, pu13)) =>
+         (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11, pu12, pu13),
+      fn (pu1, pu2, pu3, pu4, pu5, pu6, pu7, pu8, pu9, pu10, pu11, pu12, pu13)
+         =>
+         ((pu1, pu2, pu3, pu4, pu5, pu6),
+          (pu7, pu8, pu9, pu10, pu11, pu12, pu13))
+        )
+        (tuple2 (tuple6(pu1, pu2, pu3, pu4, pu5, pu6),
+                 tuple7(pu7, pu8, pu9, pu10, pu11, pu12, pu13)))
 
   fun lazy (pu : 'a pu) : (unit -> 'a) pu =
       let
@@ -851,32 +868,32 @@ print ("refCycle(3): size = " ^ Word32.toString size ^ "\n");
       let
         val hashTag = newHashTag()
       in
-        {
+        share {
           pickler =
           fn s =>
              fn stream =>
                 (
                   pickleInt (String.size s) stream;
-                  Word8Vector.app
-                      (fn elem => #pickler byte elem stream)
-                      (Byte.stringToBytes s)
+                  CharVector.app
+                      (fn elem => #pickler char elem stream)
+                      s
                 ),
           unpickler =
           fn stream =>
              let
                val length = unpickleInt stream
                val v =
-                   Word8Vector.tabulate
-                       (length, fn _ => #unpickler byte stream)
-             in Byte.bytesToString v end,
+                   CharVector.tabulate
+                       (length, fn _ => #unpickler char stream)
+             in v end,
           hasher =
           fn v =>
              maybestop
                  (fn s =>
-                     Substring.foldl
+                     CharVector.foldl
                          (fn (elem, s) => #hasher char elem s)
                          (hashAddSmall hashTag s)
-                         (Substring.full v)),
+                         v),
           eq = op =
         }
       end

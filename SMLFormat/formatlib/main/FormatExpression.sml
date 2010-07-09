@@ -4,12 +4,12 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: FormatExpression.sml,v 1.4 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-functor FormatExpression(T : FORMAT_EXPRESSION_TYPES) : FORMAT_EXPRESSION =
+structure FormatExpression : FORMAT_EXPRESSION =
 struct
 
   (***************************************************************************)
 
-  open T
+  open FormatExpressionTypes
 
   (***************************************************************************)
 

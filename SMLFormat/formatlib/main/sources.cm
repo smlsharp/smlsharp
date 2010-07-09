@@ -16,7 +16,6 @@ $/basis.cm
         $/basis.cm
 #endif
 *)
-        FORMAT_EXPRESSION_TYPES.sig
         FORMAT_EXPRESSION.sig
         FormatExpressionTypes.sml
         FormatExpression.sml
@@ -30,5 +29,4 @@ $/basis.cm
         BASIC_FORMATTERS.sig
         BasicFormatters.sml
         SMLFORMAT.sig
-        SMLFormatBase.sml
         SMLFormat.sml

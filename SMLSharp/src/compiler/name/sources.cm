@@ -19,6 +19,8 @@ Group
         structure VarID
         structure VarName
 
+	structure GlobalCounters
+
         structure ClusterID
 
         structure Constants

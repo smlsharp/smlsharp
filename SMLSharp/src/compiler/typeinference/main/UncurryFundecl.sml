@@ -848,12 +848,12 @@ in
                   (uncurryStrDeclList  decs, bodyNameMap, sigExpOpt)})
              funBindInfoStringSigexpStrexpList, 
            loc)
-  and optimize (stamps : Counters.stamps) topdecList = 
+  and optimize topdecList = 
       let
-        val  _ = Counters.init stamps
         val decs = map uncurryTopdec topdecList
       in
-        (Counters.getCountersStamps(), decs)
+        decs
       end
+      handle exn => raise exn
 end
 end

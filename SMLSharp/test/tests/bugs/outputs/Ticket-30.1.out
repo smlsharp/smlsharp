@@ -1,0 +1,3 @@
+val ninf64 = ~inf : real
+val ninf32 = ~inf : Real32.real
+

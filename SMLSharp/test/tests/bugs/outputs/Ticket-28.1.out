@@ -1,0 +1,6 @@
+../tests/bugs/tests/Ticket-28.1.sml:1.1-1.18 Warning:
+  dummy type variable(s) X0 are introduced due to value restriction
+Size
+uncaught exception
+../tests/bugs/tests/Ticket-28.1.sml:1.1-1.18
+RuntimeError:ExecutionException

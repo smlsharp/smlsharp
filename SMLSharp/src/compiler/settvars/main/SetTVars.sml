@@ -615,25 +615,32 @@ in
    end
 
  fun setTopDec env plTopDec =
-     case plTopDec of
-         PCF.PLFDECSTR (strDecs, loc) => PTDECSTR (map (setStrDecl env) strDecs, loc)
-       | PCF.PLFDECSIG (newSigDecs, loc) => PTDECSIG ((map (fn (name,(spec, sigExpForPrint)) => 
-                                                           (name, (setspec spec, sigExpForPrint))) 
-                                                     newSigDecs),
-                                                 loc)
-       | PCF.PLFDECFUN(funDecs, loc) => 
-         PTDECFUNCTOR (map (fn (
-                                funName, 
-                                (argSpec, argName, argNameMap, sigExpForPrint), 
-                                (bodyDecls, bodyNameMap, bodySigExpOpt), 
-                                loc) =>
-                               (
-                                funName, 
-                                (setspec argSpec, argName, argNameMap, sigExpForPrint),
-                                (map (setStrDecl env) bodyDecls, bodyNameMap, bodySigExpOpt),
-                                loc))
-                           funDecs,
-                           loc)
- fun setInterface (package, interfaceSpec, loc) = (package, setspec interfaceSpec, loc)
+     (case plTopDec of
+        PCF.PLFDECSTR (strDecs, loc)
+        => PTDECSTR (map (setStrDecl env) strDecs, loc)
+      | PCF.PLFDECSIG (newSigDecs, loc)
+        => PTDECSIG ((map (fn (name,(spec, sigExpForPrint))
+                              => 
+                              (name, (setspec spec, sigExpForPrint))) 
+                          newSigDecs),
+                     loc)
+      | PCF.PLFDECFUN(funDecs, loc) => 
+        PTDECFUNCTOR
+          (map
+             (fn
+              (
+               funName, 
+               (argSpec, argName, argNameMap, sigExpForPrint), 
+               (bodyDecls, bodyNameMap, bodySigExpOpt), 
+               loc) =>
+              (
+               funName, 
+               (setspec argSpec, argName, argNameMap, sigExpForPrint),
+               (map (setStrDecl env) bodyDecls, bodyNameMap, bodySigExpOpt),
+               loc))
+             funDecs,
+           loc)
+     )
+     handle exn => raise exn
 end
 end

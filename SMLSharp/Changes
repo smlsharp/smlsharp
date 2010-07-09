@@ -1,3 +1,25 @@
+SML# version 0.51 (released on 2010-07-09)
+
+1. Overview
+
+This is a patch release of SML# 0.50 series.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+* slightly improved compilation for "orelse" and "andalso".
+* slightly speed up of booting interactive mode by compacting pickled
+  context of the prelude.
+* refined unification algorithm to print more reasonable error messages.
+
+[SMLUnit]
+* added support files for MLton.
+
+[mlb2use]
+* fixed a bug of dealing with backslashes.
+
+-----------------------------------------------------------------------------
 SML# version 0.50 (released on 2010-06-25)
 
 1. Overview

@@ -49,7 +49,8 @@ struct
        }
 
   type context = TB.context
-  type stamps = TB.stamps
+
+  type compileUnitStamp = TB.compileUnitStamp
   type sysParam = TB.sysParam
 
   val CT.CounterSetInternal TopCounterSet =
@@ -135,7 +136,7 @@ struct
 
   local
     val pickleEnvs =
-        P.tuple12
+        P.tuple13
           (
            EnvPickler.SEnv(TypesPickler.fixity),
            NameMapPickler.topNameMap,
@@ -148,6 +149,7 @@ struct
               EnvPickler.SEnv(P.string),
               P.int
              ),
+           OPrimID.pu_ID,
            TyConID.pu_ID,
            ExnTagID.pu_ID,
            BoundTypeVarID.pu_ID,
@@ -156,27 +158,41 @@ struct
            FunctorLinker.pu_functorEnv
           )
   in
-    fun pickle (context : TB.context, stamps : TB.stamps) outstream =
+    fun pickle (context : TB.context, compileUnitStamp)
+               outstream =
         let
+          (* Now functor is not pickled. *)
+          fun noFun_topNameMap {varNameMap, tyNameMap, funNameMap, sigNameMap,
+                                strNameMap} =
+              {varNameMap=varNameMap, tyNameMap=tyNameMap,
+               funNameMap=SEnv.empty, sigNameMap=sigNameMap,
+               strNameMap=strNameMap} : NameMap.topNameMap
+          fun noFun_topTypeContext {varEnv, tyConEnv, sigEnv, funEnv} =
+              {varEnv = varEnv, tyConEnv = tyConEnv, sigEnv = sigEnv,
+               funEnv = SEnv.empty} : InitialTypeContext.topTypeContext
+          fun noFun_varIDBasis (functorEnv, varIDEnv) =
+              (VarIDContext.emptyFunctorEnv, varIDEnv)
+              : VarIDContext.topExternalVarIDBasis
           val _ = #start pickleEnvsCounter ()
         in
           P.pickle
             pickleEnvs
             (
              (#fixEnv context),
-             (#nameMap context),
-             (#topTypeContext context),
-             (#externalVarIDBasis context),
+             noFun_topNameMap (#nameMap context),
+             noFun_topTypeContext (#topTypeContext context),
+             noFun_varIDBasis (#externalVarIDBasis context),
              (#globalIndexEnv context),
              (
-              #clusterIDKeyStamp stamps,
+              ClusterID.terminate(),
               #globalNameAliasEnv context,
-              #compileUnitStamp stamps
+              compileUnitStamp
              ),
-             (#tyConIDKeyStamp stamps),
-             (#exnTagIDKeyStamp stamps),
-             (#boundTypeVarIDStamp stamps),
-             (#externalVarIDKeyStamp stamps),
+             OPrimID.terminate(),
+             TyConID.terminate(),
+             ExnTagID.terminate(),
+             BoundTypeVarID.terminate(),
+             ExternalVarID.terminate(),
 	     (#inlineEnv context),
              (*
               * when functor is compiled into instructions, we 
@@ -203,6 +219,7 @@ struct
                 globalNameAliasEnv,
                 compileUnitStamp
                ),
+               oprimIDKeyStamp,
                tyConIDKeyStamp,
                exnTagIDKeyStamp,
                boundTypeVarIDStamp,
@@ -212,26 +229,30 @@ struct
             =
             P.unpickle pickleEnvs instream
           val _ = #stop unpickleEnvsCounter ()
+          val _ =
+              (
+               OPrimID.resume oprimIDKeyStamp;
+               TyConID.resume  tyConIDKeyStamp;
+               ExnTagID.resume exnTagIDKeyStamp;
+               BoundTypeVarID.resume boundTypeVarIDStamp;
+               ClusterID.resume clusterIDKeyStamp;
+               ExternalVarID.resume externalVarIDKeyStamp
+              )
+              handle exn => raise exn
         in
-            ({
-             fixEnv =  fixEnv,
-             topTypeContext =  topTypeContext,
-	     externalVarIDBasis =  externalVarIDBasis,
-             nameMap = nameMap,
-             globalNameAliasEnv = globalNameAliasEnv,
-             globalIndexEnv =  globalIndexEnv,
-	     inlineEnv = inlineEnv,
-             functorEnv  =  functorEnv
-             } : TB.context,
-             {
-              compileUnitStamp = compileUnitStamp,
-              tyConIDKeyStamp = tyConIDKeyStamp,
-              exnTagIDKeyStamp = exnTagIDKeyStamp,
-              boundTypeVarIDStamp = boundTypeVarIDStamp,
-              clusterIDKeyStamp = clusterIDKeyStamp,
-              externalVarIDKeyStamp = externalVarIDKeyStamp
-             } : TB.stamps
-            )
+          (
+           {
+            fixEnv =  fixEnv,
+            topTypeContext =  topTypeContext,
+	    externalVarIDBasis =  externalVarIDBasis,
+            nameMap = nameMap,
+            globalNameAliasEnv = globalNameAliasEnv,
+            globalIndexEnv =  globalIndexEnv,
+	    inlineEnv = inlineEnv,
+            functorEnv  =  functorEnv
+           } : TB.context,
+           compileUnitStamp
+          )
         end
   end (* local *)
 
@@ -338,6 +359,7 @@ val currentSourceFilename = ref ""
         val (pldecs, newFixEnv, warnings) =
             Elaborator.elaborate (#fixEnv (#context basis))
                                  decs
+        handle exn => raise exn
         val _ = #stop elaborationTimeCounter ()
         val contextUpdater = 
          fn context => TB.extendContextFixEnv context newFixEnv
@@ -364,6 +386,7 @@ val currentSourceFilename = ref ""
         val (exportCurrentNameMap, plfdecs) = 
             ModuleCompiler.compile (#nameMap (#context basis))
                                    decs
+        handle exn => raise exn
         val _ = #stop moduleCompilationTimeCounter ()
         val flattenedNamePathEnv = 
             NameMap.basicNameMapToFlattenedNamePathEnv 
@@ -403,6 +426,7 @@ val currentSourceFilename = ref ""
         val plfdecs = 
             VALREC_Optimizer.optimize (#nameMap (#context basis))
                                       plfdecs
+        handle exn => raise exn
         val _ = #stop valRecOptimizationTimeCounter ()
         val _ =
             if !C.printPL andalso !C.switchTrace
@@ -427,6 +451,7 @@ val currentSourceFilename = ref ""
              if !C.doUncurryOptimization
              then pldecs
              else TransFundecl.transTopDeclList pldecs
+         handle exn => raise exn
       in
         (pldecs, basis, fn context => context)
       end
@@ -439,6 +464,7 @@ val currentSourceFilename = ref ""
         (* process user type declaration *)
         val _ = #start setTVarsTimeCounter ()
         val ptdecs = map (SetTVars.setTopDec SEnv.empty) pldecs
+        handle exn => raise exn
         val _ = #stop setTVarsTimeCounter ()
         val _ =
             if !C.printPL andalso !C.switchTrace
@@ -459,39 +485,42 @@ val currentSourceFilename = ref ""
        *)
       let
         (* type inference *)
-        val _ = #start typeInferenceTimeCounter ()
-        val stamps = 
-            {
-             boundTypeVarIDStamp = #boundTypeVarIDStamp (#stamps basis),
-             exnTagIDKeyStamp = #exnTagIDKeyStamp (#stamps basis),
-             tyConIDKeyStamp = #tyConIDKeyStamp (#stamps basis)
-            }
         val flattenedNamePathEnv = 
             case (#flattenedNamePathEnvOpt (#localContext basis)) of
               NONE =>
               raise
                 Control.Bug "expect flattenedNamePathEnv for type inferencer"
             | SOME x => x
-        val (exportContext, newStamps, tpdecs, warnings) =
+        val _ =
+            (
+             TyConID.start();
+             BoundTypeVarID.start();
+             ExnTagID.start()
+            )
+        val _ = #start typeInferenceTimeCounter ()
+        val (exportContext, tpdecs, warnings) =
             TypeInferencer.infer (#topTypeContext (#context basis))
-                                 stamps
                                  flattenedNamePathEnv
                                  ptdecs
+        handle exn => 
+               (
+                BoundTypeVarID.stop();
+                ExnTagID.stop();
+                TyConID.stop();
+                raise exn
+               )
         val _ = #stop typeInferenceTimeCounter ()
-        val newGlobalStamps = 
-            TB.setStampsTypeConstructorGlobalIDStamp
-              (TB.setStampsExceptionGlobalTagStamp
-                 (TB.setStampsBoundTypeVarIDStamp
-                    (#stamps basis) (#boundTypeVarIDStamp newStamps))
-                 (#exnTagIDKeyStamp newStamps))
-              (#tyConIDKeyStamp newStamps)
+        val _ =
+            (
+             BoundTypeVarID.stop();
+             ExnTagID.stop();
+             TyConID.stop()
+             )
         val newLocalContext =
             TB.setLocalContextTypeContextOpt
               (#localContext basis) exportContext
         val newBasis = 
-            TB.setBasisLocalContext
-              (TB.setBasisStamps basis newGlobalStamps)  
-              newLocalContext
+            TB.setBasisLocalContext basis newLocalContext
         val contextUpdater = 
             fn context => 
                TB.extendContextTopTypeContextWithCurrentTypeContext
@@ -524,18 +553,20 @@ val currentSourceFilename = ref ""
       *)
       let
         (* Uncurrying  optimization *)
+        val _ = BoundTypeVarID.start()
         val _ = #start UncurryOptimizationTimeCounter ()
-        val stamps = 
-            {
-             boundTypeVarIDStamp = #boundTypeVarIDStamp (#stamps basis),
-             exnTagIDKeyStamp = #exnTagIDKeyStamp (#stamps basis),
-             tyConIDKeyStamp = #tyConIDKeyStamp (#stamps basis)
-            }
-        val (newStamps, tpdecs) = 
+        val tpdecs = 
             if !C.doUncurryOptimization
-            then UncurryFundecl.optimize stamps tpdecs
-            else (stamps, tpdecs)
+            then UncurryFundecl.optimize tpdecs
+                 handle exn =>
+                        (
+                         BoundTypeVarID.stop();
+                         raise exn
+                        )
+            else tpdecs
+                 
         val _ = #stop UncurryOptimizationTimeCounter ()
+        val _ = BoundTypeVarID.stop()
         val _ =
             if !C.printUC andalso !C.switchTrace
             then
@@ -554,7 +585,6 @@ val currentSourceFilename = ref ""
      TypedCalc => TypedCalc
      *)
       let
-        val _ = #start printerGenerationTimeCounter ()
         val newTypeContext = 
             case (#typeContextOpt (#localContext basis)) of 
               NONE =>
@@ -562,8 +592,6 @@ val currentSourceFilename = ref ""
                 Control.Bug
                   "\nexpect type context for PrinterCodeGeneration\n"
             | SOME x => x
-        val stamps = #boundTypeVarIDStamp (#stamps basis)
-
         val flattenedNamePathEnv = 
             case (#flattenedNamePathEnvOpt (#localContext basis)) of
               NONE =>
@@ -571,30 +599,31 @@ val currentSourceFilename = ref ""
                 Control.Bug
                   "expect flattenedNamePathEnv for print code generator"
             | SOME x => x
-        val (newContext, newFlattenedNamePathEnv, newStamps, tpdecs) =
+        val _ = BoundTypeVarID.start()
+        val _ = #start printerGenerationTimeCounter ()
+        val (newContext, newFlattenedNamePathEnv, tpdecs) =
             if !C.skipPrinter
-            then (newTypeContext, flattenedNamePathEnv, stamps, tpdecs)
+            then (newTypeContext, flattenedNamePathEnv, tpdecs)
             else
               PrinterGenerator.generate
                 {
                  context = #topTypeContext (#context basis),
                  newContext = newTypeContext,
                  flattenedNamePathEnv = flattenedNamePathEnv, 
-                 stamps = stamps,
                  printBinds = !C.printBinds,
                  declarations = tpdecs
                 }
+              handle exn =>
+                     (BoundTypeVarID.stop();
+                      raise exn)
         val _ = #stop printerGenerationTimeCounter ()
+        val _ = BoundTypeVarID.stop()
                     
-        val newGlobalStamps = 
-            TB.setStampsBoundTypeVarIDStamp (#stamps basis) newStamps
         val newLocalContext = 
             TB.setLocalContextFlattenedNamePathEnvOpt
               (#localContext basis) newFlattenedNamePathEnv
         val newBasis = 
-            TB.setBasisLocalContext
-              (TB.setBasisStamps basis newGlobalStamps)
-              newLocalContext
+            TB.setBasisLocalContext basis newLocalContext
         val _ =
             if
               !C.printTP
@@ -624,8 +653,6 @@ val currentSourceFilename = ref ""
       * TypedCalc => TypedFlatCalc
       *)
       let
-        val _ = #start UniqueIdAllocationCounter ()
-        val stamps = #externalVarIDKeyStamp (#stamps basis)
         val flattenedNamePathEnv = 
             case (#flattenedNamePathEnvOpt (#localContext basis)) of
               NONE =>
@@ -633,24 +660,24 @@ val currentSourceFilename = ref ""
                 Control.Bug
                   "expect flattenedNamePathEnv for uniqueIdAllocation"
             | SOME x => x
-        val (deltaBasis, stamps, tpflatdecs) =
+        val _ = ExternalVarID.start()
+        val _ = #start UniqueIdAllocationCounter ()
+        val (deltaBasis, tpflatdecs) =
             UniqueIDAllocation.allocateID
               (#externalVarIDBasis (#context basis))
               (#2 flattenedNamePathEnv)
-              stamps
               tpdecs
+        handle exn =>
+               (ExternalVarID.stop();
+                raise exn
+               )
         val _ = #stop UniqueIdAllocationCounter ()
-        val newBasis = 
-            TB.setBasisStamps
-              basis 
-              (TB.setStampsExternalVarIDStamp
-                 (#stamps basis)
-                 stamps)
+        val _ = ExternalVarID.stop()
         val newLocalContext = 
             TB.setLocalContextNewExternalVarIDBasisOpt
               (#localContext basis) deltaBasis
         val newBasis = 
-            TB.setBasisLocalContext newBasis newLocalContext
+            TB.setBasisLocalContext basis newLocalContext
         val contextUpdater = 
          fn context =>
             TB.extendContextWithExternalVarIDBasis context deltaBasis
@@ -675,6 +702,7 @@ val currentSourceFilename = ref ""
         val _ = #start overloadCompilationTimeCounter ()
         val (rcdecs, warnings) =
             MatchCompiler.compile tpflatdecs
+        handle exn => raise exn
         val _ = #stop overloadCompilationTimeCounter ()
         val _ = printWarnings (#sysParam basis) warnings
         val _ =
@@ -697,18 +725,19 @@ val currentSourceFilename = ref ""
      TypedFlatCalc => RecordCalc
      *)
       let
-        val stamps = #boundTypeVarIDStamp (#stamps basis)
         val _ = #start matchCompilationTimeCounter ()
-        val (stamps, newrctopblocks) =
+        val _ = BoundTypeVarID.start()
+        val newrctopblocks =
             OverloadCompilation.compile
-              stamps
               (#externalVarIDBasis (#context basis))
               rctopblocks
+          handle exn =>
+                 (
+                  BoundTypeVarID.stop();
+                  raise exn
+                 )
         val _ = #stop matchCompilationTimeCounter ()
-        val newGlobalStamps = 
-            TB.setStampsBoundTypeVarIDStamp
-               (#stamps basis) stamps
-        val newBasis = TB.setBasisStamps basis newGlobalStamps
+        val _ = BoundTypeVarID.stop()
         val _ =
             if !C.printRC andalso !C.switchTrace
             then
@@ -721,7 +750,7 @@ val currentSourceFilename = ref ""
                 newrctopblocks
             else ()
       in
-        (newrctopblocks, newBasis, fn context => context)
+        (newrctopblocks, basis, fn context => context)
       end
 
   fun doTypedLambdaNormalization (basis : TB.basis) rcdecs =
@@ -732,6 +761,7 @@ val currentSourceFilename = ref ""
         val _ = #start typedLambdaNormalizationTimeCounter ()
         val tldecs = 
             TLNormalization.normalize rcdecs
+        handle exn => raise exn
         val _ = #stop typedLambdaNormalizationTimeCounter ()
         val _ =
             if !C.printTL andalso !C.switchTrace
@@ -757,6 +787,7 @@ val currentSourceFilename = ref ""
               let
                 val diagnoses =
                     TypeCheckTypedLambda.typecheck tldecs
+                handle exn => raise exn
                 val _ = 
                     if ! C.printDiagnosis then
                       case diagnoses of
@@ -783,6 +814,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start staticAnalysisTimeCounter ()
         val acdecs = StaticAnalysis.analyse tldecs
+        handle exn => raise exn
+
         val _ = #stop staticAnalysisTimeCounter ()
         val _ =
             if !C.printAC andalso !C.switchTrace
@@ -804,6 +837,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start recordUnboxingTimeCounter ()
         val mvdecs =  RecordUnboxing.transform acdecs
+        handle exn => raise exn
+
         val _ = #stop recordUnboxingTimeCounter ()
         val _ =
             if !C.printMV andalso !C.switchTrace
@@ -824,17 +859,12 @@ val currentSourceFilename = ref ""
      *)
       if !C.doInlining then
 	let
-          val stamps = #boundTypeVarIDStamp (#stamps basis)
 	  val _ = #start inliningTimeCounter()
-	  val (globalInlineEnv, newStamps, mvdecs) = 
-	      Inline.doInlining (#inlineEnv (#context basis)) stamps mvdecs
+	  val (globalInlineEnv, mvdecs) = 
+	      Inline.doInlining (#inlineEnv (#context basis)) mvdecs
+          handle exn => raise exn
+
 	  val _ = #stop inliningTimeCounter()
-          val newGlobalStamps = 
-              TB.setStampsBoundTypeVarIDStamp
-                (#stamps basis)
-                newStamps
-          val newBasis = 
-              TB.setBasisStamps basis newGlobalStamps
     (* 2008.2.7 liu : to support true separate compilation ,
      * inliner must return the incremental globalInlineEnv instead of an
      * already increased one. The current implementation  follows the latter
@@ -852,7 +882,7 @@ val currentSourceFilename = ref ""
 		  mvdecs
 	      else ()
 	in
-          (mvdecs, newBasis, contextUpdater)
+          (mvdecs, basis, contextUpdater)
 	end
       else
 	(mvdecs, basis, fn context => context)
@@ -867,6 +897,8 @@ val currentSourceFilename = ref ""
           val _ = #start mvOptimizationTimeCounter ()
           val mvdecs = 
               MVOptimization.optimize mvdecs
+          handle exn => raise exn
+
           val _ = #stop mvOptimizationTimeCounter ()
           val _ =
               if !C.printMV andalso !C.switchTrace
@@ -891,6 +923,8 @@ val currentSourceFilename = ref ""
        let
          val _ = #start functionLocalizeTimeCounter ()
          val mvdecs = FunctionLocalize.localize mvdecs
+         handle exn => raise exn
+
          val _ = #stop  functionLocalizeTimeCounter ()
          val _ =
              if !C.printMV andalso !C.switchTrace
@@ -916,6 +950,8 @@ val currentSourceFilename = ref ""
         val (newFunctorEnv, mvdecs) =
             FunctorLinker.link (#functorEnv (#context basis))
                                mvdecs
+        handle exn => raise exn
+
         val _ = #stop functorLinkerTimeCounter ()
         val contextUpdater =
          fn context => TB.extendContextFunctorEnv context newFunctorEnv
@@ -943,6 +979,8 @@ val currentSourceFilename = ref ""
               let
                 val diagnoses =
                     MVTypeCheck.typecheck mvdecs
+                handle exn => raise exn
+
                 val _ = 
                     if ! C.printDiagnosis then
                       case diagnoses of
@@ -974,6 +1012,8 @@ val currentSourceFilename = ref ""
               let
                 val diagnoses =
                     MVTypeCheck.typecheck mvdecs
+                handle exn => raise exn
+
                 val _ = 
                     if ! C.printDiagnosis then
                       case diagnoses of
@@ -1006,6 +1046,8 @@ val currentSourceFilename = ref ""
               let
                 val diagnoses =
                     MVTypeCheck.typecheck mvdecs
+                handle exn => raise exn
+
                 val _ = 
                     if ! C.printDiagnosis then
                       case diagnoses of
@@ -1033,6 +1075,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start clusteringTimeCounter ()
         val ccdecs = Clustering.transform mvdecs
+        handle exn => raise exn
+
         val _ = #stop clusteringTimeCounter ()
         val _ =
             if !C.printCC andalso !C.switchTrace
@@ -1055,6 +1099,8 @@ val currentSourceFilename = ref ""
         val _ = #start rbuTransformationTimeCounter ()
         val rbudecs = 
             RBUTransformation.transform ccdecs
+        handle exn => raise exn
+
         val _ = #stop rbuTransformationTimeCounter ()
         val _ =
             if !C.printRBU andalso !C.switchTrace
@@ -1074,6 +1120,8 @@ val currentSourceFilename = ref ""
         val _ = #start anormalizationTimeCounter ()
         val andecs = 
             ANormalization.normalize rbudecs
+        handle exn => raise exn
+
         val _ = #stop anormalizationTimeCounter ()
         val _ =
             if !C.printAN andalso !C.switchTrace
@@ -1092,6 +1140,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start iltransformationTimeCounter ()
         val ilcode = ILTransformation.transform andecls
+        handle exn => raise exn
+
         val _ = #stop iltransformationTimeCounter ()
         val _ =
             if !C.printIL andalso !C.switchTrace
@@ -1112,6 +1162,8 @@ val currentSourceFilename = ref ""
         val (newGlobalIndexEnv, symbolicCode) = 
             SIGenerator.generate
               (#globalIndexEnv (#context basis), ilcode)
+        handle exn => raise exn
+
         val _ = #stop sigenerationTimeCounter ()
         val contextUpdater =
          fn context => TB.setContextGlobalIndexEnv context newGlobalIndexEnv
@@ -1136,6 +1188,8 @@ val currentSourceFilename = ref ""
 	    then map 
 		   Reallocater.clusterGraphColoring  symbolicCode
 	    else symbolicCode
+        handle exn => raise exn
+
 	val _ = 
 	    if !C.printSR andalso !C.switchTrace
 	    then 
@@ -1156,16 +1210,15 @@ val currentSourceFilename = ref ""
 
   fun doYAANormalization (basis : TB.basis) rbudecs =
       let
+        val _ = ClusterID.start()
         val _ = #start anormalizationTimeCounter ()
-        val (newCounter, andecs) = 
-            YAANormalization.normalize
-              (#clusterIDKeyStamp (#stamps basis))
-              rbudecs
+        val andecs = YAANormalization.normalize rbudecs
+        handle exn => 
+               (ClusterID.stop();
+                raise exn
+               )
         val _ = #stop anormalizationTimeCounter ()
-        val newGlobalStamps = 
-            TB.setStampsClusterGlobalIDStamp
-              (#stamps basis) newCounter
-        val newBasis = TB.setBasisStamps basis newGlobalStamps
+        val _ = ClusterID.stop()
         val _ =
             if !C.printAN andalso !C.switchTrace
             then
@@ -1176,13 +1229,15 @@ val currentSourceFilename = ref ""
                 andecs
             else ()
       in
-        (andecs, newBasis, fn context => context)
+        (andecs, basis, fn context => context)
       end
 
   fun doYAANormalOptimization (basis : TB.basis) andecs =
       let
         val _ = #start anormalizationTimeCounter ()
         val newAndecs = YAANormalOptimization.optimize andecs
+        handle exn => raise exn
+
         val _ = #stop anormalizationTimeCounter ()
         val _ =
             if !C.printAN andalso !C.switchTrace
@@ -1204,6 +1259,8 @@ val currentSourceFilename = ref ""
             then
               let
                 val diagnoses = YAANormalTypeCheck.typecheck andecs
+                handle exn => raise exn
+
                 val _ = 
                     if ! C.printDiagnosis then
                       case diagnoses of
@@ -1237,6 +1294,8 @@ val currentSourceFilename = ref ""
                separateCompilation = false
               }
               andecs
+        handle exn => raise exn
+
         val contextUpdater = 
          fn context => TB.setContextGlobalNameAliasEnv context newAliasEnv
         val _ =
@@ -1259,6 +1318,8 @@ val currentSourceFilename = ref ""
             then SOME (GlobalIndexAllocator.new
                          (#globalIndexEnv (#context basis)))
             else NONE
+        handle exn => raise exn
+
         val (allocator, finish) =
             case globalIndexAllocator of
               SOME {allocator, finish} => (SOME allocator, SOME finish)
@@ -1268,6 +1329,8 @@ val currentSourceFilename = ref ""
             AIGenerator.generate
               allocator
               andecls
+        handle exn => raise exn
+
         val _ = #stop aigenerationTimeCounter ()
         val (contextUpdater, initGlobalArrays) =
             case finish of
@@ -1297,6 +1360,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start aigenerationTimeCounter ()
         val aicode = AIGenerator2.generate andecls
+        handle exn => raise exn
+
         val _ = #stop aigenerationTimeCounter ()
         val _ =
             if !C.printAI andalso !C.switchTrace
@@ -1316,6 +1381,8 @@ val currentSourceFilename = ref ""
         val _ = #start vmcodeselectionTimeCounter ()
         val vmcode = 
             VMCodeSelection.select aicode
+        handle exn => raise exn
+
         val _ = #stop vmcodeselectionTimeCounter ()
         val _ =
             if !C.printML andalso !C.switchTrace
@@ -1334,6 +1401,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start stackallocationTimeCounter ()
         val mcode = StackAllocation.allocate mcode
+        handle exn => raise exn
+
         val _ = #stop stackallocationTimeCounter ()
         val _ =
             if !C.printML andalso !C.switchTrace
@@ -1352,6 +1421,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start linearizeTimeCounter ()
         val mcode = Linearize.linearize mcode
+        handle exn => raise exn
+
         val _ = #stop linearizeTimeCounter ()
         val _ =
             if !C.printML andalso !C.switchTrace
@@ -1370,6 +1441,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start vmcodeemissionTimeCounter ()
         val asmcode = VMCodeEmission.emit vmcode
+        handle exn => raise exn
+
         val _ = #stop vmcodeemissionTimeCounter ()
         val _ =
             if !C.printIS andalso !C.switchTrace
@@ -1388,6 +1461,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start vmcodeemissionTimeCounter ()
         val objfile = Assemble.assemble VMAssembler.assemble asmcode
+        handle exn => raise exn
+
         val _ = #stop vmcodeemissionTimeCounter ()
         val _ =
             if !C.printOBJ andalso !C.switchTrace
@@ -1407,8 +1482,10 @@ val currentSourceFilename = ref ""
         val _ = #start vmcodeselectionTimeCounter ()
         val asm =
             X86RTLBackend.codegen
-              (SOME (#compileUnitStamp (#stamps basis)))
+              (SOME (#compileUnitStamp basis))
               aicode
+        handle exn => raise exn
+
         val _ = #stop vmcodeselectionTimeCounter ()
       in
         (SessionTypes.ASMFILE asm, basis, fn context => context)
@@ -1419,8 +1496,10 @@ val currentSourceFilename = ref ""
         val _ = #start vmcodeselectionTimeCounter ()
         val x86code = 
             X86CodeSelection.select
-              (SOME (#compileUnitStamp (#stamps basis)))
+              (SOME (#compileUnitStamp basis))
               aicode
+        handle exn => raise exn
+
         val _ = #stop vmcodeselectionTimeCounter ()
         val _ =
             if !C.printML andalso !C.switchTrace
@@ -1441,6 +1520,8 @@ val currentSourceFilename = ref ""
         val x86code = 
             X86RegisterAllocation.allocate
               x86code
+        handle exn => raise exn
+
         val _ = #stop vmcodeselectionTimeCounter ()
         val _ =
             if !C.printML andalso !C.switchTrace
@@ -1459,6 +1540,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start vmcodeselectionTimeCounter ()
         val asm = X86CodeGeneration.codeGen x86code
+        handle exn => raise exn
+
         val _ = #stop vmcodeselectionTimeCounter ()
         val result = SessionTypes.ASMFILE
                        {code = fn f => f asm, nextDummy = NONE}
@@ -1472,6 +1555,8 @@ val currentSourceFilename = ref ""
         val sicode = 
             YASIGenerator.generate
               (initGlobalArrays, aicode)
+        handle exn => raise exn
+
         val _ = #stop yasigenerationTimeCounter ()
         val _ =
             if !C.printLS andalso !C.switchTrace
@@ -1491,6 +1576,8 @@ val currentSourceFilename = ref ""
         val _ = #start assembleTimeCounter ()
         val executable as {instructions, locationTable, ...} =
             Assembler.assemble symbolicCode
+        handle exn => raise exn
+
         val _ = #stop assembleTimeCounter ()
         val _ =
             if !C.printIS andalso !C.switchTrace
@@ -1514,6 +1601,8 @@ val currentSourceFilename = ref ""
       let
         val _ = #start serializeTimeCounter ()
         val codeBlock = ExecutableSerializer.serialize executable
+        handle exn => raise exn
+
         val _ = #stop serializeTimeCounter ()
       in
         (SessionTypes.CODEBLOCK codeBlock, basis, fn context => context)
@@ -1539,7 +1628,7 @@ val currentSourceFilename = ref ""
   fun return (codeOpt , basis:TB.basis, f :context -> context) =
       (codeOpt, basis, f)
 
-  fun compile (context, stamps, sysParam) decs =
+  fun compile (context, compileUnitStamp, sysParam) decs =
       let
         (* reset local counters *)
         val _ =
@@ -1548,7 +1637,7 @@ val currentSourceFilename = ref ""
              VarID.reset();
              VarName.reset()
             )
-            
+
         val phases =
         (0, doSource)
           ==> (C.Elab, doElaboration)
@@ -1622,7 +1711,7 @@ val currentSourceFilename = ref ""
         val initialBasis = 
             {
              context = context,
-             stamps = stamps,
+             compileUnitStamp = compileUnitStamp,
              localContext = TB.initializeLocalContext (),
              sysParam = sysParam
             }: TB.basis
@@ -1634,10 +1723,11 @@ val currentSourceFilename = ref ""
          codeOpt,
          (
           contextUpdater (#context newBasis) : TB.context,
-          TB.incrementCompileUnitStamp (#stamps newBasis) : TB.stamps
+          TB.incrementCompileUnitStamp (#compileUnitStamp newBasis)
          )
         )
       end
+      handle exn => raise exn
 
   fun onParseError sysParam = printError sysParam o Parser.errorToString
   
@@ -1801,7 +1891,8 @@ val _ = currentSourceFilename := absoluteFilePath
   (**
    * @return true if the process succeeds. false otherwise.
    *)
-  fun processSource (context, stamps, sysParam) (parseSource, parseContext) =
+  fun processSource (context, compileUnitStamp, sysParam)
+                    (parseSource, parseContext) =
       let
         (* datatype to absorbe the exception raised during the parsing *)
         datatype 'a parseResult = 
@@ -1809,7 +1900,7 @@ val _ = currentSourceFilename := absoluteFilePath
 
         val doProfile =
             Interactive = #interactionMode parseSource andalso !C.doProfile
-        fun loop (context, stamps) parseContext = 
+        fun loop (context, compileUnitStamp) parseContext = 
             let
               val _ = if doProfile then #reset TopCounterSet () else ()
               val _ = #start parseTimeCounter ();
@@ -1826,19 +1917,19 @@ val _ = currentSourceFilename := absoluteFilePath
               val _ = #stop parseTimeCounter ();
             in
               case parseStatus of
-                Finished => (true, (context, stamps))
+                Finished => (true, (context, compileUnitStamp))
               | Interrupted => 
                 (
                  print sysParam "\n"; 
-                 loop (context, stamps) (flush parseContext)
+                 loop (context, compileUnitStamp) (flush parseContext)
                 )
               | ParseError exn =>
                 (
                  errorHandler sysParam exn;
                  if isStopOnError parseSource then 
-                   (false, (context, stamps))
+                   (false, (context, compileUnitStamp))
                  else 
-                   loop (context, stamps) (flush parseContext)
+                   loop (context, compileUnitStamp) (flush parseContext)
                 )
               | Completed (A.USEOBJ (fileName, loc), newParseContext) => 
                 raise Control.Bug "to be implemented ..."
@@ -1849,9 +1940,9 @@ val _ = currentSourceFilename := absoluteFilePath
                        useSource sysParam parseSource (fileName, loc)
                  in
                    let
-                     val (success, updatedContextAndStamps) =
+                     val (success, updatedContextAndCompileUnitStamp) =
                          processSource
-                           (context, stamps, sysParam)
+                           (context, compileUnitStamp, sysParam)
                            (innerParseSource, innerParseContext)
                      val _ = #close (#stream innerParseSource) ()
                    in
@@ -1861,11 +1952,12 @@ val _ = currentSourceFilename := absoluteFilePath
                             print sysParam (Counter.dump ()))
                       else ();
                       if success then
-                        loop updatedContextAndStamps newParseContext
+                        loop updatedContextAndCompileUnitStamp newParseContext
                       else if isStopOnError parseSource then 
-                        (false, (context, stamps))
+                        (false, (context, compileUnitStamp))
                       else 
-                        loop (context, stamps) (flush newParseContext)
+                        loop (context, compileUnitStamp)
+                             (flush newParseContext)
                      )
                    end
                  end
@@ -1873,16 +1965,17 @@ val _ = currentSourceFilename := absoluteFilePath
                         (
                          errorHandler sysParam sourceError;
                          if isStopOnError parseSource
-                         then (false, (context, stamps))
+                         then (false, (context, compileUnitStamp))
                          else 
-                           loop (context, stamps) (flush newParseContext)
+                           loop (context, compileUnitStamp)
+                                (flush newParseContext)
                         )
                 )
               | Completed (A.UNIT(topdecs, loc), newParseContext) => 
                 let
                   val _ = #start compilationTimeCounter ()
-                  val (codeBlock, updatedContextAndStamps) =
-                      compile (context, stamps, sysParam) topdecs
+                  val (codeBlock, updatedContextAndCompileUnitStamp) =
+                      compile (context, compileUnitStamp, sysParam) topdecs
                   val _= #stop compilationTimeCounter ()
                   val _ =
                       if C.doPhase C.Run
@@ -1902,32 +1995,27 @@ val _ = currentSourceFilename := absoluteFilePath
                   then (print sysParam "\n"; 
                         print sysParam (Counter.dump ()))
                   else ();
-                  loop updatedContextAndStamps newParseContext
+                  loop updatedContextAndCompileUnitStamp newParseContext
                 end
                 handle compilerError => 
                        (
                         errorHandler sysParam compilerError;
                         if isStopOnError parseSource
-                        then (false, (context, stamps))
+                        then (false, (context, compileUnitStamp))
                         else 
-                          loop (context, stamps) (flush newParseContext)
+                          loop (context, compileUnitStamp)
+                               (flush newParseContext)
                        )
             end
       in
-        loop (context, stamps) parseContext
+        loop (context, compileUnitStamp) parseContext
       end
 
-  fun initializeContextAndStamps () =
-      (TB.initializeContext (), TopBasis.initializeStamps ())
+  fun initializeContextAndCompileUnitStamp () =
+      (TB.initializeContext (), TB.initializeCompileUnitStamp ())
           
-(*
-  fun initializeContextAndStampsWithNamespace namespace =
-      (TB.initializeContext (),
-       TopBasis.initializeStampsWithNamespace namespace)
-*)
-
   fun run (context : TB.context)
-          (stamps : TB.stamps)
+          (compileUnitStamp : TB.compileUnitStamp)
           (sysParam : TB.sysParam)
           ({
            interactionMode,
@@ -1963,7 +2051,7 @@ val _ = currentSourceFilename := absoluteFilePath
               }
       in
         processSource
-          (context, stamps, sysParam)
+          (context, compileUnitStamp, sysParam)
           (initialParseSource, initialParseContext)
       end
 end

@@ -2118,5 +2118,6 @@ structure BUCTransformer : BUCTRANSFORMER = struct
         declList
       end
       handle  Dummy => raise Control.Bug "dummy"
+            | exn => raise exn
                              
 end

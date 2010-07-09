@@ -4,5 +4,5 @@
  *)
 signature UNCURRYFUNDECL = 
 sig
-  val optimize : Counters.stamps -> TypedCalc.tptopdecl list -> (Counters.stamps * TypedCalc.tptopdecl list)
+  val optimize : TypedCalc.tptopdecl list -> TypedCalc.tptopdecl list
 end

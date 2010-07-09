@@ -3087,5 +3087,6 @@ struct
       in
         program
       end
+      handle exp => raise exp
 
 end

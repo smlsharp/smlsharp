@@ -905,28 +905,33 @@ in
           val ple1 = elabExp env e1
           val ple2 = elabExp env e2
         in
-          PC.PLAPPM
-          (
-            PC.PLFNM([([truePat loc], ple2),
-                      ([falsePat loc], falseExp loc)],
-                     loc),
-            [ple1],
-            loc
-          )
+          PC.PLCASEM
+            (
+             [ple1],
+             [
+              ([falsePat loc], falseExp loc),
+              ([truePat loc], ple2)
+             ],
+             PC.MATCH,
+             loc
+            )
         end
       | A.EXPDISJUNCTION (e1, e2, loc) =>
         let
           val ple1 = elabExp env e1
           val ple2 = elabExp env e2
         in
-          PC.PLAPPM
-          (
-            PC.PLFNM ([([truePat loc], trueExp loc),
-                       ([falsePat loc], ple2)],
-                      loc),
-            [ple1],
-            loc
-          )
+          PC.PLCASEM
+            (
+             [ple1],
+             [
+              ([truePat loc], trueExp loc),
+              ([falsePat loc], ple2)
+             ],
+             PC.MATCH,
+             loc
+            )
+             
         end
       | A.EXPHANDLE (e1, match, loc) =>
         PC.PLHANDLE
@@ -1593,6 +1598,7 @@ in
                    )
           | errors => raise UE.UserErrors (getErrorsAndWarnings ())
         end
+        handle exn => raise exn
         
     end (* end local *)
 end

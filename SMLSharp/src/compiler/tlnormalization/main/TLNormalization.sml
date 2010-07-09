@@ -1534,5 +1534,6 @@ struct
       in
         topBlocks
       end
+      handle exn => raise exn
 
 end

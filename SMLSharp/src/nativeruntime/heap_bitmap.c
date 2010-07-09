@@ -994,6 +994,13 @@ clear_bitmap(struct heap_arena *arena)
 {
 	unsigned int i;
 
+#ifdef DEBUG
+	for (i = arena->layout->bitmap_limit[ARENA_RANK - 1];
+	     i < ARENA_BITMAP0_OFFSET + arena->layout->bitmap_size;
+	     i++)
+		ASSERT(*(unsigned char*)ADD_OFFSET(arena, i) == 0);
+#endif /* DEBUG */
+
 	memset(BITMAP0_BASE(arena), 0, arena->layout->bitmap_size);
 #ifdef GCSTAT
 	gcstat.last.clear_bytes += arena->layout->bitmap_size;
@@ -1955,19 +1962,19 @@ do_gc(enum sml_gc_mode mode)
 #endif /* GCTIME */
 
 #ifdef MINOR_GC
-	if (mode != MINOR)
+	if (mode != MINOR) {
+		flush_stack();
 #endif /* MINOR_GC */
 		clear_all_bitmaps();
+#ifdef MINOR_GC
+	}
+#endif /* MINOR_GC */
 
 #ifdef GCSTAT
 	sml_timer_now(b_cleared);
 #endif /* GCSTAT */
 
 #ifdef ARENA_MARKSTACK
-#ifdef MINOR_GC
-	if (mode != MINOR)
-		flush_stack();
-#endif /* MINOR_GC */
 	trace_cls.fn = push;
 	trace_cls.mode = mode;
 	sml_rootset_enum_ptr(&trace_cls.fn, mode);
@@ -1978,8 +1985,6 @@ do_gc(enum sml_gc_mode mode)
 		trace_cls.fn = push;
 		trace_cls.mode = mode;
 		pop(&trace_cls);
-	} else {
-		flush_stack();
 	}
 #endif /* MINOR_GC */
 	trace_cls.fn = mark;

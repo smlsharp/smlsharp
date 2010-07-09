@@ -651,5 +651,6 @@ struct
         Counters.init stamp;
         (evalTopdecList env topdecList, Counters.getCounterStamp ())
       )
+      handle exn => raise exn
 
 end

@@ -258,6 +258,8 @@ structure ANormalOptimizer = struct
 
   (************************************************************************)
 
-  fun optimize anexp = optimizeExp AE.empty anexp
+  fun optimize anexp =
+      optimizeExp AE.empty anexp
+      handle exn => raise exn
 
 end

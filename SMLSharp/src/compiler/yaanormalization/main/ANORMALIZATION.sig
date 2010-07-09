@@ -8,8 +8,6 @@
 signature YAANORMALIZATION = sig
 
   val normalize
-      : Counters.stamp
-        -> RBUCalc.rbudecl list
-        -> Counters.stamp * YAANormal.topdecl list
+      : RBUCalc.rbudecl list -> YAANormal.topdecl list
 
 end

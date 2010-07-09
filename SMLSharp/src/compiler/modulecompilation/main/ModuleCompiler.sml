@@ -2382,5 +2382,6 @@ in
            decs
           )
       end
+      handle exn => raise exn
 end
 end

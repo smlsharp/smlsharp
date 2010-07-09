@@ -256,5 +256,6 @@ struct
           bbss = bbss
         } : VM.instruction list A.program
       end
+      handle exn => raise exn
 
 end

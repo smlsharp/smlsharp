@@ -18,9 +18,9 @@ struct
           (parameter : Top.sysParam) preludePath preludeChannel = 
       let
 (*      
-        val (context, stamps) = Top.initialize ()
+        val (context, compileUnitStamp) = Top.initialize ()
 *)
-        val (context, stamps) = Top.initializeContextAndStamps ()
+        val (context, compileUnitStamp) = Top.initializeContextAndCompileUnitStamp ()
         val preludeDir = getDirectory preludePath
 
         val currentSwitchTrace = !Control.switchTrace
@@ -28,10 +28,10 @@ struct
         val _ = Control.switchTrace := false;
         val _ = Control.printBinds := false;
 
-        val (success, newContextAndStamps) =
+        val (success, newContextAndCompileUnitStamp) =
             Top.run
                 context
-                stamps
+                compileUnitStamp
                 parameter
                 {
                  interactionMode = Top.Prelude,
@@ -49,7 +49,7 @@ struct
         val _ = Control.switchTrace := currentSwitchTrace;
         val _ = Control.printBinds := currentPrintBinds;
       in
-          newContextAndStamps
+          newContextAndCompileUnitStamp
       end
 
   fun resumePrelude
@@ -66,7 +66,7 @@ struct
               seek = #seek preludeChannel
             }
         val _ = print "restoring static environment..."
-        val contextAndStamps =
+        val contextAndCompileUnitStamp =
             Top.unpickle (Pickle.makeInstream reader)
             handle exn =>
                    raise Fail ("malformed compiled code:" ^ exnMessage exn)
@@ -81,7 +81,7 @@ struct
         val _ = execute ()
         val _ = print "done\n"
       in
-          contextAndStamps
+          contextAndCompileUnitStamp
       end
 
   fun runCase
@@ -94,7 +94,7 @@ struct
         resultChannel : ChannelTypes.OutputChannel
       } =
       let
-val _ = print ("source = [" ^ sourceFileName ^ "]\n");
+        val _ = print ("source = [" ^ sourceFileName ^ "]\n");
         val ignoreOutput = ref true
         fun switchFun selector channel arg =
             if !ignoreOutput then () else (selector channel) arg
@@ -127,7 +127,7 @@ val _ = print ("source = [" ^ sourceFileName ^ "]\n");
             }
       in
         let
-            val (context, stamps) =
+            val (context, compileUnitStamp) =
                 (if isCompiledPrelude then resumePrelude else compilePrelude)
                     initializeParameter preludeFileName preludeChannel
         in
@@ -135,7 +135,7 @@ val _ = print ("source = [" ^ sourceFileName ^ "]\n");
           ignoreOutput := false;
           Top.run
               context
-              stamps
+              compileUnitStamp
               initializeParameter
               {
                 interactionMode = Top.NonInteractive {stopOnError = false},
