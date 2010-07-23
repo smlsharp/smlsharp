@@ -430,9 +430,10 @@ in
       | MVSIZEOF _ => mvexpression
       | MVCONSTANT _ => mvexpression
       | MVGLOBALSYMBOL _ => mvexpression
-      | MVEXCEPTIONTAG {tagValue, loc} =>
+      | MVEXCEPTIONTAG {tagValue, displayName, loc} =>
         MVEXCEPTIONTAG
           {tagValue = linkTemplateExceptionTag linkContext tagValue loc,
+           displayName = displayName,
            loc = loc}
       | MVVAR ({varInfo ={displayName,
                           ty,

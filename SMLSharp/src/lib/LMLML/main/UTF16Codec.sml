@@ -205,7 +205,7 @@ in
  * @author YAMATODANI Kiyoshi
  * @version $Id: UTF16Codec.sml,v 1.3 2007/02/25 12:42:48 kiyoshiy Exp $
  *)
-structure UTF16BECodec =
+structure UTF16BECodec :> CODEC =
           Codec(FixedLengthCharPrimCodecBase(UTF16BECodecPrimArg))
 
 (**
@@ -213,7 +213,7 @@ structure UTF16BECodec =
  * @author YAMATODANI Kiyoshi
  * @version $Id: UTF16Codec.sml,v 1.3 2007/02/25 12:42:48 kiyoshiy Exp $
  *)
-structure UTF16LECodec =
+structure UTF16LECodec :> CODEC =
           Codec(FixedLengthCharPrimCodecBase(UTF16LECodecPrimArg))
 
 (**
@@ -221,7 +221,7 @@ structure UTF16LECodec =
  * @author YAMATODANI Kiyoshi
  * @version $Id: UTF16Codec.sml,v 1.3 2007/02/25 12:42:48 kiyoshiy Exp $
  *)
-structure UTF16Codec =
+structure UTF16Codec :> CODEC =
           Codec(FixedLengthCharPrimCodecBase(UTF16CodecPrimArg))
 
 end

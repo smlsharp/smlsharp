@@ -146,7 +146,7 @@ struct
            P.tuple3
              (
               ClusterID.pu_ID,
-              EnvPickler.SEnv(P.string),
+              DeclarationRecovery.pu_globalSymbolEnv,
               P.int
              ),
            OPrimID.pu_ID,
@@ -185,7 +185,7 @@ struct
              (#globalIndexEnv context),
              (
               ClusterID.terminate(),
-              #globalNameAliasEnv context,
+              #globalSymbolEnv context,
               compileUnitStamp
              ),
              OPrimID.terminate(),
@@ -216,7 +216,7 @@ struct
                globalIndexEnv,
                (
                 clusterIDKeyStamp,
-                globalNameAliasEnv,
+                globalSymbolEnv,
                 compileUnitStamp
                ),
                oprimIDKeyStamp,
@@ -246,7 +246,7 @@ struct
             topTypeContext =  topTypeContext,
 	    externalVarIDBasis =  externalVarIDBasis,
             nameMap = nameMap,
-            globalNameAliasEnv = globalNameAliasEnv,
+            globalSymbolEnv = globalSymbolEnv,
             globalIndexEnv =  globalIndexEnv,
 	    inlineEnv = inlineEnv,
             functorEnv  =  functorEnv
@@ -1282,22 +1282,20 @@ val currentSourceFilename = ref ""
 
   fun doDeclarationRecovery (basis : TB.basis) andecs =
       let
-        val (newAliasEnv, newAndecs) =
+        val (newSymbolEnv, newAndecs) =
             DeclarationRecovery.recover
               {
-               currentBasis = #externalVarIDBasis (#context basis),
                newBasis =
                  valOf (#newTopExternalVarIDBasisOpt (#localContext basis)),
-               currentContext = #topTypeContext (#context basis),
                newContext = valOf (#typeContextOpt (#localContext basis)),
-               aliasEnv = #globalNameAliasEnv (#context basis),
-               separateCompilation = false
+               globalSymbolEnv = #globalSymbolEnv (#context basis),
+               compileUnitCount = SOME (#compileUnitStamp basis)
               }
               andecs
         handle exn => raise exn
 
         val contextUpdater = 
-         fn context => TB.setContextGlobalNameAliasEnv context newAliasEnv
+         fn context => TB.extendContextGlobalSymbolEnv context newSymbolEnv
         val _ =
             if !C.printAN andalso !C.switchTrace
             then

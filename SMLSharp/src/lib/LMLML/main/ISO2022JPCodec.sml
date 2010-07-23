@@ -172,7 +172,7 @@ in
  * @author YAMATODANI Kiyoshi
  * @version $Id: ISO2022JPCodec.sml,v 1.3 2007/02/25 12:42:48 kiyoshiy Exp $
  *)
-structure ISO2022JPCodec =
+structure ISO2022JPCodec :> CODEC =
           Codec(FixedLengthCharPrimCodecBase(ISO2022JPCodecPrimArg))
 
 end

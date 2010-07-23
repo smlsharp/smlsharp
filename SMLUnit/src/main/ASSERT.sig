@@ -2,6 +2,7 @@
  * A set of assert functions.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ASSERT.sig,v 1.5 2007/05/20 05:45:07 kiyoshiy Exp $
  *)
 signature ASSERT =
@@ -89,6 +90,18 @@ sig
       (('a * 'a) -> General.order) -> 'a valueFormatter -> 'a assertEqual
 
   (**
+   * @params assert expecteds actual
+   * @param assert an assertion function
+   * @param expecteds a list of expected values
+   * @param actual actual value
+   * @return the actual if the assert judges that the actual equals to any of
+   *      expecteds.
+   * @exception Fail raised if none of expecteds equals to the actual.
+   *)
+  val assertEqualAlternatives : 
+      'a assertEqual -> 'a list -> 'a -> 'a
+
+  (**
    * asserts that a condition is true.
    * @params message v
    * @param error message
@@ -143,6 +156,10 @@ sig
 
   (**
    * Asserts that two real numbers are equal.
+   * <p>
+   * If both expected and actual are Nan, assertion succeeds.
+   * Otherwise, if either is Nan, assertion fails.
+   * </p>
    *)
   val assertEqualReal : real assertEqual
 
@@ -277,6 +294,26 @@ sig
   val assertEqual3Tuple :
       ('a assertEqual * 'b assertEqual * 'c assertEqual) ->
       ('a * 'b * 'c) assertEqual
+
+  (**
+   * Asserts that two 4-tuples are equal.
+   *)
+  val assertEqual4Tuple :
+      ('a assertEqual * 'b assertEqual * 'c assertEqual * 'd assertEqual) ->
+      ('a * 'b * 'c * 'd) assertEqual
+
+  (**
+   * Asserts that two 5-tuples are equal.
+   *)
+  val assertEqual5Tuple :
+      (
+        'a assertEqual
+      * 'b assertEqual
+      * 'c assertEqual
+      * 'd assertEqual
+      * 'e assertEqual
+      ) ->
+      ('a * 'b * 'c * 'd * 'e) assertEqual
 
   (****************************************)
 

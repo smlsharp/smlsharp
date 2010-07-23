@@ -82,7 +82,7 @@ Group is
         ../../x86/sources.cm
         ../../rtl/sources.cm
 
-        TOP.sig
+        (* TOP.sig *)
 	TopBasis.sml
         Top.sml
 

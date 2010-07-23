@@ -9,6 +9,7 @@ Group is
         ../../primitive/sources.cm
         ../../absyn/sources.cm
         ../../constantterm/sources.cm
+        ../../pickle/sources.cm
 
         Counters.sml
         ANORMALIZATION.sig

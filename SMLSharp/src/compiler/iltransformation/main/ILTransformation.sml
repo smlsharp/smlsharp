@@ -55,7 +55,7 @@ structure ILTransformation : ILTRANSFORMATION = struct
     | transformArg (AN.ANVAR {varInfo, loc}) = IL.Variable (transformVarInfo varInfo)
     | transformArg (AN.ANCONSTANT {value, loc}) = IL.Constant value 
     | transformArg (AN.ANLABEL {codeId, loc}) = IL.Label codeId 
-    | transformArg (AN.ANEXCEPTIONTAG {tagValue, loc}) = IL.ExceptionTag tagValue
+    | transformArg (AN.ANEXCEPTIONTAG {tagValue, displayName, loc}) = IL.ExceptionTag tagValue
     | transformArg _ = raise Control.Bug "invalid argument"
 
   fun generateUnitReturnCode position loc =
@@ -637,7 +637,7 @@ structure ILTransformation : ILTRANSFORMATION = struct
                    resultSizeExpList = map transformArg resultSizeExpList
                   }
             | AN.ANCONSTANT {value, loc} => IL.Constant value
-            | AN.ANEXCEPTIONTAG {tagValue, loc} => IL.ExceptionTag tagValue
+            | AN.ANEXCEPTIONTAG {tagValue, displayName, loc} => IL.ExceptionTag tagValue
             | AN.ANENVACC {nestLevel, offset, loc} =>
               IL.AccessEnv
                   {

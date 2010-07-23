@@ -73,6 +73,11 @@ void *sml_trace_ptr(void *ptr, enum sml_gc_mode);
 void sml_malloc_sweep(enum sml_gc_mode);
 
 /*
+ * enumerate pointer slots in malloc'ed objects.
+ */
+void sml_malloc_enum_ptr(sml_trace_cls *trace);
+
+/*
  * add writeaddr to global barrier.
  * writeaddr : address of pointer variable holding address of an ML object.
  * objaddr : address of object including writeaddr.

@@ -87,7 +87,7 @@ structure StaticAnalysis : STATICANALYSIS = struct
           )
         end
 
-      | TL.TLEXCEPTIONTAG (v as {tagValue, loc}) =>
+      | TL.TLEXCEPTIONTAG (v as {tagValue, displayName, loc}) =>
         (ACEXCEPTIONTAG v, AT.exntagty)
       | TL.TLCONSTANT (v as {value, loc}) =>
         (ACCONSTANT v, ATU.constDefaultTy value)

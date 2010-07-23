@@ -1,3 +1,20 @@
+SML# version 0.52 (released on 2010-07-23)
+
+1. Overview
+
+This is a bug-fix release of SML# 0.52.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+* fixed a bug of an alternative implementation of signbit in the native
+  runtime. This fix affects several primitive functions defined in Real
+  structure.
+* fixed a bug of functor management and global symbol resolution in
+  native code backend.
+
+-----------------------------------------------------------------------------
 SML# version 0.51 (released on 2010-07-09)
 
 1. Overview

@@ -286,13 +286,13 @@ structure RBUCalc = struct
            *)
 	  RBUGLOBALSYMBOL of {name:string, kind:Absyn.globalSymbolKind, ty:ty, loc:loc}
         | (*%
-           * @format({tagValue, loc}) "EXNTAG(" tagValue ")"
+           * @format({tagValue, displayName, loc}) "EXNTAG(" tagValue ")"
            *)
           (*%
            * @prefix typed
-           * @format({tagValue, loc}) "EXNTAG(" tagValue ")"
+           * @format({tagValue, displayName, loc}) "EXNTAG(" tagValue ")"
            *)
-          RBUEXCEPTIONTAG of {tagValue : globalTag, loc : loc}
+          RBUEXCEPTIONTAG of {tagValue : globalTag, displayName : string, loc : loc}
         | (*%
            * @format({varInfo, valueSizeExp, loc}) varInfo
            *)

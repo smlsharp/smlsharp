@@ -302,7 +302,8 @@ struct
     TLCONSTANT{value = CT.INT(Int32.fromInt(#tag con)), loc = loc}
 
   fun makeTagExpForExnCon (exn : Types.exnInfo) loc =
-    TLEXCEPTIONTAG{tagValue = (#tag exn), loc = loc}
+    TLEXCEPTIONTAG{tagValue = (#tag exn), displayName = #displayName exn,
+                   loc = loc}
 
   fun makeLocalBind (boundExp, boundTy, loc) K =
     case boundExp of

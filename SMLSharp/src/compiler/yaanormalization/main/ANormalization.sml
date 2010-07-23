@@ -128,7 +128,8 @@ struct
   datatype bounddst =
       LOCAL of AN.varInfo
     | GLOBAL of {id: ExternalVarID.id, ty: AN.ty,
-                 size: AN.anvalue, tag: AN.anvalue}
+                 size: AN.anvalue, tag: AN.anvalue,
+                 displayName: string}
 
   datatype position =
       Merge of {label: AN.id, dsts: AN.varInfo list, sizes: AN.sisize list}
@@ -146,15 +147,15 @@ struct
         (fn (dst, (vars, decls)) =>
             case dst of
               LOCAL var => (var::vars, decls)
-            | GLOBAL {id, ty, size, tag} =>
+            | GLOBAL {id, ty, size, tag, displayName} =>
               let
                 val var = newVar AN.LOCAL ty
               in
                 (var::vars,
                  AN.ANSETFIELD {array = AN.ANGLOBALSYMBOL
-                                            {name = ("", AN.UNDECIDED),
-                                             ann = AN.GLOBALVAR id,
-                                             ty = AN.BOXED},
+                                          {name = (displayName, AN.UNDECIDED),
+                                           ann = AN.GLOBALVAR id,
+                                           ty = AN.BOXED},
                                 offset = AN.ANWORD 0w0,
                                 value = AN.ANVAR var,
                                 valueTy = ty,
@@ -313,9 +314,9 @@ struct
             in
               (clusters, decls,
                AN.ANGETFIELD {array = AN.ANGLOBALSYMBOL
-                                          {name = ("", AN.UNDECIDED),
-                                           ann = AN.GLOBALVAR id,
-                                           ty = AN.BOXED},
+                                        {name = (displayName, AN.UNDECIDED),
+                                         ann = AN.GLOBALVAR id,
+                                         ty = AN.BOXED},
                               offset = AN.ANWORD 0w0,
                               size = anSize,
                               needBoundaryCheck = false,
@@ -360,8 +361,8 @@ struct
         (nil, nil, AN.ANGLOBALSYMBOL {name = (name, AN.EXTERNSYMBOL),
                                       ann = AN.GLOBALOTHER,
                                       ty = AN.FOREIGNFUN})
-      | RBU.RBUEXCEPTIONTAG {tagValue, loc} =>
-        (nil, nil, AN.ANGLOBALSYMBOL {name = ("", AN.UNDECIDED),
+      | RBU.RBUEXCEPTIONTAG {tagValue, displayName, loc} =>
+        (nil, nil, AN.ANGLOBALSYMBOL {name = (displayName, AN.UNDECIDED),
                                       ann = AN.EXCEPTIONTAG tagValue,
                                       ty = AN.BOXED})
       | RBU.RBULABEL {codeId, loc} =>
@@ -454,11 +455,11 @@ struct
                             sizeList = [sisize],
                             exp = AN.ANVALUE AN.ANUNIT,
                             loc = loc}
-                | (GLOBAL {id, tag, ty, size}, sisize) =>
+                | (GLOBAL {id, tag, ty, size, displayName}, sisize) =>
                   AN.ANSETFIELD {array = AN.ANGLOBALSYMBOL
-                                             {name = ("", AN.UNDECIDED),
-                                              ann = AN.GLOBALVAR id,
-                                              ty = AN.BOXED},
+                                           {name = (displayName, AN.UNDECIDED),
+                                            ann = AN.GLOBALVAR id,
+                                            ty = AN.BOXED},
                                  offset = AN.ANWORD 0w0,
                                  value = AN.ANUNIT,
                                  valueTy = ty,
@@ -551,11 +552,12 @@ struct
                                                {name = (name, AN.EXTERNSYMBOL),
                                                 ann = AN.GLOBALOTHER,
                                                 ty = AN.FOREIGNFUN})))
-      | RBU.RBUEXCEPTIONTAG {tagValue, loc} =>
-        (nil, makeVAL pos loc (AN.ANVALUE (AN.ANGLOBALSYMBOL
-                                               {name = ("", AN.UNDECIDED),
-                                                ann = AN.GLOBALOTHER,
-                                                ty = AN.BOXED})))
+      | RBU.RBUEXCEPTIONTAG {tagValue, displayName, loc} =>
+        (nil, makeVAL pos loc (AN.ANVALUE
+                                 (AN.ANGLOBALSYMBOL
+                                    {name = (displayName, AN.UNDECIDED),
+                                     ann = AN.GLOBALOTHER,
+                                     ty = AN.BOXED})))
       | RBU.RBULABEL {codeId, loc} =>
         (nil, makeVAL pos loc (AN.ANVALUE (AN.ANLABEL codeId)))
 
@@ -1071,11 +1073,11 @@ struct
                           case constant of
                             RBU.RBUCONSTANT {value, loc} =>
                             AN.ANCONST value
-                          | RBU.RBUEXCEPTIONTAG {tagValue, loc} =>
+                          | RBU.RBUEXCEPTIONTAG {tagValue, displayName, loc} =>
                             AN.ANVALUE (AN.ANGLOBALSYMBOL
-                                            {name = ("", AN.UNDECIDED),
-                                             ann = AN.EXCEPTIONTAG tagValue,
-                                             ty = AN.BOXED})
+                                          {name = (displayName, AN.UNDECIDED),
+                                           ann = AN.EXCEPTIONTAG tagValue,
+                                           ty = AN.BOXED})
                           | _ => raise Control.Bug "normalizeExp: RBUSWITCH"
 
                       val (clusters1, anBranch) = normalizeExp branchPos exp
@@ -1125,7 +1127,7 @@ struct
          mergePointDecl)
       end
 
-  and normalizeDstVarList ((varInfo as {varId,varKind,ty,...})::varList)
+  and normalizeDstVarList ((varInfo as {varId,varKind,ty,displayName})::varList)
                           (size::sizeList) (tag::tagList) =
       (
         case (varId, !varKind) of
@@ -1146,7 +1148,8 @@ struct
             val var = GLOBAL {id = id,
                               ty = transformTy ty,
                               tag = anTag,
-                              size = anSize}
+                              size = anSize,
+                              displayName = displayName}
             val (clusters3, decls3, sizes, vars) =
                 normalizeDstVarList varList sizeList tagList
           in

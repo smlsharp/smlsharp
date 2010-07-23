@@ -1,0 +1,9 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+$(SML_LIB)/basis/basis.mlb
+
+module.mlb
+TestMain.sml
+main_MLton.sml

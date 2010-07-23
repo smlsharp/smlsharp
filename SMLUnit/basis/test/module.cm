@@ -1,0 +1,90 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+Group
+is
+(*
+        $/basis.cm
+*)
+        basis.cm
+
+        ../../smlunitlib.cm
+        AssertDate.sml
+        AssertIEEEReal.sml
+        AssertLargeInt.sml
+        AssertLargeWord.sml
+        AssertLargeReal.sml
+        AssertTime.sml
+
+        (* sequence modules *)
+        SEQUENCE.sig
+        Sequence101.sml
+        Array101.sml
+        CharArray101.sml
+        CharVector101.sml
+        Vector101.sml
+        Word8Array101.sml
+        Word8Vector101.sml
+
+        MUTABLE_SEQUENCE.sig
+        MutableSequence001.sml
+        Array001.sml
+        CharArray001.sml
+        Word8Array001.sml
+
+        IMMUTABLE_SEQUENCE.sig
+        ImmutableSequence001.sml
+        CharVector001.sml
+        Vector001.sml
+        Word8Vector001.sml
+
+        (* sequence slice modules *)
+        SEQUENCE_SLICE.sig
+        SequenceSlice101.sml
+        ArraySlice101.sml
+        CharArraySlice101.sml
+        CharVectorSlice101.sml
+        VectorSlice101.sml
+        Word8ArraySlice101.sml
+        Word8VectorSlice101.sml
+
+        MUTABLE_SEQUENCE_SLICE.sig
+        MutableSequenceSlice001.sml
+        ArraySlice001.sml
+        CharArraySlice001.sml
+        Word8ArraySlice001.sml
+
+        IMMUTABLE_SEQUENCE_SLICE.sig
+        ImmutableSequenceSlice001.sml
+        VectorSlice001.sml
+        CharVectorSlice001.sml
+        Word8VectorSlice001.sml
+
+        (* INTEGER modules *)
+        SignedInteger001.sml
+        Int001.sml
+        LargeInt001.sml
+
+        (* WORD modules *)
+        UnsignedInteger001.sml
+        Word001.sml
+        Word8001.sml
+        LargeWord001.sml
+
+        (* other Basis modules *)
+        Bool001.sml
+        Byte001.sml
+        Char001.sml
+        Date001.sml
+        General001.sml
+        IEEEReal001.sml
+        List001.sml
+        ListPair001.sml
+        Math001.sml
+        Option001.sml
+        Real001.sml
+        String001.sml
+        StringCvt001.sml
+        Substring001.sml
+        Time001.sml
