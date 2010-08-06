@@ -76,7 +76,19 @@ struct
       end
 
   fun tabulate (number, generator) =
-      fromList (List.tabulate (number, fn index => generator index))
+      if number = 0
+      then makeEmptyVector ()
+      else
+        let
+          val target = makeArray (number, generator 0)
+          fun fill i =
+              if i = number
+              then ()
+              else (B.update(target, i, generator i); fill (i + 1))
+          val _ = fill 1
+        in
+          target
+        end
 
   fun length vector = B.length vector
 

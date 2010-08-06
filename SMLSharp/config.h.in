@@ -161,6 +161,12 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
 
+/* Define to 1 if you have the `nextafter' function. */
+#undef HAVE_NEXTAFTER
+
+/* Define to 1 if you have the `nextafterf' function. */
+#undef HAVE_NEXTAFTERF
+
 /* Define to 1 if you have the `poll' function. */
 #undef HAVE_POLL
 

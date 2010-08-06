@@ -10,11 +10,12 @@ Group
 	structure NameMapPickler
         structure BoundTypeVarID
 
+        structure PrimID
         structure OPrimID
         structure TyConID
         structure BoundTypeVarID
         structure ExnTagID
-        structure ExternalVarID
+        structure ExVarID
         structure FreeTypeVarID
         structure VarID
         structure VarName

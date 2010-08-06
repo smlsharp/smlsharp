@@ -803,7 +803,7 @@ struct
                       env: argInfo option, argVarList: argInfo list,
                       attributes: ffiAttributes}
     | (* *)
-      BoundaryCheckFailed
+      CheckFailed
 
   (*%
    * @formatter(VarID.Map.map) formatIDMap

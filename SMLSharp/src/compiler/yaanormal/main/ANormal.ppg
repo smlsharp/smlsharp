@@ -125,11 +125,11 @@ struct
   (* for backward compatibility *)
   (*%
    * @formatter(ExnTagID.id) ExnTagID.format_id
-   * @formatter(ExternalVarID.id) ExternalVarID.format_id
+   * @formatter(ExVarID.id) ExVarID.format_id
    *)
   datatype globalSymbolAnn =
       (*% @format(id) "g" id *)
-      GLOBALVAR of ExternalVarID.id
+      GLOBALVAR of ExVarID.id
     | (*% @format(id) "e" id *)
       EXCEPTIONTAG of ExnTagID.id
     | (*% @format "c" *)
@@ -247,7 +247,7 @@ struct
 (*
     | ANGETGLOBAL of
       {
-        id: ExternalVarID.id,
+        id: ExVarID.id,
         globalName: globalName option,
         size: anvalue,
         ty: ty
@@ -524,7 +524,7 @@ struct
       (* only appear in sequential compilation *)
       ANSETGLOBAL of
       {
-        id: ExternalVarID.id,
+        id: ExVarID.id,
         globalName: globalName option,
         size: anvalue,
         ty: ty,
@@ -987,7 +987,7 @@ struct
       ANGLOBALVARDECL of
       {
         globalName: globalName option,
-        id: ExternalVarID.id,
+        id: ExVarID.id,
         ty: ty,
         loc: loc
       }
@@ -1059,7 +1059,7 @@ struct
       {
         globalName: string,
         export: bool,
-        externalVarID: ExternalVarID.id option, (* for YASIGenerator *)
+        externalVarID: ExVarID.id option, (* for YASIGenerator *)
         bitmap: BasicTypes.UInt32,
         totalSize: BasicTypes.UInt32,
         initialValues: anvalue list,      (* ANVAR never occur *)

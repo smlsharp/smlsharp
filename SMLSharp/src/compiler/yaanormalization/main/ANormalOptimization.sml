@@ -433,7 +433,7 @@ struct
         case (kind1, kind2) of
           (AN.UNDECIDED, AN.UNDECIDED) =>
           (case (ann1, ann2) of
-             (AN.GLOBALVAR x, AN.GLOBALVAR y) => ExternalVarID.eq (x, y)
+             (AN.GLOBALVAR x, AN.GLOBALVAR y) => ExVarID.eq (x, y)
            | (AN.EXCEPTIONTAG x, AN.EXCEPTIONTAG y) => ExnTagID.eq (x, y)
            | _ => false)
         | _ => name1 = name2

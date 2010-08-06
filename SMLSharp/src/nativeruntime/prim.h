@@ -192,6 +192,8 @@ float roundf(float);
 float ldexpf(float, int);
 float frexpf(float, int *);
 float modff(float, float *);
+double nextafter(double, double);
+float nextafterf(float, float);
 
 /* POSIX */
 /* unistd.h */

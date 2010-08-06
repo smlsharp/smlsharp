@@ -54,10 +54,6 @@ struct
                then raise General.Div
                else SMLSharp.Runtime.remLargeInt (left, right)
 
-  val op + = fn ((left : int), right) => left + right
-
-  val op - = fn ((left : int), right) => left - right
-
   fun compare ((left : int), right) =
       if left < right
       then General.LESS
@@ -245,8 +241,14 @@ struct
   val andb = SMLSharp.Runtime.LargeInt_andb
   val notb = SMLSharp.Runtime.LargeInt_notb
 
-  fun << (x, width) = x * pow (2, Word.toInt width)
-  fun ~>> (x, width) = x div (pow (2, Word.toInt width))
+  fun << (x, 0w0) = x
+    | << (x, width) = << (x * 2, width - 0w1)
+  fun ~>> (x, 0w0) = x
+    | ~>> (x, width) = ~>> (x div 2, width - 0w1)
+
+  val op + = fn ((left : int), right) => left + right
+
+  val op - = fn ((left : int), right) => left - right
 
   (***************************************************************************)
 

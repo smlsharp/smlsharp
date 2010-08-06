@@ -127,7 +127,7 @@ struct
 
   datatype bounddst =
       LOCAL of AN.varInfo
-    | GLOBAL of {id: ExternalVarID.id, ty: AN.ty,
+    | GLOBAL of {id: ExVarID.id, ty: AN.ty,
                  size: AN.anvalue, tag: AN.anvalue,
                  displayName: string}
 

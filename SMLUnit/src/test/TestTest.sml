@@ -25,19 +25,18 @@ struct
    * custom assertion for the Test.test type
    *)
   fun assertEqualTest (Test.TestLabel pair1) (Test.TestLabel pair2) =
-      Test.TestLabel
-      (Assert.assertEqual2Tuple
+      Assert.assertEqual2Tuple
        (Assert.assertEqualString,assertEqualTest)
        pair1
-       pair2)
+       pair2
     | assertEqualTest (Test.TestList list1) (Test.TestList list2) =
-      Test.TestList (Assert.assertEqualList assertEqualTest list1 list2)
+      Assert.assertEqualList assertEqualTest list1 list2
     | assertEqualTest (Test.TestCase _) (case2 as Test.TestCase _) =
       (*
         We cannot define equality relation on functions.
         Any assertion on functions will success.
       *)
-      case2
+      ()
     | assertEqualTest _ _ = raise Fail "not equal"
 
   (******************************************)

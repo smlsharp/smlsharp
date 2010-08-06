@@ -13,8 +13,8 @@ structure NamePickler
      val TyConIDMap : 'value Pickle.pu -> 'value TyConID.Map.map Pickle.pu
      val TyConIDSet : TyConID.Set.set Pickle.pu
      val ExternalVarIDMap : 
-       'value Pickle.pu -> 'value ExternalVarID.Map.map Pickle.pu
-     val ExternalVarIDSet : ExternalVarID.Set.set Pickle.pu
+       'value Pickle.pu -> 'value ExVarID.Map.map Pickle.pu
+     val ExternalVarIDSet : ExVarID.Set.set Pickle.pu
      val ExnTagIDMap : 'value Pickle.pu -> 'value ExnTagID.Map.map Pickle.pu
      val ExnTagIDSet : ExnTagID.Set.set Pickle.pu
      val pos : Loc.pos Pickle.pu
@@ -31,7 +31,7 @@ struct
 
   val id = VarID.pu_ID
 
-  val externalVarID = ExternalVarID.pu_ID
+  val externalVarID = ExVarID.pu_ID
 
   val tyConID = TyConID.pu_ID
 
@@ -49,12 +49,12 @@ struct
   structure TyConIDSetPickler = OrdSetPickler(TyConID.Set)
   val TyConIDSet = TyConIDSetPickler.set tyConID
 
-  structure ExternalVarIDMapPickler = OrdMapPickler(ExternalVarID.Map)
+  structure ExternalVarIDMapPickler = OrdMapPickler(ExVarID.Map)
 
   fun ExternalVarIDMap value_pu = 
     ExternalVarIDMapPickler.map (externalVarID, value_pu)
 
-  structure ExternalVarIDSetPickler = OrdSetPickler(ExternalVarID.Set)
+  structure ExternalVarIDSetPickler = OrdSetPickler(ExVarID.Set)
   val ExternalVarIDSet = ExternalVarIDSetPickler.set externalVarID
 
   structure ExnTagIDMapPickler = OrdMapPickler(ExnTagID.Map)

@@ -18,14 +18,14 @@ struct
      * @formatter(smap) SmlppgUtil.formatSmap
      * @formatter(ty) Types.format_ty
      * @formatter(VarID.id) VarID.format_id
-     * @formatter(ExternalVarID.id) ExternalVarID.format_id
+     * @formatter(ExVarID.id) ExVarID.format_id
      *)
     datatype varIDItem = 
              (*%
               * @format(index) 
               *  index 
               *)
-             External of ExternalVarID.id
+             External of ExVarID.id
            | (*%
               * @format(id * ty)
               *  id 
@@ -76,7 +76,7 @@ struct
           argName : string,  
           argExternalVarIDEnv : varIDEnv,
           bodyExternalVarIDEnv : varIDEnv,
-          generativeExternalVarIDSet : ExternalVarID.Set.set }
+          generativeExternalVarIDSet : ExVarID.Set.set }
         ) SEnv.map 
 
     (*%

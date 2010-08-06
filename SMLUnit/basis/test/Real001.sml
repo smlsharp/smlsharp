@@ -29,15 +29,17 @@ struct
 
   structure A = SMLUnit.Assert
   structure T = SMLUnit.Test
-  structure AI = AssertIEEEReal
-  structure ALI = AssertLargeInt
-  structure ALR = AssertLargeReal
+  structure AI = SMLUnit.Assert.AssertIEEEReal
+  structure ALI = SMLUnit.Assert.AssertLargeInt
+  structure ALR = SMLUnit.Assert.AssertLargeReal
   open A
   open AI
 
   structure R = Real
   structure IR = IEEEReal
   structure LR = LargeReal
+  structure I = Int
+  structure LI = LargeInt
 
   (************************************************************)
 
@@ -45,6 +47,11 @@ struct
   type wholeFrac = {whole : real, frac : real}
 
   (************************************************************)
+
+  val epsilon = 0.0001
+  val assertEqualReal = assertEqualReal_epsilon epsilon
+  val assertEqualRealOption = assertEqualOption assertEqualReal
+  val assertEqualRealList = assertEqualList assertEqualReal
 
   val assertEqualRSOption =
       assertEqualOption
@@ -101,6 +108,23 @@ struct
 
   val pos0 = 0.0
   val neg0 = ~0.0
+
+  val I2i = LI.toInt
+
+  val (maxInt_r, maxInt) =
+      case I.precision
+       of SOME 31 => (1073741823.0, valOf I.maxInt)
+        | SOME 32 => (2147483647.0, valOf I.maxInt)
+        | SOME 64 => (9223372036854775807.0, valOf I.maxInt)
+        | NONE => (9223372036854775807.0, I2i 9223372036854775807) (* ? *)
+  val (minInt_r, minInt) =
+      case I.precision
+       of SOME 31 => (~1073741824.0, valOf I.minInt)
+        | SOME 32 => (~2147483648.0, valOf I.minInt)
+        | SOME 64 => (~9223372036854775808.0, valOf I.minInt)
+        | NONE => (~9223372036854775808.0, I2i ~9223372036854775808) (* ? *)
+  val maxInt_L = LargeInt.fromInt maxInt
+  val minInt_L = LargeInt.fromInt minInt
 
   (**********)
 
@@ -1181,8 +1205,14 @@ struct
   in
   fun toManExp001 () =
       let
-        val toManExp_p = test 123.456 {man = 0.123456, exp = 1}
-        val toManExp_n = test ~123.456 {man = ~0.123456, exp = 1}
+        (* The 'man' field of return value of toManExp is
+         *   1.0/radix <= abs(man) < 1.0
+         * If radix = 2, the absolute of 'man' is in [0.5, 1.0), for example.
+         *)
+        val toManExp_p =
+            test (0.567 * R.fromInt R.radix) {man = 0.567, exp = 1}
+        val toManExp_n =
+            test (~0.567 * R.fromInt R.radix) {man = ~0.567, exp = 1}
         val toManExp_p0 = test pos0 {man = pos0, exp = 0}
         val toManExp_n0 = test neg0 {man = neg0, exp = 0}
 
@@ -1207,14 +1237,24 @@ struct
         val fromManExp_n0_p = test {man = neg0, exp = 4} neg0
         val fromManExp_n0_n = test {man = neg0, exp = ~4} neg0
 
-        val fromManExp_p_0 = test {man = 12.3, exp = 0} 1.23
-        val fromManExp_p_p = test {man = 12.3, exp = 4} 1.23
-        val fromManExp_p_n = test {man = 12.3, exp = ~4} 1.23
-
-        val fromManExp_n_0 = test {man = ~12.3, exp = 0} 1.23
-        val fromManExp_n_p = test {man = ~12.3, exp = 4} 1.23
-        val fromManExp_n_n = test {man = ~12.3, exp = ~4} 1.23
-
+        val fromManExp_p_0 = test {man = 12.3, exp = 0} 12.3
+        val fromManExp_p_p =
+            test
+                {man = 12.3, exp = 4}
+                (12.3 * Math.pow(R.fromInt R.radix, 4.0))
+        val fromManExp_p_n =
+            test
+                {man = 12.3, exp = ~4}
+                (12.3 * Math.pow(R.fromInt R.radix, ~4.0))
+        val fromManExp_n_0 = test {man = ~12.3, exp = 0} ~12.3
+        val fromManExp_n_p =
+            test
+                {man = ~12.3, exp = 4}
+                (~12.3 * Math.pow(R.fromInt R.radix, 4.0))
+        val fromManExp_n_n =
+            test
+                {man = ~12.3, exp = ~4}
+                (~12.3 * Math.pow(R.fromInt R.radix, ~4.0))
         val fromManExp_pinf_0 = test {man = posInf, exp = 0} posInf
         val fromManExp_pinf_p = test {man = posInf, exp = 4} posInf
         val fromManExp_pinf_n = test {man = posInf, exp = ~4} posInf
@@ -1243,8 +1283,10 @@ struct
         val split_n = test ~123.456 {whole = ~123.0, frac = ~0.456}
         val split_p0 = test pos0 {whole = pos0, frac = pos0}
         val split_n0 = test neg0 {whole = neg0, frac = neg0}
-        val split_pinf = test posInf {whole = posInf, frac = posInf}
-        val split_ninf = test negInf {whole = negInf, frac = negInf}
+        (* If r is +-infinity, whole is +-infinity and frac is +-0. *)
+        val split_pinf = test posInf {whole = posInf, frac = pos0}
+        val split_ninf = test negInf {whole = negInf, frac = neg0}
+        (* If r is NaN, both whole and frac are NaN. *)
         val split_pnan = test posNan {whole = posNan, frac = posNan}
         val split_nnan = test negNan {whole = negNan, frac = negNan}
       in () end
@@ -1260,8 +1302,8 @@ struct
         val realMod_n = test ~123.456 ~0.456
         val realMod_p0 = test pos0 pos0
         val realMod_n0 = test neg0 neg0
-        val realMod_pinf = test posInf posInf
-        val realMod_ninf = test negInf negInf
+        val realMod_pinf = test posInf pos0
+        val realMod_ninf = test negInf neg0
         val realMod_pnan = test posNan posNan
         val realMod_nnan = test negNan negNan
       in () end
@@ -1363,7 +1405,7 @@ struct
         assertEqual4Int
             expected (R.floor args, R.ceil args, R.trunc args, R.round args)
   in
-  fun toIntConversions_normal () =
+  fun toIntConversions_normal_0001 () =
       let
         val conv_p_14 = test 1.4 (1, 2, 1, 1)
         val conv_p_15 = test 1.5 (1, 2, 1, 2)
@@ -1372,6 +1414,61 @@ struct
 
         val conv_p0 = test pos0 (0, 0, 0, 0)
         val conv_n0 = test neg0 (0, 0, 0, 0)
+      in () end
+  end (* local *)
+
+  local
+    fun test conv arg expected = assertEqualInt expected (conv arg)
+    fun testFail conv arg =
+        (conv arg; fail "Overflow expected") handle General.Overflow => ()
+  in
+  fun toIntConversions_normal_1001 () =
+      let
+        (* all conversions fail. *)
+        val maxIntPlus1_r = maxInt_r + 1.0
+        val minIntMinus1_r = minInt_r - 1.0
+
+        val conv_pinf_floor = testFail R.floor maxIntPlus1_r
+        val conv_pinf_ceil = testFail R.ceil maxIntPlus1_r
+        val conv_pinf_trunc = testFail R.trunc maxIntPlus1_r
+        val conv_pinf_round = testFail R.round maxIntPlus1_r
+
+        val conv_ninf_floor = testFail R.floor minIntMinus1_r
+        val conv_ninf_ceil = testFail R.ceil minIntMinus1_r
+        val conv_ninf_trunc = testFail R.trunc minIntMinus1_r
+        val conv_ninf_round = testFail R.round minIntMinus1_r
+      in () end
+  fun toIntConversions_normal_1002 () =
+      let
+        (* round succeeds. *)
+        val maxIntPlus04_r = maxInt_r + 0.4
+        val minIntMinus04_r = minInt_r - 0.4
+
+        val conv_pinf_floor = test R.floor maxIntPlus04_r maxInt
+        val conv_pinf_ceil = testFail R.ceil maxIntPlus04_r
+        val conv_pinf_trunc = test R.trunc maxIntPlus04_r maxInt
+        val conv_pinf_round = test R.round maxIntPlus04_r maxInt
+
+        val conv_ninf_floor = testFail R.floor minIntMinus04_r
+        val conv_ninf_ceil = test R.ceil minIntMinus04_r minInt
+        val conv_ninf_trunc = test R.trunc minIntMinus04_r minInt
+        val conv_ninf_round = test R.round minIntMinus04_r minInt
+      in () end
+  fun toIntConversions_normal_1003 () =
+      let
+        (* round fails *)
+        val maxIntPlus06_r = maxInt_r + 0.6
+        val minIntMinus06_r = minInt_r - 0.6
+
+        val conv_pinf_floor = test R.floor maxIntPlus06_r maxInt
+        val conv_pinf_ceil = testFail R.ceil maxIntPlus06_r
+        val conv_pinf_trunc = test R.trunc maxIntPlus06_r maxInt
+        val conv_pinf_round = testFail R.round maxIntPlus06_r
+
+        val conv_ninf_floor = testFail R.floor minIntMinus06_r
+        val conv_ninf_ceil = test R.ceil minIntMinus06_r minInt
+        val conv_ninf_trunc = test R.trunc minIntMinus06_r minInt
+        val conv_ninf_round = testFail R.round minIntMinus06_r
       in () end
   end (* local *)
 
@@ -1432,6 +1529,66 @@ struct
         val normal_n15 = test ~1.5 (~2, ~2, ~1, ~1)
         val normal_p0 = test pos0 (0, 0, 0, 0)
         val normal_n0 = test neg0 (0, 0, 0, 0)
+      in () end
+  fun toInt_normal_0002 () =
+      let
+        val normal_maxInt = test maxInt_r (maxInt, maxInt, maxInt, maxInt)
+        val normal_minInt = test minInt_r (minInt, minInt, minInt, minInt)
+      in () end
+  end (* local *)
+  local
+    fun test mode arg expected = assertEqualInt expected (R.toInt mode arg)
+    fun testFail mode arg =
+        (R.toInt mode arg; fail "Overflow expected")
+        handle General.Overflow => ()
+  in
+  fun toInt_normal_1001 () =
+      let
+        (* all modes fail. *)
+        val maxIntPlus1_r = maxInt_r + 1.0
+        val minIntMinus1_r = minInt_r - 1.0
+
+        val toInt_pinf_NEAREST = testFail IR.TO_NEAREST maxIntPlus1_r
+        val toInt_pinf_NEGINF = testFail IR.TO_NEGINF maxIntPlus1_r
+        val toInt_pinf_POSINF = testFail IR.TO_POSINF maxIntPlus1_r
+        val toInt_pinf_ZERO = testFail IR.TO_ZERO maxIntPlus1_r
+
+        val toInt_ninf_NEAREST = testFail IR.TO_NEAREST minIntMinus1_r
+        val toInt_ninf_NEGINF = testFail IR.TO_NEGINF minIntMinus1_r
+        val toInt_ninf_POSINF = testFail IR.TO_POSINF minIntMinus1_r
+        val toInt_ninf_ZERO = testFail IR.TO_ZERO minIntMinus1_r
+      in () end
+  fun toInt_normal_1002 () =
+      let
+        (* TO_NEAREST succeeds. *)
+        val maxIntPlus04_r = maxInt_r + 0.4
+        val minIntMinus04_r = minInt_r - 0.4
+
+        val toInt_pinf_NEAREST = test IR.TO_NEAREST maxIntPlus04_r maxInt
+        val toInt_pinf_NEGINF = test IR.TO_NEGINF maxIntPlus04_r maxInt
+        val toInt_pinf_POSINF = testFail IR.TO_POSINF maxIntPlus04_r
+        val toInt_pinf_ZERO = test IR.TO_ZERO maxIntPlus04_r maxInt
+
+        val toInt_ninf_NEAREST = test IR.TO_NEAREST minIntMinus04_r minInt
+        val toInt_ninf_NEGINF = testFail IR.TO_NEGINF minIntMinus04_r
+        val toInt_ninf_POSINF = test IR.TO_POSINF minIntMinus04_r minInt
+        val toInt_ninf_ZERO = test IR.TO_ZERO minIntMinus04_r minInt
+      in () end
+  fun toInt_normal_1003 () =
+      let
+        (* TO_NEAREST fails *)
+        val maxIntPlus06_r = maxInt_r + 0.6
+        val minIntMinus06_r = minInt_r - 0.6
+
+        val toInt_pinf_NEAREST = testFail IR.TO_NEAREST maxIntPlus06_r
+        val toInt_pinf_NEGINF = test IR.TO_NEGINF maxIntPlus06_r maxInt
+        val toInt_pinf_POSINF = testFail IR.TO_POSINF maxIntPlus06_r
+        val toInt_pinf_ZERO = test IR.TO_ZERO maxIntPlus06_r maxInt
+
+        val toInt_ninf_NEAREST = testFail IR.TO_NEAREST minIntMinus06_r
+        val toInt_ninf_NEGINF = testFail IR.TO_NEGINF minIntMinus06_r
+        val toInt_ninf_POSINF = test IR.TO_POSINF minIntMinus06_r minInt
+        val toInt_ninf_ZERO = test IR.TO_ZERO minIntMinus06_r minInt
       in () end
   end (* local *)
 
@@ -1494,6 +1651,31 @@ struct
         val normal_p0 = test pos0 (0, 0, 0, 0)
         val normal_n0 = test neg0 (0, 0, 0, 0)
       in () end
+  fun toLargeInt_normal_0002 () =
+      (* test Int.maxInt. *)
+      let
+        val maxInt = maxInt_L
+        val minInt = minInt_L
+        val normal_maxInt = test maxInt_r (maxInt, maxInt, maxInt, maxInt)
+        val normal_minInt = test minInt_r (minInt, minInt, minInt, minInt)
+      in () end
+  fun toLargeInt_normal_0003 () =
+      (* test greater than Int.maxInt and less than Int.minInt *)
+      if (NONE = I.precision)
+         orelse
+         (isSome LI.precision andalso valOf LI.precision <= valOf I.precision)
+      then () (* This test is unnecessary. *)
+      else
+        let
+          val maxIntP1_r = maxInt_r + 1.0
+          val maxIntP1 = maxInt_L + 1
+          val minIntM1_r = minInt_r - 1.0
+          val minIntM1 = minInt_L - 1
+          val normal_maxInt =
+              test maxIntP1_r (maxIntP1, maxIntP1, maxIntP1, maxIntP1)
+          val normal_minInt =
+              test minIntM1_r (minIntM1, minIntM1, minIntM1, minIntM1)
+        in () end
   end (* local *)
 
   local
@@ -1614,56 +1796,218 @@ struct
 
   (**********)
 
+  (* To avoid error of float numbers which fluctuate test results,
+   * we use float numbers which can be represented as the sum of powers
+   * of 2 exactly.
+   * 0.1875 = 0.125 + 0.0625 = 2^(-3) + 2^(-4)
+   *)
   local
     fun test spec arg expected = assertEqualString expected (R.fmt spec arg)
     datatype realfmt = datatype StringCvt.realfmt
   in
-  fun fmt_SCI_normal () =
+  fun fmt_SCI_normal_0001 () =
       let
-        val fmt_SCI_1357_N_1 = test (SCI NONE) 13.57 "1.357000E1"
-        val fmt_SCI_1357_0_1 = test (SCI (SOME 0)) 13.57 "1E1"
-        val fmt_SCI_1357_1_1 = test (SCI (SOME 1)) 13.57 "1.3E1"
-        val fmt_SCI_1357_2_1 = test (SCI (SOME 2)) 13.57 "1.35E1"
-        val fmt_SCI_1357_3_1 = test (SCI (SOME 3)) 13.57 "1.357E1"
-        val fmt_SCI_1357_4_1 = test (SCI (SOME 4)) 13.57 "1.3570E1"
+        val fmt_SCI_1875_N_1 = test (SCI NONE) 18.75 "1.875000E1"
+        val fmt_SCI_1875_0_1 = test (SCI (SOME 0)) 18.75 "1E1"
+        val fmt_SCI_1875_1_1 = test (SCI (SOME 1)) 18.75 "1.8E1"
+        val fmt_SCI_1875_2_1 = test (SCI (SOME 2)) 18.75 "1.87E1"
+        val fmt_SCI_1875_3_1 = test (SCI (SOME 3)) 18.75 "1.875E1"
+        val fmt_SCI_1875_4_1 = test (SCI (SOME 4)) 18.75 "1.8750E1"
 
-        val fmt_SCI_1357_N_0 = test (SCI NONE) 1.357 "1.357000E0"
-        val fmt_SCI_1357_N_n1 = test (SCI NONE) 0.1357 "1.357000E~1"
+        val fmt_SCI_1875_N_0 = test (SCI NONE) 1.875 "1.875000E0"
+        val fmt_SCI_1875_N_n1 = test (SCI NONE) 0.1875 "1.875000E~1"
 
-        val fmt_SCI_n1357_N_1 = test (SCI NONE) ~13.57 "~1.357000E1"
+        val fmt_SCI_n1875_N_1 = test (SCI NONE) ~18.75 "~1.875000E1"
+      in () end
+  (* check exponential. The real is just on power of 10. *)
+  fun fmt_SCI_normal_0010 () =
+      let
+        val fmt_SCI_100_N_1 = test (SCI NONE) 10.0 "1.000000E1"
+        val fmt_SCI_100_0_1 = test (SCI (SOME 0)) 10.0 "1E1"
+        val fmt_SCI_100_1_1 = test (SCI (SOME 1)) 10.0 "1.0E1"
+        val fmt_SCI_100_2_1 = test (SCI (SOME 2)) 10.0 "1.00E1"
+        val fmt_SCI_100_3_1 = test (SCI (SOME 3)) 10.0 "1.000E1"
+      in () end
+  (* check rounding. The most significant digit is under 5 *)
+  fun fmt_SCI_normal_0011 () =
+      let
+        val fmt_SCI_400_N_1 = test (SCI NONE) 40.0 "4.000000E1"
+        val fmt_SCI_400_0_1 = test (SCI (SOME 0)) 40.0 "4E1"
+        val fmt_SCI_400_1_1 = test (SCI (SOME 1)) 40.0 "4.0E1"
+        val fmt_SCI_400_2_1 = test (SCI (SOME 2)) 40.0 "4.00E1"
+        val fmt_SCI_400_3_1 = test (SCI (SOME 3)) 40.0 "4.000E1"
+      in () end
+  (* check rounding. The most significant digit is over 5 *)
+  fun fmt_SCI_normal_0012 () =
+      let
+        val fmt_SCI_600_N_1 = test (SCI NONE) 60.0 "6.000000E1"
+        val fmt_SCI_600_0_1 = test (SCI (SOME 0)) 60.0 "6E1"
+        val fmt_SCI_600_1_1 = test (SCI (SOME 1)) 60.0 "6.0E1"
+        val fmt_SCI_600_2_1 = test (SCI (SOME 2)) 60.0 "6.00E1"
+        val fmt_SCI_600_3_1 = test (SCI (SOME 3)) 60.0 "6.000E1"
+      in () end
+  (* check sign *)
+  fun fmt_SCI_normal_0013 () =
+      let
+        val fmt_SCI_n100_N_1 = test (SCI NONE) ~10.0 "~1.000000E1"
+        val fmt_SCI_n100_0_1 = test (SCI (SOME 0)) ~10.0 "~1E1"
+        val fmt_SCI_n100_1_1 = test (SCI (SOME 1)) ~10.0 "~1.0E1"
+        val fmt_SCI_n100_2_1 = test (SCI (SOME 2)) ~10.0 "~1.00E1"
+        val fmt_SCI_n100_3_1 = test (SCI (SOME 3)) ~10.0 "~1.000E1"
+      in () end
+  (* check exponential. The real is just on power of 10. *)
+  fun fmt_SCI_normal_0020 () =
+      let
+        val fmt_SCI_0001_N_n3 = test (SCI NONE) 0.001 "1.000000E~3"
+        val fmt_SCI_0001_0_n3 = test (SCI (SOME 0)) 0.001 "1E~3"
+        val fmt_SCI_0001_1_n3 = test (SCI (SOME 1)) 0.001 "1.0E~3"
+        val fmt_SCI_0001_2_n3 = test (SCI (SOME 2)) 0.001 "1.00E~3"
+        val fmt_SCI_0001_3_n3 = test (SCI (SOME 3)) 0.001 "1.000E~3"
+        val fmt_SCI_0001_4_n3 = test (SCI (SOME 4)) 0.001 "1.0000E~3"
+      in () end
+  (* check rounding. The most significant digit is under 5 *)
+  fun fmt_SCI_normal_0021 () =
+      let
+        val fmt_SCI_0004_N_n3 = test (SCI NONE) 0.004 "4.000000E~3"
+        val fmt_SCI_0004_0_n3 = test (SCI (SOME 0)) 0.004 "4E~3"
+        val fmt_SCI_0004_1_n3 = test (SCI (SOME 1)) 0.004 "4.0E~3"
+        val fmt_SCI_0004_2_n3 = test (SCI (SOME 2)) 0.004 "4.00E~3"
+        val fmt_SCI_0004_3_n3 = test (SCI (SOME 3)) 0.004 "4.000E~3"
+        val fmt_SCI_0004_4_n3 = test (SCI (SOME 4)) 0.004 "4.0000E~3"
+      in () end
+  (* check rounding. The most significant digit is over 5 *)
+  fun fmt_SCI_normal_0022 () =
+      let
+        val fmt_SCI_0006_N_n3 = test (SCI NONE) 0.006 "6.000000E~3"
+        val fmt_SCI_0006_0_n3 = test (SCI (SOME 0)) 0.006 "6E~3"
+        val fmt_SCI_0006_1_n3 = test (SCI (SOME 1)) 0.006 "6.0E~3"
+        val fmt_SCI_0006_2_n3 = test (SCI (SOME 2)) 0.006 "6.00E~3"
+        val fmt_SCI_0006_3_n3 = test (SCI (SOME 3)) 0.006 "6.000E~3"
+        val fmt_SCI_0006_4_n3 = test (SCI (SOME 4)) 0.006 "6.0000E~3"
+      in () end
+  (* check sign *)
+  fun fmt_SCI_normal_0023 () =
+      let
+        val fmt_SCI_n0001_N_n3 = test (SCI NONE) ~0.001 "~1.000000E~3"
+        val fmt_SCI_n0001_0_n3 = test (SCI (SOME 0)) ~0.001 "~1E~3"
+        val fmt_SCI_n0001_1_n3 = test (SCI (SOME 1)) ~0.001 "~1.0E~3"
+        val fmt_SCI_n0001_2_n3 = test (SCI (SOME 2)) ~0.001 "~1.00E~3"
+        val fmt_SCI_n0001_3_n3 = test (SCI (SOME 3)) ~0.001 "~1.000E~3"
+        val fmt_SCI_n0001_4_n3 = test (SCI (SOME 4)) ~0.001 "~1.0000E~3"
       in () end
   fun fmt_SCI_abnormal () =
       let
         val fmt_SCI_p0_N = test (SCI NONE) pos0 "0.000000E0"
+        val fmt_SCI_p0_0 = test (SCI (SOME 0)) pos0 "0E0"
         val fmt_SCI_p0_1 = test (SCI (SOME 1)) pos0 "0.0E0"
-        val fmt_SCI_n0_N = test (SCI NONE) neg0 "0.000000E0"
-        val fmt_SCI_n0_1 = test (SCI (SOME 1)) neg0 "0.0E0"
+        val fmt_SCI_n0_N = test (SCI NONE) neg0 "~0.000000E0"
+        val fmt_SCI_n0_0 = test (SCI (SOME 0)) neg0 "~0E0"
+        val fmt_SCI_n0_1 = test (SCI (SOME 1)) neg0 "~0.0E0"
         val fmt_SCI_pinf_N = test (SCI NONE) posInf "inf"
         val fmt_SCI_ninf_N = test (SCI NONE) negInf "~inf"
+        (* sign of nan is ignored. *)
         val fmt_SCI_pnan_N = test (SCI NONE) posNan "nan"
         val fmt_SCI_nnan_N = test (SCI NONE) negNan "nan"
       in () end
 
-  fun fmt_FIX_normal () =
+  fun fmt_FIX_normal_0001 () =
       let
-        val fmt_FIX_1357_N_1 = test (FIX NONE) 13.57 "13.570000"
-        val fmt_FIX_1357_0_1 = test (FIX (SOME 0)) 13.57 "13"
-        val fmt_FIX_1357_1_1 = test (FIX (SOME 1)) 13.57 "13.5"
-        val fmt_FIX_1357_2_1 = test (FIX (SOME 2)) 13.57 "13.57"
-        val fmt_FIX_1357_3_1 = test (FIX (SOME 3)) 13.57 "13.570"
-        val fmt_FIX_1357_4_1 = test (FIX (SOME 4)) 13.57 "13.5700"
+        val fmt_FIX_1875_N_1 = test (FIX NONE) 18.75 "18.750000"
+        val fmt_FIX_1875_0_1 = test (FIX (SOME 0)) 18.75 "18"
+        val fmt_FIX_1875_1_1 = test (FIX (SOME 1)) 18.75 "18.7"
+        val fmt_FIX_1875_2_1 = test (FIX (SOME 2)) 18.75 "18.75"
+        val fmt_FIX_1875_3_1 = test (FIX (SOME 3)) 18.75 "18.750"
+        val fmt_FIX_1875_4_1 = test (FIX (SOME 4)) 18.75 "18.7500"
 
-        val fmt_FIX_1357_N_0 = test (FIX NONE) 1.357 "1.357000"
-        val fmt_FIX_1357_N_n1 = test (FIX NONE) 0.1357 "0.135700"
+        val fmt_FIX_1875_N_0 = test (FIX NONE) 1.875 "1.875000"
+        val fmt_FIX_1875_N_n1 = test (FIX NONE) 0.1875 "0.187500"
 
-        val fmt_FIX_n1357_N_1 = test (FIX NONE) ~13.57 "~13.570000"
+        val fmt_FIX_n1875_N_1 = test (FIX NONE) ~18.75 "~18.750000"
+      in () end
+  (* check exponential. The real is just on power of 10. *)
+  fun fmt_FIX_normal_0010 () =
+      let
+        val fmt_FIX_100_N_1 = test (FIX NONE) 10.0 "10.000000"
+        val fmt_FIX_100_0_1 = test (FIX (SOME 0)) 10.0 "10"
+        val fmt_FIX_100_1_1 = test (FIX (SOME 1)) 10.0 "10.0"
+        val fmt_FIX_100_2_1 = test (FIX (SOME 2)) 10.0 "10.00"
+        val fmt_FIX_100_3_1 = test (FIX (SOME 3)) 10.0 "10.000"
+      in () end
+  (* check rounding. The most significant digit is under 5 *)
+  fun fmt_FIX_normal_0011 () =
+      let
+        val fmt_FIX_400_N_1 = test (FIX NONE) 40.0 "40.000000"
+        val fmt_FIX_400_0_1 = test (FIX (SOME 0)) 40.0 "40"
+        val fmt_FIX_400_1_1 = test (FIX (SOME 1)) 40.0 "40.0"
+        val fmt_FIX_400_2_1 = test (FIX (SOME 2)) 40.0 "40.00"
+        val fmt_FIX_400_3_1 = test (FIX (SOME 3)) 40.0 "40.000"
+      in () end
+  (* check rounding. The most significant digit is over 5 *)
+  fun fmt_FIX_normal_0012 () =
+      let
+        val fmt_FIX_600_N_1 = test (FIX NONE) 60.0 "60.000000"
+        val fmt_FIX_600_0_1 = test (FIX (SOME 0)) 60.0 "60"
+        val fmt_FIX_600_1_1 = test (FIX (SOME 1)) 60.0 "60.0"
+        val fmt_FIX_600_2_1 = test (FIX (SOME 2)) 60.0 "60.00"
+        val fmt_FIX_600_3_1 = test (FIX (SOME 3)) 60.0 "60.000"
+      in () end
+  (* check sign. *)
+  fun fmt_FIX_normal_0013 () =
+      let
+        val fmt_FIX_n100_N_1 = test (FIX NONE) ~10.0 "~10.000000"
+        val fmt_FIX_n100_0_1 = test (FIX (SOME 0)) ~10.0 "~10"
+        val fmt_FIX_n100_1_1 = test (FIX (SOME 1)) ~10.0 "~10.0"
+        val fmt_FIX_n100_2_1 = test (FIX (SOME 2)) ~10.0 "~10.00"
+        val fmt_FIX_n100_3_1 = test (FIX (SOME 3)) ~10.0 "~10.000"
+      in () end
+  (* check exponential. The real is just on power of 10. *)
+  fun fmt_FIX_normal_0020 () =
+      let
+        val fmt_FIX_0001_N_n3 = test (FIX NONE) 0.001 "0.001000"
+        val fmt_FIX_0001_0_n3 = test (FIX (SOME 0)) 0.001 "0"
+        val fmt_FIX_0001_1_n3 = test (FIX (SOME 1)) 0.001 "0.0"
+        val fmt_FIX_0001_2_n3 = test (FIX (SOME 2)) 0.001 "0.00"
+        val fmt_FIX_0001_3_n3 = test (FIX (SOME 3)) 0.001 "0.001"
+        val fmt_FIX_0001_4_n3 = test (FIX (SOME 4)) 0.001 "0.0010"
+      in () end
+  (* check exponential. The most significant digit is under 5 *)
+  fun fmt_FIX_normal_0021 () =
+      let
+        val fmt_FIX_0004_N_n3 = test (FIX NONE) 0.004 "0.004000"
+        val fmt_FIX_0004_0_n3 = test (FIX (SOME 0)) 0.004 "0"
+        val fmt_FIX_0004_1_n3 = test (FIX (SOME 1)) 0.004 "0.0"
+        val fmt_FIX_0004_2_n3 = test (FIX (SOME 2)) 0.004 "0.00"
+        val fmt_FIX_0004_3_n3 = test (FIX (SOME 3)) 0.004 "0.004"
+        val fmt_FIX_0004_4_n3 = test (FIX (SOME 4)) 0.004 "0.0040"
+      in () end
+  (* check exponential. The most significant digit is over 5 *)
+  fun fmt_FIX_normal_0022 () =
+      let
+        val fmt_FIX_0006_N_n3 = test (FIX NONE) 0.006 "0.006000"
+        val fmt_FIX_0006_0_n3 = test (FIX (SOME 0)) 0.006 "0"
+        val fmt_FIX_0006_1_n3 = test (FIX (SOME 1)) 0.006 "0.0"
+        val fmt_FIX_0006_2_n3 = test (FIX (SOME 2)) 0.006 "0.00"
+        val fmt_FIX_0006_3_n3 = test (FIX (SOME 3)) 0.006 "0.006"
+        val fmt_FIX_0006_4_n3 = test (FIX (SOME 4)) 0.006 "0.0060"
+      in () end
+  (* check sign. *)
+  fun fmt_FIX_normal_0023 () =
+      let
+        val fmt_FIX_n0001_N_n3 = test (FIX NONE) ~0.001 "~0.001000"
+        val fmt_FIX_n0001_0_n3 = test (FIX (SOME 0)) ~0.001 "~0"
+        val fmt_FIX_n0001_1_n3 = test (FIX (SOME 1)) ~0.001 "~0.0"
+        val fmt_FIX_n0001_2_n3 = test (FIX (SOME 2)) ~0.001 "~0.00"
+        val fmt_FIX_n0001_3_n3 = test (FIX (SOME 3)) ~0.001 "~0.001"
+        val fmt_FIX_n0001_4_n3 = test (FIX (SOME 4)) ~0.001 "~0.0010"
       in () end
   fun fmt_FIX_abnormal () =
       let
         val fmt_FIX_p0_N = test (FIX NONE) pos0 "0.000000"
+        val fmt_FIX_p0_0 = test (FIX (SOME 0)) pos0 "0"
         val fmt_FIX_p0_1 = test (FIX (SOME 1)) pos0 "0.0"
-        val fmt_FIX_n0_N = test (FIX NONE) neg0 "0.000000"
-        val fmt_FIX_n0_1 = test (FIX (SOME 1)) neg0 "0.0"
+        val fmt_FIX_n0_N = test (FIX NONE) neg0 "~0.000000"
+        val fmt_FIX_n0_0 = test (FIX (SOME 0)) neg0 "~0"
+        val fmt_FIX_n0_1 = test (FIX (SOME 1)) neg0 "~0.0"
         val fmt_FIX_pinf_N = test (FIX NONE) posInf "inf"
         val fmt_FIX_ninf_N = test (FIX NONE) negInf "~inf"
         val fmt_FIX_pnan_N = test (FIX NONE) posNan "nan"
@@ -1674,6 +2018,12 @@ struct
       let
         (* NONE indicates SOME(12) *)
 
+        (*
+         * FIX: 1234567890100000
+         * SCI: 1.2345678901E15
+         * Because trailing 0 is truncated, only 11 digits is printed in SCI
+         * format.
+         *)
         val fmt_GEN_p_N_11 =
             test (GEN NONE) 1234567890100000.0 "1.2345678901E15" (* SCI *)
         (*
@@ -1689,8 +2039,7 @@ struct
   fun fmt_GEN_normal_NONE_negExp () =
       let
         (* NONE indicates SOME(12) *)
-        val fmt_GEN_p_N_n4_11 =
-            test (GEN NONE) 0.00012345678901 "1.2345678901E~4" (* SCI *)
+
         (*
          * FIX: 0.0012345678901
          * SCI: 1.2345678901E~3
@@ -1698,10 +2047,20 @@ struct
          *)
         val fmt_GEN_p_N_n3_11 =
             test (GEN NONE) 0.0012345678901 "0.0012345678901" (* FIX *)
+        (*
+         * FIX: 0.00012345678901
+         * SCI: 1.2345678901E~4
+         *)
+        val fmt_GEN_p_N_n4_11 =
+            test (GEN NONE) 0.00012345678901 "1.2345678901E~4" (* SCI *)
+        (*
+         * FIX: 0.000123456789012
+         * SCI: 1.23456789012E~4
+         *)
         val fmt_GEN_p_N__n4_12 =
-            test (GEN NONE) 0.000123456789012 "1.2345678901E~4" (* SCI *)
+            test (GEN NONE) 0.000123456789012 "1.23456789012E~4" (* SCI *)
         val fmt_GEN_p_N__n4_13 =
-            test (GEN NONE) 0.0001234567890123 "1.2345678901E~4" (* SCI *)
+            test (GEN NONE) 0.0001234567890123 "1.23456789012E~4" (* SCI *)
       in () end
   fun fmt_GEN_normal_SOME_posExp () =
       let
@@ -1737,8 +2096,8 @@ struct
       let
         val fmt_GEN_p0_N = test (GEN NONE) pos0 "0"
         val fmt_GEN_p0_1 = test (GEN (SOME 1)) pos0 "0"
-        val fmt_GEN_n0_N = test (GEN NONE) neg0 "0"
-        val fmt_GEN_n0_1 = test (GEN (SOME 1)) neg0 "0"
+        val fmt_GEN_n0_N = test (GEN NONE) neg0 "~0"
+        val fmt_GEN_n0_1 = test (GEN (SOME 1)) neg0 "~0"
         val fmt_GEN_pinf_N = test (GEN NONE) posInf "inf"
         val fmt_GEN_ninf_N = test (GEN NONE) negInf "~inf"
         val fmt_GEN_pnan_N = test (GEN NONE) posNan "nan"
@@ -1805,24 +2164,20 @@ struct
       let
         (* test case for numbers with whole part *)
         val normal_N_123_N_N_N = test "123" (SOME(123.0, ""))
-        (* ToDo: check whether this is valid format or not. *)
-        val normal_N_123d_N_N_N = test "123." (SOME(123.0, ""))
         val normal_N_123_456_N_N = test "123.456" (SOME(123.456, ""))
         val normal_N_123_456_N_1 = test "123.456E1" (SOME(1234.56, ""))
 
         val normal_p_123_N_N_N = test "+123" (SOME(123.0, ""))
-        val normal_t_123_N_N_N = test "~123" (SOME(123.0, ""))
-        val normal_m_123_N_N_N = test "-123" (SOME(123.0, ""))
+        val normal_t_123_N_N_N = test "~123" (SOME(~123.0, ""))
+        val normal_m_123_N_N_N = test "-123" (SOME(~123.0, ""))
         val normal_m_123_456_N_1 = test "-123.456E1" (SOME(~1234.56, ""))
-        val normal_m_123_456_m_1 = test "-123.456-E1" (SOME(~12.3456, ""))
+        val normal_m_123_456_m_1 = test "-123.456E-1" (SOME(~12.3456, ""))
       in () end
   fun scan_normal_0002 () =
       let
         (* test case for numbers with no whole part *)
-        (* ToDo: chack whether empty Exp part is valid or not. *)
-        val normal_N_N_123_N_N = test ".123E" (SOME(0.123, ""))
         val normal_N_N_123_N_1 = test ".123E1" (SOME(1.23, ""))
-        val normal_N_N_123_N_10 = test ".123E10" (SOME(12300000000.0, ""))
+        val normal_N_N_123_N_10 = test ".123E10" (SOME(1230000000.0, ""))
         val normal_N_N_123_p_1 = test ".123E+1" (SOME(1.23, ""))
         val normal_N_N_123_t_1 = test ".123E~1" (SOME(0.0123, ""))
         val normal_N_N_123_m_1 = test ".123E-1" (SOME(0.0123, ""))
@@ -1851,15 +2206,22 @@ struct
         val normal_smallE = test "123.456e1" (SOME(1234.56, ""))
         val normal_largeE = test "123.456E1" (SOME(1234.56, ""))
       in () end
-  (* error case for normal floats *)
+  fun scan_normal_0012 () =
+      let
+        (* test case for extremes. *)
+        val normal_error_Ebig = test "1E1000" (SOME(posInf, ""))
+      in () end
   fun scan_normal_1001 () =
       let
-        val normal_error_E1 = test "E" NONE
+        (* test cases for bugs? in the format specified in Basis spec. *)
+        (* With whole part and 'E', but no exponential part. *)
+        val normal_error_E1 = test "1EA" (SOME(1.0, "A"))
+        (* With 'E' and exponential, but no whole part. *)
         val normal_error_E2 = test "E1" NONE
-        val normal_error_E3 = test "1EA" NONE (* should be SOME(1.0, "EA") ? *)
-        val normal_error_Ebig = test "1E1000" (SOME(posInf, ""))
-
-        val normal_error_dot = test "1..1" (SOME(1.0, "..1")) (* should be NONE ? *)
+        (* Only 'E' *)
+        val normal_error_E3 = test "E" NONE
+        (* With decimal point, but no fractional part. *)
+        val normal_error_dot = test "1..1" (SOME(1.0, ".1"))
       in () end
 
   (* The valid format of Real.scan for abnormal floats is:
@@ -1924,13 +2286,13 @@ struct
   in
   fun toDecimal_normal_0001 () =
       let
-        val normal_p_p = test 12.3 (IR.NORMAL, false, [1, 2, 3], 2)
-        val normal_p_0 = test 0.123 (IR.NORMAL, false, [1, 2, 3], 0)
-        val normal_p_n = test 0.00123 (IR.NORMAL, false, [1, 2, 3], ~2)
+        val normal_p_p = test 12.5 (IR.NORMAL, false, [1, 2, 5], 2)
+        val normal_p_0 = test 0.125 (IR.NORMAL, false, [1, 2, 5], 0)
+        val normal_p_n = test 0.015625 (IR.NORMAL, false, [1, 5, 6, 2, 5], ~1)
 
-        val normal_n_p = test ~12.3 (IR.NORMAL, true, [1, 2, 3], 2)
-        val normal_n_0 = test ~0.123 (IR.NORMAL, true, [1, 2, 3], 0)
-        val normal_n_n = test ~0.00123 (IR.NORMAL, true, [1, 2, 3], ~2)
+        val normal_n_p = test ~12.5 (IR.NORMAL, true, [1, 2, 5], 2)
+        val normal_n_0 = test ~0.125 (IR.NORMAL, true, [1, 2, 5], 0)
+        val normal_n_n = test ~0.015625 (IR.NORMAL, true, [1, 5, 6, 2, 5], ~1)
       in () end
   fun toDecimal_abnormal_0001 () =
       let
@@ -1956,13 +2318,25 @@ struct
   (* safe case *)
   fun fromDecimal_normal_0001 () =
       let
-        val normal_p_p = test (IR.NORMAL, false, [1, 2, 3], 2) (SOME 12.3)
-        val normal_p_0 = test (IR.NORMAL, false, [1, 2, 3], 0) (SOME 0.123)
-        val normal_p_n = test (IR.NORMAL, false, [1, 2, 3], ~2) (SOME 0.00123)
+        val normal_p_p = test (IR.NORMAL, false, [1, 2, 5], 2) (SOME 12.5)
+        val normal_p_0 = test (IR.NORMAL, false, [1, 2, 5], 0) (SOME 0.125)
+        val normal_p_n = test (IR.NORMAL, false, [1, 2, 5], ~2) (SOME 0.00125)
 
-        val normal_n_p = test (IR.NORMAL, true, [1, 2, 3], 2) (SOME ~12.3)
-        val normal_n_0 = test (IR.NORMAL, true, [1, 2, 3], 0) (SOME ~0.123)
-        val normal_n_n = test (IR.NORMAL, true, [1, 2, 3], ~2) (SOME ~0.00123)
+        val normal_n_p = test (IR.NORMAL, true, [1, 2, 5], 2) (SOME ~12.5)
+        val normal_n_0 = test (IR.NORMAL, true, [1, 2, 5], 0) (SOME ~0.125)
+        val normal_n_n = test (IR.NORMAL, true, [1, 2, 5], ~2) (SOME ~0.00125)
+      in () end
+  (* fromDecimal should ignore class field for IR.NORMAL. *)
+  fun fromDecimal_normal_0002 () =
+      let
+        (* empty digits *)
+        val abnormal_NORMAL_p0 = test (IR.NORMAL, false, [], 2) (SOME pos0)
+        (* very large magnitude *)
+        val abnormal_NORMAL_pinf = test (IR.NORMAL, false, [1], 1000) (SOME posInf)
+        val abnormal_NORMAL_ninf = test (IR.NORMAL, true, [1], 1000) (SOME negInf)
+        (* very small magnitude *)
+        val abnormal_NORMAL_p0 = test (IR.NORMAL, false, [1], ~1000) (SOME pos0)
+        val abnormal_NORMAL_n0 = test (IR.NORMAL, true, [1], ~1000) (SOME neg0)
       in () end
   (* error case *)
   fun fromDecimal_normal_1001 () =
@@ -1982,15 +2356,11 @@ struct
         val normal_pnan = test (IR.NAN, false, [], 0) (SOME posNan)
         val normal_nnan = test (IR.NAN, true, [], 0) (SOME negNan)
       in () end
-  (* fromDecimal ignores class field. *)
   fun fromDecimal_abnormal_0002 () =
       let
-        val abnormal_NORMAL_p0 = test (IR.NORMAL, false, [], 2) (SOME pos0)
-        val abnormal_INF_p = test (IR.INF, false, [1, 2, 3], 2) (SOME 12.3)
-        val abnormal_NAN_p = test (IR.NAN, false, [1, 2, 3], 2) (SOME 12.3)
-
-        val abnormal_NORMAL_pinf = test (IR.NORMAL, false, [1], 1000) (SOME posInf)
-        val abnormal_NORMAL_p0 = test (IR.NORMAL, false, [1], ~1000) (SOME pos0)
+        (* digits and exp are ignored *)
+        val abnormal_INF_p = test (IR.INF, false, [1, 2, 3], 2) (SOME posInf)
+        val abnormal_NAN_p = test (IR.NAN, false, [1, 2, 3], 2) (SOME posNan)
       in () end
 
   end (* inner local *)
@@ -2113,15 +2483,24 @@ struct
         ("checkFloat001", checkFloat001),
 
         ("toRealIntConversions0001", toRealIntConversions0001),
-        ("toIntConversions_normal", toIntConversions_normal),
+        ("toIntConversions_normal_0001", toIntConversions_normal_0001),
+        ("toIntConversions_normal_1001", toIntConversions_normal_1001),
+        ("toIntConversions_normal_1002", toIntConversions_normal_1002),
+        ("toIntConversions_normal_1003", toIntConversions_normal_1003),
         ("toIntConversions_inf", toIntConversions_inf),
         ("toIntConversions_nan", toIntConversions_nan),
 
         ("toInt_normal_0001", toInt_normal_0001),
+        ("toInt_normal_0002", toInt_normal_0002),
+        ("toInt_normal_1001", toInt_normal_1001),
+        ("toInt_normal_1002", toInt_normal_1002),
+        ("toInt_normal_1003", toInt_normal_1003),
         ("toInt_inf_0001", toInt_inf_0001),
         ("toInt_nan_0001", toInt_nan_0001),
 
         ("toLargeInt_normal_0001", toLargeInt_normal_0001),
+        ("toLargeInt_normal_0002", toLargeInt_normal_0002),
+        ("toLargeInt_normal_0003", toLargeInt_normal_0003),
         ("toLargeInt_inf_0001", toLargeInt_inf_0001),
         ("toLargeInt_nan_0001", toLargeInt_nan_0001),
 
@@ -2131,9 +2510,25 @@ struct
         ("toLarge0001", toLarge0001),
         ("fromLarge0001", fromLarge0001),
 
-        ("fmt_SCI_normal", fmt_SCI_normal),
+        ("fmt_SCI_normal_0001", fmt_SCI_normal_0001),
+        ("fmt_SCI_normal_0010", fmt_SCI_normal_0010),
+        ("fmt_SCI_normal_0011", fmt_SCI_normal_0011),
+        ("fmt_SCI_normal_0012", fmt_SCI_normal_0012),
+        ("fmt_SCI_normal_0013", fmt_SCI_normal_0013),
+        ("fmt_SCI_normal_0020", fmt_SCI_normal_0020),
+        ("fmt_SCI_normal_0021", fmt_SCI_normal_0021),
+        ("fmt_SCI_normal_0022", fmt_SCI_normal_0022),
+        ("fmt_SCI_normal_0023", fmt_SCI_normal_0023),
         ("fmt_SCI_abnormal", fmt_SCI_abnormal),
-        ("fmt_FIX_normal", fmt_FIX_normal),
+        ("fmt_FIX_normal_0001", fmt_FIX_normal_0001),
+        ("fmt_FIX_normal_0010", fmt_FIX_normal_0010),
+        ("fmt_FIX_normal_0011", fmt_FIX_normal_0011),
+        ("fmt_FIX_normal_0012", fmt_FIX_normal_0012),
+        ("fmt_FIX_normal_0013", fmt_FIX_normal_0013),
+        ("fmt_FIX_normal_0020", fmt_FIX_normal_0020),
+        ("fmt_FIX_normal_0021", fmt_FIX_normal_0021),
+        ("fmt_FIX_normal_0022", fmt_FIX_normal_0022),
+        ("fmt_FIX_normal_0023", fmt_FIX_normal_0023),
         ("fmt_FIX_abnormal", fmt_FIX_abnormal),
         ("fmt_GEN_normal_NONE_posExp", fmt_GEN_normal_NONE_posExp),
         ("fmt_GEN_normal_NONE_negExp", fmt_GEN_normal_NONE_negExp),
@@ -2148,6 +2543,7 @@ struct
         ("scan_normal_0003", scan_normal_0003),
         ("scan_normal_0010", scan_normal_0010),
         ("scan_normal_0011", scan_normal_0011),
+        ("scan_normal_0012", scan_normal_0012),
         ("scan_normal_1001", scan_normal_1001),
         ("scan_abnormal_0001", scan_abnormal_0001),
         ("scan_abnormal_0002", scan_abnormal_0002),
@@ -2158,6 +2554,7 @@ struct
         ("toDecimal_abnormal_0001", toDecimal_abnormal_0001),
 
         ("fromDecimal_normal_0001", fromDecimal_normal_0001),
+        ("fromDecimal_normal_0002", fromDecimal_normal_0002),
         ("fromDecimal_normal_1001", fromDecimal_normal_1001),
         ("fromDecimal_abnormal_0001", fromDecimal_abnormal_0001),
         ("fromDecimal_abnormal_0002", fromDecimal_abnormal_0002)

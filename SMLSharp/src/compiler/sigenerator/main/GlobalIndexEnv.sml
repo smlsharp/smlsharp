@@ -17,10 +17,10 @@ structure GlobalIndexEnv :> GLOBALINDEXENV = struct
         lastBoxedIndex : implementationIndex option,
         lastAtomIndex : implementationIndex option,
         lastDoubleIndex : implementationIndex option,
-        indexMap : implementationIndex ExternalVarID.Map.map
+        indexMap : implementationIndex ExVarID.Map.map
        }
 
-  structure AIMapPickler = OrdMapPickler(ExternalVarID.Map)
+  structure AIMapPickler = OrdMapPickler(ExVarID.Map)
 
   val pu_arrayIndex = P.word32
   val pu_offset = P.word32
@@ -34,7 +34,7 @@ structure GlobalIndexEnv :> GLOBALINDEXENV = struct
           )
           (P.tuple2(pu_arrayIndex,pu_offset))
   val pu_implementationIndexOpt = P.option pu_implementationIndex
-  val pu_indexMap = AIMapPickler.map(ExternalVarID.pu_ID, pu_implementationIndex)
+  val pu_indexMap = AIMapPickler.map(ExVarID.pu_ID, pu_implementationIndex)
   val pu_globalIndexEnv =
       P.conv
           (
@@ -72,14 +72,14 @@ structure GlobalIndexEnv :> GLOBALINDEXENV = struct
        lastBoxedIndex = NONE,
        lastAtomIndex = NONE,
        lastDoubleIndex = NONE,
-       indexMap = ExternalVarID.Map.empty
+       indexMap = ExVarID.Map.empty
       } : globalIndexEnv
 
   val initialGlobalIndexEnv = emptyGlobalIndexEnv : globalIndexEnv
       
 
   fun findIndex ( {indexMap,...} : globalIndexEnv, abstractIndex) =
-      ExternalVarID.Map.find(indexMap, abstractIndex)
+      ExVarID.Map.find(indexMap, abstractIndex)
 
   fun allocateIndex 
           ({nextArrayIndex, lastBoxedIndex, lastAtomIndex, lastDoubleIndex, indexMap} : globalIndexEnv,
@@ -110,7 +110,7 @@ structure GlobalIndexEnv :> GLOBALINDEXENV = struct
                lastBoxedIndex = lastBoxedIndex,
                lastAtomIndex = lastAtomIndex,
                lastDoubleIndex = lastDoubleIndex,
-               indexMap = ExternalVarID.Map.insert(indexMap, abstractIndex, newIndex)
+               indexMap = ExVarID.Map.insert(indexMap, abstractIndex, newIndex)
               }
         in
           (newGlobalIndexEnv, newIndex)
@@ -139,7 +139,7 @@ structure GlobalIndexEnv :> GLOBALINDEXENV = struct
                lastBoxedIndex = lastBoxedIndex,
                lastAtomIndex = lastAtomIndex,
                lastDoubleIndex = lastDoubleIndex,
-               indexMap = ExternalVarID.Map.insert(indexMap, abstractIndex, newIndex)
+               indexMap = ExVarID.Map.insert(indexMap, abstractIndex, newIndex)
               }
         in
           (newGlobalIndexEnv, newIndex)
@@ -168,7 +168,7 @@ structure GlobalIndexEnv :> GLOBALINDEXENV = struct
                lastBoxedIndex = lastBoxedIndex,
                lastAtomIndex = lastAtomIndex,
                lastDoubleIndex = lastDoubleIndex,
-               indexMap = ExternalVarID.Map.insert(indexMap, abstractIndex, newIndex)
+               indexMap = ExVarID.Map.insert(indexMap, abstractIndex, newIndex)
               }
         in
           (newGlobalIndexEnv, newIndex)

@@ -66,6 +66,7 @@ local
     val split = SMLSharp.Runtime.Float_split
     val toManExp = SMLSharp.Runtime.Float_toManExp
     val fromManExp = SMLSharp.Runtime.Float_fromManExp
+    val nextAfter = SMLSharp.Runtime.Float_nextAfter
     val copySign = SMLSharp.Runtime.Float_copySign
     val equal = Real32.==
     val class = SMLSharp.Runtime.Float_class

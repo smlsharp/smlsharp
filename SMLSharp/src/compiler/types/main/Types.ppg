@@ -648,13 +648,13 @@ struct
 
   (*%
    * @formatter(VarID.id) VarID.format_id
-   * @formatter(ExternalVarID.id) ExternalVarID.format_id
+   * @formatter(ExVarID.id) ExVarID.format_id
    *)
   datatype varId =
       (*%
        * @format(id) "#G" id
        *)
-      EXTERNAL of ExternalVarID.id
+      EXTERNAL of ExVarID.id
     | (*%
        * @format(id) "#" id
        *)

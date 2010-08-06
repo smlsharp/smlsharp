@@ -372,6 +372,20 @@ IMLPrim_Real_strtodImpl(UInt32Value argsCount,
     return;
 }
 
+/*
+ * val nextAfter : (real * real) -> real
+ */
+void
+IMLPrim_Real_nextAfterImpl(UInt32Value argsCount,
+                           Cell* argumentRefs[],
+                           Cell* resultRef)
+{
+    Real64Value left = PrimitiveSupport::cellRefToReal64(argumentRefs[0]);
+    Real64Value right = PrimitiveSupport::cellRefToReal64(argumentRefs[1]);
+    Real64Value resultValue = ::nextafter(left, right);
+    PrimitiveSupport::real64ToCellRef(resultValue, resultRef);
+};
+
 Primitive IMLPrim_Real_toString = IMLPrim_Real_toStringImpl;
 Primitive IMLPrim_Real_fromInt = IMLPrim_Real_fromIntImpl;
 Primitive IMLPrim_Real_floor = IMLPrim_Real_floorImpl;
@@ -388,6 +402,7 @@ Primitive IMLPrim_Real_toFloat = IMLPrim_Real_toFloatImpl;
 Primitive IMLPrim_Real_fromFloat = IMLPrim_Real_fromFloatImpl;
 Primitive IMLPrim_Real_dtoa = IMLPrim_Real_dtoaImpl;
 Primitive IMLPrim_Real_strtod = IMLPrim_Real_strtodImpl;
+Primitive IMLPrim_Real_nextAfter = IMLPrim_Real_nextAfterImpl;
 
 ///////////////////////////////////////////////////////////////////////////////
 

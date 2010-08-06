@@ -754,6 +754,15 @@ struct
         val span_3_3_A_A_2 = test "abcdefghi" (1, 3) (5, 3) (1, 7)
       in () end
   end (* local *)
+  (* another error case where base strings of substrings are not equal. *)
+  fun span1001 () =
+      let
+        val ss1 = SS.substring ("abcd", 1, 0)
+        val ss2 = SS.substring ("bcde", 2, 0)
+      in
+        (SS.span (ss1, ss2); fail "Span expected.")
+        handle General.Span => ()
+      end
 
   (********************)
 
@@ -951,6 +960,7 @@ struct
         ("dropTake0001", dropTake0001),
         ("position0001", position0001),
         ("span0001", span0001),
+        ("span1001", span1001),
         ("translate0001", translate0001),
         ("tokens0001", tokens0001),
         ("fields0001", fields0001),

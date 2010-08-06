@@ -62,19 +62,17 @@ struct
       if number = 0
       then P.makeEmptyArray ()
       else
-        if number < 0
-        then raise General.Size
-        else
-          let
-            val target = P.makeArray(number, generator 0)
-            fun fill i = 
-                if i = number
-                then ()
-                else (P.update(target, i, generator i); fill (i + 1))
-            val _ = fill 1
-          in
-            target
-          end
+        let
+          val target = P.makeArray (number, generator 0)
+          fun fill i = 
+              if i = number
+              then ()
+              else (P.update(target, i, generator i); fill (i + 1))
+          val _ = fill 1
+        in
+          target
+        end
+
   fun length array = P.length array
 
   fun sub (array, index) =

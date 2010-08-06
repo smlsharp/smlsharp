@@ -18,9 +18,23 @@ struct
 
   val fromList = String.implode
 
-  (* ToDo : instead of fromList, it is more efficient to allocate a buffer
-   * by 'String_allocate' first, then, fill it by 'String_update'. *)
-  val tabulate = fromList o List.tabulate
+  fun tabulate (size, generator) =
+      if size < 0 orelse maxLen < size
+      then raise General.Size
+      else
+        let
+          val buffer = SMLSharp.PrimString.vector (size, #"a")
+          fun write i =
+              if i = size
+              then ()
+              else
+                (
+                  SMLSharp.PrimString.update_unsafe (buffer, i, generator i);
+                  write (i + 1)
+                )
+        in
+          write 0; buffer
+        end
 
   val length = String.size
 
@@ -29,9 +43,12 @@ struct
   val concat = String.concat
 
   fun update (vector, index, value) =
-      let fun valueOfIndex i = if i = index then value else sub (vector, i)
-      in tabulate (length vector, valueOfIndex)
-      end
+      if index < 0 orelse length vector <= index
+      then raise General.Subscript
+      else
+        let fun valueOfIndex i = if i = index then value else sub (vector, i)
+        in tabulate (length vector, valueOfIndex)
+        end
 
   fun copy {src, si, dst, di, len} =
       SMLSharp.PrimString.copy_unsafe (src, si, dst, di, len)
@@ -74,14 +91,23 @@ struct
         | (_, NONE) => raise Fail "BUG: vector concat"
       end
 
-  (* ToDo : As tabulate, mapi should be rewritten to efficient one. *)
   fun mapi mapFun vector =
-      let val length = size vector
+      let
+        val size = size vector
+        val buffer = SMLSharp.PrimString.vector (size, #"a")
+        fun write i =
+            if i = size
+            then ()
+            else
+              let val c = mapFun (i, sub (vector, i))
+              in
+                SMLSharp.PrimString.update_unsafe (buffer, i, c);
+                write (i + 1)
+              end
       in
-        String.implode
-            (List.tabulate
-                 (length, fn index => mapFun (index, sub (vector, index))))
+        write 0; buffer
       end
+
   val map = String.map
 
   fun appi appFun vector =

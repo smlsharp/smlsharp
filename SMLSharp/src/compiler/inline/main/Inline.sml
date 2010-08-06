@@ -320,7 +320,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 	    val varInfo = IU.changeTY ty varInfo
 	    val mvexp = MV.MVVAR {varInfo=varInfo,loc=loc}
 	    val (mvexp,size) =
-		case ExternalVarID.Map.find (globalEnv,ai) of
+		case ExVarID.Map.find (globalEnv,ai) of
 		    SOME (IE.GSIMPLE (mvexp as (MV.MVCONSTANT _),_))
 		    => (mvexp, 1) (* expand constant *)
                   | SOME (IE.GSIMPLE (mvexp as (MV.MVGLOBALSYMBOL _),_))
@@ -531,7 +531,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 	      | MV.MVVAR {varInfo={varId=T.EXTERNAL ai,...},...}
 		=> 
 		(
-		 case ExternalVarID.Map.find (globalEnv, ai) of
+		 case ExVarID.Map.find (globalEnv, ai) of
 		     SOME (IE.GFN (MV.MVFNM {argVarList, funTy, bodyExp, annotation, loc},displayName))
 		     => 
 		     let 
@@ -628,7 +628,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 	      | MV.MVVAR {varInfo={varId=T.EXTERNAL ai,...},...}
 		=>
 		(
-		 case ExternalVarID.Map.find (globalEnv, ai) of
+		 case ExVarID.Map.find (globalEnv, ai) of
 		     SOME (IE.GPFN (btvEnv, MV.MVFNM {argVarList, bodyExp, ...}, _, displayName))
 		     => 
 		     let 
@@ -993,7 +993,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 	      | MV.MVVAR {varInfo={varId=T.EXTERNAL ai,...},...}
 		=>
 		(
-		 case ExternalVarID.Map.find (globalEnv, ai) of
+		 case ExVarID.Map.find (globalEnv, ai) of
 		     SOME (IE.GPFN (btvEnv, mvfnm, (*sizeGPFN*)_, displayName))
 		     =>
 		     let
@@ -1154,7 +1154,7 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 			     case varId of 
 				 T.INTERNAL _ => globalEnv
 			       | T.EXTERNAL ai
-				 => ExternalVarID.Map.insert (globalEnv,ai,IE.GSIMPLE (boundExp,displayName))
+				 => ExVarID.Map.insert (globalEnv,ai,IE.GSIMPLE (boundExp,displayName))
 			 val (mvdeclList,sizeMVDeclList) =
 			     case varId of
 				 T.INTERNAL _ => (nil,0)
@@ -1181,7 +1181,7 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 			     case varId of 
 				 T.INTERNAL _ => globalEnv
 			       | T.EXTERNAL ai
-				 => ExternalVarID.Map.insert (globalEnv,ai,IE.GSIMPLE (boundExp,displayName))
+				 => ExVarID.Map.insert (globalEnv,ai,IE.GSIMPLE (boundExp,displayName))
 			 val (mvdeclList,sizeMVDeclList) =
 			     case varId of
 				 T.INTERNAL _ => (nil,0)
@@ -1214,7 +1214,7 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				  case #varId varInfo of
 				      T.INTERNAL _ => globalEnv
 				    | T.EXTERNAL _
-				      => ExternalVarID.Map.insert (globalEnv, ai, IE.GSIMPLE (boundExp,displayName))
+				      => ExVarID.Map.insert (globalEnv, ai, IE.GSIMPLE (boundExp,displayName))
 				 )
 			 val (mvdeclList,sizeMVDeclList) = 
 			     case varId of
@@ -1248,7 +1248,7 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				 => 
 				 if sizeBoundExp <= !Control.inlineThreshold then
 				     if hasFreeVar boundExp then globalEnv
-				     else ExternalVarID.Map.insert 
+				     else ExVarID.Map.insert 
 					      (
 					       globalEnv,
 					       ai,
@@ -1284,7 +1284,7 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				 =>
 				 if sizeBoundExp <= !Control.inlineThreshold then
 				     if hasFreeVar boundExp then globalEnv
-				     else ExternalVarID.Map.insert 
+				     else ExVarID.Map.insert 
 					      (
 					       globalEnv,
 					       ai,

@@ -118,15 +118,20 @@ struct
         val slice_1_1_0 = test (1, 1, SOME 0) []
         val slice_1_1_1 = testFail (1, 1, SOME 1)
         val slice_1_2_N = testFail (1, 2, NONE)
+        val slice_2_m1_N = testFail (2, ~1, NONE)
+        val slice_2_m1_0 = testFail (2, ~1, SOME 0)
         val slice_2_0_N = test (2, 0, NONE) [n0, n1]
+        val slice_2_0_m1 = testFail (2, 0, SOME ~1)
         val slice_2_0_0 = test (2, 0, SOME 0) []
         val slice_2_0_2 = test (2, 0, SOME 2) [n0, n1]
         val slice_2_0_3 = testFail (2, 0, SOME 3)
         val slice_2_1_N = test (2, 1, NONE) [n1]
+        val slice_2_1_m1 = testFail (2, 1, SOME ~1)
         val slice_2_1_0 = test (2, 1, SOME 0) []
         val slice_2_1_1 = test (2, 1, SOME 1) [n1]
         val slice_2_1_2 = testFail (2, 1, SOME 2)
         val slice_2_2_N = test (2, 2, NONE) []
+        val slice_2_2_m1 = testFail (2, 2, SOME ~1)
         val slice_2_2_0 = test (2, 2, SOME 0) []
         val slice_2_2_1 = testFail (2, 2, SOME 1)
       in () end
@@ -148,19 +153,29 @@ struct
           val vector = makeSequence vectorLength
           val slice1 = S.slice(vector, start1, SOME length1)
         in
-          (S.subslice(slice1, start2, lengthOpt2); fail "subslice: Subscript.")
+          (
+            S.subslice(slice1, start2, lengthOpt2);
+            fail "subslice: Subscript expected."
+          )
           handle General.Subscript => ()
         end
   in
   fun subslice001 () =
       let
+        val subslice_5_1_3_m1_N = testFail (5, 1, 3, ~1, NONE)
+        val subslice_5_1_3_m1_0 = testFail (5, 1, 3, ~1, SOME 0)
         val subslice_5_1_3_0_N = test (5, 1, 3, 0, NONE) [n1, n2, n3]
+        val subslice_5_1_3_0_m1 = testFail (5, 1, 3, 0, SOME ~1)
         val subslice_5_1_3_0_3 = test (5, 1, 3, 0, SOME 3) [n1, n2, n3]
         val subslice_5_1_3_1_N = test (5, 1, 3, 1, NONE) [n2, n3]
+        val subslice_5_1_3_1_m1 = testFail (5, 1, 3, 1, SOME ~1)
         val subslice_5_1_3_1_0 = test (5, 1, 3, 1, SOME 0) []
         val subslice_5_1_3_1_1 = test (5, 1, 3, 1, SOME 1) [n2]
+        val subslice_5_1_3_1_2 = test (5, 1, 3, 1, SOME 2) [n2, n3]
         val subslice_5_1_3_1_3 = testFail (5, 1, 3, 1, SOME 3)
         val subslice_5_1_3_2_N = test (5, 1, 3, 2, NONE) [n3]
+        val subslice_5_1_3_2_m1 = test (5, 1, 3, 2, SOME ~1)
+        val subslice_5_1_3_2_0 = test (5, 1, 3, 2, SOME 0) []
         val subslice_5_1_3_2_1 = test (5, 1, 3, 2, SOME 1) [n3]
       in () end
   end (* local *)

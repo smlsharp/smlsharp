@@ -220,7 +220,7 @@ struct
                         "non EXTERNAL to pu_EXTERNAL\
                         \ (types/main/TypesPickler.sml)"
                  )
-                (ExternalVarID.pu_ID)
+                (ExVarID.pu_ID)
 
         fun pu_INTERNAL pu =
             P.con1

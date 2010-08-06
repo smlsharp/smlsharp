@@ -472,19 +472,17 @@ struct
 (*
     | (*% @prefix att_ @format "\tinto" *)
       INTO
+*)
     | (*% @prefix att_ @format(dst * src) "\taddb\t" src ", " dst *)
       ADDB of rm8 * rmi8
     | (*% @prefix att_ @format(dst * src) "\taddw\t" src ", " dst *)
       ADDW of rm16 * rmi16
-*)
     | (*% @prefix att_ @format(dst * src) "\taddl\t" src ", " dst *)
       ADDL of rm32 * rmi32
-(*
     | (*% @prefix att_ @format(dst * src) "\tsubb\t" src ", " dst *)
       SUBB of rm8 * rmi8
     | (*% @prefix att_ @format(dst * src) "\tsubw\t" src ", " dst *)
       SUBW of rm16 * rmi16
-*)
     | (*% @prefix att_ @format(dst * src) "\tsubl\t" src ", " dst *)
       SUBL of rm32 * rmi32
 (*

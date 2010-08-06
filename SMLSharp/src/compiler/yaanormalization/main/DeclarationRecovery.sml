@@ -64,21 +64,21 @@ struct
 
   type globalSymbolEnv =
       {
-        varEnv: string ExternalVarID.Map.map,
+        varEnv: string ExVarID.Map.map,
         exnEnv: string ExnTagID.Map.map,
         aliasEnv: string SEnv.map
       }
 
   val emptyGlobalSymbolEnv =
       {
-        varEnv = ExternalVarID.Map.empty,
+        varEnv = ExVarID.Map.empty,
         exnEnv = ExnTagID.Map.empty,
         aliasEnv = SEnv.empty
       } : globalSymbolEnv
 
   val initialGlobalSymbolEnv =
       {
-        varEnv = ExternalVarID.Map.empty,
+        varEnv = ExVarID.Map.empty,
         exnEnv = #exceptionGlobalNameMap BuiltinContext.builtinContext,
         aliasEnv = SEnv.empty
       } : globalSymbolEnv
@@ -89,7 +89,7 @@ struct
 
   fun extendGlobalSymbolEnv (env1:globalSymbolEnv, env2:globalSymbolEnv) =
       {
-        varEnv = ExternalVarID.Map.unionWith disjointUnion
+        varEnv = ExVarID.Map.unionWith disjointUnion
                                              (#varEnv env1, #varEnv env2),
         exnEnv = ExnTagID.Map.unionWith disjointUnion
                                         (#exnEnv env1, #exnEnv env2),
@@ -98,7 +98,7 @@ struct
       } : globalSymbolEnv
 
   local
-    structure VarEnvPickler = OrdMapPickler(ExternalVarID.Map)
+    structure VarEnvPickler = OrdMapPickler(ExVarID.Map)
     structure ExnEnvPickler = OrdMapPickler(ExnTagID.Map)
   in
   val pu_globalSymbolEnv =
@@ -107,7 +107,7 @@ struct
             {varEnv=varEnv, exnEnv=exnEnv, aliasEnv=aliasEnv},
          fn {varEnv, exnEnv, aliasEnv} =>
             (varEnv, exnEnv, aliasEnv))
-        (Pickle.tuple3 (VarEnvPickler.map (ExternalVarID.pu_ID, Pickle.string),
+        (Pickle.tuple3 (VarEnvPickler.map (ExVarID.pu_ID, Pickle.string),
                         ExnEnvPickler.map (ExnTagID.pu_ID, Pickle.string),
                         EnvPickler.SEnv Pickle.string))
   end (* local *)
@@ -130,10 +130,10 @@ struct
             raise Control.Bug "reverseExternalVarIDBasis"
           | (k, VarIDContext.Dummy, z) => z
           | (k, VarIDContext.External i, z) =>
-            case ExternalVarID.Map.find (z, i) of
-              SOME v => ExternalVarID.Map.insert (z, i, SSet.add (v, k))
-            | NONE => ExternalVarID.Map.insert (z, i, SSet.singleton k))
-        ExternalVarID.Map.empty
+            case ExVarID.Map.find (z, i) of
+              SOME v => ExVarID.Map.insert (z, i, SSet.add (v, k))
+            | NONE => ExVarID.Map.insert (z, i, SSet.singleton k))
+        ExVarID.Map.empty
         topVarIDEnv
 
   (* Extract definitions of global exceptions defined in the
@@ -181,11 +181,11 @@ struct
 
   type context =
       {
-        varEnv: AN.globalSymbolName ExternalVarID.Map.map,
+        varEnv: AN.globalSymbolName ExVarID.Map.map,
         exnEnv: AN.globalSymbolName ExnTagID.Map.map,
-        exportVars: SSet.set ExternalVarID.Map.map,
+        exportVars: SSet.set ExVarID.Map.map,
         exportExns: SSet.set ExnTagID.Map.map,
-        newVarEnv: string ExternalVarID.Map.map,
+        newVarEnv: string ExVarID.Map.map,
         newExnEnv: string ExnTagID.Map.map,
         compileUnitCount: int option,
         decls: AN.topdecl list list
@@ -233,7 +233,7 @@ struct
 
   (* we assume that ID.toString makes an unique string. *)
   fun localVarSymbol count displayName vid =
-      varSymbol count ("_" ^ displayName ^ "." ^ ExternalVarID.toString vid)
+      varSymbol count ("_" ^ displayName ^ "." ^ ExVarID.toString vid)
 
   fun localExnSymbol count displayName tag =
       exnSymbol count ("_" ^ displayName ^ "." ^ ExnTagID.toString tag)
@@ -317,12 +317,12 @@ struct
         end
 
   fun recoverGlobalVarDecl (context:context) displayName vid ty =
-      case ExternalVarID.Map.find (#varEnv context, vid) of
+      case ExVarID.Map.find (#varEnv context, vid) of
         SOME gname => (context, gname)
       | NONE =>
         let
           val syms =
-              case ExternalVarID.Map.find (#exportVars context, vid) of
+              case ExVarID.Map.find (#exportVars context, vid) of
                 SOME syms => SSet.listItems syms
               | NONE =>
                 (* this variable is defined in current compilation unit
@@ -336,11 +336,11 @@ struct
           val gname = (sym, AN.GLOBALSYMBOL)
         in
           ({
-             varEnv = ExternalVarID.Map.insert (#varEnv context, vid, gname),
+             varEnv = ExVarID.Map.insert (#varEnv context, vid, gname),
              exnEnv = #exnEnv context,
              exportVars = #exportVars context,
              exportExns = #exportExns context,
-             newVarEnv = ExternalVarID.Map.insert (#newVarEnv context,vid,sym),
+             newVarEnv = ExVarID.Map.insert (#newVarEnv context,vid,sym),
              newExnEnv = #newExnEnv context,
              compileUnitCount = #compileUnitCount context,
              decls = decls :: #decls context
@@ -954,11 +954,11 @@ struct
         val exportExnNames = extractExceptionDefinitions newContext
 
         val varEnv =
-            ExternalVarID.Map.map (fn x => (x, AN.EXTERNSYMBOL)) varEnv
+            ExVarID.Map.map (fn x => (x, AN.EXTERNSYMBOL)) varEnv
         val exnEnv =
             ExnTagID.Map.map (fn x => (x, AN.EXTERNSYMBOL)) exnEnv
         val exportVars =
-            ExternalVarID.Map.map (SSet.map (varSymbol compileUnitCount))
+            ExVarID.Map.map (SSet.map (varSymbol compileUnitCount))
                                   exportVarNames
         val exportExns =
             ExnTagID.Map.map (SSet.map (exnSymbol compileUnitCount))
@@ -967,9 +967,9 @@ struct
 (*
         val _ =
             (print "varEnv:\n";
-             ExternalVarID.Map.appi
+             ExVarID.Map.appi
                (fn (k,(v,_)) =>
-                   print (ExternalVarID.toString k ^ " : " ^ v ^ "\n"))
+                   print (ExVarID.toString k ^ " : " ^ v ^ "\n"))
                varEnv)
         val _ =
             (print "exnEnv:\n";
@@ -984,8 +984,8 @@ struct
                aliasEnv)
         val _ =
             (print "exportVars:\n";
-             ExternalVarID.Map.appi
-               (fn (k,v) => (print (ExternalVarID.toString k ^ " : ");
+             ExVarID.Map.appi
+               (fn (k,v) => (print (ExVarID.toString k ^ " : ");
                              SSet.app (fn x => print (x^", ")) v;
                              print "\n"))
                exportVars)
@@ -1004,7 +1004,7 @@ struct
               exnEnv = exnEnv,
               exportVars = exportVars,
               exportExns = exportExns,
-              newVarEnv = ExternalVarID.Map.empty,
+              newVarEnv = ExVarID.Map.empty,
               newExnEnv = ExnTagID.Map.empty,
               compileUnitCount = compileUnitCount,
               decls = nil
@@ -1019,12 +1019,12 @@ struct
                        aliasSyms
 
         val aliasEnv =
-            ExternalVarID.Map.foldli
+            ExVarID.Map.foldli
               (fn (vid, syms, aliasEnv) =>
-                  case ExternalVarID.Map.find (#newVarEnv context, vid) of
+                  case ExVarID.Map.find (#newVarEnv context, vid) of
                     SOME _ => aliasEnv
                   | NONE =>
-                    case ExternalVarID.Map.find (#varEnv context, vid) of
+                    case ExVarID.Map.find (#varEnv context, vid) of
                       SOME (sym, _) => addAliases (aliasEnv, sym, syms)
                     | NONE => raise Control.Bug "recover: orphan global var")
               SEnv.empty
@@ -1056,9 +1056,9 @@ struct
 (*
         val _ =
             (print "newVarEnv:\n";
-             ExternalVarID.Map.appi
+             ExVarID.Map.appi
                (fn (k,v) =>
-                   print (ExternalVarID.toString k ^ " : " ^ v ^ "\n"))
+                   print (ExVarID.toString k ^ " : " ^ v ^ "\n"))
                newVarEnv)
         val _ =
             (print "newExnEnv:\n";

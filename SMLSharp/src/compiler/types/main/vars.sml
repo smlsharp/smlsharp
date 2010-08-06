@@ -84,7 +84,7 @@ struct
           (Types.INTERNAL id1, Types.INTERNAL id2) => VarID.compare(id1, id2)
         | (Types.INTERNAL _, Types.EXTERNAL _) => LESS
         | (Types.EXTERNAL _, Types.INTERNAL _) => GREATER
-        | (Types.EXTERNAL index1, Types.EXTERNAL index2) => ExternalVarID.compare (index1, index2)
+        | (Types.EXTERNAL index1, Types.EXTERNAL index2) => ExVarID.compare (index1, index2)
 
   type ord_key = Types.varId
 end

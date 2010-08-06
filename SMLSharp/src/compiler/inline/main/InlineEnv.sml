@@ -30,8 +30,8 @@ datatype globalInlineInfo = GFN of MV.mvexp * string (* for MVFNM in global env.
 			   *)
 			  | GSIMPLE of MV.mvexp * string
 
-datatype globalInlineEnv = GIE of globalInlineInfo ExternalVarID.Map.map
-val initialInlineEnv = GIE ExternalVarID.Map.empty
+datatype globalInlineEnv = GIE of globalInlineInfo ExVarID.Map.map
+val initialInlineEnv = GIE ExVarID.Map.empty
 
 fun printInlineInfo inlineInfo =
     case inlineInfo of
@@ -89,8 +89,8 @@ fun printGlobalInlineInfo globalInlineInfo =
 )
 
 fun printGlobalInlineEnv (GIE aimap) =
-    ExternalVarID.Map.appi (fn (key,globalInlineInfo) => 
-		    (print (Control.prettyPrint (ExternalVarID.format_id key));
+    ExVarID.Map.appi (fn (key,globalInlineInfo) => 
+		    (print (Control.prettyPrint (ExVarID.format_id key));
 		     print " ";
 		     printGlobalInlineInfo globalInlineInfo;
 		     print "\n")

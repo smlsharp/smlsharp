@@ -135,18 +135,18 @@ signature TYPEDFLATCALC = sig
    | TFPEXNBINDDEF of Types.exnInfo list
    | TFPFUNCTORDEC of {name : string, 
                        formalAbstractTypeIDSet : TyConID.Set.set, 
-                       formalVarIDSet : ExternalVarID.Set.set,
+                       formalVarIDSet : ExVarID.Set.set,
                        formalExnIDSet : ExnTagID.Set.set,
-                       generativeVarIDSet : ExternalVarID.Set.set,
+                       generativeVarIDSet : ExVarID.Set.set,
                        generativeExnIDSet : ExnTagID.Set.set,
                        bodyCode : tfpdecl list}
    | TFPLINKFUNCTORDEC of {name : string, 
                            actualArgName : string,
                            typeResolutionTable : Types.tyBindInfo TyConID.Map.map,
                            exnTagResolutionTable : ExnTagID.id ExnTagID.Map.map,
-                           externalVarIDResolutionTable : ExternalVarID.id ExternalVarID.Map.map,
+                           externalVarIDResolutionTable : ExVarID.id ExVarID.Map.map,
                            refreshedExceptionTagTable : ExnTagID.id ExnTagID.Map.map,
-                           refreshedExternalVarIDTable : ExternalVarID.id ExternalVarID.Map.map,
+                           refreshedExternalVarIDTable : ExVarID.id ExVarID.Map.map,
                            loc : loc}
 
  datatype basicBlock =
@@ -156,9 +156,9 @@ signature TYPEDFLATCALC = sig
  datatype topBlock = 
           TFPFUNCTORBLOCK of {name : string, 
                               formalAbstractTypeIDSet : TyConID.Set.set, 
-                              formalVarIDSet : ExternalVarID.Set.set,
+                              formalVarIDSet : ExVarID.Set.set,
                               formalExnIDSet : ExnTagID.Set.set,
-                              generativeVarIDSet : ExternalVarID.Set.set,
+                              generativeVarIDSet : ExVarID.Set.set,
                               generativeExnIDSet : ExnTagID.Set.set,
                               bodyCode : basicBlock list}      
         | TFPBASICBLOCK of basicBlock

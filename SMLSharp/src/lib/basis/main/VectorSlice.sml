@@ -101,11 +101,10 @@ struct
       foldli (fn (_, element, accum) => foldFun(element, accum)) initial slice
   fun foldr foldFun initial slice = 
       foldri (fn (_, element, accum) => foldFun (element, accum)) initial slice
-  fun mapi mapFun slice =
-      V.fromList
-          (List.rev
-               (foldli
-                    (fn (index, a, l) => (mapFun (index, a) :: l)) [] slice))
+
+  fun mapi mapFun (vector, start, length) =
+      V.tabulate
+          (length, fn index => mapFun (index, V.sub (vector, start + index)))
   fun map mapFun slice = mapi (fn (_, element) => mapFun element) slice
   fun appi appFun slice =
       foldli (fn (index, a, _) => (appFun (index, a))) () slice

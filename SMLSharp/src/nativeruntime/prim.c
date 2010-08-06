@@ -124,6 +124,22 @@ float copysignf(float x, float y)
 }
 #endif /* HAVE_COPYSIGNF */
 
+#ifndef HAVE_NEXTAFTER
+double nextafter(double x, double y)
+{
+	/* ToDo: stub */
+	sml_fatal(0, "nextafter is not implemented");
+}
+#endif /* HAVE_NEXTAFTER */
+
+#ifndef HAVE_NEXTAFTERF
+float nextafter(float x, float y)
+{
+	/* ToDo: stub */
+	sml_fatal(0, "nextafterf is not implemented");
+}
+#endif /* HAVE_NEXTAFTERF */
+
 #if HAVE_DECL_FPCLASSIFY
 #define HAVE_FPCLASSIFY 1
 #endif

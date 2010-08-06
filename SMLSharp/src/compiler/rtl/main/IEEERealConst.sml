@@ -92,7 +92,7 @@ struct
       | SOME {kind=IEEEReal.INF, sign, ...} =>
         SOME {man = 0, exp = expInf, sign = sign}
       | SOME {kind=IEEEReal.ZERO, sign, ...} =>
-        SOME  {man = 0, exp = 0w0, sign = false}
+        SOME  {man = 0, exp = 0w0, sign = sign}
       | SOME {kind, sign, digits, exp} =>
         let
           val float =

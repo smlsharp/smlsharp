@@ -10,8 +10,8 @@ sig
   (* for YASIGenerator *)
   type globalIndexAllocator =
       {
-        find: ExternalVarID.id -> AbstractInstruction.globalIndex option,
-        alloc: ExternalVarID.id * ANormal.ty -> unit
+        find: ExVarID.id -> AbstractInstruction.globalIndex option,
+        alloc: ExVarID.id * ANormal.ty -> unit
       }
 
   val generate

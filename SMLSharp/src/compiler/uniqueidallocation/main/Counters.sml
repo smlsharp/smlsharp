@@ -6,11 +6,11 @@
 structure Counters : 
           sig
               val newLocalID : unit -> VarID.id
-              val newExternalID : unit -> ExternalVarID.id
+              val newExternalID : unit -> ExVarID.id
           end
   =
 struct
    fun newLocalID () = VarID.generate ()
    fun newExternalID () = 
-        ExternalVarID.generate ()
+        ExVarID.generate ()
 end

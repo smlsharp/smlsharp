@@ -80,7 +80,7 @@ struct
 
   val op ^ = op ^ (* ^ is a primitive operator. *)
 
-  val str = Char.toString
+  fun str ch = SMLSharp.PrimString.vector (1, ch)
 
   fun implode chars =
       let
@@ -236,11 +236,16 @@ struct
    * or a non-printable (= non-ASCII) character.
    * If the argument is zero-length, SOME("") is returned.
    *)
+  fun scan reader stream =
+      case PC.wrap(PC.oneOrMore Char.scan, implode) reader stream
+       of NONE =>
+          if Option.isSome (reader stream)
+          then NONE
+          else SOME("", stream)
+        | x => x
+
   fun fromString "" = SOME ""
-    | fromString string =
-      StringCvt.scanString
-          (PC.wrap(PC.oneOrMore Char.scan, fn chars => implode chars))
-          string
+    | fromString string = StringCvt.scanString scan string
   end  
   fun toString string = translate Char.toString string
 

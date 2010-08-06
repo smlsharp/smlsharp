@@ -153,7 +153,7 @@ struct
            TyConID.pu_ID,
            ExnTagID.pu_ID,
            BoundTypeVarID.pu_ID,
-           ExternalVarID.pu_ID,
+           ExVarID.pu_ID,
 	   InlinePickler.globalInlineEnv,
            FunctorLinker.pu_functorEnv
           )
@@ -192,7 +192,7 @@ struct
              TyConID.terminate(),
              ExnTagID.terminate(),
              BoundTypeVarID.terminate(),
-             ExternalVarID.terminate(),
+             ExVarID.terminate(),
 	     (#inlineEnv context),
              (*
               * when functor is compiled into instructions, we 
@@ -236,7 +236,7 @@ struct
                ExnTagID.resume exnTagIDKeyStamp;
                BoundTypeVarID.resume boundTypeVarIDStamp;
                ClusterID.resume clusterIDKeyStamp;
-               ExternalVarID.resume externalVarIDKeyStamp
+               ExVarID.resume externalVarIDKeyStamp
               )
               handle exn => raise exn
         in
@@ -660,7 +660,7 @@ val currentSourceFilename = ref ""
                 Control.Bug
                   "expect flattenedNamePathEnv for uniqueIdAllocation"
             | SOME x => x
-        val _ = ExternalVarID.start()
+        val _ = ExVarID.start()
         val _ = #start UniqueIdAllocationCounter ()
         val (deltaBasis, tpflatdecs) =
             UniqueIDAllocation.allocateID
@@ -668,11 +668,11 @@ val currentSourceFilename = ref ""
               (#2 flattenedNamePathEnv)
               tpdecs
         handle exn =>
-               (ExternalVarID.stop();
+               (ExVarID.stop();
                 raise exn
                )
         val _ = #stop UniqueIdAllocationCounter ()
-        val _ = ExternalVarID.stop()
+        val _ = ExVarID.stop()
         val newLocalContext = 
             TB.setLocalContextNewExternalVarIDBasisOpt
               (#localContext basis) deltaBasis

@@ -483,8 +483,12 @@ struct
         | DOWN32TO8 (s, dst, op1) => emitMove8 env (dst, op1)
         | DOWN32TO16 (s, dst, op1) => emitMove16 env (dst, op1)
         | ADD (Int32 _, dst, op1, op2) => [ADDL (arith2 (dst, op1, op2))]
+        | ADD (Int16 _, dst, op1, op2) => [ADDW (to16 (arith2 (dst, op1, op2)))]
+        | ADD (Int8 _, dst, op1, op2) => [ADDB (to8 (arith2 (dst, op1, op2)))]
         | ADD _ => raise Control.Bug "emitInsn: ADD"
         | SUB (Int32 _, dst, op1, op2) => [SUBL (arith2 (dst, op1, op2))]
+        | SUB (Int16 _, dst, op1, op2) => [SUBW (to16 (arith2 (dst, op1, op2)))]
+        | SUB (Int8 _, dst, op1, op2) => [SUBB (to8 (arith2 (dst, op1, op2)))]
         | SUB _ => raise Control.Bug "emitInsn: SUB"
         | AND (Int32 _, dst, op1, op2) => [ANDL (arith2 (dst, op1, op2))]
         | AND (Int16 _, dst, op1, op2) => [ANDW (to16 (arith2 (dst, op1, op2)))]

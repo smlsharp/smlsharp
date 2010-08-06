@@ -18,13 +18,13 @@
 #include "IllegalStateException.hh"
 #include "NoEnoughFrameStackException.hh"
 #include "NoEnoughHandlerStackException.hh"
-#include "Log.hh"
 #endif
 #include "RuntimeTypes.hh"
 #include "EmptyHandlerStackException.hh"
 #include "IllegalStateException.hh"
 #include "SystemError.hh"
 #include "Debug.hh"
+#include "Log.hh"
 
 #include <iterator>
 

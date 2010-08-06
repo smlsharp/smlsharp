@@ -11,8 +11,8 @@ struct
 
   structure A = SMLUnit.Assert
   structure T = SMLUnit.Test
-  structure AL = AssertLargeInt
-  structure AT = AssertTime
+  structure AL = SMLUnit.Assert.AssertLargeInt
+  structure AT = SMLUnit.Assert.AssertTime
   open A
   open AT
 
@@ -52,7 +52,7 @@ struct
         val sconds_m = AL.assertEqualInt ~123 (conv ~123)
 
         val seconds_fromReal =
-            AL.assertEqualInt 2 (T.toSeconds (T.fromReal 2.01))
+            AL.assertEqualInt 1 (T.toSeconds (T.fromReal 1.25))
       in
         ()
       end
@@ -69,7 +69,7 @@ struct
         val milliseconds_m3 = AL.assertEqualInt ~123456789 (conv ~123456789)
 
         val milliseconds_fromReal =
-            AL.assertEqualInt 2010 (T.toMilliseconds (T.fromReal 2.010000))
+            AL.assertEqualInt 1250 (T.toMilliseconds (T.fromReal 1.250000))
       in
         ()
       end
@@ -86,7 +86,7 @@ struct
         val microseconds_m3 = AL.assertEqualInt ~123456789 (conv ~123456789)
 
         val microseconds_fromReal =
-            AL.assertEqualInt 2010000 (T.toMicroseconds (T.fromReal 2.01))
+            AL.assertEqualInt 1250000 (T.toMicroseconds (T.fromReal 1.25))
       in
         ()
       end
@@ -103,7 +103,7 @@ struct
         val toNanoseconds_m3 = AL.assertEqualInt ~123456789 (conv ~123456789)
 
         val toNanoseconds_fromReal =
-            AL.assertEqualInt 2010000000 (T.toNanoseconds (T.fromReal 2.01))
+            AL.assertEqualInt 1250000000 (T.toNanoseconds (T.fromReal 1.25))
       in
         ()
       end
@@ -233,6 +233,9 @@ struct
         ()
       end
   end (* local *)
+  fun fmt1001 () =
+      (T.fmt ~1 T.zeroTime; fail "Size expected.")
+      handle General.Size => ()
         
   fun toString0001 () =
       let
@@ -312,6 +315,7 @@ struct
         ("binComp0001", binComp0001),
         ("now0001", now0001),
         ("fmt0001", fmt0001),
+        ("fmt1001", fmt1001),
         ("toString0001", toString0001),
         ("scan0001", scan0001),
         ("fromString0001", fromString0001)

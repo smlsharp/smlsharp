@@ -7,5 +7,6 @@
 structure LargeInt001 =
 SignedInteger001(struct
                    open LargeInt
-                   val assertEqualInt = AssertLargeInt.assertEqualInt
+                   val assertEqualInt =
+                       SMLUnit.Assert.AssertLargeInt.assertEqualInt
                  end);

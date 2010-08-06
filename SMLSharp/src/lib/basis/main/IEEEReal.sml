@@ -10,10 +10,8 @@ struct
 
   datatype real_order = LESS | EQUAL | GREATER | UNORDERED
 
-  datatype nan_mode = QUIET | SIGNALLING
-
   datatype float_class =
-           NAN of nan_mode
+           NAN
          | INF
          | ZERO
          | NORMAL
@@ -27,7 +25,7 @@ struct
 
   type decimal_approx =
        {
-         kind : float_class,
+         class : float_class,
          sign : bool,
          digits : int list,
          exp : int
@@ -51,18 +49,18 @@ struct
       | intsToString digits =
         implode (map (fn digit => Char.chr(Char.ord #"0" + digit)) digits)
   in
-  fun toString ({kind, sign, digits, exp} : decimal_approx) =
+  fun toString ({class, sign, digits, exp} : decimal_approx) =
       let
         val string = 
-            case kind of
+            case class of
               ZERO => "0.0"
             | NORMAL => "0." ^ intsToString digits
             | SUBNORMAL => "0." ^ intsToString digits
             | INF => "inf"
-            | NAN _ => "nan"
+            | NAN => "nan"
         val string = if sign then "~" ^ string else string
         val string =
-            if exp <> 0 andalso ((kind = NORMAL) orelse (kind = SUBNORMAL))
+            if exp <> 0 andalso ((class = NORMAL) orelse (class = SUBNORMAL))
             then string ^ "E" ^ (Int.toString exp)
             else string
       in
@@ -89,6 +87,16 @@ struct
         | _ => raise Fail "unexpected char in IEEEReal.charToNumbr."
 
     val isNumberChar = Char.isDigit
+
+    (* parse a character ignoring case. *)
+    fun char_ic ch =
+        PC.or(PC.char (Char.toLower ch), PC.char (Char.toUpper ch))
+    (* parse a string ignoring case. *)
+    fun string_ic string =
+        List.foldr
+            (PC.seqWith (op ::))
+            (PC.result [])
+            (List.map char_ic (String.explode string))
 
     (* (+|-|~)? *)
     fun scanSign reader stream = 
@@ -160,7 +168,7 @@ struct
           (suffixZeros, reversedPrefix) =>
           (List.rev reversedPrefix, suffixZeros)
   in
-  fun 'a scan (reader : (char, 'a) SC.reader) stream =
+  fun scan reader stream =
       let
         fun buildDecimal
                 (sign, ((integers, fractionals), (expSign, expDigits))) =
@@ -170,27 +178,28 @@ struct
               val scannedExp =
                   (if expSign then ~1 else 1) * (accumIntList expDigits)
 
-              val (kind, digits, exp) =
+              val (class, digits, exp) =
                   case (integers, fractionals) of
                     ([], []) => (ZERO, [], 0)
                   | ([], _) =>
                     let
-                      val kind = NORMAL
+                      val class = NORMAL
                       val (prefixZeros, digits) =
                           partitionPrefixZeros fractionals
                       val exp = scannedExp - (List.length prefixZeros)
-                    in (kind, digits, exp)
+                    in (class, digits, exp)
                     end
                   | (_ :: _, _) =>
                     let
-                      val kind = NORMAL
-                      val digits = integers @ fractionals
+                      val class = NORMAL
+                      val (digits, _) =
+                          partitionSuffixZeros (integers @ fractionals)
                       val exp = scannedExp + (List.length integers)
-                    in (kind, digits, exp)
+                    in (class, digits, exp)
                     end
 
             in
-              {kind = kind, sign = sign, digits = digits, exp = exp}
+              {class = class, sign = sign, digits = digits, exp = exp}
               : decimal_approx
             end
         fun scanNormal reader stream =
@@ -213,13 +222,13 @@ struct
                         scanSign, 
                         PC.or'
                             [
-                              PC.wrap (PC.string "inf", fn _ => INF),
-                              PC.wrap (PC.string "infinity", fn _ => INF),
-                              PC.wrap (PC.string "nan", fn _ => NAN QUIET)
+                              PC.wrap (string_ic "infinity", fn _ => INF),
+                              PC.wrap (string_ic "inf", fn _ => INF),
+                              PC.wrap (string_ic "nan", fn _ => NAN)
                             ]
                       ),
-                  fn (sign, kind) => 
-                     {kind = kind, sign = sign, digits = [], exp = 0}
+                  fn (sign, class) => 
+                     {class = class, sign = sign, digits = [], exp = 0}
                      : decimal_approx
                 )
                 reader

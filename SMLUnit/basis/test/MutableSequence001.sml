@@ -51,6 +51,9 @@ struct
       let
         val array_m1i =
             (A.array (~1, n1); fail "array(~1)") handle General.Size => ()
+        val array_maxLenPlus1 =
+            (A.array (A.maxLen + 1, n1); fail "array(maxLen+1)")
+            handle General.Size => ()
       in
         ()
       end

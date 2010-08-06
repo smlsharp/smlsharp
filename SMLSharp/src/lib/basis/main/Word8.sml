@@ -15,11 +15,14 @@ struct
   fun Word8_toWord (byte : byte) = _cast (byte) : Word.word
   fun Word8_fromWord (word : Word.word) = _cast (Word.andb(word, 0wxFF)) : byte
 *)
-  fun Word8_toWord x = Word.fromInt (toIntX x)
+  (* ToDo : We should have toInt and toIntX both. *)
+  fun Word8_toWord x = 
+      Word.fromInt (let val n = toIntX x in if n < 0 then n + 256 else n end)
+  val Word8_toWordX = Word.fromInt o toIntX
   fun Word8_fromWord x = fromInt (Word.toIntX x)
 
   val toLarge = Word.toLargeWord o Word8_toWord
-  val toLargeX = Word.toLargeWordX o Word8_toWord
+  val toLargeX = Word.toLargeWordX o Word8_toWordX
   val fromLarge = Word8_fromWord o Word.fromLargeWord
 
   val toLargeWord = toLarge
@@ -27,12 +30,12 @@ struct
   val fromLargeWord = fromLarge
 
   val toLargeInt = Word.toLargeInt o Word8_toWord
-  val toLargeIntX = Word.toLargeIntX o Word8_toWord
+  val toLargeIntX = Word.toLargeIntX o Word8_toWordX
   val fromLargeInt = Word8_fromWord o Word.fromLargeInt
 
-  val toInt = Word.toInt o Word8_toWord
-  val toIntX = Word.toIntX o Word8_toWord
-  val fromInt = Word8_fromWord o Word.fromInt
+  fun toInt x = let val n = toIntX x in if n < 0 then 256 + n else n end
+  val toIntX = toIntX
+  val fromInt = fromInt
 
   fun cast1_1 f word1 = Word8_fromWord(f (Word8_toWord word1));
   fun cast2 f (word1, word2) = f (Word8_toWord word1, Word8_toWord word2);
@@ -53,7 +56,7 @@ struct
 
   val >> = cast10_1 Word.>>
 
-  val ~>> = cast10_1 Word.~>>
+  val ~>> = fn (b, w) => Word8_fromWord (Word.~>> (Word8_toWordX b, w))
 
   val ~ = fn word => fromInt(Int.~(toInt word))
 
@@ -87,7 +90,10 @@ struct
       fn stream =>
          case wordReader stream of
            NONE => NONE
-         | SOME(word, stream') => SOME(Word8_fromWord word, stream')
+         | SOME(word, stream') =>
+           if Word.< (0wxFF, word)
+           then raise Overflow
+           else SOME(Word8_fromWord word, stream')
   fun scan radix charReader = castReader(Word.scan radix charReader)
 
   (***************************************************************************)

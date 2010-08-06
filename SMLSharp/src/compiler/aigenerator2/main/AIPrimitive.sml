@@ -56,6 +56,9 @@ structure AIPrimitive : sig
          loc: AbstractInstruction2.loc}
         -> AbstractInstruction2.instruction list
 
+  val needDivZeroCheck
+      : BuiltinPrimitive.primitive -> AbstractInstruction2.ty option
+
 end =
 struct
   structure AbstractInstruction = AbstractInstruction2
@@ -596,6 +599,134 @@ struct
 
       (* old primitive; never appear for native backend *)
       | P.RuntimePrim _ => raise Control.Bug "RuntimePrim"
+
+  fun needDivZeroCheck prim =
+      case prim of
+        P.PolyEqual => NONE
+      | P.Int_add P.NoOverflowCheck => NONE
+      | P.Int_add P.OverflowCheck => NONE
+      | P.Real_add => NONE
+      | P.Float_add => NONE
+      | P.Word_add => NONE
+      | P.Byte_add => NONE
+      | P.Int_sub P.NoOverflowCheck => NONE
+      | P.Int_sub P.OverflowCheck => NONE
+      | P.Real_sub => NONE
+      | P.Float_sub => NONE
+      | P.Word_sub => NONE
+      | P.Byte_sub => NONE
+      | P.Int_mul P.NoOverflowCheck => NONE
+      | P.Int_mul P.OverflowCheck => NONE
+      | P.Real_mul => NONE
+      | P.Float_mul => NONE
+      | P.Word_mul => NONE
+      | P.Byte_mul => NONE
+      | P.Int_div P.NoOverflowCheck => SOME I.SINT
+      | P.Int_div P.OverflowCheck => SOME I.SINT
+      | P.Word_div => SOME I.UINT
+      | P.Byte_div => SOME I.BYTE
+      | P.Real_div => NONE
+      | P.Float_div => NONE
+      | P.Int_mod P.NoOverflowCheck => SOME I.SINT
+      | P.Int_mod P.OverflowCheck => SOME I.SINT
+      | P.Word_mod => SOME I.UINT
+      | P.Byte_mod => SOME I.BYTE
+      | P.Int_quot P.NoOverflowCheck => SOME I.SINT
+      | P.Int_quot P.OverflowCheck => SOME I.SINT
+      | P.Int_rem P.NoOverflowCheck => SOME I.SINT
+      | P.Int_rem P.OverflowCheck => SOME I.SINT
+      | P.Int_neg P.NoOverflowCheck => NONE
+      | P.Int_neg P.OverflowCheck => NONE
+      | P.Real_neg => NONE
+      | P.Float_neg => NONE
+      | P.Int_abs P.NoOverflowCheck => NONE
+      | P.Int_abs P.OverflowCheck => NONE
+      | P.Real_abs => NONE
+      | P.Float_abs => NONE
+      | P.Int_lt => NONE
+      | P.Real_lt => NONE
+      | P.Float_lt => NONE
+      | P.Word_lt => NONE
+      | P.Byte_lt => NONE
+      | P.Char_lt => NONE
+      | P.Int_gt => NONE
+      | P.Real_gt => NONE
+      | P.Float_gt => NONE
+      | P.Word_gt => NONE
+      | P.Byte_gt => NONE
+      | P.Char_gt => NONE
+      | P.Int_lteq => NONE
+      | P.Real_lteq => NONE
+      | P.Float_lteq => NONE
+      | P.Word_lteq => NONE
+      | P.Byte_lteq => NONE
+      | P.Char_lteq => NONE
+      | P.Int_gteq => NONE
+      | P.Real_gteq => NONE
+      | P.Float_gteq => NONE
+      | P.Word_gteq => NONE
+      | P.Byte_gteq => NONE
+      | P.Char_gteq => NONE
+      | P.Byte_toIntX => NONE
+      | P.Byte_fromInt => NONE
+      | P.Word_toIntX => NONE
+      | P.Word_fromInt => NONE
+      | P.Word_andb => NONE
+      | P.Word_orb => NONE
+      | P.Word_xorb => NONE
+      | P.Word_notb => NONE
+      | P.Word_lshift => NONE
+      | P.Word_rshift => NONE
+      | P.Word_arshift => NONE
+      | P.Real_fromInt => NONE
+      | P.Real_equal => NONE
+      | P.Float_equal => NONE
+      | P.Float_fromInt => NONE
+      | P.Float_fromReal => NONE
+      | P.Float_toReal => NONE
+      | P.Float_trunc_unsafe P.NoOverflowCheck => NONE
+      | P.Real_trunc_unsafe P.NoOverflowCheck => NONE
+      | P.Float_trunc_unsafe P.OverflowCheck => NONE
+      | P.Real_trunc_unsafe P.OverflowCheck => NONE
+      | P.Char_ord => NONE
+      | P.Char_chr_unsafe => NONE
+      | P.Array_length => NONE
+      | P.ObjectEqual => NONE
+      | P.PointerEqual => NONE
+      | P.Byte_equal => NONE
+      | P.Char_equal => NONE
+      | P.Int_equal => NONE
+      | P.Word_equal => NONE
+      | P.String_array => NONE
+      | P.String_vector => NONE
+      | P.String_copy_unsafe => NONE
+      | P.String_equal => NONE
+      | P.String_gt => NONE
+      | P.String_gteq => NONE
+      | P.String_lt => NONE
+      | P.String_lteq => NONE
+      | P.String_size => NONE
+      | P.String_sub_unsafe => NONE
+      | P.String_update_unsafe => NONE
+      | P.IntInf_abs => NONE
+      | P.IntInf_add => NONE
+      | P.IntInf_div => NONE
+      | P.IntInf_equal => NONE
+      | P.IntInf_gt => NONE
+      | P.IntInf_gteq => NONE
+      | P.IntInf_lt => NONE
+      | P.IntInf_lteq => NONE
+      | P.IntInf_mod => NONE
+      | P.IntInf_mul => NONE
+      | P.IntInf_neg => NONE
+      | P.IntInf_sub => NONE
+      | P.Ptr_deref_int => NONE
+      | P.Ptr_deref_real => NONE
+      | P.Ptr_deref_float => NONE
+      | P.Ptr_deref_word => NONE
+      | P.Ptr_deref_char => NONE
+      | P.Ptr_deref_byte => NONE
+      | P.RuntimePrim _ => NONE
 
   fun transform {prim,
                  dstVarList, dstTyList, argList, argTyList,

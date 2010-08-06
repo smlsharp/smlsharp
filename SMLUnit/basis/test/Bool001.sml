@@ -42,8 +42,8 @@ struct
         val fromString_true = test "true" (SOME true)
         val fromString_false = test "false" (SOME false)
         val fromString_space_true = test " \t\ntrue" (SOME true)
-        val fromString_TRUE = test "TRUE" (SOME true)
-        val fromString_FALSE = test "FALSE" (SOME false)
+        val fromString_TruE = test "TruE" (SOME true)
+        val fromString_FalsE = test "FalsE" (SOME false)
         val fromString_true_trailer = test "truefalse" (SOME true)
       in () end
   end (* local *)
@@ -61,8 +61,8 @@ struct
         val scan_true = test "true" (SOME(true, []))
         val scan_false = test "false" (SOME(false, []))
         val scan_space_true = test " \t\ntrue" (SOME(true, []))
-        val scan_TRUE = test "TRUE" (SOME(true, []))
-        val scan_FALSE = test "FALSE" (SOME(false, []))
+        val scan_TRUE = test "TruE" (SOME(true, []))
+        val scan_FALSE = test "FalsE" (SOME(false, []))
         val scan_true_trailer = test "truefalse" (SOME(true, explode "false"))
       in () end
   end (* local *)

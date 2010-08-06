@@ -31,9 +31,9 @@ in
        {
         typeResolutionTable : AnnotatedTypes.tyBindInfo TyConID.Map.map,
         exnTagResolutionTable : ExnTagID.id ExnTagID.Map.map,
-        externalVarIDResolutionTable : ExternalVarID.id ExternalVarID.Map.map,
+        externalVarIDResolutionTable : ExVarID.id ExVarID.Map.map,
         refreshedExceptionTagTable : ExnTagID.id ExnTagID.Map.map,
-        refreshedExternalVarIDTable : ExternalVarID.id ExternalVarID.Map.map,
+        refreshedExternalVarIDTable : ExVarID.id ExVarID.Map.map,
         templateRenamingVarBasis : VIC.templateVarRenamingBasis
        }
 
@@ -153,11 +153,11 @@ in
       end
 
   fun linkTemplateIndex (linkContext:linkContext) index =
-      case ExternalVarID.Map.find(#externalVarIDResolutionTable linkContext,
+      case ExVarID.Map.find(#externalVarIDResolutionTable linkContext,
                                   index) of
           SOME newIndex => newIndex
         | NONE => 
-          case ExternalVarID.Map.find
+          case ExVarID.Map.find
                  (#refreshedExternalVarIDTable linkContext, index) of
               SOME newIndex => newIndex
             | NONE => index

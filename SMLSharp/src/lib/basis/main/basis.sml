@@ -144,9 +144,14 @@ use "./LIST_PAIR.sig";
 use "./ListPair.sml";
 structure ListPair = ListPair : LIST_PAIR;
 
+(*
 use "./SubstringBase.sml";
+*)
 use "./SUBSTRING.sig";
+(*
 use "./Substring.sml";
+*)
+use "./SubstringDefun.sml";
 
 use "./STRING_CVT.sig";
 use "./StringCvt.sml";
@@ -156,6 +161,13 @@ use "./PARSER_COMB.sig";
 use "./ParserComb.sml";
 
 use "./Int.sml";
+use "./IntInf.sml";
+structure IntInf = struct open IntInf
+fun '_format_int' arg =
+    let val string = toString arg
+    in SMLSharp.SMLFormat.Term(size string, string) end;
+end;
+
 use "./Word.sml";
 
 (* Char is referred by String and STRING. *)
@@ -236,10 +248,17 @@ use "./MONO_ARRAY.sig";
 use "./MONO_VECTOR_SLICE.sig";
 use "./MONO_ARRAY_SLICE.sig";
 
+(*
 use "./MonoVectorBase.sml";
+*)
+use "./MonoVectorUtils.sml";
+(*
 use "./MonoArrayBase.sml";
+*)
+use "./MonoArrayUtils.sml";
 
 use "./MonoVectorSliceBase.sml";
+use "./MonoVectorSliceUtils.sml";
 use "./MonoArraySliceBase.sml";
 
 signature MONO_VECTOR_ARRAY =
@@ -264,9 +283,18 @@ end;
 
 (********************)
 
+(*
 use "./IntVector.sml";
+*)
+use "./IntVectorDefun.sml";
+(*
 use "./IntArray.sml";
+*)
+use "./IntArrayDefun.sml";
+(*
 use "./IntVectorSlice.sml";
+*)
+use "./IntVectorSliceDefun.sml";
 use "./IntArraySlice.sml";
 
 local
@@ -294,12 +322,6 @@ end;
 structure Int32 = Int;
 structure Word32 = Word;
 
-use "./IntInf.sml";
-structure IntInf = struct open IntInf
-fun '_format_int' arg =
-    let val string = toString arg
-    in SMLSharp.SMLFormat.Term(size string, string) end;
-end;
 structure LargeInt = IntInf;
 
 use "./INTEGER.sig";
@@ -332,15 +354,33 @@ structure SysWord = Word;
 
 use "./CharVector.sml";
 use "./CharArray.sml";
+(*
 use "./CharVectorSlice.sml";
+*)
+use "./CharVectorSliceDefun.sml";
 use "./CharArraySlice.sml";
 
 use "./Word8.sml";
-structure Word8 = Word8 :> WORD where type word = Word8.word;
+structure Word8 :> WORD where type word = Word8.word =
+struct open Word8
+fun '_format_word' (arg : word) =
+    let val string = "0wx" ^ (toString arg)
+    in SMLSharp.SMLFormat.Term(size string, string) end;
+end;
 
+
+(*
 use "./Word8Vector.sml";
-use "./Word8Array.sml";
+*)
+use "./Word8VectorDefun.sml";
+(*
+ use "./Word8Array.sml";
+*)
+use "./Word8ArrayDefun.sml";
+(*
 use "./Word8VectorSlice.sml";
+*)
+use "./Word8VectorSliceDefun.sml";
 use "./Word8ArraySlice.sml";
 
 local
@@ -434,9 +474,18 @@ structure Real32 = Real32 :> REAL where type real = Real32.real;
 
 (********************)
 
+(*
 use "./RealVector.sml";
+*)
+use "./RealVectorDefun.sml";
+(*
 use "./RealArray.sml";
+*)
+use "./RealArrayDefun.sml";
+(*
 use "./RealVectorSlice.sml";
+*)
+use "./RealVectorSliceDefun.sml";
 use "./RealArraySlice.sml";
 
 local
@@ -529,6 +578,9 @@ use "./CommandLine.sml";
 
 use "./DATE.sig";
 use "./Date.sml";
+(* NOTE: The runtime aborts if the definition of Date is constrained by DATE
+ * in Date.sml. This is a bug of compiler, maybe. *)
+structure Date = Date :> DATE;
 
 use "./TIMER.sig";
 use "./Timer.sml";

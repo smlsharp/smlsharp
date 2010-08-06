@@ -18,20 +18,24 @@ struct
   (************************************************************)
 
   local
-    fun test arg expected = assertEqualString expected (General.exnName arg)
+    fun test arg expected =
+        assertEqualAlternatives
+            assertEqualString expected (General.exnName arg)
   in
   fun exnName001 () =
       let
-        val nameBind = test General.Bind "Bind" 
-        val nameMatch = test General.Match "Match" 
-        val nameChr = test General.Chr "Chr" 
-        val nameDiv = test General.Div "Div" 
-        val nameDomain = test General.Domain "Domain" 
-        val nameFail = test (General.Fail "foo") "Fail" 
-        val nameOverflow = test General.Overflow "Overflow" 
-        val nameSize = test General.Size "Size" 
-        val nameSpan = test General.Span "Span" 
-        val nameSubscript = test General.Subscript "Subscript" 
+        (* exnName may return the name of any exception constructor aliasing
+         * the argument exception. *)
+        val nameBind = test General.Bind ["Bind", "General.Bind"]
+        val nameMatch = test General.Match ["Match", "General.Match"]
+        val nameChr = test General.Chr ["Chr", "General.Chr"]
+        val nameDiv = test General.Div ["Div", "General.Div"] 
+        val nameDomain = test General.Domain ["Domain", "General.Domain"] 
+        val nameFail = test (General.Fail "foo") ["Fail", "General.Fail"] 
+        val nameOverflow = test General.Overflow ["Overflow", "General.Overflow"] 
+        val nameSize = test General.Size ["Size", "General.Size"] 
+        val nameSpan = test General.Span ["Span", "General.Span"] 
+        val nameSubscript = test General.Subscript ["Subscript", "General.Subscript"] 
       in () end
   end (* local *)
 

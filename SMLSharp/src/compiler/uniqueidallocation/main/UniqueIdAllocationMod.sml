@@ -74,11 +74,11 @@ in
                                                    sigVarNamePath,
                                                    (VIC.External newExternalVarID)
                                                    ),
-                                     ExternalVarID.Set.add(varIDSet, newExternalVarID)
+                                     ExVarID.Set.add(varIDSet, newExternalVarID)
                                      )
                                 end
                               | (varNamePath, _ , result) => result)
-                            (NPEnv.empty, NPEnv.empty, ExternalVarID.Set.empty)
+                            (NPEnv.empty, NPEnv.empty, ExVarID.Set.empty)
                             varEnv
            val (strArgVarIDEnv, sigArgVarIDEnv, formalVarIDSet) = varEnvToVarIDEnv varEnv
            val newVarIDBasis = 
@@ -164,12 +164,12 @@ in
                val externalVarIDResolutionTable =
                    FAU.makeArgIDMap (argExternalVarIDEnv, externalizedActualArgVarIDEnv) loc
                val refreshedExternalVarIDTable =
-                   ExternalVarID.Set.foldr
+                   ExVarID.Set.foldr
                        (fn (generativeExternalVarID, refreshedExternalVarIDTable) => 
-                           ExternalVarID.Map.insert(refreshedExternalVarIDTable,
+                           ExVarID.Map.insert(refreshedExternalVarIDTable,
                                                     generativeExternalVarID,
                                                     Counters.newExternalID ()))
-                       ExternalVarID.Map.empty
+                       ExVarID.Map.empty
                        generativeExternalVarIDSet
 
                val newBodyVarIDEnv = 
