@@ -28,7 +28,7 @@ struct
     fun test zip input result =
         let
           val r = zip input
-          val _ = assertEqualInt2List result r
+          val () = assertEqualInt2List result r
         in
           ()
         end
@@ -38,14 +38,14 @@ struct
   in
   fun zip001 () =
       let
-        val zip00 = test ([], []) []
-        val zip01 = test ([], [1]) []
-        val zip10 = test ([1], []) []
-        val zip11 = test ([1], [7]) [(1, 7)]
-        val zip12 = test ([1], [7, 8]) [(1, 7)]
-        val zip21 = test ([1, 2], [7]) [(1, 7)]
-        val zip22 = test ([1, 2], [7, 8]) [(1, 7), (2, 8)]
-        val zip33 = test ([1, 2, 3], [7, 8, 9]) [(1, 7), (2, 8), (3, 9)]
+        val case00 as () = test ([], []) []
+        val case01 as () = test ([], [1]) []
+        val case10 as () = test ([1], []) []
+        val case11 as () = test ([1], [7]) [(1, 7)]
+        val case12 as () = test ([1], [7, 8]) [(1, 7)]
+        val case21 as () = test ([1, 2], [7]) [(1, 7)]
+        val case22 as () = test ([1, 2], [7, 8]) [(1, 7), (2, 8)]
+        val case33 as () = test ([1, 2, 3], [7, 8, 9]) [(1, 7), (2, 8), (3, 9)]
       in
         ()
       end
@@ -61,14 +61,14 @@ struct
   in
   fun zipEq001 () =
       let
-        val zipEq00 = test ([], []) []
-        val zipEq01 = testFail ([], [1])
-        val zipEq10 = testFail ([1], [])
-        val zipEq11 = test ([1], [7]) [(1, 7)]
-        val zipEq12 = testFail ([1], [7, 8])
-        val zipEq21 = testFail ([1, 2], [7])
-        val zipEq22 = test ([1, 2], [7, 8]) [(1, 7), (2, 8)]
-        val zipEq33 = test ([1, 2, 3], [7, 8, 9]) [(1, 7), (2, 8), (3, 9)]
+        val case00 as () = test ([], []) []
+        val case01 as () = testFail ([], [1])
+        val case10 as () = testFail ([1], [])
+        val case11 as () = test ([1], [7]) [(1, 7)]
+        val case12 as () = testFail ([1], [7, 8])
+        val case21 as () = testFail ([1, 2], [7])
+        val case22 as () = test ([1, 2], [7, 8]) [(1, 7), (2, 8)]
+        val case33 as () = test ([1, 2, 3], [7, 8, 9]) [(1, 7), (2, 8), (3, 9)]
       in
         ()
       end
@@ -82,16 +82,16 @@ struct
     fun test input result =
         let
           val r = ListPair.unzip input
-          val _ = assertEqualIntList2 result r
+          val () = assertEqualIntList2 result r
         in
           ()
         end
   in
   fun unzip001 () =
       let
-        val unzip0 = test [] ([], [])
-        val unzip1 = test [(1, 7)] ([1], [7])
-        val unzip2 = test [(1, 7), (2, 8)] ([1, 2], [7, 8])
+        val case0 as () = test [] ([], [])
+        val case1 as () = test [(1, 7)] ([1], [7])
+        val case2 as () = test [(1, 7), (2, 8)] ([1, 2], [7, 8])
       in
         ()
       end
@@ -111,7 +111,7 @@ struct
         let
           val (s, f) = makeState ()
           val () = app f input
-          val _ = assertEqualInt2List visited (!s)
+          val () = assertEqualInt2List visited (!s)
         in
           ()
         end
@@ -121,14 +121,14 @@ struct
   in
   fun app001 () =
       let
-        val app00 = test ([], []) []
-        val app01 = test ([], [7]) []
-        val app10 = test ([1], []) []
-        val app11 = test ([1], [7]) [(1, 7)]
-        val app12 = test ([1], [7, 8]) [(1, 7)]
-        val app21 = test ([1, 2], [7]) [(1, 7)]
-        val app22 = test ([1, 2], [7, 8]) [(1, 7), (2, 8)]
-        val app33 = test ([1, 2, 3], [7, 8, 9]) [(1, 7), (2, 8), (3, 9)]
+        val case00 as () = test ([], []) []
+        val case01 as () = test ([], [7]) []
+        val case10 as () = test ([1], []) []
+        val case11 as () = test ([1], [7]) [(1, 7)]
+        val case12 as () = test ([1], [7, 8]) [(1, 7)]
+        val case21 as () = test ([1, 2], [7]) [(1, 7)]
+        val case22 as () = test ([1, 2], [7, 8]) [(1, 7), (2, 8)]
+        val case33 as () = test ([1, 2, 3], [7, 8, 9]) [(1, 7), (2, 8), (3, 9)]
       in
         ()
       end
@@ -147,14 +147,14 @@ struct
   in
   fun appEq001 () =
       let
-        val appEq00 = test ([], []) []
-        val appEq01 = testFail ([], [7]) [] 
-        val appEq10 = testFail ([1], []) []
-        val appEq11 = test ([1], [7]) [(1, 7)]
-        val appEq12 = testFail ([1], [7, 8]) [(1, 7)]
-        val appEq21 = testFail ([1, 2], [7]) [(1, 7)]
-        val appEq22 = test ([1, 2], [7, 8]) [(1, 7), (2, 8)]
-        val appEq33 = test ([1, 2, 3], [7, 8, 9]) [(1, 7), (2, 8), (3, 9)]
+        val case00 as () = test ([], []) []
+        val case01 as () = testFail ([], [7]) [] 
+        val case10 as () = testFail ([1], []) []
+        val case11 as () = test ([1], [7]) [(1, 7)]
+        val case12 as () = testFail ([1], [7, 8]) [(1, 7)]
+        val case21 as () = testFail ([1, 2], [7]) [(1, 7)]
+        val case22 as () = test ([1, 2], [7, 8]) [(1, 7), (2, 8)]
+        val case33 as () = test ([1, 2, 3], [7, 8, 9]) [(1, 7), (2, 8), (3, 9)]
       in
         ()
       end
@@ -176,8 +176,8 @@ struct
         let
           val (s, f) = makeState ()
           val r = map f input
-          val _ = assertEqualIntList result r
-          val _ = assertEqualInt2List visited (!s)
+          val () = assertEqualIntList result r
+          val () = assertEqualInt2List visited (!s)
         in
           ()
         end
@@ -187,14 +187,14 @@ struct
   in
   fun map001 () =
       let
-        val map_00 = test ([], []) [] []
-        val map_01 = test ([], [7]) [] []
-        val map_10 = test ([1], []) [] []
-        val map_11 = test ([1], [7]) [17] [(1, 7)]
-        val map_12 = test ([1], [7, 8]) [17] [(1, 7)]
-        val map_21 = test ([1, 2], [7]) [17] [(1, 7)]
-        val map_22 = test ([1, 2], [7, 8]) [17, 28] [(1, 7), (2, 8)]
-        val map_33 = test ([1, 2, 3], [7, 8, 9]) [17, 28, 39] [(1, 7), (2, 8), (3, 9)]
+        val case_00 as () = test ([], []) [] []
+        val case_01 as () = test ([], [7]) [] []
+        val case_10 as () = test ([1], []) [] []
+        val case_11 as () = test ([1], [7]) [17] [(1, 7)]
+        val case_12 as () = test ([1], [7, 8]) [17] [(1, 7)]
+        val case_21 as () = test ([1, 2], [7]) [17] [(1, 7)]
+        val case_22 as () = test ([1, 2], [7, 8]) [17, 28] [(1, 7), (2, 8)]
+        val case_33 as () = test ([1, 2, 3], [7, 8, 9]) [17, 28, 39] [(1, 7), (2, 8), (3, 9)]
       in
         ()
       end
@@ -214,14 +214,14 @@ struct
   in
   fun mapEq001 () =
       let
-        val mapEq_00 = test ([], []) [] []
-        val mapEq_01 = testFail ([], [7]) []
-        val mapEq_10 = testFail ([1], []) []
-        val mapEq_11 = test ([1], [7]) [17] [(1, 7)]
-        val mapEq_12 = testFail ([1], [7, 8]) [(1, 7)]
-        val mapEq_21 = testFail ([1, 2], [7]) [(1, 7)]
-        val mapEq_22 = test ([1, 2], [7, 8]) [17, 28] [(1, 7), (2, 8)]
-        val mapEq_33 = test ([1, 2, 3], [7, 8, 9]) [17, 28, 39] [(1, 7), (2, 8), (3, 9)]
+        val case_00 as () = test ([], []) [] []
+        val case_01 as () = testFail ([], [7]) []
+        val case_10 as () = testFail ([1], []) []
+        val case_11 as () = test ([1], [7]) [17] [(1, 7)]
+        val case_12 as () = testFail ([1], [7, 8]) [(1, 7)]
+        val case_21 as () = testFail ([1, 2], [7]) [(1, 7)]
+        val case_22 as () = test ([1, 2], [7, 8]) [17, 28] [(1, 7), (2, 8)]
+        val case_33 as () = test ([1, 2, 3], [7, 8, 9]) [17, 28, 39] [(1, 7), (2, 8), (3, 9)]
       in
         ()
       end
@@ -243,8 +243,8 @@ struct
         let
           val (s, f) = makeState ()
           val r = fold f input1 input2
-          val _ = assertEqualIntList expected r
-          val _ = assertEqualInt2List visited (!s)
+          val () = assertEqualIntList expected r
+          val () = assertEqualInt2List visited (!s)
         in
           ()
         end
@@ -254,14 +254,14 @@ struct
   in
   fun foldl001 () =
       let
-        val foldl00 = test [] ([], []) [] []
-        val foldl01 = test [] ([], [7]) [] []
-        val foldl10 = test [] ([1], []) [] []
-        val foldl11 = test [] ([1], [7]) [1, 7] [(1, 7)]
-        val foldl12 = test [] ([1], [7, 8]) [1, 7] [(1, 7)]
-        val foldl21 = test [] ([1, 2], [7]) [1, 7] [(1, 7)]
-        val foldl22 = test [] ([1, 2], [7, 8]) [2, 8, 1, 7] [(1, 7), (2, 8)]
-        val foldl33 = test [] ([1, 2, 3], [7, 8, 9]) [3, 9, 2, 8, 1, 7] [(1, 7), (2, 8), (3, 9)]
+        val case00 as () = test [] ([], []) [] []
+        val case01 as () = test [] ([], [7]) [] []
+        val case10 as () = test [] ([1], []) [] []
+        val case11 as () = test [] ([1], [7]) [1, 7] [(1, 7)]
+        val case12 as () = test [] ([1], [7, 8]) [1, 7] [(1, 7)]
+        val case21 as () = test [] ([1, 2], [7]) [1, 7] [(1, 7)]
+        val case22 as () = test [] ([1, 2], [7, 8]) [2, 8, 1, 7] [(1, 7), (2, 8)]
+        val case33 as () = test [] ([1, 2, 3], [7, 8, 9]) [3, 9, 2, 8, 1, 7] [(1, 7), (2, 8), (3, 9)]
       in
         ()
       end
@@ -273,14 +273,14 @@ struct
   in
   fun foldr001 () =
       let
-        val foldr00 = test [] ([], []) [] []
-        val foldr01 = test [] ([], [7]) [] []
-        val foldr10 = test [] ([1], []) [] []
-        val foldr11 = test [] ([1], [7]) [1, 7] [(1, 7)]
-        val foldr12 = test [] ([1], [7, 8]) [1, 7] [(1, 7)]
-        val foldr21 = test [] ([1, 2], [7]) [1, 7] [(1, 7)]
-        val foldr22 = test [] ([1, 2], [7, 8]) [1, 7, 2, 8] [(2, 8), (1, 7)]
-        val foldr33 = test [] ([1, 2, 3], [7, 8, 9]) [1, 7, 2, 8, 3, 9] [(3, 9), (2, 8), (1, 7)]
+        val case00 as () = test [] ([], []) [] []
+        val case01 as () = test [] ([], [7]) [] []
+        val case10 as () = test [] ([1], []) [] []
+        val case11 as () = test [] ([1], [7]) [1, 7] [(1, 7)]
+        val case12 as () = test [] ([1], [7, 8]) [1, 7] [(1, 7)]
+        val case21 as () = test [] ([1, 2], [7]) [1, 7] [(1, 7)]
+        val case22 as () = test [] ([1, 2], [7, 8]) [1, 7, 2, 8] [(2, 8), (1, 7)]
+        val case33 as () = test [] ([1, 2, 3], [7, 8, 9]) [1, 7, 2, 8, 3, 9] [(3, 9), (2, 8), (1, 7)]
       in
         ()
       end
@@ -304,14 +304,14 @@ struct
   in
   fun foldlEq001 () =
       let
-        val foldlEq00 = test [] ([], []) [] []
-        val foldlEq01 = testFail [] ([], [7]) []
-        val foldlEq10 = testFail [] ([1], []) []
-        val foldlEq11 = test [] ([1], [7]) [1, 7] [(1, 7)]
-        val foldlEq12 = testFail [] ([1], [7, 8]) [(1, 7)]
-        val foldlEq21 = testFail [] ([1, 2], [7]) [(1, 7)]
-        val foldlEq22 = test [] ([1, 2], [7, 8]) [2, 8, 1, 7] [(1, 7), (2, 8)]
-        val foldlEq33 = test [] ([1, 2, 3], [7, 8, 9]) [3, 9, 2, 8, 1, 7] [(1, 7), (2, 8), (3, 9)]
+        val case00 as () = test [] ([], []) [] []
+        val case01 as () = testFail [] ([], [7]) []
+        val case10 as () = testFail [] ([1], []) []
+        val case11 as () = test [] ([1], [7]) [1, 7] [(1, 7)]
+        val case12 as () = testFail [] ([1], [7, 8]) [(1, 7)]
+        val case21 as () = testFail [] ([1, 2], [7]) [(1, 7)]
+        val case22 as () = test [] ([1, 2], [7, 8]) [2, 8, 1, 7] [(1, 7), (2, 8)]
+        val case33 as () = test [] ([1, 2, 3], [7, 8, 9]) [3, 9, 2, 8, 1, 7] [(1, 7), (2, 8), (3, 9)]
       in
         ()
       end
@@ -325,14 +325,14 @@ struct
   in
   fun foldrEq001 () =
       let
-        val foldrEq00 = test [] ([], []) [] []
-        val foldrEq01 = testFail [] ([], [7]) []
-        val foldrEq10 = testFail [] ([1], []) []
-        val foldrEq11 = test [] ([1], [7]) [1, 7] [(1, 7)]
-        val foldrEq12 = testFail [] ([1], [7, 8]) [(1, 7)]
-        val foldrEq21 = testFail [] ([1, 2], [7]) [(1, 7)]
-        val foldrEq22 = test [] ([1, 2], [7, 8]) [1, 7, 2, 8] [(2, 8), (1, 7)]
-        val foldrEq33 = test [] ([1, 2, 3], [7, 8, 9]) [1, 7, 2, 8, 3, 9] [(3, 9), (2, 8), (1, 7)]
+        val case00 as () = test [] ([], []) [] []
+        val case01 as () = testFail [] ([], [7]) []
+        val case10 as () = testFail [] ([1], []) []
+        val case11 as () = test [] ([1], [7]) [1, 7] [(1, 7)]
+        val case12 as () = testFail [] ([1], [7, 8]) [(1, 7)]
+        val case21 as () = testFail [] ([1, 2], [7]) [(1, 7)]
+        val case22 as () = test [] ([1, 2], [7, 8]) [1, 7, 2, 8] [(2, 8), (1, 7)]
+        val case33 as () = test [] ([1, 2, 3], [7, 8, 9]) [1, 7, 2, 8, 3, 9] [(3, 9), (2, 8), (1, 7)]
       in
         ()
       end
@@ -359,33 +359,33 @@ struct
         let
           val (s, f) = makeState ()
           val r = ListPair.exists f input
-          val _ = assertEqualBool expected r
-          val _ = assertEqualInt2List visited (!s)
+          val () = assertEqualBool expected r
+          val () = assertEqualInt2List visited (!s)
         in
           ()
         end
   in
   fun exists001 () =
       let
-        val exists00 = test ([], []) false []
-        val exists01__f = test ([], [7]) false []
-        val exists01__t = test ([], [9]) false []
-        val exists10_f_ = test ([1], []) false []
-        val exists10_t_ = test ([2], []) false []
-        val exists11_f_f = test ([1], [7]) false [(1, 7)]
-        val exists11_f_t = test ([1], [9]) false [(1, 9)]
-        val exists11_t_t = test ([2], [9]) true [(2, 9)]
-        val exists12_f_ff = test ([1], [7, 8]) false [(1, 7)]
-        val exists12_f_tf = test ([1], [9, 8]) false [(1, 9)]
-        val exists12_t_tf = test ([2], [9, 8]) true [(2, 9)]
-        val exists21_ff_f = test ([1, 3], [7]) false [(1, 7)]
-        val exists21_ff_t = test ([1, 3], [9]) false [(1, 9)]
-        val exists21_tf_f = test ([2, 3], [7]) false [(2, 7)]
-        val exists21_tf_t = test ([2, 3], [9]) true [(2, 9)]
-        val exists22_ff = test ([1, 3], [7, 8]) false [(1, 7), (3, 8)]
-        val exists22_ft = test ([1, 2], [7, 9]) true [(1, 7), (2, 9)]
-        val exists22_tf = test ([2, 3], [6, 8]) true [(2, 6)]
-        val exists22_tt = test ([2, 4], [6, 9]) true [(2, 6)]
+        val case00 as () = test ([], []) false []
+        val case01__f as () = test ([], [7]) false []
+        val case01__t as () = test ([], [9]) false []
+        val case10_f_ as () = test ([1], []) false []
+        val case10_t_ as () = test ([2], []) false []
+        val case11_f_f as () = test ([1], [7]) false [(1, 7)]
+        val case11_f_t as () = test ([1], [9]) false [(1, 9)]
+        val case11_t_t as () = test ([2], [9]) true [(2, 9)]
+        val case12_f_ff as () = test ([1], [7, 8]) false [(1, 7)]
+        val case12_f_tf as () = test ([1], [9, 8]) false [(1, 9)]
+        val case12_t_tf as () = test ([2], [9, 8]) true [(2, 9)]
+        val case21_ff_f as () = test ([1, 3], [7]) false [(1, 7)]
+        val case21_ff_t as () = test ([1, 3], [9]) false [(1, 9)]
+        val case21_tf_f as () = test ([2, 3], [7]) false [(2, 7)]
+        val case21_tf_t as () = test ([2, 3], [9]) true [(2, 9)]
+        val case22_ff as () = test ([1, 3], [7, 8]) false [(1, 7), (3, 8)]
+        val case22_ft as () = test ([1, 2], [7, 9]) true [(1, 7), (2, 9)]
+        val case22_tf as () = test ([2, 3], [6, 8]) true [(2, 6)]
+        val case22_tt as () = test ([2, 4], [6, 9]) true [(2, 6)]
       in
         ()
       end
@@ -398,8 +398,8 @@ struct
         let
           val (s, f) = makeState ()
           val r = all f input
-          val _ = assertEqualBool expected r
-          val _ = assertEqualInt2List visited (!s)
+          val () = assertEqualBool expected r
+          val () = assertEqualInt2List visited (!s)
         in
           ()
         end
@@ -409,25 +409,25 @@ struct
   in
   fun all001 () =
       let
-        val all00 = test ([], []) true []
-        val all01__f = test ([], [7]) true []
-        val all01__t = test ([], [9]) true []
-        val all10_f_ = test ([1], []) true []
-        val all10_t_ = test ([2], []) true []
-        val all11_f_f = test ([1], [7]) false [(1, 7)]
-        val all11_f_t = test ([1], [9]) false [(1, 9)]
-        val all11_t_t = test ([2], [9]) true [(2, 9)]
-        val all12_f_ff = test ([1], [7, 8]) false [(1, 7)]
-        val all12_f_tf = test ([1], [9, 8]) false [(1, 9)]
-        val all12_t_tf = test ([2], [9, 8]) true [(2, 9)]
-        val all21_ff_f = test ([1, 3], [7]) false [(1, 7)]
-        val all21_ff_t = test ([1, 3], [9]) false [(1, 9)]
-        val all21_tf_f = test ([2, 3], [7]) false [(2, 7)]
-        val all21_tf_t = test ([2, 3], [9]) true [(2, 9)]
-        val all22_ff = test ([1, 3], [7, 8]) false [(1, 7)]
-        val all22_ft = test ([1, 2], [7, 9]) false [(1, 7)]
-        val all22_tf = test ([2, 3], [6, 8]) false [(2, 6), (3, 8)]
-        val all22_tt = test ([2, 4], [6, 9]) true [(2, 6), (4, 9)]
+        val case00 as () = test ([], []) true []
+        val case01__f as () = test ([], [7]) true []
+        val case01__t as () = test ([], [9]) true []
+        val case10_f_ as () = test ([1], []) true []
+        val case10_t_ as () = test ([2], []) true []
+        val case11_f_f as () = test ([1], [7]) false [(1, 7)]
+        val case11_f_t as () = test ([1], [9]) false [(1, 9)]
+        val case11_t_t as () = test ([2], [9]) true [(2, 9)]
+        val case12_f_ff as () = test ([1], [7, 8]) false [(1, 7)]
+        val case12_f_tf as () = test ([1], [9, 8]) false [(1, 9)]
+        val case12_t_tf as () = test ([2], [9, 8]) true [(2, 9)]
+        val case21_ff_f as () = test ([1, 3], [7]) false [(1, 7)]
+        val case21_ff_t as () = test ([1, 3], [9]) false [(1, 9)]
+        val case21_tf_f as () = test ([2, 3], [7]) false [(2, 7)]
+        val case21_tf_t as () = test ([2, 3], [9]) true [(2, 9)]
+        val case22_ff as () = test ([1, 3], [7, 8]) false [(1, 7)]
+        val case22_ft as () = test ([1, 2], [7, 9]) false [(1, 7)]
+        val case22_tf as () = test ([2, 3], [6, 8]) false [(2, 6), (3, 8)]
+        val case22_tt as () = test ([2, 4], [6, 9]) true [(2, 6), (4, 9)]
       in
         ()
       end
@@ -440,25 +440,25 @@ struct
   in
   fun allEq001 () =
       let
-        val allEq00 = test ([], []) true []
-        val allEq01__f = test ([], [7]) false []
-        val allEq01__t = test ([], [9]) false []
-        val allEq10_f_ = test ([1], []) false []
-        val allEq10_t_ = test ([2], []) false []
-        val allEq11_f_f = test ([1], [7]) false [(1, 7)]
-        val allEq11_f_t = test ([1], [9]) false [(1, 9)]
-        val allEq11_t_t = test ([2], [9]) true [(2, 9)]
-        val allEq12_f_ff = test ([1], [7, 8]) false [(1, 7)]
-        val allEq12_f_tf = test ([1], [9, 8]) false [(1, 9)]
-        val allEq12_t_tf = test ([2], [9, 8]) false [(2, 9)]
-        val allEq21_ff_f = test ([1, 3], [7]) false [(1, 7)]
-        val allEq21_ff_t = test ([1, 3], [9]) false [(1, 9)]
-        val allEq21_tf_f = test ([2, 3], [7]) false [(2, 7)]
-        val allEq21_tf_t = test ([2, 3], [9]) false [(2, 9)]
-        val allEq22_ff = test ([1, 3], [7, 8]) false [(1, 7)]
-        val allEq22_ft = test ([1, 2], [7, 9]) false [(1, 7)]
-        val allEq22_tf = test ([2, 3], [6, 8]) false [(2, 6), (3, 8)]
-        val allEq22_tt = test ([2, 4], [6, 9]) true [(2, 6), (4, 9)]
+        val case00 as () = test ([], []) true []
+        val case01__f as () = test ([], [7]) false []
+        val case01__t as () = test ([], [9]) false []
+        val case10_f_ as () = test ([1], []) false []
+        val case10_t_ as () = test ([2], []) false []
+        val case11_f_f as () = test ([1], [7]) false [(1, 7)]
+        val case11_f_t as () = test ([1], [9]) false [(1, 9)]
+        val case11_t_t as () = test ([2], [9]) true [(2, 9)]
+        val case12_f_ff as () = test ([1], [7, 8]) false [(1, 7)]
+        val case12_f_tf as () = test ([1], [9, 8]) false [(1, 9)]
+        val case12_t_tf as () = test ([2], [9, 8]) false [(2, 9)]
+        val case21_ff_f as () = test ([1, 3], [7]) false [(1, 7)]
+        val case21_ff_t as () = test ([1, 3], [9]) false [(1, 9)]
+        val case21_tf_f as () = test ([2, 3], [7]) false [(2, 7)]
+        val case21_tf_t as () = test ([2, 3], [9]) false [(2, 9)]
+        val case22_ff as () = test ([1, 3], [7, 8]) false [(1, 7)]
+        val case22_ft as () = test ([1, 2], [7, 9]) false [(1, 7)]
+        val case22_tf as () = test ([2, 3], [6, 8]) false [(2, 6), (3, 8)]
+        val case22_tt as () = test ([2, 4], [6, 9]) true [(2, 6), (4, 9)]
       in
         ()
       end

@@ -1,5 +1,7 @@
 (**
  * unit test of <code>structure EasyHTMLParser</code>
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure EasyHTMLParserTest0001 =
 struct

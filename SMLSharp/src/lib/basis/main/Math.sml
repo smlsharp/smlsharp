@@ -1,6 +1,7 @@
 (**
  * Math structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Math.sml,v 1.3 2005/09/10 06:45:34 kiyoshiy Exp $
  *)
 structure Math =

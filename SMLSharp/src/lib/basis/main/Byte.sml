@@ -1,6 +1,7 @@
 (**
  * Byte structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Byte.sml,v 1.2 2005/12/12 14:54:23 kiyoshiy Exp $
  *)
 structure Byte :> BYTE =

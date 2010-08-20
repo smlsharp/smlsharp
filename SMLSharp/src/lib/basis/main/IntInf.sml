@@ -1,6 +1,7 @@
 (**
  * Int structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: IntInf.sml,v 1.4 2007/08/07 14:04:29 kiyoshiy Exp $
  *)
 structure IntInf =
@@ -17,16 +18,15 @@ struct
 
   fun fromLarge largeInt = largeInt
 
-  fun toInt int = SMLSharp.Runtime.LargeInt_toInt int
+  fun toInt int =
+      if int < ~0x80000000 orelse 0x7FFFFFFF < int
+      then raise General.Overflow
+      else SMLSharp.Runtime.LargeInt_toInt int
 
   fun fromInt int = SMLSharp.Runtime.LargeInt_fromInt int
 
   val precision = NONE
-(*
-  val minInt = SOME ~2147483648
 
-  val maxInt = SOME 2147483647
-*)
   val minInt = NONE
   val maxInt = NONE
 
@@ -232,7 +232,7 @@ struct
         else 0
 
   fun log2 x =
-      if x < 0
+      if x <= 0
       then raise General.Domain
       else SMLSharp.Runtime.LargeInt_log2 x
 

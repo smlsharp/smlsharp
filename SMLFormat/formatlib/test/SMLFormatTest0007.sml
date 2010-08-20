@@ -30,6 +30,9 @@
  *   <td>including a guard which is included within a indent region</td>
  * </tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0007 =
 struct

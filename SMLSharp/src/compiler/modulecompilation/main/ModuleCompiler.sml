@@ -536,7 +536,8 @@ in
     *)
   fun compileTy (nameContext:NM.nameContext) ty =
       case ty of
-        A.TYID x => A.TYID x
+        A.TYWILD x => A.TYWILD x
+      | A.TYID x => A.TYID x
       | A.TYRECORD (labelTys, loc) => 
         let
           val newLabelTys =

@@ -77,6 +77,7 @@ in
 (**
  * fundamental functions to access ASCII encoded characters.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ASCIICodec.sml,v 1.2.28.3 2010/05/11 07:08:03 kiyoshiy Exp $
  *)
 structure ASCIICodec :> CODEC = Codec(ASCIICodecPrim)

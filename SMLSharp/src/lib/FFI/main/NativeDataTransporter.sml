@@ -2,6 +2,7 @@
  * NativeDataTransporter is a data structure converter between ML value and
  * 'native' data structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: NativeDataTransporter.sml,v 1.2 2007/05/20 05:32:56 kiyoshiy Exp $
  *)
 structure NativeDataTransporter :> NATIVE_DATA_TRANSPORTER =

@@ -2,6 +2,7 @@
  * interface to null-terminated strings allocated outside of the managed heap
  * of SML#.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: UNMANAGED_STRING.sig,v 1.3 2006/11/04 13:16:37 kiyoshiy Exp $
  *)
 structure UnmanagedString : UNMANAGED_STRING =

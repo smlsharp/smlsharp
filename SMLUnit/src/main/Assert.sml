@@ -5,7 +5,7 @@
  * @copyright 2010, Tohoku University.
  * @version $Id: Assert.sml,v 1.4 2007/05/20 05:45:07 kiyoshiy Exp $
  *)
-structure Assert : ASSERT =
+structure Assert =
 struct
 
   (***************************************************************************)
@@ -24,16 +24,16 @@ struct
 
   (***************************************************************************)
 
-  fun assert message true = ()
-    | assert message false = raise (Fail (GeneralFailure message))
-
   fun fail message = raise (Fail (GeneralFailure message))
 
   fun failByNotEqual (expected, actual) =
       raise Fail(NotEqualFailure (expected, actual))
 
-  fun assertEqualByCompare comparator valueFormatter expected actual =
-      if EQUAL = comparator (expected, actual)
+  fun assert message true = ()
+    | assert message false = fail message
+
+  fun assertEqual comparator valueFormatter expected actual =
+      if comparator (expected, actual)
       then ()
       else
         let
@@ -43,19 +43,15 @@ struct
           failByNotEqual (expectedText, actualText)
         end
 
-  fun assertEqual comparator valueFormatter expected actual =
-      assertEqualByCompare
-      (fn pair => if comparator pair then EQUAL else LESS)
-      valueFormatter
-      expected
-      actual
+  fun assertEqualByCompare comparator =
+      assertEqual (fn pair => comparator pair = EQUAL)
 
   fun assertEqualAlternatives assert [expected] actual = assert expected actual
     | assertEqualAlternatives assert (expected :: expecteds) actual =
       (assert expected actual
        handle Fail _ => assertEqualAlternatives assert expecteds actual)
     | assertEqualAlternatives assert [] actual =
-      raise fail "assertEqualAlternatives expects non-empty list"
+      fail "assertEqualAlternatives expects non-empty list"
 
   fun convertAssertEqual convert assert expected actual =
       assert (convert expected) (convert actual)
@@ -524,6 +520,8 @@ struct
 
   val assertEqualSubstringList = assertEqualList assertEqualSubstring
 
+  (****************************************)
+
   structure AssertArray =
   struct
     val assertEqualArray = assertEqualArray
@@ -805,5 +803,7 @@ struct
   struct
   val assertEqualInt = assertEqualInt
   end
+
+  (***************************************************************************)
 
 end

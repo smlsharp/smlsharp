@@ -3,6 +3,7 @@
  * See README.txt.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CSVJDBCTest.sml,v 1.4 2010/04/24 07:48:03 kiyoshiy Exp $
  *)
 

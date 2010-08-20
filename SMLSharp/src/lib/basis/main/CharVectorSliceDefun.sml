@@ -1,6 +1,5 @@
 (**
  * CharVectorSlice structure, defunctorized.
- * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori
  * @copyright (c) 2010, Tohoku University.
  *)

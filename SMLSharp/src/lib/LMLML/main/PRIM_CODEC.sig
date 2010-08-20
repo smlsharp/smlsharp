@@ -20,6 +20,7 @@
  * And, a character of code between 0 and 127 is an ascii character.
  * </p>
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: PRIM_CODEC.sig,v 1.1.28.2 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 signature PRIM_CODEC =

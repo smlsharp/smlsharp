@@ -31,6 +31,9 @@ typedef LargeInt::largeInt largeInt;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+const SInt32Value MIN_SINT32 = -0x80000000L;
+const SInt32Value MAX_SINT32 = 0x7FFFFFFFL;
+
 const int PRIMITIVE_MAX_ARGUMENTS = 256;
 
 const int CLOSURE_ENTRYPOINT_INDEX = 0;
@@ -109,6 +112,11 @@ SInt32Value divInt(SInt32Value left, SInt32Value right){
         PrimitiveSupport::raiseException(exn);
         return 0;
     }
+    if((MIN_SINT32 == left) && (-1 == right)){
+        Cell exn = PrimitiveSupport::constructExnOverflow();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
     div_t temp;
     /* The return value of of ::div is rounded towards 0.
      * We have to adjust it towards negative infinity, if the denominator is
@@ -130,6 +138,11 @@ SInt32Value quotInt(SInt32Value left, SInt32Value right){
         PrimitiveSupport::raiseException(exn);
         return 0;
     }
+    if((MIN_SINT32 == left) && (-1 == right)){
+        Cell exn = PrimitiveSupport::constructExnOverflow();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
     div_t temp;
     /* ::div rounds toward 0 always. */
     temp = ::div(left, right);
@@ -142,6 +155,10 @@ SInt32Value modInt(SInt32Value left, SInt32Value right){
     if(0 == right){
         Cell exn = PrimitiveSupport::constructExnDiv();
         PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    if((MIN_SINT32 == left) && (-1 == right)){
+        /* On cygwin, ::div(MIN_SINT32, -1) raises an arithmetic signal. */
         return 0;
     }
     div_t temp;
@@ -159,6 +176,10 @@ SInt32Value remInt(SInt32Value left, SInt32Value right){
     if(0 == right){
         Cell exn = PrimitiveSupport::constructExnDiv();
         PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    if((MIN_SINT32 == left) && (-1 == right)){
+        /* On cygwin, ::div(MIN_SINT32, -1) raises an arithmetic signal. */
         return 0;
     }
     div_t temp;

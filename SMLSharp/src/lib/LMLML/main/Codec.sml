@@ -14,6 +14,7 @@
  * into a record of functions.
  * </p>
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Codec.sml,v 1.2.26.3 2010/05/11 07:08:03 kiyoshiy Exp $
  *)
 functor Codec(PrimCodec : PRIM_CODEC) :> CODEC =

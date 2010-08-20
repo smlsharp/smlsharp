@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ExternalRefLinker.sml,v 1.5 2007/09/19 05:28:55 matsu Exp $
  *)
 structure ExternalRefLinker : EXTERNALREF_LINKER =

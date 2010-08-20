@@ -1,6 +1,7 @@
 (**
  * ListPair structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ListPair.sml,v 1.3 2005/07/26 08:35:52 kiyoshiy Exp $
  *)
 structure ListPair = 

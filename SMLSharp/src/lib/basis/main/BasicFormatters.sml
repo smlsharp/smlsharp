@@ -1,3 +1,9 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ * @version $Id: ArraySlice.sml,v 1.4 2007/09/01 03:21:15 kiyoshiy Exp $
+ *)
+
 local open SMLSharp.SMLFormat in
 
   fun rev list =

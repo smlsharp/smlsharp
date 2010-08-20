@@ -1,5 +1,6 @@
 (*
  * temporary implementation of OS signature.
+ * @copyright 2010, Tohoku University.
  *)
 structure OS =
 struct

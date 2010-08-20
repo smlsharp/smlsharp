@@ -1,5 +1,9 @@
 use "./Reference2Testee.sml";
 
+(**
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
 structure Reference2Tester =
 struct
 

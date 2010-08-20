@@ -2,6 +2,7 @@
  *  This module translates the expressions into a text representation which fits
  * within the specified column width.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: PrettyPrinter.sml,v 1.5 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 structure PrettyPrinter =

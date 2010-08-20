@@ -25,6 +25,9 @@
  *   <td>including indent indicator whose indent width is negative integer</td>
  * </tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0006 =
 struct

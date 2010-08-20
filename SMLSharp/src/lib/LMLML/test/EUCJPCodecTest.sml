@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MultiByteStringTest.sml,v 1.1.28.1 2010/05/09 13:52:28 kiyoshiy Exp $
  *)
 structure EUCJPCodecTest =

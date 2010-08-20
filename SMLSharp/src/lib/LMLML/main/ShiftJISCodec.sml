@@ -50,6 +50,7 @@ in
 (**
  * fundamental functions to access ShiftJIS encoded characters.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ShiftJISCodec.sml,v 1.1.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure ShiftJISCodec :> CODEC =

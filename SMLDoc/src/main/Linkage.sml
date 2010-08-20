@@ -1,6 +1,7 @@
 (**
  * information of links between entities.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Linkage.sml,v 1.2 2004/10/20 03:18:40 kiyoshiy Exp $
  *)
 structure Linkage =

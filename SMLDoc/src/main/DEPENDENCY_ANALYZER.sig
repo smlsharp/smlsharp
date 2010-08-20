@@ -3,6 +3,7 @@
  * the parser generated.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: DEPENDENCY_ANALYZER.sig,v 1.2 2004/10/20 03:18:39 kiyoshiy Exp $
  *)
 signature DEPENDENCY_ANALYZER =

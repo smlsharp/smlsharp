@@ -1,6 +1,7 @@
 (**
  * CharArray structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CharArray.sml,v 1.5 2007/12/19 02:00:56 kiyoshiy Exp $
  *)
 structure CharArray =

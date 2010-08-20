@@ -1,6 +1,7 @@
 (**
  * Substring structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Substring.sml,v 1.6 2006/09/16 08:10:20 kiyoshiy Exp $
  *)
 local

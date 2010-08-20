@@ -31,6 +31,9 @@
  *     at one of them but not required at the other.</td>
  * </tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0005 =
 struct

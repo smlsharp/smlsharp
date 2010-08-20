@@ -1,6 +1,7 @@
 (**
  * functor to generate a codec-specific String structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CodecStringBase.sml,v 1.2.28.5 2010/05/11 07:08:03 kiyoshiy Exp $
  *)
 functor CodecStringBase(P : PRIM_CODEC) : MULTI_BYTE_STRING =

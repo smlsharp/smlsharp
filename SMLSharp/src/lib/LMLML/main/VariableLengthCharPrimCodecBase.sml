@@ -11,6 +11,7 @@
  * </p>
  * 
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: VariableLengthCharPrimCodecBase.sml,v 1.1.28.2 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 functor VariableLengthCharPrimCodecBase

@@ -10,6 +10,7 @@
  * </ul>
  * </p>
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MULTI_BYTE_TEXT.sig,v 1.1.2.2 2010/05/06 06:51:47 kiyoshiy Exp $
  *)
 signature MULTI_BYTE_TEXT =

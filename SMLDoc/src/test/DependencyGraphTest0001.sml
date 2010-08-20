@@ -1,5 +1,7 @@
 (**
  * unit test of <code>structure DependencyGraph</code>
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure DependencyGraphTest0001 =
 struct

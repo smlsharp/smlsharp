@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 datatype iodesc = IODesc of int;
 
 use "./OS_Path.sml";

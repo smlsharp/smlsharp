@@ -1,7 +1,9 @@
 use "./DataTypes2Testee.sml";
 
-(*
+(**
  * test cases for passing array between SML world and OLE world.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure DataTypes2Tester =
 struct

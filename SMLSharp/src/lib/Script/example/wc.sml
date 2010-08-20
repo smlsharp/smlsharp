@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 val file = case argv of [] => stdIn | name :: _ => fopen name "r";
 val (ls, ws, cs) =
     foldl

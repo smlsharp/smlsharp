@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 fun eval script =
     let
       val doOpen =

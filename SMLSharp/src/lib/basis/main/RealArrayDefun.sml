@@ -1,7 +1,7 @@
 (**
  * RealArray structure, defunctorized
- * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori
+ * @copyright 2010, Tohoku University.
  * @version $Id: RealArray.sml,v 1.5 2008/03/11 08:53:57 katsu Exp $
  *)
 local

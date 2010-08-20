@@ -1,7 +1,9 @@
 use "./Enum1Testee.sml";
 
-(*
+(**
  * test cases for enum.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure Enum1Tester =
 struct

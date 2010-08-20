@@ -1,5 +1,9 @@
 use "./Array1Testee.sml";
 
+(**
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
 structure Array1Tester =
 struct
 

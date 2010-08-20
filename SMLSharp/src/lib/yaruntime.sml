@@ -149,16 +149,16 @@ struct
       _import "prim_Date_ascTime"
       : __attribute__((no_callback))
         (int, int, int, int, int, int, int, int, int) -> char ptr
-  val Date_mkTime =
+  val ya_Date_mkTime =
       _import "prim_Date_mkTime"
       : __attribute__((no_callback))
         (int, int, int, int, int, int, int, int, int) -> int
   val ya_Date_localTime =
       _import "prim_Date_localTime"
-      : __attribute__((no_callback)) (int, int array) -> unit
+      : __attribute__((no_callback)) (int, int array) -> int
   val ya_Date_gmTime =
       _import "prim_Date_gmTime"
-      : __attribute__((no_callback)) (int, int array) -> unit
+      : __attribute__((no_callback)) (int, int array) -> int
   val Pack_packReal64Little =
       _import "prim_Pack_packReal64Little"
       : __attribute__((pure,no_callback))
@@ -360,6 +360,12 @@ struct
       _import "modff"
       : __attribute__((pure,no_callback))
       (Real32.real, Real32.real ref) -> Real32.real
+  val fesetround =
+      _import "fesetround"
+      : __attribute__((no_callback)) int -> int
+  val fegetround =
+      _import "fegetround"
+      : __attribute__((pure,no_callback)) () -> int
 
   (* POSIX *)
 
@@ -993,7 +999,19 @@ struct
         handle OS.SysErr (s,n) => raise OS.SysErr ("times:" ^ s, n)
 
   fun Date_ascTime (arg:int*int*int*int*int*int*int*int*int) : string =
-      str_new (ya_Date_ascTime arg)
+      let
+        val ret = ya_Date_ascTime arg
+      in
+        checkErrorIfNull (_cast(ret) : unit ptr);
+        str_new ret
+      end
+
+  fun Date_mkTime (arg:int*int*int*int*int*int*int*int*int) : int =
+      let
+        val ret = ya_Date_mkTime arg
+      in
+        if ret < 0 then raiseSysErr () else ret
+      end
 
   fun Date_strfTime(format:string, (sec:int, min:int, hour:int, mday:int,
                                     mon:int, year:int, wday:int, yday:int,
@@ -1023,8 +1041,9 @@ struct
   fun Date_localTime (time:int) : int*int*int*int*int*int*int*int*int =
       let
         val buf = Array.array(9, 0)
-        val _ = ya_Date_localTime (time, buf)
+        val err = ya_Date_localTime (time, buf)
       in
+        checkError err;
         (Array.sub (buf, 0),
          Array.sub (buf, 1),
          Array.sub (buf, 2),
@@ -1039,8 +1058,9 @@ struct
   fun Date_gmTime (time:int) : int*int*int*int*int*int*int*int*int =
       let
         val buf = Array.array (9, 0)
-        val _ = ya_Date_gmTime (time, buf)
+        val err = ya_Date_gmTime (time, buf)
       in
+        checkError err;
         (Array.sub (buf, 0),
          Array.sub (buf, 1),
          Array.sub (buf, 2),
@@ -1187,6 +1207,29 @@ struct
          Word8.fromInt (Char.ord (SMLSharp.PrimString.sub_unsafe (buffer, 2))),
          Word8.fromInt (Char.ord (SMLSharp.PrimString.sub_unsafe (buffer, 1))),
          Word8.fromInt (Char.ord (SMLSharp.PrimString.sub_unsafe (buffer, 0))))
+      end
+
+  fun IEEEReal_setRoundingMode (mode:int) : unit =
+      let
+        val mode =
+            case mode of 0 => cconstInt "FE_TONEAREST"
+                       | 1 => cconstInt "FE_DOWNWARD"
+                       | 2 => cconstInt "FE_UPWARD"
+                       | _ => cconstInt "FE_TOWARDZERO"
+        val err = fesetround mode
+      in
+        if err = 0 then () else raiseSysErr ()
+      end
+
+  fun IEEEReal_getRoundingMode () : int =
+      let
+        val mode = fegetround ()
+      in
+        if mode = cconstInt "FE_TONEAREST" then 0
+        else if mode = cconstInt "FE_DOWNWARD" then 1
+        else if mode = cconstInt "FE_UPWARD" then 2
+        else if mode = cconstInt "FE_TOWARDZERO" then 3
+        else ~1
       end
 
 end

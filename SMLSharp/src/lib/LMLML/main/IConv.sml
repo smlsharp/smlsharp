@@ -1,6 +1,7 @@
 (**
  * A wrapper module of the iconv (3C) function of POSIX.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: IConv.sml,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
  *)
 structure IConv

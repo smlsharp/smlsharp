@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 use "./CODECS.sig";
 use "./Codecs.sml";
 

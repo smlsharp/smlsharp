@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 (* substitute environment reference. *)
 val file = case argv of [] => stdIn | name :: _ => fopen name "r";
 print

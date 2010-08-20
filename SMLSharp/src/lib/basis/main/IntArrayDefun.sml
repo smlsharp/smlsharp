@@ -1,7 +1,7 @@
 (**
  * IntArray structure, defuncterized.
- * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori
+ * @copyright 2010, Tohoku University.
  * @version $Id: IntArray.sml,v 1.8 2008/03/11 08:53:57 katsu Exp $
  *)
 local

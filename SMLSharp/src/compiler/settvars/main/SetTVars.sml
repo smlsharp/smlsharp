@@ -52,7 +52,8 @@ in
 
  fun tvarsInTy ty = 
    (case ty of
-      A.TYID ({name, eq},loc) =>  SEnv.singleton (name, eq)
+      A.TYWILD loc => SEnv.empty
+    | A.TYID ({name, eq},loc) =>  SEnv.singleton (name, eq)
     | A.TYRECORD (stringTyList, loc) =>
         foldr (fn ((l,ty), tvarNameSet) =>
                tvarNameSetUnion(tvarNameSet, tvarsInTy ty, loc)) 

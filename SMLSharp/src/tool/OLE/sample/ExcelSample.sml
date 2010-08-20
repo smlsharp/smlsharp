@@ -1,6 +1,9 @@
 (* This code requires Excel.sml generated as follows.
  *
  *   $ OLE2SML.exe -c Application -c Workbooks -c Workbook -c Worksheets -c Worksheet -c Range Excel.Application
+ * 
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 
 use "OLE.sml";

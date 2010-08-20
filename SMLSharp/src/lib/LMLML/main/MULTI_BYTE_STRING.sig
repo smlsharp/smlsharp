@@ -7,6 +7,7 @@
  * signature.
  * </p>
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MULTI_BYTE_STRING.sig,v 1.1.28.4 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 signature MULTI_BYTE_STRING =

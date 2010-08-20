@@ -6,6 +6,9 @@
  *   $ OLE2SML.exe -c HTMLDocument -c HTMLHtmlElement \
  *      "C:\\WINDOWS\\system32\\MSHTML.TLB"
  *   generated MSHTML.sml
+ * 
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 
 (* OLE.sml is installed in SML# system library directory. *)

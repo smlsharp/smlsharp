@@ -1,6 +1,7 @@
 (**
  * IEEEReal structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: IEEEReal.sml,v 1.6 2007/12/19 02:57:10 kiyoshiy Exp $
  *)
 structure IEEEReal :> IEEE_REAL =
@@ -37,12 +38,21 @@ struct
 
   (***************************************************************************)
 
-  local
-    val gRoundingMode = ref TO_NEAREST
-  in
-  fun setRoundingMode roundingMode = gRoundingMode := roundingMode
-  fun getRoundingMode () = ! gRoundingMode
-  end
+  fun setRoundingMode roundingMode =
+      let
+        val mode = case roundingMode
+                    of TO_NEAREST => 0
+                     | TO_NEGINF => 1
+                     | TO_POSINF => 2
+                     | TO_ZERO => 3
+      in SMLSharp.Runtime.IEEEReal_setRoundingMode mode end
+        
+  fun getRoundingMode () =
+      case SMLSharp.Runtime.IEEEReal_getRoundingMode ()
+       of 0 => TO_NEAREST
+        | 1 => TO_NEGINF
+        | 2 => TO_POSINF
+        | 3 => TO_ZERO
 
   local
     fun intsToString [] = "0"

@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 val user = case argv of [] => env "USER" | name :: _ => name;
 case
   List.filter

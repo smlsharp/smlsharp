@@ -2,6 +2,7 @@
  * definition of format template
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: FormatTemplate.sml,v 1.6 2007/06/30 11:04:42 kiyoshiy Exp $
  *)
 structure FormatTemplate =

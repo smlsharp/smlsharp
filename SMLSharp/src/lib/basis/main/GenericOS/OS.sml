@@ -1,6 +1,7 @@
 (**
  * OS structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: OS.sml,v 1.2 2005/08/23 05:04:10 kiyoshiy Exp $
  *)
 structure OS : OS =

@@ -1,6 +1,7 @@
 (**
  * datatype of linke file which describes linkage information.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: LinkFile.sml,v 1.2 2004/10/20 03:18:40 kiyoshiy Exp $
  *)
 structure LinkFile =

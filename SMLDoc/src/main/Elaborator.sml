@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Elaborator.sml,v 1.7 2006/05/23 05:24:00 kiyoshiy Exp $
  *)
 structure Elaborator : ELABORATOR =

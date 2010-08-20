@@ -28,6 +28,9 @@
  *     at all of indicators</td>
  * </tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0003 =
 struct

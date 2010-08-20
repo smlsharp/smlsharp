@@ -1,6 +1,7 @@
 (**
  * Int structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Int.sml,v 1.9 2007/02/28 13:17:16 katsu Exp $
  *)
 structure Int =
@@ -22,45 +23,28 @@ struct
 
   (***************************************************************************)
 
-  fun toLarge int = int
+  val precision = SOME 32
 
-  fun fromLarge largeInt = largeInt
+  val minInt = SOME ~0x80000000
+  val maxInt = SOME 0x7FFFFFFF
+
+  fun toLarge int = SMLSharp.Runtime.LargeInt_fromInt int
+
+  fun fromLarge largeInt =
+      if largeInt < ~0x80000000 orelse 0x7FFFFFFF < largeInt
+      then raise General.Overflow
+      else SMLSharp.Runtime.LargeInt_toInt largeInt
 
   fun toInt int = int
 
   fun fromInt int = int
 
-  val precision = SOME 32
-(*
-  val minInt = SOME ~2147483648
-
-  val maxInt = SOME 2147483647
-*)
-  val minInt = SOME ~2147483648
-  val maxInt = SOME 2147483647
-
-  val ~ = fn num => ~ num
-
-  val op * = fn (left, right) => left * right
-
-  val op div = fn (left, right) => left div right
-
-  val op mod = fn (left, right) => left mod right
-
-(*
-  val quot = fn (left, right) => quotInt (left, right)
-
-  val rem = fn (left, right) => remInt (left, right)
-*)
-
-  val op + = fn (left, right) => left + right
-
-  val op - = fn (left, right) => left - right
-
   fun compare (left, right) =
       if left < right
       then General.LESS
       else if left = right then General.EQUAL else General.GREATER
+
+  val ~ = fn num => ~ num
 
   fun abs num = if num < 0 then ~ num else num
 
@@ -99,7 +83,7 @@ struct
         | _ => raise Fail "bug: Int.charOfNum"
     fun numOfChar char = 
         case char of
-          #"0" => 0
+          #"0" => 0 : IntInf.int
         | #"1" => 1
         | #"2" => 2
         | #"3" => 3
@@ -168,7 +152,7 @@ struct
     fun scanNumbers radix reader stream =
         let
           val (isNumberChar, charToNumber, base) =
-              (isNumChar radix, numOfChar, numOfRadix radix)
+              (isNumChar radix, numOfChar, toLarge (numOfRadix radix))
         in
           PC.wrap
               (
@@ -200,7 +184,7 @@ struct
             reader
             stream
         fun scanner reader stream =
-            PC.seqWith (fn (x, y) => x * y) (scanSign, scanBody) reader stream
+            PC.seqWith (fromLarge o op * ) (scanSign, scanBody) reader stream
       in
         scanner reader (StringCvt.skipWS reader stream)
       end
@@ -210,6 +194,16 @@ struct
   fun fromString string = (SC.scanString (scan SC.DEC)) string
 (* The following eta equivalent form causes an internal error of the SML/NJ.
   val fromString = (SC.scanString (scan SC.DEC)) : string -> int option
+*)
+
+  val op + = fn (left, right) => left + right
+  val op - = fn (left, right) => left - right
+  val op * = fn (left, right) => left * right
+  val op div = fn (left, right) => left div right
+  val op mod = fn (left, right) => left mod right
+(*
+  val quot = fn (left, right) => quotInt (left, right)
+  val rem = fn (left, right) => remInt (left, right)
 *)
 
   fun op < (left : int, right : int) =

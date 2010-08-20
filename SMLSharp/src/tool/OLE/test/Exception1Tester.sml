@@ -1,7 +1,9 @@
 use "./Exception1Testee.sml";
 
-(*
+(**
  * test cases for handling exception thrown from COM/.NET object.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure Exception1Tester =
 struct

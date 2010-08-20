@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 val (src, dest) = case argv of src :: dest :: _ => (src, dest);
 val lines = 4; (* split into 10-line pieces. (not 9) *)
 val count = ref 0;

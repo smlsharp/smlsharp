@@ -49,7 +49,7 @@ struct
   fun byteToChar001 () =
       let
         val byteToChar_1 = Byte.byteToChar (0w97)
-        val _ = assertEqualChar #"a" byteToChar_1
+        val () = assertEqualChar #"a" byteToChar_1
       in () end
 
   (********************)
@@ -57,7 +57,7 @@ struct
   fun charToByte001 () =
       let
         val charToByte_1 = Byte.charToByte #"a"
-        val _ = assertEqualWord8 0w97 charToByte_1
+        val () = assertEqualWord8 0w97 charToByte_1
       in () end
 
   (********************)
@@ -65,9 +65,9 @@ struct
   fun bytesToString001 () =
       let
         val bytesToString_0 = Byte.bytesToString (L2V [])
-        val _ = assertEqualString "" bytesToString_0
+        val () = assertEqualString "" bytesToString_0
         val bytesToString_1 = Byte.bytesToString (L2V [0w97])
-        val _ = assertEqualString "a" bytesToString_1
+        val () = assertEqualString "a" bytesToString_1
       in () end
 
   (********************)
@@ -75,9 +75,9 @@ struct
   fun stringToBytes001 () =
       let
         val stringToBytes_0 = V2L(Byte.stringToBytes "")
-        val _ = assertEqualWord8List [] stringToBytes_0
+        val () = assertEqualWord8List [] stringToBytes_0
         val stringToBytes_1 = V2L(Byte.stringToBytes "a")
-        val _ = assertEqualWord8List [0w97] stringToBytes_1
+        val () = assertEqualWord8List [0w97] stringToBytes_1
       in () end
 
   (********************)
@@ -85,9 +85,9 @@ struct
   fun unpackStringVec001 () =
       let
         val unpackStringVec_0 = Byte.unpackStringVec (L2VS [])
-        val _ = assertEqualString "" unpackStringVec_0
+        val () = assertEqualString "" unpackStringVec_0
         val unpackStringVec_1 = Byte.unpackStringVec (L2VS [0w97])
-        val _ = assertEqualString "a" unpackStringVec_1
+        val () = assertEqualString "a" unpackStringVec_1
       in () end
 
   (********************)
@@ -95,9 +95,9 @@ struct
   fun unpackString001 () =
       let
         val unpackString_0 = Byte.unpackString (L2AS [])
-        val _ = assertEqualString "" unpackString_0
+        val () = assertEqualString "" unpackString_0
         val unpackString_1 = Byte.unpackString (L2AS [0w97])
-        val _ = assertEqualString "a" unpackString_1
+        val () = assertEqualString "a" unpackString_1
       in () end
 
   (********************)
@@ -120,15 +120,15 @@ struct
   in
   fun packString001 () =
       let
-        val packString_000 = test (0, 0, "") []
-        val packString_3m11 = testFail (3, ~1, "a")
-        val packString_301 = test (3, 0, "a") [0w97, 0w1, 0w2]
-        val packString_311 = test (3, 1, "a") [0w0, 0w97, 0w2]
-        val packString_321 = test (3, 2, "a") [0w0, 0w1, 0w97]
-        val packString_331 = testFail (3, 3, "a")
-        val packString_302 = test (3, 0, "ab") [0w97, 0w98, 0w2]
-        val packString_312 = test (3, 1, "ab") [0w0, 0w97, 0w98]
-        val packString_322 = testFail (3, 2, "ab")
+        val case_000 as () = test (0, 0, "") []
+        val case_3m11 as () = testFail (3, ~1, "a")
+        val case_301 as () = test (3, 0, "a") [0w97, 0w1, 0w2]
+        val case_311 as () = test (3, 1, "a") [0w0, 0w97, 0w2]
+        val case_321 as () = test (3, 2, "a") [0w0, 0w1, 0w97]
+        val case_331 as () = testFail (3, 3, "a")
+        val case_302 as () = test (3, 0, "ab") [0w97, 0w98, 0w2]
+        val case_312 as () = test (3, 1, "ab") [0w0, 0w97, 0w98]
+        val case_322 as () = testFail (3, 2, "ab")
       in () end
   end
 

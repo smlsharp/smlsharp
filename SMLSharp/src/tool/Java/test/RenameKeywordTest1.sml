@@ -3,6 +3,8 @@ use "./RenameKeywordTestee1.sml";
 
 (**
  * TestCases for renaming SML keywords used as Java entity names.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure RenameKeywordTest1 =
 struct

@@ -1,7 +1,9 @@
 use "./MethodCall1Testee.sml";
 
-(*
+(**
  * test cases for arity and co-arity of COM object method.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure MethodCall1Tester =
 struct

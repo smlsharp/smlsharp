@@ -1,6 +1,7 @@
 (**
  * functions to access memory outside of the managed heap.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: UNMANAGED_MEMORY.sig,v 1.10 2007/03/09 23:17:08 kiyoshiy Exp $
  *)
 signature UNMANAGED_MEMORY =

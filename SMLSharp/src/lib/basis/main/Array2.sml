@@ -1,303 +1,345 @@
-(* array2.sml
- *
- * COPYRIGHT (c) 1997 AT&T Research.
+(**
+ * Array2 structure.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
+structure Array2 : ARRAY2 =
+struct
 
-structure Array2 :> ARRAY2 =
-  struct
+  (***************************************************************************)
 
-(* ToDo : What does 'ltu' mean ?
-    val ltu = InlineT.DfltInt.ltu
-*)
-    val ltu = fn (x, y) => x < y
-    val unsafeUpdate = Array.update
-    val unsafeSub = Array.sub
+  structure A = Array
 
-    structure A = Array
+  (***************************************************************************)
 
-    type 'a array = {
-	data : 'a A.array, nrows : int, ncols : int
+  (**
+   * elements are stored in the row-major order in the base array.
+   * The element at (iRow, iCol) in an nRows x nCols array is stored at the
+   * offset (iRow * nCols + iCol) in the base array.
+   *)
+  type 'a array = 'a Array.array * (** nRows *) int * (** nCols *) int
+
+  type 'a region =
+       {
+	 base : 'a array,
+	 row : int, col : int,
+	 nrows : int option,
+         ncols : int option
       }
 
-    type 'a region = {
-	base : 'a array,
-	row : int, col : int,
-	nrows : int option, ncols : int option
-      }
-
-    datatype traversal = RowMajor | ColMajor
-
-    val mkArray = Array.array
-
-  (* compute the index of an array element *)
-    fun unsafeIndex ({nrows, ncols, ...} : 'a array, i, j) = (i*ncols + j)
-    fun index (arr, i, j) =
-	  if (ltu(i, #nrows arr) andalso ltu(j, #ncols arr))
-	    then unsafeIndex (arr, i, j)
-	    else raise General.Subscript
-
-    fun chkSize (nrows, ncols) =
-	  if (nrows < 0) orelse (ncols < 0)
-	    then raise General.Size
-	    else let
-	      val n = nrows*ncols handle Overflow => raise General.Size
-	      in
-		if (Vector.maxLen < n) then raise General.Size else n
-	      end
-
-    fun array (nrows, ncols, v) = (case chkSize (nrows, ncols)
-	   of 0 => {data = Array.fromList [], nrows = 0, ncols = 0}
-	    | n => {data = mkArray (n, v), nrows = nrows, ncols = ncols}
-	  (* end case *))
-    fun fromList rows = (case List.rev rows
-	   of [] => {data = Array.fromList [], nrows = 0, ncols = 0}
-	    | (lastRow::rest) => let
-		val nCols = List.length lastRow
-		fun chk ([], nRows, l) = (nRows, l)
-		  | chk (row::rest, nRows, l) = let
-		      fun chkRow ([], n) = (
-			    if (n <> nCols) then raise General.Size else ();
-			    l)
-			| chkRow (x::r, n) = x :: chkRow(r, n+1)
-		      in
-			chk (rest, nRows+1, chkRow(row, 0))
-		      end
-		val (nRows, data) = chk(rest, 1, lastRow)
-		in
-		  {data = Array.fromList data, nrows = nRows, ncols = nCols}
-		end
-	  (* end case *))
-    fun tabulateRM (nrows, ncols, f) = (case chkSize (nrows, ncols)
-	   of 0 => {data = Array.fromList [], nrows = nrows, ncols = ncols}
-	    | n => let
-		val arr = mkArray (n, f(0, 0))
-		fun lp1 (i, j, k) = if (i < nrows)
-			then lp2 (i, 0, k)
-			else ()
-		and lp2 (i, j, k) = if (j < ncols)
-			then (
-			  unsafeUpdate(arr, k, f(i, j));
-			  lp2 (i, j+1, k+1))
-			else lp1 (i+1, 0, k)
-		in
-		  lp2 (0, 1, 1);  (* we've already done (0, 0) *)
-		  {data = arr, nrows = nrows, ncols = ncols}
-		end
-	  (* end case *))
-    fun tabulateCM (nrows, ncols, f) = (case chkSize (nrows, ncols)
-	   of 0 => {data = Array.fromList [], nrows = nrows, ncols = ncols}
-	    | n => let
-		val arr = mkArray (n, f(0, 0))
-		val delta = n - 1
-		fun lp1 (i, j, k) = if (j < ncols)
-			then lp2 (0, j, k)
-			else ()
-		and lp2 (i, j, k) = if (i < nrows)
-			then (
-			  unsafeUpdate(arr, k, f(i, j));
-			  lp2 (i+1, j, k+ncols))
-			else lp1 (0, j+1, k-delta)
-		in
-		  lp2 (1, 0, ncols);  (* we've already done (0, 0) *)
-		  {data = arr, nrows = nrows, ncols = ncols}
-		end
-	  (* end case *))
-    fun tabulate RowMajor = tabulateRM
-      | tabulate ColMajor = tabulateCM
-    fun sub (a, i, j) = unsafeSub(#data a, index(a, i, j))
-    fun update (a, i, j, v) = unsafeUpdate(#data a, index(a, i, j), v)
-    fun dimensions {data, nrows, ncols} = (nrows, ncols)
-    fun nCols (arr : 'a array) = #ncols arr
-    fun nRows (arr : 'a array) = #nrows arr
-    fun row ({data, nrows, ncols}, i) = let
-	  val stop = i*ncols
-	  fun mkVec (j, l) =
-		if (j < stop)
-		  then Vector.fromList l
-		  else mkVec(j-1, A.sub(data, j)::l)
-	  in
-	    if ltu(nrows, i)
-	      then raise General.Subscript
-	      else mkVec (stop+ncols-1, [])
-	  end
-    fun column ({data, nrows, ncols}, j) = let
-	  fun mkVec (i, l) =
-		if (i < 0)
-		  then Vector.fromList l
-		  else mkVec(i-ncols, A.sub(data, i)::l)
-	  in
-	    if ltu(ncols, j)
-	      then raise General.Subscript
-	      else mkVec ((A.length data - ncols) + j, [])
-	  end
-
-    datatype index = DONE | INDX of {i:int, r:int, c:int}
-
-    fun chkRegion {base={data, nrows, ncols}, row, col, nrows=nr, ncols=nc} = let
-	  fun chk (start, n, NONE) =
-		if ((start < 0) orelse (n < start))
-		  then raise General.Subscript
-		  else n-start
-	    | chk (start, n, SOME len) =
-		if ((start < 0) orelse (len < 0) orelse (n < start+len))
-		  then raise General.Subscript
-		  else len
-	  val nr = chk (row, nrows, nr)
-	  val nc = chk (col, ncols, nc)
-	  in
-	    {data = data, i = (row*ncols + col), r=row, c=col, nr=nr, nc=nc}
-	  end
-
-    fun copy {src : 'a region, dst, dst_row, dst_col} =
-	  raise Fail "Array2.copy unimplemented"
-
-  (* this function generates a stream of indeces for the given region in
-   * row-major order.
+  (**
+   * canonicalized form of region for internal use.
+   * The region includes elements at (row, col) where
+   *   startRow <= row < endRow
+   *   startCol <= col < endCol.
    *)
-    fun iterateRM arg = let
-	  val {data, i, r, c=cStart, nr, nc} = chkRegion arg
-	  val ii = ref i and ri = ref r and ci = ref cStart
-	  val rEnd = r+nr and cEnd = cStart+nc
-	  val rowDelta = #ncols(#base arg) - nc
-	  fun mkIndx (r, c) = let val i = !ii
-		in
-		  ii := i+1;
-		  INDX{i=i, c=c, r=r}
-		end
-	  fun iter () = let
-		val r = !ri and c = !ci
-		in
-		  if (c < cEnd)
-		    then (ci := c+1; mkIndx(r, c))
-		  else if (r+1 < rEnd)
-		    then (
-		      ii := !ii + rowDelta;
-		      ci := cStart;
-		      ri := r+1;
-		      iter())
-		    else DONE
-		end
-	  in
-	    (data, iter)
-	  end
+  type 'a internal_region =
+        {
+          array : 'a Array.array,
+          nRows : int,
+          nCols : int,
+          startRow : int,
+          startCol : int,
+          endRow : int,
+          endCol : int
+        }
 
-  (* this function generates a stream of indeces for the given region in
-   * col-major order.
+  datatype traversal = RowMajor | ColMajor
+
+  (***************************************************************************)
+
+  fun emptyArray () = A.tabulate (0, fn _ => raise Fail "bug")
+
+  (* check that the region is valid, and translates it into its internal form.
    *)
-    fun iterateCM (arg as {base={ncols, nrows, ...}, ...}) = let
-	  val {data, i, r=rStart, c, nr, nc} = chkRegion arg
-	  val ii = ref i and ri = ref rStart and ci = ref c
-	  val rEnd = rStart+nr and cEnd = c+nc
-	  val delta = (nr * ncols) - 1
-	  fun mkIndx (r, c) = let val i = !ii
-		in
-		  ii := i+ncols;
-		  INDX{i=i, c=c, r=r}
-		end
-	  fun iter () = let
-		val r = !ri and c = !ci
-		in
-		  if (r < rEnd)
-		    then (ri := r+1; mkIndx(r, c))
-		  else if (c+1 < cEnd)
-		    then (
-		      ii := !ii - delta;
-		      ri := rStart;
-		      ci := c+1;
-		      iter())
-		    else DONE
-		end
-	  in
-	    (data, iter)
-	  end
+  fun checkRegion {base = (array, nRows, nCols), row, col, nrows, ncols} =
+      if
+        row < 0
+        orelse col < 0
+        orelse nRows < row
+        orelse nCols < col
+        orelse (isSome nrows
+                andalso (valOf nrows < 0 orelse nRows < row + valOf nrows))
+        orelse (isSome ncols
+                andalso (valOf ncols < 0 orelse nCols < col + valOf ncols))
+      then raise General.Subscript
+      else
+        {
+          array = array,
+          nRows = nRows,
+          nCols = nCols,
+          startRow = row,
+          startCol = col,
+          endRow = case nrows of NONE => nRows | SOME nrows => row + nrows,
+          endCol = case ncols of NONE => nCols | SOME ncols => col + ncols
+        } : 'a internal_region
 
-    fun appi order f region = let
-	  val (data, iter) = (case order
-		 of RowMajor => iterateRM region
-		  | ColMajor => iterateCM region
-		(* end case *))
-	  fun app () = (case iter()
-		 of DONE => ()
-		  | INDX{i, r, c} => (f(r, c, unsafeSub(data, i)); app())
-		(* end case *))
-	  in
-	    app ()
-	  end
+  fun array (nRows, nCols, init) =
+      let val size = nRows * nCols
+      in
+        if nRows < 0 orelse nCols < 0 orelse A.maxLen < size
+        then raise General.Size
+        else (A.array (nRows * nCols, init), nRows, nCols)
+      end
 
-    fun appRM f {data, ncols, nrows} = A.app f data
-    fun appCM f {data, ncols, nrows} = let
-	  val delta = A.length data - 1
-	  fun appf (i, k) = if (i < nrows)
-		then (f(unsafeSub(data, k)); appf(i+1, k+ncols))
-		else let
-		  val k = k-delta
-		  in
-		    if (k < ncols) then appf (0, k) else ()
-		  end
-	  in
-	    appf (0, 0)
-	  end
-    fun app RowMajor = appRM
-      | app ColMajor = appCM
+  fun fromList elements =
+      let
+        val nRows = List.length elements
+        (* get the length of the first row. *)
+        val nCols = case elements of [] => 0 | row :: _ => List.length row
+        val size = nRows * nCols
+        val array =
+            if A.maxLen < size then raise General.Size
+            else if size = 0 then emptyArray ()
+            else A.array (size, hd (hd elements))
+        (* write elements in row-major order.
+         * raise Size if any row has more or less elements than the first row.
+         *)
+        fun writeRows _ [] = ()
+          | writeRows offset (row :: rows) =
+            let
+              fun writeCols iCol [] =
+                  if nCols <> iCol then raise General.Size else ()
+                | writeCols iCol (col :: cols) =
+                  if nCols = iCol
+                  then raise General.Size
+                  else
+                    (
+                      A.update (array, offset + iCol, col);
+                      writeCols (iCol + 1) cols
+                    )
+              val () = writeCols 0 row
+            in
+              writeRows (offset + nCols) rows
+            end
+      in
+        writeRows 0 elements; (array, nRows, nCols)
+      end
 
-    fun modifyi order f region = let
-	  val (data, iter) = (case order
-		 of RowMajor => iterateRM region
-		  | ColMajor => iterateCM region
-		(* end case *))
-	  fun modify () = (case iter()
-		 of DONE => ()
-		  | INDX{i, r, c} => (
-		      unsafeUpdate (data, i, f(r, c, unsafeSub(data, i)));
-		      modify())
-		(* end case *))
-	  in
-	    modify ()
-	  end
+  fun sub ((array, nRows, nCols), iRow, iCol) =
+      if iRow < 0 orelse iCol < 0 orelse nRows <= iRow orelse nCols <= iCol
+      then raise General.Subscript
+      else A.sub (array, iRow * nCols + iCol)
 
-    fun modifyRM f {data, ncols, nrows} = A.modify f data
-    fun modifyCM f {data, ncols, nrows} = let
-	  val delta = A.length data - 1
-	  fun modf (i, k) = if (i < nrows)
-		then (unsafeUpdate(data, k, f(unsafeSub(data, k))); modf(i+1, k+ncols))
-		else let
-		  val k = k-delta
-		  in
-		    if (k < ncols) then modf (0, k) else ()
-		  end
-	  in
-	    modf (0, 0)
-	  end
-    fun modify RowMajor = modifyRM
-      | modify ColMajor = modifyCM
+  fun update ((array, nRows, nCols), iRow, iCol, newElem) =
+      if iRow < 0 orelse iCol < 0 orelse nRows <= iRow orelse nCols <= iCol
+      then raise General.Subscript
+      else A.update (array, iRow * nCols + iCol, newElem)
 
-    fun foldi order f init region = let
-	  val (data, iter) = (case order
-		 of RowMajor => iterateRM region
-		  | ColMajor => iterateCM region
-		(* end case *))
-	  fun fold accum = (case iter()
-		 of DONE => accum
-		  | INDX{i, r, c} => fold(f(r, c, unsafeSub(data, i), accum))
-		(* end case *))
-	  in
-	    fold init
-	  end
+  fun dimensions (_, nRows, nCols) = (nRows, nCols)
 
-    fun foldRM f init {data, ncols, nrows} = A.foldl f init data
-    fun foldCM f init {data, ncols, nrows} = let
-	  val delta = A.length data - 1
-	  fun foldf (i, k, accum) = if (i < nrows)
-		then foldf (i+1, k+ncols, f(unsafeSub(data, k), accum))
-		else let
-		  val k = k-delta
-		  in
-		    if (k < ncols) then foldf (0, k, accum) else accum
-		  end
-	  in
-	    foldf (0, 0, init)
-	  end
-    fun fold RowMajor = foldRM
-      | fold ColMajor = foldCM
+  fun nCols (_, _, n) = n
 
-  end
+  fun nRows (_, n, _) = n
+
+  fun row ((array, nRows, nCols), iRow) =
+      if iRow < 0 orelse nRows <= iRow
+      then raise General.Subscript
+      else
+        Vector.tabulate (nCols, fn iCol => A.sub (array, iRow * nCols + iCol))
+
+  fun column ((array, nRows, nCols), iCol) =
+      if iCol < 0 orelse nCols <= iCol
+      then raise General.Subscript
+      else
+        Vector.tabulate (nRows, fn iRow => A.sub (array, iRow * nCols + iCol))
+
+  fun copy {src, dst, dst_row, dst_col} =
+      let
+        val src_region = checkRegion src
+        val nRowsOfRegion = #endRow src_region - #startRow src_region
+        val nColsOfRegion = #endCol src_region - #startCol src_region
+        (* src_region and dst_region have the same size. *)
+        val dst_region = checkRegion
+                             {
+                               base = dst,
+                               row = dst_row,
+                               col = dst_col,
+                               nrows = SOME nRowsOfRegion,
+                               ncols = SOME nColsOfRegion
+                             }
+
+        fun srcOffset (iRow, iCol) = iRow * #nCols src_region + iCol
+        fun dstOffset (iRow, iCol) = iRow * #nCols dst_region + iCol
+
+        (* copy elements of columns in a row from left to right. *)
+        fun copyColsFromLeft srcRow dstRow =
+            let
+              fun copyCols srcCol dstCol =
+                  if srcCol = #endCol src_region
+                  then ()
+                  else
+                    let
+                      val srcOffset = srcOffset (srcRow, srcCol)
+                      val dstOffset = dstOffset (dstRow, dstCol)
+                      val elem = A.sub (#array src_region, srcOffset)
+                      val () = A.update (#array dst_region, dstOffset, elem)
+                    in
+                      copyCols (srcCol + 1) (dstCol + 1)
+                    end
+            in copyCols (#startCol src_region) (#startCol dst_region)
+            end
+        (* copy elements of columns in a row from right to left. *)
+        fun copyColsFromRight srcRow dstRow =
+            let
+              (* NOTE: the region copied includes startCol, but not endCol. *)
+              fun copyCols srcCol dstCol =
+                  if srcCol = #startCol src_region - 1
+                  then ()
+                  else
+                    let
+                      val srcOffset = srcOffset (srcRow, srcCol)
+                      val dstOffset = dstOffset (dstRow, dstCol)
+                      val elem = A.sub (#array src_region, srcOffset)
+                      val () = A.update (#array dst_region, dstOffset, elem)
+                    in
+                      copyCols (srcCol - 1) (dstCol - 1)
+                    end
+            in copyCols (#endCol src_region - 1) (#endCol dst_region - 1)
+            end
+        (* take care about cases where src_region and dst_region overlap
+         * in the same array.
+         *)
+        val copyCols =
+            if #startCol src_region < #startCol dst_region
+            then copyColsFromRight
+            else copyColsFromLeft
+        (* copy rows from top to bottom. *)
+        fun copyRowsFromTop () =
+            let
+              fun copyRows srcRow dstRow =
+                  if srcRow = #endRow src_region
+                  then ()
+                  else
+                    (
+                      copyCols srcRow dstRow;
+                      copyRows (srcRow + 1) (dstRow + 1)
+                    )
+            in copyRows (#startRow src_region) (#startRow dst_region)
+            end
+        (* copy rows from bottom to top. *)
+        fun copyRowsFromBottom () =
+            let
+              fun copyRows srcRow dstRow =
+                  if srcRow = #startRow src_region - 1
+                  then ()
+                  else
+                    (
+                      copyCols srcRow dstRow;
+                      copyRows (srcRow - 1) (dstRow - 1)
+                    )
+            in copyRows (#endRow src_region - 1) (#endRow dst_region - 1)
+            end
+        val copyRows =
+            if #startRow src_region < #startRow dst_region
+            then copyRowsFromBottom
+            else copyRowsFromTop
+      in
+        copyRows ()
+      end
+
+  (* implementation of foldi for RowMajor order *)
+  fun foldiRM
+        folder init {array, nRows, nCols, startRow, startCol, endRow, endCol} =
+      let
+        fun f accum iRow iCol =
+            if iRow = endRow
+            then accum
+            else if iCol = endCol
+            then f accum (iRow + 1) startCol
+            else
+              let val elem = A.sub (array, iRow * nCols + iCol)
+              in f (folder (iRow, iCol, elem, accum)) iRow (iCol + 1) end
+      in f init startRow startCol
+      end
+      
+  (* implementation of foldi for ColMajor order *)
+  fun foldiCM
+        folder init {array, nRows, nCols, startRow, startCol, endRow, endCol} =
+      let
+        fun f accum iRow iCol =
+            if iCol = endCol
+            then accum
+            else if iRow = endRow
+            then f accum startRow (iCol + 1)
+            else
+              let val elem = A.sub (array, iRow * nCols + iCol)
+              in f (folder (iRow, iCol, elem, accum)) (iRow + 1) iCol end
+      in f init startRow startCol
+      end
+
+  fun foldi order folder init region =
+      let val region = checkRegion region
+      in
+        case order of
+          RowMajor => foldiRM folder init region
+        | ColMajor => foldiCM folder init region
+      end
+
+  fun fold order folder init array =
+      foldi
+          order
+          (fn (_, _, elem, accum) => folder (elem, accum))
+          init 
+          {base = array, row = 0, col = 0, nrows = NONE, ncols = NONE}
+
+  fun modifyi order modifier (region as {base = (array, nRows, nCols), ...}) = 
+      foldi
+          order
+          (fn (iRow, iCol, elem, _) =>
+              A.update
+                  (array, iRow * nCols + iCol, modifier (iRow, iCol, elem)))
+          ()
+          region
+
+  fun modify order modifier array =
+      let
+        val region =
+            {base = array, row = 0, col = 0, nrows = NONE, ncols = NONE}
+      in
+        modifyi order (modifier o #3) region
+      end
+
+  fun appi order apper region =
+      foldi
+          order
+          (fn (iRow, iCol, elem, _) => apper (iRow, iCol, elem))
+          ()
+          region
+
+  fun app order apper array =
+      let
+        val region =
+            {base = array, row = 0, col = 0, nrows = NONE, ncols = NONE}
+      in
+        appi order (apper o #3) region
+      end
+
+  fun tabulate order (nRows, 0, _) = (emptyArray(), nRows, 0)
+    | tabulate order (0, nCols, _) = (emptyArray(), 0, nCols)
+    | tabulate order (nRows, nCols, generator) = 
+      let
+        val () = if nRows < 0 orelse nCols < 0 then raise General.Size else ()
+        val size = nRows * nCols
+        val firstElem = generator (0, 0)
+        val array =
+            if A.maxLen < size
+            then raise General.Size
+            else A.array (size, firstElem)
+        fun modifier (0, 0, _) = firstElem
+          | modifier (iRow, iCol, _) = generator (iRow, iCol)
+        val region =
+            {
+              base = (array, nRows, nCols),
+              row = 0,
+              col = 0,
+              nrows = NONE,
+              ncols = NONE
+            }
+        val () = modifyi order modifier region
+      in (array, nRows, nCols)
+      end
+
+  (***************************************************************************)
+
+end

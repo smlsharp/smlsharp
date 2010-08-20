@@ -1,6 +1,7 @@
 (**
  * Utility functions for LMLML unit test.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: LMLMLTestUtil.sml,v 1.1.2.3 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 functor LMLMLTestUtil(Codec : CODEC) =

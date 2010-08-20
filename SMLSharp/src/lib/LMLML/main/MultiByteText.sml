@@ -1,6 +1,7 @@
 (**
  * The main user interface of the multibyte text library.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MultiByteText.sml,v 1.1.2.4 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure MultiByteText :> MULTI_BYTE_TEXT =

@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 fun usage () =
     TextIO.print
     "mlb2use [-d baseDir] [-p pathMapFile] [-e] [-v] MLBfile \n\

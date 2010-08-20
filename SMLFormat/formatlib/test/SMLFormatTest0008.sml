@@ -30,6 +30,9 @@
  * <tr><td>0LR3</td><td>&gt;</td></tr>
  *
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0008 =
 struct

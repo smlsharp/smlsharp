@@ -24,14 +24,14 @@ struct
 
   fun pi001 () =
       let
-        val _ = assertEqReal 3.14159265359 Math.pi
+        val () = assertEqReal 3.14159265359 Math.pi
       in
         ()
       end
 
   fun e001 () =
       let
-        val _ = assertEqReal 2.71828182846 Math.e
+        val () = assertEqReal 2.71828182846 Math.e
       in
         ()
       end
@@ -39,7 +39,7 @@ struct
   fun sqrt001 () = 
       let
         val sqrt001 = Math.sqrt 1.23
-        val _ = assertEqReal 1.10905365064 sqrt001
+        val () = assertEqReal 1.10905365064 sqrt001
       in
         ()
       end
@@ -47,7 +47,7 @@ struct
   fun sin001 () = 
       let
         val sin001 = Math.sin 1.23
-        val _ = assertEqReal 0.942488801932 sin001
+        val () = assertEqReal 0.942488801932 sin001
       in
         ()
       end
@@ -55,7 +55,7 @@ struct
   fun cos001 () = 
       let
         val cos001 = Math.cos 1.23
-        val _ = assertEqReal 0.334237727125 cos001
+        val () = assertEqReal 0.334237727125 cos001
       in
         ()
       end
@@ -63,7 +63,7 @@ struct
   fun tan001 () = 
       let
         val tan001 = Math.tan 1.23
-        val _ = assertEqReal 2.81981573427 tan001
+        val () = assertEqReal 2.81981573427 tan001
       in
         ()
       end
@@ -71,7 +71,7 @@ struct
   fun asin001 () = 
       let
         val asin001 = Math.asin 0.123
-        val _ = assertEqReal 0.123312275192 asin001
+        val () = assertEqReal 0.123312275192 asin001
       in
         ()
       end
@@ -79,7 +79,7 @@ struct
   fun acos001 () = 
       let
         val acos001 = Math.acos 0.123
-        val _ = assertEqReal 1.4474840516 acos001
+        val () = assertEqReal 1.4474840516 acos001
       in
         ()
       end
@@ -87,7 +87,7 @@ struct
   fun atan001 () = 
       let
         val atan001 = Math.atan 1.23
-        val _ = assertEqReal 0.888173774378 atan001
+        val () = assertEqReal 0.888173774378 atan001
       in
         ()
       end
@@ -95,7 +95,7 @@ struct
   fun atan2001 () = 
       let
         val atan2001 = Math.atan2 (1.23, 2.34)
-        val _ = assertEqReal 0.48394938786 atan2001
+        val () = assertEqReal 0.48394938786 atan2001
       in
         ()
       end
@@ -103,7 +103,7 @@ struct
   fun exp001 () = 
       let
         val exp001 = Math.exp 1.23
-        val _ = assertEqReal 3.42122953629 exp001
+        val () = assertEqReal 3.42122953629 exp001
       in
         ()
       end
@@ -111,7 +111,7 @@ struct
   fun pow001 () = 
       let
         val pow001 = Math.pow (1.23, 2.34)
-        val _ = assertEqReal 1.62322215169 pow001
+        val () = assertEqReal 1.62322215169 pow001
       in
         ()
       end
@@ -119,7 +119,7 @@ struct
   fun ln001 () = 
       let
         val ln001 = Math.ln 1.23
-        val _ = assertEqReal 0.207014169384 ln001
+        val () = assertEqReal 0.207014169384 ln001
       in
         ()
       end
@@ -127,7 +127,7 @@ struct
   fun log10001 () = 
       let
         val log10001 = Math.log10 1.23
-        val _ = assertEqReal 0.0899051114394 log10001
+        val () = assertEqReal 0.0899051114394 log10001
       in
         ()
       end
@@ -135,7 +135,7 @@ struct
   fun sinh001 () = 
       let
         val sinh001 = Math.sinh 1.23
-        val _ = assertEqReal 1.5644684793 sinh001
+        val () = assertEqReal 1.5644684793 sinh001
       in
         ()
       end
@@ -143,7 +143,7 @@ struct
   fun cosh001 () = 
       let
         val cosh001 = Math.cosh 1.23
-        val _ = assertEqReal 1.85676105699 cosh001
+        val () = assertEqReal 1.85676105699 cosh001
       in
         ()
       end
@@ -151,7 +151,7 @@ struct
   fun tanh001 () = 
       let
         val tanh001 = Math.tanh 1.23
-        val _ = assertEqReal 0.842579325659 tanh001
+        val () = assertEqReal 0.842579325659 tanh001
       in
         ()
       end

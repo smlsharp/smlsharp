@@ -4,6 +4,8 @@ use "./ClassBasicsTestee1_NotChild.sml";
 
 (**
  * TestCases for basic operations about Java class hierarchy.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure ClassBasicsTest1 =
 struct

@@ -44,11 +44,11 @@ struct
   fun length001 () =
       let
         val length1 = S.length (L2S[])
-        val _ = assertEqualInt 0 length1
+        val () = assertEqualInt 0 length1
         val length2 = S.length (L2S[n1])
-        val _ = assertEqualInt 1 length2
+        val () = assertEqualInt 1 length2
         val length3 = S.length (L2S[n1, n2])
-        val _ = assertEqualInt 2 length3
+        val () = assertEqualInt 2 length3
       in
         ()
       end
@@ -64,15 +64,15 @@ struct
   in
   fun sub001 () =
       let
-        val sub00 = testError ([], 0)
-        val sub0m1 = testError ([], ~1)
-        val sub01 = testError ([], 1)
-        val sub10 = test ([n1], 0) n1
-        val sub11 = testError ([n2], 1)
-        val sub1m1 = testError ([n2], ~1)
-        val sub20 = test ([n1, n2], 0) n1
-        val sub21 = test ([n1, n2], 1) n2
-        val sub22 = testError ([n1, n2], 2)
+        val case00 as () = testError ([], 0)
+        val case0m1 as () = testError ([], ~1)
+        val case01 as () = testError ([], 1)
+        val case10 as () = test ([n1], 0) n1
+        val case11 as () = testError ([n2], 1)
+        val case1m1 as () = testError ([n2], ~1)
+        val case20 as () = test ([n1, n2], 0) n1
+        val case21 as () = test ([n1, n2], 1) n2
+        val case22 as () = testError ([n1, n2], 2)
       in
         ()
       end        
@@ -86,9 +86,9 @@ struct
   in
   fun full001 () =
       let
-        val full_0 = test 0
-        val full_1 = test 1
-        val full_2 = test 2
+        val case_0 as () = test 0 []
+        val case_1 as () = test 1 [n0]
+        val case_2 as () = test 2 [n0, n1]
       in () end
   end (* local *)
 
@@ -100,7 +100,7 @@ struct
         in
           assertEqualElemList expected (S2L(S.slice(vector, start, lengthOpt)))
         end
-    fun testFail (vectorLength, start, lengthOpt) expected =
+    fun testFail (vectorLength, start, lengthOpt) =
         let val v = makeSequence vectorLength
         in
           (S.slice(v, start, lengthOpt); fail "slice: Subscript expected.")
@@ -109,31 +109,31 @@ struct
   in
   fun slice001 () =
       let
-        val slice_0_0_N = test (0, 0, NONE) []
-        val slice_1_0_N = test (1, 0, NONE) [n0]
-        val slice_1_0_0 = test (1, 0, SOME 0) []
-        val slice_1_0_1 = test (1, 0, SOME 1) [n0]
-        val slice_1_0_2 = testFail (1, 0, SOME 1)
-        val slice_1_1_N = test (1, 1, NONE) []
-        val slice_1_1_0 = test (1, 1, SOME 0) []
-        val slice_1_1_1 = testFail (1, 1, SOME 1)
-        val slice_1_2_N = testFail (1, 2, NONE)
-        val slice_2_m1_N = testFail (2, ~1, NONE)
-        val slice_2_m1_0 = testFail (2, ~1, SOME 0)
-        val slice_2_0_N = test (2, 0, NONE) [n0, n1]
-        val slice_2_0_m1 = testFail (2, 0, SOME ~1)
-        val slice_2_0_0 = test (2, 0, SOME 0) []
-        val slice_2_0_2 = test (2, 0, SOME 2) [n0, n1]
-        val slice_2_0_3 = testFail (2, 0, SOME 3)
-        val slice_2_1_N = test (2, 1, NONE) [n1]
-        val slice_2_1_m1 = testFail (2, 1, SOME ~1)
-        val slice_2_1_0 = test (2, 1, SOME 0) []
-        val slice_2_1_1 = test (2, 1, SOME 1) [n1]
-        val slice_2_1_2 = testFail (2, 1, SOME 2)
-        val slice_2_2_N = test (2, 2, NONE) []
-        val slice_2_2_m1 = testFail (2, 2, SOME ~1)
-        val slice_2_2_0 = test (2, 2, SOME 0) []
-        val slice_2_2_1 = testFail (2, 2, SOME 1)
+        val case_0_0_N as () = test (0, 0, NONE) []
+        val case_1_0_N as () = test (1, 0, NONE) [n0]
+        val case_1_0_0 as () = test (1, 0, SOME 0) []
+        val case_1_0_1 as () = test (1, 0, SOME 1) [n0]
+        val case_1_0_2 as () = testFail (1, 0, SOME 2)
+        val case_1_1_N as () = test (1, 1, NONE) []
+        val case_1_1_0 as () = test (1, 1, SOME 0) []
+        val case_1_1_1 as () = testFail (1, 1, SOME 1)
+        val case_1_2_N as () = testFail (1, 2, NONE)
+        val case_2_m1_N as () = testFail (2, ~1, NONE)
+        val case_2_m1_0 as () = testFail (2, ~1, SOME 0)
+        val case_2_0_N as () = test (2, 0, NONE) [n0, n1]
+        val case_2_0_m1 as () = testFail (2, 0, SOME ~1)
+        val case_2_0_0 as () = test (2, 0, SOME 0) []
+        val case_2_0_2 as () = test (2, 0, SOME 2) [n0, n1]
+        val case_2_0_3 as () = testFail (2, 0, SOME 3)
+        val case_2_1_N as () = test (2, 1, NONE) [n1]
+        val case_2_1_m1 as () = testFail (2, 1, SOME ~1)
+        val case_2_1_0 as () = test (2, 1, SOME 0) []
+        val case_2_1_1 as () = test (2, 1, SOME 1) [n1]
+        val case_2_1_2 as () = testFail (2, 1, SOME 2)
+        val case_2_2_N as () = test (2, 2, NONE) []
+        val case_2_2_m1 as () = testFail (2, 2, SOME ~1)
+        val case_2_2_0 as () = test (2, 2, SOME 0) []
+        val case_2_2_1 as () = testFail (2, 2, SOME 1)
       in () end
   end (* local *)
 
@@ -162,21 +162,21 @@ struct
   in
   fun subslice001 () =
       let
-        val subslice_5_1_3_m1_N = testFail (5, 1, 3, ~1, NONE)
-        val subslice_5_1_3_m1_0 = testFail (5, 1, 3, ~1, SOME 0)
-        val subslice_5_1_3_0_N = test (5, 1, 3, 0, NONE) [n1, n2, n3]
-        val subslice_5_1_3_0_m1 = testFail (5, 1, 3, 0, SOME ~1)
-        val subslice_5_1_3_0_3 = test (5, 1, 3, 0, SOME 3) [n1, n2, n3]
-        val subslice_5_1_3_1_N = test (5, 1, 3, 1, NONE) [n2, n3]
-        val subslice_5_1_3_1_m1 = testFail (5, 1, 3, 1, SOME ~1)
-        val subslice_5_1_3_1_0 = test (5, 1, 3, 1, SOME 0) []
-        val subslice_5_1_3_1_1 = test (5, 1, 3, 1, SOME 1) [n2]
-        val subslice_5_1_3_1_2 = test (5, 1, 3, 1, SOME 2) [n2, n3]
-        val subslice_5_1_3_1_3 = testFail (5, 1, 3, 1, SOME 3)
-        val subslice_5_1_3_2_N = test (5, 1, 3, 2, NONE) [n3]
-        val subslice_5_1_3_2_m1 = test (5, 1, 3, 2, SOME ~1)
-        val subslice_5_1_3_2_0 = test (5, 1, 3, 2, SOME 0) []
-        val subslice_5_1_3_2_1 = test (5, 1, 3, 2, SOME 1) [n3]
+        val case_5_1_3_m1_N as () = testFail (5, 1, 3, ~1, NONE)
+        val case_5_1_3_m1_0 as () = testFail (5, 1, 3, ~1, SOME 0)
+        val case_5_1_3_0_N as () = test (5, 1, 3, 0, NONE) [n1, n2, n3]
+        val case_5_1_3_0_m1 as () = testFail (5, 1, 3, 0, SOME ~1)
+        val case_5_1_3_0_3 as () = test (5, 1, 3, 0, SOME 3) [n1, n2, n3]
+        val case_5_1_3_1_N as () = test (5, 1, 3, 1, NONE) [n2, n3]
+        val case_5_1_3_1_m1 as () = testFail (5, 1, 3, 1, SOME ~1)
+        val case_5_1_3_1_0 as () = test (5, 1, 3, 1, SOME 0) []
+        val case_5_1_3_1_1 as () = test (5, 1, 3, 1, SOME 1) [n2]
+        val case_5_1_3_1_2 as () = test (5, 1, 3, 1, SOME 2) [n2, n3]
+        val case_5_1_3_1_3 as () = testFail (5, 1, 3, 1, SOME 3)
+        val case_5_1_3_2_N as () = test (5, 1, 3, 2, NONE) [n3]
+        val case_5_1_3_2_m1 as () = testFail (5, 1, 3, 2, SOME ~1)
+        val case_5_1_3_2_0 as () = test (5, 1, 3, 2, SOME 0) []
+        val case_5_1_3_2_1 as () = test (5, 1, 3, 2, SOME 1) [n3]
       in () end
   end (* local *)
 
@@ -195,10 +195,10 @@ struct
   in
   fun base001 () =
       let
-        val base_0_0_0 = test (0, 0, 0) ([], 0, 0)
-        val base_2_0_0 = test (2, 0, 0) ([n0, n1], 0, 0)
-        val base_2_0_1 = test (2, 0, 1) ([n0, n1], 0, 1)
-        val base_2_1_1 = test (2, 1, 1) ([n0, n1], 1, 1)
+        val case_0_0_0 as () = test (0, 0, 0) ([], 0, 0)
+        val case_2_0_0 as () = test (2, 0, 0) ([n0, n1], 0, 0)
+        val case_2_0_1 as () = test (2, 0, 1) ([n0, n1], 0, 1)
+        val case_2_1_1 as () = test (2, 1, 1) ([n0, n1], 1, 1)
       in () end
   end (* local *)
 
@@ -215,10 +215,10 @@ struct
   in
   fun vector001 () =
       let
-        val vector_0_0_0 = test (0, 0, 0) []
-        val vector_2_0_0 = test (2, 0, 0) []
-        val vector_2_0_1 = test (2, 0, 1) [n0]
-        val vector_2_1_1 = test (2, 1, 1) [n1]
+        val case_0_0_0 as () = test (0, 0, 0) []
+        val case_2_0_0 as () = test (2, 0, 0) []
+        val case_2_0_1 as () = test (2, 0, 1) [n0]
+        val case_2_1_1 as () = test (2, 1, 1) [n1]
       in () end
   end (* local *)
 
@@ -235,16 +235,16 @@ struct
   in        
   fun isEmpty001 () =
       let
-        val isEmpty_0_0_0 = test (0, 0, 0) true
-        val isEmpty_1_0_0 = test (1, 0, 0) true
-        val isEmpty_1_0_1 = test (1, 0, 1) false
-        val isEmpty_1_1_0 = test (1, 1, 0) true
-        val isEmpty_2_0_0 = test (2, 0, 0) true
-        val isEmpty_2_0_1 = test (2, 0, 1) false
-        val isEmpty_2_0_2 = test (2, 0, 2) false
-        val isEmpty_2_1_0 = test (2, 1, 0) true
-        val isEmpty_2_1_1 = test (2, 1, 1) false
-        val isEmpty_2_2_0 = test (2, 2, 0) true
+        val case_0_0_0 as () = test (0, 0, 0) true
+        val case_1_0_0 as () = test (1, 0, 0) true
+        val case_1_0_1 as () = test (1, 0, 1) false
+        val case_1_1_0 as () = test (1, 1, 0) true
+        val case_2_0_0 as () = test (2, 0, 0) true
+        val case_2_0_1 as () = test (2, 0, 1) false
+        val case_2_0_2 as () = test (2, 0, 2) false
+        val case_2_1_0 as () = test (2, 1, 0) true
+        val case_2_1_1 as () = test (2, 1, 1) false
+        val case_2_2_0 as () = test (2, 2, 0) true
       in () end
   end (* local *)
 
@@ -263,16 +263,16 @@ struct
   in
   fun getItem001 () =
       let
-        val getItem_0_0_0 = test (0, 0, 0) NONE
-        val getItem_1_0_0 = test (1, 0, 0) NONE
-        val getItem_1_0_1 = test (1, 0, 1) (SOME(n0, []))
-        val getItem_1_1_0 = test (1, 1, 0) NONE
-        val getItem_2_0_0 = test (2, 0, 0) NONE
-        val getItem_2_0_1 = test (2, 0, 1) (SOME(n0, []))
-        val getItem_2_0_2 = test (2, 0, 2) (SOME(n0, [n1]))
-        val getItem_2_1_0 = test (2, 1, 0) NONE
-        val getItem_2_1_1 = test (2, 1, 1) (SOME(n1, []))
-        val getItem_2_2_0 = test (2, 2, 0) NONE
+        val case_0_0_0 as () = test (0, 0, 0) NONE
+        val case_1_0_0 as () = test (1, 0, 0) NONE
+        val case_1_0_1 as () = test (1, 0, 1) (SOME(n0, []))
+        val case_1_1_0 as () = test (1, 1, 0) NONE
+        val case_2_0_0 as () = test (2, 0, 0) NONE
+        val case_2_0_1 as () = test (2, 0, 1) (SOME(n0, []))
+        val case_2_0_2 as () = test (2, 0, 2) (SOME(n0, [n1]))
+        val case_2_1_0 as () = test (2, 1, 0) NONE
+        val case_2_1_1 as () = test (2, 1, 1) (SOME(n1, []))
+        val case_2_2_0 as () = test (2, 2, 0) NONE
       in () end
   end (* local *)
 
@@ -290,16 +290,16 @@ struct
         let
           val (s, f) = makeStatei ()
           val () = S.appi f (L2S arg)
-          val _ = assertEqualIntElemList visited (!s)
+          val () = assertEqualIntElemList visited (!s)
         in
           ()
         end
   in
   fun appi001 () =
       let
-        val appi_0 = test [] []
-        val appi_1 = test [n1] [(0, n1)]
-        val appi_2 = test [n1, n2] [(0, n1), (1, n2)]
+        val case_0 as () = test [] []
+        val case_1 as () = test [n1] [(0, n1)]
+        val case_2 as () = test [n1, n2] [(0, n1), (1, n2)]
       in
         ()
       end
@@ -319,17 +319,17 @@ struct
         let
           val (s, f) = makeState ()
           val app0 = S.app f (L2S arg)
-          val _ = assertEqualElemList visited (!s)
+          val () = assertEqualElemList visited (!s)
         in
           ()
         end
   in
   fun app001 () =
       let
-        val app0 = test [] []
-        val app1 = test [n1] [n1]
-        val app2 = test [n1, n2] [n1, n2]
-        val app3 = test [n1, n2, n3] [n1, n2, n3]
+        val case0 as () = test [] []
+        val case1 as () = test [n1] [n1]
+        val case2 as () = test [n1, n2] [n1, n2]
+        val case3 as () = test [n1, n2, n3] [n1, n2, n3]
       in
         ()
       end
@@ -356,8 +356,8 @@ struct
         let
           val (s, f) = makeStatei ()
           val r = fold f [] (L2S arg)
-          val _ = assertEqualElemList expected r
-          val _ = assertEqualIntElemList visited (!s)
+          val () = assertEqualElemList expected r
+          val () = assertEqualIntElemList visited (!s)
         in
           ()
         end
@@ -365,8 +365,8 @@ struct
         let
           val (s, f) = makeState ()
           val r = fold f [] (L2S arg)
-          val _ = assertEqualElemList expected r
-          val _ = assertEqualElemList visited (!s)
+          val () = assertEqualElemList expected r
+          val () = assertEqualElemList visited (!s)
         in
           ()
         end
@@ -377,21 +377,21 @@ struct
   in
   fun foldli001 () =
       let
-        val foldli_0 = testi [] [] []
-        val foldli_1 = testi [n1] [n1] [(0, n1)]
+        val case_0 as () = testi [] [] []
+        val case_1 as () = testi [n1] [n1] [(0, n1)]
         (* The result is in reverse order. *)
-        val foldli_2 = testi [n1, n2] [n2, n1] [(0, n1), (1, n2)]
+        val case_2 as () = testi [n1, n2] [n2, n1] [(0, n1), (1, n2)]
       in
         ()
       end
 
   fun foldl001 () =
       let
-        val foldl_0 = test [] [] []
-        val foldl_1 = test [n1] [n1] [n1]
+        val case_0 as () = test [] [] []
+        val case_1 as () = test [n1] [n1] [n1]
         (* The result is in reverse order *)
-        val foldl_2 = test [n1, n2] [n2, n1] [n1, n2]
-        val foldl_3 = test [n1, n2, n3] [n3, n2, n1] [n1, n2, n3]
+        val case_2 as () = test [n1, n2] [n2, n1] [n1, n2]
+        val case_3 as () = test [n1, n2, n3] [n3, n2, n1] [n1, n2, n3]
       in
         ()
       end
@@ -403,21 +403,21 @@ struct
   in
   fun foldri001 () =
       let
-        val foldri_0 = testi [] [] []
-        val foldri_1 = testi [n1] [n1] [(0, n1)]
+        val case_0 as () = testi [] [] []
+        val case_1 as () = testi [n1] [n1] [(0, n1)]
         (* result is in normal order. visited is in reverse order *)
-        val foldri_2 = testi [n1, n2] [n1, n2] [(1, n2), (0, n1)]
+        val case_2 as () = testi [n1, n2] [n1, n2] [(1, n2), (0, n1)]
       in
         ()
       end
 
   fun foldr001 () =
       let
-        val foldr_0 = test [] [] []
-        val foldr_1 = test [n1] [n1] [n1]
+        val case_0 as () = test [] [] []
+        val case_1 as () = test [n1] [n1] [n1]
         (* result is in normal order. visited is in reverse order *)
-        val foldr_2 = test [n1, n2]  [n1, n2] [n2, n1]
-        val foldr3 = test [n1, n2, n3] [n1, n2, n3] [n3, n2, n1]
+        val case_2 as () = test [n1, n2]  [n1, n2] [n2, n1]
+        val case3 as () = test [n1, n2, n3] [n1, n2, n3] [n3, n2, n1]
       in
         ()
       end
@@ -450,8 +450,8 @@ struct
         let
           val (s, f) = makeStatei n9
           val r = S.findi f (L2S  arg)
-          val _ = assertEqualIntElemOption expected r
-          val _ = assertEqualIntElemList visited (!s)
+          val () = assertEqualIntElemOption expected r
+          val () = assertEqualIntElemList visited (!s)
         in
           ()
         end
@@ -459,34 +459,34 @@ struct
         let
           val (s, f) = makeState n9
           val r = S.find f (L2S  arg)
-          val _ = assertEqualElemOption expected r
-          val _ = assertEqualElemList visited (!s)
+          val () = assertEqualElemOption expected r
+          val () = assertEqualElemList visited (!s)
         in
           ()
         end
   in
   fun findi001 () =
       let
-        val findi_0 = testi [] NONE []
-        val findi_1F = testi [n1] NONE [(0, n1)]
-        val findi_1T = testi [n9] (SOME(0, n9)) [(0, n9)]
-        val findi_2F = testi [n1, n2] NONE [(0, n1), (1, n2)]
-        val findi_2T1 = testi [n1, n9] (SOME(1, n9)) [(0, n1), (1, n9)]
-        val findi_2T2 = testi [n9, n1] (SOME(0, n9)) [(0, n9)]
-        val findi_2T3 = testi [n9, n9] (SOME(0, n9)) [(0, n9)]
+        val case_0 as () = testi [] NONE []
+        val case_1F as () = testi [n1] NONE [(0, n1)]
+        val case_1T as () = testi [n9] (SOME(0, n9)) [(0, n9)]
+        val case_2F as () = testi [n1, n2] NONE [(0, n1), (1, n2)]
+        val case_2T1 as () = testi [n1, n9] (SOME(1, n9)) [(0, n1), (1, n9)]
+        val case_2T2 as () = testi [n9, n1] (SOME(0, n9)) [(0, n9)]
+        val case_2T3 as () = testi [n9, n9] (SOME(0, n9)) [(0, n9)]
       in
         ()
       end
 
   fun find001 () =
       let
-        val find_0 = test [] NONE []
-        val find_1F = test [n1] NONE [n1]
-        val find_1T = test [n9] (SOME n9) [n9]
-        val find_2F = test [n1, n2] NONE [n1, n2]
-        val find_2T1 = test [n1, n9] (SOME n9) [n1, n9]
-        val find_2T2 = test [n9, n1] (SOME n9) [n9]
-        val find_2T3 = test [n9, n9] (SOME n9) [n9]
+        val case_0 as () = test [] NONE []
+        val case_1F as () = test [n1] NONE [n1]
+        val case_1T as () = test [n9] (SOME n9) [n9]
+        val case_2F as () = test [n1, n2] NONE [n1, n2]
+        val case_2T1 as () = test [n1, n9] (SOME n9) [n1, n9]
+        val case_2T2 as () = test [n9, n1] (SOME n9) [n9]
+        val case_2T3 as () = test [n9, n9] (SOME n9) [n9]
       in
         ()
       end
@@ -499,8 +499,8 @@ struct
         let
           val (s, f) = makeState n9
           val r = scanner f (L2S arg)
-          val _ = assertEqualBool expected r
-          val _ = assertEqualElemList visited (!s)
+          val () = assertEqualBool expected r
+          val () = assertEqualElemList visited (!s)
         in
           ()
         end
@@ -511,13 +511,13 @@ struct
   in
   fun exists001 () =
       let
-        val exists_0 = test [] false []
-        val exists_1F = test [n1] false [n1]
-        val exists_1T = test [n9] true [n9]
-        val exists_2F = test [n1, n2] false [n1, n2]
-        val exists_2T1 = test [n1, n9] true [n1, n9]
-        val exists_2T2 = test [n9, n1] true [n9]
-        val exists_2T3 = test [n9, n9] true [n9]
+        val case_0 as () = test [] false []
+        val case_1F as () = test [n1] false [n1]
+        val case_1T as () = test [n9] true [n9]
+        val case_2F as () = test [n1, n2] false [n1, n2]
+        val case_2T1 as () = test [n1, n9] true [n1, n9]
+        val case_2T2 as () = test [n9, n1] true [n9]
+        val case_2T3 as () = test [n9, n9] true [n9]
       in
         ()
       end
@@ -530,13 +530,13 @@ struct
   in
   fun all001 () =
       let
-        val all_0 = test [] true [] (* true is returnd for nothing. *)
-        val all_1F = test [n1] false [n1]
-        val all_1T = test [n9] true [n9]
-        val all_2F = test [n1, n2] false [n1] (* visit only first element. *)
-        val all_2F2 = test [n1, n9] false [n1]
-        val all_2F3 = test [n9, n1] false [n9, n1]
-        val all_2T = test [n9, n9] true [n9, n9]
+        val case_0 as () = test [] true [] (* true is returnd for nothing. *)
+        val case_1F as () = test [n1] false [n1]
+        val case_1T as () = test [n9] true [n9]
+        val case_2F as () = test [n1, n2] false [n1] (* visit only first element. *)
+        val case_2F2 as () = test [n1, n9] false [n1]
+        val case_2F3 as () = test [n9, n1] false [n9, n1]
+        val case_2T as () = test [n9, n9] true [n9, n9]
       in
         ()
       end
@@ -561,29 +561,29 @@ struct
         let
           val (s, f) = makeState ()
           val r = S.collate f (L2S arg1, L2S arg2)
-          val _ = assertEqualOrder expected r
-          val _ = assertEqualElem2List visited (!s)
+          val () = assertEqualOrder expected r
+          val () = assertEqualElem2List visited (!s)
         in
           ()
         end
   in
   fun collate001 () =
       let
-        val collate00 = test ([], []) EQUAL []
-        val collate01 = test ([], [n1]) LESS []
-        val collate10 = test ([n1], [n0]) GREATER [(n1, n0)]
-        val collate11L = test ([n1], [n2]) LESS [(n1, n2)]
-        val collate11E = test ([n1], [n1]) EQUAL [(n1, n1)]
-        val collate11G = test ([n2], [n1]) GREATER [(n2, n1)]
-        val collate12L = test ([n1], [n1, n2]) LESS [(n1, n1)]
-        val collate12G = test ([n2], [n1, n2]) GREATER [(n2, n1)]
-        val collate21L = test ([n1, n2], [n2]) LESS [(n1, n2)]
-        val collate21G = test ([n1, n2], [n1]) GREATER [(n1, n1)]
-        val collate22L1 = test ([n2, n1], [n3, n1]) LESS [(n2, n3)]
-        val collate22L2 = test ([n1, n2], [n1, n3]) LESS [(n1, n1), (n2, n3)]
-        val collate22E = test ([n1, n2], [n1, n2]) EQUAL [(n1, n1), (n2, n2)]
-        val collate22G1 = test ([n3, n1], [n2, n1]) GREATER [(n3, n2)]
-        val collate22G2 = test ([n1, n3], [n1, n2]) GREATER [(n1, n1), (n3, n2)]
+        val case00 as () = test ([], []) EQUAL []
+        val case01 as () = test ([], [n1]) LESS []
+        val case10 as () = test ([n1], [n0]) GREATER [(n1, n0)]
+        val case11L as () = test ([n1], [n2]) LESS [(n1, n2)]
+        val case11E as () = test ([n1], [n1]) EQUAL [(n1, n1)]
+        val case11G as () = test ([n2], [n1]) GREATER [(n2, n1)]
+        val case12L as () = test ([n1], [n1, n2]) LESS [(n1, n1)]
+        val case12G as () = test ([n2], [n1, n2]) GREATER [(n2, n1)]
+        val case21L as () = test ([n1, n2], [n2]) LESS [(n1, n2)]
+        val case21G as () = test ([n1, n2], [n1]) GREATER [(n1, n1)]
+        val case22L1 as () = test ([n2, n1], [n3, n1]) LESS [(n2, n3)]
+        val case22L2 as () = test ([n1, n2], [n1, n3]) LESS [(n1, n1), (n2, n3)]
+        val case22E as () = test ([n1, n2], [n1, n2]) EQUAL [(n1, n1), (n2, n2)]
+        val case22G1 as () = test ([n3, n1], [n2, n1]) GREATER [(n3, n2)]
+        val case22G2 as () = test ([n1, n3], [n1, n2]) GREATER [(n1, n1), (n3, n2)]
       in
         ()
       end

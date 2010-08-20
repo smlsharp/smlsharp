@@ -3,6 +3,7 @@
  * summarized information useful for the document generator.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: SUMMARIZER.sig,v 1.3 2004/11/06 16:15:03 kiyoshiy Exp $
  *)
 signature SUMMARIZER =

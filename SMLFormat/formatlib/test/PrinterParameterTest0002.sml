@@ -8,6 +8,9 @@
  * <tr><td>SpaceString0001</td><td>&nbsp;</td></tr>
  * <tr><td>SpaceString0002</td><td>&amp;nbsp;</td></tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure PrinterParameterTest0002 =
 struct

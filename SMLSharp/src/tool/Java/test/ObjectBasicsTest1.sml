@@ -2,6 +2,8 @@ use "./ObjectBasicsTestee1.sml";
 
 (**
  * TestCases for basic operations on Java object.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure ObjectBasicsTest1 =
 struct

@@ -9,7 +9,7 @@ sig
 
   include SEQUENCE
 
-  type array
+  eqtype array
   type vector
   sharing type array = sequence
 

@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Summarizer.sml,v 1.3 2004/11/06 16:15:03 kiyoshiy Exp $
  *)
 structure Summarizer : SUMMARIZER =

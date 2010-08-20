@@ -335,4 +335,7 @@ val SMLSharpCommandLine_executableImageName : unit -> string option
 val DynamicBind_importSymbol : string -> unit ptr
 val DynamicBind_exportSymbol : string * unit ptr -> unit
 
+val IEEEReal_setRoundingMode : int -> unit
+val IEEEReal_getRoundingMode : unit -> int
+
 end

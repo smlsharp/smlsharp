@@ -1,6 +1,7 @@
 (**
  * base of implementations of the MONO_ARRAY signature.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MonoArrayBase.sml,v 1.7 2007/12/19 02:00:56 kiyoshiy Exp $
  *)
 functor MonoArrayBase

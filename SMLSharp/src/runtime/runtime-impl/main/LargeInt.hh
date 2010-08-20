@@ -171,7 +171,10 @@ class LargeInt
 
     static int log_2(largeInt x)
     {
-        return mpz_sizeinbase(x, 2);
+        /* mpz_sizeinbase returns the bit-width required to represent x.
+         * It is log2(x) + 1.
+         */
+        return mpz_sizeinbase(x, 2) - 1;
     }
 
     static void orb(largeInt result, largeInt x, largeInt y)

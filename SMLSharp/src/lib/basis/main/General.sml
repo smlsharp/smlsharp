@@ -1,6 +1,7 @@
 (**
  * General structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: General.sml,v 1.9 2009/06/18 07:10:49 katsu Exp $
  *)
 structure General :> GENERAL =

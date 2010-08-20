@@ -1,6 +1,7 @@
 (**
  *  This module defines types which represents format expressions.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: FormatExpressionTypes.sml,v 1.1 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 structure FormatExpressionTypes =

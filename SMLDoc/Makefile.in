@@ -12,8 +12,8 @@ VPATH = @SMLDOCDIR@
 
 SMLSHARP = smlsharp
 
-CONFIG_FILES = $(srcdir)/src/mlton/preludes.mlb.in \
-               $(srcdir)/src/main/sources.sml.in
+CONFIG_FILES = 
+
 
 LEXFILES =  $(srcdir)/src/main/ML.lex \
             $(srcdir)/src/main/ParamPattern.lex \

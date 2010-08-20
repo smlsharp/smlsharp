@@ -1,6 +1,7 @@
 (**
- * 
+ * Real32 structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Real32.sml,v 1.2 2007/11/05 02:01:30 kiyoshiy Exp $
  *)
 local

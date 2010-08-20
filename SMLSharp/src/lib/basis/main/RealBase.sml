@@ -1,6 +1,7 @@
 (**
  * generator of Real structures.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Real64.sml,v 1.6 2008/01/16 08:17:46 kiyoshiy Exp $
  *)
 functor RealBase

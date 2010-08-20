@@ -1,7 +1,9 @@
 (**
  *  This module provides a formatter environment consisting of entries for
  * basic types.
+ *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: BasicFormattersEnv.sml,v 1.3 2006/02/07 12:49:33 kiyoshiy Exp $
  *)
 structure BasicFormattersEnv =

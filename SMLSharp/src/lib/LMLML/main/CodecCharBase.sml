@@ -1,3 +1,7 @@
+(**
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
 functor CodecCharBase(P : PRIM_CODEC) : MULTI_BYTE_CHAR =
 struct
 

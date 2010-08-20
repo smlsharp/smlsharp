@@ -1,3 +1,7 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
 use "./FORMAT_EXPRESSION.sig";
 use "./FormatExpressionTypes_SMLSharp.sml";
 use "./FormatExpression.sml";

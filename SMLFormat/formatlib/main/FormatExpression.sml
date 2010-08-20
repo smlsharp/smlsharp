@@ -2,6 +2,7 @@
  *  This module defines types which represents format expressions and operators
  * on them.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: FormatExpression.sml,v 1.4 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 structure FormatExpression : FORMAT_EXPRESSION =

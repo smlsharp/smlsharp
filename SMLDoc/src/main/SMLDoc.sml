@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: SMLDoc.sml,v 1.6 2007/03/05 03:31:23 kiyoshiy Exp $
  *)
 structure SMLDoc : SMLDOC =

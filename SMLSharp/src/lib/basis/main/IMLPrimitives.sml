@@ -1,6 +1,7 @@
 (**
  * This structure defines IML primitives to test our Basis implementation on
  * the SML/NJ.
+ * @copyright 2010, Tohoku University.
  *)
 structure IMLPrimitives =
 struct

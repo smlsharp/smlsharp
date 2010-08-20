@@ -52,6 +52,7 @@ in
 (**
  * fundamental functions to access EUCJP encoded characters.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: EUCJPCodec.sml,v 1.1.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure EUCJPCodec :> CODEC =

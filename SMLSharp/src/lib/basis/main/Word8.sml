@@ -1,6 +1,7 @@
 (**
  * Word8 structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Word8.sml,v 1.6 2007/08/09 02:38:20 kiyoshiy Exp $
  *)
 structure Word8 =

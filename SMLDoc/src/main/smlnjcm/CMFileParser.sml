@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CMFileParser.sml,v 1.4 2007/09/19 05:28:55 matsu Exp $
  *)
 structure CMFileParser : CMFILE_PARSER =

@@ -8,6 +8,9 @@
  * <tr><td>NewlineString0001</td><td>\n</td></tr>
  * <tr><td>NewlineString0002</td><td>&lt;BR&gt;</td></tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure PrinterParameterTest0001 =
 struct

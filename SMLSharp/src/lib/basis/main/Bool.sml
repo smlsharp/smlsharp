@@ -1,6 +1,7 @@
 (**
  * Bool structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Bool.sml,v 1.5 2005/05/14 15:03:39 kiyoshiy Exp $
  *)
 structure Bool :> BOOL =

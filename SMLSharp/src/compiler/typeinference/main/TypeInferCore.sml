@@ -82,7 +82,10 @@ in
 
   fun evalRawty (basis : TIC.basis) rawty =
     case rawty of
-      A.TYID ({name=string,eq}, loc) =>
+        (* Since this is a wild type annotation, we use infinite lambda
+           depth here *)
+        A.TYWILD loc => T.newtyWithLambdaDepth (T.infiniteDepth, T.univKind)
+      | A.TYID ({name=string,eq}, loc) =>
         (case TIC.lookupUtvarInBasis (basis, string) of
            NONE =>
              (E.enqueueError(loc, E.NotBoundTyvar{tyvar = string}); T.ERRORty)
@@ -4010,7 +4013,14 @@ in
                       end)
                  (SEnv.empty, nil)
                  tyvars
+               val newBasis = TIC.overrideBasisWithUtvarEnv(basis, utvarEnv)
+(*
+  The following should be rejected:
+   fun 'a f x = let datatype foo = A of 'a in A end
+  For this, we need to flush the utvarEnv.
+
                val newBasis = TIC.extendBasisWithUtvarEnv(basis, utvarEnv)
+*)
                val resultTy =
                  T.RAWty
                  {tyCon = tyCon, args = map T.TYVARty argTyvarStateRefs}
@@ -4281,7 +4291,7 @@ in
         foldr (fn ({tyCon = {id, ...}, ...}, s) => TyConID.Set.add(s, id))
         TyConID.Set.empty
         dataTyInfos
-      val datacons = 
+      val datacons =
         (map
          (typeinfConbind
             lambdaDepth

@@ -41,6 +41,10 @@
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_DLFCN_H)
 #include <dlfcn.h>
 #endif /* HAVE_DLFCN_H */
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_FENV_H)
+#include <fenv.h>
+#endif /* HAVE_FENV_H */
+
 #ifdef MINGW32
 #include <windows.h>
 #undef OBJ_BITMAP
@@ -139,6 +143,22 @@ float nextafter(float x, float y)
 	sml_fatal(0, "nextafterf is not implemented");
 }
 #endif /* HAVE_NEXTAFTERF */
+
+#ifndef HAVE_FESETROUND
+int fesetround(int x)
+{
+	/* ToDo: stub */
+	sml_fatal(0, "fesetround is not implemented");
+}
+#endif /* HAVE_FESETROUND */
+
+#ifndef HAVE_FEGETROUND
+int fegetround()
+{
+	/* ToDo: stub */
+	sml_fatal(0, "fegetround is not implemented");
+}
+#endif /* HAVE_FEGETROUND */
 
 #if HAVE_DECL_FPCLASSIFY
 #define HAVE_FPCLASSIFY 1
@@ -882,11 +902,13 @@ prim_Date_mkTime(int sec, int min, int hour, int mday, int month, int year,
 	return mktime(&tm);
 }
 
-void
+int
 prim_Date_localTime(int time, int *ret)
 {
 	time_t t = time;
 	struct tm *tm = localtime(&t);
+	if (tm == NULL)
+		return -1;
 	ret[0] = tm->tm_sec;
 	ret[1] = tm->tm_min;
 	ret[2] = tm->tm_hour;
@@ -896,13 +918,16 @@ prim_Date_localTime(int time, int *ret)
 	ret[6] = tm->tm_wday;
 	ret[7] = tm->tm_yday;
 	ret[8] = tm->tm_isdst;
+	return 0;
 }
 
-void
+int
 prim_Date_gmTime(int time, int *ret)
 {
 	time_t t = time;
 	struct tm *tm = gmtime(&t);
+	if (tm == NULL)
+		return -1;
 	ret[0] = tm->tm_sec;
 	ret[1] = tm->tm_min;
 	ret[2] = tm->tm_hour;
@@ -912,6 +937,7 @@ prim_Date_gmTime(int time, int *ret)
 	ret[6] = tm->tm_wday;
 	ret[7] = tm->tm_yday;
 	ret[8] = tm->tm_isdst;
+	return 0;
 }
 
 double
@@ -1027,6 +1053,22 @@ prim_cconst_int(const char *name)
 		return SEEK_SET;
 	if (strcmp(name, "SEEK_CUR") == 0)
 		return SEEK_CUR;
+#ifdef FE_TONEAREST
+	if (strcmp(name, "FE_TONEAREST") == 0)
+		return FE_TONEAREST;
+#endif /* FE_TONEAREST */
+#ifdef FE_DOWNWARD
+	if (strcmp(name, "FE_DOWNWARD") == 0)
+		return FE_DOWNWARD;
+#endif /* FE_DOWNWARD */
+#ifdef FE_UPWARD
+	if (strcmp(name, "FE_UPWARD") == 0)
+		return FE_UPWARD;
+#endif /* FE_UPWARD */
+#ifdef FE_TOWARDZERO
+	if (strcmp(name, "FE_TOWARDZERO") == 0)
+		return FE_TOWARDZERO;
+#endif /* FE_TOWARDZERO */
 	return 0;
 }
 
@@ -1952,6 +1994,8 @@ const struct sml_prim_tabent sml_runtime_primitives[] = {
 	{"ldexpf", (primfn*)ldexpf},
 	{"frexpf", (primfn*)frexpf},
 	{"modff", (primfn*)modff},
+	{"fesetround", (primfn*)fesetround},
+	{"fegetround", (primfn*)fegetround},
 
 	/* POSIX */
 	{"sleep", (primfn*)sleep},

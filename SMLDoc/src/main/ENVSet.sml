@@ -1,6 +1,7 @@
 (**
  * environment with module hierarchy.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ENVSet.sml,v 1.3 2004/10/20 03:18:39 kiyoshiy Exp $
  *)
 structure ENVSet =

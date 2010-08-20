@@ -1,5 +1,9 @@
 use "./DataTypes1Testee.sml";
 
+(**
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
 structure DataTypes1Tester =
 struct
 
