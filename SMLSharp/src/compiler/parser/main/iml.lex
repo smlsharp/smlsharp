@@ -19,6 +19,8 @@ type lexresult= (svalue,Loc.pos) token
 type pos = Loc.pos
 exception Error
 
+datatype stringType = STRING | CHAR | NOSTR
+
 type arg =
 {
   fileName : string,
@@ -26,8 +28,8 @@ type arg =
   errorPrinter : (string * pos * pos) -> unit,
   stringBuf : string list ref,
   stringStart : pos ref,
-  stringType : bool ref,
-  comLevel : int ref,
+  stringType : stringType ref,
+  commentStart : Loc.pos list ref,
   anyErrors : bool ref,
   lineMap : {lineCount : int, beginPos : int} list ref,
   lineCount : int ref,
@@ -108,7 +110,21 @@ fun strToLoc (text, pos, arg) =
 fun addChar (buffer, string) = buffer := String.str string :: (!buffer)
 fun makeString (buffer) = concat (rev (!buffer)) before buffer := nil
 
-val eof = fn arg => T.EOF (Loc.nopos, Loc.nopos)
+fun eof ({commentStart, stringStart, stringType, anyErrors, errorPrinter,
+          ...}:arg) =
+    (case !commentStart of
+       nil => ()
+     | pos::_ => (errorPrinter ("unclosed comment", pos, Loc.nopos);
+                  anyErrors := true);
+     case !stringType of
+       NOSTR => ()
+     | STRING => (errorPrinter ("unclosed string", !stringStart, Loc.nopos);
+                  anyErrors := true)
+     | CHAR => (errorPrinter ("unclosed character constant",
+                              !stringStart, Loc.nopos);
+                anyErrors := true);
+     T.EOF (Loc.nopos, Loc.nopos))
+
 local
   fun cvtnum scanner (s, i, loc) =
       let val (v, remain) = valOf(scanner SS.getc (SS.triml i (SS.full s)))
@@ -140,26 +156,12 @@ fun isSuffix char string =
         stringBuf,
         stringStart,
         stringType,
-        comLevel,
+        commentStart,
         anyErrors,
         lineMap,
         lineCount,
         charCount,
         initialCharCount
-      } :
-      {
-        fileName : string, 
-        isPrelude : bool,
-        errorPrinter : (string * Loc.pos * Loc.pos) -> unit,
-        stringBuf : string list ref,
-        stringStart : Loc.pos ref,
-        stringType : bool ref,
-        comLevel : int ref,
-        anyErrors : bool ref,
-        lineMap : {lineCount : int, beginPos : int} list ref,
-        lineCount : int ref,
-        charCount : int ref,
-        initialCharCount : int
       });
 
 quote="'";
@@ -306,18 +308,20 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>\" => (
                  stringBuf := nil; 
                  stringStart := left(yypos, arg);
-                 stringType := true; 
+                 stringType := STRING;
                  YYBEGIN S;
                  continue()
                );
 <INITIAL>\#\" => (
                     stringBuf := nil; 
                     stringStart := left(yypos, arg);
-                    stringType := false; 
+                    stringType := CHAR;
                     YYBEGIN S;
                     continue()
                   );
-<INITIAL>"(*" => (YYBEGIN A; comLevel := 1; continue());
+<INITIAL>"(*" => (YYBEGIN A;
+                  commentStart := left(yypos, arg) :: !commentStart;
+                  continue());
 <INITIAL>"*)" => (
                    errorPrinter
                    (
@@ -344,18 +348,21 @@ hexnum=[0-9a-fA-F]+;
                 anyErrors := true;
                 continue()
               );
-<A>"(*"  => (comLevel := !comLevel + 1; continue());
+<A>"(*"  => (commentStart := left(yypos, arg) :: !commentStart;
+             continue());
 <A>{eol} => (newLine(yypos, yytext, arg); continue ());
 <A>"*)" => (
-             comLevel := !comLevel - 1;
-             if !comLevel=0 then YYBEGIN INITIAL else ();
-             continue()
+            case !commentStart of
+              _::nil => (commentStart := nil; YYBEGIN INITIAL)
+            | _::t => commentStart := t
+            | nil => raise Control.Bug "unmatched close comment";
+            continue()
            );
 <A>. => (continue());
 <S>\" => (
            let
              val s = makeString stringBuf
-             val s = if size s <> 1 andalso not(!stringType)
+             val s = if size s <> 1 andalso !stringType = CHAR
                      then
                        (
                          errorPrinter
@@ -371,14 +378,18 @@ hexnum=[0-9a-fA-F]+;
              val t = (s, !stringStart, right(yypos, 1, arg))
            in
              YYBEGIN INITIAL;
-             if !stringType
-             then T.STRING t else T.CHAR t
+             case !stringType before stringType := NOSTR of
+               STRING => T.STRING t
+             | CHAR => T.CHAR t
+             | NOSTR => raise Control.Bug "close string"
+
            end
          );
 <S>{eol} => (
               errorPrinter
               ("unclosed string", left(yypos, arg), right(yypos, 1, arg));
               anyErrors := true;
+              stringType := NOSTR;
               newLine(yypos, yytext, arg); 
               YYBEGIN INITIAL;
               T.STRING
@@ -480,6 +491,7 @@ hexnum=[0-9a-fA-F]+;
            errorPrinter
            ("unclosed string", left(yypos, arg), right(yypos, 1, arg));
            anyErrors := true;
+           stringType := NOSTR;
            YYBEGIN INITIAL;
            T.STRING
            (makeString stringBuf, !stringStart, right(yypos, 1, arg))

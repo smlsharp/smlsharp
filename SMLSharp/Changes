@@ -1,3 +1,17 @@
+SML# version 0.55 (released on 2010-09-03)
+
+1. Overview
+
+This is a bug-fix release of SML# 0.55.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+- fixed a bug of parsing unclosed comments and unclosed string
+ literals. They now causes a parse error.
+
+-----------------------------------------------------------------------------
 SML# version 0.54 (released on 2010-08-20)
 
 1. Overview
