@@ -1,22 +1,26 @@
 Group is
-        $/basis.cm
-        ../../name/sources.cm
-        ../../control/sources.cm
-        ../../types/sources.cm
-        ../../rbucalc/sources.cm
-        ../../yaanormal/sources.cm
-        ../../systemdef/sources.cm
-        ../../primitive/sources.cm
-        ../../absyn/sources.cm
-        ../../constantterm/sources.cm
-        ../../pickle/sources.cm
 
-        Counters.sml
-        ANORMALIZATION.sig
-        ANormalization.sml
-        ANORMALOPTIMIZATION.sig
-        ANormalOptimization.sml
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../typecontext/sources.cm
-        ../../env/sources.cm
-        DeclarationRecovery.sml
+	../../../primitives/compiler/constants.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../pickle/sources.cm
+	../../primitive/sources.cm
+	../../types/sources.cm
+	../../typecontext/sources.cm
+	../../absyn/sources.cm
+	../../constantterm/sources.cm
+	../../rbucalc/sources.cm
+	../../yaanormal/sources.cm
+
+	Counters.sml
+	ANORMALIZATION.sig
+	ANormalization.sml
+	ANORMALOPTIMIZATION.sig
+	ANormalOptimization.sml
+	DeclarationRecovery.sml

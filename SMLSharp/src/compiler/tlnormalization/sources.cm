@@ -1,5 +1,4 @@
 Group
-        structure TLNormalization
+	structure TLNormalization
 is
 	main/module.cm
-

@@ -1,3 +1,22 @@
+SML# version 0.56 (released on 2010-09-17)
+
+1. Overview
+
+This is a patch release of SML# 0.56.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+- refined several Makefiles and .cm files.
+
+[SMLDoc]
+- fixed errors in Makefile.
+
+[mlb2use]
+- added support for SML/NJ .cm files.
+
+-----------------------------------------------------------------------------
 SML# version 0.55 (released on 2010-09-03)
 
 1. Overview

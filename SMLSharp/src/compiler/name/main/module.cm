@@ -1,23 +1,23 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../../../../SMLFormat/smlformatlib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../../primitives/compiler/constants.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../pickle/sources.cm 
+	../../util/sources.cm
 
-        ../../control/sources.cm
-        ../../env/sources.cm
-        ../../pickle/sources.cm 
-        ../../util/sources.cm
-        ../../../primitives/constants.cm
-
-        GLOBAL_ID.sig
-        GlobalID.sml
-        LOCAL_ID.sig
-        LocalID.sml
-        PATH.sig
-        Path.sml
+	GLOBAL_ID.sig
+	GlobalID.sml
+	LOCAL_ID.sig
+	LocalID.sml
+	PATH.sig
+	Path.sml
+	NamePickler.sml
 	NameMap.ppg.sml
-        NameMapPickler.sml
-        NamePickler.sml
-
+	NameMapPickler.sml

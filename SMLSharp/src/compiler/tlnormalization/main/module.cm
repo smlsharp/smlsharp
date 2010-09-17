@@ -1,20 +1,17 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-	../../../../../SMLFormat/smlformatlib.cm
-	../../../../../smlnj-lib/Util/smlnj-lib.cm
-
-        ../../control/sources.cm
-        ../../env/sources.cm
+	../../control/sources.cm
+	../../env/sources.cm
 	../../name/sources.cm
-        ../../primitive/sources.cm
-        ../../types/sources.cm
-        ../../constantterm/sources.cm
-        ../../recordcalc/sources.cm
-        ../../typedlambda/sources.cm
+	../../primitive/sources.cm
+	../../constantterm/sources.cm
+	../../types/sources.cm
+	../../recordcalc/sources.cm
+	../../typedlambda/sources.cm
 
-        TLNORMALIZATION.sig
-        TLNormalization.sml
-
-
+	TLNORMALIZATION.sig
+	TLNormalization.sml

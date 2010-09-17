@@ -5,7 +5,10 @@
 Group
 is
 
+#if defined(NEW_CM)
 $/basis.cm
+#endif
+../../../../mlyacc/lib/ml-yacc-lib.cm
 
 FILE.sig
 File.sml
@@ -14,11 +17,15 @@ SourcePos.sml
 SOURCE.sig
 Source.sml
 
-$/ml-yacc-lib.cm
-mlb.grm
-mlb.lex
+mlb.grm.sig
+mlb.grm.sml
+mlb.lex.sml
+
+smlnjcm/sources.cm
 
 PathMap.sml
 MLBParser.sml
 
 MLB2Use.sml
+
+main.sml

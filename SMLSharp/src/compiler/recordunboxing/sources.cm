@@ -1,4 +1,4 @@
 Group
-        structure RecordUnboxing
+	structure RecordUnboxing
 is
 	main/module.cm

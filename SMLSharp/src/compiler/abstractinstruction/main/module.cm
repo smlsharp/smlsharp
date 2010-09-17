@@ -1,14 +1,18 @@
 Group is
-        $/basis.cm
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../control/sources.cm
-        ../../util/sources.cm
-        ../../name/sources.cm
-        ../../env/sources.cm
-        ../../systemdef/sources.cm
-        ../../anormal/sources.cm
-        ../../targetplatform/sources.cm
 
-        AbstractInstruction.ppg.sml
-        AbstractInstructionUtils.sml
-        AbstractInstructionFormatter.sml
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../systemdef/sources.cm
+	../../name/sources.cm
+	../../util/sources.cm
+	../../targetplatform/sources.cm
+	../../anormal/sources.cm
+
+	AbstractInstruction.ppg.sml
+	AbstractInstructionUtils.sml
+	AbstractInstructionFormatter.sml

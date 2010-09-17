@@ -1,6 +1,6 @@
 Group
-        structure YAANormalization
-        structure YAANormalOptimization
-        structure DeclarationRecovery
+	structure YAANormalization
+	structure YAANormalOptimization
+	structure DeclarationRecovery
 is
-        main/module.cm
+	main/module.cm

@@ -1,31 +1,25 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../util/sources.cm
+	../../pickle/sources.cm
+	../../types/sources.cm
+	../../absyn/sources.cm
+	../../constantterm/sources.cm
+	../../patterncalc/sources.cm
 
-        ../../absyn/sources.cm
-        ../../parser/sources.cm
-        ../../control/sources.cm
-        ../../parser/sources.cm
-        ../../util/sources.cm
-        ../../pickle/sources.cm
-        ../../types/sources.cm
-        ../../env/sources.cm
-        ../../name/sources.cm
-        ../../patterncalc/sources.cm
-        ../../systemdef/sources.cm
-        ../../primitive/sources.cm
-        ../../constantterm/sources.cm
-(*
-OHORI: why MVcalc is needed?
-	../../multiplevaluecalc/sources.cm
-*)
-
-        TYPEDFLATCALC.sig
-        TypedFlatCalc.ppg.sml
-        TypedFlatCalcUtils.sml
-        PRINTTFP.sig
-        PrintTFP.sml
-        TypedFlatCalcPickler.sml
+	TYPEDFLATCALC.sig
+	TypedFlatCalc.ppg.sml
+	TypedFlatCalcUtils.sml
+	PRINTTFP.sig
+	PrintTFP.sml
+	TypedFlatCalcPickler.sml

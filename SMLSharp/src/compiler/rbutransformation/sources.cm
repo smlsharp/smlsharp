@@ -1,4 +1,4 @@
 Group
-        structure RBUTransformation
+	structure RBUTransformation
 is
 	main/module.cm

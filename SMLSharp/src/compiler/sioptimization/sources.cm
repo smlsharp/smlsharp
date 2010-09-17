@@ -1,4 +1,4 @@
 Group
-        structure Reallocater
+	structure Reallocater
 is
-        main/module.cm
+	main/module.cm

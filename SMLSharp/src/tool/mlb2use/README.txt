@@ -1,6 +1,7 @@
 mlb2use
 
  mlb2use is a utility to generate 'use' directives from MLton mlb files.
+It also accpets a very limited subset of SML/NJ cm files as MLton accepts.
 
 @author YAMATODANI Kiyoshi
 @version $Id: README.txt,v 1.1 2007/07/29 08:12:03 kiyoshiy Exp $
@@ -15,7 +16,7 @@ Build.
 -----
 Usage.
 
- 'mlb2use' command takes two arguments. A path-map file and a mlb file.
+ 'mlb2use' command takes two arguments. A path-map file and a mlb or cm file.
 
   $ cat > smlsharp-path-map.txt
   SML_LIB ${SML_LIB}
@@ -30,7 +31,7 @@ Usage.
         > smlsharp.use
 
 This generates a SML source file 'smlsharp.use'.
-It consists of 'use' directives to load source files which are referred from the argument mlb file.
+It consists of 'use' directives to load source files which are referred from the argument file.
 
 Specify '-h' to see options.
 

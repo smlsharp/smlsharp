@@ -1,15 +1,15 @@
 Group is
-        
-      $/basis.cm
-        
-      ../../../../../SMLFormat/smlformatlib.cm
-      ../../../../../smlnj-lib/Util/smlnj-lib.cm
 
-      ../../recordcalc/sources.cm
-      ../../control/sources.cm
-      ../../env/sources.cm
-      ../../types/sources.cm
-      ../../name/sources.cm
-      ../../primitive/sources.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-      OverloadCompile.sml
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../types/sources.cm
+	../../primitive/sources.cm
+	../../recordcalc/sources.cm
+
+	OverloadCompile.sml

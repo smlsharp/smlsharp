@@ -1,9 +1,9 @@
 Group
-        structure TypeInferencer
-        structure TypeinfBase
+	structure TypeInferencer
+	structure TypeinfBase
 	structure Unify
 	structure TypeInferenceUtils
-        structure UncurryFundecl
+	structure UncurryFundecl
 	structure SigUtils
 	structure TypeInferenceError
 	structure TypeInstantiationTerm

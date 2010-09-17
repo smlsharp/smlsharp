@@ -1,7 +1,7 @@
 Group
-        structure UniqueIDAllocation
+	structure UniqueIDAllocation
 	structure UniqueIdAllocationContext
-        structure UniqueIdAllocationPickler
+	structure UniqueIdAllocationPickler
 	structure FunctorApplyUtils
 	structure ExternalIdAllocator
 	structure UniqueIdAllocationUtils

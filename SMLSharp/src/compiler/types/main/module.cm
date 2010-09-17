@@ -1,49 +1,29 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../../../../SMLFormat/smlformatlib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../pickle/sources.cm
+	../../absyn/sources.cm
+	../../util/sources.cm
+	../../primitive/primitive.cm
 
-        ../../util/sources.cm
-        ../../env/sources.cm
-(*
-        ../../format/sources.cm
-*)
-        ../../control/sources.cm
-        ../../name/sources.cm
-        ../../pickle/sources.cm
-        ../../absyn/sources.cm
-        ../../systemdef/sources.cm
-
-        ../../usererror/sources.cm
-
-        ../../primitive/primitive.cm
-
-        TYPE_FORMATTER.sig
-        TypeFormatter.sml
-        TYPES.sig
-        Types.ppg.sml
-        TYPE_PARSER.sig
-        TypeParser.sml
-        TYPESUTILS.sig
-        TypesUtils.sml
-        TYPE_TRANSDUCER.sig
-        TypeTransducer.sml
-        vars.sml
-        TypesPickler.sml        
-(*
-        Fixity.sml
-        NameMap.ppg.sml
-        NameMapPickler.sml
-*)
+	TYPES.sig
+	Types.ppg.sml
+	TypesPickler.sml        
 	VarIDContext.ppg.sml
 	VarIDContextPickler.sml
-
+	TYPE_FORMATTER.sig
+	TypeFormatter.sml
+	TYPE_TRANSDUCER.sig
+	TypeTransducer.sml
+	vars.sml
+	TypesUtils.sml
 	RuntimeTypes.ppg.sml
-(*
-	ConstantTerm.ppg.sml
-	ConstantTermPickler.sml
-        PREDEFINED_TYPES.sig
-        PredefinedTypes.sml
-*)
+	TypeParser.sml

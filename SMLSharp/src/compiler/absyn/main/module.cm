@@ -1,18 +1,19 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-       ../../../../../SMLFormat/smlformatlib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../util/sources.cm
+	../../name/sources.cm
+	../../pickle/sources.cm
 
-       ../../util/sources.cm
-       ../../env/sources.cm
-       ../../control/sources.cm
-       ../../name/sources.cm
-       ../../pickle/sources.cm
-
-       Fixity.sml
-       ABSYN.sig
-       Absyn.ppg.sml
-       ABSYN_FORMATTER.sig
-       AbsynFormatter.sml
-       AbsynPickler.sml
+	Fixity.sml
+	ABSYN.sig
+	Absyn.ppg.sml
+	ABSYN_FORMATTER.sig
+	AbsynFormatter.sml
+	AbsynPickler.sml

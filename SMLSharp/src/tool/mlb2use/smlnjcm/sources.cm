@@ -1,0 +1,18 @@
+Group is
+
+#if defined(NEW_CM)
+        $/basis.cm
+#endif
+        ../../../../../mlyacc/lib/ml-yacc-lib.cm
+
+        ParserUtil.sml
+        CMSemantic.sml
+        FileID.sml
+        SourcePath.sml
+
+        CM.grm.sig
+        CM.grm.sml
+        CM.lex.sml
+
+        CMFILE_PARSER.sig
+        CMFileParser.sml

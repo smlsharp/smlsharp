@@ -1,56 +1,53 @@
 Group is
 
-      $/basis.cm
-
-      ../../../configuration/sources.cm
-
-      ../../../instructions/sources.cm
-
-      ../../../primitives/constants.cm
-
-      ../../util/sources.cm
-
-      ../../systemdef/sources.cm
-      ../../control/sources.cm
-      ../../objectfile/sources.cm
-      ../../elf/sources.cm
-
-      ChannelTypes.sml
-      ChannelUtility.sml
-      FileChannel.sml
-      ByteListChannel.sml
-      ByteArrayChannel.sml
-      ByteVectorChannel.sml
-      TextIOChannel.sml
-      ServerSocketChannel.sml
-      ClientSocketChannel.sml
-#if defined(structure Posix)
-      UnixProcessChannel.sml
+#if defined(NEW_CM)
+	$/basis.cm
 #endif
 
-      SIGNAL_UTILITY.sig
+	../../../configuration/sources.cm
+	../../../instructions/compiler/sources.cm
+	../../../primitives/compiler/constants.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../util/sources.cm
+	../../objectfile/sources.cm
+	../../elf/sources.cm
+
+	ChannelTypes.sml
+	ChannelUtility.sml
+	FileChannel.sml
+	ByteListChannel.sml
+	ByteArrayChannel.sml
+	ByteVectorChannel.sml
+	TextIOChannel.sml
+
+	SIGNAL_UTILITY.sig
 #if defined(structure Signals)
-      SignalUtility.sml
+	SignalUtility.sml
 #else
-      SignalUtility_dummy.sml
-#endif
+	SignalUtility_dummy.sml
+#endif (* structure Signals *)
 
-      RuntimeProxyTypes.sml
-      RUNTIME_PROXY.sig
-#if defined(structure Posix)
-      UnixProcessRuntimeProxy.sml
-#endif
-      NetworkRuntimeProxy.sml
+	RuntimeProxyTypes.sml
+	RUNTIME_PROXY.sig
 
-      SessionTypes.sml
-      SESSION.sig
-      StandAloneSession.sml
-      InteractiveSession.sml
-      YAStandAloneSession.sml
-      YAStandAloneSessionNoLink.sml
-      YAInteractiveSession.sml
+#if defined(SMLNJ_VERSION)
+	ServerSocketChannel.sml
+	ClientSocketChannel.sml
+	NetworkRuntimeProxy.sml
 #if defined(structure Posix)
-      YAUnixProcessChannel.sml
-      YAUnixProcessRuntimeProxy.sml
-#endif
-      NativeStandAloneSession.sml
+	UnixProcessChannel.sml
+	UnixProcessRuntimeProxy.sml
+	YAUnixProcessChannel.sml
+	YAUnixProcessRuntimeProxy.sml
+#endif (* structure Posix *)
+#endif (* SMLNJ_VERSION *)
+
+	SessionTypes.sml
+	SESSION.sig
+	StandAloneSession.sml
+	InteractiveSession.sml
+	YAStandAloneSession.sml
+	YAStandAloneSessionNoLink.sml
+	YAInteractiveSession.sml
+	NativeStandAloneSession.sml

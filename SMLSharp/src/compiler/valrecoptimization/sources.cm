@@ -1,5 +1,5 @@
 Group
-        structure VALREC_Optimizer
-        structure TransFundecl
+	structure VALREC_Optimizer
+	structure TransFundecl
 is
 	main/module.cm

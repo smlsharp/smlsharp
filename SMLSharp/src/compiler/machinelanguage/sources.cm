@@ -1,6 +1,6 @@
 Group
-        structure MachineLanguage
-        structure MachineLanguageFormatter
-        structure Linearize
+	structure MachineLanguage
+	structure MachineLanguageFormatter
+	structure Linearize
 is
-        main/module.cm
+	main/module.cm

@@ -1,25 +1,21 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-      ../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../symbolicinstructions/sources.cm
 
-        ../../control/sources.cm
-        ../../systemdef/sources.cm
-        ../../env/sources.cm
-        ../../symbolicinstructions/sources.cm
-        ../../name/sources.cm
-        ../../types/sources.cm
-        ../../util/sources.cm
-        ../../../instructions/compiler/sources.cm
-
-        CODEENV.sig
-        CodeEnv.sml
-        UseDef.sml
-        SubFunctions.sml
-        Rename.sml
-        Liveness.sml
-        Exception.sml
-        BasicBlock.sml  
-        STACK_REALLOCATION.sig  
-        StackReallocation.sml
+	SubFunctions.sml
+	Rename.sml
+	Exception.sml
+	BasicBlock.sml  
+	UseDef.sml
+	Liveness.sml
+	STACK_REALLOCATION.sig  
+	StackReallocation.sml

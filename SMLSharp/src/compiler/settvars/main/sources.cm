@@ -1,8 +1,0 @@
-Group is
-(*
-        ml-yacc-lib.cm
-*)
-        module.cm
-(*
-        main.sml
-*)

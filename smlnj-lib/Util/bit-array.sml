@@ -48,6 +48,7 @@ structure BitArray :> BIT_ARRAY =
          *)
           type elem = bool
           val maxLen = 8*Word8Array.maxLen
+              handle Overflow => Word8Array.maxLen
           datatype vector = BA of {nbits : int, bits : W8A.array}
       
           fun array (0,init) = BA{nbits=0,bits=W8A.array(0,0w0)}

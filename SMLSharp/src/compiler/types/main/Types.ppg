@@ -272,7 +272,7 @@ struct
 
   and btvEnv =
       (*%
-       * (* only for POLYty. general btvEnv formatter is defined later. *)
+       * (* dummy printer. general btvEnv formatter is defined later. *)
        * @format(btvKind imap)
        * imap:format_btvEnv_forPOLYty(btvKind)(btvEnv)
        * @format:btvKind({eqKind, recordKind})
@@ -282,15 +282,19 @@ struct
 
   and polyTy = (* for pretty printing *)
       (*%
-       * @format({boundtvars, body})
-       * "[" !N0{ boundtvars()(btvEnv) "." +1 body()(btvEnv) "]" }
+       * (*. general btvEnv formatter is defined later. *)
+       * @format({boundtvars:btvKind imap, body})
+       * "[" !N0{ imap:format_btvEnv_forPOLYty(btvKind)(btvEnv) "."
+       *          +1 body()(btvEnv) "]" }
+       * @format:btvKind({eqKind, recordKind})
+       * recordKind()(btvEnv)
        *)
       (**
        * boundtvars = {..., btvid -> btvKind as {recordKind, eqKind}, ...}
        * btvid is the id of boundTvars used as i in BOUNDVARty(i)
        *)
       {
-        boundtvars : btvEnv,
+        boundtvars : {eqKind: eqKind, recordKind: recordKind} IEnv.map,
         body : ty
       }
 

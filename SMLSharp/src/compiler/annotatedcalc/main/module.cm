@@ -1,16 +1,18 @@
 Group is
-        $/basis.cm
-        ../../../../../SMLFormat/smlformatlib.cm
 
-        ../../name/sources.cm
-        ../../control/sources.cm
-        ../../absyn/sources.cm
-        ../../annotatedtypes/sources.cm
-        ../../systemdef/sources.cm
-        ../../util/sources.cm
-        ../../types/sources.cm
-        ../../constantterm/sources.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        AnnotatedCalc.ppg.sml
-        ANNOTATEDCALCFORMATTER.sig
-        AnnotatedCalcFormatter.sml
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../name/sources.cm
+	../../util/sources.cm
+	../../absyn/sources.cm
+	../../constantterm/sources.cm
+	../../annotatedtypes/sources.cm
+
+	AnnotatedCalc.ppg.sml
+	ANNOTATEDCALCFORMATTER.sig
+	AnnotatedCalcFormatter.sml

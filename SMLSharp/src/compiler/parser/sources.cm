@@ -1,8 +1,5 @@
 Group
-        signature PARSER
-        structure Parser
-(*
-	structure InterfaceParser
-*)
+	signature PARSER
+	structure Parser
 is
 	main/module.cm

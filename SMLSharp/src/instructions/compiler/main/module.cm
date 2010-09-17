@@ -1,33 +1,43 @@
 Group is
-$/basis.cm
-(*
+
 #if defined(NEW_CM)
-        $/basis_compat.cm
-#endif*)
-        ../../../compiler/systemdef/sources.cm
-        ../../../configuration/sources.cm
+	$/basis.cm
+#endif
 
-        PRIMITIVE_SERIALIZER.sig
-        PrimitiveSerializerLittleEndian.sml
-        PrimitiveSerializerBigEndian.sml
+	../../../compiler/systemdef/sources.cm
+	../../../configuration/sources.cm
 
-        BASIC_TYPE_SERIALIZER.sig
-        BasicTypeSerializerBase.sml
-#if defined(LITTLE_ENDIAN)
-        BasicTypeSerializer_ForLittleEndian.sml
-#elif defined(BIG_ENDIAN)
-        BasicTypeSerializer_ForBigEndian.sml
+	Instructions.sml
+	EXECUTABLE.sig
+	Executable.sml
+	IEEE754.sml
+
+	PRIMITIVE_SERIALIZER.sig
+	PrimitiveSerializerBigEndian.sml
+	PrimitiveSerializerLittleEndian.sml
+
+	BASIC_TYPE_SERIALIZER.sig
+	BasicTypeSerializerBase.sml
+	BasicTypeSerializerForNetworkByteOrder.sml
+
+#if defined(SMLNJ_VERSION)
+#if defined(BIG_ENDIAN)
+	BasicTypeSerializer_ForBigEndian.sml
+#elif defined(LITTLE_ENDIAN)
+	BasicTypeSerializer_ForLittleEndian.sml
 #else
 #error neither 'LITTLE_ENDIAN' nor 'BIG_ENDIAN' is defined.
-#endif
-        BasicTypeSerializerForNetworkByteOrder.sml
+#endif (* BIG_ENDIAN *)
+#else
+#if defined(BIG_ENDIAN)
+	BasicTypeSerializer_ForBigEndian.sml
+#else
+	BasicTypeSerializer_ForLittleEndian.sml
+#endif (* BIG_ENDIAN *)
+#endif (* SMLNJ_VERSION *)
 
-        Instructions.sml
-        INSTRUCTION_SERIALIZER.sig
+	INSTRUCTION_SERIALIZER.sig
+	InstructionSerializer.sml
 
-        InstructionSerializer.sml
-        EXECUTABLE.sig
-        Executable.sml
-        EXECUTABLE_SERIALIZER.sig
-        ExecutableSerializer.sml
-        IEEE754.sml
+	EXECUTABLE_SERIALIZER.sig
+	ExecutableSerializer.sml

@@ -1,39 +1,27 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+
+	SystemDefTypes.sml
+	SYSTEMDEF.sig
 
 (* NOTE: SML/NJ 110.52 (or earlier working versions) tells a lie
  *       that PowerPC is LITTLE_ENDIAN.
  *       Anyway, we should obey SML/NJ about endian here as
  *       instructions/compiler/main/sources.cm do.
  *)
-#if defined(LITTLE_ENDIAN)
-        SystemDef_x86.sml
-#elif defined(BIG_ENDIAN)
-        SystemDef_Sparc.sml
+#if defined(BIG_ENDIAN)
+	SystemDef_Sparc.sml
 #else
-#error neither 'LITTLE_ENDIAN' nor 'BIG_ENDIAN' is defined.
+(* #elif defined(LITTLE_ENDIAN) *)
+	SystemDef_x86.sml
+(* #else *)
+(* #error neither 'LITTLE_ENDIAN' nor 'BIG_ENDIAN' is defined. *)
 #endif
 
-(*
-#if defined(NEW_CM)
-        BasicTypes.cm
-#else
-        BasicTypes.sml
-#endif
-#if defined(ARCH_X86)
-        SystemDef_x86.sml
-#elif defined(ARCH_SPARC)
-        SystemDef_Sparc.sml
-#else
-#error unsupported architecture
-#endif
-*)
-
-        BasicTypes.cm
-        SystemDefTypes.sml
-        SYSTEMDEF.sig
-
-        BasicTypeFormatters.sml
+	BasicTypes.sml
+	BasicTypeFormatters.sml

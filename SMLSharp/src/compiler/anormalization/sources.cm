@@ -1,4 +1,4 @@
 Group
-        structure ANormalization
+	structure ANormalization
 is
 	main/module.cm

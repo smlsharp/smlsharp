@@ -1,31 +1,19 @@
 Group is
-        $/basis.cm
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../control/sources.cm
-        ../../util/sources.cm
-        ../../env/sources.cm
-        ../../name/sources.cm
 
-        ../../targetplatform/sources.cm
-        ../../absyn/sources.cm
-        ../../abstractinstruction/sources.cm
-        ../../../vmgen/module.cm
-        ../../machinelanguage/sources.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-(*
-        ../../systemdef/sources.cm
-        ../../util/sources.cm
-        ../../../primitives/compiler/sources.cm
-        ../../symbolicinstructions/sources.cm
-        ../../abstractinstruction/sources.cm
-        ../../sigenerator/sources.cm
-        ../../anormal/sources.cm
-*)
-(*
-        ../../../primitives/compiler/sources.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../name/sources.cm
+	../../env/sources.cm
+	../../util/sources.cm
 	../../absyn/sources.cm
-*)
+	../../abstractinstruction/sources.cm
+	../../../vmgen/module.cm
+	../../machinelanguage/sources.cm
 
-        VMCODESELECTION.sig
-        VMCodeSelection.sml
-        VMCodeFormatter.sml
+	VMCODESELECTION.sig
+	VMCodeSelection.sml
+	VMCodeFormatter.sml

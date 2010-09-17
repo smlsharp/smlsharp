@@ -1,2 +1,38 @@
-Group is
+Group
+	structure ChannelTypes
+	structure ChannelUtility
+	structure ByteArrayChannel
+	structure ByteListChannel
+	structure ByteVectorChannel
+
+#if defined(SMLNJ_VERSION)
+	structure ServerSocketChannel
+	structure ClientSocketChannel
+	structure NetworkRuntimeProxy
+#if defined(structure UnixProcessChannel)
+	structure UnixProcessChannel
+	structure UnixProcessRuntimeProxy
+#endif (* structure UnixProcessChannel *)
+#if defined(structure YAUnixProcessChannel)
+	structure YAUnixProcessChannel
+	structure YAUnixProcessRuntimeProxy
+#endif (* structure YAUnixProcessChannel *)
+#endif (* SMLNJ_VERSION *)
+
+	structure FileChannel
+	structure TextIOChannel
+
+	structure RuntimeProxyTypes
+	structure SignalUtility
+
+	structure SessionTypes
+	structure InteractiveSession
+	structure StandAloneSession
+
+	structure YAInteractiveSession
+	structure YAStandAloneSession
+	structure YAStandAloneSessionNoLink
+
+	structure NativeStandAloneSession
+is
 	main/module.cm

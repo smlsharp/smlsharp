@@ -7,19 +7,17 @@ is
 
 (*../../../smlnj-lib/Util/smlnj-lib.cm*)
 
+#if defined(SMLNJ_VERSION)
 #if defined(NEW_CM)
+	$/basis.cm
         $/smlnj-lib.cm
 #else
         smlnj-lib.cm
 #endif
-
-
-$/basis.cm
-(*
-#if defined(NEW_CM)
-        $/basis.cm
+#else
+	../../../smlnj-lib/Util/smlnj-lib.cm
 #endif
-*)
+
         FORMAT_EXPRESSION.sig
         FormatExpressionTypes.sml
         FormatExpression.sml

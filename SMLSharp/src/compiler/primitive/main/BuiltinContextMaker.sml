@@ -4,7 +4,35 @@
  * @version $Id: $
  *)
 structure BuiltinContextMaker : sig
-  type decl
+  datatype decl =
+      TYPE of
+      {
+        eqKind: Types.eqKind,
+        tyvars: Types.eqKind list,
+        constructors: {name:string, hasArg:bool, ty:string, tag:int} list,
+        runtimeTy: RuntimeTypes.ty option,
+        interoperable: RuntimeTypes.interoperableKind
+      }
+    | EXCEPTION of
+      {
+        hasArg: bool,
+        ty: string,
+        tag: ExnTagID.id,  (* ToDo: tag will be eliminated *)
+        extern: string
+      }
+    | PRIM of BuiltinPrimitive.prim_or_special
+    | OPRIM of
+      {
+        ty: string,
+        instances: {instTyList:string list,
+                    instance: OPrimInstance.instance} list
+      }
+    (* ToDo: DUMMY is a nasty hack for printer code generation.
+     *       Printer code generator should check whether required utilitity
+     *       functions are defined and well-typed.
+     *)
+    | DUMMY of {ty: string}
+
   type context
   val emptyContext : context
   val getOPrimInstMap : context * OPrimID.id -> OPrimInstance.oprimInstMap

@@ -1,20 +1,23 @@
 Group is
 
-      $/basis.cm
-      $/ml-yacc-lib.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../../../../mlyacc/lib/ml-yacc-lib.cm
+	../../control/sources.cm
+	../../util/sources.cm
+	../../usererror/sources.cm
+	../../absyn/sources.cm
 
-        ../../util/sources.cm
-        ../../control/sources.cm
-        ../../session/sources.cm
-        ../../absyn/sources.cm
-        ../../name/sources.cm
-        ../../usererror/sources.cm
-
-        iml.lex
-        iml.grm
-
-        ParserConstants_SMLNJ.sml
-        PARSER.sig
-        Parser.sml
+	iml.grm.sig
+	iml.grm.sml
+	iml.lex.sml
+#if defined(SMLNJ_VERSION)
+	ParserConstants_SMLNJ.sml
+#else
+	ParserConstants_MLton.sml
+#endif (* SMLNJ_VERSION *)
+	PARSER.sig
+	Parser.sml

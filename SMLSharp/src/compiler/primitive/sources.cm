@@ -1,9 +1,9 @@
 group
-        structure OPrimInstance
-        structure BuiltinPrimitive
-        structure BuiltinPrimitivePickler
-        structure BuiltinPrimitiveUtils
-        structure BuiltinContext
-        structure PredefinedTypes
+	structure OPrimInstance
+	structure BuiltinPrimitive
+	structure BuiltinPrimitivePickler
+	structure BuiltinPrimitiveUtils
+	structure BuiltinContext
+	structure PredefinedTypes
 is
-        main/module.cm
+	main/module.cm

@@ -1,5 +1,4 @@
 Group
-        structure FunctionLocalize
+	structure FunctionLocalize
 is
 	main/module.cm
-

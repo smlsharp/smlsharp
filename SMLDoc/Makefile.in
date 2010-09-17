@@ -1,14 +1,14 @@
 # Makefile for SMLDoc
 # $Id: Makefile.in,v 1.21 2007/12/13 08:59:46 katsu Exp $
 
-srcdir = @SMLDOCDIR@
+srcdir = @srcdir_smldoc@
 builddir = @builddir@
 top_srcdir = @top_srcdir@
 top_builddir = @top_builddir@
 
 include @top_builddir@/commonrule
 
-VPATH = @SMLDOCDIR@
+VPATH = @srcdir_smldoc@
 
 SMLSHARP = smlsharp
 

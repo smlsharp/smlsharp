@@ -1,19 +1,20 @@
 Group is
-        $/basis.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
 
-        ../../control/sources.cm
-        ../../util/sources.cm
-        ../../pickle/sources.cm
-        ../../env/sources.cm
-        ../../name/sources.cm
-        ../../types/sources.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../pickle/sources.cm
+	../../types/sources.cm
 	../../multiplevaluecalc/sources.cm
 	../../annotatedtypes/sources.cm
 
 	Counters.sml
-	INLINE.sig
-	Inline.sml
 	InlineEnv.sml
 	InlinePickler.sml
 	InlineUtils.sml
+	INLINE.sig
+	Inline.sml

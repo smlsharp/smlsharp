@@ -1,4 +1,4 @@
 Group
-        structure ModuleCompiler
+	structure ModuleCompiler
 is
 	main/module.cm

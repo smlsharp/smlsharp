@@ -1,6 +1,6 @@
 Group
-        structure IntermediateLanguage
-        structure ILFormatter
-        structure ILUtils
+	structure IntermediateLanguage
+	structure ILFormatter
+	structure ILUtils
 is
 	main/module.cm

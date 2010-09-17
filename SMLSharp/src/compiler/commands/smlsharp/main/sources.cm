@@ -1,39 +1,45 @@
 Group is
 
-      $/basis.cm
-
-(*
 #if defined(NEW_CM)
-	$/basis_compat.cm
+	$/basis.cm
 #endif
-*)
 
-        ../../../../configuration/sources.cm
+	../../../../configuration/sources.cm
+	../../../control/sources.cm
+	../../../env/sources.cm
+	../../../systemdef/sources.cm
+	../../../util/sources.cm
+	../../../pickle/sources.cm
+	../../../pathresolver/sources.cm
+	../../../session/sources.cm
+	../../../name/sources.cm
+	../../../elf/sources.cm
+	../../../toplevel/sources.cm 
 
-        ../../../toplevel/sources.cm 
-        ../../../pathresolver/sources.cm
-        ../../../control/sources.cm
-        ../../../env/sources.cm
-        ../../../name/sources.cm
-        ../../../session/sources.cm
-        ../../../util/sources.cm
-        ../../../pickle/sources.cm
-        ../../../types/sources.cm
+	GET_OPT.sig
+	GetOpt.sml
 
-        ../../../elf/sources.cm
-
-        GET_OPT.sig
-        GetOpt.sml
-
+#if defined(SMLNJ_VERSION)
 #if defined(structure Posix)
-        FileSysUtil_Posix.sml
-        InteractiveSessionFactory_Unix.sml
-        YAInteractiveSessionFactory_Unix.sml
+	FileSysUtil_Posix.sml
+	InteractiveSessionFactory_Unix.sml
+	YAInteractiveSessionFactory_Unix.sml
 #else
-        FileSysUtil_Windows.sml
-        InteractiveSessionFactory_General.sml
-        YAInteractiveSessionFactory_General.sml
-#endif
-        Platform.sml
+	FileSysUtil_Windows.sml
+	InteractiveSessionFactory_General.sml
+	YAInteractiveSessionFactory_General.sml
+#endif (* structure Posix *)
+#else (* for MLton *)
+	FileSysUtil_MLton.sml
+	InteractiveSessionFactory_MLton.sml
+	YAInteractiveSessionFactory_General.sml
+#endif (* SMLNJ_VERSION *)
 
-        Main.sml
+	Platform.sml
+
+	Main.sml
+
+#if defined(SMLNJ_VERSION)
+#else
+	mlton_main.sml
+#endif
