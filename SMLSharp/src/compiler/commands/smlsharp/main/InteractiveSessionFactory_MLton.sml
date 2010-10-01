@@ -31,7 +31,7 @@ struct
 *)
 
   val VMInitialize = 
-      _import "smlsharp_initialize"
+      _import "smlsharp_initialize" public
       : Int32.int (* heap size *)
         * Int32.int (* stack size *)
         * Int32.int (* isInteractive *)
@@ -41,7 +41,7 @@ struct
         -> unit;
 
   val VMExecute =
-      _import "smlsharp_executeRawExecutable"
+      _import "smlsharp_executeRawExecutable" public
       : Word32.word * Word8Vector.vector -> Int32.int;
 
   (* MLton document says that strings are not null terminated. 

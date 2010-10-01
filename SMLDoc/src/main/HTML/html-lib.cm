@@ -24,7 +24,9 @@ is
 	$/basis_compat.cm
 #endif
 *)
+#if defined(NEW_CM)
 $/basis.cm
+#endif
 (*
   ml-yacc-lib.cm
 

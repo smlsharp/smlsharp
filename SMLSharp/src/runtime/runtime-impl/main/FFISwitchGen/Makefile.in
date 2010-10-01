@@ -1,0 +1,26 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@/commonrule
+
+VPATH = @srcdir@
+
+TARGETS = LARGEFFISWITCH.cc
+GENSOURCES = FFIGenData.ppg.sml
+
+all: $(TARGETS)
+
+LARGEFFISWITCH.cc: ffigen
+	./ffigen $(srcdir) $(FFI_MAX_ARGS)
+
+ffigen: FFISwitchGen.sml FFIGenData.ppg.sml main.sml sources.cm
+	$(MAKESML) -o $@ $(srcdir)/sources.cm
+
+clean:
+	-rm -rf $(srcdir)/CM $(srcdir)/.cm
+	-rm -f $(TARGETS) $(GENSOURCES)
+	$(MAKESML) -r -o ffigen
+
+FFIGenData.ppg.sml: FFIGenData.ppg

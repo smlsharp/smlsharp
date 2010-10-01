@@ -21,6 +21,7 @@ libdir_smlsharp = $(libdir)/smlsharp
 libdir_smlformat = $(libdir)/smlsharp/SMLFormat
 libdir_smlunit = $(libdir)/smlsharp/SMLUnit
 libdir_smlnj_lib = $(libdir)/smlsharp/smlnj-lib
+libdir_mlyacc = $(libdir)/smlsharp/ml-yacc-lib
 heapdir = $(libdir_smlsharp)/heap
 
 CC = @CC@
@@ -30,6 +31,7 @@ CXXFLAGS = @CXXFLAGS@
 DEFS = @DEFS@ $(LOCAL_DEFS)
 CPPFLAGS = -I$(top_builddir) @CPPFLAGS@ $(LOCAL_CPPFLAGS)
 LDFLAGS = @LDFLAGS@
+CXXLDFLAGS = @CXXLDFLAGS@
 DL_LDFLAGS = @DL_LDFLAGS@
 LIBS = @LIBS@
 LIBSTDCXX = @LIBSTDCXX@
@@ -53,6 +55,7 @@ target = @target@
 target_cpu = @target_cpu@
 target_vendor = @target_vendor@
 target_os = @target_os@
+host_os = @host_os@
 BYTE_ORDER = @BYTE_ORDER@
 
 EXEEXT = @EXEEXT@
@@ -81,6 +84,7 @@ JAR = @JAR@
 SMLNJ_VERSION = @SMLNJ_VERSION@
 SML = @SML@
 SMLCM = @SMLCM@
+SML_BAT = @SML_BAT@
 SML_HEAP_SUFFIX = @SML_HEAP_SUFFIX@
 MLLEX = @MLLEX@
 MLYACC = @MLYACC@
@@ -113,12 +117,25 @@ RUNTIME_CORE_SRCDIR = $(top_srcdir)/src/runtime/runtime-core
 RUNTIME_IMPL_SRCDIR = $(top_srcdir)/src/runtime/runtime-impl
 PRIMITIVES_SRCDIR   = $(top_srcdir)/src/primitives
 INSTRUCTIONS_SRCDIR = $(top_srcdir)/src/instructions
-SMLSHARP = $(top_builddir)/src/compiler/smlsharp_build$(BATEXT)
+SMLSHARP = $(top_builddir)/src/compiler/smlsharp
 LIBSMLSHARP_O = $(top_builddir)/src/runtime/byterun/main/libsmlsharprun.$(OBJEXT)
 
 MKSMLPATH = $(SHELL) $(BUILD_ROOT)/mksmlpath
 MKSMLRUN  = $(SHELL) $(BUILD_ROOT)/mksmlrun
 MKSMLHEAP = $(SHELL) $(BUILD_ROOT)/mksmlheap
+SML_COMPILER = @SML_COMPILER@
+MAKESML = CYGPATH='$(CYGPATH)' \
+          SML='$(SML)' \
+          SML_BAT='$(SML_BAT)' \
+          SML_HEAP_SUFFIX='$(SML_HEAP_SUFFIX)' \
+          COMPILER='$(SML_COMPILER)' \
+          INSTALL='$(INSTALL)' \
+          host_os='$(host_os)' \
+          BINDIR='$(DESTDIR)$(bindir)' \
+          HEAPDIR='$(DESTDIR)$(heapdir)' \
+          CPPFLAGS='$(CPPFLAGS)' \
+          LDFLAGS='$(LDFLAGS)' \
+          $(SHELL) $(SRC_ROOT)/makesml
 
 SMLSHARP_PLATFORM = @SMLSHARP_PLATFORM@
 NATIVE_TARGET = @NATIVE_TARGET@

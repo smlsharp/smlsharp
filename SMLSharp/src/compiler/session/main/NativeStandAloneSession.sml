@@ -26,6 +26,7 @@ struct
       {
         outputFileName: string,
         preludeLibraryFileName: string option,
+        entryObjectFileName: string option,
         compileMode: compileMode
       }
 
@@ -153,7 +154,8 @@ struct
         OS.Path.joinBaseExt {base = base, ext = SOME suffix}
       end
 
-  fun openSession {outputFileName, preludeLibraryFileName, compileMode} =
+  fun openSession {outputFileName, preludeLibraryFileName,
+                   entryObjectFileName, compileMode} =
       let
         val doAssemble =
             case compileMode of
@@ -293,8 +295,9 @@ struct
                       else ()
 
               val entry =
-                  OS.Path.joinDirFile {dir = Configuration.LibDirectory,
-                                       file = "smlsharp_entry.o"}
+                  case entryObjectFileName of
+                    SOME filename => filename ^ " "
+                  | NONE => ""
               val prelude =
                   case preludeLibraryFileName of
                     SOME filename => filename ^ " "
@@ -307,7 +310,7 @@ struct
                       Configuration.LDFLAGS ^
                       " -L" ^ Configuration.LibDirectory ^ " " ^
                       !Control.LDFLAGS ^ " " ^
-                      entry ^ " " ^ prelude,
+                      entry ^ prelude,
                       " -lsmlsharp " ^ Configuration.LIBS ^
                       " -o " ^ outputFileName)
                      objfiles

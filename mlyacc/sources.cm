@@ -7,8 +7,13 @@
 
 Group is
 
+#if defined(NEW_CM)
 $/basis.cm
+#endif
 src/sources.cm
 main.sml
 
-
+#if defined(SMLNJ_VERSION)
+#else
+call-main.sml
+#endif

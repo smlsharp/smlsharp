@@ -29,17 +29,38 @@ TARGETS = $(srcdir)/VMMnemonic.sml \
           $(srcdir)/optab32.inc \
           $(srcdir)/optab64.inc
 
+SOURCES = control.sml \
+          utils.sml \
+          parser.sml \
+          elab.sml \
+          subst.sml \
+          typecheck.sml \
+          mother.sml \
+          fusion.sml \
+          ml-mnemonic-gen.sml \
+          ml-parser-gen.sml \
+          ml-printer-gen.sml \
+          ml-asm-gen.sml \
+          c-prep-gen.sml \
+          c-eval-gen.sml \
+          main.sml \
+          start.sml \
+          $(GENSOURCES)
+
 all: $(TARGETS)
 
-$(TARGETS): $(GENSOURCES) $(srcdir)/insn.def
-	cd $(srcdir) && \
-	$(SHELL) $(BUILD_ROOT)/mksmlheap --exec 'Main.main "insn.def";'
+$(TARGETS): vmgen $(GENSOURCES) $(srcdir)/insn.def
+	./vmgen $(srcdir) insn.def
+
+vmgen: sources.cm $(SOURCES)
+	$(MAKESML) -o $@ $(srcdir)/sources.cm
 
 clean:
 	-rm -rf $(srcdir)/CM $(srcdir)/.cm
 	-rm -f $(TARGETS)
 	-rm -f $(GENSOURCES)
 	-rm -f insndef.grm.sml insndef.grm.sig insndef.grm.desc insndef.lex.sml
+	$(MAKESML) -r -o vmgen
 
 $(srcdir)/insndef.ppg.sml: insndef.ppg
 $(srcdir)/insndef.grm.sml $(srcdir)/insndef.grm.sig $(srcdir)/insndef.grm.desc: insndef.grm

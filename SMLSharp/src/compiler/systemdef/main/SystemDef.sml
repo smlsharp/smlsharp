@@ -5,6 +5,6 @@
 structure SystemDef :> SYSTEMDEF =
 struct
 
-  val NativeByteOrder = SystemDefTypes.LittleEndian
+  val NativeByteOrder = Configuration.NativeByteOrder
 
 end

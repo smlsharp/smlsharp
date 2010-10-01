@@ -1,6 +1,6 @@
 structure Main : sig
 
-  val main : string -> OS.Process.status
+  val main : string * string list -> OS.Process.status
   val debug : int ref
 
 end =
@@ -39,8 +39,14 @@ struct
       )
       else ()
 
-  fun main filename =
+  fun main (_, args) =
       let
+        val filename =
+            case args of
+              x::y::z => (OS.FileSys.chDir x; y)
+            | y::z => y
+            | _ => raise Fail "too few arguments"
+
         val defs = Parser.parse filename
 
         val _ = dump 1 "Source" InsnDef.format_def defs

@@ -20,7 +20,6 @@ struct
 
   structure BT = BasicTypes
   structure CT = ChannelTypes
-  structure BTS = BasicTypeSerializer
   structure BTSN = BasicTypeSerializerForNetworkByteOrder
   structure SD = SystemDef
   structure SDT = SystemDefTypes

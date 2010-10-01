@@ -36,6 +36,7 @@ $(srcdir)/Configuration.sml: Configuration.sml.in Makefile \
 	    -e "s|%SNAPSHOT_DATE%|$$snapdate|" \
 	    -e "s|%SMLSHARP_PLATFORM%|$(SMLSHARP_PLATFORM)|" \
 	    -e "s|%NATIVE_TARGET%|$(NATIVE_TARGET)|" \
+	    -e "s|%BYTE_ORDER%|$(BYTE_ORDER)|" \
 	    -e "s|%CC%|$(CC)|" \
 	    -e "s|%LD%|$(LD)|" \
 	    -e "s|%AR%|$(AR)|" \

@@ -1,6 +1,7 @@
 structure Main = struct
-fun main () =
+fun main (_, args) =
     (
+      case args of h::t => OS.FileSys.chDir h | _ => ();
       PrimitiveTable.generateFiles
 	  "../../primitives.csv"
 	  [
@@ -15,7 +16,8 @@ fun main () =
 	    "../../compiler/main/Constants.sml",
 	    "../../runtime/main/Constants.cc",
 	    "../../runtime/main/Constants.hh"
-          ]
+          ];
+      OS.Process.success
     )
     handle PrimitiveTable.ParseError line =>
            raise Fail ("error in primitives.csv at " ^ Int.toString line)

@@ -34,8 +34,8 @@ struct
 
        (* the following wild card type ("_") must be used for uninstanciated
         * types in oprim instances. See "+" below.
-        *) 
-       ("_", 
+        *)
+       ("_",
         TYPE {
           eqKind = Types.EQ,
           tyvars = [],
@@ -85,7 +85,7 @@ struct
           interoperable = RuntimeTypes.INTEROPERABLE
         }),
 
-       (* In current implementation, "string" is used as both array and 
+       (* In current implementation, "string" is used as both array and
         * vector of "char". The only difference between array and vector
         * is runtime equality testing. In compiler internal, every string
         * value is dealt with as mutable except string constants. String
@@ -376,87 +376,113 @@ struct
 
        ("@@",
         OPRIM {
-        ty = "['a#{int,real,bool,('b)list,('c)array},'b#{bool,char},\
-             \'c#{int,bool}.'a * 'a -> 'a]",
-        instances = [
-        {instTyList=["bool", "_", "_"],
-         instance=EXTERNVAR "foo"},
-        {instTyList=["int", "_", "_"],
-         instance=PRIMAPPLY (P.S P.Int_first)},
-        {instTyList=["real", "_", "_"],
-         instance=PRIMAPPLY (P.S P.Real_second)},
-        {instTyList=["(bool)list", "bool", "_"],
-         instance=PRIMAPPLY (P.S P.List_first)},
-        {instTyList=["(char)list", "char", "_"],
-         instance=PRIMAPPLY (P.S P.List_second)},
-        {instTyList = ["(int)array", "_", "int"],
-         instance=PRIMAPPLY (P.S P.Array_first)},
-        {instTyList = ["(bool)array", "_", "bool"],
-         instance=PRIMAPPLY (P.S P.Array_second)}
-        ]
-       }),
+          ty = "['a#{int,real,bool,('b)list,('c)array},'b#{bool,char},\
+               \'c#{int,bool}.'a * 'a -> 'a]",
+          instances = [
+            {instTyList = ["bool", "_", "_"],
+             instance = EXTERNVAR "foo"},
+            {instTyList = ["int", "_", "_"],
+             instance = PRIMAPPLY (P.S P.Int_first)},
+            {instTyList = ["real", "_", "_"],
+             instance = PRIMAPPLY (P.S P.Real_second)},
+            {instTyList = ["(bool)list", "bool", "_"],
+             instance = PRIMAPPLY (P.S P.List_first)},
+            {instTyList = ["(char)list", "char", "_"],
+             instance = PRIMAPPLY (P.S P.List_second)},
+            {instTyList = ["(int)array", "_", "int"],
+             instance = PRIMAPPLY (P.S P.Array_first)},
+            {instTyList = ["(bool)array", "_", "bool"],
+             instance = PRIMAPPLY (P.S P.Array_second)}
+          ]
+        }),
 
        ("+",
         OPRIM {
-        ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word}.\
-             \'a * 'a -> 'a]",
-        instances = [
-         {instTyList=["int"],instance=PRIMAPPLY (P.P(P.Int_add P.NoOverflowCheck))},
-         {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_add)},
-         {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_add)},
-         {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_add)},
-         {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_add)},
-         {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_add)}
-        ]
+          ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word}.\
+               \'a * 'a -> 'a]",
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P (P.Int_add P.NoOverflowCheck))},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_add)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_add)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_add)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_add)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_add)}
+          ]
         }),
 
        ("-",
         OPRIM {
-        ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word}.\
+          ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word}.\
                \'a * 'a -> 'a]",
-        instances = [
-         {instTyList=["int"],instance=PRIMAPPLY (P.P(P.Int_sub P.NoOverflowCheck))},
-         {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_sub)},
-         {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_sub)},
-         {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_sub)},
-         {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_sub)},
-         {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_sub)}
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P (P.Int_sub P.NoOverflowCheck))},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_sub)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_sub)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_sub)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_sub)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_sub)}
           ]
         }),
 
        ("*",
         OPRIM {
-        ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word}.\
-             \'a * 'a -> 'a]",
-        instances = [
-         {instTyList=["int"],instance=PRIMAPPLY (P.P(P.Int_mul P.NoOverflowCheck))},
-         {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_mul)},
-         {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_mul)},
-         {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_mul)},
-         {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_mul)},
-         {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_mul)}
-         ]
+          ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word}.\
+               \'a * 'a -> 'a]",
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P (P.Int_mul P.NoOverflowCheck))},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_mul)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_mul)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_mul)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_mul)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_mul)}
+          ]
         }),
 
        ("div",
         OPRIM {
-        ty = "['a#{int,IntInf.int,word,Word8.word}.'a * 'a -> 'a]",
-        instances = [
-         {instTyList=["int"],instance=PRIMAPPLY (P.P(P.Int_div P.NoOverflowCheck))},
-         {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_div)},
-         {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_div)},
-         {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_div)}
-        ]
+          ty = "['a#{int,IntInf.int,word,Word8.word}.'a * 'a -> 'a]",
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P (P.Int_div P.NoOverflowCheck))},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_div)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_div)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_div)}
+          ]
         }),
 
        ("mod",
         OPRIM {
-        ty = "['a#{int,IntInf.int,word,Word8.word}.'a * 'a -> 'a]",
-        instances = [
-         {instTyList=["int"],instance=PRIMAPPLY (P.P(P.Int_mod P.NoOverflowCheck))},
-         {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_mod)},
-         {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_mod)},
-         {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_mod)}
+          ty = "['a#{int,IntInf.int,word,Word8.word}.'a * 'a -> 'a]",
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P (P.Int_mod P.NoOverflowCheck))},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_mod)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_mod)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_mod)}
           ]
         }),
 
@@ -464,109 +490,157 @@ struct
         OPRIM {
           ty = "['a#{real,Real32.real}.'a * 'a -> 'a]",
           instances = [
-            {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_div)},
-            {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_div)}
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_div)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_div)}
           ]
         }),
 
        ("~",
         OPRIM {
-        ty = "['a#{int,IntInf.int,real,Real32.real}.'a -> 'a]",
-        instances = [
-         {instTyList=["int"],instance=PRIMAPPLY (P.P(P.Int_neg P.NoOverflowCheck))},
-         {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_neg)},
-         {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_neg)},
-         {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_neg)}
+          ty = "['a#{int,IntInf.int,real,Real32.real}.'a -> 'a]",
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P (P.Int_neg P.NoOverflowCheck))},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_neg)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_neg)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_neg)}
           ]
         }),
 
        ("abs",
         OPRIM {
-        ty = "['a#{int,IntInf.int,real,Real32.real}.'a -> 'a]",
-        instances = [
-         {instTyList=["int"],instance=PRIMAPPLY (P.P(P.Int_abs P.NoOverflowCheck))},
-         {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_abs)},
-         {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_abs)},
-         {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_abs)}
+          ty = "['a#{int,IntInf.int,real,Real32.real}.'a -> 'a]",
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P (P.Int_abs P.NoOverflowCheck))},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_abs)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_abs)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_abs)}
           ]
         }),
 
        ("<",
         OPRIM {
           ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word,\
-               \char,string}.'a * 'a -> bool]",
+                    \char,string}.'a * 'a -> bool]",
           instances = [
-            {instTyList = ["int"], instance = PRIMAPPLY (P.P P.Int_lt)},
-            {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_lt)},
-            {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_lt)},
-            {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_lt)},
-            {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_lt)},
-            {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_lt)},
-            {instTyList = ["char"], instance = PRIMAPPLY (P.P P.Char_lt)},
-            {instTyList = ["string"], instance = PRIMAPPLY (P.P P.String_lt)}
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P P.Int_lt)},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_lt)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_lt)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_lt)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_lt)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_lt)},
+            {instTyList = ["char"],
+             instance = PRIMAPPLY (P.P P.Char_lt)},
+            {instTyList = ["string"],
+             instance = PRIMAPPLY (P.P P.String_lt)}
           ]
         }),
 
        (">",
         OPRIM {
           ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word,\
-               \char,string}.'a * 'a -> bool]",
+                    \char,string}.'a * 'a -> bool]",
           instances = [
-            {instTyList = ["int"], instance = PRIMAPPLY (P.P P.Int_gt)},
-            {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_gt)},
-            {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_gt)},
-            {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_gt)},
-            {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_gt)},
-            {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_gt)},
-            {instTyList = ["char"], instance = PRIMAPPLY (P.P P.Char_gt)},
-            {instTyList = ["string"], instance = PRIMAPPLY (P.P P.String_gt)}
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P P.Int_gt)},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_gt)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_gt)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_gt)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_gt)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_gt)},
+            {instTyList = ["char"],
+             instance = PRIMAPPLY (P.P P.Char_gt)},
+            {instTyList = ["string"],
+             instance = PRIMAPPLY (P.P P.String_gt)}
          ]
         }),
 
        ("<=",
         OPRIM {
           ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word,\
-               \char,string}.'a * 'a -> bool]",
+                    \char,string}.'a * 'a -> bool]",
           instances = [
-            {instTyList = ["int"], instance = PRIMAPPLY (P.P P.Int_lteq)},
-            {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_lteq)},
-            {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_lteq)},
-            {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_lteq)},
-            {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_lteq)},
-            {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_lteq)},
-            {instTyList = ["char"], instance = PRIMAPPLY (P.P P.Char_lteq)},
-            {instTyList = ["string"], instance = PRIMAPPLY (P.P P.String_lteq)}
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P P.Int_lteq)},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_lteq)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_lteq)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_lteq)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_lteq)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_lteq)},
+            {instTyList = ["char"],
+             instance = PRIMAPPLY (P.P P.Char_lteq)},
+            {instTyList = ["string"],
+             instance = PRIMAPPLY (P.P P.String_lteq)}
           ]
         }),
 
        (">=",
         OPRIM {
           ty = "['a#{int,IntInf.int,real,Real32.real,word,Word8.word,\
-               \char,string}.'a * 'a -> bool]",
+                    \char,string}.'a * 'a -> bool]",
           instances = [
-            {instTyList = ["int"], instance = PRIMAPPLY (P.P P.Int_gteq)},
-            {instTyList = ["IntInf.int"], instance = PRIMAPPLY (P.P P.IntInf_gteq)},
-            {instTyList = ["real"], instance = PRIMAPPLY (P.P P.Real_gteq)},
-            {instTyList = ["Real32.real"], instance = PRIMAPPLY (P.P P.Float_gteq)},
-            {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Word_gteq)},
-            {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Byte_gteq)},
-            {instTyList = ["char"], instance = PRIMAPPLY (P.P P.Char_gteq)},
-            {instTyList = ["string"], instance = PRIMAPPLY (P.P P.String_gteq)}
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P P.Int_gteq)},
+            {instTyList = ["IntInf.int"],
+             instance = PRIMAPPLY (P.P P.IntInf_gteq)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Real_gteq)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Float_gteq)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Word_gteq)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Byte_gteq)},
+            {instTyList = ["char"],
+             instance = PRIMAPPLY (P.P P.Char_gteq)},
+            {instTyList = ["string"],
+             instance = PRIMAPPLY (P.P P.String_gteq)}
           ]
         }),
 
        ("!!",
         OPRIM {
-        ty = "['a#{int,real,Real32.real,word,Word8.word,char}.\
-             \('a) ptr -> 'a]",
-        instances = [
-         {instTyList=["int"], instance = PRIMAPPLY (P.P P.Ptr_deref_int)},
-         {instTyList=["real"], instance = PRIMAPPLY (P.P P.Ptr_deref_real)},
-         {instTyList=["Real32.real"], instance = PRIMAPPLY (P.P P.Ptr_deref_float)},
-         {instTyList = ["word"], instance = PRIMAPPLY (P.P P.Ptr_deref_word)},
-         {instTyList = ["Word8.word"], instance = PRIMAPPLY (P.P P.Ptr_deref_byte)},
-         {instTyList = ["char"], instance = PRIMAPPLY (P.P P.Ptr_deref_char)}
-        ]
+          ty = "['a#{int,real,Real32.real,word,Word8.word,char}.\
+               \('a) ptr -> 'a]",
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P P.Ptr_deref_int)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Ptr_deref_real)},
+            {instTyList = ["Real32.real"],
+             instance = PRIMAPPLY (P.P P.Ptr_deref_float)},
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Ptr_deref_word)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Ptr_deref_byte)},
+            {instTyList = ["char"],
+             instance = PRIMAPPLY (P.P P.Ptr_deref_char)}
+          ]
         }),
 
        (":=", PRIM (P.S P.Assign)),
@@ -612,7 +686,8 @@ struct
        (* ("Float_neg", PRIM (P.P P.Float_neg)), *)
        (* ("Float_sub", PRIM (P.P P.Float_sub)), *)
        ("Real32.toReal", PRIM (P.P P.Float_toReal)),
-       ("Real32.trunc_unsafe", PRIM (P.P (P.Float_trunc_unsafe P.NoOverflowCheck))),
+       ("Real32.trunc_unsafe",
+        PRIM (P.P (P.Float_trunc_unsafe P.NoOverflowCheck))),
        (* ("IntInf_abs", PRIM (P.P P.IntInf_abs)), *)
        (* ("IntInf_add", PRIM (P.P P.IntInf_add)), *)
        (* ("IntInf_div", PRIM (P.P P.IntInf_div)), *)
@@ -656,7 +731,8 @@ struct
        (* ("Real_mul", PRIM (P.P P.Real_mul)), *)
        (* ("Real_neg", PRIM (P.P P.Real_neg)), *)
        (* ("Real_sub", PRIM (P.P P.Real_sub)), *)
-       ("Real.trunc_unsafe", PRIM (P.P (P.Real_trunc_unsafe P.NoOverflowCheck))),
+       ("Real.trunc_unsafe",
+        PRIM (P.P (P.Real_trunc_unsafe P.NoOverflowCheck))),
        ("SMLSharp.PrimString.array", PRIM (P.P P.String_array)),
        ("SMLSharp.PrimString.copy_unsafe", PRIM (P.P P.String_copy_unsafe)),
        (* ("String_equal", PRIM (P.P P.String_equal)), *)
@@ -750,13 +826,13 @@ struct
         DUMMY {ty = "SMLSharp.exntag -> SMLSharp.SMLFormat.expression"}),
        ("_format_exnRef",
         DUMMY {ty = "(exn -> SMLSharp.SMLFormat.expression) ref"})
-     ]
+      ]
 
   val builtinContext =
       foldl (fn (x,z) => BuiltinContextMaker.define z x)
             BuiltinContextMaker.emptyContext
             decls
-            handle exn => 
+            handle exn =>
                    (print "builtoinContext\n";
                     raise exn)
 

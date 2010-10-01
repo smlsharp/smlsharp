@@ -44,11 +44,11 @@ install: $(TARGETS)
 
 smlsharprun$(EXEEXT): main.$(OBJEXT) $(LIBRARIES) $(ICONS_O)
 	$(CXX) $(LDFLAGS) -o $@ main.$(OBJEXT) $(LIBRARIES) \
-	       $(LIBSTDCXX) $(LIBS) $(ICONS_O)
+	       $(CXXLDFLAGS) $(LIBS) $(ICONS_O)
 
 libsmlsharprun.$(DLEXT): libmain.$(OBJEXT) $(LIBRARIES)
 	$(CXX) $(LDFLAGS) $(DL_LDFLAGS) -o $@ libmain.$(OBJEXT) $(LIBRARIES) \
-	       $(LIBSTDCXX) $(LIBS)
+	       $(CXXLDFLAGS) $(LIBS)
 
 libsmlsharprun.$(LIBEXT): libmain.$(OBJEXT) $(LIBRARIES)
 	@set -x; \

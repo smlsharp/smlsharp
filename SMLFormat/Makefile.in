@@ -10,16 +10,9 @@ include @top_builddir@/commonrule
 
 VPATH = @srcdir_smlformat@
 
-SMLSHARP = smlsharp
-
-CONFIG_FILES = $(srcdir)/generator/mlton/preludes.mlb.in \
-               $(srcdir)/generator/main/sources.sml.in
-
-LIBFILES = smlformatlib.sml \
-           formatlib/main
+TARGETS = smlformat
 
 LEXFILES =  $(srcdir)/generator/main/ml.lex
-
 YACCFILES = $(srcdir)/generator/main/ml.grm
 
 GENSOURCES = $(LEXFILES:.lex=.lex.sml) \
@@ -27,126 +20,77 @@ GENSOURCES = $(LEXFILES:.lex=.lex.sml) \
              $(YACCFILES:.grm=.grm.sig) \
              $(YACCFILES:.grm=.grm.desc)
 
-SMLNJ_HEAP = $(srcdir)/generator/main/smlformat.$(SML_HEAP_SUFFIX)
+SOURCES = generator/main/AST.sig \
+          generator/main/Ast.sml \
+          generator/main/ASTUTIL.sig \
+          generator/main/AstUtil.sml \
+          generator/main/BasicFormattersEnv.sml \
+          generator/main/Constants_MLton.sml \
+          generator/main/Constants_SMLNJ.sml \
+          generator/main/ErrorQueue.sml \
+          generator/main/FormatTemplate.sml \
+          generator/main/FORMATTER_GENERATOR.sig \
+          generator/main/FormatterGenerator.sml \
+          generator/main/Main.sml \
+          generator/main/MLPARSER.sig \
+          generator/main/MLParser.sml \
+          generator/main/PPGMain.sml \
+          generator/main/PPGSourceTool.sml \
+          generator/main/TokenTable.sml \
+          generator/main/Utility.sml \
+          $(GENSOURCES)
 
-TARGET_smlsharp = smlformat
-TARGET_smlnj = smlformat
-TARGET_mlton = smlformat$(EXEEXT)
-MLTON_TARGET_PLATFORM = self
-TARGET = $(TARGET_@DEFAULT_SML_COMPILER@)
+LIBFILES = smlformatlib.sml \
+           formatlib/main/AssocResolver.sml \
+           formatlib/main/BASIC_FORMATTERS.sig \
+           formatlib/main/BasicFormatters.sml \
+           formatlib/main/FORMAT_EXPRESSION.sig \
+           formatlib/main/FormatExpression.sml \
+           formatlib/main/FormatExpressionTypes.sml \
+           formatlib/main/FormatExpressionTypes_SMLSharp.sml \
+           formatlib/main/PreProcessedExpression.sml \
+           formatlib/main/PreProcessor.sml \
+           formatlib/main/PrettyPrinter.sml \
+           formatlib/main/PRINTER_PARAMETER.sig \
+           formatlib/main/PrinterParameter.sml \
+           formatlib/main/SMLFORMAT.sig \
+           formatlib/main/SMLFormat.sml \
+           formatlib/main/Truncator.sml \
+           formatlib/main/sources.cm \
+           formatlib/main/sources.sml
 
-all: config all-@DEFAULT_SML_COMPILER@
+all: $(TARGETS)
 
-install: install-@DEFAULT_SML_COMPILER@
-
-clean:
-	-rm -f $(TARGET_smlsharp) $(SMLNJ_HEAP) $(TARGET_smlnj) $(TARGET_mlton)
-	-rm -f $(CONFIG_FILES:.in=)
-	-rm -f $(GENSOURCES)
-	-rm -rf $(srcdir)/generator/main/CM
-	-rm -rf $(srcdir)/formatlib/main/CM
-	-rm -rf $(srcdir)/generator/main/.cm
-	-rm -rf $(srcdir)/formatlib/main/.cm
-	-rm -f cmtool/anchor.sml cmtool/ppg-ext.cm cmtool/smlformat-tool.sml
-	-rm -rf cmtool/.cm
-	-rmdir cmtool
-
-config: $(CONFIG_FILES:.in=)
-
-$(CONFIG_FILES:.in=): Makefile $(CONFIG_FILES)
-	sed \
-	-e "s|@"SMLFORMATDIR"@|`$(MKSMLPATH) -sh '$(SMLFORMATDIR)'`|g" \
-	-e "s|@"SMLUNITDIR"@|`$(MKSMLPATH) -sh '$(SMLUNITDIR)'`|g" \
-	$@.in > $@
-
-cmtool_ppg: cmtool/anchor.sml cmtool/ppg-ext.cm cmtool/smlformat-tool.sml
-
-cmtool/anchor.sml cmtool/ppg-ext.cm cmtool/smlformat-tool.sml: \
-	cmtool/anchor.sml.in cmtool/ppg-ext.cm.in cmtool/smlformat-tool.sml.in
-	-mkdir cmtool
-	for i in cmtool/anchor.sml cmtool/ppg-ext.cm cmtool/smlformat-tool.sml;\
-	do \
-	  sed \
-	  -e "s|@"CMTOOLDIR"@|`$(MKSMLPATH) -cm "$$PWD/cmtool"`|g" \
-	  -e "s|@"SMLFORMAT"@|`$(MKSMLPATH) -cm "$$PWD/$(TARGET)"`|g" \
-	  $(srcdir)/"$$i".in > "$$i"; \
+install: $(TARGETS) $(LIBFILES)
+	$(INSTALL) -d -m 755 '$(DESTDIR)$(bindir)'
+	$(MAKESML) -B '$(DESTDIR)$(bindir)' -H '$(DESTDIR)$(heapdir)' \
+	           -i -o smlformat
+	$(INSTALL) -d -m 755 '$(DESTDIR)$(libdir_smlformat)'
+	$(INSTALL) -d -m 755 '$(DESTDIR)$(libdir_smlformat)/formatlib'
+	$(INSTALL) -d -m 755 '$(DESTDIR)$(libdir_smlformat)/formatlib/main'
+	set -x; for i in $(LIBFILES); do \
+	  $(INSTALL_DATA) '$(srcdir)/'"$$i" \
+	                  '$(DESTDIR)$(libdir_smlformat)/'"$$i";\
 	done
 
-doc:
-	-$(MAKE) smldoc
+clean:
+	-rm -rf $(srcdir)/generator/.cm $(srcdir)/generator/CM
+	-rm -rf $(srcdir)/formatlib/.cm $(srcdir)/formatlib/CM
+	-rm -f $(GENSOURCES)
+	$(MAKESML) -r -o smlformat
 
-smldoc: 
-	@if test 'x$(SMLDOC)' = 'x'; then \
-	  echo '*** smldoc not found.'; exit 1; \
-	fi
+smlformat: generator/main/sources.cm $(SOURCES)
+	$(MAKESML) -o $@ $(srcdir)/generator/main/sources.cm
+
+$(srcdir)/generator/main/ml.lex.sml: generator/main/ml.lex
+	$(MLLEX) $(srcdir)/generator/main/ml.lex
+
+$(srcdir)/generator/main/ml.grm.sml $(srcdir)/generator/main/ml.grm.sig: generator/main/ml.grm
+	$(MLYACC) $(srcdir)/generator/main/ml.grm
+
+doc/api/index.html: $(srcdir)/formatlib/smldoc.cfg $(LIBFILES) 
 	-rm -rf ./doc/api
 	mkdir -p ./doc/api
-	# overwrite --directory option specified in smldoc.cfg.
 	$(SMLDOC) -a $(srcdir)/formatlib/smldoc.cfg --directory=./doc/api
-
-# -------- Rules for SML# --------
-
-all-smlsharp: $(GENSOURCES)
-	$(SMLSHARP) -o $(TARGET_smlsharp) -c generator/main/sources.sml
-
-install-smlsharp: install-lib
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
-	$(INSTALL_PROGRAM) $(TARGET_smlsharp) '$(DESTDIR)$(bindir)'
-
-# -------- Rules for SML/NJ --------
-
-all-smlnj: $(TARGET_smlnj) cmtool_ppg
-
-$(TARGET_smlnj): $(GENSOURCES)
-	cd $(srcdir)/generator/main && $(MKSMLHEAP) smlformat
-	$(MKSMLRUN) smlformat $(srcdir)/generator/main $(TARGET_smlnj)
-
-install-smlnj: install-lib
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(heapdir)'
-	$(MKSMLRUN) smlformat $(heapdir) '$(DESTDIR)$(bindir)/smlformat'
-	$(INSTALL_DATA) $(SMLNJ_HEAP) '$(DESTDIR)$(heapdir)'
-
-# -------- Rules for MLton --------
-
-all-mlton: $(GENSOURCES)
-	$(MLTON) -verbose 1 -output $(TARGET_mlton) \
-	         -target $(MLTON_TARGET_PLATFORM) \
-	         -cc '$(CC)' $(MLTON_FLAGS) \
-	         $(srcdir)/generator/mlton/smlformat.mlb
-
-install-mlton: install-lib
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
-	$(INSTALL_PROGRAM) $(TARGET_mlton) '$(DESTDIR)$(bindir)'
-
-# -------- Common Rules --------
-
-$(GENSOURCES): $(LEXFILES) $(YACCFILES)
-	-rm -f $(GENSOURCES)
-	@set -x; for i in $(LEXFILES); do $(MLLEX) "$$i"; done
-	@set -x; for i in $(YACCFILES); do $(MLYACC) "$$i"; done
-
-install-lib:
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlformat)'
-	@set -x; \
-	cd $(srcdir); \
-	find $(LIBFILES) -type d -print \
-	| $(EGREP) -v '\.svn|CVS|CM|\.cm' \
-	| (while read i; do \
-	    $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlformat)/'$$i \
-	    || exit $$?; \
-	   done)
-	@set -x; \
-	cd $(srcdir); \
-	find $(LIBFILES) -type f -print \
-	| $(EGREP) -v '\.svn|CVS|\.cvsignore|\~$$|\.in$$|Makefile|CM|\.cm' \
-	| (while read i; do \
-	    $(INSTALL_DATA) $$i '$(DESTDIR)$(libdir_smlformat)/'$$i \
-	    || exit $$?; \
-	   done);
-	if test 'x$(libdir_smlsharp)' != 'x'; then \
-	  set -x; \
-	  echo "use \"`$(MKSMLPATH) -sh $(libdir_smlformat)/smlformatlib.sml`\";" > '$(DESTDIR)$(libdir_smlsharp)/smlformatlib.sml'; \
-	fi
 
 # Makefile.in ends here.

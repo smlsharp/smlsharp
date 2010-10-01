@@ -14,10 +14,6 @@ Group is
 	iml.grm.sig
 	iml.grm.sml
 	iml.lex.sml
-#if defined(SMLNJ_VERSION)
-	ParserConstants_SMLNJ.sml
-#else
-	ParserConstants_MLton.sml
-#endif (* SMLNJ_VERSION *)
+	ParserConstants_MLton.sml (* assume bugfixed version *)
 	PARSER.sig
 	Parser.sml

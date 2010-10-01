@@ -10,16 +10,12 @@ include @top_builddir@/commonrule
 
 VPATH = @srcdir_smldoc@
 
-SMLSHARP = smlsharp
-
-CONFIG_FILES = 
-
+TARGETS = smldoc
 
 LEXFILES =  $(srcdir)/src/main/ML.lex \
             $(srcdir)/src/main/ParamPattern.lex \
             $(srcdir)/src/main/LinkFile.lex \
             $(srcdir)/src/main/smlnjcm/CM.lex
-
 YACCFILES = $(srcdir)/src/main/ML.grm \
             $(srcdir)/src/main/ParamPattern.grm \
             $(srcdir)/src/main/LinkFile.grm \
@@ -30,75 +26,90 @@ GENSOURCES = $(LEXFILES:.lex=.lex.sml) \
 	     $(YACCFILES:.grm=.grm.sig) \
 	     $(YACCFILES:.grm=.grm.desc)
 
-SMLNJ_HEAP = $(srcdir)/src/main/smldoc.$(SML_HEAP_SUFFIX)
+SOURCES = src/main/Utility.sml \
+          src/main/PATH_UTILITY.sig \
+          src/main/PathUtility.sml \
+          src/main/ParserUtil.sml \
+          src/main/DocumentGenerationParameter.sml \
+          src/main/AST.sig \
+          src/main/Ast.sml \
+          src/main/TokenTable.sml \
+          src/main/ASTUTIL.sig \
+          src/main/AstUtil.sml \
+          src/main/DocComment.sml \
+          src/main/AnnotatedAst.sml \
+          src/main/EASY_HTML_PARSER.sig \
+          src/main/EasyHTMLParser.sml \
+          src/main/PARSER.sig \
+          src/main/Parser.sml \
+          src/main/DEPENDENCY_GRAPH.sig \
+          src/main/DependencyGraph.sml \
+          src/main/DEPENDENCY_ANALYZER.sig \
+          src/main/DependencyAnalyzer.sml \
+          src/main/ENVSet.sml \
+          src/main/ElaboratedAst.sml \
+          src/main/ELABORATOR.sig \
+          src/main/Elaborator.sml \
+          src/main/LinkFile.sml \
+          src/main/EXTERNALREF_LINKER.sig \
+          src/main/ExternalRefLinker.sml \
+          src/main/Linkage.sml \
+          src/main/Binds.sml \
+          src/main/SUMMARIZER.sig \
+          src/main/Summarizer.sml \
+          src/main/DOCUMENT_GENERATOR.sig \
+          src/main/HTML/html-lib.cm \
+          src/main/HTML/html-sig.sml \
+          src/main/HTML/html.sml \
+          src/main/HTML/make-html.sml \
+          src/main/HTML/pr-html.sml \
+          src/main/HTMLDocumentGenerator.sml \
+          src/main/SMLDOC.sig \
+          src/main/SMLDoc.sml \
+          src/main/GET_OPT.sig \
+          src/main/GetOpt.sml \
+          src/main/smlnjcm/CMSemantic.sml \
+          src/main/smlnjcm/SourcePath.sml \
+          src/main/smlnjcm/FileID.sml \
+          src/main/smlnjcm/CMFILE_PARSER.sig \
+          src/main/smlnjcm/CMFileParser.sml \
+          src/main/Main.sml \
+          src/main/call-main.sml \
+          $(GENSOURCES)
 
-TARGET_smlsharp = smldoc
-TARGET_smlnj = smldoc
-TARGET_mlton = smldoc$(EXEEXT)
-MLTON_TARGET_PLATFORM = self
-TARGET = $(TARGET_@DEFAULT_SML_COMPILER@)
+all: $(TARGETS)
 
-all: config all-@DEFAULT_SML_COMPILER@
-
-install: install-@DEFAULT_SML_COMPILER@
+install: $(TARGETS)
+	$(INSTALL) -d -m 755 '$(DESTDIR)$(bindir)'
+	$(MAKESML) -B '$(DESTDIR)$(bindir)' -H '$(DESTDIR)$(heapdir)' \
+	           -i -o smldoc
 
 clean:
-	-rm -f $(TARGET_smlsharp) $(SMLNJ_HEAP) $(TARGET_smlnj) $(TARGET_mlton)
-	-rm -f $(CONFIG_FILES:.in=)
+	-rm -rf $(srcdir)/src/main/.cm $(srcdir)/src/main/CM
+	-rm -rf $(srcdir)/src/main/HTML/.cm $(srcdir)/src/main/HTML/CM
+	-rm -rf $(srcdir)/src/main/smlnjcm/.cm $(srcdir)/src/main/smlnjcm/CM
 	-rm -f $(GENSOURCES)
-	-rm -rf $(srcdir)/src/main/CM
-	-rm -rf $(srcdir)/src/main/.cm
+	$(MAKESML) -r -o smldoc
 
-config: $(CONFIG_FILES:.in=)
+smldoc: src/main/sources.cm $(SOURCES)
+	$(MAKESML) -o $@ $(srcdir)/src/main/sources.cm
 
-$(CONFIG_FILES:.in=): Makefile $(CONFIG_FILES)
-	sed \
-	-e "s|@"SMLFORMATDIR"@|`$(MKSMLPATH) -sh '$(SMLFORMATDIR)'`|g" \
-	-e "s|@"SMLUNITDIR"@|`$(MKSMLPATH) -sh '$(SMLUNITDIR)'`|g" \
-	$@.in > $@
+$(srcdir)/src/main/ML.lex.sml: src/main/ML.lex
+	$(MLLEX) $(srcdir)/src/main/ML.lex
+$(srcdir)/src/main/ParamPattern.lex.sml: src/main/ParamPattern.lex
+	$(MLLEX) $(srcdir)/src/main/ParamPattern.lex
+$(srcdir)/src/main/LinkFile.lex.sml: src/main/LinkFile.lex
+	$(MLLEX) $(srcdir)/src/main/LinkFile.lex
+$(srcdir)/src/main/smlnjcm/CM.lex.sml: src/main/smlnjcm/CM.lex
+	$(MLLEX) $(srcdir)/src/main/smlnjcm/CM.lex
 
-# -------- Rules for SML# --------
-
-all-smlsharp: $(GENSOURCES)
-	$(SMLSHARP) -o $(TARGET_smlsharp) -c src/main/sources.sml
-
-install-smlsharp: install-lib
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
-	$(INSTALL_PROGRAM) $(TARGET_smlsharp) '$(DESTDIR)$(bindir)'
-
-# -------- Rules for SML/NJ --------
-
-all-smlnj: $(TARGET_smlnj)
-
-$(TARGET_smlnj): $(GENSOURCES)
-	cd $(srcdir)/src/main && $(MKSMLHEAP) smldoc
-	$(MKSMLRUN) smldoc $(srcdir)/src/main $(TARGET_smlnj)
-
-install-smlnj: install-lib
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(heapdir)'
-	$(MKSMLRUN) smldoc $(heapdir) '$(DESTDIR)$(bindir)/smldoc'
-	$(INSTALL_DATA) $(SMLNJ_HEAP) '$(DESTDIR)$(heapdir)'
-
-# -------- Rules for MLton --------
-
-all-mlton: $(GENSOURCES)
-	$(MLTON) -verbose 1 -output $(TARGET_mlton) \
-	         -target $(MLTON_TARGET_PLATFORM) \
-	         -cc '$(CC)' $(MLTON_FLAGS) \
-	         $(srcdir)/src/mlton/smldoc.mlb
-
-install-mlton: install-lib
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
-	$(INSTALL_PROGRAM) $(TARGET_mlton) '$(DESTDIR)$(bindir)'
-
-# -------- Common Rules --------
-
-$(GENSOURCES): $(LEXFILES) $(YACCFILES)
-	-rm -f $(GENSOURCES)
-	@set -x; for i in $(LEXFILES); do $(MLLEX) "$$i"; done
-	@set -x; for i in $(YACCFILES); do $(MLYACC) "$$i"; done
-
-install-lib:
+$(srcdir)/src/main/ML.grm.sml $(srcdir)/src/main/ML.grm.sig: src/main/ML.grm
+	$(MLYACC) $(srcdir)/src/main/ML.grm
+$(srcdir)/src/main/ParamPattern.grm.sml $(srcdir)/src/main/ParamPattern.grm.sig: src/main/ParamPattern.grm
+	$(MLYACC) $(srcdir)/src/main/ParamPattern.grm
+$(srcdir)/src/main/LinkFile.grm.sml $(srcdir)/src/main/LinkFile.grm.sig: src/main/LinkFile.grm
+	$(MLYACC) $(srcdir)/src/main/LinkFile.grm
+$(srcdir)/src/main/smlnjcm/CM.grm.sml $(srcdir)/src/main/smlnjcm/CM.grm.sig: src/main/smlnjcm/CM.grm
+	$(MLYACC) $(srcdir)/src/main/smlnjcm/CM.grm
 
 # Makefile.in ends here.

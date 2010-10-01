@@ -1,68 +1,34 @@
 #!/bin/sh
-#
-# easy configuration script for SMLLex
-#
-# This script does
-#   * generate Makefile from Makefile.in
-#   * generate formatlib/smlunitlib.cm (optional)
-#
+# simple configuration script 
 # @author UENO Katsuhiro
 # @author YAMATODANI Kiyoshi
-# @version $Id: configure,v 1.1 2007/11/16 04:36:19 kiyoshiy Exp $
 
-###############################################################################
+projname=mllex
+depends=
 
-pwd=`pwd`
-host_os=`uname -s|sed y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/`
 prefix=/usr/local
-smllexdir="$pwd"
-#if test -d ${pwd}/basis_compat ;then
-#basisdir="$pwd/basis_compat"
-#else
-#basisdir="$pwd/../basis_compat"
-#fi
-
+exec_prefix='$(prefix)'
 compiler=mlton
-
-###############################################################################
-
-usage="Usage: $0 OPTIONS...
-
-Options:
-  --help                print this message.
-  --prefix=DIR          install files to DIR [default=$prefix]
-  --exec-prefix=DIR     isntall executables to DIR [default=$prefix]
-  --with-smlnj          use SML/NJ [default=no]
-  --with-mlton          use MLton [default=yes]
-  --with-smlsharp       use SML# [default=no]
-"
-#  --with-smlformat=DIR  use SMLFormat [default=$smlformatdir]
 
 for opt in "$@"
 do
   optarg=`expr "x$opt" : 'x[^=]*=\(.*\)'`
   case "$opt" in
+    --prefix=*) prefix="$optarg" ;;
+    --exec_prefix=*) exec_prefix="$optarg" ;;
+    --with-smlnj) compiler=smlnj ;;
+    --with-mlton) compiler=mlton ;;
+    --with-smlsharp) compiler=smlsharp ;;
     --help)
-      echo "$usage"
-      exit 0
-      ;;
-    --prefix=*)
-      prefix="$optarg"
-      ;;
-    --exec_prefix=*)
-      exec_prefix="$optarg"
-      ;;
-#    --with-smlformatdir=*)
-#      smlformatdir="$optarg"
-#      ;;
-    --with-smlnj)
-      compiler=smlnj
-      ;;
-    --with-mlton)
-      compiler=mlton
-      ;;
-    --with-smlsharp)
-      compiler=smlsharp
+      echo "Usage: $0 OPTIONS..."
+      echo
+      echo "Options:"
+      echo "  --help                print this message."
+      echo "--prefix=DIR          install files to DIR [default=$prefix]"
+      echo "--exec-prefix=DIR     isntall executables to DIR [default=$prefix]"
+      echo "--with-smlnj          use SML/NJ [default=no]"
+      echo "--with-mlton          use MLton [default=yes]"
+      echo "--with-smlsharp       use SML# [default=no]"
       ;;
     *)
       echo "$0: error: unrecognized option: $opt" 1>&2
@@ -72,166 +38,41 @@ do
   esac
 done
 
-echo "SML compiler for building smllex... $compiler"
-
-###############################################################################
-
-msyspath () {
-  case "$1" in
-    /[a-zA-Z]/*) echo "$1" | sed 's,/\(.\)/,\1:/,' ;;
-    /[a-zA-Z]) echo "$1" | sed 's,/\(.\),\1:/,' ;;
-    /*) root=`cd / && pwd -W`; echo "$root$1" ;;
-    [a-zA-Z]:*) echo "$1" ;;
-    *) echo "$1" ;;
-  esac
-}
-
-cmpath () {
-  case "$host_os" in
-    *cygwin*)
-      if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
-        # Win32 SML/NJ CM requires '\' as separator.
-        # On cygwin, the path must be converted to Windows style.
-        cygpath -aw "$1"
-      else
-        # Cygwin SML/NJ CM requires UNIX form path.
-        cygpath -au "$1"
-      fi
-      ;;
-    *mingw*)
-      msyspath "$1" | sed 's,/,\\\\,g'
-      ;;
-    *)
-      echo "$1"
-      ;;
-  esac
-}
-
-if test "x$exec_prefix" = "x"; then
-  exec_prefix='${prefix}'
-fi
-
-###############################################################################
-
-SMLLEXDIR="$smllexdir"
-EXEEXT=
-MKSMLRUN=:
-MKSMLHEAP=:
-
-case "$host_os" in
-*cygwin*)
-  SMLLEXDIR=`cygpath -am "$SMLLEXDIR"`
-  EXEEXT=.exe
-  # make requires UNIX path
-  abspath=`cygpath -au "$pwd"`
-  ;;
-*mingw*)
-  SMLLEXDIR=`msyspath "$SMLLEXDIR"`
-  EXEEXT=.exe
-  abspath=`msyspath "$pwd"`
-  ;;
-*)
-  abspath="$pwd"
-  ;;
-esac
-
-###############################################################################
-
-case "$compiler" in
-mlton)
-  ;;
-
-smlsharp)
-  ;;
-
-smlnj)
-  case "$host_os" in
-  *cygwin*)
-    if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
-      SML=sml.bat
-      SML_HEAP_SUFFIX=x86-win32
-      MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
-    else
-      SML=sml
-      SML_HEAP_SUFFIX=x86-cygwin
-      MAINFUNC=Main.main
-    fi
-    SMLCM=sml-cm.bat
-    ;;
-  *mingw*)
-    # we don't support the combination of mingw and cygwin runtime.
-    if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
-      SML='cmd /c sml.bat'
-      SMLCM='cmd /c sml-cm.bat'
-      SML_HEAP_SUFFIX=x86-win32
-      MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
-    else
-      echo 'cygwin runtime on mingw is not supported.' 1>&2
-      exit 1
-    fi
-    RUNSML="sml.bat"
-    EXEC='cmd /c \"\$$SML @SMLload=\$$HEAPNAME \$$*\"'
-    ;;
-  *)
-    SML=sml
-    SMLCM=sml-cm
-    SML_HEAP_SUFFIX='*'
-    MAINFUNC=Main.main
-    ;;
-  esac
-
-  echo 'checking for new CM... '
-  if echo 'CM.make;' | $SML | grep 'string ->' > /dev/null; then
-    echo 'new CM detected.'
-    CM_MAKE_ARG='\"newcm.cm\"'
-    SMLCM="$SML"
-  else
-    echo 'old CM detected.'
-    CM_MAKE_ARG='()'
+for i in $depends; do
+  module=`dirname $i`
+  if [ -f "../$i" ]; then result=yes; else result=no; fi
+  echo "checking for dependency on $module... $result"
+  if [ "x$result" = "xno" ]; then
+    echo "** Build \`$module' by the following command before building this module:"
+    echo "   cd ../$module && ./configure && make"
+    exit 1
   fi
+done
 
-  test "x$RUNSML" = "x" && RUNSML="$SML"
-  test "x$EXEC" = "x" && EXEC='exec \"\$$SML\" @SMLload=\"\$$HEAPNAME\" \"\$$@\"'
-
-  MKSMLHEAP='$(SHELL) -c '"'"'set -x;echo "CM.make '"$CM_MAKE_ARG"';SMLofNJ.exportFn(\"$$0\",'"$MAINFUNC"');"|$(SMLCM)'"'"
-
-  MKSMLRUN='$(SHELL) -c '"'"'{ set -x;q="'"'\\''"'";echo "\#!/bin/sh"|sed "s/\\\\//";echo "SML=$${q}'"$RUNSML"'$${q}";echo "HEAPNAME=$${q}$$1/$$0$${q}";echo "'"$EXEC"'"; } > "$$2" && chmod +x "$$2"'"'"
-  ;;
-
-*)
-  echo "*** BUG ***" 1>&2
-  exit 127
-esac
-
-###############################################################################
+echo "SML compiler for building $projname... $compiler"
 
 cat > commonrule <<EOF
 # This file is automatically generated by configure script.
-host_os = $host_os
 prefix = $prefix
 exec_prefix = $exec_prefix
 bindir = \$(exec_prefix)/bin
 libdir = \$(prefix)/lib
-libdir_smllex = \$(libdir)/smllex
-heapdir = \$(libdir_smllex)/heap
-#DESTDIR =
-EXEEXT = $EXEEXT
-SMLLEXDIR = $SMLLEXDIR
-EGREP = egrep
+libdir_$projname = \$(libdir)/$projname
+heapdir = \$(libdir_$projname)/heap
+SHELL = /bin/sh
+MLYACC = \$(srcdir)/../mlyacc/smlyacc
+MLLEX = \$(srcdir)/../mllex/smllex
+SMLDOC = \$(srcdir)/../smldoc/smldoc
 INSTALL = install
 INSTALL_PROGRAM = \$(INSTALL)
 INSTALL_DATA = \$(INSTALL)
-MLTON = mlton
-MLTON_YACC = mlyacc
-MLTON_LEX = mllex
-SML = $SML
-SMLCM = $SMLCM
-SML_HEAP_SUFFIX = $SML_HEAP_SUFFIX
-MKSMLRUN = $MKSMLRUN
-MKSMLHEAP = $MKSMLHEAP
-EOF
-cat >> commonrule <<\EOF
-MKSMLPATH = $(SHELL) -c 'echo "$$1" | sed s/\\\\\\\\/\\\\\\\\\\\\\\\\/g\\;s/\\"/\\\\\\\\\\"/g\\;s/\\\\\\\\/\\\\\\\\\\\\\\\\/g\\;s/\\"/\\\\\\\\\\"/g\\;s/\\\\\\$$/\\\\\\\\\\$$/g'
+SML_COMPILER = $compiler
+MAKESML = \
+ COMPILER='\$(SML_COMPILER)' \
+ INSTALL='\$(INSTALL)' \
+ BINDIR='\$(DESTDIR)\$(bindir)' \
+ HEAPDIR='\$(DESTDIR)\$(heapdir)' \
+ \$(SHELL) \$(srcdir)/../SMLSharp/makesml
 # commonrule ends here.
 EOF
 
@@ -240,12 +81,10 @@ for i in \
 do
   echo "creating $i"
   sed "
-s|@srcdir@|.|
-s|@abs_srcdir@|$abspath|
-s|@abs_builddir@|$abspath|
-s|@abs_top_srcdir@|$abspath|
-s|@abs_top_builddir@|$abspath|
-s|@DEFAULT_SML_COMPILER@|$compiler|
+s|@srcdir_$projname@|.|
+s|@builddir@|.|
+s|@top_srcdir@|.|
+s|@top_builddir@|.|
   " "$i.in" > "$i"
 done
 
