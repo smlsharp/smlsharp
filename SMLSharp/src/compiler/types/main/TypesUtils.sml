@@ -15,6 +15,12 @@ struct
     structure T = Types 
   in
 
+  (**
+   *)
+  fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
+  fun printKind kind = 
+      print (Control.prettyPrint (Types.format_recordKind nil kind) ^ "\n")
+
   exception ExSpecTyCon of string
   exception ExIllegalTyFunToTyCon of string
   exception CoerceFun 
@@ -786,19 +792,19 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
           (tyList, ty2, nil)
         | T.POLYty {boundtvars, body} =>
           (case derefTy body of
-               T.FUNMty(tyList,ty2) =>
-               let 
-                   val subst1 = freshSubst boundtvars
-               in
-                   (
-                    map (substBTvar subst1) tyList,
-                    substBTvar subst1 ty2,
-                    IEnv.listItems subst1
-                   )
-               end
-             | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil)
-             | T.ALIASty(_, ty) => coerceFunM (ty, tyList)
-             | _ => raise CoerceFun
+             T.FUNMty(tyList,ty2) =>
+             let 
+               val subst1 = freshSubst boundtvars
+               val argTyList = map (substBTvar subst1) tyList
+               val ranTy = substBTvar subst1 ty2
+               val btvInstTyList = IEnv.listItemsi subst1
+               val instTyList = map #2 btvInstTyList
+             in
+               (argTyList,ranTy,instTyList)
+             end
+           | T.ERRORty => (map (fn x => T.ERRORty) tyList, T.ERRORty, nil)
+           | T.ALIASty(_, ty) => coerceFunM (ty, tyList)
+           | _ => raise CoerceFun
           )
         | T.ALIASty(_, ty) => 
           coerceFunM (ty, tyList)
@@ -942,10 +948,6 @@ variables. So be careful in using this.
           | T.RECORDty fl => 
             (T.RECORDty  (SEnv.map freshRigidInstTy fl))
           | ty => ty
-
-  (**
-   *)
-  fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
 
 
   (**

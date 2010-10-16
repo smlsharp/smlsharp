@@ -20,6 +20,11 @@ struct
   fun occurresTyList tvarRef nil = false
     | occurresTyList tvarRef (h::t) = 
       occurres tvarRef h orelse occurresTyList tvarRef t
+  fun occurresTyEqList tvarRef nil = false
+    | occurresTyEqList tvarRef ((h1,h2)::t) = 
+      occurres tvarRef h1
+      orelse occurres tvarRef h2
+      orelse occurresTyEqList tvarRef t
                                 
   exception TyConId
   fun tyConId ty = 
@@ -189,22 +194,9 @@ struct
                     if OPrimID.eq(#oprimId op1, #oprimId op2) then
                       SOME op2
                     else find op1 opList
-                val (O1, newEqs1) = 
-                    foldr
-                    (fn (op1, (O1, newEqs1)) =>
-                        let
-                          val op2Opt = find op1 O2
-                        in
-                          case op2Opt of
-                            SOME op2 =>
-                              (op1::O1, (ListPair.zip(#instTyList op1,
-                                                      #instTyList op2))
-                                        @ newEqs1)
-                          | NONE => (op1::O1,newEqs1)
-                        end
-                    )
-                    (nil,nil)
-                    O1
+                (* we do not and should not generate equations from 
+                   (O1,O2) 
+                 *)
                 val O2 =
                     foldr
                     (fn (op2, O2) =>
@@ -218,7 +210,7 @@ struct
                     )
                     nil
                     O2
-                val (I,newEq2) = lubTyList(I1,I2)
+                val (I,newEqs) = lubTyList(I1,I2)
               in
                 case I of 
                   nil => raise Unify
@@ -228,7 +220,7 @@ struct
                       instances = I,
                       operators = O1@O2
                      },
-                   newEqs1@newEq2)
+                   newEqs)
               end
             | (T.UNIV, x) => (x,nil)
             | (x, T.UNIV) => (x,nil)
@@ -382,43 +374,17 @@ struct
               else if occurres tvState1 ty2 orelse occurres tvState2 ty1 
               then raise Unify
               else 
-              (* Here we perform imperative udate to the kind 
-                 Whithout treating the above two cases specially,
-                 this seems to cause the mlyacc benchmark loops.
-                 The following one does not show this problem.
                 let 
-                  val (newKind, newTyEquations) =
-                      lubKind (tvKind1, tvKind2)
-                  val newTy = T.newtyRaw {tyvarNmae = #tyvarNmae newKind,
-                                          id = #id newKind,
-                                          lambdaDepth = #lambdaDepth newKind,
-                                          recordKind = #recordKind newKind,
-                                          eqKind = #eqKind newKind}
-                in
-                  TU.performSubst(ty1, newTy);
-                  TU.performSubst(ty2, newTy);
-                  unifyTy (newTyEquations@tail)
-                end
-                let 
-                  val (newKind, newTyEquations) =
-                      lubKind (tvKind1, tvKind2)
-                  val _ = tvState1 := T.TVAR newKind
-                in
-                  TU.performSubst(ty2, ty1);
-                  unifyTy (newTyEquations@tail)
-                end
-               *)
-                let 
-                  val (newKind, newTyEquations) =
-                      lubKind (tvKind1, tvKind2)
+                  val (newKind, newTyEquations) = lubKind (tvKind1, tvKind2)
                   val newTy = T.newtyRaw {tyvarName = #tyvarName newKind,
                                           lambdaDepth = #lambdaDepth newKind,
                                           recordKind = #recordKind newKind,
                                           eqKind = #eqKind newKind}
                 in
+                  unifyTy newTyEquations;
                   TU.performSubst(ty1, newTy);
                   TU.performSubst(ty2, newTy);
-                  unifyTy (newTyEquations@tail)
+                  unifyTy tail
                 end
             | (
                T.TYVARty (tvState1 as ref(T.TVAR tvKind1)),
@@ -436,16 +402,7 @@ struct
                    unifyTy tail
                   )
                 end
-(*
-                let
-                  val newTyEquations = checkKind ty2 tvKind1
-                in
-                  (
-                   TU.performSubst(ty1, ty2); 
-                   unifyTy (newTyEquations @ tail)
-                  )
-                end
-*)
+
             | (
                _,
                T.TYVARty (tvState2 as ref(T.TVAR tvKind2))
@@ -462,16 +419,7 @@ struct
                    unifyTy tail
                   )
                 end
-(*
-                let
-                  val newTyEquations = checkKind ty1 tvKind2
-                in
-                  (
-                   TU.performSubst(ty2, ty1); 
-                   unifyTy (newTyEquations @ tail)
-                  )
-                end
-*)
+
            (* constructor types *)
             | (
                T.FUNMty(domainTyList1, rangeTy1),

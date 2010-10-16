@@ -1,3 +1,20 @@
+SML# version 0.58 (released on 2010-10-16)
+
+1. Overview
+
+This is a patch release of SML# 0.50 series.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+- fixed a bug that String.sub returns a negative integer if given
+  string contains a non-ASCII character.
+- fixed a bug of printing string values on interactive mode.
+- fixed a bug of compilation of polymorphic flexible record patterns.
+- refined messages of type errors due to record kinds.
+
+-----------------------------------------------------------------------------
 SML# version 0.57 (released on 2010-10-01)
 
 1. Overview

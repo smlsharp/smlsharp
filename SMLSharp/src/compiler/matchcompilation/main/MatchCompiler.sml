@@ -581,10 +581,10 @@ struct
   	          (
   		   ConMap.insert
   		   ( 
-                      branches, 
+                    branches, 
   		    c,
-                      (rule, env) ::
-                      getOpt (ConMap.find (branches, c), defBranch)
+                    (rule, env) ::
+                    getOpt (ConMap.find (branches, c), defBranch)
   		   ),
   		   defBranch
   		  )

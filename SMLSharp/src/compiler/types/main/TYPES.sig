@@ -61,6 +61,8 @@ sig
 
   val format_ty
       : formatBtvEnv -> ty -> SMLFormat.FormatExpression.expression list
+  val format_recordKind
+      : formatBtvEnv ->recordKind -> SMLFormat.FormatExpression.expression list
   val format_btvEnv
       : formatBtvEnv -> btvEnv -> SMLFormat.FormatExpression.expression list
 
