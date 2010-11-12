@@ -2,7 +2,7 @@
  * module compiler flattening
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompiler.sml,v 1.148 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: ModuleCompiler.sml,v 1.148.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure ModuleCompiler : MODULE_COMPILER = struct
 local
@@ -841,6 +841,26 @@ in
                           newFfiArgList,
                           newTy,
                           loc)
+        end
+
+      | PC.PLSQLSERVER (str, schema, loc) =>
+        let
+          val newTy = compileTy nameContext schema
+          val newstr = map (fn (l,e) => (l,compileExp nameContext e)) str
+          val newSchema = compileTy nameContext schema
+        in
+          PCF.PLFSQLSERVER (newstr, newTy, loc)
+        end
+      | PC.PLSQLDBI (plpat, plexp, loc) =>
+        let
+          val (newPat, varNameMap) = compilePat nameContext plpat
+          val newNameContext =
+              NM.extendNameContextWithCurrentNameMap
+                {nameContext = nameContext,
+                 nameMap = NM.injectVarNameMapInNameMap varNameMap}
+          val newExp = compileExp newNameContext plexp
+        in
+          PCF.PLFSQLDBI (newPat, newExp, loc)
         end
 
   and compileFfiArg nameContext ffiArg = 

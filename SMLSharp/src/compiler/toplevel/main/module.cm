@@ -47,6 +47,7 @@ Group is
 	../../printergeneration/sources.cm
 	../../uniqueidallocation/sources.cm
 	../../matchcompilation/sources.cm
+	../../sqlcompilation/sources.cm
 	../../overloadcompilation/sources.cm
 	../../tlnormalization/sources.cm
 	../../staticanalysis/sources.cm

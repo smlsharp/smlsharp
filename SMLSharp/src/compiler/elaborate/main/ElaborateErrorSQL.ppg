@@ -1,0 +1,92 @@
+(**
+ * @copyright (c) 2006, Tohoku University.
+ * @author UENO Katsuhiro
+ * @author ENDO Hiroki
+ *)
+structure ElaborateErrorSQL =
+struct
+
+  (***************************************************************************)
+  
+  (*%
+   * @formatter(Absyn.ty) Absyn.format_ty
+   *)
+  exception
+
+  (*
+   *)
+  (*%
+   * @format(label)
+   *    "duplicate" +d "label" +d "of" +d "SQL" +d "server"
+   *    +d "description:" label
+   *)
+  DuplicateSQLRecordLabel of string
+
+  and
+  (*
+   *)
+  (*%
+   * @format(label)
+   *    "duplicate" +d "tuple" +d "in" +d "from" +d "and/or" +d "into"
+   *    +d "clause:" +d label
+   *)
+  DuplicateSQLTuple of string
+
+  and
+  (*
+   *)
+  (*%
+   * @format(label)
+   *    "duplicate" +d "label" +d "in" +d "select" +d "clause:" +d label
+   *)
+  DuplicateSQLSelectLabel of string
+
+  and
+  (*
+   *)
+  (*%
+   * @format(label)
+   *    "duplicate" +d "label" +d "in" +d "insert" +d "clause:" +d label
+   *)
+  DuplicateSQLInsertLabel of string
+
+  and
+  (*
+   *)
+  (*%
+   * @format(label)
+   *    "duplicate" +d "label" +d "in" +d "set" +d "clause:" +d label
+   *)
+  DuplicateSQLSetLabel of string
+
+  and
+  (*
+   *)
+  (*%
+   * @format
+   *    "different" +d "number" +d "of" +d "labels" +d "in" +d "insert"
+   *    +d "clause"
+   *)
+  NumberOfSQLInsertLabel
+
+  and
+  (*
+   *)
+  (*%
+   * @format
+   *    "different" +d "number" +d "of" +d "labels" +d "in" +d "set"
+   *    +d "clause"
+   *)
+  NumberOfSQLSetLabel
+
+  and
+  (*
+   *)
+  (*%
+   * @format(label)
+   *    "not" +d "available" +d "label" +d "of" +d "SQL" +d "server"
+   *    +d "description:" label
+   *)
+  NotAvailableSQLKeyword of string
+
+end

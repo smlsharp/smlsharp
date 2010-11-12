@@ -2,7 +2,7 @@
  * Module compiler flattens structure.
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: utils.sml,v 1.16 2008/03/11 08:53:57 katsu Exp $
+ * @version $Id: utils.sml,v 1.16.6.6 2010/01/29 06:41:35 hiro-en Exp $
  *)
 structure VALREC_Utils =
 struct
@@ -201,6 +201,10 @@ in
                 | (PLFFFIARGSIZEOF (ty, NONE, loc), z) => z)
               (getFreeIdsInExp globalContext context funExp)
               args
+      | PLFSQLSERVER (server, schema, loc) =>
+        getFreeIdsInExpList globalContext context (map #2 server)
+      | PLFSQLDBI (pat, exp, loc) =>
+        getFreeIdsInExp globalContext context exp
 
   and getFreeIdsInExpList globalContext context plexpList =
       foldl 

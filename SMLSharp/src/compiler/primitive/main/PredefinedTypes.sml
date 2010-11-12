@@ -38,6 +38,13 @@ struct
   val exnTyCon = getTyCon "exn"
   val exntagTyCon = getTyCon "SMLSharp.exntag"
 
+  val sqlServerConPathInfo = getConPathInfo "_SQL.SERVER"
+  val sqlValueConPathInfo = getConPathInfo "_SQL.VALUE"
+  val sqlDBIConPathInfo = getConPathInfo "_SQL.DBI"
+  val sqlServerTyCon = getTyCon "_SQL.server"
+  val sqlValueTyCon = getTyCon "_SQL.value"
+  val sqlDBITyCon = getTyCon "_SQL.dbi"
+
   (********* for convenience ********)
 
   val boolty = Types.RAWty {tyCon = boolTyCon, args = nil}
@@ -86,6 +93,10 @@ struct
   val endOfIndentConPathInfo = getConPathInfo "SMLSharp.SMLFormat.EndOfIndent"
   val newlineConPathInfo = getConPathInfo "SMLSharp.SMLFormat.Newline"
 
+  val toSQLOPrimInfo =
+      BuiltinContextMaker.getOPrimInfo
+        (BuiltinContext.builtinContext, "_SQL_toSQL")
+
   val assignPrimInfo =
       BuiltinPrimitiveType.primInfo
           (#topTyConEnv BuiltinContext.builtinContext)
@@ -95,5 +106,26 @@ struct
       BuiltinPrimitiveType.primInfo
           (#topTyConEnv BuiltinContext.builtinContext)
           (BuiltinPrimitive.P BuiltinPrimitive.Word_mul)
+
+  val stringArrayPrimInfo =
+      BuiltinPrimitiveType.primInfo
+        (#topTyConEnv BuiltinContext.builtinContext)
+        (BuiltinPrimitive.P BuiltinPrimitive.String_array)
+
+  val stringCopyUnsafePrimInfo =
+      BuiltinPrimitiveType.primInfo
+        (#topTyConEnv BuiltinContext.builtinContext)
+        (BuiltinPrimitive.P BuiltinPrimitive.String_copy_unsafe)
+
+  val stringSizePrimInfo =
+      BuiltinPrimitiveType.primInfo
+        (#topTyConEnv BuiltinContext.builtinContext)
+        (BuiltinPrimitive.P BuiltinPrimitive.String_size)
+
+  val intAddPrimInfo =
+      BuiltinPrimitiveType.primInfo
+        (#topTyConEnv BuiltinContext.builtinContext)
+        (BuiltinPrimitive.P (BuiltinPrimitive.Int_add
+                               BuiltinPrimitive.NoOverflowCheck))
 
 end

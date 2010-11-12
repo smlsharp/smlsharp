@@ -12,6 +12,7 @@ Group is
 	../../pickle/sources.cm
 
 	Fixity.sml
+	AbsynSQL.ppg.sml
 	ABSYN.sig
 	Absyn.ppg.sml
 	ABSYN_FORMATTER.sig

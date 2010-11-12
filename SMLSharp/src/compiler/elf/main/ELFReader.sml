@@ -161,7 +161,7 @@ struct
           val desc = readString (buf, descOffset, descsz)
         in
           if name = "SML#\000" then () else raise Format Note;
-          if desc = Configuration.Version^"\000"
+          if desc = SMLSharpConfiguration.Version^"\000"
           then () else raise Format Version
         end
         handle Subscript => raise Format Note

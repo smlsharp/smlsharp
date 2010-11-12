@@ -43,6 +43,8 @@ in
       | TFPSEQ {loc,...} => loc
       | TFPLIST {loc,...} => loc
       | TFPCAST (tfpexp,ty,loc) => loc
+      | TFPSQLSERVER {server, schema, resultTy, loc} => loc
+
 (*
   structure VIdOrd : ORD_KEY =
   struct
@@ -151,6 +153,8 @@ in
     | getFV (TFPSEQ {expList,...}) = foldlUnion getFV expList
     | getFV (TFPLIST {expList,...}) = foldlUnion getFV expList
     | getFV (TFPCAST (exp, ty, loc)) =  getFV exp
+    | getFV (TFPSQLSERVER {server, schema, resultTy, loc}) =
+      foldlUnion (getFV o #2) server
 
   and getDecFVBV (TFPVAL (binds, loc)) =
       foldl

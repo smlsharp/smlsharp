@@ -90,7 +90,7 @@ struct
   fun noteSection () =
       let
         val name = "SML#"
-        val desc = Configuration.Version
+        val desc = SMLSharpConfiguration.Version
         val nameLen = size name + 1
         val descLen = size desc + 1
         val nameOffset = 12

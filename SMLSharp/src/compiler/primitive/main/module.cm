@@ -18,6 +18,7 @@ group is
 	BuiltinPrimitiveType.sml
 	BuiltinPrimitiveUtils.sml
 	BuiltinContextMaker.sml
+	BuiltinContextSQL.sml
 	BuiltinContext.sml
 	PREDEFINED_TYPES.sig
 	PredefinedTypes.sml

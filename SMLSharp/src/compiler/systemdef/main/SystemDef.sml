@@ -5,6 +5,6 @@
 structure SystemDef :> SYSTEMDEF =
 struct
 
-  val NativeByteOrder = Configuration.NativeByteOrder
+  val NativeByteOrder = SMLSharpConfiguration.NativeByteOrder
 
 end

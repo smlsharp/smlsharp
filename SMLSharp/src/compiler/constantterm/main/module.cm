@@ -9,6 +9,7 @@ Group is
 	../../control/sources.cm
 	../../pickle/sources.cm
 	../../name/sources.cm
+	../../env/sources.cm
 	../../util/sources.cm
 	../../usererror/sources.cm
 	../../primitive/sources.cm

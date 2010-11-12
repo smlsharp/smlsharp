@@ -126,6 +126,9 @@ signature TYPEDFLATCALC = sig
    | TFPSEQ of {expList:tfpexp list, expTyList:ty list, loc:loc}      (* this must be primitive *)
    | TFPLIST of {expList:tfpexp list, listTy:ty, loc:loc}
    | TFPCAST of tfpexp * ty * loc
+   | TFPSQLSERVER of {server: (string * tfpexp) list, schema: ty SEnv.map,
+                      resultTy: ty, loc: loc}
+
  and tfpdecl 
    = TFPVAL of (valIdent * tfpexp) list * loc
    | TFPVALREC of (varIdInfo * ty * tfpexp ) list * loc

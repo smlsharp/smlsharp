@@ -827,6 +827,7 @@ struct
        ("_format_exnRef",
         DUMMY {ty = "(exn -> SMLSharp.SMLFormat.expression) ref"})
       ]
+      @ BuiltinContextSQL.decls
 
   val builtinContext =
       foldl (fn (x,z) => BuiltinContextMaker.define z x)

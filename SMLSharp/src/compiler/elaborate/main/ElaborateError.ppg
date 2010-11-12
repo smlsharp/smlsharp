@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ElaborateError.ppg,v 1.23 2008/03/11 08:53:54 katsu Exp $
+ * @version $Id: ElaborateError.ppg,v 1.23.6.1 2009/12/23 22:24:58 hiro-en Exp $
  *)
 structure ElaborateError =
 struct

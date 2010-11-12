@@ -1,7 +1,7 @@
 (**
  * user errors detected in type inference phase.
  * @author OHORI Atsushi
- * @version $Id: TypeInferenceError.ppg,v 1.74 2008/06/13 23:04:24 ohori Exp $
+ * @version $Id: TypeInferenceError.ppg,v 1.74.6.3 2010/01/22 09:19:07 hiro-en Exp $
  *)
 structure TypeInferenceError =
 struct
@@ -959,6 +959,33 @@ struct
    * +d "for" +d "FFI:" +d ty
    *)
   FFIInvalidTyvar of Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(ty)
+   * "invalid" +d "type" +d "for" +d "SQL" +d "table" +d "declaration:" +d ty
+   *)
+  InvalidSQLTableDecl of Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(ty)
+   * "incompatible" +d "type" +d "with" +d "SQL:" +d ty
+   *)
+  IncompatibleWithSQL of Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(ty)
+   * "invalid" +d "database" +d "id" +d "type:" +d ty
+   *)
+  InvalidSQLDBI of Types.ty
 
   val isAnyError = ref false
 

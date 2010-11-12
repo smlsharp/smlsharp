@@ -2,7 +2,7 @@
  * resolve the scope of user declaraed type variables.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: SetTVars.sml,v 1.24 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: SetTVars.sml,v 1.24.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure SetTVars : SETTVARS = struct
 local
@@ -295,7 +295,31 @@ in
                    args
        in
          (PTFFIAPPLY (cconv , ptfunExp, ptargs, retTy, loc), tvars)
-       end)
+       end
+   | PCF.PLFSQLSERVER (str, schema, loc) =>
+     let
+(*       val tvars = tvarsInTy (A.TYRECORD (schema, loc))*)
+       val tvars1 = tvarsInTy schema
+       val (newStrs,tvars2) = foldr (fn ((l,e),(P,S)) =>
+                                        let
+                                          val (pte, tvs) = setExp env e
+                                        in
+                                          ((l,pte)::P,tvarNameSetUnion(tvs,S,loc))
+                                        end) (nil,SEnv.empty) str
+       val tvars = tvarNameSetUnion(tvars1,tvars2,loc)
+     in
+       (PTSQLSERVER (newStrs, schema, loc), tvars)
+     end
+   | PCF.PLFSQLDBI (plpat, plexp, loc) =>
+     let
+       val (ptpat, tvarset1) = setPat env plpat
+       val (ptexp, tvarset2) = setExp env plexp
+       val tvars = tvarNameSetUnion (tvarset1, tvarset2, loc)
+       val unguardedTvars = tvarNameSetDifference (tvars, env)
+     in
+       (PTSQLDBI (ptpat, ptexp, loc), unguardedTvars)
+     end
+   )
       handle exn as UE.UserErrors _ => raise exn
            | exn as C.Bug _ => raise exn
            | exn => raise UE.UserErrors([(PCF.getLocExp exp, UE.Error, exn)])

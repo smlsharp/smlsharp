@@ -520,6 +520,15 @@ in
                 spine,
                 loc)
       
+    | TP.TPSQLSERVER {server, schema, resultTy, loc} =>
+      let
+        val server = map (fn (l,e) => (l,uncurryExp nil e)) server
+      in
+        makeApply (TP.TPSQLSERVER{server=server, schema=schema,
+                                  resultTy=resultTy, loc=loc},
+                   spine, loc)
+      end
+
   and uncurryDecl isTop tpdecl = 
       case tpdecl of
         TP.TPVAL (valIdTpexpList, loc) => 

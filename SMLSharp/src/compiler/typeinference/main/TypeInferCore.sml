@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypeInferCore.sml,v 1.120 2010/02/28 00:57:55 ohori Exp $
+ * @version $Id: TypeInferCore.sml,v 1.119.6.10 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure TypeInferCore  =
 struct
@@ -482,6 +482,7 @@ in
           expList
       | TPSEQ _ => true
       | TPCAST _ => true
+      | TPSQLSERVER _ => false
 
   datatype abscontext = FINITE of int | INFINITE
 
@@ -1256,6 +1257,52 @@ in
                          bodyTy = retTy,
                          bodyExp = stubExp})
       end
+
+  local
+    fun lookupOperator oprimId nil = raise Control.Bug "lookupOperator"
+      | lookupOperator oprimId ((operator:T.operator)::operators) =
+        if OPrimID.eq (oprimId, #oprimId operator)
+        then operator
+        else lookupOperator oprimId operators
+
+    fun lookupInstKey oprimId nil = raise Control.Bug "oprimInstKey"
+      | lookupInstKey oprimId (ty::tys) =
+        case TU.derefTy ty of
+          T.TYVARty(ref(T.TVAR{recordKind=T.OPRIMkind{operators,...},...})) =>
+          #keyTyList (lookupOperator oprimId operators)
+        | _ => lookupInstKey oprimId tys
+
+    fun freshOPrimInst ({oprimPolyTy, oprimId, ...}:T.oprimInfo) =
+        let
+          val (instTy, instTyList) = TIU.freshTopLevelInstTy oprimPolyTy
+          val oprimInstKey = lookupInstKey oprimId instTyList
+        in
+          case TU.derefTy instTy of
+            T.FUNMty ([domTy], ranTy) => (domTy, ranTy, oprimInstKey)
+          | _ => raise Control.Bug "freshOPrimInst"
+        end
+  in
+
+  fun freshInst_toSQL () =
+      case freshOPrimInst PredefinedTypes.toSQLOPrimInfo of
+        (ty as T.TYVARty (ref (T.TVAR _)), _, instKey) => (ty, instKey)
+      | _ => raise Control.Bug "freshInst_toSQL"
+
+  (* if ty consists only of RAWty and can be applied to a conversion
+   * function between SQL and ML values, then yes. *)
+  fun compatibleWithSQL ty =
+      let
+        fun isOnlyRAWty ty =
+            case TU.derefTy ty of
+              T.RAWty {tyCon, args} => List.all isOnlyRAWty args
+            | _ => false
+      in
+        isOnlyRAWty ty
+        andalso (U.unify [(ty, #1 (freshInst_toSQL ()))]; true)
+        handle U.Unify => false
+      end
+
+  end (* local *)
 
   (**
    *)
@@ -3275,6 +3322,99 @@ in
                bodyExp = stubExp
               })
          end
+         
+    | PT.PTSQLSERVER (str, rawTy, loc) =>
+      let
+        val ty = evalRawty basis rawTy
+        val schema =
+            case TU.derefTy ty of
+              T.RECORDty x =>
+              (SEnv.app
+                 (fn ty =>
+                     case TU.derefTy ty of
+                       T.RECORDty fields =>
+                       SEnv.app
+                         (fn ty =>
+                             if compatibleWithSQL ty then ()
+                             else (E.enqueueError (loc,
+                                                   E.IncompatibleWithSQL ty)))
+                         fields
+                     | _ => (E.enqueueError (loc, E.InvalidSQLTableDecl ty))) x;
+               x)
+            | T.RAWty {tyCon,...} =>
+              if TyConID.eq (#id PDT.unitTyCon, #id tyCon)
+              then SEnv.empty
+              else (E.enqueueError (loc, E.InvalidSQLTableDecl ty); SEnv.empty)
+            | _ => (E.enqueueError (loc, E.InvalidSQLTableDecl ty);
+                    SEnv.empty)
+        val recordTy = ty
+        val schemaTy = T.RAWty {tyCon = PDT.sqlServerTyCon,
+                                args = [recordTy]}
+        val strs = map (fn (l,e) =>
+                           let
+                             val (ty,tpe) =
+                                 TPU.freshInst(typeinfExp lambdaDepth applyDepth
+                                                          basis e)
+                             val _ = U.unify [(ty,PDT.stringty)]
+                                 handle U.Unify =>
+                                        E.enqueueError
+                                          (loc,E.TyConMismatch
+                                                 {argTy = ty,
+                                                  domTy = PDT.stringty})
+                           in
+                             (l,tpe)
+                           end) str
+      in
+        (schemaTy,
+         TPSQLSERVER {server = strs, schema = schema,
+                      resultTy = schemaTy, loc = loc})
+      end
+    | PT.PTSQLDBI (ptpat, ptexp, loc) =>
+      let
+        (*
+         *  T{x:t dbi} |- e : tau   t \not\in FTV(T)   t \not\in FTV(tau)
+         * ----------------------------------------------------------------
+         *  T |- sqldbi x in e : tau
+         *
+         * This term is derived from "abstype" of Mitchell-Protokin's
+         * exsitential type. This term means the following:
+         *   abstype X with x : X dbi is DBI in e
+         *)
+        val lambdaDepth = incDepth ()
+        val tv = T.newtyWithLambdaDepth (lambdaDepth, T.univKind)
+        val dbiTy = T.RAWty {tyCon = PDT.sqlDBITyCon, args = [tv]}
+
+        val (patVarEnv, patTy, tppat) = typeinfPat lambdaDepth basis ptpat
+        val _ = U.unify [(patTy, dbiTy)]
+                handle U.Unify =>
+                       E.enqueueError (loc,
+                                       E.RuleTypeMismatch
+                                         {thisRule=patTy, otherRules=dbiTy})
+        val newBasis = TIC.extendBasisWithVarEnv (basis, patVarEnv)
+        val (expTy, tpexp) = typeinfExp lambdaDepth applyDepth newBasis ptexp
+
+        val _ =
+            if (case TU.derefTy tv of
+                  T.TYVARty (tvs as ref (T.TVAR {lambdaDepth=depth, ...})) =>
+                  T.youngerDepth {contextDepth = lambdaDepth,
+                                  tyvarDepth = depth}
+                  andalso not (OTSet.member (TU.EFTV expTy, tvs))
+                | _ => false)
+            then ()
+            else E.enqueueError (loc, E.InvalidSQLDBI tv)
+      in
+        (expTy,
+         TPCASEM
+           {expList=[TPDATACONSTRUCT {con = PDT.sqlDBIConPathInfo,
+                                      instTyList = [tv],
+                                      argExpOpt = NONE,
+                                      loc = loc}],
+            expTyList = [dbiTy],
+            ruleList = [([tppat], tpexp)],
+            ruleBodyTy = expTy,
+            caseKind = PatternCalc.MATCH,
+            loc = loc})
+      end
       )
 
 

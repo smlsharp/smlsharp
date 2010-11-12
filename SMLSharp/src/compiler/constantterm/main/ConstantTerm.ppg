@@ -190,12 +190,25 @@ struct
     structure OCMap = BinaryMapFn(OCord)
     val constantTypeDefs =
         [
-          (INT (0),  "['a::{int,IntInf.int}.'a]"),
-          (LARGEINT (BigInt.fromInt 0),  "['a::{int,IntInf.int}.'a]"),
-          (WORD (0w0), "['a::{word,Word8.word}.'a]"),
-          (STRING (""), "string"),
-          (REAL ("0.0"), "['a::{real,Real32.real}.'a]"),
-          (CHAR (#"c"),  "char"),
+          (INT (0), "['a::{int,IntInf.int,('b,'c)_SQL.value},\
+                     \'b::{int,(int)option},\
+                     \'c.'a]"),
+          (LARGEINT (BigInt.fromInt 0),
+           "['a::{int,IntInf.int,('b,'c)_SQL.value},\
+           \'b::{int,(int)option},\
+           \'c.'a]"),
+          (WORD 0w0, "['a::{word,Word8.word,('b,'c)_SQL.value},\
+                      \'b::{word,(word)option},\
+                      \'c.'a]"),
+          (STRING "", "['a::{string,('b,'c)_SQL.value},\
+                       \'b::{string,(string)option},\
+                       \'c.'a]"),
+          (REAL "0.0", "['a::{real,Real32.real,('b,'c)_SQL.value},\
+                        \'b::{real,(real)option},\
+                        \'c.'a]"),
+          (CHAR #"c", "['a::{char,('b,'c)_SQL.value},\
+                       \'b::{char,(char)option},\
+                       \'c.'a]"),
           (UNIT,  "unit"),
           (NULL, "(unit)ptr")
         ]
@@ -265,16 +278,29 @@ struct
         if compare (v, min) = LESS orelse compare (v, max) = GREATER
         then raise UE.UserErrors [(loc, UE.Error, TooLargeConstant)]
         else ()
+
+    fun sqlInt x = BigInt.toString x
+    fun sqlWord x = Word32.fmt StringCvt.DEC x
+    fun sqlReal x = String.translate (fn #"~" => "-" | x => str x) x
+    fun sqlString x =
+        "'" ^ String.translate (fn #"'" => "''" | x => str x) x ^ "'"
+    fun sqlChar x = sqlString (str x)
+
   in
   (**
    * fix the form of constant expression according to its type.
    *)
-  fun fixConst (const, ty, loc) =
+  fun fixConst {constTerm : constant -> 'exp,
+                recordTerm : 'exp SEnv.map * Types.ty -> 'exp,
+                conTerm : {con: Types.conPathInfo, instTyList: Types.ty list,
+                           arg: 'exp option} -> 'exp}
+               (const, ty, loc) =
       let
         datatype constTy =
                  INTty | WORDty | CHARty | STRINGty | REALty | FLOATty
                | LARGEINTty | BYTEty | UNITty | PTRty
-        val constTy =
+               | OPTIONty of constTy | SQLVALUEty of constTy * T.ty
+        fun constTy ty =
             case TU.derefTy ty of
               T.RAWty {tyCon={id,...}, args=[]} =>
               if TyConID.eq (id, #id PT.intTyCon) then INTty
@@ -290,31 +316,96 @@ struct
                 (printType ty;
                  raise Control.Bug "castConst"
                 )
-            | T.RAWty {tyCon={id,...}, args=[_]} =>
-              if TyConID.eq (id, #id PT.ptrTyCon) then PTRty
-              else
-                (printType ty;
-                 raise Control.Bug "castConst")
+            | T.RAWty {tyCon={id,...}, args=[arg]} =>
+              if TyConID.eq (id, #id PT.ptrTyCon)
+              then PTRty
+              else if TyConID.eq (id, #id PT.optionTyCon)
+              then OPTIONty (constTy arg)
+              else (printType ty; raise Control.Bug "castConst")
+            | T.RAWty {tyCon={id,...}, args=[arg1, arg2]} =>
+              if TyConID.eq (id, #id PT.sqlValueTyCon)
+              then SQLVALUEty (constTy arg1, arg2)
+              else (printType ty; raise Control.Bug "castConst")
             | _ =>
               (printType ty;
                raise Control.Bug "castConst")
+
+        fun pairTerm ((e1,t1), (e2,t2)) =
+            let
+              val ty = T.RECORDty (SEnv.fromList [("1",t1),("2",t2)])
+              val exp = recordTerm (SEnv.fromList [("1",e1), ("2",e2)], ty)
+            in
+              (exp, ty)
+            end
+        fun stringDBIPairTerm (string, dbiTy) =
+            pairTerm ((constTerm (STRING string), PT.stringty),
+                      (conTerm {con = PT.sqlDBIConPathInfo,
+                                instTyList = [dbiTy],
+                                arg = NONE},
+                       T.RAWty {tyCon = PT.sqlDBITyCon, args = [dbiTy]}))
+
+        fun sqlValue (string as (_, dbiTy)) (exp, valueTy) =
+            conTerm {con = PT.sqlValueConPathInfo,
+                     instTyList = [valueTy, dbiTy],
+                     arg = SOME (#1 (pairTerm (stringDBIPairTerm string,
+                                               (exp, valueTy))))}
+        fun sqlOptionValue string (exp, valueTy) =
+            sqlValue string
+                     (conTerm {con = PT.someConPathInfo,
+                               instTyList = [valueTy],
+                               arg = SOME exp},
+                      T.RAWty {tyCon = PT.optionTyCon, args = [valueTy]})
       in
-        case (const, constTy) of
-          (INT x, INTty) => (checkRange intRange (int32ToBigInt x, loc); const)
-        | (INT x, LARGEINTty) => LARGEINT (int32ToBigInt x)
+        case (const, constTy ty) of
+          (INT x, INTty) =>
+          (checkRange intRange (int32ToBigInt x, loc); constTerm const)
+        | (INT x, LARGEINTty) => constTerm (LARGEINT (int32ToBigInt x))
+        | (INT x, SQLVALUEty (INTty, dbi)) =>
+          (checkRange intRange (int32ToBigInt x, loc);
+           sqlValue (Int32.toString x, dbi) (constTerm const, PT.intty))
+        | (INT x, SQLVALUEty (OPTIONty INTty, dbi)) =>
+          (checkRange intRange (int32ToBigInt x, loc);
+           sqlOptionValue (Int32.toString x, dbi) (constTerm const, PT.intty))
         | (LARGEINT x, INTty) =>
-          (checkRange intRange (x, loc); INT (bigIntToInt32 x))
-        | (LARGEINT _, LARGEINTty) => const
-        | (WORD x, WORDty) => (checkRange wordRange (x, loc); const)
-        | (WORD x, BYTEty) => (checkRange byteRange (x, loc); BYTE x)
-        | (STRING _, STRINGty) => const
-        | (REAL _, REALty) => const
-        | (REAL x, FLOATty) => FLOAT x
-        | (FLOAT _, FLOATty) => const
-        | (FLOAT x, REALty) => REAL x
-        | (CHAR _, CHARty) => const
-        | (UNIT, UNITty) => const
-        | (NULL, PTRty) => const
+          (checkRange intRange (x, loc); constTerm (INT (bigIntToInt32 x)))
+        | (LARGEINT _, LARGEINTty) => constTerm const
+        | (LARGEINT x, SQLVALUEty (INTty, dbi)) =>
+          (checkRange intRange (x, loc);
+           sqlValue (sqlInt x, dbi)
+  	            (constTerm (INT (bigIntToInt32 x)), PT.intty))
+        | (LARGEINT x, SQLVALUEty (OPTIONty INTty, dbi)) =>
+          (checkRange intRange (x, loc);
+           sqlOptionValue (sqlInt x, dbi) (constTerm (INT (bigIntToInt32 x)),
+                                         PT.intty))
+        | (WORD x, WORDty) => (checkRange wordRange (x, loc); constTerm const)
+        | (WORD x, BYTEty) =>
+          (checkRange byteRange (x, loc); constTerm (BYTE x))
+        | (WORD x, SQLVALUEty (WORDty, dbi)) =>
+          (checkRange wordRange (x, loc);
+           sqlValue (sqlWord x, dbi) (constTerm const, PT.wordty))
+        | (WORD x, SQLVALUEty (OPTIONty WORDty, dbi)) =>
+          (checkRange wordRange (x, loc);
+           sqlOptionValue (sqlWord x, dbi) (constTerm const, PT.wordty))
+        | (STRING _, STRINGty) => constTerm const
+        | (STRING x, SQLVALUEty (STRINGty, dbi)) =>
+          sqlValue (sqlString x, dbi) (constTerm const, PT.stringty)
+        | (STRING x, SQLVALUEty (OPTIONty STRINGty, dbi)) =>
+          sqlOptionValue (sqlString x, dbi) (constTerm const, PT.stringty)
+        | (REAL _, REALty) => constTerm const
+        | (REAL x, FLOATty) => constTerm (FLOAT x)
+        | (REAL x, SQLVALUEty (REALty, dbi)) =>
+          sqlValue (sqlReal x, dbi) (constTerm const, PT.realty)
+        | (REAL x, SQLVALUEty (OPTIONty REALty, dbi)) =>
+          sqlOptionValue (sqlReal x, dbi) (constTerm const, PT.realty)
+        | (FLOAT _, FLOATty) => constTerm const
+        | (FLOAT x, REALty) => constTerm (REAL x)
+        | (CHAR _, CHARty) => constTerm const
+        | (CHAR x, SQLVALUEty (CHARty, dbi)) =>
+          sqlValue (sqlChar x, dbi) (constTerm const, PT.charty)
+        | (CHAR x, SQLVALUEty (OPTIONty CHARty, dbi)) =>
+          sqlOptionValue (sqlChar x, dbi) (constTerm const, PT.charty)
+        | (UNIT, UNITty) => constTerm const
+        | (NULL, PTRty) => constTerm const
         | _ => raise Control.Bug "castConst"
       end
   end

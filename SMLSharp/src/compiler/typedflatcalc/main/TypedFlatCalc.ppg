@@ -300,6 +300,7 @@ OHORI: why this is here?
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
+ * @formatter(genericSmapTy) SmlppgUtil.formatGenericSmapTy
  * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
  * @formatter(tyBindInfo) Types.format_tyBindInfo
  * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
@@ -593,6 +594,16 @@ OHORI: why this is here?
       this is used to coerce constructor type to a record type
       *)
      TFPCAST of tfpexp * ty * loc
+
+  | (*%
+     * @format({server:str strs, schema:schema schemas:genericSmapTy,
+     *          resultTy, loc})
+     * N0{ "_sqlserver" + strs(str)("," +) + ":"
+     *     + "{" schemas(schema()(btvEnv))(":", ",", "*") "}" }
+     * @format:str(l * e) N0{ l + ":" + e()(btvEnv) }
+     *)
+    TFPSQLSERVER of {server: (string * tfpexp) list, schema: ty SEnv.map,
+                     resultTy: ty, loc: loc}
 
  and tfpdecl 
    = (*%

@@ -1,0 +1,15 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../primitive/sources.cm
+	../../constantterm/sources.cm
+	../../recordcalc/sources.cm
+	../../types/sources.cm
+
+	SQLCompilation.sml

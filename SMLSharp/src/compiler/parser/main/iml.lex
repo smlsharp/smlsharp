@@ -6,7 +6,7 @@
  * @author Atsushi Ohori
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: iml.lex,v 1.42 2008/02/28 07:36:06 bochao Exp $
+ * @version $Id: iml.lex,v 1.42.6.6 2010/01/22 09:19:06 hiro-en Exp $
  *)
 
 structure T = Tokens
@@ -238,6 +238,25 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"while" => (T.WHILE (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"with" => (T.WITH (left(yypos,arg),right(yypos,4,arg)));
 <INITIAL>"withtype" => (T.WITHTYPE (left(yypos,arg),right(yypos,8,arg)));
+<INITIAL>"_sqlserver" => (T.SQLSERVER (left(yypos,arg),right(yypos,8,arg)));
+<INITIAL>"_sqleval" => (T.SQLEVAL (left(yypos,arg),right(yypos,8,arg)));
+<INITIAL>"_sqlexec" => (T.SQLEXEC (left(yypos,arg),right(yypos,8,arg)));
+
+<INITIAL>"_sql" => (T.SQL (left(yypos,arg),right(yypos,4,arg)));
+<INITIAL>"asc" => (T.ASC (left(yypos,arg),right(yypos,3,arg)));
+<INITIAL>"desc" => (T.DESC (left(yypos,arg),right(yypos,4,arg)));
+<INITIAL>"select" => (T.SELECT (left(yypos,arg),right(yypos,6,arg)));
+<INITIAL>"from" => (T.FROM (left(yypos,arg),right(yypos,4,arg)));
+<INITIAL>"order" => (T.ORDER (left(yypos,arg),right(yypos,5,arg)));
+<INITIAL>"by" => (T.BY (left(yypos,arg),right(yypos,2,arg)));
+<INITIAL>"insert" => (T.INSERT (left(yypos,arg),right(yypos,6,arg)));
+<INITIAL>"into" => (T.INTO (left(yypos,arg),right(yypos,4,arg)));
+<INITIAL>"values" => (T.VALUES (left(yypos,arg),right(yypos,6,arg)));
+<INITIAL>"delete" => (T.DELETE (left(yypos,arg),right(yypos,6,arg)));
+<INITIAL>"update" => (T.UPDATE (left(yypos,arg),right(yypos,6,arg)));
+<INITIAL>"set" => (T.SET (left(yypos,arg),right(yypos,3,arg)));
+<INITIAL>"default" => (T.DEFAULT (left(yypos,arg),right(yypos,7,arg)));
+
 <INITIAL>":>" => (T.OPAQUE (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"*" => (T.ASTERISK(left(yypos,arg),right(yypos,1,arg)));
 <INITIAL>"#" => (T.HASH(left(yypos,arg),right(yypos,1,arg)));

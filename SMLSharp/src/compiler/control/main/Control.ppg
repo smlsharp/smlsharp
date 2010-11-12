@@ -17,25 +17,26 @@ struct
   val Print     = 7
   val UniqueID  = 8
   val MatchComp = 9
-  val OverloadComp = 10
-  val Lambda    = 11
-  val Static    = 12
-  val Unbox     = 13
-  val Inline    = 14
-  val RefElim   = 15
-  val DeadCode  = 16
-  val Localize  = 17
-  val Functor   = 18
-  val Cluster   = 19
-  val RBUComp   = 20
-  val Anormal   = 21
-  val SI        = 22
-  val SIOpt     = 23
-  val AI        = 24
-  val AIOpt     = 25
-  val Assem     = 26
-  val Code      = 27
-  val Run       = 28
+  val SQLComp   = 10
+  val OverloadComp = 11
+  val Lambda    = 12
+  val Static    = 13
+  val Unbox     = 14
+  val Inline    = 15
+  val RefElim   = 16
+  val DeadCode  = 17
+  val Localize  = 18
+  val Functor   = 19
+  val Cluster   = 20
+  val RBUComp   = 21
+  val Anormal   = 22
+  val SI        = 23
+  val SIOpt     = 24
+  val AI        = 25
+  val AIOpt     = 26
+  val Assem     = 27
+  val Code      = 28
+  val Run       = 29
 
   val doUntil = ref Run
 
@@ -176,9 +177,9 @@ struct
   (****************************************)
   (* switches to runtime parameter *)
 
-  val runtimePath = ref Configuration.RuntimePath
+  val runtimePath = ref SMLSharpConfiguration.RuntimePath
 
-  val runtimeDLLPath = ref Configuration.RuntimeDLLPath
+  val runtimeDLLPath = ref SMLSharpConfiguration.RuntimeDLLPath
 
   val VMHeapSize = ref 4096000
 
@@ -294,7 +295,7 @@ struct
 
   (** a string that SML# inserts at the head of output executable.
    *)
-  val headerOfExecutable = ref ("#!" ^ Configuration.RuntimePath ^ "\n")
+  val headerOfExecutable = ref ("#!" ^ SMLSharpConfiguration.RuntimePath ^ "\n")
 
   (* true if the compiler should skip the shebang line of the argument source
    * file. *)

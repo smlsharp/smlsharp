@@ -79,6 +79,8 @@ struct
       #addElapsedTime ElapsedCounterSet "unique allocation"
   val matchCompilationTimeCounter =
       #addElapsedTime ElapsedCounterSet "match compilation"
+  val sqlCompilationTimeCounter =
+      #addElapsedTime ElapsedCounterSet "SQL compilation"
   val overloadCompilationTimeCounter =
       #addElapsedTime ElapsedCounterSet "overload compilation"
   val typedLambdaNormalizationTimeCounter =
@@ -718,6 +720,28 @@ val currentSourceFilename = ref ""
             else ()
       in
         (rcdecs, basis, fn context => context)
+      end
+
+  fun doSQLCompilation (basis : TB.basis) rctopblocks =
+      let
+        val _ = #start sqlCompilationTimeCounter ()
+        val newrctopblocks =
+            SQLCompilation.compile
+              rctopblocks
+        val _ = #stop sqlCompilationTimeCounter ()
+        val _ =
+            if !C.printRC andalso !C.switchTrace
+            then
+              printIntermediateCodes
+                (#sysParam basis)
+                "SQL Compiled"
+                (if !C.printWithType
+                 then RecordCalcFormatter.topGroupToString
+                 else RecordCalcFormatter.topGroupToStringWithoutType)
+                newrctopblocks
+            else ()
+      in
+        (newrctopblocks, basis, fn context => context)
       end
 
   fun doOverloadCompilation (basis : TB.basis) rctopblocks =
@@ -1648,6 +1672,7 @@ val currentSourceFilename = ref ""
           ==> (C.LayoutOpt, doUncurryOptimization)
           ==> (C.UniqueID, doUniqueIDAllocation)
           ==> (C.MatchComp, doMatchCompilation)
+          ==> (C.SQLComp, doSQLCompilation)
           ==> (C.OverloadComp, doOverloadCompilation)
           ==> (C.Lambda, doTypedLambdaNormalization)
           ==> (C.Lambda, doTypeCheck)

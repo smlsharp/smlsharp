@@ -808,7 +808,11 @@ CPPFLAGS
 CCC
 CC
 CFLAGS
-CPP'
+LDFLAGS
+LIBS
+CPPFLAGS
+CPP
+CPPFLAGS'
 
 
 # Initialize some variables set by options.
@@ -4147,6 +4151,11 @@ $as_echo "$as_me: error: cygpath is not found." >&2;}
       RESOURCE_TYPE=rc
     fi
 
+    ;;
+  *darwin*)
+    DLEXT='dylib'
+    DLSTUBEXT='a'
+    LIBEXT='a'
     ;;
   *)
     DLEXT='so'

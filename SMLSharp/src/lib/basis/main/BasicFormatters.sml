@@ -288,6 +288,7 @@ fun '_format_expression' (Term(n, s)) =
   | '_format_expression' (StartOfIndent n) =
     Guard(NONE, [Term(13, "StartOfIndent"), '_format_int' n])
   | '_format_expression' (EndOfIndent) = Term(11, "EndOfIndent");
+
 end
 end;
 

@@ -5,7 +5,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Absyn.ppg,v 1.27 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: Absyn.ppg,v 1.27.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure Absyn : ABSYN = 
 struct
@@ -317,6 +317,7 @@ struct
          tvar list * string * (bool * string * ty option) list
 
     (*%
+     * @formatter(AbsynSQL.exp) AbsynSQL.format_exp
      * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
      * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
      * @formatter(enclosedList) SmlppgUtil.formatListWithEnclosure
@@ -446,6 +447,11 @@ struct
          *         + ":" + ty}
          *)
         EXPFFIAPPLY of string list * exp * ffiArg list * ty * loc
+
+      | (*%
+         * @format((e,p,t) s * loc) s(e,p,t)
+         *)
+        EXPSQL of (exp, pat, ty) AbsynSQL.exp * loc
 
     and ffiArg =
         (*%
@@ -835,4 +841,6 @@ struct
     | EXPFFIIMPORT (exp,ty,_) =>EXPFFIIMPORT (exp,ty,loc)
     | EXPFFIEXPORT (exp,ty,_) =>EXPFFIEXPORT (exp,ty,loc)
     | EXPFFIAPPLY (attrs,id,args,ty,_) => EXPFFIAPPLY (attrs,id,args,ty,loc)
+    | EXPSQL (sql,_) => EXPSQL (sql,loc)
+
 end

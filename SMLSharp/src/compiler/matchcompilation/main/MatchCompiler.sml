@@ -252,6 +252,8 @@ struct
             limitCheck (map Exp expList @ itemList) (n + 1)
         | TFPCAST (tfpexp, ty, loc) =>
           limitCheck (Exp tfpexp :: itemList) (n + 1)
+        | TFPSQLSERVER {server, schema, resultTy, loc} =>
+            limitCheck (map (Exp o #2) server @ itemList) (n + 1)
 
       and limitCheckDecl tfpdecl itemList n = 
         case tfpdecl of
@@ -1453,6 +1455,11 @@ struct
                 expTyList=expTyList, 
                 loc=loc
                 }
+      | TFPSQLSERVER {server, schema, resultTy, loc} =>
+        RCSQL (RCSQLSERVER
+                 {server = map (fn (l,e) => (l,tfpexpToRcexp varEnv btvEnv e)) server,
+                  schema = schema},
+               resultTy, loc)
 
   and tfpdecToRcdecs varEnv btvEnv tfpdec = 
       case tfpdec of

@@ -16,6 +16,8 @@ VPATH = @srcdir@
 
 TARGETS = prelude.smc @NATIVE_PRELUDE@
 
+GENSOURCES =
+
 # ./ is required to avoid PATH substitution on Solaris make.
 INSTALL_FILES = ./basis \
                 ./basis.sml \
@@ -39,7 +41,7 @@ all: $(TARGETS)
 
 clean:
 	-rm -f $(srcdir)/CM
-	-rm -f $(TARGETS)
+	-rm -f $(TARGETS) $(GENSOURCES)
 
 mlton: config
 
@@ -69,11 +71,11 @@ install: $(TARGETS)
 
 # ToDO : 
 # prelude depends on many files in Basis and other libraries.
-prelude.smc: rtprelude.sml prelude.sml $(SMLSHARP)
+prelude.smc: rtprelude.sml prelude.sml $(GENSOURCES) $(SMLSHARP)
 	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/rtprelude.sml --make-compiled-prelude --output=$@ --stdin
 
-ntprelude.smc: yaprelude.sml prelude.sml $(SMLSHARP)
+ntprelude.smc: yaprelude.sml prelude.sml $(GENSOURCES) $(SMLSHARP)
 	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=$(NATIVE_TARGET) --make-compiled-prelude --output=ntprelude.$(OBJEXT) --stdin --xswitchTrace=yes --xtracePrelude=yes --xtraceFileLoad=yes
 
-yaprelude.smo: yaprelude.sml prelude.sml $(SMLSHARP)
+yaprelude.smo: yaprelude.sml prelude.sml $(GENSOURCES) $(SMLSHARP)
 	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=newvm --make-compiled-prelude --output=$@ --stdin

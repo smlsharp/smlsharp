@@ -59,6 +59,11 @@ case "$host_os" in
     fi
     AC_SUBST(RESOURCE_TYPE)
     ;;
+  *darwin*)
+    DLEXT='dylib'
+    DLSTUBEXT='a'
+    LIBEXT='a'
+    ;;
   *)
     DLEXT='so'
     DLSTUBEXT='a'

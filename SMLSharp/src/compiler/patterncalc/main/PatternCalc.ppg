@@ -4,7 +4,7 @@
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: PatternCalc.ppg,v 1.26 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: PatternCalc.ppg,v 1.26.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure PatternCalc : PATTERNCALC = 
 struct
@@ -216,6 +216,20 @@ in
      *         + ":" + ty}
      *)
     PLFFIAPPLY of ffiAttributes * plexp * ffiArg list * ty * loc
+
+  | (*%
+     * @format(str strs * ty * loc)
+     * N0{ "_sqlserver" + strs(str)("," +) + ":" + ty }
+     * @format:str(str * exp) N0{ str + "," + exp()(expFormatter,patFormatter) }
+     *)
+    PLSQLSERVER of (string * plexp) list * ty * loc
+  | (*%
+     * @format(pat * exp * loc)
+     * "_sqldbi" + pat()(expFormatter,patFormatter)
+     * + "in" + exp()(expFormatter,patFormatter)
+     *)
+    PLSQLDBI of plpat * plexp * loc
+
   and ffiArg =
     (*%
      * @format(exp * ty * loc)  exp()(expFormatter,patFormatter) + ":" + ty
@@ -595,6 +609,8 @@ in
    | PLFFIIMPORT x => #1 (#3 x)
    | PLFFIEXPORT x => #1 (#3 x)
    | PLFFIAPPLY x => #1 (#5 x)
+   | PLSQLSERVER (_,_,loc) => #1 loc
+   | PLSQLDBI (_,_,loc) => #1 loc
 
   fun getRightPosExp plexp =
       case plexp of
@@ -619,6 +635,8 @@ in
    | PLFFIIMPORT x => #2 (#3 x)
    | PLFFIEXPORT x => #2 (#3 x)
    | PLFFIAPPLY x => #2 (#5 x)
+   | PLSQLSERVER (_,_,loc) => #2 loc
+   | PLSQLDBI (_,_,loc) => #2 loc
 
   fun getLocExp exp = (getLeftPosExp exp, getRightPosExp exp)
 

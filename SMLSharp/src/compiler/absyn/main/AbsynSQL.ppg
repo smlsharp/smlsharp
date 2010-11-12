@@ -1,0 +1,63 @@
+(* -*- sml -*- *)
+(**
+ * syntax for the IML.
+ *
+ * @copyright (c) 2006, 2010 Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+structure AbsynSQL =
+struct
+
+  (*% *)
+  datatype 'exp command =
+    (*% *)
+    SQLSELECT of {selectListExps: 'exp list,
+                  selectLabels: string list option,
+                  selectName: string option,
+                  fromClause: (string * 'exp) list,
+                  whereClause: 'exp option,
+                  orderByClause: {keyExp:'exp, orderAsc:bool} list,
+                  loc: Loc.loc}
+  | (*% *)
+    SQLINSERT of {table: string * string,
+                  insertRows: 'exp option list list, (* NONE = DEFAULT *)
+                  insertLabels: string list,
+                  loc: Loc.loc}
+  | (*% *)
+    SQLDELETE of {table: string * string,
+                  tableName: string option,
+                  whereClause: 'exp option,
+                  loc: Loc.loc}
+  | (*% *)
+    SQLUPDATE of {table: string * string,
+                  tableName: string option,
+                  setListExps: 'exp list,
+                  setLabels: string list,
+                  fromClause: (string * 'exp) list,
+                  whereClause: 'exp option,
+                  loc: Loc.loc}
+
+  (*% *)
+  datatype ('exp, 'pat, 'ty) exp =
+      (*%
+       *)
+      SQLFIELDSELECT of string * 'exp * Loc.loc
+    | (*%
+       *)
+      SQLFN of 'pat * 'exp command * Loc.loc
+    | (*%
+       * @format(str strs * ty * loc)
+       * N0{ "_sqlserver" +d "\"" strs(str)("," +) "\"" +1 ":" +d ty }
+       * @format:str(label * value) N0{ label + "=" + value }
+       *)
+      SQLSERVER of (string * 'exp) list * 'ty * Loc.loc
+    | (*%
+       * @format(exp * loc) "_sqlexec" +d exp
+       *)
+      SQLEXEC of 'exp * Loc.loc
+    | (*%
+       * @format(exp * loc) "_sqleval" +d exp
+       *)
+      SQLEVAL of 'exp * Loc.loc
+
+end

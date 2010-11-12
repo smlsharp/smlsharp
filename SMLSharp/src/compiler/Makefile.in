@@ -16,6 +16,7 @@ MLTON_OBJDIR=mlton_$(MLTON_TARGET_PLATFORM)
 MLTON_TARGET=$(MLTON_OBJDIR)/smlsharp$(EXEEXT)
 
 SOURCES = $(srcdir)/absyn/main/Absyn.ppg \
+          $(srcdir)/absyn/main/AbsynSQL.ppg \
           $(srcdir)/anormal/main/ANormal.ppg \
           $(srcdir)/annotatedtypes/main/AnnotatedTypes.ppg \
           $(srcdir)/annotatedcalc/main/AnnotatedCalc.ppg \
@@ -26,6 +27,7 @@ SOURCES = $(srcdir)/absyn/main/Absyn.ppg \
           $(srcdir)/usererror/main/UserError.ppg \
           $(srcdir)/clustercalc/main/ClusterCalc.ppg \
           $(srcdir)/elaborate/main/ElaborateError.ppg \
+          $(srcdir)/elaborate/main/ElaborateErrorSQL.ppg \
           $(srcdir)/modulecompilation/main/ModuleCompilationError.ppg \
           $(srcdir)/util/main/SmlppgUtil.ppg \
           $(srcdir)/functionlocalize/main/FunIDMapData.ppg \
@@ -257,6 +259,7 @@ $(srcdir)/primitive/main/BuiltinPrimitiveInfo.sml: \
 ####################
 
 $(srcdir)/absyn/main/Absyn.ppg.sml: absyn/main/Absyn.ppg
+$(srcdir)/absyn/main/Absyn.ppg.sml: absyn/main/AbsynSQL.ppg
 $(srcdir)/anormal/main/anormal.ppg.sml: anormal/main/anormal.ppg
 $(srcdir)/annotatedtypes/main/AnnotatedTypes.ppg.sml: annotatedtypes/main/AnnotatedTypes.ppg
 $(srcdir)/annotatedcalc/main/AnnotatedCalc.ppg.sml: annotatedcalc/main/AnnotatedCalc.ppg
@@ -267,6 +270,7 @@ $(srcdir)/control/main/Loc.ppg.sml: control/main/Loc.ppg
 $(srcdir)/usererror/main/UserError.ppg.sml: usererror/main/UserError.ppg
 $(srcdir)/clustercalc/main/ClusterCalc.ppg.sml: clustercalc/main/ClusterCalc.ppg
 $(srcdir)/elaborate/main/ElaborateError.ppg.sml: elaborate/main/ElaborateError.ppg
+$(srcdir)/elaborate/main/ElaborateErrorSQL.ppg.sml: elaborate/main/ElaborateErrorSQL.ppg
 $(srcdir)/modulecompilation/main/ModuleCompilationError.ppg.sml: modulecompilation/main/ModuleCompilationError.ppg
 $(srcdir)/util/main/SmlppgUtil.ppg.sml: util/main/SmlppgUtil.ppg
 $(srcdir)/functionlocalize/main/FunIDMapData.ppg.sml: functionlocalize/main/FunIDMapData.ppg

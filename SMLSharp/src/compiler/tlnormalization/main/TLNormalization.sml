@@ -1421,6 +1421,8 @@ struct
       end
     | RC.RCCAST (exp, targetTy, loc) =>
       TLCAST {exp = transformExp vEnv exp, targetTy = targetTy, loc = loc} 
+    | RC.RCSQL (rcsqlexp, ty, loc)
+      => raise Control.Bug "transformExp: RCSQL"
 
   and transformDecl vEnv decl =
     case decl of 

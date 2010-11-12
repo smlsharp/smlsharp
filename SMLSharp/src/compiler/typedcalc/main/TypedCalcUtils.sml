@@ -2,7 +2,7 @@
  * Utility functions to manipulate the typed pattern calculus.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypedCalcUtils.sml,v 1.20 2008/06/08 07:57:33 ohori Exp $
+ * @version $Id: TypedCalcUtils.sml,v 1.20.6.5 2010/01/29 06:41:34 hiro-en Exp $
  *)
 structure TypedCalcUtils : TYPEDCALCUTILS = struct
 local 
@@ -39,6 +39,7 @@ in
       | TPSEQ {loc,...} => loc
       | TPLIST {loc,...} => loc
       | TPCAST (toexo, ty, loc) => loc
+      | TPSQLSERVER {loc,...} => loc
 
   (**
    * Make a fresh instance of a polytype and a term of that type.
@@ -494,6 +495,8 @@ in
           in
               (TPCAST (newExp, ty , loc) , accum)
           end
+
+        | TPSQLSERVER {server, schema, resultTy, loc} => (tpexp, defaultAccumValue)
           
   and tpExpListExnTagTransducer applyFunction accumMerge defaultAccumValue tpexpList =
       foldl (fn (tpexp, (newTpExpList, accum)) =>
@@ -505,7 +508,7 @@ in
                 end)
             (nil, defaultAccumValue)
             tpexpList
-              
+
   and tpPatExnTagTransducer applyFunction tppat =
       case tppat of
           TPPATWILD _ => tppat

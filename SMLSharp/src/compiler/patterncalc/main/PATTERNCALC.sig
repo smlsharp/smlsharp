@@ -5,7 +5,7 @@
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: PATTERNCALC.sig,v 1.22 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: PATTERNCALC.sig,v 1.22.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 signature PATTERNCALC = sig
 
@@ -40,6 +40,8 @@ signature PATTERNCALC = sig
    | PLFFIIMPORT of plexp * Absyn.ty * Loc.loc
    | PLFFIEXPORT of plexp * Absyn.ty * Loc.loc
    | PLFFIAPPLY of Absyn.ffiAttributes * plexp * ffiArg list * Absyn.ty * Loc.loc
+   | PLSQLSERVER of (string * plexp) list * Absyn.ty * Loc.loc
+   | PLSQLDBI of plpat * plexp * Loc.loc
 
  and ffiArg =
      PLFFIARG of plexp * Absyn.ty * Loc.loc

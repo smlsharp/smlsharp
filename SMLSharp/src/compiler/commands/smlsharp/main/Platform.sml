@@ -9,7 +9,7 @@ structure Platform : sig val ArchName : string val OSName : string end =
 struct
 
   local
-  val host = Configuration.Platform
+  val host = SMLSharpConfiguration.Platform
   val (cpu, os) = Substring.splitl (fn c => c <> #"-") (Substring.full host)
   val cpu = Substring.string cpu
   val os = Substring.string (Substring.triml 1 os)

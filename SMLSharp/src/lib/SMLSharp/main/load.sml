@@ -24,5 +24,8 @@ use "./SMLSharpPlatform.sml";
 use "./SMLSHARP_MUTABLE.sig";
 use "./SMLSharpMutable.sml";
 
+use "../../../configuration/CONFIGURATION.sig";
+use "../../../configuration/Configuration.sml";
+
 use "./SMLSHARP.sig";
 use "./SMLSharp.sml";
