@@ -62,6 +62,7 @@ int prim_UnmanagedMemory_subInt(void *ptr);
 double prim_UnmanagedMemory_subReal(void *ptr);
 unsigned int prim_UnmanagedMemory_subWord(void *ptr);
 unsigned char prim_UnmanagedMemory_subByte(void *ptr);
+void *prim_UnmanagedMemory_subPtr(void *p);
 
 /* for basis library implementation */
 STRING prim_Int_toString(int);
@@ -128,10 +129,11 @@ void prim_Pack_unpackReal32Little(float, unsigned char *);
 STRING prim_UnmanagedMemory_import(void *, unsigned int);
 void *prim_UnmanagedMemory_export(const char *, unsigned int, unsigned int);
 int prim_UnmanagedString_size(void *);
-void prim_UnmanagedMemory_update(void *, unsigned char);
+void prim_UnmanagedMemory_updateByte(void *, unsigned char);
 void prim_UnmanagedMemory_updateWord(void *, unsigned int);
 void prim_UnmanagedMemory_updateInt(void *, int);
 void prim_UnmanagedMemory_updateReal(void *, double);
+void prim_UnmanagedMemory_updatePtr(void *, void *);
 int prim_StandardC_errno(void);
 int prim_Platform_isBigEndian(void);
 STRING prim_Platform_getPlatform(void);

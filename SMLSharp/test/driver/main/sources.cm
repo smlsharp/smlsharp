@@ -16,6 +16,8 @@ is
         ../../../src/compiler/pickle/sources.cm
         ../../../src/compiler/env/sources.cm
         ../../../src/compiler/name/sources.cm
+        ../../../src/compiler/systemdef/sources.cm
+        ../../../src/compiler/control/sources.cm
 
         Diff.sml
         TestTypes.sml

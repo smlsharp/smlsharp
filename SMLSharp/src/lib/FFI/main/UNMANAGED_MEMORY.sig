@@ -160,6 +160,23 @@ sig
    *)
   val updateReal : (address * Real.real) -> unit
 
+  (**
+   * extracts a pointer from a unmanaged memory address.
+   * @params address
+   * @param address an address in unmanaged memory.
+   * @return the real value at (void* )((byte* )address)
+   *)
+  val subPtr : address -> unit ptr
+
+  (**
+   * stores a pointer into a unmanaged memory address.
+   * @params (address, newValue)
+   * @param address a pointer to a address in unmanaged memory.
+   * @param newValue a pointer value which is stored into
+   *                (void* )((byte* )address)
+   *)
+  val updatePtr : (address * unit ptr) -> unit
+
   (***************************************************************************)
 
 end

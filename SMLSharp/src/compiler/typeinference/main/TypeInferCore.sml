@@ -1222,28 +1222,25 @@ in
             | A.TYFFI (_,_,[argTy],retTy,_) =>
               (evalRawty basis argTy, evalRawty basis retTy)
             | _ => raise bug "stubImportOldPrim"
-        val stubTyBody = T.FUNMty ([argTy], retTy)
-        val (stubBoundEnv, stubTy) = generalize stubTyBody
 
-        val subst = TU.freshSubst stubBoundEnv
-        val primTyBody = TU.substBTvar subst stubTyBody
+        val primTyBody = T.FUNMty ([argTy], retTy)
         val (_, primTy) = generalize primTyBody
         val prim = BuiltinPrimitive.P (BuiltinPrimitive.RuntimePrim name)
         val primInfo = {prim_or_special = prim, ty = primTy}
 
+        val (primInstTy, instTyList) = TIU.freshTopLevelInstTy primTy
+        val (argTy, ranTy) =
+            case TU.derefTy primInstTy of
+              T.FUNMty ([argTy], retTy) => (argTy, retTy)
+            | _ => raise Control.Bug "stubImportOldPrim"
+
         val argVar = {namePath = (Counters.newVarName (), Path.NilPath),
                       ty = argTy}
-        val argVarExp = TPVAR (argVar, loc)
-
-        val (argTy2, argExp) = TPU.freshInst (argTy, argVarExp)
-        val (instTy, instTyList) = TIU.freshTopLevelInstTy primTy
-        val (domTys, ranTy, _) = TU.coerceFunM (instTy, [argTy2])
-        val _ = U.unify [(argTy2, List.hd domTys)]
-
         val stubExp = TPPRIMAPPLY {primOp = primInfo,
                                    instTyList = instTyList,
-                                   argExpOpt = SOME argExp,
+                                   argExpOpt = SOME (TPVAR (argVar, loc)),
                                    loc = loc}
+        val (stubBoundEnv, stubTy) = generalize primInstTy
       in
         (stubTy,
          if IEnv.isEmpty stubBoundEnv

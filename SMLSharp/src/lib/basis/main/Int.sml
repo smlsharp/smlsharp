@@ -39,18 +39,18 @@ struct
 
   fun fromInt int = int
 
-  fun compare (left, right) =
+  fun compare (left:int, right:int) =
       if left < right
       then General.LESS
       else if left = right then General.EQUAL else General.GREATER
 
-  val ~ = fn num => ~ num
+  val ~ = ~ : int -> int
 
   fun abs num = if num < 0 then ~ num else num
 
-  fun min (left, right) = if left < right then left else right
+  fun min (left:int, right:int) = if left < right then left else right
 
-  fun max (left, right) = if left > right then left else right
+  fun max (left:int, right:int) = if left > right then left else right
 
   fun sign num = if num < 0 then ~1 else if num = 0 then 0 else 1
 
@@ -196,11 +196,11 @@ struct
   val fromString = (SC.scanString (scan SC.DEC)) : string -> int option
 *)
 
-  val op + = fn (left, right) => left + right
-  val op - = fn (left, right) => left - right
-  val op * = fn (left, right) => left * right
-  val op div = fn (left, right) => left div right
-  val op mod = fn (left, right) => left mod right
+  val op + = op + : int * int -> int
+  val op - = op - : int * int -> int
+  val op * = op * : int * int -> int
+  val op div = op div : int * int -> int
+  val op mod = op mod : int * int -> int
 (*
   val quot = fn (left, right) => quotInt (left, right)
   val rem = fn (left, right) => remInt (left, right)

@@ -385,7 +385,7 @@ in
         {
           string = leftString,
           start = leftStart,
-          length = rightStart + rightLength - leftStart
+          length = rightStart + rightLength - leftStart : int
         }
 
   fun translate transChar {string, start, length} =

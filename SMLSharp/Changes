@@ -1,3 +1,19 @@
+SML# version 0.61 (released on 2010-11-26)
+
+1. Overview
+
+This is a patch release of SML# 0.60 series.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+- added a feature that CConfig creates a cache file for check results.
+- added Pointer structure.
+  This structure is experimental and provides primitive functions for
+  C pointers such as pointer arithmetics and memory access.
+
+-----------------------------------------------------------------------------
 SML# version 0.60 (released on 2010-11-12)
 
 1. Overview

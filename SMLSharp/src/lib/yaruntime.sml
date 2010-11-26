@@ -192,18 +192,6 @@ struct
   val UnmanagedString_size =
       _import "prim_UnmanagedString_size"
       : __attribute__((pure,no_callback)) unit ptr -> int
-  val UnmanagedMemory_update =
-      _import "prim_UnmanagedMemory_update"
-      : __attribute__((no_callback)) (unit ptr, Word8.word) -> unit
-  val UnmanagedMemory_updateWord =
-      _import "prim_UnmanagedMemory_updateWord"
-      : __attribute__((no_callback)) (unit ptr, word) -> unit
-  val UnmanagedMemory_updateInt =
-      _import "prim_UnmanagedMemory_updateInt"
-      : __attribute__((no_callback)) (unit ptr, int) -> unit
-  val UnmanagedMemory_updateReal =
-      _import "prim_UnmanagedMemory_updateReal"
-      : __attribute__((no_callback)) (unit ptr, real) -> unit
   val StandardC_errno =
       _import "prim_StandardC_errno"
       : __attribute__((no_callback)) () -> int

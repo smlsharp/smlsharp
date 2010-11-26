@@ -4,7 +4,7 @@ struct
   val name = "Unix"
 
   (* relative path from test/bin. *)
-  val runtimePath = Configuration.RuntimePath 
+  val runtimePath = SMLSharpConfiguration.RuntimePath 
 
   fun createInstance () =
       UnixProcessRuntimeProxy.initialize

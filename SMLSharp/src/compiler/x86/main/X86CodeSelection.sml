@@ -4476,6 +4476,16 @@ struct
               shiftInsn I.SARL I.SARL_CL (I.R reg, arg2) @
               [ I.MOVL (dst, I.R_ reg) ]
             end
+          | (AI.PointerAdvance, AI.CPOINTER, AI.SINT, AI.CPOINTER) =>
+            let
+              val reg = newReg32 ()
+            in
+              [
+                I.MOVL (I.R reg, arg1),
+                I.ADDL (I.R reg, arg2),
+                I.MOVL (dst, I.R_ reg)
+              ]
+            end
           | op2 =>
             let
               val (insn1, cc) = selectCmpOp context op2 arg1 arg2

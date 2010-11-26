@@ -757,6 +757,48 @@ structure ANormalization : ANORMALIZATION = struct
             newAEnv
           )
         end
+      | RBU.RBUPRIMAPPLY {prim=BuiltinPrimitive.Ptr_advance,
+                          argExpList=[arg1, arg2],
+                          argSizeExpList=[argSize1, argSize2],
+                          argTyList=[argTy1, argTy2],
+                          resultTyList,
+                          instSizeExpList=[sz],instTagExpList,loc} =>
+        let
+          val exp1 = RBU.RBUPRIMAPPLY
+                       {prim = BuiltinPrimitive.Word_lshift,
+                        argExpList = [sz, RBU.RBUCONSTANT
+                                            {loc=loc, value=CT.WORD 0w2}],
+                        argSizeExpList = [argSize2, argSize2],
+                        argTyList = [argTy2, argTy2],
+                        resultTyList = [argTy2],
+                        instSizeExpList = nil,
+                        instTagExpList = nil,
+                        loc = loc}
+          val exp2 = RBU.RBUPRIMAPPLY
+                       {prim = BuiltinPrimitive.Int_mul
+                                 BuiltinPrimitive.NoOverflowCheck,
+                        argExpList = [arg2, exp1],
+                        argSizeExpList = [argSize2, argSize2],
+                        argTyList = [argTy2, argTy2],
+                        resultTyList = [argTy2],
+                        instSizeExpList = nil,
+                        instTagExpList = nil,
+                        loc = loc}
+          val exp3 = RBU.RBUPRIMAPPLY
+                       {prim = BuiltinPrimitive.Int_add
+                                 BuiltinPrimitive.NoOverflowCheck,
+                        argExpList = [arg1, exp2],
+                        argSizeExpList = [argSize1, argSize2],
+                        argTyList = [argTy1, argTy2],
+                        resultTyList = resultTyList,
+                        instSizeExpList = nil,
+                        instTagExpList = nil,
+                        loc = loc}
+        in
+          normalizeExp vEnv aEnv exp3
+        end
+      | RBU.RBUPRIMAPPLY {prim=BuiltinPrimitive.Ptr_advance,...} =>
+        raise Control.Bug "RBUPRIMAPPLY: Ptr_advance"
       | RBU.RBUPRIMAPPLY {prim,argExpList,argSizeExpList,argTyList,resultTyList,instSizeExpList,instTagExpList,loc} =>
         let
           val primName = BuiltinPrimitiveUtils.oldPrimitiveName prim

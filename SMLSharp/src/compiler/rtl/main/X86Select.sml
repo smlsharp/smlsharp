@@ -2328,6 +2328,23 @@ val _ = Control.ps "=="
               | (AI.ArithRShift, R.Int32 _, R.Int32 _, R.Int32 _,
                  OPRD op1, OPRD op2) =>
                 shiftInsn code (R.ARSHIFT, dstTy, dst, op1, op2)
+              | (AI.PointerAdvance, R.Ptr ptrTy, R.Ptr _, R.Int32 _, _, _) =>
+                let
+                  val (code, v) = coerceToVar code arg1
+                  val insn =
+                      case arg2 of
+                        (OPRD (R.CONST c)) =>
+                        R.MOVEADDR (ptrTy, dst, R.DISP (c, R.BASE v))
+                      | _ =>
+                        let
+                          val (code, v2) = coerceToVar code arg2
+                        in
+                          R.MOVEADDR (ptrTy, dst,
+                                      R.BASEINDEX {base=v, index=v2, scale=1})
+                        end
+                in
+                  insert (code, [insn])
+                end
               | (_, R.Int32 R.U, _, _, _, _) =>
                 let
                   val v = newDst (R.Int8 R.U)

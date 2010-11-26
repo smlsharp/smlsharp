@@ -9,6 +9,8 @@ use "./UnmanagedMemory.sml";
 use "./UNMANAGED_STRING.sig";
 use "./UnmanagedString.sml";
 
+use "./Pointer.sml";
+
 use "./STANDARD_C.sig";
 use "./StandardC.sml";
 

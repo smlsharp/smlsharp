@@ -10,7 +10,7 @@ struct
   val BinaryVersion = {major = 0w%VERSION_MAJOR%, minor = 0w%VERSION_MINOR%}
 
   (* release date *)
-  val ReleaseDate = "2010-11-12 20:43:21 JST"
+  val ReleaseDate = "2010-11-26 18:41:36 JST"
 
   (* absolute path to the build directory of development *)
   val BuildRoot = "%BUILD_ROOT%"

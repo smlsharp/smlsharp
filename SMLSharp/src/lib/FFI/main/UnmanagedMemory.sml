@@ -46,19 +46,28 @@ struct
 
   fun sub (x:address) = !! (_cast(x) : Word8.word ptr)
 
-  val update = SMLSharp.Runtime.UnmanagedMemory_update
+  fun update (x:address, y) =
+      '_Pointer_store' (_cast(x) : Word8.word ptr, y)
 
   fun subWord (x:address) = !! (_cast(x) : word ptr)
 
-  val updateWord = SMLSharp.Runtime.UnmanagedMemory_updateWord
+  fun updateWord (x:address, y) =
+      '_Pointer_store' (_cast(x) : word ptr, y)
 
   fun subInt (x:address) = !! (_cast(x) : int ptr)
 
-  val updateInt = SMLSharp.Runtime.UnmanagedMemory_updateInt
+  fun updateInt (x:address, y) =
+      '_Pointer_store' (_cast(x) : int ptr, y)
 
   fun subReal (x:address) = !! (_cast(x) : real ptr)
 
-  val updateReal = SMLSharp.Runtime.UnmanagedMemory_updateReal
+  fun updateReal (x:address, y) =
+      '_Pointer_store' (_cast(x) : real ptr, y)
+
+  fun subPtr (x:address) = !! (_cast(x) : unit ptr ptr)
+
+  fun updatePtr (x:address, y) =
+      '_Pointer_store' (_cast(x) : unit ptr ptr, y)
 
   (***************************************************************************)
 

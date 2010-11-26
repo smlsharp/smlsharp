@@ -281,6 +281,8 @@ UnmanagedMemory_subInt,,"(unit) ptr -> int",1,,IMLPrim_UnmanagedMemory_subWord,e
 UnmanagedMemory_updateInt,,"(unit) ptr * int -> unit",2,,IMLPrim_UnmanagedMemory_updateWord,effective
 UnmanagedMemory_subReal,,"(unit) ptr -> real",1,,IMLPrim_UnmanagedMemory_subReal,effective
 UnmanagedMemory_updateReal,,"(unit) ptr * real -> unit",2,,IMLPrim_UnmanagedMemory_updateReal,effective
+UnmanagedMemory_subPtr,,"['a.(('a)ptr)ptr -> ('a)ptr]",1,,IMLPrim_UnmanagedMemory_subWord,effective
+UnmanagedMemory_updatePtr,,"['a.(('a)ptr)ptr * ('a)ptr -> unit]",2,,IMLPrim_UnmanagedMemory_updateWord,effective
 UnmanagedMemory_import,,"(unit) ptr * int -> byteArray",2,,IMLPrim_UnmanagedMemory_import,effective
 UnmanagedMemory_export,,"byteArray * int * int -> (unit) ptr",3,,IMLPrim_UnmanagedMemory_export,effective
 UnmanagedString_size,,"(unit) ptr -> int",1,,IMLPrim_UnmanagedString_size,effective

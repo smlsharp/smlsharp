@@ -278,14 +278,16 @@ val StandardC_errno = _import "StandardC_errno" : () -> int
 
 val UnmanagedMemory_allocate = _import "UnmanagedMemory_allocate" : int -> (unit) ptr
 val UnmanagedMemory_release = _import "UnmanagedMemory_release" : (unit) ptr -> unit
-(* UnmanagedMemory_sub,,"(unit) ptr -> byte",1,,IMLPrim_UnmanagedMemory_sub,effective *)
-val UnmanagedMemory_update = _import "UnmanagedMemory_update" : (unit) ptr * Word8.word -> unit
-(* UnmanagedMemory_subWord,,"(unit) ptr -> word",1,,IMLPrim_UnmanagedMemory_subWord,effective *)
-val UnmanagedMemory_updateWord = _import "UnmanagedMemory_updateWord" : (unit) ptr * word -> unit
-(* UnmanagedMemory_subInt,,"(unit) ptr -> int",1,,IMLPrim_UnmanagedMemory_subWord,effective *)
-val UnmanagedMemory_updateInt = _import "UnmanagedMemory_updateInt" : (unit) ptr * int -> unit
-(* UnmanagedMemory_subReal,,"(unit) ptr -> real",1,,IMLPrim_UnmanagedMemory_subReal,effective *)
-val UnmanagedMemory_updateReal = _import "UnmanagedMemory_updateReal" : (unit) ptr * real -> unit
+(*F UnmanagedMemory_sub,,"(unit) ptr -> byte",1,,IMLPrim_UnmanagedMemory_sub,effective *)
+(*F UnmanagedMemory_update,,"(unit) ptr * byte -> unit",2,,IMLPrim_UnmanagedMemory_update,effective *)
+(*F UnmanagedMemory_subWord,,"(unit) ptr -> word",1,,IMLPrim_UnmanagedMemory_subWord,effective *)
+(*F UnmanagedMemory_updateWord,,"(unit) ptr * word -> unit",2,,IMLPrim_UnmanagedMemory_updateWord,effective *)
+(*F UnmanagedMemory_subInt,,"(unit) ptr -> int",1,,IMLPrim_UnmanagedMemory_subWord,effective *)
+(*F UnmanagedMemory_updateInt,,"(unit) ptr * int -> unit",2,,IMLPrim_UnmanagedMemory_updateWord,effective *)
+(*F UnmanagedMemory_subReal,,"(unit) ptr -> real",1,,IMLPrim_UnmanagedMemory_subReal,effective *)
+(*F UnmanagedMemory_updateReal,,"(unit) ptr * real -> unit",2,,IMLPrim_UnmanagedMemory_updateReal,effective *)
+(*F UnmanagedMemory_subPtr,,"['a.(('a)ptr)ptr -> ('a)ptr]",1,,IMLPrim_UnmanagedMemory_subWord,effective *)
+(*F UnmanagedMemory_updatePtr,,"['a.(('a)ptr)ptr * ('a)ptr -> unit]",2,,IMLPrim_UnmanagedMemory_updateWord,effective *)
 val UnmanagedMemory_import = _import "UnmanagedMemory_import" : (unit) ptr * int -> string
 val UnmanagedMemory_export = _import "UnmanagedMemory_export" : string * int * int -> (unit) ptr
 val UnmanagedString_size = _import "UnmanagedString_size" : (unit) ptr -> int

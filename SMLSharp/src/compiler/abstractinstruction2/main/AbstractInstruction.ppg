@@ -369,6 +369,8 @@ struct
       RShift
     | (*% @format L3{ x +1 ">>>" +2 y } *)
       ArithRShift
+    | (*% @format L3{ x +1 "++" +2 y } *)
+      PointerAdvance
 
   (*% *)
   datatype barrier =

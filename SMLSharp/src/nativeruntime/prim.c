@@ -1809,6 +1809,12 @@ prim_UnmanagedMemory_subByte(void *p)
 	return *(unsigned char*)p;
 }
 
+void *
+prim_UnmanagedMemory_subPtr(void *p)
+{
+	return *(void**)p;
+}
+
 STRING
 prim_UnmanagedMemory_import(void *ptr, unsigned int len)
 {
@@ -1837,7 +1843,7 @@ prim_UnmanagedString_size(void *ptr)
 }
 
 void
-prim_UnmanagedMemory_update(void *address, unsigned char value)
+prim_UnmanagedMemory_updateByte(void *address, unsigned char value)
 {
 	*(unsigned char*)address = value;
 }
@@ -1858,6 +1864,12 @@ void
 prim_UnmanagedMemory_updateReal(void *address, double value)
 {
 	*(double *)address = value;
+}
+
+void
+prim_UnmanagedMemory_updatePtr(void *address, void *value)
+{
+	*(void **)address = value;
 }
 
 void *

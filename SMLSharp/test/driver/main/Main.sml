@@ -18,10 +18,12 @@ struct
 
   (***************************************************************************)
 
-  val libdir = Configuration.LibDirectory
-  val minimumPreludePath = libdir ^ "/" ^ Configuration.MinimumPreludeFileName
-  val PreludePath = libdir ^ "/" ^ Configuration.PreludeFileName
-  val compiledPreludePath = libdir ^ "/" ^ Configuration.CompiledPreludeFileName
+  val libdir = SMLSharpConfiguration.LibDirectory
+  val minimumPreludePath =
+      libdir ^ "/" ^ SMLSharpConfiguration.MinimumPreludeFileName
+  val PreludePath = libdir ^ "/" ^ SMLSharpConfiguration.PreludeFileName
+  val compiledPreludePath =
+      libdir ^ "/" ^ SMLSharpConfiguration.CompiledPreludeFileName
 
   val USAGE = "prelude expectedDirectory resultDirectory sourcePath1 ..."
 
