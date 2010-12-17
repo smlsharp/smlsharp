@@ -36,11 +36,10 @@ local
 
     fun validVolume (_, vol)= Substring.isEmpty vol
 
-    val volSS = Substring.full ""
-
     (* Note: we are guaranteed that this is never called with "" *)
     fun splitVolPath s =
         let val ss = SS.full (trPath s)
+            val volSS = Substring.full ""
         in
           if (SS.sub(ss, 0) = #"/")
           then (true, volSS, Substring.triml 1 ss)

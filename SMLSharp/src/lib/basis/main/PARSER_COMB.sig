@@ -52,4 +52,4 @@ signature PARSER_COMB =
 	   * non-empty.
 	   *)
 
-  end;
+  end

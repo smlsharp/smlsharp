@@ -60,14 +60,14 @@ local
   fun charToString char = VS.full(V.fromList [char])
 
   fun isAscii char = true
-  val isSpace = mapCharPred Char.isSpace
-  val isLower = mapCharPred Char.isLower
-  val isUpper = mapCharPred Char.isUpper
-  val isDigit = mapCharPred Char.isDigit
-  val isHexDigit = mapCharPred Char.isHexDigit
-  val isPunct = mapCharPred Char.isPunct
-  val isGraph = mapCharPred Char.isGraph
-  val isCntrl = mapCharPred Char.isCntrl
+  fun isSpace x = mapCharPred Char.isSpace x
+  fun isLower x = mapCharPred Char.isLower x
+  fun isUpper x = mapCharPred Char.isUpper x
+  fun isDigit x = mapCharPred Char.isDigit x
+  fun isHexDigit x = mapCharPred Char.isHexDigit x
+  fun isPunct x = mapCharPred Char.isPunct x
+  fun isGraph x = mapCharPred Char.isGraph x
+  fun isCntrl x = mapCharPred Char.isCntrl x
   end
 
 end

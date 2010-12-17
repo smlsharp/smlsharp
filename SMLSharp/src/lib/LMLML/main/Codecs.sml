@@ -100,4 +100,4 @@ struct
 
   end (* local for codec registry *)
 
-end;
+end

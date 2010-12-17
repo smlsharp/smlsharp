@@ -169,6 +169,9 @@ struct
 
   val doStackReallocation = ref true
 
+  val doStaticAllocation = ref true
+  val doRegisterCoalescing = ref true
+
   val pageSizeOfGlobalArray = ref 1024
 
   (* this switch is used in Main.main. *)
@@ -209,6 +212,8 @@ struct
   val printLS =  ref false
   val printIS =  ref false
   val printSR = ref false
+  val printRTL = ref false
+  val printCode = ref false
   val checkType = ref false
 
   (** true if detailed type information should b printed. *)
@@ -341,8 +346,10 @@ struct
     ("inlineThreshold", IntSwitch inlineThreshold),
     ("doRecursiveCallOptimize", BoolSwitch doRecursiveCallOptimize),
     ("doRepresentationAnalysis", BoolSwitch doRepresentationAnalysis),
+    ("doRegisterCoalescing", BoolSwitch doRegisterCoalescing),
     ("doSelfRecursiveCallOptimize", BoolSwitch doSelfRecursiveCallOptimize),
     ("doStackReallocation", BoolSwitch doStackReallocation),
+    ("doStaticAllocation", BoolSwitch doStaticAllocation),
     ("doSymbolicInstructionsOptimization", BoolSwitch doSymbolicInstructionsOptimization),
     ("doTailCallOptimize", BoolSwitch doTailCallOptimize),
     ("doUncurryingOptimizeInMatchCompile", BoolSwitch doUncurryingOptimizeInMatchCompile),
@@ -374,6 +381,8 @@ struct
     ("printPL", BoolSwitch printPL),
     ("printRBU", BoolSwitch printRBU),
     ("printRC", BoolSwitch printRC),
+    ("printRTL", BoolSwitch printRTL),
+    ("printCode", BoolSwitch printCode),
     ("printSource", BoolSwitch printSource),
     ("printSR", BoolSwitch printSR),
     ("printTFP", BoolSwitch printTFP),

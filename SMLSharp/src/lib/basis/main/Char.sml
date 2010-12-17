@@ -62,7 +62,7 @@ struct
     val maxLowerAlpha = #"z"
     val minUpperAlpha = #"A"
     val maxUpperAlpha = #"Z"
-    val diffOfLowerAndUpperAlpha = (ord minUpperAlpha) - (ord minLowerAlpha)
+    val diffOfLowerAndUpperAlpha = ~32 (*ord minUpperAlpha - ord minLowerAlpha*)
     val minAscii = #"\000"
     val maxAscii = #"\127"
     val minDigit = #"0"
@@ -314,9 +314,9 @@ struct
       case compare (left, right) of General.LESS => true | _ => false
   fun op <= (left : char, right : char) =
       case compare (left, right) of General.GREATER => false | _ => true
-  val op > = not o (op <=)
-  val op >= = not o (op <)
+  fun op > x = not (op <= x)
+  fun op >= x = not (op < x)
 
   (***************************************************************************)
 
-end;
+end

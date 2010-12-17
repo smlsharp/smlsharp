@@ -9,10 +9,10 @@ val print = SMLSharp.Runtime.print
 
 (* following globals are referred from formatters in basis and SMLSharpControl
  * structure. *)
-val Control_columns = ref 80;
-val Control_maxDepth = ref (SOME 10 : int option);
-val Control_maxWidth = ref (SOME 20 : int option);
-val Control_maxRefDepth = ref 5;
+val Control_columns = ref 80
+val Control_maxDepth = ref (SOME 10 : int option)
+val Control_maxWidth = ref (SOME 20 : int option)
+val Control_maxRefDepth = ref 5
 
 (* temporary printFormat.
  * Full version is defined after SMLFormat is loaded.
@@ -34,14 +34,14 @@ fun printFormat exp =
             | EndOfIndent => ()
     in
       pr exp
-    end;
+    end
 end;
 
 use "./basis.sml";
 
 use "./RegExp.sml";
 use "./script.sml";
-open Script;
+open Script
 infix =~;
 
 use "./SMLSharp.sml";
@@ -108,7 +108,7 @@ local
 in
 structure SMLSharp = struct open SMLSharp
 fun printFormat exp =
-    print (SMLFormat.prettyPrint (getPrinterParameters ()) [exp]);
+    print (SMLFormat.prettyPrint (getPrinterParameters ()) [exp])
 
 fun printFormatOfValBinding (name, valExp, tyExp) =
     let
@@ -136,7 +136,7 @@ fun printFormatOfValBinding (name, valExp, tyExp) =
              tyExp,
              FE.EndOfIndent]))
     end
-end;
+end
 
 structure General : GENERAL =
 struct
@@ -158,10 +158,10 @@ struct
       in SMLFormat.prettyPrint [SMLFormat.Columns (valOf Int.maxInt)] [exp]
       end
 
-end;
+end
 
-val exnMessage = General.exnMessage;
-val exnName = General.exnName;
+val exnMessage = General.exnMessage
+val exnName = General.exnName
 
 end;
 

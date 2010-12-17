@@ -114,4 +114,4 @@ structure ParserComb (* : PARSER_COMB *) =
 	    | _ => NONE
 	  (* end case *))
 
-  end;
+  end

@@ -210,10 +210,10 @@ struct
       case compare (left, right) of General.LESS => true | _ => false
   fun op <= (left : int, right : int) =
       case compare (left, right) of General.GREATER => false | _ => true
-  val op > = not o (op <=)
-  val op >= = not o (op <)
+  fun op > x = not (op <= x)
+  fun op >= x = not (op < x)
 
   (***************************************************************************)
 
   end (* divWord, subWord, modWord *)
-end;
+end

@@ -7,16 +7,12 @@
 
 structure X86Subst : RTLSUBST =
 struct
-(*
-fun puts s = print (s ^ "\n")
-fun putfs s = print (Control.prettyPrint s ^ "\n")
-*)
 
   structure I = RTL
 
   fun newVar ty =
       let
-        val id = NewLabel.newLabel ()
+        val id = VarID.generate ()
       in
         {id = id, ty = ty} : I.var
       end
@@ -57,6 +53,12 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       end
     | substVarList subst code nil = (code, nil, nil)
 
+  fun substClob subst var =
+      case subst var of
+        NONE => var
+      | SOME (I.REG var) => var
+      | SOME _ => raise Control.Bug "substClob"
+
   fun substAddr subst code addr =
       case addr of
         I.ABSADDR _ => (code, addr)
@@ -82,14 +84,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
         in
           (code, I.BASE var)
         end
-(*
-      | I.INDEX {scale, index} =>
-        let
-          val (code, var) = load (substVar subst code index)
-        in
-          (code, I.INDEX {scale = scale, index = index})
-        end
-*)
       | I.BASEINDEX {base, scale, index} =>
         let
           val (code, base) = load (substVar subst code base)
@@ -158,9 +152,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
           NONE => (code, I.REG var)
         | SOME (I.REG var) => (code, I.REG var)
         | SOME (I.MEM mem) => (code, I.MEM mem)
-(*
-        | SOME (dst as I.COUPLE {hi,lo}) => substDstRM subst code dst
-*)
         | SOME (I.COUPLE _) => raise Control.Bug "substDstRM: COUPLE"
       )
     | substDstRM subst code (I.MEM (ty, mem)) =
@@ -171,14 +162,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       end
     | substDstRM subst code (I.COUPLE (ty, {hi, lo})) =
       raise Control.Bug "substDstRM: COUPLE"
-(*
-      let
-        val (code, hi) = substDstRM subst code hi
-        val (code, lo) = substDstRM subst code lo
-      in
-        (code, I.COUPLE {hi=hi, lo=lo})
-      end
-*)
 
   fun substOperandR subst code operand =
       case operand of
@@ -343,15 +326,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
         (code, con (ty, dst, op1))
       end
         
-(*
-  fun substTest subst code test =
-      case test of
-        I.TEST_SUB (ty, op1, op2) =>
-        substRmRmiTest subst code I.TEST_SUB (ty, op1, op2)
-      | I.TEST_AND (ty, op1, op2) =>
-        substRmRmiTest subst code I.TEST_AND (ty, op1, op2)
-*)
-
   fun substInsn subst code insn =
       case insn of
         I.NOP => (code, insn)
@@ -376,6 +350,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
                     end)
                 (code, VarID.Map.empty)
                 uses
+          val clobs = map (substClob subst) clobs
         in
           (code, I.COMPUTE_FRAME {uses=uses, clobs=clobs})
         end
@@ -407,6 +382,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
         let
           val (code, dst) = substDstRM subst code dst
           val (code, src) = substOperandRM subst code src
+          val clobs = map (substClob subst) clobs
         in
           (code, I.COPY {ty=ty, dst=dst, src=src, clobs=clobs})
         end
@@ -415,6 +391,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
           val (code, srcAddr) = substAddrR subst code (I.Void, srcAddr)
           val (code, size) = substOperandR subst code size
           val (code, defs) = save (substVarList subst code defs)
+          val clobs = map (substClob subst) clobs
         in
           (code, I.MLOAD {ty=ty, dst=dst, srcAddr=srcAddr, size=size,
                           defs=defs, clobs=clobs})
@@ -424,6 +401,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
           val (code, dstAddr) = substAddrR subst code (I.Void, dstAddr)
           val (code, size) = substOperandR subst code size
           val (code, defs) = save (substVarList subst code defs)
+          val clobs = map (substClob subst) clobs
         in
           (code, I.MSTORE {ty=ty, dstAddr=dstAddr, src=src, size=size,
                            defs=defs, clobs=clobs, global=global})
@@ -496,7 +474,10 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
               else
                 (code, op1, op2)
         in
-          (code, I.MUL ((ty, dst), (ty1, op1), (ty2, op2)))
+          (code,
+           case op1 of
+             I.REF (_, I.MEM _) => I.MUL ((ty, dst), (ty2, op2), (ty1, op1))
+           | _ => I.MUL ((ty, dst), (ty1, op1), (ty2, op2)))
         end
       | I.MUL ((ty as I.Int64 _, dst),
                (op1Ty as I.Int32 _, op1), (op2Ty as I.Int32 _, op2)) =>
@@ -665,9 +646,12 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
           (code, I.X86 (I.X86FSTSW (dst, test)))
         end
 *)
-      | I.X86 (I.X86FSW_GT {clob}) => (code, insn)
-      | I.X86 (I.X86FSW_GE {clob}) => (code, insn)
-      | I.X86 (I.X86FSW_EQ {clob}) => (code, insn)
+      | I.X86 (I.X86FSW_GT {clob}) =>
+        (code, I.X86 (I.X86FSW_GT {clob = substClob subst clob}))
+      | I.X86 (I.X86FSW_GE {clob}) =>
+        (code, I.X86 (I.X86FSW_GE {clob = substClob subst clob}))
+      | I.X86 (I.X86FSW_EQ {clob}) =>
+        (code, I.X86 (I.X86FSW_EQ {clob = substClob subst clob}))
       | I.X86 (I.X86FLDCW mem) =>
         let
           val (code, dst) = substMem subst code mem
@@ -809,59 +793,16 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
   fun substitute subst graph =
       RTLEdit.extend
         (fn RTLEdit.FIRST first =>
-(*
-let
-val _ = Control.ps "== FIRST"
-val _ = Control.p I.format_first first
-val _ = Control.ps "--"
-val g =
-*)
             RTLEdit.unfocus (substFirst subst first)
-(*
-in
-Control.p I.format_graph g;
-Control.ps "==";
-g
-end
-*)
           | RTLEdit.MIDDLE insn =>
-(*
-let
-val _ = Control.ps "== MIDDLE"
-val _ = Control.p I.format_instruction insn
-val _ = Control.ps "--"
-val g =
-*)
             let
               val code = RTLEdit.singletonFirst I.ENTER
               val (code, insn) = substInsn subst code insn
             in
               RTLEdit.unfocus (RTLEdit.insertBefore (code, [insn]))
             end
-(*
-in
-Control.p I.format_graph g;
-Control.ps "==";
-g
-end
-*)
           | RTLEdit.LAST last =>
-(*
-let
-val _ = Control.ps "== LAST"
-val _ = Control.p I.format_last last
-val _ = Control.ps "--"
-val g =
-*)
-            RTLEdit.unfocus (substLast subst last)
-(*
-in
-Control.p I.format_graph g;
-Control.ps "==";
-g
-end
-*)
-)
+            RTLEdit.unfocus (substLast subst last))
         graph
 
 end

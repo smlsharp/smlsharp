@@ -26,7 +26,7 @@ struct
   local
     val finalizersRef = ref ([] : (unit -> unit) list)
   in
-  fun atExit finalizer = finalizersRef := finalizer :: (!finalizersRef);
+  fun atExit finalizer = finalizersRef := finalizer :: (!finalizersRef)
 
   fun terminate x = (SMLSharp.Runtime.GenericOS_exit x; raise Fail "not terminated.")
   fun exit sts =

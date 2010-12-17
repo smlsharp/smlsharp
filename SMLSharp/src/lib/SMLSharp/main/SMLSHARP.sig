@@ -18,4 +18,4 @@ sig
   structure Platform : SMLSHARP_PLATFORM
   structure Configuration : SMLSHARP_CONFIGURATION
 
-end;
+end

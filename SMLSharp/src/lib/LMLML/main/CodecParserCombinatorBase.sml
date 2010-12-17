@@ -134,4 +134,4 @@ struct
        of (SOME(res as _::_, strm)) => SOME(P.implode res, strm)
 	| _ => NONE
 
-end;
+end

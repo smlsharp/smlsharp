@@ -6,4 +6,4 @@
  *)
 structure Word8ArraySlice =
           MonoArraySliceBase
-              (structure A = Word8Array structure V = Word8Vector);
+              (structure A = Word8Array structure V = Word8Vector)

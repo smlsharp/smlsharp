@@ -1,3 +1,8 @@
+(*
+ * wrapper for IEEEReal of SML/NJ for compatibility.
+ * @copyright (c) 2010, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
 structure IEEEReal : sig
 
   exception Unordered

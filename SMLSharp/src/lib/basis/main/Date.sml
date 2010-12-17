@@ -154,8 +154,8 @@ struct
 
   (********************)
 
-  val secondsOfHour = 60 * 60 : LI.int
-  val secondsOfDay = secondsOfHour * 24 : LI.int
+  val secondsOfHour = 3600 (*60 * 60*) : LI.int
+  val secondsOfDay = 86400 (*secondsOfHour * 24*) : LI.int
   (* Time.zeroTime denotes 1970-01-01 00:00:00 (UTC) *)
   val epochYear = 1970 : LI.int
 
@@ -495,7 +495,7 @@ struct
       end
   end (* local *)
 
-  val toString = fmt "%a %b %d %H:%M:%S %Y"
+  fun toString x = fmt "%a %b %d %H:%M:%S %Y" x
 
   (********************)
 
@@ -587,7 +587,7 @@ struct
 
   end (* local *)
 
-  val fromString = StringCvt.scanString scan
+  fun fromString x = StringCvt.scanString scan x
 
   (********************)
 
@@ -607,4 +607,4 @@ struct
 
   (***************************************************************************)
 
-end;
+end

@@ -1110,7 +1110,7 @@ struct
       | AN.ANBYTE n => (context, AI.UInt (Target.toUInt n))
       | AN.ANCHAR c => (context, AI.UInt (Target.charToUInt c))
       | AN.ANUNIT => (context, AI.UInt 0w0)  (* assume UNIT is an integer. *)
-      | AN.ANGLOBALSYMBOL {name = (_, AN.UNDECIDED), ...} =>
+      | AN.ANGLOBALSYMBOL {name = (_, AN.UNDECIDED _), ...} =>
         raise Control.Bug "transformArg: UNDECIDED"
       | AN.ANGLOBALSYMBOL {name, ann = AN.EXCEPTIONTAG tag, ...} =>
         (context, transformExceptionTag (name, tag))
@@ -1120,7 +1120,7 @@ struct
           val con = case symkind of
                       AN.EXTERNSYMBOL => AI.Extern
                     | AN.GLOBALSYMBOL => AI.Global
-                    | AN.UNDECIDED => raise Control.Bug "UNDECIDED"
+                    | AN.UNDECIDED _ => raise Control.Bug "UNDECIDED"
         in
           (context, con {label = {label = name, value = findGlobalIndex id},
                          ty = ty})
@@ -1794,7 +1794,7 @@ struct
 
       | AN.ANVAL {varList, sizeList,
                   exp = AN.ANRECORD {bitmap, totalSize, fieldList,
-                                     fieldSizeList, fieldTyList},
+                                     fieldSizeList, fieldTyList, isMutable},
                   loc} =>
         let
           val dst = transformVarInfo context (onlyOne varList)
@@ -2986,7 +2986,7 @@ struct
         raise Control.Bug "FIXME: ANTOPCONST: not implemented"
 
       | AN.ANTOPRECORD {globalName, export, bitmaps, totalSize, fieldList,
-                        fieldTyList, fieldSizeList} =>
+                        fieldTyList, fieldSizeList, isMutable} =>
         (* ToDo: used for exception *)
         { 
           toplevel = NONE,
@@ -2996,11 +2996,9 @@ struct
           clusters = nil
         }
 
-      | AN.ANTOPARRAY {globalName, export,
-                       externalVarID = SOME id,
-                       bitmap, totalSize,
-                       initialValues = nil, elementTy, elementSize,
-                       isMutable = true} =>
+      | AN.ANTOPVAR {globalName,
+                     externalVarID = SOME id,
+                     initialValue = NONE, elementTy, elementSize} =>
         (* ToDo: used for global variable *)
         {
           toplevel = NONE,
@@ -3011,10 +3009,13 @@ struct
           clusters = nil
         }
 
+      | AN.ANTOPVAR _ =>
+        raise Control.Bug "FIXME: ANTOPVAR: not implemented"
+
       | AN.ANTOPARRAY _ =>
         raise Control.Bug "FIXME: ANTOPARRAY: not implemented"
 
-      | AN.ANTOPCLOSURE {globalName, export, funLabel} =>
+      | AN.ANTOPCLOSURE {globalName, export, funLabel, closureEnv} =>
         raise Control.Bug "FIXME: ANTOPCLOSURE: not implemented"
 
       | AN.ANTOPALIAS {globalName, export,

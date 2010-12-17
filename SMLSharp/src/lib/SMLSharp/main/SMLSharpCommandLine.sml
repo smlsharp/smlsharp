@@ -10,4 +10,4 @@ struct
   val executableImageName =
       SMLSharp.Runtime.SMLSharpCommandLine_executableImageName
 
-end;
+end

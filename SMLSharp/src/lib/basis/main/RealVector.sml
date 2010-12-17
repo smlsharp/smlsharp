@@ -22,4 +22,4 @@ local
   end
 in
 structure RealVector = MonoVectorBase(Operations)
-end;
+end

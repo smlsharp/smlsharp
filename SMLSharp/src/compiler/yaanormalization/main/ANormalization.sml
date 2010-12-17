@@ -153,9 +153,10 @@ struct
               in
                 (var::vars,
                  AN.ANSETFIELD {array = AN.ANGLOBALSYMBOL
-                                          {name = (displayName, AN.UNDECIDED),
+                                          {name = (displayName,
+                                                   AN.UNDECIDED ty),
                                            ann = AN.GLOBALVAR id,
-                                           ty = AN.BOXED},
+                                           ty = AN.POINTER},
                                 offset = AN.ANWORD 0w0,
                                 value = AN.ANVAR var,
                                 valueTy = ty,
@@ -314,9 +315,10 @@ struct
             in
               (clusters, decls,
                AN.ANGETFIELD {array = AN.ANGLOBALSYMBOL
-                                        {name = (displayName, AN.UNDECIDED),
+                                        {name = (displayName,
+                                                 AN.UNDECIDED ty),
                                          ann = AN.GLOBALVAR id,
-                                         ty = AN.BOXED},
+                                         ty = AN.POINTER},
                               offset = AN.ANWORD 0w0,
                               size = anSize,
                               needBoundaryCheck = false,
@@ -362,7 +364,8 @@ struct
                                       ann = AN.GLOBALOTHER,
                                       ty = AN.FOREIGNFUN})
       | RBU.RBUEXCEPTIONTAG {tagValue, displayName, loc} =>
-        (nil, nil, AN.ANGLOBALSYMBOL {name = (displayName, AN.UNDECIDED),
+        (nil, nil, AN.ANGLOBALSYMBOL {name = (displayName,
+                                              AN.UNDECIDED AN.BOXED),
                                       ann = AN.EXCEPTIONTAG tagValue,
                                       ty = AN.BOXED})
       | RBU.RBULABEL {codeId, loc} =>
@@ -457,9 +460,10 @@ struct
                             loc = loc}
                 | (GLOBAL {id, tag, ty, size, displayName}, sisize) =>
                   AN.ANSETFIELD {array = AN.ANGLOBALSYMBOL
-                                           {name = (displayName, AN.UNDECIDED),
+                                           {name = (displayName,
+                                                    AN.UNDECIDED ty),
                                             ann = AN.GLOBALVAR id,
-                                            ty = AN.BOXED},
+                                            ty = AN.POINTER},
                                  offset = AN.ANWORD 0w0,
                                  value = AN.ANUNIT,
                                  valueTy = ty,
@@ -555,7 +559,8 @@ struct
       | RBU.RBUEXCEPTIONTAG {tagValue, displayName, loc} =>
         (nil, makeVAL pos loc (AN.ANVALUE
                                  (AN.ANGLOBALSYMBOL
-                                    {name = (displayName, AN.UNDECIDED),
+                                    {name = (displayName,
+                                             AN.UNDECIDED AN.BOXED),
                                      ann = AN.GLOBALOTHER,
                                      ty = AN.BOXED})))
       | RBU.RBULABEL {codeId, loc} =>
@@ -833,7 +838,8 @@ struct
                              totalSize = anTotalSize,
                              fieldList = anValues,
                              fieldSizeList = anSizes,
-                             fieldTyList = antys}))
+                             fieldTyList = antys,
+                             isMutable = isMutable}))
         end
 
       | RBU.RBUENVRECORD {bitmapExp, totalSize, fieldList, fieldTyList,
@@ -1075,7 +1081,8 @@ struct
                             AN.ANCONST value
                           | RBU.RBUEXCEPTIONTAG {tagValue, displayName, loc} =>
                             AN.ANVALUE (AN.ANGLOBALSYMBOL
-                                          {name = (displayName, AN.UNDECIDED),
+                                          {name = (displayName,
+                                                   AN.UNDECIDED AN.BOXED),
                                            ann = AN.EXCEPTIONTAG tagValue,
                                            ty = AN.BOXED})
                           | _ => raise Control.Bug "normalizeExp: RBUSWITCH"

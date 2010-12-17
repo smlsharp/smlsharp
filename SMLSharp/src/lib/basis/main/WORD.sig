@@ -59,6 +59,6 @@ signature WORD =
     val fmt : StringCvt.radix -> word -> string
     val toString   : word -> string
 
-  end;
+  end
 
 

@@ -28,7 +28,7 @@ struct
 
   (***************************************************************************)
 
-  val emptyString = P.concat []
+  fun emptyString () = P.concat []
 
   fun base ({string, start, length} : substring) = (string, start, length)
 
@@ -132,7 +132,7 @@ struct
 
   fun size ({string, length, ...} : substring) = length
 
-  fun concat [] = emptyString
+  fun concat [] = emptyString ()
     | concat (substring :: substrings) =
       let
         fun append [] result = result
@@ -141,7 +141,7 @@ struct
       in append substrings (string substring)
       end
 
-  fun concatWith separator [] = emptyString
+  fun concatWith separator [] = emptyString ()
     | concatWith separator [substring] = string substring
     | concatWith separator (substring :: substrings) =
       let
@@ -403,7 +403,7 @@ struct
               in
                 scan (index + 1) (P.concat [accum, translated])
               end
-      in scan 0 emptyString
+      in scan 0 (emptyString ())
       end
 
   local
@@ -490,5 +490,5 @@ struct
 
   (***************************************************************************)
 
-end;
+end
 

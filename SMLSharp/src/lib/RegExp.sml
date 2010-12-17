@@ -14,4 +14,4 @@ use "../../../smlnj-lib/Util/list-set-fn.sml";
 use "../../../smlnj-lib/Util/list-map-fn.sml";
 use "../../../smlnj-lib/RegExp/regexp-lib.use";
 structure RegExp =
-    RegExpFn(structure P = AwkSyntax structure E = BackTrackEngine);
+    RegExpFn(structure P = AwkSyntax structure E = BackTrackEngine)

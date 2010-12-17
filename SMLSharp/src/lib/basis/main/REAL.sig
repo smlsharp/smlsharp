@@ -100,5 +100,5 @@ signature REAL =
     val fromFloat : float -> real
 *)
 
-  end;
+  end
 

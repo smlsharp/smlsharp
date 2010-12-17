@@ -45,7 +45,7 @@ struct
   (* exnName is redefined later to use SMLFormat. *)
   fun exnMessage (exn : exn) = "exnMessage is not implemented"
 
-  fun ! (ref arg) = arg;
+  fun ! (ref arg) = arg
 
   val (op :=) = (op :=)
 
@@ -57,4 +57,4 @@ struct
 
   (***************************************************************************)
 
-end;
+end

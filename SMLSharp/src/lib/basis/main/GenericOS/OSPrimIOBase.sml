@@ -190,37 +190,41 @@ struct
           end
     in
 
-    val mkBinReader =
+    fun mkBinReader x =
         mkReader
             {
               mkRD = BinPrimIO.RD,
               cvtVec = fn v => v,
               cvtArrSlice = fn s => s
             }
+            x
 
-    val mkTextReader =
+    fun mkTextReader x =
         mkReader
             {
               mkRD = TextPrimIO.RD,
               cvtVec = Byte.bytesToString,
               cvtArrSlice = c2w_as
             }
+            x
 
-    val mkBinWriter =
+    fun mkBinWriter x =
         mkWriter
             {
               mkWR = BinPrimIO.WR,
               cvtVecSlice = fn s => s,
               cvtArrSlice = fn s => s
             }
+            x
 
-    val mkTextWriter =
+    fun mkTextWriter x =
         mkWriter
             {
               mkWR = TextPrimIO.WR,
               cvtVecSlice = c2w_vs,
               cvtArrSlice = c2w_as
             }
+            x
 
     end (* local *)
 

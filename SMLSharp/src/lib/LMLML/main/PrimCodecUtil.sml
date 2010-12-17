@@ -151,8 +151,8 @@ struct
       end
 
   local
-    val W32 = Word32.fromLargeWord o Word8.toLargeWord
-    val W8 = Word8.fromLargeWord o Word32.toLargeWord
+    fun W32 x = Word32.fromLargeWord (Word8.toLargeWord x)
+    fun W8 x = Word8.fromLargeWord (Word32.toLargeWord x)
     open Word32
     infix << >> orb andb
   in
@@ -178,4 +178,4 @@ struct
 
   end
 
-end;
+end

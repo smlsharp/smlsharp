@@ -27,4 +27,4 @@ local
   end
 in
 structure RealArray = MonoArrayBase(Operations)
-end;
+end

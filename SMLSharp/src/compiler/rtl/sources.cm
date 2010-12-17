@@ -1,4 +1,4 @@
 Group
-	structure X86RTLBackend
+	structure X86Backend
 is
 	main/module.cm

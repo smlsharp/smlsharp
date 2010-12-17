@@ -28,4 +28,4 @@ signature INT_INF =
 
     val ~>> : (int * Word.word) -> int
 
-  end;
+  end

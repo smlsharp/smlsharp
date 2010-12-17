@@ -36,6 +36,12 @@ struct
                   fromClause: (string * 'exp) list,
                   whereClause: 'exp option,
                   loc: Loc.loc}
+  | (*% *)
+    SQLBEGIN of Loc.loc
+  | (*% *)
+    SQLCOMMIT of Loc.loc
+  | (*% *)
+    SQLROLLBACK of Loc.loc
 
   (*% *)
   datatype ('exp, 'pat, 'ty) exp =

@@ -19,4 +19,4 @@ struct
   structure Platform = SMLSharpPlatform
   structure Configuration = SMLSharpConfiguration
 
-end;
+end

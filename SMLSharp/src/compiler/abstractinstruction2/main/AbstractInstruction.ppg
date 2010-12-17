@@ -220,7 +220,7 @@ struct
   datatype objectType =
       Array
     | Vector
-    | Record
+    | Record of {mutable:bool}
 
   (*% *)
   type globalLabel =
@@ -247,12 +247,12 @@ struct
     | (*% @format({clusterId, entry}) clusterId ":" entry *)
       (* entry address of ML function *)
       Entry of {clusterId: clusterId, entry: label}
-    | (*% @format(label) label "@GBL" *)
+    | (*% @format(label * ty) label "@GBL:" ty *)
       (* global label declared in same linkage unit *)
-      Global of globalLabel
-    | (*% @format(label) label "@EXT" *)
+      Global of globalLabel * ty
+    | (*% @format(label * ty) label "@EXT:" ty *)
       (* global label declared in other linkage unit *)
-      Extern of globalLabel
+      Extern of globalLabel * ty
     | (*% @format(l) l *)
       (* local label *)
       Label of label
@@ -307,6 +307,15 @@ struct
         bitmaps: targetUInt list,
         payloadSize: targetUInt,
         fields: {size: targetUInt, value: primData} list
+      }
+    | (*%
+       * @format({size, value: v vopt})
+       * { "VAR(" { vopt(v) "," +1 "size=" size } ")" }
+       *)
+      VarSlot of
+      {
+        size: targetUInt,
+        value: primData option
       }
 
   (*% @params(x) *)

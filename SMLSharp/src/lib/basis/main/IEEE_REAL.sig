@@ -38,6 +38,6 @@ signature IEEE_REAL =
     val scan : (char, 'a) StringCvt.reader ->
 	       (decimal_approx, 'a) StringCvt.reader
 
-  end;
+  end
 
 

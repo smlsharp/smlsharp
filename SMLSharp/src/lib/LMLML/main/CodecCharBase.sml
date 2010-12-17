@@ -14,14 +14,14 @@ struct
       let val mbs = P.decode slice
       in if 0 = P.size mbs then NONE else SOME(P.sub (mbs, 0))
       end
-  val MBCToBytesSlice = P.encode o P.charToString
+  fun MBCToBytesSlice x = P.encode (P.charToString x)
 
-  val bytesToMBC = bytesSliceToMBC o Word8VectorSlice.full
-  val MBCToBytes = Word8VectorSlice.vector o P.encode o P.charToString
+  fun bytesToMBC x = bytesSliceToMBC (Word8VectorSlice.full x)
+  fun MBCToBytes x = Word8VectorSlice.vector (P.encode (P.charToString x))
 
-  val stringToMBC = bytesToMBC o Byte.stringToBytes
-  val MBCToString =
-      Byte.bytesToString o Word8VectorSlice.vector o P.encode o P.charToString
+  fun stringToMBC x = bytesToMBC (Byte.stringToBytes x)
+  fun MBCToString x =
+      Byte.bytesToString (Word8VectorSlice.vector (P.encode (P.charToString x)))
 
   val compare = P.compareChar
 
@@ -93,12 +93,12 @@ struct
       else c
 
   local
-    val stringToMBS = P.decode o Word8VectorSlice.full o Byte.stringToBytes
-    val MBCToString =
+    fun stringToMBS x = P.decode (Word8VectorSlice.full (Byte.stringToBytes x))
+    fun MBCToString x =
         Byte.bytesToString
-        o Word8VectorSlice.vector
-        o P.encode
-        o P.charToString
+          (Word8VectorSlice.vector
+             (P.encode
+                (P.charToString x)))
     fun fromStringBase converter cstring =
         (* A sequence of ASCII characters may start with a C-escape sequence,
          * which shoule be converted to a character.
@@ -122,10 +122,10 @@ struct
               | NONE => MBCToString c)
 
   in
-  val fromString = fromStringBase Char.fromString
-  val toString = toStringBase Char.toString
-  val fromCString = fromStringBase Char.fromCString
-  val toCString = toStringBase Char.toCString
+  fun fromString x = fromStringBase Char.fromString x
+  fun toString x = toStringBase Char.toString x
+  fun fromCString x = fromStringBase Char.fromCString x
+  fun toCString x = toStringBase Char.toCString x
   end
 
   fun op < args = compare args = General.LESS

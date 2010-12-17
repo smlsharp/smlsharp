@@ -10,7 +10,7 @@ local open SMLSharp.SMLFormat in
       let
         fun scan [] result = result
           | scan (head :: tail) result = scan tail (head :: result)
-      in scan list [] end;
+      in scan list [] end
   fun op @ ([], right) = right
     | op @ (left, []) = left
     | op @ (left, right) =
@@ -18,21 +18,21 @@ local open SMLSharp.SMLFormat in
         fun scan [] right = right
           | scan (head :: tail) right = scan tail (head :: right)
       in scan (rev left) right
-      end;
+      end
 
 fun '_format_int' arg =
     let val string = SMLSharp.Runtime.Int_toString arg
-    in Term(size string, string) end;
+    in Term(size string, string) end
 
 structure IntInf = struct open IntInf
 fun '_format_int' arg =
     let val string = SMLSharp.Runtime.LargeInt_toString arg
-    in SMLSharp.SMLFormat.Term(size string, string) end;
-end;
+    in SMLSharp.SMLFormat.Term(size string, string) end
+end
 
 fun '_format_word' arg =
     let val string = "0wx" ^ (SMLSharp.Runtime.Word_toString arg)
-    in Term(size string, string) end;
+    in Term(size string, string) end
 
 fun '_format_ptr' (f:'a->expression) (arg:'a ptr) =
     let val addr = _cast(arg) : word
@@ -41,21 +41,21 @@ fun '_format_ptr' (f:'a->expression) (arg:'a ptr) =
         val s = if n > 8 then SMLSharp.Runtime.String_substring (s, n - 8, 8)
                 else s
     in Term(10, "0x" ^ s)
-    end;
+    end
 
 fun '_format_real' arg =
     let val string = SMLSharp.Runtime.Real_toString arg
-    in Term(size string, string) end;
+    in Term(size string, string) end
 
 structure Real32 = struct open Real32
 fun '_format_real' arg =
     let val string = SMLSharp.Runtime.Float_toString arg
-    in SMLSharp.SMLFormat.Term(size string, string) end;
-end;
+    in SMLSharp.SMLFormat.Term(size string, string) end
+end
 
 fun '_format_bool' arg =
     let val string = case arg of true => "true" | false => "false"
-    in Term(size string, string) end;
+    in Term(size string, string) end
 
 local
 fun escape #"\a" = "\\a"
@@ -78,14 +78,14 @@ fun '_format_string' arg =
                  ""
                  (map escape (explode arg)))
           ^ "\""
-    in Term(size string, string) end;
+    in Term(size string, string) end
 end
 
 (* Bug ? "#\"" is rejected by lexer. *)
 fun '_format_char' arg =
     let val string = "#" ^ "\"" ^ (SMLSharp.Runtime.Char_toEscapedString arg)
                      ^ "\""
-    in Term(size string, string) end;
+    in Term(size string, string) end
 
 (* This formatter does not stop if arg contains cyclic data structure.
  * When module mechanism is supported in future version of compiler,
@@ -119,9 +119,9 @@ fun '_format_ref' format_arg (ref (arg : 'a)) =
         in
           result
         end
-          handle e => (depthRef := depth; raise e);
+          handle e => (depthRef := depth; raise e)
 
-end;
+end
 
 local
   fun formatPredefinedExn exn =
@@ -162,7 +162,7 @@ in
 val '_format_exnRef' = ref formatPredefinedExn
 end
 
-fun '_format_exn' exn = case '_format_exnRef' of ref format => format exn;
+fun '_format_exn' exn = case '_format_exnRef' of ref format => format exn
 
 structure SMLSharp = struct open SMLSharp
 fun '_format_exntag' x = Term(1, "-")
@@ -202,18 +202,18 @@ fun '_format_list' format_element list =
                  Term(1, "]")
                ]
           )
-    end;
+    end
 
 fun '_format_array' (format_arg : 'a -> string) (arg : 'a array) =
-    Term(5, "array");
+    Term(5, "array")
 
 structure Word8 = struct open Word8
 fun '_format_word' (arg : word) =
     let
       val string =
           "0wx" ^ (SMLSharp.Runtime.Word_toString (Word.fromInt (toIntX arg)))
-    in Term(size string, string) end;
-end;
+    in Term(size string, string) end
+end
 
 fun '_format_option' format_element NONE = Term(4, "NONE")
   | '_format_option' format_element (SOME arg) =
@@ -224,25 +224,25 @@ fun '_format_option' format_element NONE = Term(4, "NONE")
             Term(4, "SOME"),
             Indicator{space = true, newline = NONE},
             format_element arg
-          ]);
+          ])
 
 structure SMLSharp = struct open SMLSharp
 structure SMLFormat = struct open SMLFormat
 fun '_format_assocDirection' (Left) = Term(4, "Left")
   | '_format_assocDirection' (Right) = Term(5, "Right")
-  | '_format_assocDirection' (Neutral) = Term(7, "Neutral");
+  | '_format_assocDirection' (Neutral) = Term(7, "Neutral")
 
 fun '_format_priority' (Preferred n) =
     Guard(NONE, [Term(9, "Preferred"), '_format_int' n])
-  | '_format_priority' (Deferred) = Term(8, "Deferred");
+  | '_format_priority' (Deferred) = Term(8, "Deferred")
 
-fun '_format_assoc' {cut, strength, direction} = Term(4, "assoc");
+fun '_format_assoc' {cut, strength, direction} = Term(4, "assoc")
 (*
     "{cut = " ^ '_format_bool' cut ^ ", "
     ^ "strength = " ^ '_format_int' strength ^ ", "
     ^ "direction = " ^ '_format_assocDirection' direction
     ^ "}";
-*);
+*)
 
 fun '_format_expression' (Term(n, s)) =
     Guard
@@ -287,9 +287,9 @@ fun '_format_expression' (Term(n, s)) =
         )
   | '_format_expression' (StartOfIndent n) =
     Guard(NONE, [Term(13, "StartOfIndent"), '_format_int' n])
-  | '_format_expression' (EndOfIndent) = Term(11, "EndOfIndent");
+  | '_format_expression' (EndOfIndent) = Term(11, "EndOfIndent")
 
 end
-end;
+end
 
 end (* open SMLSharp.SMLFormat *)

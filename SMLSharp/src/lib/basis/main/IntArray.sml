@@ -26,4 +26,4 @@ local
   end
 in
 structure IntArray = MonoArrayBase(Operations)
-end;
+end

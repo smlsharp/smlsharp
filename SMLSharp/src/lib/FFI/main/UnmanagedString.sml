@@ -37,7 +37,7 @@ struct
    *)
   fun export string = (UM.export o Byte.stringToBytes) (string ^ "\000")
 
-  val exportSubstring = export o Substring.string
+  fun exportSubstring x = export (Substring.string x)
 
   (**
    * release the memory allocated by exportBlock.

@@ -33,8 +33,8 @@ install: $(TARGETS)
 	done)
 
 OLE2SML$(EXEEXT): OLE2SML.$(OBJEXT)
-	$(CXX) $(LDFLAGS) $(LIBSTDCXX) $(LIBS) \
-	-o $@ OLE2SML.$(OBJEXT) -loleaut32 -lole32 -luuid
+	$(CXX) $(LDFLAGS) -o $@ OLE2SML.$(OBJEXT) \
+	       $(CXXLDFLAGS) -loleaut32 -lole32 -luuid
 
 doc:
 	-$(MAKE) smldoc

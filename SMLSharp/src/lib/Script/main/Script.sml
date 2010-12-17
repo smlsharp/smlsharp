@@ -368,9 +368,9 @@ struct
       in OS.Process.system command
       end
 
-  val exit = ignore o OS.Process.exit
+  fun exit x = ignore (OS.Process.exit x)
 
-  val sleep = OS.Process.sleep o Time.fromSeconds o LargeInt.fromInt
+  fun sleep x = OS.Process.sleep (Time.fromSeconds (LargeInt.fromInt x))
 
   fun env name =
       case OS.Process.getEnv name
@@ -404,17 +404,19 @@ struct
   local
     (* ToDo : translate to regular expression according to Posix strictly
      *)
-    val translators =
-        map
-            (fn (pat, rep) => global_subst pat rep)
-            [("\\[!", "[^"), ("\\*", ".*"), ("\\?", ".")]
     fun transPattern globPattern =
-        "^" 
-        ^ (foldl
-               (fn (translator, string) => translator string)
-               globPattern
-               translators)
-        ^ "$"
+        let
+          val translators =
+              map (fn (pat, rep) => global_subst pat rep)
+                  [("\\[!", "[^"), ("\\*", ".*"), ("\\?", ".")]
+        in
+          "^" 
+          ^ (foldl
+                 (fn (translator, string) => translator string)
+                 globPattern
+                 translators)
+          ^ "$"
+        end
     (* ToDo : compile pattern to RE to improve efficiency. *)
     fun isMatch pattern name = name =~ pattern
   in

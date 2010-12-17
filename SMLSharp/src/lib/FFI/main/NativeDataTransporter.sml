@@ -153,15 +153,15 @@ struct
   in
   val wordBig : Word.word transporter =
       {
-        export = export PackWord32Big.update,
-        import = import PackWord32Big.subArr,
+        export = fn x => export PackWord32Big.update x,
+        import = fn x => import PackWord32Big.subArr x,
         sizeof = sizeof,
         hash = hash
       }
   val wordLittle : Word.word transporter =
       {
-        export = export PackWord32Little.update,
-        import = import PackWord32Little.subArr,
+        export = fn x => export PackWord32Little.update x,
+        import = fn x => import PackWord32Little.subArr x,
         sizeof = sizeof,
         hash = hash
       }
@@ -204,15 +204,15 @@ struct
   in
   val realBig : Real.real transporter =
       {
-        export = export PackReal64Big.update,
-        import = import PackReal64Big.subArr,
+        export = fn x => export PackReal64Big.update x,
+        import = fn x => import PackReal64Big.subArr x,
         sizeof = sizeof,
         hash = hash
       }
   val realLittle : Real.real transporter =
       {
-        export = export PackReal64Little.update,
-        import = import PackReal64Little.subArr,
+        export = fn x => export PackReal64Little.update x,
+        import = fn x => import PackReal64Little.subArr x,
         sizeof = sizeof,
         hash = hash
       }
@@ -478,8 +478,8 @@ struct
         fun sizeof (vr, offset) = offset + 4
       in
         {
-          export = export transporter toDyn,
-          import = import transporter fromDyn,
+          export = fn x => export transporter toDyn x,
+          import = fn x => import transporter fromDyn x,
           sizeof = sizeof,
           hash = hash
         }
@@ -1005,4 +1005,4 @@ struct
 
   fun release ({cleaner, ...} : 'a external) = cleaner ()
 
-end;
+end

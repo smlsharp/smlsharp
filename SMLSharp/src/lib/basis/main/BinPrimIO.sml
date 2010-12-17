@@ -14,4 +14,4 @@ structure BinPrimIO =
                 val someElem = (0w0 : Word8.word)
                 type pos = Position.int
                 val compare = Position.compare
-              );
+              )

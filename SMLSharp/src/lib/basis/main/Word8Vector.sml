@@ -26,4 +26,4 @@ local
   end
 in
 structure Word8Vector = MonoVectorBase(Operations)
-end;
+end

@@ -510,6 +510,10 @@ sml_heap_dump_layout()
 	 ((struct heap_arena*)((uintptr_t)(objaddr) & ~(ARENA_SIZE - 1U))))
 #define OBJ_TO_INDEX(arena, objaddr) \
 	(ASSERT(OBJ_TO_ARENA(objaddr) == (arena)), \
+	 ASSERT((char*)(objaddr) >= (arena)->slot_base), \
+	 ASSERT((char*)(objaddr) < (arena)->slot_base \
+				 + ((arena)->layout->num_slots \
+				    << (arena)->slotsize_log2)), \
 	 ((size_t)((char*)(objaddr) - (arena)->slot_base) \
 	  >> (arena)->slotsize_log2))
 
@@ -2329,6 +2333,7 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 
 	if (alloc_size > HEAP_SLOTSIZE_MAX) {
 		GCSTAT_ALLOC_COUNT(malloc, 0, alloc_size);
+		sml_save_frame_pointer(frame_pointer);
 		return sml_obj_malloc(alloc_size);
 	}
 

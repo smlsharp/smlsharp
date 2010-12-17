@@ -125,6 +125,9 @@
     | UPDATE
     | SET
     | DEFAULT
+    | BEGIN
+    | COMMIT
+    | ROLLBACK
 
 
 %nonterm absnamespace of string list
@@ -298,6 +301,7 @@
 %right ARROW
 %right AND
 %right DARROW 
+%nonassoc BAR
 %left DO
 %left ELSE
 %left RAISE
@@ -360,6 +364,9 @@ id_noEQSTAR : ID (ID)
             | UPDATE ("update")
             | SET ("set")
             | DEFAULT ("default")
+            | BEGIN ("begin")
+            | COMMIT ("commit")
+            | ROLLBACK ("rollback")
 
 id_noEQ     : id_noEQSTAR (id_noEQSTAR)
             | ASTERISK ("*")
@@ -590,6 +597,12 @@ sql : SELECT selectList intoClause fromClause whereClause orderbyClause
                              fromClause = fromClause,
                              whereClause = whereClause,
                              loc = (UPDATEleft, whereClauseright)})
+    | BEGIN
+        (AbsynSQL.SQLBEGIN (BEGINleft, BEGINright))
+    | COMMIT
+        (AbsynSQL.SQLCOMMIT (COMMITleft, COMMITright))
+    | ROLLBACK
+        (AbsynSQL.SQLROLLBACK (ROLLBACKleft, ROLLBACKright))
 
 sqlExp : appexp_noSQL (appexp_noSQL)
 (*       | sqlExp COLON ty ()*)

@@ -17,4 +17,4 @@ signature POSIX_FLAGS =
 
     val anySet : (flags * flags) -> bool
 
-  end;
+  end
