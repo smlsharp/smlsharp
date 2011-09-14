@@ -81,7 +81,7 @@ in
           loc
           (argExp, ty) =
       case ty of
-        TY.INSTCODEty _ => OC.makeConstantTerm "fn"
+        TY.SINGLETONty _ => OC.makeConstantTerm "SINGLETONty"
 
       |  TY.ERRORty => raise Control.Bug "unexpected ERRORty"
 
@@ -1041,7 +1041,8 @@ val _ = print "\n"
               in toBTVs dummyTyIndex tailBTVKinds (newTy :: newTys)
               end
         in
-        val replacedBoundTys = toBTVs 0 (IEnv.listItemsi BTVKindMap) []
+        val replacedBoundTys =
+            toBTVs 0 (BoundTypeVarID.Map.listItemsi BTVKindMap) []
         end
 
         local
@@ -1051,13 +1052,13 @@ val _ = print "\n"
         val newBTVKindMap = 
             foldl (* left to right *)
                 (fn (TY.BOUNDVARty ID, map) =>
-                    IEnv.insert(map, ID, newBTVKind)
+                    BoundTypeVarID.Map.insert(map, ID, newBTVKind)
                   | _ =>
                     raise
                       Control.Bug
                           "non BOUNDVARty in appliedTys \
                           \(printergeneration/main/FormatterGenerator.sml)")
-                IEnv.empty
+                BoundTypeVarID.Map.empty
                 appliedTys
         end
 
@@ -1078,7 +1079,8 @@ val _ = print "\n"
                 (fn (ty as TY.BOUNDVARty index) =>
                     {
                       namePath =
-                      (U.formatterNamePrefix ^ Int.toString index, P.NilPath),
+                      (U.formatterNamePrefix ^ BoundTypeVarID.toString index,
+                       P.NilPath),
                       ty = OC.tyOfFormatterOfTy ty
                     }
                   | _ =>
@@ -1458,7 +1460,7 @@ val _ = print "\n"
 val _ = print
             ("formatterTy: " ^ TypeFormatter.tyToString monoFormatterTy ^ "\n")
 *)
-        val arity = IEnv.numItems (#tyargs tyFun)
+        val arity = BoundTypeVarID.Map.numItems (#tyargs tyFun)
         (* 'X1 -> result, ..., 'Xn -> result, ('X1,...,'Xn) t *)
         val (formatterTyOfArgTys, argVarTy, _) =
             U.decompFunctionType arity monoFormatterTy

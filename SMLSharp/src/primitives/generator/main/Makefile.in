@@ -7,11 +7,7 @@ include @top_builddir@/commonrule
 
 VPATH = @srcdir@
 
-TEMPLATES = $(srcdir)/../../compiler/main/Primitives.ppg.in \
-            $(srcdir)/../../runtime/main/Primitives.cc.in \
-            $(srcdir)/../../runtime/main/Primitives.hh.in \
-            $(srcdir)/../../../instructions/Instructions.sml.in \
-            $(srcdir)/../../compiler/main/Constants.sml.in \
+TEMPLATES = $(srcdir)/../../compiler/main/Constants.sml.in \
             $(srcdir)/../../runtime/main/Constants.cc.in \
             $(srcdir)/../../runtime/main/Constants.hh.in
 
@@ -34,7 +30,6 @@ all: $(TARGETS)
 
 $(TARGETS): primgen \
             $(TEMPLATES) \
-            $(srcdir)/../../primitives.csv \
             $(srcdir)/../../constants.csv
 	./primgen $(srcdir)
 

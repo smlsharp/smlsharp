@@ -1,0 +1,20 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../control/sources.cm
+	../../name/sources.cm
+	../../env/sources.cm
+	../../builtin/sources.cm
+	../../types/sources.cm
+	../../annotatedtypes/sources.cm
+	../../runtimetypes/sources.cm
+	../../constantterm/sources.cm
+	../../multiplevaluecalc/sources.cm
+	../../bitmapcalc/sources.cm
+
+	RecordLayout.sml
+	SingletonTyEnv.sml
+	BitmapCompilation.sml

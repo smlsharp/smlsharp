@@ -14,6 +14,7 @@ structure ANormalization : ANORMALIZATION = struct
   structure RBU = RBUCalc
   structure VEnv = VarID.Map
   structure ANU = ANormalUtils
+  structure P = BuiltinPrimitive
 
   open ANormal
 
@@ -225,7 +226,7 @@ structure ANormalization : ANORMALIZATION = struct
     | zip3 (x::tx, y::ty, z::tz) = (x,y,z) :: zip3(tx, ty,tz)
     | zip3 _ = raise Control.Bug "arg/ty/size lists do not agree : (anormalization/main/ANormalization.sml)"
 
-  fun optimizePRIMAPPLY (exp as ANPRIMAPPLY {primName, argExpList, argSizeExpList, argTyList, loc, ...}) =
+  fun optimizePRIMAPPLY (exp as ANPRIMAPPLY {primitive, argExpList, argSizeExpList, argTyList, loc, ...}) =
       let
         fun intOf (ANCONSTANT {value = CT.INT v,...}) = SOME v
           | intOf _ = NONE
@@ -314,145 +315,158 @@ structure ANormalization : ANORMALIZATION = struct
 
       in
         (
-         case (primName, argExpList) of
-           ("addInt",[ANCONSTANT {value = CT.INT 0,...},arg2]) => arg2
-         | ("addInt",[arg1,ANCONSTANT {value = CT.INT 0,...}]) => arg1
-         | ("addInt", _) => optimize2 intOf intOf intToExp ( op + ) 
-         | ("addWord",[ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg2
-         | ("addWord",[arg1,ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
-         | ("addWord", _) => optimize2 wordOf wordOf wordToExp ( op + ) 
-         | ("addReal", _) => optimize2 realOf realOf realToExp ( op + ) 
-         | ("addFloat", _) => optimize2 floatOf floatOf floatToExp ( op + ) 
-         | ("addByte",[ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg2
-         | ("addByte",[arg1,ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
-         | ("addByte", _) => optimize2 byteOf byteOf byteToExp ( op + ) 
+         case (primitive, argExpList) of
+           (P.Int_add _,[ANCONSTANT {value = CT.INT 0,...},arg2]) => arg2
+         | (P.Int_add _,[arg1,ANCONSTANT {value = CT.INT 0,...}]) => arg1
+         | (P.Int_add _, _) => optimize2 intOf intOf intToExp ( op + ) 
+         | (P.Word_add,[ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg2
+         | (P.Word_add,[arg1,ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
+         | (P.Word_add, _) => optimize2 wordOf wordOf wordToExp ( op + ) 
+         | (P.Real_add, _) => optimize2 realOf realOf realToExp ( op + ) 
+         | (P.Float_add, _) => optimize2 floatOf floatOf floatToExp ( op + ) 
+         | (P.Byte_add,[ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg2
+         | (P.Byte_add,[arg1,ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
+         | (P.Byte_add, _) => optimize2 byteOf byteOf byteToExp ( op + ) 
 
-         | ("subInt",[arg1,ANCONSTANT {value = CT.INT 0,...}]) => arg1
-         | ("subInt", _) => optimize2 intOf intOf intToExp ( op - ) 
-         | ("subWord",[arg1,ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
-         | ("subWord", _) => optimize2 wordOf wordOf wordToExp ( op - ) 
-         | ("subReal", _) => optimize2 realOf realOf realToExp ( op - ) 
-         | ("subFloat", _) => optimize2 floatOf floatOf floatToExp ( op - ) 
-         | ("subByte",[arg1,ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
-         | ("subByte", _) => optimize2 byteOf byteOf byteToExp ( op - ) 
+         | (P.Int_sub _,[arg1,ANCONSTANT {value = CT.INT 0,...}]) => arg1
+         | (P.Int_sub _, _) => optimize2 intOf intOf intToExp ( op - ) 
+         | (P.Word_sub,[arg1,ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
+         | (P.Word_sub, _) => optimize2 wordOf wordOf wordToExp ( op - ) 
+         | (P.Real_sub, _) => optimize2 realOf realOf realToExp ( op - ) 
+         | (P.Float_sub, _) => optimize2 floatOf floatOf floatToExp ( op - ) 
+         | (P.Byte_sub,[arg1,ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
+         | (P.Byte_sub, _) => optimize2 byteOf byteOf byteToExp ( op - ) 
 
-         | ("mulInt",[arg1 as ANCONSTANT {value = CT.INT 0,...},arg2]) => arg1
-         | ("mulInt",[arg1,arg2 as ANCONSTANT {value = CT.INT 0,...}]) => arg2
-         | ("mulInt", _) => optimize2 intOf intOf intToExp ( op * ) 
-         | ("mulWord",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("mulWord",[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg2
-         | ("mulWord", _) => optimize2 wordOf wordOf wordToExp ( op * ) 
-         | ("mulReal", _) => optimize2 realOf realOf realToExp ( op * ) 
-         | ("mulFloat", _) => optimize2 floatOf floatOf floatToExp ( op * ) 
-         | ("mulByte",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("mulByte",[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg2
-         | ("mulByte", _) => optimize2 byteOf byteOf byteToExp ( op * ) 
+         | (P.Int_mul _,[arg1 as ANCONSTANT {value = CT.INT 0,...},arg2]) => arg1
+         | (P.Int_mul _,[arg1,arg2 as ANCONSTANT {value = CT.INT 0,...}]) => arg2
+         | (P.Int_mul _, _) => optimize2 intOf intOf intToExp ( op * ) 
+         | (P.Word_mul,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Word_mul,[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg2
+         | (P.Word_mul, _) => optimize2 wordOf wordOf wordToExp ( op * ) 
+         | (P.Real_mul, _) => optimize2 realOf realOf realToExp ( op * ) 
+         | (P.Float_mul, _) => optimize2 floatOf floatOf floatToExp ( op * ) 
+         | (P.Byte_mul,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Byte_mul,[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg2
+         | (P.Byte_mul, _) => optimize2 byteOf byteOf byteToExp ( op * ) 
 
-         | ("divInt",[arg1 as ANCONSTANT {value = CT.INT 0,...},arg2]) => arg1
-         | ("divInt", _) => optimize2 intOf intOf intToExp ( op div ) 
-         | ("divWord",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("divWord", _) => optimize2 wordOf wordOf wordToExp ( op div ) 
-         (*| ("/", _) => optimize2 realOf realOf realToExp ( op / ) *)
-         (*| ("divFloat", _) => optimize2 floatOf floatOf floatToExp ( op / ) *)
-         | ("divByte",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("divByte", _) => optimize2 byteOf byteOf byteToExp ( op div ) 
+         | (P.Int_div _,[arg1 as ANCONSTANT {value = CT.INT 0,...},arg2]) => arg1
+         | (P.Int_div _, _) => optimize2 intOf intOf intToExp ( op div ) 
+         | (P.Word_div,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Word_div, _) => optimize2 wordOf wordOf wordToExp ( op div ) 
+         (*| (P.Real_div, _) => optimize2 realOf realOf realToExp ( op / ) *)
+         (*| (P.Float_div, _) => optimize2 floatOf floatOf floatToExp ( op / ) *)
+         | (P.Byte_div,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Byte_div, _) => optimize2 byteOf byteOf byteToExp ( op div ) 
 
-         | ("modInt",[arg1 as ANCONSTANT {value = CT.INT 0,...},arg2]) => arg1
-         | ("modInt", _) => optimize2 intOf intOf intToExp ( op mod ) 
-         | ("modWord",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("modWord", _) => optimize2 wordOf wordOf wordToExp ( op mod ) 
-         | ("modByte",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("modByte", _) => optimize2 byteOf byteOf byteToExp ( op mod ) 
+         | (P.Int_mod _,[arg1 as ANCONSTANT {value = CT.INT 0,...},arg2]) => arg1
+         | (P.Int_mod _, _) => optimize2 intOf intOf intToExp ( op mod ) 
+         | (P.Word_mod,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Word_mod, _) => optimize2 wordOf wordOf wordToExp ( op mod ) 
+         | (P.Byte_mod,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Byte_mod, _) => optimize2 byteOf byteOf byteToExp ( op mod ) 
 
-         | ("quotInt", _) => optimize2 intOf intOf intToExp ( Int32.quot ) 
-         | ("remInt", _) => optimize2 intOf intOf intToExp ( Int32.rem ) 
+         | (P.Int_quot _, _) => optimize2 intOf intOf intToExp ( Int32.quot ) 
+         | (P.Int_rem _, _) => optimize2 intOf intOf intToExp ( Int32.rem ) 
 
-         | ("negInt", _) => optimize1 intOf intToExp ~  
-         | ("negReal", _) => optimize1 realOf realToExp ~ 
-         | ("negFloat", _) => optimize1 floatOf floatToExp ~ 
+         | (P.Int_neg _, _) => optimize1 intOf intToExp ~  
+         | (P.Real_neg, _) => optimize1 realOf realToExp ~ 
+         | (P.Float_neg, _) => optimize1 floatOf floatToExp ~ 
 
-         | ("ltInt", _) => optimize2 intOf intOf boolToExp ( op < ) 
-         | ("ltWord", _) => optimize2 wordOf wordOf boolToExp ( op < ) 
-         | ("ltReal", _) => optimize2 realOf realOf boolToExp ( op < ) 
-         | ("ltFloat", _) => optimize2 floatOf floatOf boolToExp ( op < ) 
-         | ("ltByte", _) => optimize2 byteOf byteOf boolToExp ( op < ) 
-         | ("ltChar", _) => optimize2 charOf charOf boolToExp ( op < ) 
-         | ("ltString", _) => optimize2 stringOf stringOf boolToExp ( op < ) 
+         | (P.Int_lt, _) => optimize2 intOf intOf boolToExp ( op < ) 
+         | (P.Word_lt, _) => optimize2 wordOf wordOf boolToExp ( op < ) 
+         | (P.Real_lt, _) => optimize2 realOf realOf boolToExp ( op < ) 
+         | (P.Float_lt, _) => optimize2 floatOf floatOf boolToExp ( op < ) 
+         | (P.Byte_lt, _) => optimize2 byteOf byteOf boolToExp ( op < ) 
+         | (P.Char_lt, _) => optimize2 charOf charOf boolToExp ( op < ) 
+         | (P.String_lt, _) => optimize2 stringOf stringOf boolToExp ( op < ) 
 
-         | ("gtInt", _) => optimize2 intOf intOf boolToExp ( op > ) 
-         | ("gtWord", _) => optimize2 wordOf wordOf boolToExp ( op > ) 
-         | ("gtReal", _) => optimize2 realOf realOf boolToExp ( op > ) 
-         | ("gtFloat", _) => optimize2 floatOf floatOf boolToExp ( op > ) 
-         | ("gtByte", _) => optimize2 byteOf byteOf boolToExp ( op > ) 
-         | ("gtChar", _) => optimize2 charOf charOf boolToExp ( op > ) 
-         | ("gtString", _) => optimize2 stringOf stringOf boolToExp ( op > ) 
+         | (P.Int_gt, _) => optimize2 intOf intOf boolToExp ( op > ) 
+         | (P.Word_gt, _) => optimize2 wordOf wordOf boolToExp ( op > ) 
+         | (P.Real_gt, _) => optimize2 realOf realOf boolToExp ( op > ) 
+         | (P.Float_gt, _) => optimize2 floatOf floatOf boolToExp ( op > ) 
+         | (P.Byte_gt, _) => optimize2 byteOf byteOf boolToExp ( op > ) 
+         | (P.Char_gt, _) => optimize2 charOf charOf boolToExp ( op > ) 
+         | (P.String_gt, _) => optimize2 stringOf stringOf boolToExp ( op > ) 
 
-         | ("lteqInt", _) => optimize2 intOf intOf boolToExp ( op <= ) 
-         | ("lteqWord", _) => optimize2 wordOf wordOf boolToExp ( op <= ) 
-         | ("lteqReal", _) => optimize2 realOf realOf boolToExp ( op <= ) 
-         | ("lteqFloat", _) => optimize2 floatOf floatOf boolToExp ( op <= ) 
-         | ("lteqByte", _) => optimize2 byteOf byteOf boolToExp ( op <= ) 
-         | ("lteqChar", _) => optimize2 charOf charOf boolToExp ( op <= ) 
-         | ("lteqString", _) => optimize2 stringOf stringOf boolToExp ( op <= ) 
+         | (P.Int_lteq, _) => optimize2 intOf intOf boolToExp ( op <= ) 
+         | (P.Word_lteq, _) => optimize2 wordOf wordOf boolToExp ( op <= ) 
+         | (P.Real_lteq, _) => optimize2 realOf realOf boolToExp ( op <= ) 
+         | (P.Float_lteq, _) => optimize2 floatOf floatOf boolToExp ( op <= ) 
+         | (P.Byte_lteq, _) => optimize2 byteOf byteOf boolToExp ( op <= ) 
+         | (P.Char_lteq, _) => optimize2 charOf charOf boolToExp ( op <= ) 
+         | (P.String_lteq, _) => optimize2 stringOf stringOf boolToExp ( op <= ) 
 
-         | ("gteqInt", _) => optimize2 intOf intOf boolToExp ( op >= ) 
-         | ("gteqWord", _) => optimize2 wordOf wordOf boolToExp ( op >= ) 
-         | ("gteqReal", _) => optimize2 realOf realOf boolToExp ( op >= ) 
-         | ("gteqFloat", _) => optimize2 floatOf floatOf boolToExp ( op >= ) 
-         | ("gteqByte", _) => optimize2 byteOf byteOf boolToExp ( op >= ) 
-         | ("gteqChar", _) => optimize2 charOf charOf boolToExp ( op >= ) 
-         | ("gteqString", _) => optimize2 stringOf stringOf boolToExp ( op >= )
+         | (P.Int_gteq, _) => optimize2 intOf intOf boolToExp ( op >= ) 
+         | (P.Word_gteq, _) => optimize2 wordOf wordOf boolToExp ( op >= ) 
+         | (P.Real_gteq, _) => optimize2 realOf realOf boolToExp ( op >= ) 
+         | (P.Float_gteq, _) => optimize2 floatOf floatOf boolToExp ( op >= ) 
+         | (P.Byte_gteq, _) => optimize2 byteOf byteOf boolToExp ( op >= ) 
+         | (P.Char_gteq, _) => optimize2 charOf charOf boolToExp ( op >= ) 
+         | (P.String_gteq, _) => optimize2 stringOf stringOf boolToExp ( op >= )
 
-         | ("Word_toIntX", _) => optimize1 wordOf intToExp (Int32.fromLarge o Word32.toLargeIntX)          
-         | ("Word_fromInt", _) => optimize1 intOf wordToExp (Word32.fromLargeInt o Int32.toLarge)          
+         | (P.Word_toIntX, _) => optimize1 wordOf intToExp (Int32.fromLarge o Word32.toLargeIntX)          
+         | (P.Word_fromInt, _) => optimize1 intOf wordToExp (Word32.fromLargeInt o Int32.toLarge)          
 
-         | ("Word_andb",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("Word_andb",[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg2
-         | ("Word_andb", _) => optimize2 wordOf wordOf wordToExp ( Word32.andb ) 
+         | (P.Word_andb,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Word_andb,[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg2
+         | (P.Word_andb, _) => optimize2 wordOf wordOf wordToExp ( Word32.andb ) 
 
-         | ("Word_orb",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg2
-         | ("Word_orb",[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
-         | ("Word_orb", _) => optimize2 wordOf wordOf wordToExp ( Word32.orb ) 
+         | (P.Word_orb,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg2
+         | (P.Word_orb,[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
+         | (P.Word_orb, _) => optimize2 wordOf wordOf wordToExp ( Word32.orb ) 
 
-         | ("Word_xorb", _) => optimize2 wordOf wordOf wordToExp ( Word32.xorb ) 
-         | ("Word_notb", _) => optimize1 wordOf wordToExp ( Word32.notb ) 
+         | (P.Word_xorb, _) => optimize2 wordOf wordOf wordToExp ( Word32.xorb ) 
+         | (P.Word_notb, _) => optimize1 wordOf wordToExp ( Word32.notb ) 
 
-         | ("Word_leftShift",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("Word_leftShift",[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
-         | ("Word_leftShift", _) => optimize2 wordOf genericWordOf wordToExp ( Word32.<< ) 
+         | (P.Word_lshift,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Word_lshift,[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
+         | (P.Word_lshift, _) => optimize2 wordOf genericWordOf wordToExp ( Word32.<< ) 
 
-         | ("Word_logicalRightShift",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("Word_logicalRightShift",[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
-         | ("Word_logicalRightShift", _) => optimize2 wordOf genericWordOf wordToExp ( Word32.>> ) 
+         | (P.Word_rshift,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Word_rshift,[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
+         | (P.Word_rshift, _) => optimize2 wordOf genericWordOf wordToExp ( Word32.>> ) 
 
-         | ("Word_arithmeticRightShift",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
-         | ("Word_arithmeticRightShift",[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
-         | ("Word_arithmeticRightShift", _) => optimize2 wordOf genericWordOf wordToExp ( Word32.~>> ) 
+         | (P.Word_arshift,[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
+         | (P.Word_arshift,[arg1,arg2 as ANCONSTANT {value = CT.WORD 0w0,...}]) => arg1
+         | (P.Word_arshift, _) => optimize2 wordOf genericWordOf wordToExp ( Word32.~>> ) 
 
+(*
          | ("Int_toString", _) => optimize1 intOf stringToExp (Int32.toString)          
          | ("Word_toString", _) => optimize1 wordOf stringToExp (Word32.toString)       
+*)
 
-         | ("Real_fromInt", _) => optimize1 intOf realToExp (Real.fromLargeInt o Int32.toLarge)             
+         | (P.Real_fromInt, _) => optimize1 intOf realToExp (Real.fromLargeInt o Int32.toLarge)             
+(*
          | ("Real_toString", _) => optimize1 realOf stringToExp (Real.toString)       
          | ("Real_floor", _) => optimize1 realOf genericIntToExp (Real.floor)
          | ("Real_ceil", _) => optimize1 realOf genericIntToExp (Real.ceil)
-         | ("Real_trunc", _) => optimize1 realOf genericIntToExp (Real.trunc)
+*)
+         | (P.Real_trunc_unsafe _, _) => optimize1 realOf genericIntToExp (Real.trunc)
+(*
          | ("Real_round", _) => optimize1 realOf genericIntToExp (Real.round)
+*)
 
-         | ("Float_fromInt", _) => optimize1 intOf floatToExp (Real.fromLargeInt o Int32.toLarge)             
+         | (P.Float_fromInt, _) => optimize1 intOf floatToExp (Real.fromLargeInt o Int32.toLarge)             
+(*
          | ("Float_toString", _) => optimize1 floatOf stringToExp (Real.toString)       
          | ("Float_floor", _) => optimize1 floatOf genericIntToExp (Real.floor)
          | ("Float_ceil", _) => optimize1 floatOf genericIntToExp (Real.ceil)
-         | ("Float_trunc", _) => optimize1 floatOf genericIntToExp (Real.trunc)
+*)
+         | (P.Float_trunc_unsafe _, _) => optimize1 floatOf genericIntToExp (Real.trunc)
+(*
          | ("Float_round", _) => optimize1 floatOf genericIntToExp (Real.round)
 
          | ("Char_toString", _) => optimize1 charOf stringToExp (Char.toString)       
-         | ("Char_ord", _) => optimize1 charOf genericIntToExp (Char.ord)       
-         | ("Char_chr", _) => optimize1 genericIntOf charToExp (Char.chr)
+*)
+         | (P.Char_ord, _) => optimize1 charOf genericIntToExp (Char.ord)       
+         | (P.Char_chr_unsafe, _) => optimize1 genericIntOf charToExp (Char.chr)
 
+(*
          | ("String_concat2", _) => optimize2 stringOf stringOf stringToExp ( op ^ )        
-         | ("String_sub", _) => optimize2 stringOf genericIntOf charToExp ( String.sub )        
-         | ("String_size", _) => optimize1 stringOf genericIntToExp ( String.size )        
+*)
+         | (P.String_sub_unsafe, _) => optimize2 stringOf genericIntOf charToExp ( String.sub )        
+         | (P.String_size, _) => optimize1 stringOf genericIntToExp ( String.size )        
+(*
          | ("String_substring", _) => optimize3 stringOf genericIntOf genericIntOf stringToExp ( String.substring )        
 
          | ("Math_sqrt", _) => optimize1 realOf realToExp ( Math.sqrt )
@@ -470,6 +484,7 @@ structure ANormalization : ANORMALIZATION = struct
          | ("Math_sinh", _) => optimize1 realOf realToExp ( Math.sinh )
          | ("Math_cosh", _) => optimize1 realOf realToExp ( Math.cosh )
          | ("Math_tanh", _) => optimize1 realOf realToExp ( Math.tanh )
+*)
 
 
          | _ => exp          
@@ -557,7 +572,13 @@ structure ANormalization : ANORMALIZATION = struct
               normalizeArgList vEnv aEnv argSizeExpAtomTySingleSizeList
 
           val (declList2, newFunExp, newVEnv, newAEnv) = 
-            normalizeArg newVEnv newAEnv (funExp, ATOM, singleSize loc)
+              case funExp of
+                RBU.RBUGLOBALSYMBOL {name, kind=Absyn.ForeignCodeSymbol,
+                                     ty=RT.ATOMty, loc} =>
+                (* allow ANPRIMSYMBOL as arg *)
+                ([], ANPRIMSYMBOL {name=name, loc=loc},vEnv,aEnv)
+              | _ =>
+                normalizeArg newVEnv newAEnv (funExp, ATOM, singleSize loc)
 
           val newArgTyList = map transformTy argTyList
 
@@ -616,6 +637,9 @@ structure ANormalization : ANORMALIZATION = struct
           (declList1 @ declList2 @ declList3, newExp ,newVEnv, newAEnv)
         end
       | RBU.RBUCONSTANT arg => ([],ANCONSTANT arg,vEnv,aEnv)
+      | RBU.RBUGLOBALSYMBOL {name, kind=Absyn.ForeignCodeSymbol,
+                             ty=RT.ATOMty, loc} =>
+        ([], ANPRIMSYMBOL {name=name, loc=loc},vEnv,aEnv)
       | RBU.RBUGLOBALSYMBOL _ => raise Control.Bug "RBUGLOBALSYMBOL: not supported"
       | RBU.RBUEXCEPTIONTAG arg => ([],ANEXCEPTIONTAG arg,vEnv,aEnv)
       | RBU.RBUVAR {varInfo as {varId,...},valueSizeExp,loc} =>
@@ -801,7 +825,6 @@ structure ANormalization : ANORMALIZATION = struct
         raise Control.Bug "RBUPRIMAPPLY: Ptr_advance"
       | RBU.RBUPRIMAPPLY {prim,argExpList,argSizeExpList,argTyList,resultTyList,instSizeExpList,instTagExpList,loc} =>
         let
-          val primName = BuiltinPrimitiveUtils.oldPrimitiveName prim
           val newArgTyList = map transformTy argTyList
           val argSizeExpAtomSingleSizeList = 
             map (fn exp => (exp, ATOM, singleSize loc)) argSizeExpList
@@ -815,7 +838,7 @@ structure ANormalization : ANORMALIZATION = struct
           val newExp =
               ANPRIMAPPLY
                   {
-                   primName = primName,
+                   primitive = prim,
                    argExpList = newArgExpList,
                    argSizeExpList = newArgSizeExpList,
                    argTyList = newArgTyList,

@@ -105,10 +105,13 @@ local
         visit 0 symbol
       end
   end
+
+  val prettyPrint = SMLFormat.prettyPrint
+  datatype parameter = datatype SMLFormat.parameter
 in
 structure SMLSharp = struct open SMLSharp
 fun printFormat exp =
-    print (SMLFormat.prettyPrint (getPrinterParameters ()) [exp])
+    print (prettyPrint (getPrinterParameters ()) [exp])
 
 fun printFormatOfValBinding (name, valExp, tyExp) =
     let
@@ -118,7 +121,7 @@ fun printFormatOfValBinding (name, valExp, tyExp) =
         | peel x = [x]
     in
       print
-        (SMLFormat.prettyPrint
+        (prettyPrint
            (getPrinterParameters ())
            ([FE.StartOfIndent 4,
              FE.Term (3, "val"),
@@ -155,7 +158,7 @@ struct
 
   fun exnMessage exn =
       let val exp = '_format_exn' exn
-      in SMLFormat.prettyPrint [SMLFormat.Columns (valOf Int.maxInt)] [exp]
+      in prettyPrint [Columns (valOf Int.maxInt)] [exp]
       end
 
 end

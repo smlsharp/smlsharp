@@ -1,5 +1,4 @@
-(**
- * constant terms.
+(** * constant terms.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
  * @author YAMATODANI Kiyoshi
@@ -8,15 +7,18 @@
 structure ConstantTerm =
 struct
 
-  structure P = Path
+(*
   structure PT = PredefinedTypes
+*)
+  structure BE = BuiltinEnv
   structure T = Types
-  structure TP = TypeParser
   structure TU = TypesUtils
   structure UE = UserError
+  structure A = Absyn
 
  (* for debugging *)
-  fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
+  fun printType ty =
+      print (Control.prettyPrint (Types.format_ty nil ty) ^ "\n")
 
   (*%
    * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
@@ -63,9 +65,13 @@ struct
        *)
       UNIT 
     | (*%
-       * @format(value) "NULL"
+       * @format "NULLPTR"
        *)
-      NULL  (* null pointer *)
+      NULLPOINTER   (* null C pointer *)
+    | (*%
+       * @format "NULLBOXED"
+       *)
+      NULLBOXED     (* null pointer (boxed type) *)
 
   (*% *)
   exception
@@ -74,184 +80,158 @@ struct
    *)
   TooLargeConstant
 
-  fun compare (x,y) = 
-    (* Note: we pick the following ordering 
-        INT < LARGEINT < WORD < STRING < REAL < FLOAT < CHAR < NULL < UNIT
-       to make compare as a toral ordering.
-    *)
-      case (x,y) of
-        (INT i1, INT i2) => Int32.compare(i1, i2)
-      | (INT _, _) => LESS
-      | (LARGEINT _, INT _) => GREATER
-      | (LARGEINT i1, LARGEINT i2) => BigInt.compare(i1, i2)
-      | (LARGEINT _, _) => LESS
-      | (WORD _,INT _) => GREATER
-      | (WORD _,LARGEINT _) => GREATER
-      | (WORD w1,WORD w2) => Word32.compare(w1,w2)
-      | (WORD w1,_) => LESS
-      | (BYTE _, INT _) => GREATER
-      | (BYTE _, LARGEINT _) => GREATER
-      | (BYTE _, WORD _) => GREATER
-      | (BYTE s1, BYTE s2) => Word32.compare (s1, s2)
-      | (BYTE _, _) => LESS
-      | (STRING _, INT _) => GREATER
-      | (STRING _, LARGEINT _) => GREATER
-      | (STRING _, WORD _) => GREATER
-      | (STRING _, BYTE _) => GREATER
-      | (STRING s1, STRING s2) => String.compare (s1, s2)
-      | (STRING _, _) => LESS
-      | (REAL r1, INT _) => GREATER
-      | (REAL r1, LARGEINT _) => GREATER
-      | (REAL r1, WORD _) => GREATER
-      | (REAL r1, BYTE _) => GREATER
-      | (REAL r1, STRING _) => GREATER
-      | (REAL r1, REAL r2) => String.compare(r1, r2)
-      | (REAL _, _) => LESS
-      | (FLOAT r1, INT _) => GREATER
-      | (FLOAT r1, LARGEINT _) => GREATER
-      | (FLOAT r1, WORD _) => GREATER
-      | (FLOAT r1, BYTE _) => GREATER
-      | (FLOAT r1, STRING _) => GREATER
-      | (FLOAT _, REAL _) => GREATER
-      | (FLOAT r1, FLOAT r2) => String.compare(r1, r2)
-      | (FLOAT r1, _) => LESS
-      | (CHAR _, INT _) => GREATER
-      | (CHAR _, LARGEINT _) => GREATER
-      | (CHAR _, WORD _) => GREATER
-      | (CHAR _, BYTE _) => GREATER
-      | (CHAR _, STRING _) => GREATER
-      | (CHAR _, REAL _) => GREATER
-      | (CHAR _, FLOAT _) => GREATER
-      | (CHAR c1, CHAR c2) => Char.compare(c1,c2)
-      | (CHAR _, _) => LESS
-      | (NULL, INT _) => GREATER
-      | (NULL, LARGEINT _) => GREATER
-      | (NULL, WORD _) => GREATER
-      | (NULL, BYTE _) => GREATER
-      | (NULL, STRING _) => GREATER
-      | (NULL, REAL _) => GREATER
-      | (NULL, FLOAT _) => GREATER
-      | (NULL, NULL) => EQUAL
-      | (NULL, _) => LESS
-      | (UNIT, UNIT) => EQUAL
-      | (UNIT, _) => GREATER
+  fun compare (x, y) =
+      let
+        fun order const =
+            case const of
+              INT _ => 0
+            | LARGEINT _ => 1
+            | WORD _ => 2
+            | BYTE _ => 3
+            | STRING _ => 4
+            | REAL _ => 5
+            | FLOAT _ => 6
+            | CHAR _ => 7
+            | UNIT => 8
+            | NULLPOINTER => 9
+            | NULLBOXED => 10
+      in
+        case (x, y) of
+          (INT x, INT y) => Int32.compare (x, y)
+        | (INT _, _) => Int.compare (order x, order y)
+        | (LARGEINT x, LARGEINT y) => BigInt.compare (x, y)
+        | (LARGEINT _, _) => Int.compare (order x, order y)
+        | (WORD x, WORD y) => Word32.compare (x, y)
+        | (WORD _, _) => Int.compare (order x, order y)
+        | (BYTE x, BYTE y) => Word32.compare (x, y)
+        | (BYTE _, _) => Int.compare (order x, order y)
+        | (STRING x, STRING y) => String.compare (x, y)
+        | (STRING _, _) => Int.compare (order x, order y)
+        | (REAL x, REAL y) => String.compare (x, y)
+        | (REAL _, _) => Int.compare (order x, order y)
+        | (FLOAT x, FLOAT y) => String.compare (x, y)
+        | (FLOAT _, _) => Int.compare (order x, order y)
+        | (CHAR x, CHAR y) => Char.compare (x, y)
+        | (CHAR _, _) => Int.compare (order x, order y)
+        | (UNIT, UNIT) => EQUAL
+        | (UNIT, _) => Int.compare (order x, order y)
+        | (NULLPOINTER, NULLPOINTER) => EQUAL
+        | (NULLPOINTER, _) => Int.compare (order x, order y)
+        | (NULLBOXED, NULLBOXED) => EQUAL
+        | (NULLBOXED, _) => Int.compare (order x, order y)
+      end
 
   local
-    structure OCord : ORD_KEY =
-      struct
-     (* Note: we pick the following ordering 
-          INT < LARGEINT < WORD < STRING < REAL < FLOAT < CHAR < NULL < UNIT
-         to make compare as a toral ordering.
-	 Anybody who add new constant type should make this comparison
-         function total!
-      *)
-        fun compare (INT _, INT _)             = EQUAL
-          | compare (INT _, _)                 = LESS
-          | compare (LARGEINT _, INT _)        = GREATER
-          | compare (LARGEINT _, LARGEINT _)   = EQUAL
-          | compare (LARGEINT _, _)            = LESS
-          | compare (WORD _, INT _)            = GREATER
-          | compare (WORD _, LARGEINT _)       = GREATER
-          | compare (WORD _, WORD _)           = EQUAL
-          | compare (WORD _, _)                = LESS
-          | compare (BYTE _, INT _)          = GREATER
-          | compare (BYTE _, LARGEINT _)     = GREATER
-          | compare (BYTE _, WORD _)         = GREATER
-          | compare (BYTE _, BYTE _)       = EQUAL
-          | compare (BYTE _,  _)             = LESS
-          | compare (STRING _, INT _)          = GREATER
-          | compare (STRING _, LARGEINT _)     = GREATER
-          | compare (STRING _, WORD _)         = GREATER
-          | compare (STRING _, BYTE _)         = GREATER
-          | compare (STRING _, STRING _)       = EQUAL
-          | compare (STRING _,  _)             = LESS
-          | compare (REAL _, UNIT)             = LESS
-          | compare (REAL _, NULL)             = LESS
-          | compare (REAL _, CHAR _)           = LESS
-          | compare (REAL _, FLOAT _)          = LESS
-          | compare (REAL _, REAL _)           = EQUAL
-          | compare (REAL _, _)                = GREATER
-          | compare (FLOAT _, UNIT)            = LESS
-          | compare (FLOAT _, NULL)            = LESS
-          | compare (FLOAT _, CHAR _)          = LESS
-          | compare (FLOAT _, FLOAT _)         = EQUAL
-          | compare (FLOAT _, _)               = GREATER
-          | compare (CHAR _, UNIT)             = LESS
-          | compare (CHAR _, NULL)             = LESS
-          | compare (CHAR _, CHAR _)           = EQUAL
-          | compare (CHAR _, _)                = GREATER
-          | compare (NULL, UNIT)               = LESS
-          | compare (NULL, NULL)               = EQUAL
-          | compare (NULL, _)                  = GREATER
-          | compare (UNIT, UNIT)               = EQUAL
-          | compare (UNIT, _)                  = GREATER
-        type ord_key = constant
-      end
-    structure OCMap = BinaryMapFn(OCord)
-    val constantTypeDefs =
+
+    fun decomposePolyTy (T.POLYty {boundtvars, body}) = (boundtvars, body)
+      | decomposePolyTy ty = (BoundTypeVarID.Map.empty, ty)
+
+    fun polyTy (btvEnv, bodyTy) =
+        if BoundTypeVarID.Map.isEmpty btvEnv
+        then bodyTy else T.POLYty {boundtvars=btvEnv, body=bodyTy}
+
+    fun overloadTy tys =
+        let
+          val (btvEnvs, tys) = ListPair.unzip (map decomposePolyTy tys)
+          val btvEnv = foldl (BoundTypeVarID.Map.unionWith
+                                (fn _ => raise Control.Bug "unionTys"))
+                             BoundTypeVarID.Map.empty
+                             btvEnvs
+        in
+          case tys of
+            [ty] => polyTy (btvEnv, ty)
+          | _ =>
+            let
+              val btv = BoundTypeVarID.generate ()
+              val btvKind = {tvarKind = T.OCONSTkind tys, eqKind = A.NONEQ}
+              val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv, btvKind)
+            in
+              T.POLYty {boundtvars = btvEnv, body = T.BOUNDVARty btv}
+            end
+        end
+
+    fun sqlValueTy elemTy =
+        let
+          val (btvEnv, elemTy) = decomposePolyTy elemTy
+          val btv = BoundTypeVarID.generate ()
+          val btvKind = {tvarKind = T.UNIV, eqKind = A.NONEQ}
+          val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv, btvKind)
+          val tyCon = BE.lookupTyCon BuiltinName.sqlValueTyName
+        in
+          T.POLYty {boundtvars = btvEnv,
+                    body = T.CONSTRUCTty {tyCon = tyCon,
+                                          args = [elemTy, T.BOUNDVARty btv]}}
+        end
+
+    fun optionTy elemTy =
+        let
+          val (btvEnv, elemTy) = decomposePolyTy elemTy
+          val tyCon = BE.lookupTyCon BuiltinName.optionTyName
+        in
+          polyTy (btvEnv, T.CONSTRUCTty {tyCon = tyCon, args = [elemTy]})
+        end
+
+    fun intType () =
+        overloadTy
         [
-          (INT (0), "['a::{int,IntInf.int,('b,'c)_SQL.value},\
-                     \'b::{int,(int)option},\
-                     \'c.'a]"),
-          (LARGEINT (BigInt.fromInt 0),
-           "['a::{int,IntInf.int,('b,'c)_SQL.value},\
-           \'b::{int,(int)option},\
-           \'c.'a]"),
-          (WORD 0w0, "['a::{word,Word8.word,('b,'c)_SQL.value},\
-                      \'b::{word,(word)option},\
-                      \'c.'a]"),
-          (STRING "", "['a::{string,('b,'c)_SQL.value},\
-                       \'b::{string,(string)option},\
-                       \'c.'a]"),
-          (REAL "0.0", "['a::{real,Real32.real,('b,'c)_SQL.value},\
-                        \'b::{real,(real)option},\
-                        \'c.'a]"),
-          (CHAR #"c", "['a::{char,('b,'c)_SQL.value},\
-                       \'b::{char,(char)option},\
-                       \'c.'a]"),
-          (UNIT,  "unit"),
-          (NULL, "(unit)ptr")
+          BE.INTty,
+          BE.INTINFty, 
+          sqlValueTy (overloadTy [BE.INTty, optionTy BE.INTty])
         ]
-    val constantTypeMap =
-        foldl
-          (fn ((const, tyRep), constTypeMap) =>
-              let
-                val newTy =  
-                    TP.readTy
-                      (#topTyConEnv BuiltinContext.builtinContext) tyRep
-                   (*
-                    TP.readTy
-                      (ReservedCounters.reservedBoundTypeVarIDSequence)
-                      PT.initialTopTyConEnv tyRep
-                    *)
-              in
-                OCMap.insert (constTypeMap, const, newTy)
-              end)
-          OCMap.empty
-          constantTypeDefs
+
+    fun wordType () =
+        overloadTy
+        [
+          BE.WORDty,
+          BE.WORD8ty,
+          sqlValueTy (overloadTy [BE.WORDty, optionTy BE.WORDty])
+        ]
+
+    fun stringType () =
+        overloadTy
+        [
+          BE.STRINGty,
+          sqlValueTy (overloadTy [BE.STRINGty, optionTy BE.STRINGty])
+        ]
+
+    fun realType () =
+        overloadTy
+        [
+          BE.REALty,
+          BE.REAL32ty,
+          sqlValueTy (overloadTy [BE.REALty, optionTy BE.REALty])
+        ]
+
+    fun charType () =
+        overloadTy
+        [
+          BE.CHARty,
+          sqlValueTy (overloadTy [BE.CHARty, optionTy BE.CHARty])
+        ]
+
+    fun unitType () =
+        BE.UNITty
+
+    fun nullType () =
+        overloadTy
+        [
+          BE.PTRty,
+          BE.BOXEDty
+        ]
   in
     fun constTy const =
-        case OCMap.find(constantTypeMap, const) of
-          SOME ty => ty
-        | _ => raise (Control.Bug "InitialTypeContext constTy")
+        case const of
+          A.INT _ => intType ()
+        | A.WORD _ => wordType ()
+        | A.STRING _ => stringType ()
+        | A.REAL _ => realType ()
+        | A.CHAR _ => charType ()
+        | A.UNITCONST _ => unitType ()
+        | A.NULLCONST _ => nullType ()
   end
-
-  fun constDefaultTy const =
-      case const of
-        INT _ => PT.intty
-      | LARGEINT _ => PT.largeIntty
-      | WORD _ => PT.wordty
-      | BYTE _ => PT.bytety
-      | REAL _ => PT.realty
-      | FLOAT _ => PT.floatty
-      | STRING _ => PT.stringty
-      | CHAR _ => PT.charty
-      | UNIT => PT.unitty
-      | NULL => PT.ptrty
 
   local
     val bigIntToInt32 = Int32.fromLarge o BigInt.toLarge
-    val int32ToBigInt = BigInt.fromLarge o Int32.toLarge
 
     val intRange =
         (
@@ -292,38 +272,40 @@ struct
    *)
   fun fixConst {constTerm : constant -> 'exp,
                 recordTerm : 'exp SEnv.map * Types.ty -> 'exp,
-                conTerm : {con: Types.conPathInfo, instTyList: Types.ty list,
+                conTerm : {con: Types.conInfo, instTyList: Types.ty list,
                            arg: 'exp option} -> 'exp}
-               (const, ty, loc) =
+               (const, ty) =
       let
         datatype constTy =
                  INTty | WORDty | CHARty | STRINGty | REALty | FLOATty
-               | LARGEINTty | BYTEty | UNITty | PTRty
+               | LARGEINTty | BYTEty | UNITty | PTRty | BOXEDty
                | OPTIONty of constTy | SQLVALUEty of constTy * T.ty
         fun constTy ty =
             case TU.derefTy ty of
-              T.RAWty {tyCon={id,...}, args=[]} =>
-              if TyConID.eq (id, #id PT.intTyCon) then INTty
-              else if TyConID.eq (id, #id PT.wordTyCon) then WORDty
-              else if TyConID.eq (id, #id PT.charTyCon) then CHARty
-              else if TyConID.eq (id, #id PT.stringTyCon) then STRINGty
-              else if TyConID.eq (id, #id PT.realTyCon) then REALty
-              else if TyConID.eq (id, #id PT.floatTyCon) then FLOATty
-              else if TyConID.eq (id, #id PT.largeIntTyCon) then LARGEINTty
-              else if TyConID.eq (id, #id PT.byteTyCon) then BYTEty
-              else if TyConID.eq (id, #id PT.unitTyCon) then UNITty
+              T.CONSTRUCTty {tyCon={id,...}, args=[]} =>
+              if TypID.eq (id, #id BE.INTtyCon) then INTty
+              else if TypID.eq (id, #id BE.WORDtyCon) then WORDty
+              else if TypID.eq (id, #id BE.CHARtyCon) then CHARty
+              else if TypID.eq (id, #id BE.STRINGtyCon) then STRINGty
+              else if TypID.eq (id, #id BE.REALtyCon) then REALty
+              else if TypID.eq (id, #id BE.REAL32tyCon) then FLOATty
+              else if TypID.eq (id, #id BE.INTINFtyCon) then LARGEINTty
+              else if TypID.eq (id, #id BE.WORD8tyCon) then BYTEty
+              else if TypID.eq (id, #id BE.UNITtyCon) then UNITty
+              else if TypID.eq (id, #id BE.BOXEDtyCon) then BOXEDty
               else
                 (printType ty;
                  raise Control.Bug "castConst"
                 )
-            | T.RAWty {tyCon={id,...}, args=[arg]} =>
-              if TyConID.eq (id, #id PT.ptrTyCon)
+            | T.CONSTRUCTty {tyCon={id,...}, args=[arg]} =>
+              if TypID.eq (id, #id BE.PTRtyCon)
               then PTRty
-              else if TyConID.eq (id, #id PT.optionTyCon)
+              else if TypID.eq (id,
+                                #id (BE.lookupTyCon BuiltinName.optionTyName))
               then OPTIONty (constTy arg)
               else (printType ty; raise Control.Bug "castConst")
-            | T.RAWty {tyCon={id,...}, args=[arg1, arg2]} =>
-              if TyConID.eq (id, #id PT.sqlValueTyCon)
+            | T.CONSTRUCTty {tyCon={id,...}, args=[arg1, arg2]} =>
+              if TypID.eq (id, #id (BE.lookupTyCon BuiltinName.sqlValueTyName))
               then SQLVALUEty (constTy arg1, arg2)
               else (printType ty; raise Control.Bug "castConst")
             | _ =>
@@ -338,75 +320,94 @@ struct
               (exp, ty)
             end
         fun stringDBIPairTerm (string, dbiTy) =
-            pairTerm ((constTerm (STRING string), PT.stringty),
-                      (conTerm {con = PT.sqlDBIConPathInfo,
+            pairTerm ((constTerm (STRING string), BE.STRINGty),
+                      (conTerm {con = BE.lookupCon BuiltinName.sqlDBIConName,
                                 instTyList = [dbiTy],
                                 arg = NONE},
-                       T.RAWty {tyCon = PT.sqlDBITyCon, args = [dbiTy]}))
+                       T.CONSTRUCTty
+                         {tyCon = BE.lookupTyCon BuiltinName.sqlDBITyName,
+                          args = [dbiTy]}))
 
         fun sqlValue (string as (_, dbiTy)) (exp, valueTy) =
-            conTerm {con = PT.sqlValueConPathInfo,
+            conTerm {con = BE.lookupCon BuiltinName.sqlValueConName,
                      instTyList = [valueTy, dbiTy],
                      arg = SOME (#1 (pairTerm (stringDBIPairTerm string,
                                                (exp, valueTy))))}
         fun sqlOptionValue string (exp, valueTy) =
             sqlValue string
-                     (conTerm {con = PT.someConPathInfo,
+                     (conTerm {con = BE.lookupCon BuiltinName.someConName,
                                instTyList = [valueTy],
                                arg = SOME exp},
-                      T.RAWty {tyCon = PT.optionTyCon, args = [valueTy]})
+                      T.CONSTRUCTty
+                        {tyCon = BE.lookupTyCon BuiltinName.optionTyName,
+                         args = [valueTy]})
       in
         case (const, constTy ty) of
-          (INT x, INTty) =>
-          (checkRange intRange (int32ToBigInt x, loc); constTerm const)
-        | (INT x, LARGEINTty) => constTerm (LARGEINT (int32ToBigInt x))
-        | (INT x, SQLVALUEty (INTty, dbi)) =>
-          (checkRange intRange (int32ToBigInt x, loc);
-           sqlValue (Int32.toString x, dbi) (constTerm const, PT.intty))
-        | (INT x, SQLVALUEty (OPTIONty INTty, dbi)) =>
-          (checkRange intRange (int32ToBigInt x, loc);
-           sqlOptionValue (Int32.toString x, dbi) (constTerm const, PT.intty))
+          (A.INT (x, loc), INTty) =>
+          (checkRange intRange (x, loc);
+           constTerm (INT (bigIntToInt32 x)))
+        | (A.INT (x, loc), LARGEINTty) => constTerm (LARGEINT x)
+        | (A.INT (x, loc), SQLVALUEty (INTty, dbi)) =>
+          (checkRange intRange (x, loc);
+           sqlValue (BigInt.toString x, dbi)
+                    (constTerm (INT (bigIntToInt32 x)), BE.INTty))
+        | (A.INT (x, loc), SQLVALUEty (OPTIONty INTty, dbi)) =>
+          (checkRange intRange (x, loc);
+           sqlOptionValue (BigInt.toString x, dbi)
+                          (constTerm (INT (bigIntToInt32 x)), BE.INTty))
+        | (A.INT _, _) => raise Control.Bug "fixConst: INT"
+(*
         | (LARGEINT x, INTty) =>
           (checkRange intRange (x, loc); constTerm (INT (bigIntToInt32 x)))
         | (LARGEINT _, LARGEINTty) => constTerm const
         | (LARGEINT x, SQLVALUEty (INTty, dbi)) =>
           (checkRange intRange (x, loc);
            sqlValue (sqlInt x, dbi)
-  	            (constTerm (INT (bigIntToInt32 x)), PT.intty))
+  	            (constTerm (INT (bigIntToInt32 x)), BE.INTty))
         | (LARGEINT x, SQLVALUEty (OPTIONty INTty, dbi)) =>
           (checkRange intRange (x, loc);
            sqlOptionValue (sqlInt x, dbi) (constTerm (INT (bigIntToInt32 x)),
-                                         PT.intty))
-        | (WORD x, WORDty) => (checkRange wordRange (x, loc); constTerm const)
-        | (WORD x, BYTEty) =>
+                                           BE.INTty))
+*)
+        | (A.WORD (x, loc), WORDty) =>
+          (checkRange wordRange (x, loc); constTerm (WORD x))
+        | (A.WORD (x, loc), BYTEty) =>
           (checkRange byteRange (x, loc); constTerm (BYTE x))
-        | (WORD x, SQLVALUEty (WORDty, dbi)) =>
+        | (A.WORD (x, loc), SQLVALUEty (WORDty, dbi)) =>
           (checkRange wordRange (x, loc);
-           sqlValue (sqlWord x, dbi) (constTerm const, PT.wordty))
-        | (WORD x, SQLVALUEty (OPTIONty WORDty, dbi)) =>
+           sqlValue (sqlWord x, dbi) (constTerm (WORD x), BE.WORDty))
+        | (A.WORD (x, loc), SQLVALUEty (OPTIONty WORDty, dbi)) =>
           (checkRange wordRange (x, loc);
-           sqlOptionValue (sqlWord x, dbi) (constTerm const, PT.wordty))
-        | (STRING _, STRINGty) => constTerm const
-        | (STRING x, SQLVALUEty (STRINGty, dbi)) =>
-          sqlValue (sqlString x, dbi) (constTerm const, PT.stringty)
-        | (STRING x, SQLVALUEty (OPTIONty STRINGty, dbi)) =>
-          sqlOptionValue (sqlString x, dbi) (constTerm const, PT.stringty)
-        | (REAL _, REALty) => constTerm const
-        | (REAL x, FLOATty) => constTerm (FLOAT x)
-        | (REAL x, SQLVALUEty (REALty, dbi)) =>
-          sqlValue (sqlReal x, dbi) (constTerm const, PT.realty)
-        | (REAL x, SQLVALUEty (OPTIONty REALty, dbi)) =>
-          sqlOptionValue (sqlReal x, dbi) (constTerm const, PT.realty)
+           sqlOptionValue (sqlWord x, dbi) (constTerm (WORD x), BE.WORDty))
+        | (A.WORD _, _) => raise Control.Bug "fixConst: WORD"
+        | (A.STRING (x, loc), STRINGty) => constTerm (STRING x)
+        | (A.STRING (x, loc), SQLVALUEty (STRINGty, dbi)) =>
+          sqlValue (sqlString x, dbi) (constTerm (STRING x), BE.STRINGty)
+        | (A.STRING (x, loc), SQLVALUEty (OPTIONty STRINGty, dbi)) =>
+          sqlOptionValue (sqlString x, dbi) (constTerm (STRING x), BE.STRINGty)
+        | (A.STRING _, _) => raise Control.Bug "fixConst: STRING"
+        | (A.REAL (x, loc), REALty) => constTerm (REAL x)
+        | (A.REAL (x, loc), FLOATty) => constTerm (FLOAT x)
+        | (A.REAL (x, loc), SQLVALUEty (REALty, dbi)) =>
+          sqlValue (sqlReal x, dbi) (constTerm (REAL x), BE.REALty)
+        | (A.REAL (x, loc), SQLVALUEty (OPTIONty REALty, dbi)) =>
+          sqlOptionValue (sqlReal x, dbi) (constTerm (REAL x), BE.REALty)
+        | (A.REAL _, _) => raise Control.Bug "fixConst: REAL"
+(*
         | (FLOAT _, FLOATty) => constTerm const
         | (FLOAT x, REALty) => constTerm (REAL x)
-        | (CHAR _, CHARty) => constTerm const
-        | (CHAR x, SQLVALUEty (CHARty, dbi)) =>
-          sqlValue (sqlChar x, dbi) (constTerm const, PT.charty)
-        | (CHAR x, SQLVALUEty (OPTIONty CHARty, dbi)) =>
-          sqlOptionValue (sqlChar x, dbi) (constTerm const, PT.charty)
-        | (UNIT, UNITty) => constTerm const
-        | (NULL, PTRty) => constTerm const
-        | _ => raise Control.Bug "castConst"
+*)
+        | (A.CHAR (x, loc), CHARty) => constTerm (CHAR x)
+        | (A.CHAR (x, loc), SQLVALUEty (CHARty, dbi)) =>
+          sqlValue (sqlChar x, dbi) (constTerm (CHAR x), BE.CHARty)
+        | (A.CHAR (x, loc), SQLVALUEty (OPTIONty CHARty, dbi)) =>
+          sqlOptionValue (sqlChar x, dbi) (constTerm (CHAR x), BE.CHARty)
+        | (A.CHAR _, _) => raise Control.Bug "fixConst: CHAR"
+        | (A.UNITCONST (_, loc), UNITty) => constTerm UNIT
+        | (A.UNITCONST _, _) => raise Control.Bug "fixConst: UNITCONST"
+        | (A.NULLCONST _, PTRty) => constTerm NULLPOINTER
+        | (A.NULLCONST _, BOXEDty) => constTerm NULLBOXED
+        | (A.NULLCONST _, _) => raise Control.Bug "fixConst: NULLCONST"
       end
   end
 

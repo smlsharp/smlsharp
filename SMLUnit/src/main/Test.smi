@@ -1,0 +1,12 @@
+_require "basis.smi"
+_require "TEST.sig"
+
+structure Test =
+struct
+  type testFunction = unit -> unit
+  datatype test =
+      TestCase of testFunction
+    | TestLabel of (string * test)
+    | TestList of test list
+  val labelTests : (string * testFunction) list -> test
+end

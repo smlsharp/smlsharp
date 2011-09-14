@@ -9,7 +9,9 @@ functor UnsignedInteger001
              : sig
                  include WORD
                  val assertEqualWord : word SMLUnit.Assert.assertEqual
-               end) =
+               end) : sig
+  val suite : unit -> SMLUnit.Test.test
+end =
 struct
 
   (************************************************************)

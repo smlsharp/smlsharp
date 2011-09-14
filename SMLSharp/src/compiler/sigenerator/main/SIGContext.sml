@@ -27,7 +27,7 @@ structure SIGContext : SIGCONTEXT = struct
 
   structure ConstMap = BinaryMapMaker(Const_ord)
   structure EntryMap = BinaryMapMaker(Entry_ord)
-  structure VarInfoSet = BinarySetFn(VarInfo_ord)
+  structure VarInfoSet = BinarySetMaker(VarInfo_ord)
 
   datatype varRoot = 
            CONST of ConstantTerm.constant

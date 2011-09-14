@@ -1,5 +1,0 @@
-Group
-	signature STACKALLOCATION
-	structure StackAllocation
-is
-	main/module.cm

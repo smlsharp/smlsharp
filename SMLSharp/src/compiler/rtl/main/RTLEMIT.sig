@@ -10,7 +10,6 @@ signature RTLEMIT = sig
   structure Target : sig
     type reg
     type program
-    type nextDummy
   end
 
   type frameLayout
@@ -19,8 +18,9 @@ signature RTLEMIT = sig
   val emit : {regAlloc: Target.reg VarID.Map.map,
               layoutMap: frameLayout ClusterID.Map.map}
              -> RTL.program
-             -> {code: Target.program, nextDummy: Target.nextDummy}
+             -> Target.program
 
   val formatOf : RTL.ty -> RTL.format
+  val formatOfGeneric : {size: int, align: int}
 
 end

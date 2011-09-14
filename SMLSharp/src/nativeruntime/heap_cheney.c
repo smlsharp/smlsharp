@@ -9,20 +9,23 @@
 #include <string.h>
 #include <unistd.h>
 
-#if 0
+/*#define DEBUG_USE_MMAP*/
+
+#if defined(DEBUG) && defined(DEBUG_USE_MMAP)
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
-#if defined(HAVE_CONFIG_H) && defined(HAVE_SYS_MMAN_H)
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_MMAN_H)
 #include <sys/mman.h>
 #endif /* HAVE_SYS_MMAN_H */
-#endif
+#endif /* DEBUG && DEBUG_USE_MMAP */
 
 #include "smlsharp.h"
 #include "object.h"
 #include "objspace.h"
 #include "heap.h"
 
+/*#define GCSTAT*/
 /*#define GCTIME*/
 
 #ifdef GCSTAT
@@ -108,6 +111,52 @@ print_alloc_count()
 #define GCSTAT_TRIGGER(size)
 #endif /* GCSTAT */
 
+/*
+ * Heap Space Layout:
+ *
+ *   INITIAL_OFFSET
+ *    <-->
+ *   +----+--------------------------------+
+ *   |    |                                |
+ *   +----+--------------------------------+
+ *   ^    ^           ^                     ^
+ *   base |          free                   limit
+ *        |
+ *        start address of free.
+ *
+ * Allocation:
+ *
+ * heap_space.free always points to the free space for the next object.
+ * inc must be aligned in MAXALIGN, i.e., rounded by HEAP_ROUND_SIZE.
+ *
+ * h : size of object header
+ * size : total object size intended to be allocated.
+ * inc = HEAP_ROUND_SIZE(size)
+ *
+ *         |<---------------- inc ----------------->|
+ *         |                                        |
+ *         |     |<----------------- inc ---------------->|
+ *         |     |                                  |     |
+ *         |<------------ size ------------>|       |     |
+ *         |     |                          |       |     |
+ *         |<-h->|                          |       |<-h->|
+ *         |     |                          |       |     |
+ *         |  MAXALIGN                      |       |  MAXALIGN
+ *   HEAP        v                                        v
+ *    -----+-----+--------------------------+-------+-----+----------
+ *         |head1|           obj1           |       |     |
+ *    -----+-----+--------------------------+-------+-----+----------
+ *               ^                                        ^
+ *              prev                                     new
+ *              free                                     free
+ */
+struct heap_space {
+	char *free;
+	char *limit;
+	char *base;
+};
+extern struct heap_space sml_heap_from_space;
+
 #define INITIAL_OFFSET  ALIGNSIZE(OBJ_HEADER_SIZE, MAXALIGN)
 
 #define GC_FORWARDED_FLAG     OBJ_GC1_MASK
@@ -118,13 +167,18 @@ print_alloc_count()
 	((heap_space).base <= (char*)(ptr) \
 	 && (char*)(ptr) < (heap_space).limit)
 
+/* For each object, its size must be enough to hold one forwarded pointer. */
+#define HEAP_ALLOC_SIZE_MIN  (OBJ_HEADER_SIZE + sizeof(void*))
+#ifdef FAIR_COMPARISON
+#define HEAP_ROUND_SIZE(sz) \
+	ALIGNSIZE(sz, ALIGNSIZE(HEAP_ALLOC_SIZE_MIN, 8))
+#else
+#define HEAP_ROUND_SIZE(sz) \
+	ALIGNSIZE(sz, ALIGNSIZE(HEAP_ALLOC_SIZE_MIN, MAXALIGN))
+#endif /* FAIR_COMPARISON */
+
 struct heap_space sml_heap_from_space = {0, 0, 0};
 static struct heap_space sml_heap_to_space = {0, 0, 0};
-
-/* thread-local information */
-struct sml_heap_thread {
-	int dummy;
-};
 
 static void
 heap_space_alloc(struct heap_space *heap, size_t size)
@@ -134,29 +188,24 @@ heap_space_alloc(struct heap_space *heap, size_t size)
 	void *page;
 
 	allocsize = ALIGNSIZE(size, pagesize);
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_USE_MMAP)
 	{
-	static void *base = (void*)0x2000000;
-	page = mmap(base, allocsize, PROT_READ | PROT_WRITE,
-		    MAP_ANON | MAP_PRIVATE, -1, 0);
-	base = (char*)base + 0x2000000;
+		static void *base = (void*)0x2000000;
+		page = mmap(base, allocsize, PROT_READ | PROT_WRITE,
+			    MAP_ANON | MAP_PRIVATE, -1, 0);
+		base = (char*)base + 0x2000000;
+		if (page == (void*)-1)
+			sml_sysfatal("mmap");
 	}
-	if (page == (void*)-1)
-		sml_sysfatal("mmap");
-#elif 0
-	page = mmap(NULL, allocsize, PROT_READ | PROT_WRITE,
-		    MAP_ANON | MAP_PRIVATE, -1, 0);
-	if (page == (void*)-1)
-		sml_sysfatal("mmap");
 #else
 	page = xmalloc(allocsize);
-#endif
+#endif /* DEBUG && DEBUG_USE_MMAP */
 
 	heap->base = page;
 	heap->limit = page + allocsize;
 }
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DEBUG_USE_MMAP)
 static void
 heap_space_protect(struct heap_space *heap)
 {
@@ -171,7 +220,7 @@ heap_space_unprotect(struct heap_space *heap)
 #else
 #define heap_space_protect(heap)  ((void)0)
 #define heap_space_unprotect(heap)  ((void)0)
-#endif /* DEBUG */
+#endif /* DEBUG && DEBUG_USE_MMAP */
 
 static void
 heap_space_swap()
@@ -186,11 +235,11 @@ heap_space_swap()
 static void
 heap_space_free(struct heap_space *heap)
 {
-#if 0
+#if defined(DEBUG) && defined(DEBUG_USE_MMAP)
 	munmap(heap->base, heap->limit - heap->base);
 #else
 	free(heap->base);
-#endif
+#endif /* DEBUG && DEBUG_USE_MMAP */
 }
 
 static void
@@ -280,7 +329,7 @@ sml_heap_dump()
 }
 
 void
-sml_heap_init(size_t size)
+sml_heap_init(size_t size, size_t max_size ATTR_UNUSED)
 {
 	size_t space_size;
 
@@ -375,24 +424,26 @@ sml_heap_free()
 #endif /* GCSTAT || GCTIME */
 }
 
-void
+void *
 sml_heap_thread_init()
 {
-	struct sml_heap_thread *th = xmalloc(sizeof(struct sml_heap_thread));
-	th->dummy = 0;
-	SML_THREAD_ENV->heap = th;
+	return NULL;
 }
 
 void
-sml_heap_thread_free()
+sml_heap_thread_free(void *heap ATTR_UNUSED)
 {
-	struct sml_thread_env *env = SML_THREAD_ENV;
-	free(env->heap);
-	env->heap = NULL;
 }
 
+#ifdef MULTITHREAD
 void
-sml_heap_barrier(void **writeaddr, void *objaddr)
+sml_heap_thread_stw_hook(void *data ATTR_UNUSED)
+{
+}
+#endif /* MULTITHREAD */
+
+SML_PRIMITIVE void
+sml_write_barrier(void **writeaddr, void *objaddr)
 {
 	if (IS_IN_HEAP_SPACE(sml_heap_from_space, writeaddr))
 		return;
@@ -402,22 +453,11 @@ sml_heap_barrier(void **writeaddr, void *objaddr)
 
 	/* remember the writeaddr as a root pointer which is outside
 	 * of the heap. */
-	sml_global_barrier(writeaddr, objaddr, MAJOR);
+	sml_global_barrier(writeaddr, objaddr);
 }
-
-static int
-obj_forwarded(void *obj)
-{
-	return IS_IN_HEAP_SPACE(sml_heap_from_space, obj)
-		&& OBJ_FORWARDED(obj);
-}
-
-static void forward(void **slot, void *data);
-static const sml_trace_cls forward_fn = forward;
-#define forward_cls ((sml_trace_cls*)&forward_fn)
 
 static void
-forward(void **slot, void *data ATTR_UNUSED)
+forward(void **slot)
 {
 	void *obj = *slot;
 	size_t obj_size, alloc_size;
@@ -426,11 +466,8 @@ forward(void **slot, void *data ATTR_UNUSED)
 	if (!IS_IN_HEAP_SPACE(sml_heap_from_space, obj)) {
 		DBG(("%p at %p outside", obj, slot));
 		ASSERT(!IS_IN_HEAP_SPACE(sml_heap_to_space, obj));
-		if (obj != NULL) {
-			obj = sml_trace_ptr(obj, MAJOR);
-			if (obj != NULL)
-				sml_obj_enum_ptr(obj, forward_cls);
-		}
+		if (obj != NULL)
+			sml_trace_ptr(obj);
 		return;
 	}
 
@@ -460,7 +497,7 @@ forward(void **slot, void *data ATTR_UNUSED)
 	*slot = newobj;
 }
 
-#define forward_children(obj)  sml_obj_enum_ptr(obj, forward_cls)
+#define forward_children(obj)  sml_obj_enum_ptr(obj, forward)
 
 static void
 forward_region(void *start)
@@ -476,18 +513,15 @@ forward_region(void *start)
 }
 
 static void
-forward_deep(void **slot, void *data ATTR_UNUSED)
+forward_deep(void **slot)
 {
 	void *cur = sml_heap_to_space.free;
-	forward(slot, NULL);
+	forward(slot);
 	forward_region(cur);
 }
 
-static const sml_trace_cls forward_deep_fn = forward_deep;
-#define forward_deep_cls ((sml_trace_cls*)&forward_deep_fn)
-
-void
-sml_heap_gc(void)
+static void
+do_gc(void)
 {
 #ifdef GCTIME
 	sml_timer_t b_start, b_end;
@@ -497,7 +531,7 @@ sml_heap_gc(void)
 	sml_time_t t;
 #endif /* GCSTAT */
 
-	HEAP_LOCK();
+	STOP_THE_WORLD();
 
 #ifdef GCSTAT
 	if (gcstat.verbose >= GCSTAT_VERBOSE_COUNT) {
@@ -522,15 +556,17 @@ sml_heap_gc(void)
 	     (unsigned long)HEAP_TOTAL(sml_heap_from_space),
 	     sml_heap_from_space.base, sml_heap_to_space.base));
 
-	sml_rootset_enum_ptr(forward_cls, MAJOR);
+	sml_rootset_enum_ptr(forward, MAJOR);
 
 	DBG(("copying root completed"));
 
 	/* forward objects which are reachable from live objects. */
 	forward_region(HEAP_START(sml_heap_to_space));
 
+	sml_malloc_pop_and_mark(forward_deep, MAJOR);
+
 	/* check finalization */
-	sml_check_finalizer(MAJOR, obj_forwarded, forward_deep_cls);
+	sml_check_finalizer(forward_deep, MAJOR);
 
 	/* clear from-space, and swap two spaces. */
 	heap_space_clear(&sml_heap_from_space);
@@ -546,7 +582,6 @@ sml_heap_gc(void)
 #ifdef GCTIME
 	sml_timer_now(b_end);
 #endif /* GCTIME */
-	HEAP_UNLOCK();
 
 #ifdef GCTIME
 	sml_timer_dif(b_start, b_end, gctime);
@@ -572,17 +607,25 @@ sml_heap_gc(void)
 	}
 #endif /* GCSTAT */
 
-	/* start finalizers */
-	sml_run_finalizer();
+	RUN_THE_WORLD();
+}
+
+void
+sml_heap_gc(void)
+{
+	GIANT_LOCK(NULL);
+	do_gc();
+	GIANT_UNLOCK();
+	sml_run_finalizer(NULL);
 }
 
 #ifdef GCSTAT
-void
+static void
 sml_heap_alloced(size_t size)
 {
 	sml_timer_t b;
 	sml_time_t t;
-	
+
 	gcstat.last.alloc_bytes += size;
 	if (gcstat.last.alloc_bytes > gcstat.probe_threshold
 	    && gcstat.verbose >= GCSTAT_VERBOSE_PROBE) {
@@ -599,17 +642,21 @@ sml_heap_alloced(size_t size)
 }
 #endif /* GCSTAT */
 
-void *
-sml_heap_slow_alloc(size_t obj_size)
+static NOINLINE void *
+slow_alloc(size_t obj_size)
 {
 	void *obj;
 
 	GCSTAT_TRIGGER(obj_size);
-	sml_heap_gc();
+	do_gc();
 
-	HEAP_FAST_ALLOC(obj, obj_size, NULL);
-
-	if (obj == NULL) {
+	if (HEAP_REST(sml_heap_from_space) >= obj_size) {
+		obj = sml_heap_from_space.free;
+		sml_heap_from_space.free += obj_size;
+#ifdef GC_STAT
+		sml_heap_alloced(obj_size);
+#endif /* GC_STAT */
+	} else {
 #ifdef GCSTAT
 		stat_notice("---");
 		stat_notice("event: error");
@@ -621,5 +668,40 @@ sml_heap_slow_alloc(size_t obj_size)
 		sml_fatal(0, "heap exceeded: intended to allocate %lu bytes.",
 			  (unsigned long)obj_size);
 	}
+
+	GIANT_UNLOCK();
+	obj = sml_run_finalizer(obj);
+	return obj;
+}
+
+SML_PRIMITIVE void *
+sml_alloc(unsigned int objsize, void *frame_pointer)
+{
+	/* objsize = payload_size + bitmap_size */
+	void *obj;
+	size_t inc = HEAP_ROUND_SIZE(OBJ_HEADER_SIZE + objsize);
+
+#ifdef FAIR_COMPARISON
+	if (inc > 4096) {
+		sml_save_frame_pointer(frame_pointer);
+		return sml_obj_malloc(inc);
+	}
+#endif /* FAIR_COMPARISON */
+
+	GIANT_LOCK(frame_pointer);
+
+	obj = sml_heap_from_space.free;
+	if ((size_t)(sml_heap_from_space.limit - (char*)obj) >= inc) {
+		sml_heap_from_space.free += inc;
+#ifdef GC_STAT
+		sml_heap_alloced(inc);
+#endif /* GC_STAT */
+		GIANT_UNLOCK();
+	} else {
+		sml_save_frame_pointer(frame_pointer);
+		obj = slow_alloc(inc);
+	}
+
+	OBJ_HEADER(obj) = 0;
 	return obj;
 }

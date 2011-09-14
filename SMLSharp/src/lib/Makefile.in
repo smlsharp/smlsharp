@@ -14,7 +14,7 @@ SUBDIRS = basis \
 
 VPATH = @srcdir@
 
-TARGETS = prelude.smc @NATIVE_PRELUDE@
+TARGETS = prelude.smk @NATIVE_PRELUDE@
 
 GENSOURCES =
 
@@ -47,11 +47,12 @@ mlton: config
 
 install: $(TARGETS)
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
-	$(INSTALL_DATA) prelude.smc '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_DATA) prelude.sme '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_DATA) prelude.smk '$(DESTDIR)$(libdir_smlsharp)'
 	[ -z "@NATIVE_PRELUDE@" ] || \
 	$(INSTALL_DATA) ntprelude.$(OBJEXT) '$(DESTDIR)$(libdir_smlsharp)'
 	[ -z "@NATIVE_PRELUDE@" ] || \
-	$(INSTALL_DATA) ntprelude.smc '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_DATA) ntprelude.smk '$(DESTDIR)$(libdir_smlsharp)'
 	@set -x; \
 	cd $(srcdir); \
 	find $(INSTALL_FILES) -type d -print \
@@ -71,11 +72,8 @@ install: $(TARGETS)
 
 # ToDO : 
 # prelude depends on many files in Basis and other libraries.
-prelude.smc: rtprelude.sml prelude.sml $(GENSOURCES) $(SMLSHARP)
-	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/rtprelude.sml --make-compiled-prelude --output=$@ --stdin
+prelude.smk: rtprelude.sml prelude.sml $(GENSOURCES) $(SMLSHARP)
+	$(SMLSHARP) --make-prelude -noprelude -target='' rtprelude.sml -o prelude.sme
 
-ntprelude.smc: yaprelude.sml prelude.sml $(GENSOURCES) $(SMLSHARP)
-	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=$(NATIVE_TARGET) --make-compiled-prelude --output=ntprelude.$(OBJEXT) --stdin --xswitchTrace=yes --xtracePrelude=yes --xtraceFileLoad=yes
-
-yaprelude.smo: yaprelude.sml prelude.sml $(GENSOURCES) $(SMLSHARP)
-	echo ';' | $(SMLSHARP) --prelude=$(srcdir)/yaprelude.sml --xtarget=newvm --make-compiled-prelude --output=$@ --stdin
+ntprelude.smk: yaprelude.sml prelude.sml $(GENSOURCES) $(SMLSHARP)
+	$(SMLSHARP) --make-prelude -noprelude -dtraceFileLoad=yes yaprelude.sml -o ntprelude.o

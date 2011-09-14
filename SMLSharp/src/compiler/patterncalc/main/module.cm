@@ -9,7 +9,8 @@ Group is
 	../../util/sources.cm
 	../../absyn/sources.cm
 
-	PATTERNCALC.sig
-	PatternCalc.ppg.sml
-	PATTERNCALC_FORMATTER.sig
-	PatternCalcFormatter.sml 
+        ../../env/sources.cm
+        ../../name/sources.cm
+
+        PatternCalc.ppg.sml
+	PatternCalcInterface.ppg.sml

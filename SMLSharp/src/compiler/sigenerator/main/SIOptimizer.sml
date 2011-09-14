@@ -7,6 +7,7 @@ structure SIOptimizer : SIOPTIMIZER = struct
 
   structure CTX = SIGContext
   structure BT = BasicTypes
+  structure P = BuiltinPrimitive
   open SymbolicInstructions
 
   structure Entry_ord:ORD_KEY = struct 
@@ -17,7 +18,7 @@ structure SIOptimizer : SIOPTIMIZER = struct
   end
   
   structure EntryMap = BinaryMapMaker(Entry_ord)
-  structure EntrySet = BinarySetFn(Entry_ord)
+  structure EntrySet = BinarySetMaker(Entry_ord)
 
   datatype SizeListKind =
            EmptySizeList
@@ -93,85 +94,85 @@ structure SIOptimizer : SIOPTIMIZER = struct
             | _ => instruction
 
       in
-        case (#bindName primitive, argEntries) of
-          ("addInt", [arg1,arg2]) => optimize intOf (AddInt_Const_1, AddInt_Const_2) (arg1, arg2)
-        | ("addLargeInt", [arg1,arg2]) => optimize largeIntOf (AddLargeInt_Const_1, AddLargeInt_Const_2) (arg1, arg2)
-        | ("addReal", [arg1,arg2]) => optimize realOf (AddReal_Const_1, AddReal_Const_2) (arg1, arg2)
-        | ("addFloat", [arg1,arg2]) => optimize floatOf (AddFloat_Const_1, AddFloat_Const_2) (arg1, arg2)
-        | ("addWord", [arg1,arg2]) => optimize wordOf (AddWord_Const_1, AddWord_Const_2) (arg1, arg2)
-        | ("addByte", [arg1,arg2]) => optimize wordOf (AddByte_Const_1, AddByte_Const_2) (arg1, arg2)
+        case (primitive, argEntries) of
+          (PRIM (P.Int_add _), [arg1,arg2]) => optimize intOf (AddInt_Const_1, AddInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_add, [arg1,arg2]) => optimize largeIntOf (AddLargeInt_Const_1, AddLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Real_add, [arg1,arg2]) => optimize realOf (AddReal_Const_1, AddReal_Const_2) (arg1, arg2)
+        | (PRIM P.Float_add, [arg1,arg2]) => optimize floatOf (AddFloat_Const_1, AddFloat_Const_2) (arg1, arg2)
+        | (PRIM P.Word_add, [arg1,arg2]) => optimize wordOf (AddWord_Const_1, AddWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_add, [arg1,arg2]) => optimize wordOf (AddByte_Const_1, AddByte_Const_2) (arg1, arg2)
 
-        | ("subInt", [arg1,arg2]) => optimize intOf (SubInt_Const_1, SubInt_Const_2) (arg1, arg2)
-        | ("subLargeInt", [arg1,arg2]) => optimize largeIntOf (SubLargeInt_Const_1, SubLargeInt_Const_2) (arg1, arg2)
-        | ("subReal", [arg1,arg2]) => optimize realOf (SubReal_Const_1, SubReal_Const_2) (arg1, arg2)
-        | ("subFloat", [arg1,arg2]) => optimize floatOf (SubFloat_Const_1, SubFloat_Const_2) (arg1, arg2)
-        | ("subWord", [arg1,arg2]) => optimize wordOf (SubWord_Const_1, SubWord_Const_2) (arg1, arg2)
-        | ("subByte", [arg1,arg2]) => optimize wordOf (SubByte_Const_1, SubByte_Const_2) (arg1, arg2)
+        | (PRIM (P.Int_sub _), [arg1,arg2]) => optimize intOf (SubInt_Const_1, SubInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_sub, [arg1,arg2]) => optimize largeIntOf (SubLargeInt_Const_1, SubLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Real_sub, [arg1,arg2]) => optimize realOf (SubReal_Const_1, SubReal_Const_2) (arg1, arg2)
+        | (PRIM P.Float_sub, [arg1,arg2]) => optimize floatOf (SubFloat_Const_1, SubFloat_Const_2) (arg1, arg2)
+        | (PRIM P.Word_sub, [arg1,arg2]) => optimize wordOf (SubWord_Const_1, SubWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_sub, [arg1,arg2]) => optimize wordOf (SubByte_Const_1, SubByte_Const_2) (arg1, arg2)
 
-        | ("mulInt", [arg1,arg2]) => optimize intOf (MulInt_Const_1, MulInt_Const_2) (arg1, arg2)
-        | ("mulLargeInt", [arg1,arg2]) => optimize largeIntOf (MulLargeInt_Const_1, MulLargeInt_Const_2) (arg1, arg2)
-        | ("mulReal", [arg1,arg2]) => optimize realOf (MulReal_Const_1, MulReal_Const_2) (arg1, arg2)
-        | ("mulFloat", [arg1,arg2]) => optimize floatOf (MulFloat_Const_1, MulFloat_Const_2) (arg1, arg2)
-        | ("mulWord", [arg1,arg2]) => optimize wordOf (MulWord_Const_1, MulWord_Const_2) (arg1, arg2)
-        | ("mulByte", [arg1,arg2]) => optimize wordOf (MulByte_Const_1, MulByte_Const_2) (arg1, arg2)
+        | (PRIM (P.Int_mul _), [arg1,arg2]) => optimize intOf (MulInt_Const_1, MulInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_mul, [arg1,arg2]) => optimize largeIntOf (MulLargeInt_Const_1, MulLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Real_mul, [arg1,arg2]) => optimize realOf (MulReal_Const_1, MulReal_Const_2) (arg1, arg2)
+        | (PRIM P.Float_mul, [arg1,arg2]) => optimize floatOf (MulFloat_Const_1, MulFloat_Const_2) (arg1, arg2)
+        | (PRIM P.Word_mul, [arg1,arg2]) => optimize wordOf (MulWord_Const_1, MulWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_mul, [arg1,arg2]) => optimize wordOf (MulByte_Const_1, MulByte_Const_2) (arg1, arg2)
 
-        | ("divInt", [arg1,arg2]) => optimize intOf (DivInt_Const_1, DivInt_Const_2) (arg1, arg2)
-        | ("divLargeInt", [arg1,arg2]) => optimize largeIntOf (DivLargeInt_Const_1, DivLargeInt_Const_2) (arg1, arg2)
-        | ("/", [arg1,arg2]) => optimize realOf (DivReal_Const_1, DivReal_Const_2) (arg1, arg2)
-        | ("divFloat", [arg1,arg2]) => optimize floatOf (DivFloat_Const_1, DivFloat_Const_2) (arg1, arg2)
-        | ("divWord", [arg1,arg2]) => optimize wordOf (DivWord_Const_1, DivWord_Const_2) (arg1, arg2)
-        | ("divByte", [arg1,arg2]) => optimize wordOf (DivByte_Const_1, DivByte_Const_2) (arg1, arg2)
+        | (PRIM (P.Int_div _), [arg1,arg2]) => optimize intOf (DivInt_Const_1, DivInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_div, [arg1,arg2]) => optimize largeIntOf (DivLargeInt_Const_1, DivLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Real_div, [arg1,arg2]) => optimize realOf (DivReal_Const_1, DivReal_Const_2) (arg1, arg2)
+        | (PRIM P.Float_div, [arg1,arg2]) => optimize floatOf (DivFloat_Const_1, DivFloat_Const_2) (arg1, arg2)
+        | (PRIM P.Word_div, [arg1,arg2]) => optimize wordOf (DivWord_Const_1, DivWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_div, [arg1,arg2]) => optimize wordOf (DivByte_Const_1, DivByte_Const_2) (arg1, arg2)
 
-        | ("modInt", [arg1,arg2]) => optimize intOf (ModInt_Const_1, ModInt_Const_2) (arg1, arg2)
-        | ("modLargeInt", [arg1,arg2]) => optimize largeIntOf (ModLargeInt_Const_1, ModLargeInt_Const_2) (arg1, arg2)
-        | ("modWord", [arg1,arg2]) => optimize wordOf (ModWord_Const_1, ModWord_Const_2) (arg1, arg2)
-        | ("modByte", [arg1,arg2]) => optimize wordOf (ModByte_Const_1, ModByte_Const_2) (arg1, arg2)
+        | (PRIM (P.Int_mod _), [arg1,arg2]) => optimize intOf (ModInt_Const_1, ModInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_mod, [arg1,arg2]) => optimize largeIntOf (ModLargeInt_Const_1, ModLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Word_mod, [arg1,arg2]) => optimize wordOf (ModWord_Const_1, ModWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_mod, [arg1,arg2]) => optimize wordOf (ModByte_Const_1, ModByte_Const_2) (arg1, arg2)
 
-        | ("quotInt", [arg1,arg2]) => optimize intOf (QuotInt_Const_1, QuotInt_Const_2) (arg1, arg2)
-        | ("quotLargeInt", [arg1,arg2]) => optimize largeIntOf (QuotLargeInt_Const_1, QuotLargeInt_Const_2) (arg1, arg2)
-        | ("remInt", [arg1,arg2]) => optimize intOf (RemInt_Const_1, RemInt_Const_2) (arg1, arg2)
-        | ("remLargeInt", [arg1,arg2]) => optimize largeIntOf (RemLargeInt_Const_1, RemLargeInt_Const_2) (arg1, arg2)
+        | (PRIM (P.Int_quot _), [arg1,arg2]) => optimize intOf (QuotInt_Const_1, QuotInt_Const_2) (arg1, arg2)
+        | (NAME "quotLargeInt", [arg1,arg2]) => optimize largeIntOf (QuotLargeInt_Const_1, QuotLargeInt_Const_2) (arg1, arg2)
+        | (PRIM (P.Int_rem _), [arg1,arg2]) => optimize intOf (RemInt_Const_1, RemInt_Const_2) (arg1, arg2)
+        | (NAME "remLargeInt", [arg1,arg2]) => optimize largeIntOf (RemLargeInt_Const_1, RemLargeInt_Const_2) (arg1, arg2)
 
-        | ("ltInt", [arg1,arg2]) => optimize intOf (LtInt_Const_1, LtInt_Const_2) (arg1, arg2)
-        | ("ltLargeInt", [arg1,arg2]) => optimize largeIntOf (LtLargeInt_Const_1, LtLargeInt_Const_2) (arg1, arg2)
-        | ("ltReal", [arg1,arg2]) => optimize realOf (LtReal_Const_1, LtReal_Const_2) (arg1, arg2)
-        | ("ltFloat", [arg1,arg2]) => optimize floatOf (LtFloat_Const_1, LtFloat_Const_2) (arg1, arg2)
-        | ("ltWord", [arg1,arg2]) => optimize wordOf (LtWord_Const_1, LtWord_Const_2) (arg1, arg2)
-        | ("ltByte", [arg1,arg2]) => optimize wordOf (LtByte_Const_1, LtByte_Const_2) (arg1, arg2)
-        | ("ltChar", [arg1,arg2]) => optimize charOf (LtChar_Const_1, LtChar_Const_2) (arg1, arg2)
+        | (PRIM P.Int_lt, [arg1,arg2]) => optimize intOf (LtInt_Const_1, LtInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_lt, [arg1,arg2]) => optimize largeIntOf (LtLargeInt_Const_1, LtLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Real_lt, [arg1,arg2]) => optimize realOf (LtReal_Const_1, LtReal_Const_2) (arg1, arg2)
+        | (PRIM P.Float_lt, [arg1,arg2]) => optimize floatOf (LtFloat_Const_1, LtFloat_Const_2) (arg1, arg2)
+        | (PRIM P.Word_lt, [arg1,arg2]) => optimize wordOf (LtWord_Const_1, LtWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_lt, [arg1,arg2]) => optimize wordOf (LtByte_Const_1, LtByte_Const_2) (arg1, arg2)
+        | (PRIM P.Char_lt, [arg1,arg2]) => optimize charOf (LtChar_Const_1, LtChar_Const_2) (arg1, arg2)
 
-        | ("gtInt", [arg1,arg2]) => optimize intOf (GtInt_Const_1, GtInt_Const_2) (arg1, arg2)
-        | ("gtLargeInt", [arg1,arg2]) => optimize largeIntOf (GtLargeInt_Const_1, GtLargeInt_Const_2) (arg1, arg2)
-        | ("gtReal", [arg1,arg2]) => optimize realOf (GtReal_Const_1, GtReal_Const_2) (arg1, arg2)
-        | ("gtFloat", [arg1,arg2]) => optimize floatOf (GtFloat_Const_1, GtFloat_Const_2) (arg1, arg2)
-        | ("gtWord", [arg1,arg2]) => optimize wordOf (GtWord_Const_1, GtWord_Const_2) (arg1, arg2)
-        | ("gtByte", [arg1,arg2]) => optimize wordOf (GtByte_Const_1, GtByte_Const_2) (arg1, arg2)
-        | ("gtChar", [arg1,arg2]) => optimize charOf (GtChar_Const_1, GtChar_Const_2) (arg1, arg2)
+        | (PRIM P.Int_gt, [arg1,arg2]) => optimize intOf (GtInt_Const_1, GtInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_gt, [arg1,arg2]) => optimize largeIntOf (GtLargeInt_Const_1, GtLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Real_gt, [arg1,arg2]) => optimize realOf (GtReal_Const_1, GtReal_Const_2) (arg1, arg2)
+        | (PRIM P.Float_gt, [arg1,arg2]) => optimize floatOf (GtFloat_Const_1, GtFloat_Const_2) (arg1, arg2)
+        | (PRIM P.Word_gt, [arg1,arg2]) => optimize wordOf (GtWord_Const_1, GtWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_gt, [arg1,arg2]) => optimize wordOf (GtByte_Const_1, GtByte_Const_2) (arg1, arg2)
+        | (PRIM P.Char_gt, [arg1,arg2]) => optimize charOf (GtChar_Const_1, GtChar_Const_2) (arg1, arg2)
 
-        | ("lteqInt", [arg1,arg2]) => optimize intOf (LteqInt_Const_1, LteqInt_Const_2) (arg1, arg2)
-        | ("lteqLargeInt", [arg1,arg2]) => optimize largeIntOf (LteqLargeInt_Const_1, LteqLargeInt_Const_2) (arg1, arg2)
-        | ("lteqReal", [arg1,arg2]) => optimize realOf (LteqReal_Const_1, LteqReal_Const_2) (arg1, arg2)
-        | ("lteqFloat", [arg1,arg2]) => optimize floatOf (LteqFloat_Const_1, LteqFloat_Const_2) (arg1, arg2)
-        | ("lteqWord", [arg1,arg2]) => optimize wordOf (LteqWord_Const_1, LteqWord_Const_2) (arg1, arg2)
-        | ("lteqByte", [arg1,arg2]) => optimize wordOf (LteqByte_Const_1, LteqByte_Const_2) (arg1, arg2)
-        | ("lteqChar", [arg1,arg2]) => optimize charOf (LteqChar_Const_1, LteqChar_Const_2) (arg1, arg2)
+        | (PRIM P.Int_lteq, [arg1,arg2]) => optimize intOf (LteqInt_Const_1, LteqInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_lteq, [arg1,arg2]) => optimize largeIntOf (LteqLargeInt_Const_1, LteqLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Real_lteq, [arg1,arg2]) => optimize realOf (LteqReal_Const_1, LteqReal_Const_2) (arg1, arg2)
+        | (PRIM P.Float_lteq, [arg1,arg2]) => optimize floatOf (LteqFloat_Const_1, LteqFloat_Const_2) (arg1, arg2)
+        | (PRIM P.Word_lteq, [arg1,arg2]) => optimize wordOf (LteqWord_Const_1, LteqWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_lteq, [arg1,arg2]) => optimize wordOf (LteqByte_Const_1, LteqByte_Const_2) (arg1, arg2)
+        | (PRIM P.Char_lteq, [arg1,arg2]) => optimize charOf (LteqChar_Const_1, LteqChar_Const_2) (arg1, arg2)
 
-        | ("gteqInt", [arg1,arg2]) => optimize intOf (GteqInt_Const_1, GteqInt_Const_2) (arg1, arg2)
-        | ("gteqLargeInt", [arg1,arg2]) => optimize largeIntOf (GteqLargeInt_Const_1, GteqLargeInt_Const_2) (arg1, arg2)
-        | ("gteqReal", [arg1,arg2]) => optimize realOf (GteqReal_Const_1, GteqReal_Const_2) (arg1, arg2)
-        | ("gteqFloat", [arg1,arg2]) => optimize floatOf (GteqFloat_Const_1, GteqFloat_Const_2) (arg1, arg2)
-        | ("gteqWord", [arg1,arg2]) => optimize wordOf (GteqWord_Const_1, GteqWord_Const_2) (arg1, arg2)
-        | ("gteqByte", [arg1,arg2]) => optimize wordOf (GteqByte_Const_1, GteqByte_Const_2) (arg1, arg2)
-        | ("gteqChar", [arg1,arg2]) => optimize charOf (GteqChar_Const_1, GteqChar_Const_2) (arg1, arg2)
+        | (PRIM P.Int_gteq, [arg1,arg2]) => optimize intOf (GteqInt_Const_1, GteqInt_Const_2) (arg1, arg2)
+        | (PRIM P.IntInf_gteq, [arg1,arg2]) => optimize largeIntOf (GteqLargeInt_Const_1, GteqLargeInt_Const_2) (arg1, arg2)
+        | (PRIM P.Real_gteq, [arg1,arg2]) => optimize realOf (GteqReal_Const_1, GteqReal_Const_2) (arg1, arg2)
+        | (PRIM P.Float_gteq, [arg1,arg2]) => optimize floatOf (GteqFloat_Const_1, GteqFloat_Const_2) (arg1, arg2)
+        | (PRIM P.Word_gteq, [arg1,arg2]) => optimize wordOf (GteqWord_Const_1, GteqWord_Const_2) (arg1, arg2)
+        | (PRIM P.Byte_gteq, [arg1,arg2]) => optimize wordOf (GteqByte_Const_1, GteqByte_Const_2) (arg1, arg2)
+        | (PRIM P.Char_gteq, [arg1,arg2]) => optimize charOf (GteqChar_Const_1, GteqChar_Const_2) (arg1, arg2)
 
-        | ("Word_andb", [arg1,arg2]) => optimize wordOf (Word_andb_Const_1, Word_andb_Const_2) (arg1, arg2)
-        | ("Word_orb", [arg1,arg2]) => optimize wordOf (Word_orb_Const_1, Word_orb_Const_2) (arg1, arg2)
-        | ("Word_xorb", [arg1,arg2]) => optimize wordOf (Word_xorb_Const_1, Word_xorb_Const_2) (arg1, arg2)
-        | ("Word_leftShift", [arg1,arg2]) => 
+        | (PRIM P.Word_andb, [arg1,arg2]) => optimize wordOf (Word_andb_Const_1, Word_andb_Const_2) (arg1, arg2)
+        | (PRIM P.Word_orb, [arg1,arg2]) => optimize wordOf (Word_orb_Const_1, Word_orb_Const_2) (arg1, arg2)
+        | (PRIM P.Word_xorb, [arg1,arg2]) => optimize wordOf (Word_xorb_Const_1, Word_xorb_Const_2) (arg1, arg2)
+        | (PRIM P.Word_lshift, [arg1,arg2]) => 
           optimize wordOf (Word_leftShift_Const_1, Word_leftShift_Const_2) (arg1, arg2)
-        | ("Word_logicalRightShift", [arg1,arg2]) => 
+        | (PRIM P.Word_rshift, [arg1,arg2]) => 
           optimize wordOf (Word_logicalRightShift_Const_1, Word_logicalRightShift_Const_2) (arg1, arg2)
-        | ("Word_arithmeticRightShift", [arg1,arg2]) => 
+        | (PRIM P.Word_arshift, [arg1,arg2]) => 
           optimize wordOf (Word_arithmeticRightShift_Const_1, Word_arithmeticRightShift_Const_2) (arg1, arg2)
 
         | _ => instruction

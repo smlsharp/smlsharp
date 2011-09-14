@@ -1,0 +1,10 @@
+_require "basis.smi"
+structure Term =
+struct
+  datatype term
+    = CON of string
+    | INT of int
+    | REF of term option ref
+    | STR of string * term list
+  exception BadArg of string
+end

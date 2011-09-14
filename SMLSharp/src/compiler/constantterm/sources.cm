@@ -1,5 +1,4 @@
 Group
 	structure ConstantTerm
-	structure ConstantTermPickler
 is
 	main/module.cm

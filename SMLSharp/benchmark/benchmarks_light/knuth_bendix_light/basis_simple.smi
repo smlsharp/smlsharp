@@ -1,0 +1,11 @@
+infix  7 * / div mod
+infix  6 + - ^
+infixr 5 :: @
+infix  4 = <> > >= < <=
+infix  3 := o
+infix  0 before
+
+val + = _builtin val Int_add_noov : int * int -> int
+val - = _builtin val Int_sub_noov : int * int -> int
+val > = _builtin val Int_gt : int * int -> bool
+val < = _builtin val Int_lt : int * int -> bool

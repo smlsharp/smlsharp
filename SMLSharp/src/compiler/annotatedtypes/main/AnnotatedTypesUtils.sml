@@ -11,11 +11,13 @@ structure AnnotatedTypesUtils : ANNOTATEDTYPESUTILS = struct
   structure AT = AnnotatedTypes
   structure CT = ConstantTerm
 
+(*
   (* Types utilities*)
 
   fun flatTyList (AT.MVALty tyList) = tyList
     | flatTyList ty = [ty]
 
+*)
   fun constDefaultTy const = 
       case const of
         CT.INT _ => AT.intty
@@ -27,9 +29,11 @@ structure AnnotatedTypesUtils : ANNOTATEDTYPESUTILS = struct
       | CT.STRING _ => AT.stringty
       | CT.CHAR _ => AT.charty
       | CT.UNIT => AT.unitty
-      | CT.NULL => AT.RAWty {tyCon = PredefinedTypes.ptrTyCon,
-                             args = [AT.unitty]}
+      | CT.NULLPOINTER => AT.CONty {tyCon = BuiltinEnv.PTRtyCon,
+                                    args = [AT.unitty]}
+      | CT.NULLBOXED => AT.CONty {tyCon = BuiltinEnv.BOXEDtyCon, args = []}
 
+(*
   fun fieldTypes (AT.RECORDty{fieldTypes,...}) = fieldTypes
     | fieldTypes _ = raise Control.Bug "record type is expected"
 
@@ -46,28 +50,22 @@ structure AnnotatedTypesUtils : ANNOTATEDTYPESUTILS = struct
 
   fun argTyList (AT.FUNMty {argTyList,...}) = argTyList
     | argTyList _ = raise Control.Bug "function type is expected"
-
+*)
   fun expandFunTy (AT.FUNMty arg) = arg
     | expandFunTy ty =
       raise Control.Bug "function type is expected"
 before print (Control.prettyPrint (AT.format_ty ty))
-
+(*
   fun expandRecordTy (AT.RECORDty arg) = arg
     | expandRecordTy _ = raise Control.Bug "record type is expected"
  
+*)
   fun substitute subst ty =
       case ty of
-        AT.INSTCODEty {oprimId,oprimPolyTy,name,keyTyList,instTyList} =>
-        AT.INSTCODEty
-          {
-           oprimId = oprimId,
-           oprimPolyTy = oprimPolyTy,
-           name = name,
-           keyTyList =  map (substitute subst) keyTyList,
-           instTyList = map (substitute subst) instTyList
-          }
+        AT.SINGLETONty sty =>
+        AT.SINGLETONty (substituteSingletonTy subst sty)
       | AT.BOUNDVARty tid =>
-        (case IEnv.find(subst,tid) of
+        (case BoundTypeVarID.Map.find(subst,tid) of
            SOME ty => ty
          | NONE => ty
         )
@@ -86,23 +84,38 @@ before print (Control.prettyPrint (AT.format_ty ty))
              fieldTypes = SEnv.map (substitute subst) fieldTypes,
              annotation = annotation
             }
-      | AT.RAWty {tyCon, args} =>
-        AT.RAWty {tyCon = tyCon, args = map (substitute subst) args}
+      | AT.CONty {tyCon, args} =>
+        AT.CONty {tyCon = tyCon, args = map (substitute subst) args}
       | AT.POLYty {boundtvars, body} =>
         AT.POLYty
             {
              boundtvars = boundtvars,  (* keep original kinds*)
              body = substitute subst body
             }
-(* 
-      | AT.SPECty ty => AT.SPECty (substitute subst ty)
-*)
-      | AT.SPECty {tyCon, args} =>
-        AT.SPECty {tyCon = tyCon, args = map (substitute subst) args}
       | _ => ty
 
+  and substituteSingletonTy subst singletonTy =
+      case singletonTy of
+        AT.INSTCODEty {oprimId,path,keyTyList} =>
+        AT.INSTCODEty
+          {
+           oprimId = oprimId,
+           path = path,
+           keyTyList =  map (substitute subst) keyTyList
+          }
+      | AT.INDEXty (label, ty) =>
+        AT.INDEXty (label, substitute subst ty)
+      | AT.TAGty ty =>
+        AT.TAGty (substitute subst ty)
+      | AT.SIZEty ty =>
+        AT.SIZEty (substitute subst ty)
+      | AT.RECORDSIZEty ty =>
+        AT.RECORDSIZEty (substitute subst ty)
+      | AT.RECORDBITMAPty (index, ty) =>
+        AT.RECORDBITMAPty (index, substitute subst ty)
+
   and substituteBtvEnv subst btvEnv =
-      IEnv.map (substituteBtvKind subst) btvEnv
+      BoundTypeVarID.Map.map (substituteBtvKind subst) btvEnv
 
   and substituteBtvKind subst {id, recordKind, eqKind, instancesRef = ref instances} =
       {
@@ -116,28 +129,16 @@ before print (Control.prettyPrint (AT.format_ty ty))
       case recordKind of 
         AT.UNIV => AT.UNIV
       | AT.REC flty => AT.REC (SEnv.map (substitute subst) flty)
-      | AT.OPRIMkind {instances, operators}
+      | AT.OPRIMkind instances
         => 
-        AT.OPRIMkind
-          {instances = map (substitute subst) instances,
-           operators =
-           map
-             (fn {oprimId, oprimPolyTy, name = name, keyTyList, instTyList} =>
-                 {oprimId = oprimId,
-                  oprimPolyTy = oprimPolyTy,
-                  name = name,
-                  keyTyList =  map (substitute subst) keyTyList,
-                  instTyList = map (substitute subst) instTyList}
-             )
-             operators
-          }
+        AT.OPRIMkind (map (substitute subst) instances)
+
   fun makeSubst (btvEnv, tyList) =
       ListPair.foldr
-          (fn ((i, _), ty, S) => IEnv.insert(S, i, ty))
-          IEnv.empty
-          (IEnv.listItemsi btvEnv, tyList)
+          (fn ((i, _), ty, S) => BoundTypeVarID.Map.insert(S, i, ty))
+          BoundTypeVarID.Map.empty
+          (BoundTypeVarID.Map.listItemsi btvEnv, tyList)
       
-
   fun tpappTy (ty, nil) = ty
     | tpappTy (AT.POLYty{boundtvars, body, ...}, tyl) = 
       substitute (makeSubst (boundtvars, tyl)) body
@@ -167,6 +168,7 @@ before print (Control.prettyPrint (AT.format_ty ty))
         SOME i => convertNumericalLabel i
       | _ => label 
 
+(*
 (*
   fun newVar ty = 
       let
@@ -203,62 +205,71 @@ before print (Control.prettyPrint (AT.format_ty ty))
       | EQUAL => Word32.compare(y1,y2)
       | LESS => LESS
 
-  local
-    val labelSeed = ref 0
-    val functionIdSeed = ref 0
-  in
-    fun initialize () = labelSeed := 0
-    fun initializeFunID () = 
-      (
-       functionIdSeed := 0
-       )
-    fun newFunctionId () = !functionIdSeed before (functionIdSeed := !functionIdSeed + 1)
+  fun newFunctionId () = FunctionAnnotationID.generate ()
 
-    fun freshAnnotationLabel () = !labelSeed before (labelSeed := !labelSeed + 1)
-    (* by default, all records are unboxed and not aligned,
-     * these properties will be constrainted by unification
-     *)
-    fun freshRecordAnnotation () = {labels = AT.LE_UNKNOWN, boxed = false, align = false}
-    fun freshFunctionAnnotation () = ref {labels = AT.LE_UNKNOWN, boxed = false}
-    fun newLocalFunStatus ({functionId, owners, codeStatus}:AT.funStatus) = 
-      {
-       functionId = newFunctionId (),
-       owners = 
-         case codeStatus of
-           ref AT.CLOSURE => [{ownerId = functionId , ownerCode = codeStatus}]
-         | ref AT.GLOBAL_FUNSTATUS => nil
-         | ref AT.LOCAL => {ownerId = functionId, ownerCode = codeStatus} :: owners,
-      codeStatus = 
-         case codeStatus of
-           ref AT.CLOSURE => ref AT.LOCAL
-         | ref AT.LOCAL => ref AT.LOCAL
-         | ref AT.GLOBAL_FUNSTATUS => ref AT.CLOSURE
-       }
+  fun freshAnnotationLabel () = AnnotationLabelID.generate ()
+  (* by default, all records are unboxed and not aligned,
+   * these properties will be constrainted by unification
+   *)
+  fun freshRecordAnnotation () = {labels = AT.LE_UNKNOWN, boxed = false, align = false}
+*)
+  fun freshFunctionAnnotation () = ref {labels = AT.LE_UNKNOWN, boxed = false}
+(*
+  fun newLocalFunStatus ({functionId, owners, codeStatus}:AT.funStatus) = 
+    {
+     functionId = newFunctionId (),
+     owners = 
+       case codeStatus of
+         ref AT.CLOSURE => [{ownerId = functionId , ownerCode = codeStatus}]
+       | ref AT.GLOBAL_FUNSTATUS => nil
+       | ref AT.LOCAL => {ownerId = functionId, ownerCode = codeStatus} :: owners,
+    codeStatus = 
+       case codeStatus of
+         ref AT.CLOSURE => ref AT.LOCAL
+       | ref AT.LOCAL => ref AT.LOCAL
+       | ref AT.GLOBAL_FUNSTATUS => ref AT.CLOSURE
+     }
 
-    fun globalFunStatus () = 
-      {
-       functionId = newFunctionId (),
-       owners = nil,
-       codeStatus = ref AT.GLOBAL_FUNSTATUS
-       } : AT.funStatus
-
-    fun newClosureFunStatus () = 
-      {
-       functionId = newFunctionId (),
-       owners = nil,
-       codeStatus = ref AT.CLOSURE
-       } : AT.funStatus
-
-  end
-
+  fun globalFunStatus () = 
+    {
+     functionId = newFunctionId (),
+     owners = nil,
+     codeStatus = ref AT.GLOBAL_FUNSTATUS
+     } : AT.funStatus
+*)
+  fun newClosureFunStatus () = 
+    {
+     functionId = FunctionAnnotationID.generate (),
+     owners = nil,
+     codeStatus = ref AT.CLOSURE
+     } : AT.funStatus
+(*
   fun coerceClosure ty =
     case ty of 
       AT.FUNMty {funStatus = {codeStatus, ...}, ...} =>
         codeStatus := AT.CLOSURE
     | AT.POLYty {body,...} => coerceClosure body
     | _ => ()
-
-
+*)
+  fun makeClosureFunTy (argTyList, bodyTy) =
+      AT.FUNMty {argTyList = argTyList,
+                 bodyTy = bodyTy,
+                 funStatus = newClosureFunStatus (),
+                 annotation = ref {labels = AT.LE_GENERIC, boxed = true}}
+(*
+  fun makeLocalFunTy (argTyList, bodyTy) =
+      AT.FUNMty {argTyList = argTyList,
+                 bodyTy = bodyTy,
+                 funStatus = {functionId = newFunctionId (),
+                              owners = nil,
+                              codeStatus = ref AT.LOCAL},
+                 annotation = ref {labels = AT.LE_GENERIC, boxed = true}}
+*)
+  fun isLocalFunTy ty =
+    case ty of
+      AT.FUNMty {funStatus = {codeStatus = ref AT.LOCAL,...},...} => true
+    | _ => false
+(*
 (*
   fun generateExtraList {tagTyCon, sizeTyCon, indexTyCon} (btvEnv : AT.btvEnv) =
       let
@@ -282,6 +293,7 @@ before print (Control.prettyPrint (AT.format_ty ty))
       in
         IEnv.foldr (fn (btvKind, L) => (generate btvKind) @ L) [] btvEnv
       end
+*)
 *)
 
 end

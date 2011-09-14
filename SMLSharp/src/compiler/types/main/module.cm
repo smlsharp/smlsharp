@@ -4,26 +4,23 @@ Group is
 	$/basis.cm
 #endif
 
+        ../../../../../SMLFormat/smlformatlib.cm
 	../../../../../smlnj-lib/Util/smlnj-lib.cm
-	../../../../../SMLFormat/smlformatlib.cm
-	../../control/sources.cm
-	../../env/sources.cm
-	../../name/sources.cm
-	../../pickle/sources.cm
-	../../absyn/sources.cm
-	../../util/sources.cm
-	../../primitive/primitive.cm
 
-	TYPES.sig
+        ../../absyn/sources.cm
+        ../../control/sources.cm
+        ../../name/sources.cm
+        ../../env/sources.cm
+        ../../builtin/sources.cm
+        ../../util/sources.cm
+
+	tvarMap.sml
+	IDTypes.ppg.sml
+	OPrimInstMap.sml
 	Types.ppg.sml
-	TypesPickler.sml        
-	VarIDContext.ppg.sml
-	VarIDContextPickler.sml
-	TYPE_FORMATTER.sig
-	TypeFormatter.sml
-	TYPE_TRANSDUCER.sig
-	TypeTransducer.sml
+        VarMap.sml
+        OPrimMap.sml
+	EvalIty.sml
+	BuiltinEnv.sml
 	vars.sml
 	TypesUtils.sml
-	RuntimeTypes.ppg.sml
-	TypeParser.sml

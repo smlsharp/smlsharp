@@ -1,0 +1,157 @@
+_require "basis/main/IntStructures.smi"
+_require "basis/main/RealStructures.smi"
+_require "basis/main/Char.smi"
+_require "basis/main/StringStructures.smi"
+
+infix 7 * / div mod
+infix 6 + -
+infix 4 = <> > >= < <=
+
+val <> : ''a * ''a -> bool
+
+val + =
+    case 'a in 'a * 'a -> 'a of
+      word => SMLSharp.Word.add
+    | Word8.word => SMLSharp.Word8.add
+    | LargeWord.word => LargeWord.+
+    | int => SMLSharp.Int.add
+    | IntInf.int => IntInf.+
+    | LargeInt.int => LargeInt.+
+    | Position.int => Position.+
+    | real => SMLSharp.Real.add
+    | Real32.real => SMLSharp.Real32.add
+    | LargeReal.real => LargeReal.+
+
+val - =
+    case 'a in 'a * 'a -> 'a of
+      word => SMLSharp.Word.sub
+    | Word8.word => SMLSharp.Word8.sub
+    | LargeWord.word => LargeWord.-
+    | int => SMLSharp.Int.sub
+    | IntInf.int => IntInf.-
+    | LargeInt.int => LargeInt.-
+    | Position.int => Position.-
+    | real => SMLSharp.Real.sub
+    | Real32.real => SMLSharp.Real32.sub
+    | LargeReal.real => LargeReal.-
+
+val * =
+    case 'a in 'a * 'a -> 'a of
+      word => SMLSharp.Word.mul
+    | Word8.word => SMLSharp.Word8.mul
+    | LargeWord.word => LargeWord.*
+    | int => SMLSharp.Int.mul
+    | IntInf.int => IntInf.*
+    | LargeInt.int => LargeInt.*
+    | Position.int => Position.*
+    | real => SMLSharp.Real.mul
+    | Real32.real => SMLSharp.Real32.mul
+    | LargeReal.real => LargeReal.*
+
+val div =
+    case 'a in 'a * 'a -> 'a of
+      word => SMLSharp.Word.div
+    | Word8.word => SMLSharp.Word8.div
+    | LargeWord.word => LargeWord.div
+    | int => SMLSharp.Int.div
+    | IntInf.int => IntInf.div
+    | LargeInt.int => LargeInt.div
+    | Position.int => Position.div
+
+val mod =
+    case 'a in 'a * 'a -> 'a of
+      word => SMLSharp.Word.mod
+    | Word8.word => SMLSharp.Word8.mod
+    | LargeWord.word => LargeWord.mod
+    | int => SMLSharp.Int.mod
+    | IntInf.int => IntInf.mod
+    | LargeInt.int => LargeInt.mod
+    | Position.int => Position.mod
+
+val / =
+    case 'a in 'a * 'a -> 'a of
+      real => SMLSharp.Real.div
+    | Real32.real => SMLSharp.Real32.div
+    | LargeReal.real => LargeReal./
+
+val ~ =
+    case 'a in 'a -> 'a of
+      word => SMLSharp.Word.neg
+    | Word8.word => Word8.~
+    | int => SMLSharp.Int.neg
+    | IntInf.int => IntInf.~
+    | LargeInt.int => LargeInt.~
+    | Position.int => Position.~
+    | real => SMLSharp.Real.neg
+    | Real32.real => SMLSharp.Real32.neg
+    | LargeReal.real => LargeReal.~
+
+val abs =
+    case 'a in 'a -> 'a of
+      real => SMLSharp.Real.abs
+    | Real32.real => SMLSharp.Real32.abs
+    | LargeReal.real => LargeReal.abs
+    | int => SMLSharp.Int.abs
+    | IntInf.int => IntInf.abs
+    | LargeInt.int => LargeInt.abs
+    | Position.int => Position.abs
+
+val < =
+    case 'a in 'a * 'a -> bool of
+      word => SMLSharp.Word.lt
+    | Word8.word => SMLSharp.Word8.lt
+    | LargeWord.word => LargeWord.<
+    | int => SMLSharp.Int.lt
+    | IntInf.int => IntInf.<
+    | LargeInt.int => LargeInt.<
+    | Position.int => Position.<
+    | real => SMLSharp.Real.lt
+    | Real32.real => SMLSharp.Real32.lt
+    | LargeReal.real => LargeReal.<
+    | string => String.<
+    | char => SMLSharp.Char.lt
+
+val > =
+    case 'a in 'a * 'a -> bool of
+      word => SMLSharp.Word.gt
+    | Word8.word => SMLSharp.Word8.gt
+    | LargeWord.word => LargeWord.>
+    | int => SMLSharp.Int.gt
+    | IntInf.int => IntInf.>
+    | LargeInt.int => LargeInt.>
+    | Position.int => Position.>
+    | real => SMLSharp.Real.gt
+    | Real32.real => SMLSharp.Real32.gt
+    | LargeReal.real => LargeReal.>
+    | string => String.>
+    | char => SMLSharp.Char.gt
+
+val <= =
+    case 'a in 'a * 'a -> bool of
+      word => SMLSharp.Word.lteq
+    | Word8.word => SMLSharp.Word8.lteq
+    | LargeWord.word => LargeWord.<=
+    | int => SMLSharp.Int.lteq
+    | IntInf.int => IntInf.<=
+    | LargeInt.int => LargeInt.<=
+    | Position.int => Position.<=
+    | real => SMLSharp.Real.lteq
+    | Real32.real => SMLSharp.Real32.lteq
+    | LargeReal.real => LargeReal.<=
+    | string => String.<=
+    | char => SMLSharp.Char.lteq
+
+val >= =
+    case 'a in 'a * 'a -> bool of
+      word => SMLSharp.Word.gteq
+    | Word8.word => SMLSharp.Word8.gteq
+    | LargeWord.word => LargeWord.>=
+    | int => SMLSharp.Int.gteq
+    | IntInf.int => IntInf.>=
+    | LargeInt.int => LargeInt.>=
+    | Position.int => Position.>=
+    | real => SMLSharp.Real.gteq
+    | Real32.real => SMLSharp.Real32.gteq
+    | LargeReal.real => LargeReal.>=
+    | string => String.>=
+    | char => SMLSharp.Char.gteq

@@ -3,22 +3,26 @@ Group is
 #if defined(NEW_CM)
 	$/basis.cm
 #endif
-
-	../../../../../SMLFormat/smlformatlib.cm
 	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+
 	../../control/sources.cm
 	../../env/sources.cm
 	../../types/sources.cm
+	../../builtin/sources.cm
 	../../name/sources.cm
 	../../util/sources.cm
 	../../usererror/sources.cm
-	../../primitive/sources.cm
-	../../constantterm/sources.cm
-	../../patterncalc/sources.cm
-	../../typedflatcalc/sources.cm
+	../../absyn/sources.cm
+	../../typedcalc/sources.cm
 	../../recordcalc/sources.cm
+	../../patterncalc/sources.cm
 
 	MatchData.sml
 	MatchError.ppg.sml
-	MATCH_COMPILER.sig
 	MatchCompiler.sml
+
+(*
+	MATCH_COMPILER.sig
+	../../primitive/sources.cm
+*)

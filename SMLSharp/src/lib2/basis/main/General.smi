@@ -1,0 +1,38 @@
+_require "basis/main/GENERAL.sig"
+
+structure General =
+struct
+  type unit = unit
+  type exn = exn
+  exception Bind = Bind
+  exception Match = Match
+  exception Chr
+  exception Div = Div
+  exception Domain = Domain
+  exception Fail = Fail
+  exception Overflow = Overflow
+  exception Size = Size
+  exception Span
+  exception Subscript = Subscript
+  val exnName : exn -> string
+  val exnMessage : exn -> string
+  datatype order = LESS | EQUAL | GREATER
+  val ! : 'a ref -> 'a
+  val := : 'a ref * 'a -> unit
+  val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
+  val before : 'a * unit -> 'a
+  val ignore : 'a -> unit
+end
+
+(* toplevel *)
+infix 3 := o
+infix 0 before
+datatype order = datatype General.order
+val ! : 'a ref -> 'a
+val before : 'a * unit -> 'a
+val exnMessage : exn -> string
+val exnName : exn -> string
+val ignore : 'a -> unit
+val o : ('a -> 'b) * ('c -> 'a) -> 'c -> 'b
+exception Chr = General.Chr
+exception Span = General.Span

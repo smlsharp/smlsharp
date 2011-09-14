@@ -8,8 +8,8 @@ Group is
 	../../control/sources.cm
 	../../systemdef/sources.cm
 	../../name/sources.cm
+	../../primitive/sources.cm
 	../../absyn/sources.cm
-	../../../primitives/compiler/primitives.cm
 
 	SymbolicInstructions.ppg.sml
 	SymbolicInstructionsFormatter.sml

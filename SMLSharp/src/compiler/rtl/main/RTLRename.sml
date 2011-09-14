@@ -296,19 +296,20 @@ struct
         R.X86 (R.X86FDIVR (ty, substMem sUse mem))
       | R.X86 (R.X86FDIVR_ST (st1:R.x86st, st2:R.x86st)) => insn
       | R.X86 (R.X86FDIVRP (st1:R.x86st)) => insn
+      | R.X86 R.X86FPREM => insn
       | R.X86 (R.X86FABS) => insn
       | R.X86 (R.X86FCHS) => insn
+      | R.X86 (R.X86FINCSTP) => insn
       | R.X86 (R.X86FFREE (st:R.x86st)) => insn
       | R.X86 (R.X86FXCH (st:R.x86st)) => insn
       | R.X86 (R.X86FUCOM (st:R.x86st)) => insn
       | R.X86 (R.X86FUCOMP (st:R.x86st)) => insn
       | R.X86 R.X86FUCOMPP => insn
-      | R.X86 (R.X86FSW_GT {clob}) =>
-        R.X86 (R.X86FSW_GT {clob = substClob clob})
-      | R.X86 (R.X86FSW_GE {clob}) =>
-        R.X86 (R.X86FSW_GE {clob = substClob clob})
-      | R.X86 (R.X86FSW_EQ {clob}) =>
-        R.X86 (R.X86FSW_EQ {clob = substClob clob})
+      | R.X86 (R.X86FSW_TESTH {clob,mask}) =>
+        R.X86 (R.X86FSW_TESTH {clob = substClob clob, mask = mask})
+      | R.X86 (R.X86FSW_MASKCMPH {clob,mask,compare}) =>
+        R.X86 (R.X86FSW_MASKCMPH {clob = substClob clob, mask = mask,
+                                  compare = compare})
       | R.X86 (R.X86FLDCW mem) =>
         R.X86 (R.X86FLDCW (substMem sUse mem))
       | R.X86 (R.X86FNSTCW mem) =>

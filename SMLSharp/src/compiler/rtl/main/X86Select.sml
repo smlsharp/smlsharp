@@ -75,9 +75,9 @@ struct
       }
 
   fun entrySymbolName {clusterId, entry} =
-      "F" ^ ClusterID.toString clusterId ^ "_" ^ VarID.toString entry
+      "FF" ^ ClusterID.toString clusterId ^ "_" ^ VarID.toString entry
   fun constSymbolName id =
-      "C" ^ VarID.toString id
+      "LC" ^ VarID.toString id
   fun globalSymbolName (options:options) label =
       if #globalSymbolStartsWithUnderscore options
       then "_" ^ label
@@ -100,7 +100,6 @@ struct
         | R.Int64 _ => raise Control.Bug "transformVarInfo: Int64"
         | R.Generic _ =>
           R.MEM (ty, R.SLOT {id=id, format=X86Emit.formatOf ty})
-        | R.Atom => R.REG {id=id, ty=ty}
       end
 
   fun newVar ty =
@@ -235,6 +234,13 @@ struct
         (updateFocus code focus, label)
       end
 
+  fun makeLabelBefore code =
+      let
+        val (focus, label) = RTLEdit.makeLabelBefore (#focus code)
+      in
+        (updateFocus code focus, label)
+      end
+
   fun focusFirst (code, label) =
       let
         val graph = RTLEdit.unfocus (#focus code)
@@ -255,18 +261,11 @@ struct
       | AI.ENTRY => R.Ptr R.Code
       | AI.FLOAT => R.Real32
       | AI.DOUBLE => R.Real64
-      | AI.INDEX => R.Int32 R.U
-      | AI.BITMAP => R.Int32 R.U
-      | AI.OFFSET => R.Int32 R.U
-      | AI.SIZE => R.Int32 R.U
-      | AI.TAG => R.Int32 R.U
-      | AI.ATOMty => R.Atom         (* FIXME: deprecated *)
-      | AI.DOUBLEty => R.Real64     (* FIXME: deprecated *)
 
   fun sizeof ty =
       #size (X86Emit.formatOf ty)
   fun genericSize () =
-      sizeof (R.Generic 0)
+      #size X86Emit.formatOfGeneric
 
   fun transformVarInfo ({id, ty, displayName}:AI.varInfo) =
       let
@@ -287,7 +286,6 @@ struct
           (* generic variables are allocated in frame. *)
         | R.Generic _ =>
           R.MEM (ty, R.SLOT {id=id, format=X86Emit.formatOf ty})
-        | R.Atom => R.REG {id=id, ty=ty}
       end
 
   fun transformArgInfo ({id, ty, ...}:AI.argInfo) =
@@ -358,46 +356,6 @@ struct
     | makeCast (ADDR addr, _) = raise Control.Bug "makeCast: ADDR"
     | makeCast (OPRD op1, ty) = OPRD (makeCastOperand (op1, ty))
 
-  fun recoverAtomTy (R.Atom, ty) =
-      if (case ty of
-            R.Int8 s => true
-          | R.Int32 s => true
-          | R.Real32 => true
-          | R.Ptr R.Void => true
-          | R.Ptr R.Code => true
-          | R.Atom => true
-          | _ => false)
-      then ty
-      else raise Control.Bug ("recoverAtomTy: failed: "
-                              ^ Control.prettyPrint (R.format_ty ty))
-    | recoverAtomTy (ty, _) = ty
-
-  fun recoverAtom (value as OPRD (R.CONST _), ty) =
-      makeCast (value, ty)
-    | recoverAtom (value, ty) =
-      makeCast (value, recoverAtomTy (valueTy value, ty))
-
-  fun recoverAtomDst (dst, ty2) =
-      let
-        val ty1 = RTLUtils.dstTy dst
-        (* allow cast from BOXED to ATOM
-         * FIXME: this should be explicit cast. *)
-        val ty2 = case (ty1, ty2) of
-                    (R.Atom, R.Ptr R.Data) => R.Ptr R.Data
-                  | _ => recoverAtomTy (ty1, ty2)
-      in
-        if ty1 = ty2
-        then (fn code => code, ty2, dst)
-        else
-          let
-            val v = newDst ty2
-          in
-            (fn code =>
-                insert (code, [R.MOVE (ty1, dst, R.REF (R.CAST ty1, v))]),
-             ty2, v)
-          end
-      end
-
   fun promoteIntTy ty =
       case ty of
         (* extend under-32 bits variables to 32 bits. *)
@@ -412,7 +370,6 @@ struct
       | R.Real80 => ty
       | R.Int64 _ => ty
       | R.Generic _ => ty
-      | R.Atom => R.Atom
 
   fun promoteInt (code, op1) =
       case op1 of
@@ -457,9 +414,6 @@ struct
         in
           (fn code => insert (code, [R.DOWN32TO16 (s, dst, R.REF_ v)]), v)
         end
-(*
-      | R.Atom => recoverAtomDst (dst, R.Int32 R.S)
-*)
       | _ =>
         (fn code => code, dst)
 
@@ -474,6 +428,8 @@ struct
       R.SYMBOL (R.Code, R.LOCAL, entrySymbolName ent)
   fun dataSymbol (ptrTy, scope, symbol) =
       R.SYMBOL (ptrTy, scope, symbol)
+  fun constSymbol id =
+      R.SYMBOL (R.Data, R.LOCAL, constSymbolName id)
 
   local
     fun find (externSymbols, ptrTy, symbol) =
@@ -603,6 +559,7 @@ struct
       case value of
         AI.UInt n => R.CONST (R.UINT32 n)
       | AI.SInt n => R.CONST (R.INT32 n)
+      | AI.Byte n => R.CONST (R.UINT8 (Word8.fromInt (AI.Target.UIntToInt n)))
       | AI.Var var =>
         let
           val dst = transformVarInfo var
@@ -626,6 +583,7 @@ struct
       case value of
         AI.UInt n => raise NotAddr
       | AI.SInt n => raise NotAddr
+      | AI.Byte n => raise NotAddr
       | AI.Var var =>
         (
           case transformVarInfo var of
@@ -678,6 +636,7 @@ struct
       case value of
         AI.UInt _ => raise NotJump
       | AI.SInt _ => raise NotJump
+      | AI.Byte _ => raise NotJump
       | AI.Var var =>
         (
           case transformVarInfo var of
@@ -738,24 +697,20 @@ struct
 
   fun selectMove code (dst, value, size) =
       let
-        val (sets, dstTy, dst) = recoverAtomDst (dst, valueTy value)
-        val value = recoverAtom (value, dstTy)
+        val dstTy = RTLUtils.dstTy dst
         val srcTy = valueTy value
 
         val code =
             case (srcTy, dstTy, value, dst) of
-              (R.Atom, R.Atom, OPRD op1, _) =>
-              insert (code, [R.MOVE (dstTy, dst, op1)])
-            | (R.Atom, _, _, _) => raise Control.Bug "selectMove: Atom: ADDR"
-            | (R.Int8 _, R.Int8 _, OPRD op1, _) =>
+              (R.Int8 _, R.Int8 _, OPRD op1, _) =>
               insert (code, [R.MOVE (dstTy, dst, to8 op1)])
             (*
             | (R.Int8 _, R.Int16 s, OPRD op1) =>
               insert (code, [R.EXT8TO16 (s, dst, op1)])
+             *)
             | (R.Int8 _, R.Int32 s, OPRD op1, _) =>
               insert (code, [R.EXT8TO32
                                (s, dst, makeCastOperand (op1, R.Int8 s))])
-            *)
             | (R.Int8 _, _, _, _) => raise Control.Bug "selectMove: Int8"
             (*
             | (R.Int16 _, R.Int8 s, _, OPRD op1) =>
@@ -769,9 +724,9 @@ struct
                                (s, dst, makeCastOperand (op1, R.Int16 s))])
              *)
             | (R.Int16 _, _, _, _) => raise Control.Bug "selectMove: Int16"
-            (*
             | (R.Int32 _, R.Int8 s, OPRD op1, _) =>
               insert (code, [R.DOWN32TO8 (s, dst, op1)])
+            (*
             | (R.Int32 _, R.Int16 s, OPRD op1, _) =>
               insert (code, [R.DOWN32TO16 (s, dst, op1)])
              *)
@@ -848,7 +803,7 @@ struct
             | (R.Generic _, _, _, _) =>
               raise Control.Bug "selectMove: Generic"
       in
-        sets code
+        code
       end
 
   end (* local *)
@@ -1178,7 +1133,6 @@ struct
         | (R.PtrDiff _, _) => raise Control.Bug "getCRets: PtrDiff"
         | (R.Generic _, _) => raise Control.Bug "getCRets: Generic"
         | (R.NoType, _) => raise Control.Bug "getCRets: NoType"
-        | (R.Atom, _) => raise Control.Bug "getCRets: Atom"
       )
     | getCRets (SOME Absyn.FFI_CDECL, argTys, nil) nil =
       (fn code => code, nil)
@@ -1250,7 +1204,6 @@ struct
         | R.PtrDiff _ => raise Control.Bug "setCRets: PtrDiff"
         | R.Generic _ => raise Control.Bug "setCRets: Generic"
         | R.NoType => raise Control.Bug "setCRets: NoType"
-        | R.Atom => raise Control.Bug "setCRets: Atom"
       end
     | setCRets code (SOME Absyn.FFI_CDECL, argTys, nil) nil = (code, nil)
     | setCRets code (SOME Absyn.FFI_CDECL, argTys, retTys) retValues =
@@ -1369,19 +1322,11 @@ struct
         insert (code, [R.REQUIRE_SLOT slot])
       end
 
-  fun selectRaise context code exnVar =
+  fun selectRaise (context:context) code exnVar infoVar =
       let
-        val v1 = newVar (R.Ptr R.Void)
         fun handlerInfo ptrTy disp =
-            R.MEM (R.Ptr ptrTy, R.ADDR (R.DISP (R.INT32 disp, R.BASE v1)))
+            R.MEM (R.Ptr ptrTy, R.ADDR (R.DISP (R.INT32 disp, R.BASE infoVar)))
         val v2 = newVar (R.Ptr R.Code)
-        val code =
-            selectPrimCall context code
-                           {callTo = "sml_pop_handler",
-                            retRegs = [v1],
-                            argRegs = nil,
-                            needStabilize = true,
-                            returnTo = NONE}
         val code =
             insert (code, [R.MOVE (R.Ptr R.Code, R.REG v2,
                                    R.REF_ (handlerInfo R.Code 4))])
@@ -1394,61 +1339,45 @@ struct
                                 handler = #handler context})
       end
 
-  fun attachFrameChain context code =
+  fun startThread context code =
       let
-        val v1 = newVar (R.Ptr R.Void)
-        val v2 = newVar (R.Int32 R.U)
-        val v3 = newVar (R.Ptr R.Void)
-        val code =
-            selectPrimCall context code
-                           {callTo = "sml_load_frame_pointer",
-                            retRegs = [v1],
-                            argRegs = [],
-                            needStabilize = false,
-                            returnTo = NONE}
+        val fp = newVar (R.Ptr R.Void)
+        val code = insert (code, [R.LOAD_FP (R.REG fp)])
+        val code = selectPrimCall context code
+                                  {callTo = "sml_control_start",
+                                   retRegs = [],
+                                   argRegs = [fp],
+                                   needStabilize = false,
+                                   returnTo = NONE}
       in
-        insert
-          (code,
-           [
-             R.OR (R.Int32 R.U, R.REG v2,
-                   R.REF (R.CAST (R.Int32 R.U),
-                          R.REG v1),
-                   R.CONST (R.UINT32 FRAME_FLAG_SKIP)),
-             R.LOAD_PREV_FP (R.REG v3),
-             R.MOVE (R.Int32 R.U,
-                     R.MEM (R.Int32 R.U,
-                            R.ADDR (R.DISP (R.INT32 ~4,
-                                            R.BASE v3))),
-                     R.REF_ (R.REG v2))
-           ])
+        code
       end
 
-  fun detachFrameChain context code =
+  fun saveFramePointer context code =
       let
-        val v1 = newVar (R.Ptr R.Void)
-        val v2 = newVar (R.Int32 R.U)
-        val v3 = newVar (R.Int32 R.U)
-        val code =
-            insert
-              (code,
-               [
-                 R.LOAD_PREV_FP (R.REG v1),
-                 R.MOVE (R.Int32 R.U,
-                         R.REG v2,
-                         R.REF_ (R.MEM (R.Int32 R.U,
-                                        R.ADDR (R.DISP (R.INT32 ~4,
-                                                        R.BASE v1))))),
-                 R.AND (R.Int32 R.U,
-                        R.REG v3, R.REF_ (R.REG v2),
-                        R.CONST (R.UINT32 (notb FRAME_FLAG_SKIP)))
-               ])
+        val v = newVar (R.Ptr R.Void)
+        val code = insert (code, [R.LOAD_FP (R.REG v)])
       in
         selectPrimCall context code
                        {callTo = "sml_save_frame_pointer",
-                        retRegs = [],
-                        argRegs = [v3],
+                        retRegs = nil,
+                        argRegs = [v],
                         needStabilize = false,
                         returnTo = NONE}
+      end
+
+  fun writeBarrier context code (addr, block, returnTo) =
+      let
+        val (code, v1) = coerceToVar code (ADDR addr)
+        val (code, v2) = coerceToVar code (ADDR block)
+        val code = saveFramePointer context code
+      in
+        selectPrimCall context code
+                       {callTo = "sml_write_barrier",
+                        retRegs = nil,
+                        argRegs = [v1, v2],
+                        needStabilize = true,
+                        returnTo = returnTo}
       end
 
   local
@@ -1573,14 +1502,7 @@ struct
 
   fun callAllocCallback codeAddrVar envVar (context, code, sizeVar, dstVar) =
       let
-        val fp = newVar (R.Ptr R.Void)
-        val code = insert (code, [R.LOAD_FP (R.REG fp)])
-        val code = selectPrimCall context code
-                                  {callTo = "sml_save_frame_pointer",
-                                   retRegs = [],
-                                   argRegs = [fp],
-                                   needStabilize = false,
-                                   returnTo = NONE}
+        val code = saveFramePointer context code
         val code = selectPrimCall context code
                                   {callTo = "sml_alloc_callback",
                                    retRegs = [dstVar],
@@ -1604,35 +1526,51 @@ struct
            * v1 = v2              --> st(0)=v1, st(1)=v2, st(0) = st(1)
            * v1 < v2  == v2 > v1  --> st(0)=v2, st(1)=v1, st(0) > st(1)
            * v1 <= v2 == v2 >= v1 --> st(0)=v2, st(1)=v1, st(0) >= st(1)
+           *
+           *            C3:14 C2:10 C0:8
+           * st0 > src    0     0     0
+           * st0 < src    0     0     1
+           * st0 = src    1     0     0
+           * unordered    1     1     1
+           *
+           * >   : hi & 0b01000101 == 0
+           * >=  : hi & 0b00000101 == 0
+           * ==  : hi & 0b01000101 == 0b01000000
+           * ?=  : hi & 0b01000000 == 0
            *)
+          val clob = newVar (R.Int16 R.U)  (* ax *)
           val (cmp, st0, st1) =
               case oper of
-                AI.Gt => (R.X86FSW_GT, (ty1, mem1), (ty2, mem2))
-              | AI.Gteq => (R.X86FSW_GE, (ty1, mem1), (ty2, mem2))
-              | AI.MonoEqual => (R.X86FSW_EQ, (ty1, mem1), (ty2, mem2))
-              | AI.Lt => (R.X86FSW_GT, (ty2, mem2), (ty1, mem1))
-              | AI.Lteq => (R.X86FSW_GE, (ty2, mem2), (ty1, mem1))
+                AI.Gt =>
+                (R.X86FSW_TESTH {clob=clob, mask=R.UINT8 0wx45},
+                 (ty1, mem1), (ty2, mem2))
+              | AI.Gteq =>
+                (R.X86FSW_TESTH {clob=clob, mask=R.UINT8 0wx5},
+                 (ty1, mem1), (ty2, mem2))
+              | AI.Lt =>
+                (R.X86FSW_TESTH {clob=clob, mask=R.UINT8 0wx45},
+                 (ty2, mem2), (ty1, mem1))
+              | AI.Lteq =>
+                (R.X86FSW_TESTH {clob=clob, mask=R.UINT8 0wx5},
+                 (ty2, mem2), (ty1, mem1))
+              | AI.MonoEqual =>
+                (R.X86FSW_MASKCMPH {clob=clob, mask=R.UINT8 0wx45,
+                                    compare=R.UINT8 0wx40},
+                 (ty1, mem1), (ty2, mem2))
+              | AI.UnorderedOrEqual =>
+                (R.X86FSW_TESTH {clob=clob, mask=R.UINT8 0wx40},
+                 (ty1, mem1), (ty2, mem2))
               | _ => raise Control.Bug "selectCompare: cmpFloat"
           val code = insert (code, [R.X86 (R.X86FLD st1),
                                     R.X86 (R.X86FLD st0),
                                     R.X86 R.X86FUCOMPP])
-          val clob = newVar (R.Int16 R.U)  (* ax *)
         in
-          (code, R.X86 (cmp {clob=clob}), R.EQUAL)
+          (code, R.X86 cmp, R.EQUAL)
         end
   in
 
   fun selectCompare code (operator, ty1, ty2, _) (arg1, arg2) =
       let
-        (* comparison between Atoms may be generated due to PolyEqual.
-         * Regard it as comparison between unsigned integer. *)
-        val (ty1, ty2) =
-            case (transformTy ty1, transformTy ty2) of
-              (R.Atom, R.Atom) => (R.Int32 R.U, R.Int32 R.U)
-            | (ty1, ty2) => (ty1, ty2)
-
-        val arg1 = recoverAtom (arg1, ty1)
-        val arg2 = recoverAtom (arg2, ty2)
         val ty1 = valueTy arg1
         val ty2 = valueTy arg2
       in
@@ -1667,7 +1605,15 @@ struct
                R.EQUAL)
             | (R.BASE v1, R.ABSADDR l) =>
               (code, R.TEST_LABEL (ptrTy, R.REF_ (R.REG v1), l), R.EQUAL)
-            | _ => raise Control.Bug "selectCompare: MonoEqual Ptr"
+            | _ =>
+              let
+                val (code, v1) = coerceToVar code arg1
+                val (code, v2) = coerceToVar code arg2
+              in
+                (code,
+                 R.TEST_SUB (ty1, R.REF_ (R.REG v1), R.REF_ (R.REG v2)),
+                 R.EQUAL)
+              end
           )
         | (op2, ty1, ty2, _, _) =>
           raise Control.Bug
@@ -1834,18 +1780,7 @@ struct
         in
           case barrier of
             AI.NoBarrier => code
-          | AI.WriteBarrier =>
-            let
-              val (code, v1) = coerceToVar code (ADDR addr)
-              val (code, v2) = coerceToVar code (ADDR block)
-            in
-              selectPrimCall context code
-                             {callTo = "sml_write_barrier",
-                              retRegs = nil,
-                              argRegs = [v1, v2],
-                              needStabilize = true,
-                              returnTo = NONE}
-            end
+          | AI.WriteBarrier => writeBarrier context code (addr, block, NONE)
           | AI.BarrierTag value =>
             let
               val value = transformOperand value
@@ -1857,15 +1792,8 @@ struct
                                             cc = R.EQUAL,
                                             thenLabel = endLabel,
                                             elseLabel = l})
-              val (code, v1) = coerceToVar code (ADDR addr)
-              val (code, v2) = coerceToVar code (ADDR block)
             in
-              selectPrimCall context code
-                             {callTo = "sml_write_barrier",
-                              retRegs = nil,
-                              argRegs = [v1, v2],
-                              needStabilize = true,
-                              returnTo = SOME endLabel}
+              writeBarrier context code (addr, block, SOME endLabel)
             end
         end
 
@@ -1920,8 +1848,7 @@ struct
         let
           val dst = transformVarInfo dst
           val (code, arg) = transformValue context code arg
-          val arg = recoverAtom (arg, transformTy ty1)
-          val (sets, dstTy, dst) = recoverAtomDst (dst, transformTy ty2)
+          val dstTy = RTLUtils.dstTy dst
           val ty1 = valueTy arg
 
           fun float (dst, op1, insns) =
@@ -2066,24 +1993,15 @@ struct
                 end
               | _ => raise Control.Bug "SelectInsn: PrimOp1"
         in
-          sets code
+          code
         end
 
       | AI.PrimOp2 {dst, op2 as (operator,ty1,ty2,ty3), arg1, arg2, loc} =>
         let
-          (* comparison between Atoms may be generated due to PolyEqual.
-           * Regard it as comparison between unsigned integer. *)
-          val (ty1, ty2) =
-              case (transformTy ty1, transformTy ty2) of
-                (R.Atom, R.Atom) => (R.Int32 R.U, R.Int32 R.U)
-              | (ty1, ty2) => (ty1, ty2)
-
           val dst = transformVarInfo dst
           val (code, arg1) = transformValue context code arg1
           val (code, arg2) = transformValue context code arg2
-          val arg1 = recoverAtom (arg1, ty1)
-          val arg2 = recoverAtom (arg2, ty2)
-          val (sets, dstTy, dst) = recoverAtomDst (dst, transformTy ty3)
+          val dstTy = RTLUtils.dstTy dst
           val ty1 = valueTy arg1
           val ty2 = valueTy arg2
 
@@ -2101,6 +2019,34 @@ struct
                 val code = insert (code, [R.X86 (R.X86FSTP (dstTy, dst))])
               in
                 save code
+              end
+
+          (* st(0)=arg1, st(1)=arg2, dst = st(1) rem st(0) *)
+          fun floatRem (dst, arg1, arg2) =
+              let
+                val (code, ty1, src1) = coerceToMem code arg1
+                val (code, ty2, src2) = coerceToMem code arg2
+                val (save, dstTy, dst) = coerceDstToMem dst
+                val st1 = (ty2, src2)
+                val st0 = (ty1, src1)
+                val code = insert (code, [R.X86 (R.X86FLD st1),
+                                          R.X86 (R.X86FLD st0)])
+                val (code, loopLabel) = makeLabelBefore code
+                val code = insert (code, [R.X86 R.X86FPREM])
+                val clob = newVar (R.Int16 R.U)  (* ax *)
+                val test = R.X86 (R.X86FSW_TESTH {clob=clob,
+                                                  mask=R.UINT8 0wx4})
+                val code =
+                    insertLastBefore
+                      (code, fn l => R.CJUMP {test = test,
+                                              cc = R.NOTEQUAL,
+                                              thenLabel = loopLabel,
+                                              elseLabel = l})
+                val code = insert (code, [R.X86 (R.X86FSTP (dstTy, dst)),
+                                          R.X86 (R.X86FFREE (R.X86ST 0)),
+                                          R.X86 R.X86FINCSTP])
+              in
+                code
               end
 
           val code =
@@ -2180,6 +2126,12 @@ struct
                 float (dst, arg1, arg2, [R.X86 (R.X86FDIVP (R.X86ST 1))])
               | (AI.Div, R.Real80, R.Real80, R.Real80, _, _) =>
                 float (dst, arg1, arg2, [R.X86 (R.X86FDIVP (R.X86ST 1))])
+              | (AI.Rem, R.Real32, R.Real32, R.Real32, _, _) =>
+                floatRem (dst, arg1, arg2)
+              | (AI.Rem, R.Real64, R.Real64, R.Real64, _, _) =>
+                floatRem (dst, arg1, arg2)
+              | (AI.Rem, R.Real80, R.Real80, R.Real80, _, _) =>
+                floatRem (dst, arg1, arg2)
               | (AI.Mod, R.Int32 R.S, R.Int32 R.S, R.Int32 R.S,
                  OPRD op1, OPRD op2) =>
                 let
@@ -2264,12 +2216,12 @@ struct
                                                             op2)
                          ^ " -> " ^ Control.prettyPrint (R.format_ty ty3))
         in
-          sets code
+          code
         end
 
       | AI.CallExt {dstVarList, entry,
                     attributes={callingConvention, isPure, noCallback,
-                                allocMLValue},
+                                suspendThread, allocMLValue},
                     argList, calleeTy=(argTys, retTys), loc} =>
         let
           val argTys = map transformTy argTys
@@ -2278,25 +2230,21 @@ struct
           val args = map dstToValue argSrcs
           val dsts = map transformArgInfo dstVarList
 
-          (* regard Atoms as unsigned int. *)
-          val argTys = map (fn R.Atom => R.Int32 R.U | x => x) argTys
-          val retTys = map (fn R.Atom => R.Int32 R.U | x => x) retTys
-
           val (code, entry) = transformJumpTo context code entry
           val code =
-              if not noCallback orelse allocMLValue then
-                let
-                  val v = newVar (R.Ptr R.Void)
-                  val code = insert (code, [R.LOAD_FP (R.REG v)])
-                in
-                  selectPrimCall context code
-                                 {callTo = "sml_save_frame_pointer",
-                                  retRegs = nil,
-                                  argRegs = [v],
-                                  needStabilize = false,
-                                  returnTo = NONE}
-                end
+              if not noCallback orelse allocMLValue orelse suspendThread
+              then saveFramePointer context code
               else code
+          val code =
+              if suspendThread then
+                selectPrimCall context code
+                               {callTo = "sml_state_suspend",
+                                retRegs = nil,
+                                argRegs = nil,
+                                needStabilize = false,
+                                returnTo = NONE}
+              else code
+
           val (code, uses) =
               setCArgs code (callingConvention, argTys, retTys) args
           val (gets, defs) =
@@ -2310,9 +2258,22 @@ struct
                                  needStabilize = allocMLValue,
                                  returnTo = NONE,
                                  postFrameAdjust = postFrameAdjust}
+
+          (* make sure that all args are live during executing callbacks. *)
           val code =
               if noCallback then code
               else insert (code, [R.USE (map R.REF_ argSrcs)])
+
+          val code =
+              if suspendThread then
+                selectPrimCall context code
+                               {callTo = "sml_state_running",
+                                retRegs = nil,
+                                argRegs = nil,
+                                needStabilize = false,
+                                returnTo = NONE}
+              else code
+
           val code = gets code
         in
           code
@@ -2364,8 +2325,8 @@ struct
                             attributes as {callingConvention,...}, loc} =>
         let
           val dst = transformVarInfo dst
-          val (sets1, dstTy, dst) = recoverAtomDst (dst, R.Ptr R.Code)
-          val (sets2, dstVar) = coerceDstToVar dst
+          val dstTy = RTLUtils.dstTy dst
+          val (sets1, dstVar) = coerceDstToVar dst
           val (code, entry) = transformAddr context code entry
           val (code, env) = transformAddr context code env
           val (code, entryVar) = coerceToVar code (ADDR entry)
@@ -2386,9 +2347,6 @@ struct
 
           val argTys = map transformTy argTys
           val retTys = map transformTy retTys
-          (* regard Atoms as unsigned int. *)
-          val argTys = map (fn R.Atom => R.Int32 R.U | x => x) argTys
-          val retTys = map (fn R.Atom => R.Int32 R.U | x => x) retTys
           val preFrameSize =
               cPreFrameSize (true, callingConvention, argTys, retTys)
           val preFrameRetSize =
@@ -2441,7 +2399,7 @@ struct
                            R.REF_ (R.REG offset2))
                  ])
         in
-          sets2 (sets1 code)
+          sets1 code
         end
 
       | AI.Return {varList, argTyList, retTyList, loc} =>
@@ -2465,11 +2423,15 @@ struct
         let
           val argTys = map transformTy argTyList
           val retTys = map transformTy retTyList
-          (* regard Atoms as unsigned int. *)
-          val argTys = map (fn R.Atom => R.Int32 R.U | x => x) argTys
-          val retTys = map (fn R.Atom => R.Int32 R.U | x => x) retTys
 
-          val code = detachFrameChain context code
+          val fp = newVar (R.Ptr R.Void)
+          val code = insert (code, [R.LOAD_FP (R.REG fp)])
+          val code = selectPrimCall context code
+                                    {callTo = "sml_control_finish",
+                                     retRegs = [],
+                                     argRegs = [fp],
+                                     needStabilize = false,
+                                     returnTo = NONE}
 
           val rets = map argInfoToValue varList
           val (code, uses) =
@@ -2531,6 +2493,7 @@ struct
         let
           val exn = transformArgInfo exn
           val (code, exnVar) = coerceToVar code (OPRD (R.REF_ exn))
+(*
           val code =
               if !Control.debugCodeGen
               then selectPrimCall context code
@@ -2540,23 +2503,41 @@ struct
                                    needStabilize = false,
                                    returnTo = NONE}
               else code
+*)
+          val v1 = newVar (R.Ptr R.Void)
+          val code =
+              selectPrimCall context code
+                             {callTo = "sml_pop_handler",
+                              retRegs = [v1],
+                              argRegs = [exnVar],
+                              needStabilize = false,
+                              returnTo = NONE}
         in
-          selectRaise context code exnVar
+          selectRaise context code exnVar v1
         end
 
       | AI.RaiseExt {exn, attributes, loc} =>
         let
-          val code = detachFrameChain context code
           val exn = transformArgInfo exn
           val (code, exnVar) = coerceToVar code (OPRD (R.REF_ exn))
+          val v1 = newVar (R.Ptr R.Void)
+          val code =
+              selectPrimCall context code
+                             {callTo = "sml_pop_handler",
+                              retRegs = [v1],
+                              argRegs = [exnVar],
+                              needStabilize = false,
+                              returnTo = NONE}
+          val fp = newVar (R.Ptr R.Void)
+          val code = insert (code, [R.LOAD_FP (R.REG fp)])
           val code = selectPrimCall context code
-                                    {callTo = "sml_check_handler",
-                                     retRegs = nil,
-                                     argRegs = [exnVar],
+                                    {callTo = "sml_control_finish",
+                                     retRegs = [],
+                                     argRegs = [fp],
                                      needStabilize = false,
                                      returnTo = NONE}
         in
-          selectRaise context code exnVar
+          selectRaise context code exnVar v1
         end
 
       | AI.ChangeHandler {change = AI.PushHandler _, previousHandler,
@@ -2582,7 +2563,7 @@ struct
 
   fun selectBlock {code = {globalOffsetBase, externSymbols, handlerSlots,
                            preFrameSize, postFrameSize, graph},
-                   options, clusterId, calleeSaves}
+                   numHeaderWords, options, clusterId, calleeSaves}
                   ({label, blockKind, handler, instructionList, loc}
                    :AI.basicBlock) =
       let
@@ -2598,7 +2579,7 @@ struct
         (* labels following an uncoditional branch should be
          * 16-byte-aligned when less than 8 bytes away from a
          * 16-byte boundary. *)
-        val (first, sets) =
+        val (first, sets, newNumHeaderWords) =
             case blockKind of
               AI.FunEntry {argTyList, resultTyList, env, argVarList} =>
               let
@@ -2622,7 +2603,7 @@ struct
                               (* precolor: esi, edi, ebx, eax, ecx, edx *)
                               defs = defs,
                               loc = loc},
-                 sets)
+                 sets, 1)
               end
             | AI.ExtFunEntry {argTyList, resultTyList, env, argVarList,
                               attributes as {callingConvention, ...}} =>
@@ -2630,9 +2611,6 @@ struct
                 val symbol = entrySymbolName {clusterId=clusterId, entry=label}
                 val argTys = map transformTy argTyList
                 val retTys = map transformTy resultTyList
-                (* regard Atoms as unsigned int. *)
-                val argTys = map (fn R.Atom => R.Int32 R.U | x => x) argTys
-                val retTys = map (fn R.Atom => R.Int32 R.U | x => x) retTys
 
                 val env =
                     case env of
@@ -2693,13 +2671,14 @@ struct
                               loc = loc},
                  fn code =>
                     let
-                      val code = attachFrameChain context code
+                      val code = startThread context code
                       val code = insert (code, insn1)
                       val code = sets code
                       val code = insert (code, insn2)
                     in
                       code
-                    end)
+                    end,
+                 2)
               end
             | AI.Handler exn =>
               let
@@ -2710,10 +2689,10 @@ struct
                                  align = 4,
                                  defs = [exn],  (* precolor: eax *)
                                  loc = loc},
-                 sets)
+                 sets, 0)
               end
             | _ =>
-              (R.BEGIN {label = label, align = 1, loc = loc}, fn x => x)
+              (R.BEGIN {label = label, align = 1, loc = loc}, fn x => x, 0)
 
         val focus = RTLEdit.singletonFirst first
         val code =
@@ -2730,12 +2709,13 @@ struct
 
         val graph = RTLEdit.mergeGraph (graph, RTLEdit.unfocus (#focus code))
       in
-        {globalOffsetBase = #globalOffsetBase code,
-         externSymbols = #externSymbols code,
-         handlerSlots = #handlerSlots code,
-         preFrameSize = #preFrameSize code,
-         postFrameSize = #postFrameSize code,
-         graph = graph}
+        ({globalOffsetBase = #globalOffsetBase code,
+          externSymbols = #externSymbols code,
+          handlerSlots = #handlerSlots code,
+          preFrameSize = #preFrameSize code,
+          postFrameSize = #postFrameSize code,
+          graph = graph},
+         Int.max (numHeaderWords, newNumHeaderWords))
       end
 
   fun selectFrameBitmap ({source, bits}:AI.frameBitmap) =
@@ -2783,16 +2763,16 @@ struct
              postFrameSize = 0,
              graph = R.LabelMap.empty}
 
-        val {globalOffsetBase, externSymbols, handlerSlots,
-             preFrameSize, postFrameSize, graph} =
-            foldl (fn (block, code) =>
+        val ({globalOffsetBase, externSymbols, handlerSlots,
+              preFrameSize, postFrameSize, graph}, numHeaderWords) =
+            foldl (fn (block, (code, numHeaderWords)) =>
                       selectBlock {code = code,
+                                   numHeaderWords = numHeaderWords,
                                    options = options,
                                    clusterId = name,
                                    calleeSaves = calleeSaves}
-                                  block
-)
-                  code
+                                  block)
+                  (code, 1)
                   body
 
         (* insert computation of global offset base *)
@@ -2860,6 +2840,7 @@ struct
                        body = graph,
                        preFrameSize = preFrameSize,
                        postFrameSize = postFrameSize,
+                       numHeaderWords = numHeaderWords,
                        loc = loc}
       in
         ({externSymbols=externSymbols, thunkSymbol=thunkSymbol}, topdecl)
@@ -2873,6 +2854,9 @@ struct
       | AI.UIntData n =>
         (externSymbols, R.Int32 R.U,
          R.CONST_DATA (R.UINT32 (AI.Target.UIntToUInt32 n)))
+      | AI.ByteData n =>
+        (externSymbols, R.Int8 R.U,
+         R.CONST_DATA (R.UINT8 (Word8.fromInt (AI.Target.UIntToInt n))))
       | AI.RealData r =>
         (externSymbols, R.Real64, R.CONST_DATA (R.REAL64 r))
       | AI.FloatData r =>
@@ -2891,6 +2875,12 @@ struct
         in
           (externSymbols, R.Ptr R.Data, R.LABELREF_DATA symbol)
         end
+      | AI.ConstData id =>
+        (externSymbols, R.Ptr R.Data, R.LABELREF_DATA (constSymbol id))
+      | AI.NullPointerData =>
+        (externSymbols, R.Ptr R.Void, R.LABELREF_DATA (R.NULL R.Void))
+      | AI.NullBoxedData =>
+        (externSymbols, R.Ptr R.Data, R.LABELREF_DATA (R.NULL R.Data))
 
   fun sectionOf ty =
       let
@@ -3042,7 +3032,7 @@ struct
            R.DATA {scope = scope, symbol = symbol, aliases = aliases,
                    ptrTy = R.Data, section = section,
                    prefix = [header],
-                   align = #align (X86Emit.formatOf (R.Generic 0)),
+                   align = #align X86Emit.formatOfGeneric,
                    data = data,
                    prefixSize = sizeof (R.Int32 R.U)})
         end
@@ -3144,9 +3134,14 @@ struct
         (externSymbols, topdecls, thunkDecls)
       end
 
-  fun selectToplevel options unitStamp externSymbols NONE =
+  fun nextToplevelSymbol sym =
+      case RTLBackendContext.suffixNumber sym of
+        NONE => raise Control.Bug "nextToplevelSymbol: format error"
+      | SOME (prefix,x) => prefix ^ "." ^ Int.toString (x + 1)
+
+  fun selectToplevel options externSymbols mainSymbol NONE =
       (externSymbols, nil)
-    | selectToplevel options unitStamp externSymbols (SOME entry) =
+    | selectToplevel options externSymbols mainSymbol (SOME entry) =
       let
         (* dummy code *)
         val code = {globalOffsetBase = NONE,
@@ -3161,28 +3156,43 @@ struct
         val (code, smlPopHandlerLabel) =
             transformExtFunLabel options code "sml_pop_handler"
 
-        val (symbol, nextToplevel) =
-            case unitStamp of
-              NONE => (globalSymbolName options "smlsharp_main", NONE)
-            | SOME 0 => (globalSymbolName options "smlsharp_main",
-                         SOME (globalSymbolName options "smlsharp_main.1"))
-            | SOME n => (globalSymbolName options
-                                          ("smlsharp_main." ^ Int.toString n),
-                         SOME (globalSymbolName options
-                                                ("smlsharp_main."
-                                                 ^ Int.toString (n + 1))))
+        val (symbol, nextToplevelSymbol) =
+            (globalSymbolName options mainSymbol, NONE)
+(*
+            case toplevelLabel of
+              RTLBackendContext.TOP_MAIN =>
+              (globalSymbolName options "smlsharp_main",
+               RTLBackendContext.TOP_MAIN, NONE)
+            | RTLBackendContext.TOP_NONE =>
+              let
+                val cur = globalSymbolName options "smlsharp_main"
+                val next = globalSymbolName options "smlsharp_main.1"
+              in
+                (cur, RTLBackendContext.TOP_SEQ {from=cur, next=next},
+                 SOME next)
+              end
+            | RTLBackendContext.TOP_SEQ {from,next} =>
+              let
+                val newNext = nextToplevelSymbol next
+              in
+                (next, RTLBackendContext.TOP_SEQ {from=next, next=newNext},
+                 SOME newNext)
+              end
+*)
+
       in
         (#externSymbols code,
          [
            R.TOPLEVEL {symbol = symbol,
                        toplevelEntry = entrySymbolName entry,
-                       nextToplevel = nextToplevel,
+                       nextToplevel = nextToplevelSymbol,
                        smlPushHandlerLabel = smlPushHandlerLabel,
                        smlPopHandlerLabel = smlPopHandlerLabel}
          ])
       end
 
-  fun select unitStamp ({toplevel, clusters, constants, globals}:AI.program) =
+  fun select ({mainSymbol},
+              {toplevel, clusters, constants, globals}:AI.program) =
       let
         (* FIXME: hard coded *)
         val {cpu, manufacturer, ossys, options} = Control.targetInfo ()
@@ -3218,7 +3228,7 @@ struct
 
         val externSymbols = SEnv.empty
         val (externSymbols, toplevelDecls) =
-            selectToplevel options unitStamp externSymbols toplevel
+            selectToplevel options externSymbols mainSymbol toplevel
         val (externSymbols, clusterDecls, thunkDecls) =
             selectClusters options externSymbols clusters
         val (externSymbols, constDecls) =
@@ -3236,8 +3246,8 @@ struct
               nil
               externSymbols
       in
-        toplevelDecls @ clusterDecls @ constDecls @ globalDecls
-        @ externDecls @ thunkDecls
+        (toplevelDecls @ clusterDecls @ constDecls @ globalDecls
+         @ externDecls @ thunkDecls)
       end
 
 end

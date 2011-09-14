@@ -55,6 +55,35 @@ struct
 
   (********************)
 
+  fun sizeOfSymbolTable "" = 0w0
+    | sizeOfSymbolTable table =
+      (* StringLengthToPaddedUInt8ListLength ensures that there is at least
+       * one sentinel byte. *)
+      BT.IntToUInt32 (BT.StringLengthToPaddedUInt8ListLength (size table))
+
+  fun serializeSymbolTable table writer =
+      let
+        val totalsize = BT.UInt32.toInt (sizeOfSymbolTable table)
+        val padsize = totalsize * 4 - size table
+        fun serializePad n =
+            if n <= 0 then ()
+            else (BTS.serializeUInt8 0w0 writer; serializePad (n - 1))
+      in
+        CharVector.app (fn c => BTS.serializeUInt8 (Byte.charToByte c) writer)
+                       table;
+        serializePad padsize
+      end
+
+  fun deserializeSymbolTable words reader =
+      let
+        val bytes = BT.UInt32.toInt words * 4
+        val binary = deserializeSequence BTS.deserializeUInt8 bytes reader
+      in
+        Byte.bytesToString (Word8Vector.fromList binary)
+      end
+
+  (********************)
+
   fun sizeOfLocationTable (table : E.locationTable) =
       0w1 (* locationsCount *)
       + (#locationsCount table * SIZE_OF_LOCATION_TABLE_ENTRY)
@@ -262,6 +291,9 @@ struct
                 }
         val _ = pos := (!pos) + bytesOfInstructionsSize
 
+        val linkSymbolTableWords = BTS.deserializeUInt32 reader
+        val linkSymbolTable = deserializeSymbolTable linkSymbolTableWords reader
+
         val locationTableWords = BTS.deserializeUInt32 reader
         val locationTable = deserializeLocationTable reader
 
@@ -281,6 +313,7 @@ struct
           byteOrder = byteOrder,
           instructionsSize = instructionsSize,
           instructionsArray = instructionsArray,
+          linkSymbolTable = linkSymbolTable,
           locationTable = locationTable,
           nameSlotTable = nameSlotTable
         }
@@ -291,10 +324,12 @@ struct
             byteOrder,
             instructionsSize,
             instructions,
+            linkSymbolTable,
             locationTable,
             nameSlotTable
            } : Executable.executable) =
       let
+        val linkSymbolTableWords = sizeOfSymbolTable linkSymbolTable
         val locationTableWords = sizeOfLocationTable locationTable
         val nameSlotTableWords = sizeOfNameSlotTable nameSlotTable
 
@@ -302,6 +337,8 @@ struct
             0w1 (* magic *)
             + 0w1 (* minor, major version *)
             + 0w1 (* byte order *)
+            + 0w1 (* symbolTableSize *)
+            + linkSymbolTableWords
             + 0w1 (* instructionSize *)
             + instructionsSize (* instructions *)
             + 0w1 (* locationTableWords *)
@@ -338,16 +375,23 @@ struct
             BTSNet.serializeUInt32
                 (BT.WordToUInt32(SDT.byteOrderToWord byteOrder)) writer
 
+        (* symbol table *)
+        val _ = BTS.serializeUInt32 linkSymbolTableWords writer
+        val _ = serializeSymbolTable linkSymbolTable writer
+
         (* instructions *)
         val _ = BTS.serializeUInt32 instructionsSize writer
         val _ = InstructionSerializer.serialize instructions writer
         val _ =
-            (* magic, version, byteOrder, size *)
-            if !pos <> 4 + 4 + 4 + 4 + (BT.UInt32.toInt instructionsSize * 4)
+            if !pos <> 4 + 4 + 4  (* magic, version, byteOrder *)
+                       + 4 + (BT.UInt32.toInt linkSymbolTableWords * 4)
+                       + 4 + (BT.UInt32.toInt instructionsSize * 4)
             then
               raise
                 Fail
                     ("serialize: serialized = " ^ Int.toString (!pos)
+                     ^ ", symtabsize = "
+                     ^ Int.toString (BT.UInt32.toInt linkSymbolTableWords)
                      ^ ", instsize = "
                      ^ Int.toString (BT.UInt32.toInt instructionsSize))
             else ()

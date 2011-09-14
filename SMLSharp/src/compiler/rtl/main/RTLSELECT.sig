@@ -8,8 +8,7 @@
 signature RTLSELECT = sig
 
   val select :
-      int option   (* compile unit stamp *)
-      -> AbstractInstruction2.program
+      {mainSymbol: string} * AbstractInstruction2.program
       -> RTL.program
 
 end

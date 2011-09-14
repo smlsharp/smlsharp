@@ -1,25 +1,34 @@
-Group is
+Group
+	signature ORD_KEY
+	signature ORD_SET
+	signature ORD_MAP
+	structure IEnv
+	structure SEnv
+	structure ISet
+	structure SSet
+	structure PathEnv
+	functor BinaryMapMaker
+(*
+	structure IEnvLazy
+	structure WEnvLazy
+	structure SEnvLazy
+	functor BinaryMapMakerLazy
+	functor BinarySetMaker
+*)
+
+is
 
 #if defined(NEW_CM)
 	$/basis.cm
 #endif
 
 	../../../../../smlnj-lib/Util/smlnj-lib.cm
-	../../pickle/sources.cm
 
 	IOrd.sml
-	WOrd.sml
 	SOrd.sml
-
-	BinaryMapMaker_Lazy.sml
-	BinaryMapMaker_NonLazy.sml
-	BinarySetMaker_NonLazy.sml
+	BinaryMapMaker.sml
 	ISet.sml
-	WSet.sml
 	SSet.sml
 	IEnv.sml
-	WEnv.sml
 	SEnv.sml
-	OrdSetPickler.sml
-	OrdMapPickler.sml
-	EnvPickler.sml
+	pathEnv.sml

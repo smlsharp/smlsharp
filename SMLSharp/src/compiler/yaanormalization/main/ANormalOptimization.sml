@@ -92,12 +92,9 @@ struct
         fun byteOf (AN.ANWORD v) = SOME v
           | byteOf _ = NONE
         fun boolOf (AN.ANINT v) =
-            if v = (BasicTypes.SInt32.fromInt Constants.TAG_bool_true)
-            then SOME true
-            else
-              if v = (BasicTypes.SInt32.fromInt Constants.TAG_bool_false)
-              then SOME false
-              else raise Control.Bug "invalid bool value"
+            if v = 0
+            then SOME false
+            else SOME true
           | boolOf _ = NONE
 (*
         fun stringOf (AN.ANCONST (CT.STRING v)) = SOME v
@@ -118,8 +115,8 @@ struct
         fun byteToExp v = AN.ANWORD v
         fun boolToExp v =
             if v
-            then AN.ANINT (BasicTypes.IntToSInt32 Constants.TAG_bool_true)
-            else AN.ANINT (BasicTypes.IntToSInt32 Constants.TAG_bool_false)
+            then AN.ANINT 1
+            else AN.ANINT 0
 (*
         fun stringToExp v = AN.ANCONSTANT (CT.STRING v)
 *)
@@ -421,23 +418,10 @@ struct
     | valueEq (AN.ANBYTE c1, AN.ANBYTE c2) = c1 = c2
     | valueEq (AN.ANCHAR c1, AN.ANCHAR c2) = c1 = c2
     | valueEq (AN.ANUNIT, AN.ANUNIT) = true
-(*
-    | valueEq (AN.ANEXCEPTIONTAG t1, AN.ANEXCEPTIONTAG t2) =
-      ExnTagID.eq (#tag t1, #tag t2)
-*)
     | valueEq (AN.ANVAR v1, AN.ANVAR v2) = ID.eq (#id v1, #id v2)
     | valueEq (AN.ANLABEL l1, AN.ANLABEL l2) = ID.eq (l1, l2)
-    | valueEq (AN.ANGLOBALSYMBOL {name=name1 as (_,kind1),ann=ann1,...},
-               AN.ANGLOBALSYMBOL {name=name2 as (_,kind2),ann=ann2,...}) =
-      (
-        case (kind1, kind2) of
-          (AN.UNDECIDED _, AN.UNDECIDED _) =>
-          (case (ann1, ann2) of
-             (AN.GLOBALVAR x, AN.GLOBALVAR y) => ExVarID.eq (x, y)
-           | (AN.EXCEPTIONTAG x, AN.EXCEPTIONTAG y) => ExnTagID.eq (x, y)
-           | _ => false)
-        | _ => name1 = name2
-      )
+    | valueEq (AN.ANTOPSYMBOL {name=name1,...},
+               AN.ANTOPSYMBOL {name=name2,...}) = name1 = name2
     | valueEq _ = false
 
   fun closureEq (AN.ANCLOSURE {funLabel = funLabel1, env = env1},
@@ -461,8 +445,7 @@ struct
         else anvalue
       | _ => anvalue
 
-  fun optimizeAPPLY env (args as {closure, argList, argTyList, resultTyList,
-                                  argSizeList}) =
+  fun optimizeAPPLY env (args as {closure, argList, argTyList, resultTyList}) =
       case getDefs env closure of
         h::t =>
         if List.all (fn x => closureEq (h, x)) t
@@ -472,13 +455,11 @@ struct
             AN.ANCALL {funLabel = funLabel,
                        env = env,
                        argList = argList,
-                       argSizeList = argSizeList,
                        argTyList = argTyList,
                        resultTyList = resultTyList}
           | AN.ANRECCLOSURE {funLabel} =>
             AN.ANRECCALL {funLabel = funLabel,
                           argList = argList,
-                          argSizeList = argSizeList,
                           argTyList = argTyList,
                           resultTyList = resultTyList}
           | _ => AN.ANAPPLY args
@@ -487,7 +468,7 @@ struct
       | nil => AN.ANAPPLY args
 
   fun optimizeTAILRECCALL ({entryFunctions, ...}:context)
-                          (args as {funLabel, argList, argSizeList,
+                          (args as {funLabel, argList,
                                     argTyList, resultTyList, loc}) =
       case funLabel of
         AN.ANLABEL funLabel =>
@@ -495,7 +476,6 @@ struct
            SOME _ =>
            AN.ANTAILLOCALCALL {codeLabel = AN.ANLOCALCODE funLabel,
                                argList = argList,
-                               argSizeList = argSizeList,
                                argTyList = argTyList,
                                resultTyList = resultTyList,
                                loc = loc,
@@ -504,7 +484,7 @@ struct
       | _ => AN.ANTAILRECCALL args
 
   fun optimizeTAILAPPLY context env
-                        (args as {closure, argList, argTyList, argSizeList,
+                        (args as {closure, argList, argTyList,
                                   resultTyList, loc}) =
       case getDefs env closure of
         h::t =>
@@ -515,14 +495,12 @@ struct
             AN.ANTAILCALL {funLabel = funLabel,
                            env = env,
                            argList = argList,
-                           argSizeList = argSizeList,
                            argTyList = argTyList,
                            resultTyList = resultTyList,
                            loc = loc}
           | AN.ANRECCLOSURE {funLabel} =>
             optimizeTAILRECCALL context {funLabel = funLabel,
                                          argList = argList,
-                                         argSizeList = argSizeList,
                                          argTyList = argTyList,
                                          resultTyList = resultTyList,
                                          loc = loc}
@@ -565,7 +543,8 @@ struct
                     isMutable} =>
         AN.ANARRAY {bitmap = propValue env subst bitmap,
                     totalSize = propValue env subst totalSize,
-                    initialValue = propValue env subst initialValue,
+                    initialValue =
+                      Option.map (propValue env subst) initialValue,
                     elementTy = elementTy,
                     elementSize = propValue env subst elementSize,
                     isMutable = isMutable}
@@ -578,43 +557,41 @@ struct
              resultTyList = resultTyList,
              instSizeList = map (propValue env subst) instSizeList,
              instTagList = map (propValue env subst) instTagList}
-      | AN.ANAPPLY {closure, argList, argSizeList, argTyList, resultTyList} =>
+      | AN.ANAPPLY {closure, argList, argTyList, resultTyList} =>
         optimizeAPPLY env
             {closure = propValue env subst closure,
              argList = map (propValue env subst) argList,
-             argSizeList = argSizeList : AN.sisize list,
              argTyList = argTyList,
              resultTyList = resultTyList}
-      | AN.ANCALL {funLabel, env=closEnv, argList, argSizeList, argTyList,
-                   resultTyList} =>
+      | AN.ANCALL {funLabel, env=closEnv, argList, argTyList, resultTyList} =>
         AN.ANCALL {funLabel = propValue env subst funLabel,
                    env = propValue env subst closEnv,
                    argList = map (propValue env subst) argList,
-                   argSizeList = argSizeList : AN.sisize list,
                    argTyList = argTyList,
                    resultTyList = resultTyList}
-      | AN.ANRECCALL {funLabel, argList, argSizeList, argTyList,
-                      resultTyList} =>
+      | AN.ANRECCALL {funLabel, argList, argTyList, resultTyList} =>
         AN.ANRECCALL {funLabel = propValue env subst funLabel,
                       argList = map (propValue env subst) argList,
-                      argSizeList = argSizeList : AN.sisize list,
                       argTyList = argTyList,
                       resultTyList = resultTyList}
-      | AN.ANLOCALCALL {codeLabel, argList, argSizeList, argTyList,
+      | AN.ANLOCALCALL {codeLabel, argList, argTyList,
                         resultTyList, returnLabel, knownDestinations} =>
         AN.ANLOCALCALL {codeLabel = codeLabel,
                         argList = map (propValue env subst) argList,
-                        argSizeList = argSizeList : AN.sisize list,
                         argTyList = argTyList,
                         resultTyList = resultTyList,
                         returnLabel = returnLabel,
                         knownDestinations = knownDestinations}
-      | AN.ANRECORD {bitmap, totalSize, fieldList, fieldSizeList,
-                     fieldTyList, isMutable} =>
-        AN.ANRECORD {bitmap = propValue env subst bitmap,
+      | AN.ANRECORD {bitmaps, totalSize, fieldList, fieldSizeList,
+                     fieldIndexList, fieldTyList, isMutable} =>
+        AN.ANRECORD {bitmaps = map (propValue env subst) bitmaps,
                      totalSize = propValue env subst totalSize,
                      fieldList = map (propValue env subst) fieldList,
                      fieldSizeList = map (propValue env subst) fieldSizeList,
+                     fieldIndexList =
+                       case fieldIndexList of
+                         NONE => NONE
+                       | SOME l => SOME (map (propValue env subst) l),
                      fieldTyList = fieldTyList,
                      isMutable = isMutable}
       | AN.ANENVRECORD {bitmap, totalSize, fieldList, fieldSizeList,
@@ -686,64 +663,54 @@ struct
                           elementTag = propValue env subst elementTag,
                           loc = loc}],
          env, subst)
-      | AN.ANTAILAPPLY {closure, argList, argTyList, argSizeList, resultTyList,
-                        loc} =>
+      | AN.ANTAILAPPLY {closure, argList, argTyList, resultTyList, loc} =>
         ([optimizeTAILAPPLY context env
               {closure = propValue env subst closure,
                argList = map (propValue env subst) argList,
                argTyList = argTyList,
                resultTyList = resultTyList,
-               argSizeList = argSizeList : AN.sisize list,
                loc = loc}],
          env, subst)
-      | AN.ANTAILCALL {funLabel, env = closEnv, argList, argSizeList,
+      | AN.ANTAILCALL {funLabel, env = closEnv, argList,
                        argTyList, resultTyList, loc} =>
         ([AN.ANTAILCALL {funLabel = propValue env subst funLabel,
                          env = propValue env subst closEnv,
                          argList = map (propValue env subst) argList,
-                         argSizeList = argSizeList : AN.sisize list,
                          argTyList = argTyList,
                          resultTyList = resultTyList,
                          loc = loc}],
          env, subst)
-      | AN.ANTAILRECCALL {funLabel, argList, argSizeList, argTyList,
-                          resultTyList, loc} =>
+      | AN.ANTAILRECCALL {funLabel, argList, argTyList, resultTyList, loc} =>
         ([optimizeTAILRECCALL context
               {funLabel = propValue env subst funLabel,
                argList = map (propValue env subst) argList,
-               argSizeList = argSizeList : AN.sisize list,
                argTyList = argTyList,
                resultTyList = resultTyList,
                loc = loc}],
          env, subst)
-      | AN.ANTAILLOCALCALL {codeLabel, argList, argSizeList, argTyList,
+      | AN.ANTAILLOCALCALL {codeLabel, argList, argTyList,
                             resultTyList, loc, knownDestinations} =>
         ([AN.ANTAILLOCALCALL
               {codeLabel = codeLabel,
                argList = map (propValue env subst) argList,
-               argSizeList = argSizeList : AN.sisize list,
                argTyList = argTyList,
                resultTyList = resultTyList,
                knownDestinations = knownDestinations,
                loc = loc}],
          env, subst)
-      | AN.ANRETURN {valueList, tyList, sizeList, loc} =>
+      | AN.ANRETURN {valueList, tyList, loc} =>
         ([AN.ANRETURN {valueList = map (propValue env subst) valueList,
                        tyList = tyList,
-                       sizeList = sizeList : AN.sisize list,
                        loc = loc}],
          env, subst)
-      | AN.ANLOCALRETURN {valueList, tyList, sizeList, loc,
-                          knownDestinations} =>
+      | AN.ANLOCALRETURN {valueList, tyList, loc, knownDestinations} =>
         ([AN.ANLOCALRETURN
               {valueList = map (propValue env subst) valueList,
                tyList = tyList,
-               sizeList = sizeList : AN.sisize list,
                loc = loc,
                knownDestinations = knownDestinations}],
          env, subst)
-      | AN.ANVAL {varList = [dst], sizeList,
-                  exp = AN.ANVALUE value, loc} =>
+      | AN.ANVAL {varList = [dst], exp = AN.ANVALUE value, loc} =>
         let
           val subst =
               case value of
@@ -757,19 +724,17 @@ struct
           val env = addDef [dst] anexp env
         in
           ([AN.ANVAL {varList = [dst],
-                      sizeList = sizeList : AN.sisize list,
                       exp = anexp,
                       loc = loc}],
            env, subst)
         end
-      | AN.ANVAL {varList, sizeList, exp, loc} =>
+      | AN.ANVAL {varList, exp, loc} =>
         let
           val varList = map (substVar subst) varList
           val anexp = optimizeExp env subst exp
           val env = addDef varList anexp env
         in
           ([AN.ANVAL {varList = map (substVar subst) varList,
-                      sizeList = sizeList : AN.sisize list,
                       exp = anexp,
                       loc = loc}],
            env, subst)
@@ -844,7 +809,7 @@ struct
     | optimizeDeclList context env subst nil = (nil, env, subst)
 
   and optimizeCodeDecl context env subst
-                       ({codeId, argVarList, argSizeList, body, resultTyList,
+                       ({codeId, argVarList, body, resultTyList,
                          loc}:AN.codeDecl) =
       let
         (* code is in the current sopce *)
@@ -853,7 +818,6 @@ struct
         {
           codeId = codeId,
           argVarList = argVarList,
-          argSizeList = argSizeList : AN.siexp list,
           body = body,
           resultTyList = resultTyList,
           loc =loc
@@ -861,7 +825,7 @@ struct
       end
 
   fun optimizeFunDecl context
-                      ({codeId, argVarList, argSizeList, body, resultTyList,
+                      ({codeId, argVarList, body, resultTyList,
                         ffiAttributes, loc}:AN.funDecl) =
       let
         val (body, _, _) =
@@ -870,7 +834,6 @@ struct
         {
           codeId = codeId,
           argVarList = argVarList,
-          argSizeList = argSizeList : AN.siexp list,
           body = body,
           resultTyList = resultTyList,
           ffiAttributes = ffiAttributes,

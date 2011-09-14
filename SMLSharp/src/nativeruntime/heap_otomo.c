@@ -13,6 +13,7 @@
 #include "object.h"
 #include "objspace.h"
 #include "heap.h"
+#include "heap_otomo.h"
 
 #ifdef GCSTAT
 #define GCTIME
@@ -563,18 +564,19 @@ heap_space_clear()
 
 }
 
-void
+void *
 sml_heap_thread_init()
 {
+	return NULL;
 }
 
 void
-sml_heap_thread_free()
+sml_heap_thread_free(void *data ATTR_UNUSED)
 {
 }
 
 void
-sml_heap_init(size_t size)
+sml_heap_init(size_t size, size_t max_size ATTR_UNUSED)
 {
 #ifdef PRINT_ALLOC_TIME
     arranged = size;
@@ -704,7 +706,14 @@ sml_heap_free()
 #endif /* GCSTAT || GCTIME */
 }
 
-#define mark_children(obj)  sml_obj_enum_ptr(obj, &mark_fn)
+#ifdef MULTITHREAD
+void
+sml_heap_thread_stw_hook(void *data ATTR_UNUSED)
+{
+}
+#endif /* MULTITHREAD */
+
+#define mark_children(obj)  sml_obj_enum_ptr(obj, mark)
 
 #define FROM_HEAP_TO_BITMAP(info,p)					\
   ((unsigned int)((char *)(p) - ((char *)(info)->obj_base))		\
@@ -858,21 +867,17 @@ is_marked(void *obj)
   return (*tmp_bitmap & tmp);
 }
 
-static void mark(void **slot, void *data);
-static sml_trace_cls mark_fn = mark;
+static void mark(void **slot);
 
 static void
 trace_outside(void *obj)
 {
-	if (obj != NULL) {
-		obj = sml_trace_ptr(obj, MAJOR);
-		if (obj != NULL)
-			sml_obj_enum_ptr(obj, &mark_fn);
-	}
+	if (obj != NULL)
+		sml_trace_ptr(obj);
 }
 
 static void
-mark(void **slot, void *data ATTR_UNUSED)
+mark(void **slot)
 {
   struct bitmap_info_space *b_info;
   unsigned int obj_size, alloc_size;
@@ -931,6 +936,18 @@ mark(void **slot, void *data ATTR_UNUSED)
 #ifdef GCSTAT
   gcstat.last.push_count++;
 #endif /* GCSTAT */
+}
+
+static void
+mark_all(void **slot)
+{
+  mark(*slot);
+  
+  /* STACK POP */
+  while (marking_stack.bottom != marking_stack.top){
+      marking_stack.top--;
+      mark_children((*(marking_stack.top)));
+  }
 }
 
 static void
@@ -1013,7 +1030,7 @@ sml_heap_gc(void)
 #endif /* PRINT_ALLOC_TIME */
   
   /* mark root objects */
-  sml_rootset_enum_ptr(&mark_fn, MAJOR);
+  sml_rootset_enum_ptr(mark, MAJOR);
   
   DBG(("marking root objects completed"));
   
@@ -1022,6 +1039,9 @@ sml_heap_gc(void)
       marking_stack.top--;
       mark_children((*(marking_stack.top)));
   }
+
+  sml_malloc_pop_and_mark(mark_all, MAJOR);
+
   DBG(("marking completed"));
 
 #ifdef CHECK
@@ -1029,7 +1049,7 @@ sml_heap_gc(void)
 #endif /* CHECK */
 
   /* check finalization */
-  sml_check_finalizer(MAJOR, is_marked, &mark_fn);
+  sml_check_finalizer(mark_all, MAJOR);
 
   /* sweep malloc heap */
   sml_malloc_sweep(MAJOR);
@@ -1079,7 +1099,7 @@ sml_heap_gc(void)
 #endif /* PRINT_ALLOC_TIME */
   
   /* start finalizers */
-  sml_run_finalizer();
+  sml_run_finalizer(NULL);
 }
 
 #ifdef GCSTAT
@@ -1403,15 +1423,15 @@ sml_heap_slow_alloc(size_t alloc_size)
   return obj;
 }
 
-void
-sml_heap_barrier(void **writeaddr, void *objaddr)
+SML_PRIMITIVE void
+sml_write_barrier(void **writeaddr, void *objaddr)
 { 
 #ifndef NOT_CLEAR_BITMAP
   if (IS_IN_HEAP_SPACE(writeaddr)) return;
   
   /* remember the writeaddr as a root pointer which is outside
    * of the heap. */
-  sml_global_barrier(writeaddr, objaddr, MAJOR);
+  sml_global_barrier(writeaddr, objaddr);
   
 #else /* NOT_CLEAR_BITMAP */
   struct bitmap_info_space *b_info;
@@ -1469,4 +1489,19 @@ sml_heap_barrier(void **writeaddr, void *objaddr)
   marking_stack.top++;  
 #endif /* NOT_CLEAR_BITMAP */
 
+}
+
+SML_PRIMITIVE void *
+sml_alloc(unsigned int objsize, void *frame_pointer)
+{
+	/* objsize = payload_size + bitmap_size */
+	void *obj;
+	size_t inc = HEAP_ROUND_SIZE(OBJ_HEADER_SIZE + objsize);
+
+	GIANT_LOCK(frame_pointer);
+	HEAP_FAST_ALLOC(obj, inc, (sml_save_frame_pointer(frame_pointer),
+				   sml_heap_slow_alloc(inc)));
+	GIANT_UNLOCK();
+	OBJ_HEADER(obj) = 0;
+	return obj;
 }

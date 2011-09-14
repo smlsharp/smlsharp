@@ -1,5 +1,0 @@
-Group
-	structure PatternCalcWithTvars
-	structure PatternCalcWithTvarsFormatter
-is
-	main/module.cm

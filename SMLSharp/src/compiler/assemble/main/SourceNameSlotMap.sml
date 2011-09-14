@@ -22,7 +22,7 @@ struct
    * BinarySet is used, not BinaryMap.
    *)
   structure EntrySet =
-  BinarySetFn
+  BinarySetMaker
   (struct
      type ord_key = Executable.nameSlotTableEntry
      fun compare (left : ord_key, right : ord_key) =

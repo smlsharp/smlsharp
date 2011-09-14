@@ -9,6 +9,7 @@ Group is
 	../../systemdef/sources.cm
 	../../name/sources.cm
 	../../util/sources.cm
+	../../primitive/sources.cm
 	../../absyn/sources.cm
 	../../constantterm/sources.cm
 	../../types/sources.cm

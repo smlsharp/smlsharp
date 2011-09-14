@@ -11,7 +11,6 @@ struct
 
   structure AI = AllocationInfo
   structure BT = BasicTypes
-  structure P = Primitives
   structure SI = SymbolicInstructions
 
   fun length L = BT.UInt32.fromInt(List.length L)
@@ -101,13 +100,10 @@ struct
 
       | SI.GetEnv _ => 0w2
       | SI.CallPrim {argEntries, primitive, ...} =>
-        (case #instruction primitive of
-           P.Internal1 _ => 0w3
-         | P.Internal2 _ => 0w4
-         | P.Internal3 _ => 0w5
-         | P.InternalN _ => 0w3 + (length argEntries)
-         | P.External _ => 0w4 + (length argEntries)
-         | None =>  raise Control.Bug "None inst in wordsOfInstruction : (assemble/main/InstructionSizeCalculator.sml)")
+        (case VMPrimitive.primImpl primitive of
+           VMPrimitive.Internal1 _ => 0w3
+         | VMPrimitive.Internal2 _ => 0w4
+         | VMPrimitive.External _ => 0w4 + (length argEntries))
       | SI.ForeignApply {argEntries, ...} => 
            (*
              Ohori: Dec 18, 2006. the additional 0x4 is for switchTag field 

@@ -6,6 +6,10 @@
  *)
 structure IntInf =
 struct
+  (*
+    IntInf.int
+    IntInf._format_int
+  *)
   open IntInf
 
   (***************************************************************************)

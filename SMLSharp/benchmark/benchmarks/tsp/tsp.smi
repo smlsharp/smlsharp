@@ -1,0 +1,6 @@
+_require "basis.smi"
+_require "tree.smi"
+structure TSP =
+struct
+  val tsp : Tree.tree * int -> Tree.tree
+end

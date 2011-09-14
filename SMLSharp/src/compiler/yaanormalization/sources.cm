@@ -1,7 +1,11 @@
 Group
+(*
 	structure YAANormalization
+*)
 	structure YAANormalOptimization
+(*
 	structure DeclarationRecovery
+*)
 	structure StaticAllocation
 is
 	main/module.cm

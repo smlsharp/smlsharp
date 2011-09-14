@@ -24,7 +24,7 @@ $(srcdir)/Configuration.sml: Configuration.sml.in Makefile \
                              $(top_builddir)/mksmlpath \
                              $(top_srcdir)/VERSION
 	if grep '%SNAPSHOT_DATE%' $(srcdir)/Configuration.sml.in > /dev/null 2>&1; then \
-	  snapdate=`$(SHELL) $(srcdir)/snapdate.sh $(top_srcdir)/..`; \
+	  snapdate=`$(SHELL) $(srcdir)/snapdate.sh $(top_srcdir)/../..`; \
 	fi; \
 	sed -e "s|%BUILD_ROOT%|`$(MKSMLPATH) -sh '$(BUILD_ROOT)'`|" \
 	    -e "s|%SRC_ROOT%|`$(MKSMLPATH) -sh '$(SRC_ROOT)'`|" \

@@ -1,0 +1,4 @@
+Group
+	structure ClosureANormal
+is
+	main/module.cm

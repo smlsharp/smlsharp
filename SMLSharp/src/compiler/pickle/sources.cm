@@ -1,5 +1,0 @@
-Group
-	signature PICKLE
-	structure Pickle
-is
-	main/module.cm

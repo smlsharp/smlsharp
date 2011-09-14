@@ -22,9 +22,7 @@ GENSOURCES = $(YACCFILES:.grm=.grm.sml) \
 
 TARGETS = $(TEMPLATES:.in=)
 
-DEFINITIONS = $(srcdir)/../Instructions.sml \
-              $(srcdir)/../../primitives/primitives.csv \
-              $(srcdir)/../../primitives/constants.csv \
+DEFINITIONS = $(srcdir)/../Instructions.sml
 
 SOURCES = InstructionParserTypes.sml \
           StringReplacer.sml \

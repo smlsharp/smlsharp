@@ -9,6 +9,4 @@ use "./makestring.sml";
 use "./data.sml";
 use "./main.sml";
 
-
-Main.doit ();
-print "Done";
+use "./doit.sml";

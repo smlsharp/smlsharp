@@ -164,7 +164,6 @@ struct
       | R.PtrDiff _ => ()
       | R.NoType => ()
       | R.Generic tid => checkTid context tid
-      | R.Atom => ()
 
   fun checkIntTy ty f =
       case ty of
@@ -179,7 +178,6 @@ struct
       | R.PtrDiff _ => ()
       | R.NoType => ERROR (f {actual=ty})
       | R.Generic tid => ERROR (f {actual=ty})
-      | R.Atom => ()
 
   fun checkPtrTy (tys as {actual:R.ptrTy, require:R.ptrTy}) f =
       if actual = require then nil else [f tys]
@@ -197,7 +195,6 @@ struct
       | R.PtrDiff _ => (ERROR (f {actual=ty}); R.Void)
       | R.NoType => (ERROR (f {actual=ty}); R.Void)
       | R.Generic tid => (ERROR (f {actual=ty}); R.Void)
-      | R.Atom => R.Void
 
   fun checkLabelRef (context:context) label =
       case label of
@@ -807,16 +804,19 @@ struct
       | R.X86 (R.X86FDIVR (ty, mem)) => checkX86FLD context (ty, mem)
       | R.X86 (R.X86FDIVR_ST (st1, st2)) => emptyEnv
       | R.X86 (R.X86FDIVRP st1) => emptyEnv
+      | R.X86 R.X86FPREM => emptyEnv
       | R.X86 (R.X86FABS) => emptyEnv
       | R.X86 (R.X86FCHS) => emptyEnv
+      | R.X86 R.X86FINCSTP => emptyEnv
       | R.X86 (R.X86FFREE st) => emptyEnv
       | R.X86 (R.X86FXCH st) => emptyEnv
       | R.X86 (R.X86FUCOM st) => emptyEnv
       | R.X86 (R.X86FUCOMP st) => emptyEnv
       | R.X86 R.X86FUCOMPP => emptyEnv
-      | R.X86 (R.X86FSW_GT {clob}) => (checkClobs context [clob]; emptyEnv)
-      | R.X86 (R.X86FSW_GE {clob}) => (checkClobs context [clob]; emptyEnv)
-      | R.X86 (R.X86FSW_EQ {clob}) => (checkClobs context [clob]; emptyEnv)
+      | R.X86 (R.X86FSW_TESTH {clob,mask}) =>
+        (checkClobs context [clob]; emptyEnv)
+      | R.X86 (R.X86FSW_MASKCMPH {clob,mask,compare}) =>
+        (checkClobs context [clob]; emptyEnv)
       | R.X86 (R.X86FLDCW mem) =>
         (
           checkMem context (R.Int16 R.U, mem);
@@ -1019,16 +1019,17 @@ handle e => (print (Control.prettyPrint (RTL.format_last last)^ "\n"); raise e)
       | R.X86 (R.X86FDIVR (ty, mem)) => ()
       | R.X86 (R.X86FDIVR_ST (x86st1, x86st2)) => ()
       | R.X86 (R.X86FDIVRP x86st1) => ()
+      | R.X86 R.X86FPREM => ()
       | R.X86 R.X86FABS => ()
       | R.X86 R.X86FCHS => ()
+      | R.X86 R.X86FINCSTP => ()
       | R.X86 (R.X86FFREE x86st1) => ()
       | R.X86 (R.X86FXCH x86st1) => ()
       | R.X86 (R.X86FUCOM x86st1) => ()
       | R.X86 (R.X86FUCOMP x86st1) => ()
       | R.X86 R.X86FUCOMPP => ()
-      | R.X86 (R.X86FSW_GT {clob}) => checkClobLive live clob
-      | R.X86 (R.X86FSW_GE {clob}) => checkClobLive live clob
-      | R.X86 (R.X86FSW_EQ {clob}) => checkClobLive live clob
+      | R.X86 (R.X86FSW_TESTH {clob,mask}) => checkClobLive live clob
+      | R.X86 (R.X86FSW_MASKCMPH {clob,mask,compare}) => checkClobLive live clob
       | R.X86 (R.X86FLDCW mem) => ()
       | R.X86 (R.X86FNSTCW mem) => ()
       | R.X86 R.X86FWAIT => ()
@@ -1114,7 +1115,8 @@ handle e => (print (Control.prettyPrint (RTL.format_last last)^ "\n"); raise e)
 
   fun checkCluster {symbolEnv, checkStability}
                    ({clusterId, frameBitmap, baseLabel, body,
-                     preFrameSize, postFrameSize, loc}:R.cluster) =
+                     preFrameSize, postFrameSize, numHeaderWords,
+                     loc}:R.cluster) =
       let
         val livenessGraph = RTLLiveness.liveness body
         val _ = checkClusterLiveness {checkStability=checkStability}

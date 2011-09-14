@@ -32,6 +32,10 @@ datatype globalInlineInfo = GFN of MV.mvexp * string (* for MVFNM in global env.
 
 datatype globalInlineEnv = GIE of globalInlineInfo ExVarID.Map.map
 val initialInlineEnv = GIE ExVarID.Map.empty
+val emptyInlineEnv = GIE ExVarID.Map.empty
+
+fun extendInlineEnv (GIE env1, GIE env2) =
+    GIE (ExVarID.Map.unionWith #2 (env1, env2))
 
 fun printInlineInfo inlineInfo =
     case inlineInfo of

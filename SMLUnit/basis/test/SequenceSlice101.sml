@@ -6,7 +6,9 @@
  * @author YAMATODANI Kiyoshi
  * @copyright 2010, Tohoku University.
  *)
-functor SequenceSlice101(S : SEQUENCE_SLICE) =
+functor SequenceSlice101(S : SEQUENCE_SLICE) : sig
+  val suite : unit -> SMLUnit.Test.test
+end =
 struct
 
   (************************************************************)

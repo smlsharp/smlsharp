@@ -1,0 +1,18 @@
+_require "basis.smi"
+_require "objects.smi"
+structure Ray =
+struct
+  val scaleVector : real * Objects.vector -> Objects.vector
+  val vecPlusVec : Objects.vector * Objects.vector -> Objects.vector
+  val vecPlusPt : Objects.vector * Objects.point -> Objects.point
+  val ptMinusPt : Objects.point * Objects.point -> Objects.vector
+  val wave : Objects.point * Objects.point * real -> Objects.point
+  val dotProd : Objects.vector * Objects.vector -> real
+  val normalSphere : Objects.visible -> Objects.vector
+  val intersectSphere : Objects.ray * Objects.sphere -> Objects.hit
+  val trace : Objects.ray * Objects.sphere list -> Objects.visible
+  val shade : Objects.visible -> Objects.color
+  val camera : real * real -> Objects.ray
+  val image : Objects.sphere list -> real * real -> Objects.color
+  val picture : string * Objects.sphere list -> unit
+end

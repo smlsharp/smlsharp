@@ -1,0 +1,20 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../util/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../usererror/sources.cm
+	../../toolchain/sources.cm
+	../../absyn/sources.cm
+	../../parser/sources.cm
+
+	SHA1.sml
+	InterfaceHash.sml
+	LoadFileError.ppg.sml
+	LoadFile.sml

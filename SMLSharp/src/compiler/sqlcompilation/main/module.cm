@@ -5,11 +5,12 @@ Group is
 #endif
 
 	../../control/sources.cm
-	../../env/sources.cm
 	../../name/sources.cm
-	../../primitive/sources.cm
-	../../constantterm/sources.cm
-	../../recordcalc/sources.cm
+	../../env/sources.cm
+	../../util/sources.cm
+	../../builtin/sources.cm
+	../../absyn/sources.cm
 	../../types/sources.cm
+	../../recordcalc/sources.cm
 
 	SQLCompilation.sml

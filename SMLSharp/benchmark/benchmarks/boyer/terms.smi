@@ -1,0 +1,14 @@
+_require "basis.smi"
+structure Terms =
+struct
+  datatype term =
+      Prop of {name : string, props : (term * term) list ref} * term list
+    | Var of int
+  datatype binding = Bind of int * term
+  type head = {name : string, props : (term * term) list ref}
+  val get : string -> head
+  val headname : head -> string
+  val add_lemma : term -> unit
+  val apply_subst : binding list -> term -> term
+  val rewrite : term -> term
+end

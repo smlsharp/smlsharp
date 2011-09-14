@@ -6,7 +6,9 @@
  * @author YAMATODANI Kiyoshi
  * @copyright 2010, Tohoku University.
  *)
-functor Sequence101(S : SEQUENCE) =
+functor Sequence101(S : SEQUENCE) : sig
+  val suite : unit -> SMLUnit.Test.test
+end =
 struct
 
   (************************************************************)

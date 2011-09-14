@@ -31,6 +31,7 @@
     | AT
     | ATTRIBUTE
     | BAR
+    | BUILTIN
     | CASE
     | CAST
     | CDECL
@@ -63,6 +64,7 @@
     | INFIXR
     | INT of BigInt.int
     | INT0 of BigInt.int
+    | INTERFACE
     | LBRACE
     | LBRACKET
     | LET
@@ -78,6 +80,7 @@
     | NULL
     | PERIOD
     | PERIODS
+    | PRIVATE
     | RAISE 
     | REC
     | REQUIRE
@@ -249,19 +252,21 @@
        | ffiApplyArg of Absyn.ffiArg
        | ffiApplyArgs of Absyn.ffiArg list
        | ffiApplyArgSeq of Absyn.ffiArg list
-       | ffityrow of (string * Absyn.ty) list
-       | ffityseq of Absyn.ty list
-       | ffiArgs of Absyn.ty list
-       | ffiContyArg of Absyn.ty list
-       | ffiAtty of Absyn.ty
-       | ffitupleseq of Absyn.ty list
-       | ffiTupleTy of Absyn.ty
-       | ffiFunArg of Absyn.ty list
-       | ffiFunty of Absyn.ty
+       | ffityrow of (string * Absyn.ffiTy) list
+       | ffityseq of Absyn.ffiTy list
+       | ffiArgs of Absyn.ffiTy list
+       | ffiContyArg of Absyn.ffiTy list
+       | ffiAtty of Absyn.ffiTy
+       | ffitupleseq of Absyn.ffiTy list
+       | ffiTupleTy of Absyn.ffiTy
+       | ffiFunArg of Absyn.ffiTy list
+       | ffiFunRet of Absyn.ffiTy list
+       | ffiFunty of Absyn.ffiTy
        | ffiattrseq of string list
        | ffiattr of string list
        | ffiattropt of string list
-       | ffity of Absyn.ty
+       | ffity of Absyn.ffiTy
+(*
        | old_ffiContyArg of Absyn.ty list
        | old_ffiAtty of Absyn.ty
        | old_ffituple of Absyn.ty list
@@ -269,10 +274,14 @@
        | old_ffityArg of Absyn.ty list
        | old_ffiFunty of Absyn.ty list * Absyn.ty
        | old_ffity of Absyn.ty
+*)
        | typbind of (Absyn.tvar list * string * Absyn.ty) list
        | typdesc of (Absyn.tvar list * string) list
+       | useFile of Absyn.top
+       | tops of Absyn.top list
        | topdecs of Absyn.topdec list
        | topdec of Absyn.topdec
+       | interface of Absyn.interface
        | unit of Absyn.unit
        | valdesc of (string * Absyn.ty) list
        | valbind of (Absyn.pat * Absyn.exp) list
@@ -317,9 +326,11 @@
 
 start : unit (Absyn.UNIT unit)
       | expOrSQL (Absyn.UNIT
-                 ([
-                    Absyn.TOPDECSTR
-                        (Absyn.COREDEC
+                  {
+                   tops=
+                    [Absyn.TOPDEC
+                       [Absyn.TOPDECSTR
+                          (Absyn.COREDEC
                              (Absyn.DECVAL
                                   (nil,
                                    [
@@ -329,12 +340,12 @@ start : unit (Absyn.UNIT unit)
                                    (expOrSQLleft,expOrSQLright)),
                                   (Loc.nopos,Loc.nopos)),
                              (Loc.nopos,Loc.nopos))
-                        ],
-                  (Loc.nopos,Loc.nopos)
-                  )
+                        ]
+                    ],
+                   interface = Absyn.NOINTERFACE,
+                   loc = (Loc.nopos,Loc.nopos)
+                  }
             )
-      | USE STRING (Absyn.USE(STRING,(USEleft,STRINGright)))
-      | USEOBJ STRING (Absyn.USEOBJ(STRING,(USEOBJleft,STRINGright)))
 
 (****************** constant ***************************)
 int      : INT (INT)
@@ -505,10 +516,19 @@ exp : appexp (appexp)
              (Absyn.EXPGLOBALSYMBOL(STRING,Absyn.ForeignCodeSymbol,
                                     (IMPORTleft,STRINGright)),
               ffity, (IMPORTleft,ffityright)))
+(*
     | exp COLON EXPORT ffity
           (Absyn.EXPFFIEXPORT(exp,ffity,(expleft,ffityright)))
+*)
     | FFIAPPLY ffiattropt atexp LPAREN ffiApplyArgs RPAREN COLON ffity
           (Absyn.EXPFFIAPPLY(ffiattropt, atexp, ffiApplyArgs, ffity,
+                             (FFIAPPLYleft,ffityright)))
+    | FFIAPPLY ffiattropt IMPORT STRING LPAREN ffiApplyArgs RPAREN COLON ffity
+          (Absyn.EXPFFIAPPLY(ffiattropt,
+                             Absyn.EXPGLOBALSYMBOL (STRING,
+                                                    Absyn.ForeignCodeSymbol,
+                                                    (IMPORTleft, STRINGright)),
+                             ffiApplyArgs, ffity,
                              (FFIAPPLYleft,ffityright)))
     | exp ANDALSO exp (Absyn.EXPCONJUNCTION(exp1,exp2,(exp1left,exp2right)))
     | exp ORELSE exp (Absyn.EXPDISJUNCTION(exp1,exp2,(exp1left,exp2right)))
@@ -710,7 +730,7 @@ dec : VAL valbind (Absyn.DECVAL(nil,valbind,(VALleft,valbindright)))
     | EXCEPTION exbinds (Absyn.DECEXN(exbinds,(EXCEPTIONleft,exbindsright)))
 (*    
     | LOCAL decseq_semicolon IN decseq_semicolon END                
-               (Absyn.LOCALDEC(decseq_semicolon1,decseq_semicolon2,(LOCALleft,ENDright)))
+      (Absyn.LOCALDEC(decseq_semicolon1,decseq_semicolon2,(LOCALleft,ENDright)))
 *)
     | OPEN longidseq (Absyn.DECOPEN(longidseq,(OPENleft,longidseqright)))
     | INFIX int idseq
@@ -721,14 +741,21 @@ dec : VAL valbind (Absyn.DECVAL(nil,valbind,(VALleft,valbindright)))
     | INFIX idseq (Absyn.DECINFIX(0,idseq,(INFIXleft,idseqright)))
     | INFIXR idseq (Absyn.DECINFIXR(0,idseq,(INFIXRleft,idseqright)))
     | NONFIX idseq (Absyn.DECNONFIX(idseq,(NONFIXleft,idseqright)))
+(*
 (*  deprecated syntax  *)
     | VAL EXTERNAL ffiattropt id EQ appexp COLON old_ffiFunty
         (Absyn.DECVAL(nil,
            [(Absyn.PATID({opPrefix=false,id=[id],loc=(idleft,idright)}),
-             Absyn.EXPFFIIMPORT(appexp,
-                                Absyn.TYFFI(Absyn.defaultFFIAttributes,ffiattropt,#1 old_ffiFunty,#2 old_ffiFunty,(old_ffiFuntyleft,old_ffiFuntyright)),
-                                (appexpleft,old_ffiFuntyright)))],
-           (VALleft,old_ffiFuntyright)))
+             Absyn.EXPFFIIMPORT
+               (appexp,
+                Absyn.TYFFI(Absyn.defaultFFIAttributes,
+                            ffiattropt,
+                            #1 old_ffiFunty,
+                            #2 old_ffiFunty,
+                            (old_ffiFuntyleft,old_ffiFuntyright)),
+                (appexpleft,old_ffiFuntyright)))],
+                      (VALleft,old_ffiFuntyright)))
+*)
 
 idseq : id ([id])
       | id idseq (id::idseq)
@@ -789,8 +816,12 @@ tyvarseq_comma : tyvar COMMA tyvar ([tyvar1,tyvar2])
    Ohori: kinded tyvar added 2007/11/11 ohori
 *)
 kinded_tyvar : tyvar ((tyvar, Absyn.UNIV))
-             | TYVAR HASH LBRACE tyrow RBRACE (({name=TYVAR,eq=Absyn.NONEQ},Absyn.REC(tyrow)))
-             | EQTYVAR HASH LBRACE tyrow RBRACE (({name=EQTYVAR,eq=Absyn.EQ}, Absyn.REC(tyrow)))
+             | TYVAR HASH LBRACE tyrow RBRACE
+               (({name=TYVAR,eq=Absyn.NONEQ},
+                 Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
+             | EQTYVAR HASH LBRACE tyrow RBRACE
+               (({name=EQTYVAR,eq=Absyn.EQ},
+                 Absyn.REC(tyrow, (LBRACEleft, RBRACEright))))
 
 kinded_tyvarseq : kinded_tyvar ([kinded_tyvar])
          | LPAREN kinded_tyvar RPAREN ([kinded_tyvar])
@@ -856,8 +887,6 @@ pat : apppat (Absyn.PATAPPLY(apppat,(apppatleft,apppatright)))
                  * identifier in the elaboration phase. *)
     | pat COLON ty (Absyn.PATTYPED(pat,ty,(patleft,tyright)))
     | pat AS pat (Absyn.PATLAYERED(pat1,pat2,(pat1left,pat2right)))
-    | LPAREN pat BAR pat RPAREN
-                (Absyn.PATORPAT(pat1,pat2,(LPARENleft,RPARENright)))
 
 optty : COLON ty (SOME(ty))
       | (NONE)
@@ -988,24 +1017,33 @@ ffiContyArg : (nil)
             | ffiArgs (ffiArgs)
 
 ffiAtty : LPAREN ffity RPAREN (ffity)
-        | tyvar (Absyn.TYID(tyvar,(tyvarleft,tyvarright)))
-        | ffiContyArg tyid (Absyn.TYCONSTRUCT(ffiContyArg,tyid,(ffiContyArgleft,tyidright)))
-        | LBRACE ffityrow RBRACE (Absyn.TYRECORD(ffityrow,(LBRACEleft,RBRACEright)))
-        | LBRACE RBRACE (Absyn.TYRECORD([],(LBRACEleft,RBRACEright)))
+        | tyvar (Absyn.FFITYVAR(tyvar,(tyvarleft,tyvarright)))
+        | ffiContyArg tyid
+          (Absyn.FFICONTY(ffiContyArg,tyid,(ffiContyArgleft,tyidright)))
+        | LBRACE ffityrow RBRACE
+          (Absyn.FFIRECORDTY(ffityrow,(LBRACEleft,RBRACEright)))
+        | LBRACE RBRACE (Absyn.FFIRECORDTY([],(LBRACEleft,RBRACEright)))
 
 ffitupleseq : ffiAtty ASTERISK ffiAtty ([ffiAtty1,ffiAtty2])
             | ffiAtty ASTERISK ffitupleseq (ffiAtty::ffitupleseq)
 
-ffiTupleTy : ffitupleseq (Absyn.TYTUPLE(ffitupleseq,(ffitupleseqleft,ffitupleseqright)))
+ffiTupleTy : ffitupleseq
+             (Absyn.FFITUPLETY(ffitupleseq,(ffitupleseqleft,ffitupleseqright)))
 
 ffiFunArg : LPAREN RPAREN ([])
           | ffiArgs (ffiArgs)
           | ffiTupleTy ([ffiTupleTy])
 
-ffiFunty : ffiFunArg ARROW ffity
-           (Absyn.TYFFI(Absyn.defaultFFIAttributes,nil,ffiFunArg,ffity,(ffiFunArgleft,ffityright)))
-         | ffiattr ffiFunArg ARROW ffity
-           (Absyn.TYFFI(Absyn.defaultFFIAttributes,ffiattr,ffiFunArg,ffity,(ffiFunArgleft,ffityright)))
+ffiFunRet : LPAREN RPAREN ([])
+          | ffity ([ffity])
+          | LPAREN ffityseq RPAREN (ffityseq)
+
+ffiFunty : ffiFunArg ARROW ffiFunRet
+           (Absyn.FFIFUNTY(nil,ffiFunArg,ffiFunRet,
+                           (ffiFunArgleft,ffiFunRetright)))
+         | ffiattr ffiFunArg ARROW ffiFunRet
+           (Absyn.FFIFUNTY(ffiattr,ffiFunArg,ffiFunRet,
+                           (ffiFunArgleft,ffiFunRetright)))
 
 ffiattrseq : id ([id])
            | id COMMA ffiattrseq (id::ffiattrseq)
@@ -1021,6 +1059,7 @@ ffity : ffiAtty (ffiAtty)
       | ffiFunty (ffiFunty)
       | ffiTupleTy (ffiTupleTy)
 
+(*
 (* deperecated syntax *)
 old_ffiContyArg : (nil)
                 | old_ffiAtty ([old_ffiAtty])
@@ -1041,6 +1080,7 @@ old_ffity : old_ffiAtty (old_ffiAtty)
                                       #1 old_ffiFunty,#2 old_ffiFunty,
                                       (old_ffiFuntyleft,old_ffiFuntyright)))
           | old_ffituple (Absyn.TYTUPLE(old_ffituple,(old_ffitupleleft,old_ffitupleright)))
+*)
 
 (**************** structure and signature************)
 
@@ -1278,5 +1318,21 @@ topdec : strdec
        | FUNCTOR funbindseq
                 (Absyn.TOPDECFUN(funbindseq,(FUNCTORleft,funbindseqright)))
 
-unit :  topdecs (topdecs, (topdecsleft, topdecsright))
+useFile : USE STRING (Absyn.USE (STRING,(USEleft,STRINGright)))
 
+tops : topdecs ([Absyn.TOPDEC topdecs])
+     | useFile ([useFile])
+     | topdecs useFile tops (Absyn.TOPDEC topdecs :: useFile :: tops)
+     | useFile tops (useFile :: tops)
+
+interface : (* none *)
+              (Absyn.NOINTERFACE)
+          | INTERFACE STRING interface
+              (Absyn.INTERFACE {name=STRING, loc=(INTERFACEleft, STRINGright)})
+
+unit : interface
+         ({interface = interface, tops = nil,
+           loc = (interfaceleft, interfaceright)})
+     | interface tops
+         ({interface = interface, tops = tops,
+           loc = (interfaceleft, topsright)})

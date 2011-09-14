@@ -6,9 +6,9 @@
 signature MULTIPLEVALUECALCUTILS = sig
 
   val getLocOfExp : MultipleValueCalc.mvexp -> MultipleValueCalc.loc
+(*
+  val substExp : AnnotatedTypes.ty BoundTypeVarID.Map.map -> MultipleValueCalc.mvexp -> MultipleValueCalc.mvexp
 
-  val substExp : AnnotatedTypes.ty IEnv.map -> MultipleValueCalc.mvexp -> MultipleValueCalc.mvexp
-
-  val substVarInfo : AnnotatedTypes.ty IEnv.map -> MultipleValueCalc.varInfo ->  MultipleValueCalc.varInfo
-
+  val substVarInfo : AnnotatedTypes.ty BoundTypeVarID.Map.map -> MultipleValueCalc.varInfo ->  MultipleValueCalc.varInfo
+*)
 end

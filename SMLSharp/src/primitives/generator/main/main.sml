@@ -2,14 +2,15 @@ structure Main = struct
 fun main (_, args) =
     (
       case args of h::t => OS.FileSys.chDir h | _ => ();
+(*
       PrimitiveTable.generateFiles
 	  "../../primitives.csv"
 	  [
 	    "../../compiler/main/Primitives.ppg",
 	    "../../runtime/main/Primitives.cc",
-	    "../../runtime/main/Primitives.hh",
-	    "../../../instructions/Instructions.sml"
+	    "../../runtime/main/Primitives.hh"
           ];
+*)
       ConstantTable.generateFiles
 	  "../../constants.csv"
 	  [

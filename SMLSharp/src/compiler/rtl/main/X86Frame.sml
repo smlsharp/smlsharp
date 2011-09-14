@@ -12,18 +12,25 @@ struct
   structure Emit = X86Emit
 
   fun sizeof ty = #size (X86Emit.formatOf ty)
-  val maxAlign = sizeof (R.Generic 0)
+  val maxAlign = #size X86Emit.formatOfGeneric
 
-  val frameInfo = {preOffset = 0w0,
-                   postOffset = 0w12,
-                   frameAlign = maxAlign,
-                   wordSize = sizeof (R.Int32 R.U)}
+  fun frameOffset headerSize {frameSize, offset} =
+      offset - (frameSize + headerSize)
+
+  fun frameInfo headerSize =
+      {preOffset = 0w0,
+       postOffset = Word.fromInt (8 + headerSize),
+       frameAlign = maxAlign,
+       wordSize = sizeof (R.Int32 R.U),
+       pointerSize = sizeof (R.Ptr R.Void),
+       frameHeaderOffset = ~4,
+       frameOffset = frameOffset headerSize}
 
   fun ceil (m, n) =
       (m + n - 1) - (m + n - 1) mod n
 
   fun allocateCluster (cluster as {clusterId, frameBitmap, baseLabel, body,
-                                   preFrameSize, postFrameSize,
+                                   preFrameSize, postFrameSize, numHeaderWords,
                                    loc}:R.cluster) =
       let
         (*
@@ -31,15 +38,15 @@ struct
          *
          * addr
          *  | :          :
-         *  | +----------+ [align 16]  -----------------------------
+         *  | +----------+ [align 16] ---------------------------
          *  | :PostFrame : (need to allocate)                ^
          *  | |          |                                   |
          *  | +==========+ [align 16]  preOffset = 0         |
          *  | | Frame    | (need to allocate)                | need to alloc
          *  | |          |                                   |
-         *  | +==========+ [align 12/16] postOffset = 12     |
-         *  | | infoaddr |                                   v
-         *  | +----------+ 8/16 <---- ebp --------------------------
+         *  | +==========+ postOffset = 12 or 16             |
+         *  | | header   | (4 or 8 bytes)                    v
+         *  | +----------+ 8/16 <---- ebp -----------------------
          *  | | push ebp |
          *  | +----------+ 4/16
          *  | | ret addr |
@@ -51,8 +58,14 @@ struct
          *  | :          :
          *  v
          *)
+        val _ = if numHeaderWords = 1 orelse numHeaderWords = 2
+                then ()
+                else raise Control.Bug "allocateCluster: numHeaderWords"
+
+        val headerSize = sizeof (R.Ptr R.Void) * numHeaderWords
+
         val {slotIndex, frameSize, initCode, frameCode} =
-            FrameLayout.allocate frameInfo cluster
+            FrameLayout.allocate (frameInfo headerSize) cluster
 
         (* substitute COMPUTE_FRAME with frameCode *)
         val body =
@@ -93,7 +106,7 @@ struct
          *  | +-----------+     ------                  |
          *  | | frame     |       |                     | allocSize
          *  | +-----------+       | framePointerOffset  |
-         *  | |frame info |       v                     v
+         *  | | header    |       v                     v
          *  | +-----------+ %ebp --------------------------
          *  | | push ebp  |       ^                  |
          *  | +-----------+       | systemSpaceSize  |
@@ -109,7 +122,7 @@ struct
         val preFrameOrigin =
             systemSpaceSize + preFrameSize
         val framePointerOffset =
-            frameSize + sizeof (R.Ptr R.Void) (* frame info *)
+            frameSize + headerSize
         val allocSize =
             ceil (systemSpaceSize + framePointerOffset + postFrameSize,
                   maxAlign) - systemSpaceSize
@@ -126,6 +139,7 @@ struct
               body = body,
               preFrameSize = preFrameSize,
               postFrameSize = postFrameSize,
+              numHeaderWords = numHeaderWords,
               loc = loc
             } : R.cluster
 

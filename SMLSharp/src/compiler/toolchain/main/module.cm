@@ -1,0 +1,12 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../configuration/sources.cm
+	../../control/sources.cm
+	Filename.sml
+	CoreUtils.sml
+	TempFile.sml
+	BinUtils.sml

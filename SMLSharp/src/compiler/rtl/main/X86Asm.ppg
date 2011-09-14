@@ -83,7 +83,10 @@ struct
   (*% @prefix format_ @ditto att_ *)
   (*% @prefix darwin_ @ditto att_ *)
   type localLabel =
-      (*% @prefix att_ @format(c * l) ".C" c "." "L" l *)
+      (*% @prefix att_ @format(c * l) "L" c "_" l *)
+      (* symbols beginning with "L" are "local symbol names."
+       * See section 5.3 Symbol Names of "Using as" of binutils
+       * documentation. *)
       ClusterID.id * VarID.id
 
   (*% @prefix att_ *)
@@ -100,7 +103,7 @@ struct
   type linkPtrSymbol =
       (*% @prefix att_ @format(x) x "@GOT" *)
       (*% @prefix format_ @format(x) x "$link" *)
-      (*% @prefix darwin_ @format(x) x "$non_lazy_ptr" *)
+      (*% @prefix darwin_ @format(x) "L" x "$non_lazy_ptr" *)
       string
 
   (*% @prefix att_ *)
@@ -109,7 +112,7 @@ struct
   type linkStubSymbol =
       (*% @prefix att_ @format(x) x "@PLT" *)
       (*% @prefix format_ @format(x) x "$stub" *)
-      (*% @prefix darwin_ @format(x) x "$stub" *)
+      (*% @prefix darwin_ @format(x) "L" x "$stub" *)
       string
 
   (*% @prefix att_ *)
@@ -822,9 +825,9 @@ struct
       FABS             (* st(0) <- abs(st(0)) *)
     | (*% @prefix att_ @format "\tfchs" *)
       FCHS             (* st(0) <- -st(0) *)
-(*
     | (*% @prefix att_ @format "\tfprem" *)
       FPREM            (* st(0) <- st(0) % st(1) *)
+(*
     | (*% @prefix att_ @format "\tfprem1" *)
       FPREM1           (* st(0) <- st(0) % st(1) IEEE *)
     | (*% @prefix att_ @format "\tfrndint" *)
@@ -873,8 +876,10 @@ struct
 (*
     | (*% @prefix att_ @format "\tfnstsw\t%ax" *)
       FNSTSW_AX      (* store fpu status word to %ax without exception check *)
+*)
     | (*% @prefix att_ @format "\tfincstp" *)
       FINCSTP          (* increment stack-top pointer *)
+(*
     | (*% @prefix att_ @format "\tfdecstp" *)
       FDECSTP          (* decrement stack-top pointer *)
 *)

@@ -143,7 +143,7 @@ in
 
   fun formatBTVMap BTVMap =
       let
-        val BTVIndexes = map TY.BOUNDVARty (IEnv.listKeys BTVMap)
+        val BTVIndexes = map TY.BOUNDVARty (BoundTypeVarID.Map.listKeys BTVMap)
         val formatEnv = TermFormat.extendBtvEnv TermFormat.emptyBtvEnv BTVMap
         val formattedNames = map (TY.format_ty formatEnv) BTVIndexes
       in
@@ -189,7 +189,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
   fun tyvarsToNames tyvars =
       map
           (fn (index, eq) =>
-              TY.format_eqKind (TermFormat.formatFreeTyvar index) eq)
+              TY.format_eqKind (BF.format_string (TermFormat.ftvName index)) eq)
           (ListPair.zip (List.tabulate (length tyvars, fn n => n), tyvars))
      
 
@@ -607,7 +607,8 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
                 NONE,
                 [FE.Term(4, "type"), U.s_d_Indicator]
                 @ formattedTyVarNames
-                @ (if 0 = IEnv.numItems tyargs then [] else [U.s_d_Indicator])
+                @ (if 0 = BoundTypeVarID.Map.numItems tyargs
+                   then [] else [U.s_d_Indicator])
                 @ [
                     FE.Term(size tyFunName, tyFunName),
                     U.s_d_Indicator,
@@ -1005,7 +1006,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
 
   and formatPlSpec plSpec = 
       case plSpec of
-        PL.PLSPECVAL (stringTyList, _) =>
+        PL.PLSPECVAL (_, stringTyList, _) =>
         let
           fun formatStringTy (string, ty) =
               [
@@ -1023,14 +1024,16 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         in
           concatFormatsList (map formatStringTy stringTyList)
         end
-      | PL.PLSPECTYPE (tvarsStringList, loc) =>
+      | PL.PLSPECTYPE {tydecls=tvarsStringList, iseq, loc,...} =>
         let
           fun basic pad name =
               [
                 FE.Guard
                     (
                       NONE,
-                      [FE.Term(4, "type")] @ pad @
+                      (if iseq then [FE.Term(4, "eqtype")]
+                       else [FE.Term(4, "type")])
+                      @ pad @
                       [U.s_d_Indicator, FE.Term(size name, name)]
                     )
               ]
@@ -1069,30 +1072,6 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
           case formattedTyvars of
             nil => basic nil
           | formatted => basic ([U.s_d_Indicator] @ formatted)
-        end
-      | PL.PLSPECEQTYPE (tvarsStringList, loc) =>
-        let
-          fun basic pad name =
-              [
-                FE.Guard
-                    (
-                      NONE,
-                      [FE.Term(6, "eqtype")]
-                      @ pad
-                      @ [U.s_d_Indicator, FE.Term(size name, name)]
-                    )
-              ]
-          fun formatStringTy (tyvars, name) =
-              let
-                val formattedTyvars = formatTvars tyvars
-              in
-                case formattedTyvars of
-                  nil => basic nil name
-                | formatted => basic ([U.s_d_Indicator] @ formatted) name
-              end
-             
-        in
-          concatFormatsList (map formatStringTy tvarsStringList)
         end
       | PL.PLSPECDATATYPE (tvarListtyNameConNameTyOptList_List, loc) =>
         let

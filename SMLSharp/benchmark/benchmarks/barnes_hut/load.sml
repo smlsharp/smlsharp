@@ -12,5 +12,4 @@ use "./main.sml";
 use "./vector3.sml";
 use "./main2.sml";
 
-Main.doit ();
-print "Done";
+use "./doit.sml";

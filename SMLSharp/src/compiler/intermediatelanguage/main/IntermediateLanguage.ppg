@@ -30,13 +30,13 @@ structure IntermediateLanguage = struct
 
   type id = VarID.id
 
-  (*%
+  (*% @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id
    *)
   type tid = 
        (*%
         * @format(tid) "t" tid
         *)
-       int
+       BoundTypeVarID.id
 
   (*%
    * @formatter(ANormal.ty) ANormal.format_ty
@@ -107,6 +107,7 @@ structure IntermediateLanguage = struct
    * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
    * @formatter(formatListWithEnclosureIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
    * @formatter(formatLabel) formatLabel
+   * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
    *)
   datatype expression =
            (*%
@@ -117,6 +118,10 @@ structure IntermediateLanguage = struct
             * @format(const:formatConst) const
             *)
            Constant of constant
+         | (*%
+            * @format(name) name
+            *)
+	   PrimSymbol of string
          | (*%
             * @format(const) "ExceptionTag(" const ")"
             *)
@@ -164,15 +169,15 @@ structure IntermediateLanguage = struct
             fieldOffsetExp : expression
            }
          | (*%
-            * @format({primName, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList}) 
+            * @format({primitive, argExpList:arg args:formatListWithEnclosure, argTyList, argSizeExpList}) 
             *    {"CallPrim(" 
-            *       2[+2 primName ","
+            *       2[+2 primitive ","
             *         +2 args(arg)(","1,"[","]")
             *        ] ")"}
             *)
            CallPrim of
            {
-            primName : string,
+            primitive : BuiltinPrimitive.primitive,
             argExpList : expression list,
             argTyList : ty list,
             argSizeExpList : expression list

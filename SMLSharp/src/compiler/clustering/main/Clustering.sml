@@ -64,7 +64,10 @@ structure Clustering : CLUSTERING = struct
         end
       | MV.MVEXPORTCALLBACK {funExp, funTy, attributes, loc} =>
         raise Control.Bug "transformExp: MVEXPORTCALLBACK"
+      | MV.MVTAGOF {ty, loc} => CCTAGOF {ty = ty, loc = loc}
       | MV.MVSIZEOF {ty, loc} => CCSIZEOF {ty = ty, loc = loc}
+      | MV.MVINDEXOF {label, recordTy, loc} =>
+        CCINDEXOF {label=label, recordTy=recordTy, loc=loc}
       | MV.MVCONSTANT v => CCCONSTANT v
       | MV.MVGLOBALSYMBOL v => CCGLOBALSYMBOL v
       | MV.MVEXCEPTIONTAG v => CCEXCEPTIONTAG v
@@ -164,20 +167,23 @@ structure Clustering : CLUSTERING = struct
              isMutable = isMutable,
              loc = loc
             }
-      | MV.MVSELECT {recordExp, label, recordTy, resultTy, loc} =>
+      | MV.MVSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
         CCSELECT
             {
              recordExp = transformExp recordExp,
+             indexExp = transformExp indexExp,
              label = label,
              recordTy = recordTy,
              resultTy = resultTy,
              loc = loc
             }
-      | MV.MVMODIFY {recordExp, recordTy, label, valueExp, valueTy, loc} =>
+      | MV.MVMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy,
+                     loc} =>
         CCMODIFY
             {
              recordExp = transformExp recordExp,
              recordTy = recordTy,
+             indexExp = transformExp indexExp,
              label = label,
              valueExp = transformExp valueExp,
              valueTy = valueTy,
@@ -449,24 +455,6 @@ structure Clustering : CLUSTERING = struct
          else 
            [CCCLUSTER
             {
-             entryFunctions = map transformRecBind recbindList,
-             innerFunctions = [],
-             isRecursive = true,
-             loc = loc
-            }]
-      | MV.MVVALPOLYREC {btvEnv, recbindList, loc} =>
-         if List.all (fn x => isLocalFunVar (#boundVar x)) recbindList then
-           [CCPOLYVALCODE
-            {
-             btvEnv = btvEnv,
-             code = map transformRecBind recbindList,
-             isRecursive = true,
-             loc = loc
-             }]
-         else 
-           [CCPOLYCLUSTER
-            {
-             btvEnv = btvEnv,
              entryFunctions = map transformRecBind recbindList,
              innerFunctions = [],
              isRecursive = true,

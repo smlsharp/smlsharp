@@ -1,0 +1,664 @@
+(*
+ The scope free calculus for SML#.
+ @author Atsushi Ohori
+*)
+structure IDCalc = 
+struct
+local
+  structure T = IDTypes
+
+  fun bug s = Control.Bug ("IDCalc: " ^ s)
+  type loc = Loc.loc
+
+  (*% @formatter(T.path) T.format_path *)
+  type path = (*% @format(x)  x *) T.path
+
+  (*% @formatter(T.typId) T.format_typId *)
+  type typId = (*% @format(x)  x *) T.typId
+  (*% @formatter(T.conId) T.format_conId *)
+  type conId = (*% @format(x)  x *) T.conId
+  (*% @formatter(T.varId) T.format_varId *)
+  type varId = (*% @format(x)  x *) T.varId
+  (*% @formatter(T.exnId) T.format_exnId *)
+  type exnId = (*% @format(x)  x *) T.exnId
+  (*% @formatter(T.oprimId) T.format_oprimId *)
+  type oprimId = (*% @format(x)  x *) T.oprimId
+  (*% @formatter(T.tvarId) T.format_tvarId *)
+  type tvarId = (*% @format(x)  x *) T.tvarId
+
+  (*% @formatter(T.revealKey) T.format_revealKey *)
+  type revealKey = (*% @format(x)  x *) T.revealKey
+
+  (*% @formatter(T.tvar) T.format_tvar *)
+  type tvar = (*% @format(x)  x *) T.tvar
+  (*% @formatter(T.kindedTvar) T.format_kindedTvar *)
+  type kindedTvar = (*% @format(x)  x *) T.kindedTvar
+  (*% @formatter(T.liftedTys) T.format_liftedTys *)
+  type liftedTys = (*% @format(x)  x *) T.liftedTys
+  (*% @formatter(T.formals) T.format_formals *)
+  type formals = (*% @format(x)  x *) T.formals
+  (*% @formatter(T.ffiTy) T.format_ffiTy *)
+  type ffiTy = (*% @format(x)  x *) T.ffiTy
+  (*% @formatter(T.ty) T.format_ty *)
+  type ty = (*% @format(x)  x *) T.ty
+  (*% @formatter(T.tfun) T.format_tfun *)
+  type tfun = (*% @format(x)  x *) T.tfun
+  (*% @formatter(T.conInfo) T.format_conInfo *)
+  type conInfo = (*% @format(x)  x *) T.conInfo
+  (*% @formatter(T.exnInfo) T.format_exnInfo *)
+  type exnInfo = (*% @format(x)  x *) T.exnInfo
+  (*% @formatter(T.typInfo) T.format_typInfo *)
+  type typInfo = (*% @format(x)  x *) T.typInfo
+  (*% @formatter(T.conSpec) T.format_conSpec *)
+  type conSpec = (*% @format(x)  x *) T.conSpec
+  (*% @formatter(T.varE) T.format_varE *)
+  type varE = (*% @format(x)  x *) T.varE
+
+  val tempVarNamePrefix = "$T_"
+
+in
+
+  (*%
+    @formatter(option) TermFormat.formatOptionalOption
+   *)
+  (* variable *)
+  type varInfo
+    = (*%
+         @format({path, id})
+            path "(" id ")"
+       *)
+      {path: path, id: varId}
+
+  (*% *)
+  (* overloaded primitive name *)
+  type oprimInfo
+    = (*% @format({path, id})  path "(" id ")" *)
+      {path: path, id: oprimId}
+
+  (*% @formatter(Absyn.constant) Absyn.format_constant *)
+  type constant = Absyn.constant
+
+
+  (*% @formatter(TvarMap.map) T.formatEnclosedTvarMap
+   *)
+  type tycast =
+   (*
+     (*
+         @format({from, liftedTysInst:ty map, to})
+          2[
+            from 
+            2[map(ty)(+1 "with (","=>",",",")") ]
+            +d "to" +d to
+           ]
+      *)
+       {from:tfun, liftedTysInst:ty TvarMap.map, to:tfun}
+    *)
+     (*%
+         @format({from, to})
+          2[
+            from +d "to" +d to
+           ]
+      *)
+       {from:tfun, to:tfun}
+
+  (*% @formatter(list) SmlppgUtil.formatListWithEnclosure *)
+  type scopedTvars =
+       (*%
+        * @format(ev evs)
+        * {evs(ev)("," +, + "(", ")")}
+        *)
+       kindedTvar list
+
+  (*%
+   * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+   *)
+  datatype overloadInstance =
+      (*% @format(exp) exp *)
+      INST_OVERLOAD of overloadCase
+    | (*% @format({path, ty} * loc) path *)
+      INST_EXVAR of {path: path, ty: ty} * loc
+    | (*% @format({primitive, ty} * loc) primitive *)
+      INST_PRIM of {primitive: BuiltinPrimitive.primitive, ty: ty} * loc
+
+ withtype overloadCase =
+      (*%
+        @format({tvar, expTy, matches: m ms, loc})
+         1[+1
+            "case" +d tvar +1 "in" +d expTy +1 "of" 2[+1 ms(m)(~2[+1 "|" +d])]
+          ]
+        @format:m({instTy, instance})
+         instTy +d "=>" +d instance
+       *)
+      {tvar: tvar,
+       expTy: ty,
+       matches: {instTy: ty, instance: overloadInstance} list,
+       loc: loc}
+  (*%
+    @formatter(option) TermFormat.formatOptionalOption
+    @formatter(ifCons) TermFormat.formatIfCons
+    @formatter(seqList) TermFormat.formatSeqList
+    @formatter(appList) TermFormat.formatAppList
+    @formatter(declList) TermFormat.formatDeclList
+    @formatter(enclosedList) TermFormat.formatEnclosedList
+    @formatter(optionalList) TermFormat.formatOptionalList
+    @formatter(bool) SmlppgUtil.formatBinaryChoice
+    @formatter(TypID.Map.map) formatEnclosedTypEnv
+    @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+    @formatter(BuiltinType.ty) BuiltinType.format_ty
+   *)
+  datatype icexp 
+    = (*%  @format(loc)  "_" *)
+      ICERROR of loc
+    | (*% @format(const * loc)  const *)
+      (* constant literal *)
+      ICCONSTANT of constant * loc
+    | (*% @format(name * gk * loc)  name *)
+      (* do we need this ? *)
+      ICGLOBALSYMBOL of string * Absyn.globalSymbolKind * loc
+    | (*%  @format(var * loc)  var  *)
+      (* local variable *)
+      ICVAR of varInfo * loc
+    | (*%
+         @format({path,ty} * loc)  path +d ":" +d ty
+       *)
+      (* extnernal variable imported through _require *)
+      ICEXVAR of {path:path, ty:ty} * loc
+    | (*%
+         @format({primitive,ty,loc})  primitive
+       *)
+      (* builtin names imported through _require *)
+      ICBUILTINVAR of {primitive:BuiltinPrimitive.primitive, ty:ty, loc:loc}
+    | (*%
+         @format(con * loc)  con
+       *)
+      (* constructor *)
+      ICCON of conInfo * loc
+    | (*%
+         @format(exn * loc)  exn 
+       *)
+      (* exception constructor *)
+      ICEXN of exnInfo * loc
+    | (*%
+         @format({path, ty} * loc)  path 
+       *)
+      (* extnernal exception constructor *)
+      ICEXEXN of {path:path, ty:ty} * loc
+    | (*%
+         @format(exn * loc)  "EXNCONSTRUCTOR" +d "(" exn ")"
+       *)
+      (* exception constructor *)
+      ICEXN_CONSTRUCTOR of exnInfo * loc
+    | (*%  @format(var * loc) var  *)
+      (* overloaded primitives *)
+      ICOPRIM of oprimInfo * loc
+    | (*%
+         @format(exp * ty * loc)
+         L2{ 1[exp +1":" ty] }
+       *)
+      ICTYPED of icexp * ty * loc
+    | (*%
+         @format({path, icexp, ty, loc,revealKey})
+         L2{ 1[icexp +1 ":>" ty "("revealKey")" ] }
+       *)
+      ICSIGTYPED of {path:path,icexp:icexp,ty:ty,loc:loc,revealKey:revealKey}
+    | (*%
+        @format(funExp * argExp list * loc)
+        L8{ 1[
+          funExp
+          +1
+          "{" list(argExp)(",") "}"
+          ] }
+       *)
+      ICAPPM of icexp * icexp list * loc
+    | (*%
+        @format(funExp * argExp list * loc)
+          funExp
+          +1
+          "{:" list(argExp)(",") ":}"
+       *)
+      ICAPPM_NOUNIFY of icexp * icexp list * loc
+    | (*%
+         @format(dec decs * exp exps * Loc)
+         R1{
+           "let" 1[ decs:declList(dec)(+1,+1) ]
+           +1 "in" 1[ +1 exps(exp)(";" +1) ]
+           +1 "end"
+           }
+       *)
+      ICLET of icdecl list * icexp list * loc
+    | (*%
+         @format(cast casts * exp * Loc)
+         R1{
+           "cast"
+             1[ casts:declList(cast)(+1,+1) ]
+           +1 "in"
+              1[ +1 exp ]
+           +1 "end"
+           }
+       *)
+      ICTYCAST of tycast list * icexp * loc
+    | (*%
+         @format(field fields * loc)
+           fields:optionalList(field)("{",",","}")
+         @format:field(label*exp)
+           label "=" exp
+       *)
+      ICRECORD of (string * icexp) list * loc
+    | (*%
+         @format(exp * loc)
+         R1{ 1[ "raise" +1 exp ] }
+       *)
+      ICRAISE of icexp * loc
+    | (*%
+         @format(exp * rule rules * loc)
+         R1{
+           exp
+           +1 "handle"
+           1[ +1 ] rules(rule)( +1 "|" +d)
+         }
+         @format:rule(pat * exp)
+         1[ pat +d "=>" +1 exp ]
+       *)
+      ICHANDLE of icexp * (icpat * icexp) list * loc
+    | (*%
+         @format(rule rules * loc)
+          "fn" +d rules(rule)(+1 " |"+d)
+         @format:rule({args:arg args,body:exp})
+          1[
+           args:seqList(arg)("{",",","}")
+           +d "=>"
+           +1 exp
+          ]
+       *)
+      ICFNM of {args:icpat list, body:icexp} list * loc 
+    | (*%
+         @format(arg args * exp * loc)
+          "fn" +d 
+          1[
+             "{" args(arg)(",") "}"
+           +d "=>"
+           +1 exp
+          ]
+         @format:arg(var * ty tys) var
+       *)
+      ICFNM1 of (varInfo * ty list) list * icexp * loc 
+    | (*%
+         @format(arg args * exp * loc)
+          "fn poly" +d 
+          1[
+             "{" args(arg)(",") "}"
+           +d "=>"
+           +1 exp
+          ]
+         @format:arg(var * ty) var
+       *)
+      ICFNM1_POLY of (varInfo * ty) list * icexp * loc
+    | (*%
+         @format(exp exps * rule rules * caseKind *loc)
+         R1{
+         "case"
+            1[+1 exps:seqList(exp)("(",",",")")]
+          +1 "of" +
+          rules(rule)(+1 " |" +)
+         }
+        @format:rule({args:pat pats, body:exp})
+          {pats:seqList(pat)("(",",",")") +d "=>" +1 exp}
+       *)
+      ICCASEM of icexp list 
+               * {args:icpat list, body:icexp} list 
+               * PatternCalc.caseKind 
+               * loc  (* primitive; caseKind added *)
+    | (*%
+         @format(exp * field fields * loc)
+         R1{
+          1[ { "modify" +1 exp +1
+               "#" +1 fields:seqList(field)("{",",","}") } ] }
+         @format:field(label * exp)
+          label "=" exp
+       *)
+      ICRECORD_UPDATE of icexp * (string * icexp) list * loc
+    | (*%
+         @format(label * loc) "#" label
+       *)
+      ICRECORD_SELECTOR of string * loc 
+    | (*%
+         @format(label * exp * loc) 
+         L8 { "#" label +1 exp }
+       *)
+      ICSELECT of string * icexp * loc
+    | (*%
+         @format(exp list * loc)
+         list:seqList(exp)("(",";",")")
+       *)
+      ICSEQ of icexp list * loc
+    | (*%
+         @format(exp * loc)
+         L2{ "_cast(" !N0{ exp ")" } }
+       *)
+      ICCAST of icexp * loc
+    | (*%
+       * @format(exp * ty * loc)
+       *     N0{ exp
+       *         + ":" +1 "_import" +2 {ty} }
+       *)
+      ICFFIIMPORT of icexp * ffiTy * loc
+    | (*%
+       * @format(exp * ty * loc)
+       *     N0{ exp
+       *         + ":" +1 "_export" +2 {ty} }
+       *)
+      ICFFIEXPORT of icexp * ffiTy * loc
+    | (*%
+         @format(ffiatrb * exp * arg list * ffiTy * loc)
+         L2{ "_ffiappy(" !N0{ exp "," +1 list:seqList(arg)("",",","") ")" } }
+       *)
+      ICFFIAPPLY of Absyn.ffiAttributes option
+                    * icexp * ffiArg list * ffiTy * loc
+    | (*%
+         @format(str strs * ty * loc)
+           N0{ "_sqlserver" + strs(str)("," +) + ":" + ty }
+         @format:str(str * exp)
+          N0{ str + "," + exp }
+       *)
+      ICSQLSERVER of (string * icexp) list * ty * loc
+    | (*%
+         @format(pat * exp * loc)
+         "_sqldbi" + pat
+         + "in" + exp
+       *)
+      ICSQLDBI of icpat * icexp * loc
+    
+
+  and ffiArg
+    = (*%
+         @format(exp * ffiTy * loc) exp
+       *)    
+      ICFFIARG of icexp * ffiTy * loc
+    | (*%
+         @format(ty * exp opt * loc)
+         "_sizeof(" !N0{ ty ")" }
+       *)
+      ICFFIARGSIZEOF of ty * icexp option * loc
+
+  and icpat 
+    = (*%  @format(loc) "?" *)
+      ICPATERROR of loc
+    | (*%  @format(loc) "_" *)
+      ICPATWILD of loc
+    | (*%  @format(var * loc) var  *)
+      ICPATVAR of varInfo * loc
+    | (*%  @format(con * loc) con *)
+      (* datatype constructor *)
+      ICPATCON of conInfo * loc
+    | (*%  @format(exn * loc) exn  *)
+      (* exception constructor *)
+      ICPATEXN of exnInfo * loc
+    | (*%  @format({path, ty} * loc) path  *)
+      ICPATEXEXN of {path:path, ty:ty} * loc
+    | (*%  @format(const * loc) const *)
+      (* constants *)
+      ICPATCONSTANT of constant * loc
+    | (*%
+         @format({con, arg, loc})
+         L8{ con + arg }
+       *)
+      ICPATCONSTRUCT of {con: icpat, arg: icpat, loc:loc}
+    | (*%
+         @format({flex, fields: field fields, loc})
+           fields:enclosedList(field)("{",",","}")
+         @format:field(label*exp)
+           label  "="  exp
+       *)
+      ICPATRECORD of {flex: bool, fields: (string * icpat) list, loc: loc}
+    | (*%
+         @format({patVar, tyOpt:ty opt, pat, loc})
+         L3{ patVar +1 "as" +1 pat }
+       *)
+      ICPATLAYERED of {patVar : varInfo, tyOpt: ty option, pat: icpat, loc:loc}
+    | (*%
+         @format(pat * ty * loc)
+         L2{ pat +1 ":" +d ty }
+       *)
+      ICPATTYPED of icpat * ty * loc
+  
+  and icdecl
+    = 
+      (*%
+         @format(scope * valbind valbinds * loc)
+         1[
+           "val"
+           scope 
+           +
+           valbinds(valbind)(+1 "and" +d)
+          ]
+         @format:valbind(pat * exp)
+            pat + "=" +1 exp
+       *)
+      ICVAL of scopedTvars * (icpat * icexp) list * loc
+    | (*%
+         @format({guard:scope, funbinds:fundecl fundecls, loc})
+          4[
+           "fun"
+            scope + 
+            fundecls(fundecl)(+1 "and" +d)
+           ]
+         @format:fundecl({funVarInfo, rules:rule rules})
+            funVarInfo
+               +d
+               rules(rule)(~2[+1"|" + funVarInfo + ])
+           
+         @format:rule({args:exp exps, body})
+           +2 L8{ "" exps(exp)(+2) } +1 "=" +d body
+       *)
+      ICDECFUN of
+         {
+          guard: scopedTvars,
+          funbinds:
+            {
+             funVarInfo: varInfo,
+             rules: {args: icpat list, body: icexp} list
+            } list,
+          loc: loc
+         }
+    | (*%
+         @format({guard:scope, funVarInfo, rules: rule rules, loc})
+          4[
+           "fun"
+            scope + 
+            funVarInfo
+               +d
+               rules(rule)(~2[+1"|" + funVarInfo + ])
+           ]
+         @format:rule({args:exp exps, body})
+           +2 L8{ "" exps(exp)(+2) } +1 "=" +d body
+       *)
+      ICNONRECFUN of
+         {
+          guard: scopedTvars,
+          funVarInfo: varInfo,
+          rules: {args: icpat list, body: icexp} list,
+          loc: loc
+         }
+    | (*%
+         @format({guard, recbinds:bind binds, loc})
+          "val rec" +d binds(bind)(+1)
+         @format:bind({varInfo, body})
+           varInfo +d "=" +2 body
+       *)
+      ICVALREC of {guard: scopedTvars,
+                   recbinds: {varInfo: varInfo,
+                              body: icexp} list,
+                   loc: loc}
+    | (*%
+         @format({tybinds:bind binds, body:decl decls, loc})
+           binds:seqList(bind)("abstype" +d, +1 "    and" +d,)
+           "in" 1[+1  decls(decl)(+1) ]
+         @format:bind({args:tvar tvars, typInfo, datacon: con cons})
+           1[ tvars:optionalList(tvar)("(",",",")") +1
+              typInfo +1
+              1[ cons:seqList(con)(" ="," |",) ]
+            ]
+         @format:con({datacon, tyOpt:ty opt})
+           datacon opt(ty)(+1 "of" +1,)
+       *)
+      ICABSTYPE of
+        {tybinds: 
+          {args: tvar list,
+           typInfo: typInfo,
+           datacon: {datacon: conInfo, tyOpt: ty option} list
+          } list,
+         body: icdecl list,
+         loc: loc
+        }
+    | (*%
+         @format(bind binds * loc)
+          binds:optionalList(bind)("exception" +d, +1 "and",)
+         @format:bind({exnInfo, loc}) exnInfo
+       *)
+      ICEXND of {exnInfo: exnInfo, loc: loc} list * loc
+    | (*%
+         @format({exnInfo, varInfo}* loc)
+                "exception tag" +d exnInfo +d "=" +d varInfo
+       *)
+      ICEXNTAGD of {exnInfo: exnInfo, varInfo:varInfo} * loc
+    | (*%
+         @format(var * ty * loc) "export" +d "variable" + var + ":" + ty
+       *)
+     (* export variable declaration specified in  _interface *)
+      ICEXPORTVAR of varInfo * ty * loc
+    | (*%
+         @format(var * ty * loc) "export" +d "variable" + var + ":" + ty
+       *)
+     (* export variable declaration specified in  _interface *)
+      ICEXPORTFUNCTOR of varInfo * ty * loc
+    | (*%
+         @format(exn * loc)
+         "export" +d "exception" + exn
+       *)
+     (* export exception declaration specified in  _interface *)
+      ICEXPORTEXN of exnInfo * loc
+    | (*%
+        @format({path, ty} * loc)
+         "extern" + "var" + path + ":" + ty
+       *)
+     (* import variable declaration specified in  _interface *)
+      ICEXTERNVAR of {path:path, ty:ty} * loc
+    | (*%
+        @format({path, ty:ty} * loc)
+         "extern" + "exception" + path + ":" + ty
+       *)
+     (* import exception declaration specified in  _interface *)
+      ICEXTERNEXN of {path:path, ty:ty} * loc
+    | (*%
+        @format({boundtvars, id, path, overloadCase, loc})
+         1["overloaded" + "var" + path + "(" id ")" +d "=" +d
+           overloadCase]
+       *)
+     (* overloaded name declaration specified in  _interface *)
+      ICOVERLOADDEF of {boundtvars:kindedTvar list,
+                        id:oprimId,path:path,overloadCase:overloadCase, loc:loc}
+
+  fun getLocExp icexp =
+      case icexp of
+      ICERROR loc => loc
+    | ICCONSTANT (constant, loc) => loc
+    | ICGLOBALSYMBOL (string,globalSymbolKind, loc) => loc
+    | ICVAR (varInfo, loc) => loc
+    | ICEXVAR ({path, ty},loc) => loc
+    | ICBUILTINVAR  {primitive, ty, loc} => loc
+    | ICCON (conInfo, loc) => loc
+    | ICEXN (exnInfo, loc) => loc
+    | ICEXN_CONSTRUCTOR (exnInfo, loc) => loc
+    | ICEXEXN ({path, ty}, loc) => loc
+    | ICOPRIM (oprimInfo, loc) => loc
+    | ICTYPED (icexp, ty, loc) => loc
+    | ICSIGTYPED {path, icexp, ty, loc, revealKey} => loc
+    | ICAPPM (icexp, icexpList, loc) => loc
+    | ICAPPM_NOUNIFY (icexp, icexpList, loc) => loc
+    | ICLET (icdeclList, icexpList, loc) => loc
+    | ICTYCAST (tycastList, icexpList, loc) => loc
+    | ICRECORD (fields, loc) => loc
+(*
+    | ICLIST (icexpList, loc) => loc
+*)
+    | ICRAISE (icexp, loc) => loc
+    | ICHANDLE (icexp, rules, loc) => loc
+    | ICFNM (rules, loc) => loc
+    | ICFNM1 (args, exp, loc) => loc
+    | ICFNM1_POLY (args, exp, loc) => loc
+    | ICCASEM (icexpList, rules, kind, loc) => loc
+    | ICRECORD_UPDATE (icexp, fieds, loc) => loc
+    | ICRECORD_SELECTOR (string, loc) => loc
+    | ICSELECT (string, icexp, loc) => loc
+    | ICSEQ (icexpList, loc) => loc
+    | ICCAST (icexp, loc) => loc
+    | ICFFIIMPORT (icexp, ffiTy, loc) => loc
+    | ICFFIEXPORT (icexp, ffiTy, loc) => loc
+    | ICFFIAPPLY (ffiAttributesOption, icexp, ffiArgList, ffiTy, loc) => loc
+    | ICSQLSERVER (stringIcexpList, ty, loc) => loc
+    | ICSQLDBI (icpat1, icexp2, loc) => loc
+    
+  fun getLeftLocExp icexp = #1 (getLocExp icexp)
+  fun getRightLocExp icexp = #2 (getLocExp icexp)
+
+  fun getLocPat pat = 
+      case pat of
+        ICPATERROR loc => loc
+      | ICPATWILD loc => loc
+      | ICPATVAR (varInfo, loc) => loc
+      | ICPATCON (conInfo, loc) => loc
+      | ICPATEXN (exnInfo, loc) => loc
+      | ICPATEXEXN ({path, ty}, loc) => loc
+      | ICPATCONSTANT (constant, loc) => loc
+      | ICPATCONSTRUCT {con, arg, loc} => loc
+      | ICPATRECORD {flex, fields, loc} => loc
+      | ICPATLAYERED {patVar, tyOpt, pat, loc} => loc
+      | ICPATTYPED (icpat, ty, loc) => loc
+
+  fun getRuleLocM nil = raise bug "empty rule in getRuleLocM"
+    | getRuleLocM [{args=pat::_,body=exp}] =
+        Loc.mergeLocs (getLocPat pat, getLocExp exp)
+    | getRuleLocM rules =
+        let
+          val pat1 = 
+            case rules of
+              {args=pat1::_, body}:: _ => pat1
+            | _ =>
+                raise
+                  bug
+                  "empty pattern in rules\
+                  \ (typeinference/main/TypeInferCore.sml)"
+          val {args, body=exp2} = List.last rules
+        in
+          Loc.mergeLocs (getLocPat pat1, getLocExp exp2)
+        end
+
+  fun getLeftLocPat pat = #1 (getLocPat pat)
+  fun getRightLocPat pat = #2 (getLocPat pat)
+        
+  fun getLocDec dec =
+      case dec of
+        ICVAL (scopedTvars, icpatIcexpList, loc) => loc
+      | ICDECFUN {guard,funbinds,loc} => loc
+      | ICNONRECFUN {loc,...} => loc
+      | ICVALREC {guard, recbinds,loc} => loc
+      | ICABSTYPE {tybinds, body, loc} => loc
+      | ICEXND (exdecls, loc) => loc
+      | ICEXNTAGD (extagdecls, loc) => loc
+      | ICEXPORTVAR (varInfo, ty, loc) => loc
+      | ICEXPORTFUNCTOR (varInfo, ty, loc) => loc
+      | ICEXPORTEXN (exnInfo, loc) => loc
+      | ICEXTERNVAR ({path, ty}, loc) => loc
+      | ICEXTERNEXN  ({path, ty}, loc) => loc
+      | ICOVERLOADDEF {boundtvars, id, path, overloadCase, loc} => loc
+
+  fun newICVar() =
+      let
+        fun gensym () =  tempVarNamePrefix ^ Gensym.gensym()
+        val newVarId = VarID.generate()
+      in
+        {path=[gensym()], id=newVarId}
+      end
+
+end
+end

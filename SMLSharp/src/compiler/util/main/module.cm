@@ -5,10 +5,11 @@ Group is
 #endif
 
 	../../../../../SMLFormat/smlformatlib.cm
-	../../../../../smlnj-lib/Util/smlnj-lib.cm
 	../../env/sources.cm
 	../../control/sources.cm
+	../../name/sources.cm
 
+(*
 	PATH_UTILITY.sig
 (*
 #if defined(SMLNJ_VERSION)
@@ -19,10 +20,13 @@ Group is
 	PathUtility_MLton.sml
 #endif
 *)
+*)
 	COUNTER.sig
 	Counter.sml
 	ListSorter.sml
+(*
 	ExtensibleArray.sml
+*)
 
 #if defined(SMLNJ_VERSION)
 #if defined(structure IntInf)
@@ -36,3 +40,9 @@ Group is
 
 	SmlppgUtil.ppg.sml
 	TermFormat.sml
+        utils.sml
+
+ 	GRAPH.sig
+ 	Graph.sml
+	SCCFun.sml
+	gensym.sml

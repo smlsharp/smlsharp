@@ -13,11 +13,15 @@ signature SACONTEXT = sig
       
   val insertVariables : context -> (AnnotatedCalc.varInfo list) -> context
 
+  val insertExVar : context -> AnnotatedCalc.exVarInfo -> context
+
   val insertBtvEnv : context -> AnnotatedTypes.btvEnv -> context
 
-  val lookupVariable : context  -> VarID.id -> (string * Loc.loc) -> AnnotatedCalc.varInfo
+  val lookupVariable : context  -> TypedLambda.varInfo -> Loc.loc -> AnnotatedCalc.varInfo
 
-  val lookupTid : context -> int -> AnnotatedTypes.btvKind
+  val lookupExVar : context -> TypedLambda.exVarInfo -> Loc.loc -> AnnotatedCalc.exVarInfo
+
+  val lookupTid : context -> BoundTypeVarID.id -> AnnotatedTypes.btvKind
 
   val fieldType : context -> (AnnotatedTypes.ty * string) -> AnnotatedTypes.ty
 

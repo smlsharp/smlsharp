@@ -5,8 +5,9 @@
  *)
 signature SIGENERATOR = sig
 
-  val generate : GlobalIndexEnv.globalIndexEnv * 
+  val generate : GlobalIndexEnv.globalIndexEnv *
                  IntermediateLanguage.moduleCode -> 
-                 (GlobalIndexEnv.globalIndexEnv * SymbolicInstructions.clusterCode list)
+                 (GlobalIndexEnv.globalIndexEnv *
+                  SymbolicInstructions.clusterCode list)
 
 end

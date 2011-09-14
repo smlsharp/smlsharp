@@ -17,9 +17,7 @@ sig
   (***************************************************************************)
 
   val elaborate :
-      Fixity.fixity SEnv.map
-      -> Absyn.topdec list
-      -> PatternCalc.pltopdec list
-         * Fixity.fixity SEnv.map
+      AbsynInterface.compileUnit
+      -> PatternCalcInterface.compileUnit
          * UserError.errorInfo list
 end

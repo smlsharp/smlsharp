@@ -17,7 +17,9 @@ structure UselessCodeElimination : USELESSCODEELIMINATION = struct
       case exp of
         MVFOREIGNAPPLY _ => true
       | MVEXPORTCALLBACK _ => true
+      | MVTAGOF _ => false
       | MVSIZEOF _ => false
+      | MVINDEXOF _ => false
       | MVCONSTANT _ => false
       | MVGLOBALSYMBOL _ => false
       | MVEXCEPTIONTAG _ => false
@@ -34,9 +36,10 @@ structure UselessCodeElimination : USELESSCODEELIMINATION = struct
         (containEffectInDeclList localDeclList) orelse (containEffectInExp mainExp)
       | MVMVALUES {expList, tyList, loc} => containEffectInExpList expList
       | MVRECORD {expList, recordTy, annotation, isMutable, loc} => containEffectInExpList expList
-      | MVSELECT {recordExp, label, recordTy, resultTy, loc} => containEffectInExp recordExp
-      | MVMODIFY {recordExp, recordTy, label, valueExp, valueTy, loc} =>
-        containEffectInExpList [recordExp,valueExp]
+      | MVSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
+        (containEffectInExp recordExp) orelse (containEffectInExp indexExp)
+      | MVMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy, loc} =>
+        containEffectInExpList [recordExp,indexExp,valueExp]
       | MVRAISE {argExp, resultTy, loc} => true
       | MVHANDLE {exp, exnVar, handler, loc} => true (*temporary*)
       | MVFNM {argVarList, funTy, bodyExp, annotation, loc} => false
@@ -61,7 +64,6 @@ structure UselessCodeElimination : USELESSCODEELIMINATION = struct
         MVVAL {boundVars, boundExp,...} => 
         (AnnotatedTypesUtils.isGlobal (hd boundVars)) orelse containEffectInExp boundExp
       | MVVALREC _ => false
-      | MVVALPOLYREC _ => false
 
   and containEffectInDeclList [] = false
     | containEffectInDeclList (decl::rest) =
@@ -101,7 +103,9 @@ structure UselessCodeElimination : USELESSCODEELIMINATION = struct
            newVarIdSet
           )
         end
+      | MVTAGOF _ => (exp,vSet)
       | MVSIZEOF _ => (exp,vSet)
+      | MVINDEXOF _ => (exp,vSet)
       | MVCONSTANT _ => (exp,vSet)
       | MVGLOBALSYMBOL _ => (exp,vSet)
       | MVEXCEPTIONTAG _ => (exp,vSet)
@@ -268,14 +272,16 @@ structure UselessCodeElimination : USELESSCODEELIMINATION = struct
            newVarIdSet
           )
         end
-      | MVSELECT {recordExp, label, recordTy, resultTy, loc} =>
+      | MVSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
         let
           val (newRecordExp,newVarIdSet) = eliminateExp vSet recordExp
+          val (newIndexExp,newVarIdSet) = eliminateExp newVarIdSet indexExp
         in
           (
            MVSELECT
                {
                 recordExp = newRecordExp,
+                indexExp = indexExp,
                 label = label,
                 recordTy = recordTy,
                 resultTy = resultTy,
@@ -284,16 +290,18 @@ structure UselessCodeElimination : USELESSCODEELIMINATION = struct
            newVarIdSet
           )
         end
-      | MVMODIFY {recordExp, recordTy, label, valueExp, valueTy, loc} =>
+      | MVMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy, loc} =>
         let
           val (newRecordExp,newValueExp,newVarIdSet) =
               eliminateExp2 vSet (recordExp,valueExp)
+          val (newIndexExp,newVarIdSet) = eliminateExp newVarIdSet indexExp
         in
           (
            MVMODIFY
                {
                 recordExp = newRecordExp,
                 recordTy = recordTy,
+                indexExp = newIndexExp,
                 label = label,
                 valueExp = newValueExp,
                 valueTy = valueTy,
@@ -510,25 +518,6 @@ structure UselessCodeElimination : USELESSCODEELIMINATION = struct
               end
           end
 
-        | MVVALPOLYREC {btvEnv, recbindList, loc} =>
-          let
-            val boundVars = boundVarsInRecBinds recbindList
-            val varIds = varIdSet boundVars
-          in
-            if (VarIdSet.isEmpty(VarIdSet.intersection(varIds,newVarIdSet)))
-               andalso (not (globalInVars boundVars))
-            then (newDeclList, newVarIdSet)
-            else
-              let
-                val (newRecBindList, newVarIdSet) = eliminateRecBindList newVarIdSet recbindList
-              in
-                (
-                 MVVALPOLYREC {btvEnv = btvEnv, recbindList = newRecBindList, loc = loc}::newDeclList,
-                 VarIdSet.difference(newVarIdSet, varIds)
-                )
-              end
-          end
-
       end
   
   fun eliminateBasicBlockList vSet [] = ([], vSet)
@@ -586,25 +575,6 @@ structure UselessCodeElimination : USELESSCODEELIMINATION = struct
                                             in
                                                 (
                                                  MVVALREC {recbindList = newRecBindList, loc = loc}::newCode,
-                                                 VarIdSet.difference(newVarIdSet, varIds)
-                                                )
-                                            end
-                                    end
-                                  | MVVALPOLYREC {btvEnv, recbindList, loc} =>
-                                    let
-                                        val boundVars = boundVarsInRecBinds recbindList
-                                        val varIds = varIdSet boundVars
-                                    in
-                                        if (VarIdSet.isEmpty(VarIdSet.intersection(varIds,newVarIdSet)))
-                                           andalso (not (globalInVars boundVars))
-                                        then (newCode, newVarIdSet)
-                                        else
-                                            let
-                                                val (newRecBindList, newVarIdSet) = eliminateRecBindList newVarIdSet recbindList
-                                            in
-                                                (
-                                                 MVVALPOLYREC {btvEnv = btvEnv, recbindList = newRecBindList, loc = loc}::
-                                                 newCode,
                                                  VarIdSet.difference(newVarIdSet, varIds)
                                                 )
                                             end

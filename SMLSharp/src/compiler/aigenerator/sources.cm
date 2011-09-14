@@ -1,6 +1,0 @@
-Group
-	structure AIGenerator
-	structure GlobalIndexAllocator
-	structure AIPrimitive (* for YASIGenerator *)
-is
-	main/module.cm

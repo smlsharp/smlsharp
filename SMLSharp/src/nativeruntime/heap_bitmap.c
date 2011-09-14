@@ -2,6 +2,7 @@
  * heap_bitmap.c
  * @copyright (c) 2010, Tohoku University.
  * @author UENO Katsuhiro
+ * @author Yudai Asai
  * @version $Id: $
  */
 
@@ -10,6 +11,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#ifdef MULTITHREAD
+#include <pthread.h>
+#endif /* MULTITHREAD */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -28,25 +32,21 @@
 #include "objspace.h"
 #include "heap.h"
 
-#define EARLYMARK
-/*#define GLOBAL_MARKSTACK*/
-/*#define ARENA_MARKSTACK*/
 /*#define SURVIVAL_CHECK*/
 /*#define GCSTAT*/
 /*#define GCTIME*/
-/*#define MEMSET_NT*/
-#define SWEEP_ARENA
 /*#define NULL_IS_NOT_ZERO*/
 /*#define MINOR_GC*/
+/*#define DEBUG_USE_MMAP */
+
+#ifdef MULTITHREAD
+/* ToDo: generational collection with multithread support is not confirmed. */
+#undef MINOR_GC
+#endif /* MULTITHREAD */
 
 #ifdef GCSTAT
 #define GCTIME
 #endif /* GCSTAT */
-#ifdef MINOR_GC
-#define SWEEP_ARENA
-#undef GLOBAL_MARKSTACK
-#undef ARENA_MARKSTACK
-#endif /* MINOR_GC */
 
 #if defined GCSTAT || defined GCTIME
 #include <stdarg.h>
@@ -55,37 +55,37 @@
 #endif /* GCSTAT || GCTIME */
 
 /* bit pointer */
-struct heap_bitptr {
+struct bitptr {
 	unsigned int *ptr;
 	unsigned int mask;
 };
-typedef struct heap_bitptr heap_bitptr_t;
+typedef struct bitptr bitptr_t;
 
-#define HEAP_BITPTR_WORDBITS  ((unsigned int)(sizeof(unsigned int) * CHAR_BIT))
+#define BITPTR_WORDBITS  ((unsigned int)(sizeof(unsigned int) * CHAR_BIT))
 
-#define HEAP_BITPTR_INIT(b,p,n) \
-	((b).ptr = (p) + (n) / HEAP_BITPTR_WORDBITS, \
-	 (b).mask = 1 << ((n) % HEAP_BITPTR_WORDBITS))
-#define HEAP_BITPTR_TEST(b)  (*(b).ptr & (b).mask)
-#define HEAP_BITPTR_SET(b)   (*(b).ptr |= (b).mask)
-#define HEAP_BITPTR_CLEAR(b) (*(b).ptr &= ~(b).mask)
-#define HEAP_BITPTR_WORD(b)  (*(b).ptr)
-#define HEAP_BITPTR_WORDINDEX(b,p)  ((b).ptr - (p))
-#define HEAP_BITPTR_EQUAL(b1,b2) \
+#define BITPTR_INIT(b,p,n) \
+	((b).ptr = (p) + (n) / BITPTR_WORDBITS, \
+	 (b).mask = 1 << ((n) % BITPTR_WORDBITS))
+#define BITPTR_TEST(b)  (*(b).ptr & (b).mask)
+#define BITPTR_SET(b)   (*(b).ptr |= (b).mask)
+#define BITPTR_CLEAR(b) (*(b).ptr &= ~(b).mask)
+#define BITPTR_WORD(b)  (*(b).ptr)
+#define BITPTR_WORDINDEX(b,p)  ((b).ptr - (p))
+#define BITPTR_EQUAL(b1,b2) \
 	((b1).ptr == (b2).ptr && (b1).mask == (b2).mask)
 
-/* HEAP_BITPTR_NEXT: find 0 bit in current word after and including
+/* BITPTR_NEXT: find 0 bit in current word after and including
  * pointed bit. */
-#define HEAP_BITPTR_NEXT(b) do {			 \
+#define BITPTR_NEXT(b) do {				 \
 	unsigned int tmp__ = *(b).ptr | ((b).mask - 1U); \
 	(b).mask = (tmp__ + 1U) & ~tmp__;		 \
 } while (0)
-#define HEAP_BITPTR_NEXT_FAILED(b)  ((b).mask == 0)
+#define BITPTR_NEXT_FAILED(b)  ((b).mask == 0)
 
-static heap_bitptr_t
+static bitptr_t
 bitptr_linear_search(unsigned int *start, const unsigned int *limit)
 {
-	heap_bitptr_t b = {start, 0};
+	bitptr_t b = {start, 0};
 	while (b.ptr < limit) {
 		b.mask = (*b.ptr + 1) & ~*b.ptr;
 		if (b.mask) break;
@@ -95,139 +95,162 @@ bitptr_linear_search(unsigned int *start, const unsigned int *limit)
 }
 
 #if defined(__GNUC__) && !defined(NOASM) && defined(HOST_CPU_i386)
-#define HEAP_BITPTR_INC(b) do {						\
+#define BITPTR_INC(b) do {						\
 	unsigned int tmp__;						\
 	__asm__ ("xorl\t%0, %0\n\t"					\
 		 "roll\t%1\n\t"						\
 		 "rcll\t%0"						\
 		 : "=&r" (tmp__), "+r" ((b).mask));			\
-	(b).ptr += tmp__;\
+	(b).ptr += tmp__;						\
 } while (0)
 #else
-#define HEAP_BITPTR_INC(b) \
+#define BITPTR_INC(b) \
 	(((b).mask <<= 1) ? (void)0 : (void)((b).mask = 1, (b).ptr++))
 #endif /* !NOASM */
 
-/* HEAP_BITPTR_INDEX: bit index of 'b' counting from first bit of 'base'. */
 #if defined(__GNUC__) && !defined(NOASM) && defined(HOST_CPU_i386)
-#define HEAP_BITPTR_INDEX(b,p) ({				\
-	unsigned int tmp__;					\
-	__asm__ ("bsfl %1, %0" : "=r" (tmp__) : "r" ((b).mask)); \
-	((b).ptr - (p)) * HEAP_BITPTR_WORDBITS + tmp__;		 \
-})
-#else
-#define HEAP_BITPTR_INDEX(b,p) \
-	(((b).ptr - (p) + 1U) * HEAP_BITPTR_WORDBITS - bsr((b).mask))
-#endif /* NOASM */
-
-/* sml_heap_bsr(x) : searches first 1 bit from MSB and returns the bit index.
- * Assume that x is not zero. */
-#if defined(__GNUC__) && !defined(NOASM) && defined(HOST_CPU_i386)
-#define sml_heap_bsr(x) ({ \
+#define bsr(x) ({							\
 	unsigned int tmp__;						\
 	ASSERT((x) > 0);						\
 	__asm__ ("bsrl\t%1, %0" : "=r" (tmp__) : "r" ((unsigned int)(x))); \
 	tmp__;								\
 })
-#elif defined(SIZEOF_INT) && (SIZEOF_INT == 4 || SIZEOF_INT == 8)
+#define bsf(x) ({							\
+	unsigned int tmp__;						\
+	ASSERT((x) > 0);						\
+	__asm__ ("bsfl\t%1, %0" : "=r" (tmp__) : "r" ((unsigned int)(x))); \
+	tmp__;								\
+})
+#elif defined(SIZEOF_INT) && (SIZEOF_INT == 4)
 static inline unsigned int
-sml_heap_bsr(unsigned int m)
+bsr(unsigned int m)
 {
-	unsigned int x, n = -1;
+	unsigned int x, n = 0;
 	ASSERT(m > 0);
-#if SIZEOF_INT == 8
-	x = m >> 32; if (x != 0) n += 32, m = x;
-#endif /* SIZEOF_INT == 8 */
 	x = m >> 16; if (x != 0) n += 16, m = x;
 	x = m >> 8; if (x != 0) n += 8, m = x;
 	x = m >> 4; if (x != 0) n += 4, m = x;
 	x = m >> 2; if (x != 0) n += 2, m = x;
-	return n + m;
+	return n + (m >> 1);
+}
+static inline unsigned int
+bsf(unsigned int m)
+{
+	unsigned int x, n = 31;
+	ASSERT(m > 0);
+	x = m << 16; if (x != 0) n -= 16, m = x;
+	x = m << 8; if (x != 0) n -= 8, m = x;
+	x = m << 4; if (x != 0) n -= 4, m = x;
+	x = m << 2; if (x != 0) n -= 2, m = x;
+	x = m << 1; if (x != 0) n -= 1;
+	return n;
 }
 #else
 static inline unsigned int
-sml_heap_bsr(unsigned int m)
+bsr(unsigned int m)
 {
-	unsigned int x, n = -1, c = sizeof(unsigned int) / 2;
+	unsigned int x, n = 0, c = BITPTR_WORDBITS / 2;
 	ASSERT(m > 0);
 	do {
 		x = m >> c; if (x != 0) n += c, m = x;
 		c >>= 1;
 	} while (c > 1);
-	return n + m;
+	return n + (m >> 1);
+}
+static inline unsigned int
+bsf(unsigned int m)
+{
+	unsigned int x, n = 31, c = BITPTR_WORDBITS / 2;
+	ASSERT(m > 0);
+	do {
+		x = m << c; if (x != 0) n -= c, m = x;
+		c >>= 1;
+	} while (c > 0);
+	return n;
 }
 #endif /* NOASM */
 
-#define HEAP_CEIL_LOG2(x) \
-	(sml_heap_bsr((x) - 1) + 1)
+/* BITPTR_INDEX: bit index of 'b' counting from first bit of 'base'. */
+#define BITPTR_INDEX(b,p) \
+	(((b).ptr - (p)) * BITPTR_WORDBITS + bsf((b).mask))
 
-/* heap bins */
-/*
- * Since heap_bins are frequently accessed, they should be small so that
- * they can stay in cache as long as possible. And, in order for fast
- * offset computation, sizeof(struct heap_bin) should be power of 2.
- */
-struct heap_bin {
-	heap_bitptr_t freebit;
-	char *free;
-	unsigned int slotsize_bytes;
-	struct heap_arena *arena, *filled;  /* zipped arena list */
-	unsigned int minor_count;
-	unsigned int dummy;
+#define CEIL_LOG2(x) \
+	(bsr((x) - 1) + 1)
+
+/* segments */
+
+#ifndef SEGMENT_SIZE
+#define SEGMENT_SIZE  131072  /* 128k */
+#endif /* SEGMENT_SIZE */
+#ifndef SEG_RANK
+#define SEG_RANK  3
+#endif /* SEG_RANK */
+
+#define BLOCKSIZE_MIN_LOG2  3U   /* 2^3 = 8 */
+#define BLOCKSIZE_MIN       (1U << BLOCKSIZE_MIN_LOG2)
+#define BLOCKSIZE_MAX_LOG2  12U  /* 2^4 = 16 */
+#define BLOCKSIZE_MAX       (1U << BLOCKSIZE_MAX_LOG2)
+
+struct segment_layout {
+	size_t blocksize;
+	size_t bitmap_offset[SEG_RANK];
+	size_t bitmap_limit[SEG_RANK];
+	unsigned int bitmap_sentinel[SEG_RANK];
+	size_t bitmap_size;
+	size_t stack_offset;
+	size_t stack_limit;
+	size_t block_offset;
+	size_t num_blocks;
+#ifdef MINOR_GC
+	size_t minor_threshold;
+#endif /* MINOR_GC */
 };
 
-#define HEAP_SLOTSIZE_MIN_LOG2  3U   /* 2^3 = 8 */
-#define HEAP_SLOTSIZE_MIN       (1U << HEAP_SLOTSIZE_MIN_LOG2)
-#define HEAP_SLOTSIZE_MAX_LOG2  12U  /* 2^4 = 16 */
-#define HEAP_SLOTSIZE_MAX       (1U << HEAP_SLOTSIZE_MAX_LOG2)
+struct segment {
+	struct segment *next;
+	unsigned int live_count;
+	void **stack;
+	char *block_base;
+	const struct segment_layout *layout;
+	unsigned int blocksize_log2;
+};
 
-static struct heap_bin heap_bins[HEAP_SLOTSIZE_MAX_LOG2 + 1];
-
-#define BIN_TO_SLOTSIZE_LOG2(bin) \
-	(ASSERT(HEAP_SLOTSIZE_MIN_LOG2 <= (unsigned)((bin) - heap_bins) \
-		&& (unsigned)((bin) - heap_bins) <= HEAP_SLOTSIZE_MAX_LOG2), \
-	 (unsigned)((bin) - heap_bins))
-
-static const unsigned int dummy_bitmap = ~0U;
-static const heap_bitptr_t dummy_bitptr = { (unsigned int *)&dummy_bitmap, 1 };
-
-/* heap arena */
 /*
- * Heap arena layout:
+ * segment layout:
  *
  * 00000 +--------------------------+
- *       | struct heap_arena        |
- *       +--------------------------+ ARENA_BITMAP_BASE0 (aligned in MAXALIGN)
+ *       | struct segment           |
+ *       +--------------------------+ SEG_BITMAP_BASE0 (aligned in MAXALIGN)
  *       | bitmap(0)                | ^
  *       :                          : | about N bits + sentinel
  *       |                          | V
- *       +--------------------------+ ARENA_BITMAP_BASE1
+ *       +--------------------------+ SEG_BITMAP_BASE1
  *       | bitmap(1)                | ^
  *       :                          : | about N/32 bits + sentinel
  *       |                          | V
- *       +--------------------------+ ARENA_BITMAP_BASE2
+ *       +--------------------------+ SEG_BITMAP_BASE2
  *       :                          :
- *       +--------------------------+ ARENA_BITMAP_BASEn
+ *       +--------------------------+ SEG_BITMAP_BASEn
  *       | bitmap(n)                | about N/32^n bits + sentinel
  *       |                          |
- *       +--------------------------+ ARENA_STACK_BASE
+ *       +--------------------------+ SEG_STACK_BASE
  *       | stack area               | ^
  *       |                          | | N pointers
  *       |                          | v
- *       +--------------------------+ ARENA_SLOT_BASE (aligned in MAXALIGN)
- *       | obj slot area            | ^
- *       |                          | | N slots
+ *       +--------------------------+ SEG_BLOCK_BASE (aligned in MAXALIGN)
+ *       | obj block area           | ^
+ *       |                          | | N blocks
  *       |                          | v
  *       +--------------------------+
  *       :                          :
  * 80000 +--------------------------+
  *
- * N-th bit of bitmap(0) indicates whether N-th slot is used (1) or not (0).
+ * N-th bit of bitmap(0) indicates whether N-th block is used (1) or not (0).
  * N-th bit of bitmap(n) indicates whether N-th word of bitmap(n-1) is
  * filled (1) or not (0).
  */
 
-#define WORDBITS HEAP_BITPTR_WORDBITS
+#define WORDBITS BITPTR_WORDBITS
 
 #define CEIL_(x,y)         ((((x) + (y) - 1) / (y)) * (y))
 #define BITS_TO_WORDS_(n)  (((n) + WORDBITS - 1) / WORDBITS)
@@ -263,198 +286,152 @@ static const heap_bitptr_t dummy_bitptr = { (unsigned int *)&dummy_bitmap, 1 };
 #define SEL2_(a,b,c)  b
 #define SEL3_(a,b,c)  c
 
-#ifndef ARENA_SIZE
-#define ARENA_SIZE  524288  /* 512k */
-#endif /* ARENA_SIZE */
-#ifndef ARENA_RANK
-#define ARENA_RANK  3
-#endif /* ARENA_RANK */
+#define SEG_INITIAL_OFFSET CEIL_(sizeof(struct segment), MAXALIGN)
 
-struct heap_arena {
-#ifdef SWEEP_ARENA
-	unsigned int live_count;
-#endif /* SWEEP_ARENA */
-	void **stack;
-	char *slot_base;
-	const struct arena_layout *layout;
-	unsigned int slotsize_log2;
-	struct heap_arena *next;
-};
-
-static struct {
-	struct heap_arena *freelist;
-	void *begin, *end;
-} alloc_arena;
-
-#define IS_IN_HEAP(p) \
-	((char*)alloc_arena.begin <= (char*)(p) \
-		 && (char*)(p) < (char*)alloc_arena.end)
-
-#ifdef ARENA_MARKSTACK
-#define STACK_SENTINEL  sizeof(void*)
-#else
-#define STACK_SENTINEL  0
-#endif /* ARENA_MARKSTACK */
-
-#define ARENA_INITIAL_OFFSET CEIL_(sizeof(struct heap_arena), MAXALIGN)
-
-#define ARENA_BITMAP0_OFFSET   ARENA_INITIAL_OFFSET
-#define ARENA_BITMAP_BOTTOM(n)					\
-	(/* offset */ ARENA_BITMAP0_OFFSET,			\
+#define SEG_BITMAP0_OFFSET   SEG_INITIAL_OFFSET
+#define SEG_BITMAP_BOTTOM(n)					\
+	(/* offset */ SEG_BITMAP0_OFFSET,			\
 	 /* bits */   n,					\
 	 /* words */  BITS_TO_WORDS_((n) + 1))
-#define ARENA_BITMAP_ITERATE(offset,bits,words)			\
+#define SEG_BITMAP_ITERATE(offset,bits,words)			\
 	(/* offset */ (offset) + WORDS_TO_BYTES_(words),	\
 	 /* bits */   BITS_TO_WORDS_(bits),			\
 	 /* words */  BITS_TO_WORDS_((words) + 1))
 
-#define ARENA_BITMAP_(i,n) \
-	REPEAT_(i, ARENA_BITMAP_ITERATE, ARENA_BITMAP_BOTTOM(n))
+#define SEG_BITMAP_(i,n) \
+	REPEAT_(i, SEG_BITMAP_ITERATE, SEG_BITMAP_BOTTOM(n))
 
-#define ARENA_BITMAP_OFFSET_(i,n) (APPLY_(SEL1_,ARENA_BITMAP_(i,n)))
-#define ARENA_BITMAP_BITS_(i,n)   (APPLY_(SEL2_,ARENA_BITMAP_(i,n)))
-#define ARENA_BITMAP_WORDS_(i,n)  (APPLY_(SEL3_,ARENA_BITMAP_(i,n)))
-#define ARENA_BITMAP_SIZE_(i,n)   WORDS_TO_BYTES(ARENA_BITMAP_WORDS_(i,n))
-#define ARENA_BITMAP_LIMIT_(i,n)  ARENA_BITMAP_OFFSET_(INC_(i), n)
-#define ARENA_BITMAP_SENTINEL_BITS_(i,n) \
-	(ARENA_BITMAP_WORDS_(i,n) * WORDBITS - ARENA_BITMAP_BITS_(i,n))
+#define SEG_BITMAP_OFFSET_(i,n) (APPLY_(SEL1_,SEG_BITMAP_(i,n)))
+#define SEG_BITMAP_BITS_(i,n)   (APPLY_(SEL2_,SEG_BITMAP_(i,n)))
+#define SEG_BITMAP_WORDS_(i,n)  (APPLY_(SEL3_,SEG_BITMAP_(i,n)))
+#define SEG_BITMAP_SIZE_(i,n)   WORDS_TO_BYTES(SEG_BITMAP_WORDS_(i,n))
+#define SEG_BITMAP_LIMIT_(i,n)  SEG_BITMAP_OFFSET_(INC_(i), n)
+#define SEG_BITMAP_SENTINEL_BITS_(i,n) \
+	(SEG_BITMAP_WORDS_(i,n) * WORDBITS - SEG_BITMAP_BITS_(i,n))
 
-#define ARENA_STACK_OFFSET_(n) \
-	CEIL_(ARENA_BITMAP_OFFSET_(ARENA_RANK, n), sizeof(void*))
-#define ARENA_STACK_SIZE_(n) \
+#define SEG_STACK_OFFSET_(n) \
+	CEIL_(SEG_BITMAP_OFFSET_(SEG_RANK, n), sizeof(void*))
+#define SEG_STACK_SIZE_(n) \
 	((n) * sizeof(void*))
-#define ARENA_STACK_LIMIT_(n) \
-	(ARENA_STACK_OFFSET_(n) + ARENA_STACK_SIZE_(n))
-#define ARENA_SLOT_OFFSET_(n,s) \
-	CEIL_(ARENA_STACK_LIMIT_(n) + OBJ_HEADER_SIZE, MAXALIGN)
-#define ARENA_TOTAL_SIZE_(numslots,slotsize) \
-	(ARENA_SLOT_OFFSET_(numslots,slotsize) + (numslots) * (slotsize))
+#define SEG_STACK_LIMIT_(n) \
+	(SEG_STACK_OFFSET_(n) + SEG_STACK_SIZE_(n))
+#define SEG_BLOCK_OFFSET_(n,s) \
+	CEIL_(SEG_STACK_LIMIT_(n) + OBJ_HEADER_SIZE, MAXALIGN)
+#define SEG_TOTAL_SIZE_(numblocks,blocksize) \
+	(SEG_BLOCK_OFFSET_(numblocks,blocksize) + (numblocks) * (blocksize))
 
-#define ARENA_NUM_SLOTS_ESTIMATE(slotsize)		\
-	((size_t)(((double)ARENA_SIZE			\
-		   - (double)ARENA_INITIAL_OFFSET	\
-		   - (double)ARENA_RANK / CHAR_BIT	\
-		   - STACK_SENTINEL)			\
-		  / ((double)(slotsize)			\
+#define SEG_NUM_BLOCKS_ESTIMATE(blocksize)		\
+	((size_t)(((double)SEGMENT_SIZE			\
+		   - (double)SEG_INITIAL_OFFSET		\
+		   - (double)SEG_RANK / CHAR_BIT)	\
+		  / ((double)(blocksize)		\
 		     + (1.f				\
 			+ 1.f / WORDBITS		\
 			+ 1.f / WORDBITS / WORDBITS)	\
 		     / CHAR_BIT				\
 		     + sizeof(void*))))
 
-#define ARENA_OVERFLOW_BYTES(slotsize) \
-	((signed)(ARENA_TOTAL_SIZE_(ARENA_NUM_SLOTS_ESTIMATE(slotsize),	\
-				    slotsize) - ARENA_SIZE))
-#define ARENA_OVERFLOW_SLOTS(slotsize) \
-	((ARENA_OVERFLOW_BYTES(slotsize) + (slotsize) - 1) / (signed)(slotsize))
-#define ARENA_NUM_SLOTS(slotsize) \
-	(ARENA_NUM_SLOTS_ESTIMATE(slotsize) - ARENA_OVERFLOW_SLOTS(slotsize))
+#define SEG_OVERFLOW_BYTES(blocksize) \
+	((signed)(SEG_TOTAL_SIZE_(SEG_NUM_BLOCKS_ESTIMATE(blocksize),	\
+				  blocksize) - SEGMENT_SIZE))
+#define SEG_OVERFLOW_BLOCKS(blocksize) \
+	((SEG_OVERFLOW_BYTES(blocksize) + (blocksize) - 1) \
+	 / (signed)(blocksize))
+#define SEG_NUM_BLOCKS(blocksize) \
+	(SEG_NUM_BLOCKS_ESTIMATE(blocksize) - SEG_OVERFLOW_BLOCKS(blocksize))
 
-#define ARENA_BITMAP_OFFSET(level, slotsize) \
-	ARENA_BITMAP_OFFSET_(level, ARENA_NUM_SLOTS(slotsize))
-#define ARENA_BITMAP_LIMIT(level, slotsize) \
-	ARENA_BITMAP_LIMIT_(level, ARENA_NUM_SLOTS(slotsize))
-#define ARENA_BITMAP_SIZE(slotsize) \
+#define SEG_BITMAP_OFFSET(level, blocksize) \
+	SEG_BITMAP_OFFSET_(level, SEG_NUM_BLOCKS(blocksize))
+#define SEG_BITMAP_LIMIT(level, blocksize) \
+	SEG_BITMAP_LIMIT_(level, SEG_NUM_BLOCKS(blocksize))
+#define SEG_BITMAP_SIZE(blocksize) \
 	/* aligning in MAXALIGN makes memset faster. \
 	 * It is safe since stack area is bigger than MAXALIGN and \
 	 * memset never reach both object header and content. */ \
-	CEIL_(ARENA_BITMAP_OFFSET(ARENA_RANK, slotsize) - ARENA_BITMAP0_OFFSET,\
+	CEIL_(SEG_BITMAP_OFFSET(SEG_RANK, blocksize) - SEG_BITMAP0_OFFSET, \
 	      MAXALIGN)
-#define ARENA_BITMAP_SENTINEL_BITS(level, slotsize) \
-	ARENA_BITMAP_SENTINEL_BITS_(level, ARENA_NUM_SLOTS(slotsize))
-#define ARENA_BITMAP_SENTINEL(level, slotsize) \
-	(~0U << (WORDBITS - ARENA_BITMAP_SENTINEL_BITS(level, slotsize)))
-#define ARENA_STACK_OFFSET(slotsize) \
-	ARENA_STACK_OFFSET_(ARENA_NUM_SLOTS(slotsize))
-#define ARENA_STACK_SIZE(slotsize) \
-	ARENA_STACK_SIZE_(ARENA_NUM_SLOTS(slotsize))
-#define ARENA_STACK_LIMIT(slotsize) \
-	ARENA_STACK_LIMIT_(ARENA_NUM_SLOTS(slotsize))
-#define ARENA_SLOT_OFFSET(slotsize) \
-	ARENA_SLOT_OFFSET_(ARENA_NUM_SLOTS(slotsize), slotsize)
+#define SEG_BITMAP_SENTINEL_BITS(level, blocksize) \
+	SEG_BITMAP_SENTINEL_BITS_(level, SEG_NUM_BLOCKS(blocksize))
+#define SEG_BITMAP_SENTINEL(level, blocksize) \
+	(~0U << (WORDBITS - SEG_BITMAP_SENTINEL_BITS(level, blocksize)))
+#define SEG_STACK_OFFSET(blocksize) \
+	SEG_STACK_OFFSET_(SEG_NUM_BLOCKS(blocksize))
+#define SEG_STACK_SIZE(blocksize) \
+	SEG_STACK_SIZE_(SEG_NUM_BLOCKS(blocksize))
+#define SEG_STACK_LIMIT(blocksize) \
+	SEG_STACK_LIMIT_(SEG_NUM_BLOCKS(blocksize))
+#define SEG_BLOCK_OFFSET(blocksize) \
+	SEG_BLOCK_OFFSET_(SEG_NUM_BLOCKS(blocksize), blocksize)
 
 #ifdef MINOR_GC
 #ifndef MINOR_THRESHOLD_RATIO
 #define MINOR_THRESHOLD_RATIO  0.5
 #endif /* MINOR_THRESHOLD_RATIO */
 #ifndef MINOR_COUNT
-#define MINOR_COUNT  3
+#define MINOR_COUNT  0  /* must be a positive number. 0 means infinity */
 #endif /* MINOR_COUNT */
-#define ARENA_LAYOUT(slotsize) \
-	{/*slotsize*/      slotsize, \
-	 /*bitmap_offset*/ ARRAY_(ARENA_RANK, ARENA_BITMAP_OFFSET, slotsize), \
-	 /*bitmap_limit*/  ARRAY_(ARENA_RANK, ARENA_BITMAP_LIMIT, slotsize), \
-	 /*sentinel*/      ARRAY_(ARENA_RANK, ARENA_BITMAP_SENTINEL, slotsize),\
-	 /*bitmap_size*/   ARENA_BITMAP_SIZE(slotsize), \
-	 /*stack_offset*/  ARENA_STACK_OFFSET(slotsize), \
-	 /*stack_limit*/   ARENA_STACK_LIMIT(slotsize),	\
-	 /*slot_offset*/   ARENA_SLOT_OFFSET(slotsize),	\
-	 /*num_slots*/     ARENA_NUM_SLOTS(slotsize),	\
-	 /*minor_threshold*/ (size_t)(ARENA_NUM_SLOTS(slotsize) \
+#define SEGMENT_LAYOUT(blocksize) \
+	{/*blocksize*/       blocksize, \
+	 /*bitmap_offset*/   ARRAY_(SEG_RANK, SEG_BITMAP_OFFSET, blocksize), \
+	 /*bitmap_limit*/    ARRAY_(SEG_RANK, SEG_BITMAP_LIMIT, blocksize), \
+	 /*sentinel*/        ARRAY_(SEG_RANK, SEG_BITMAP_SENTINEL, blocksize),\
+	 /*bitmap_size*/     SEG_BITMAP_SIZE(blocksize), \
+	 /*stack_offset*/    SEG_STACK_OFFSET(blocksize), \
+	 /*stack_limit*/     SEG_STACK_LIMIT(blocksize), \
+	 /*block_offset*/    SEG_BLOCK_OFFSET(blocksize), \
+	 /*num_blocks*/      SEG_NUM_BLOCKS(blocksize),	\
+	 /*minor_threshold*/ (size_t)(SEG_NUM_BLOCKS(blocksize) \
 				      * MINOR_THRESHOLD_RATIO)}
 
-#define ARENA_LAYOUT_DUMMY \
-	{/*slotsize*/      0, \
-	 /*bitmap_offset*/ ARRAY_(ARENA_RANK, DUMMY_, ARENA_BITMAP0_OFFSET), \
-	 /*bitmap_limit*/  ARRAY_(ARENA_RANK, DUMMY_, ARENA_SIZE), \
-	 /*sentinel*/      ARRAY_(ARENA_RANK, DUMMY_, 0), \
-	 /*bitmap_size*/   ARENA_SIZE - ARENA_BITMAP0_OFFSET, \
-	 /*stack_offset*/  ARENA_SIZE, \
-	 /*stack_limit*/   ARENA_SIZE, \
-	 /*slot_offset*/   ARENA_SIZE, \
-	 /*num_slots*/     ARENA_SIZE, \
+#define SEGMENT_LAYOUT_DUMMY \
+	{/*blocksize*/       0, \
+	 /*bitmap_offset*/   ARRAY_(SEG_RANK, DUMMY_, SEG_BITMAP0_OFFSET), \
+	 /*bitmap_limit*/    ARRAY_(SEG_RANK, DUMMY_, SEGMENT_SIZE), \
+	 /*sentinel*/        ARRAY_(SEG_RANK, DUMMY_, 0), \
+	 /*bitmap_size*/     SEGMENT_SIZE - SEG_BITMAP0_OFFSET, \
+	 /*stack_offset*/    SEGMENT_SIZE, \
+	 /*stack_limit*/     SEGMENT_SIZE, \
+	 /*block_offset*/    SEGMENT_SIZE, \
+	 /*num_blocks*/      SEGMENT_SIZE, \
 	 /*minor_threshold*/ 0}
 #else
-#define ARENA_LAYOUT(slotsize) \
-	{/*slotsize*/      slotsize,\
-	 /*bitmap_offset*/ ARRAY_(ARENA_RANK, ARENA_BITMAP_OFFSET, slotsize), \
-	 /*bitmap_limit*/  ARRAY_(ARENA_RANK, ARENA_BITMAP_LIMIT, slotsize), \
-	 /*sentinel*/      ARRAY_(ARENA_RANK, ARENA_BITMAP_SENTINEL, slotsize),\
-	 /*bitmap_size*/   ARENA_BITMAP_SIZE(slotsize), \
-	 /*stack_offset*/  ARENA_STACK_OFFSET(slotsize), \
-	 /*stack_limit*/   ARENA_STACK_LIMIT(slotsize), \
-	 /*slot_offset*/   ARENA_SLOT_OFFSET(slotsize), \
-	 /*num_slots*/     ARENA_NUM_SLOTS(slotsize)}
+#define SEGMENT_LAYOUT(blocksize) \
+	{/*blocksize*/       blocksize,\
+	 /*bitmap_offset*/   ARRAY_(SEG_RANK, SEG_BITMAP_OFFSET, blocksize), \
+	 /*bitmap_limit*/    ARRAY_(SEG_RANK, SEG_BITMAP_LIMIT, blocksize), \
+	 /*sentinel*/        ARRAY_(SEG_RANK, SEG_BITMAP_SENTINEL, blocksize),\
+	 /*bitmap_size*/     SEG_BITMAP_SIZE(blocksize), \
+	 /*stack_offset*/    SEG_STACK_OFFSET(blocksize), \
+	 /*stack_limit*/     SEG_STACK_LIMIT(blocksize), \
+	 /*block_offset*/    SEG_BLOCK_OFFSET(blocksize), \
+	 /*num_blocks*/      SEG_NUM_BLOCKS(blocksize)}
 
-#define ARENA_LAYOUT_DUMMY \
-	{/*slotsize*/      0, \
-	 /*bitmap_offset*/ ARRAY_(ARENA_RANK, DUMMY_, ARENA_BITMAP0_OFFSET), \
-	 /*bitmap_limit*/  ARRAY_(ARENA_RANK, DUMMY_, ARENA_SIZE), \
-	 /*sentinel*/      ARRAY_(ARENA_RANK, DUMMY_, 0), \
-	 /*bitmap_size*/   ARENA_SIZE - ARENA_BITMAP0_OFFSET, \
-	 /*stack_offset*/  ARENA_SIZE, \
-	 /*stack_limit*/   ARENA_SIZE, \
-	 /*slot_offset*/   ARENA_SIZE, \
-	 /*num_slots*/     0}
+#define SEGMENT_LAYOUT_DUMMY \
+	{/*blocksize*/       0, \
+	 /*bitmap_offset*/   ARRAY_(SEG_RANK, DUMMY_, SEG_BITMAP0_OFFSET), \
+	 /*bitmap_limit*/    ARRAY_(SEG_RANK, DUMMY_, SEGMENT_SIZE), \
+	 /*sentinel*/        ARRAY_(SEG_RANK, DUMMY_, 0), \
+	 /*bitmap_size*/     SEGMENT_SIZE - SEG_BITMAP0_OFFSET, \
+	 /*stack_offset*/    SEGMENT_SIZE, \
+	 /*stack_limit*/     SEGMENT_SIZE, \
+	 /*block_offset*/    SEGMENT_SIZE, \
+	 /*num_blocks*/      0}
 #endif /* MINOR_GC */
 
-const struct arena_layout {
-	size_t slotsize;
-	size_t bitmap_offset[ARENA_RANK];
-	size_t bitmap_limit[ARENA_RANK];
-	unsigned int bitmap_sentinel[ARENA_RANK];
-	size_t bitmap_size;
-	size_t stack_offset;
-	size_t stack_limit;
-	size_t slot_offset;
-	size_t num_slots;
-#ifdef MINOR_GC
-	size_t minor_threshold;
-#endif /* MINOR_GC */
-} arena_layout[HEAP_SLOTSIZE_MAX_LOG2 + 1] = {
-	ARENA_LAYOUT_DUMMY,     /* 2^0 = 1 */
-	ARENA_LAYOUT_DUMMY,     /* 2^1 = 2 */
-	ARENA_LAYOUT_DUMMY,     /* 2^2 = 4 */
-	ARENA_LAYOUT(1 << 3),   /* 2^3 = 8 == HEAP_SLOTSIZE_MIN  */
-	ARENA_LAYOUT(1 << 4),   /* 2^4 = 16 */
-	ARENA_LAYOUT(1 << 5),   /* 2^5 = 32 */
-	ARENA_LAYOUT(1 << 6),   /* 2^6 = 64 */
-	ARENA_LAYOUT(1 << 7),   /* 2^7 = 128 */
-	ARENA_LAYOUT(1 << 8),   /* 2^8 = 256 */
-	ARENA_LAYOUT(1 << 9),   /* 2^9 = 512 */
-	ARENA_LAYOUT(1 << 10),  /* 2^10 = 1024 */
-	ARENA_LAYOUT(1 << 11),  /* 2^11 = 2048 */
-	ARENA_LAYOUT(1 << 12),  /* 2^12 = 4096 == HEAP_SLOTSIZE_MIN */
+const struct segment_layout segment_layout[BLOCKSIZE_MAX_LOG2 + 1] = {
+	SEGMENT_LAYOUT_DUMMY,     /* 2^0 = 1 */
+	SEGMENT_LAYOUT_DUMMY,     /* 2^1 = 2 */
+	SEGMENT_LAYOUT_DUMMY,     /* 2^2 = 4 */
+	SEGMENT_LAYOUT(1 << 3),   /* 2^3 = 8 == BLOCKSIZE_MIN  */
+	SEGMENT_LAYOUT(1 << 4),   /* 2^4 = 16 */
+	SEGMENT_LAYOUT(1 << 5),   /* 2^5 = 32 */
+	SEGMENT_LAYOUT(1 << 6),   /* 2^6 = 64 */
+	SEGMENT_LAYOUT(1 << 7),   /* 2^7 = 128 */
+	SEGMENT_LAYOUT(1 << 8),   /* 2^8 = 256 */
+	SEGMENT_LAYOUT(1 << 9),   /* 2^9 = 512 */
+	SEGMENT_LAYOUT(1 << 10),  /* 2^10 = 1024 */
+	SEGMENT_LAYOUT(1 << 11),  /* 2^11 = 2048 */
+	SEGMENT_LAYOUT(1 << 12),  /* 2^12 = 4096 == BLOCKSIZE_MIN */
 };
 
 #ifdef DEBUG
@@ -462,28 +439,27 @@ void
 sml_heap_dump_layout()
 {
 	unsigned int i, j;
-	const struct arena_layout *l;
+	const struct segment_layout *l;
 	unsigned long total;
 
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		l = &arena_layout[i];
-		total = l->slot_offset + l->num_slots * l->slotsize;
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		l = &segment_layout[i];
+		total = l->block_offset + l->num_blocks * l->blocksize;
 		sml_notice("---");
-		sml_notice("slotsize: %lu", (unsigned long)l->slotsize);
+		sml_notice("blocksize: %lu", (unsigned long)l->blocksize);
 		sml_notice("bitmap0 offset: %lu",
-			   (unsigned long)ARENA_BITMAP0_OFFSET);
-		for (j = 0; j < ARENA_RANK; j++) {
+			   (unsigned long)SEG_BITMAP0_OFFSET);
+		for (j = 0; j < SEG_RANK; j++) {
 			sml_notice("bitmap%u limit: %lu",
-			       j, (unsigned long)l->bitmap_limit[j]);
+				   j, (unsigned long)l->bitmap_limit[j]);
 			sml_notice("bitmap%u sentinel: %08x",
 			       j, l->bitmap_sentinel[j]);
 		}
-		sml_notice("bitmap size: %lu",
-		       (unsigned long)l->bitmap_size);
+		sml_notice("bitmap size: %lu", (unsigned long)l->bitmap_size);
 		sml_notice("stack offset: %lu", (unsigned long)l->stack_offset);
 		sml_notice("stack limit: %lu", (unsigned long)l->stack_limit);
-		sml_notice("slot offset: %lu", (unsigned long)l->slot_offset);
-		sml_notice("num slots: %lu", (unsigned long)l->num_slots);
+		sml_notice("block offset: %lu", (unsigned long)l->block_offset);
+		sml_notice("num blocks: %lu", (unsigned long)l->num_blocks);
 		sml_notice("total size: %lu", total);
 	}
 }
@@ -491,57 +467,233 @@ sml_heap_dump_layout()
 
 #define ADD_OFFSET(p,n)  ((void*)((char*)(p) + (n)))
 
-#define BITMAP0_BASE(arena) \
-	((unsigned int*)ADD_OFFSET(arena, ARENA_BITMAP0_OFFSET))
-#define BITMAP_BASE(arena, level) \
+#define BITMAP0_BASE(seg) \
+	((unsigned int*)ADD_OFFSET(seg, SEG_BITMAP0_OFFSET))
+#define BITMAP_BASE(seg, level) \
 	((unsigned int*) \
-	 ADD_OFFSET(arena, (arena)->layout->bitmap_offset[level]))
-#define BITMAP_LIMIT_3(arena, layout, level)				\
-	((unsigned int*)ADD_OFFSET(arena, (layout)->bitmap_limit[level]))
-#define BITMAP_LIMIT(arena, level) \
-	BITMAP_LIMIT_3(arena, (arena)->layout, level)
-#define BITMAP_SENTINEL(arena, level) \
-	((arena)->layout->bitmap_sentinel[level])
-#define SLOT_BASE(arena)  ((arena)->slot_base)
-#define SLOT_SIZE(arena)  (1U << (arena)->slotsize_log2)
+	 ADD_OFFSET(seg, (seg)->layout->bitmap_offset[level]))
+#define BITMAP_LIMIT_3(seg, layout, level) \
+	((unsigned int*)ADD_OFFSET(seg, (layout)->bitmap_limit[level]))
+#define BITMAP_LIMIT(seg, level) \
+	BITMAP_LIMIT_3(seg, (seg)->layout, level)
+#define BITMAP_SENTINEL(seg, level) \
+	((seg)->layout->bitmap_sentinel[level])
+#define BLOCK_BASE(seg)  ((seg)->block_base)
+#define BLOCK_SIZE(seg)  (1U << (seg)->blocksize_log2)
 
-#define OBJ_TO_ARENA(objaddr) \
+/* sub heaps */
+struct subheap {
+	struct segment *seglist;      /* list of segments */
+	struct segment **unreserved;  /* head of unreserved segs on seglist */
+#ifdef MINOR_GC
+	unsigned int minor_count;
+	struct segment **minor_space; /* head of minor space on seglist */
+#endif /* MINOR_GC */
+};
+
+/* allocation pointers */
+/*
+ * Since allocation pointers are frequently accessed,
+ * they should be small so that they can stay in cache as long as possible.
+ * And, in order for fast offset computation, sizeof(struct alloc_ptr)
+ * should be power of 2.
+ */
+struct alloc_ptr {
+	bitptr_t freebit;
+	char *free;
+	unsigned int blocksize_bytes;
+};
+
+union alloc_ptr_set {
+	struct alloc_ptr alloc_ptr[BLOCKSIZE_MAX_LOG2 + 1];
+#ifdef MULTITHREAD
+	/* alloc_ptr[0] is not used. We use there as a pointer member. */
+	union alloc_ptr_set *next;
+#endif /* MULTITHREAD */
+};
+
+static const unsigned int dummy_bitmap = ~0U;
+static const bitptr_t dummy_bitptr = { (unsigned int *)&dummy_bitmap, 1 };
+
+#ifdef MULTITHREAD
+static union alloc_ptr_set *global_free_ptr_list;
+#define ALLOC_PTR_SET() ((union alloc_ptr_set *)sml_current_thread_heap())
+#else
+static union alloc_ptr_set global_alloc_ptr_set;
+#define ALLOC_PTR_SET() (&global_alloc_ptr_set)
+#endif /* MULTITHREAD */
+
+struct subheap global_subheaps[BLOCKSIZE_MAX_LOG2 + 1];
+
+static struct {
+	struct segment *freelist;
+	void *begin, *end;
+	unsigned int min_num_segments, max_num_segments, num_committed;
+	unsigned int extend_step;
+	unsigned int *bitmap;
+} heap_space;
+
+#define IS_IN_HEAP(p) \
+	((char*)heap_space.begin <= (char*)(p) \
+		 && (char*)(p) < (char*)heap_space.end)
+
+#define ALLOC_PTR_TO_BLOCKSIZE_LOG2(ptr)				\
+	(ASSERT								\
+	 (BLOCKSIZE_MIN_LOG2 <=						\
+	  (unsigned)((ptr) - &ALLOC_PTR_SET()->alloc_ptr[0])		\
+	  && (unsigned)((ptr) - &ALLOC_PTR_SET()->alloc_ptr[0])		\
+	  <= BLOCKSIZE_MAX_LOG2),					\
+	 (unsigned)((ptr) - &ALLOC_PTR_SET()->alloc_ptr[0]))
+
+/* bit pointer is suitable for computing segment address.
+ * bit pointer always points to the address in the middle of segments. */
+#define ALLOC_PTR_TO_SEGMENT(ptr)					\
+	(ASSERT(IS_IN_HEAP((ptr)->freebit.ptr)),			\
+	 ((struct segment*)                                             \
+	  (((uintptr_t)(ptr)->freebit.ptr) & ~(SEGMENT_SIZE - 1U))))
+
+#define OBJ_TO_SEGMENT(objaddr) \
 	(ASSERT(IS_IN_HEAP(objaddr)), \
-	 ((struct heap_arena*)((uintptr_t)(objaddr) & ~(ARENA_SIZE - 1U))))
-#define OBJ_TO_INDEX(arena, objaddr) \
-	(ASSERT(OBJ_TO_ARENA(objaddr) == (arena)), \
-	 ASSERT((char*)(objaddr) >= (arena)->slot_base), \
-	 ASSERT((char*)(objaddr) < (arena)->slot_base \
-				 + ((arena)->layout->num_slots \
-				    << (arena)->slotsize_log2)), \
-	 ((size_t)((char*)(objaddr) - (arena)->slot_base) \
-	  >> (arena)->slotsize_log2))
+	 ((struct segment*)((uintptr_t)(objaddr) & ~(SEGMENT_SIZE - 1U))))
 
-struct heap_arena *obj_to_arena(void *obj) {return OBJ_TO_ARENA(obj);}
+#define OBJ_TO_INDEX(seg, objaddr)					\
+	(ASSERT(OBJ_TO_SEGMENT(objaddr) == (seg)),			\
+	 ASSERT((char*)(objaddr) >= (seg)->block_base),			\
+	 ASSERT((char*)(objaddr)					\
+		< (seg)->block_base + ((seg)->layout->num_blocks	\
+				       << (seg)->blocksize_log2)),	\
+	 ((size_t)((char*)(objaddr) - (seg)->block_base)		\
+	  >> (seg)->blocksize_log2))
+
+/* for debug */
+struct segment *obj_to_segment(void *obj) {return OBJ_TO_SEGMENT(obj);}
 size_t obj_to_index(void *obj) {
-	struct heap_arena *arena = OBJ_TO_ARENA(obj);
-	return OBJ_TO_INDEX(arena, obj);
+	struct segment *seg = OBJ_TO_SEGMENT(obj);
+	return OBJ_TO_INDEX(seg, obj);
 }
 unsigned int obj_to_bit(void *obj) {
-	struct heap_arena *arena = OBJ_TO_ARENA(obj);
-	size_t index = OBJ_TO_INDEX(arena, obj);
-	heap_bitptr_t b;
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), index);
-	return HEAP_BITPTR_TEST(b);
+	struct segment *seg = OBJ_TO_SEGMENT(obj);
+	size_t index = OBJ_TO_INDEX(seg, obj);
+	bitptr_t b;
+	BITPTR_INIT(b, BITMAP0_BASE(seg), index);
+	return BITPTR_TEST(b);
 }
 void **obj_to_stack(void *obj) {
-	struct heap_arena *arena = OBJ_TO_ARENA(obj);
-	size_t index = OBJ_TO_INDEX(arena, obj);
-	return arena->stack + index;
+	struct segment *seg = OBJ_TO_SEGMENT(obj);
+	size_t index = OBJ_TO_INDEX(seg, obj);
+	return seg->stack + index;
 }
 
+#ifdef MULTITHREAD
+static pthread_mutex_t free_ptr_list_lock = PTHREAD_MUTEX_INITIALIZER;
+#define PUSH_FREE_PTR_LIST(ptr) do { \
+	pthread_mutex_lock(&free_ptr_list_lock); \
+	ptr->next = global_free_ptr_list; \
+	global_free_ptr_list = ptr; \
+	pthread_mutex_unlock(&free_ptr_list_lock); \
+} while (0)
+#define POP_FREE_PTR_LIST(ptr) do { \
+	pthread_mutex_lock(&free_ptr_list_lock); \
+	ptr = global_free_ptr_list; \
+	if (ptr) global_free_ptr_list = ptr->next; \
+	pthread_mutex_unlock(&free_ptr_list_lock); \
+} while (0)
+#define CLEAR_FREE_PTR_LIST(ptr) do { \
+	pthread_mutex_lock(&free_ptr_list_lock); \
+	ptr = global_free_ptr_list; \
+	global_free_ptr_list = NULL; \
+	pthread_mutex_unlock(&free_ptr_list_lock); \
+} while (0)
+#endif /* MULTITHREAD */
+
+#ifdef MULTITHREAD
+#if defined(__GNUC__) && !defined(NOASM) && defined(HOST_CPU_i386)
+#define FREELIST_NEXT(freelist, seg) do { \
+	struct segment *new__ ATTR_UNUSED; \
+	__asm__ volatile ("movl %0, %1\n" \
+			  "1:\n\t" \
+			  "testl %1, %1\n\t" \
+			  "je 1f\n\t" \
+			  "movl (%1), %2\n\t" \
+			  "lock; cmpxchgl %2, %0\n\t" \
+			  "jne 1b\n" \
+			  "1:" \
+			  : "+m" (freelist), "=&a" (seg), "=&r" (new__) \
+			  :: "memory"); \
+} while (0)
+#define UNRESERVED_NEXT(unreserved, seg) do { \
+	__asm__ volatile ("movl %0, %%eax\n" \
+			  "1:\n\t" \
+			  "movl (%%eax), %1\n\t" \
+			  "testl %1, %1\n\t" \
+			  "je 1f\n\t" \
+			  "lock; cmpxchgl %1, %0\n\t" \
+			  "jne 1b\n" \
+			  "1:" \
+			  : "+m" (unreserved), "=&r" (seg) \
+			  :: "eax", "memory"); \
+} while (0)
+#define UNRESERVED_APPEND(unreserved, seg) do { \
+	struct segment *next__ ATTR_UNUSED; \
+	__asm__ volatile ("1:\n\t" \
+			  "movl %0, %%eax\n\t" \
+			  "movl (%%eax), %1\n\t" \
+			  "testl %1, %1\n\t" \
+			  "je 2f\n\t" \
+			  "lock; cmpxchgl %1, %0\n\t" \
+			  "jmp 1b\n" \
+			  "2:\n\t" \
+			  "movl %%eax, %1\n\t" \
+			  "xorl %%eax, %%eax\n\t" \
+			  "lock; cmpxchgl %2, (%1)\n\t" \
+			  "jne 1b\n\t" \
+			  "movl %1, %%eax\n\t" \
+			  "lock; cmpxchgl %2, %0" \
+			  : "+m" (unreserved), "=&r" (next__) \
+			  : "r" (seg) : "eax", "memory"); \
+} while (0)
+#else
+static pthread_mutex_t heap_space_lock = PTHREAD_MUTEX_INITIALIZER;
+#define FREELIST_NEXT(freelist, seg) do { \
+	pthread_mutex_lock(&heap_space_lock); \
+	seg = freelist;	\
+	if (seg) freelist = seg->next; \
+	pthread_mutex_unlock(&heap_space_lock); \
+} while (0)
+#define UNRESERVED_NEXT(unreserved, seg) do { \
+	pthread_mutex_lock(&heap_space_lock); \
+	seg = *unreserved; \
+	if (seg) unreserved = &seg->next; \
+	pthread_mutex_unlock(&heap_space_lock); \
+} while (0)
+#define UNRESERVED_APPEND(unreserved, seg) do { \
+	pthread_mutex_lock(&heap_space_lock); \
+	*unreserved = seg; \
+	unreserved = &seg->next; \
+	pthread_mutex_unlock(&heap_space_lock); \
+} while (0)
+#endif /* !NOASM */
+#else /* MULTITHREAD */
+#define UNRESERVED_NEXT(unreserved, seg) do { \
+	seg = *unreserved; \
+	if (seg) unreserved = &seg->next; \
+} while (0)
+#define FREELIST_NEXT(freelist, seg) do { \
+	seg = freelist;	\
+	if (seg) freelist = seg->next; \
+} while (0)
+#define UNRESERVED_APPEND(unreserved, seg) do { \
+	*unreserved = seg; \
+	unreserved = &seg->next; \
+} while (0)
+#endif /* MULTITHREAD */
 
 #if defined GCSTAT || defined GCTIME
 static struct {
 	FILE *file;
 	size_t probe_threshold;
 	unsigned int verbose;
-	unsigned int initial_num_arenas;
+	unsigned int initial_num_segments;
 	sml_timer_t exec_begin, exec_end;
 	sml_time_t exec_time;
 	struct gcstat_gc {
@@ -559,10 +711,10 @@ static struct {
 	struct {
 		unsigned int trigger;
 		struct {
-			unsigned int fast[HEAP_SLOTSIZE_MAX_LOG2 + 1];
-			unsigned int find[HEAP_SLOTSIZE_MAX_LOG2 + 1];
-			unsigned int next[HEAP_SLOTSIZE_MAX_LOG2 + 1];
-			unsigned int new[HEAP_SLOTSIZE_MAX_LOG2 + 1];
+			unsigned int fast[BLOCKSIZE_MAX_LOG2 + 1];
+			unsigned int find[BLOCKSIZE_MAX_LOG2 + 1];
+			unsigned int next[BLOCKSIZE_MAX_LOG2 + 1];
+			unsigned int new[BLOCKSIZE_MAX_LOG2 + 1];
 			unsigned int malloc;
 		} alloc_count;
 #ifdef MINOR_GC
@@ -610,7 +762,7 @@ print_alloc_count()
 		return;
 
 	stat_notice("count:");
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
 		if (gcstat.last.alloc_count.fast[i] != 0
 		    || gcstat.last.alloc_count.find[i] != 0
 		    || gcstat.last.alloc_count.next[i] != 0
@@ -639,48 +791,25 @@ print_alloc_count()
 #endif /* GCSTAT || GCTIME */
 
 
-
-/* arena allocation */
-
-#ifdef MEMSET_NT
-#define memset(dst,fill,size) do {					\
-	if ((fill) == 0) {						\
-		void *p__ = (dst);					\
-		size_t s__ = (size);					\
-		ASSERT((uintptr_t)p__ % 16 == 0);			\
-		ASSERT(s__ % 16 == 0);					\
-		__asm__ volatile ("xorps\t%%xmm0, %%xmm0\n"		\
-				  "1:\n\t"				\
-				  "movntdq\t%%xmm0, (%0)\n\t"		\
-				  "addl\t$16, %0\n\t"			\
-				  "cmpl\t%0, %1\n\t"			\
-				  "jne\t1b"				\
-				  : "+r" (p__)				\
-				  : "r" ((char*)p__ + s__)		\
-				  : "xmm0", "memory");			\
-	} else memset(dst,fill,size);					\
-} while (0)
-#endif /* MEMSET_NT */
-
 /* for debug or GCSTAT */
 static size_t
-arena_filled(struct heap_arena *arena, size_t filled_index, size_t *ret_bytes)
+segment_filled(struct segment *seg, size_t filled_index, size_t *ret_bytes)
 {
 	unsigned int i;
-	heap_bitptr_t b;
-	char *p = SLOT_BASE(arena);
+	bitptr_t b;
+	char *p = BLOCK_BASE(seg);
 	size_t filled = 0, count = 0;
-	const size_t slotsize = SLOT_SIZE(arena);
+	const size_t blocksize = BLOCK_SIZE(seg);
 
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), 0);
-	for (i = 0; i < arena->layout->num_slots; i++) {
-		if (i < filled_index || HEAP_BITPTR_TEST(b)) {
-			ASSERT(OBJ_TOTAL_SIZE(p) <= slotsize);
+	BITPTR_INIT(b, BITMAP0_BASE(seg), 0);
+	for (i = 0; i < seg->layout->num_blocks; i++) {
+		if (i < filled_index || BITPTR_TEST(b)) {
+			ASSERT(OBJ_TOTAL_SIZE(p) <= blocksize);
 			count++;
 			filled += OBJ_TOTAL_SIZE(p);
 		}
-		HEAP_BITPTR_INC(b);
-		p += slotsize;
+		BITPTR_INC(b);
+		p += blocksize;
 	}
 
 	if (ret_bytes)
@@ -690,221 +819,243 @@ arena_filled(struct heap_arena *arena, size_t filled_index, size_t *ret_bytes)
 
 #ifdef DEBUG
 static void
-scribble_arena(struct heap_arena *arena, size_t filled_index)
+scribble_segment(struct segment *seg, size_t filled_index)
 {
 	unsigned int i;
-	heap_bitptr_t b;
-	char *p = SLOT_BASE(arena);
+	bitptr_t b;
+	char *p = BLOCK_BASE(seg);
 
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), 0);
-	for (i = 0; i < arena->layout->num_slots; i++) {
-		size_t objsize = ((i < filled_index || HEAP_BITPTR_TEST(b))
+	BITPTR_INIT(b, BITMAP0_BASE(seg), 0);
+	for (i = 0; i < seg->layout->num_blocks; i++) {
+		size_t objsize = ((i < filled_index || BITPTR_TEST(b))
 				  ? OBJ_TOTAL_SIZE(p) : 0);
 		memset(p - OBJ_HEADER_SIZE + objsize, 0x55,
-		       SLOT_SIZE(arena) - objsize);
-		HEAP_BITPTR_INC(b);
-		p += SLOT_SIZE(arena);
+		       BLOCK_SIZE(seg) - objsize);
+		BITPTR_INC(b);
+		p += BLOCK_SIZE(seg);
 	}
 }
 
 static void
-scribble_bins()
+scribble_subheaps()
 {
 	unsigned int i;
-	struct heap_bin *bin;
-	struct heap_arena *arena;
+	struct segment *seg;
 
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		bin = &heap_bins[i];
-#ifdef MINOR_GC
-		for (arena = bin->filled; arena; arena = arena->next)
-			scribble_arena(arena, 0);
-#endif /* MINOR_GC */
-		if (bin->arena == NULL)
-			continue;
-		scribble_arena(bin->arena, HEAP_BITPTR_INDEX
-			       (bin->freebit, BITMAP0_BASE(bin->arena)));
-		for (arena = bin->arena->next; arena; arena = arena->next)
-			scribble_arena(arena, 0);
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		for (seg = global_subheaps[i].seglist; seg; seg = seg->next)
+			/* assume that bitmaps exactly indicate
+			 * the liveness of blocks. */
+			scribble_segment(seg, 0);
 	}
 }
 
 static size_t
-check_arena_consistent(struct heap_arena *arena, size_t filled_index)
+check_segment_consistent(struct segment *seg, size_t filled_index)
 {
-	heap_bitptr_t b;
+	bitptr_t b;
 	unsigned int i, *p;
 	size_t index, count, filled;
-	const struct arena_layout *layout;
+	const struct segment_layout *layout;
 
-	ASSERT(HEAP_SLOTSIZE_MIN_LOG2 <= arena->slotsize_log2
-	       && arena->slotsize_log2 <= HEAP_SLOTSIZE_MAX_LOG2);
+	ASSERT(BLOCKSIZE_MIN_LOG2 <= seg->blocksize_log2
+	       && seg->blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
 
 	/* check alignment */
-	ASSERT((uintptr_t)arena & ~(ARENA_SIZE - 1U));
+	ASSERT((uintptr_t)seg & ~(SEGMENT_SIZE - 1U));
 
 	/* check layout */
-	layout = &arena_layout[arena->slotsize_log2];
-	ASSERT(arena->layout == layout);
-	ASSERT(arena->stack == ADD_OFFSET(arena, layout->stack_offset));
-	ASSERT(arena->slot_base == ADD_OFFSET(arena, layout->slot_offset));
+	layout = &segment_layout[seg->blocksize_log2];
+	ASSERT(seg->layout == layout);
+	ASSERT(seg->stack == ADD_OFFSET(seg, layout->stack_offset));
+	ASSERT(seg->block_base == ADD_OFFSET(seg, layout->block_offset));
 
-#if defined ARENA_MARKSTACK
-	/* check stack bottom sentinel. */
-	ASSERT(*arena->stack == NULL);
-#elif !defined GLOBAL_MARKSTACK
 	/* stack area must be filled with NULL. */
-	for (i = 0; i < layout->num_slots; i++)
-		ASSERT(arena->stack[i] == NULL);
-#endif /* ARENA_MARKSTACK */
+	for (i = 0; i < layout->num_blocks; i++)
+		ASSERT(seg->stack[i] == NULL);
 
 	/* check sentinel bits */
-	index = layout->num_slots;
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), index);
-	ASSERT(HEAP_BITPTR_TEST(b));
-	HEAP_BITPTR_NEXT(b);
-	ASSERT(HEAP_BITPTR_NEXT_FAILED(b));
+	index = layout->num_blocks;
+	BITPTR_INIT(b, BITMAP0_BASE(seg), index);
+	ASSERT(BITPTR_TEST(b));
+	BITPTR_NEXT(b);
+	ASSERT(BITPTR_NEXT_FAILED(b));
 
-	for (i = 1; i < ARENA_RANK; i++) {
-		index = index / HEAP_BITPTR_WORDBITS + 1;
-		HEAP_BITPTR_INIT(b, BITMAP_BASE(arena, i), index);
-		ASSERT(HEAP_BITPTR_TEST(b));
-		HEAP_BITPTR_NEXT(b);
-		ASSERT(HEAP_BITPTR_NEXT_FAILED(b));
+	for (i = 1; i < SEG_RANK; i++) {
+		index = index / BITPTR_WORDBITS + 1;
+		BITPTR_INIT(b, BITMAP_BASE(seg, i), index);
+		ASSERT(BITPTR_TEST(b));
+		BITPTR_NEXT(b);
+		ASSERT(BITPTR_NEXT_FAILED(b));
 	}
 
 	/* check bitmap tree */
-	for (i = 0; i < ARENA_RANK - 1; i++) {
-		for (p = BITMAP_BASE(arena,i); p < BITMAP_LIMIT(arena,i); p++) {
-			HEAP_BITPTR_INIT(b, BITMAP_BASE(arena, i + 1),
-					 p - BITMAP_BASE(arena, i));
-			ASSERT((*p == ~0U) == (HEAP_BITPTR_TEST(b) != 0));
+	for (i = 0; i < SEG_RANK - 1; i++) {
+		for (p = BITMAP_BASE(seg,i); p < BITMAP_LIMIT(seg,i); p++) {
+			BITPTR_INIT(b, BITMAP_BASE(seg, i + 1),
+				    p - BITMAP_BASE(seg, i));
+			ASSERT((*p == ~0U) == (BITPTR_TEST(b) != 0));
 		}
 	}
 
 	/* check all objecst are valid. */
-	count = arena_filled(arena, filled_index, &filled);
-	ASSERT(count <= layout->num_slots);
-	ASSERT(filled <= (layout->num_slots << arena->slotsize_log2));
+	count = segment_filled(seg, filled_index, &filled);
+	ASSERT(count <= layout->num_blocks);
+	ASSERT(filled <= (layout->num_blocks << seg->blocksize_log2));
 
-#if defined MINOR_GC
 	/* check live_count */
-	ASSERT(count == arena->live_count);
-#elif defined SWEEP_ARENA
-	/* check live_count flag */
-	ASSERT((count == 0) == (arena->live_count == 0));
-#endif /* MINOR_GC || SWEEP_ARENA */
+	ASSERT(count == seg->live_count);
 
 	return count;
 }
 
 static void
-check_bin_consistent()
+check_ptr_consistent(struct alloc_ptr *ptr)
+{
+	size_t index;
+	unsigned int i;
+	struct segment *seg, *s;
+
+	/* if freebit is equal to dummy, ptr points no segment. */
+	ASSERT((!ptr->free && BITPTR_EQUAL(ptr->freebit, dummy_bitptr))
+	       || (ptr->free && !BITPTR_EQUAL(ptr->freebit, dummy_bitptr)));
+	if (ptr->free == NULL)
+		return;
+	seg = ALLOC_PTR_TO_SEGMENT(ptr);
+	i = seg->blocksize_log2;
+
+	/* block size must be equal between ptr and segment. */
+	ASSERT(ptr->blocksize_bytes == 1 << i);
+
+	/* segment is in seglist of the subheap. */
+	for (s = global_subheaps[i].seglist; s; s = s->next)
+		if (s == seg)
+			break;
+	ASSERT(s == seg);
+
+	/* free pointer boundary check */
+	ASSERT(BLOCK_BASE(seg) <= ptr->free
+	       && ptr->free < (BLOCK_BASE(seg) +
+			       (seg->layout->num_blocks << i)));
+	ASSERT(BITMAP0_BASE(seg) <= ptr->freebit.ptr
+	       && ptr->freebit.ptr < BITMAP_LIMIT(seg, 0));
+
+	/* correspondence between free and freebit */
+	index = BITPTR_INDEX(ptr->freebit, BITMAP0_BASE(seg));
+	ASSERT(index == OBJ_TO_INDEX(seg, ptr->free));
+}
+
+static void
+check_subheap_consistent(struct subheap *subheap, unsigned int blocksize_log2)
+{
+	struct segment *seg, *s, **p;
+	size_t count;
+	int num_segments, unreserved_start;
+#ifdef MINOR_GC
+	int minor_start;
+#endif /* MINOR_GC */
+
+	/* check subheap->unreserved consistent */
+	num_segments = 0;
+	unreserved_start = -1;
+	for (p = &subheap->seglist; *p; p = &(*p)->next) {
+		if (p == subheap->unreserved) {
+			ASSERT(unreserved_start == -1);
+			unreserved_start = num_segments;
+		}
+		num_segments++;
+	}
+	if (subheap->unreserved == p)
+		unreserved_start = num_segments;
+	ASSERT(unreserved_start >= 0);
+
+#ifdef MINOR_GC
+	/* check subheap->minor_space consistent */
+	num_segments = 0;
+	minor_start = -1;
+	for (p = &subheap->seglist; *p; p = &(*p)->next) {
+		if (p == subheap->minor_space) {
+			ASSERT(minor_start == -1);
+			minor_start = num_segments;
+		}
+		num_segments++;
+	}
+	if (subheap->minor_space == p)
+		minor_start = num_segments;
+	ASSERT(minor_start >= 0 && minor_start <= unreserved_start);
+#if MINOR_COUNT > 0
+	ASSERT(subheap->minor_count <= MINOR_COUNT);
+#endif /* MINOR_COUNT */
+#endif /* MINOR_GC */
+
+	/* check each segment consistent */
+	for (seg = subheap->seglist; seg; seg = seg->next) {
+		ASSERT(seg->blocksize_log2 == blocksize_log2);
+		/* assume that bitmaps exactly indicate
+		 * the liveness of blocks. */
+		count = check_segment_consistent(seg, 0);
+		/*count = check_segment_consistent(seg, SEGMENT_SIZE);*/
+		/*ASSERT(!reserved || count == seg->layout->num_blocks);*/
+
+		/* seg is not in the free list. */
+		for (s = heap_space.freelist; s; s = s->next)
+			ASSERT(s != seg);
+	}
+}
+
+static void
+check_heap_consistent()
 {
 	unsigned int i;
-	struct heap_arena *arena;
-	struct heap_bin *bin;
-	size_t index, count;
-
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		bin = &heap_bins[i];
-
-		/* arenas may be empty only if freebit is equal to dummy. */
-		if (HEAP_BITPTR_EQUAL(bin->freebit, dummy_bitptr)) {
-			ASSERT(bin->arena == NULL);
-			ASSERT(bin->free == NULL);
-			continue;
-		}
-
-		/* each bin must have at least one current arena. */
-		ASSERT(bin->arena != NULL);
-
-		/* free pointer boundary check */
-		ASSERT(SLOT_BASE(bin->arena) <= bin->free
-		       && bin->free < (SLOT_BASE(bin->arena)
-				       + (arena_layout[i].num_slots << i)));
-		ASSERT(BITMAP0_BASE(bin->arena) <= bin->freebit.ptr
-		       && bin->freebit.ptr < BITMAP_LIMIT(bin->arena, 0));
-
-		/* correspondence between free and freebit */
-		index = HEAP_BITPTR_INDEX(bin->freebit,
-					  BITMAP0_BASE(bin->arena));
-		ASSERT(index == OBJ_TO_INDEX(bin->arena, bin->free));
-
-		/* check all arenas */
-		for (arena = bin->filled; arena; arena = arena->next) {
-			ASSERT(arena->slotsize_log2 == i);
-#ifdef MINOR_GC
-			count = check_arena_consistent(arena, 0);
-#else
-			count = check_arena_consistent(arena, ARENA_SIZE);
-			ASSERT(count == arena_layout[i].num_slots);
-#endif /* MINOR_GC */
-		}
-		for (arena = bin->arena; arena; arena = arena->next) {
-			ASSERT(arena->slotsize_log2 == i);
-			check_arena_consistent(arena, 0);
-		}
-
-#ifdef MINOR_GC
-		ASSERT(bin->minor_count <= MINOR_COUNT);
-#endif /* MINOR_GC */
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		check_subheap_consistent(&global_subheaps[i], i);
+		check_ptr_consistent(&ALLOC_PTR_SET()->alloc_ptr[i]);
 	}
 }
 #endif /* DEBUG */
 
-static void
-rewind_arena_list(struct heap_bin *bin)
-{
-	struct heap_arena *arenas = bin->arena;
-	struct heap_arena *arena, *next;
-
-	arena = bin->filled;
-	while (arena) {
-		next = arena->next;
-		arena->next = arenas;
-		arenas = arena;
-		arena = next;
-	}
-	bin->arena = arenas;
-	bin->filled = NULL;
-}
-
-/* for debug */
-static struct heap_arena *
-reverse_arena_list(struct heap_arena *arena)
-{
-	struct heap_arena *next, *prev = NULL;
-	while (arena) {
-		next = arena->next;
-		arena->next = prev;
-		prev = arena;
-		arena = next;
-	}
-	return prev;
-}
-
 #ifdef GCSTAT
 static void
-print_arena_occupancy(struct heap_arena *arena, size_t filled_index,
-		      struct heap_arena *current)
+print_segment_occupancy(struct segment *seg, size_t filled_index,
+			struct subheap *subheap)
 {
 	size_t count, filled;
-	count = arena_filled(arena, filled_index, &filled);
+
+	count = segment_filled(seg, filled_index, &filled);
 	stat_notice("  - {filled: %lu, count: %lu, used: %lu}%s",
 		    (unsigned long)filled,
 		    (unsigned long)count,
-		    (unsigned long)count << arena->slotsize_log2,
-		    arena == current ? " #" : "");
+		    (unsigned long)count << seg->blocksize_log2,
+		    (seg == *subheap->unreserved) ? " # ^^^"
+#ifdef MINOR_GC
+		    : (seg == *subheap->minor_space) ? " # ---"
+#endif /* MINOR_GC */
+		    : "");
 }
 
 static void
-print_arenas_occupancy(struct heap_arena *arena, size_t filled_index,
-		       struct heap_arena *current)
+print_subheap_occupancy(struct subheap *subheap, unsigned int blocksize_log2)
 {
-	while (arena) {
-		print_arena_occupancy(arena, filled_index, current);
-		arena = arena->next;
+	struct segment *seg;
+#ifdef MINOR_GC
+	size_t filled = SEGMENT_SIZE;
+#else
+	size_t filled = 0;
+#endif /* MINOR_GC */
+
+	for (seg = subheap->seglist; seg; seg = seg->next) {
+#ifdef MINOR_GC
+		if (seg == *subheap->minor_space)
+			filled = SEGMENT_SIZE;
+#endif /* MINOR_GC */
+		if (seg == *subheap->unreserved)
+			filled = 0;
+		if (&seg->next == subheap->unreserved) {
+			struct alloc_ptr *ptr;
+			ptr = &ALLOC_PTR_SET()->alloc_ptr[blocksize_log2];
+			filled = BITPTR_INDEX(ptr->freebit, BITMAP0_BASE(seg));
+		}
+		print_segment_occupancy(seg, filled, subheap);
 	}
 }
 
@@ -912,53 +1063,39 @@ static void
 print_heap_occupancy()
 {
 	unsigned int i;
-	size_t index;
-	struct heap_bin *bin;
+	struct subheap *subheap;
 
 	if (gcstat.verbose < GCSTAT_VERBOSE_HEAP)
 		return;
 
 	stat_notice("heap:");
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		bin = &heap_bins[i];
-		if (bin->filled == NULL && bin->arena == NULL)
-			continue;
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		subheap = &global_subheaps[i];
 
-		stat_notice(" %u:", bin->slotsize_bytes);
-		bin->filled = reverse_arena_list(bin->filled);
-#ifdef MINOR_GC
-		print_arenas_occupancy(bin->filled, 0, NULL);
-#else
-		print_arenas_occupancy(bin->filled, ARENA_SIZE, NULL);
-#endif /* MINOR_GC */
-		bin->filled = reverse_arena_list(bin->filled);
-
-		if (bin->arena == NULL)
-			continue;
-		index = HEAP_BITPTR_INDEX(bin->freebit,
-					  BITMAP0_BASE(bin->arena));
-		print_arena_occupancy(bin->arena, index, bin->arena);
-		print_arenas_occupancy(bin->arena->next, 0, NULL);
+		if (subheap->seglist) {
+			stat_notice(" %u:", 1U << i);
+			print_subheap_occupancy(subheap, i);
+		}
 	}
 }
 #endif /* GCSTAT */
 
 /* for debug */
 static void
-dump_arena_list(struct heap_arena *arena, struct heap_arena *cur)
+dump_segment_list(struct segment *seg, struct segment *cur)
 {
 	size_t filled, count;
 
-	while (arena) {
-		count = arena_filled(arena, 0, &filled);
-		sml_debug("  arena %p:%s\n",
-			  arena, arena == cur ? " CURRENT" : "");
-		sml_debug("    slotsize = %u, "
-			  "slots = %lu, used = %lu, filled = %lu\n",
-			  SLOT_SIZE(arena),
-			  (unsigned long)arena->layout->num_slots,
+	while (seg) {
+		count = segment_filled(seg, 0, &filled);
+		sml_debug("  segment %p:%s\n",
+			  seg, seg == cur ? " UNRESERVED" : "");
+		sml_debug("    blocksize = %u, "
+			  "%lu blocks, %lu blocks used, %lu bytes filled\n",
+			  BLOCK_SIZE(seg),
+			  (unsigned long)seg->layout->num_blocks,
 			  (unsigned long)count, (unsigned long)filled);
-		arena = arena->next;
+		seg = seg->next;
 	}
 }
 
@@ -967,104 +1104,95 @@ void
 sml_heap_dump()
 {
 	unsigned int i;
-	struct heap_bin *bin;
+	struct subheap *subheap;
+	struct alloc_ptr *ptr;
+	struct segment *seg;
 
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		bin = &heap_bins[i];
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		subheap = &global_subheaps[i];
+		ptr = &ALLOC_PTR_SET()->alloc_ptr[i];
 
-		if (HEAP_BITPTR_EQUAL(bin->freebit, dummy_bitptr)) {
-			sml_debug("bin %u (2^%u=%u): dummy bitptr\n",
-				  i, i, bin->slotsize_bytes);
-		}
-		else if (bin->arena) {
-			sml_debug("bin %u (2^%u=%u): free=%p, bit %u\n",
-				  i, i, bin->slotsize_bytes, bin->free,
-				  HEAP_BITPTR_INDEX(bin->freebit,
-						    BITMAP0_BASE(bin->arena)));
+		if (BITPTR_EQUAL(ptr->freebit, dummy_bitptr)) {
+			sml_debug("ptr[%u] (%u): dummy bitptr\n",
+				  i, ptr->blocksize_bytes);
 		} else {
-			sml_debug("bin %u (2^%u=%u): free=%p, bitptr %p:%08u\n",
-				  i, i, bin->slotsize_bytes, bin->free,
-				  bin->freebit.ptr, bin->freebit.mask);
+			seg = ALLOC_PTR_TO_SEGMENT(ptr);
+			sml_debug("ptr[%u] (%u): free=%p, bit %u\n",
+				  i, ptr->blocksize_bytes, ptr->free,
+				  BITPTR_INDEX(ptr->freebit,
+					       BITMAP0_BASE(seg)));
 		}
-		sml_debug(" arenas:\n");
-		bin->filled = reverse_arena_list(bin->filled);
-		dump_arena_list(bin->filled, NULL);
-		bin->filled = reverse_arena_list(bin->filled);
-		dump_arena_list(bin->arena, bin->arena);
+		sml_debug(" segments:\n");
+		dump_segment_list(subheap->seglist, *subheap->unreserved);
 	}
 
 	sml_debug("freelist:\n");
-	dump_arena_list(alloc_arena.freelist, NULL);
+	dump_segment_list(heap_space.freelist, NULL);
 }
 
 static void
-clear_bin(struct heap_bin *bin)
+set_alloc_ptr(struct alloc_ptr *ptr, struct segment *seg)
 {
-	if (bin->arena) {
-		bin->free = SLOT_BASE(bin->arena);
-		HEAP_BITPTR_INIT(bin->freebit, BITMAP0_BASE(bin->arena), 0);
+	if (seg) {
+		ptr->free = BLOCK_BASE(seg);
+		BITPTR_INIT(ptr->freebit, BITMAP0_BASE(seg), 0);
 	} else {
-		bin->free = NULL;
-		bin->freebit = dummy_bitptr;
+		ptr->free = NULL;
+		ptr->freebit = dummy_bitptr;
 	}
 }
 
 static void
-clear_bitmap(struct heap_arena *arena)
+clear_bitmap(struct segment *seg)
 {
 	unsigned int i;
 
 #ifdef DEBUG
-	for (i = arena->layout->bitmap_limit[ARENA_RANK - 1];
-	     i < ARENA_BITMAP0_OFFSET + arena->layout->bitmap_size;
+	for (i = seg->layout->bitmap_limit[SEG_RANK - 1];
+	     i < SEG_BITMAP0_OFFSET + seg->layout->bitmap_size;
 	     i++)
-		ASSERT(*(unsigned char*)ADD_OFFSET(arena, i) == 0);
+		ASSERT(*(unsigned char*)ADD_OFFSET(seg, i) == 0);
 #endif /* DEBUG */
 
-	memset(BITMAP0_BASE(arena), 0, arena->layout->bitmap_size);
+	memset(BITMAP0_BASE(seg), 0, seg->layout->bitmap_size);
 #ifdef GCSTAT
-	gcstat.last.clear_bytes += arena->layout->bitmap_size;
+	gcstat.last.clear_bytes += seg->layout->bitmap_size;
 #endif /* GCSTAT */
 
-	for (i = 0; i < ARENA_RANK; i++)
-		BITMAP_LIMIT(arena, i)[-1] = BITMAP_SENTINEL(arena, i);
-#ifdef SWEEP_ARENA
-	arena->live_count = 0;
-#endif /* SWEEP_ARENA */
+	for (i = 0; i < SEG_RANK; i++)
+		BITMAP_LIMIT(seg, i)[-1] = BITMAP_SENTINEL(seg, i);
+	seg->live_count = 0;
 }
 
 static void
 clear_all_bitmaps()
 {
 	unsigned int i;
-	struct heap_arena *arena;
-	struct heap_bin *bin;
+	struct segment *seg;
 
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		bin = &heap_bins[i];
-		rewind_arena_list(bin);
-		for (arena = bin->arena; arena; arena = arena->next)
-			clear_bitmap(arena);
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		for (seg = global_subheaps[i].seglist; seg; seg = seg->next)
+			clear_bitmap(seg);
 	}
 }
 
 static void
-init_arena(struct heap_arena *arena, unsigned int slotsize_log2)
+init_segment(struct segment *seg, unsigned int blocksize_log2)
 {
-	const struct arena_layout *layout;
+	const struct segment_layout *layout;
 	unsigned int i;
 	void *old_limit, *new_limit;
 
-	ASSERT(HEAP_SLOTSIZE_MIN_LOG2 <= slotsize_log2
-	       && slotsize_log2 <= HEAP_SLOTSIZE_MAX_LOG2);
+	ASSERT(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
+	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
 
-	/* if arena is already initialized, do nothing. */
-	if (arena->slotsize_log2 == slotsize_log2) {
-		ASSERT(check_arena_consistent(arena, 0) == 0);
+	/* if seg is already initialized, do nothing. */
+	if (seg->blocksize_log2 == blocksize_log2) {
+		ASSERT(check_segment_consistent(seg, 0) == 0);
 		return;
 	}
 
-	layout = &arena_layout[slotsize_log2];
+	layout = &segment_layout[blocksize_log2];
 
 	/*
 	 * bitmap and stack area are cleared except bitmap sentinels.
@@ -1072,153 +1200,278 @@ init_arena(struct heap_arena *arena, unsigned int slotsize_log2)
 	 * with accessing least memory.
 	 */
 #if defined NULL_IS_NOT_ZERO
-	old_limit = BITMAP_LIMIT(arena, ARENA_RANK - 1);
-	new_limit = BITMAP_LIMIT_L(arena, layout, ARENA_RANK - 1);
-#elif defined GLOBAL_MARKSTACK || defined ARENA_MARKSTACK
-	old_limit = ADD_OFFSET(BITMAP0_BASE(arena), arena->layout->bitmap_size);
-	new_limit = ADD_OFFSET(BITMAP0_BASE(arena), layout->bitmap_size);
+	old_limit = BITMAP_LIMIT(seg, SEG_RANK - 1);
+	new_limit = BITMAP_LIMIT_L(seg, layout, SEG_RANK - 1);
 #else
-	old_limit = ADD_OFFSET(arena, arena->layout->stack_limit);
-	new_limit = ADD_OFFSET(arena, layout->stack_limit);
+	old_limit = ADD_OFFSET(seg, seg->layout->stack_limit);
+	new_limit = ADD_OFFSET(seg, layout->stack_limit);
 #endif /* NULL_IS_NOT_ZERO */
 	if ((char*)new_limit > (char*)old_limit)
 		memset(old_limit, 0, (char*)new_limit - (char*)old_limit);
 
-	for (i = 0; i < ARENA_RANK; i++) {
+	for (i = 0; i < SEG_RANK; i++) {
 		/* clear old sentinel */
-		BITMAP_LIMIT(arena, i)[-1] = 0;
+		BITMAP_LIMIT(seg, i)[-1] = 0;
 		/* set new sentinel */
-		BITMAP_LIMIT_3(arena,layout,i)[-1] = layout->bitmap_sentinel[i];
+		BITMAP_LIMIT_3(seg,layout,i)[-1] = layout->bitmap_sentinel[i];
 	}
 
-	arena->slotsize_log2 = slotsize_log2;
-	arena->layout = layout;
-	arena->stack = ADD_OFFSET(arena, layout->stack_offset);
-	arena->slot_base = ADD_OFFSET(arena, layout->slot_offset);
-	arena->next = NULL;
+	seg->blocksize_log2 = blocksize_log2;
+	seg->layout = layout;
+	seg->stack = ADD_OFFSET(seg, layout->stack_offset);
+	seg->block_base = ADD_OFFSET(seg, layout->block_offset);
+	seg->next = NULL;
 
-#ifdef ARENA_MARKSTACK
-	*arena->stack = NULL;
-#else
 #ifdef NULL_IS_NOT_ZERO
-	for (i = 0; i < layout->num_slots; i++)
-		arena->stack[i] = NULL;
+	for (i = 0; i < layout->num_blocks; i++)
+		seg->stack[i] = NULL;
 #endif /* NULL_IS_NOT_ZERO */
-#endif /* ARENA_MARKSTACK */
 
-	ASSERT(check_arena_consistent(arena, 0) == 0);
+	ASSERT(check_segment_consistent(seg, 0) == 0);
+}
+
+#ifdef MINGW32
+#define GetPageSize()  (64 * 1024)
+#define ReservePageError  NULL
+#define ReservePage(addr, size)	\
+	VirtualAlloc(addr, size, MEM_RESERVE, PAGE_NOACCESS)
+#define ReleasePage(addr, size) \
+	VirtualFree(addr, size, MEM_RELEASE)
+#define CommitPage(addr, size) \
+	VirtualAlloc(addr, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE)
+#define UncommitPage(addr, size) \
+	VirtualFree(addr, size, MEM_UNCOMMIT)
+#else
+#define GetPageSize()  getpagesize()
+#define ReservePageError  ((void*)-1)
+#define ReservePage(addr, size) \
+	mmap(addr, size, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0)
+#define ReleasePage(addr, size) \
+	munmap(addr, size)
+#define CommitPage(addr, size) \
+	mprotect(addr, size, PROT_READ | PROT_WRITE)
+#define UncommitPage(addr, size) \
+	mmap(addr, size, PROT_NONE, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0)
+#endif /* MINGW32 */
+
+#if defined(DEBUG) && defined(DEBUG_USE_MMAP)
+#define HEAP_BEGIN_ADDR  (void*)0x2000000
+#else
+#define HEAP_BEGIN_ADDR  NULL
+#endif /* DEBUG && DEBUG_USE_MMAP */
+
+static void
+extend_heap(unsigned int count)
+{
+	unsigned int i;
+	struct segment *first, *seg, **seg_p;
+	bitptr_t b;
+
+	BITPTR_INIT(b, heap_space.bitmap, 0);
+	seg = heap_space.begin;
+	count = heap_space.min_num_segments;
+	seg_p = &first;
+	for (i = 0; count > 0 && i < heap_space.max_num_segments; i++) {
+		if (!BITPTR_TEST(b)) {
+			CommitPage(seg, SEGMENT_SIZE);
+			seg->layout = &segment_layout[0];
+			*seg_p = seg;
+			seg_p = &seg->next;
+			BITPTR_SET(b);
+			count--;
+			heap_space.num_committed++;
+			DBG(("extend: %p (%d) %d", seg, i,
+			     heap_space.num_committed));
+		}
+		BITPTR_INC(b);
+		seg = (struct segment *)((char*)seg + SEGMENT_SIZE);
+	}
+	*seg_p = heap_space.freelist;
+	heap_space.freelist = first;
 }
 
 static void
-init_alloc_arena(size_t size)
+init_heap_space(size_t min_size, size_t max_size)
 {
-	size_t pagesize, allocsize, freesize_pre, freesize_post;
+	size_t pagesize, alloc_size, reserve_size, freesize_pre, freesize_post;
+	unsigned int min_num_segments, max_num_segments, bitmap_bits;
 	void *p;
-	unsigned int i;
-	struct heap_arena *arena;
 
-#ifdef MINGW32
-	pagesize = 64 * 1024;
-#else
-	pagesize = getpagesize();
-#endif /* MINGW32 */
-	if (ARENA_SIZE % pagesize != 0)
-		sml_fatal(0, "ARENA_SIZE is not aligned in page size.");
+	pagesize = GetPageSize();
 
-	allocsize = ALIGNSIZE(size, ARENA_SIZE);
+	if (SEGMENT_SIZE % pagesize != 0)
+		sml_fatal(0, "SEGMENT_SIZE is not aligned in page size.");
 
-	if (allocsize / ARENA_SIZE == 0)
-		allocsize = ARENA_SIZE;
+	alloc_size = ALIGNSIZE(min_size, SEGMENT_SIZE);
+	reserve_size = ALIGNSIZE(max_size, SEGMENT_SIZE);
 
-#ifdef MINGW32
-	p = VirtualAlloc(NULL, ARENA_SIZE + allocsize, MEM_RESERVE,
-			 PAGE_NOACCESS);
-	if (p == NULL) {
-		sml_fatal(0, "VirtualAlloc: error %lu",
-			  (unsigned long)GetLastError());
-	}
+	if (alloc_size < SEGMENT_SIZE)
+		alloc_size = SEGMENT_SIZE;
+	if (reserve_size < alloc_size)
+		reserve_size = alloc_size;
 
-	freesize_post = (uintptr_t)p & (ARENA_SIZE - 1);
+	min_num_segments = alloc_size / SEGMENT_SIZE;
+	max_num_segments = reserve_size / SEGMENT_SIZE;
+
+	p = ReservePage(HEAP_BEGIN_ADDR, SEGMENT_SIZE + reserve_size);
+	if (p == ReservePageError)
+		sml_fatal(0, "failed to alloc virtual memory.");
+
+	freesize_post = (uintptr_t)p & (SEGMENT_SIZE - 1);
 	if (freesize_post == 0) {
-		VirtualFree(p + allocsize, ARENA_SIZE, MEM_RELEASE);
+		ReleasePage(p + reserve_size, SEGMENT_SIZE);
 	} else {
-		freesize_pre = ARENA_SIZE - freesize_post;
-		VirtualFree(p, freesize_pre, MEM_RELEASE);
+		freesize_pre = SEGMENT_SIZE - freesize_post;
+		ReleasePage(p, freesize_pre);
 		p = (char*)p + freesize_pre;
-		VirtualFree(p + allocsize, freesize_post, MEM_RELEASE);
+		ReleasePage(p + reserve_size, freesize_post);
 	}
-	VirtualAlloc(p, allocsize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-#else
-	/* mmap clears mapping with 0. */
-#ifdef DEBUG
-	p = mmap((void*)0x2000000, ARENA_SIZE + allocsize, PROT_NONE,
-		 MAP_ANON | MAP_PRIVATE, -1, 0);
-#else
-	p = mmap(NULL, ARENA_SIZE + allocsize, PROT_NONE,
-		 MAP_ANON | MAP_PRIVATE, -1, 0);
-#endif /* DEBUG */
-	if (p == (void*)-1)
-		sml_sysfatal("mmap");
 
-	freesize_post = (uintptr_t)p & (ARENA_SIZE - 1);
-	if (freesize_post == 0) {
-		munmap(p + allocsize, ARENA_SIZE);
-	} else {
-		freesize_pre = ARENA_SIZE - freesize_post;
-		munmap(p, freesize_pre);
-		p = (char*)p + freesize_pre;
-		munmap(p + allocsize, freesize_post);
-	}
-	mprotect(p, allocsize, PROT_READ | PROT_WRITE);
-#endif /* MINGW32 */
+	heap_space.begin = p;
+	heap_space.end = (char*)p + reserve_size;
+	heap_space.min_num_segments = min_num_segments;
+	heap_space.max_num_segments = max_num_segments;
+	heap_space.num_committed = 0;
+	heap_space.extend_step = min_num_segments > 0 ? min_num_segments : 1;
 
-	alloc_arena.begin = p;
-	alloc_arena.end = (char*)p + allocsize;
-	arena = (struct heap_arena *)alloc_arena.end;
-	alloc_arena.freelist = NULL;
+	bitmap_bits = ALIGNSIZE(max_num_segments, BITPTR_WORDBITS);
+	heap_space.bitmap = xmalloc(bitmap_bits / CHAR_BIT);
+	memset(heap_space.bitmap, 0, bitmap_bits / CHAR_BIT);
 
-	for (i = 0; i < allocsize / ARENA_SIZE; i++) {
-		arena = (struct heap_arena *)((char*)arena - ARENA_SIZE);
-		arena->next = alloc_arena.freelist;
-		arena->layout = &arena_layout[0];
-		alloc_arena.freelist = arena;
-	}
+	extend_heap(min_num_segments);
 
 #ifdef GCSTAT
-	gcstat.initial_num_arenas = i;
+	gcstat.initial_num_segments = min_num_segments;
 #endif /* GCSTAT */
 }
 
-static struct heap_arena *
-new_arena()
+static void
+init_subheaps()
 {
-	struct heap_arena *arena;
+	unsigned int i;
+	struct subheap *subheap;
 
-	if (alloc_arena.freelist == NULL)
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		subheap = &global_subheaps[i];
+		subheap->seglist = NULL;
+		subheap->unreserved = &subheap->seglist;
+#ifdef MINOR_GC
+#if MINOR_COUNT > 0
+		subheap->minor_count = MINOR_COUNT;
+#endif /* MINOR_COUNT */
+		subheap->minor_space = &subheap->seglist;
+#endif /* MINOR_GC */
+	}
+}
+
+static struct segment *
+new_segment()
+{
+	struct segment *seg;
+
+	FREELIST_NEXT(heap_space.freelist, seg);
+	if (seg == NULL)
 		return NULL;
-
-	arena = alloc_arena.freelist;
-	alloc_arena.freelist = arena->next;
-	arena->next = NULL;
-	return arena;
+	seg->next = NULL;
+#ifdef DEBUG
+	memset(ADD_OFFSET(seg, seg->layout->block_offset),
+	       0x55, SEGMENT_SIZE - seg->layout->block_offset);
+#endif /* DEBUG */
+	return seg;
 }
 
 static void
-free_arena(struct heap_arena *arena)
+free_segment(struct segment *seg)
 {
-#ifdef MINGW32
-	VirtualFree(arena, ARENA_SIZE, MEM_RELEASE);
-#else
-	munmap(arena, ARENA_SIZE);
-#endif /* MINGW32 */
+	bitptr_t b;
+	unsigned int index;
+
+	index = ((char*)seg - (char*)heap_space.begin) / SEGMENT_SIZE;
+	BITPTR_INIT(b, heap_space.bitmap, index);
+	ASSERT(BITPTR_TEST(b));
+	BITPTR_CLEAR(b);
+	UncommitPage(seg, SEGMENT_SIZE);
+	heap_space.num_committed--;
+	DBG(("free_segment: %p (%d) %d\n", seg, index,
+	     heap_space.num_committed));
 }
 
-void
-sml_heap_init(size_t size)
+static void
+shrink_heap(unsigned int count)
+{
+	struct segment *seg;
+
+	while (heap_space.num_committed > heap_space.min_num_segments
+	       && count > 0) {
+		seg = heap_space.freelist;
+		if (seg == NULL)
+			break;
+		heap_space.freelist = seg->next;
+		free_segment(seg);
+		heap_space.num_committed--;
+		count--;
+	}
+}
+
+static void
+init_alloc_ptr_set(union alloc_ptr_set *ptr_set)
 {
 	unsigned int i;
 
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		ptr_set->alloc_ptr[i].blocksize_bytes = 1U << i;
+		set_alloc_ptr(&ptr_set->alloc_ptr[i], NULL);
+	}
+#ifdef MULTITHREAD
+	ptr_set->next = NULL;
+#endif /* MULTITHREAD */
+}
+
+#ifdef MULTITHREAD
+static union alloc_ptr_set *
+new_alloc_ptr_set()
+{
+	union alloc_ptr_set *ptr_set;
+
+	POP_FREE_PTR_LIST(ptr_set);
+	if (ptr_set != NULL) {
+		ptr_set->next = NULL;
+		return ptr_set;
+	}
+
+	ptr_set = xmalloc(sizeof(union alloc_ptr_set));
+	init_alloc_ptr_set(ptr_set);
+	return ptr_set;
+}
+
+static void
+free_alloc_ptr_set(union alloc_ptr_set *ptr_set)
+{
+	// ToDo:: LOCK
+	ASSERT(ptr_set != NULL);
+	PUSH_FREE_PTR_LIST(ptr_set);
+}
+
+static void
+destroy_free_ptr_list()
+{
+	union alloc_ptr_set *freelist, *ptr_set;
+
+	CLEAR_FREE_PTR_LIST(freelist);
+
+	while (freelist) {
+		ptr_set = freelist->next;
+		free(freelist);
+		freelist = ptr_set;
+	}
+}
+#endif /* MULTITHREAD */
+
+void
+sml_heap_init(size_t min_size, size_t max_size)
+{
 #ifdef GCSTAT
+	unsigned int i;
 	const char *env;
 	env = getenv("SMLSHARP_GCSTAT_FILE");
 	if (env) {
@@ -1238,9 +1491,9 @@ sml_heap_init(size_t size)
 	if (env) {
 		gcstat.probe_threshold = strtol(env, NULL, 10);
 		if (gcstat.probe_threshold == 0)
-			gcstat.probe_threshold = size;
+			gcstat.probe_threshold = min_size;
 	} else {
-		gcstat.probe_threshold = ARENA_SIZE * 4;
+		gcstat.probe_threshold = SEGMENT_SIZE * 4;
 	}
 #endif /* GCSTAT */
 
@@ -1248,33 +1501,26 @@ sml_heap_init(size_t size)
 	sml_timer_now(gcstat.exec_begin);
 #endif /* GCTIME */
 
-	init_alloc_arena(size);
-
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		heap_bins[i].arena = NULL; /* new_arena(); */
-		heap_bins[i].filled = NULL;
-		heap_bins[i].slotsize_bytes = 1U << i;
-		if (heap_bins[i].arena)
-			init_arena(heap_bins[i].arena, i);
-		clear_bin(&heap_bins[i]);
-#ifdef MINOR_GC
-		heap_bins[i].minor_count = MINOR_COUNT;
-#endif /* MINOR_GC */
-	}
+	init_heap_space(min_size, max_size);
+	init_subheaps();
+#ifndef MULTITHREAD
+	init_alloc_ptr_set(ALLOC_PTR_SET());
+#endif /* MULTITHREAD */
 
 #ifdef GCSTAT
 	stat_notice("---");
 	stat_notice("event: init");
 	stat_notice("time: 0.0");
-	stat_notice("initial_num_arenas: %u", gcstat.initial_num_arenas);
-	stat_notice("heap_size: %u", ARENA_SIZE * gcstat.initial_num_arenas);
+	stat_notice("initial_num_segments: %u", gcstat.initial_num_segments);
+	stat_notice("heap_size: %u",
+		    SEGMENT_SIZE * gcstat.initial_num_segments);
 	stat_notice("config:");
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++)
-		stat_notice(" %u: {size: %lu, num_slots: %lu, "
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++)
+		stat_notice(" %u: {size: %lu, num_blocks: %lu, "
 			    "bitmap_size: %lu}",
-			    1U << i, (unsigned long)ARENA_SIZE,
-			    (unsigned long)arena_layout[i].num_slots,
-			    (unsigned long)arena_layout[i].bitmap_size);
+			    1U << i, (unsigned long)SEGMENT_SIZE,
+			    (unsigned long)segment_layout[i].num_blocks,
+			    (unsigned long)segment_layout[i].bitmap_size);
 	stat_notice("counters:");
 	stat_notice(" heap: [fast, find, next, new]");
 	stat_notice(" other: [malloc]");
@@ -1288,21 +1534,16 @@ sml_heap_init(size_t size)
 void
 sml_heap_free()
 {
-	unsigned int i;
-	struct heap_arena *arena, *next;
 #if defined GCTIME && defined MINOR_GC
 	sml_time_t t;
 #endif /* GCTIME && MINOR_GC */
 
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		rewind_arena_list(&heap_bins[i]);
-		arena = heap_bins[i].arena;
-		while (arena) {
-			next = arena->next;
-			free_arena(arena);
-			arena = next;
-		}
-	}
+#ifdef MULTITHREAD
+	destroy_free_ptr_list();
+#endif /* MULTITHREAD */
+
+	ReleasePage(heap_space.begin,
+		    (char*)heap_space.end - (char*)heap_space.begin);
 
 #ifdef GCTIME
 	sml_timer_now(gcstat.exec_end);
@@ -1387,37 +1628,36 @@ sml_heap_free()
 #endif /* GCSTAT || GCTIME */
 }
 
-void
+void *
 sml_heap_thread_init()
 {
+#ifdef MULTITHREAD
+	return new_alloc_ptr_set();
+#else
+	return NULL;
+#endif /* MULTITHREAD */
 }
 
 void
-sml_heap_thread_free()
+sml_heap_thread_free(void *data ATTR_UNUSED)
 {
+#ifdef MULTITHREAD
+	union alloc_ptr_set *ptr_set = (union alloc_ptr_set *)data;
+	free_alloc_ptr_set(ptr_set);
+#endif /* MULTITHREAD */
 }
 
-static int
-is_marked(void *obj)
+#ifdef MULTITHREAD
+void
+sml_heap_thread_stw_hook(void *data)
 {
-	struct heap_arena *arena;
-	size_t index;
-	heap_bitptr_t b;
-
-	if (!IS_IN_HEAP(obj))
-		return 0;
-
-	arena = OBJ_TO_ARENA(obj);
-	index = OBJ_TO_INDEX(arena, obj);
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), index);
-	return HEAP_BITPTR_TEST(b);
+	unsigned int i;
+	union alloc_ptr_set *ptr_set = data;
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++)
+		set_alloc_ptr(&ptr_set->alloc_ptr[i], NULL);
 }
+#endif /* MULTITHREAD */
 
-#if defined GLOBAL_MARKSTACK
-static void *stack[4096];
-static void **stack_top = stack;
-#elif defined ARENA_MARKSTACK
-#else
 static unsigned int stack_last;
 static void *stack_top = &stack_last;
 
@@ -1428,7 +1668,6 @@ void stacklist(){
 		obj = *obj_to_stack(obj);
 	}
 }
-#endif /* GLOBAL_MARKSTACK || ARENA_MARKSTACK */
 
 #ifdef GCSTAT
 #define GCSTAT_PUSH_COUNT()  (gcstat.last.push_count++)
@@ -1436,97 +1675,46 @@ void stacklist(){
 #define GCSTAT_PUSH_COUNT()
 #endif /* GCSTAT */
 
-#if defined MINOR_GC
-#define GCSTAT_MARK_COUNT(arena)  ((arena)->live_count++)
-#elif defined SWEEP_ARENA
-#define GCSTAT_MARK_COUNT(arena)  ((arena)->live_count = 1)
-#else
-#define GCSTAT_MARK_COUNT(arena)
-#endif /* MINOR_GC || SWEEP_ARENA */
+#define OBJ_HAS_NO_POINTER(obj)			\
+	(!(OBJ_TYPE(obj) & OBJTYPE_BOXED)	\
+	 || (OBJ_TYPE(obj) == OBJTYPE_RECORD	\
+	     && OBJ_BITMAP(obj)[0] == 0		\
+	     && OBJ_NUM_BITMAPS(obj) == 1))
 
-#define OBJ_HAS_NO_POINTER(obj) \
-	(!(OBJ_TYPE(obj) & OBJTYPE_BOXED) \
-	|| (OBJ_TYPE(obj) == OBJTYPE_RECORD \
-	    && OBJ_BITMAP(obj)[0] == 0 \
-	    && OBJ_NUM_BITMAPS(obj) == 1))
-
-#define MARKBIT(b, index, arena) do {					\
+#define MARKBIT(b, index, seg) do {					\
 	unsigned int index__ = (index);					\
-	ASSERT(HEAP_BITPTR_INDEX((b), BITMAP0_BASE(arena)) == index__);	\
-	GCSTAT_MARK_COUNT(arena);					\
-	HEAP_BITPTR_SET(b);						\
-	if (~HEAP_BITPTR_WORD(b) == 0U) {				\
+	ASSERT(BITPTR_INDEX((b), BITMAP0_BASE(seg)) == index__);	\
+	(seg)->live_count++;						\
+	BITPTR_SET(b);							\
+	if (~BITPTR_WORD(b) == 0U) {					\
 		unsigned int i__;					\
-		for(i__ = 1; i__ < ARENA_RANK; i__++) {			\
-			heap_bitptr_t b__;				\
-			index__ /= HEAP_BITPTR_WORDBITS;		\
-			HEAP_BITPTR_INIT(b__, BITMAP_BASE(arena, i__),	\
-					 index__);			\
-			HEAP_BITPTR_SET(b__);				\
-			if (~HEAP_BITPTR_WORD(b__) != 0U)		\
+		for(i__ = 1; i__ < SEG_RANK; i__++) {			\
+			bitptr_t b__;					\
+			index__ /= BITPTR_WORDBITS;			\
+			BITPTR_INIT(b__, BITMAP_BASE(seg, i__),		\
+				    index__);				\
+			BITPTR_SET(b__);				\
+			if (~BITPTR_WORD(b__) != 0U)			\
 				break;					\
 		}							\
 	}								\
 } while (0)
 
-struct trace_cls {
-	sml_trace_cls fn;
-	enum sml_gc_mode mode;
-};
-
-#if defined GLOBAL_MARKSTACK
-#define STACK_TOP()  (*stack_top)
-#define STACK_PUSH(obj, arena, index) do { \
-	ASSERT(obj != NULL); \
-	GCSTAT_PUSH_COUNT(); \
-	*(++stack_top) = (obj); \
-} while (0)
-#define STACK_POP(topobj)  (stack_top--)
-#elif defined ARENA_MARKSTACK
-#define STACK_PUSH(obj, arena, index) do { \
-	ASSERT(obj != NULL); \
-	GCSTAT_PUSH_COUNT(); \
-	*(++(arena)->stack) = (obj); \
-} while (0)
-#else
 #define STACK_TOP() (stack_top == &stack_last ? NULL : stack_top)
-#define STACK_PUSH(obj, arena, index) do { \
-	GCSTAT_PUSH_COUNT(); \
-	ASSERT(OBJ_TO_ARENA(obj) == arena); \
-	ASSERT(OBJ_TO_INDEX(OBJ_TO_ARENA(obj), obj) == index); \
-	ASSERT((arena)->stack[index] == NULL); \
-	(arena)->stack[index] = stack_top, stack_top = (obj); \
+#define STACK_PUSH(obj, seg, index) do {				\
+	GCSTAT_PUSH_COUNT();						\
+	ASSERT(OBJ_TO_SEGMENT(obj) == seg);				\
+	ASSERT(OBJ_TO_INDEX(OBJ_TO_SEGMENT(obj), obj) == index);	\
+	ASSERT((seg)->stack[index] == NULL);				\
+	(seg)->stack[index] = stack_top, stack_top = (obj);		\
 } while (0)
-#define STACK_POP(topobj) do { \
-	struct heap_arena *arena__ = OBJ_TO_ARENA(topobj); \
-	unsigned int index__ = OBJ_TO_INDEX(arena__, topobj); \
-	stack_top = arena__->stack[index__], arena__->stack[index__] = NULL; \
+#define STACK_POP(topobj) do {						\
+	struct segment *seg__ = OBJ_TO_SEGMENT(topobj);			\
+	unsigned int index__ = OBJ_TO_INDEX(seg__, topobj);		\
+	stack_top = seg__->stack[index__], seg__->stack[index__] = NULL; \
 } while (0)
-#endif /* GLOBAL_MARKSTACK */
 
 #ifdef MINOR_GC
-#if defined GLOBAL_MARKSTACK
-static void
-flush_stack()
-{
-	stack_top = stack;
-}
-#elif defined ARENA_MARKSTACK
-static void
-flush_stack()
-{
-	unsigned int i;
-	struct heap_arena *arena;
-
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		ASSERT(heap_bins[i].filled == NULL);
-		for (arena = heap_bins[i].arena; arena; arena = arena->next) {
-			arena->stack =
-				ADD_OFFSET(arena, arena->layout->stack_offset);
-		}
-	}
-}
-#else
 static void
 flush_stack()
 {
@@ -1534,16 +1722,15 @@ flush_stack()
 	while ((obj = STACK_TOP()))
 		STACK_POP(obj);
 }
-#endif /* GLOBAL_MARKSTACK || ARENA_MARKSTACK */
 #endif /* MINOR_GC */
 
 #ifdef MINOR_GC
-void
-sml_heap_barrier(void **writeaddr, void *objaddr)
+SML_PRIMITIVE void
+sml_write_barrier(void **writeaddr, void *objaddr)
 {
-	struct heap_arena *arena;
+	struct segment *seg;
 	size_t index;
-	heap_bitptr_t b;
+	bitptr_t b;
 	void *obj;
 
 	DBG(("objaddr=%p, writeaddr=%p (%p)", objaddr, writeaddr, *writeaddr));
@@ -1552,202 +1739,148 @@ sml_heap_barrier(void **writeaddr, void *objaddr)
 #endif /* GCSTAT */
 
 	if (!IS_IN_HEAP(writeaddr)) {
+		sml_global_barrier(writeaddr, objaddr);
 		obj = *writeaddr;
-		if (!IS_IN_HEAP(obj)) {
-			sml_global_barrier(writeaddr, objaddr, MAJOR);
-			return;
-		}
-		arena = OBJ_TO_ARENA(obj);
-		index = OBJ_TO_INDEX(arena, obj);
-		HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), index);
-		if (HEAP_BITPTR_TEST(b)) {
-			sml_global_barrier(writeaddr, objaddr, MAJOR);
-			return;
-		}
-		if (!sml_global_barrier(writeaddr, objaddr, MINOR))
+
+		if (!IS_IN_HEAP(obj))
 			return;
 
-		/* obj is referenced from outside of heap.
+		GIANT_LOCK(NULL);
+
+		seg = OBJ_TO_SEGMENT(obj);
+		index = OBJ_TO_INDEX(seg, obj);
+		BITPTR_INIT(b, BITMAP0_BASE(seg), index);
+		if (BITPTR_TEST(b)) {
+			GIANT_UNLOCK();
+			return;
+		}
+
+		/* obj is young and is referenced from outside of heap.
 		 * it must be either marked or barriered. */
 #ifdef GCSTAT
 		gcstat.last.barrier_count.barriered++;
 #endif /* GCSTAT */
 		DBG(("BARRIER: %p", obj));
-		MARKBIT(b, index, arena);
-		STACK_PUSH(obj, arena, index);
+		MARKBIT(b, index, seg);
+		STACK_PUSH(obj, seg, index);
+		GIANT_UNLOCK();
 	} else {
+		GIANT_LOCK(NULL);
 		/* objaddr is destructively updated.
 		 * if it is marked, it must be barriered. */
-		arena = OBJ_TO_ARENA(objaddr);
-		index = OBJ_TO_INDEX(arena, objaddr);
-		HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), index);
-		if (!HEAP_BITPTR_TEST(b) || arena->stack[index] != NULL)
+		seg = OBJ_TO_SEGMENT(objaddr);
+		index = OBJ_TO_INDEX(seg, objaddr);
+		BITPTR_INIT(b, BITMAP0_BASE(seg), index);
+		if (!BITPTR_TEST(b) || seg->stack[index] != NULL) {
+			GIANT_UNLOCK();
 			return;
+		}
+
 #ifdef GCSTAT
 		gcstat.last.barrier_count.barriered++;
 #endif /* GCSTAT */
 		DBG(("BARRIER: %p", objaddr));
-		STACK_PUSH(objaddr, arena, index);
+		STACK_PUSH(objaddr, seg, index);
+		GIANT_UNLOCK();
 	}
 }
 #else /* MINOR_GC */
-void
-sml_heap_barrier(void **writeaddr, void *objaddr)
+SML_PRIMITIVE void
+sml_write_barrier(void **writeaddr, void *objaddr)
 {
 	if (!IS_IN_HEAP(writeaddr))
-		sml_global_barrier(writeaddr, objaddr, MAJOR);
+		sml_global_barrier(writeaddr, objaddr);
 }
 #endif /* MINOR_GC */
 
 static void
-push(void **slot, void *data)
+push(void **block)
 {
-	struct trace_cls *cls = (struct trace_cls *)data;
-	void *obj = *slot;
-	struct heap_arena *arena;
+	void *obj = *block;
+	struct segment *seg;
 	size_t index;
-	heap_bitptr_t b;
+	bitptr_t b;
 
 	if (!IS_IN_HEAP(obj)) {
-		DBG(("%p at %p outside", obj, slot));
-		if (obj == NULL)
-			return;
-		obj = sml_trace_ptr(obj, cls->mode);
+		DBG(("%p at %p outside", obj, block));
 		if (obj != NULL)
-			sml_obj_enum_ptr(obj, &cls->fn);
+			sml_trace_ptr(obj);
 		return;
 	}
 
 #ifdef GCSTAT
 	gcstat.last.trace_count++;
 #endif /* GCSTAT */
-	arena = OBJ_TO_ARENA(obj);
-	index = OBJ_TO_INDEX(arena, obj);
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), index);
-	if (HEAP_BITPTR_TEST(b)) {
+	seg = OBJ_TO_SEGMENT(obj);
+	index = OBJ_TO_INDEX(seg, obj);
+	BITPTR_INIT(b, BITMAP0_BASE(seg), index);
+	if (BITPTR_TEST(b)) {
 		DBG(("already marked: %p", obj));
 		return;
 	}
-	MARKBIT(b, index, arena);
+	MARKBIT(b, index, seg);
 	DBG(("MARK: %p", obj));
 
-#ifdef EARLYMARK
 	if (OBJ_HAS_NO_POINTER(obj)) {
 		DBG(("EARLYMARK: %p", obj));
 		return;
 	}
-#endif /* EARLYMARK */
 
-	STACK_PUSH(obj, arena, index);
+	STACK_PUSH(obj, seg, index);
 	DBG(("PUSH: %p", obj));
 }
 
-#ifdef ARENA_MARKSTACK
-static void
-pop()
-{
-	unsigned int i, found;
-	struct heap_arena *arena;
-	void *obj;
-
-	do {
-		found = 0;
-		for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2;
-		     i++) {
-			for (arena = heap_bins[i].filled; arena;
-			     arena = arena->next) {
-				while ((obj = *arena->stack)) {
-					arena->stack--;
-					DBG(("POP: %p", obj));
-					sml_obj_enum_ptr(obj, push);
-					found = 1;
-				}
-			}
-			for (arena = heap_bins[i].arena; arena;
-			     arena = arena->next) {
-				while ((obj = *arena->stack)) {
-					arena->stack--;
-					DBG(("POP: %p", obj));
-					sml_obj_enum_ptr(obj, push);
-					found = 1;
-				}
-			}
-		}
-	} while (found);
-}
-
-static void
-mark_and_pop(void **slot)
-{
-	push(slot);
-	pop();
-}
-
-#else /* ARENA_MARKSTACK */
-
 #ifdef MINOR_GC
 static void
-pop(struct trace_cls *trace_cls)
+pop()
 {
 	void *obj;
 
 	while ((obj = STACK_TOP())) {
 		DBG(("POP: %p", obj));
 		STACK_POP(obj);
-		sml_obj_enum_ptr(obj, &trace_cls->fn);
+		sml_obj_enum_ptr(obj, push);
 	}
 }
 #endif /* MINOR_GC */
 
 static void
-mark(void **slot, void *data)
+mark(void **block)
 {
-	struct trace_cls *cls = data;
-	struct trace_cls push_cls;
-	void *obj = *slot;
-	struct heap_arena *arena;
+	void *obj = *block;
+	struct segment *seg;
 	size_t index;
-	heap_bitptr_t b;
+	bitptr_t b;
 
-#ifndef GLOBAL_MARKSTACK
 	ASSERT(STACK_TOP() == NULL);
-#endif /* !GLOBAL_MARKSTACK */
 
 	if (!IS_IN_HEAP(obj)) {
-		DBG(("%p at %p outside", obj, slot));
-		if (obj == NULL)
-			return;
-		obj = sml_trace_ptr(obj, cls->mode);
+		DBG(("%p at %p outside", obj, block));
 		if (obj != NULL)
-			sml_obj_enum_ptr(obj, &cls->fn);
+			sml_trace_ptr(obj);
 		return;
 	}
 
 #ifdef GCSTAT
 	gcstat.last.trace_count++;
 #endif /* GCSTAT */
-	arena = OBJ_TO_ARENA(obj);
-	index = OBJ_TO_INDEX(arena, obj);
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), index);
-	if (HEAP_BITPTR_TEST(b)) {
+	seg = OBJ_TO_SEGMENT(obj);
+	index = OBJ_TO_INDEX(seg, obj);
+	BITPTR_INIT(b, BITMAP0_BASE(seg), index);
+	if (BITPTR_TEST(b)) {
 		DBG(("already marked: %p", obj));
 		return;
 	}
-	MARKBIT(b, index, arena);
+	MARKBIT(b, index, seg);
 	DBG(("MARK: %p", obj));
 
-#ifdef EARLYMARK
 	if (OBJ_HAS_NO_POINTER(obj)) {
 		DBG(("EARLYMARK: %p", obj));
 		return;
 	}
-#endif /* EARLYMARK */
-
-	push_cls.fn = push;
-	push_cls.mode = cls->mode;
 
 	for (;;) {
-		sml_obj_enum_ptr(obj, &push_cls.fn);
+		sml_obj_enum_ptr(obj, push);
 		obj = STACK_TOP();
 		if (obj == NULL) {
 			DBG(("MARK END"));
@@ -1757,173 +1890,207 @@ mark(void **slot, void *data)
 		DBG(("POP: %p", obj));
 	}
 }
-#endif /* ARENA_MARKSTACK */
 
 static void
-sweep_arena()
+sweep()
 {
 	unsigned int i;
-	struct heap_bin *bin;
-#ifdef SWEEP_ARENA
-	struct heap_arena *arena, **arena_p, **free_p = &alloc_arena.freelist;
-#endif /* SWEEP_ARENA */
+	struct subheap *subheap;
+	struct segment *seg;
+	struct segment **filled_tail;
+	struct segment *unfilled, **unfilled_tail;
+	struct segment *free, **free_tail;
 
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		bin = &heap_bins[i];
-#ifdef SWEEP_ARENA
-		ASSERT(bin->filled == NULL);
+	ASSERT(GIANT_LOCKED());
 
-		/* Keep the order of arenas in the list.
-		 * This means that allocator always tries to find free
-		 * slot from long-life arena. This storategy is good to
-		 * gather long-life object in same arena as many as
-		 * possible. */
-		arena_p = &bin->arena;
-		while ((arena = *arena_p)) {
-			if (arena->live_count > 0) {
-				arena_p = &arena->next;
+	/*
+	 * The order of segments in a sub-heap and the free list may be
+	 * significant for performace.
+	 *
+	 * Segments in the list should be ordered in allocation time order.
+	 * By keeping this order, mutator always tries to find a free block
+	 * at first from long-alived segments, which have long-life objects.
+	 * This storategy is good to gather long-life objects in one segment
+	 * as many as possible.
+	 *
+	 * Segments in the free list should be sorted by previous block size.
+	 * Smaller block size segment has larger bitmap, and any bitmap in
+	 * the free list are already cleared by collector.
+	 * By recycling smaller block size segment at first, we can avoid
+	 * memset of segment initialization as many as possible.
+	 */
+	free = NULL, free_tail = &free;
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		subheap = &global_subheaps[i];
+
+		filled_tail = &subheap->seglist;
+		unfilled = NULL, unfilled_tail = &unfilled;
+		for (seg = subheap->seglist; seg; seg = seg->next) {
+			if (seg->live_count == seg->layout->num_blocks) {
+				*filled_tail = seg;
+				filled_tail = &seg->next;
+			} else if (seg->live_count > 0) {
+				*unfilled_tail = seg;
+				unfilled_tail = &seg->next;
 			} else {
-				*arena_p = arena->next;
-				/* Arenas in freelist are sorted by slotsize.
-				 * Smaller slotsize arena has larger bitmap.
-				 * By recycling smaller slotsize arena at
-				 * first, we can avoid memset of arena
-				 * initialization as many as possible.
-				 */
-				*free_p = arena;
-				free_p = &arena->next;
+				*free_tail = seg;
+				free_tail = &seg->next;
 			}
 		}
-#endif /* SWEEP_ARENA */
-		clear_bin(bin);
+
+		*filled_tail = unfilled;
+		*unfilled_tail = NULL;
+		subheap->unreserved = filled_tail;
 #ifdef MINOR_GC
-		bin->minor_count = MINOR_COUNT;
+#if MINOR_COUNT > 0
+		subheap->minor_count = MINOR_COUNT;
+#endif /* MINOR_COUNT */
+		subheap->minor_space = subheap->unreserved;
 #endif /* MINOR_GC */
+
+#ifndef MULTITHREAD
+		set_alloc_ptr(&ALLOC_PTR_SET()->alloc_ptr[i], NULL);
+#endif /* MULTITHREAD */
 	}
-#ifdef SWEEP_ARENA
-	*free_p = NULL;
-#endif /* SWEEP_ARENA */
+	*free_tail = heap_space.freelist;
+	heap_space.freelist = free;
 }
 
 #ifdef MINOR_GC
 static void
-rewind_arena_minor()
+sweep_minor()
 {
-	unsigned int i, j;
-	struct heap_bin *bin;
-	struct heap_arena *arena, **arena_p;
+	unsigned int i;
+	struct subheap *subheap;
+	struct segment *seg;
+	struct segment **filled_tail;
+	struct segment *unfilled, **unfilled_tail;
+	struct segment *free, **free_tail;
 
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		bin = &heap_bins[i];
+	ASSERT(GIANT_LOCKED());
 
-		/* move not-so-filled arenas from bin->filled to bin->arena. */
-		arena_p = &bin->filled;
-		for (j = 0; *arena_p && j < MINOR_COUNT - bin->minor_count;
-		     j++) {
-			arena = *arena_p;
-			if (arena->live_count == 0) {
-				*arena_p = arena->next;
-				arena->next = alloc_arena.freelist;
-				alloc_arena.freelist = arena;
-			}
-			else if (arena->live_count
-				 < arena->layout->minor_threshold) {
-				*arena_p = arena->next;
-				arena->next = bin->arena;
-				bin->arena = arena;
+	free = NULL, free_tail = &free;
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		subheap = &global_subheaps[i];
+
+		/* initial filled_tail is different from sweep() */
+		filled_tail = subheap->minor_space;
+		unfilled = NULL, unfilled_tail = &unfilled;
+		for (seg = *subheap->minor_space; seg; seg = seg->next) {
+			/* filled condition is different from sweep() */
+			if (seg->live_count >= seg->layout->minor_threshold) {
+				*filled_tail = seg;
+				filled_tail = &seg->next;
+			} else if (seg->live_count > 0) {
+				*unfilled_tail = seg;
+				unfilled_tail = &seg->next;
 			} else {
-				arena_p = &arena->next;
+				*free_tail = seg;
+				free_tail = &seg->next;
 			}
 		}
 
-		/* skip filled arenas */
-		while (bin->arena && (bin->arena->live_count
-				      == bin->arena->layout->num_slots)) {
-			arena = bin->arena;
-			bin->arena = bin->arena->next;
-			arena->next = bin->filled;
-			bin->filled = arena;
-		}
+		*filled_tail = unfilled;
+		*unfilled_tail = NULL;
+		subheap->unreserved = filled_tail;
+#if MINOR_COUNT > 0
+		subheap->minor_count = MINOR_COUNT;
+#endif /* MINOR_COUNT */
+		subheap->minor_space = subheap->unreserved;
 
-		clear_bin(bin);
-		bin->minor_count = MINOR_COUNT;
+#ifndef MULTITHREAD
+		set_alloc_ptr(&ALLOC_PTR_SET()->alloc_ptr[i], NULL);
+#endif /* MULTITHREAD */
 	}
+	*free_tail = heap_space.freelist;
+	heap_space.freelist = free;
 }
 #endif /* MINOR_GC */
 
 #if defined DEBUG && defined SURVIVAL_CHECK
+#include "splay.h"
 static struct {
+	sml_obstack_t *nodes;
+	sml_obstack_t *stack;
 	sml_tree_t set;
+	void *parent;
 } survival_check;
 
-struct survive_cls {
-	sml_trace_cls fn;
-	void *parent;
-	sml_obstack_t *stack;
-};
+static void *
+survive_alloc(size_t n)
+{
+	return sml_obstack_alloc(&survival_check.nodes, n);
+}
 
 static int
-voidp_cmp(void *x, void *y)
+survive_cmp(void *x, void *y)
 {
-	uintptr_t m = (uintptr_t)x, n = (uintptr_t)y;
+	uintptr_t m = (uintptr_t)((void**)x)[0], n = (uintptr_t)((void**)y)[0];
 	if (m < n) return -1;
 	else if (m > n) return 1;
 	else return 0;
 }
 
 static void
-survive_trace(void **slot, void *data)
+survive_trace(void **block)
 {
-	struct survive_cls *cls = data;
-	if (*slot == NULL) return;
-	if (sml_splay_find(&survival_check.set, *slot) != NULL) return;
-	*(sml_splay_insert(&survival_check.set, *slot)) = cls->parent;
-	*((void**)sml_obstack_extend(&cls->stack, sizeof(void*))) = *slot;
+	void *key;
+	void **p;
+	if (*block == NULL) return;
+	key = *block;
+	if (sml_tree_find(&survival_check.set, &key) != NULL) return;
+	p = survive_alloc(sizeof(void *) * 3);
+	p[0] = *block, p[1] = survival_check.parent, p[2] = block;
+	sml_tree_insert(&survival_check.set, p);
+	p = sml_obstack_extend(&survival_check.stack, sizeof(void*));
+	*p = *block;
 }
 
 static void
 init_check_survival()
 {
-	struct survive_cls cls;
 	void **p;
 
+	survival_check.nodes = NULL;
+	survival_check.stack = NULL;
 	survival_check.set.root = NULL;
-	survival_check.set.cmp = voidp_cmp;
-	survival_check.set.alloc = xmalloc;
-	survival_check.set.free = free;
-	cls.fn = survive_trace;
-	cls.parent = NULL;
-	cls.stack = NULL;
-	sml_rootset_enum_ptr(&cls.fn, TRY_MAJOR);
+	survival_check.set.cmp = survive_cmp;
+	survival_check.set.alloc = survive_alloc;
+	survival_check.set.free = NULL;
+	survival_check.parent = NULL;
+	sml_rootset_enum_ptr(survive_trace, TRY_MAJOR);
 
-	while (cls.stack && sml_obstack_object_size(cls.stack) > 0) {
-		p = (void**)sml_obstack_next_free(cls.stack) - 1;
-		cls.parent = *p;
-		sml_obstack_shrink(&cls.stack, p);
-		sml_obj_enum_ptr(cls.parent, &cls.fn);
+	while (survival_check.stack
+	       && sml_obstack_object_size(survival_check.stack) > 0) {
+		p = (void**)sml_obstack_next_free(survival_check.stack) - 1;
+		survival_check.parent = *p;
+		sml_obstack_shrink(&survival_check.stack, p);
+		sml_obj_enum_ptr(survival_check.parent, survive_trace);
 	}
-	sml_obstack_free(&cls.stack, NULL);
+	sml_obstack_free(&survival_check.stack, NULL);
 }
 
 static unsigned int
-check_alive(struct heap_arena *arena)
+check_alive(struct segment *seg)
 {
 	unsigned int i, bittest, livetest, count = 0;
-	heap_bitptr_t b;
+	bitptr_t b;
 	char *p;
+	void *key;
 
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), 0);
-	p = SLOT_BASE(arena);
-	for (i = 0; i < arena->layout->num_slots; i++) {
-		bittest = (HEAP_BITPTR_TEST(b) != 0);
-		livetest = (sml_splay_find(&survival_check.set, p) != NULL);
-		ASSERT(bittest >= livetest);
+	BITPTR_INIT(b, BITMAP0_BASE(seg), 0);
+	p = BLOCK_BASE(seg);
+	for (i = 0; i < seg->layout->num_blocks; i++) {
+		bittest = (BITPTR_TEST(b) != 0);
+		key = p;
+		livetest = (sml_tree_find(&survival_check.set, &key) != NULL);
+		ASSERT(bittest >= livetest); /* live but not marked! */
 		if (bittest > livetest) {
 			DBG(("%p is not alive but marked", p));
 			count++;
 		}
-		HEAP_BITPTR_INC(b);
-		p += SLOT_SIZE(arena);
+		BITPTR_INC(b);
+		p += BLOCK_SIZE(seg);
 	}
 	return count;
 }
@@ -1932,18 +2099,17 @@ static void
 check_survival()
 {
 	unsigned int i, count = 0;
-	struct heap_arena *arena;
+	struct segment *seg;
 
-	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
-		for (arena = heap_bins[i].filled; arena; arena = arena->next)
-			count += check_alive(arena);
-		for (arena = heap_bins[i].arena; arena; arena = arena->next)
-			count += check_alive(arena);
+	for (i = BLOCKSIZE_MIN_LOG2; i <= BLOCKSIZE_MAX_LOG2; i++) {
+		for (seg = global_subheaps[i].seglist; seg; seg = seg->next)
+			count += check_alive(seg);
 	}
 	if (count > 0)
 		sml_warn(0, "%u objects are not alive but marked.", count);
 
-	sml_tree_delete_all(&survival_check.set);
+	sml_obstack_free(&survival_check.nodes, NULL);
+	sml_obstack_free(&survival_check.stack, NULL);
 }
 
 /* for debugger */
@@ -1952,13 +2118,13 @@ survival_ancestors(void *obj)
 {
 	void **v;
 	while (obj) {
-		sml_notice("%p", obj);
-		v = sml_splay_find(&survival_check.set, obj);
+		v = sml_tree_find(&survival_check.set, &obj);
 		if (v == NULL) {
 			sml_notice("*** abort ***");
 			return;
 		}
-		obj = *v;
+		sml_notice("%p (= *%p)", v[0], v[2]);
+		obj = v[1];
 	}
 }
 #endif /* DEBUG && SURVIVAL_CHECK */
@@ -1966,7 +2132,6 @@ survival_ancestors(void *obj)
 static void
 do_gc(enum sml_gc_mode mode)
 {
-	struct trace_cls trace_cls;
 #ifdef GCSTAT
 	sml_time_t cleartime, t;
 	sml_timer_t b_cleared;
@@ -1981,7 +2146,7 @@ do_gc(enum sml_gc_mode mode)
 #endif /* MINOR_GC */
 #endif /* GCTIME */
 
-	HEAP_LOCK();
+	STOP_THE_WORLD();
 
 #ifdef GCSTAT
 	if (gcstat.verbose >= GCSTAT_VERBOSE_COUNT) {
@@ -2014,6 +2179,9 @@ do_gc(enum sml_gc_mode mode)
 		flush_stack();
 #endif /* MINOR_GC */
 		clear_all_bitmaps();
+#ifdef MULTITHREAD
+		destroy_free_ptr_list();
+#endif /* MULTITHREAD */
 #ifdef MINOR_GC
 	}
 #endif /* MINOR_GC */
@@ -2022,39 +2190,26 @@ do_gc(enum sml_gc_mode mode)
 	sml_timer_now(b_cleared);
 #endif /* GCSTAT */
 
-#ifdef ARENA_MARKSTACK
-	trace_cls.fn = push;
-	trace_cls.mode = mode;
-	sml_rootset_enum_ptr(&trace_cls.fn, mode);
-	pop();
-#else
 #ifdef MINOR_GC
-	if (mode == MINOR) {
-		trace_cls.fn = push;
-		trace_cls.mode = mode;
-		pop(&trace_cls);
-	}
+	if (mode == MINOR)
+		pop();
 #endif /* MINOR_GC */
-	trace_cls.fn = mark;
-	trace_cls.mode = mode;
-	sml_rootset_enum_ptr(&trace_cls.fn, mode);
-#endif /* ARENA_MARKSTACK */
+	sml_rootset_enum_ptr(mark, mode);
+	sml_malloc_pop_and_mark(mark, mode);
 
 	/* check finalization */
-#ifdef ARENA_MARKSTACK
-	trace_cls.fn = mark_and_pop;
-	sml_check_finalizer(mode, is_marked, &trace_cls.fn);
-#else
-	trace_cls.fn = mark;
-	sml_check_finalizer(mode, is_marked, &trace_cls.fn);
-#endif /* ARENA_MARKSTACK */
+	sml_check_finalizer(mark, mode);
 
 #ifdef MINOR_GC
 	if (mode == MINOR)
-		rewind_arena_minor();
-	else
+		sweep_minor();
+	else {
 #endif /* MINOR_GC */
-		sweep_arena();
+		sweep();
+		shrink_heap(1);
+#ifdef MINOR_GC
+	}
+#endif /* MINOR_GC */
 
 	/* sweep malloc heap */
 	sml_malloc_sweep(mode);
@@ -2066,14 +2221,12 @@ do_gc(enum sml_gc_mode mode)
 	DBG(("gc finished."));
 
 #ifdef DEBUG
-	check_bin_consistent();
-	scribble_bins();
-#endif /* DEBUG */
-#if defined DEBUG && defined SURVIVAL_CHECK
+	check_heap_consistent();
+#if defined SURVIVAL_CHECK
 	check_survival();
-#endif /* DEBUG && SURVIVAL_CHECK */
-
-	HEAP_UNLOCK();
+#endif /* SURVIVAL_CHECK */
+	scribble_subheaps();
+#endif /* DEBUG */
 
 #ifdef GCTIME
 	sml_timer_dif(b_start, b_end, gctime);
@@ -2117,57 +2270,56 @@ do_gc(enum sml_gc_mode mode)
 	}
 #endif /* GCSTAT */
 
-#ifdef MINOR_GC
-	if (mode != MINOR)
-#endif
-	/* start finalizers */
-	sml_run_finalizer();
+	RUN_THE_WORLD();
 }
 
 void
 sml_heap_gc()
 {
+	GIANT_LOCK(NULL);
 	do_gc(MAJOR);
+	GIANT_UNLOCK();
+	sml_run_finalizer(NULL);
 }
 
 #ifdef DEBUG
 static int
 check_newobj(void *obj)
 {
-	struct heap_bin *bin;
-	struct heap_arena *arena;
+	struct alloc_ptr *ptr;
+	struct segment *seg;
 	size_t index;
-	heap_bitptr_t b, b2;
+	bitptr_t b, b2;
 	unsigned int i;
 
-	arena = OBJ_TO_ARENA(obj);
-	bin = &heap_bins[arena->slotsize_log2];
+	seg = OBJ_TO_SEGMENT(obj);
+	ptr = &ALLOC_PTR_SET()->alloc_ptr[seg->blocksize_log2];
 
-	/* new object must belong to current arena. */
-	ASSERT(bin->arena == arena);
+	/* new object must belong to current segment. */
+	ASSERT(ALLOC_PTR_TO_SEGMENT(ptr) == seg);
 
 	/* bit pointer boundary check */
-	ASSERT(BITMAP0_BASE(arena) <= bin->freebit.ptr
-	       && bin->freebit.ptr < BITMAP_LIMIT(arena, 0));
+	ASSERT(BITMAP0_BASE(seg) <= ptr->freebit.ptr
+	       && ptr->freebit.ptr < BITMAP_LIMIT(seg, 0));
 
 	/* check index */
-	index = OBJ_TO_INDEX(arena, obj);
-	ASSERT(SLOT_BASE(arena) + (index << arena->slotsize_log2)
+	index = OBJ_TO_INDEX(seg, obj);
+	ASSERT(BLOCK_BASE(seg) + (index << seg->blocksize_log2)
 	       == (char*)obj);
 
 	/* object address boundary check */
-	ASSERT(index < arena->layout->num_slots);
+	ASSERT(index < seg->layout->num_blocks);
 
 	/* bitmap check */
-	HEAP_BITPTR_INIT(b, BITMAP0_BASE(arena), index);
-	ASSERT(!HEAP_BITPTR_TEST(b));
+	BITPTR_INIT(b, BITMAP0_BASE(seg), index);
+	ASSERT(!BITPTR_TEST(b));
 
 	/* bitmap tree check */
-	for (i = 1; i < ARENA_RANK; i++) {
-		index /= HEAP_BITPTR_WORDBITS;
-		HEAP_BITPTR_INIT(b2, BITMAP_BASE(arena, i), index);
-		ASSERT((HEAP_BITPTR_WORD(b) == ~0U) ==
-		       (HEAP_BITPTR_TEST(b2) != 0));
+	for (i = 1; i < SEG_RANK; i++) {
+		index /= BITPTR_WORDBITS;
+		BITPTR_INIT(b2, BITMAP_BASE(seg, i), index);
+		ASSERT((BITPTR_WORD(b) == ~0U) ==
+		       (BITPTR_TEST(b2) != 0));
 		b2 = b;
 	}
 
@@ -2196,11 +2348,11 @@ gcstat_alloc_count(size_t offset, size_t size)
 	}
 	((unsigned int*)&gcstat.last)[offset]++;
 }
-#define GCSTAT_ALLOC_COUNT(counter, offset, size)			\
+#define GCSTAT_ALLOC_COUNT(counter, offset, size) \
 	gcstat_alloc_count((unsigned int*)&gcstat.last.alloc_count.counter \
-			    - (unsigned int*)&gcstat.last + (offset), size)
+			   - (unsigned int*)&gcstat.last + (offset), size)
 #define GCSTAT_TRIGGER(slogsize_log2) \
-	(gcstat.last.trigger = (slotsize_log2))
+	(gcstat.last.trigger = (blocksize_log2))
 #define GCSTAT_COUNT_MOVE(counter1, counter2) \
 	(gcstat.last.alloc_count.counter1--, \
 	 gcstat.last.alloc_count.counter2++)
@@ -2211,108 +2363,98 @@ gcstat_alloc_count(size_t offset, size_t size)
 #endif /* GCSTAT */
 
 static void *
-find_bitmap(struct heap_bin *bin)
+find_bitmap(struct alloc_ptr *ptr)
 {
 	unsigned int i, index, *base, *limit, *p;
-	struct heap_arena *arena;
-	heap_bitptr_t b = bin->freebit;
+	struct segment *seg;
+	bitptr_t b = ptr->freebit;
 	void *obj;
 
-	ASSERT(bin->arena != NULL);
-	arena = bin->arena;
+	ASSERT(ptr->freebit.ptr != &dummy_bitmap);
+	seg = ALLOC_PTR_TO_SEGMENT(ptr);
 
-	HEAP_BITPTR_NEXT(b);
-	base = BITMAP0_BASE(arena);
+	BITPTR_NEXT(b);
+	base = BITMAP0_BASE(seg);
 
-	if (HEAP_BITPTR_NEXT_FAILED(b)) {
+	if (BITPTR_NEXT_FAILED(b)) {
 		for (i = 1;; i++) {
-			if (i >= ARENA_RANK) {
-				p = &HEAP_BITPTR_WORD(b) + 1;
-				limit = BITMAP_LIMIT(arena, ARENA_RANK - 1);
+			if (i >= SEG_RANK) {
+				p = &BITPTR_WORD(b) + 1;
+				limit = BITMAP_LIMIT(seg, SEG_RANK - 1);
 				b = bitptr_linear_search(p, limit);
-				if (HEAP_BITPTR_NEXT_FAILED(b))
+				if (BITPTR_NEXT_FAILED(b))
 					return NULL;
-				i = ARENA_RANK - 1;
+				i = SEG_RANK - 1;
 				break;
 			}
-			index = HEAP_BITPTR_WORDINDEX(b, base) + 1;
-			base = BITMAP_BASE(arena, i);
-			HEAP_BITPTR_INIT(b, base, index);
-			HEAP_BITPTR_NEXT(b);
-			if (!HEAP_BITPTR_NEXT_FAILED(b))
+			index = BITPTR_WORDINDEX(b, base) + 1;
+			base = BITMAP_BASE(seg, i);
+			BITPTR_INIT(b, base, index);
+			BITPTR_NEXT(b);
+			if (!BITPTR_NEXT_FAILED(b))
 				break;
 		}
 		do {
-			index = HEAP_BITPTR_INDEX(b, base);
-			base = BITMAP_BASE(arena, --i);
-			HEAP_BITPTR_INIT(b, base + index, 0);
-			HEAP_BITPTR_NEXT(b);
-			ASSERT(!HEAP_BITPTR_NEXT_FAILED(b));
+			index = BITPTR_INDEX(b, base);
+			base = BITMAP_BASE(seg, --i);
+			BITPTR_INIT(b, base + index, 0);
+			BITPTR_NEXT(b);
+			ASSERT(!BITPTR_NEXT_FAILED(b));
 		} while (i > 0);
 	}
 
-	index = HEAP_BITPTR_INDEX(b, base);
-	obj = SLOT_BASE(arena) + (index << arena->slotsize_log2);
-	ASSERT(OBJ_TO_ARENA(obj) == arena);
+	index = BITPTR_INDEX(b, base);
+	obj = BLOCK_BASE(seg) + (index << seg->blocksize_log2);
+	ASSERT(OBJ_TO_SEGMENT(obj) == seg);
 
-	GCSTAT_ALLOC_COUNT(find, arena->slotsize_log2, bin->slotsize_bytes);
-	HEAP_BITPTR_INC(b);
-	bin->freebit = b;
-	bin->free = (char*)obj + bin->slotsize_bytes;
+	GCSTAT_ALLOC_COUNT(find, seg->blocksize_log2, ptr->blocksize_bytes);
+	BITPTR_INC(b);
+	ptr->freebit = b;
+	ptr->free = (char*)obj + ptr->blocksize_bytes;
 
 	return obj;
 }
 
 static void *
-find_arena(struct heap_bin *bin)
+find_segment(struct alloc_ptr *ptr)
 {
-	struct heap_arena *arena;
+	unsigned int blocksize_log2 = ALLOC_PTR_TO_BLOCKSIZE_LOG2(ptr);
+	struct segment *seg;
+	struct subheap *subheap = &global_subheaps[blocksize_log2];
 	void *obj;
 
-	/* find free slot from following arenas. */
-	if (bin->arena) {
-		arena = bin->arena;
-		for (;;) {
-			/* skip current arena. */
-			bin->arena = arena->next;
-			arena->next = bin->filled;
-			bin->filled = arena;
-#ifdef MINOR_GC
-			if (--bin->minor_count == 0) {
-				clear_bin(bin);
-				return NULL;
-			}
-#endif /* MINOR_GC */
-			arena = bin->arena;
-			if (arena == NULL)
-				break;
-			clear_bin(bin);
-			obj = find_bitmap(bin);
-			if (obj) {
-				GCSTAT_COUNT_MOVE(find[arena->slotsize_log2],
-						  next[arena->slotsize_log2]);
-				return obj;
-			}
-		}
-	}
+	ASSERT(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
+	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
 
-	/* try to allocate new arena */
-	bin->arena = new_arena();
-	if (bin->arena) {
-		init_arena(bin->arena, BIN_TO_SLOTSIZE_LOG2(bin));
-		clear_bin(bin);
-		ASSERT(!HEAP_BITPTR_TEST(bin->freebit));
-		GCSTAT_ALLOC_COUNT(new, BIN_TO_SLOTSIZE_LOG2(bin),
-				   bin->slotsize_bytes);
-		obj = bin->free;
-		HEAP_BITPTR_INC(bin->freebit);
-		bin->free += bin->slotsize_bytes;
+#if defined MINOR_GC && MINOR_COUNT > 0
+	if (subheap->minor_count-- == 0)
+		return NULL;
+#endif /* MINOR_GC */
+
+	UNRESERVED_NEXT(subheap->unreserved, seg);
+	if (seg) {
+		/* seg have at least one free block. */
+		set_alloc_ptr(ptr, seg);
+		obj = find_bitmap(ptr);
+		ASSERT(obj != NULL);
+		GCSTAT_COUNT_MOVE(find[blocksize_log2], next[blocksize_log2]);
 		return obj;
 	}
 
-#ifdef DEBUG
-	clear_bin(bin);
-#endif /* DEBUG */
+	seg = new_segment();
+	if (seg) {
+		init_segment(seg, blocksize_log2);
+		UNRESERVED_APPEND(subheap->unreserved, seg);
+		set_alloc_ptr(ptr, seg);
+
+		ASSERT(!BITPTR_TEST(ptr->freebit));
+		GCSTAT_ALLOC_COUNT(new, blocksize_log2, ptr->blocksize_bytes);
+		BITPTR_INC(ptr->freebit);
+		obj = ptr->free;
+		ptr->free += ptr->blocksize_bytes;
+		return obj;
+	}
+
 	return NULL;
 }
 
@@ -2320,82 +2462,93 @@ SML_PRIMITIVE void *
 sml_alloc(unsigned int objsize, void *frame_pointer)
 {
 	size_t alloc_size;
-	unsigned int slotsize_log2;
-	struct heap_bin *bin;
+	unsigned int blocksize_log2;
+	struct alloc_ptr *ptr;
 	void *obj;
 
 #ifdef GCSTAT
 	gcstat.total_alloc_count++;
 #endif /* GCSTAT */
 
-	/* ensure that alloc_size is at least HEAP_SLOTSIZE_MIN. */
-	alloc_size = ALIGNSIZE(OBJ_HEADER_SIZE + objsize, HEAP_SLOTSIZE_MIN);
+	/* ensure that alloc_size is at least BLOCKSIZE_MIN. */
+	alloc_size = ALIGNSIZE(OBJ_HEADER_SIZE + objsize, BLOCKSIZE_MIN);
 
-	if (alloc_size > HEAP_SLOTSIZE_MAX) {
+	if (alloc_size > BLOCKSIZE_MAX) {
 		GCSTAT_ALLOC_COUNT(malloc, 0, alloc_size);
 		sml_save_frame_pointer(frame_pointer);
 		return sml_obj_malloc(alloc_size);
 	}
 
-	slotsize_log2 = HEAP_CEIL_LOG2(alloc_size);
-	ASSERT(HEAP_SLOTSIZE_MIN_LOG2 <= slotsize_log2
-	       && slotsize_log2 <= HEAP_SLOTSIZE_MAX_LOG2);
+	blocksize_log2 = CEIL_LOG2(alloc_size);
+	ASSERT(BLOCKSIZE_MIN_LOG2 <= blocksize_log2
+	       && blocksize_log2 <= BLOCKSIZE_MAX_LOG2);
 
-	bin = &heap_bins[slotsize_log2];
+	ptr = &ALLOC_PTR_SET()->alloc_ptr[blocksize_log2];
 
-	HEAP_LOCK();
-
-	if (!HEAP_BITPTR_TEST(bin->freebit)) {
-		GCSTAT_ALLOC_COUNT(fast, slotsize_log2, alloc_size);
-		HEAP_BITPTR_INC(bin->freebit);
-		obj = bin->free;
-		bin->free += bin->slotsize_bytes;
+	if (!BITPTR_TEST(ptr->freebit)) {
+		GCSTAT_ALLOC_COUNT(fast, blocksize_log2, alloc_size);
+		BITPTR_INC(ptr->freebit);
+		obj = ptr->free;
+		ptr->free += ptr->blocksize_bytes;
 		goto alloced;
 	}
 
-	if (bin->arena) {
-		obj = find_bitmap(bin);
-		if (obj) goto alloced;
-	}
-	obj = find_arena(bin);
-	if (obj) goto alloced;
 	sml_save_frame_pointer(frame_pointer);
 
-#ifdef MINOR_GC
-	GCSTAT_TRIGGER(slotsize_log2);
-	do_gc(MINOR);
-	if (bin->arena) {
-		obj = find_bitmap(bin);
+	if (ptr->free != NULL) {
+		obj = find_bitmap(ptr);
 		if (obj) goto alloced;
 	}
-	obj = find_arena(bin);
+	obj = find_segment(ptr);
 	if (obj) goto alloced;
+
+	GIANT_LOCK(NULL);
+
+#ifdef MULTITHREAD
+	obj = find_segment(ptr);
+	if (obj) goto alloced_unlock;
+#endif /* MULTITHREAD */
+
+#ifdef MINOR_GC
+	GCSTAT_TRIGGER(blocksize_log2);
+	do_gc(MINOR);
+	obj = find_segment(ptr);
+	if (obj) goto alloced_unlock;
 #endif /* MINOR_GC */
 
-	GCSTAT_TRIGGER(slotsize_log2);
+	GCSTAT_TRIGGER(blocksize_log2);
 	do_gc(MAJOR);
+	obj = find_segment(ptr);
+	if (obj) goto alloced_major;
 
-	if (bin->arena) {
-		obj = find_bitmap(bin);
-		if (obj) goto alloced;
-	}
-	obj = find_arena(bin);
-	if (obj) goto alloced;
+	extend_heap(heap_space.extend_step);
+	obj = find_segment(ptr);
+	if (obj) goto alloced_major;
 
 #ifdef GCSTAT
 	stat_notice("---");
 	stat_notice("event: error");
 	stat_notice("heap exceeded: intented to allocate %u bytes.",
-		    bin->slotsize_bytes);
+		    ptr->blocksize_bytes);
 	if (gcstat.file)
 		fclose(gcstat.file);
 #endif /* GCSTAT */
 	sml_fatal(0, "heap exceeded: intended to allocate %u bytes.",
-		  bin->slotsize_bytes);
+		  ptr->blocksize_bytes);
 
- alloced:
-	HEAP_UNLOCK();
+ alloced_major:
 	ASSERT(check_newobj(obj));
+	GIANT_UNLOCK();
+	/* NOTE: sml_run_finalizer may cause garbage collection. */
+	obj = sml_run_finalizer(obj);
+	goto finished;
+#if defined MULTITHREAD || defined MINOR_GC
+ alloced_unlock:
+	GIANT_UNLOCK();
+#endif /* MULTITHREAD || MINOR_GC */
+ alloced:
+	ASSERT(check_newobj(obj));
+ finished:
 	OBJ_HEADER(obj) = 0;
 	return obj;
 }

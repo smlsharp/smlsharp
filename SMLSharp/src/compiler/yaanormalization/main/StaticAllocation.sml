@@ -14,9 +14,33 @@ struct
   structure AN = YAANormal
   structure CT = ConstantTerm
 
+  type topEnv =
+       {locals: AN.topdecl VarID.Map.map, globals: AN.topdecl SEnv.map}
+
+  val emptyTopEnv =
+      {locals = VarID.Map.empty, globals = SEnv.empty} : topEnv
+
+  fun singleton (AN.TOP_LOCAL id, decl) =
+      {locals = VarID.Map.singleton (id, decl), globals = SEnv.empty} : topEnv
+    | singleton (AN.TOP_GLOBAL sym, decl) =
+      {locals = VarID.Map.empty, globals = SEnv.singleton (sym, decl)} : topEnv
+
+  fun find ({locals, globals}:topEnv, topSymbol) =
+      case topSymbol of
+        AN.TOP_LOCAL id => VarID.Map.find (locals, id)
+      | AN.TOP_GLOBAL sym => SEnv.find (globals, sym)
+
+  fun extendTopEnv (env1:topEnv, env2:topEnv) =
+      {locals = VarID.Map.unionWith #1 (#locals env1, #locals env2),
+       globals = SEnv.unionWith #2 (#globals env1, #globals env2)}
+      : topEnv
+
+  fun listItems ({locals, globals}:topEnv) =
+      VarID.Map.listItems locals @ SEnv.listItems globals
+
   type env =
       {
-        topEnv: AN.topdecl SEnv.map,
+        topEnv: topEnv,
         varEnv: AN.anvalue option VarID.Map.map,
         isToplevel: bool,
         clusterId: AN.clusterId,
@@ -31,22 +55,8 @@ struct
        clusterId = clusterId,
        count = count} : env
 
-  fun unionTopEnv (env1, env2) =
-      SEnv.unionWith
-        (fn (x,y) =>
-            raise Control.Bug ("unionTopEnv:\n"
-                               ^ Control.prettyPrint (AN.format_topdecl x)
-                               ^ "\n" 
-                               ^ Control.prettyPrint (AN.format_topdecl y)))
-        (env1, env2)
-
   fun fmt3 n =
       StringCvt.padLeft #"0" 3 (Int.fmt StringCvt.DEC n)
-
-  (* assume that "ClusterID.toString clusterId" is locally unique *)
-  fun newTopName ({clusterId, count, ...}:env) =
-      "SA_C" ^ ClusterID.toString clusterId ^ "." ^ (fmt3 (!count))
-      before count := !count + 1
 
   fun bindVars vars =
       foldl (fn ({id,...}:AN.varInfo, varEnv) =>
@@ -69,7 +79,9 @@ struct
         )
       | AN.ANLABEL _ => anvalue
       | AN.ANLOCALCODE _ => anvalue
-      | AN.ANGLOBALSYMBOL _ => anvalue
+      | AN.ANTOPSYMBOL _ => anvalue
+      | AN.ANNULLPOINTER => anvalue
+      | AN.ANNULLBOXED => anvalue
 
   fun isStatic value =
       case value of
@@ -81,7 +93,9 @@ struct
       | AN.ANVAR _ => false
       | AN.ANLABEL _ => true
       | AN.ANLOCALCODE _ => false
-      | AN.ANGLOBALSYMBOL _ => true
+      | AN.ANTOPSYMBOL _ => true
+      | AN.ANNULLPOINTER => true
+      | AN.ANNULLBOXED => true
 
   fun toUInt32 (AN.ANWORD n) = n
     | toUInt32 (AN.ANINT n) =
@@ -91,46 +105,46 @@ struct
     | toFunLabel _ = raise Control.Bug "toFunLabel: ANLABEL expected"
 
   local
-    fun allocTop env topdeclFn =
+    fun allocTop topdeclFn =
         let
-          val name = newTopName env
+          val name = AN.TOP_LOCAL (VarID.generate ())
           val topdecl = topdeclFn name
         in
-          SOME (SEnv.singleton (name, topdecl),
-                AN.ANGLOBALSYMBOL {name = (name, AN.GLOBALSYMBOL),
-                                   ann = AN.GLOBALOTHER,
-                                   ty = AN.BOXED})
+          SOME (singleton (name, topdecl),
+                AN.ANTOPSYMBOL {name = AN.TOP_EXPORT name, ty = AN.BOXED})
         end
   in
 
-  fun allocateConst env const =
+  fun allocateConst const =
       case const of
-        CT.INT n => SOME (SEnv.empty, AN.ANINT n)
+        CT.INT n => SOME (emptyTopEnv, AN.ANINT n)
       | CT.LARGEINT n => NONE
-      | CT.WORD n => SOME (SEnv.empty, AN.ANWORD n)
-      | CT.BYTE n => SOME (SEnv.empty, AN.ANBYTE n)
+      | CT.WORD n => SOME (emptyTopEnv, AN.ANWORD n)
+      | CT.BYTE n => SOME (emptyTopEnv, AN.ANBYTE n)
       | CT.STRING s =>
-        allocTop env
+        allocTop
           (fn name => AN.ANTOPCONST {globalName = name,
-                                     export = false,
                                      constant = const})
       | CT.REAL _ => NONE
       | CT.FLOAT _ => NONE
-      | CT.CHAR c => SOME (SEnv.empty, AN.ANCHAR c)
-      | CT.UNIT => SOME (SEnv.empty, AN.ANUNIT)
-      | CT.NULL => NONE
+      | CT.CHAR c => SOME (emptyTopEnv, AN.ANCHAR c)
+      | CT.UNIT => SOME (emptyTopEnv, AN.ANUNIT)
+      | CT.NULLPOINTER => SOME (emptyTopEnv, AN.ANNULLPOINTER)
+      | CT.NULLBOXED => SOME (emptyTopEnv, AN.ANNULLBOXED)
 
-  fun allocateStatic env exp =
+  fun allocateStatic (env:env) exp =
       case exp of
-        AN.ANCONST const => allocateConst env const
+        AN.ANCONST const => allocateConst const
       | AN.ANVALUE value =>
-        if isStatic value then SOME (SEnv.empty, value) else NONE
+        if isStatic value then SOME (emptyTopEnv, value) else NONE
       | AN.ANFOREIGNAPPLY _ => NONE
       | AN.ANCALLBACKCLOSURE _ => NONE
       | AN.ANENVACC _ => NONE
       | AN.ANGETFIELD _ => NONE
-      | AN.ANARRAY {bitmap, totalSize, initialValue, elementTy, elementSize,
-                    isMutable} =>
+      | AN.ANARRAY {bitmap, totalSize, initialValue = NONE, elementTy,
+                    elementSize, isMutable} => NONE
+      | AN.ANARRAY {bitmap, totalSize, initialValue = SOME initialValue,
+                    elementTy, elementSize, isMutable} =>
         (* assume that the toplevel is executed only once and has no loop. *)
         if (not isMutable orelse #isToplevel env)
            andalso List.all isStatic [bitmap, totalSize,
@@ -146,10 +160,9 @@ struct
                 val values = List.tabulate (BasicTypes.UInt32ToInt numElems,
                                             fn _ => initialValue)
               in
-                allocTop env
+                allocTop
                   (fn name =>
                       AN.ANTOPARRAY {globalName = name,
-                                     export = false,
                                      bitmap = toUInt32 bitmap,
                                      totalSize = totalSize,
                                      initialValues = values,
@@ -161,29 +174,50 @@ struct
           end
           handle Overflow => NONE
         else NONE
-      | AN.ANRECORD {bitmap, totalSize, fieldList, fieldSizeList,
-                     fieldTyList, isMutable} =>
-        if List.all isStatic ([bitmap, totalSize] @ fieldList @ fieldSizeList)
+      | AN.ANRECORD {bitmaps, totalSize, fieldList, fieldSizeList,
+                     fieldIndexList, fieldTyList, isMutable} =>
+        if List.all isStatic (totalSize :: bitmaps @ fieldList @ fieldSizeList
+                              @ (case fieldIndexList of
+                                   NONE => nil | SOME l => l))
         then
-          allocTop env
-            (fn name => 
-                AN.ANTOPRECORD {globalName = name,
-                                export = false,
-                                bitmaps = [toUInt32 bitmap],
-                                totalSize = toUInt32 totalSize,
-                                fieldList = fieldList,
-                                fieldTyList = fieldTyList,
-                                fieldSizeList = map toUInt32 fieldSizeList,
-                                isMutable = isMutable})
+          case fieldIndexList of
+            NONE =>
+            allocTop
+              (fn name => 
+                  AN.ANTOPRECORD {globalName = name,
+                                  bitmaps = map toUInt32 bitmaps,
+                                  totalSize = toUInt32 totalSize,
+                                  fieldList = fieldList,
+                                  fieldTyList = fieldTyList,
+                                  fieldSizeList = map toUInt32 fieldSizeList,
+                                  isMutable = isMutable})
+          | SOME fieldIndexList =>
+            let
+              val totalSize = toUInt32 totalSize
+              val fieldIndexList = map toUInt32 fieldIndexList
+              fun difList (nil, z) = [z : BasicTypes.UInt32]
+                | difList ([x], z) = [z - x]
+                | difList (h1::h2::t, z) = (h2 - h1) :: difList (h2::t, z)
+              val fieldSizeList = difList (fieldIndexList, totalSize)
+            in
+              allocTop
+                (fn name =>
+                    AN.ANTOPRECORD {globalName = name,
+                                    bitmaps = map toUInt32 bitmaps,
+                                    totalSize = totalSize,
+                                    fieldList = fieldList,
+                                    fieldTyList = fieldTyList,
+                                    fieldSizeList = fieldSizeList,
+                                    isMutable = isMutable})
+            end
         else NONE
       | AN.ANENVRECORD {bitmap, totalSize, fieldList, fieldSizeList,
                         fieldTyList, fixedSizeList} =>
         if List.all isStatic (bitmap :: fieldList @ fieldSizeList)
         then
-          allocTop env
+          allocTop
             (fn name =>
                 AN.ANTOPRECORD {globalName = name,
-                                export = false,
                                 bitmaps = [toUInt32 bitmap],
                                 totalSize = totalSize,
                                 fieldList = fieldList,
@@ -197,10 +231,9 @@ struct
       | AN.ANCLOSURE {funLabel, env=closEnv} =>
         if isStatic funLabel andalso isStatic closEnv
         then
-          allocTop env
+          allocTop
             (fn name =>
                 AN.ANTOPCLOSURE {globalName = name,
-                                 export = false,
                                  funLabel = toFunLabel funLabel,
                                  closureEnv = closEnv})
         else NONE
@@ -250,17 +283,22 @@ struct
                     isMutable} =>
         AN.ANARRAY {bitmap = optimizeValue varEnv bitmap,
                     totalSize = optimizeValue varEnv totalSize,
-                    initialValue = optimizeValue varEnv initialValue,
+                    initialValue =
+                      Option.map (optimizeValue varEnv) initialValue,
                     elementTy = elementTy,
                     elementSize = optimizeValue varEnv elementSize,
                     isMutable = isMutable}
 
-      | AN.ANRECORD {bitmap, totalSize, fieldList, fieldSizeList,
-                     fieldTyList, isMutable} =>
-        AN.ANRECORD {bitmap = optimizeValue varEnv bitmap,
+      | AN.ANRECORD {bitmaps, totalSize, fieldList, fieldSizeList,
+                     fieldIndexList, fieldTyList, isMutable} =>
+        AN.ANRECORD {bitmaps = map (optimizeValue varEnv) bitmaps,
                      totalSize = optimizeValue varEnv totalSize,
                      fieldList = map (optimizeValue varEnv) fieldList,
                      fieldSizeList = map (optimizeValue varEnv) fieldSizeList,
+                     fieldIndexList =
+                        case fieldIndexList of
+                          NONE => NONE
+                        | SOME l => SOME (map (optimizeValue varEnv) l),
                      fieldTyList = fieldTyList,
                      isMutable = isMutable}
 
@@ -307,35 +345,29 @@ struct
       | AN.ANRECCLOSURE {funLabel} =>
         AN.ANRECCLOSURE {funLabel = optimizeValue varEnv funLabel}
 
-      | AN.ANAPPLY {closure, argList, argTyList, resultTyList, argSizeList} =>
+      | AN.ANAPPLY {closure, argList, argTyList, resultTyList} =>
         AN.ANAPPLY {closure = optimizeValue varEnv closure,
                     argList = map (optimizeValue varEnv) argList,
                     argTyList = argTyList,
-                    resultTyList = resultTyList,
-                    argSizeList = argSizeList}
+                    resultTyList = resultTyList}
 
-      | AN.ANCALL {funLabel, env, argList, argSizeList, argTyList,
-                   resultTyList} =>
+      | AN.ANCALL {funLabel, env, argList, argTyList, resultTyList} =>
         AN.ANCALL {funLabel = optimizeValue varEnv funLabel,
                    env = optimizeValue varEnv env,
                    argList = map (optimizeValue varEnv) argList,
-                   argSizeList = argSizeList,
                    argTyList = argTyList,
                    resultTyList = resultTyList}
 
-      | AN.ANRECCALL {funLabel, argList, argSizeList, argTyList,
-                      resultTyList} =>
+      | AN.ANRECCALL {funLabel, argList, argTyList, resultTyList} =>
         AN.ANRECCALL {funLabel = optimizeValue varEnv funLabel,
                       argList = map (optimizeValue varEnv) argList,
-                      argSizeList = argSizeList,
                       argTyList = argTyList,
                       resultTyList = resultTyList}
 
-      | AN.ANLOCALCALL {codeLabel, argList, argSizeList, argTyList,
+      | AN.ANLOCALCALL {codeLabel, argList, argTyList,
                         resultTyList, returnLabel, knownDestinations} =>
         AN.ANLOCALCALL {codeLabel = optimizeValue varEnv codeLabel,
                         argList = map (optimizeValue varEnv) argList,
-                        argSizeList = argSizeList,
                         argTyList = argTyList,
                         resultTyList = resultTyList,
                         returnLabel = returnLabel,
@@ -357,36 +389,35 @@ struct
                              loc = loc}
         in
           case decl of
-            AN.ANSETFIELD {array = AN.ANGLOBALSYMBOL {name=(name,_),...},
+            AN.ANSETFIELD {array = AN.ANTOPSYMBOL {name=AN.TOP_EXPORT name,...},
                            offset = AN.ANWORD 0w0,
                            value,
                            needBoundaryCheck = false, ...} =>
             if isStatic value
             then
-              case SEnv.find (topEnv, name) of
-                SOME (AN.ANTOPVAR {globalName, externalVarID, initialValue,
+              case find (topEnv, name) of
+                SOME (AN.ANTOPVAR {globalName, initialValue,
                                    elementTy, elementSize}) =>
                 (
                   case initialValue of
                     SOME _ => raise Control.Bug "optimizeDecl: ANSETFIELD"
                   | NONE =>
-                    (SEnv.singleton (globalName,
-                                     AN.ANTOPVAR {globalName = globalName,
-                                                  externalVarID = externalVarID,
-                                                  initialValue = SOME value,
-                                                  elementTy = elementTy,
-                                                  elementSize = elementSize}),
+                    (singleton
+                       (name, AN.ANTOPVAR {globalName = globalName,
+                                           initialValue = SOME value,
+                                           elementTy = elementTy,
+                                           elementSize = elementSize}),
                      VarID.Map.empty,
                      nil)
                 )
-              | _ => (SEnv.empty, VarID.Map.empty, [decl])
-            else (SEnv.empty, VarID.Map.empty, [decl])
-          | _ => (SEnv.empty, VarID.Map.empty, [decl])
+              | _ => (emptyTopEnv, VarID.Map.empty, [decl])
+            else (emptyTopEnv, VarID.Map.empty, [decl])
+          | _ => (emptyTopEnv, VarID.Map.empty, [decl])
         end
 
       | AN.ANSETTAIL {record, nestLevel, offset, value, valueTy, valueSize,
                       valueTag, loc} =>
-        (SEnv.empty, VarID.Map.empty,
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANSETTAIL {record = optimizeValue varEnv record,
                         nestLevel = optimizeValue varEnv nestLevel,
                         offset = optimizeValue varEnv offset,
@@ -398,7 +429,7 @@ struct
 
       | AN.ANCOPYARRAY {src, srcOffset, dst, dstOffset, length, elementTy,
                         elementSize, elementTag, loc} =>
-        (SEnv.empty, VarID.Map.empty,
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANCOPYARRAY {src = optimizeValue varEnv src,
                           srcOffset = optimizeValue varEnv srcOffset,
                           dst = optimizeValue varEnv dst,
@@ -409,65 +440,55 @@ struct
                           elementTag = optimizeValue varEnv elementTag,
                           loc = loc}])
 
-      | AN.ANTAILAPPLY {closure, argList, argTyList, resultTyList, argSizeList,
-                        loc} =>
-        (SEnv.empty, VarID.Map.empty,
+      | AN.ANTAILAPPLY {closure, argList, argTyList, resultTyList, loc} =>
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANTAILAPPLY {closure = optimizeValue varEnv closure,
                           argList = map (optimizeValue varEnv) argList,
                           argTyList = argTyList,
                           resultTyList = resultTyList,
-                          argSizeList = argSizeList,
                           loc = loc}])
 
-      | AN.ANTAILCALL {funLabel, env, argList, argSizeList, argTyList,
-                       resultTyList, loc} =>
-        (SEnv.empty, VarID.Map.empty,
+      | AN.ANTAILCALL {funLabel, env, argList, argTyList, resultTyList, loc} =>
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANTAILCALL {funLabel = optimizeValue varEnv funLabel,
                          env = optimizeValue varEnv env,
                          argList = map (optimizeValue varEnv) argList,
-                         argSizeList = argSizeList,
                          argTyList = argTyList,
                          resultTyList = resultTyList,
                          loc = loc}])
 
-      | AN.ANTAILRECCALL {funLabel, argList, argSizeList, argTyList,
-                          resultTyList, loc} =>
-        (SEnv.empty, VarID.Map.empty,
+      | AN.ANTAILRECCALL {funLabel, argList, argTyList, resultTyList, loc} =>
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANTAILRECCALL {funLabel = optimizeValue varEnv funLabel,
                             argList = map (optimizeValue varEnv) argList,
-                            argSizeList = argSizeList,
                             argTyList = argTyList,
                             resultTyList = resultTyList,
                             loc = loc}])
 
-      | AN.ANTAILLOCALCALL {codeLabel, argList, argSizeList, argTyList,
+      | AN.ANTAILLOCALCALL {codeLabel, argList, argTyList,
                             resultTyList, loc, knownDestinations} =>
-        (SEnv.empty, VarID.Map.empty,
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANTAILLOCALCALL {codeLabel = optimizeValue varEnv codeLabel,
                               argList = map (optimizeValue varEnv) argList,
-                              argSizeList = argSizeList,
                               argTyList = argTyList,
                               resultTyList = resultTyList,
                               loc = loc,
                               knownDestinations = knownDestinations}])
 
-      | AN.ANRETURN {valueList, tyList, sizeList, loc} =>
-        (SEnv.empty, VarID.Map.empty,
+      | AN.ANRETURN {valueList, tyList, loc} =>
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANRETURN {valueList = map (optimizeValue varEnv) valueList,
                        tyList = tyList,
-                       sizeList = sizeList,
                        loc = loc}])
 
-      | AN.ANLOCALRETURN {valueList, tyList, sizeList, loc,
-                          knownDestinations} =>
-        (SEnv.empty, VarID.Map.empty,
+      | AN.ANLOCALRETURN {valueList, tyList, loc, knownDestinations} =>
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANLOCALRETURN {valueList = map (optimizeValue varEnv) valueList,
                             tyList = tyList,
-                            sizeList = sizeList,
                             loc = loc,
                             knownDestinations = knownDestinations}])
 
-      | AN.ANVAL {varList, sizeList, exp, loc} =>
+      | AN.ANVAL {varList, exp, loc} =>
         let
           val exp = optimizeExp varEnv exp
         in
@@ -475,9 +496,8 @@ struct
             ([var], SOME (newTopEnv, value)) =>
             (newTopEnv, VarID.Map.singleton (#id var, SOME value), nil)
           | _ =>
-            (SEnv.empty, bindVars varList,
+            (emptyTopEnv, bindVars varList,
              [AN.ANVAL {varList = varList,
-                        sizeList = sizeList,
                         exp = exp,
                         loc = loc}])
         end
@@ -499,23 +519,22 @@ struct
                       AN.ANVAR _ => NONE
                     | value =>
                       SOME (AN.ANVAL {varList = [var],
-                                      sizeList = [AN.SIIGNORE],
                                       exp = AN.ANVALUE value,
                                       loc = loc}))
                 varList
         in
-          (SEnv.empty, VarID.Map.empty, decls @ [decl])
+          (emptyTopEnv, VarID.Map.empty, decls @ [decl])
         end
 
       | AN.ANMERGEPOINT {label, varList, leaveHandler, loc} =>
-        (SEnv.empty, bindVars varList,
+        (emptyTopEnv, bindVars varList,
          [AN.ANMERGEPOINT {label = label,
                            varList = varList,
                            leaveHandler = leaveHandler,
                            loc = loc}])
 
       | AN.ANRAISE {value, loc} =>
-        (SEnv.empty, VarID.Map.empty,
+        (emptyTopEnv, VarID.Map.empty,
          [AN.ANRAISE {value = optimizeValue varEnv value,
                       loc = loc}])
 
@@ -526,7 +545,7 @@ struct
           val handlerEnv = extendVarEnv env newVarEnv
           val (topEnv2, handler) = optimizeDeclList handlerEnv handler
         in
-          (unionTopEnv (topEnv1, topEnv2), VarID.Map.empty,
+          (extendTopEnv (topEnv1, topEnv2), VarID.Map.empty,
            [AN.ANHANDLE {try = try,
                          exnVar = exnVar,
                          handler = handler,
@@ -540,7 +559,7 @@ struct
           val (topEnv1, branches) = optimizeBranches env branches
           val (topEnv2, default) = optimizeDeclList env default
         in
-          (unionTopEnv (topEnv1, topEnv2), VarID.Map.empty,
+          (extendTopEnv (topEnv1, topEnv2), VarID.Map.empty,
            [AN.ANSWITCH {value = value,
                          valueTy = valueTy,
                          branches = branches,
@@ -548,7 +567,7 @@ struct
                          loc = loc}])
         end
 
-  and optimizeBranches env nil = (SEnv.empty, nil)
+  and optimizeBranches env nil = (emptyTopEnv, nil)
     | optimizeBranches env ({constant, branch}::branches) =
       let
         val constant = optimizeExp (#varEnv env) constant
@@ -556,21 +575,21 @@ struct
         val branch = {constant = constant, branch = branch}
         val (topEnv2, branches) = optimizeBranches env branches
       in
-        (unionTopEnv (topEnv1, topEnv2), branch::branches)
+        (extendTopEnv (topEnv1, topEnv2), branch::branches)
       end
               
-  and optimizeDeclList env nil = (SEnv.empty, nil)
+  and optimizeDeclList env nil = (emptyTopEnv, nil)
     | optimizeDeclList env (decl::decls) =
       let
         val (topEnv1, varEnv1, decls1) = optimizeDecl env decl
         val env = extendVarEnv env varEnv1
         val (topEnv2, decls2) = optimizeDeclList env decls
       in
-        (unionTopEnv (topEnv1, topEnv2), decls1 @ decls2)
+        (extendTopEnv (topEnv1, topEnv2), decls1 @ decls2)
       end
 
-  and optimizeCodeDecl env ({codeId, argVarList, argSizeList, body,
-                             resultTyList, loc}:AN.codeDecl) =
+  and optimizeCodeDecl env ({codeId, argVarList, body, resultTyList,
+                             loc}:AN.codeDecl) =
       let
         val env = extendVarEnv env (bindVars argVarList)
         val (newTopEnv, body) = optimizeDeclList env body
@@ -579,23 +598,22 @@ struct
          {
            codeId = codeId,
            argVarList = argVarList,
-           argSizeList = argSizeList,
            body = body,
            resultTyList = resultTyList,
            loc = loc
          } : AN.codeDecl)
       end
 
-  and optimizeCodeDeclList env nil = (SEnv.empty, nil)
+  and optimizeCodeDeclList env nil = (emptyTopEnv, nil)
     | optimizeCodeDeclList env (codedecl::codedecls) =
       let
         val (topEnv1, fundecl) = optimizeCodeDecl env codedecl
         val (topEnv2, fundecls) = optimizeCodeDeclList env codedecls
       in
-        (unionTopEnv (topEnv1, topEnv2), codedecl :: codedecls)
+        (extendTopEnv (topEnv1, topEnv2), codedecl :: codedecls)
       end
 
-  and optimizeFunDecl env ({codeId, argVarList, argSizeList, body,
+  and optimizeFunDecl env ({codeId, argVarList, body,
                             resultTyList, ffiAttributes, loc}:AN.funDecl) =
       let
         val {topEnv, toplevelFunIds, clusterId, count} = env
@@ -611,7 +629,6 @@ struct
          {
            codeId = codeId,
            argVarList = argVarList,
-           argSizeList = argSizeList,
            body = body,
            resultTyList = resultTyList,
            ffiAttributes = ffiAttributes,
@@ -619,13 +636,13 @@ struct
          } : AN.funDecl)
       end
 
-  fun optimizeFunDeclList env nil = (SEnv.empty, nil)
+  fun optimizeFunDeclList env nil = (emptyTopEnv, nil)
     | optimizeFunDeclList env (fundecl::fundecls) =
       let
         val (topEnv1, fundecl) = optimizeFunDecl env fundecl
         val (topEnv2, fundecls) = optimizeFunDeclList env fundecls
       in
-        (unionTopEnv (topEnv1, topEnv2), fundecl :: fundecls)
+        (extendTopEnv (topEnv1, topEnv2), fundecl :: fundecls)
       end
 
   fun optimizeCluster {topEnv, toplevelFunIds}
@@ -658,26 +675,26 @@ struct
         in
           (newTopEnv, AN.ANCLUSTER newCluster)
         end
-      | AN.ANTOPCONST _ => (SEnv.empty, topdecl)
-      | AN.ANTOPRECORD _ => (SEnv.empty, topdecl)
-      | AN.ANTOPARRAY _ => (SEnv.empty, topdecl)
-      | AN.ANTOPVAR _ => (SEnv.empty, topdecl)
-      | AN.ANTOPCLOSURE _ => (SEnv.empty, topdecl)
-      | AN.ANTOPALIAS _ => (SEnv.empty, topdecl)
-      | AN.ANENTERTOPLEVEL id => (SEnv.empty, topdecl)
+      | AN.ANTOPCONST _ => (emptyTopEnv, topdecl)
+      | AN.ANTOPRECORD _ => (emptyTopEnv, topdecl)
+      | AN.ANTOPARRAY _ => (emptyTopEnv, topdecl)
+      | AN.ANTOPVAR _ => (emptyTopEnv, topdecl)
+      | AN.ANTOPCLOSURE _ => (emptyTopEnv, topdecl)
+      | AN.ANTOPALIAS _ => (emptyTopEnv, topdecl)
+      | AN.ANENTERTOPLEVEL id => (emptyTopEnv, topdecl)
 
-  fun optimizeTopdeclList env nil = (SEnv.empty, nil)
+  fun optimizeTopdeclList env nil = (emptyTopEnv, nil)
     | optimizeTopdeclList env (topdecl::topdecls) =
       let
         val (topEnv1, topdecl) = optimizeTopdecl env topdecl
 
         val {topEnv, toplevelFunIds} = env
-        val topEnv = SEnv.unionWith #2 (topEnv, topEnv1)
+        val topEnv = extendTopEnv (topEnv, topEnv1)
         val env2 = {topEnv = topEnv, toplevelFunIds = toplevelFunIds}
 
         val (topEnv2, topdecls) = optimizeTopdeclList env2 topdecls
       in
-        (unionTopEnv (topEnv1, topEnv2), topdecl :: topdecls)
+        (extendTopEnv (topEnv1, topEnv2), topdecl :: topdecls)
       end
 
   fun globalName topdecl =
@@ -695,8 +712,8 @@ struct
       foldl (fn (topdecl, env) =>
                 case globalName topdecl of
                   NONE => env
-                | SOME name => SEnv.insert (env, name, topdecl))
-            SEnv.empty
+                | SOME name => extendTopEnv (env, singleton (name, topdecl)))
+            emptyTopEnv
             topdecls
 
   fun replaceTopdecl topEnv topdecls =
@@ -704,7 +721,7 @@ struct
               case globalName topdecl of
                 NONE => topdecl
               | SOME name =>
-                case SEnv.find (topEnv, name) of
+                case find (topEnv, name) of
                   NONE => topdecl
                 | SOME topdecl => topdecl)
           topdecls
@@ -722,14 +739,15 @@ struct
         val (newTopEnv, topdecls) = optimizeTopdeclList env topdecls
         val topdecls = replaceTopdecl newTopEnv topdecls
 
+        val newTopdecls = listItems newTopEnv
         val newTopdecls =
-            SEnv.foldri
-              (fn (name, topdecl, newTopdecls) =>
-                  case SEnv.find (topEnv, name) of
-                    SOME _ => newTopdecls
-                  | NONE => topdecl :: newTopdecls)
-              nil
-              newTopEnv
+            List.filter (fn topdecl =>
+                            case globalName topdecl of
+                              NONE => true
+                            | SOME name => case find (topEnv, name) of
+                                             NONE => true
+                                           | SOME _ => false)
+                        newTopdecls
 
 (*
         val _ =

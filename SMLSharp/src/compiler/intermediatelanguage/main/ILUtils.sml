@@ -29,6 +29,7 @@ struct
       | CT.FLOAT value => AN.ATOM
       | CT.CHAR value => AN.ATOM
       | CT.UNIT => AN.ATOM
-      | CT.NULL => AN.ATOM
+      | CT.NULLPOINTER => AN.ATOM
+      | CT.NULLBOXED => AN.BOXED
         
 end

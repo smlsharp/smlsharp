@@ -6,13 +6,16 @@ Group is
 
 	../../../../../SMLFormat/smlformatlib.cm
 	../../control/sources.cm
-	../../systemdef/sources.cm
 	../../name/sources.cm
 	../../util/sources.cm
+	../../builtin/sources.cm
 	../../absyn/sources.cm
+	../../types/sources.cm
 	../../constantterm/sources.cm
 	../../annotatedtypes/sources.cm
-
+(*
+	../../systemdef/sources.cm
+*)
 	AnnotatedCalc.ppg.sml
 	ANNOTATEDCALCFORMATTER.sig
 	AnnotatedCalcFormatter.sml

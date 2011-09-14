@@ -4,6 +4,15 @@ Group is
 	$/basis.cm
 #endif
 
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../util/sources.cm
+	../../absyn/sources.cm
+	../../constantterm/sources.cm
+	../../annotatedtypes/sources.cm
+	../../annotatedcalc/sources.cm
+
+(*
 	../../../../../smlnj-lib/Util/smlnj-lib.cm
 	../../../../../SMLFormat/smlformatlib.cm
 	../../control/sources.cm
@@ -17,12 +26,15 @@ Group is
 	../../constantterm/sources.cm
 	../../types/sources.cm
 	../../annotatedtypes/sources.cm
+*)
 
 	MultipleValueCalc.ppg.sml
 	MULTIPLEVALUECALCFORMATTER.sig
 	MultipleValueCalcFormatter.sml
 	MULTIPLEVALUECALCUTILS.sig
 	MultipleValueCalcUtils.sml
+(*
 	MVTypeCheckError.ppg.sml
 	MVTypeCheck.sml
 	MultipleValueCalcPickler.sml
+*)

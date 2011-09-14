@@ -1,27 +1,29 @@
 signature GLOBALINDEXENV = sig
 
-  type arrayIndex = BasicTypes.UInt32
-  type offset = BasicTypes.UInt32
-
-  type implementationIndex = {arrayIndex : arrayIndex, offset : offset}
-
   type globalIndexEnv
-
-  val initialGlobalIndexEnv : globalIndexEnv
+  type globalIndexAllocator
 
   val emptyGlobalIndexEnv : globalIndexEnv
+  val extendGlobalIndexEnv : globalIndexEnv * globalIndexEnv -> globalIndexEnv
 
-  val findIndex : globalIndexEnv * ExVarID.id -> implementationIndex option
+  (* takes current counter and environment and returns an allocator. *)
+  val initGlobalIndexAllocator
+      : globalIndexEnv -> globalIndexAllocator
 
-  val allocateIndex : globalIndexEnv * ExVarID.id * IntermediateLanguage.ty -> 
-                      globalIndexEnv * implementationIndex
+  (* save the current counter and deconstruct an allocator to
+   * newly-introduced environment and new global array indexes. *)
+  val finishGlobalIndexAllocator
+      : globalIndexAllocator
+        -> {newGlobalIndexEnv: globalIndexEnv,
+            newGlobalArrayIndexes:
+            (GlobalArrayIndexCounter.arrayIndex * IntermediateLanguage.ty) list}
 
-  val globalBoxedArraySize : BasicTypes.UInt32
-  val globalAtomArraySize : BasicTypes.UInt32
-  val globalDoubleArraySize : BasicTypes.UInt32
+  val findIndex : globalIndexAllocator * ExVarID.id
+                  -> GlobalArrayIndexCounter.implementationIndex option
 
-  val startRecordingNewGlobalArrays : unit -> unit
-  val getNewGlobalArrayIndexes : unit -> (arrayIndex * IntermediateLanguage.ty) list
+  val allocateIndex
+      : globalIndexAllocator * ExVarID.id * IntermediateLanguage.ty -> 
+        globalIndexAllocator * GlobalArrayIndexCounter.implementationIndex
 
   val pu_globalIndexEnv : globalIndexEnv Pickle.pu
 

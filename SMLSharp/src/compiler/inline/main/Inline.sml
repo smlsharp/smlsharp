@@ -17,6 +17,9 @@ structure ATU = AnnotatedTypesUtils
 structure AT = AnnotatedTypes
 structure T = Types
 
+val emptyGlobalEnv = ExVarID.Map.empty
+fun extendGlobalEnv (x, y) = ExVarID.Map.unionWith #2 (x, y)
+
 in 
 local
 
@@ -28,7 +31,11 @@ fun hasFV env mvexp =
 	   foldr (fn (mvexp,r) => hasFV env mvexp orelse r) false argExpList
       | MV.MVEXPORTCALLBACK {funExp,...}
 	=> hasFV env funExp
+      | MV.MVTAGOF _
+	=> false
       | MV.MVSIZEOF _
+	=> false
+      | MV.MVINDEXOF _
 	=> false
       | MV.MVCONSTANT _
 	=> false
@@ -121,17 +128,6 @@ and hasFVDecl env decl =
 	   in (env,r)
 	   end
       | MV.MVVALREC {recbindList,...}
-	=> let val env = foldr (fn ({boundVar={varId=T.INTERNAL id,...},...},env) 
-				   => ID.Set.add (env,id)
-				 | ({boundVar={varId=T.EXTERNAL _,...},...},env)
-				   => env)
-			       env recbindList
-	   in (env,
-	       foldr (fn ({boundExp,...},r) => hasFV env boundExp orelse r)
-		     false recbindList
-	      )
-	   end
-      | MV.MVVALPOLYREC {recbindList,...}
 	=> let val env = foldr (fn ({boundVar={varId=T.INTERNAL id,...},...},env) 
 				   => ID.Set.add (env,id)
 				 | ({boundVar={varId=T.EXTERNAL _,...},...},env)
@@ -267,11 +263,27 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 	in
 	    {mvexp=mvexp, size=sizeFun+1, ety=ety}
 	end
+      | MV.MVTAGOF {ty, loc}
+	=> 
+	let val ty = IU.substitute tyEnv ty
+	    val mvexp = MV.MVTAGOF {ty=ty, loc=loc}
+	    val ety = AT.SINGLETONty (AT.TAGty ty)
+	in
+	    {mvexp=mvexp, size=1, ety=ety}
+	end
       | MV.MVSIZEOF {ty, loc}
 	=> 
 	let val ty = IU.substitute tyEnv ty
 	    val mvexp = MV.MVSIZEOF {ty=ty, loc=loc}
-	    val ety = AT.intty
+	    val ety = AT.SINGLETONty (AT.SIZEty ty)
+	in
+	    {mvexp=mvexp, size=1, ety=ety}
+	end
+      | MV.MVINDEXOF {label, recordTy, loc}
+	=> 
+	let val recordTy = IU.substitute tyEnv recordTy
+	    val mvexp = MV.MVINDEXOF {label=label, recordTy=recordTy, loc=loc}
+	    val ety = AT.SINGLETONty (AT.INDEXty (label, recordTy))
 	in
 	    {mvexp=mvexp, size=1, ety=ety}
 	end
@@ -604,7 +616,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 						  | _ => raise Control.Bug "invalid varinfo in inliner")
 						intRenameEnv
 						(argVarList,newArgVarList)
-			 val btvList = map (fn (key,_) => key) (IEnv.listItemsi btvEnv)
+			 val btvList = map (fn (key,_) => key) (BoundTypeVarID.Map.listItemsi btvEnv)
 			 val tyEnv = ListPair.foldr (fn (key,ty,subst) => IU.insertTyEnv (subst,key,ty)) 
 						    tyEnv (btvList, instTyList)
 			 (*
@@ -641,7 +653,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 						  | _ => raise Control.Bug "invalid varinfo in inliner")
 						intRenameEnv
 						(argVarList,newArgVarList)
-			 val btvList = map (fn (key,_) => key) (IEnv.listItemsi btvEnv)
+			 val btvList = map (fn (key,_) => key) (BoundTypeVarID.Map.listItemsi btvEnv)
 			 val tyEnv = ListPair.foldr (fn (key,ty,subst) => IU.insertTyEnv (subst,key,ty)) 
 						    tyEnv (btvList, instTyList)
 			 (*
@@ -691,7 +703,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 	end
       | MV.MVLET {localDeclList, mainExp, loc}
 	=> 
-	let val {globalEnv, localEnv=newLocalEnv, intRenameEnv, 
+	let val {newGlobalEnv, localEnv=newLocalEnv, intRenameEnv, 
 		 mvdeclList=localDeclList, size=sizeDecls}
 		= 
 		inlineDeclList 
@@ -705,7 +717,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 	    val {mvexp=mainExp, size=sizeMain, ety,...} = 
 		inlineExp 
 		    {
-		     globalEnv=globalEnv,
+		     globalEnv=extendGlobalEnv (globalEnv, newGlobalEnv),
 		     localEnv=newLocalEnv,
 		     intRenameEnv=intRenameEnv,
 		     tyEnv=tyEnv,
@@ -763,8 +775,8 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 			    }
 	in {mvexp=mvexp, size=size+1, ety=recordTy}
 	end
-      | MV.MVSELECT {recordExp, label, recordTy, resultTy, loc}
-	=> let val {mvexp=recordExp, size, ety,...} =
+      | MV.MVSELECT {recordExp, indexExp, label, recordTy, resultTy, loc}
+	=> let val {mvexp=recordExp, size=sizeRecord, ety,...} =
 		   inlineExp
 		       {
 			globalEnv=globalEnv, 
@@ -773,19 +785,30 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 			tyEnv=tyEnv,
 			mvexp=recordExp
 		       }
+	       val {mvexp=indexExp, size=sizeIndex, ety,...} =
+		   inlineExp
+		       {
+			globalEnv=globalEnv, 
+			localEnv=localEnv, 
+			intRenameEnv=intRenameEnv,
+			tyEnv=tyEnv,
+			mvexp=indexExp
+		       }
 	       val recordTy = IU.substitute tyEnv recordTy
 	       val resultTy = IU.substitute tyEnv resultTy
 	       val mvexp = MV.MVSELECT
 			       {
 				recordExp=recordExp,
-				label=label,
+                                indexExp=indexExp,
+                                label=label,
 				recordTy=recordTy,
 				resultTy=resultTy,
 				loc=loc
 			       }
-	   in {mvexp=mvexp, size=size+1, ety=resultTy}
+	   in {mvexp=mvexp, size=sizeRecord+sizeIndex+1, ety=resultTy}
 	   end
-      | MV.MVMODIFY {recordExp, recordTy, label, valueExp, valueTy, loc}
+      | MV.MVMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy,
+                     loc}
 	=> let val {mvexp=recordExp,size=sizeRecord,ety,...} =
 		   inlineExp
 		       {
@@ -794,6 +817,15 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 			intRenameEnv=intRenameEnv,
 			tyEnv=tyEnv,
 			mvexp=recordExp
+		       }
+	       val {mvexp=indexExp,size=sizeIndex,ety,...} =
+		   inlineExp
+		       {
+			globalEnv=globalEnv, 
+			localEnv=localEnv, 
+			intRenameEnv=intRenameEnv,
+			tyEnv=tyEnv,
+			mvexp=indexExp
 		       }
 	       val {mvexp=valueExp, size=sizeValue,...} =
 		   inlineExp
@@ -810,12 +842,13 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 				      {
 				       recordExp=recordExp,
 				       recordTy=recordTy,
-				       label=label,
+                                       indexExp=indexExp,
+                                       label=label,
 				       valueExp=valueExp,
 				       valueTy=valueTy,
 				       loc=loc
 				      }
-	       val size = sizeRecord + sizeValue + 1
+	       val size = sizeRecord + sizeIndex + sizeValue + 1
 	   in {mvexp=mvexp, size=size, ety=ety}
 	   end
       | MV.MVRAISE {argExp, resultTy, loc}
@@ -917,7 +950,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 		    case tyEnv of 
 			NONE => freshBtvEnv
 		      | SOME tyEnv => IU.substituteBtvEnv tyEnv freshBtvEnv,
-		    IEnv.foldri (fn (oldId,btv,tyEnv) => IU.insertTyEnv (tyEnv,oldId,btv))
+		    BoundTypeVarID.Map.foldri (fn (oldId,btv,tyEnv) => IU.insertTyEnv (tyEnv,oldId,btv))
 				tyEnv subst
 		    )
 		end
@@ -976,7 +1009,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 		     SOME (IE.PFN (btvEnv,mvfnm,sizePFN,displayName))
 		     =>
 		     let
-			 val btvList = map (fn (key,_) => key) (IEnv.listItemsi btvEnv)
+			 val btvList = map (fn (key,_) => key) (BoundTypeVarID.Map.listItemsi btvEnv)
 			 val tyEnv = ListPair.foldr (fn (key,ty,subst) => IU.insertTyEnv (subst,key,ty))
 						    tyEnv (btvList, instTyList)
 			 val mvfnm = case tyEnv of
@@ -997,7 +1030,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 		     SOME (IE.GPFN (btvEnv, mvfnm, (*sizeGPFN*)_, displayName))
 		     =>
 		     let
-			 val btvList = map (fn (key,_) => key) (IEnv.listItemsi btvEnv)
+			 val btvList = map (fn (key,_) => key) (BoundTypeVarID.Map.listItemsi btvEnv)
 			 val tyEnv = ListPair.foldr (fn (key,ty,subst) => IU.insertTyEnv (subst,key,ty))
 						    tyEnv (btvList, instTyList)
 			 val {mvexp=mvfnm,size=sizeMVFNM,ety} = 
@@ -1150,18 +1183,18 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				 => ID.Map.insert (localEnv,id,IE.SIMPLE boundExp)
 			       | T.EXTERNAL _ 
 				 => localEnv
-			 val globalEnv =
+			 val newGlobalEnv =
 			     case varId of 
-				 T.INTERNAL _ => globalEnv
+				 T.INTERNAL _ => emptyGlobalEnv
 			       | T.EXTERNAL ai
-				 => ExVarID.Map.insert (globalEnv,ai,IE.GSIMPLE (boundExp,displayName))
+				 => ExVarID.Map.singleton (ai,IE.GSIMPLE (boundExp,displayName))
 			 val (mvdeclList,sizeMVDeclList) =
 			     case varId of
 				 T.INTERNAL _ => (nil,0)
 			       | T.EXTERNAL _ => ([mvdecl],sizeMVDecl)
 		     in 
 			 {
-			  globalEnv=globalEnv,
+			  newGlobalEnv=newGlobalEnv,
 			  localEnv=localEnv,
 			  intRenameEnv=intRenameEnv,
 			  mvdeclList=mvdeclList,
@@ -1177,18 +1210,18 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				 => ID.Map.insert (localEnv,id,IE.SIMPLE boundExp)
 			       | T.EXTERNAL _ 
 				 => localEnv
-			 val globalEnv =
+			 val newGlobalEnv =
 			     case varId of 
-				 T.INTERNAL _ => globalEnv
+				 T.INTERNAL _ => emptyGlobalEnv
 			       | T.EXTERNAL ai
-				 => ExVarID.Map.insert (globalEnv,ai,IE.GSIMPLE (boundExp,displayName))
+				 => ExVarID.Map.singleton (ai,IE.GSIMPLE (boundExp,displayName))
 			 val (mvdeclList,sizeMVDeclList) =
 			     case varId of
 				 T.INTERNAL _ => (nil,0)
 			       | T.EXTERNAL _ => ([mvdecl],sizeMVDecl)
 		     in 
 			 {
-			  globalEnv=globalEnv,
+			  newGlobalEnv=newGlobalEnv,
 			  localEnv=localEnv,
 			  intRenameEnv=intRenameEnv,
 			  mvdeclList=mvdeclList,
@@ -1204,24 +1237,24 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				 => ID.Map.insert (localEnv,id,IE.SIMPLE boundExp)
 			       | T.EXTERNAL _
 				 => localEnv
-			 val globalEnv =
+			 val newGlobalEnv =
 			     case varId of
 				 T.INTERNAL _
-				 => globalEnv
+				 => emptyGlobalEnv
 			       | T.EXTERNAL ai
 				 =>
 				 (
 				  case #varId varInfo of
-				      T.INTERNAL _ => globalEnv
+				      T.INTERNAL _ => emptyGlobalEnv
 				    | T.EXTERNAL _
-				      => ExVarID.Map.insert (globalEnv, ai, IE.GSIMPLE (boundExp,displayName))
+				      => ExVarID.Map.singleton (ai, IE.GSIMPLE (boundExp,displayName))
 				 )
 			 val (mvdeclList,sizeMVDeclList) = 
 			     case varId of
 				 T.INTERNAL _ => (nil,0)
 			       | T.EXTERNAL _ => ([mvdecl],sizeMVDecl)
 		     in {
-			 globalEnv=globalEnv,
+			 newGlobalEnv=newGlobalEnv,
 			 localEnv=localEnv,
 			 intRenameEnv=intRenameEnv,
 			 mvdeclList=mvdeclList,
@@ -1241,23 +1274,22 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				     localEnv
 			       | T.EXTERNAL _
 				 => localEnv
-			 val globalEnv =
+			 val newGlobalEnv =
 			     case varId of
-				 T.INTERNAL _ => globalEnv
+				 T.INTERNAL _ => emptyGlobalEnv
 			       | T.EXTERNAL ai
 				 => 
 				 if sizeBoundExp <= !Control.inlineThreshold then
-				     if hasFreeVar boundExp then globalEnv
-				     else ExVarID.Map.insert 
+				     if hasFreeVar boundExp then emptyGlobalEnv
+				     else ExVarID.Map.singleton
 					      (
-					       globalEnv,
 					       ai,
 					       IE.GFN (boundExp,displayName)
 					      )
-				 else globalEnv
+				 else emptyGlobalEnv
 		     in 
 			 {
-			  globalEnv=globalEnv,
+			  newGlobalEnv=newGlobalEnv,
 			  localEnv=localEnv,
 			  intRenameEnv=intRenameEnv,
 			  mvdeclList=[mvdecl],
@@ -1277,23 +1309,22 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				     localEnv
 			       | T.EXTERNAL _
 				 => localEnv
-			 val globalEnv = 
+			 val newGlobalEnv = 
 			     case varId of
-				 T.INTERNAL _ => globalEnv
+				 T.INTERNAL _ => emptyGlobalEnv
 			       | T.EXTERNAL ai
 				 =>
 				 if sizeBoundExp <= !Control.inlineThreshold then
-				     if hasFreeVar boundExp then globalEnv
-				     else ExVarID.Map.insert 
+				     if hasFreeVar boundExp then emptyGlobalEnv
+				     else ExVarID.Map.singleton
 					      (
-					       globalEnv,
 					       ai,
 					       IE.GPFN (btvEnv,mvfnm,sizeBoundExp,displayName)
 					      )
-				 else globalEnv
+				 else emptyGlobalEnv
 		     in
 			 {
-			  globalEnv=globalEnv,
+			  newGlobalEnv=newGlobalEnv,
 			  localEnv=localEnv,
 			  intRenameEnv=intRenameEnv,
 			  mvdeclList=[mvdecl],
@@ -1303,7 +1334,7 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 		   | _
 		     => 
 		     {
-		      globalEnv=globalEnv,
+		      newGlobalEnv=emptyGlobalEnv,
 		      localEnv=localEnv,
 		      intRenameEnv=intRenameEnv,
 		      mvdeclList=[mvdecl],
@@ -1323,7 +1354,7 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 				 }
 		     in 
 			 {
-			  globalEnv=globalEnv,
+			  newGlobalEnv=emptyGlobalEnv,
 			  localEnv=localEnv,
 			  intRenameEnv=intRenameEnv,
 			  mvdeclList=nil, (* since this case is internal. *)
@@ -1333,7 +1364,7 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 		   | _
 		     =>
 		     {
-		      globalEnv=globalEnv,
+		      newGlobalEnv=emptyGlobalEnv,
 		      localEnv=localEnv,
 		      intRenameEnv=intRenameEnv,
 		      mvdeclList=[mvdecl],
@@ -1397,85 +1428,15 @@ and inlineDecl {globalEnv, localEnv, intRenameEnv, tyEnv, mvdecl}
 					  }
 	    val mvdecl = MV.MVVALREC {recbindList=recbindList,loc=loc}
 	in
-	    {globalEnv=globalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, 
+	    {newGlobalEnv=emptyGlobalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, 
 	     mvdeclList=[mvdecl], size=size+1}
 	end
-      | MV.MVVALPOLYREC {btvEnv, recbindList, loc}
-	=> 
-	let 
-	    val intRenameEnv = 
-		let val oldVarIdList = map (fn {boundVar,...} => #varId boundVar) recbindList
-		in foldr
-		       (fn (oldVarId,intRenameEnv) =>
-			   case oldVarId of
-			       T.INTERNAL oldId =>
-			       ID.Map.insert (intRenameEnv, oldId, Counters.newLocalID())
-			     | T.EXTERNAL _ =>
-			       intRenameEnv)
-		       intRenameEnv
-		       oldVarIdList
-		end
-	    val (btvEnv,tyEnv) = 
-		let 
-		    val (subst,freshBtvEnv) = IU.copyBtvEnv btvEnv
-		in (
-		    case tyEnv of
-			NONE => freshBtvEnv
-		      | SOME tyEnv => IU.substituteBtvEnv tyEnv freshBtvEnv,
-		    IEnv.foldri (fn (oldId,btv,tyEnv) => IU.insertTyEnv (tyEnv,oldId,btv))
-				tyEnv subst
-		    )
-		end
-	    fun inlineBindList {globalEnv,localEnv,intRenameEnv,tyEnv,bindList=nil} = (nil, 0)
-	      | inlineBindList 
-		    {
-		     globalEnv,
-		     localEnv,
-		     intRenameEnv,
-		     tyEnv,
-		     bindList={boundVar=boundVar:MV.varInfo,
-			       boundExp} :: binds
-		    } =
-		let 
-		    val newBoundVar = 
-			case #varId boundVar of
-			    T.INTERNAL id =>
-			    (case ID.Map.find (intRenameEnv,id) of
-				 SOME id => IU.changeID id boundVar
-			       | NONE => raise Control.Bug "inliner bug")
-			  | T.EXTERNAL _ => boundVar
-		    val newBoundVar = IU.changeTY (IU.substitute tyEnv (#ty boundVar)) newBoundVar
-		    val {mvexp,size=sizeBE,...} =
-			inlineExp {globalEnv=globalEnv,localEnv=localEnv,intRenameEnv=intRenameEnv,
-				   tyEnv=tyEnv,mvexp=boundExp}
-		    val newBind = {boundVar = newBoundVar, boundExp = mvexp}
-		    val (newBinds, sizeList) = 
-			inlineBindList {globalEnv=globalEnv,localEnv=localEnv,intRenameEnv=intRenameEnv,
-					tyEnv=tyEnv,bindList=binds}
-		    val size = sizeBE + sizeList
-		in
-		    (newBind::newBinds, size)
-		end
-	    val (recbindList, size) = inlineBindList 
-					  {
-					   globalEnv=globalEnv,
-					   localEnv=localEnv,
-					   intRenameEnv=intRenameEnv,
-					   tyEnv=tyEnv,
-					   bindList=recbindList
-					  }
-	    val mvdecl = MV.MVVALPOLYREC {btvEnv=btvEnv,recbindList=recbindList,loc=loc}
-	in
-	    {globalEnv=globalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, 
-	     mvdeclList=[mvdecl], size=size+1}
-	end
-	
 
 and inlineDeclList {globalEnv,localEnv,intRenameEnv,tyEnv, mvdeclList=nil} = 
-    {globalEnv=globalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, mvdeclList=nil, size=0}
+    {newGlobalEnv=emptyGlobalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, mvdeclList=nil, size=0}
   | inlineDeclList {globalEnv,localEnv,intRenameEnv,tyEnv,
 		    mvdeclList=mvdecl::mvdeclList} =
-    let val {globalEnv,localEnv,intRenameEnv,mvdeclList=mvdeclList1,size=sizeDecl} = 
+    let val {newGlobalEnv=env1,localEnv,intRenameEnv,mvdeclList=mvdeclList1,size=sizeDecl} = 
 	    inlineDecl 
 		{
 		 globalEnv=globalEnv,
@@ -1484,10 +1445,10 @@ and inlineDeclList {globalEnv,localEnv,intRenameEnv,tyEnv, mvdeclList=nil} =
 		 tyEnv=tyEnv,
 		 mvdecl=mvdecl
 		}
-	val {globalEnv,localEnv,intRenameEnv,mvdeclList=mvdeclList2,size=sizeDeclList} = 
+	val {newGlobalEnv=env2,localEnv,intRenameEnv,mvdeclList=mvdeclList2,size=sizeDeclList} = 
 	    inlineDeclList 
 		{
-		 globalEnv=globalEnv,
+		 globalEnv=extendGlobalEnv (globalEnv, env1),
 		 localEnv=localEnv,
 		 intRenameEnv=intRenameEnv,
 		 tyEnv=tyEnv,
@@ -1495,7 +1456,7 @@ and inlineDeclList {globalEnv,localEnv,intRenameEnv,tyEnv, mvdeclList=nil} =
 		}
 	val size = sizeDecl + sizeDeclList
     in {
-	globalEnv=globalEnv, 
+	newGlobalEnv=extendGlobalEnv (env1, env2), 
 	localEnv=localEnv, 
 	intRenameEnv=intRenameEnv,
 	mvdeclList=mvdeclList1 @ mvdeclList2,
@@ -1507,7 +1468,7 @@ and inlineDeclList {globalEnv,localEnv,intRenameEnv,tyEnv, mvdeclList=nil} =
      case basicBlock of
          MV.MVVALBLOCK {code, exnIDSet} =>
          let
-	     val {globalEnv,localEnv,intRenameEnv,mvdeclList=newCode,size} = 
+	     val {newGlobalEnv,localEnv,intRenameEnv,mvdeclList=newCode,size} = 
 	         inlineDeclList {globalEnv=globalEnv,
 		                 localEnv=localEnv,
 		                 intRenameEnv=intRenameEnv,
@@ -1515,20 +1476,20 @@ and inlineDeclList {globalEnv,localEnv,intRenameEnv,tyEnv, mvdeclList=nil} =
 		                 mvdeclList=code
 		                }
          in
-             {globalEnv = globalEnv, 
+             {newGlobalEnv = newGlobalEnv, 
               localEnv = localEnv,
               intRenameEnv = intRenameEnv, 
               basicBlock = MV.MVVALBLOCK {code = newCode, exnIDSet = exnIDSet}, 
               size = size} 
          end
        | MV.MVLINKFUNCTORBLOCK x => 
-	 {globalEnv=globalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, basicBlock = basicBlock, size=0}
+	 {newGlobalEnv=emptyGlobalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, basicBlock = basicBlock, size=0}
 
 fun inlineTopBlock {globalEnv, localEnv, intRenameEnv, tyEnv, topBlock} =
     case topBlock of
         MV.MVBASICBLOCK basicBlock =>
         let
-            val {globalEnv,localEnv,intRenameEnv, basicBlock, size} = 
+            val {newGlobalEnv,localEnv,intRenameEnv, basicBlock, size} = 
 	        inlineBasicBlock
                     {globalEnv = globalEnv, 
                      localEnv = localEnv, 
@@ -1536,7 +1497,7 @@ fun inlineTopBlock {globalEnv, localEnv, intRenameEnv, tyEnv, topBlock} =
                      tyEnv = tyEnv, 
                      basicBlock = basicBlock}
         in
-	    {globalEnv=globalEnv, 
+	    {newGlobalEnv=newGlobalEnv,
              localEnv=localEnv, 
              intRenameEnv=intRenameEnv, 
 	     topBlock = MV.MVBASICBLOCK basicBlock,
@@ -1546,31 +1507,31 @@ fun inlineTopBlock {globalEnv, localEnv, intRenameEnv, tyEnv, topBlock} =
         (* Since MVFUNCTOR & MVLINKFUNCTOR appears only in toplevel, this size infomation is not used.
          * So I simply let it 0 (any value is ok). 
 	 *)
-	{globalEnv=globalEnv, 
+	{newGlobalEnv=emptyGlobalEnv, 
          localEnv=localEnv, 
          intRenameEnv=intRenameEnv, 
 	 topBlock=topBlock, 
          size=0}
 
 fun inlineTopBlockList {globalEnv,localEnv,intRenameEnv,tyEnv, topBlockList=nil} = 
-    {globalEnv=globalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, topBlockList=nil, size=0}
+    {newGlobalEnv=emptyGlobalEnv, localEnv=localEnv, intRenameEnv=intRenameEnv, topBlockList=nil, size=0}
   | inlineTopBlockList {globalEnv,localEnv,intRenameEnv,tyEnv, topBlockList = topBlock:: topBlockList} =
     let 
-        val {globalEnv, localEnv,intRenameEnv, topBlock,size=size1} = 
+        val {newGlobalEnv=env1, localEnv,intRenameEnv, topBlock,size=size1} = 
 	    inlineTopBlock {globalEnv=globalEnv,
 		         localEnv=localEnv,
 		         intRenameEnv=intRenameEnv,
 		         tyEnv=tyEnv,
 		         topBlock=topBlock}
-	val {globalEnv,localEnv,intRenameEnv, topBlockList = topBlockList,size=size2} = 
-	    inlineTopBlockList {globalEnv=globalEnv,
+	val {newGlobalEnv=env2,localEnv,intRenameEnv, topBlockList = topBlockList,size=size2} = 
+	    inlineTopBlockList {globalEnv=extendGlobalEnv (globalEnv, env1),
 		             localEnv=localEnv,
 		             intRenameEnv=intRenameEnv,
 		             tyEnv=tyEnv,
 		             topBlockList=topBlockList}
 	val size = size1 + size2
     in {
-	globalEnv=globalEnv, 
+	newGlobalEnv=extendGlobalEnv (env1, env2),
 	localEnv=localEnv, 
 	intRenameEnv=intRenameEnv,
 	topBlockList= topBlock :: topBlockList,
@@ -1580,7 +1541,7 @@ fun inlineTopBlockList {globalEnv,localEnv,intRenameEnv,tyEnv, topBlockList=nil}
 
 fun doInlining (IE.GIE globalEnv) topBlockList = 
     let 
-	val {globalEnv,topBlockList,...} = 
+	val {newGlobalEnv,topBlockList,...} = 
             inlineTopBlockList
 		{
 		 globalEnv=globalEnv,
@@ -1590,9 +1551,8 @@ fun doInlining (IE.GIE globalEnv) topBlockList =
 		 topBlockList=topBlockList
 		}
     in 
-	(IE.GIE globalEnv, topBlockList)
+	(IE.GIE newGlobalEnv, topBlockList)
     end
-    handle exn => raise exn
 
 end
 end

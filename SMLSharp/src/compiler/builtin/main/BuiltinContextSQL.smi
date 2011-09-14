@@ -1,0 +1,628 @@
+(* If you change this file, edit BuiltinName.sml with respect to the change
+ * of this file. *)
+
+structure SQL =
+struct
+  datatype 'a server =
+      SERVER of
+      string
+      * (string * {colname: string, typename: string, isnull: bool} list) list
+      * 'a
+  datatype 'a conn = CONN of unit ptr * 'a
+  datatype 'a dbi = DBI of 'a dbi
+  datatype ('a,'b) db = DB of 'a * 'b dbi
+  datatype ('a,'b) table = TABLE of (string * 'b dbi) * 'a
+  datatype ('a,'b) row = ROW of (string * 'b dbi) * 'a
+  datatype ('a,'b) value = VALUE of (string * 'b dbi) * 'a
+  datatype result = RESULT of unit ptr * int
+  datatype 'a rel = REL of result * (result -> 'a)
+  datatype 'a query = QUERY of string * 'a * (result -> 'a)
+  datatype command = COMMAND of string
+end
+
+(*
+  val format_server : ('a -> SMLSharp.SMLFormat.expression)
+                      -> 'a server -> SMLSharp.SMLFormat.expression
+  val format_conn : ('a -> SMLSharp.SMLFormat.expression)
+                      -> 'a conn -> SMLSharp.SMLFormat.expression
+  val format_dbi : ('a -> SMLSharp.SMLFormat.expression)
+                    -> 'a dbi -> SMLSharp.SMLFormat.expression
+  val format_db : ('a -> SMLSharp.SMLFormat.expression)
+                  -> ('b -> SMLSharp.SMLFormat.expression)
+                  -> ('a,'b) db -> SMLSharp.SMLFormat.expression
+  val format_table : ('a -> SMLSharp.SMLFormat.expression)
+                     -> ('b -> SMLSharp.SMLFormat.expression)
+                     -> ('a,'b) table -> SMLSharp.SMLFormat.expression
+  val format_row : ('a -> SMLSharp.SMLFormat.expression)
+                     -> ('b -> SMLSharp.SMLFormat.expression)
+                     -> ('a,'b) row -> SMLSharp.SMLFormat.expression
+  val format_value : ('a -> SMLSharp.SMLFormat.expression)
+                     -> ('b -> SMLSharp.SMLFormat.expression)
+                     -> ('a,'b) value -> SMLSharp.SMLFormat.expression
+  val format_result : result -> SMLSharp.SMLFormat.expression
+  val format_rel : ('a -> SMLSharp.SMLFormat.expression)
+                   -> 'a rel -> SMLSharp.SMLFormat.expression
+  val format_query : ('a -> SMLSharp.SMLFormat.expression)
+                     -> 'a query -> SMLSharp.SMLFormat.expression
+  val format_command : command -> SMLSharp.SMLFormat.expression
+
+  datatype bool = datatype bool
+  datatype option = datatype option
+
+  val format_bool : bool -> SMLSharp.SMLFormat.expression
+  val format_option : ('a -> SMLSharp.SMLFormat.expression)
+                      -> 'a option -> SMLSharp.SMLFormat.expression
+
+  val concatDot : (string * 'a) * string -> string * 'a
+  val concatQuery : (string * 'a) list -> string
+  val eval : 'a dbi * (('b,'a) db -> 'c query) -> 'b conn -> 'c rel
+  val exec : 'a dbi * (('b,'a) db -> command) -> 'b conn -> unit
+
+  val toSQL_int
+      : int -> (int, 'c) value
+  val toSQL_word
+      : word -> (word, 'c) value
+  val toSQL_char
+      : char -> (char, 'c) value
+  val toSQL_string
+      : string -> (string, 'c) value
+  val toSQL_real
+      : real -> (real, 'c) value
+  val toSQL_intOption
+      : int option -> (int option, 'c) value
+  val toSQL_wordOption
+      : word option -> (word option, 'c) value
+  val toSQL_charOption
+      : char option -> (char option, 'c) value
+  val toSQL_boolOption
+      : bool option -> (bool option, 'c) value
+  val toSQL_stringOption
+      : string option -> (string option, 'c) value
+  val toSQL_realOption
+      : real option -> (real option, 'c) value
+
+  val toSQL =
+      case 'a in 'a -> ('a, 'c) value of
+        int => toSQL_int
+      | word => toSQL_word
+      | char => toSQL_char
+      | string => toSQL_string
+      | real => toSQL_real
+      | 'b option =>
+        case 'b in 'b option -> ('b option, 'c) value of
+          int => toSQL_intOption
+        | word => toSQL_wordOption
+        | char => toSQL_charOption
+        | bool => toSQL_boolOption
+        | string => toSQL_stringOPtion
+        | real => toSQL_realOption
+
+  val fromSQL_int
+      : int * result * int -> int
+  val fromSQL_word
+      : int * result * word -> word
+  val fromSQL_char
+      : int * result * char -> char
+  val fromSQL_string
+      : int * result * string -> string
+  val fromSQL_real
+      : int * result * real -> real
+  val fromSQL_intOption
+      : int * result * int option -> int option
+  val fromSQL_wordOption
+      : int * result * word option -> word option
+  val fromSQL_charOption
+      : int * result * char option -> char option
+  val fromSQL_boolOption
+      : int * result * bool option -> bool option
+  val fromSQL_stringOption
+      : int * result * string option -> string option
+  val fromSQL_realOption
+      : int * result * real option -> real option
+
+  val fromSQL =
+      case 'a in int * result * 'a -> 'a of
+        int => fromSQL_int
+      | word => fromSQL_word
+      | char => fromSQL_char
+      | string => fromSQL_string
+      | real => fromSQL_real
+      | 'b option =>
+        case 'b in 'b option -> ('b option, 'c) value of
+          int => fromSQL_intOption
+        | word => fromSQL_wordOption
+        | char => fromSQL_charOption
+        | bool => fromSQL_boolOption
+        | string => fromSQL_stringOPtion
+        | real => fromSQL_realOption
+
+  val default_int
+      : unit -> (int, unit) value
+  val default_word
+      : unit -> (word, unit) value
+  val default_char
+      : unit -> (char, unit) value
+  val default_string
+      : unit -> (string, unit) value
+  val default_real
+      : unit -> (real, unit) value
+  val default_intOption
+      : unit -> (int option, unit) value
+  val default_wordOption
+      : unit -> (word option, unit) value
+  val default_charOption
+      : unit -> (char option, unit) value
+  val default_boolOption
+      : unit -> (bool option, unit) value
+  val default_stringOption
+      : unit -> (string option, unit) value
+  val default_realOption
+      : unit -> (real option, unit) value
+
+  val default =
+      case 'a in unit -> ('a, 'c) value of
+        int => default_int
+      | word => default_word
+      | char => default_char
+      | string => default_string
+      | real => default_real
+      | 'b option =>
+        case 'b in unit -> ('b option, 'c) value of
+          int => default_intOption
+        | word => default_wordOption
+        | char => default_charOption
+        | bool => default_boolOption
+        | string => default_stringOPtion
+        | real => default_realOption
+
+  val add_int
+      : (int, 'c) value * (int, 'c) value -> (int, 'c) value
+  val add_word
+      : (word, 'c) value * (word, 'c) value -> (word, 'c) value
+  val add_real
+      : (real, 'c) value * (real, 'c) value -> (real, 'c) value
+  val add_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (int option, 'c) value
+  val add_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (word option, 'c) value
+  val add_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (real option, 'c) value
+
+  val add =
+      case 'a in ('a,'c) value * ('a,'c) value -> ('a,'c) value of
+        int => add_int
+      | word => add_word
+      | real => add_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> ('b option, 'c) value of
+          int => add_intOption
+        | word => add_wordOption
+        | real => add_realOption
+
+  val sub_int
+      : (int, 'c) value * (int, 'c) value -> (int, 'c) value
+  val sub_word
+      : (word, 'c) value * (word, 'c) value -> (word, 'c) value
+  val sub_real
+      : (real, 'c) value * (real, 'c) value -> (real, 'c) value
+  val sub_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (int option, 'c) value
+  val sub_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (word option, 'c) value
+  val sub_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (real option, 'c) value
+
+  val sub =
+      case 'a in ('a,'c) value * ('a,'c) value -> ('a,'c) value of
+        int => sub_int
+      | word => sub_word
+      | real => sub_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> ('b option, 'c) value of
+          int => sub_intOption
+        | word => sub_wordOption
+        | real => sub_realOption
+
+  val mul_int
+      : (int, 'c) value * (int, 'c) value -> (int, 'c) value
+  val mul_word
+      : (word, 'c) value * (word, 'c) value -> (word, 'c) value
+  val mul_real
+      : (real, 'c) value * (real, 'c) value -> (real, 'c) value
+  val mul_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (int option, 'c) value
+  val mul_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (word option, 'c) value
+  val mul_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (real option, 'c) value
+
+  val mul =
+      case 'a in ('a,'c) value * ('a,'c) value -> ('a,'c) value of
+        int => mul_int
+      | word => mul_word
+      | real => mul_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> ('b option, 'c) value of
+          int => mul_intOption
+        | word => mul_wordOption
+        | real => mul_realOption
+
+  val div_int
+      : (int, 'c) value  * (int, 'c) value -> (int, 'c) value
+  val div_word
+      : (word, 'c) value  * (word, 'c) value -> (word, 'c) value
+  val div_intOption
+      : (int option, 'c) value  * (int option, 'c) value
+        -> (int option, 'c) value
+  val div_wordOption
+      : (word option, 'c) value  * (word option, 'c) value
+        -> (word option, 'c) value
+
+  val div =
+      case 'a in ('a,'c) value * ('a,'c) value -> ('a,'c) value of
+        int => div_int
+      | word => div_word
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> ('b option, 'c) value of
+          int => div_intOption
+        | word => div_wordOption
+
+  val mod_int
+      : (int, 'c) value  * (int, 'c) value -> (int, 'c) value
+  val mod_word
+      : (word, 'c) value  * (word, 'c) value -> (word, 'c) value
+  val mod_intOption
+      : (int option, 'c) value  * (int option, 'c) value
+        -> (int option, 'c) value
+  val mod_wordOption
+      : (word option, 'c) value  * (word option, 'c) value
+        -> (word option, 'c) value
+
+  val mod =
+      case 'a in ('a,'c) value * ('a,'c) value -> ('a,'c) value of
+        int => mod_int
+      | word => mod_word
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> ('b option, 'c) value of
+          int => mod_intOption
+        | word => mod_wordOption
+
+  val div_real
+      : (real, 'c) value * (real, 'c) value -> (real, 'c) value
+  val div_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (real option, 'c) value
+
+  val divr =
+      case 'a in ('a,'c) value * ('a,'c) value -> ('a,'c) value of
+        real => div_real
+      | real option => div_realOption
+
+  val neg_int
+      : (int, 'c) value -> (int, 'c) value
+  val neg_real
+      : (real, 'c) value -> (real, 'c) value
+  val neg_intOption
+      : (int option, 'c) value -> (int option, 'c) value
+  val neg_realOption
+      : (real option, 'c) value -> (real option, 'c) value
+
+  val neg =
+      case 'a in ('a,'c) value -> ('a,'c) value of
+        int => neg_int
+      | real => neg_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value -> ('b option, 'c) value of
+          int => neg_intOption
+        | real => neg_realOption
+
+  val abs_int
+      : (int, 'c) value -> (int, 'c) value
+  val abs_real
+      : (real, 'c) value -> (real, 'c) value
+  val abs_intOption
+      : (int option, 'c) value -> (int option, 'c) value
+  val abs_realOption
+      : (real option, 'c) value -> (real option, 'c) value
+
+  val abs =
+      case 'a in ('a,'c) value -> ('a,'c) value of
+        int => abs_int
+      | real => abs_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value -> ('b option, 'c) value of
+          int => abs_intOption
+        | real => abs_realOption
+
+  val lt_int
+      : (int, 'c) value * (int, 'c) value -> (bool option, 'c) value
+  val lt_word
+      : (word, 'c) value * (word, 'c) value -> (bool option, 'c) value
+  val lt_char
+      : (char, 'c) value * (char, 'c) value -> (bool option, 'c) value
+  val lt_string
+      : (string, 'c) value * (string, 'c) value -> (bool option, 'c) value
+  val lt_real
+      : (real, 'c) value * (real, 'c) value -> (bool option, 'c) value
+  val lt_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (bool option, 'c) value
+  val lt_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (bool option, 'c) value
+  val lt_charOption
+      : (char option, 'c) value * (char option, 'c) value
+        -> (bool option, 'c) value
+  val lt_boolOption
+      : (bool option, 'c) value * (bool option, 'c) value
+        -> (bool option, 'c) value
+  val lt_stringOption
+      : (string option, 'c) value * (string option, 'c) value
+        -> (bool option, 'c) value
+  val lt_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (bool option, 'c) value
+
+  val lt =
+      case 'a in ('a, 'c) value * ('a, 'c) value -> (bool option, 'a) value of
+        int => lt_int
+      | word => lt_word
+      | char => lt_char
+      | string => lt_string
+      | real => lt_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> (bool option, 'b option) value of
+          int => lt_intOption
+        | word => lt_wordOption
+        | char => lt_charOption
+        | bool => lt_boolOption
+        | string => lt_stringOPtion
+        | real => lt_realOption
+
+  val gt_int
+      : (int, 'c) value * (int, 'c) value -> (bool option, 'c) value
+  val gt_word
+      : (word, 'c) value * (word, 'c) value -> (bool option, 'c) value
+  val gt_char
+      : (char, 'c) value * (char, 'c) value -> (bool option, 'c) value
+  val gt_string
+      : (string, 'c) value * (string, 'c) value -> (bool option, 'c) value
+  val gt_real
+      : (real, 'c) value * (real, 'c) value -> (bool option, 'c) value
+  val gt_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (bool option, 'c) value
+  val gt_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (bool option, 'c) value
+  val gt_charOption
+      : (char option, 'c) value * (char option, 'c) value
+        -> (bool option, 'c) value
+  val gt_boolOption
+      : (bool option, 'c) value * (bool option, 'c) value
+        -> (bool option, 'c) value
+  val gt_stringOption
+      : (string option, 'c) value * (string option, 'c) value
+        -> (bool option, 'c) value
+  val gt_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (bool option, 'c) value
+
+  val gt =
+      case 'a in ('a, 'c) value * ('a, 'c) value -> (bool option, 'a) value of
+        int => gt_int
+      | word => gt_word
+      | char => gt_char
+      | string => gt_string
+      | real => gt_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> (bool option, 'b option) value of
+          int => gt_intOption
+        | word => gt_wordOption
+        | char => gt_charOption
+        | bool => gt_boolOption
+        | string => gt_stringOPtion
+        | real => gt_realOption
+
+  val le_int
+      : (int, 'c) value * (int, 'c) value -> (bool option, 'c) value
+  val le_word
+      : (word, 'c) value * (word, 'c) value -> (bool option, 'c) value
+  val le_char
+      : (char, 'c) value * (char, 'c) value -> (bool option, 'c) value
+  val le_string
+      : (string, 'c) value * (string, 'c) value -> (bool option, 'c) value
+  val le_real
+      : (real, 'c) value * (real, 'c) value -> (bool option, 'c) value
+  val le_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (bool option, 'c) value
+  val le_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (bool option, 'c) value
+  val le_charOption
+      : (char option, 'c) value * (char option, 'c) value
+        -> (bool option, 'c) value
+  val le_boolOption
+      : (bool option, 'c) value * (bool option, 'c) value
+        -> (bool option, 'c) value
+  val le_stringOption
+      : (string option, 'c) value * (string option, 'c) value
+        -> (bool option, 'c) value
+  val le_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (bool option, 'c) value
+
+  val le =
+      case 'a in ('a, 'c) value * ('a, 'c) value -> (bool option, 'a) value of
+        int => le_int
+      | word => le_word
+      | char => le_char
+      | string => le_string
+      | real => le_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> (bool option, 'b option) value of
+          int => le_intOption
+        | word => le_wordOption
+        | char => le_charOption
+        | bool => le_boolOption
+        | string => le_stringOPtion
+        | real => le_realOption
+
+  val ge_int
+      : (int, 'c) value * (int, 'c) value -> (bool option, 'c) value
+  val ge_word
+      : (word, 'c) value * (word, 'c) value -> (bool option, 'c) value
+  val ge_char
+      : (char, 'c) value * (char, 'c) value -> (bool option, 'c) value
+  val ge_string
+      : (string, 'c) value * (string, 'c) value -> (bool option, 'c) value
+  val ge_real
+      : (real, 'c) value * (real, 'c) value -> (bool option, 'c) value
+  val ge_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (bool option, 'c) value
+  val ge_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (bool option, 'c) value
+  val ge_charOption
+      : (char option, 'c) value * (char option, 'c) value
+        -> (bool option, 'c) value
+  val ge_boolOption
+      : (bool option, 'c) value * (bool option, 'c) value
+        -> (bool option, 'c) value
+  val ge_stringOption
+      : (string option, 'c) value * (string option, 'c) value
+        -> (bool option, 'c) value
+  val ge_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (bool option, 'c) value
+
+  val ge =
+      case 'a in ('a, 'c) value * ('a, 'c) value -> (bool option, 'a) value of
+        int => ge_int
+      | word => ge_word
+      | char => ge_char
+      | string => ge_string
+      | real => ge_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> (bool option, 'b option) value of
+          int => ge_intOption
+        | word => ge_wordOption
+        | char => ge_charOption
+        | bool => ge_boolOption
+        | string => ge_stringOPtion
+        | real => ge_realOption
+
+  val eq_int
+      : (int, 'c) value * (int, 'c) value -> (bool option, 'c) value
+  val eq_word
+      : (word, 'c) value * (word, 'c) value -> (bool option, 'c) value
+  val eq_char
+      : (char, 'c) value * (char, 'c) value -> (bool option, 'c) value
+  val eq_string
+      : (string, 'c) value * (string, 'c) value -> (bool option, 'c) value
+  val eq_real
+      : (real, 'c) value * (real, 'c) value -> (bool option, 'c) value
+  val eq_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (bool option, 'c) value
+  val eq_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (bool option, 'c) value
+  val eq_charOption
+      : (char option, 'c) value * (char option, 'c) value
+        -> (bool option, 'c) value
+  val eq_boolOption
+      : (bool option, 'c) value * (bool option, 'c) value
+        -> (bool option, 'c) value
+  val eq_stringOption
+      : (string option, 'c) value * (string option, 'c) value
+        -> (bool option, 'c) value
+  val eq_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (bool option, 'c) value
+
+  val eq =
+      case 'a in ('a, 'c) value * ('a, 'c) value -> (bool option, 'a) value of
+        int => eq_int
+      | word => eq_word
+      | char => eq_char
+      | string => eq_string
+      | real => eq_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> (bool option, 'b option) value of
+          int => eq_intOption
+        | word => eq_wordOption
+        | char => eq_charOption
+        | bool => eq_boolOption
+        | string => eq_stringOPtion
+        | real => eq_realOption
+
+  val neq_int
+      : (int, 'c) value * (int, 'c) value -> (bool option, 'c) value
+  val neq_word
+      : (word, 'c) value * (word, 'c) value -> (bool option, 'c) value
+  val neq_char
+      : (char, 'c) value * (char, 'c) value -> (bool option, 'c) value
+  val neq_string
+      : (string, 'c) value * (string, 'c) value -> (bool option, 'c) value
+  val neq_real
+      : (real, 'c) value * (real, 'c) value -> (bool option, 'c) value
+  val neq_intOption
+      : (int option, 'c) value * (int option, 'c) value
+        -> (bool option, 'c) value
+  val neq_wordOption
+      : (word option, 'c) value * (word option, 'c) value
+        -> (bool option, 'c) value
+  val neq_charOption
+      : (char option, 'c) value * (char option, 'c) value
+        -> (bool option, 'c) value
+  val neq_boolOption
+      : (bool option, 'c) value * (bool option, 'c) value
+        -> (bool option, 'c) value
+  val neq_stringOption
+      : (string option, 'c) value * (string option, 'c) value
+        -> (bool option, 'c) value
+  val neq_realOption
+      : (real option, 'c) value * (real option, 'c) value
+        -> (bool option, 'c) value
+
+  val neq =
+      case 'a in ('a, 'c) value * ('a, 'c) value -> (bool option, 'a) value of
+        int => neq_int
+      | word => neq_word
+      | char => neq_char
+      | string => neq_string
+      | real => neq_real
+      | 'b option =>
+        case 'b in ('b option, 'c) value * ('b option, 'c) value
+                   -> (bool option, 'b option) value of
+          int => neq_intOption
+        | word => neq_wordOption
+        | char => neq_charOption
+        | bool => neq_boolOption
+        | string => neq_stringOPtion
+        | real => neq_realOption
+
+end
+*)

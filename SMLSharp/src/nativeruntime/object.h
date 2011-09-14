@@ -96,6 +96,8 @@
 #define OBJTYPE_RECORD          ((0x2U << 29) | OBJTYPE_BOXED)
 #define OBJTYPE_INTINF          ((0x3U << 29) | OBJTYPE_UNBOXED)
 
+#define OBJ_DUMMY_HEADER   0  /* valid header for dummy object */
+
 #define OBJ_HEADER_WORD(objtype, size) \
 	((unsigned int)(objtype) | (unsigned int)(size))
 

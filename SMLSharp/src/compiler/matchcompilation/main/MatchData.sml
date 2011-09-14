@@ -5,33 +5,33 @@
  *)
 structure MatchData = 
 struct
-  structure CT = ConstantTerm
+  structure A = Absyn
   structure T = Types
-  structure TFC = TypedFlatCalc
-
-  datatype kind = Bind | Match | Handle of TFC.varIdInfo
+  structure TC = TypedCalc
+  structure RC = RecordCalc
+  structure BE = BuiltinEnv
+ 
+  datatype kind = Bind | Match | Handle of T.varInfo
     
-  type con = ConstantTerm.constant
-  type dataTag = T.conInfo
-  type exnTag = T.exnInfo
+  type const = Absyn.constant
+  type conInfo = T.conInfo
+  type exnCon = TC.exnCon
 
-  structure ConOrd : ORD_KEY = 
+  structure ConstOrd : ORD_KEY = 
   struct
-    type ord_key = con
-    fun compare (CT.INT i1, CT.INT i2) = Int32.compare (i1, i2)
-      | compare (CT.LARGEINT i1, CT.LARGEINT i2) = BigInt.compare (i1, i2)
-      | compare (CT.WORD w1, CT.WORD w2) = Word32.compare (w1, w2)
-      | compare (CT.STRING s1, CT.STRING s2) = String.compare (s1, s2)
-      | compare (CT.REAL r1, CT.REAL r2) = String.compare (r1, r2)
-      | compare (CT.FLOAT r1, CT.FLOAT r2) = String.compare (r1, r2)
-      | compare (CT.CHAR c1, CT.CHAR c2) = Char.compare (c1, c2)
-      | compare (CT.INT _, _) = LESS
-      | compare (CT.STRING _, CT.REAL _) = LESS
+    type ord_key = const
+    fun compare (A.INT (i1,_), A.INT (i2,_)) = BigInt.compare (i1, i2)
+      | compare (A.WORD (w1,_), A.WORD (w2,_)) = Word32.compare (w1, w2)
+      | compare (A.STRING (s1,_), A.STRING (s2,_)) = String.compare (s1, s2)
+      | compare (A.REAL (r1,_), A.REAL (r2,_)) = String.compare (r1, r2)
+      | compare (A.CHAR (c1,_), A.CHAR (c2,_)) = Char.compare (c1, c2)
+      | compare (A.INT _, _) = LESS
+      | compare (A.STRING _, A.REAL _) = LESS
       | compare (_, _) = GREATER
   end
 
 
-  structure DataTagOrd : ORD_KEY = 
+  structure DataConOrd : ORD_KEY = 
    (* Ohori: I will double check to make sure that this is should be OK.
         structure TagOrd : ORD_KEY = 
          struct
@@ -41,12 +41,12 @@ struct
      end
    *)
   struct
-    type ord_key = dataTag * bool
-    fun compare ((i, _) : ord_key, (k, _) : ord_key) = 
-        Int.compare (#tag i, #tag k)
+    type ord_key = conInfo * bool
+    fun compare (({id=id1,...}, _) : ord_key, ({id=id2,...}, _) : ord_key) = 
+        ConID.compare(id1,id2)
   end
 
-  structure ExnTagOrd : ORD_KEY = 
+  structure ExnConOrd : ORD_KEY = 
    (* Ohori: I will double check to make sure that this is should be OK.
         structure TagOrd : ORD_KEY = 
          struct
@@ -56,9 +56,27 @@ struct
      end
    *)
   struct
-    type ord_key = exnTag * bool
-    fun compare ((i, _) : ord_key, (k, _) : ord_key) = 
-        ExnTagID.compare ((#tag i), (#tag  k))
+    local
+      fun compPath (path1, path2) =
+          case (path1, path2) of
+            (nil,nil) => EQUAL
+          | (nil, _ :: _) => LESS
+          | (_::_, nil) => GREATER
+          | (h1::tl1, h2::tl2) => 
+            (case String.compare(h1,h2) of
+               EQUAL => compPath(tl1,tl2)
+             | ord => ord)
+    in
+      type ord_key = exnCon * bool
+      fun compare ((exnCon1, _) : ord_key, (exnCon2, _) : ord_key) = 
+          case (exnCon1, exnCon2) of
+            (TC.EXN {id=id1,...}, TC.EXN{id=id2,...}) =>
+            ExnID.compare(id1, id2)
+          | (TC.EXEXN{path=path1,...},TC.EXEXN{path=path2,...}) => 
+            compPath(path1,path2)
+          | (TC.EXEXN _, TC.EXN _) => LESS
+          | (TC.EXN _, TC.EXEXN _) => GREATER
+    end
   end
 
   structure SSOrd : ORD_KEY = 
@@ -70,19 +88,19 @@ struct
          | ord => ord
   end
 
-  structure ConMap = BinaryMapMaker (ConOrd)
-  structure DataTagMap = BinaryMapMaker (DataTagOrd)
-  structure ExnTagMap = BinaryMapMaker (ExnTagOrd)
-  structure SSMap = BinaryMapMaker (SSOrd)
+  structure ConstMap = BinaryMapFn (ConstOrd)
+  structure DataConMap = BinaryMapFn (DataConOrd)
+  structure ExnConMap = BinaryMapFn (ExnConOrd)
+  structure SSMap = BinaryMapFn (SSOrd)
 
   type branchId = int
 
   datatype pat
   = WildPat of T.ty
-  | VarPat of TFC.varIdInfo
-  | ConPat of con * T.ty
-  | DataTagPat of dataTag * bool * pat * T.ty
-  | ExnTagPat of exnTag * bool * pat * T.ty
+  | VarPat of T.varInfo
+  | ConstPat of const * T.ty
+  | DataConPat of conInfo * bool * pat * T.ty
+  | ExnConPat of exnCon * bool * pat * T.ty
   | RecPat of (string * pat) list * T.ty
   | LayerPat of pat * pat
   | OrPat of pat * pat
@@ -94,18 +112,19 @@ struct
   | ++ of pat * rule
   infixr ++
 
-  type env = TFC.varIdInfo VarEnv.map
+  type env = T.varInfo VarInfoEnv.map
 
   datatype tree
   = EmptyNode
   | LeafNode of exp * env
-  | EqNode of TFC.varIdInfo * tree ConMap.map * tree
-  | DataTagNode of TFC.varIdInfo * tree DataTagMap.map * tree
-  | ExnTagNode of TFC.varIdInfo * tree ExnTagMap.map * tree
-  | RecNode of TFC.varIdInfo * string * tree
-  | UnivNode of TFC.varIdInfo * tree
+  | EqNode of T.varInfo * tree ConstMap.map * tree
+  | DataConNode of T.varInfo * tree DataConMap.map * tree
+  | ExnConNode of T.varInfo * tree ExnConMap.map * tree
+  | RecNode of T.varInfo * string * tree
+  | UnivNode of T.varInfo * tree
 
-  val unitExp = RecordCalc.RCCONSTANT(CT.UNIT, Loc.noloc)
+  val unitExp =
+      RC.RCCONSTANT {const=A.UNITCONST Loc.noloc, ty=BE.UNITty, loc=Loc.noloc}
 
   val expDummy = unitExp
     

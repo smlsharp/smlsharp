@@ -1,5 +1,0 @@
-Group
-        structure BUCTransformer
-	structure BUCCompileContext	
-is
-	main/module.cm

@@ -1,8 +1,8 @@
 Group
 	structure Absyn
 	structure AbsynSQL
+	structure AbsynInterface
 	structure AbsynFormatter
-	structure AbsynPickler
 	structure Fixity
 is
 	main/module.cm

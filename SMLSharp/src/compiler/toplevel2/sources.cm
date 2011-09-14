@@ -1,0 +1,10 @@
+Group
+(*
+	structure Top
+	structure Basis
+	structure Link
+	structure RunLoop
+	structure SignalHandler
+*)
+is
+	main/module.cm

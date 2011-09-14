@@ -181,9 +181,9 @@ struct
   *)
  type 'a tupleTy = 
      (*%
-      * @format(field fields)
-      *           N2{ fields(field)(itemsep) }
-      * @format:field(label * ty) N3{ty}
+        @format(field fields)
+          N2{ fields(field)(itemsep) }
+        @format:field(label * ty) N3{ty}
       *)
      (string * 'a) list
 
@@ -192,9 +192,9 @@ struct
   *)
  type 'a tupleExp = 
      (*%
-      * @format(field fields)
-      *           !N0{ "(" 2[1 fields(field)("," +1)] 1 ")" }
-      * @format:field(label * exp) {exp}
+       @format(field fields)
+          !N0{ "(" 1[1 fields(field)("," +1)] 1 ")" }
+       @format:field(label * exp) {exp}
       *)
      (string * 'a) list
 

@@ -9,7 +9,7 @@
 #include "smlsharp.h"
 
 /* entry point of SML# object file. */
-void smlsharp_main(void);
+void SMLmain(void);
 
 int
 main(int argc, char **argv)
@@ -28,7 +28,7 @@ main(int argc, char **argv)
 			  : : : "edi", "eax", "ecx", "cc", "memory");
 #endif
 
-	smlsharp_main();
+	SMLmain();
 
 	sml_finish();
 	return 0;

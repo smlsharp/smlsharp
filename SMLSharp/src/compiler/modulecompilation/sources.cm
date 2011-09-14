@@ -1,4 +1,0 @@
-Group
-	structure ModuleCompiler
-is
-	main/module.cm

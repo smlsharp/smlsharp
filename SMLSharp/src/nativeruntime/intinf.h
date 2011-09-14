@@ -23,7 +23,7 @@ struct sml_intinf {
 #define sml_intinf_fmt(v,b)      mpz_get_str(NULL, (b), (v)->value)
 #define sml_intinf_get_si(v)     mpz_get_si((v)->value)
 #define sml_intinf_get_ui(v)     mpz_get_ui((v)->value)
-#define sml_intinf_abs(z,x)      mpz_neg((z)->value, (x)->value)
+#define sml_intinf_abs(z,x)      mpz_abs((z)->value, (x)->value)
 #define sml_intinf_add(z,x,y)    mpz_add((z)->value, (x)->value, (y)->value)
 #define sml_intinf_sub(z,x,y)    mpz_sub((z)->value, (x)->value, (y)->value)
 #define sml_intinf_neg(z,x)      mpz_neg((z)->value, (x)->value)

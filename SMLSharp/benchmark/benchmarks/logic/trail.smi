@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "term.smi"
+structure Trail =
+struct
+  val unwind_trail : int * 'a option ref list -> 'a option ref list
+  val reset_trail : unit -> unit
+  val trail : (unit -> 'a) -> unit
+  val bind : Term.term option ref * Term.term -> unit
+end

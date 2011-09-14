@@ -45,6 +45,9 @@ struct
       | getParentIdsOfLongid (id :: ids) =
         id :: getParentIdsOfLongid ids
 
+    fun formatRecordTy formatter recordTy =
+        TermFormat.formatRecordTy formatter (SEnv.fromList recordTy)
+
     type loc = Loc.loc
 
     (*%
@@ -94,12 +97,13 @@ struct
    *)
   type ffiAttributes =
       (*%
-       * @format({isPure, noCallback, allocMLValue,
+       * @format({isPure, noCallback, allocMLValue, suspendThread,
        *          callingConvention: cc ccopt})
        * "__attr__(("
        * isPure()("pure,",)
        * noCallback()("no_callback,",)
        * allocMLValue()("alloc,",)
+       * suspendThread()("suspend_thread,",)
        * ccopt(cc)
        * "))"
        *)
@@ -107,6 +111,7 @@ struct
         isPure: bool,
         noCallback: bool,
         allocMLValue: bool,
+        suspendThread: bool,
         callingConvention: callingConvention option
       }
 
@@ -115,7 +120,8 @@ struct
         isPure = false,
         noCallback = false,
         allocMLValue = false,
-        callingConvention = NONE
+        callingConvention = NONE,
+        suspendThread = false
       }
 
     (*%
@@ -146,6 +152,7 @@ struct
    * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
    * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
    * @formatter(NameMap.namePath) NameMap.format_namePath
+   * @formatter(recordTy) formatRecordTy
    *)
   datatype ty
     = (*%
@@ -157,9 +164,9 @@ struct
        *)
       TYID of tvar * loc
     | (*%
-       * @format(field fields * loc)
-       *           !N0{ "{" 2[ 1 fields(field)("," +1) ] 1 "}" }
-       * @format:field(label * ty) {label} +d ":" +d {ty}
+       * @format(field fields * loc) fields:recordTy(ty)
+       * @format:field(label * ty)
+       * @format:ty(ty) ty
        *)
       TYRECORD of (string * ty) list * loc
     | (*%
@@ -167,11 +174,6 @@ struct
        *                !N0{args(arg)("," +, "(", ")" +) tyCons(tyCon)(".") }
        *)
       TYCONSTRUCT of ty list * string list * loc
-    | (*%
-       * @format(arg args:formatListWithEnclosureOne * tyCon * loc)
-       * !N0{args(arg)("," +, + "(", ")") +d tyCon }
-       *)
-      TYCONSTRUCT_WITH_NAMEPATH of ty list * NameMap.namePath * Loc.loc
     | (*%
        * @format(elem elems * loc) N1{ d elems(elem)( + "*" +d ) }
        *)
@@ -181,13 +183,7 @@ struct
        *)
       TYFUN of ty * ty * loc
     | (*%
-       * @format(ffiattr * attr attrs * dom doms * ret * loc)
-       *           R1{ "(" doms(dom)("," + ) ")" +d "->"
-       *               2[ +1 {ret} ] }
-       *)
-      TYFFI of ffiAttributes * string list * ty list * ty * loc
-    | (*%
-       * @format(tvar tvars * ty *  loc)
+       * @format(tvar tvars * ty * loc)
        *   "[" tvars(tvar)(",") "." 2[1 !N0{ty}] "]"
        *)
       TYPOLY of (kindedTvar) list * ty * loc
@@ -198,10 +194,10 @@ struct
          *)
         UNIV 
       | (*%
-         * @format(field fields) "#{" 2[1 fields(field)(","+1)] 1 "}"
+         * @format(field fields * loc) "#{" 2[1 fields(field)(","+1)] 1 "}"
          * @format:field(label * ty) {label} +d ":" +d {ty}
          *)
-        REC of (string * ty) list
+        REC of (string * ty) list * loc
 
     withtype tvar =
      (*%
@@ -214,6 +210,36 @@ struct
         * @format({name, eq} * tvarKind) eq name tvarKind
         *)
        {name:string, eq:eq} * tvarKind
+
+  (*%
+   * @formatter(tyConArgTys) SmlppgUtil.formatTyConArgumentTypes
+   *)
+  datatype ffiTy =
+      (*%
+       * @format(attr attrs * dom doms * ret rets * loc)
+       *           R1{ "(" doms(dom)("," + ) ")" +d "->"
+       *               2[ +1 "(" rets(ret)("," + ) ")" ] }
+       *)
+      FFIFUNTY of string list * ffiTy list * ffiTy list * loc
+    | (*%
+       * @format(elem elems * loc) N1{ d elems(elem)( + "*" +d ) }
+       *)
+      FFITUPLETY of ffiTy list * loc
+    | (*%
+       * @format(tvar * loc) tvar
+       *)
+      FFITYVAR of tvar * loc
+    | (*%
+       * @format(field fields * loc)
+       *           !N0{ "{" 2[ 1 fields(field)("," +1) ] 1 "}" }
+       * @format:field(label * ty) {label} +d ":" +d {ty}
+       *)
+      FFIRECORDTY of (string * ffiTy) list * loc
+    | (*%
+       * @format(arg args:tyConArgTys * tyCon tyCons * loc)
+       *                !N0{args(arg)("," +, "(", ")" +) tyCons(tyCon)(".") }
+       *)
+      FFICONTY of ffiTy list * string list * loc
 
   (*%
    * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
@@ -234,7 +260,7 @@ struct
         PATID of {opPrefix:bool, id:longid, loc:loc}
       | (*%
          * @format({ifFlex:ifFlex:binaryChoice, fields:field fields,loc:loc})
-         *               {"{" 2[ 1 fields(field)( "," +1) ] ifFlex()(",...","") 1 "}"}
+         *   {"{" 2[ 1 fields(field)( "," +1) ] ifFlex()(",...","") 1 "}"}
          *)
         PATRECORD of {ifFlex:bool, fields:patrow list, loc:loc}
       | (*%
@@ -243,25 +269,23 @@ struct
         PATTUPLE of pat list * loc
       | (*%
          * @format(elem elems * loc)
-         *           {"[" 2[ 1 elems(elem)("," +1) ] 1 "]"}
+         *   {"[" 2[ 1 elems(elem)("," +1) ] 1 "]"}
          *)
         PATLIST of pat list * loc
       | (*%
-         * @format(pat pats * loc) R1{d pats(pat)( +d) }
+         * @format(pat pats * loc)
+            "patapply[" + R1{d pats(pat)( +d) } "]"
          *)
         PATAPPLY of pat list * loc
       | (*%
-         * @format(pat * ty * loc) !N0{ "(" {pat} + ":" +d {ty} ")"}
+         * @format(pat * ty * loc)
+             "pattyped[" + !N0{ "(" {pat} + ":" +d {ty} ")"} "]"
          *)
         PATTYPED of pat * ty * loc
       | (*%
          * @format(pat1 * pat2 * loc) {pat1} +d "as" +d {pat2}
          *)
         PATLAYERED of pat * pat * loc
-      | (*%
-         * @format(pat1 * pat2 * loc) "(" {pat1} +d "|" +d {pat2} ")"
-         *)
-        PATORPAT of pat * pat * loc
 
     and patrow =
         (*%
@@ -435,18 +459,18 @@ struct
          * @format(exp * ty * loc)
          *     N0{ {exp} + ":" +1 "_import" +2 {ty} }
          *)
-        EXPFFIIMPORT of exp * ty * loc
+        EXPFFIIMPORT of exp * ffiTy * loc
       | (*%
          * @format(exp * ty * loc)
          *     N0{ {exp} + ":" +1 "_export" +2 {ty} }
          *)
-        EXPFFIEXPORT of exp * ty * loc
+        EXPFFIEXPORT of exp * ffiTy * loc
       | (*%
          * @format(attr attrs * exp * arg args * ty * loc)
          *     N0{ "_ffiapply" + exp + "(" args(arg)("," +) ")"
          *         + ":" + ty}
          *)
-        EXPFFIAPPLY of string list * exp * ffiArg list * ty * loc
+        EXPFFIAPPLY of string list * exp * ffiArg list * ffiTy * loc
 
       | (*%
          * @format((e,p,t) s * loc) s(e,p,t)
@@ -457,7 +481,7 @@ struct
         (*%
          * @format(exp * ty * loc)  exp + ":" + ty
          *)
-        FFIARG of exp * ty * loc
+        FFIARG of exp * ffiTy * loc
       | (*%
          * @format(ty * exp opt:prependedOpt * loc)
          *   "_sizeof(" ty ")" {opt(exp)(+d "*" +)}
@@ -763,15 +787,41 @@ struct
          *) 
         TOPDECFUN of funbind list * loc (* functor binding *)
 
+  (*% *)
+  datatype top =
+      (*%
+       * @format (dec decs)
+       * decs(dec)(+1)
+       *)
+      TOPDEC of topdec list
+    | (*%
+       * @format(file * loc) "use" + {file}
+       *)
+      USE of string * loc
+
+  (*% *)
+  datatype interface =
+        (*% @format({name, loc}) "_interface" +1 name *)
+        INTERFACE of {name: string, loc: loc}
+      | (*% @format *)
+        NOINTERFACE
+
   (*%
    *)
   type unit = 
        (*%
-        * @format(topdec topdecs * loc) 
-        * {topdecs(topdec)("\n" 1)} "\n"
+        * @format({interface,
+        *          tops : top tops,
+        *          loc : loc})
+        * interface "\n"
+        * {tops(top)("\n" 1)} "\n"
         *)
-       topdec list * loc
-              
+       {
+         interface : interface,
+         tops : top list,
+         loc : loc
+       }
+
   (*%
    *)
   datatype unitparseresult
@@ -781,13 +831,8 @@ struct
        *)
       UNIT of unit
     | (*%
-       * @format(file * loc) "use" + {file}
        *)
-      USE of string * loc
-    | (*%
-       * @format(file * loc) "useObj" + {file}
-       *)
-      USEOBJ of string * loc
+      EOF
 
   fun getLocTy ty =
       case ty of
@@ -795,10 +840,8 @@ struct
       | TYID(_, loc) => loc
       | TYRECORD (_, loc) => loc
       | TYCONSTRUCT (_, _, loc) => loc
-      | TYCONSTRUCT_WITH_NAMEPATH (_, _, loc) => loc
       | TYTUPLE(_, loc) => loc
       | TYFUN (_, _, loc) => loc
-      | TYFFI (_, _, _, _, loc) => loc
       | TYPOLY (_, _, loc) => loc
 
   fun getLocPat pat =
@@ -812,7 +855,6 @@ struct
       | PATAPPLY (_, loc) => loc
       | PATTYPED (_, _, loc) => loc
       | PATLAYERED (_, _, loc) => loc
-      | PATORPAT (_, _, loc) => loc
 
   fun replaceLoc (exp,loc) =
     case exp of

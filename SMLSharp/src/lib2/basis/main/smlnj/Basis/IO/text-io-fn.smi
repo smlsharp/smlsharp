@@ -1,0 +1,187 @@
+_require "basis/main/General.smi"
+_require "basis/main/StringCvt.smi"
+_require "basis/main/Option.smi"
+_require "basis/main/StringStructures.smi"
+_require "basis/main/IntStructures.smi"
+_require "basis/main/IO.smi"
+_require "basis/main/smlnj/Basis/IO/text-prim-io.smi"
+_require "basis/main/smlnj/Basis/IO/clean-io.smi"
+_require "basis/main/smlnj/Basis/IO/os-prim-io.sig"
+
+functor SMLSharpSMLNJ_TextIOFn (
+  Arg : sig
+    structure OSPrimIO : sig
+      structure PrimIO : sig
+        type elem
+        type vector
+        type vector_slice
+        type array
+        type array_slice
+        type pos
+        val compare : pos * pos -> order
+        datatype reader =
+            RD of {name : string,
+                   chunkSize : int,
+                   readVec : (int -> vector) option,
+                   readArr : (array_slice -> int) option,
+                   readVecNB : (int -> vector option) option,
+                   readArrNB : (array_slice -> int option) option,
+                   block : (unit -> unit) option,
+                   canInput : (unit -> bool) option,
+                   avail : unit -> int option,
+                   getPos : (unit -> pos) option,
+                   setPos : (pos -> unit) option,
+                   endPos : (unit -> pos) option,
+                   verifyPos : (unit -> pos) option,
+                   close : unit -> unit,
+                   ioDesc : OS.IO.iodesc option}
+        datatype writer =
+            WR of {name : string,
+                   chunkSize : int,
+                   writeVec : (vector_slice -> int) option,
+                   writeArr : (array_slice -> int) option,
+                   writeVecNB : (vector_slice -> int option) option,
+                   writeArrNB : (array_slice -> int option) option,
+                   block : (unit -> unit) option,
+                   canOutput : (unit -> bool) option,
+                   getPos : (unit -> pos) option,
+                   setPos : (pos -> unit) option,
+                   endPos : (unit -> pos) option,
+                   verifyPos : (unit -> pos) option,
+                   close : unit -> unit,
+                   ioDesc : OS.IO.iodesc option}
+        val openVector : vector -> reader
+        val nullRd : unit -> reader
+        val nullWr : unit -> writer
+        val augmentReader : reader -> reader
+        val augmentWriter : writer -> writer
+      end
+      type file_desc
+      val openRd : string -> PrimIO.reader
+      val openWr : string -> PrimIO.writer
+      val openApp : string -> PrimIO.writer
+      val mkReader : {fd : file_desc, name : string, initBlkMode : bool}
+                     -> PrimIO.reader
+      val mkWriter: {fd : file_desc,
+                     name : string,
+                     appendMode : bool,
+                     initBlkMode : bool,
+                     chunkSize : int
+                    } -> PrimIO.writer
+      val stdIn : unit -> PrimIO.reader
+      val stdOut : unit -> PrimIO.writer
+      val stdErr : unit -> PrimIO.writer
+      val strReader : string -> PrimIO.reader
+    end
+    where type PrimIO.elem = TextPrimIO.elem
+    where type PrimIO.vector = TextPrimIO.vector
+    where type PrimIO.vector_slice = TextPrimIO.vector_slice
+    where type PrimIO.array = TextPrimIO.array
+    where type PrimIO.array_slice = TextPrimIO.array_slice
+    where type PrimIO.pos = TextPrimIO.pos
+    where type PrimIO.reader = TextPrimIO.reader
+    where type PrimIO.writer = TextPrimIO.writer
+  end
+) =
+struct
+  structure StreamIO =
+  struct
+    type elem = SMLSharp.Char.char
+    type vector = CharVector.vector
+    type reader = Arg.OSPrimIO.PrimIO.reader
+    type writer = Arg.OSPrimIO.PrimIO.writer
+    type pos = Arg.OSPrimIO.PrimIO.pos
+    datatype instream =
+        ISTRM of in_buffer * int
+    and in_buffer =
+        IBUF of {basePos : pos option,
+                 more : more ref,
+                 data : vector,
+                 info : info}
+    and more =
+        MORE of in_buffer
+      | EOS of in_buffer
+      | NOMORE 
+      | TERMINATED
+    and info =
+        INFO of {reader : reader,
+                 readVec : int -> vector,
+                 readVecNB : (int -> vector) option,
+                 closed : bool ref,
+                 getPos : unit -> pos option,
+                 tail : more ref ref,
+                 cleanTag : SMLSharpSMLNJ_CleanIO.tag}
+    datatype outstream =
+        OSTRM of {buf : CharArray.array,
+                  pos : int ref,
+                  closed : bool ref,
+                  bufferMode : IO.buffer_mode ref,
+                  writer : writer,
+                  writeArr : CharArraySlice.slice -> unit,
+                  writeVec : CharVectorSlice.slice -> unit,
+                  cleanTag : SMLSharpSMLNJ_CleanIO.tag}
+    datatype out_pos =
+        OUTP of {pos : pos, strm : outstream}
+    val input : instream -> vector * instream
+    val input1 : instream -> (elem * instream) option
+    val inputN : instream * int -> vector * instream
+    val inputAll : instream -> vector * instream
+    val canInput : instream * int -> int option
+    val closeIn : instream -> unit
+    val endOfStream : instream -> bool
+    val output : outstream * vector -> unit
+    val output1 : outstream * elem -> unit
+    val flushOut : outstream -> unit
+    val closeOut : outstream -> unit
+    val mkInstream : reader * vector -> instream
+    val getReader : instream -> reader * vector
+    val filePosIn : instream -> pos
+    val setBufferMode : outstream * IO.buffer_mode -> unit
+    val getBufferMode : outstream -> IO.buffer_mode
+    val mkOutstream : writer * IO.buffer_mode -> outstream
+    val getWriter : outstream -> writer * IO.buffer_mode
+    val getPosOut : outstream -> out_pos
+    val setPosOut : out_pos -> outstream
+    val filePosOut : out_pos -> pos
+    val inputLine : instream -> (string * instream) option
+    val outputSubstr : outstream * substring -> unit
+  end
+  type vector = StreamIO.vector
+  type elem = StreamIO.elem
+  type instream = StreamIO.instream ref
+  type outstream = StreamIO.outstream ref
+  val input : instream -> vector
+  val input1 : instream -> elem option
+  val inputN : instream * int -> vector
+  val inputAll : instream -> vector
+  val canInput : instream * int -> int option
+  val lookahead : instream -> elem option
+  val closeIn : instream -> unit
+  val endOfStream : instream -> bool
+  val output : outstream * vector -> unit
+  val output1 : outstream * elem -> unit
+  val flushOut : outstream -> unit
+  val closeOut : outstream -> unit
+  val mkInstream : StreamIO.instream -> instream
+  val getInstream : instream -> StreamIO.instream
+  val setInstream : instream * StreamIO.instream -> unit
+  val mkOutstream : StreamIO.outstream -> outstream
+  val getOutstream : outstream -> StreamIO.outstream
+  val setOutstream : outstream * StreamIO.outstream -> unit
+  val getPosOut : outstream -> StreamIO.out_pos
+  val setPosOut : outstream * StreamIO.out_pos -> unit
+  val inputLine : instream -> string option
+  val outputSubstr : outstream * substring -> unit
+  val openIn : string -> instream
+  val openOut : string -> outstream
+  val openAppend : string -> outstream
+  val openString : string -> instream
+  val stdIn : instream
+  val stdOut : outstream
+  val stdErr : outstream
+  val print : string -> unit
+  val scanStream : ((SMLSharp.Char.char, StreamIO.instream) StringCvt.reader
+                    -> ('a, StreamIO.instream) StringCvt.reader)
+                   -> instream
+                   -> 'a option
+end

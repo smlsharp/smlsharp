@@ -1,0 +1,33 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+	../../control/sources.cm
+	../../env/sources.cm
+	../../util/sources.cm
+	../../name/sources.cm
+	../../usererror/sources.cm
+	../../types/sources.cm
+	../../absyn/sources.cm
+	../../constantterm/sources.cm
+	../../typedcalc/sources.cm
+	../../idcalc/sources.cm
+	../../nameevaluation/sources.cm
+
+	TypeInferenceError.ppg.sml
+	TypeInferenceContext.ppg.sml
+	CheckEq.sml
+	Unify.sml
+	TypeInferenceUtils.sml
+	InferTypes.sml
+	UNCURRYFUNDECL.sig
+	UncurryFundecl.sml
+(*
+	Printers.sml
+	UNIFY.sig
+*)

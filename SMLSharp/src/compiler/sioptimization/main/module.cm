@@ -14,8 +14,8 @@ Group is
 	SubFunctions.sml
 	Rename.sml
 	Exception.sml
-	BasicBlock.sml  
+	BasicBlock.sml
 	UseDef.sml
 	Liveness.sml
-	STACK_REALLOCATION.sig  
+	STACK_REALLOCATION.sig
 	StackReallocation.sml

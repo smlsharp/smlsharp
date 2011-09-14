@@ -599,7 +599,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="smlsharp"
-ac_unique_file="src/compiler/toplevel/main/Top.sml"
+ac_unique_file="src/compiler/toplevel2/main/Top.sml"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -796,6 +796,7 @@ enable_monitoring
 enable_profile
 enable_native
 enable_heapimpl
+enable_thread
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1451,6 +1452,8 @@ Optional Features:
   --enable-native         enable native code generation [default=yes]
   --enable-heapimpl       select heap implemenatation of native backend
                           [default=bitmap]
+  --enable-thread         enable experimental native thread support
+                          [default=no]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -13673,7 +13676,7 @@ if test "x$NATIVE_TARGET" = "x"; then
 $as_echo "no" >&6; }
 else
   NATIVE_RUNTIME=nativeruntime
-  NATIVE_PRELUDE=ntprelude.smc
+  NATIVE_PRELUDE=ntprelude.smk
   { $as_echo "$as_me:$LINENO: result: $NATIVE_TARGET" >&5
 $as_echo "$NATIVE_TARGET" >&6; }
 fi
@@ -13696,12 +13699,18 @@ $as_echo_n "checking for heap implementation of native backend... " >&6; }
   { $as_echo "$as_me:$LINENO: result: $NATIVE_HEAPIMPL" >&5
 $as_echo "$NATIVE_HEAPIMPL" >&6; }
 fi
-if test -f "$srcdir/src/nativeruntime/heap_$NATIVE_HEAPIMPL.h"; then
+if test -f "$srcdir/src/nativeruntime/heap_$NATIVE_HEAPIMPL.c"; then
   :
 else
-  { { $as_echo "$as_me:$LINENO: error: heap implementation \`$NATIVE_HEAPIMPL\' is not available." >&5
-$as_echo "$as_me: error: heap implementation \`$NATIVE_HEAPIMPL\' is not available." >&2;}
+  { { $as_echo "$as_me:$LINENO: error: heap implementation \`$NATIVE_HEAPIMPL' is not available." >&5
+$as_echo "$as_me: error: heap implementation \`$NATIVE_HEAPIMPL' is not available." >&2;}
    { (exit 1); exit 1; }; }
+fi
+
+
+# Check whether --enable-thread was given.
+if test "${enable_thread+set}" = set; then
+  enableval=$enable_thread;  CPPFLAGS="$CPPFLAGS -DMULTITHREAD"
 fi
 
 
@@ -13719,7 +13728,7 @@ fi
 
 # -------- Finale --------
 
-ac_config_files="$ac_config_files commonrule mksmlheap mksmlrun mksmlpath Makefile stublibs/Makefile src/Makefile src/configuration/Makefile src/primitives/Makefile src/primitives/generator/main/Makefile src/primitives/runtime/main/Makefile src/primitives/compiler/main/Makefile src/instructions/Makefile src/instructions/generator/Makefile src/instructions/runtime/main/Makefile src/instructions/compiler/main/Makefile src/vmgen/Makefile src/yaruntime/Makefile src/nativeruntime/Makefile src/compiler/Makefile src/lib/Makefile src/lib/basis/Makefile src/lib/CConfig/Makefile src/lib/FFI/Makefile src/lib/LMLML/Makefile src/lib/Script/Makefile src/lib/SMLSharp/Makefile src/runtime/Makefile src/runtime/runtime-core/main/Makefile src/runtime/runtime-impl/main/Makefile src/runtime/runtime-impl/main/FFISwitchGen/Makefile src/runtime/icons/Makefile src/runtime/byterun/main/Makefile src/tool/Makefile src/tool/Java/Makefile src/tool/OLE/Makefile src/tool/smlsharp2exe/Makefile src/tool/mlb2use/Makefile doc/Makefile"
+ac_config_files="$ac_config_files commonrule mksmlpath Makefile stublibs/Makefile src/Makefile src/configuration/Makefile src/primitives/Makefile src/primitives/generator/main/Makefile src/primitives/runtime/main/Makefile src/primitives/compiler/main/Makefile src/instructions/Makefile src/instructions/generator/Makefile src/instructions/runtime/main/Makefile src/instructions/compiler/main/Makefile src/nativeruntime/Makefile src/compiler/Makefile src/lib/Makefile src/lib/basis/Makefile src/lib/CConfig/Makefile src/lib/FFI/Makefile src/lib/LMLML/Makefile src/lib/Script/Makefile src/lib/SMLSharp/Makefile src/lib2/Makefile src/runtime/Makefile src/runtime/runtime-core/main/Makefile src/runtime/runtime-impl/main/Makefile src/runtime/runtime-impl/main/FFISwitchGen/Makefile src/runtime/icons/Makefile src/runtime/byterun/main/Makefile src/tool/Makefile src/tool/Java/Makefile src/tool/OLE/Makefile src/tool/smlsharp2exe/Makefile src/tool/mlb2use/Makefile doc/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -14325,8 +14334,6 @@ do
     "SMLUnit/Makefile") CONFIG_FILES="$CONFIG_FILES SMLUnit/Makefile:../SMLUnit/Makefile.in" ;;
     "libffi/Makefile") CONFIG_FILES="$CONFIG_FILES libffi/Makefile:../libffi/Makefile.in" ;;
     "commonrule") CONFIG_FILES="$CONFIG_FILES commonrule" ;;
-    "mksmlheap") CONFIG_FILES="$CONFIG_FILES mksmlheap" ;;
-    "mksmlrun") CONFIG_FILES="$CONFIG_FILES mksmlrun" ;;
     "mksmlpath") CONFIG_FILES="$CONFIG_FILES mksmlpath" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "stublibs/Makefile") CONFIG_FILES="$CONFIG_FILES stublibs/Makefile" ;;
@@ -14340,8 +14347,6 @@ do
     "src/instructions/generator/Makefile") CONFIG_FILES="$CONFIG_FILES src/instructions/generator/Makefile" ;;
     "src/instructions/runtime/main/Makefile") CONFIG_FILES="$CONFIG_FILES src/instructions/runtime/main/Makefile" ;;
     "src/instructions/compiler/main/Makefile") CONFIG_FILES="$CONFIG_FILES src/instructions/compiler/main/Makefile" ;;
-    "src/vmgen/Makefile") CONFIG_FILES="$CONFIG_FILES src/vmgen/Makefile" ;;
-    "src/yaruntime/Makefile") CONFIG_FILES="$CONFIG_FILES src/yaruntime/Makefile" ;;
     "src/nativeruntime/Makefile") CONFIG_FILES="$CONFIG_FILES src/nativeruntime/Makefile" ;;
     "src/compiler/Makefile") CONFIG_FILES="$CONFIG_FILES src/compiler/Makefile" ;;
     "src/lib/Makefile") CONFIG_FILES="$CONFIG_FILES src/lib/Makefile" ;;
@@ -14351,6 +14356,7 @@ do
     "src/lib/LMLML/Makefile") CONFIG_FILES="$CONFIG_FILES src/lib/LMLML/Makefile" ;;
     "src/lib/Script/Makefile") CONFIG_FILES="$CONFIG_FILES src/lib/Script/Makefile" ;;
     "src/lib/SMLSharp/Makefile") CONFIG_FILES="$CONFIG_FILES src/lib/SMLSharp/Makefile" ;;
+    "src/lib2/Makefile") CONFIG_FILES="$CONFIG_FILES src/lib2/Makefile" ;;
     "src/runtime/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/Makefile" ;;
     "src/runtime/runtime-core/main/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-core/main/Makefile" ;;
     "src/runtime/runtime-impl/main/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-impl/main/Makefile" ;;

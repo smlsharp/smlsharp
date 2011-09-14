@@ -16,14 +16,9 @@ local
     fun mvdeclToString decl = 
       Control.prettyPrint (MultipleValueCalc.format_mvdecl decl)
 
-    fun topBlockToString group = 
-      Control.prettyPrint (MultipleValueCalc.format_topBlock group)
-
     fun mvdeclToStringTyped decl = 
         Control.prettyPrint (MultipleValueCalc.typedmvdecl decl)
 
-    fun topBlockToStringTyped group =
-        Control.prettyPrint (MultipleValueCalc.typedtopBlock group)
 in
     val mvexpToString = fn x => 
        (if !Control.printWithType then mvexpToStringTyped
@@ -33,8 +28,5 @@ in
        (if !Control.printWithType then mvdeclToStringTyped
         else mvdeclToString) x
 
-    val topBlockToString = fn x =>
-       (if !Control.printWithType then topBlockToStringTyped
-        else topBlockToString) x
 end
 end

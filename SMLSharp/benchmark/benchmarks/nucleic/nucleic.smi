@@ -1,0 +1,5 @@
+_require "basis.smi"
+structure Nucleic =
+struct
+  val anticodon_length : unit -> int
+end

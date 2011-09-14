@@ -1,5 +1,0 @@
-Group
-	structure PatternCalcFlattened
-	structure PatternCalcFlattenedFormatter
-is
-	main/module.cm

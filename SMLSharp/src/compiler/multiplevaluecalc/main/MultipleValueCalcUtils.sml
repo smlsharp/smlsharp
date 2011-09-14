@@ -5,9 +5,11 @@
  *)
 structure MultipleValueCalcUtils : MULTIPLEVALUECALCUTILS = struct
 local
+(*
   structure ATU = AnnotatedTypesUtils
   structure T = Types
   structure AT = AnnotatedTypes
+*)
 in
   open MultipleValueCalc
 
@@ -15,16 +17,20 @@ in
       case exp of
         MVFOREIGNAPPLY {loc,...} => loc
       | MVEXPORTCALLBACK {loc,...} => loc
+      | MVTAGOF {loc,...} => loc
       | MVSIZEOF {loc,...} => loc
+      | MVINDEXOF {loc,...} => loc
       | MVCONSTANT {loc,...} => loc
       | MVGLOBALSYMBOL {loc,...} => loc
-      | MVEXCEPTIONTAG {loc,...} => loc
       | MVVAR {loc,...} => loc
+      | MVEXVAR {loc,...} => loc
+(*
       | MVGETFIELD {loc,...} => loc
       | MVSETFIELD {loc,...} => loc
       | MVSETTAIL {loc,...} => loc
       | MVARRAY {loc,...} => loc
       | MVCOPYARRAY {loc,...} => loc
+*)
       | MVPRIMAPPLY {loc,...} => loc
       | MVAPPM {loc,...} => loc
       | MVLET {loc,...} => loc
@@ -40,6 +46,7 @@ in
       | MVSWITCH {loc,...} => loc
       | MVCAST {loc,...} => loc
 
+(*
   fun substVarInfo subst {displayName,ty,varId} =
       let val ty = ATU.substitute subst ty
       in 
@@ -66,12 +73,26 @@ in
         in
           MVEXPORTCALLBACK {funExp=funExp,funTy=funTy,attributes=attributes,loc=loc}
         end
+     | MVTAGOF {ty, loc}
+        =>
+        let 
+          val ty = ATU.substitute subst ty
+        in
+          MVTAGOF {ty=ty, loc=loc}
+        end
      | MVSIZEOF {ty, loc}
         =>
         let 
           val ty = ATU.substitute subst ty
         in
           MVSIZEOF {ty=ty, loc=loc}
+        end
+     | MVINDEXOF {label, recordTy, loc}
+        =>
+        let 
+          val recordTy = ATU.substitute subst recordTy
+        in
+          MVINDEXOF {label=label, recordTy=recordTy, loc=loc}
         end
      | MVCONSTANT _
         => mvexp
@@ -214,21 +235,23 @@ in
            loc=loc
            }
         end
-     | MVSELECT {recordExp,label,recordTy,resultTy,loc}
+     | MVSELECT {recordExp,indexExp,label,recordTy,resultTy,loc}
         =>
         let 
           val recordExp = substExp subst recordExp
+          val indexExp = substExp subst indexExp
           val recordTy = ATU.substitute subst recordTy
           val resultTy = ATU.substitute subst resultTy
         in
           MVSELECT
-          {recordExp=recordExp,label=label,recordTy=recordTy,resultTy=resultTy,loc=loc}
+          {recordExp=recordExp,indexExp=indexExp,label=label,recordTy=recordTy,resultTy=resultTy,loc=loc}
         end
-     | MVMODIFY {recordExp,recordTy,label,valueExp,valueTy,loc}
+     | MVMODIFY {recordExp,recordTy,indexExp,label,valueExp,valueTy,loc}
         =>
         let 
           val recordExp = substExp subst recordExp
           val recordTy = ATU.substitute subst recordTy
+          val indexExp = substExp subst indexExp
           val valueExp = substExp subst valueExp
           val valueTy = ATU.substitute subst valueTy
         in
@@ -236,6 +259,7 @@ in
           {
            recordExp=recordExp,
            recordTy=recordTy,
+           indexExp=indexExp,
            label=label,
            valueExp=valueExp,
            valueTy=valueTy,
@@ -282,8 +306,8 @@ in
         =>
         let 
           val btvEnv = ATU.substituteBtvEnv subst btvEnv
-          val subst = IEnv.foldri (fn (key,_,subst) => 
-                                   (#1 (IEnv.remove (subst,key)) handle _ => subst))
+          val subst = BoundTypeVarID.Map.foldri (fn (key,_,subst) => 
+                                   (#1 (BoundTypeVarID.Map.remove (subst,key)) handle _ => subst))
             subst btvEnv
           val expTyWithoutTAbs = ATU.substitute subst expTyWithoutTAbs
           val exp = substExp subst exp
@@ -357,19 +381,6 @@ in
       in
         MVVALREC {recbindList=recbindList, loc=loc}
       end
-    | MVVALPOLYREC {btvEnv, recbindList, loc}
-      =>
-      let
-        val btvEnv = ATU.substituteBtvEnv subst btvEnv
-        val subst = IEnv.foldri (fn (key,_,subst) => 
-                                 (#1 (IEnv.remove (subst,key)) handle _ => subst))
-          subst btvEnv
-        val recbindList = map (fn {boundVar, boundExp} => 
-                               {boundVar = substVarInfo subst boundVar,
-                                boundExp = substExp subst boundExp})
-          recbindList
-      in
-        MVVALPOLYREC {btvEnv=btvEnv, recbindList=recbindList, loc=loc}
-      end
+*)
 end
 end

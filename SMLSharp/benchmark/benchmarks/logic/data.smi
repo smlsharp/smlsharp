@@ -1,0 +1,15 @@
+_require "basis.smi"
+_require "term.smi"
+_require "trail.smi"
+_require "unify.smi"
+structure Data =
+struct
+  val exists : (Term.term -> 'a) -> 'a
+  val move_horiz : Term.term * Term.term -> (unit -> unit) -> unit
+  val rotate : Term.term * Term.term -> (unit -> unit) -> unit
+  val move : Term.term * Term.term -> (unit -> unit) -> unit
+  val solitaire : Term.term * Term.term * Term.term
+                  -> (unit -> unit) -> unit
+  val solution1 : Term.term -> (unit -> unit) -> unit
+  val solution2 : Term.term -> (unit -> unit) -> unit
+end

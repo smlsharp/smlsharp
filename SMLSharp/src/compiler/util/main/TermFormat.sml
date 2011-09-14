@@ -24,7 +24,8 @@ structure TermFormat :> sig
    * formatAppList           ()        1         (1, 2, 3, ..., n)
    * formatSeqList                     1         (1, 2, 3, ..., n)
    * formatOptionalList               (1)        (1, 2, 3, ..., n)
-   * formatDeclList                   ,1         ,1,2,3,...,n
+   * formatDeclList                   (1         (1,2,3,...,n
+   * formatCaseList          ()       (1,)       (1,2,3,...,n,)
    * (basic formatter)                 1          1,2,3,...,n
    *)
   val formatEnclosedList
@@ -36,7 +37,9 @@ structure TermFormat :> sig
   val formatOptionalList
       : 'a formatter * format * format * format -> 'a list formatter
   val formatDeclList
-      : 'a formatter * format -> 'a list formatter
+      : 'a formatter * format * format -> 'a list formatter
+  val formatCaseList
+      : 'a formatter * format * format * format -> 'a list formatter
 
   (*
    * formatting options:
@@ -59,9 +62,14 @@ structure TermFormat :> sig
       : 'k formatter -> ('a -> ('k * 'v) list)
         -> 'v formatter * format * format * format * format
         -> 'a formatter
+
   val formatEnclosedSEnv
       : 'a formatter * format * format * format * format
         -> 'a SEnv.map formatter
+
+  val formatEnclosedSEnvPlain
+      : 'a formatter * format * format -> 'a SEnv.map formatter
+
 
   (* formatting records and tuples *)
   val isTuple : 'a SEnv.map -> bool
@@ -75,16 +83,17 @@ structure TermFormat :> sig
   type 'kind btvEnv'
   type 'kind btvEnv = 'kind btvEnv' formatParam
   val emptyBtvEnv : 'k btvEnv
-  val extendBtvEnv : 'k btvEnv -> 'k IEnv.map -> 'k btvEnv
-  val extendBtvEnvWithOrder : 'k btvEnv -> 'k IEnv.map * int (*btvId*) list
-                              -> 'k btvEnv
-  val formatBtv : (format -> 'k formatter) -> 'k btvEnv
-                  -> int (*btvId*) formatter
-  val formatBtvList : (format -> 'k formatter) -> 'k btvEnv
-                      -> int (*btvId*) list formatter
-  val formatBtvSetWithOrder : (format -> 'k formatter) -> 'k btvEnv
-                              -> ('k IEnv.map * int (*btvId*) list) formatter
-  val formatFreeTyvar : int formatter  (* int : free tyvar id *)
+  val extendBtvEnv : 'k btvEnv -> 'k BoundTypeVarID.Map.map -> 'k btvEnv
+  val extendBtvEnvWithOrder :
+      'k btvEnv -> 'k BoundTypeVarID.Map.map * BoundTypeVarID.id list
+      -> 'k btvEnv
+  val formatBoundTyvar : (format -> 'k formatter) -> 'k btvEnv
+                         -> BoundTypeVarID.id formatter
+  val btvName : int -> string
+  val formatBtvEnv : (format -> 'k formatter) -> 'k btvEnv ->
+                     'k BoundTypeVarID.Map.map formatter
+  val formatFreeTyvar : FreeTypeVarID.id formatter
+  val ftvName : int -> string
 
   (* formatting constant literals *)
   val format_BigInt_dec_ML : BigInt.int -> format
@@ -139,7 +148,6 @@ structure TermFormat :> sig
 
   (* for debug *)
   val formatFormat : format -> format
-
 end =
 struct
 
@@ -247,9 +255,14 @@ struct
   fun formatOptionalList (formatter, lparen, comma, rparen) nil = nil
     | formatOptionalList args elems = formatEnclosedList args elems
 
-  fun formatDeclList (formatter, sep) nil = nil
-    | formatDeclList (formatter, sep) elems =
-      List.concat (map (fn x => sep @ formatter x) elems)
+  fun formatDeclList (formatter, head, sep) nil = nil
+    | formatDeclList (formatter, head, sep) (elem::elems) =
+      head @ formatter elem
+      @ List.concat (map (fn x => sep @ formatter x) elems)
+
+  fun formatCaseList (formatter, head, sep, last) nil = head @ last
+    | formatCaseList (formatter, head, sep, last) elems =
+      head @ foldr (fn (x,z) => formatter x @ sep @ z) last elems
 
   fun formatEnclosedOption (formatter, lparen, rparen) NONE = lparen @ rparen
     | formatEnclosedOption (formatter, lparen, rparen) (SOME x) =
@@ -261,9 +274,9 @@ struct
 
   fun keyValuePair (key, mapsto, value) =
       begin_
-        guard_ NONE
+(*        guard_ NONE *)
           $key $mapsto nest_ 2 space $value end_
-        end_
+(*        end_ *)
       end_
 
   fun formatEnclosedMap formatKey listItemsi
@@ -277,6 +290,30 @@ struct
   fun formatEnclosedSEnv args map =
       formatEnclosedMap (fn x => [term x]) SEnv.listItemsi args map
 
+  fun formatEnclosedList (formatter, lparen, comma, rparen) elems =
+      begin_
+        $lparen
+        guard_ cutAssoc
+          $(intersperse (comma @ [sp]) (map formatter elems))
+          $rparen
+        end_
+      end_
+
+  fun formatEnclosedSEnvPlain (formatter, comma, mapsto) senv =
+      formatDeclList
+        (fn (string, value) =>
+            begin_
+              nest_ 1
+                 $[term string]
+                 $mapsto
+                 $(formatter value)
+              end_
+            end_,
+         comma,
+         comma
+        )
+        (SEnv.listItemsi senv)
+     
   structure FormatComb =
   struct
     open FormatComb
@@ -339,11 +376,11 @@ struct
   type 'kind btvEnv' =
        {
          base : int,
-         env : (int * 'kind) IEnv.map  (* btvId -> nameIndex * kind *)
+         env : (int * 'kind) BoundTypeVarID.Map.map
        }
   type 'kind btvEnv = 'kind btvEnv' formatParam
 
-  val emptyBtvEnv' = {base=0, env=IEnv.empty} : 'kind btvEnv'
+  val emptyBtvEnv' = {base=0, env=BoundTypeVarID.Map.empty} : 'kind btvEnv'
   val emptyBtvEnv = nil : 'kind btvEnv
 
   fun getBtvEnv nil = emptyBtvEnv'
@@ -353,10 +390,10 @@ struct
 
   fun listItemsiWithOrder (map, order) =
       let
-        fun loop (map, nil) = IEnv.listItemsi map
+        fun loop (map, nil) = BoundTypeVarID.Map.listItemsi map
           | loop (map, h::t) =
-            if IEnv.inDomain (map, h)
-            then let val (map, v) = IEnv.remove (map, h)
+            if BoundTypeVarID.Map.inDomain (map, h)
+            then let val (map, v) = BoundTypeVarID.Map.remove (map, h)
                  in (h, v) :: loop (map, t) end
             else loop (map, t)
       in
@@ -364,11 +401,11 @@ struct
       end
 
   fun add ({base, env} : 'k btvEnv') (k, v) =
-      {base = base + 1, env = IEnv.insert (env, k, (base, v))}
+      {base = base + 1, env = BoundTypeVarID.Map.insert (env, k, (base, v))}
 
   fun extendBtvEnv env btvMap =
-      [IEnv.foldli (fn (k, v, env) => add env (k, v))
-                   (getBtvEnv env) btvMap]
+      [BoundTypeVarID.Map.foldli (fn (k, v, env) => add env (k, v))
+                                 (getBtvEnv env) btvMap]
 
   fun extendBtvEnvWithOrder env pair =
       [foldl (fn (x, env) => add env x)
@@ -376,23 +413,28 @@ struct
              (listItemsiWithOrder pair)]
 
   fun tvName base index =
-      if index < 26 then str (chr (ord #"a" + index))
-      else tvName base (index div 26) ^ str (chr (ord #"a" + index mod 26))
+      if index < 26 then str (chr (ord base + index))
+      else tvName base (index div 26) ^ str (chr (ord base + index mod 26))
 
   fun btvName index = tvName #"a" index
   fun ftvName index = tvName #"A" index
 
   fun formatFreeTyvar ftvId =
-      [term (ftvName ftvId)]
+      [term (ftvName (FreeTypeVarID.toInt ftvId))]
+
+  datatype btvName = BOUND of int | FREE of BoundTypeVarID.id
 
   fun lookup env btvId =
-      case IEnv.find (#env (getBtvEnv env), btvId) of
-        SOME (nameIndex, kind) => (btvName nameIndex, SOME kind)
-      | NONE => ("FREEBTV(" ^ Int.toString btvId ^ ")", NONE)
+      case BoundTypeVarID.Map.find (#env (getBtvEnv env), btvId) of
+        SOME (nameIndex, kind) => (BOUND nameIndex, SOME kind)
+      | NONE => (FREE btvId, NONE)
 
-  fun formatBtv formatKind env btvId =
+  fun formatBtv formatKind (name, kind) =
       let
-        val (name, kind) = lookup env btvId
+        val name =
+            case name of
+              BOUND i => btvName i
+            | FREE id => "FREEBTV(" ^ BoundTypeVarID.toString id ^ ")"
         val nameFormat = [term name]
       in
         case kind of
@@ -400,13 +442,26 @@ struct
         | NONE => nameFormat
       end
 
-  fun formatBtvList formatKind env btvIds =
-      SMLFormat.BasicFormatters.format_list
-        (formatBtv formatKind env, commaSpace)
-        btvIds
+  fun formatBoundTyvar formatKind env btvId =
+      formatBtv formatKind (lookup env btvId)
 
-  fun formatBtvSetWithOrder formatKind env pair =
-      formatBtvList formatKind env (map #1 (listItemsiWithOrder pair))
+  fun formatBtvEnv formatKind env btvEnv =
+      let
+        val tyvars =
+            map (fn (id, kind) => (#1 (lookup env id), SOME kind))
+                (BoundTypeVarID.Map.listItemsi btvEnv)
+        val tyvars =
+            ListSorter.sort
+              (fn ((BOUND i,_), (BOUND j,_)) => Int.compare (i, j)
+                | ((BOUND _,_), (FREE _,_)) => LESS
+                | ((FREE _,_), (BOUND _,_)) => GREATER
+                | ((FREE i,_), (FREE j,_)) => BoundTypeVarID.compare (i, j))
+              tyvars
+      in
+        SMLFormat.BasicFormatters.format_list
+          (formatBtv formatKind, commaSpace)
+          tyvars
+      end
 
   (**** formatters for constant literals ****)
 

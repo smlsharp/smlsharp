@@ -1,4 +1,3 @@
 use "./mandelbrot.sml";
 
-Main.doit ();
-print "Done";
+use "./doit.sml";

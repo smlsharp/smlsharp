@@ -138,7 +138,7 @@ in
       | h::t =>
         reduce counter (h::dst) t
 
-  and reduceCodeDecl ({codeId, argVarList, argSizeList, body, resultTyList,
+  and reduceCodeDecl ({codeId, argVarList, body, resultTyList,
                        loc}:AN.codeDecl) =
       let
         val (_, body) = reduce ID.Map.empty nil body
@@ -146,14 +146,13 @@ in
         {
           codeId = codeId,
           argVarList = argVarList,
-          argSizeList = argSizeList,
           body = body,
           resultTyList = resultTyList,
           loc = loc
         } : AN.codeDecl
       end
 
-  fun reduceFunDecl ({codeId, argVarList, argSizeList, body, resultTyList,
+  fun reduceFunDecl ({codeId, argVarList, body, resultTyList,
                       ffiAttributes, loc}:AN.funDecl) =
       let
         val (_, body) = reduce ID.Map.empty nil body
@@ -161,7 +160,6 @@ in
         {
           codeId = codeId,
           argVarList = argVarList,
-          argSizeList = argSizeList,
           body = body,
           resultTyList = resultTyList,
           ffiAttributes = ffiAttributes,

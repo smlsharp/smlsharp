@@ -4,146 +4,172 @@
  * @version $Id: VALREC_Optimizer.sml,v 1.39.6.6 2010/01/29 06:41:35 hiro-en Exp $
  *)
 structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
-
-  open PatternCalcFlattened
+  open IDCalc
   open Graph
   open VALREC_Utils
 
-  type recNodeinfo = {functionId : string,
-                      dependentIds : SSet.set,
-                      functionDecl : plfpat * plfexp }
-  
-  type funNodeinfo = {functionId : string,
-                      dependentIds : SSet.set,
-                      functionDecl : plfpat * (plfpat list * plfexp) list}
-  
-  fun optimizeExp globalContext context plfexp =
-      case plfexp of
-        PLFCONSTANT _ => plfexp
-      | PLFGLOBALSYMBOL _ => plfexp
-      | PLFVAR _ => plfexp
-      | PLFTYPED (exp,ty,loc) =>
-        PLFTYPED (optimizeExp globalContext context exp, ty, loc)
-      | PLFAPPM (funExp, argExpList, loc) =>
-        PLFAPPM (optimizeExp globalContext context funExp,
-                map (optimizeExp globalContext context) argExpList,
-               loc)
-      | PLFLET (localDeclList, mainExpList, loc) =>
+  type recNodeinfo = {functionId : VarID.id,
+                      dependentIds : VarID.Set.set,
+                      functionDecl : {varInfo:varInfo,body:icexp}}
+		     
+  type funNodeinfo = {functionId : VarID.id,
+                      dependentIds : VarID.Set.set,
+                      functionDecl : {funVarInfo:varInfo,
+				      rules:{args:icpat list,body:icexp} list}}
+    
+  fun optimizeExp icexp =
+      case icexp of
+	ICERROR loc => icexp
+      | ICCONSTANT (const, loc) => icexp
+      | ICGLOBALSYMBOL (str, symbol, loc) => icexp
+      | ICVAR (varInfo, loc) => icexp
+      | ICEXVAR ({path, ty}, loc) => icexp 
+      | ICBUILTINVAR {primitive, ty, loc} => icexp
+      | ICCON (conInfo, loc) => icexp
+      | ICEXN (exnInfo, loc) => icexp
+      | ICEXEXN ({path, ty}, loc) => icexp
+      | ICEXN_CONSTRUCTOR (exnInfo, loc) => icexp
+      | ICOPRIM (oprimInfo, loc) => icexp
+      | ICTYPED (icexp,ty,loc) =>
+        ICTYPED (optimizeExp icexp, ty, loc)
+      | ICSIGTYPED {path,icexp,ty,loc,revealKey} =>
+        ICSIGTYPED {path=path,
+                    icexp=optimizeExp icexp,
+                    ty=ty,
+                    loc=loc,
+                    revealKey=revealKey}
+      | ICAPPM (funExp, argExpList, loc) => 
+	ICAPPM (optimizeExp funExp,
+		map optimizeExp argExpList,
+		loc)
+      | ICAPPM_NOUNIFY (funExp, argExpList, loc) => 
+	ICAPPM_NOUNIFY (optimizeExp funExp,
+		        map optimizeExp argExpList,
+		        loc)
+      | ICLET (localDeclList, mainExpList, loc) =>
         let
-          val (_,newLocalDeclList) = 
-              optimizeDeclList globalContext context localDeclList
+          val newLocalDeclList = 
+	      optimizeDeclList localDeclList
         in
-          PLFLET (newLocalDeclList,
-                 map (optimizeExp globalContext context) mainExpList,
+          ICLET (newLocalDeclList,
+                 map optimizeExp mainExpList,
                  loc)
         end
-      | PLFRECORD (elementList, loc) =>
-        PLFRECORD (map 
-                      (fn (label, exp) => (label, optimizeExp globalContext context exp))
-                      elementList,
-                  loc)
-      | PLFRECORD_UPDATE (exp, elementList, loc) =>
-        PLFRECORD_UPDATE (optimizeExp globalContext context exp,
-                         map (fn (label, exp) => (label, optimizeExp globalContext context exp))
-                             elementList,
-                         loc)
-      | PLFTUPLE (elementList,loc) =>
-        PLFTUPLE (map (optimizeExp globalContext context) elementList,loc)
-      | PLFLIST (elementList,loc) =>
-        PLFLIST (map (optimizeExp globalContext context) elementList,loc)
-      | PLFRAISE (exp,loc) => 
-        PLFRAISE (optimizeExp globalContext context exp, loc)
-      | PLFHANDLE (handler, matchList, loc) =>
-        PLFHANDLE (optimizeExp globalContext context handler,
-                  map 
-                      (fn (pat,exp) => (pat, optimizeExp globalContext context exp))
-                      matchList,
-                  loc)
-      | PLFFNM (matchList, loc) =>
-        PLFFNM (map 
-                  (fn (patList,exp) => (patList, optimizeExp globalContext context exp))
-                  matchList,
-              loc)
-      | PLFCASEM (selectorList, matchList, kind, loc) =>
-        PLFCASEM (map (optimizeExp globalContext context) selectorList,
-                map
-                    (fn (patList,exp) => (patList, optimizeExp globalContext context exp))
-                    matchList,
-                kind,
-                loc)
-      | PLFRECORD_SELECTOR _ => plfexp
-      | PLFSELECT (label,exp,loc) =>
-        PLFSELECT (label, optimizeExp globalContext context exp, loc)
-      | PLFSEQ (expList, loc) =>
-        PLFSEQ (map (optimizeExp globalContext context) expList, loc)
-      | PLFCAST (exp, loc) =>
-        PLFCAST (optimizeExp globalContext context exp, loc)
-      | PLFFFIIMPORT (exp,ty,loc) =>
-        PLFFFIIMPORT (optimizeExp globalContext context exp, ty, loc)
-      | PLFFFIEXPORT (exp,ty,loc) =>
-        PLFFFIEXPORT (optimizeExp globalContext context exp, ty, loc)
-      | PLFFFIAPPLY (cconv, funExp, args, retTy, loc) =>
-        PLFFFIAPPLY (cconv,
-                    optimizeExp globalContext context funExp,
-                    map (fn PLFFFIARG (exp, ty, loc) =>
-                            PLFFFIARG (optimizeExp globalContext context exp, ty, loc)
-                          | PLFFFIARGSIZEOF (ty, SOME exp, loc) =>
-                            PLFFFIARGSIZEOF (ty, SOME (optimizeExp globalContext context exp), loc)
-                          | PLFFFIARGSIZEOF (ty, NONE, loc) =>
-                            PLFFFIARGSIZEOF (ty, NONE, loc))
-                        args,
-                    retTy, loc)
-      | PLFSQLSERVER (str, schema, loc) =>
-        PLFSQLSERVER
-          (map (fn (x,y) => (x, optimizeExp globalContext context y)) str,
-           schema, loc)
-      | PLFSQLDBI (pat, exp, loc) =>
-        PLFSQLDBI (pat, optimizeExp globalContext context exp, loc)
+      | ICTYCAST (tycastList, icexp, loc) =>
+	  ICTYCAST (tycastList, optimizeExp icexp, loc)
+      | ICRECORD (elementList, loc) =>
+        ICRECORD
+            (map 
+		 (fn (label, icexp) => (label, optimizeExp icexp))
+		 elementList,
+             loc)
+      | ICRAISE (icexp,loc) => 
+        ICRAISE (optimizeExp icexp, loc) 
+      | ICHANDLE  (handler, matchList, loc) =>
+        ICHANDLE
+            (optimizeExp handler,
+             map 
+		 (fn (icpat,icexp) => (icpat, optimizeExp icexp))
+		 matchList,
+             loc)
+      | ICFNM (matchList, loc) =>
+        ICFNM
+            (map 
+		 (fn ({args:icpat list, body:icexp})
+                     => {args=args, body=optimizeExp body})
+		 matchList,
+             loc)
+      | ICFNM1 (varInfoTyListList,icexp,loc)=>
+	ICFNM1 (varInfoTyListList,optimizeExp icexp,loc)
+      | ICFNM1_POLY (varInfoTyList,icexp,loc)=>
+	ICFNM1_POLY (varInfoTyList,optimizeExp icexp,loc)
+      | ICCASEM (selectorList, matchList, kind, loc) =>
+        ICCASEM
+            (map optimizeExp selectorList,
+             map
+		 (fn ({args:icpat list, body:icexp}) =>
+                     {args=args, body=optimizeExp body})
+		 matchList,
+             kind,
+             loc)
+      | ICRECORD_UPDATE (icexp, elementList, loc) =>
+        ICRECORD_UPDATE
+            (optimizeExp icexp,
+             map (fn (label, icexp) => (label, optimizeExp icexp))
+		 elementList,
+             loc)
+      | ICRECORD_SELECTOR (str, loc) => icexp
+      | ICSELECT (label,icexp,loc) =>
+        ICSELECT (label, optimizeExp icexp, loc)
+      | ICSEQ (icexpList, loc) =>
+        ICSEQ (map optimizeExp icexpList, loc)
+      | ICCAST (icexp, loc) =>
+        ICCAST (optimizeExp icexp, loc)
+      | ICFFIIMPORT (icexp,ty,loc) =>
+        ICFFIIMPORT (optimizeExp icexp, ty, loc)
+      | ICFFIEXPORT (icexp,ty,loc) =>
+        ICFFIEXPORT (optimizeExp icexp, ty, loc)
+      | ICFFIAPPLY (cconv, funExp, args, retTy, loc) =>
+        ICFFIAPPLY
+            (cconv,
+             optimizeExp funExp,
+             map (fn ICFFIARG (icexp, ty, loc) =>
+                     ICFFIARG (optimizeExp icexp, ty, loc)
+                   | ICFFIARGSIZEOF (ty, SOME icexp, loc) =>
+                     ICFFIARGSIZEOF
+			 (ty, SOME (optimizeExp icexp), loc)
+                   | ICFFIARGSIZEOF (ty, NONE, loc) =>
+                     ICFFIARGSIZEOF (ty, NONE, loc))
+		 args,
+             retTy, loc)
+      | ICSQLSERVER (str, schema, loc) =>
+          ICSQLSERVER
+              (map (fn (x,y) => (x, optimizeExp y)) str,
+               schema, loc)
+      | ICSQLDBI (icpat, icexp, loc) =>
+        ICSQLDBI (icpat, optimizeExp icexp, loc)
+  
+  and optimizeRule patListExpList =
+      map (fn {args,body} => {args=args, body=optimizeExp body})
+	  patListExpList
 
-  and optimizeRule globalContext (context:context) patListExpList =
-     map (fn (patList,exp) => (patList, optimizeExp globalContext context exp))
-     patListExpList
-    
-  and optimizeDecl globalContext (context:context) pdecl  =
-      case pdecl of 
-        PDFVAL(tvarList,declList,loc) =>
-        (
-         injectVarSetInEmptyContext (getBoundIdsInDecl globalContext context pdecl),
-         [PDFVAL(tvarList,
-                (map (fn (pat,exp) => (pat,optimizeExp globalContext context exp))) declList,
-                loc)]
-         )
-      | PDFDECFUN (tvarList, declList, loc) =>
+  and optimizeDecl icdecl  =
+      case icdecl of 
+        ICVAL (tvarList, declList, loc) =>  
+	[ICVAL (tvarList, (map (fn (icpat,icexp) => 
+				   (icpat, optimizeExp icexp))) declList,
+		loc)]
+      | ICDECFUN {guard, funbinds, loc} =>
         let
-          fun getUniqueID pat =
-              case pat of
-                PLFPATID (fid,_) => NM.namePathToString(fid)
-              | PLFPATTYPED(pat',_,_) => getUniqueID pat'
-              | _ => raise Control.Bug "incorrect function name"
-          val boundIDList = map (getUniqueID o #1) declList
+          val boundIDList = map (fn ({funVarInfo,rules})=>
+				    (#id funVarInfo)) funbinds
           val g = Graph.empty :  funNodeinfo Graph.graph
           val g =
               foldl 
-                  (fn ((fidpat, rules),g) =>
+                  (fn ({funVarInfo,rules},g) =>
                       let 
-                        val fid = getUniqueID fidpat
-                        val dependentIds = getFreeIdsInRule globalContext context rules
+			val fid = (#id funVarInfo)
+			val dependentIds =
+                            getFreeIdsInRule rules
                       in
-                        #1 (Graph.addNode
-                                g
-                                {functionId=fid,
-                                 dependentIds=dependentIds,
-                                 functionDecl=(fidpat, optimizeRule globalContext context rules)})
+			#1
+			    (Graph.addNode
+				 g
+				 {functionId=fid,
+				  dependentIds=dependentIds,
+				  functionDecl=
+				  {funVarInfo=funVarInfo,
+				   rules=optimizeRule rules}})
                       end)
                   (Graph.empty : funNodeinfo Graph.graph)
-                  declList
+                  funbinds
           val nodeList = Graph.listNodes g
           val g = 
               foldl
                   (fn ((nid1,{dependentIds as dids1 , ... }), g) =>
                       foldl 
                           (fn ((nid2,{functionId as fid2,... }),g) =>
-                              if SSet.member(dids1, fid2)
+                              if VarID.Set.member(dids1, fid2)
                               then Graph.addEdge g (nid2,nid1)
                               else g)
                           g
@@ -152,322 +178,136 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
                   nodeList
           val scc = Graph.scc g          
         in
-          (
-           injectVarSetInEmptyContext (getBoundIdsInDecl globalContext context pdecl),
-           [PDFVALRECGROUP
-              (
-               boundIDList,
-               map 
-                 (fn nidList =>
-                     case nidList of 
-                       [] => raise Control.Bug "recval"
-                     | [nid] =>
-                       let
-                         val {functionId,dependentIds,functionDecl} =
-                             case Graph.getNodeInfo g nid of
-                               NONE => raise Control.Bug "val rec"
-                             | SOME info => info
-                       in
-                         if SSet.member(dependentIds,functionId)
-                         then PDFDECFUN (tvarList, [functionDecl], loc)
-                         else PDFNONRECFUN (tvarList, functionDecl, loc)
-                       end
-                     | _ => 
-                       let
-                         val functionDeclList =
-                             foldr 
-                               (fn (nid,S) =>
-                                   case Graph.getNodeInfo g nid of
-                                     NONE => raise Control.Bug "val rec"
-                                   | SOME info => (#functionDecl info)::S)
-                               []
-                               nidList
-                       in
-                         PDFDECFUN (tvarList,functionDeclList,loc)
-                       end
-                         )
-                 scc,
-                 loc
-                 )]
-           )
-        end
-      | PDFVALREC (tvarList,declList,loc) =>
+          map 
+              (fn nidList =>
+                  case nidList of 
+                    [] => raise Control.Bug "recval"
+                  | [nid] =>
+                    let
+                      val {functionId,dependentIds,functionDecl} =
+                          case Graph.getNodeInfo g nid of
+                            NONE => raise Control.Bug "val rec"
+                          | SOME info => info
+                    in
+                      if VarID.Set.member(dependentIds,functionId)
+                      then ICDECFUN {guard=guard,
+				     funbinds=[functionDecl],
+				     loc=loc}
+                      else ICNONRECFUN 
+			       {
+				guard=guard,
+				funVarInfo=(#funVarInfo functionDecl),
+				rules=(#rules functionDecl),
+				loc=loc
+			       }
+                    end
+                  | _ => 
+                    let
+                      val functionDeclList =
+                          foldr 
+                              (fn (nid,S) =>
+                                  case Graph.getNodeInfo g nid of
+                                    NONE => raise Control.Bug "val rec"
+                                  | SOME info => (#functionDecl info)::S)
+                              []
+                              nidList
+                    in
+                      ICDECFUN {guard=guard,funbinds=functionDeclList,loc=loc}
+                    end
+              )
+              scc
+        end 
+      | ICNONRECFUN {guard, funVarInfo, rules, loc} =>
+	raise Control.Bug "invalid declaration"
+      | ICVALREC {guard, recbinds, loc} =>
         let
-          fun getUniqueID pat =
-              case pat of
-                PLFPATID (fid,_) => NM.namePathToString(fid)
-              | PLFPATTYPED(pat',_,_) => getUniqueID pat'
-              | _ => raise Control.Bug "incorrect function name"
-          val boundIDList = map (getUniqueID o #1) declList
+          val boundIDList = map (fn ({varInfo,body})=>(#id varInfo)) recbinds
           val g = Graph.empty :  recNodeinfo Graph.graph
           val g =
-              foldl 
-                  (fn ((pat,exp),g) =>
-                      let 
-                        val fid = getUniqueID pat
-                        val dependentIds = getFreeIdsInExp globalContext context exp
-                      in
-                        #1 (Graph.addNode
-                                g
-                                {functionId=fid,
-                                 dependentIds=dependentIds,
-                                 functionDecl=(pat,optimizeExp globalContext context exp)})
-                      end)
+	      foldl 
+                  (fn ({varInfo,body},g) =>
+		      let 
+			val fid = (#id varInfo) 
+			val dependentIds = getFreeIdsInExp body
+		      in
+			#1
+			    (Graph.addNode
+				 g
+				 {functionId=fid,
+				  dependentIds=dependentIds,
+				  functionDecl=
+				  {varInfo=varInfo,body=optimizeExp body}})
+		      end)
                   (Graph.empty : recNodeinfo Graph.graph)
-                  declList
-          val nodeList = Graph.listNodes g
+                  recbinds
+	  val nodeList = Graph.listNodes g
           val g = 
-              foldl
+	      foldl
                   (fn ((nid1,{dependentIds as dids1 , ... }), g) =>
-                      foldl 
-                          (fn ((nid2,{functionId as fid2,... }),g) =>
-                              if SSet.member(dids1, fid2)
-                              then Graph.addEdge g (nid2,nid1)
-                              else g)
-                          g
-                          nodeList)
+		      foldl 
+			  (fn ((nid2,{functionId as fid2,... }),g) =>
+			      if VarID.Set.member(dids1, fid2)
+			      then Graph.addEdge g (nid2,nid1)
+			      else g)
+			  g
+			  nodeList)
                   g
                   nodeList
-          val scc = Graph.scc g          
+          val scc = Graph.scc g 
         in
-          (
-           injectVarSetInEmptyContext (getBoundIdsInDecl globalContext context pdecl),
-           [PDFVALRECGROUP
-              (
-               boundIDList,
-               map 
-                 (fn nidList =>
-                     case nidList of 
-                       [] => raise Control.Bug "recval"
-                     | [nid] =>
-                       let
-                         val {functionId,dependentIds,functionDecl} =
-                             case Graph.getNodeInfo g nid of
-                               NONE => raise Control.Bug "val rec"
-                             | SOME info => info
-                       in
-                         if SSet.member(dependentIds,functionId)
-                         then PDFVALREC (tvarList,[functionDecl],loc)
-                         else PDFVAL (tvarList,[functionDecl],loc)
-                       end
-                     | _ => 
-                       let
-                         val functionDeclList =
-                             foldr 
-                               (fn (nid,S) =>
-                                   case Graph.getNodeInfo g nid of
-                                     NONE => raise Control.Bug "val rec"
-                                   | SOME info => (#functionDecl info)::S)
-                               []
-                               nidList
-                       in
-                         PDFVALREC (tvarList,functionDeclList,loc)
-                       end
-                         )
-                 scc,
-                 loc
-                 )]
-           )
-        end
-      | PDFTYPE _ => (emptyContext,[pdecl])
-      | PDFDATATYPE _ => 
-        (
-         injectVarSetInEmptyContext (getBoundIdsInDecl globalContext context pdecl),
-         [pdecl]
-         )
-      | PDFABSTYPE _ => 
-        (
-         injectVarSetInEmptyContext (getBoundIdsInDecl globalContext context pdecl),
-         [pdecl]
-         )
-      | PDFREPLICATEDAT _ => 
-        (
-         injectVarSetInEmptyContext (getBoundIdsInDecl globalContext context pdecl),
-         [pdecl]
-         )
-      | PDFEXD _ => 
-        (         
-         injectVarSetInEmptyContext (getBoundIdsInDecl globalContext context pdecl),
-         [pdecl]
-         )
-      | PDFLOCALDEC (localDeclList,mainDeclList,loc) =>
-        let
-          val (context1,newLocalDeclList) =
-              optimizeDeclList globalContext context localDeclList
-          val (context2,newMainDeclList) =
-              optimizeDeclList globalContext
-                               (extendContextWithContext(context,context1))
-                               mainDeclList
-        in
-          (
-           extendContextWithContext(context1,context2),
-           [PDFLOCALDEC (newLocalDeclList,
-                        newMainDeclList,
-                        loc)]
-           )
-        end
-      | PDFINTRO (basicNameNPEnv, strNameList, loc) =>
-        (injectVarSetInEmptyContext (getBoundIdsInDecl globalContext context pdecl),
-         [PDFINTRO (basicNameNPEnv, strNameList, loc)])
-      | PDFINFIXDEC _ => (emptyContext,[pdecl])
-      | PDFINFIXRDEC _ => (emptyContext,[pdecl])
-      | PDFNONFIXDEC _ => (emptyContext,[pdecl])
-      | PDFEMPTY => (emptyContext,[pdecl])
-      | _ => raise Control.Bug "invalid declaration"
+	  map 
+	      (fn nidList =>
+		  case nidList of 
+		    [] => raise Control.Bug "recval"
+		  | [nid] =>
+		    let
+		      val {functionId,dependentIds,functionDecl} =
+			  case Graph.getNodeInfo g nid of
+			    NONE => raise Control.Bug "val rec"
+			  | SOME info => info
+		    in
+		      if VarID.Set.member(dependentIds,functionId)
+		      then ICVALREC {guard=guard,
+				     recbinds=[functionDecl],
+				     loc=loc}
+		      else ICVAL (guard,
+				  [(ICPATVAR (#varInfo functionDecl,loc),
+				    #body functionDecl)],
+				  loc)
+		    end
+		  | _ => 
+		    let
+		      val functionDeclList =
+			  foldr 
+			      (fn (nid,S) =>
+				  case Graph.getNodeInfo g nid of
+				    NONE => raise Control.Bug "val rec"
+				  | SOME info => (#functionDecl info)::S)
+			      []
+			      nidList
+		    in
+		      ICVALREC {guard=guard,recbinds=functionDeclList,loc=loc}
+		    end
+	      )
+	      scc
+	end
+      | ICABSTYPE {tybinds, body, loc} =>
+	raise Control.Bug "abstype"
+      | ICEXND (_, loc) => [icdecl]
+      | ICEXNTAGD (_, loc) => [icdecl]
+      | ICEXPORTVAR (varInfo, ty, loc) => [icdecl]
+      | ICEXPORTFUNCTOR _ => [icdecl]
+      | ICEXPORTEXN (exnInfo, loc) => [icdecl]
+      | ICEXTERNVAR ({path, ty}, loc) => [icdecl]
+      | ICEXTERNEXN ({path, ty}, loc) => [icdecl]
+      | ICOVERLOADDEF {boundtvars, id, path, overloadCase, loc} => [icdecl]
 
-  and optimizeStrDecl globalContext context strDecl = 
-      case strDecl of
-          PDFCOREDEC (decs, loc) =>
-          let
-              val (context, newDecs) =
-                  optimizeDeclList globalContext context decs
-          in
-              (context, [PDFCOREDEC (newDecs, loc)])
-          end
-        | PDFTRANCONSTRAINT (decs, namemap, spec, specnamemap, loc) =>
-          let
-              val (context, newDecs) = 
-                  optimizeStrDeclList globalContext context decs
-          in
-              (context, [PDFTRANCONSTRAINT (newDecs, namemap, spec, specnamemap, loc)])
-          end
-        | PDFOPAQCONSTRAINT (decs, namemap, spec, specnamemap, loc) =>
-          let
-              val (context, newDecs) = optimizeStrDeclList globalContext context decs
-          in 
-              (context, [PDFOPAQCONSTRAINT (newDecs, namemap, spec, specnamemap, loc)])
-          end
-        | PDFFUNCTORAPP (prefix, funName, actualArg, loc) => 
-          let
-              val varSet = 
-                  lookupFunctor (globalContext, context, funName)
-              val newVarSet = adjustVarSet (varSet, Path.pathToString(prefix))
-          in
-              ((newVarSet, SEnv.empty),
-               [PDFFUNCTORAPP (prefix, funName, actualArg, loc)])
-          end
-        | PDFANDFLATTENED (decUnits, loc) =>
-          let
-              val (context, newDecUnits)  =
-                  foldl (fn ((printSigInfo, decUnit), (incContext, newDecUnits)) =>
-                            let
-                                val (newContext, newDecUnit) =
-                                    optimizeStrDeclList globalContext context decUnit
-                            in
-                                (extendContextWithContext(incContext, newContext),
-                                 newDecUnits @ [(printSigInfo, newDecUnit)])
-                            end)
-                        (emptyContext, nil)
-                        decUnits
-          in
-              (context, [PDFANDFLATTENED(newDecUnits, loc)])
-          end
-        | PDFSTRLOCAL (localDeclList,mainDeclList, loc) =>
-          let
-              val (context1,newLocalDeclList) =
-                  optimizeStrDeclList globalContext context localDeclList
-              val (context2,newMainDeclList) =
-                  optimizeStrDeclList globalContext
-                                      (extendContextWithContext(context,context1))
-                                      mainDeclList
-          in
-              (
-               extendContextWithContext(context1,context2),
-               [PDFSTRLOCAL (newLocalDeclList,
-                             newMainDeclList,
-                             loc)]
-               )
-          end
-          
-  and optimizeDeclList globalContext context pdeclList =
-      foldl ( fn (pdecl,(incContext, result)) =>
-                 let
-                   val (context1, newPdecl) =
-                       optimizeDecl globalContext context pdecl
-                 in
-                   (
-                    extendContextWithContext(incContext,context1),
-                    result @ newPdecl
-                    )
-                 end
-                   )
-            (emptyContext, nil)
-            pdeclList
+  and optimizeDeclList icdeclList = List.concat (map optimizeDecl icdeclList)
 
-  and optimizeStrDeclList globalContext context pdeclList =
-      foldl ( fn (pdecl,(incContext, result)) =>
-                 let
-                   val (context1, newPdecl) =
-                       optimizeStrDecl globalContext context pdecl
-                 in
-                   (
-                    extendContextWithContext(incContext,context1),
-                    result @ newPdecl
-                    )
-                 end
-                   )
-            (emptyContext, nil)
-            pdeclList
-
- and optimizetopdec globalContext context topdec = 
-     case topdec of 
-         PLFDECSTR(strDecs, loc) => 
-         let
-           val (context1, newDecs) =
-               optimizeStrDeclList globalContext context strDecs
-         in
-           (context1, [PLFDECSTR(newDecs, loc)])
-         end
-       | PLFDECFUN(newFunBinds, loc) => 
-         let
-           val (incContext, context, plfundecs) =  
-               foldr (fn ((funId, argSpec, (bodyDecList, bodyNameMap, bodySigExpOpt), loc), 
-                          (incContext, context, ptfunbinds)) => 
-                         let
-                             val (context1:context, newDecs) = 
-                                 optimizeStrDeclList globalContext context bodyDecList
-                             val context2 = 
-                                 bindFunInEmptyContext (funId, #1 context1)
-                         in
-                             (
-                              extendContextWithContext(incContext,context2),
-                              extendContextWithContext(context,context2),
-                              (funId, argSpec, (newDecs, bodyNameMap, bodySigExpOpt), loc) :: ptfunbinds
-                           )
-                         end)
-                     (emptyContext, context, nil)
-                     newFunBinds
-         in
-           (incContext,[PLFDECFUN(plfundecs,loc)]) 
-         end
-       | other => (emptyContext, [other])
-
- and optimizetopdecList globalContext context topdecs = 
-     let
-       val (newIncContext, newContext, newTopDecs) =
-           foldl (fn (topdec,(incContext,context,newTopDecs)) =>
-                     let
-                       val (context1,newTopDec) = 
-                           optimizetopdec globalContext context topdec
-                     in
-                       (extendContextWithContext(incContext,context1),
-                        extendContextWithContext(context,context1),
-                        newTopDecs @ [newTopDec]
-                        )
-                     end
-                 )
-                 (emptyContext,context,nil)
-                 topdecs
-     in
-       (newIncContext, List.concat newTopDecs)
-     end
-
- fun optimize (globalContext:VALREC_Utils.globalContext) topdecs  = 
-     let
-       val (newContext, newTopDecs) =
-           optimizetopdecList globalContext emptyContext topdecs
-     in
-       newTopDecs
-     end
-     handle exn => raise exn
+  fun optimize topdecs =
+      let 
+	val newTopdecs = optimizeDeclList topdecs
+      in
+	newTopdecs
+      end
 end

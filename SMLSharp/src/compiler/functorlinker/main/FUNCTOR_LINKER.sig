@@ -1,10 +1,12 @@
 signature FUNCTOR_LINKER = sig
   type functorEnv
-  val initialFunctorEnv : functorEnv
-  val pu_functorEnv : MultipleValueCalc.mvdecl list SEnv.map Pickle.pu
+  val initialFunctorEnv : functorEnv 
+  val emptyFunctorEnv : functorEnv 
+  val extendFunctorEnv : functorEnv * functorEnv -> functorEnv
+  val pu_functorEnv : functorEnv Pickle.pu
   val link : 
-    MultipleValueCalc.mvdecl list SEnv.map
+    functorEnv
     -> MultipleValueCalc.topBlock list
-       -> MultipleValueCalc.mvdecl list SEnv.map 
+       -> functorEnv
           * MultipleValueCalc.mvdecl list
 end 

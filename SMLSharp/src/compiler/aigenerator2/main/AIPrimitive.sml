@@ -84,7 +84,7 @@ struct
   datatype primop =
       Op1 of I.op1 * I.ty * I.ty
     | Op2 of I.op2 * I.ty * I.ty * I.ty
-    | FloatOp of primop
+    | FloatOp of string * primop
     | Special of {dst: I.varInfo,
                   args: I.value list,
                   argTys: I.ty list,
@@ -109,6 +109,7 @@ struct
               isPure = isPure,
               noCallback = true,
               allocMLValue = allocMLValue,
+              suspendThread = false,
               callingConvention = NONE
             } : I.ffiAttributes
         fun genArgs (n, arg::argList, ty::tys) =
@@ -190,29 +191,17 @@ struct
                isPure = true,
                allocMLValue = false,
                argList = [dst, dstOffset, src, srcOffset, length, tag],
-               calleeTy = ([I.BOXED, I.OFFSET, I.BOXED, I.OFFSET,
-                            I.SIZE, I.UINT], []),
+               calleeTy = ([I.BOXED, I.UINT, I.BOXED, I.UINT,
+                            I.UINT, I.UINT], []),
                loc = loc}
       
-  fun useCmp cmpPrim cmpOp {dst, args=[arg1, arg2], argTys=[ty1, ty2],
-                            instSizes=nil, instTags=nil, loc} =
-      let
-        val var = newVar I.SINT
-      in
-        (* dst = strcmp(arg1, arg2) op 0; *)
-        cmpPrim {dst = var,
-                 arg1 = arg1,
-                 arg2 = arg2,
-                 loc = loc} @
-        [
-          I.PrimOp2 {dst = dst,
-                     op2 = (cmpOp, I.SINT, I.SINT, I.UINT),
-                     arg1 = I.Var var,
-                     arg2 = I.SInt 0,
-                     loc = loc}
-        ]
-      end
-    | useCmp cmpPrim cmpOp _ =
+  fun stringCmp {dst, args=[arg1, arg2], argTys=[ty1, ty2],
+                 instSizes=nil, instTags=nil, loc} =
+      StrCmp {dst = dst,
+              arg1 = arg1,
+              arg2 = arg2,
+              loc = loc}
+    | stringCmp _ =
       raise Control.Bug "invalid arity for comparison"
 
   fun advancePointer {dst, args=[arg1, arg2], argTys=[ty1, ty2],
@@ -296,12 +285,12 @@ struct
                | I.BYTE => true
                | I.FLOAT => true
                | I.DOUBLE => true
-               | I.ATOMty => true
-               | I.DOUBLEty => true
                | I.CODEPOINTER => true
                | I.HEAPPOINTER => true
                | I.CPOINTER => true
-               | _ => false)
+               | I.BOXED => false
+               | I.ENTRY => true
+               | I.GENERIC _ => false)
       then
         (* monomorphic equal *)
         [
@@ -362,198 +351,93 @@ struct
     | primEqual _ =
       raise Control.Bug "invalid arity for equal"
 
+  fun primCast {dst, args = [arg], argTys = [ty], instSizes, instTags, loc} =
+      [
+        I.Move {dst = dst, ty = ty, value = arg, loc = loc}
+      ]
+    | primCast _ = raise Control.Bug "primCast"
+
   fun primArrayLength {dst, args = [arg1], argTys = [ty1],
                        instSizes = [sz], instTags = [tag], loc} =
-      I.PrimOp1 {dst = dst,
-                 op1 = (I.PayloadSize, ty1, I.UINT),
-                 arg = arg1,
-                 loc = loc} ::
-      (case sz of
-         I.UInt 0w1 => nil
-       | I.UInt 0w2 =>
-         [I.PrimOp2 {dst = dst,
-                     op2 = (I.RShift, I.UINT, I.UINT, I.UINT),
-                     arg1 = I.Var dst,
-                     arg2 = I.UInt 0w1,
-                     loc = loc}]
-       | I.UInt 0w4 =>
-         [I.PrimOp2 {dst = dst,
-                     op2 = (I.RShift, I.UINT, I.UINT, I.UINT),
-                     arg1 = I.Var dst,
-                     arg2 = I.UInt 0w2,
-                     loc = loc}]
-       | I.UInt 0w8 =>
-         [I.PrimOp2 {dst = dst,
-                     op2 = (I.RShift, I.UINT, I.UINT, I.UINT),
-                     arg1 = I.Var dst,
-                     arg2 = I.UInt 0w3,
-                     loc = loc}]
-       | I.UInt 0w16 =>
-         [I.PrimOp2 {dst = dst,
-                     op2 = (I.RShift, I.UINT, I.UINT, I.UINT),
-                     arg1 = I.Var dst,
-                     arg2 = I.UInt 0w4,
-                     loc = loc}]
-       | _ =>
-         [I.PrimOp2 {dst = dst,
-                     op2 = (I.Div, I.UINT, I.UINT, I.UINT),
-                     arg1 = I.Var dst,
-                     arg2 = sz,
-                     loc = loc}])
+      let
+        val tmp = newVar I.UINT
+      in
+        I.PrimOp1 {dst = tmp,
+                   op1 = (I.PayloadSize, ty1, I.UINT),
+                   arg = arg1,
+                   loc = loc} ::
+        (case sz of
+           I.UInt 0w1 => nil
+         | I.UInt 0w2 =>
+           [I.PrimOp2 {dst = tmp,
+                       op2 = (I.RShift, I.UINT, I.UINT, I.UINT),
+                       arg1 = I.Var tmp,
+                       arg2 = I.UInt 0w1,
+                       loc = loc}]
+         | I.UInt 0w4 =>
+           [I.PrimOp2 {dst = tmp,
+                       op2 = (I.RShift, I.UINT, I.UINT, I.UINT),
+                       arg1 = I.Var tmp,
+                       arg2 = I.UInt 0w2,
+                       loc = loc}]
+         | I.UInt 0w8 =>
+           [I.PrimOp2 {dst = tmp,
+                       op2 = (I.RShift, I.UINT, I.UINT, I.UINT),
+                       arg1 = I.Var tmp,
+                       arg2 = I.UInt 0w3,
+                       loc = loc}]
+         | I.UInt 0w16 =>
+           [I.PrimOp2 {dst = tmp,
+                       op2 = (I.RShift, I.UINT, I.UINT, I.UINT),
+                       arg1 = I.Var tmp,
+                       arg2 = I.UInt 0w4,
+                       loc = loc}]
+         | _ =>
+           [I.PrimOp2 {dst = tmp,
+                       op2 = (I.Div, I.UINT, I.UINT, I.UINT),
+                       arg1 = I.Var tmp,
+                       arg2 = sz,
+                       loc = loc}])
+        @ [I.PrimOp1 {dst = dst,
+                      op1 = (I.Cast, I.UINT, I.SINT),
+                      arg = I.Var tmp,
+                      loc = loc}]
+      end
     | primArrayLength _ =
       raise Control.Bug "invalid arity for Array_length"
 
-(*
-  fun convertPrim ({bindName, instruction, ...} : Primitives.primitive) =
-      case (instruction, bindName) of
-        (Internal2 _, "=") => Special primEqual
-      | (Internal2 _, "addInt") => Op2 (I.Add, I.SINT, I.SINT, I.SINT)
-      | (Internal2 _, "addReal") =>
-        FloatOp (Op2 (I.Add, I.DOUBLE, I.DOUBLE, I.DOUBLE))
-      | (Internal2 _, "addFloat") => Op2 (I.Add, I.FLOAT, I.FLOAT, I.FLOAT)
-      | (Internal2 _, "addWord") => Op2 (I.Add, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "addByte") => Op2 (I.Add, I.BYTE, I.BYTE, I.BYTE)
-      | (Internal2 _, "addLargeInt") => Ext
-      | (Internal2 _, "subInt") => Op2 (I.Sub, I.SINT, I.SINT, I.SINT)
-      | (Internal2 _, "subReal") =>
-        FloatOp (Op2 (I.Sub, I.DOUBLE, I.DOUBLE, I.DOUBLE))
-      | (Internal2 _, "subFloat") => Op2 (I.Sub, I.FLOAT, I.FLOAT, I.FLOAT)
-      | (Internal2 _, "subWord") => Op2 (I.Sub, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "subByte") => Op2 (I.Sub, I.BYTE, I.BYTE, I.BYTE)
-      | (Internal2 _, "subLargeInt") => Ext
-      | (Internal2 _, "mulInt") => Op2 (I.Mul, I.SINT, I.SINT, I.SINT)
-      | (Internal2 _, "mulReal") =>
-        FloatOp (Op2 (I.Mul, I.DOUBLE, I.DOUBLE, I.DOUBLE))
-      | (Internal2 _, "mulFloat") => Op2 (I.Mul, I.FLOAT, I.FLOAT, I.FLOAT)
-      | (Internal2 _, "mulWord") => Op2 (I.Mul, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "mulByte") => Op2 (I.Mul, I.BYTE, I.BYTE, I.BYTE)
-      | (Internal2 _, "mulLargeInt") => Ext
-      | (Internal2 _, "divInt") => Op2 (I.Div, I.SINT, I.SINT, I.SINT)
-      | (Internal2 _, "divWord") => Op2 (I.Div, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "divByte") => Op2 (I.Div, I.BYTE, I.BYTE, I.BYTE)
-      | (Internal2 _, "divLargeInt") => Ext
-      | (Internal2 _, "/") =>
-        FloatOp (Op2 (I.Div, I.DOUBLE, I.DOUBLE, I.DOUBLE))
-      | (Internal2 _, "divFloat") => Op2 (I.Div, I.FLOAT, I.FLOAT, I.FLOAT)
-      | (Internal2 _, "modInt") => Op2 (I.Mod, I.SINT, I.SINT, I.SINT)
-      | (Internal2 _, "modWord") => Op2 (I.Mod, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "modByte") => Op2 (I.Mod, I.BYTE, I.BYTE, I.BYTE)
-      | (Internal2 _, "modLargeInt") => Ext
-      | (Internal2 _, "quotInt") => Op2 (I.Quot, I.SINT, I.SINT, I.SINT)
-      | (Internal2 _, "quotLargeInt") => Ext
-      | (Internal2 _, "remInt") => Op2 (I.Rem, I.SINT, I.SINT, I.SINT)
-      | (Internal2 _, "remLargeInt") => Ext
-      | (Internal1 _, "negInt") => Op1 (I.Neg, I.SINT, I.SINT)
-      | (Internal1 _, "negLargeInt") => Ext
-      | (Internal1 _, "negReal") =>
-        FloatOp (Op1 (I.Neg, I.DOUBLE, I.DOUBLE))
-      | (Internal1 _, "negFloat") => Op1 (I.Neg, I.FLOAT, I.FLOAT)
-      | (Internal1 _, "absInt") => Op1 (I.Abs, I.SINT, I.SINT)
-      | (Internal1 _, "absLargeInt") => Ext
-      | (Internal1 _, "absReal") =>
-        FloatOp (Op1 (I.Abs, I.DOUBLE, I.DOUBLE))
-      | (Internal1 _, "absFloat") => Op1 (I.Neg, I.FLOAT, I.FLOAT)
-      | (Internal2 _, "ltInt") => Op2 (I.Lt, I.SINT, I.SINT, I.UINT)
-      | (Internal2 _, "ltReal") =>
-        FloatOp (Op2 (I.Lt, I.DOUBLE, I.DOUBLE, I.UINT))
-      | (Internal2 _, "ltFloat") => Op2 (I.Lt, I.FLOAT, I.FLOAT, I.UINT)
-      | (Internal2 _, "ltWord") => Op2 (I.Lt, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "ltByte") => Op2 (I.Lt, I.BYTE, I.BYTE, I.UINT)
-      | (Internal2 _, "ltChar") => Op2 (I.Lt, I.CHAR, I.CHAR, I.UINT)
-      | (Internal2 _, "ltString") => Special (useCmp StrCmp I.Lt)
-      | (Internal2 _, "ltLargeInt") => Special (useCmp IntInfCmp I.Lt)
-      | (Internal2 _, "gtInt") => Op2 (I.Gt, I.SINT, I.SINT, I.UINT)
-      | (Internal2 _, "gtReal") =>
-        FloatOp (Op2 (I.Gt, I.DOUBLE, I.DOUBLE, I.UINT))
-      | (Internal2 _, "gtFloat") => Op2 (I.Gt, I.FLOAT, I.FLOAT, I.UINT)
-      | (Internal2 _, "gtWord") => Op2 (I.Gt, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "gtByte") => Op2 (I.Gt, I.BYTE, I.BYTE, I.UINT)
-      | (Internal2 _, "gtChar") => Op2 (I.Gt, I.CHAR, I.CHAR, I.UINT)
-      | (Internal2 _, "gtString") => Special (useCmp StrCmp I.Gt)
-      | (Internal2 _, "gtLargeInt") => Special (useCmp IntInfCmp I.Gt)
-      | (Internal2 _, "lteqInt") => Op2 (I.Lteq, I.SINT, I.SINT, I.UINT)
-      | (Internal2 _, "lteqReal") =>
-        FloatOp (Op2 (I.Lteq, I.DOUBLE, I.DOUBLE, I.UINT))
-      | (Internal2 _, "lteqFloat") => Op2 (I.Lteq, I.FLOAT, I.FLOAT, I.UINT)
-      | (Internal2 _, "lteqWord") => Op2 (I.Lteq, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "lteqByte") => Op2 (I.Lteq, I.BYTE, I.BYTE, I.UINT)
-      | (Internal2 _, "lteqChar") => Op2 (I.Lteq, I.CHAR, I.CHAR, I.UINT)
-      | (Internal2 _, "lteqString") => Special (useCmp StrCmp I.Lteq)
-      | (Internal2 _, "lteqLargeInt") => Special (useCmp IntInfCmp I.Lteq)
-      | (Internal2 _, "gteqInt") => Op2 (I.Gteq, I.SINT, I.SINT, I.UINT)
-      | (Internal2 _, "gteqReal") =>
-        FloatOp (Op2 (I.Gteq, I.DOUBLE, I.DOUBLE, I.UINT))
-      | (Internal2 _, "gteqFloat") => Op2 (I.Gteq, I.FLOAT, I.FLOAT, I.UINT)
-      | (Internal2 _, "gteqWord") => Op2 (I.Gteq, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "gteqByte") => Op2 (I.Gteq, I.BYTE, I.BYTE, I.UINT)
-      | (Internal2 _, "gteqChar") => Op2 (I.Gteq, I.CHAR, I.CHAR, I.UINT)
-      | (Internal2 _, "gteqString") => Special (useCmp StrCmp I.Gteq)
-      | (Internal2 _, "gteqLargeInt") => Special (useCmp IntInfCmp I.Gteq)
-      | (Internal1 _, "Word_toIntX") => Op1 (I.Cast, I.UINT, I.SINT)
-      | (Internal1 _, "Word_fromInt") => Op1 (I.Cast, I.SINT, I.UINT)
-      | (Internal2 _, "Word_andb") => Op2 (I.Andb, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "Word_orb") => Op2 (I.Orb, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "Word_xorb") => Op2 (I.Xorb, I.UINT, I.UINT, I.UINT)
-      | (Internal1 _, "Word_notb") => Op1 (I.Notb, I.UINT, I.UINT)
-      | (Internal2 _, "Word_leftShift") =>
-        Op2 (I.LShift, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "Word_logicalRightShift") =>
-        Op2 (I.RShift, I.UINT, I.UINT, I.UINT)
-      | (Internal2 _, "Word_arithmeticRightShift") =>
-        Op2 (I.ArithRShift, I.UINT, I.UINT, I.UINT)
-      | (Internal1 _, "Array_length") =>
-        (* for YASIGenerator;
-         * In symbolic instruction, Array_length primitives returns the
-         * number of elements, not in bytes. *)
-        NewOp (Special primArrayLength)
-      | (Internal1 _, "Internal_getCurrentIP") => Ext
-      | (Internal1 _, "Internal_getStackTrace") => Ext
-      | (External _, "Real_fromInt") =>
-        FloatOp (Op1 (I.Cast, I.SINT, I.DOUBLE))
-      | (External _, "Real_equal") =>
-        FloatOp (Op2 (I.MonoEqual, I.DOUBLE, I.DOUBLE, I.UINT))
-      | (External _, "Real_toFloat") =>
-        FloatOp (Op1 (I.Cast, I.DOUBLE, I.FLOAT))
-      | (External _, "Real_fromFloat") =>
-        FloatOp (Op1 (I.Cast, I.FLOAT, I.DOUBLE))
-      | (External _, "Char_ord") => Op1 (I.Cast, I.CHAR, I.SINT)
-      | (External _, "Char_chr") => Op1 (I.Cast, I.SINT, I.CHAR)
-      | (External _, "GC_fixedCopy") =>
-        Prim {name = bindName, isPure = false}
-      | (External _, "GC_copyBlock") =>
-        Prim {name = bindName, isPure = false}
-      | (External _, _) => Ext
-      | (None, _) => Ext
-      | _ =>
-        (print ("NOTICE: ignore primitive "^bindName^"\n"); Ext)
-
-  val primitiveMap =
-      foldl (fn (prim as {bindName, ...}, primMap) =>
-                case convertPrim prim of
-                  Ext => primMap
-                | x => SEnv.insert (primMap, bindName, x))
-            SEnv.empty
-            Primitives.allPrimitives
-*)
-
   fun convertPrim prim =
       case prim of
-        P.PolyEqual => Special primEqual
+        P.Equal => Special primEqual
+      | P.Cast => Special primCast
+      | P.IdentityEqual => Op2 (I.MonoEqual, I.BOXED, I.BOXED, I.UINT)
+      | P.Array_allocArray => raise Control.Bug "convertPrim: Array_array"
+      | P.Array_copy_unsafe =>
+        raise Control.Bug "convertPrim: Array_array_unsafe"
+      | P.Array_allocVector => raise Control.Bug "convertPrim: Array_vector"
+      | P.Array_sub => raise Control.Bug "convertPrim: Array_sub"
+      | P.Array_update => raise Control.Bug "convertPrim: Array_update"
+      | P.Ref_alloc => raise Control.Bug "convertPrim: Ref_alloc"
+      | P.Ref_deref => raise Control.Bug "convertPrim: Ref_deref"
+      | P.Ref_assign => raise Control.Bug "convertPrim: Ref_assign"
       | P.Int_add P.NoOverflowCheck => Op2 (I.Add, I.SINT, I.SINT, I.SINT)
       | P.Int_add P.OverflowCheck => raise Control.Bug "Int_add_ov"
-      | P.Real_add => FloatOp (Op2 (I.Add, I.DOUBLE, I.DOUBLE, I.DOUBLE))
+      | P.Real_add =>
+        FloatOp ("addReal", Op2 (I.Add, I.DOUBLE, I.DOUBLE, I.DOUBLE))
       | P.Float_add => Op2 (I.Add, I.FLOAT, I.FLOAT, I.FLOAT)
       | P.Word_add => Op2 (I.Add, I.UINT, I.UINT, I.UINT)
       | P.Byte_add => Op2 (I.Add, I.BYTE, I.BYTE, I.BYTE)
       | P.Int_sub P.NoOverflowCheck => Op2 (I.Sub, I.SINT, I.SINT, I.SINT)
       | P.Int_sub P.OverflowCheck => raise Control.Bug "Int_sub_ov"
-      | P.Real_sub => FloatOp (Op2 (I.Sub, I.DOUBLE, I.DOUBLE, I.DOUBLE))
+      | P.Real_sub =>
+        FloatOp ("subReal", Op2 (I.Sub, I.DOUBLE, I.DOUBLE, I.DOUBLE))
       | P.Float_sub => Op2 (I.Sub, I.FLOAT, I.FLOAT, I.FLOAT)
       | P.Word_sub => Op2 (I.Sub, I.UINT, I.UINT, I.UINT)
       | P.Byte_sub => Op2 (I.Sub, I.BYTE, I.BYTE, I.BYTE)
       | P.Int_mul P.NoOverflowCheck=> Op2 (I.Mul, I.SINT, I.SINT, I.SINT)
       | P.Int_mul P.OverflowCheck => raise Control.Bug "Int_mul_ov"
-      | P.Real_mul => FloatOp (Op2 (I.Mul, I.DOUBLE, I.DOUBLE, I.DOUBLE))
+      | P.Real_mul =>
+        FloatOp ("mulReal", Op2 (I.Mul, I.DOUBLE, I.DOUBLE, I.DOUBLE))
       | P.Float_mul => Op2 (I.Mul, I.FLOAT, I.FLOAT, I.FLOAT)
       | P.Word_mul => Op2 (I.Mul, I.UINT, I.UINT, I.UINT)
       | P.Byte_mul => Op2 (I.Mul, I.BYTE, I.BYTE, I.BYTE)
@@ -561,10 +445,13 @@ struct
       | P.Int_div P.OverflowCheck => raise Control.Bug "Int_div_ov"
       | P.Word_div => Op2 (I.Div, I.UINT, I.UINT, I.UINT)
       | P.Byte_div => Op2 (I.Div, I.BYTE, I.BYTE, I.BYTE)
-      | P.Real_div => FloatOp (Op2 (I.Div, I.DOUBLE, I.DOUBLE, I.DOUBLE))
+      | P.Real_div =>
+        FloatOp ("divReal", Op2 (I.Div, I.DOUBLE, I.DOUBLE, I.DOUBLE))
       | P.Float_div => Op2 (I.Div, I.FLOAT, I.FLOAT, I.FLOAT)
       | P.Int_mod P.NoOverflowCheck => Op2 (I.Mod, I.SINT, I.SINT, I.SINT)
       | P.Int_mod P.OverflowCheck => raise Control.Bug "Int_mod_ov"
+      | P.Real_rem => Op2 (I.Rem, I.DOUBLE, I.DOUBLE, I.DOUBLE)
+      | P.Float_rem => Op2 (I.Rem, I.FLOAT, I.FLOAT, I.FLOAT)
       | P.Word_mod => Op2 (I.Mod, I.UINT, I.UINT, I.UINT)
       | P.Byte_mod => Op2 (I.Mod, I.BYTE, I.BYTE, I.BYTE)
       | P.Int_quot P.NoOverflowCheck=> Op2 (I.Quot, I.SINT, I.SINT, I.SINT)
@@ -573,56 +460,68 @@ struct
       | P.Int_rem P.OverflowCheck => raise Control.Bug "Int_rem_ov"
       | P.Int_neg P.NoOverflowCheck=> Op1 (I.Neg, I.SINT, I.SINT)
       | P.Int_neg P.OverflowCheck => raise Control.Bug "Int_neg_ov"
-      | P.Real_neg => FloatOp (Op1 (I.Neg, I.DOUBLE, I.DOUBLE))
+      | P.Real_neg => FloatOp ("negReal", Op1 (I.Neg, I.DOUBLE, I.DOUBLE))
       | P.Float_neg => Op1 (I.Neg, I.FLOAT, I.FLOAT)
       | P.Int_abs P.NoOverflowCheck => Op1 (I.Abs, I.SINT, I.SINT)
       | P.Int_abs P.OverflowCheck => raise Control.Bug "Int_abs_ov"
-      | P.Real_abs => FloatOp (Op1 (I.Abs, I.DOUBLE, I.DOUBLE))
+      | P.Real_abs => FloatOp ("absReal", Op1 (I.Abs, I.DOUBLE, I.DOUBLE))
       | P.Float_abs => Op1 (I.Neg, I.FLOAT, I.FLOAT)
       | P.Int_lt => Op2 (I.Lt, I.SINT, I.SINT, I.UINT)
-      | P.Real_lt => FloatOp (Op2 (I.Lt, I.DOUBLE, I.DOUBLE, I.UINT))
+      | P.Real_lt => FloatOp ("ltReal", Op2 (I.Lt, I.DOUBLE, I.DOUBLE, I.UINT))
       | P.Float_lt => Op2 (I.Lt, I.FLOAT, I.FLOAT, I.UINT)
       | P.Word_lt => Op2 (I.Lt, I.UINT, I.UINT, I.UINT)
       | P.Byte_lt => Op2 (I.Lt, I.BYTE, I.BYTE, I.UINT)
       | P.Char_lt => Op2 (I.Lt, I.BYTE, I.BYTE, I.UINT)
       | P.Int_gt => Op2 (I.Gt, I.SINT, I.SINT, I.UINT)
-      | P.Real_gt => FloatOp (Op2 (I.Gt, I.DOUBLE, I.DOUBLE, I.UINT))
+      | P.Real_gt => FloatOp ("gtReal", Op2 (I.Gt, I.DOUBLE, I.DOUBLE, I.UINT))
       | P.Float_gt => Op2 (I.Gt, I.FLOAT, I.FLOAT, I.UINT)
       | P.Word_gt => Op2 (I.Gt, I.UINT, I.UINT, I.UINT)
       | P.Byte_gt => Op2 (I.Gt, I.BYTE, I.BYTE, I.UINT)
       | P.Char_gt => Op2 (I.Gt, I.BYTE, I.BYTE, I.UINT)
       | P.Int_lteq => Op2 (I.Lteq, I.SINT, I.SINT, I.UINT)
-      | P.Real_lteq => FloatOp (Op2 (I.Lteq, I.DOUBLE, I.DOUBLE, I.UINT))
+      | P.Real_lteq =>
+        FloatOp ("lteqReal", Op2 (I.Lteq, I.DOUBLE, I.DOUBLE, I.UINT))
       | P.Float_lteq => Op2 (I.Lteq, I.FLOAT, I.FLOAT, I.UINT)
       | P.Word_lteq => Op2 (I.Lteq, I.UINT, I.UINT, I.UINT)
       | P.Byte_lteq => Op2 (I.Lteq, I.BYTE, I.BYTE, I.UINT)
       | P.Char_lteq => Op2 (I.Lteq, I.BYTE, I.BYTE, I.UINT)
       | P.Int_gteq => Op2 (I.Gteq, I.SINT, I.SINT, I.UINT)
-      | P.Real_gteq => FloatOp (Op2 (I.Gteq, I.DOUBLE, I.DOUBLE, I.UINT))
+      | P.Real_gteq =>
+        FloatOp ("gteqReal", Op2 (I.Gteq, I.DOUBLE, I.DOUBLE, I.UINT))
       | P.Float_gteq => Op2 (I.Gteq, I.FLOAT, I.FLOAT, I.UINT)
       | P.Word_gteq => Op2 (I.Gteq, I.UINT, I.UINT, I.UINT)
       | P.Byte_gteq => Op2 (I.Gteq, I.BYTE, I.BYTE, I.UINT)
       | P.Char_gteq => Op2 (I.Gteq, I.BYTE, I.BYTE, I.UINT)
+      | P.Byte_toInt => Op1 (I.ZeroExt, I.BYTE, I.SINT)
       | P.Byte_toIntX => Op1 (I.SignExt, I.BYTE, I.SINT)
+      | P.Byte_toWord => Op1 (I.ZeroExt, I.BYTE, I.UINT)
       | P.Byte_fromInt => Op1 (I.Cast, I.SINT, I.BYTE)
+      | P.Byte_fromWord => Op1 (I.Cast, I.UINT, I.BYTE)
       | P.Word_toIntX => Op1 (I.Cast, I.UINT, I.SINT)
       | P.Word_fromInt => Op1 (I.Cast, I.SINT, I.UINT)
       | P.Word_andb => Op2 (I.Andb, I.UINT, I.UINT, I.UINT)
       | P.Word_orb => Op2 (I.Orb, I.UINT, I.UINT, I.UINT)
       | P.Word_xorb => Op2 (I.Xorb, I.UINT, I.UINT, I.UINT)
+      | P.Word_neg => Op1 (I.Neg, I.UINT, I.UINT)
       | P.Word_notb => Op1 (I.Notb, I.UINT, I.UINT)
       | P.Word_lshift => Op2 (I.LShift, I.UINT, I.UINT, I.UINT)
       | P.Word_rshift => Op2 (I.RShift, I.UINT, I.UINT, I.UINT)
       | P.Word_arshift => Op2 (I.ArithRShift, I.UINT, I.UINT, I.UINT)
-      | P.Real_fromInt => FloatOp (Op1 (I.Cast, I.SINT, I.DOUBLE))
-      | P.Real_equal => FloatOp (Op2 (I.MonoEqual, I.DOUBLE, I.DOUBLE, I.UINT))
+      | P.Real_fromInt =>
+        FloatOp ("Real_fromInt", Op1 (I.Cast, I.SINT, I.DOUBLE))
+      | P.Real_equal =>
+        FloatOp ("Real_equal", Op2 (I.MonoEqual, I.DOUBLE, I.DOUBLE, I.UINT))
       | P.Float_equal => Op2 (I.MonoEqual, I.FLOAT, I.FLOAT, I.UINT)
+      | P.Real_unorderedOrEqual =>
+        Op2 (I.UnorderedOrEqual, I.DOUBLE, I.DOUBLE, I.UINT)
+      | P.Float_unorderedOrEqual =>
+        Op2 (I.UnorderedOrEqual, I.FLOAT, I.FLOAT, I.UINT)
       | P.Float_fromInt => Op1 (I.Cast, I.SINT, I.FLOAT)
       | P.Float_fromReal => Op1 (I.Cast, I.DOUBLE, I.FLOAT)
       | P.Float_toReal => Op1 (I.Cast, I.FLOAT, I.DOUBLE)
       | P.Float_trunc_unsafe P.NoOverflowCheck => Op1 (I.Cast, I.FLOAT, I.SINT)
       | P.Real_trunc_unsafe P.NoOverflowCheck =>
-        FloatOp (Op1 (I.Cast, I.DOUBLE, I.SINT))
+        FloatOp ("Real_trunc", Op1 (I.Cast, I.DOUBLE, I.SINT))
       | P.Float_trunc_unsafe P.OverflowCheck => raise Control.Bug "Float_trunc"
       | P.Real_trunc_unsafe P.OverflowCheck => raise Control.Bug "Real_trunc"
       | P.Char_ord => Op1 (I.ZeroExt, I.BYTE, I.SINT)
@@ -630,59 +529,51 @@ struct
       | P.Array_length => Special primArrayLength
 
       (* these are not used currently *)
-      | P.ObjectEqual => raise Control.Bug "ObjectEqual"
-      | P.PointerEqual => raise Control.Bug "PointerEqual"
       | P.Byte_equal => raise Control.Bug "Byte_equal"
       | P.Char_equal => raise Control.Bug "Char_equal"
       | P.Int_equal => raise Control.Bug "Int_equal"
       | P.Word_equal => raise Control.Bug "Word_equal"
+      | P.String_equal => raise Control.Bug "String_equal"
 
       (* these are implemented as runtime functions currently *)
-      | P.String_array => Ext{name="prim_String_allocateMutable", alloc=true}
-      | P.String_vector => Ext{name="prim_String_allocateImmutable", alloc=true}
+      | P.String_allocArray => Ext{name="prim_String_allocateMutableNoInit",
+                                   alloc=true}
+      | P.String_allocVector => Ext{name="prim_String_allocateImmutableNoInit",
+                                    alloc=true}
       | P.String_copy_unsafe => Ext{name="prim_String_copy", alloc=false}
-      | P.String_equal => Special (useCmp StrCmp I.MonoEqual)
-      | P.String_gt => Special (useCmp StrCmp I.Gt)
-      | P.String_gteq => Special (useCmp StrCmp I.Gteq)
-      | P.String_lt => Special (useCmp StrCmp I.Lt)
-      | P.String_lteq => Special (useCmp StrCmp I.Lteq)
+      | P.String_compare => Special stringCmp
       | P.String_size => Ext{name="prim_String_size", alloc=false}
-      | P.String_sub_unsafe => Ext{name="prim_String_sub", alloc=false}
-      | P.String_update_unsafe => Ext{name="prim_String_update", alloc=false}
-      | P.IntInf_abs => Ext{name="prim_IntInf_abs", alloc=true}
-      | P.IntInf_add => Ext{name="prim_IntInf_add", alloc=true}
-      | P.IntInf_div => Ext{name="prim_IntInf_div", alloc=true}
-      | P.IntInf_equal => Special (useCmp IntInfCmp I.MonoEqual)
-      | P.IntInf_gt => Special (useCmp IntInfCmp I.Gt)
-      | P.IntInf_gteq => Special (useCmp IntInfCmp I.Gteq)
-      | P.IntInf_lt => Special (useCmp IntInfCmp I.Lt)
-      | P.IntInf_lteq => Special (useCmp IntInfCmp I.Lteq)
-      | P.IntInf_mod => Ext{name="prim_IntInf_mod", alloc=true}
-      | P.IntInf_mul => Ext{name="prim_IntInf_mul", alloc=true}
-      | P.IntInf_neg => Ext{name="prim_IntInf_neg", alloc=true}
-      | P.IntInf_sub => Ext{name="prim_IntInf_sub", alloc=true}
+      | P.String_sub => Ext{name="prim_String_sub", alloc=false} (*unsafe*)
+      | P.String_update => Ext{name="prim_String_update", alloc=false} (*unsafe*)
       | P.Ptr_advance => Special advancePointer
       | P.Ptr_deref_int => Ext{name="prim_UnmanagedMemory_subInt", alloc=false}
       | P.Ptr_deref_real => Ext{name="prim_UnmanagedMemory_subReal",alloc=false}
-      | P.Ptr_deref_float => raise Control.Bug "Ptr_deref_float"
+      | P.Ptr_deref_real32 => raise Control.Bug "Ptr_deref_float"
       | P.Ptr_deref_word => Ext{name="prim_UnmanagedMemory_subWord",alloc=false}
       | P.Ptr_deref_char => Ext{name="prim_UnmanagedMemory_subByte", alloc=false}
-      | P.Ptr_deref_byte => Ext{name="prim_UnmanagedMemory_subByte", alloc=false}
+      | P.Ptr_deref_word8 => Ext{name="prim_UnmanagedMemory_subByte", alloc=false}
       | P.Ptr_deref_ptr => Ext{name="prim_UnmanagedMemory_subPtr", alloc=false}
       | P.Ptr_store_int => Ext{name="prim_UnmanagedMemory_updateInt", alloc=false}
       | P.Ptr_store_real => Ext{name="prim_UnmanagedMemory_updateReal",alloc=false}
-      | P.Ptr_store_float => raise Control.Bug "Ptr_store_float"
+      | P.Ptr_store_real32 => raise Control.Bug "Ptr_store_real32"
       | P.Ptr_store_word => Ext{name="prim_UnmanagedMemory_updateWord",alloc=false}
       | P.Ptr_store_char => Ext{name="prim_UnmanagedMemory_updateByte", alloc=false}
-      | P.Ptr_store_byte => Ext{name="prim_UnmanagedMemory_updateByte", alloc=false}
+      | P.Ptr_store_word8 => Ext{name="prim_UnmanagedMemory_updateByte", alloc=false}
       | P.Ptr_store_ptr => Ext{name="prim_UnmanagedMemory_updatePtr", alloc=false}
-
-      (* old primitive; never appear for native backend *)
-      | P.RuntimePrim _ => raise Control.Bug "RuntimePrim"
 
   fun needDivZeroCheck prim =
       case prim of
-        P.PolyEqual => NONE
+        P.Equal => NONE
+      | P.Cast => NONE
+      | P.IdentityEqual => NONE
+      | P.Array_allocArray => NONE
+      | P.Array_copy_unsafe => NONE
+      | P.Array_allocVector => NONE
+      | P.Array_sub => NONE
+      | P.Array_update => NONE
+      | P.Ref_alloc => NONE
+      | P.Ref_deref => NONE
+      | P.Ref_assign => NONE
       | P.Int_add P.NoOverflowCheck => NONE
       | P.Int_add P.OverflowCheck => NONE
       | P.Real_add => NONE
@@ -711,6 +602,8 @@ struct
       | P.Int_mod P.OverflowCheck => SOME I.SINT
       | P.Word_mod => SOME I.UINT
       | P.Byte_mod => SOME I.BYTE
+      | P.Real_rem => NONE
+      | P.Float_rem => NONE
       | P.Int_quot P.NoOverflowCheck => SOME I.SINT
       | P.Int_quot P.OverflowCheck => SOME I.SINT
       | P.Int_rem P.NoOverflowCheck => SOME I.SINT
@@ -747,13 +640,17 @@ struct
       | P.Word_gteq => NONE
       | P.Byte_gteq => NONE
       | P.Char_gteq => NONE
+      | P.Byte_toInt => NONE
       | P.Byte_toIntX => NONE
+      | P.Byte_toWord => NONE
       | P.Byte_fromInt => NONE
+      | P.Byte_fromWord => NONE
       | P.Word_toIntX => NONE
       | P.Word_fromInt => NONE
       | P.Word_andb => NONE
       | P.Word_orb => NONE
       | P.Word_xorb => NONE
+      | P.Word_neg => NONE
       | P.Word_notb => NONE
       | P.Word_lshift => NONE
       | P.Word_rshift => NONE
@@ -761,6 +658,8 @@ struct
       | P.Real_fromInt => NONE
       | P.Real_equal => NONE
       | P.Float_equal => NONE
+      | P.Real_unorderedOrEqual => NONE
+      | P.Float_unorderedOrEqual => NONE
       | P.Float_fromInt => NONE
       | P.Float_fromReal => NONE
       | P.Float_toReal => NONE
@@ -771,51 +670,33 @@ struct
       | P.Char_ord => NONE
       | P.Char_chr_unsafe => NONE
       | P.Array_length => NONE
-      | P.ObjectEqual => NONE
-      | P.PointerEqual => NONE
       | P.Byte_equal => NONE
       | P.Char_equal => NONE
       | P.Int_equal => NONE
       | P.Word_equal => NONE
-      | P.String_array => NONE
-      | P.String_vector => NONE
+      | P.String_allocArray => NONE
+      | P.String_allocVector => NONE
       | P.String_copy_unsafe => NONE
       | P.String_equal => NONE
-      | P.String_gt => NONE
-      | P.String_gteq => NONE
-      | P.String_lt => NONE
-      | P.String_lteq => NONE
+      | P.String_compare => NONE
       | P.String_size => NONE
-      | P.String_sub_unsafe => NONE
-      | P.String_update_unsafe => NONE
-      | P.IntInf_abs => NONE
-      | P.IntInf_add => NONE
-      | P.IntInf_div => NONE
-      | P.IntInf_equal => NONE
-      | P.IntInf_gt => NONE
-      | P.IntInf_gteq => NONE
-      | P.IntInf_lt => NONE
-      | P.IntInf_lteq => NONE
-      | P.IntInf_mod => NONE
-      | P.IntInf_mul => NONE
-      | P.IntInf_neg => NONE
-      | P.IntInf_sub => NONE
+      | P.String_sub => NONE
+      | P.String_update => NONE
       | P.Ptr_advance => NONE
       | P.Ptr_deref_int => NONE
       | P.Ptr_deref_real => NONE
-      | P.Ptr_deref_float => NONE
+      | P.Ptr_deref_real32 => NONE
       | P.Ptr_deref_word => NONE
       | P.Ptr_deref_char => NONE
-      | P.Ptr_deref_byte => NONE
+      | P.Ptr_deref_word8 => NONE
       | P.Ptr_deref_ptr => NONE
       | P.Ptr_store_int => NONE
       | P.Ptr_store_real => NONE
-      | P.Ptr_store_float => NONE
+      | P.Ptr_store_real32 => NONE
       | P.Ptr_store_word => NONE
       | P.Ptr_store_char => NONE
-      | P.Ptr_store_byte => NONE
+      | P.Ptr_store_word8 => NONE
       | P.Ptr_store_ptr => NONE
-      | P.RuntimePrim _ => NONE
 
   fun transform {prim,
                  dstVarList, dstTyList, argList, argTyList,
@@ -826,10 +707,9 @@ struct
             case (x, dstVarList, argList) of
               (Ext {name, alloc}, _, _) =>
               let
-                val isPure =
-                    (case BuiltinPrimitiveUtils.raisesException prim of
-                      nil => true | _ => false)
-                    andalso BuiltinPrimitiveUtils.hasEffect prim
+                val {memory, update, throw} =
+                    BuiltinPrimitive.haveSideEffect prim
+                val isPure = not memory andalso not update andalso not throw
               in
                 CallExt {dstVarList = dstVarList,
                          entry = name,
@@ -839,11 +719,10 @@ struct
                          calleeTy = (argTyList, dstTyList),
                          loc = loc}
               end
-            | (FloatOp x, dsts, args) =>
+            | (FloatOp (oldname, x), dsts, args) =>
               primInsn
                 (if !Control.enableUnboxedFloat then x
-                 else Ext {name = BuiltinPrimitiveUtils.oldPrimitiveName prim,
-                           alloc = true})
+                 else Ext {name = oldname, alloc = true})
             | (Special f, [dst], _) =>
               f {dst = dst,
                  args = argList,

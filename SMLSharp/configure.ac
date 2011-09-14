@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.61)
 AC_INIT(smlsharp)
-AC_CONFIG_SRCDIR([src/compiler/toplevel/main/Top.sml])
+AC_CONFIG_SRCDIR([src/compiler/toplevel2/main/Top.sml])
 AC_CONFIG_HEADER([config.h])
 
 AC_CANONICAL_TARGET
@@ -734,7 +734,7 @@ if test "x$NATIVE_TARGET" = "x"; then
   AC_MSG_RESULT([no])
 else
   NATIVE_RUNTIME=nativeruntime
-  NATIVE_PRELUDE=ntprelude.smc
+  NATIVE_PRELUDE=ntprelude.smk
   AC_MSG_RESULT([$NATIVE_TARGET])
 fi
 AC_SUBST(NATIVE_RUNTIME)
@@ -752,12 +752,18 @@ else
   AC_MSG_CHECKING([for heap implementation of native backend])
   AC_MSG_RESULT([$NATIVE_HEAPIMPL])
 fi
-if test -f "$srcdir/src/nativeruntime/heap_$NATIVE_HEAPIMPL.h"; then
+if test -f "$srcdir/src/nativeruntime/heap_$NATIVE_HEAPIMPL.c"; then
   :
 else
-  AC_MSG_ERROR([heap implementation \`$NATIVE_HEAPIMPL\' is not available.])
+  AC_MSG_ERROR([heap implementation \`$NATIVE_HEAPIMPL' is not available.])
 fi
 AC_SUBST(NATIVE_HEAPIMPL)
+
+AC_ARG_ENABLE(thread,
+AS_HELP_STRING([--enable-thread],
+               [enable experimental native thread support [[default=no]]]),
+[ CPPFLAGS="$CPPFLAGS -DMULTITHREAD" ],
+[])
 
 # -------- Setup Stub Libraries --------
 
@@ -772,8 +778,6 @@ AC_SUBST(STUBLIBS)
 # -------- Finale --------
 
 AC_CONFIG_FILES([commonrule
-                 mksmlheap
-                 mksmlrun
                  mksmlpath
                  Makefile
                  stublibs/Makefile
@@ -787,8 +791,6 @@ AC_CONFIG_FILES([commonrule
                  src/instructions/generator/Makefile
                  src/instructions/runtime/main/Makefile
                  src/instructions/compiler/main/Makefile
-                 src/vmgen/Makefile
-                 src/yaruntime/Makefile
                  src/nativeruntime/Makefile
                  src/compiler/Makefile
                  src/lib/Makefile
@@ -798,6 +800,7 @@ AC_CONFIG_FILES([commonrule
                  src/lib/LMLML/Makefile
                  src/lib/Script/Makefile
                  src/lib/SMLSharp/Makefile
+		 src/lib2/Makefile
                  src/runtime/Makefile
                  src/runtime/runtime-core/main/Makefile
                  src/runtime/runtime-impl/main/Makefile

@@ -1,9 +1,0 @@
-Group
-	structure UniqueIDAllocation
-	structure UniqueIdAllocationContext
-	structure UniqueIdAllocationPickler
-	structure FunctorApplyUtils
-	structure ExternalIdAllocator
-	structure UniqueIdAllocationUtils
-is
-	main/module.cm

@@ -63,8 +63,13 @@ InteractiveSession::receiveUInt32Value()
 {
     // transmit 32bit word in network byte order (= big endian)
     UInt32Value inBigEndian;
-    messageInputChannel_->receive(sizeof(UInt32Value),
-                                  (ByteValue*)&inBigEndian);
+    UInt32Value n;
+    n = messageInputChannel_->receive(sizeof(UInt32Value),
+				      (ByteValue*)&inBigEndian);
+    if (n < sizeof(UInt32Value)) {
+        DBGWRAP(LOG.error("receiveUInt32Value: invalid received length"));
+        throw ProtocolException();
+    }
 #if defined(BYTE_ORDER_LITTLE_ENDIAN)
     reverseQuadByte(&inBigEndian);
 #endif
@@ -76,8 +81,13 @@ InteractiveSession::receiveSInt32Value()
 {
     // transmit 32bit word in network byte order (= big endian)
     SInt32Value inBigEndian;
-    messageInputChannel_->receive(sizeof(SInt32Value),
-                                  (ByteValue*)&inBigEndian);
+    UInt32Value n;
+    n = messageInputChannel_->receive(sizeof(SInt32Value),
+                                      (ByteValue*)&inBigEndian);
+    if (n < sizeof(UInt32Value)) {
+        DBGWRAP(LOG.error("receiveSInt32Value: invalid received length"));
+        throw ProtocolException();
+    }
 #if defined(BYTE_ORDER_LITTLE_ENDIAN)
     reverseQuadByte((UInt32Value*)&inBigEndian);
 #endif
@@ -119,13 +129,22 @@ InteractiveSession::Result*
 InteractiveSession::receiveResult()
 {
     ByteValue majorCode;
-    messageInputChannel_->receive(1, &majorCode);
+    UInt32Value n;
+    n = messageInputChannel_->receive(1, &majorCode);
+    if (n < 1) {
+        DBGWRAP(LOG.error("receiveResult:major: invalid received length"));
+        throw ProtocolException();
+    }
     if(MAJOR_CODE_SUCCESS == majorCode){
         return new Result(majorCode);
     }
     else{
         ByteValue minorCode;
-        messageInputChannel_->receive(1, &minorCode);
+        n = messageInputChannel_->receive(1, &minorCode);
+        if (n < 1) {
+            DBGWRAP(LOG.error("receiveResult:minor: invalid received length"));
+            throw ProtocolException();
+        }
         UInt32Value arrayLength;
         ByteValue *array;
         receiveByteArray(&arrayLength, &array);
@@ -192,7 +211,9 @@ InteractiveSession::start()
     while(BOOLVALUE_FALSE == messageInputChannel_->isEOF())
     {
         ByteValue messageType;
-        messageInputChannel_->receive(1, &messageType);
+	UInt32Value n;
+        n = messageInputChannel_->receive(1, &messageType);
+	if (n == 0) break;
         switch(messageType){
           case MESSAGE_TYPE_EXECUTION_REQUEST:
             {
@@ -242,8 +263,13 @@ InteractiveSession::start()
                 break;
             }
           case MESSAGE_TYPE_EXIT_REQUEST:
-            messageInputChannel_->receive
-            (sizeof(SInt32Value), (ByteValue*)&exitCode);
+            n = messageInputChannel_->receive
+                (sizeof(SInt32Value), (ByteValue*)&exitCode);
+            if (n < sizeof(SInt32Value)) {
+                DBGWRAP(LOG.error("MESSAGE_TYPE_EXIT_REQUEST: "
+                                  "invalid received length"));
+                throw ProtocolException();
+            }
             goto LOOP_EXIT;
           default:
             DBGWRAP(LOG.error("protocol error:invalid message type."));
@@ -261,7 +287,9 @@ readFromRemoteTerminal(UInt32Value length, ByteValue* buffer)
     sendInputRequest(length);
 
     ByteValue messageType;
-    messageInputChannel_->receive(1, &messageType);
+    UInt32Value n;
+    n = messageInputChannel_->receive(1, &messageType);
+    if (n == 0) return 0;
     switch(messageType){
       case MESSAGE_TYPE_INPUT_RESULT:
         {
@@ -299,7 +327,9 @@ writeToRemoteTerminal(FileDescriptor descriptor,
 {
     sendOutputRequest(descriptor, length, buffer);
     ByteValue messageType;
-    messageInputChannel_->receive(1, &messageType);
+    UInt32Value n;
+    n = messageInputChannel_->receive(1, &messageType);
+    if (n == 0) return 0;
     switch(messageType){
       case MESSAGE_TYPE_OUTPUT_RESULT:
         {

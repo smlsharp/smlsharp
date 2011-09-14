@@ -97,7 +97,8 @@ struct sml_obstack {
 	char *free, *base;
 };
 
-#define MINCHUNKSIZE  256
+/* assume that libc consumes 8 bytes for memory management. */
+#define MINCHUNKSIZE  248
 
 static void
 chunk_alloc(sml_obstack_t **obstack, size_t objsize)
@@ -253,7 +254,15 @@ sml_obstack_enum_chunk(sml_obstack_t *obstack,
 		       void *data)
 {
 	while (obstack) {
-		enumfunc(obstack->start, obstack->end, data);
+		enumfunc(obstack->start, obstack->free, data);
 		obstack = obstack->next;
 	}
+}
+
+int
+sml_obstack_is_empty(sml_obstack_t *obstack)
+{
+	return (obstack->start == obstack->base
+		&& obstack->base == obstack->free
+		&& obstack->next == NULL);
 }

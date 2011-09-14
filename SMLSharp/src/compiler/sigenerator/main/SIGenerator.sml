@@ -14,6 +14,7 @@ structure SIGenerator : SIGENERATOR = struct
   structure CTX = SIGContext
   structure SIO = SIOptimizer
   structure GIE = GlobalIndexEnv
+  structure GIC = GlobalArrayIndexCounter
 
   (***************************************************************************)
 
@@ -30,17 +31,18 @@ structure SIGenerator : SIGENERATOR = struct
        end
 
 
-  val globalIndexEnvRef = ref GIE.initialGlobalIndexEnv
+  val globalIndexAllocatorRef = ref NONE : GIE.globalIndexAllocator option ref
 
   fun lookupOrAddGlobalIndex (abstractIndex, ty) =
-      case GIE.findIndex(!globalIndexEnvRef, abstractIndex) 
+      case GIE.findIndex(valOf (!globalIndexAllocatorRef), abstractIndex) 
        of SOME implementationIndex => implementationIndex
         | NONE => 
           let
-            val (newGlobalIndexEnv, newIndex) = 
-                GIE.allocateIndex (!globalIndexEnvRef, abstractIndex, ty)
+            val (newGlobalIndexAllocator, newIndex) = 
+                GIE.allocateIndex (valOf (!globalIndexAllocatorRef),
+                                   abstractIndex, ty)
           in
-            globalIndexEnvRef := newGlobalIndexEnv; newIndex
+            globalIndexAllocatorRef := SOME (newGlobalIndexAllocator); newIndex
           end
 
   (***************************************************************************)
@@ -107,7 +109,10 @@ structure SIGenerator : SIGENERATOR = struct
       | CT.FLOAT value => SI.LoadFloat{value = value, destination = destination}
       | CT.CHAR value => SI.LoadChar{value = BT.IntToUInt32(Char.ord value), destination = destination}
       | CT.UNIT => SI.LoadInt{value = 0, destination = destination}
-      | CT.NULL => SI.LoadInt{value = 0, destination = destination}
+      | CT.NULLPOINTER =>
+        SI.LoadInt{value = 0, destination = destination}
+      | CT.NULLBOXED =>
+        SI.LoadEmptyBlock{destination = destination}
 
   fun generateLocInstruction context instructions =
       if !Control.generateExnHistory orelse !Control.generateDebugInfo
@@ -371,19 +376,33 @@ structure SIGenerator : SIGENERATOR = struct
         in
           (context, code1 @ code2 @ code3 @ (generateLocInstruction context [instruction]))
         end
-      | IL.CallPrim {primName, argExpList, argTyList, argSizeExpList} =>
+      | IL.CallPrim {primitive, argExpList, argTyList, argSizeExpList} =>
         let
           val (context,code,argEntries) = transformArgList context argExpList
           val instruction =
               SI.CallPrim
                   {
-                   primitive = Primitives.findPrimitive primName,
+                   primitive = SI.PRIM primitive,
                    argEntries = argEntries,
                    destination = List.hd destinations
                   }
           val instruction = SIO.optimizeInstruction context instruction
         in
           (context, code @ (generateLocInstruction context [instruction]))
+        end
+      | IL.ForeignApply {funExp=IL.PrimSymbol name, argExpList, argTyList, argSizeExpList, attributes} =>
+        let
+          val (context,code1,argEntries) = transformArgList context argExpList
+          val instruction =
+              SI.CallPrim
+                  {
+                   primitive = SI.NAME name,
+                   argEntries = argEntries,
+                   destination = List.hd destinations
+                  }
+          val instruction = SIO.optimizeInstruction context instruction
+        in
+          (context, code1 @ (generateLocInstruction context [instruction]))
         end
       | IL.ForeignApply {funExp, argExpList, argTyList, argSizeExpList, attributes} =>
         let
@@ -670,7 +689,7 @@ structure SIGenerator : SIGENERATOR = struct
           val instruction =
               case hd branches 
                of {constant = CT.INT _, ...} =>
-                  SI.SwitchInt
+                  [SI.SwitchInt
                       {
                        targetEntry = targetEntry,
                        cases =
@@ -684,9 +703,9 @@ structure SIGenerator : SIGENERATOR = struct
                            )
                            cases,
                        default = defaultLabel
-                      }
+                      }]
                 | {constant = CT.LARGEINT _, ...} =>
-                  SI.SwitchLargeInt
+                  [SI.SwitchLargeInt
                       {
                        targetEntry = targetEntry,
                        cases =
@@ -705,9 +724,9 @@ structure SIGenerator : SIGENERATOR = struct
                              )
                            cases,
                        default = defaultLabel
-                      }
+                      }]
                 | {constant = CT.WORD _, ...} =>
-                  SI.SwitchWord
+                  [SI.SwitchWord
                       {
                        targetEntry = targetEntry,
                        cases =
@@ -721,9 +740,9 @@ structure SIGenerator : SIGENERATOR = struct
                             )
                            cases,
                        default = defaultLabel
-                      }
+                      }]
                 | {constant = CT.BYTE _, ...} =>
-                  SI.SwitchWord
+                  [SI.SwitchWord
                       {
                        targetEntry = targetEntry,
                        cases =
@@ -737,9 +756,9 @@ structure SIGenerator : SIGENERATOR = struct
                             )
                            cases,
                        default = defaultLabel
-                      }
+                      }]
                 | {constant = CT.CHAR _, ...} =>
-                  SI.SwitchChar
+                  [SI.SwitchChar
                       {
                        targetEntry = targetEntry,
                        cases =
@@ -756,9 +775,9 @@ structure SIGenerator : SIGENERATOR = struct
                                )
                            cases,
                        default = defaultLabel
-                      }
+                      }]
                 | {constant = CT.STRING _, ...} =>
-                  SI.SwitchString
+                  [SI.SwitchString
                       {
                        targetEntry = targetEntry,
                        cases =
@@ -773,7 +792,32 @@ structure SIGenerator : SIGENERATOR = struct
                              )
                            cases,
                        default = defaultLabel
-                      }
+                      }]
+                | {constant = CT.NULLBOXED, ...} =>
+                  (
+                    case cases of
+                      [{const = CT.NULLBOXED, destination}] =>
+                      let
+                        val tmp1 = newVar IL.LOCAL AN.BOXED
+                        val entry1 = CTX.addLocalVariable context tmp1
+                        val tmp2 = newVar IL.LOCAL AN.ATOM
+                        val entry2 = CTX.addLocalVariable context tmp2
+                      in
+                        [
+                         SI.LoadEmptyBlock {destination=entry1},
+                         SI.CallPrim
+                           {primitive = SI.PRIM BuiltinPrimitive.PolyEqual,
+                            argEntries = [targetEntry, entry1],
+                            destination = entry2},
+                         SI.SwitchInt
+                           {targetEntry = entry2,
+                            cases = [{const = 0, destination = defaultLabel}],
+                            default = destination}
+                        ]
+                      end
+                    | _ => raise Control.Bug
+                                   "SWITCH: should all be NULL const : (sigenerator/main/SIGenerator.sml)"
+                  )
                 | _ =>
                   raise
                     Control.Bug
@@ -797,7 +841,7 @@ structure SIGenerator : SIGENERATOR = struct
           (
            context, 
            switchCode
-           @ (instruction :: (List.concat caseCodes))
+           @ instruction @ (List.concat caseCodes)
            @ [SI.Label defaultLabel]
            @ defaultCode
            @ tailCode
@@ -1032,10 +1076,10 @@ structure SIGenerator : SIGENERATOR = struct
               fun insertRecord tyvarid records=
                   let
                     val entriesOfTyVar =
-                        case IEnv.find (records, tyvarid) of
+                        case BoundTypeVarID.Map.find (records, tyvarid) of
                           NONE => [entry]
                         | SOME entries => entry :: entries
-                  in IEnv.insert (records, tyvarid, entriesOfTyVar) end
+                  in BoundTypeVarID.Map.insert (records, tyvarid, entriesOfTyVar) end
             in
               case #ty varInfo of
                 AN.BOXED => (atoms, entry :: pointers, doubles, records, unboxedRecords)
@@ -1047,7 +1091,7 @@ structure SIGenerator : SIGENERATOR = struct
             end
         val localVars = CTX.getLocalVariables initialContext
         val (atomVarIDs, pointerVarIDs, doubleVarIDs, recordVarIDsMap, unboxedRecordVarIDsMap) = 
-            foldl groupByType ([], [], [], IEnv.empty, IEnv.empty) localVars
+            foldl groupByType ([], [], [], BoundTypeVarID.Map.empty, BoundTypeVarID.Map.empty) localVars
 
         (* A frame bitmap is composed from tags information of free type variables and bound type variables
          * so that least bits coresspond to bound type variables and most bits correspond to free type variables.
@@ -1061,12 +1105,12 @@ structure SIGenerator : SIGENERATOR = struct
         val recordVarIDLists =
             map
             (fn tyvarid =>
-                case IEnv.find (recordVarIDsMap, tyvarid) of
+                case BoundTypeVarID.Map.find (recordVarIDsMap, tyvarid) of
                   SOME entries => entries
                 | NONE => [])
             tyvars
 
-        val unboxedRecordVarIDLists = IEnv.listItems unboxedRecordVarIDsMap
+        val unboxedRecordVarIDLists = BoundTypeVarID.Map.listItems unboxedRecordVarIDsMap
 
         val tagArgs = map varInfoToEntry (#tagArgs frameInfo)
         val bitmapFree =
@@ -1096,38 +1140,42 @@ structure SIGenerator : SIGENERATOR = struct
                 {clusterCodes, initFunctionLabel} : IL.moduleCode) =
       let
         val _ = SIO.initialize_ALWAYS_Entry (newLocalId())
-        val _ = GIE.startRecordingNewGlobalArrays ()
-        val _ = globalIndexEnvRef := globalIndexEnv
+        val allocator = GIE.initGlobalIndexAllocator globalIndexEnv
+        val _ = globalIndexAllocatorRef := SOME allocator
 
         val (frameInfo, functionCodes, name, args, instructions, functionLoc, clusterLoc, SIClusterCodes) = 
             case map transformCluster (rev clusterCodes) of
               {frameInfo, functionCodes as [{name, args, instructions, loc = functionLoc}], loc = clusterLoc}::SIClusterCodes 
                 => (frameInfo, functionCodes, name, args, instructions, functionLoc, clusterLoc,SIClusterCodes)
               | _ => raise Control.Bug "multiple function clusters not implemeted : (sigenerator/main/SIGenerator.sml)"
+
+        val {newGlobalIndexEnv, newGlobalArrayIndexes} =
+            GIE.finishGlobalIndexAllocator (valOf (!globalIndexAllocatorRef))
+
         val initGlobalArrayInstructions = 
             map 
                 (fn (arrayIndex, AN.ATOM) => 
                     SI.InitGlobalArrayUnboxed
                         {
                          globalArrayIndex = arrayIndex,
-                         arraySize = GIE.globalAtomArraySize 
+                         arraySize = GIC.globalAtomArraySize 
                         }
                   | (arrayIndex, AN.BOXED) =>
                     SI.InitGlobalArrayBoxed
                         {
                          globalArrayIndex = arrayIndex,
-                         arraySize = GIE.globalBoxedArraySize 
+                         arraySize = GIC.globalBoxedArraySize 
                         }
                   | (arrayIndex, AN.DOUBLE) =>
                     SI.InitGlobalArrayDouble
                         {
                          globalArrayIndex = arrayIndex,
-                         arraySize = GIE.globalDoubleArraySize 
+                         arraySize = GIC.globalDoubleArraySize 
                         }
                   | _ => raise Control.Bug "global object should have a concrete type"
                 )
-                (GIE.getNewGlobalArrayIndexes ())
-                
+                newGlobalArrayIndexes
+
         val SIInitialClusterCode =
             {
              frameInfo = frameInfo,
@@ -1141,7 +1189,7 @@ structure SIGenerator : SIGENERATOR = struct
              loc = clusterLoc
             }
       in
-          (!globalIndexEnvRef,  SIInitialClusterCode::SIClusterCodes)
+          (newGlobalIndexEnv, SIInitialClusterCode::SIClusterCodes)
       end
 
 end

@@ -10,6 +10,6 @@ Group is
 	../../annotatedtypes/sources.cm
 	../../multiplevaluecalc/sources.cm
 	../../clustercalc/sources.cm
-	
+
 	CLUSTERING.sig
 	Clustering.sml

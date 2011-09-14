@@ -7,377 +7,269 @@
 structure VALREC_Utils =
 struct
 local
-  open PatternCalcFlattened
+  open IDCalc
 in
-  structure T = Types
-  structure NM = NameMap
-  type globalContext = NameMap.topNameMap
-
-  type varSet = SSet.set
-  type funMap = varSet SEnv.map
-
-  type context = varSet * funMap
-  val emptyContext = (SSet.empty, SEnv.empty) : context
-
-  fun bindIdInEmptyContext id =
-      (SSet.singleton(id), SEnv.empty)
-
-  fun bindFunInEmptyContext (funid, varSet) =
-      (SSet.empty, SEnv.singleton(funid, varSet))
-
-  fun injectVarSetInEmptyContext varSet =
-      (varSet, SEnv.empty)
-
-  fun extendContextWithContext (oldContext:context, newContext:context) =
-      (SSet.union (#1 oldContext, #1 newContext),
-       SEnv.unionWith #1 (#2 newContext, #2 oldContext)
-       )
-
-  fun varNameMapToVarSet prefixName varEnv = 
-      SEnv.foldli (fn (varId,_, varSet) => 
-                      let
-                          val newName = case prefixName of
-                                            "" => varId
-                                          | _ => prefixName ^ "." ^ varId
-                      in
-                          SSet.add(varSet, newName)
-                      end)
-                  SSet.empty
-                  varEnv
-                 
-  fun strNameMapToVarSet prefixName strEnv =
-      SEnv.foldli
-          (fn (strName, NM.NAMEAUX{basicNameMap=(subTE, subVE, subSE),...}, varSet) =>
-              let
-                  val newPrefixName = 
-                      case prefixName of
-                          "" => strName
-                        | _ => prefixName ^ "." ^ strName
-                  val varSet1 = varNameMapToVarSet newPrefixName subVE
-              in
-                  SSet.union (varSet1, varSet)
-              end)
-          SSet.empty
-          strEnv
-
-  fun nameMapToVarSet (nameMap:NameMap.currentNameMap) = 
-      SSet.union
-          (varNameMapToVarSet "" (#varNameMap nameMap),
-           strNameMapToVarSet "" (#strNameMap nameMap))
-
-  fun basicNameMapToVarSet (basicNameMap : NameMap.basicNameMap) =
-      SSet.union
-          (varNameMapToVarSet "" (#2 basicNameMap),
-           strNameMapToVarSet "" (#3 basicNameMap))
-      
-  fun lookupFunctor (globalContext : NM.topNameMap, context:context, string) =
-      case SEnv.find(#2 context, string) of
-        SOME (varSet) => varSet
-      | NONE => case SEnv.find(#funNameMap globalContext, string) of
-                    SOME ({body=NM.NAMEAUX {basicNameMap, ...}, ...}) =>
-                    basicNameMapToVarSet basicNameMap
-                  | NONE => SSet.empty
-
-  fun adjustVarSet (varSet, prefixName) =
-      SSet.map (fn varName => prefixName^"."^varName) varSet
-      
-  fun addIdAsSuffix prefix strName =
-      if prefix = "" then
-        strName
-      else 
-        prefix ^ "." ^ strName
-        
-  fun getFreeIdsFromVarNameMap depthPath varNameMap =
-      SEnv.foldli (fn (varId, _ , varSet) =>
-                      SSet.add(varSet,addIdAsSuffix depthPath varId)
-                      )
-                  SSet.empty
-                  varNameMap
-
-  fun getFreeIdsFromStrNameMap depthPath strNameMap =
-      SEnv.foldli (fn (strName, NM.NAMEAUX {basicNameMap=(_ ,subVarEnv, subStrEnv),...}, sumSet) =>
-                      let
-                        val crtDepthPath = addIdAsSuffix depthPath strName
-                        val subSumSet1 = 
-                            getFreeIdsFromVarNameMap crtDepthPath subVarEnv
-                        val subSumSet2 = 
-                            getFreeIdsFromStrNameMap crtDepthPath subStrEnv
-                      in
-                        SSet.union (SSet.union (sumSet,subSumSet1), subSumSet2)
-                      end)
-                  SSet.empty
-                  strNameMap
-                  
-  fun getFreeIdsFromGlobalContextStrItem (varEnv, strEnv) =
-      let
-        val varSet1 = getFreeIdsFromVarNameMap "" varEnv
-        val varSet2 = getFreeIdsFromStrNameMap "" strEnv
-      in
-        SSet.union (varSet1,varSet2)
-      end
-
-(*  fun getVisibleIdsByLongid (globalContext, context, longid) =
-      case lookupStructureInContext (context, longid) of
-        SOME (varSet, strMap) => 
-        getFreeIdsFromContextStrItem (varSet, strMap)
-      | NONE => 
-        case lookupStructureInGlobalContext (globalContext, [Path.topStrName] @ longid) of
-          SOME (varSet, strMap) =>
-          getFreeIdsFromContextStrItem (varSet, strMap)
-        | NONE => 
-          (* unbound longid error case should be captured by typeinference *)
-          SSet.empty
-*)
-                      
-  fun getFreeIdsInExp globalContext context plexp =
-      case plexp of
-        PLFCONSTANT _ => SSet.empty
-      | PLFGLOBALSYMBOL _ => SSet.empty
-      | PLFVAR (id,loc) => SSet.singleton(NM.namePathToString(id))
-      | PLFTYPED (exp,ty,loc) => getFreeIdsInExp globalContext context exp
-      | PLFAPPM (funExp,argExpList,loc) =>
-        SSet.union(getFreeIdsInExp globalContext context funExp, 
-                   getFreeIdsInExpList globalContext context argExpList)
-      | PLFLET (localDeclList,mainExpList,loc) =>
-        SSet.union(getFreeIdsInDeclList globalContext context localDeclList,
-                   SSet.difference(getFreeIdsInExpList globalContext context mainExpList,
-                                   getBoundIdsInDeclList globalContext context localDeclList))
-      | PLFRECORD (elementList,loc) =>
+  fun getFreeIdsInExp icexp =
+      case icexp of
+	ICERROR _ => VarID.Set.empty
+      | ICCONSTANT (const, loc) => VarID.Set.empty
+      | ICGLOBALSYMBOL (str, globalSymbolKind, loc) => VarID.Set.empty
+      | ICVAR (varInfo, loc) => VarID.Set.singleton(#id varInfo)
+      | ICEXVAR _ => VarID.Set.empty
+      | ICBUILTINVAR _ => VarID.Set.empty
+      | ICCON _ => VarID.Set.empty
+      | ICEXN _ => VarID.Set.empty
+      | ICEXEXN _ => VarID.Set.empty
+      | ICEXN_CONSTRUCTOR _ => VarID.Set.empty
+      | ICOPRIM _ => VarID.Set.empty
+      | ICTYPED (exp,ty,loc) => getFreeIdsInExp exp
+      | ICSIGTYPED {path,icexp,ty,loc, revealKey} => getFreeIdsInExp icexp
+      | ICAPPM (funExp,argExpList,loc) =>
+        VarID.Set.union(getFreeIdsInExp funExp, 
+			getFreeIdsInExpList argExpList)
+      | ICAPPM_NOUNIFY (funExp,argExpList,loc) =>
+        VarID.Set.union(getFreeIdsInExp funExp, 
+			getFreeIdsInExpList argExpList)
+      | ICLET (localDeclList,mainExpList,loc) =>
+        VarID.Set.union(getFreeIdsInDeclList localDeclList,
+			VarID.Set.difference
+			    (getFreeIdsInExpList mainExpList,
+			     getBoundIdsInDeclList localDeclList))
+      | ICTYCAST (tycast, exp, loc) => getFreeIdsInExp exp
+      | ICRECORD (elementList,loc) =>
         foldl 
             (fn ((label,exp),S) =>
-                SSet.union(S,getFreeIdsInExp globalContext context exp))
-            SSet.empty
+                VarID.Set.union(S,getFreeIdsInExp exp))
+            VarID.Set.empty
             elementList
-      | PLFRECORD_UPDATE (exp,elementList,loc) =>
-        foldl 
-            (fn ((label,exp),S) =>
-                SSet.union(S,getFreeIdsInExp globalContext context exp))
-            (getFreeIdsInExp globalContext context exp)
-            elementList
-      | PLFTUPLE (elementList, loc) => getFreeIdsInExpList globalContext context elementList
-      | PLFLIST (elementList, loc) => getFreeIdsInExpList globalContext context elementList
-      | PLFRAISE (exp,loc) => getFreeIdsInExp globalContext context exp
-      | PLFHANDLE (handler,matchList, loc) =>
+      | ICRAISE (exp,loc) => getFreeIdsInExp exp
+      | ICHANDLE (handler,matchList, loc) =>
         foldl 
             (fn ((pat,exp),S) =>
-                SSet.union
+                VarID.Set.union
                     (S,
-                     SSet.difference
-                         (getFreeIdsInExp globalContext context exp,
+                     VarID.Set.difference
+                         (getFreeIdsInExp exp,
                           getFreeIdsInPat pat)))
-            (getFreeIdsInExp globalContext context handler)
+            (getFreeIdsInExp handler)
             matchList
-      | PLFFNM (matchList,loc) =>                      
+      | ICFNM (matchList,loc) =>                      
         foldl 
-            (fn ((patList,exp),S) =>
-                SSet.union
+            (fn ({args,body},S) =>
+                VarID.Set.union
                     (S,
-                     SSet.difference
-                         (getFreeIdsInExp globalContext context exp,
-                          getFreeIdsInPatList patList)))
-            SSet.empty
+                     VarID.Set.difference
+                         (getFreeIdsInExp body,
+                          getFreeIdsInPatList args)))
+            VarID.Set.empty
             matchList
-      | PLFCASEM (selectorList, matchList, kind, loc) =>
+      | ICFNM1 (varInfoTyListList,exp,loc)=>
+	VarID.Set.difference
+	(getFreeIdsInExp exp,
+	 foldl
+	     (fn ((varInfo,tyList),S) =>
+		 VarID.Set.add(S,#id varInfo))
+				VarID.Set.empty
+				varInfoTyListList)
+      | ICFNM1_POLY (varInfoTyList,exp,loc)=>
+	VarID.Set.difference
+	(getFreeIdsInExp exp,
+	 foldl
+	     (fn ((varInfo,tyList),S) =>
+		 VarID.Set.add(S,#id varInfo))
+				VarID.Set.empty
+				varInfoTyList)
+      | ICCASEM (selectorList, matchList, kind, loc) =>
         foldl 
-            (fn ((patList,exp),S) =>
-                SSet.union
+            (fn ({args,body},S) =>
+                VarID.Set.union
                     (S,
-                     SSet.difference
-                         (getFreeIdsInExp globalContext context exp,
-                          getFreeIdsInPatList patList)))
-            (getFreeIdsInExpList globalContext context selectorList)
+                     VarID.Set.difference
+                         (getFreeIdsInExp body,
+                          getFreeIdsInPatList args)))
+            (getFreeIdsInExpList selectorList)
             matchList
-      | PLFRECORD_SELECTOR _ => SSet.empty
-      | PLFSELECT (label,exp, loc) => getFreeIdsInExp globalContext context exp
-      | PLFSEQ (expList,loc) => getFreeIdsInExpList globalContext context expList
-      | PLFCAST (exp,loc) => getFreeIdsInExp globalContext context exp
-      | PLFFFIIMPORT (exp,ty,loc) => getFreeIdsInExp globalContext context exp
-      | PLFFFIEXPORT (exp,ty,loc) => getFreeIdsInExp globalContext context exp
-      | PLFFFIAPPLY (cconv,funExp,args,retTy,loc) =>
-        foldl (fn (PLFFFIARG (exp, ty, loc), z) =>
-                  SSet.union (z, getFreeIdsInExp globalContext context exp)
-                | (PLFFFIARGSIZEOF (ty, SOME exp, loc), z) =>
-                  SSet.union (z, getFreeIdsInExp globalContext context exp)
-                | (PLFFFIARGSIZEOF (ty, NONE, loc), z) => z)
-              (getFreeIdsInExp globalContext context funExp)
+      | ICRECORD_UPDATE (exp,elementList,loc) =>
+        foldl 
+            (fn ((label,exp),S) =>
+                VarID.Set.union(S,getFreeIdsInExp exp))
+            (getFreeIdsInExp exp)
+            elementList
+      | ICRECORD_SELECTOR _ => VarID.Set.empty
+      | ICSELECT (label,exp, loc) => getFreeIdsInExp exp
+      | ICSEQ (expList,loc) => getFreeIdsInExpList expList
+      | ICCAST (exp,loc) => getFreeIdsInExp exp
+      | ICFFIIMPORT (exp,ty,loc) => getFreeIdsInExp exp
+      | ICFFIEXPORT (exp,ty,loc) => getFreeIdsInExp exp
+      | ICFFIAPPLY (cconv,funExp,args,retTy,loc) =>
+        foldl (fn (ICFFIARG (exp, ty, loc), z) =>
+                  VarID.Set.union (z, getFreeIdsInExp exp)
+                | (ICFFIARGSIZEOF (ty, SOME exp, loc), z) =>
+                  VarID.Set.union (z, getFreeIdsInExp exp)
+                | (ICFFIARGSIZEOF (ty, NONE, loc), z) => z)
+              (getFreeIdsInExp funExp)
               args
-      | PLFSQLSERVER (server, schema, loc) =>
-        getFreeIdsInExpList globalContext context (map #2 server)
-      | PLFSQLDBI (pat, exp, loc) =>
-        getFreeIdsInExp globalContext context exp
+      | ICSQLSERVER (server, schema, loc) =>
+        getFreeIdsInExpList (map #2 server)
+      | ICSQLDBI (pat, exp, loc) =>
+        VarID.Set.difference(getFreeIdsInExp exp, getFreeIdsInPat pat)
 
-  and getFreeIdsInExpList globalContext context plexpList =
+  and getFreeIdsInExpList icexpList =
       foldl 
-          (fn (exp,S) => SSet.union(S,getFreeIdsInExp globalContext context exp))
-          SSet.empty
-          plexpList
+          (fn (exp,S) => VarID.Set.union(S,getFreeIdsInExp exp))
+          VarID.Set.empty
+          icexpList
 
-  and getFreeIdsInFundeclList globalContext context fidRuleListList =
-    let
-      val boundList =       
-        foldl
-          (fn ((fidPat,rules),S) => SSet.union(getFreeIdsInPat fidPat,S))
-          SSet.empty
+  and getFreeIdsInFundeclList fidRuleListList =
+      let
+	val boundList =       
+            foldl
+		(fn ({funVarInfo,rules},S) =>
+		    VarID.Set.add(S,#id funVarInfo))
+		VarID.Set.empty
+		fidRuleListList
+	val freeList = 
+            foldl
+		(fn ({funVarInfo,rules},S) =>
+		    VarID.Set.union(getFreeIdsInRule rules,S))
+		VarID.Set.empty
           fidRuleListList
-      val freeList = 
-        foldl
-          (fn ((fidPat,rules),S) => SSet.union(getFreeIdsInRule globalContext context rules,S))
-          SSet.empty
-          fidRuleListList
-    in
-      SSet.difference(freeList, boundList)
+      in
+	VarID.Set.difference(freeList, boundList)
     end
 
-  and getFreeIdsInRule globalContext context patListExpList =
-        foldl 
-            (fn ((patList,exp),S) =>
-                SSet.union
-                    (S,
-                     SSet.difference
-                         (getFreeIdsInExp globalContext context exp,
-                          getFreeIdsInPatList patList)))
-            SSet.empty
-            patListExpList
-
+  and getFreeIdsInRule patListExpList =
+      foldl 
+          (fn ({args,body},S) =>
+              VarID.Set.union
+                  (S,
+                   VarID.Set.difference
+                       (getFreeIdsInExp body,
+                        getFreeIdsInPatList args)))
+          VarID.Set.empty
+          patListExpList
 
   and getFreeIdsInPatList patList =
       foldl 
-          (fn (pat,S) => SSet.union(S,getFreeIdsInPat pat))
-          SSet.empty
+          (fn (pat,S) => VarID.Set.union(S,getFreeIdsInPat pat))
+          VarID.Set.empty
           patList
 
-  and getFreeIdsInPat plpat = 
-      case plpat of 
-        PLFPATWILD _ => SSet.empty
-      | PLFPATID (id,loc) => SSet.singleton(NM.namePathToString(id))
-      | PLFPATCONSTANT _ => SSet.empty
-      | PLFPATCONSTRUCT (constructor,arg, loc) => getFreeIdsInPat arg
-      | PLFPATRECORD (_,patList,_) =>
+  and getFreeIdsInPat icpat = 
+      case icpat of 
+        ICPATERROR _ => VarID.Set.empty
+      | ICPATWILD _ => VarID.Set.empty
+      | ICPATVAR (varInfo, loc) => VarID.Set.singleton(#id varInfo)
+      | ICPATCON _ => VarID.Set.empty
+      | ICPATEXN _ => VarID.Set.empty
+      | ICPATEXEXN _ => VarID.Set.empty
+      | ICPATCONSTANT _ => VarID.Set.empty
+      | ICPATCONSTRUCT {con, arg, loc} => getFreeIdsInPat arg
+      | ICPATRECORD {flex, fields, loc} =>
         foldl 
             (fn ((label,pat),S) =>
-                SSet.union(S,getFreeIdsInPat pat))
-            SSet.empty
-            patList
-      | PLFPATLAYERED (id,_,pat,_) => 
-        SSet.union(SSet.singleton(id),getFreeIdsInPat pat)
-      | PLFPATTYPED (pat,ty,loc) => getFreeIdsInPat pat
-      | PLFPATORPAT (pat1,pat2,loc) => SSet.union(getFreeIdsInPat pat1,getFreeIdsInPat pat2)
+                VarID.Set.union(S,getFreeIdsInPat pat))
+            VarID.Set.empty
+            fields
+      | ICPATLAYERED {patVar, tyOpt, pat, loc} => 
+        VarID.Set.add(getFreeIdsInPat pat,#id patVar)
+      | ICPATTYPED (pat, ty, loc) => getFreeIdsInPat pat
 
-  and getFreeIdsInExBind (PLFEXBINDDEF _) = SSet.empty
-    | getFreeIdsInExBind (PLFEXBINDREP(_,left,_,right,_)) =
-      SSet.singleton(NM.namePathToString(right))
+  and getFreeIdsInExBind {exncon, tyOpt, loc} = VarID.Set.empty
 
-  and getFreeIdsInDecl globalContext context pdecl =
-      case pdecl of 
-        PDFVAL (tvarList, bindList, loc) => getFreeIdsInBindList globalContext context  bindList
-      | PDFDECFUN  (tvarList, declList, loc) => getFreeIdsInFundeclList globalContext context declList
-      | PDFVALREC (tvarList, bindList, loc) =>
-        SSet.difference(getFreeIdsInBindList globalContext context bindList,
-                        getBoundIdsInBindList globalContext context bindList)
-      | PDFTYPE _ => SSet.empty
-      | PDFDATATYPE _ => SSet.empty
-      | PDFABSTYPE _ => SSet.empty
-      | PDFREPLICATEDAT _ => SSet.empty
-      | PDFEXD (exBindList, loc) =>
-        foldl 
-            (fn (exBind,S) => SSet.union(S,getFreeIdsInExBind exBind))
-            SSet.empty
-            exBindList
-      | PDFLOCALDEC (localDeclList, mainDeclList, loc) =>
-        SSet.union(getFreeIdsInDeclList  globalContext context localDeclList,
-                   SSet.difference(getFreeIdsInDeclList globalContext context mainDeclList,
-                                   getBoundIdsInDeclList globalContext context localDeclList))
-      | PDFINTRO ((_, varNamePathEnv), strNameList, loc) =>
-        NameMap.NPEnv.foldl
-            (fn (idstate, sset) => 
-                SSet.add(sset, 
-                         NameMap.namePathToString
-                             (NameMap.getNamePathFromIdstate(idstate))))
-            SSet.empty
-            varNamePathEnv
-      | PDFINFIXDEC _ => SSet.empty
-      | PDFINFIXRDEC _ => SSet.empty
-      | PDFNONFIXDEC _ => SSet.empty
-      | PDFEMPTY => SSet.empty
-      | _ => raise Control.Bug "invalid declaration"
+  and getFreeIdsInDecl icdecl =
+      case icdecl of 
+        ICVAL (tvarList, bindList, loc) => getFreeIdsInBindList bindList
+      | ICDECFUN  {guard, funbinds, loc} => getFreeIdsInFundeclList funbinds
+      | ICNONRECFUN  _ => raise Control.Bug "invalid declaration"
+      | ICVALREC {guard, recbinds, loc} =>
+        VarID.Set.difference(getFreeIdsInRecBinds recbinds,
+                             getBoundIdsInRecBinds recbinds)
+      | ICABSTYPE {tybinds,body,loc} => getFreeIdsInDeclList body
+      | ICEXND (_, loc) => VarID.Set.empty
+      | ICEXNTAGD ({exnInfo, varInfo}, loc) =>
+        VarID.Set.singleton (#id varInfo)
+      | ICEXPORTVAR _ => VarID.Set.empty
+      | ICEXPORTFUNCTOR _ => VarID.Set.empty
+      | ICEXPORTEXN _ => VarID.Set.empty
+      | ICEXTERNVAR _ => VarID.Set.empty
+      | ICEXTERNEXN _ => VarID.Set.empty
+      | ICOVERLOADDEF _ => VarID.Set.empty
 
-
-  and getFreeIdsInDeclList globalContext context pdeclList =
+  and getFreeIdsInDeclList icdeclList =
       #1 (foldl
               (fn (decl,(freeIds,boundIds)) =>
-                  (SSet.union(freeIds,
-                              SSet.difference(getFreeIdsInDecl globalContext context decl,boundIds)),
-                   SSet.union(boundIds,getBoundIdsInDecl globalContext context decl)))
-              (SSet.empty,SSet.empty)
-              pdeclList)
+                  (VarID.Set.union(freeIds,
+				   VarID.Set.difference
+				       (getFreeIdsInDecl decl,boundIds)),
+                   VarID.Set.union(boundIds,getBoundIdsInDecl decl)))
+              (VarID.Set.empty,VarID.Set.empty)
+              icdeclList)
 
+  and getBoundIdsInExBind {exncon, tyOpt, loc} = VarID.Set.empty
 
-  and getBoundIdsInExBind (PLFEXBINDDEF(_,id,_,_)) =
-      SSet.singleton(NM.namePathToString(id))
-    | getBoundIdsInExBind (PLFEXBINDREP (_,left,_,right,_)) =
-      SSet.singleton(NM.namePathToString(left))
+  and getBoundIdsInDecl icdecl = 
+      case icdecl of
+        ICVAL (tvarList, bindList, loc) => getBoundIdsInBindList bindList 
+      | ICDECFUN {guard, funbinds, loc} => getBoundIdsInFundeclList funbinds
+      | ICNONRECFUN _ => raise Control.Bug "invalid declaration"
+      | ICVALREC {guard, recbinds, loc} => getBoundIdsInRecBinds recbinds
+      | ICABSTYPE {tybinds, body, loc} => getBoundIdsInDeclList body
+      | ICEXND _ => VarID.Set.empty
+      | ICEXNTAGD _ => VarID.Set.empty
+      | ICEXPORTVAR _ => VarID.Set.empty
+      | ICEXPORTFUNCTOR _ => VarID.Set.empty
+      | ICEXPORTEXN _ => VarID.Set.empty
+      | ICEXTERNVAR _ => VarID.Set.empty
+      | ICEXTERNEXN _ => VarID.Set.empty
+      | ICOVERLOADDEF _ => VarID.Set.empty
 
-  and getBoundIdsInDecl globalContext context pdecl = 
-      case pdecl of
-        PDFVAL (tvarList, bindList , loc ) => getBoundIdsInBindList globalContext context bindList
-      | PDFDECFUN  (tvarList, declList, loc) => getBoundIdsInFundeclList globalContext context declList
-      | PDFVALREC (tvarList, bindList, loc) => getBoundIdsInBindList globalContext context bindList
-      | PDFTYPE _ => SSet.empty
-      | PDFDATATYPE (prefix, datBindList, loc) =>    
-        foldl 
-            (fn ((_,_,consList),S) =>
-                foldl
-                    (fn ((_,id,_),S) => SSet.union(S,SSet.singleton(id)))
-                    S
-                    consList)
-            SSet.empty
-            datBindList
-      | PDFABSTYPE(prefix, datBindList, declList, loc) => 
-            getBoundIdsInDeclList globalContext context declList
-      | PDFREPLICATEDAT _ => SSet.empty
-      | PDFEXD (exBindList, loc) =>
-        foldl 
-            (fn (exBind,S) => SSet.union(S,getBoundIdsInExBind exBind))
-            SSet.empty
-            exBindList
-      | PDFLOCALDEC (localDeclList,mainDeclList,loc) => 
-        getBoundIdsInDeclList globalContext context mainDeclList
-      | PDFINTRO ((_, varNamePathEnv), strNameList, loc) =>
-        NameMap.NPEnv.foldli
-            (fn (namePath, _, sset) => SSet.add(sset, NameMap.namePathToString(namePath)))
-            SSet.empty
-            varNamePathEnv
-      | PDFINFIXDEC _ => SSet.empty
-      | PDFINFIXRDEC _ => SSet.empty
-      | PDFNONFIXDEC _ => SSet.empty
-      | PDFEMPTY => SSet.empty
-      | _ => raise Control.Bug "invalid declaration"
-
-  and getBoundIdsInDeclList globalContext context pdeclList =
+  and getBoundIdsInDeclList icdeclList =
       foldl 
-          (fn (decl,S) => SSet.union(S,getBoundIdsInDecl globalContext context decl))
-          SSet.empty
-          pdeclList
+          (fn (decl,S) => VarID.Set.union(S,getBoundIdsInDecl decl))
+          VarID.Set.empty
+          icdeclList
 
-  and getFreeIdsInBindList globalContext context bindList =
+  and getFreeIdsInBindList bindList =
       #1 (foldl
               (fn ((pat,exp),(freeIds,boundIds)) =>
-                  (SSet.union(freeIds,
-                              SSet.difference(getFreeIdsInExp globalContext context exp,boundIds)),
-                   SSet.union(boundIds,getFreeIdsInPat pat)))
-              (SSet.empty,SSet.empty)
+                  (VarID.Set.union(freeIds,
+				   VarID.Set.difference
+				       (getFreeIdsInExp exp,boundIds)),
+                   VarID.Set.union(boundIds,getFreeIdsInPat pat)))
+              (VarID.Set.empty,VarID.Set.empty)
               bindList)
-
-  and getBoundIdsInBindList globalContext context bindList =
+      
+  and getFreeIdsInRecBinds bindList =
+      #1 (foldl
+              (fn ({varInfo,body},(freeIds,boundIds)) =>
+                  (VarID.Set.union(freeIds,
+				   VarID.Set.difference
+				       (getFreeIdsInExp body,boundIds)),
+                   VarID.Set.add(boundIds,#id varInfo)))
+	      (VarID.Set.empty,VarID.Set.empty)
+	      bindList)
+      
+  and getBoundIdsInBindList bindList =
       foldl
-          (fn ((pat,exp),S) => SSet.union(getFreeIdsInPat pat,S))
-          SSet.empty
+          (fn ((pat,exp),S) => VarID.Set.union(getFreeIdsInPat pat,S))
+          VarID.Set.empty
           bindList
-        
-  and getBoundIdsInFundeclList globalContext context fidRuleListList =
-        foldl
-          (fn ((fidPat,rules),S) => SSet.union(getFreeIdsInPat fidPat,S))
-          SSet.empty
+	  
+  and getBoundIdsInRecBinds bindList =
+      foldl
+          (fn ({varInfo,body},S) => 
+	      VarID.Set.add(S,#id varInfo))
+          VarID.Set.empty
+          bindList
+	  
+  and getBoundIdsInFundeclList fidRuleListList =
+      foldl
+          (fn ({funVarInfo,rules},S) => 
+	      VarID.Set.add(S,#id funVarInfo))
+          VarID.Set.empty
           fidRuleListList
+	  
 end
 end
+

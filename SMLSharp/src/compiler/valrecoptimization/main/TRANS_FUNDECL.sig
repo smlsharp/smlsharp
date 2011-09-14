@@ -1,4 +1,4 @@
 signature TRANS_FUNDECL = sig
-  val transTopDeclList : 
-    PatternCalcFlattened.plftopdec list -> PatternCalcFlattened.plftopdec list
+  val transIcdeclList :
+	    IDCalc.icdecl list -> IDCalc.icdecl list
 end

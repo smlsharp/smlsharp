@@ -8,15 +8,14 @@ Group is
 	../../control/sources.cm
 	../../env/sources.cm
 	../../name/sources.cm
+	../../builtin/sources.cm
 	../../util/sources.cm
 	../../types/sources.cm
 	../../absyn/sources.cm
-	../../constantterm/sources.cm
-	../../patterncalc/sources.cm
+	../../idcalc/sources.cm
 
+(*
 	TYPEDCALC.sig
+*)
 	TypedCalc.ppg.sml
-	TYPEDCALC_FORMATTER.sig
-	TypedCalcFormatter.sml
-	TYPEDCALCUTILS.sig
 	TypedCalcUtils.sml

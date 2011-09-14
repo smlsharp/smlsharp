@@ -1,21 +1,19 @@
 Group
-	structure TypeFormatter
-	structure TypeParser
+	structure IDTypes
 	structure Types
-	structure VarIdEnv
-	structure VarEnv
-	structure TEnv
-	structure VarIdSet
-	structure VarSet
-	structure OTSet
 	structure TypesUtils
-	signature TYPE_TRANSDUCER
-	structure TypeTransducer
-	structure TypesPickler
-
-	structure VarIDContext
-	structure VarIDContextPickler	  
-
-	structure RuntimeTypes
+	structure BuiltinEnv
+	structure EvalIty
+	structure TvarMap
+	structure TvarSet
+	structure VarMap
+	structure VarSet
+	structure OPrimMap
+	structure Gensym
+	structure OTSet
+	structure OPrimInstMap
+	structure Gensym
+	structure VarInfoSet
+	structure VarInfoEnv
 is
 	main/module.cm

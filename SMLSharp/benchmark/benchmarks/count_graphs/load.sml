@@ -1,4 +1,3 @@
 use "./count-graphs.sml";
 
-Main.doit ();
-print "Done";
+use "./doit.sml";

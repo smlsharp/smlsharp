@@ -66,6 +66,15 @@ struct
    * @formatter(Absyn.callingConvenvtion) Absyn.format_callingConvenvtion
    *)
   type ffiAttributes = Absyn.ffiAttributes
+
+  (*%
+   * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+   *)
+  datatype primitive =
+      (*% @format(x) x *)
+      PRIM of BuiltinPrimitive.primitive
+    | (*% @format(x) "'" x "'" *)
+      NAME of string
         
   (*%
    * @formatter(UInt8) BasicTypeFormatters.format_UInt8
@@ -79,8 +88,6 @@ struct
    * @formatter(SInt32) BasicTypeFormatters.format_SInt32
    *
    * @formatter(Real64) BasicTypeFormatters.format_Real64
-   *
-   * @formatter(Primitives.primitive) Primitives.format_primitive
    *)
   datatype instruction =
            (*%
@@ -398,7 +405,7 @@ struct
             *)
            CallPrim of
            {
-             primitive : Primitives.primitive,
+             primitive : primitive,
              argEntries : entry list,
              destination : entry
            }

@@ -691,13 +691,20 @@ in
    *)
   fun isSafeExpression exp =
       case exp of
-        TP.TPCONSTANT _ => true
+        TP.TPFFIIMPORT {ptrExp, ffiTy, stubTy, loc} => isSafeExpression ptrExp
+      | TP.TPSIZEOF _ => true
+      | TP.TPERROR => raise Control.Bug "isSafeExpression: TPERROR"
+      | TP.TPCONSTANT _ => true
       | TP.TPGLOBALSYMBOL _ => true
       | TP.TPVAR _ => true
+      | TP.TPRECFUNVAR _ => true
+      | TP.TPPRIMAPPLY _ => false
+      | TP.TPOPRIMAPPLY _ => false
       | TP.TPDATACONSTRUCT {argExpOpt=NONE, ...} => true
       | TP.TPDATACONSTRUCT {argExpOpt=SOME exp, ...} => isSafeExpression exp
       | TP.TPEXNCONSTRUCT {argExpOpt=NONE, ...} => true
       | TP.TPEXNCONSTRUCT {argExpOpt=SOME exp, ...} => isSafeExpression exp
+      | TP.TPAPPM _ => false
       | TP.TPMONOLET {binds=binds, bodyExp=body, loc=loc} =>
         (List.all (fn (_, exp) => isSafeExpression exp) binds)
         andalso (isSafeExpression body)
@@ -709,15 +716,20 @@ in
       | TP.TPSELECT {exp=recordExp, ...} => isSafeExpression recordExp
       | TP.TPMODIFY {recordExp = exp1, elementExp = exp2, ...} =>
         isSafeExpression exp1 andalso isSafeExpression exp2
+      | TP.TPRAISE _ => false
       | TP.TPHANDLE {exp=bodyExp, handler=handlerExp, ...} =>
         (isSafeExpression bodyExp) andalso (isSafeExpression handlerExp)
+      | TP.TPCASEM {expList, expTyList, ruleList, ruleBodyTy, caseKind, loc} =>
+        List.all isSafeExpression expList
+        andalso List.all isSafeExpression (map #2 ruleList)
       | TP.TPFNM _ => true
       | TP.TPPOLYFNM _ => true
       | TP.TPPOLY {exp, ...} => isSafeExpression exp
       | TP.TPTAPP {exp, ...} => isSafeExpression exp
-      | TP.TPLIST {expList=exps, ...} => List.all isSafeExpression exps
       | TP.TPSEQ {expList=exps, ...} => List.all isSafeExpression exps
-      | _ => false
+      | TP.TPLIST {expList=exps, ...} => List.all isSafeExpression exps
+      | TP.TPCAST (exp,_,_) => isSafeExpression exp
+      | TP.TPSQLSERVER _ => true
 
   and isSafeDeclaration dec =
       case dec of

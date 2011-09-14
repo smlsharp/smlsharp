@@ -1,27 +1,23 @@
 Group
-	signature GLOBAL_ID
 	signature LOCAL_ID
 
-	signature PATH
-        structure Path
-
-	structure NameMap
-	structure NamePickler
-	structure NameMapPickler
-        structure BoundTypeVarID
-
-	structure PrimID
-	structure OPrimID
-	structure TyConID
-	structure BoundTypeVarID
-	structure ExnTagID
-	structure ExVarID
 	structure FreeTypeVarID
+	structure BoundTypeVarID
+	structure ClusterID
+	structure ConID
+	structure ExnID
+	structure ExExnID
+	structure FreeTypeVarID
+	structure InterfaceID
+	structure OPrimID
+	structure PrimID
+	structure TvarID
+	structure TypID
 	structure VarID
+	structure FunctionAnnotationID
+	structure AnnotationLabelID
+	structure RevealID
 	structure VarName
 
-	structure GlobalCounters
-
-	structure ClusterID
 is
 	main/module.cm

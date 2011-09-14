@@ -1,6 +1,0 @@
-Group 
-        structure BUCCalc
-	structure BUCUtils
-	structure BUCCalcFormatter
-is
-	main/module.cm
