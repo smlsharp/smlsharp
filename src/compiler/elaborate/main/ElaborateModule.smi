@@ -1,0 +1,21 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Fixity.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+_require "../../usererror/main/UserErrorUtils.smi"
+_require "ElaborateCore.smi"
+_require "ElaborateError.ppg.smi"
+
+structure ElaborateModule =
+  struct
+    val elabSigExp : Absyn.sigexp -> PatternCalc.plsigexp
+    val elabSpec : Absyn.spec -> PatternCalc.plspec
+    val elabTopDecs
+        : Fixity.fixity SEnv.map
+          -> Absyn.topdec list
+          -> PatternCalc.pltopdec list * Fixity.fixity SEnv.map
+  end

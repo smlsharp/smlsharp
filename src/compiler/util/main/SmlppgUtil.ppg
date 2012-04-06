@@ -1,0 +1,352 @@
+(**
+ * Utility functions for formatting using SMLFormat.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori 
+ * @version $Id: SmlppgUtil.ppg,v 1.1 2008/06/13 04:14:10 ohori Exp $
+ *)
+structure SmlppgUtil =
+struct
+  type format = SMLFormat.FormatExpression.expression list
+
+  (***************************************************************************)
+
+  structure FE = SMLFormat.FormatExpression
+
+  (***************************************************************************)
+
+  val spaceIndicator = FE.Indicator{space = true, newline = NONE}
+  val ns_1_Indicator =
+      FE.Indicator
+      {space = false, newline = SOME{priority = FE.Preferred 1}}
+  val s_1_Indicator =
+      FE.Indicator
+      {space = true, newline = SOME{priority = FE.Preferred 1}}
+  val s_d_Indicator =
+      FE.Indicator
+      {space = true, newline = SOME{priority = FE.Deferred}}
+
+  fun makeToken s = [FE.Term (String.size s, s)]
+
+  fun format_int32 int =
+      let val text = Int32.toString int
+      in [FE.Term (size text, text)] end
+
+  fun format_word32 word =
+      let val text = Word32.toString word
+      in [FE.Term (size text, text)] end
+
+  fun format_BigInt int =
+      let val text = BigInt.toString int
+      in [FE.Term (size text, text)] end
+
+  fun format_IntInf int =
+      let val text = IntInf.toString int
+      in [FE.Term (size text, text)] end
+
+  local
+    (**
+     * @params isTyConArguments args
+     * @param isTyConArguments true if this function is called to format type
+     *        arguments to type constructor.
+     * @param args a pair of element formatter, separator, prefix and suffix.
+     *)
+    fun formatElements
+            isTyConArguments
+            (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
+        fn [] => [FE.Term (0, "")]
+         | [e] =>
+           if isTyConArguments
+           then
+             (* guard the element as:
+              *   N3{ elem }
+              * This assumes this function is called to format type arguments
+              * of type constructor.
+              *)
+             [
+               FE.Guard 
+                   (
+                     SOME{cut = false, strength = 3, direction = FE.Neutral},
+                     elementFormatter e
+                   ),
+               s_d_Indicator
+             ]
+           else (elementFormatter e) (*@ [s_d_Indicator]*)
+         | list =>
+           prefixIfNotNull
+           @ [
+               FE.Guard 
+                   (
+                     SOME{cut = true, strength = 0, direction = FE.Neutral},
+                     (SMLFormat.BasicFormatters.format_list
+                          (elementFormatter, separator) list)
+                   )
+             ]
+           @ suffixIfNotNull
+  in
+  fun formatTyConArgumentTypes arguments = formatElements true arguments
+  fun formatListWithEnclosureOne arguments = formatElements false arguments
+  end
+
+  fun formatSSet (separator, prefixIfNotNull, suffixIfNotNull) sset = 
+      let 
+      val L = SSet.listItems sset
+      in
+         formatListWithEnclosureOne
+         (
+           SMLFormat.BasicFormatters.format_string,
+           separator,
+           prefixIfNotNull,
+           suffixIfNotNull
+         )
+         L
+      end
+
+  (*
+    This is for the usual list printing, u.e.
+      nil => ""
+      non nil => [e1,...,en] 
+   *)
+  fun formatListWithEnclosure
+      (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
+      fn [] => nil
+       | list =>
+         prefixIfNotNull @
+         (SMLFormat.BasicFormatters.format_list
+              (elementFormatter, separator) list) @
+         suffixIfNotNull
+
+  (*
+    This is for the following printing
+      nil => ""
+      [e] => e
+      [e1,...,en] => opne e1 sep e2 sep ... sep en close
+   *)
+  fun formatListWithEnclosureIfMoreThanOne
+      (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
+      fn [] => [FE.Term (0, "")]
+       | [value] => elementFormatter value
+       | list =>
+         prefixIfNotNull @
+         (SMLFormat.BasicFormatters.format_list
+              (elementFormatter, separator) list) @
+         suffixIfNotNull
+
+  (*
+    This is for the following printing
+      nil => open close
+      [e] => e
+      [e1,...,en] => open e1 sep e2 sep ... sep en close
+   *)
+  fun formatListWithEnclosureIfNotOne
+      (elementFormatter, separator, prefix, suffix) =
+      fn [] => prefix @ suffix
+       | [value] => elementFormatter value
+       | list =>
+         prefix @
+         (SMLFormat.BasicFormatters.format_list
+              (elementFormatter, separator) list) @
+         suffix
+
+ (*%
+  * @params(bindsep,itemsep)
+  *)
+ type 'a record =
+     (*%
+      * @format(field fields)
+      *           !N0{ "{" 2[1 fields(field)(itemsep)] 1 "}" }
+      * @format:field(label * ty) label bindsep 1[ +d {ty} ]
+      *)
+     (string * 'a) list
+
+ (*%
+  * @params(bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
+  * @formatter(listWithEncousure)  formatListWithEnclosure
+  *)
+ type 'a varenvWithEnclosure =
+     (*%
+      * @format(field fields:listWithEncousure)
+      *           fields(field)(itemsep, prefixIfNotNull, suffixIfNotNull)
+      * @format:field(label * ty) label bindsep ty
+      *)
+     (string * 'a) list
+
+ (*%
+  * @params(itemsep)
+  *)
+ type 'a tupleTy = 
+     (*%
+        @format(field fields)
+          N2{ fields(field)(itemsep) }
+        @format:field(label * ty) N3{ty}
+      *)
+     (string * 'a) list
+
+ (*%
+  * @params(bindsep,itemsep)
+  *)
+ type 'a tupleExp = 
+     (*%
+       @format(field fields)
+          !N0{ "(" 1[1 fields(field)("," +1)] 1 ")" }
+       @format:field(label * exp) {exp}
+      *)
+     (string * 'a) list
+
+  fun isNumeric L = 
+      let 
+        fun isNumeric' n nil = true
+          | isNumeric' n ((l,_)::tail) = 
+            (case Int.fromString l  of
+               SOME k => if k = n then isNumeric' (n+1) tail else false
+             | _ => false)
+      in
+        isNumeric' 1 L 
+      end
+
+  fun formatGenericFieldsTy
+          ([elementFormatter], bindsep, itemsepRecord, itemsep) L =
+        (case L of
+          nil => [FE.Term (3, "nil")]
+        | [_] => format_record(elementFormatter, bindsep, itemsepRecord) L
+        | _ =>  
+          if isNumeric L
+          then format_tupleTy(elementFormatter, itemsep) L
+          else format_record(elementFormatter, bindsep, itemsepRecord) L
+        )
+    | formatGenericFieldsTy _ _ =
+      raise
+        Control.Bug
+          "SmlppgUtil:formatGenericFieldsTy:empty element formatter"
+
+  fun formatGenericFieldsExp ([elementFormatter],bindsep,itemsep) L =
+      let 
+      fun isNumeric n nil = true
+        | isNumeric n ((l,_)::tail) = 
+          (case Int.fromString l of
+             SOME k => if k = n then isNumeric (n+1) tail else false
+           | _ => false)
+      in
+        if isNumeric 1 L
+        then format_tupleExp(elementFormatter,bindsep,itemsep) L
+        else format_record(elementFormatter,bindsep,itemsep) L
+      end
+    | formatGenericFieldsExp _ _ = 
+      raise
+        Control.Bug
+          "SmlppgUtil:formatGenericFieldsExp : empty element formatter"
+
+
+  fun formatGenericSmapTy 
+        (elementFormatter, bindsep, itemsepRecord, itemsep)
+        smap =
+      let
+        val L = SEnv.listItemsi smap
+      in
+        formatGenericFieldsTy 
+	([elementFormatter], bindsep, itemsepRecord, itemsep)
+	 L
+      end
+
+  fun formatGenericLmapTy 
+        (elementFormatter, bindsep, itemsepRecord, itemsep)
+        smap =
+      let
+        val L = LabelEnv.listItemsi smap
+      in
+        formatGenericFieldsTy 
+	([elementFormatter], bindsep, itemsepRecord, itemsep)
+	 L
+      end
+
+  fun formatGenericSmapExp (elementFormatter,bindsep,itemsep) smap =
+      let 
+        val L = SEnv.listItemsi smap
+      in
+        formatGenericFieldsExp ([elementFormatter],bindsep,itemsep) L
+      end
+
+  fun formatGenericLmapExp (elementFormatter,bindsep,itemsep) smap =
+      let 
+        val L = LabelEnv.listItemsi smap
+      in
+        formatGenericFieldsExp ([elementFormatter],bindsep,itemsep) L
+      end
+
+ (*%
+  * @params(lparen, bindsep,itemsep,rparen)
+  * @formatter(listWithEncousure)  formatListWithEnclosure
+  *)
+ type 'a varenv =
+     (*%
+        @format(field fields)
+          fields:listWithEncousure(field)(itemsep,lparen,rparen) 
+        @format:field(label * ty) 
+          { 2[ label bindsep ty ] }
+      *)
+     (string * 'a) list
+
+  fun formatSmap (elementFormatter,lparen, bindsep,itemsep, rparen) smap =
+      format_varenv(elementFormatter,lparen, bindsep,itemsep, rparen) (SEnv.listItemsi smap)
+
+ (*%
+  * @params(lparen, itemsep, rparen)
+  * @formatter(formatListWithEnclosure)  formatListWithEnclosure
+  *)
+ type 'a genericVarenv =
+     (*%
+        @format(field fields)
+          fields:formatListWithEnclosure(field)(itemsep, lparen, rparen) 
+        @format:field(label * ty) 
+          ty()(,label)
+      *)
+     (string * 'a) list
+
+  fun formatGenericSmap (elementFormatter,lparen, itemsep, rparen) smap =
+      format_genericVarenv(elementFormatter,lparen, itemsep, rparen) (SEnv.listItemsi smap)
+
+  fun formatSmapWithEnclosure
+          (
+            elementFormatter,
+            bindsep,
+            itemsep,
+            prefixIfNotNull,
+            suffixIfNotNull
+          )
+          smap
+    =
+      format_varenvWithEnclosure
+      (elementFormatter, bindsep, itemsep, prefixIfNotNull, suffixIfNotNull)
+      (SEnv.listItemsi smap)
+
+  fun formatImap (elementFormatter) imap =
+      let
+        val keys = IEnv.listKeys imap
+        val suf = [FE.Term(List.length keys + 2,
+                           "(" ^ (String.concat
+                                  (map (fn i => (Int.toString i ^ ",")) keys))
+                            ^   ")")]
+      in
+        (SMLFormat.BasicFormatters.format_list
+           (elementFormatter,makeToken ",") (IEnv.listItems imap))
+        (*  @ suf for debugging *)
+      end
+
+  fun formatPrependedOpt (formatter, prefixIfSome) =
+      fn NONE => [FE.Term (0, "")]
+       | SOME value => prefixIfSome @ (formatter value)
+
+  fun formatEnclosedOpt (formatter, prefixIfSome, suffixIfSome) =
+      fn NONE => [FE.Term (0, "")]
+       | SOME value => prefixIfSome @ (formatter value) @ suffixIfSome
+
+  fun formatOptWithDefault (formatter, default) =
+      fn NONE => default
+       | SOME value => formatter value
+
+  fun formatBinaryChoice (ifTrue, ifFalse) value =
+      if value then ifTrue else ifFalse
+
+
+  (***************************************************************************)
+
+end

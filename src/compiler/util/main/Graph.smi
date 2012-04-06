@@ -1,0 +1,19 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/IEnv.smi"
+_require "../../../compiler-utils/env/main/ISet.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "GRAPH.sig"
+
+structure Graph =
+struct
+  type node_id = int
+  type 'n graph (= boxed)
+  val empty : 'n graph
+  val addNode : 'n graph -> 'n -> ('n graph * node_id)
+  val addEdge : 'n graph -> node_id * node_id  -> 'n graph
+  val listNodes : 'n graph -> (node_id * 'n) list
+  val getNodeInfo : 'n graph -> node_id -> 'n option
+  val scc : 'n graph  -> (node_id list) list
+  val printNodes : node_id list -> unit
+end

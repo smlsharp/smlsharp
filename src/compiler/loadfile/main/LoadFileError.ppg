@@ -1,0 +1,53 @@
+(**
+ * @copyright (c) 2011, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+structure LoadFileError =
+struct
+
+  (*% *)
+  exception
+
+  (*%
+   * @format(string)
+   * "invalid" +d "top" +d "interface:" +d string
+   *)
+  InvalidTopInterface of string
+
+  and
+  (*%
+   * @format(string)
+   * "file" +d "not" +d "found" +d "on" +d "load" +d "path:" +d string
+   *)
+  FileNotFound of string
+
+  and
+  (*%
+   * @format(string)
+   * "detected" +d "circular" +d "file" +d "refrences:" +d string
+   *)
+  CircularLoad of string
+
+  and
+  (*%
+   * @format(string)
+   * "file" +d "loaded" +d "by" +d "`use'" +d "has" +d "interface:" +d string
+   *)
+  UseWithInterface of string
+
+  and
+  (*%
+   * @format(string)
+   * "found" +d "an" +d "empty" +d "interface:" +d string
+   *)
+  EmptyInterface of string
+
+  and
+  (*%
+   * @format(string)
+   * "interface" +d "without" +d "variable" +d "specified" +d "as" +d
+   * "_interface:" +d string
+   *)
+  VirtualInterface of string
+
+end

@@ -1,0 +1,20 @@
+_require "../../../basis/main/List.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "LOC.sig"
+
+structure Loc =
+struct
+  eqtype pos (= boxed)
+  type loc = pos * pos
+  val noloc : loc
+  val nopos : pos
+  val makePos : {fileName: string, line: int, col: int} -> pos
+  val mergeLocs : loc * loc -> loc
+  val fileNameOfPos : pos -> string
+  val lineOfPos : pos -> int
+  val colOfPos : pos -> int
+  val format_head_pos : pos -> SMLFormat.FormatExpression.expression list
+  val format_tail_pos : pos -> SMLFormat.FormatExpression.expression list
+  val format_loc : pos * pos -> SMLFormat.FormatExpression.expression list
+end

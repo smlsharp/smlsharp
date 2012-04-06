@@ -1,0 +1,18 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../typedcalc/main/TypedCalcUtils.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesUtils.smi"
+_require "TypeInferenceUtils.smi"
+_require "UNCURRYFUNDECL.sig"
+
+structure UncurryFundecl =
+  struct
+    val optimize : TypedCalc.tpdecl list -> TypedCalc.tpdecl list
+  end

@@ -1,0 +1,34 @@
+_require "../../../basis/main/TextIO.smi"
+_require "../../../basis/main/BinIO.smi"
+_require "../../../basis/main/OS.smi"
+_require "../../../basis/main/List.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/binary-op.smi"
+_require "../../../config/main/Version.smi"
+
+structure Filename =
+struct
+  type filename (= string)
+  val toString : filename -> string
+  val fromString : string -> filename
+  val basename : filename -> filename
+  val dirname : filename -> filename
+  val suffix : filename -> string option
+  val addSuffix : filename * string -> filename
+  val removeSuffix : filename -> filename
+  val replaceSuffix : string -> filename -> filename
+  val pwd : unit -> filename
+  val concatPath : filename * filename -> filename
+  val isAbsolute : filename -> bool
+  val realPath : filename -> filename
+  structure TextIO =
+  struct
+    val openIn : filename -> TextIO.instream
+    val openOut : filename -> TextIO.outstream
+  end
+  structure BinIO =
+  struct
+    val openIn : filename -> BinIO.instream
+    val openOut : filename -> BinIO.outstream
+  end
+end

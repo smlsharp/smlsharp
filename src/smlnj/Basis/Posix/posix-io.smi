@@ -1,0 +1,37 @@
+_require "../../../basis/main/General.smi"
+_require "../../../basis/main/IO.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/Word.smi"
+_require "../../../basis/main/CharVector.smi"
+_require "../../../basis/main/CharVectorSlice.smi"
+_require "../../../basis/main/CharArray.smi"
+_require "../../../basis/main/Word8Vector.smi"
+_require "../../../basis/main/Word8VectorSlice.smi"
+_require "../../../basis/main/Word8Array.smi"
+_require "../../../basis/main/StringBase.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/Substring.smi"
+_require "../../../basis/main/Byte.smi"
+_require "../../../basis/main/SMLSharpOSFileSys.smi"
+_require "../../../basis/main/SMLSharpRuntime.smi"
+_require "../IO/prim-io-bin.smi"
+_require "../IO/prim-io-text.smi"
+
+structure SMLSharpSMLNJ_POSIX_IO =
+struct
+  type file_desc = SMLSharpOSFileSys.file_desc
+  val openf : string * string -> file_desc
+  val stdin : file_desc
+  val stdout : file_desc
+  val stderr : file_desc
+  val mkTextReader : {fd : file_desc, name : string, initBlkMode : bool}
+                     -> TextPrimIO.reader
+  val mkTextWriter : {fd : file_desc, name : string, initBlkMode : bool,
+                      appendMode : bool, chunkSize : int}
+                     -> TextPrimIO.writer
+  val mkBinReader : {fd : file_desc, name : string, initBlkMode : bool}
+                    -> BinPrimIO.reader
+  val mkBinWriter : {fd : file_desc, name : string, initBlkMode : bool,
+                     appendMode : bool, chunkSize : int}
+                    -> BinPrimIO.writer
+end

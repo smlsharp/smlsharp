@@ -1,5 +1,0 @@
-Group
-	structure SMLSharpConfiguration
-is
-	CONFIGURATION.sig
-	Configuration.sml

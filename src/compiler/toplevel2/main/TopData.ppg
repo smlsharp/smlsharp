@@ -1,0 +1,166 @@
+structure TopData = 
+struct
+local
+  (*% @formatter(AbsynInterface.interfaceName) AbsynInterface.format_interfaceName *)
+  type interfaceName 
+    = (*% @format(x) x *) AbsynInterface.interfaceName
+
+  (*% @formatter(AbsynInterface.filePlace) AbsynInterface.format_filePlace *)
+  type filePlace 
+    = (*% @format(x) x *) AbsynInterface.filePlace
+
+  fun format_filename filename = TermFormat.FormatComb.term (Filename.toString filename)
+  fun format_dummy _ = nil
+in
+  (*% *)
+  datatype stopAt 
+    = (*% @format "SyntaxCheck" *) SyntaxCheck
+    | (*% @format "ErrorCheck" *)  ErrorCheck
+    | (*% @format "Assembly" *) Assembly
+    | (*% @format "NoStop" *) NoStop
+
+  (*%  @formatter(Filename.filename) format_filename *)
+  datatype code 
+    = (*%  @format(filename) filename *)
+      FILE of Filename.filename
+
+  (*% 
+     @formatter(option) TermFormat.formatOptionalOption
+   *)
+  type interfaceNames 
+   = (*% 
+        @format({provide:provide opt, 
+                 requires:require requires,
+                 depends:depend depends})
+         "{"
+          1[
+            +1
+            1["provide:" + opt(provide)("SOME"+1,) ]
+            +1
+            1["requires:"
+               +1
+              requires(require)(+1)
+             ]
+            +1
+            1["depends:" 
+              +1 
+              1[depends(depend)(+1)]
+             ]
+           ]
+          1
+         "}"
+       @format:depend(place * string) string "(" place ")"
+     *)
+      {
+        provide: interfaceName option,
+        requires:interfaceName list,
+        depends: (filePlace * string) list
+      }
+
+  (*%
+     @formatter(Filename.filename) format_filename 
+     @formatter(option) TermFormat.formatOptionalOption
+  *)
+  type toplevelOptions 
+    = (*%
+         @format({stopAt,
+                  dstfile: dist distopt, 
+                  baseName: bas basopt, 
+                  stdPath: std stds, 
+                  loadPath: load loads, 
+                  asmFlags: asm asms})
+          "{"
+           1[
+              1[  "stopAt:" +d stopAt ]
+               +1
+              1["distfile:" +d distopt(dist)("SOME","NONE") ]
+               +1
+              1["baseName:" +d basopt(bas)("SOME","NONE") ]
+               +1
+              1[ "stdPath:" +d stds(std)(",") ]
+               +1
+              1["loadPath:" +d loads(load)(".")]
+               +1
+              1["asmFlags:" +d asms(asm)(+)]
+            ]
+           1
+           "}"
+       *)
+      {
+        stopAt: stopAt,
+        dstfile: Filename.filename option,
+        baseName: Filename.filename option,
+        stdPath: Filename.filename list,
+        loadPath: Filename.filename list,
+        asmFlags: string list
+      }
+
+  type toplevelContext =
+      {
+        fixEnv: Elaborator.fixEnv,
+        topEnv: NameEvalEnv.topEnv,
+        version: int option,
+        builtinDecls: IDCalc.icdecl list
+      }
+
+  type newContext =
+      {
+        fixEnv: Elaborator.fixEnv,
+        topEnv: NameEvalEnv.topEnv
+      }
+
+  (*% @formatter(newContext) format_dummy *)
+  datatype result 
+    = (*%
+         @format "stopped"
+       *)
+      STOPPED
+    | (*% 
+         @format(env * code) "return" + code 
+       *)
+      RETURN of newContext * code
+
+(*
+
+  (*%
+     @formatter(AbsynInterface.compileUnit) AbsynInterface.format_compileUnit
+   *)
+  type loadFileResult 
+    = (*%
+         @format({loadedFiles: file files} * comileUnit)
+         "{"
+           1[
+             1["loadedFiles:" +d files(file)(+1)]
+             1["compileUnit:" +d comileUnit]
+            ]
+           1
+          "}"
+        @format:file(filePlace * string) "("filePlace "," string ")"
+       *)
+    ({loadedFiles: (filePlace * string) list} * AbsynInterface.compileUnit)
+*)
+
+  val debugPrint = fn s => if !Control.debugPrint then print s else ()
+  fun printStopAt stopAt =
+      debugPrint (Control.prettyPrint (format_stopAt stopAt))
+(*
+  fun printCode code =
+      debugPrint (Control.prettyPrint (format_code code))
+*)
+  fun printInterfaceNames interfaceNames =
+      debugPrint (Control.prettyPrint (format_interfaceNames interfaceNames))
+  fun printInterfaceName interfaceName =
+      debugPrint (Control.prettyPrint (format_interfaceName interfaceName))
+  fun printFileName fileName =
+      debugPrint (Control.prettyPrint (format_filename fileName))
+  fun printInterfaceNameList interfaceNameList =
+      app (fn i => (printInterfaceName i; debugPrint "\n")) interfaceNameList
+  fun printResult result =
+      debugPrint (Control.prettyPrint (format_result result))
+  fun printToplevelOptions toplevelOptions =
+      debugPrint (Control.prettyPrint (format_toplevelOptions toplevelOptions))
+
+  fun printCompileUnit unit =
+      debugPrint (Control.prettyPrint (AbsynInterface.format_compileUnit unit))
+  end
+end

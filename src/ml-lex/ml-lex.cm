@@ -1,0 +1,17 @@
+(* Modified by Katsuhiro Ueno on 2011-Nov-25 to port ml-lex to SML#. *)
+Library
+	structure ExportLexGen
+is
+
+# if defined (NEW_CM)
+  $/basis.cm
+# endif
+
+  lexgen.sml
+  export-lex.sml
+
+(* Ueno (2011-11-25): added the following for SML# and MLton. *)
+#if defined(SMLNJ_VERSION)
+#else
+ml-lex.sml
+#endif

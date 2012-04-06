@@ -1,0 +1,10 @@
+_require "basis.smi"
+_require "./libc.smi"
+_require "./input_plain.smi"
+_require "./spectrum.smi"
+_require "./display.sig"
+
+structure Display =
+struct
+  val main : unit -> unit
+end

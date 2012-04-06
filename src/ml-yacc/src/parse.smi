@@ -1,0 +1,40 @@
+_require "../../basis.smi"
+_require "../lib/base.sig"
+_require "../lib/join.smi"
+_require "../lib/parser2.smi"
+_require "utils.sig"
+_require "sigs.sml"
+_require "hdr.smi"
+_require "yacc.lex.smi"
+_require "yacc.grm.smi"
+
+structure ParseGenParser
+ =
+struct
+  structure Header =
+  struct
+    type pos = Header.pos
+    val lineno : pos ref
+    val text : string list ref
+    type inputSource = Header.inputSource
+    val newSource : string * TextIO.instream * TextIO.outstream -> inputSource
+    val error : inputSource -> pos -> string -> unit
+    val warn : inputSource -> pos -> string -> unit
+    val errorOccurred : inputSource -> unit -> bool
+    datatype symbol = datatype Header.symbol
+    val symbolName : symbol -> string
+    val symbolPos : symbol -> pos
+    val symbolMake : string * int -> symbol
+    type ty = Header.ty
+    val tyName : ty -> string
+    val tyMake : string -> ty
+    datatype prec = datatype Header.prec
+    datatype control = datatype Header.control
+    datatype rule = datatype Header.rule
+    datatype declData = datatype Header.declData
+    val join_decls : declData * declData * inputSource * pos -> declData
+    type parseResult = Header.parseResult
+    val getResult : parseResult -> string * declData * rule list
+  end
+  val parse : string -> Header.parseResult * Header.inputSource
+end

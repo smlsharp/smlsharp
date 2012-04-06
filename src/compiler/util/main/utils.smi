@@ -1,0 +1,8 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+structure Utils =
+struct
+  val listToTuple : 'a list -> (string * 'a) list
+  val listToFields : 'a list -> 'a LabelEnv.map
+end

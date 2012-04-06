@@ -1,0 +1,18 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../nameevaluation/main/NameEvalUtils.smi"
+_require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require "../../typeinference2/main/TypeInferenceContext.ppg.smi"
+_require "../../types/main/VarMap.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+
+structure NameEvalEnvUtils =
+struct
+  val mergeTypeEnv : NameEvalEnv.topEnv * TypeInferenceContext.varEnv
+                     -> NameEvalEnv.topEnv
+  val resetInternalId : NameEvalEnv.topEnv -> NameEvalEnv.topEnv
+  val externOverloadInstances : NameEvalEnv.topEnv -> IDCalc.icdecl list
+end

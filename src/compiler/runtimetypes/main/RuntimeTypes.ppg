@@ -1,0 +1,74 @@
+(**
+ * runtime types
+ *
+ * @copyright (c) 2008, 2011, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+structure RuntimeTypes =
+struct
+
+  (*% *)
+  datatype ty =
+      UCHARty       (* unsigned char *)
+    | INTty         (* int *)
+    | UINTty        (* unsigned int *)
+    | BOXEDty       (* heap object pointer *)
+    | POINTERty     (* void * *)
+    | CODEPOINTERty (* pointer to code segment *)
+    | DOUBLEty      (* double precision floating-point *)
+    | FLOATty       (* single precision floating-point *)
+
+(* Ohori: used in name elaborator *)
+  fun eq (ty1, ty2) = 
+      case (ty1, ty2) of
+        (UCHARty, UCHARty) => true
+      | (INTty, INTty) => true
+      | (UINTty, UINTty) => true
+      | (BOXEDty, BOXEDty) => true
+      | (POINTERty, POINTERty) => true
+      | (CODEPOINTERty, CODEPOINTERty) => true
+      | (DOUBLEty,DOUBLEty) => true
+      | (FLOATty, FLOATty) => true
+      | _ => false
+
+(* Ohori: temporary definition used in elaborator *)
+  fun findRuntimeTy name =
+      case name of
+        "UCHARty" => SOME UCHARty
+      | "char" => SOME UCHARty
+      | "INTty" => SOME INTty
+      | "int" => SOME INTty
+      | "int32" => SOME INTty
+      | "UINTty" => SOME UINTty
+      | "word" => SOME UINTty
+      | "word32" => SOME UINTty
+      | "BOXEDty" => SOME BOXEDty
+      | "boxed" => SOME BOXEDty
+      | "POINTERty" => SOME POINTERty
+      | "CODEPOINTERty" => SOME CODEPOINTERty
+      | "DOUBLEty" => SOME DOUBLEty
+      | "real" => SOME DOUBLEty
+      | "word64" => SOME DOUBLEty
+      | "FLOATty" => SOME FLOATty
+      | _ => NONE
+
+
+(* Ohori: moved from TypeLayout.sml *)
+  fun runtimeTyOfBuiltinTy ty =
+      case ty of
+        BuiltinType.INTty => INTty
+      | BuiltinType.INTINFty => BOXEDty
+      | BuiltinType.WORDty => UINTty
+      | BuiltinType.WORD8ty => UCHARty
+      | BuiltinType.CHARty => UCHARty
+      | BuiltinType.STRINGty => BOXEDty
+      | BuiltinType.REALty => DOUBLEty
+      | BuiltinType.REAL32ty => FLOATty
+      | BuiltinType.UNITty => UINTty
+      | BuiltinType.PTRty => POINTERty
+      | BuiltinType.ARRAYty => BOXEDty
+      | BuiltinType.VECTORty => BOXEDty
+      | BuiltinType.EXNty => BOXEDty
+      | BuiltinType.BOXEDty => BOXEDty
+      | BuiltinType.EXNTAGty => BOXEDty
+end

@@ -1,0 +1,29 @@
+_require "../../../basis/main/Word8Vector.smi"
+_require "../../../basis/main/BinIO.smi"
+_require "../../../basis/main/TextIO.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/OS.smi"
+_require "../../../basis/main/List.smi"
+
+_require "../../control/main/Loc.ppg.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "Filename.smi"
+
+structure CoreUtils =
+struct
+  exception Failed of {command: string, message: string}
+  val join : string list -> string
+  val quote : string -> string
+  val newFile : Filename.filename -> unit
+  val testExist : Filename.filename -> bool
+  val rm : Filename.filename -> unit
+  val rm_f : Filename.filename -> unit
+  val mkdir : Filename.filename -> unit
+  val rmdir_f : Filename.filename -> unit
+  val system : string -> unit
+  val makeTextFile : Filename.filename * string -> unit
+  val makeBinFile : Filename.filename * Word8Vector.vector -> unit
+  val makeTextFile' : Filename.filename * ((string -> unit) -> unit) -> unit
+  val readTextFile : Filename.filename -> string
+  val readBinFile : Filename.filename -> Word8Vector.vector
+end

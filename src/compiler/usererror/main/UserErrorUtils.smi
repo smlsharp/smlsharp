@@ -1,0 +1,20 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+_require "../../control/main/Loc.ppg.smi"
+_require "UserError.ppg.smi"
+
+structure UserErrorUtils =
+struct
+  val initializeErrorQueue : unit -> unit
+  val getErrorsAndWarnings : unit -> UserError.errorInfo list
+  val getErrors : unit -> UserError.errorInfo list
+  val isAnyError : unit -> bool
+  val getWarnings : unit -> UserError.errorInfo list
+  val enqueueError : Loc.loc * exn -> unit
+  val enqueueWarning : Loc.loc * exn -> unit
+  val checkNameDuplication' : ('a -> string option)
+                             -> 'a list -> Loc.loc -> (string -> exn) -> unit
+  val checkNameDuplication : ('a -> string)
+                             -> 'a list -> Loc.loc -> (string -> exn) -> unit
+end

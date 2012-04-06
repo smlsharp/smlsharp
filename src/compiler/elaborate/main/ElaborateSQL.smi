@@ -1,0 +1,17 @@
+_require "../../../basis.smi"
+_require "../../util/main/utils.smi"
+_require "../../util/main/BigInt_IntInf.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/AbsynSQL.ppg.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../usererror/main/UserErrorUtils.smi"
+_require "ElaborateErrorSQL.ppg.smi"
+
+structure ElaborateSQL =
+  struct
+     val elaborateExp
+         : {elabExp:Absyn.exp -> PatternCalc.plexp,
+            elabPat:Absyn.pat -> PatternCalc.plpat}
+           -> (Absyn.exp,Absyn.pat,Absyn.ty) AbsynSQL.exp
+           -> PatternCalc.plexp
+  end

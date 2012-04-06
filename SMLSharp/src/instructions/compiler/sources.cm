@@ -1,8 +1,0 @@
-Group
-	structure BasicTypeSerializer
-	structure Executable
-	structure ExecutableSerializer
-	structure Instructions
-	structure BasicTypeSerializerForNetworkByteOrder
-is
-	main/module.cm

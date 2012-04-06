@@ -1,8 +1,0 @@
-Group
-	structure YAANormal
-(*
-	structure YAANormalUtils
-	structure YAANormalFormatter
-*)
-is
-	main/module.cm

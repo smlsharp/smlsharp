@@ -1,0 +1,58 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "IDCalc.ppg.smi"
+_require "Types.ppg.smi"
+_require "BuiltinEnv.smi"
+_require "vars.smi"
+
+structure TypesUtils =
+struct
+  val derefTy : Types.ty -> Types.ty
+  val substBTvar : Types.ty BoundTypeVarID.Map.map -> Types.ty -> Types.ty
+  val substBTvarSingletonTy
+      : Types.ty BoundTypeVarID.Map.map
+        -> Types.singletonTy -> Types.singletonTy
+  val substBTvarTvarKind
+      : Types.ty BoundTypeVarID.Map.map
+        -> Types.tvarKind -> Types.tvarKind
+  val substBTvarOverloadMatch
+      : Types.ty BoundTypeVarID.Map.map
+        -> Types.overloadMatch -> Types.overloadMatch
+  val makeFreshSubst
+      : IDCalc.tvar option -> Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
+  val freshSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
+  val freshRigidSubst : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map
+  val monoTy : Types.ty -> bool
+  val makeFreshInstTy : (Types.btvEnv -> Types.ty BoundTypeVarID.Map.map)
+                        -> Types.ty -> Types.ty
+  val freshInstTy : Types.ty -> Types.ty
+  val freshRigidInstTy : Types.ty -> Types.ty
+  exception ExSpecTyCon of string
+  exception ExIllegalTyFunToTyCon of string
+  exception CoerceFun 
+  exception CoerceTvarKindToEQ 
+  val derefSubstTy : Types.ty -> Types.ty
+  val pruneTy : Types.ty -> Types.ty
+  val EFTV : Types.ty -> OTSet.set
+  val adjustDepthInTy : Types.lambdaDepth -> Types.ty -> unit
+  val adjustDepthInTvarKind : Types.lambdaDepth -> Types.tvarKind -> unit
+  val generalizer : Types.ty * Types.lambdaDepth
+                    -> {boundEnv: Types.btvEnv, removedTyIds: OTSet.set}
+  val generalize : Types.ty -> {body: Types.ty, boundtvEnv: Types.btvEnv}
+  val performSubst : Types.ty * Types.ty -> unit
+  val admitEqTy : Types.ty -> bool
+  val coerceTvarkindToEQ : Types.tvarKind -> Types.tvarKind
+  val copyBoundEnv
+      : Types.btvEnv -> Types.ty BoundTypeVarID.Map.map * Types.btvEnv
+  val coerceFunM
+      : Types.ty * 'a list -> Types.ty list * Types.ty * Types.ty list
+  exception RigidCoerceFunM
+  val rigidCoerceFunM
+      : Types.ty * 'a list -> Types.ty list * Types.ty
+  val tpappTy
+      : Types.ty * Types.ty list -> Types.ty
+end

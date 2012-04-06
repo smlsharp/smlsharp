@@ -1,5 +1,0 @@
-Group
-	structure SymbolicInstructions
-	structure SymbolicInstructionsFormatter
-is
-	main/module.cm

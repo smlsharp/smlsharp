@@ -1,0 +1,16 @@
+_require "../../basis/main/Int.smi"
+_require "../../basis/main/List.smi"
+_require "../../basis/main/String.smi"
+
+_require "lib-base-sig.sml"
+
+structure LibBase =
+  struct
+    exception Unimplemented of string
+    exception Impossible of string
+    exception NotFound
+    val failure : {module : string, func : string, msg : string} -> 'a
+    val version : {date : string, system : string, version_id : int list}
+    val banner : string
+  end
+

@@ -1,0 +1,13 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "GenerateMainError.ppg.smi"
+
+structure GenerateMain = 
+struct
+  val generate : AbsynInterface.interfaceName list -> string
+  val mainSymbol : AbsynInterface.compileUnit -> {mainSymbol: string}
+end

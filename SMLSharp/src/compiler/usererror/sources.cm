@@ -1,5 +1,0 @@
-Group
-	structure UserError
-	structure UserErrorUtils
-is
-	main/module.cm

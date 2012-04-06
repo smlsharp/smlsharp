@@ -1,5 +1,0 @@
-Group
-	structure MatchCompiler
-	structure MatchError
-is
-	main/module.cm

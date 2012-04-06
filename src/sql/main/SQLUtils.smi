@@ -1,0 +1,9 @@
+_require "../../basis.smi"
+_require "SQLPrim.smi"
+
+structure SMLSharp_SQL_Utils =
+struct
+  exception NotOne
+  val fetchAll : 'a SMLSharp_SQL_Prim.rel -> 'a list
+  val fetchOne : 'a SMLSharp_SQL_Prim.rel -> 'a
+end

@@ -1,0 +1,19 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../builtin/main/BuiltinType.ppg.smi"
+
+structure RuntimeTypes =
+struct
+  datatype ty
+    = BOXEDty
+    | CODEPOINTERty
+    | DOUBLEty
+    | FLOATty
+    | INTty
+    | POINTERty
+    | UCHARty
+    | UINTty
+  val format_ty : ty -> SMLFormat.FormatExpression.expression list
+  val runtimeTyOfBuiltinTy : BuiltinType.ty -> ty
+end

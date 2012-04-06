@@ -1,0 +1,67 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/env/main/SSet.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/IEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "BigInt_IntInf.smi"
+
+structure SmlppgUtil =
+struct
+  type format = SMLFormat.FormatExpression.expression list
+  val makeToken : string -> format
+  val format_int32 : Int32.int -> format
+  val format_word32 : Word32.word -> format
+  val format_BigInt : BigInt.int -> format
+  val formatTyConArgumentTypes
+    : ('a -> format) * format * format * format -> 'a list -> format
+  val formatListWithEnclosureOne 
+    : ('a -> format) * format * format * format -> 'a list -> format
+  val formatSSet 
+    : format * format * format -> SSet.set -> format
+  val formatListWithEnclosure
+    : ('a -> format) * format * format * format -> 'a list -> format
+  val formatListWithEnclosureIfMoreThanOne
+    : ('a -> format) * format * format * format
+      -> 'a list -> format
+  val formatListWithEnclosureIfNotOne
+    : ('a -> format) * format * format * format -> 'a list -> format
+  type 'a record = (string * 'a) list
+  val format_record
+    : ('a -> format) * format * format -> (string * 'a) list -> format
+  val formatGenericFieldsTy
+    : ('a -> format) list * format * format * format
+      -> (string * 'a) list -> format
+  val formatGenericFieldsExp
+    : ('a -> format) list * format * format -> (string * 'a) list -> format
+  val formatGenericSmapTy 
+    : ('a -> format) * format * format * format -> 'a SEnv.map -> format
+  val formatGenericLmapTy 
+    : ('a -> format) * format * format * format -> 'a LabelEnv.map -> format
+  val formatGenericSmapExp 
+    : ('a -> format) * format * format -> 'a SEnv.map -> format
+  val formatGenericLmapExp 
+    : ('a -> format) * format * format -> 'a LabelEnv.map -> format
+  val formatSmap 
+    : ('a -> format) * format * format * format * format
+      -> 'a SEnv.map -> format
+  val formatGenericSmap 
+    : (format * format -> 'a -> format) * format * format * format
+      -> 'a SEnv.map -> format
+  val formatSmapWithEnclosure 
+    : ('a -> format) * format * format * format * format
+      -> 'a SEnv.map -> format
+  val formatImap 
+    : ('a -> format) -> 'a IEnv.map -> format
+  val formatPrependedOpt 
+    : ('a -> format) * format -> 'a option -> format
+  val formatEnclosedOpt 
+    : ('a -> format) * format * format -> 'a option -> format
+  val formatOptWithDefault 
+      : ('a -> 'b) * 'b -> 'a option -> 'b
+  val formatBinaryChoice 
+      : 'a * 'a -> bool -> 'a
+  val isNumeric : (string*'a) list -> bool
+end

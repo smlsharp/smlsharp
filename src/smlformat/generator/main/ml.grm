@@ -1,0 +1,1233 @@
+(* ml.grm
+ *
+ * Copyright 1989,1992 by AT&T Bell Laboratories
+ *)
+(*
+2012-3-22 ohori defuncterized 
+
+The only use is in MLParser as
+  structure MLLrVals = MLLrValsFun(structure Token = LrParser.Token)
+added header and footer
+*)
+open Ast AstUtil FormatTemplate
+
+fun markexp (e, _, _) = e
+
+fun markdec(d as MarkDec _, _,_) = d
+  | markdec(d,left,right) = MarkDec(d,(left,right))
+
+fun marktypepat (p as MarkTyPat _, _, _) = p
+  | marktypepat (p, left, right) = MarkTyPat(p, (left, right))
+
+fun marktemplate (t as MarkTemplate _, _, _) = t
+  | marktemplate (t, left, right) = MarkTemplate(t, (left, right))
+
+fun markinstance (i as MarkInstance _, _, _) = i
+  | markinstance (i, left, right) = MarkInstance(i, (left, right))
+
+fun qidToString [id] = id
+  | qidToString (head::tail) = head ^ "." ^ (qidToString tail)
+
+%%
+  %term
+      EOF | SEMICOLON
+    | ID of string | TYVAR of string
+    | INT of int | INT0 of int
+    | WORD of int
+    | REAL of string
+    | STRING of string 
+    | CHAR of string
+
+    | ABSTYPE | AND | ARROW | AS | BAR | CASE | DATATYPE | DOTDOTDOT | ELSE
+    | END | EQUALOP | EQTYPE | EXCEPTION | DO | DOT | DARROW | FN | FUN
+    | FUNCTOR | HANDLE | HASH | IF | IN | INCLUDE | INFIX | INFIXR | LAZY
+    | LET | LOCAL | NONFIX | OF | OP | OPEN | OVERLOAD | RAISE | REC
+    | SHARING | SIG | SIGNATURE | STRUCT | STRUCTURE | THEN | TYPE | VAL
+    | WHERE | WHILE | WILD | WITH | WITHTYPE 
+    (* SML# extensions *)
+    | ATOM | BOXED | CAST | CDECL | DOUBLE | EXPORT | EXTERNAL | FFIAPPLY
+    | IMPORT | SIZEOF | STDCALL | USEOBJ
+
+    | ASTERISK | COLON | COLONGT | COMMA | LBRACE | LBRACKET | LPAREN | RBRACE 
+    | RBRACKET | RPAREN | ORELSE | ANDALSO | FUNSIG | VECTORSTART | BEGINQ 
+    | ENDQ of string | OBJL of string | AQID of string
+
+    | FORMATCOMMENTSTART | FORMATCOMMENTEND
+    | DITTOTAG
+    | PREFIXTAG | FORMATTERTAG | FORMATPARAMSTAG | DESTINATIONTAG | HEADERTAG
+    | FORMATTAG | LOCALFORMATTAG of string
+    | NEWLINE
+    | STARTOFINDENT of int
+    | FORMATINDICATOR of
+      {
+        space : bool,
+        newline : {priority : FormatTemplate.priority} option
+      }
+    | ASSOCINDICATOR of
+      {cut : bool, strength : int, direction : FormatTemplate.assocDirection}
+
+%nonterm ident of string
+       | id of string
+       | int of int
+       | op_op of unit
+       | qid of string list 
+       | selector of string
+       | tycon of string list
+       | tlabel of (string * ty)
+       | tlabels  of (string * ty) list 
+       | ty' of ty
+       | tuple_ty of ty list
+       | ty of ty
+       | ty0_pc of ty list
+       | match of  rule list
+       | rule of  rule
+       | elabel of  (string * exp)
+       | elabels of  (string * exp) list
+       | exp_ps of  exp list
+       | exp of  exp 
+       | app_exp of  exp list
+       | aexp of  exp
+       | exp_list of  exp list
+       | exp_2c  of  exp list
+       | quote of  exp list
+       | ot_list of  exp list
+       | pat of pat
+       | apat of pat
+       | apat' of  pat
+       | plabel of  (string * pat)
+       | plabels of  ((string * pat) list * bool)
+       | pat_2c of  pat list
+       | pat_list of  pat list
+       | or_pat_list of  pat list
+       | vb of  vb list
+       | constraint of ty option
+       | rvb of  rvb list
+       | fb' of  clause list
+       | fb of  fb list
+       | apats of pat list
+       | clause of  clause
+       | tb of tb list
+       | tyvars of tyvar list
+       | tyvarseq of tyvar list
+       | tyvar_pc of tyvar list
+       | db of  db list
+       | dbrhs of dbrhs
+       | constrs of
+         {
+           valConName:string,
+           argTypeOpt:ty option,
+           formatComments: definingFormatComment list
+         } list
+       | constr of
+         {
+           valConName:string,
+           argTypeOpt:ty option,
+           formatComments: definingFormatComment list
+         }
+       | ebs of  eb list
+       | eb of  eb
+       | qid_p of string list list
+       | fixity of fixity
+       | ldec of dec
+       | exp_pa of   exp list
+       | ldecs of  dec
+       | ops of string list
+       | spec_s of  spec list
+       | spec of  spec list
+       | idents of spec list
+       | strspec of  (string * sigexp * path option) list
+       | fctspec of  (string * fsigexp) list
+       | tyspec of  (string * tyvar list * ty option) list
+       | valspec of (string * ty) list
+       | exnspec of (string * ty option) list
+       | sharespec of spec list
+       | patheqn of string list list
+       | whspec of wherespec list
+       | sign of  sigexp
+       | sigconstraint_op of  sigexp sigConst
+       | fsigconstraint_op of fsigexp sigConst
+       | sigb of  sigb list
+       | fsigb of  fsigb list
+       | fsig of  fsigexp
+       | str of  strexp
+       | arg_fct of  (strexp * bool) list
+       | strdec of  dec
+       | strdecs of  dec
+       | sdec of  dec
+       | sdecs of  dec
+       | sdecs' of  dec
+       | strb of  strb list
+       | fparam of  string option * sigexp
+       | fparamList of  (string option * sigexp) list
+       | fctb of  fctb list
+       | fct_exp of fsigexp sigConst -> fctexp
+       | interdec of  dec
+
+       (* SML# extensions *)
+       | cconv of unit
+       | ffiApplyArg of unit
+       | ffiApplyArgs of unit
+       | ffiApplyArgSeq of unit
+       | ffityrow of unit
+       | ffityseq of unit
+       | ffiArgs of unit
+       | ffiContyArg of unit
+       | ffiAtty of unit
+       | ffitupleseq of unit
+       | ffiTupleTy of unit
+       | ffiFunArg of unit
+       | ffiFunty of unit
+       | fficconv of unit
+       | ffity of unit
+
+       (* SMLFormat extension *)
+       | header_format_comment_list of headerFormatComment list
+       | header_format_specs of headerFormatComment
+       | inner_header_format_comment_list of innerHeaderFormatComment list
+       | inner_header_format_specs of innerHeaderFormatComment
+       | inner_header_format_spec of innerHeaderFormatComment
+       | ditto_spec of string
+       | prefix_spec of string
+       | prefix_spec_opt of string
+       | formatter_spec of string * string
+       | formatparams_spec of string list
+       | formatparam_list of string list
+       | destination_spec of string
+       | funheader_spec of string
+       | defining_format_comment of definingFormatComment
+       | defining_format_comment_list of definingFormatComment list
+       | defining_format_comment_list_with_inners of
+         innerHeaderFormatComment list * definingFormatComment list
+       | formattag of formattag
+       | localformattags of formattag list
+       | localformattag of formattag
+       | typepat of typepat
+       | typepat' of typepat
+       | tuple_typepat of typepat list
+       | typepat_rows of (string * typepat) list * bool
+       | typepat_field of string * typepat
+       | atypepat of typepat
+       | atypepat_list of typepat list
+       | templates of template list
+       | template of template
+       | inst of instance
+       | opt_typed of string option
+       | insts of instance list
+       | templates_comma_list of template list list
+
+%verbose
+%pos int
+%start interdec
+%eop EOF SEMICOLON
+%noshift EOF
+
+%nonassoc WITHTYPE
+%right AND
+%right ARROW
+%right DARROW 
+%left DO
+%left ELSE
+%left RAISE
+%right HANDLE
+%right ORELSE
+%right ANDALSO
+%right AS
+%left COLON
+
+
+%name ML
+
+%keyword ABSTYPE AND AS CASE DATATYPE DOTDOTDOT ELSE END 
+  EQTYPE EXCEPTION  DO  DARROW  FN  FUN  FUNCTOR  HANDLE
+  IF IN INCLUDE  INFIX  INFIXR  LAZY LET  LOCAL  NONFIX  OF  OP
+  OPEN OVERLOAD  RAISE  REC  SHARING  SIG  SIGNATURE  STRUCT
+  STRUCTURE THEN TYPE VAL WHILE WHERE WITH WITHTYPE
+  ORELSE ANDALSO 
+
+%change -> VAL | -> THEN | -> ELSE | -> LPAREN | -> SEMICOLON | 
+        DARROW -> EQUALOP | EQUALOP -> DARROW | AND -> ANDALSO | COLON -> OF |
+        SEMICOLON -> COMMA | COMMA -> SEMICOLON |
+        -> IN ID END | -> ELSE ID
+
+%value ID ("BOGUS")
+%value TYVAR ("BOGUS")
+%value INT (1)
+%value INT0 (0)
+%value WORD (0)
+%value REAL ("0.0")
+%value STRING ("")
+%value CHAR ("a")
+
+%header (
+local
+  structure Token = LrParser.Token
+in
+  structure MLLrVals
+)
+%footer (end)
+%%
+
+int : INT (INT)
+    | INT0 (INT0)
+
+id : ID (ID)
+   | ASTERISK ("*")
+
+ident : ID (ID)
+      | ASTERISK ("*")
+      | EQUALOP ("=")
+
+op_op : OP ()
+      | ()
+
+qid : ID DOT qid (ID :: qid)
+    | ident ([ident])
+
+selector: id (id)
+        | INT (Int.toString INT)
+
+tycon : ID DOT tycon (ID :: tycon)
+      | ID ([ID])
+
+tlabel : selector COLON ty (selector, ty )
+
+tlabels : tlabel COMMA tlabels (tlabel :: tlabels)
+        | tlabel ([tlabel])
+
+ty' : TYVAR (MarkTy (VarTy(Tyv(TYVAR)), (TYVARleft, TYVARright)))
+    | LBRACE tlabels RBRACE
+                (MarkTy(RecordTy tlabels, (LBRACEleft, RBRACEright)))
+    | LBRACE RBRACE (RecordTy [])
+    | LPAREN ty0_pc RPAREN tycon
+                (MarkTy(ConTy(tycon, ty0_pc), (tyconleft, tyconright)))
+    | LPAREN ty RPAREN (ty)
+    | ty' tycon (MarkTy(ConTy(tycon, [ty']), (tyconleft, tyconright)))
+    | tycon (MarkTy(ConTy(tycon, []), (tyconleft, tyconright)))
+
+tuple_ty : ty' ASTERISK tuple_ty (ty' :: tuple_ty)
+         | ty' ASTERISK ty' ([ty'1, ty'2])
+
+ty : tuple_ty (TupleTy(tuple_ty))
+   | ty ARROW ty (ConTy([arrowTycon], [ty1, ty2]))
+   | ty' (ty')
+        
+ty0_pc : ty COMMA ty ([ty1, ty2])
+       | ty COMMA ty0_pc (ty :: ty0_pc)
+
+match : rule ([rule])
+      | rule BAR match (rule :: match)
+
+rule : pat DARROW exp (Rule{pat = pat, exp = markexp(exp, expleft, expright)})
+
+                (*         EXPRESSIONS        *)
+
+elabel : selector EQUALOP exp (selector, exp)
+
+elabels : elabel COMMA elabels (elabel :: elabels)
+        | elabel ([elabel])
+
+exp_ps : exp ([exp])
+       | exp SEMICOLON exp_ps (exp :: exp_ps)
+
+exp : exp HANDLE match ()
+    | exp ORELSE exp ()
+    | exp ANDALSO exp ()
+    | exp COLON ty ()
+    | app_exp ()
+    | FN match ()
+    | CASE exp OF match ()
+    | WHILE exp DO exp ()
+    | IF exp THEN exp ELSE exp ()
+    | RAISE exp ()
+    (* SML# extension *)
+    | exp COLON IMPORT ffity ()
+    | FFIAPPLY cconv aexp LPAREN ffiApplyArgs RPAREN COLON ffity ()
+
+app_exp : aexp ([])
+        | aexp app_exp ([])
+
+aexp : ident ()
+        |OP ident ()
+        | ID DOT qid ()
+        | int ()
+        | WORD ()
+        | REAL ()
+        | STRING ()
+        | CHAR ()
+        | HASH selector ()
+        | LBRACE elabels RBRACE ()
+        | LBRACE RBRACE ()
+        | LPAREN RPAREN ()
+        | LPAREN exp_ps RPAREN ()
+        | LPAREN exp_2c RPAREN ()
+        | LBRACKET exp_list RBRACKET ()
+        | LBRACKET RBRACKET ()
+        | VECTORSTART exp_list RBRACKET ()
+        | VECTORSTART RBRACKET ()
+        | LET ldecs IN exp_ps END ()
+        | AQID ()
+        | quote ()
+
+quote : BEGINQ ENDQ ([])
+        | BEGINQ ot_list ENDQ ([])
+
+ot_list : OBJL aexp ([])
+        | OBJL aexp ot_list ([])
+
+exp_2c : exp COMMA exp_2c (exp :: exp_2c)
+        | exp COMMA exp ([exp1, exp2])
+
+exp_list : exp ([exp])
+         | exp COMMA exp_list (exp :: exp_list)
+
+pat : pat AS pat (layered(pat1, pat2))
+    | pat COLON ty (ConstraintPat{pattern=pat, constraint=ty})
+    | apats (FlatAppPat apats)
+
+apat : apat' (apat')
+     | LPAREN pat RPAREN (pat)
+     | id (VarPat [id])
+     | LPAREN RPAREN (unitPat)
+     | LPAREN pat COMMA  pat_list RPAREN (TuplePat(pat :: pat_list))
+     | LPAREN pat BAR or_pat_list RPAREN (OrPat(pat :: or_pat_list))
+
+apat' : OP ident (VarPat [ident])
+      | ID DOT qid (VarPat (ID :: qid))
+      | int (IntPat int)
+      | WORD (WordPat WORD)
+      | STRING (StringPat STRING)
+      | CHAR (CharPat CHAR)
+      | WILD (WildPat)
+      | LBRACKET RBRACKET (ListPat nil)
+      | LBRACKET pat_list RBRACKET (ListPat pat_list)
+      | VECTORSTART RBRACKET (VectorPat nil)
+      | VECTORSTART pat_list RBRACKET (VectorPat pat_list)
+      | LBRACE RBRACE (unitPat)
+      | LBRACE plabels RBRACE        
+        (let val (d, f) = plabels
+         in
+           MarkPat
+               (RecordPat{def = d, flexibility = f}, (LBRACEleft, RBRACEright))
+         end)
+
+plabel : selector EQUALOP pat ((selector, pat))
+       | ID (ID, VarPat [ID])
+       | ID AS pat (ID, LayeredPat{varPat = VarPat [ID], expPat = pat})
+       | ID COLON ty
+         (ID, ConstraintPat{pattern = VarPat [ID], constraint = ty})
+       | ID COLON ty AS pat
+         (
+           ID,
+           LayeredPat
+           {
+             varPat = ConstraintPat{pattern = VarPat [ID], constraint = ty},
+             expPat=pat
+           }
+         )
+
+plabels : plabel COMMA plabels
+                (let val (a, (b, fx)) = (plabel, plabels) in (a :: b, fx) end)
+        | plabel ([plabel], false)
+        | DOTDOTDOT (nil, true)
+
+pat_list : pat ([pat])
+         | pat COMMA pat_list (pat :: pat_list)
+
+or_pat_list : pat ([pat])
+            | pat BAR or_pat_list (pat :: or_pat_list)
+
+vb : vb AND vb (vb1 @ vb2)
+   | LAZY pat EQUALOP exp
+     ([MarkVb(Vb{exp = exp, pat = pat, lazyp = true}, (patleft, expright))])
+   | pat EQUALOP exp
+     ([MarkVb(Vb{exp = exp, pat = pat, lazyp = false}, (patleft, expright))])
+
+constraint : (NONE)
+           | COLON ty (SOME ty)
+
+rvb : id constraint EQUALOP exp
+      ([
+         MarkRvb
+         (
+           Rvb{var = id, resultty = constraint, exp = exp, lazyp = false},
+           (idleft, expright)
+         )
+       ])
+    | OP id constraint EQUALOP exp
+      ([
+         MarkRvb
+         (
+           Rvb{var = id, resultty = constraint, exp = exp, lazyp = false},
+           (OPleft, expright)
+         )
+       ])
+    | rvb AND rvb (rvb1 @ rvb2)
+    | LAZY id constraint EQUALOP exp
+      ([
+         MarkRvb
+         (
+           Rvb{var = id, resultty = constraint, exp = exp, lazyp = true},
+           (idleft, expright)
+         )
+       ])
+    | LAZY OP id constraint EQUALOP exp
+      ([
+         MarkRvb
+         (
+           Rvb{var = id, resultty = constraint, exp = exp, lazyp = true},
+           (OPleft, expright)
+         )
+       ])
+
+fb' : clause ([clause])
+    | clause BAR fb' (clause :: fb')
+
+fb : fb' ([MarkFb(Fb(fb', false), (fb'left, fb'right))])
+   | LAZY fb' ([MarkFb(Fb(fb', true), (fb'left, fb'right))])
+   | fb' AND fb (MarkFb(Fb(fb', false), (fb'left, fb'right)) :: fb)
+   | LAZY fb' AND fb (MarkFb(Fb(fb', true), (fb'left, fb'right)) :: fb)
+
+apats : apat ([apat])
+      | apat apats (apat :: apats) 
+
+clause : apats constraint EQUALOP exp        
+         (Clause
+          {
+            pats = apats,
+            resultty = constraint,
+            exp = markexp(exp, expleft, expright)
+          })
+
+tb : inner_header_format_comment_list
+     tyvars ID EQUALOP defining_format_comment_list ty
+     ([
+        MarkTb
+        (
+          Tb
+          {
+            tyvars = tyvars,
+            tyConName = ID,
+            ty = ty,
+            formatComments = defining_format_comment_list,
+            innerHeaderFormatComments = inner_header_format_comment_list
+          },
+          (tyleft, tyright)
+        )
+      ])
+   | tb AND tb (tb1 @ tb2)
+
+tyvars : TYVAR ([MarkTyv(Tyv(TYVAR), (TYVARleft, TYVARright))])
+       | LPAREN tyvar_pc RPAREN (tyvar_pc)
+       | (nil)
+
+tyvarseq : TYVAR ([MarkTyv(Tyv(TYVAR), (TYVARleft, TYVARright))])
+         | LPAREN tyvar_pc RPAREN (tyvar_pc)
+
+tyvar_pc : TYVAR ([MarkTyv(Tyv(TYVAR), (TYVARleft, TYVARright))])
+         | TYVAR COMMA tyvar_pc
+                (MarkTyv(Tyv(TYVAR), (TYVARleft, TYVARright)) :: tyvar_pc)
+
+db : db AND db (db1 @ db2)
+   | inner_header_format_comment_list tyvars ident EQUALOP dbrhs
+     ([Db{tyConName = ident, tyvars = tyvars, rhs = dbrhs, lazyp = false,
+          innerHeaderFormatComments = inner_header_format_comment_list }])
+   | inner_header_format_comment_list LAZY tyvars ident EQUALOP dbrhs
+     ([Db{tyConName = ident, tyvars = tyvars, rhs = dbrhs, lazyp = true,
+          innerHeaderFormatComments = inner_header_format_comment_list }])
+
+dbrhs : constrs (Constrs constrs)
+      | DATATYPE tycon (Repl tycon)
+
+constrs : constr ([constr])
+        | constr BAR constrs (constr :: constrs)
+
+constr : defining_format_comment_list op_op ident
+          ({
+            formatComments = defining_format_comment_list,
+            valConName = ident,
+            argTypeOpt = NONE
+          })
+        | defining_format_comment_list op_op ident OF ty
+          ({
+            formatComments = defining_format_comment_list,
+            valConName = ident,
+            argTypeOpt = SOME ty
+          })
+
+ebs : eb ([eb])
+    | eb AND ebs (eb :: ebs)
+
+eb : defining_format_comment_list_with_inners op_op ident
+     (
+        EbGen
+        {
+          formatComments =
+              #2 defining_format_comment_list_with_inners,
+          innerHeaderFormatComments =
+              #1 defining_format_comment_list_with_inners,
+          exn = (ident),
+          etype = NONE
+        }
+      )
+   | defining_format_comment_list_with_inners op_op ident OF ty
+     (
+        EbGen
+        {
+          formatComments =
+              #2 defining_format_comment_list_with_inners,
+          innerHeaderFormatComments =
+              #1 defining_format_comment_list_with_inners,
+          exn = (ident),
+          etype = SOME ty
+        }
+      )
+   | defining_format_comment_list_with_inners op_op ident EQUALOP qid
+     (
+        EbDef
+        {
+          formatComments =
+              #2 defining_format_comment_list_with_inners,
+          innerHeaderFormatComments =
+              #1 defining_format_comment_list_with_inners,
+          exn = ident,
+          edef = qid
+        }
+      )
+
+qid_p : qid ([qid])
+      | qid qid_p (qid :: qid_p)
+
+fixity : INFIX (INfix 0)
+        | INFIX int (INfix int)
+        | INFIXR (INfixR 0)
+        | INFIXR int (INfixR int)
+        | NONFIX (NONfix)
+
+ldec : VAL vb (ValDec(vb, nil))
+     | VAL tyvarseq vb (ValDec(vb, tyvarseq))
+     | VAL REC rvb (ValrecDec(rvb, nil))
+     | VAL REC tyvarseq rvb (ValrecDec(rvb, tyvarseq))
+     | FUN fb (FunDec(fb, nil))
+     | FUN tyvarseq fb (FunDec(fb, tyvarseq))
+     | header_format_comment_list TYPE tb
+       (TypeDec {formatComments = header_format_comment_list, tbs = tb})
+     | header_format_comment_list DATATYPE db
+       (DatatypeDec
+        {
+          formatComments = header_format_comment_list,
+          datatycs = db,
+          withtycs = []
+        })
+     | header_format_comment_list DATATYPE db WITHTYPE tb
+       (DatatypeDec
+        {
+          formatComments = header_format_comment_list,
+          datatycs = db,
+          withtycs = tb
+        })
+     | header_format_comment_list ABSTYPE db WITH ldecs END
+       (AbstypeDec
+        {
+          formatComments = header_format_comment_list,
+          abstycs = db,
+          withtycs = [],
+          bodyBeginPos = WITHright,
+          body = ldecs
+        })
+     | header_format_comment_list ABSTYPE db WITHTYPE tb WITH ldecs END
+       (AbstypeDec
+        {
+          formatComments = header_format_comment_list,
+          abstycs = db,
+          withtycs = tb,
+          bodyBeginPos = WITHright,
+          body = ldecs
+        })
+     | header_format_comment_list EXCEPTION ebs
+       (ExceptionDec {formatComments = header_format_comment_list, ebs = ebs})
+     | OPEN qid_p (OpenDec qid_p)
+     | fixity ops (FixDec{fixity = fixity, ops = ops})
+     | OVERLOAD ident COLON ty AS exp_pa (OvldDec(ident, ty, exp_pa))
+
+exp_pa : exp ([exp])
+       | exp AND exp_pa (exp :: exp_pa)
+
+ldecs : (SeqDec nil)
+      | ldec ldecs (makeSEQdec (markdec(ldec, ldecleft, ldecright), ldecs))
+      | SEMICOLON ldecs (ldecs)
+      | LOCAL ldecs IN ldecs END ldecs        
+        (makeSEQdec
+         (
+           markdec
+           (
+             LocalDec
+             (
+               markdec(ldecs1, ldecs1left, ldecs1right),
+               markdec(ldecs2, ldecs2left, ldecs2right)
+             ),
+             LOCALleft,
+             ENDright
+           ),
+           ldecs3
+         ))
+
+ops : ident ([ident])
+    | ident ops (ident :: ops)
+
+spec_s : ([])
+       | spec spec_s (spec @ spec_s)
+       | SEMICOLON spec_s (spec_s)
+
+spec : STRUCTURE strspec ([StrSpec strspec])
+     | FUNCTOR fctspec ([FctSpec fctspec])
+     | DATATYPE db ([DataSpec{datatycs = db, withtycs = nil}])
+     | DATATYPE db WITHTYPE tb ([DataSpec{datatycs = db, withtycs = tb}])
+     | TYPE tyspec ([TycSpec(tyspec, false)])
+     | EQTYPE tyspec ([TycSpec(tyspec, true)])
+     | VAL valspec ([ValSpec valspec])
+     | EXCEPTION exnspec ([ExceSpec exnspec])
+     | SHARING sharespec (sharespec)
+     | INCLUDE sign ([IncludeSpec sign])
+     | INCLUDE ident idents (IncludeSpec(VarSig(ident)) :: idents)
+
+idents : ident ([IncludeSpec(VarSig(ident))])
+       | ident idents (IncludeSpec(VarSig(ident)) :: idents)
+
+strspec : strspec AND strspec (strspec1 @ strspec2)
+        | ident COLON sign ([(ident, sign, NONE)])
+        | ident COLON sign EQUALOP qid ([(ident, sign, SOME(qid))])
+
+fctspec : fctspec AND fctspec (fctspec1 @ fctspec2)
+        | ident fsig ([(ident, fsig)])
+
+tyspec : tyspec AND tyspec (tyspec1 @ tyspec2)
+        | tyvars ID ([(ID, tyvars, NONE)])
+        | tyvars ID EQUALOP ty ([(ID, tyvars, SOME ty)])
+
+valspec : valspec AND valspec (valspec1 @ valspec2)
+        | op_op ident COLON ty ([(ident, ty)])
+
+exnspec : exnspec AND exnspec (exnspec1 @ exnspec2)
+        | ident ([(ident, NONE)])
+        | ident OF ty ([(ident, SOME ty)])
+
+sharespec : sharespec AND sharespec (sharespec1 @ sharespec2)
+         | TYPE patheqn
+           ([MarkSpec(ShareTycSpec(patheqn), (patheqnleft, patheqnright))])
+         | patheqn
+            ([MarkSpec(ShareStrSpec(patheqn),(patheqnleft, patheqnright))])
+        
+patheqn : qid EQUALOP qid ([qid1, qid2])
+        | qid EQUALOP patheqn (qid :: patheqn)
+
+whspec : whspec AND whspec (whspec1 @ whspec2)
+       | TYPE tyvars qid EQUALOP ty ([WhType(qid, tyvars, ty)])
+       | qid EQUALOP qid ([WhStruct(qid1, qid2)])
+
+sign : ident (MarkSig(VarSig(ident), (identleft,identright)))
+     | SIG spec_s END (MarkSig(BaseSig(spec_s), (spec_sleft, spec_sright)))
+     | sign WHERE whspec
+                (MarkSig(AugSig(sign, whspec), (signleft, whspecright)))
+
+sigconstraint_op : (NoSig)
+                 | COLON sign (Transparent(sign))
+                 | COLONGT sign (Opaque(sign))
+
+fsigconstraint_op : (NoSig)
+                  | COLON ident (Transparent(VarFsig (ident)))
+                  | COLONGT ident (Opaque(VarFsig (ident)))
+
+sigb : sigb AND sigb (sigb1 @ sigb2)
+     | ident EQUALOP sign ([Sigb{name = ident, def = sign}])
+
+fsigb : fsigb AND fsigb (fsigb1 @ fsigb2)
+      | ident fparamList EQUALOP sign
+        ([
+           Fsigb
+           {name = ident, def = BaseFsig{param = fparamList, result = sign}}
+         ])
+
+fsig : COLON ident (VarFsig (ident))
+     | fparamList COLON sign (BaseFsig{param = fparamList, result = sign})
+
+str : qid ((MarkStr(VarStr(qid), (qidleft, qidright))))
+    | STRUCT strdecs END (MarkStr(BaseStr strdecs, (STRUCTleft, ENDright)))
+    | qid arg_fct (MarkStr(AppStr(qid, arg_fct), (qidleft, arg_fctright)))
+    | LET strdecs IN str END
+      (MarkStr(LetStr(strdecs, str), (LETleft, ENDright)))
+    | str COLON sign
+      (MarkStr(ConstrainedStr(str, Transparent sign), (strleft, signright)))
+    | str COLONGT sign
+      (MarkStr(ConstrainedStr(str, Opaque sign), (strleft, signright)))
+
+arg_fct : LPAREN strdecs RPAREN arg_fct
+          ((MarkStr(BaseStr strdecs, (strdecsleft, strdecsright)), false) ::
+           arg_fct)
+        | LPAREN str RPAREN arg_fct ((str, true) :: arg_fct)
+        | LPAREN str RPAREN ([(str, true)])
+        | LPAREN strdecs RPAREN
+          ([(MarkStr(BaseStr strdecs, (strdecsleft, strdecsright)), false)])
+
+strdecs : strdec strdecs
+          (makeSEQdec (markdec(strdec, strdecleft, strdecright), strdecs))
+        | SEMICOLON strdecs (strdecs)
+        | (SeqDec[])
+
+sdecs : sdec sdecs
+        (makeSEQdec (markdec(sdec, sdecleft, sdecright), sdecs))
+      | SEMICOLON sdecs (sdecs)
+      | (SeqDec[])
+
+sdecs' : sdec sdecs'
+         (makeSEQdec (markdec(sdec, sdecleft, sdecright), sdecs'))
+       | sdec (markdec(sdec, sdecleft, sdecright))
+
+strdec : STRUCTURE strb (StrDec strb)
+       | FUNCTOR fctb (FctDec fctb)
+       | LOCAL strdecs IN strdecs END
+         (LocalDec
+          (
+            markdec(strdecs1, strdecs1left, strdecs1right),
+            markdec(strdecs2,strdecs2left,strdecs2right)
+          ))
+       | ldec (markdec(ldec, ldecleft, ldecright))
+
+sdec : STRUCTURE strb (StrDec strb)
+     | SIGNATURE sigb (SigDec sigb)
+     | FUNSIG fsigb (FsigDec fsigb)
+     | FUNCTOR fctb (FctDec fctb)
+     | LOCAL sdecs IN sdecs END
+       (LocalDec
+        (
+          markdec(sdecs1, sdecs1left, sdecs1right),
+          markdec(sdecs2, sdecs2left, sdecs2right)
+        ))
+     | ldec (markdec(ldec, ldecleft, ldecright))
+
+strb : ident sigconstraint_op EQUALOP str
+       ([
+          MarkStrb
+          (
+            Strb{name = ident, def = str, constraint = sigconstraint_op},
+            (identleft, strright)
+          )
+        ])
+     | strb AND strb (strb1 @ strb2)
+
+fparam : ID COLON sign ((SOME(ID), sign))
+       | spec_s ((NONE, MarkSig(BaseSig(spec_s), (spec_sleft, spec_sright))))
+
+fparamList : LPAREN fparam RPAREN ([fparam])
+           | LPAREN fparam RPAREN fparamList (fparam :: fparamList)
+
+fctb : ident fparamList sigconstraint_op EQUALOP str
+       ([
+          MarkFctb
+          (
+            Fctb
+            {
+              name = ident,
+              def =
+              BaseFct
+              {params = fparamList, body=str, constraint = sigconstraint_op}
+            },
+            (identleft, strright)
+          )
+        ])
+     | ident fsigconstraint_op EQUALOP fct_exp
+       ([
+          MarkFctb
+          (
+            Fctb{name = ident, def = fct_exp (fsigconstraint_op)},
+            (identleft, fct_expright)
+          )
+        ])
+     | fctb AND fctb (fctb1 @ fctb2)
+
+fct_exp : qid (fn constraint => VarFct(qid, constraint))
+        | qid arg_fct
+          (fn constraint =>
+              MarkFct
+                  (AppFct(qid, arg_fct,constraint), (qidleft, arg_fctright)))
+        | LET strdecs IN fct_exp END        
+          (fn constraint =>
+              MarkFct
+                  (LetFct(strdecs, fct_exp constraint), (LETleft, ENDright)))
+
+interdec : sdecs' (markdec(sdecs', sdecs'left, sdecs'right))
+         | exp
+           (markdec
+            (
+              ValDec([Vb{exp = exp, pat = VarPat itsym, lazyp = false}], nil),
+              expleft,
+              expright
+            ))
+
+(*****************************************************************************)
+(* SML# specific rules. *)
+
+cconv : ()
+      | fficconv ()
+
+(*********** foreign function interface *************)
+
+ffiApplyArg : app_exp COLON ffity ()
+            | SIZEOF LPAREN ty RPAREN ()
+            | SIZEOF LPAREN ty RPAREN ASTERISK aexp ()
+
+ffiApplyArgSeq : ffiApplyArg ()
+               | ffiApplyArg COMMA ffiApplyArgSeq ()
+
+ffiApplyArgs : ()
+             | ffiApplyArgSeq ()
+
+(* FFI type representation *)
+
+ffityrow : ID COLON ffity ()
+         | ID COLON ffity COMMA ffityrow ()
+
+ffityseq : ffity COMMA ffity ()
+         | ffity COMMA ffityseq ()
+
+ffiArgs : ffiAtty ()
+        | LPAREN ffityseq RPAREN ()
+
+ffiContyArg : ()
+            | ffiArgs ()
+
+ffiAtty : LPAREN ffity RPAREN ()
+        | TYVAR ()
+        | ffiContyArg tycon ()
+        | LBRACE ffityrow RBRACE ()
+        | LBRACE RBRACE ()
+
+ffitupleseq : ffiAtty ASTERISK ffiAtty ()
+            | ffiAtty ASTERISK ffitupleseq ()
+
+ffiTupleTy : ffitupleseq ()
+
+ffiFunArg : LPAREN RPAREN ()
+          | ffiArgs ()
+          | ffiTupleTy ()
+
+ffiFunty : ffiFunArg ARROW ffity ()
+         | fficconv ffiFunArg ARROW ffity ()
+
+fficconv : CDECL      ()
+         | STDCALL    ()
+
+ffity : ffiAtty ()
+      | ffiFunty ()
+      | ffiTupleTy ()
+
+(*****************************************************************************)
+(* SMLFormat specific rules. *)
+
+header_format_comment_list
+: ([])
+| FORMATCOMMENTSTART
+  header_format_specs
+  FORMATCOMMENTEND
+  header_format_comment_list
+                (header_format_specs :: header_format_comment_list)
+
+header_format_specs :
+          ({
+             destinationOpt = NONE,
+             funHeaderOpt = NONE,
+             formatters = [],
+             params = [],
+             ditto = [],
+             prefix = Ast.DefaultFormatterPrefix
+           })
+       | ditto_spec header_format_specs
+          ({
+             destinationOpt = #destinationOpt header_format_specs,
+             funHeaderOpt = #funHeaderOpt header_format_specs,
+             formatters = #formatters header_format_specs,
+             params = #params header_format_specs,
+             ditto = [ditto_spec],
+             prefix = #prefix header_format_specs
+           })
+       | prefix_spec header_format_specs
+          ({
+             destinationOpt = #destinationOpt header_format_specs,
+             funHeaderOpt = #funHeaderOpt header_format_specs,
+             formatters = #formatters header_format_specs,
+             params = #params header_format_specs,
+             ditto = #ditto header_format_specs,
+             prefix = prefix_spec
+           })
+       | formatter_spec header_format_specs
+          ({
+             destinationOpt = #destinationOpt header_format_specs,
+             funHeaderOpt = #funHeaderOpt header_format_specs,
+             formatters = formatter_spec :: (#formatters header_format_specs),
+             params = #params header_format_specs,
+             ditto = #ditto header_format_specs,
+             prefix = #prefix header_format_specs
+           })
+       | formatparams_spec header_format_specs
+          ({
+             destinationOpt = #destinationOpt header_format_specs,
+             funHeaderOpt = #funHeaderOpt header_format_specs,
+             formatters = #formatters header_format_specs,
+             params = formatparams_spec @ (#params header_format_specs),
+             ditto = #ditto header_format_specs,
+             prefix = #prefix header_format_specs
+           })
+       | destination_spec header_format_specs
+          ({
+             destinationOpt = SOME destination_spec,
+             funHeaderOpt = #funHeaderOpt header_format_specs,
+             formatters = #formatters header_format_specs,
+             params = #params header_format_specs,
+             ditto = #ditto header_format_specs,
+             prefix = #prefix header_format_specs
+           })
+       | funheader_spec header_format_specs
+          ({
+             destinationOpt = #destinationOpt header_format_specs,
+             funHeaderOpt = SOME funheader_spec,
+             formatters = #formatters header_format_specs,
+             params = #params header_format_specs,
+             ditto = #ditto header_format_specs,
+             prefix = #prefix header_format_specs
+           })
+
+inner_header_format_comment_list
+        : (* none *)
+          ([])
+        | FORMATCOMMENTSTART
+          inner_header_format_specs
+          FORMATCOMMENTEND
+          inner_header_format_comment_list
+          (inner_header_format_specs :: inner_header_format_comment_list)
+        | FORMATCOMMENTSTART
+          FORMATCOMMENTEND
+          inner_header_format_comment_list
+          (inner_header_format_comment_list)
+
+inner_header_format_specs
+        : inner_header_format_spec
+          (inner_header_format_spec)
+        | inner_header_format_spec inner_header_format_specs
+          ({
+             formatters = #formatters inner_header_format_spec
+                          @ #formatters inner_header_format_specs,
+             params = #params inner_header_format_spec
+                      @ #params inner_header_format_specs,
+             prefix = case #prefix inner_header_format_spec of
+                          SOME x => SOME x
+                        | NONE => #prefix inner_header_format_specs
+           })
+
+inner_header_format_spec
+        : formatparams_spec
+          ({
+             formatters = nil,
+             params = formatparams_spec,
+             prefix = NONE
+           })
+(* FIXME: These tags will be enabled.
+        | prefix_spec
+          ({
+             formatters = nil,
+             params = nil,
+             prefix = SOME prefix_spec
+           })
+        | formatter_spec
+          ({
+             formatters = [formatter_spec],
+             params = nil,
+             prefix = NONE
+           })
+*)
+
+prefix_spec : PREFIXTAG ID (ID)
+
+ditto_spec : DITTOTAG ID (ID)
+
+prefix_spec_opt : (Ast.DefaultFormatterPrefix)
+                | prefix_spec (prefix_spec)
+
+formatter_spec : FORMATTERTAG LPAREN qid RPAREN qid
+                 (qidToString qid1, qidToString qid2)
+
+formatparams_spec : FORMATPARAMSTAG LPAREN formatparam_list RPAREN
+                    (formatparam_list)
+
+formatparam_list : ID ([ID])
+                 | ID COMMA formatparam_list (ID :: formatparam_list)
+
+destination_spec : DESTINATIONTAG STRING (STRING)
+
+funheader_spec : HEADERTAG STRING (STRING)
+
+defining_format_comment : FORMATCOMMENTSTART
+                          prefix_spec_opt formattag
+                          localformattags
+                          FORMATCOMMENTEND
+                          ({
+                             prefix = prefix_spec_opt,
+                             primaryTag = formattag,
+                             localTags = localformattags
+                           })
+
+defining_format_comment_list : ([])
+                             | defining_format_comment_list
+                               defining_format_comment
+                               (defining_format_comment_list @
+                                [defining_format_comment])
+                             | defining_format_comment_list
+                               FORMATCOMMENTSTART
+                               FORMATCOMMENTEND
+                               (defining_format_comment_list)
+                             | defining_format_comment_list
+                               FORMATCOMMENTSTART
+                               prefix_spec_opt DITTOTAG
+                               FORMATCOMMENTEND
+                               (let
+                                  val {primaryTag, localTags, ...} =
+                                      List.last defining_format_comment_list
+                                in
+                                  defining_format_comment_list @
+                                  [{
+                                     prefix = prefix_spec_opt,
+                                     primaryTag = primaryTag,
+                                     localTags = localTags
+                                   }]
+                                end
+                                handle Empty => defining_format_comment_list)
+
+defining_format_comment_list_with_inners
+        : (* none *)
+          ((nil, nil))
+        | FORMATCOMMENTSTART
+          inner_header_format_specs
+          FORMATCOMMENTEND
+          defining_format_comment_list_with_inners
+          (
+           (inner_header_format_specs
+            :: #1 defining_format_comment_list_with_inners,
+            #2 defining_format_comment_list_with_inners)
+          )
+        | defining_format_comment
+          defining_format_comment_list_with_inners
+          (
+           (#1 defining_format_comment_list_with_inners,
+            defining_format_comment
+            :: #2 defining_format_comment_list_with_inners)
+          )
+        | FORMATCOMMENTSTART
+          FORMATCOMMENTEND
+          defining_format_comment_list_with_inners
+          (defining_format_comment_list_with_inners)
+
+formattag : FORMATTAG LPAREN typepat RPAREN templates
+            ({id = NONE, typepat = typepat, templates = templates})
+          | FORMATTAG templates (* typepat is dummy *)
+            ({id = NONE, typepat = VarTyPat "_", templates = templates})
+
+localformattags : ([])
+                | localformattag localformattags
+                  (localformattag :: localformattags)
+
+localformattag : LOCALFORMATTAG LPAREN typepat RPAREN templates
+                ({
+                   id = SOME(LOCALFORMATTAG),
+                   typepat = typepat,
+                   templates = templates
+                 })
+
+typepat : tuple_typepat
+          (marktypepat
+           (TupleTyPat tuple_typepat, tuple_typepatleft, tuple_typepatright))
+        | typepat' (typepat')
+
+tuple_typepat : typepat' ASTERISK tuple_typepat (typepat' :: tuple_typepat)
+              | typepat' ASTERISK typepat' ([typepat'1, typepat'2])
+
+typepat' : LBRACE typepat_rows RBRACE
+           (marktypepat(RecordTyPat typepat_rows, LBRACEleft, RBRACEright))
+         | LBRACE RBRACE
+           (marktypepat(RecordTyPat ([], false), LBRACEleft, RBRACEright))
+         | LPAREN typepat RPAREN
+           (marktypepat(typepat, LPARENleft, RPARENright))
+         | atypepat (marktypepat(atypepat, atypepatleft, atypepatright))
+
+atypepat : LPAREN atypepat_list RPAREN ID (TyConTyPat(ID, atypepat_list))
+         | LPAREN atypepat_list RPAREN ID COLON ID
+           (TypedTyConTyPat(ID1, atypepat_list, ID2))
+         | atypepat ID (TyConTyPat(ID, [atypepat]))
+         | atypepat ID COLON ID (TypedTyConTyPat(ID1, [atypepat], ID2))
+         | ID (VarTyPat ID)
+         | ID COLON ID (TypedVarTyPat (ID1, ID2))
+         | WILD (WildTyPat)
+
+atypepat_list : atypepat COMMA atypepat_list (atypepat :: atypepat_list)
+              | atypepat COMMA atypepat ([atypepat1, atypepat2])
+
+typepat_rows : typepat_field COMMA typepat_rows
+                (typepat_field :: (#1 typepat_rows), #2 typepat_rows)
+             | typepat_field ([typepat_field], false)
+             | DOTDOTDOT ([], true)
+
+typepat_field : selector (selector, (VarTyPat selector))
+              | selector COLON typepat (selector, typepat)
+
+templates : template templates (template :: templates)
+          | STARTOFINDENT templates RBRACKET templates
+            (marktemplate
+             (
+              StartOfIndent STARTOFINDENT,
+              STARTOFINDENTleft,
+              STARTOFINDENTright
+             ) ::
+             templates1 @
+             [marktemplate (EndOfIndent, RBRACKETleft, RBRACKETright)] @
+             templates2)
+          | ([])
+
+template : STRING (marktemplate(Term STRING, STRINGleft, STRINGright))
+         | NEWLINE (marktemplate(Newline, NEWLINEleft, NEWLINEright))
+         | ASSOCINDICATOR LBRACE templates RBRACE
+           (marktemplate
+            (
+              Guard(SOME(ASSOCINDICATOR), templates),
+              ASSOCINDICATORleft,
+              RBRACEright
+            ))
+         | LBRACE templates RBRACE
+           (marktemplate(Guard(NONE, templates), LBRACEleft, RBRACEright))
+         | FORMATINDICATOR
+           (marktemplate
+            (
+              Indicator FORMATINDICATOR,
+              FORMATINDICATORleft,
+              FORMATINDICATORright
+            ))
+         | inst (marktemplate(Instance inst, instleft, instright))
+
+inst : ID opt_typed
+                (markinstance(Atom (ID, opt_typed), IDleft, opt_typedright))
+     | ID opt_typed LPAREN insts RPAREN LPAREN templates_comma_list RPAREN
+       (markinstance
+        (App(ID, opt_typed, insts, templates_comma_list),IDleft, RPARENright))
+     | ID opt_typed LPAREN RPAREN LPAREN templates_comma_list RPAREN
+       (markinstance
+        (App(ID, opt_typed, [], templates_comma_list), IDleft, RPARENright))
+     | ID opt_typed LPAREN insts RPAREN
+       (markinstance(App(ID, opt_typed, insts, []), IDleft, RPARENright))
+     | ID opt_typed LPAREN RPAREN
+       (markinstance(App(ID, opt_typed, [], []), IDleft, RPARENright))
+
+opt_typed : (NONE)
+          | COLON ID (SOME(ID))
+
+insts : inst COMMA insts (inst :: insts)
+      | inst ([inst])
+
+templates_comma_list : templates COMMA templates_comma_list
+                       (templates :: templates_comma_list)
+                     | templates ([templates])

@@ -1,0 +1,2 @@
+This is a ported version of ml-lex from SML/NJ 110.73 for SML#.
+The bug of first charactor position is fixed in this version.

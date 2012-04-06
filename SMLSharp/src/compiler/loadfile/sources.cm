@@ -1,4 +1,0 @@
-Group
-	structure LoadFile
-is
-	main/module.cm

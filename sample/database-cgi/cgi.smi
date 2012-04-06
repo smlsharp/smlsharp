@@ -1,0 +1,17 @@
+_require "basis.smi"
+
+structure CGI =
+struct
+  exception HTTPNotFound
+  exception HTTPMethodNotAllowed of string list
+  exception HTTPBadRequest
+  exception Type of string
+  exception Field of string
+  val escapeHTML : string -> string
+  val unescape : string -> string
+  val splitFormURLEncoded : string -> (string * string) list
+  val fetchFormField : string
+                       -> (string -> 'a option)
+                       -> (string * string) list
+                       -> 'a * (string * string) list
+end

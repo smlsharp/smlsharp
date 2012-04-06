@@ -1,0 +1,1442 @@
+_require "../../../basis/main/General.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/binary-op.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../smlnj-lib/Util/ord-key-sig.sml"
+_require "../../../smlnj-lib/Util/ord-set-sig.sml"
+_require "../../../compiler-utils/env/main/IEnv.smi"
+_require "../../../compiler-utils/env/main/ISet.smi"
+_require "../../../compiler-utils/env/main/ENV.sig"
+
+_require "LOCAL_ID.sig"
+
+structure FreeTypeVarID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure BoundTypeVarID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure ClusterID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure ConID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure ExnID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure InterfaceID  = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure OPrimID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure PrimID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure TvarID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure TypID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure VarID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure StructureID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure FunctorID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure FunctionAnnotationID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure AnnotationLabelID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure RevealID = 
+struct
+  eqtype id (= int)
+  structure Map = 
+  struct
+    type 'a map (= boxed)
+    type key = id
+    val compare : key * key -> order
+    val empty : 'a map
+    val isEmpty : 'a map -> bool
+    val singleton : key * 'a -> 'a map
+    val insert : 'a map * key * 'a -> 'a map
+    val insert' : (key * 'a) * 'a map -> 'a map
+    val find : 'a map * key -> 'a option
+    val lookup : 'a map * key -> 'a
+    val inDomain : 'a map * key -> bool
+    val remove : 'a map * key -> 'a map * 'a
+    val first : 'a map -> 'a option
+    val firsti : 'a map -> (key * 'a) option
+    val numItems : 'a map -> int
+    val listItems : 'a map -> 'a list
+    val listItemsi : 'a map -> (key * 'a) list
+    val listKeys : 'a map -> key list
+    val collate : ('a * 'a -> order) -> 'a map * 'a map -> order
+    val unionWith : ('a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val unionWithi : (key * 'a * 'a -> 'a) -> 'a map * 'a map -> 'a map
+    val intersectWith : ('a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val intersectWithi : (key * 'a * 'b -> 'c) -> 'a map * 'b map -> 'c map
+    val mergeWith : ('a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val mergeWithi : (key * 'a option * 'b option -> 'c option) -> 'a map * 'b map -> 'c map
+    val app : ('a -> unit) -> 'a map -> unit
+    val appi : (key * 'a -> unit) -> 'a map -> unit
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val mapi : (key * 'a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldli : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldr : ('a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val foldri : (key * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
+    val filter : ('a -> bool) -> 'a map -> 'a map
+    val filteri : (key * 'a -> bool) -> 'a map -> 'a map
+    val mapPartial : ('a -> 'b option) -> 'a map -> 'b map
+    val mapPartiali : (key * 'a -> 'b option) -> 'a map -> 'b map
+    val fromList : (key * 'a) list -> 'a map
+    val insertWith : ('a -> unit) -> 'a map * key * 'a -> 'a map
+  end
+
+  structure Set =
+  struct
+    structure Key =
+    struct
+      type ord_key = id
+      val compare : ord_key * ord_key -> order
+    end
+    type item = Key.ord_key
+    type set (= boxed)
+    val empty : set
+    val singleton : item -> set
+    val fromList : item list -> set
+    val add : set * item -> set
+    val add' : item * set -> set
+    val addList : set * item list -> set
+    val delete : set * item -> set
+    val member : set * item -> bool
+    val isEmpty : set -> bool
+    val equal : set * set -> bool
+    val compare : set * set -> order
+    val isSubset : set * set -> bool
+    val numItems : set ->  int
+    val listItems : set -> item list
+    val union : set * set -> set
+    val intersection : set * set -> set
+    val difference : set * set -> set
+    val map : (item -> item) -> set -> set
+    val app : (item -> unit) -> set -> unit
+    val foldl : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val foldr : (item * 'a -> 'a) -> 'a -> set -> 'a
+    val partition : (item -> bool) -> set -> set * set
+    val filter : (item -> bool) -> set -> set
+    val exists : (item -> bool) -> set -> bool
+    val find : (item -> bool) -> set -> item option
+  end
+  val compare : id * id -> order
+  val eq : id * id -> bool
+  val generate : unit -> id
+  val format_id : id -> SMLFormat.FormatExpression.expression list
+  val toString : id -> string
+  val toInt : id -> int
+end
+
+structure VarName =
+struct
+  val generate : unit -> string
+end
+

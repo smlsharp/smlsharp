@@ -1,0 +1,31 @@
+_require "../../../basis.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/OPrimMap.smi"
+_require "../../types/main/VarMap.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../types/main/tvarMap.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "TypeInferenceContext.ppg.smi"
+
+structure Printers =
+  struct
+    val print : string -> unit
+    val printPath : string list -> unit
+    val printTy : Types.ty -> unit
+    val printTpdecl : TypedCalc.tpdecl -> unit
+    val printContext
+        : {oprimEnv:{id:OPrimID.id,
+                     path:string list,
+                     ty:Types.ty} OPrimMap.map,
+           tvarEnv:Types.ty TvarMap.map,
+           varEnv:'c VarMap.map}
+          -> unit
+    val printTpexp : TypedCalc.tpexp -> unit
+    val printTpVarInfo : {id:VarID.id, path:string list, ty:Types.ty} -> unit
+    val printIcexp : IDCalc.icexp -> unit
+    val printIcpat : IDCalc.icpat -> unit
+    val printIcdecl : IDCalc.icdecl -> unit
+    val printIcVarInfo : {id:VarID.id, path:string list} -> unit
+  end

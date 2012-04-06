@@ -1,0 +1,12 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+structure LoadFileError =
+struct
+  exception InvalidTopInterface of string
+  exception FileNotFound of string
+  exception CircularLoad of string
+  exception UseWithInterface of string
+  exception EmptyInterface of string
+  exception VirtualInterface of string
+end

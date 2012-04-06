@@ -1,0 +1,14 @@
+(*
+_require "basis/main/StringStructures.smi"
+_require "basis/main/ArrayStructures.smi"
+_require "basis/main/IntStructures.smi"
+_require "basis/main/List.smi"
+_require "basis/main/TextIO.smi"
+_require "basis/main/General.smi"
+_require "basis/main/binary-op.smi"
+*)
+_require "basis.smi"
+structure Main =
+struct
+  val doit : unit -> unit
+end

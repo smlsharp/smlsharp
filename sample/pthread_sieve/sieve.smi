@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "ffi.smi"
+_require "./pthread.smi"
+_require "./mvar.smi"
+
+structure Sieve =
+struct
+  val sieve : int -> unit
+end

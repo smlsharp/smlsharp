@@ -1,8 +1,0 @@
-_require "../../src/main/SMLUnit.smi"
-_require "basis.smi"
-_require "SignedInteger001.smi"
-
-structure Int001 =
-struct
-  val suite : unit -> SMLUnit.Test.test
-end

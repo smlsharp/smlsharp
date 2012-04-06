@@ -1,0 +1,1189 @@
+(**
+ * @copyright (c) 2012- Tohoku University.
+ * @author Atsushi Ohori
+ *)
+(**
+ * user errors detected in type inference phase.
+ * @author Liu Bochao
+ *)
+structure NameEvalError =
+struct
+local
+  structure UE = UserError
+
+  (*% *)
+  type longid =
+       (*%
+          @format(name names) names(name)(".")
+        *)
+       string list
+in
+
+  (*%
+     @formatter(PatternCalc.plpat) PatternCalc.format_plpat
+     @formatter(PatternCalc.ffiTy) PatternCalc.format_ffiTy
+   *)
+  exception
+
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "unbound" +d "structure name:" +d longid
+   *)
+  StrNotFound of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Functor" +d "parameter" +d "restriction:" +d longid
+   *)
+  FunctorParamRestriction of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Primitive" +d "not" +d "found:" +d name
+   *)
+  PrimitiveNotFound of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Runtime" +d "representation" +d "not" +d "found:" +d name
+   *)
+  RuntimeTyNotFound of (string * {name: string})
+
+  and
+  (*%
+     @format(code * {name})
+     "(name evaluation" +d code ")" +d
+     "Builtin" +d "type" + "not" +d "found:" +d name
+   *)
+  BuiltinTyNotFound of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "unbound" +d "variable" +d "or" +d "constructor:" +d
+     longid
+   *)
+  VarOrConNotFound of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid})) 
+     "(name evaluation" +d code ")" +d
+     "unbound" +d "constructor:" +d longid
+   *)
+  ConNotFound of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "unbound" +d "variable:" +d longid
+   *)
+  VarNotFound of (string * {longid: longid})
+
+  and
+  (*%
+    @format((code * {longid}))
+    "(name evaluation" +d code ")" +d
+    "unbound" +d "type" +d "constructor" +d "or" +d "type" +d
+    "alias" ":" +d longid
+   *)
+  TypNotFound of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "illegal" +d "free" +d "type" +d "variable" +d ":" +d name
+   *)
+  TvarNotFound of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {pat}))
+     "(name evaluation" +d code ")" +d
+     "variable" +d "pattern" +d "expected" +d "for" +d "function" +d "id:"
+     +d pat 
+   *)
+  IlleagalFunID of (string * {pat : PatternCalc.plpat})
+
+  and
+  (*%
+    @format((code * {pat}))
+     "(name evaluation" +d code ")" +d
+    "constructor" +d "expected" +d "in" +d "a"
+    +d "constructor" +d "pattern:" +d pat 
+   *)
+  NonConstructor of (string * {pat : PatternCalc.plpat})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "where-type" +d "applied" +d "to" +d "inappropriate" +d "type:"
+     +d longid 
+   *)
+  ImproperSigwhere of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "inappropriate" +d "sharing" +d "type:"
+     +d longid 
+   *)
+  ImproperSigshare of (string * {longid : longid})
+
+(* various duplications *)
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "signature" +d "name:" +d name 
+   *)
+    DuplicateSigname of (string * string)
+
+(* various duplications *)
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "record" +d "label" +d "in" +d "type" +d "annotation:" name
+   *)
+    DuplicateRecordLabelInRawType of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "record" +d "label" +d "in" +d "kind" +d "annotation:" name
+   *)
+    DuplicateRecordLabelInKind of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "structure" +d "name:" +d name 
+   *)
+    DuplicateStrName of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "functor" +d "name:" +d name 
+   *)
+    DuplicateFunctor of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "type" +d "name:"  name
+   *)
+   DuplicateTypName of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "variables" +d "in" +d "patterns:"
+     +d name 
+   *)
+    DuplicateVarInPattern of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "type" +d "parameters"
+   *)
+    DuplicateTypParms of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "function" +d "names" +d "in:"
+     "fun" +d "decl:" +d name 
+   *)
+    DuplicateFunVarInFunDecl of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "rec" +d "var" +d "names" +d "in:"
+     "rec" +d "decl:" +d name 
+   *)
+    DuplicateVarInRecDecl of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "typ" +d "in" +d "type" +d "decl:"
+      +d name 
+   *)
+    DuplicateTypInTypeDecl of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "typ" +d "in" +d "datatype" +d "decl:"
+      +d name 
+   *)
+    DuplicateTypInDty of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "Duplicate" +d "type" +d "constructor" +d "in" +d
+     "spec:" +d name
+   *)
+    DuplicateTypInSpec of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "exception" +d "name:"  name
+   *)
+   DuplicateExnName of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "variable" +d "or" +d "constructor" +d "name" +d "in"
+     +d "spec:" + name
+   *)
+   DuplicateIdInSpec of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "structure" +d "name" +d "in" +d "spec:" + name
+   *)
+   DuplicateStrInSpec of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "constructor" +d "name:"  name
+   *)
+   DuplicateConName of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "variable" +d "name:"  name
+   *)
+   DuplicateVar of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "constructor" +d "name" +d "in" +d "datatype" +d
+     "decl:" +d name
+   *)
+   DuplicateConNameInDty of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "duplicate" +d "structure" +d "name" +d "in" +d "structure" +d
+     "binds:" +d name
+   *)
+   DuplicateStrInStrbind of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "Duplicate" +d "variable" +d "in" +d
+     "spec:" +d name
+   *)
+    DuplicateVarInSpec of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "Duplicate" +d "constructor" +d "in" +d
+     "spec:" +d name
+   *)
+    DuplicateConInSpec of (string * string)
+
+  and
+  (*%
+     @format((code * name))
+     "(name evaluation" +d code ")" +d
+     "Duplicate" +d "datatype" +d "constructor" +d "in" +d
+     "spec:" +d name
+   *)
+    DuplicateDtyInSpec of (string * string)
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "datatype" +d "name" +d "undefined:" +d longid
+   *)
+    DataTypeNameUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "structure" +d "name" +d "undefined:" +d longid
+   *)
+    StructureNameUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {string}))
+     "(name evaluation" +d code ")" +d
+     "functor" +d "name" +d "undefined:" +d string
+   *)
+    FunctorNameUndefined of (string * {string : string})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "exception" +d "undefined:" +d longid
+   *)
+    ExnUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "exception" +d "expected:" +d longid
+   *)
+    ExnExpected of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "datatype" +d "name" +d "expected:" +d longid
+   *)
+    DataTypeNameExpected of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "variable" +d "pattern" +d "expected:"  longid
+   *)
+   VarPatExpected of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "type" +d "constructor" +d
+     "arity" +d "does't" +d "agree:" +d longid
+   *)
+    TypArity of (string * {longid : longid})
+
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "Constructor" +d "not" +d "specified" +d "in" +d "signature:" + longid
+   *)
+    SIGConNotInSig of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "Type" +d "constructor" +d
+     "arity" +d "does't" +d "agree:" +d longid
+   *)
+    SIGArity of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "Illeagal" +d "where" +d "type" +d "specification:" +d longid
+   *)
+    SIGIlleagalRealizer of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "Illeagal" +d "shareing" +d "specification:" +d longid
+   *)
+    SIGIlleagalShare of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "Type" +d "definition" +d
+     "expected:" +d longid
+   *)
+    SIGTypDefExpected of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "Type" +d "constructors" +d
+     "do" +d "not" +d "agree:" +d longid
+   *)
+    SIGTypconMismatch of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "datatype" +d "constructor" +d
+     "arity" +d "does't" +d "agree:" +d longid
+   *)
+    SIGDtyArity of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "datatype" +d "constructor" +d
+     "arity" +d "does't" +d "agree:" +d longid
+   *)
+    SIGTyconArity of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "datatype" +d "expected:" +d longid
+   *)
+    SIGDtyRequired of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch" +d "(datatype):" +d longid
+   *)
+    SIGDtyMismatch of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "datatype" +d "replication" +d "expected:" +d longid
+   *)
+    SIGDtyrepRequired of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "datatype" +d "replication" +d "mismatch:" +d longid
+   *)
+    SIGDtyrepId of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "inconsistent" +d "typ" +d "in" + "datatype" +d "replication:" +d longid
+   *)
+    SIGDtyrepType of (string * {longid : longid})
+
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "Type" +d "constructor" +d "undefined:" +d longid
+   *)
+    SIGTypUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Type" +d "constructor" +d
+     "undefined" +d "in" +d "sig" +d "where:" longid
+   *)
+    TypUndefinedInSigwhere of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Type" +d "constructor" +d
+     "undefined" +d "in" +d "sharing" +d "constraint:" longid
+   *)
+    TypUndefinedInSigshare of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Type" +d "mismatch" +d
+     "in" +d "sig" +d "where:" longid
+   *)
+    TypeErrorInSigwhere of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longidList:longid longids}))
+     "(name evaluation" +d code ")" +d
+     "Type" +d "constructor" +d
+     "arity" +d "mismatch" +d "in" +d "where" +d "type" +d "clause:" 
+     + longids(longid)(",")
+   *)
+    ArityErrorInSigwhere of (string * {longidList : longid list})
+
+  and
+  (*%
+     @format((code * {longidList:longid longids}))
+     "(name evaluation" +d code ")" +d
+     "Type" +d "constructor" +d
+     "arity" +d "mismatch" +d "in" +d "sharing" +d "type" +d "clause:" 
+     + longids(longid)(",")
+   *)
+    ArityErrorInSigShare of (string * {longidList : longid list})
+
+  and
+  (*%
+     @format((code * {longidList:longid longids}))
+     "(name evaluation" +d code ")" +d
+     "Equality" +d "constraint" +d
+     "violation" +d "in" +d "sharing" +d "type" +d "clause:" 
+     + longids(longid)(",")
+   *)
+    EqtypeInSigShare of (string * {longidList : longid list})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Equality" +d "constraint" +d
+     "violation" +d "in" +d "where" +d "type" +d "clause:" 
+     + longid
+   *)
+    EqtypeInSigwhere of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longidList:longid longids}))
+     "(name evaluation" +d code ")" +d
+     "Signature" +d "mismatch" +d
+     "in" +d "sharing" +d "type" +d "clause:" longids(longid)(",")
+   *)
+    SigErrorInSigShare of (string * {longidList : longid list})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "datatype" +d "undefined:" +d longid
+   *)
+    SIGDtyUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "datatype" +d "replication" +d
+     "undefined:" +d longid
+   *)
+    SIGDtyrepUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "constructor" +d "undefined:" +d  
+     longid
+   *)
+    SIGConNotFoundInDty of (string * {longid : longid})
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "constructor" +d
+     "undefined:" +d  
+     longid
+   *)
+    SIGConNotFound of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {typName, conName}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "constructor" +d "of" +d "type" +d typName +d
+     "not" +d "exported:"
+     conName
+   *)
+    SIGConNotExported of (string * {typName:longid, conName:string})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "constructor" +d
+     "undefined:" +d longid
+   *)
+    SIGConUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "eqtype" +d
+     "expected:" +d longid
+   *)
+    SIGEqtype of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "constructor" +d
+     "undefined" +d 
+     longid
+   *)
+    SIGConExpected of (string * {longid : longid})
+
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "exception" +d
+     "undefined" +d 
+     longid
+   *)
+    SIGExnExpected of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch" +d
+     "(exception" +d
+     "argument):" +d 
+     longid
+   *)
+    SIGExnType of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "variable" +d "undefined:" +d
+     longid
+   *)
+    SIGVarUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longidList:longid longids}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "sharing" +d "constraint" +d
+     "not" +d "satisfied:" +d
+     longids(longid)(",")
+   *)
+    SIGShare of (string * {longidList : longid list})
+
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Signature mismatch." +d
+     "structure" +d "undefined" +d
+     longid
+   *)
+    SIGStrUndefined of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Signature" +d
+     "name" +d "undefined" +d
+     name
+   *)
+    SigIdUndefined of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "functor" +d
+     "name" +d "undefined" +d
+     name
+   *)
+    FunIdUndefined of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "type" +d "name" +d "expected" +d
+     "in" +d "where" +d "type" +d "clause:"
+     longid
+   *)
+    SpecTyExpected of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "undefined" +d "exception" +d "id" +
+     ":" +d longid
+   *)
+    ExceptionExpected of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "exception" +d "id" +d "expected" +d
+     "in" +d "exception" +d "replication" +d
+     ":" +d longid
+   *)
+    ExceptionNameUndefined of (string * {longid : longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "type" +d "constructor" +d "undefined" "in" +d
+     "spec:" +d longid
+   *)
+    TypUndefinedInSpec of (string * {longid:longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "structure" +d "undefined" "in" +d
+     "spec:" +d longid
+   *)
+    StrUndefinedInSpec of (string * {longid:longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "datatype" +d "undefined" "in" +d
+     "spec:" +d longid
+   *)
+    DtyUndefinedInSpec of (string * {longid:longid})
+
+(* **********************************************************************)
+
+  and
+  (*%
+     @format((code * {name})) 
+     "(name evaluation" +d code ")" +d
+     "unbound" +d "exception:" +d name
+   *)
+  ExnNotFound of (string * {name: string})
+
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "unbound" +d "signature:" +d name
+   *)
+  SignatureNotFound of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "unbound" +d "functor:" +d name
+   *)
+  FunctorNotFound of (string * {name: string})
+  
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Signature" +d "mismatch" +d "(undefined" + d
+     "datatype" +d "in" +d "structure):" +d name
+   *)
+  SigMisMatchNotFoundDataTy of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Signature" +d "mismatch" +d "(undefined" +d "data" +d 
+     "constructor" +d "in" +d "structure)" name
+   *)
+  SigMisMatchNotFoundCon of (string * {name: string})
+
+  and
+
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Signature" +d "mismatch" +d "(undefined" +d "exception" +d 
+     "constructor" +d "in" +d "structure):" +d name
+   *)
+  SigMisMatchNotFoundExn of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Signature" +d "mismatch:" +d "(undefined" +d "variable" +d 
+     "in" +d "structure):" name
+   *)
+  SigMisMatchNotFoundVar of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Signature" +d "mismatch" +d "(undefined" +d "structure" +d 
+     "in" +d "structure):" +d name
+   *)
+  SigMisMatchNotFoundStr of (string * {name: string})
+
+  and
+  (*%
+     @format((code * {name}))
+     "(name evaluation" +d code ")" +d
+     "Interface" +d "mismatch" +d "(undefined" +d "functor" +d 
+     "in" +d "implementation):" +d name
+   *)
+  InterfaceMisMatchNotFoundFunctor of (string * {name: string})
+
+  (* provide error *)
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Builtin" +d "primitive" +d "in" +d "provide" +d "clause:" + longid
+   *)
+  ProvideBuiltIn of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Orverload" +d "primitive" +d "in" +d "provide" +d "clause:" + longid
+   *)
+  ProvideOverload of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(missing" + "id)"+ ":"
+      + longid
+   *)
+  ProvideUndefinedID of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(type" + "mismatch"+ ":"
+      + longid
+   *)
+  ProvideIDType of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(variable" + "id" + "expected)"+ ":"
+      + longid
+   *)
+  ProvideVarIDExpected of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(variable" + "alias" + "mismatch)"+ ":"
+      + longid
+   *)
+  ProvideVariableAlias of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(missing" + "type" + "name)"+ ":"
+      + longid
+   *)
+  ProvideUndefinedTypeName of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(missing" + "exception" + "name)" +d
+     ":" + longid
+   *)
+  ProvideUndefinedException of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(type" + "definition)" +d
+     ":" +d longid
+   *)
+  ProvideInequalTfun of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(datatype" + "expceted)" +d
+     ":" + longid
+   *)
+  ProvideDtyExpected of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" +d "check" +d "fails" +d
+     "(opaque" +d "type" +d "expceted)" +d
+     ":" + longid
+   *)
+  ProvideOpaqueExpected of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(exception" + "type" + "mistch)" +d
+     ":" +d longid
+   *)
+  ProvideExceptionType of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(generative" +d "exception" +d "definition" +d "expected)" +d
+     ":" +d longid
+   *)
+  ProvideExceptionDef of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(exception" +d "replication" +d "expected)" +d
+     ":" +d longid
+   *)
+  ProvideExceptionRep of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(exception" +d "replication" +d "mismatch)" +d
+     ":" +d longid
+   *)
+  ProvideExceptionRepID of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(type" + "arity" + "mistch)" +d
+     ":" +d longid
+   *)
+  ProvideArity of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(equality" + "type" + "expected)" +d
+     ":" +d longid
+   *)
+  ProvideEquality of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(runtime" + "type" + "mismatch)" +d
+     ":" +d longid
+   *)
+  ProvideRuntimeType of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(constructor" + "type" + "mistch)" +d
+     ":" + longid
+   *)
+  ProvideConType of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(constructore" + "undefined)" +d
+     ":" + longid
+   *)
+  ProvideUndefinedCon of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(structure" + "undefined)" +d
+     ":" + longid
+   *)
+  ProvideUndefinedStr of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(structure" + "replication)" +d
+     ":" + longid
+   *)
+  ProvideStrRep of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(functor" + "undefined)" +d
+     ":" + longid
+   *)
+  ProvideUndefinedFunctorName of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" + "check" +d "fails" +d
+     "(redundant" + "constructor)" +d
+     ":" + longid
+   *)
+  ProvideRedundantCon of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" +d "check" +d "fails" +d
+     "(functor" +d "parameter" +d "signature" +d "mismatch)" +d
+     ":" + longid
+   *)
+  ProvideFunparamMismatch of (string * {longid: longid})
+
+  and
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "Provide" +d "check" +d "fails" +d
+     "(functor" +d "body" +d "signature" +d "mismatch)" +d
+     ":" + longid
+   *)
+  ProvideFunctorMismatch of (string * {longid: longid})
+
+  and
+  (**
+   *)
+  (*%
+     @format((code * ty))
+     "(name evaluation" +d code ")" +d
+     "foreign" +d "function" +d "type" +d "is" +d "not" +d "allowed" +d "here:"
+     +d ty
+   *)
+  FFIFunTyIsNotAllowedHere of (string * PatternCalc.ffiTy)
+
+  and
+  (**
+   *)
+  (*%
+     @format((code * {longid}))
+     "(name evaluation" +d code ")" +d
+     "invalid" +d "overload" +d "instance:" +d longid
+   *)
+  InvalidOverloadInst of (string * {longid: longid})
+
+end
+end

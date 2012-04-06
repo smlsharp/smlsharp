@@ -1,5 +1,0 @@
-Group
-	structure BitmapANormal
-	structure TypeCheckBitmapANormal
-is
-	main/module.cm

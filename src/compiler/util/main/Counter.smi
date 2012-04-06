@@ -1,0 +1,120 @@
+_require "../../../basis/main/binary-op.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/List.smi"
+_require "../../../basis/main/Option.smi"
+_require "../../../basis/main/General.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/IntInf.smi"
+_require "../../../basis/main/Time.smi"
+_require "../../../basis/main/StringCvt.smi"
+_require "../../../smlnj-lib/Util/binary-set-fn.smi"
+_require "../../../compiler-utils/env/main/IEnv.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+_require "COUNTER.sig"
+
+structure Counter =
+struct
+  datatype counterSetOrder = ORDER_BY_NAME | ORDER_OF_ADDITION | ORDER_BY_TIME
+  type accumulationCounter =
+      {name: string,
+      toString : counterSetOrder -> string -> string,
+       inc: unit -> unit,
+       dec: unit -> unit,
+       add: int -> unit,
+       sub: int -> unit,
+       reset: unit -> unit,
+       getValue: unit -> int}
+  type minMaxCounter =
+      {name: string,
+      toString : counterSetOrder -> string -> string,	
+       set: int -> unit,
+       reset: unit -> unit,
+       getMin: unit -> int,
+       getMax: unit -> int}
+  type elapsedTimeCounter =
+      {name: string,
+       toString: counterSetOrder -> string -> string,
+       start: unit -> unit,
+       stop: unit -> unit,
+       reset: unit -> unit,
+       getTime: unit -> Time.time}
+  datatype counterSetInternal =
+      CounterSetInternal of
+      {name: string,
+       addAccumulation: string -> accumulationCounter,
+       addMinMax: string -> minMaxCounter,
+       addElapsedTime: string -> elapsedTimeCounter,
+       addSet: string -> counterSetInternal,
+       listCounters: counterSetOrder -> counterInternal list,
+       find: string -> counterInternal option,
+       reset: unit -> unit}
+  and counterInternal =
+      AccumulationCounter of accumulationCounter
+    | MinMaxCounter of minMaxCounter
+    | ElapsedTimeCounter of elapsedTimeCounter
+    | CounterSet of counterSetInternal
+  type counterSet = 
+      {name : string,
+       addAccumulation : string -> accumulationCounter,
+       addMinMax : string -> minMaxCounter,
+       addElapsedTime : string -> elapsedTimeCounter,
+       addSet : string -> counterSetInternal,
+       listCounters : counterSetOrder -> counterInternal list,
+       find : string -> counterInternal option,
+       reset : unit -> unit}
+  type counter =
+      {counterInternal : counterInternal,
+       toString : counterSetOrder -> string -> string,
+       reset : unit -> unit}
+  val dump : unit -> string
+  val root : counterSet
+
+  val TopCounterSet : counterSet
+  val ElapsedCounterSet : counterSet
+  val parseTimeCounter : elapsedTimeCounter
+  val loadFileTimeCounter : elapsedTimeCounter
+  val generateMainTimeCounter : elapsedTimeCounter
+  val elaborationTimeCounter : elapsedTimeCounter
+  val nameEvaluationTimeCounter : elapsedTimeCounter
+  val valRecOptimizationTimeCounter : elapsedTimeCounter
+  val fundeclElaborationTimeCounter : elapsedTimeCounter
+  val typeInferenceTimeCounter : elapsedTimeCounter
+  val printerGenerationTimeCounter : elapsedTimeCounter
+  val UncurryOptimizationTimeCounter : elapsedTimeCounter
+  val matchCompilationTimeCounter : elapsedTimeCounter
+  val sqlCompilationTimeCounter : elapsedTimeCounter
+  val ffiCompilationTimeCounter : elapsedTimeCounter
+  val recordCompilationTimeCounter : elapsedTimeCounter
+  val datatypeCompilationTimeCounter : elapsedTimeCounter
+  val staticAnalysisTimeCounter : elapsedTimeCounter
+  val recordUnboxingTimeCounter : elapsedTimeCounter
+  val bitmapCompilationTimeCounter : elapsedTimeCounter
+  val bitmapANormalizationTimeCounter : elapsedTimeCounter
+  val bitmapANormalReorderTimeCounter : elapsedTimeCounter
+  val typeCheckBitmapANormalTimeCounter : elapsedTimeCounter
+  val closureConversionTimeCounter : elapsedTimeCounter
+  val toYAANormalTimeCounter : elapsedTimeCounter
+  val anormalOptimizationTimeCounter : elapsedTimeCounter
+  val staticAllocationTimeCounter : elapsedTimeCounter
+  val aigenerationTimeCounter : elapsedTimeCounter
+  val rtlselectTimeCounter : elapsedTimeCounter
+  val rtlTypecheckTimeCounter : elapsedTimeCounter
+  val rtlstabilizeTimeCounter : elapsedTimeCounter
+  val rtlrenameTimeCounter : elapsedTimeCounter
+  val rtlcoloringTimeCounter : elapsedTimeCounter
+  val rtlframeTimeCounter : elapsedTimeCounter
+  val rtlemitTimeCounter : elapsedTimeCounter
+  val rtlasmgenTimeCounter : elapsedTimeCounter
+  val assembleTimeCounter : elapsedTimeCounter
+  val compilationTimeCounter : elapsedTimeCounter
+  val parseArgsTimeCounter : elapsedTimeCounter
+  val compileArgsTimeCounter : elapsedTimeCounter
+  val printHelpTimeCounter : elapsedTimeCounter
+  val loadInterfaceTimeCounter : elapsedTimeCounter
+  val compileFileTimeCounter : elapsedTimeCounter
+  val loadSMITimeCounter : elapsedTimeCounter
+  val linkTimeCounter : elapsedTimeCounter
+  val generateDependTimeCounter : elapsedTimeCounter
+
+end

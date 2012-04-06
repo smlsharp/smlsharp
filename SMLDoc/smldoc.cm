@@ -1,6 +1,0 @@
-Group
-  structure DocumentGenerationParameter
-  signature SMLDOC
-  structure SMLDoc
-is
-  src/main/sources.cm

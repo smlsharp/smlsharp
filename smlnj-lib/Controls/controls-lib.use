@@ -1,9 +1,0 @@
-use "./controls-sig.sml";
-use "./control-reps.sml";
-use "./controls.sml";
-use "./control-set-sig.sml";
-use "./control-set.sml";
-use "./registry-sig.sml";
-use "./control-util-sig.sml";
-use "./control-util.sml";
-use "./registry.sml";

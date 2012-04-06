@@ -1,0 +1,24 @@
+_require "../../basis.smi"
+_require "../lib/base.sig"
+_require "../lib/join.smi"
+_require "../lib/lrtable.smi"
+_require "../lib/parser2.smi"
+_require "absyn.sig"
+_require "absyn.smi"
+_require "grammar.smi"
+_require "hdr.smi"
+_require "mklrtable.smi"
+_require "mkprstruct.smi"
+_require "parse.smi"
+_require "shrink.smi"
+_require "utils.sig"
+_require "sigs.sml"
+_require "utils.smi"
+_require "yacc.grm.smi"
+_require "yacc.lex.smi"
+_require "verbose.smi"
+
+structure ParseGen =
+struct
+  val parseGen : string -> unit
+end

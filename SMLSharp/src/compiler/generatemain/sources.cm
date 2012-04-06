@@ -1,4 +1,0 @@
-Group
-	structure GenerateMain
-is
-	main/module.cm

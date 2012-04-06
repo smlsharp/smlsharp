@@ -1,0 +1,47 @@
+_require "General.smi"
+_require "StringCvt.smi"
+_require "SMLSharpScanChar.smi"
+_require "IntInf.smi"
+_require "String.smi"
+
+structure Int =
+struct
+  type int = SMLSharp.Int.int
+  val toInt : int -> SMLSharp.Int.int
+  val fromInt : SMLSharp.Int.int -> int
+  val toLarge : int -> IntInf.int
+  val fromLarge : IntInf.int -> int
+
+  val precision : SMLSharp.Int.int option
+  val minInt : int option
+  val maxInt : int option
+
+  val + = SMLSharp.Int.add
+  val - = SMLSharp.Int.sub
+  val * = SMLSharp.Int.mul
+  val div = SMLSharp.Int.div
+  val mod = SMLSharp.Int.mod
+  val quot = SMLSharp.Int.quot
+  val rem = SMLSharp.Int.rem
+  val < = SMLSharp.Int.lt
+  val > = SMLSharp.Int.gt
+  val <= = SMLSharp.Int.lteq
+  val >= = SMLSharp.Int.gteq
+  val ~ = SMLSharp.Int.neg
+  val abs = SMLSharp.Int.abs
+
+  val compare : int * int -> order
+  val min : int * int -> int
+  val max : int * int -> int
+  val sign : int -> SMLSharp.Int.int
+  val sameSign : int * int -> bool
+  val fmt : StringCvt.radix -> int -> string
+  val scan : StringCvt.radix
+             -> (char, 'a) StringCvt.reader
+             -> (int, 'a) StringCvt.reader
+  val toString : int -> string
+  val fromString : string -> int option
+end
+
+structure Position = Int
+structure Int32 = Int

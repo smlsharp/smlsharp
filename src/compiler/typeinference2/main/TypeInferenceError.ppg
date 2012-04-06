@@ -1,0 +1,1024 @@
+(**
+ * user errors detected in type inference phase.
+ * @author Atsushi Ohori 
+ * @version $Id: TypeInferenceError.ppg,v 1.74.6.3 2010/01/22 09:19:07 hiro-en Exp $
+ *)
+structure TypeInferenceError =
+struct
+  (***************************************************************************)
+
+  local
+    type longid = Absyn.longid
+    structure I = IDCalc
+    structure UE = UserError
+    fun format_ty ty = (Types.format_ty []) ty
+    fun format_ffiTy ty = TypedCalc.format_ffiTy nil ty
+    val format_AbsynTy = Absyn.format_ty 
+    val errorQueue = UE.createQueue ()
+  in
+
+  (*%
+   * @formatter(Types.ty) format_ty
+   * @formatter(I.ffiTy) I.format_ffiTy
+   * @formatter(Absyn.ty) format_AbsynTy
+   * @formatter(path) Path.format_pathWithoutDotend
+   * @formatter(longid) Absyn.format_longid
+   * @formatter(I.icpat) I.format_icpat
+   *)
+  exception
+  (**
+   * <pre>
+   *  type t = (int, int) option
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon, wants, given}) "(type inference" +d code ")" +d
+   *   "type" +d "constructor" +d tyCon +d "given" +d given +d "arguments,"
+   *  +d "wants" +d wants
+   *)
+  ArityMismatchInTypeDeclaration of string *
+  {tyCon : string, wants : int, given : int}
+
+  and
+  (**
+    fn A.c => e 
+    where A.c is not a data constructor
+   *)
+  (*%
+   * @format(code * longid:longid) "(type inference" +d code ")" +d  
+   * "path" +d longid +d "is" +d "not" +d "a" +d "constructor"
+   *)
+  NonConstructorPathInPat of string * longid
+
+  and
+  (**
+    val ('a#{a:'b}, 'b:{b:'a}) x = ...
+   *)
+  (*%
+   * @format(code * string) "(type inference" +d code ")" +d    
+   * "type" + "variable" + string + "has" + "a" + "cyclic" + "record" + "kind"
+   *)
+  CyclicTvarkindSpec of string * string
+
+  and
+  (**
+      [1, true]
+   *)
+  (*%
+   * @format(code * {prevTy, nextTy}) "(type inference" +d code ")" +d    
+   * "inconsistent" +d "list" +d "element" +d "type:" 
+   *  + 1 "this element:" +d {nextTy} 
+   *  + 1 "other elements:" +d {prevTy} 
+   *)
+ InconsistentListElementType of string * {prevTy:Types.ty, nextTy:Types.ty}
+
+  and
+  (**
+    fn A.c => e 
+    where A.c is not defined.
+   *)
+  (*%
+   * @format(code * longid:longid) "(type inference" +d code ")" +d    
+   * "constructor" +d "path" +d longid +d "undefined"
+   *)
+  ConstructorPathNotFound of string * longid
+
+  and
+  (**
+   * <pre>
+   * fn x => case x of SOME => 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {dummyTyPaths:path paths}) "(type inference" +d code ")" +d   
+    "dummy" +d "type" +d "variable(s)" +d
+    "are" +d "introduced" +d "due" +d "to" +d "value" +d "restriction"
+    +d "in:" +d paths(path)(","+d)
+   *)
+  ValueRestriction of string * {dummyTyPaths : longid list}
+
+  and
+  (**
+   * <pre>
+   * fn x => case x of SOME => 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {longid}) "(type inference" +d code ")" +d  
+     "data" +d "constructor" +d {longid} +d "used" +d "without"
+     +d "argument" +d "in" +d "pattern"
+   *)
+  ConRequireArg of string * {longid : longid}
+
+  and
+  (**
+   * <pre>
+   * fn x => case x of NONE 1 => 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {con}) "(type inference" +d code ")" +d   "constant" +d "constructor" +d "applied" +d "to" +d
+   *    "argument" +d "in" +d "pattern:" {con}
+   *)
+  ConstantConApplied of string * {con : string}
+
+  and
+  (**
+   * <pre>
+   * datatype t = D of 'a
+   * val x = y : ['a. 'a -> 'b] (rank1 type spec should be closed)
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyvar}) "(type inference" +d code ")" +d   "free" +d "type" +d "variable:" +d {tyvar}
+   *)
+  NotBoundTyvar of string * {tyvar : string}
+
+  and
+  (**
+   * <pre>
+   * datatype t = D of 'a
+   * val x = y : 'a   (top level)
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyvar}) "(type inference" +d code ")" +d   "duplicate" +d "type" +d "parameter" +d "name" +d "in" +d "datatype" +d "declaration:" +d {tyvar}
+   *)
+  DuplicateTvarNameInDatatypeArgs of string * {tyvar : string}
+
+  and
+  (**
+   * <pre>
+   * ['a,'a. 'a -> 'a]
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyvar}) "(type inference" +d code ")" +d   "duplicate" +d "user" +d "type" +d "variables" +d ":" +d {tyvar}
+   *)
+  DuplicateUserTvars of string * {tyvar : string}
+
+  and
+  (*%
+   * @format(code * {vars : var vars}) "(type inference" +d code ")" +d  
+   *   "variable(s)" +d vars(var)(","+d) + "do" +d "not" +d "occur" +d "in" +d "all" +d "branches" 
+      +d "of" +d "or-pattern" 
+   *)
+  DIfferentOrPatternVars of string * {vars : string list}
+
+  and
+  (*%
+   * @format(code * {var : var, tys: ty tys}) "(type inference" +d code ")" +d  
+   *   "variable" +d var +d "in" +d "an" +d "or-pattern" + "has" +d "inconsistent" +d "types:" +d tys(ty)(","+d)
+   *)
+  InconsistentOrVarTypes of string * {var : string, tys : Types.ty list}
+
+  and
+  (*%
+   * @format(code * {ty1 : ty1, ty2: ty2}) "(type inference" +d code ")" +d  
+   *   "types" +d "of" +d "or-pattern" + "do" +d "not" +d "agree:"
+         +1 "left" +d "pattern" + "type:" + ty1 
+         +1 "right" +d "pattern" + "type:" + ty2
+   *)
+   DifferentOrPatternTypes of string * {ty1:Types.ty, ty2:Types.ty}
+
+  and
+  (**
+   * <pre>
+   * datatype ''a t = D of 'a
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyvar}) "(type inference" +d code ")" +d   "Inconsistent" +d "equality" +d "types" +d "in" +d "datatype" +d "declaration:" +d {tyvar}
+   *)
+  InconsistentEQInDatatype of string * {tyvar : string}
+
+  and
+  (**
+   * <pre>
+   * fun g x = f true and f x = g (x + 1);
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id, definition, occurrence}) "(type inference" +d code ")" +d  
+   *  "definition" +d "and" +d "occurrence" +d "of" +d "\"" {id} "\"" +d
+   * "don't" +d "agree." +1
+   * "definition:" +d {definition} +1
+   * "occurrence:" +d {occurrence}
+   *)
+  RecDefinitionAndOccurrenceNotAgree of string *
+  {id : string, definition : Types.ty, occurrence : Types.ty}
+
+  and
+  (**
+   * <pre>
+   *  fn x => case x of {a = x, b = x, c = y, d = y} => 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {vars : var vars}) "(type inference" +d code ")" +d  
+   *   "duplicate" +d "variables" +d "in" +d "pattern(s):" +d vars(var)("," +d)
+   *)
+  DuplicatePatternVar of string * {vars : string list}
+
+  and
+  (**
+   * <pre>
+   *  type ('a, 'a) t = 'a * 'a
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tvars : tvar tvars}) "(type inference" +d code ")" +d  
+   *     "duplicate" +d "type" +d "variables" +d "name:" tvars(tvar)("," +d)
+   *)
+  DuplicateTargsInTypeDef of string * {tvars : string list}
+
+  and
+  (**
+   * <pre>
+   *  fn x => case x of 1 1 => 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {pat}) "(type inference" +d code ")" +d  
+   * "non-constructor" +d "applied" +d "to" +d "argument" +d "in" +d "pattern:"
+   * +d {pat}
+   *)
+  NonConstruct of string * {pat : I.icpat}
+
+  and
+  (**
+   * <pre>
+   *   val x = 1 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {ty}) "(type inference" +d code ")" +d   "operator" +d "is" +d "not" +d "a" +d "function:" +d {ty}
+   *)
+  NonFunction of string * {ty : Types.ty}
+
+  and
+  (**
+   * <pre>
+   *   raise 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {ty}) "(type inference" +d code ")" +d  
+   * "the" +d "argument" +d "of" +d "raise" +d "is" +d "not" +d "a" +d
+   * "function." +1
+   * "argument:" +d {ty}
+   *)
+  RaiseArgNonExn of string * {ty : Types.ty}
+
+  and
+  (**
+   * <pre>
+   *   raise 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {label}) "(type inference" +d code ")" +d  
+   * "the" +d "non-existing" +d "label" +d "in" +d "field" +d "selector" +d
+   * "expression" +1
+   * "label:" +d {label}
+   *)
+  FieldNotInRecord of string * {label : string}
+
+  and
+  (**
+   * <pre>
+   *   not 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {domTy, argTy}) "(type inference" +d code ")" +d  
+   * "operator" +d "and" +d "operand" +d "don't" +d "agree"
+   *        +1  "operator domain:" + {domTy}
+   *        +1  "operand:" + {argTy}
+   *)
+  TyConMismatch of string * {domTy: Types.ty, argTy:Types.ty}
+
+  and
+  (**
+   * <pre>
+   *   not 1
+   * </pre>
+   *)
+  (*%
+     @format(code * {domTyList:dty dtys , argTyList: aty atys})
+      "(type inference" +d code ")" +d  
+      "operator" +d "and" +d "operand" +d "don't" +d "agree"
+           +1  "operator domain:" + {dtys(dty)(","+1)}
+           +1  "operand:" + {atys(aty)(","+1)}
+   *)
+  TyConListMismatch of string *
+                       {domTyList: Types.ty list, argTyList:Types.ty list}
+
+  and
+  (**
+   * <pre>
+   *   not 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {funTy, argTy}) "(type inference" +d code ")" +d  
+   * "operator" +d "and" +d "operand" +d "don't" +d "agree"
+   *        +1  "operator:" + {funTy}
+   *        +1  "operand:" + {argTy}
+   *)
+  FunTyConMismatch of string * {funTy: Types.ty, argTy:Types.ty}
+
+  and
+  (**
+   * <pre>
+   *   not 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {patTy, expTy}) "(type inference" +d code ")" +d  
+   * "types" +d "of" +d "pattern" +d "and" +d "expression" +d "don't"
+   * +d "agree" +d "in" +d "declaration"
+   *        +1  "pattern type:" + {patTy}
+   *        +1  "expression type:" + {expTy}
+   *)
+  PatternExpMismatch of string * {patTy: Types.ty, expTy:Types.ty}
+
+  and
+  (**
+   * <pre>
+   *    1 => 1
+   *  | "1" => "1"
+   * </pre>
+   *)
+  (*%
+   * @format(code * {thisRule, otherRules}) "(type inference" +d code ")" +d   
+   * "type" +d "of" +d "a" +d "rule" +d "does" +d "not" +d "agree" +d
+   * "with" +d "other" +d "rules"
+   *        +1  "this rule:" + {thisRule}
+   *        +1  "other rules:" + {otherRules}
+   *)
+  RuleTypeMismatch of string * {thisRule: Types.ty, otherRules:Types.ty}
+
+  and
+  (**
+   * <pre>
+   *   not 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {expTy, handlerTy}) "(type inference" +d code ")" +d   
+   *  "handler" +d "type" +d "does" +d "not" +d "agree" +d "with" +d
+   * "expression"
+   *        +1  "expression type:" + {expTy}
+   *        +1  "handler type:" + {handlerTy}
+   *)
+  HandlerTy of string * {expTy: Types.ty, handlerTy:Types.ty}
+
+  and
+  (**
+   * <pre>
+   *   not 1
+   * </pre>
+   *)
+  (*%
+   * @format(code * {ty, annotatedTy}) "(type inference" +d code ")" +d  
+   *    "type" +d "and" +d "type annotation" +d "don't" +d "agree"
+   *        +1  "  inferred type:" + {ty}
+   *        +1  "type annotation:" + {annotatedTy}
+   *)
+  TypeAnnotationNotAgree of string * {ty : Types.ty, annotatedTy : Types.ty}
+
+  and
+  (*%
+   * @format(code * {path: id ids, ty, annotatedTy})
+   * "(type inference" +d code ")" +d  
+   *    "signature" +d "mismatch" +d "at" +d ids(id)(".")
+   *        +1  "  inferred type:" + {ty}
+   *        +1  "type annotation:" + {annotatedTy}
+   *)
+  SignatureMismatch of string * {path : string list, ty : Types.ty,
+                                 annotatedTy : Types.ty}
+
+  and
+  (**
+   * <pre>
+   *  fn x => case x of NONE as y => y
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d  
+   *  "pattern" +d "to" +d "left" +d "of" +d "\"as\"" +d "must" +d "be"
+   *        +d  "variable:"  +d id
+   *)
+  NonIDInLayered of string * {id : string}
+
+  and
+  (**
+   * <pre>
+   * exception E = x
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon}) "(type inference" +d code ")" +d   "found" +d "data" +d "constructor" +d "instead" +d "of"
+   *        +d "exception:" +1 tyCon
+   *)
+  NotExnCon of string * {tyCon : string}
+
+  and
+  (*% 
+    @format(code) "(type inference" +d code ")"
+   * +d "record" +d "lables" +d "do" +d "not" +d "agree."
+   *)
+  (**
+   * <p>
+   * </p>
+   *)
+  RecordLabelSetMismatch of string
+
+(* this must go to elab.
+  and
+  (**
+   * <p>
+   *  val rec (x, y) = (fn x => x, fn x => x)
+   * </p>
+   *)
+  (*%
+   * @format "left" +d "hand" +d "of" +d "val" +d "rec" +d "must" +d "be" +d
+   *         "be" +d "variable"
+   *)
+  RecValNotID
+*)
+  and
+  (**
+   * <pre>
+   *  type t = foo
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon}) "(type inference" +d code ")" +d   "unbound" +d "type" +d "constructor:" +d tyCon
+   *)
+  TyConNotFoundInIntro of string * {tyCon : string}
+
+  and
+  (**
+   * <pre>
+   *  type t = foo
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon}) "(type inference" +d code ")" +d   "unbound" +d "type" +d "constructor:" +d tyCon
+   *)
+  TyConNotFoundInRawTy of string * {tyCon : string}
+
+  and
+  (**
+   * <pre>
+   * type foo = ty
+   * datatype t = foo
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon}) "(type inference" +d code ")" +d   "type" +d "constructor" +d "expected:" +d tyCon
+   *)
+  TyConNotFoundInReplicateData of string * {tyCon : string}
+
+  and
+  (**
+   * <pre>
+   * spec 
+   * share t1 = t2 (with some ti not defined in spec)
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon}) "(type inference" +d code ")" +d  
+   * "type" +d "constructor" +d "name" +d "not" +d "declared:" +d tyCon
+   *)
+  TyConNotFoundInShare of string * {tyCon : string}
+
+  and
+  (**
+   * <pre>
+   * datatype t = datatype foo
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyFun}) "(type inference" +d code ")" +d   "unbound" +d "type" +d "constructor:" +d tyFun
+   *)
+  TyFunFoundInsteadOfTyCon of string * {tyFun : string}
+
+  and
+  (**
+   * <pre>
+   * val x = foo 1
+   * exception e = foo
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "unbound" +d "variable" +d "or" +d "constructor(type inference):" +d id
+   *)
+  VarNotFound of string * {id : string}
+
+  and
+  (**
+   * <p>
+   *   exception foo of 'a
+   * </p>
+   *)
+  (*%
+   * @format(code * id) "(type inference" +d code ")" +d  
+   * "free" +d "type" +d "variable" +d "in" +d "exception" +d "type"
+   *)
+  FreeTypeVariablesInExceptionType of string * {exid:string}
+
+  and
+  (**
+   * <p>
+   * sig
+   *    val a : int
+   *    val a : bool
+   * end
+   * </p>
+   *)
+  (*%
+   * @format "having" +d "duplicate" +d "specification"
+   *)
+  DuplicateSpecs
+
+  and
+  (**
+   * <p>
+   * sig
+   *    val a : int
+   *    val a : bool
+   * end
+   * </p>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "duplicate" +d "specification:" +d id
+   *)
+  DuplicateSpecification of string * {id:string}
+
+  and 
+  (**
+   * <p>
+   * structure A : foo =
+   * struct
+   *      ...
+   * end
+   * </p>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "unbound" +d "signature:" +d id
+   *)
+  SignatureNotFound of string * {id:string}
+
+  and
+  (**
+   * <p>
+   * functor A (S: <sigexp>) =
+   * struct
+   *      ...
+   * end : <sigexp>
+   * </p>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "unbound" +d "functor:" +d id
+   *)
+  FunctorNotFound of string * {id:string}
+
+  and 
+  (**
+   * <p>
+   * structure foo =
+   * struct
+   *      ...
+   * end
+   * </p>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "unbound" +d "structure:" +d id
+   *)
+  StructureNotFound of string * {id:string}
+
+  and
+  (**
+   * <pre>
+   *  type t = foo
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon}) "(type inference" +d code ")" +d   "unbound" +d "type" +d "constructor:" +d tyCon
+   *)
+  TyConNotFoundInRealisation of string * {tyCon : string}
+
+  and
+  (**
+   * <pre>
+   *  where type foo = ty (foo is a datatype)
+   * </pre>
+   *)
+  (*%
+   * @format(code * {longTyCon}) "(type inference" +d code ")" +d  
+   * "type" +d "annotation" +d "for" +d "type function:" +d longTyCon
+   *)
+  TyFunWithWhereType of string * {longTyCon : string}
+
+  and
+  (**
+   * <pre>
+   *  where type foo = ty (foo is a datatype)
+   * </pre>
+   *)
+  (*%
+   * @format(code * {longTyCon}) "(type inference" +d code ")" +d  
+   * "type" +d "annotation" +d "for" +d "datatype:" +d longTyCon +d " is not"
+   * +d "well-formed"
+   *)
+  DatatypeNotWellFormed of string * {longTyCon : string}
+
+  and
+  (**
+   * <pre>
+   *  where type foo = real (foo is a eqtype)
+   * </pre>
+   *)
+  (*%
+   * @format(code * {longTyCon}) "(type inference" +d code ")" +d  
+   * "equality" +d "type" +d "required" +d "for:" +d longTyCon
+   *)
+  EqtypeRequiredInWhereType of string * {longTyCon : string}
+
+  and
+  (**
+   * <pre>
+   *  where type foo = real (foo is a eqtype)
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon, wants, given}) "(type inference" +d code ")" +d  
+   *   "arity mismatch in where type:" tyCon +d "given" +d given +d "arguments,"
+   *  +d "wants" +d wants
+   *)
+  ArityMismatchInWhereType of string * {tyCon : string, wants : int, given : int}
+
+  and
+  (**
+   * <pre>
+   *  where type foo = ty (foo not defined)
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyCon}) "(type inference" +d code ")" +d   "type" +d "constructor" +d "not" +d "found:" + tyCon
+   *)
+  TyConNotFoundInWhereType of string * {tyCon : string}
+
+  and 
+  (**
+   * <pre>
+   *  type s 
+   *  type t = int * int
+   *  sharing type s = t
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName}) "(type inference" +d code ")" +d  
+   * "Type" +d  "sharing" +d "against" +d "concrete" +d "type:" + tyConName
+   *)
+  SharingOnTypeFun of string * {tyConName : string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "rigid" +d "type" +d "in" +d "where" +d "type" +d "realisation:" id
+   *)
+  RigidTypeInRealisation of string * {id : string}
+
+  and 
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d  
+   * "NON-Flexible" +d "type" +d "in" +d "type" +d "Realisation:" id
+   *)
+  NONFlexibleTypeInRealisation of string * {id : string}
+
+  and 
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d  
+   * "NON-Flexible" +d "type" +d "in" +d "type" +d "Realisation:" id
+   *)
+  RealisationDoesNotRespectEquality of string * {id : string}
+
+  and 
+  (**
+   * <pre>
+   * spec sharing lonstrid_1 = ... = longstrid_k
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "rigid" + d "type" +d "in" +d "sharing" +d "structure:" id 
+   *)
+  RigidTypeInSharingStructure of string * {id : string}
+
+  and
+  (**
+   * <pre>
+   * spec sharing lonstrid_1 = ... = longstrid_k
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "rigid" + d "type" +d "in" +d "sharing:" id 
+   *)
+  RigidTypeInSharing of string * {id : string}
+
+  and 
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {id}) "(type inference" +d code ")" +d   "illegal" +d  "type" +d  "function:"   + id
+   *)
+  IllegalTypeFunction of string * {id : string}
+  and
+
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName}) "(type inference" +d code ")" +d   "datatype " +d  "contains" +d  "unbound" + "type:"  + tyConName
+   *)
+  DatatypeContainUnboundType of string * {tyConName : string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d  "(arity):"   + tyConName
+   *)
+  ArityMismatchInSigMatch of string * {tyConName:string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d  "(equality):"   + tyConName
+   *)
+   EqErrorInSigMatch of string * {tyConName : string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d  "(tycon):" + tyConName
+   *)
+   TyConMisMatchInSigMatch of string * {tyConName:string}
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName1,tyConName2}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d  "(tycon" +d "sharing):" + tyConName1 +d tyConName2
+   *)
+   SharingTypeMismatchInSigMatch of string * {tyConName1:string,tyConName2:string}
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {Cons}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d ":" "Constructors"  +d Cons +d "only" +d "occur" +d "in" +d "signature"
+   *)
+   RedunantConstructorInSignatureInSigMatch of string * {Cons : string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {Cons}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d ":" "Constructors"  +d Cons +d "only" +d "occur" +d "in" +d "structure"
+   *)
+   RedunantConstructorInStructureInSigMatch of string * {Cons : string}
+
+  and
+
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {name}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d  "(undefined tycon):" + name
+   *)
+   unboundTyconInSigMatch of string * {name: string}
+
+  and
+
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {name}) "(type inference" +d code ")" +d  
+   * "signature" +d  "mismatch" +d  "(undefined functor):" + name
+   *)
+   unboundFunctorInSigMatch of string * {name: string}
+
+  and
+
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {strName}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d  "(undefined structure):" + strName
+   *)
+   unboundStructureInSigMatch of string * {strName: string}
+
+  and
+
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {varName}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d  "(undefined val identifer):" + varName
+   *)
+   unboundVarInSigMatch of string * {varName: string }
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName,ty1,ty2}) "(type inference" +d code ")" +d  
+   * "Signature" +d  "mismatch" +d  "(instance):" + tyConName + ":" +1 
+   *    +1 "structure:" + {ty1}
+   *    +1 "spec:"  + {ty2}
+   *)
+  InstanceCheckInSigMatch of string * {tyConName:string,ty1:Types.ty,ty2:Types.ty}
+
+  and  
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName}) "(type inference" +d code ")" +d  
+   * "Duplicate" +d  "type" +d "name" +d "in" +d "datatype:" + tyConName
+   *)
+  DuplicateTypeNameInDatatypes of string * {tyConName:string}
+  
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName}) "(type inference" +d code ")" +d  
+   * "data" +d  "constructor" +d "required" +d "in" +d "signature:" + tyConName
+   *)
+  DataConRequiredInSigMatch of string * {tyConName:string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {tyConName}) "(type inference" +d code ")" +d  
+   * "exception" +d  "constructor" +d "required" +d "in" +d "signature:" + tyConName
+   *)
+  ExnConRequiredInSigMatch of string * {tyConName:string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {utvarName}) "(type inference" +d code ")" +d  
+   * "User" +d  "type" +d "variable" +d "cannot" +d "be" +d
+   * "generalized:" + utvarName
+   *)
+  UserTvarNotGeneralized of string * {utvarName:string}
+
+  and
+  (**
+   * <pre>
+   * </pre>
+   *)
+  (*%
+   * @format(code * {fileName}) "(type inference" +d code ")" +d  
+   * fileName +d "specifies" +d "no" +d "export" + "interface"
+   *
+   *)
+  EmptyExportInterface of string * {fileName:string}
+  
+  and
+  (**
+   *)
+  (*%
+   * @format(code * ffity) "(type inference" +d code ")" +d   
+   * "not" +d "an" +d "interoperable" +d "type:" +d ffity
+   *)
+  NonInteroperableType of string * I.ffiTy
+
+  and
+  (**
+   *)
+  (*%
+   * @format(code * specTy * expTy) "(type inference" +d code ")" +d  
+   * "FFI" +d "type" +d "mismatch"
+   *    +1 "expression:" + {expTy}
+   *    +1 "spec:"  + {specTy}
+   *)
+  FFIStubMismatch of string * Types.ty * Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(code * ty) "(type inference" +d code ")" +d  
+   * "invalid" +d "occurence" +d "of" +d "type" +d "variable"
+   * +d "for" +d "FFI:" +d ty
+   *)
+  FFIInvalidTyvar of string * Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(code * ty) "(type inference" +d code ")" +d  
+   * "forcely" +d "importing" +d "a" +d "foreign" +d "function" +d
+   * "is" +d "not" +d "allowed:" +d ty
+   *)
+  ForceImportForeignFunction of string * I.ffiTy
+
+  and
+  (**
+   *)
+  (*%
+   * @format(code * ty) "(type inference" +d code ")" +d  
+   * "invalid" +d "type" +d "for" +d "SQL" +d "table" +d "declaration:" +d ty
+   *)
+  InvalidSQLTableDecl of string * Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(code * ty) "(type inference" +d code ")" +d  
+   * "incompatible" +d "type" +d "with" +d "SQL:" +d ty
+   *)
+  IncompatibleWithSQL of string * Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(code * ty) "(type inference" +d code ")" +d  
+   * "invalid" +d "database" +d "id" +d "type:" +d ty
+   *)
+  InvalidSQLDBI of string * Types.ty
+
+  val isAnyError = ref false
+
+  fun initializeTypeinfError () = 
+      (UE.clearQueue errorQueue; isAnyError := false)
+  fun getErrorsAndWarnings () = UE.getErrorsAndWarnings errorQueue
+  fun getErrors () = UE.getErrors errorQueue
+  fun isError () = !isAnyError
+  fun getWarnings () = UE.getWarnings errorQueue
+  fun enqueueError code x = 
+      (isAnyError := true; UE.enqueueError errorQueue x)
+  val enqueueWarning = UE.enqueueWarning errorQueue
+  end
+end

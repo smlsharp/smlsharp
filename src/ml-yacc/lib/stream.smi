@@ -1,0 +1,10 @@
+_require "../../basis.smi"
+_require "base.sig"
+
+structure Stream =
+struct
+  type 'a stream (= boxed)
+  val streamify : (unit -> 'a) -> 'a stream
+  val cons : 'a * 'a stream -> 'a stream
+  val get : 'a stream -> 'a * 'a stream
+end

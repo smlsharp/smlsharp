@@ -1,0 +1,7 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+structure ParserError =
+struct
+  exception ParseError of string
+end

@@ -1,0 +1,23 @@
+_require "../../basis.smi"
+_require "../../compiler-utils/env/main/SEnv.smi"
+_require "../../compiler/toolchain/main/Filename.smi"
+_require "Version.smi"
+
+structure SMLSharp_Config =
+struct
+  exception Load
+  val loadConfig : Filename.filename -> unit
+  val CC : unit -> string
+  val LD : unit -> string
+  val AR : unit -> string
+  val RANLIB : unit -> string
+  val LDFLAGS : unit -> string
+  val LIBS : unit -> string
+  val DLLEXT : unit -> string
+  val LIBEXT : unit -> string
+  val ASMEXT : unit -> string
+  val OBJEXT : unit -> string
+  val NATIVE_TARGET : unit -> string
+  val A_OUT : unit -> string
+  val RUNLOOP_DLDFLAGS : unit -> string
+end

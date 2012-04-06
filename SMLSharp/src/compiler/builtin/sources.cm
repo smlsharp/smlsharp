@@ -1,7 +1,0 @@
-Group
-	structure BuiltinPrimitive
-	structure BuiltinType
-	structure BuiltinContextSources
-	structure BuiltinName
-is
-        main/module.cm

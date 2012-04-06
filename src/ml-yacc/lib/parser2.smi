@@ -1,0 +1,81 @@
+_require "../../basis.smi"
+_require "base.sig"
+_require "stream.smi"
+_require "lrtable.smi"
+
+structure LrParser =
+struct
+  structure Stream =
+  struct
+    type 'a stream = 'a Stream.stream
+    val streamify : (unit -> 'a) -> 'a stream
+    val cons : 'a * 'a stream -> 'a stream
+    val get : 'a stream -> 'a * 'a stream
+  end
+  structure LrTable =
+  struct
+    datatype pairlist = datatype LrTable.pairlist
+    datatype state = datatype LrTable.state
+    datatype term = datatype LrTable.term
+    datatype nonterm = datatype LrTable.nonterm
+    datatype action = datatype LrTable.action
+    type table = LrTable.table
+    val numStates : table -> int
+    val numRules : table -> int
+    val describeActions : table -> state -> (term, action) pairlist * action
+    val describeGoto : table -> state -> (nonterm, state) pairlist
+    val action : table -> state * term -> action
+    val goto : table -> state * nonterm -> state
+    val initialState : table -> state
+    exception Goto = LrTable.Goto
+    val mkLrTable : {actions : ((term, action) pairlist * action) array,
+                     gotos : (nonterm, state) pairlist array,
+                     numStates : int, numRules : int,
+                     initialState : state} -> table
+  end
+  structure Token =
+  struct
+    structure LrTable =
+    struct
+      datatype pairlist = datatype LrTable.pairlist
+      datatype state = datatype LrTable.state
+      datatype term = datatype LrTable.term
+      datatype nonterm = datatype LrTable.nonterm
+      datatype action = datatype LrTable.action
+      type table = LrTable.table
+      val numStates : table -> int
+      val numRules : table -> int
+      val describeActions : table -> state -> (term, action) pairlist * action
+      val describeGoto : table -> state -> (nonterm, state) pairlist
+      val action : table -> state * term -> action
+      val goto : table -> state * nonterm -> state
+      val initialState : table -> state
+      exception Goto = LrTable.Goto
+      val mkLrTable : {actions : ((term, action) pairlist * action) array,
+                       gotos : (nonterm, state) pairlist array,
+                       numStates : int, numRules : int,
+                       initialState : state} -> table
+    end
+    datatype ('a, 'b) token = TOKEN of LrTable.term * ('a * 'b * 'b)
+    val sameToken : ('a, 'b) token * ('a, 'b) token -> bool
+  end
+  exception ParseError
+  val parse
+      : {table : LrTable.table,
+         lexer : ('b, 'c) Token.token Stream.stream,
+         arg: 'a,
+         saction : int * 'c * (LrTable.state * ('b * 'c * 'c)) list * 'a ->
+                   LrTable.nonterm * ('b * 'c * 'c) *
+                   (LrTable.state * ('b * 'c * 'c)) list,
+         void : 'b,
+         ec : {is_keyword : LrTable.term -> bool,
+               noShift : LrTable.term -> bool,
+               preferred_change : (LrTable.term list * LrTable.term list)
+                                  list,
+               errtermvalue : LrTable.term -> 'b,
+               showTerminal : LrTable.term -> string,
+               terms: LrTable.term list,
+               error : string * 'c * 'c -> unit},
+         lookahead : int} ->
+        'b * ('b, 'c) Token.token Stream.stream
+end

@@ -1,0 +1,50 @@
+_require "General.smi"
+_require "StringCvt.smi"
+_require "Word.smi"
+_require "IntInf.smi"
+_require "Int.smi"
+
+structure Word8 =
+struct
+  type word = SMLSharp.Word8.word
+  val wordSize : int
+  val toInt = SMLSharp.Word8.toInt
+  val toIntX = SMLSharp.Word8.toIntX
+  val toLarge = SMLSharp.Word8.toWord
+  val toLargeWord = SMLSharp.Word8.toWord
+  val fromInt = SMLSharp.Word8.fromInt
+  val fromLarge : LargeWord.word -> word
+  val fromLargeWord : LargeWord.word -> word
+  val + = SMLSharp.Word8.add
+  val - = SMLSharp.Word8.sub
+  val * = SMLSharp.Word8.mul
+  val div = SMLSharp.Word8.div
+  val mod = SMLSharp.Word8.mod
+  val < = SMLSharp.Word8.lt
+  val <= = SMLSharp.Word8.lteq
+  val > = SMLSharp.Word8.gt
+  val >= = SMLSharp.Word8.gteq
+
+  val toLargeX : word -> LargeWord.word
+  val toLargeWordX : word -> LargeWord.word
+  val toLargeInt : word -> IntInf.int
+  val toLargeIntX : word -> IntInf.int
+  val fromLargeInt : IntInf.int -> word
+  val andb : word * word -> word
+  val orb : word * word -> word
+  val xorb : word * word -> word
+  val notb : word -> word
+  val << : word * SMLSharp.Word.word -> word
+  val >> : word * SMLSharp.Word.word -> word
+  val ~>> : word * SMLSharp.Word.word -> word
+  val ~ : word -> word
+  val compare : word * word -> order
+  val min : word * word -> word
+  val max : word * word -> word
+  val fmt : StringCvt.radix -> word -> string
+  val toString : word -> string
+  val scan : StringCvt.radix
+             -> (char, 'a) StringCvt.reader
+             -> (word, 'a) StringCvt.reader
+  val fromString : string -> word option
+end

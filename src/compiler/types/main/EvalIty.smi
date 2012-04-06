@@ -1,0 +1,41 @@
+_require "../../../basis.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+_require "IDCalc.ppg.smi"
+_require "tvarMap.smi"
+_require "VarMap.smi"
+_require "OPrimMap.smi"
+_require "Types.ppg.smi"
+
+structure EvalIty =
+struct
+  exception EVALTFUN of {iseq: bool,
+                         formals: IDCalc.formals,
+                         realizerTy: IDCalc.ty}
+  type ityContext = {oprimEnv:IDCalc.ty OPrimMap.map,
+                     tvarEnv:Types.ty TvarMap.map,
+                     varEnv:IDCalc.ty VarMap.map}
+  val emptyContext : ityContext
+  val evalKindedTvar
+      : IDCalc.kindedTvar
+        * ({oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+           * Types.btvEnv)
+        -> ({oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+            * Types.btvEnv)
+  val evalKindedTvarList
+      : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+        -> IDCalc.kindedTvar list
+        -> {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+           * Types.btvEnv
+  val evalDtyKind
+      : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+        -> IDCalc.path -> IDCalc.dtyKind -> Types.dtyKind
+  val evalTfun
+      : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+        -> IDCalc.path -> IDCalc.tfun -> Types.tyCon
+  val evalIty
+      : {oprimEnv: 'a, tvarEnv: Types.ty TvarMap.map, varEnv: 'b}
+        -> IDCalc.ty -> Types.ty
+end

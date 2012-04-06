@@ -1,0 +1,388 @@
+(** * constant terms.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: ConstantTerm.ppg,v 1.1 2008/11/19 19:57:44 ohori Exp $
+ *)
+structure ConstantTerm =
+struct
+
+(*
+  structure PT = PredefinedTypes
+*)
+  structure BE = BuiltinEnv
+  structure T = Types
+  structure TU = TypesUtils
+  structure UE = UserError
+  structure A = Absyn
+
+ (* for debugging *)
+  fun printType ty =
+      print (Control.prettyPrint (Types.format_ty nil ty) ^ "\n")
+
+  (*%
+   * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
+   * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
+   * @formatter(Word8.word) TermFormat.format_Word8_hex_ML
+   * @formatter(BigInt.int) TermFormat.format_BigInt_dec_ML
+   * @formatter(stringLiteral) TermFormat.format_string_ML
+   * @formatter(charLiteral) TermFormat.format_char_ML
+   *)
+  datatype constant 
+    = (*%
+       * @format(value) value
+       *)
+      INT of Int32.int
+    | (*%
+       * @format(value) value
+       *)
+      LARGEINT of BigInt.int
+    | (*%
+       * @format(value) value
+       *)
+      WORD of Word32.word
+    | (*%
+       * @format(value) value
+       *)
+      BYTE of Word8.word
+    | (*%
+       * @format(value) value:stringLiteral
+       *)
+      STRING of string
+    | (*%
+       * @format(value) value
+       *)
+      REAL of string
+    | (*%
+       * @format(value) value "f"
+       *)
+      FLOAT of string
+    | (*%
+       * @format(value) value:charLiteral
+       *)
+      CHAR of char
+    | (*%
+       * @format(value) "()"
+       *)
+      UNIT 
+    | (*%
+       * @format "NULLPTR"
+       *)
+      NULLPOINTER   (* null C pointer *)
+    | (*%
+       * @format "NULLBOXED"
+       *)
+      NULLBOXED     (* null pointer (boxed type) *)
+
+  (*% *)
+  exception
+  (*%
+   * @format "too" +d "large" +d "constant"
+   *)
+  TooLargeConstant
+
+  fun compare (x, y) =
+      let
+        fun order const =
+            case const of
+              INT _ => 0
+            | LARGEINT _ => 1
+            | WORD _ => 2
+            | BYTE _ => 3
+            | STRING _ => 4
+            | REAL _ => 5
+            | FLOAT _ => 6
+            | CHAR _ => 7
+            | UNIT => 8
+            | NULLPOINTER => 9
+            | NULLBOXED => 10
+      in
+        case (x, y) of
+          (INT x, INT y) => Int32.compare (x, y)
+        | (INT _, _) => Int.compare (order x, order y)
+        | (LARGEINT x, LARGEINT y) => BigInt.compare (x, y)
+        | (LARGEINT _, _) => Int.compare (order x, order y)
+        | (WORD x, WORD y) => Word32.compare (x, y)
+        | (WORD _, _) => Int.compare (order x, order y)
+        | (BYTE x, BYTE y) => Word8.compare (x, y)
+        | (BYTE _, _) => Int.compare (order x, order y)
+        | (STRING x, STRING y) => String.compare (x, y)
+        | (STRING _, _) => Int.compare (order x, order y)
+        | (REAL x, REAL y) => String.compare (x, y)
+        | (REAL _, _) => Int.compare (order x, order y)
+        | (FLOAT x, FLOAT y) => String.compare (x, y)
+        | (FLOAT _, _) => Int.compare (order x, order y)
+        | (CHAR x, CHAR y) => Char.compare (x, y)
+        | (CHAR _, _) => Int.compare (order x, order y)
+        | (UNIT, UNIT) => EQUAL
+        | (UNIT, _) => Int.compare (order x, order y)
+        | (NULLPOINTER, NULLPOINTER) => EQUAL
+        | (NULLPOINTER, _) => Int.compare (order x, order y)
+        | (NULLBOXED, NULLBOXED) => EQUAL
+        | (NULLBOXED, _) => Int.compare (order x, order y)
+      end
+
+  local
+
+    fun decomposePolyTy (T.POLYty {boundtvars, body}) = (boundtvars, body)
+      | decomposePolyTy ty = (BoundTypeVarID.Map.empty, ty)
+
+    fun polyTy (btvEnv, bodyTy) =
+        if BoundTypeVarID.Map.isEmpty btvEnv
+        then bodyTy else T.POLYty {boundtvars=btvEnv, body=bodyTy}
+
+    fun overloadTy tys =
+        let
+          val (btvEnvs, tys) = ListPair.unzip (map decomposePolyTy tys)
+          val btvEnv = foldl (BoundTypeVarID.Map.unionWith
+                                (fn _ => raise Control.Bug "unionTys"))
+                             BoundTypeVarID.Map.empty
+                             btvEnvs
+        in
+          case tys of
+            [ty] => polyTy (btvEnv, ty)
+          | _ =>
+            let
+              val btv = BoundTypeVarID.generate ()
+              val btvKind = {tvarKind = T.OCONSTkind tys, eqKind = A.NONEQ}
+              val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv, btvKind)
+            in
+              T.POLYty {boundtvars = btvEnv, body = T.BOUNDVARty btv}
+            end
+        end
+
+    fun sqlValueTy elemTy =
+        let
+          val (btvEnv, elemTy) = decomposePolyTy elemTy
+          val btv = BoundTypeVarID.generate ()
+          val btvKind = {tvarKind = T.UNIV, eqKind = A.NONEQ}
+          val btvEnv = BoundTypeVarID.Map.insert (btvEnv, btv, btvKind)
+          val tyCon = BE.lookupTyCon BuiltinName.sqlValueTyName
+        in
+          T.POLYty {boundtvars = btvEnv,
+                    body = T.CONSTRUCTty {tyCon = tyCon,
+                                          args = [elemTy, T.BOUNDVARty btv]}}
+        end
+
+    fun optionTy elemTy =
+        let
+          val (btvEnv, elemTy) = decomposePolyTy elemTy
+          val tyCon = BE.lookupTyCon BuiltinName.optionTyName
+        in
+          polyTy (btvEnv, T.CONSTRUCTty {tyCon = tyCon, args = [elemTy]})
+        end
+
+    fun intType () =
+        overloadTy
+        [
+          BE.INTty,
+          BE.INTINFty,
+          sqlValueTy (overloadTy [BE.INTty, optionTy BE.INTty])
+        ]
+
+    fun wordType () =
+        overloadTy
+        [
+          BE.WORDty,
+          BE.WORD8ty,
+          sqlValueTy (overloadTy [BE.WORDty, optionTy BE.WORDty])
+        ]
+
+    fun stringType () =
+        overloadTy
+        [
+          BE.STRINGty,
+          sqlValueTy (overloadTy [BE.STRINGty, optionTy BE.STRINGty])
+        ]
+
+    fun realType () =
+        overloadTy
+        [
+          BE.REALty,
+          BE.REAL32ty,
+(*
+          BE.REAL64ty,
+          BE.LARGEREALty,
+*)
+          sqlValueTy (overloadTy [BE.REALty, optionTy BE.REALty])
+        ]
+
+    fun charType () =
+        overloadTy
+        [
+          BE.CHARty,
+          sqlValueTy (overloadTy [BE.CHARty, optionTy BE.CHARty])
+        ]
+
+    fun unitType () =
+        BE.UNITty
+
+    fun nullType () =
+        overloadTy
+        [
+          BE.PTRty,
+          BE.BOXEDty
+        ]
+  in
+    fun constTy const =
+        case const of
+          A.INT _ => intType ()
+        | A.WORD _ => wordType ()
+        | A.STRING _ => stringType ()
+        | A.REAL _ => realType ()
+        | A.CHAR _ => charType ()
+        | A.UNITCONST _ => unitType ()
+        | A.NULLCONST _ => nullType ()
+  end
+
+  local
+    fun sqlInt x =
+        if x < 0 then "-" ^ (Int32.toString (~x)) else Int32.toString x
+    fun sqlWord x = Word32.fmt StringCvt.DEC x
+    fun sqlReal x = String.translate (fn #"~" => "-" | x => str x) x
+    fun sqlString x =
+        "'" ^ String.translate (fn #"'" => "''" | x => str x) x ^ "'"
+    fun sqlChar x = sqlString (str x)
+  in
+  (**
+   * fix the form of constant expression according to its type.
+   *)
+  fun fixConst {constTerm : constant -> 'exp,
+                recordTerm : 'exp LabelEnv.map * Types.ty -> 'exp,
+                conTerm : {con: Types.conInfo, instTyList: Types.ty list,
+                           arg: 'exp option} -> 'exp}
+               (const, ty) =
+      let
+        datatype constTy =
+                 INTty | WORDty | CHARty | STRINGty | REALty | FLOATty
+               | LARGEINTty | BYTEty | UNITty | PTRty | BOXEDty
+               | OPTIONty of constTy | SQLVALUEty of constTy * T.ty
+        fun constTy ty =
+            case TU.derefTy ty of
+              T.CONSTRUCTty {tyCon={id,...}, args=[]} =>
+              if TypID.eq (id, #id BE.INTtyCon) then INTty
+              else if TypID.eq (id, #id BE.WORDtyCon) then WORDty
+              else if TypID.eq (id, #id BE.CHARtyCon) then CHARty
+              else if TypID.eq (id, #id BE.STRINGtyCon) then STRINGty
+              else if TypID.eq (id, #id BE.REALtyCon) then REALty
+              else if TypID.eq (id, #id BE.REAL32tyCon) then FLOATty
+              else if TypID.eq (id, #id BE.INTINFtyCon) then LARGEINTty
+              else if TypID.eq (id, #id BE.WORD8tyCon) then BYTEty
+              else if TypID.eq (id, #id BE.UNITtyCon) then UNITty
+              else if TypID.eq (id, #id BE.BOXEDtyCon) then BOXEDty
+              else
+                (printType ty;
+                 raise Control.Bug "castConst"
+                )
+            | T.CONSTRUCTty {tyCon={id,...}, args=[arg]} =>
+              if TypID.eq (id, #id BE.PTRtyCon)
+              then PTRty
+              else if TypID.eq (id,
+                                #id (BE.lookupTyCon BuiltinName.optionTyName))
+              then OPTIONty (constTy arg)
+              else (printType ty; raise Control.Bug "castConst")
+            | T.CONSTRUCTty {tyCon={id,...}, args=[arg1, arg2]} =>
+              if TypID.eq (id, #id (BE.lookupTyCon BuiltinName.sqlValueTyName))
+              then SQLVALUEty (constTy arg1, arg2)
+              else (printType ty; raise Control.Bug "castConst")
+            | _ =>
+              (printType ty;
+               raise Control.Bug "castConst")
+
+        fun pairTerm ((e1,t1), (e2,t2)) =
+            let
+              fun fromList list =
+                  foldl (fn ((key, item), m) => LabelEnv.insert (m, key, item)) LabelEnv.empty list
+              val ty = T.RECORDty (fromList [("1",t1),("2",t2)])
+              val exp = recordTerm (fromList [("1",e1), ("2",e2)], ty)
+            in
+              (exp, ty)
+            end
+        fun stringDBIPairTerm (string, dbiTy) =
+            pairTerm ((constTerm (STRING string), BE.STRINGty),
+                      (conTerm {con = BE.lookupCon BuiltinName.sqlDBIConName,
+                                instTyList = [dbiTy],
+                                arg = NONE},
+                       T.CONSTRUCTty
+                         {tyCon = BE.lookupTyCon BuiltinName.sqlDBITyName,
+                          args = [dbiTy]}))
+
+        fun sqlValue (string as (_, dbiTy)) (exp, valueTy) =
+            conTerm {con = BE.lookupCon BuiltinName.sqlValueConName,
+                     instTyList = [valueTy, dbiTy],
+                     arg = SOME (#1 (pairTerm (stringDBIPairTerm string,
+                                               (exp, valueTy))))}
+        fun sqlOptionValue string (exp, valueTy) =
+            sqlValue string
+                     (conTerm {con = BE.lookupCon BuiltinName.someConName,
+                               instTyList = [valueTy],
+                               arg = SOME exp},
+                      T.CONSTRUCTty
+                        {tyCon = BE.lookupTyCon BuiltinName.optionTyName,
+                         args = [valueTy]})
+
+        fun scanInt scanFn ({radix, digits}, loc) =
+            let
+              val r =
+                  StringCvt.scanString (scanFn radix) digits
+                  handle Overflow =>
+                         (UE.UserErrors [(loc, UE.Error, TooLargeConstant)];
+                          StringCvt.scanString (scanFn radix) "0")
+            in
+              case r of
+                SOME x => x
+              | NONE => raise Control.Bug "scanInt"
+            end
+
+      in
+        case (const, constTy ty) of
+          (A.INT x, INTty) =>
+          constTerm (INT (scanInt Int32.scan x))
+        | (A.INT x, LARGEINTty) =>
+          constTerm (LARGEINT (scanInt BigInt.scan x))
+        | (A.INT x, SQLVALUEty (INTty, dbi)) =>
+           sqlValue (sqlInt (scanInt Int32.scan x), dbi)
+                    (constTerm (INT (scanInt Int32.scan x)), BE.INTty)
+        | (A.INT x, SQLVALUEty (OPTIONty INTty, dbi)) =>
+          sqlOptionValue (sqlInt (scanInt Int32.scan x), dbi)
+                         (constTerm (INT (scanInt Int32.scan x)), BE.INTty)
+        | (A.INT _, _) => raise Control.Bug "fixConst: INT"
+        | (A.WORD x, WORDty) =>
+          constTerm (WORD (scanInt Word32.scan x))
+        | (A.WORD x, BYTEty) =>
+          constTerm (BYTE (scanInt Word8.scan x))
+        | (A.WORD x, SQLVALUEty (WORDty, dbi)) =>
+          sqlValue (sqlWord (scanInt Word32.scan x), dbi)
+                   (constTerm (WORD (scanInt Word32.scan x)), BE.WORDty)
+        | (A.WORD x, SQLVALUEty (OPTIONty WORDty, dbi)) =>
+          sqlOptionValue (sqlWord (scanInt Word32.scan x), dbi)
+                         (constTerm (WORD (scanInt Word32.scan x)), BE.WORDty)
+        | (A.WORD _, _) => raise Control.Bug "fixConst: WORD"
+        | (A.STRING (x, loc), STRINGty) => constTerm (STRING x)
+        | (A.STRING (x, loc), SQLVALUEty (STRINGty, dbi)) =>
+          sqlValue (sqlString x, dbi) (constTerm (STRING x), BE.STRINGty)
+        | (A.STRING (x, loc), SQLVALUEty (OPTIONty STRINGty, dbi)) =>
+          sqlOptionValue (sqlString x, dbi) (constTerm (STRING x), BE.STRINGty)
+        | (A.STRING _, _) => raise Control.Bug "fixConst: STRING"
+        | (A.REAL (x, loc), REALty) => constTerm (REAL x)
+        | (A.REAL (x, loc), FLOATty) => constTerm (FLOAT x)
+        | (A.REAL (x, loc), SQLVALUEty (REALty, dbi)) =>
+          sqlValue (sqlReal x, dbi) (constTerm (REAL x), BE.REALty)
+        | (A.REAL (x, loc), SQLVALUEty (OPTIONty REALty, dbi)) =>
+          sqlOptionValue (sqlReal x, dbi) (constTerm (REAL x), BE.REALty)
+        | (A.REAL _, _) => raise Control.Bug "fixConst: REAL"
+        | (A.CHAR (x, loc), CHARty) => constTerm (CHAR x)
+        | (A.CHAR (x, loc), SQLVALUEty (CHARty, dbi)) =>
+          sqlValue (sqlChar x, dbi) (constTerm (CHAR x), BE.CHARty)
+        | (A.CHAR (x, loc), SQLVALUEty (OPTIONty CHARty, dbi)) =>
+          sqlOptionValue (sqlChar x, dbi) (constTerm (CHAR x), BE.CHARty)
+        | (A.CHAR _, _) => raise Control.Bug "fixConst: CHAR"
+        | (A.UNITCONST (_, loc), UNITty) => constTerm UNIT
+        | (A.UNITCONST _, _) => raise Control.Bug "fixConst: UNITCONST"
+        | (A.NULLCONST _, PTRty) => constTerm NULLPOINTER
+        | (A.NULLCONST _, BOXEDty) => constTerm NULLBOXED
+        | (A.NULLCONST _, _) => raise Control.Bug "fixConst: NULLCONST"
+      end
+  end
+
+end

@@ -1,0 +1,15 @@
+structure FormatExpressionTypes =
+struct
+  datatype priority =
+           Preferred of int
+         | Deferred
+  datatype assocDirection = Left | Right | Neutral
+  type assoc = {cut : bool, strength : int, direction : assocDirection}
+  datatype expression =
+           Term of (int * string)
+         | Newline
+         | Guard of (assoc option) * (expression list)
+         | Indicator of {space : bool, newline : {priority : priority} option}
+         | StartOfIndent of int
+         | EndOfIndent
+end

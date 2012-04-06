@@ -1,0 +1,100 @@
+_require "basis.smi"
+
+structure GLUT =
+struct
+  val glutInit : int ref * string array -> unit
+  val glutInitDisplayMode : word -> unit
+  val glutInitWindowSize : int * int -> unit
+  val glutCreateWindow : string -> unit
+  val glutDisplayFunc : (unit -> unit) -> unit
+  val glutReshapeFunc : (int * int -> unit) -> unit
+  val glutMouseFunc : (unit -> unit) -> unit
+  val glutKeyboardFunc : (int * int * int -> unit) -> unit
+  val glutTimerFunc : int * (int -> unit) * int -> unit
+  val glutIdleFunc : (unit -> unit) -> unit
+  val glutMainLoop : unit -> unit
+  val glutSwapBuffers : unit -> unit
+  val glutPostRedisplay : unit -> unit
+  val GLUT_RGBA : word
+  val GLUT_DOUBLE : word
+  val GLUT_DEPTH : word
+end
+
+structure GL =
+struct
+  val glClearColor
+      : Real32.real * Real32.real * Real32.real * Real32.real -> unit
+  val glEnable : word -> unit
+  val glFrontFace : word -> unit
+  val glLightfv
+      : word * word * (Real32.real * Real32.real * Real32.real * Real32.real)
+        -> unit
+  val glClear : word -> unit
+  val glFlush : unit -> unit
+  val glViewport : int * int * int * int -> unit
+  val glMatrixMode : word -> unit
+  val glLoadIdentity : unit -> unit
+  val glPushMatrix : unit -> unit
+  val glPopMatrix : unit -> unit
+  val glRotated : real * real * real * real -> unit
+  val glTranslated : real * real * real -> unit
+  val glMaterialfv
+      : word * word * (Real32.real * Real32.real * Real32.real * Real32.real)
+        -> unit
+  val glMaterialiv : word * word * (int * int * int * int) -> unit
+  val glBegin : word -> unit
+  val glEnd : unit -> unit
+  val glNormal3dv : real * real * real -> unit
+  val glVertex3dv : real * real * real -> unit
+  val glVertex2d : real * real -> unit
+  val glVertex3d : real * real * real -> unit
+  val glCullFace : word -> unit
+  val glColor4i : word * word * word * word -> unit
+  val glColor3d : real * real * real -> unit
+  val glBlendFunc : word * word -> unit
+  val glOrtho : real * real * real * real * real * real -> unit
+  val GL_PROJECTION : word
+  val GL_DEPTH_TEST : word
+  val GL_CULL_FACE : word
+  val GL_BACK : word
+  val GL_FRONT_AND_BACK : word
+  val GL_FRONT : word
+  val GL_CW : word
+  val GL_LIGHTING : word
+  val GL_LIGHT0 : word
+  val GL_LIGHT1 : word
+  val GL_DIFFUSE : word
+  val GL_SPECULAR : word
+  val GL_AMBIENT : word
+  val GL_COLOR_BUFFER_BIT : word
+  val GL_DEPTH_BUFFER_BIT : word
+  val GL_MODELVIEW : word
+  val GL_QUADS : word
+  val GL_POSITION : word
+  val GL_LINE_LOOP : word
+  val GL_LINES : word
+  val GL_POLYGON : word
+  val GL_LINE_SMOOTH : word
+  val GL_POLYGON_SMOOTH : word
+  val GL_BLEND : word
+  val GL_SRC_ALPHA : word
+  val GL_ONE_MINUS_SRC_ALPHA : word
+end
+
+structure GLU =
+struct
+  type gluQuadricObj (= ptr)
+  val gluPerspective : real * real * real * real -> unit
+  val gluLookAt
+      : real * real * real * real * real * real * real * real * real -> unit
+  val gluNewQuadric : unit -> gluQuadricObj
+  val gluDeleteQuadric : gluQuadricObj -> unit
+  val gluQuadricDrawStyle : gluQuadricObj * word -> unit
+  val gluQuadricNormals : gluQuadricObj * word -> unit
+  val gluQuadricOrientation : gluQuadricObj * word -> unit
+  val gluCylinder : gluQuadricObj * real * real * real * int * int -> unit
+  val gluDisk : gluQuadricObj * real * real * int * int -> unit
+  val GLU_FILL : word
+  val GLU_SMOOTH : word
+  val GLU_INSIDE : word
+end

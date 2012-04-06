@@ -1,0 +1,299 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include config.mk
+include src/config.mk
+include @srcdir@/files.mk
+
+MLYACC = src/ml-yacc/smlyacc
+MLLEX = src/ml-lex/smllex
+SMLFORMAT = src/smlformat/smlformat
+NEW_SMLSHARP = src/compiler/smlsharp
+
+SMLSHARP_ENV = SMLSHARP_HEAPSIZE=128M:1G
+
+SML_TARGETS = \
+    $(MLLEX) \
+    $(MLYACC) \
+    $(SMLFORMAT) \
+    $(NEW_SMLSHARP)
+
+ALL_GEN_SOURCES = \
+    $(GEN_SOURCES) \
+    src/compiler/builtin/main/BuiltinContext_smi.sml \
+    src/config/main/Version.sml
+
+HEAPIMPL_SOURCES = \
+    src/runtime/heap_cheney.c \
+    src/runtime/heap_bitmap.c \
+    src/runtime/heap_otomo.c \
+    src/runtime/heap_malloc.c
+HEAP_SOURCE = src/runtime/heap_$(HEAPIMPL).c
+NETLIB_CFLAGS = $(CFLAGS) -DIEEE_8087 -DMALLOC=xmalloc
+NETLIB_SOURCES = src/runtime/netlib/dtoa.c
+RUNTIME_SOURCES = \
+    src/runtime/control.c \
+    src/runtime/error.c \
+    src/runtime/exn.c \
+    src/runtime/init.c \
+    src/runtime/object.c \
+    src/runtime/objspace.c \
+    src/runtime/obstack.c \
+    src/runtime/prim.c \
+    src/runtime/splay.c
+LIBSMLSHARP_OBJECTS = \
+    $(NETLIB_SOURCES:.c=.$(OBJEXT)) \
+    $(HEAP_SOURCE:.c=.$(OBJEXT)) \
+    $(RUNTIME_SOURCES:.c=.$(OBJEXT))
+RUNTIME_TARGETS = \
+    src/runtime/libsmlsharp.$(LIBEXT) \
+    src/runtime/smlsharp_entry.$(OBJEXT)
+
+ALL_TARGETS = \
+    src/config.mk \
+    $(RUNTIME_TARGETS) \
+    $(SML_TARGETS) \
+    $(INSTALL_FILES)
+
+all: $(ALL_TARGETS)
+
+clean: PHONY
+	-rm -f $(RUNTIME_TARGETS) $(SML_TARGETS)
+	-rm -f $(LIBSMLSHARP_OBJECTS)
+	-rm -f $(ALL_OBJECTS)
+	-rm -f $(ALL_GEN_SOURCES)
+	-rm -f minismlsharp
+@INCLUDE_STAGE0@	-rm -rf stage0
+
+distclean: clean
+	-grep '[a-f]' RELEASE_DATE > /dev/null 2>&1 && rm -f RELEASE_DATE
+	-rm -rf autom4te.cache config.h config.log config.status
+	-rm -f Makefile config.mk stamp-h
+
+sources: PHONY $(ALL_GEN_SOURCES)
+runtime: PHONY $(RUNTIME_TARGETS)
+
+install: $(ALL_TARGETS)
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_PROGRAM) -m 644 src/config.mk \
+	  '$(DESTDIR)$(libdir_smlsharp)/config.mk'
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/runtime'
+	$(INSTALL_PROGRAM) -m 644 src/runtime/libsmlsharp.$(LIBEXT) \
+	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
+	$(INSTALL_PROGRAM) -m 644 src/runtime/smlsharp_entry.$(OBJEXT) \
+	  '$(DESTDIR)$(libdir_smlsharp)/runtime'
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)/compiler'
+	if test -f src/compiler/smlsharp.lib; then \
+	  $(INSTALL_PROGRAM) -m 644 src/compiler/smlsharp.lib \
+	    '$(DESTDIR)$(libdir_smlsharp)/compiler'; else :; fi
+	@copy () { \
+	  if test ! -d "$$2"; then \
+	    echo $(INSTALL) -m 755 -d "$$2"; \
+	    $(INSTALL) -m 755 -d "$$2" || exit $?; \
+	  fi; \
+	  echo $(INSTALL_DATA) "$$1" "$$2"; \
+	  $(INSTALL_DATA) "$$1" "$$2" || exit $?; \
+	}; \
+	for i in $(INSTALL_FILES); do \
+	  d=`dirname "$$i" | sed 's,^src/*,,'`; \
+	  copy "$$i" '$(DESTDIR)$(libdir_smlsharp)/'"$$d"; \
+	done; \
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) -m 755 $(MLLEX) '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) -m 755 $(MLYACC) '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) -m 755 $(SMLFORMAT) '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) -m 755 $(NEW_SMLSHARP) '$(DESTDIR)$(bindir)'
+
+# -------- implicit rules --------
+
+PHONY: # force to rebuild
+
+.SUFFIXES: .c .h .o .a .sml .ppg .ppg.sml .lex .grm .lex.sml .grm.sml .grm.sig
+
+.sml.o:
+	$(SMLSHARP_ENV) $(SMLSHARP) -Bsrc -nostdpath -c -o $@ $<
+.ppg.ppg.sml:
+	$(SMLFORMAT) $<
+.lex.lex.sml:
+	$(MLLEX) $<
+.grm.grm.sml:
+	$(MLYACC) $<
+.grm.grm.sig:
+	$(MLYACC) $<
+.c.o:
+	$(CC) $(CFLAGS) $(DEFS) $(CPPFLAGS) -c -o $@ $<
+
+# -------- runtime --------
+
+src/runtime/libsmlsharp.$(LIBEXT): $(LIBSMLSHARP_OBJECTS)
+	-rm -f $@
+	$(AR) cru $@ $(LIBSMLSHARP_OBJECTS)
+	-$(RANLIB) $@
+
+src/runtime/smlsharp_entry.$(OBJEXT): src/runtime/main.c
+	$(CC) $(CFLAGS) $(DEFS) $(CPPFLAGS) -c -o $@ $(srcdir)/src/runtime/main.c
+
+src/runtime/netlib/dtoa.o: src/runtime/netlib/dtoa.c
+	$(CC) $(NETLIB_CFLAGS) -c -o $@ $(srcdir)/src/runtime/netlib/dtoa.c
+
+# -------- executables --------
+
+src/ml-lex/smllex: $(MLLEX_OBJECTS) $(RUNTIME_TARGETS)
+	$(SMLSHARP) -Bsrc src/ml-lex/ml-lex.smi -o $@
+
+src/ml-yacc/smlyacc: $(MLYACC_OBJECTS) $(RUNTIME_TARGETS)
+	$(SMLSHARP) -Bsrc src/ml-yacc/src/ml-yacc.smi -o $@
+
+src/smlformat/smlformat: $(SMLFORMAT_OBJECTS) $(RUNTIME_TARGETS)
+	$(SMLSHARP) -Bsrc src/smlformat/generator/main/call-main.smi -o $@
+
+src/compiler/smlsharp: $(COMPILER_LIB_OBJECTS) $(RUNTIME_TARGETS)
+	$(SMLSHARP) -Bsrc $(RDYNAMIC_LDFLAGS) src/compiler/smlsharp.smi -o $@
+
+src/compiler/minismlsharp: $(MINISMLSHARP_OBJECTS) $(RUNTIME_TARGETS)
+	$(SMLSHARP) -Bsrc $(RDYNAMIC_LDFLAGS) src/compiler/minismlsharp.smi -o $@
+
+minismlsharp: $(RUNTIME_TARGETS) precompiled/$(NATIVE_TARGET).tar.xz
+	(cd precompiled && xz -cd $(NATIVE_TARGET).tar.xz | tar xf -)
+	$(CC) $(LDFLAGS) src/runtime/smlsharp_entry.$(OBJEXT) \
+	precompiled/$(NATIVE_TARGET)/*.s src/runtime/libsmlsharp.$(LIBEXT) \
+	$(LIBS) -o $@
+
+# -------- source code generation --------
+
+src/compiler/builtin/main/BuiltinContext_smi.sml: \
+    src/compiler/builtin/main/embed.sh \
+    src/compiler/builtin/main/BuiltinContext.smi
+	$(SHELL) src/compiler/builtin/main/embed.sh \
+	src/compiler/builtin/main/BuiltinContext.smi
+
+SNAPDATE = \
+    snapdate () { \
+      r=`LANG=C hg summary \
+         | awk '/^parent:/{sub("^[0-9]*:","",$$2);print $$2;exit}'`; \
+      [ -n "$$r" ] || exit 1; \
+      d=`LANG=C hg log -r"$$r" --template '{date|isodatesec}'`; \
+      [ -n "$$d" ] || exit 1; \
+      echo "$$d $$r" > "$$1"; \
+    }; snapdate
+
+@SNAPDATE_RULE_@RELEASE_DATE: $(srcdir)/../.hg/dirstate
+@SNAPDATE_RULE_@	$(SNAPDATE) $@
+
+src/config/main/Version.sml: \
+    config.mk src/config.mk VERSION RELEASE_DATE \
+    src/config/main/Version.sml.in
+	case '$(target_os)' in *mingw*) os=Windows ;; *) os=Unix ;; esac; \
+	h () { echo "$$@" | sed 's/["\\]/\\&/g'; }; \
+	sed -e "s\"%VERSION%\"`cat VERSION`\"" \
+	    -e "s\"%RELEASE_DATE%\"`sed s/+0900/JST/ RELEASE_DATE`\"" \
+	    -e "s\"%HOST_OS%\"$$os\"" \
+	    -e "s\"%LIBDIR_SMLSHARP%\"`h '$(libdir_smlsharp)'`\"" \
+	    -e "s\"%NATIVE_TARGET%\"`h '$(NATIVE_TARGET)'`\"" \
+	    -e "s\"%ASMEXT%\"`h '$(ASMEXT)'`\"" \
+	    -e "s\"%OBJEXT%\"`h '$(OBJEXT)'`\"" \
+	    -e "s\"%LIBEXT%\"`h '$(LIBEXT)'`\"" \
+	    -e "s\"%DLLEXT%\"`h '$(DLLEXT)'`\"" \
+	    $(srcdir)/src/config/main/Version.sml.in > $@
+
+# ---- autoconf ----
+
+CHECK_GNUMAKE = \
+    ($(MAKE) --version 2> /dev/null | grep 'GNU Make' > /dev/null) \
+    && echo 'This is GNU Make; Makefiles are automatically reloaded.'
+
+Makefile: Makefile.in config.status
+	./config.status Makefile
+	@echo 'Makefiles are updated, rerun make.'
+	@$(CHECK_GNUMAKE)
+
+config.mk: config.mk.in config.status
+	./config.status config.mk
+	@echo 'Makefiles are updated, rerun make.'
+	@$(CHECK_GNUMAKE)
+
+src/config.mk: src/config.mk.in config.status
+	./config.status src/config.mk
+	@echo 'Makefiles are updated, rerun make.'
+	@$(CHECK_GNUMAKE)
+
+config.h: stamp-h
+stamp-h: $(srcdir)/config.h.in config.status
+	./config.status config.h stamp-h
+
+config.status: $(srcdir)/configure
+	./config.status --recheck
+
+$(srcdir)/configure: $(srcdir)/configure.ac
+	cd '$(srcdir)' && autoconf
+
+$(srcdir)/config.h.in: $(srcdir)/stamp-h.in
+$(srcdir)/stamp-h.in: $(srcdir)/configure.ac
+	cd '$(srcdir)' && autoheader
+	echo timestamp > '$(srcdir)/stamp-h.in'
+
+# -------- dependencies --------
+
+depend: PHONY
+	-rm -f $(srcdir)/files.mk $(srcdir)/depend.mk
+	SMLSHARP='$(SMLSHARP)' \
+	OBJEXT='$(OBJEXT)' \
+	$(SHELL) mkdepend \
+	  BASIS_LIB      src/basis.smi \
+	  MLLEX          src/ml-lex/ml-lex.smi \
+	  MLYACC_LIB     src/ml-yacc-lib.smi \
+	  MLYACC         src/ml-yacc/src/ml-yacc.smi \
+	  SMLFORMAT_LIB  src/smlformat-lib.smi \
+	  SMLFORMAT      src/smlformat/generator/main/call-main.smi \
+	  MINISMLSHARP   src/compiler/minismlsharp.smi \
+	  COMPILER_LIB   src/compiler/smlsharp.smi \
+	  SQL_LIB        src/sql.smi \
+	  PRELUDE_LIB    src/prelude.smi
+	for i in $(HEAPIMPL_SOURCES) $(NETLIB_SOURCES) $(RUNTIME_SOURCES); do \
+	  echo $(CPP) -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i 1>&2; \
+	  $(CPP) -MM $(DEFS) $(CPPFLAGS) $(srcdir)/$$i \
+	  | perl -npe 's,^[^:. ]*(\.[^: ]*: *)([^. ]*)\.c,\2\1\2\.c,; \
+	               s, /[^ ]*\.h(?= ),,g' \
+	  >> $(srcdir)/depend.mk; \
+	done
+
+# ---- precompile ----
+
+$(srcdir)/precompile.mk: files.mk Makefile
+	targets='x86-darwin x86-linux x86-mingw'; \
+	{ \
+	  echo 'GENASM = genasm () { \'; \
+	  echo '[ -d "precompiled/$$$$1" ] || mkdir "precompiled/$$$$1"; \'; \
+	  echo '  echo $$(SMLSHARP) -dtarget=$$$$1 -Bsrc -S -o $$$$3 $$$$2; \'; \
+	  echo '  $$(SMLSHARP) -dtarget=$$$$1 -Bsrc -S -o $$$$3 $$$$2 \'; \
+	  echo '  && awk '"'"'BEGIN{print"1,$$$$s/^\\([A-Z0-9_]*:\\)\t\t\043.*$$$$/\\1/\nw\nq"}'"' \\"; \
+	  echo '     | ed $$$$3 > /dev/null; \'; \
+	  echo '  return; \'; \
+	  echo '}; genasm'; \
+	  echo 'precompile: precompiled/x86-darwin.tar.xz precompiled/x86-linux.tar.xz precompiled/x86-mingw.tar.xz'; \
+	  echo 'include Makefile'; \
+	  for target in $$targets; do \
+	    asmfiles=; \
+	    count=000; \
+	    inc () { echo 00`expr $$1 + 1` | sed 's,.*\(...\)$$,\1,'; }; \
+	    src="src/compiler/minismlsharp.smi"; \
+	    asm="precompiled/$$target/$$count.s"; \
+	    asmfiles="$$asmfiles $$asm"; \
+	    echo "$$asm: $$src "'$$(MINISMLSHARP_OBJECTS)'; \
+	    echo "	@\$$(GENASM) $$target $$src $$asm"; \
+	    for i in $(MINISMLSHARP_OBJECTS); do \
+	      count=`inc $$count`; \
+	      src=`echo "$$i" | sed 's,\.smi\.o$$,.smi,;s,\.o$$,\.sml,'`; \
+	      asm="precompiled/$$target/$$count.s"; \
+	      asmfiles="$$asmfiles $$asm"; \
+	      echo "$$asm: $$i $$src"; \
+	      echo "	@\$$(GENASM) $$target $$src $$asm"; \
+	    done; \
+	    echo "precompiled/$$target.tar.xz: $$asmfiles" \
+	    | sed '$$q;s/$$/ \\/'; \
+	    echo "	(cd precompiled && tar cf - "`echo $$asmfiles | sed 's,precompiled/,,g'`" | xz -c6) > \$$@"; \
+	  done; \
+	} > $@
+
+include @srcdir@/depend.mk
+@INCLUDE_STAGE0@include @srcdir@/stage0.mk

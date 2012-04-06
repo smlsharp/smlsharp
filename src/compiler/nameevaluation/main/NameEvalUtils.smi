@@ -1,0 +1,97 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/SSet.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Fixity.smi"
+_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../types/main/tvarMap.smi"
+_require "../../elaborate/main/Elaborator.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "NameEvalEnv.ppg.smi"
+_require "TfunVars.smi"
+
+structure NameEvalUtils =
+  struct
+    val print : string -> unit
+    val printFixEnv : Elaborator.fixEnv -> unit
+    val printPath : string list -> unit
+    val printTvar
+        : {eq:Absyn.eq, id:TvarID.id, lifted:bool, name:string}
+          -> unit
+    val printTvarId : TvarID.id -> unit
+    val printVarId : VarID.id -> unit
+    val printVarInfo : {id:VarID.id, path:string list} -> unit
+    val printInterfaceId : InterfaceID.id -> unit
+    val printBuiltinTy : BuiltinType.ty -> unit
+    val printTy : IDCalc.ty -> unit
+    val printPITy : Absyn.ty -> unit
+    val printTstr : NameEvalEnv.tstr -> unit
+    val printTyE : NameEvalEnv.tstr SEnv.map -> unit
+    val printConSpec : IDCalc.ty option SEnv.map -> unit
+    val printTfun : IDCalc.tfun -> unit
+    val printTfunkind : IDCalc.tfunkind -> unit
+    val printIdstatus : IDCalc.idstatus -> unit
+    val printTypId : TypID.id -> unit
+    val printConId : ConID.id -> unit
+    val printPrimitive : BuiltinPrimitive.primitive -> unit
+    val printLiftedTys : TvarSet.set -> unit
+    val printTypInfo : {id:TypID.id, path:string list} -> unit
+    val printTySubst
+        : ({id:TypID.id, path:string list} * TvarSet.set)
+              TypID.Map.map
+              -> unit
+    val printTypidSet : TypID.Set.set -> unit
+    val printSubst : {conIdS:IDCalc.idstatus ConID.Map.map,
+                      exnIdS:ExnID.id ExnID.Map.map,
+                      tfvS:IDCalc.tfunkind ref TfvMap.map,
+                      tvarS:IDCalc.ty TvarMap.map}
+                     -> unit
+    val printTfvSubst : IDCalc.tfunkind ref TfvMap.map -> unit
+    val printEnv : NameEvalEnv.env -> unit
+    val printStrEntry : NameEvalEnv.strEntry -> unit
+    val printTopEnv : NameEvalEnv.topEnv -> unit
+    val printFunE : NameEvalEnv.funE -> unit
+    val printFunEEntry : NameEvalEnv.funEEntry -> unit
+    val printVar : {id:VarID.id, path:string list} -> unit
+    val printExp : IDCalc.icexp -> unit
+    val printPat : IDCalc.icpat -> unit
+    val printDecl : IDCalc.icdecl -> unit
+    val printPlstrDecl : PatternCalc.plstrdec -> unit
+    val printPlstrexp : PatternCalc.plstrexp -> unit
+    val printPlsigexp : PatternCalc.plsigexp -> unit
+    val printPitopdec : PatternCalcInterface.pitopdec -> unit
+    val printPltopdec : PatternCalc.pltopdec -> unit
+    val printPidec : PatternCalcInterface.pidec -> unit
+    val printCastEnv
+        : {conIdEnv:'a,
+           tfunEnv:(IDCalc.tfun * 'b * IDCalc.tfun) TypID.Map.map,
+           tvarEnv:IDCalc.ty TvarMap.map}
+          -> unit
+    val printReverseMap
+        : {LiftDown:{arity:int, liftedTys:TvarSet.set,
+                     path:string list} TypID.Map.map,
+           ToTy:({id:TypID.id, path:string list}
+                 * TvarSet.set) TvarMap.map}
+          -> unit
+    val printCastMap
+        : {arity:'a, liftedTys:TvarSet.set,
+           newId:TypID.id, tyname:string} TypID.Map.map
+          -> unit
+    val printTfv : IDCalc.tfunkind ref -> unit
+    val printTfvList : (IDCalc.tfunkind ref * string list) list -> unit
+    val printTfvMap : string list TfvMap.map -> unit
+    val printCompileUnit : PatternCalcInterface.compileUnit -> unit
+    val evalList : {emptyEnv:'a, eval:'b -> 'a * 'c, unionEnv:'a * 'a -> 'a}
+                   -> 'b list -> 'a * 'c list
+    val evalTailList : {env:'a, eval:'a -> 'b -> 'a * 'c}
+                       -> 'b list -> 'a * 'c list
+    val SEnvToSSet : 'a SEnv.map -> SSet.set
+    val runtimeTyOfConspec : 'a option SEnv.map -> BuiltinType.ty
+  end

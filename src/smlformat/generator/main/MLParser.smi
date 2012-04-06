@@ -1,0 +1,14 @@
+_require "../../../basis.smi"
+_require "../../../ml-yacc-lib.smi"
+_require "Ast.smi"
+_require "ml.grm.smi"
+_require "ml.lex.smi"
+_require "MLPARSER.sig"
+
+structure MLParser =
+struct
+  exception ParseError of string
+  val parse : string * TextIO.instream -> Ast.dec list * (int -> int * int)
+  val getErrorMessage :
+      string -> (int -> int * int) -> string * (int * int) -> string
+end

@@ -1,0 +1,31 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+structure BuiltinType =
+struct
+
+  datatype ty =
+      INTty
+    | WORDty
+    | WORD8ty
+    | CHARty
+    | STRINGty
+    | REALty
+    | REAL32ty
+    | UNITty
+    | PTRty
+    | ARRAYty
+    | VECTORty
+    | EXNty
+    | INTINFty
+    | BOXEDty
+    | EXNTAGty
+  val format_ty
+      : ty -> SMLFormat.FormatExpression.expression list
+  val equalTy : ty * ty -> bool
+  val isAdmitEquality : ty -> bool
+  val arity : ty -> int
+  val findType : string -> ty option
+  val compatTy : {absTy: ty, implTy: ty} -> bool
+
+end

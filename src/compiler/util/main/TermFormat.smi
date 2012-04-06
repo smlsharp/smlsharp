@@ -1,0 +1,116 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "ListSorter.smi"
+_require "BigInt_IntInf.smi"
+
+structure TermFormat =
+struct
+  type format = SMLFormat.FormatExpression.expression list
+  type 'a formatter = 'a -> format
+  type 'a formatParam = 'a list
+  val formatEnclosedList
+      : 'a formatter * format * format * format -> 'a list formatter
+  val formatAppList
+      : 'a formatter * format * format * format -> 'a list formatter
+  val formatSeqList
+      : 'a formatter * format * format * format -> 'a list formatter
+  val formatOptionalList
+      : 'a formatter * format * format * format -> 'a list formatter
+  val formatDeclList
+      : 'a formatter * format * format -> 'a list formatter
+  val formatCaseList
+      : 'a formatter * format * format * format -> 'a list formatter
+  val formatEnclosedOption
+      : ('a formatter * format * format) -> 'a option formatter
+  val formatOptionalOption
+      : ('a formatter * format * format) -> 'a option formatter
+  val formatEnclosedMap
+      : 'k formatter -> ('a -> ('k * 'v) list)
+        -> 'v formatter * format * format * format * format
+        -> 'a formatter
+  val formatEnclosedSEnv
+      : 'a formatter * format * format * format * format
+        -> 'a SEnv.map formatter
+  val formatEnclosedLabelEnv
+      : 'a formatter * format * format * format * format
+        -> 'a LabelEnv.map formatter
+  val formatEnclosedSEnvPlain
+      : 'a formatter * format * format -> 'a SEnv.map formatter
+  val isTuple : 'a LabelEnv.map -> bool
+  val formatRecordExp : 'a formatter -> 'a LabelEnv.map formatter
+  val formatRecordTy : 'a formatter -> 'a LabelEnv.map formatter
+  val formatIfCons : format -> 'a list formatter
+  val formatIfList : format -> 'a list formatter
+  val formatIfNonEmpty : format -> 'a SEnv.map formatter
+  val formatIfEmpty : format -> 'a SEnv.map formatter
+  val formatIfEmptyFormat : (format * format) -> format -> format
+  type 'kind btvEnv' (= boxed)
+  type 'kind btvEnv = 'kind btvEnv' formatParam
+  val emptyBtvEnv : 'k btvEnv
+  val extendBtvEnv : 'k btvEnv -> 'k BoundTypeVarID.Map.map -> 'k btvEnv
+  val extendBtvEnvWithOrder :
+      'k btvEnv -> 'k BoundTypeVarID.Map.map * BoundTypeVarID.id list
+      -> 'k btvEnv
+  val formatBoundTyvar : (format -> 'k formatter) -> 'k btvEnv
+                         -> BoundTypeVarID.id formatter
+  val btvName : int -> string
+  val formatBtvEnv : (format -> 'k formatter) -> 'k btvEnv ->
+                     'k BoundTypeVarID.Map.map formatter
+  val formatBtvEnvWithType : (format -> 'k formatter) -> 'k btvEnv ->
+                     'k BoundTypeVarID.Map.map formatter
+  val formatFreeTyvar : FreeTypeVarID.id formatter
+  val ftvName : int -> string
+  val format_BigInt_dec_ML : BigInt.int -> format
+  (* val format_Int64_dec_ML : Int64.int -> format *)
+  val format_Int32_dec_ML : Int32.int -> format
+  val format_int_dec_ML : int -> format
+  (* val format_Word64_hex_ML : Word64.word -> format *)
+  val format_Word32_hex_ML : Word32.word -> format
+  val format_Word8_hex_ML : Word8.word -> format
+  val format_word_hex_ML : word -> format
+  val format_string_ML : string -> format
+  val format_char_ML : char -> format
+  (* val format_Int64_dec_C : Int64.int -> format *)
+  val format_Int32_dec_C : Int32.int -> format
+  val format_int_dec_C : int -> format
+  (* val format_Word64_hex_C : Word64.word -> format *)
+  val format_Word32_hex_C : Word32.word -> format
+  val format_Word8_hex_C : Word8.word -> format
+  val format_word_hex_C : word -> format
+  val format_string_C : string -> format
+  val format_char_C : char -> format
+  structure FormatComb =
+  struct
+    type 'a fmt (= boxed)
+    type ('a,'b) comb (= boxed)
+    val begin_ : (format, 'n) comb -> 'n
+    val end_ : ('r, 'r) comb
+    val text : ('r, string -> ('r,'n) comb -> 'n) comb
+    val space : ('r, ('r,'n) comb -> 'n) comb
+    val dspace : ('r, ('r,'n) comb -> 'n) comb
+    val newline : ('r, ('r,'n) comb -> 'n) comb
+    val $ : ('r, format -> ('r,'n) comb -> 'n) comb
+    val guard_ : ('r, SMLFormat.FormatExpression.assoc option
+                      -> (('r,'c) comb -> 'c, 'n) comb -> 'n) comb
+    val nest_ : ('r, int -> (('r,'c) comb -> 'c, 'n) comb -> 'n) comb
+    val puts : (format, (unit, 'n) comb -> 'n) comb
+    val int : int formatter
+    val word : word formatter
+    val string : string formatter
+    val term : string -> format
+    val list : 'a formatter -> 'a list formatter
+    val assocList : 'k formatter * 'v formatter -> ('k * 'v) list formatter
+    val record : (string * format) list formatter
+    val tuple2 : 't1 formatter * 't2 formatter -> ('t1 * 't2) formatter
+    val tuple3 : 't1 formatter * 't2 formatter * 't3 formatter
+                 -> ('t1 * 't2 * 't3) formatter
+    val tuple4 : 't1 formatter * 't2 formatter * 't3 formatter * 't4 formatter
+                 -> ('t1 * 't2 * 't3 * 't4) formatter
+  end
+  val formatFormat : format -> format
+end

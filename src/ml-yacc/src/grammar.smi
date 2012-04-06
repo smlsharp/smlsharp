@@ -1,0 +1,78 @@
+_require "../../basis.smi"
+_require "../lib/base.sig"
+_require "../lib/lrtable.smi"
+_require "utils.smi"
+_require "utils.sig"
+_require "sigs.sml"
+
+structure Grammar =
+struct
+  datatype term = datatype LrTable.term
+  datatype nonterm = datatype LrTable.nonterm
+  datatype symbol = TERM of term | NONTERM of nonterm
+  datatype grammar = GRAMMAR of
+                     {rules: {lhs : nonterm, rhs : symbol list,
+                              precedence : int option, rulenum : int} list,
+                      terms: int,
+                      nonterms: int,
+                      start : nonterm,
+                      eop : term list,
+                      noshift : term list,
+                      precedence : term -> int option,
+                      termToString : term -> string,
+                      nontermToString : nonterm -> string} 
+end
+
+structure IntGrammar =
+struct
+  structure Grammar =
+  struct
+    datatype term = datatype Grammar.term
+    datatype nonterm = datatype Grammar.nonterm
+    datatype symbol = datatype Grammar.symbol
+    datatype grammar = datatype Grammar.grammar
+  end
+  structure SymbolAssoc =
+  struct
+    type 'a table (= boxed)
+    type key = Grammar.symbol
+    val size : 'a table -> int
+    val empty : 'a table
+    val exists : key * 'a table -> bool
+    val find : key * 'a table -> 'a option
+    val insert : (key * 'a) * 'a table -> 'a table
+    val make_table : (key * 'a) list -> 'a table
+    val make_list : 'a table -> (key * 'a) list
+    val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+  end
+  structure NontermAssoc =
+  struct
+    type 'a table (= boxed)
+    type key = Grammar.nonterm
+    val size : 'a table -> int
+    val empty : 'a table
+    val exists : key * 'a table -> bool
+    val find : key * 'a table -> 'a option
+    val insert : (key * 'a) * 'a table -> 'a table
+    val make_table : (key * 'a) list -> 'a table
+    val make_list : 'a table -> (key * 'a) list
+    val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+  end
+  datatype rule = RULE of
+                  {lhs : Grammar.nonterm,
+                   rhs : Grammar.symbol list,
+                   num : int,   
+                   rulenum : int,
+                   precedence : int option}
+  val gtTerm : Grammar.term * Grammar.term -> bool
+  val eqTerm : Grammar.term * Grammar.term -> bool
+  val gtNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+  val eqNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+  val gtSymbol : Grammar.symbol * Grammar.symbol -> bool
+  val eqSymbol : Grammar.symbol * Grammar.symbol -> bool
+  val DEBUG : bool
+  val prRule : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+               (string -> 'b) -> rule -> unit
+  val prGrammar : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                  (string -> unit) -> Grammar.grammar -> unit
+end

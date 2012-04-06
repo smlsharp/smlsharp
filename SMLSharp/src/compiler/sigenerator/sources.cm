@@ -1,5 +1,0 @@
-Group
-	structure SIGenerator
-	structure GlobalIndexEnv
-is
-	main/module.cm

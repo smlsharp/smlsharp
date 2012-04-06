@@ -1,0 +1,37 @@
+Sample application using database.
+
+This program is a simple Web application with database.
+
+This program requires the following systems:
+- PostgreSQL
+- An Web server supporting CGI (such as Apache)
+
+How to run this demo:
+
+(1) Create database "dbsample" on PostgreSQL.
+
+(2) Run createtable.sql on PostgreSQL in order to set up tables and users.
+
+(3) If needed, rewrite server description of '_sqlserver' at the beginning
+    of pages.sml.
+
+(4) Compile the program and put the resulting executable to the directory
+    which is permitted to execute CGI programs.
+
+(5) Access to the executable by your Web browser.
+    If URL of your program is
+      http://hostname/dbsample.cgi
+    then you should access to
+      http://hostname/dbsample.cgi/
+
+Example:
+
+(1)
+  $ createdb dbsample
+(2)
+  $ psql -d dbsample -f createtable.sql
+(4)
+  $ make
+  $ ./database-cgi
+(5)
+  $ w3m http://localhost/dbsample.cgi/

@@ -1,0 +1,93 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesUtils.smi"
+_require "../../types/main/OPrimMap.smi"
+_require "../../types/main/VarMap.smi"
+_require "../../types/main/tvarMap.smi"
+_require "../../util/main/TermFormat.smi"
+
+structure TypeInferenceContext =
+  struct
+    type tvarEnv = Types.ty TvarMap.map
+    val format_tvarEnv
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> Types.ty TvarMap.map
+          -> SMLFormat.FormatExpression.expression list
+    val formatList : ('a -> 'b list) * 'b list -> 'a list -> 'b list
+    val formatEnclosedVarMap
+        : ('a -> SMLFormat.BasicFormatters.expression list)
+          * SMLFormat.BasicFormatters.expression list
+          * SMLFormat.BasicFormatters.expression list
+          -> 'a VarMap.map
+          -> SMLFormat.BasicFormatters.expression list
+    val formatEnclosedOPrimMap
+        : ('a -> SMLFormat.BasicFormatters.expression list)
+          * SMLFormat.BasicFormatters.expression list
+          * SMLFormat.BasicFormatters.expression list
+          -> 'a OPrimMap.map
+          -> SMLFormat.BasicFormatters.expression list
+    type varEnv = TypedCalc.idstatus VarMap.map
+    val format_varEnv
+        : 'a VarMap.map -> SMLFormat.BasicFormatters.expression list
+    type oprimEnv = Types.oprimInfo OPrimMap.map
+    val format_oprimEnv
+        : {id:OPrimID.id, path:string list, ty:Types.ty} OPrimMap.map
+          -> SMLFormat.BasicFormatters.expression list
+    type context = {oprimEnv:oprimEnv, tvarEnv:tvarEnv, varEnv:varEnv}
+    val format_context
+        : {oprimEnv:{id:OPrimID.id, path:string list, ty:Types.ty}
+                        OPrimMap.map,
+           tvarEnv:Types.ty TvarMap.map,
+           varEnv:'c VarMap.map}
+          -> SMLFormat.FormatExpression.expression list
+    val emptyContext : context
+    val bindVar
+        : int * {oprimEnv:'a, tvarEnv:'b,
+                 varEnv:TypedCalc.idstatus VarMap.map}
+          * {id:VarID.id, path:string list}
+          * TypedCalc.idstatus
+          -> {oprimEnv:'a, tvarEnv:'b, varEnv:TypedCalc.idstatus VarMap.map}
+    val bindOPrim
+        : {oprimEnv:{id:OPrimID.id, path:string list, ty:'a}
+                        OPrimMap.map, tvarEnv:'b, varEnv:'c}
+          * {id:OPrimID.id, path:string list, ty:'a}
+          -> {oprimEnv:{id:OPrimID.id, path:string list,
+                        ty:'a} OPrimMap.map,
+              tvarEnv:'b, varEnv:'c}
+    val extendContextWithVarEnv
+        : {oprimEnv:'a, tvarEnv:'b, varEnv:'c VarMap.map} * 'c VarMap.map
+          -> {oprimEnv:'a, tvarEnv:'b, varEnv:'c VarMap.map}
+    val extendContextWithTvarEnv
+        : {oprimEnv:'a, tvarEnv:'b SEnv.map, varEnv:'c} * 'b SEnv.map
+          -> {oprimEnv:'a, tvarEnv:'b SEnv.map, varEnv:'c}
+    val extendContextWithContext
+        : {oprimEnv:'a OPrimMap.map, tvarEnv:'b TvarMap.map,
+           varEnv:'c VarMap.map}
+          * {oprimEnv:'a OPrimMap.map, tvarEnv:'b TvarMap.map,
+             varEnv:'c VarMap.map}
+          -> {oprimEnv:'a OPrimMap.map, tvarEnv:'b TvarMap.map,
+              varEnv:'c VarMap.map}
+    val overrideContextWithTvarEnv
+        : {oprimEnv:'a, tvarEnv:'b, varEnv:'c} * 'd
+          -> {oprimEnv:'a, tvarEnv:'d, varEnv:'c}
+    val lookupTvarInContext
+        : {oprimEnv:'a, tvarEnv:Types.tvState ref SEnv.map, varEnv:'b}
+          * string
+          -> Types.ty option
+    val addUtvar
+        : Types.lambdaDepth
+          -> {oprimEnv:'a, tvarEnv:Types.ty TvarMap.map, varEnv:'b}
+          -> ({eq:Absyn.eq, id:IDCalc.tvarId, lifted:bool,
+               name:string} * 'c) list
+          -> 'd
+          -> {oprimEnv:'a, tvarEnv:Types.ty TvarMap.map, varEnv:'b}
+             * (Types.tvState ref * 'c) TvarMap.map
+  end

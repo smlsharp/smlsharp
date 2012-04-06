@@ -1,0 +1,17 @@
+structure Libcurses =
+struct
+  val A_REVERSE : int
+  val A_BOLD : int
+  val initscr : unit -> unit
+  val endwin : unit -> unit
+  val nocbreak : unit -> unit
+  val noecho : unit -> unit
+  val nonl : unit -> unit
+  val attron : word -> unit
+  val attroff : word -> unit
+  val addch : char -> unit
+  val addstr : string -> unit 
+  val move : int * int -> unit
+  val refresh : unit -> unit
+  val clear : unit -> unit
+end

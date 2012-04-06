@@ -1,0 +1,7 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+structure GenerateMainError =
+struct
+  exception HashConflict of string * string * string
+end

@@ -1,0 +1,10 @@
+_require "../../../basis.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "TRANS_FUNDECL.sig"
+
+structure TransFundecl =
+  struct
+    val transIcdeclList : IDCalc.icdecl list -> IDCalc.icdecl list
+  end

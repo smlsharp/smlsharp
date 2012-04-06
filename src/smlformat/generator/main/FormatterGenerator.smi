@@ -1,0 +1,26 @@
+_require "../../../basis.smi"
+_require "Utility.smi"
+_require "Ast.smi"
+_require "FormatTemplate.smi"
+_require "FORMATTER_GENERATOR.sig"
+
+structure FormatterGenerator =
+struct
+  type formatterEnv (= boxed)
+  exception GenerationError of string * (int * int)
+  val initialFormatterEnv : formatterEnv
+  val addToFormatterEnv :
+      formatterEnv -> string option * string * string -> formatterEnv
+  val generateForDataTypeDec :
+      formatterEnv ->
+      Ast.region option * Ast.dec ->
+      (string option * string) list * formatterEnv
+  val generateForTypeDec :
+      formatterEnv ->
+      Ast.region option * Ast.dec ->
+      (string option * string) list * formatterEnv
+  val generateForExceptionDec :
+      formatterEnv ->
+      Ast.region option * Ast.dec ->
+      (string option * string) list * formatterEnv
+end

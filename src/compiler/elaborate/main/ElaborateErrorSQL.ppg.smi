@@ -1,0 +1,14 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+structure ElaborateErrorSQL =
+  struct
+    exception NotAvailableSQLKeyword of string
+    exception NumberOfSQLSetLabel
+    exception NumberOfSQLInsertLabel
+    exception DuplicateSQLSetLabel of string
+    exception DuplicateSQLInsertLabel of string
+    exception DuplicateSQLSelectLabel of string
+    exception DuplicateSQLTuple of string
+    exception DuplicateSQLRecordLabel of string
+  end

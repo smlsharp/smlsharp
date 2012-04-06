@@ -1,0 +1,21 @@
+_require "../../../basis/main/binary-op.smi"
+
+structure PreProcessedExpression =
+struct
+  datatype priority = Preferred of int | Deferred
+  type environmentEntry =
+       {
+        requiredColumns : int, 
+        newline : bool ref,
+        priority : priority
+       } 
+  type environment = environmentEntry list
+  datatype expression =
+           Term of (int * string)
+         | List of {expressions : expression list, environment : environment}
+         | Indicator of {space : bool, newline : bool ref}
+         | DeferredIndicator of {space : bool, requiredColumns : int ref}
+         | StartOfIndent of int
+	 | EndOfIndent
+  val isHigherThan : priority * priority -> bool
+end
