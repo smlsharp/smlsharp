@@ -68,6 +68,8 @@ struct
     | TypeCheckOnly
     | MakeDependCompile of {noStdPath: bool}
     | MakeDependLink of {noStdPath: bool}
+    | PrintMainID
+    | SHA1Sum
 
   datatype commandLineArgs =
       OutputFile of string
@@ -123,6 +125,8 @@ struct
           SLONG ("Wa", REQUIRED (fn x => AssemblerFlags (splitComma x))),
           SLONG ("fsyntax-only", NOARG (Mode SyntaxOnly)),
           SLONG ("ftypecheck-only", NOARG (Mode TypeCheckOnly)),
+          SLONG ("fprint-main-ids", NOARG (Mode PrintMainID)),
+          DLONG ("sha1", NOARG (Mode SHA1Sum)),
           SLONG ("target", REQUIRED Target),
           SLONG ("nostdpath", NOARG NoStdPath),
           DLONG ("help", NOARG Help),
@@ -140,6 +144,8 @@ struct
       | MakeDependCompile {noStdPath=true} => "-MM"
       | MakeDependLink {noStdPath=false} => "-Ml"
       | MakeDependLink {noStdPath=true} => "-MMl"
+      | PrintMainID => "-fprint-main-ids"
+      | SHA1Sum => "--sha1"
 
   fun usageMessage progname =
     "Usage: " ^ progname ^ " [options] file ...\n\
@@ -155,6 +161,7 @@ struct
     \  -MMl               make dependency for link but ignore system files\n\
     \  -fsyntax-only      check for syntax errors, and exit\n\
     \  -ftypecheck-only   check for type errors, and exit\n\
+    \  -fprint-main-ids   print main entry identifiers, and exit\n\
     \  -I <dir>           add <dir> to file search path\n\
     \  -L <dir>           add <dir> to library path of the linker\n\
     \  -l <libname>       link with <libname> to create an executable file\n\
@@ -200,6 +207,8 @@ struct
     | GenerateMain of Top.toplevelOptions * mainExp
     | Link of linkOptions * mainExp list
     | GenerateDepend of dependOptions * mainExp list
+    | PrintHash of mainExp
+    | PrintSHA1 of Filename.filename
     | Sequence of mainExp list
     | PrintHelp of {progname: string}
     | PrintVersion
@@ -402,6 +411,20 @@ struct
           raise Error ["cannot specify -o with -c with multiple files"]
         | (false, SOME CompileOnly, SOME filename, [source]) =>
           Compile Top.NoStop (SOME filename) source
+        | (false, SOME PrintMainID, SOME _, _) =>
+          raise Error ["cannot specify -o with -fprint-main-ids"]
+        | (false, SOME PrintMainID, NONE, sources) =>
+          Sequence 
+            (map (fn src =>
+                     PrintHash
+                       (LoadSMI ({stopAt = Top.SyntaxCheck,
+                                  stdPath = stdPath,
+                                  loadPath = !loadPath}, src)))
+                 sources)
+        | (false, SOME SHA1Sum, SOME _, _) =>
+          raise Error ["cannot specify -o with --sha1"]
+        | (false, SOME SHA1Sum, NONE, sources) =>
+          Sequence (map PrintSHA1 sources)
         | (false, NONE, outputFilename, sources) =>
           let
             val sources =
@@ -670,7 +693,8 @@ struct
           else BinUtils.link {flags = LDFLAGS,
                               libs = Filename.toString libsmlsharp :: LIBS,
                               objects = smlsharpEntry :: map #2 objfiles,
-                              dst = outputFilename};
+                              dst = outputFilename,
+                              quiet = false};
           #stop Counter.linkTimeCounter();
           {result = {code = SOME outputFilename, interface = NONE},
            requires = nil,
@@ -689,6 +713,28 @@ struct
         in
           outputDepends options rules;
           #stop Counter.generateDependTimeCounter();
+          {result={code=NONE, interface=NONE}, requires=nil, loaded=nil}
+        end
+      | PrintHash exp =>
+        let
+          val results as {result, requires, loaded} = evalMain exp
+        in
+          app (fn {code, interface} =>
+                  case interface of
+                    NONE => ()
+                  | SOME {hash, sourceName, ...} =>
+                    print (hash ^ " " ^ sourceName ^ "\n"))
+              requires;
+          results
+        end
+      | PrintSHA1 filename =>
+        let
+          val f = Filename.BinIO.openIn filename
+          val src = BinIO.inputAll f handle e => (BinIO.closeIn f; raise e)
+          val _ = BinIO.closeIn f
+          val hash = SHA1.toBase32 (SHA1.digest src)
+        in
+          print (hash ^ " " ^ Filename.toString filename ^ "\n");
           {result={code=NONE, interface=NONE}, requires=nil, loaded=nil}
         end
       | Sequence nil =>

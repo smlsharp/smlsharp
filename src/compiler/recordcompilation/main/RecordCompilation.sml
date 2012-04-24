@@ -221,17 +221,27 @@ struct
 
   type context =
       {
-        instanceEnv: RC.varInfo SingletonTyMap.map
+        instanceEnv: RC.varInfo SingletonTyMap.map,
+        btvEnv: RC.btvEnv
       }
 
-  fun addExtraBinds (context:context) vars =
-      foldl
-        (fn (var as {ty = T.SINGLETONty sty, ...} : RC.varInfo,
-             {instanceEnv}:context) =>
-            {instanceEnv = SingletonTyMap.insert (instanceEnv, sty, var)}
-          | _ => raise Control.Bug "addExtraBinds")
-        context
-        vars
+  fun extendBtvEnv ({instanceEnv, btvEnv}:context) newBtvEnv =
+      {instanceEnv = instanceEnv,
+       btvEnv = BoundTypeVarID.Map.unionWith #2 (btvEnv, newBtvEnv)}
+      : context
+
+  fun addExtraBinds ({instanceEnv, btvEnv}:context) vars =
+      {
+        instanceEnv =
+          foldl
+            (fn (var as {ty = T.SINGLETONty sty, ...} : RC.varInfo,
+                 instanceEnv) =>
+                SingletonTyMap.insert (instanceEnv, sty, var)
+              | _ => raise Control.Bug "addExtraBinds")
+            instanceEnv
+            vars,
+        btvEnv = btvEnv
+      } : context
 
   fun compileTy ty =
       case ty of
@@ -282,14 +292,14 @@ struct
                      loc)
         end
 
-  fun generateConcreteInstance context sty loc =
+  fun generateConcreteInstance (context as {btvEnv,...}:context) sty loc =
       case sty of
         T.INDEXty index =>
         Option.map EXP (RecordKind.generateInstance index loc)
       | T.TAGty ty =>
-        Option.map EXP (UnivKind.generateTagInstance ty loc)
+        Option.map EXP (UnivKind.generateTagInstance btvEnv ty loc)
       | T.SIZEty ty =>
-        Option.map EXP (UnivKind.generateSizeInstance ty loc)
+        Option.map EXP (UnivKind.generateSizeInstance btvEnv ty loc)
       | T.INSTCODEty operator =>
         case OverloadKind.generateInstance operator loc of
           NONE => NONE
@@ -298,7 +308,7 @@ struct
           (* may contain RCTAPP. need more type-directed compilation *)
           SOME (EXP (compileExp context exp))
 
-  and generateInstance (context as {instanceEnv}) sty loc =
+  and generateInstance (context as {instanceEnv,...}) sty loc =
       case generateConcreteInstance context sty loc of
         SOME inst => inst
       | NONE =>
@@ -443,6 +453,7 @@ struct
         let
           val extraArgs = generateExtraArgVars btvEnv
           val newContext = addExtraBinds context extraArgs
+          val newContext = extendBtvEnv newContext btvEnv
           val newArgVarList = argVarList (* contains no POLYty *)
           val newBodyTy = compileTy bodyTy
           val newBodyExp = compileExp newContext bodyExp
@@ -468,6 +479,7 @@ struct
         let
           val extraArgs = generateExtraArgVars btvEnv
           val newContext = addExtraBinds context extraArgs
+          val newContext = extendBtvEnv newContext btvEnv
           val newExpTyWithoutTAbs = compileTy expTyWithoutTAbs
           val newExp = compileExp newContext exp
         in
@@ -618,6 +630,7 @@ struct
       | RC.RCVALPOLYREC (btvEnv, bindList, loc) =>
         let
           val extraArgs = generateExtraArgVars btvEnv
+          val newContext = extendBtvEnv context btvEnv
         in
           case extraArgs of
             nil =>
@@ -625,7 +638,7 @@ struct
                               map (fn {var, expTy, exp} =>
                                       {var = compileVarInfo var,
                                        expTy = compileTy expTy,
-                                       exp = compileExp context exp})
+                                       exp = compileExp newContext exp})
                                    bindList,
                               loc)]
           | _::_ =>
@@ -650,7 +663,7 @@ struct
                * ..., f_n in this program in order to replace type
                * information. This does not make sense.
                *)
-              val newContext = addExtraBinds context extraArgs
+              val newContext = addExtraBinds newContext extraArgs
               val instTyList =
                   map T.BOUNDVARty (BoundTypeVarID.Map.listKeys btvEnv)
 
@@ -696,7 +709,8 @@ struct
 
   fun compile topBlockList =
       let
-        val context = {instanceEnv = SingletonTyMap.empty} : context
+        val context = {instanceEnv = SingletonTyMap.empty,
+                       btvEnv = BoundTypeVarID.Map.empty} : context
       in
         List.concat (map (compileDecl context) topBlockList)
       end

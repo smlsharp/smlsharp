@@ -290,19 +290,15 @@ struct
   fun rename {old, new} =
       if prim_rename (old, new) < 0
       then raise SMLSharpRuntime.OS_SysErr () else ()
-                                                   
-  val prim_tmpnam =
-      _import "tmpnam"
-      : __attribute__((no_callback)) char ptr -> char ptr
-                                                 
+
+  val prim_tmpName =
+      _import "prim_tmpName"
+      : __attribute__((no_callback,alloc)) () -> string
+
   fun tmpName () =
-      let
-        val ret = prim_tmpnam (SMLSharp.Pointer.fromUnitPtr _NULL)
-      in
-        case SMLSharpRuntime.str_new_option ret of
-          NONE => raise SMLSharpRuntime.OS_SysErr ()
-        | SOME str => str
-      end
+      case prim_tmpName () of
+        "" => raise SMLSharpRuntime.OS_SysErr ()
+      | x => x
 
   val stdin = 0 : file_desc
   val stdout = 1 : file_desc

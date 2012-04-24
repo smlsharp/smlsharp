@@ -317,7 +317,14 @@ in
         SOME (idstatus, makeMonoApply3 RD.makeEXVAR nameTerm reifiedTerm tyTerm)
       end
     | I.IDEXVAR_TOBETYPED _ => NONE
-    | I.IDBUILTINVAR _ => NONE
+    | I.IDBUILTINVAR {primitive, ty} => 
+      let
+        val tyTerm = makeString (prettyPrint idstatusWidth (I.print_ty (nil,nil) ty))
+        val nameTerm = makeString name
+        val reifiedTerm = RD.builtin()
+      in
+        SOME (idstatus, makeMonoApply3 RD.makeEXVAR nameTerm reifiedTerm tyTerm)
+      end
     | I.IDCON _ => NONE
     | I.IDEXN _ => NONE
     | I.IDEXNREP _ => NONE

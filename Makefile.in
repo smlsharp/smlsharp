@@ -5,6 +5,9 @@ include config.mk
 include src/config.mk
 include @srcdir@/files.mk
 
+# to disable fast build, comment out the next line
+@INCLUDE_FASTBUILD@include @srcdir@/fastbuild.mk
+
 MLYACC = src/ml-yacc/smlyacc
 MLLEX = src/ml-lex/smllex
 SMLFORMAT = src/smlformat/smlformat
@@ -68,7 +71,12 @@ clean: PHONY
 distclean: clean
 	-grep '[a-f]' RELEASE_DATE > /dev/null 2>&1 && rm -f RELEASE_DATE
 	-rm -rf autom4te.cache config.h config.log config.status
-	-rm -f Makefile config.mk stamp-h
+	-rm -f Makefile config.mk src/config.mk stamp-h
+	-rm -rf precompiled/$(NATIVE_TARGET) \
+	        precompiled/fastbuild1 \
+	        precompiled/fastbuild2 \
+	        precompiled/fastbuild3 \
+	        precompiled/minismlsharp-files
 
 sources: PHONY $(ALL_GEN_SOURCES)
 runtime: PHONY $(RUNTIME_TARGETS)
@@ -155,9 +163,11 @@ src/compiler/minismlsharp: $(MINISMLSHARP_OBJECTS) $(RUNTIME_TARGETS)
 
 minismlsharp: $(RUNTIME_TARGETS) precompiled/$(NATIVE_TARGET).tar.xz
 	(cd precompiled && xz -cd $(NATIVE_TARGET).tar.xz | tar xf -)
-	$(CC) $(LDFLAGS) src/runtime/smlsharp_entry.$(OBJEXT) \
-	precompiled/$(NATIVE_TARGET)/*.s src/runtime/libsmlsharp.$(LIBEXT) \
-	$(LIBS) -o $@
+	(cd precompiled/$(NATIVE_TARGET) \
+	 && $(CC) $(LDFLAGS) ../../src/runtime/smlsharp_entry.$(OBJEXT) \
+	          `cat ../minismlsharp-files` \
+	          ../../src/runtime/libsmlsharp.$(LIBEXT) \
+	          $(LIBS) -o ../../$@)
 
 # -------- source code generation --------
 
@@ -256,44 +266,6 @@ depend: PHONY
 	               s, /[^ ]*\.h(?= ),,g' \
 	  >> $(srcdir)/depend.mk; \
 	done
-
-# ---- precompile ----
-
-$(srcdir)/precompile.mk: files.mk Makefile
-	targets='x86-darwin x86-linux x86-mingw'; \
-	{ \
-	  echo 'GENASM = genasm () { \'; \
-	  echo '[ -d "precompiled/$$$$1" ] || mkdir "precompiled/$$$$1"; \'; \
-	  echo '  echo $$(SMLSHARP) -dtarget=$$$$1 -Bsrc -S -o $$$$3 $$$$2; \'; \
-	  echo '  $$(SMLSHARP) -dtarget=$$$$1 -Bsrc -S -o $$$$3 $$$$2 \'; \
-	  echo '  && awk '"'"'BEGIN{print"1,$$$$s/^\\([A-Z0-9_]*:\\)\t\t\043.*$$$$/\\1/\nw\nq"}'"' \\"; \
-	  echo '     | ed $$$$3 > /dev/null; \'; \
-	  echo '  return; \'; \
-	  echo '}; genasm'; \
-	  echo 'precompile: precompiled/x86-darwin.tar.xz precompiled/x86-linux.tar.xz precompiled/x86-mingw.tar.xz'; \
-	  echo 'include Makefile'; \
-	  for target in $$targets; do \
-	    asmfiles=; \
-	    count=000; \
-	    inc () { echo 00`expr $$1 + 1` | sed 's,.*\(...\)$$,\1,'; }; \
-	    src="src/compiler/minismlsharp.smi"; \
-	    asm="precompiled/$$target/$$count.s"; \
-	    asmfiles="$$asmfiles $$asm"; \
-	    echo "$$asm: $$src "'$$(MINISMLSHARP_OBJECTS)'; \
-	    echo "	@\$$(GENASM) $$target $$src $$asm"; \
-	    for i in $(MINISMLSHARP_OBJECTS); do \
-	      count=`inc $$count`; \
-	      src=`echo "$$i" | sed 's,\.smi\.o$$,.smi,;s,\.o$$,\.sml,'`; \
-	      asm="precompiled/$$target/$$count.s"; \
-	      asmfiles="$$asmfiles $$asm"; \
-	      echo "$$asm: $$i $$src"; \
-	      echo "	@\$$(GENASM) $$target $$src $$asm"; \
-	    done; \
-	    echo "precompiled/$$target.tar.xz: $$asmfiles" \
-	    | sed '$$q;s/$$/ \\/'; \
-	    echo "	(cd precompiled && tar cf - "`echo $$asmfiles | sed 's,precompiled/,,g'`" | xz -c6) > \$$@"; \
-	  done; \
-	} > $@
 
 include @srcdir@/depend.mk
 @INCLUDE_STAGE0@include @srcdir@/stage0.mk

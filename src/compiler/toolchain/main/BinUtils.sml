@@ -8,7 +8,7 @@ structure BinUtils : sig
   val assemble : {source: Filename.filename, flags: string list,
                   object: Filename.filename} -> unit
   val link : {flags: string list, objects: Filename.filename list,
-              libs: string list, dst: Filename.filename} -> unit
+              libs: string list, dst: Filename.filename, quiet: bool} -> unit
   val partialLink : {objects: Filename.filename list, dst: Filename.filename}
                     -> unit
   val archive : {objects: Filename.filename list, archive: Filename.filename}
@@ -68,7 +68,7 @@ struct
         loop (files, nil)
       end
 
-  fun link {flags, objects, libs, dst} =
+  fun link {flags, objects, libs, dst, quiet} =
       let
         val objects = map (quote o Filename.toString) objects
         val pre = join (SMLSharp_Config.CC () ::
@@ -77,6 +77,11 @@ struct
         val post = join (map quote libs
                          @ [SMLSharp_Config.LIBS (),
                             "-o", quote (Filename.toString dst)])
+        val post =
+            case (quiet, SMLSharp_Version.HostOS) of
+              (true, SMLSharp_Version.Unix) => post ^ " > /dev/null 2>&1"
+            | (true, SMLSharp_Version.Windows) => post ^ " > nul 2>&1"
+            | (false, _) => post
       in
         invokeLinker (pre, objects, post)
       end

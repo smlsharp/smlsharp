@@ -44,15 +44,19 @@ struct
         loop (vec, 4, 0w0)
       end
 
-  fun readWords vec =
+  fun readWordsAccum (vec, dst) =
       let
         val rest = Word8VectorSlice.length vec
         val (vec, w) = readWord vec
       in
         if rest < 4
-        then [((w << 0w8) orb 0wx80) << (Word.fromInt ((4 - rest - 1) * 8))]
-        else w :: readWords vec
+        then (((w << 0w8) orb 0wx80) << (Word.fromInt ((4 - rest - 1) * 8)))
+             :: dst
+        else readWordsAccum (vec, w::dst)
       end
+
+  fun readWords vec =
+      rev (readWordsAccum (vec, nil))
 
   fun readWordsAndPad src =
       let

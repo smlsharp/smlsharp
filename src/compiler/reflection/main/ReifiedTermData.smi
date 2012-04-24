@@ -72,6 +72,7 @@ struct
   val EXNtyRep : Types.conInfo option ref
   val PTRtyRep : Types.conInfo option ref
   val UNPRINTABLERep : Types.conInfo option ref
+  val BUILTINRep : Types.conInfo option ref
   val EXVAR : Types.conInfo option ref
   val EXEXN : Types.conInfo option ref
   val EXEXNREP : Types.conInfo option ref
@@ -79,6 +80,7 @@ struct
   val init : NameEvalEnv.topEnv -> unit
   val mkConTerm : Types.conInfo * TypedCalc.tpexp option -> TypedCalc.tpexp
   val unprintable : unit -> TypedCalc.tpexp
+  val builtin : unit -> TypedCalc.tpexp
   val mkINTtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
   val mkBOOLtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp
   val mkINTINFtyRepTerm : TypedCalc.tpexp -> TypedCalc.tpexp

@@ -79,6 +79,7 @@ in
   val EXNtyRep = ref NONE : T.conInfo option ref
   val PTRtyRep = ref NONE : T.conInfo option ref
   val UNPRINTABLERep = ref NONE : T.conInfo option ref
+  val BUILTINRep = ref NONE : T.conInfo option ref
   val EXVAR  = ref NONE : T.conInfo option ref
   val EXEXN = ref NONE : T.conInfo option ref
   val EXEXNREP = ref NONE : T.conInfo option ref
@@ -196,6 +197,7 @@ in
          EXNtyRep := findCon ["ReifiedTerm","EXNtyRep"];
          PTRtyRep := findCon ["ReifiedTerm","PTRtyRep"];
          UNPRINTABLERep := findCon ["ReifiedTerm","UNPRINTABLERep"];
+         BUILTINRep := findCon ["ReifiedTerm","BUILTINRep"];
          EXVAR := findCon ["ReifiedTerm","EXVAR"];
          EXEXN := findCon ["ReifiedTerm","EXEXN"];
          EXEXNREP := findCon ["ReifiedTerm","EXEXNREP"];
@@ -208,6 +210,11 @@ in
 
   fun unprintable () = 
       case !UNPRINTABLERep of
+        NONE => raise bug "unprintable unavailable"
+      | SOME con => mkConTerm(con, NONE)
+
+  fun builtin () = 
+      case !BUILTINRep of
         NONE => raise bug "unprintable unavailable"
       | SOME con => mkConTerm(con, NONE)
 

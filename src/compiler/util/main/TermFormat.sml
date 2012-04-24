@@ -552,14 +552,14 @@ struct
                 | (((FREE i,_),_), ((FREE j,_),_)) => BoundTypeVarID.compare (i, j))
               tyvars
       in
-(*
         SMLFormat.BasicFormatters.format_list
           (formatBtvWithType formatKind, commaSpace)
           tyvars
-*)
+(*
         SMLFormat.BasicFormatters.format_list
           (formatBtvWithType formatKind, comma)
           tyvars
+*)
       end
 
   (**** formatters for constant literals ****)

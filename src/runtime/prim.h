@@ -141,6 +141,7 @@ int prim_CommandLine_argc(void);
 char **prim_CommandLine_argv(int);
 void *prim_xmalloc(int size);
 STRING prim_executable_path(void);
+STRING prim_tmpName(void);
 int prim_cconst_int(const char *);
 STRING sml_str_new(const char *);
 
@@ -186,7 +187,6 @@ void free(void *);
 int system(const char *);
 
 /* stdio.h */
-char *tmpnam(char *);
 int remove(const char *);
 int rename(const char *, const char *);
 
