@@ -2514,7 +2514,9 @@ src/basis/main/Option.sml \
 src/basis/main/OPTION.sig \
 src/basis/main/General.sml \
 src/basis/main/GENERAL.sig
-PRELUDE_LIB_OBJECTS = src/reifiedterm/main/ReifiedTerm.ppg.o \
+PRELUDE_LIB_OBJECTS = src/compiler/control/main/Control.ppg.o \
+src/compiler/control/main/Loc.ppg.o \
+src/reifiedterm/main/ReifiedTerm.ppg.o \
 src/reifiedterm/main/TermPrintUtils.ppg.o \
 src/compiler-utils/env/main/LabelEnv.o \
 src/compiler-utils/env/main/LabelOrd.o \
@@ -2606,6 +2608,9 @@ src/basis/main/List.o \
 src/basis/main/Option.o \
 src/basis/main/General.o
 PRELUDE_LIB_SOURCES = \
+src/compiler/control/main/Control.ppg.sml \
+src/compiler/control/main/Loc.ppg.sml \
+src/compiler/control/main/LOC.sig \
 src/reifiedterm/main/ReifiedTerm.ppg.sml \
 src/reifiedterm/main/TermPrintUtils.ppg.sml \
 src/compiler-utils/env/main/LabelEnv.sml \
@@ -3736,11 +3741,9 @@ src/compiler/nameevaluation/main/NameEvalError.ppg.sml \
 src/compiler/parser/main/ParserError.ppg.sml \
 src/compiler/parser/main/iml.grm.sml \
 src/compiler/parser/main/iml.grm.sig \
-src/compiler/parser/main/iml.grm.desc \
 src/compiler/parser/main/iml.lex.sml \
 src/compiler/parser/main/interface.grm.sml \
 src/compiler/parser/main/interface.grm.sig \
-src/compiler/parser/main/interface.grm.desc \
 src/compiler/patterncalc/main/PatternCalc.ppg.sml \
 src/compiler/patterncalc/main/PatternCalcInterface.ppg.sml \
 src/compiler/recordcalc/main/RecordCalc.ppg.sml \
@@ -3762,5 +3765,7 @@ src/reifiedterm/main/ReifiedTerm.ppg.sml \
 src/reifiedterm/main/TermPrintUtils.ppg.sml \
 src/smlformat/generator/main/ml.grm.sml \
 src/smlformat/generator/main/ml.grm.sig \
-src/smlformat/generator/main/ml.grm.desc \
 src/smlformat/generator/main/ml.lex.sml
+CLEAN_FILES = src/compiler/parser/main/iml.grm.desc \
+src/compiler/parser/main/interface.grm.desc \
+src/smlformat/generator/main/ml.grm.desc

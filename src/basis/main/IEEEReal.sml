@@ -27,10 +27,10 @@ struct
   exception Unordered
 
   val fesetround =
-      _import "fesetround"
+      _import "prim_fesetround"
       : __attribute__((no_callback)) int -> int
   val fegetround =
-      _import "fegetround"
+      _import "prim_fegetround"
       : __attribute__((pure,no_callback)) () -> int
 
   fun setRoundingMode roundingMode =

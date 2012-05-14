@@ -1,4 +1,15 @@
+_require "../../../basis/main/StringCvt.smi"
+_require "../../../basis/main/List.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/Char.smi"
+_require "../../../basis/main/Array.smi"
+_require "../../../basis/main/ListPair.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/General.smi"
+_require "../../../basis/main/binary-op.smi"
+(*
 _require "../../../basis.smi"
+*)
 _require "../../../ml-yacc-lib.smi"
 _require "../../control/main/Loc.ppg.smi"
 _require "../../absyn/main/Absyn.ppg.smi"

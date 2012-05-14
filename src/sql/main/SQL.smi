@@ -29,6 +29,9 @@ struct
   val Some : ('a, 'b) value -> ('a option, 'b) value
   val Null : ('a option, 'b) value
 
+  val queryString : (('a,'b) db -> 'c query) -> 'a server -> string
+  val commandString : (('a,'b) db -> command) -> 'a server -> string
+
   val + =
       case 'a in
         ('a, 'b) value * ('a, 'b) value -> ('a, 'b) value

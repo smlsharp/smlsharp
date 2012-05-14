@@ -30,6 +30,7 @@ dep_srcfiles () { \
 ALL_OBJECTS=
 INSTALL_FILES=
 GEN_SOURCES=
+CLEAN_FILES=
 
 read_smi () { \
   obj=`dep_objfiles "$2"`
@@ -78,7 +79,8 @@ for i in `echo "$ALL_OBJECTS" | sed "s,\.$OBJEXT\$,,"`; do
       echo "$i.sml: $i \$(MLLEX_DEP)" >> $depend_mk
       ;;
     *.grm)
-      GEN_SOURCES="$GEN_SOURCES $i.sml $i.sig $i.desc"
+      GEN_SOURCES="$GEN_SOURCES $i.sml $i.sig"
+      CLEAN_FILES="$CLEAN_FILES $i.desc"
       echo "$i.sml $i.sig: $i \$(MLYACC_DEP)" >> $depend_mk
       ;;
   esac
@@ -90,3 +92,5 @@ done
 
 GEN_SOURCES=`echo "$GEN_SOURCES" | awk '{sub("^ *","");gsub("  *","\n");print}'`
 echo "GEN_SOURCES = $GEN_SOURCES" | sed '$q;s,$, \\,' >> $files_mk
+CLEAN_FILES=`echo "$CLEAN_FILES" | awk '{sub("^ *","");gsub("  *","\n");print}'`
+echo "CLEAN_FILES = $CLEAN_FILES" | sed '$q;s,$, \\,' >> $files_mk

@@ -6,19 +6,23 @@
  * @author UENO Katsuhiro
  *)
 
-structure SMLSharp_Version =
+structure SMLSharp_Version : sig
+
+  val Version : string
+  val ReleaseDate : string
+  val DefaultSystemBaseDir : string
+
+  datatype os = Windows | Unix
+  val HostOS : os ref  (* overwritable *)
+
+end =
 struct
 
   val Version = "%VERSION%"
   val ReleaseDate = "%RELEASE_DATE%"
   val DefaultSystemBaseDir = "%LIBDIR_SMLSHARP%"
-  val DefaultDLLEXT = "%DLLEXT%"
-  val DefaultLIBEXT = "%LIBEXT%"
-  val DefaultOBJEXT = "%OBJEXT%"
-  val DefaultASMEXT = "%ASMEXT%"
-  val DefaultNativeTarget = "%NATIVE_TARGET%"
 
   datatype os = Windows | Unix
-  val HostOS = %HOST_OS%
+  val HostOS = ref %HOST_OS%
 
 end

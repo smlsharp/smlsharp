@@ -26,7 +26,7 @@ precompiled/ids: $(SMIFILES) precompile.mk
 	| sed 's,\.smi$$,.sml,' > $@
 
 precompiled/sums: $(SMLFILES) precompile.mk
-	$(SMLSHARP) --sha1 $(SMLFILES) > $@
+	$(SMLSHARP) -Bsrc --sha1 $(SMLFILES) > $@
 
 precompiled/files: precompiled/map precompiled/ids precompiled/sums \
 	           precompile.mk

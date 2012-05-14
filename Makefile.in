@@ -64,7 +64,7 @@ clean: PHONY
 	-rm -f $(RUNTIME_TARGETS) $(SML_TARGETS)
 	-rm -f $(LIBSMLSHARP_OBJECTS)
 	-rm -f $(ALL_OBJECTS)
-	-rm -f $(ALL_GEN_SOURCES)
+	-rm -f $(ALL_GEN_SOURCES) $(CLEAN_FILES)
 	-rm -f minismlsharp
 @INCLUDE_STAGE0@	-rm -rf stage0
 
@@ -191,19 +191,13 @@ SNAPDATE = \
 @SNAPDATE_RULE_@	$(SNAPDATE) $@
 
 src/config/main/Version.sml: \
-    config.mk src/config.mk VERSION RELEASE_DATE \
+    config.mk src/config.mk Makefile VERSION RELEASE_DATE \
     src/config/main/Version.sml.in
-	case '$(target_os)' in *mingw*) os=Windows ;; *) os=Unix ;; esac; \
 	h () { echo "$$@" | sed 's/["\\]/\\&/g'; }; \
 	sed -e "s\"%VERSION%\"`cat VERSION`\"" \
 	    -e "s\"%RELEASE_DATE%\"`sed s/+0900/JST/ RELEASE_DATE`\"" \
-	    -e "s\"%HOST_OS%\"$$os\"" \
+	    -e "s\"%HOST_OS%\"$(OS_TYPE)\"" \
 	    -e "s\"%LIBDIR_SMLSHARP%\"`h '$(libdir_smlsharp)'`\"" \
-	    -e "s\"%NATIVE_TARGET%\"`h '$(NATIVE_TARGET)'`\"" \
-	    -e "s\"%ASMEXT%\"`h '$(ASMEXT)'`\"" \
-	    -e "s\"%OBJEXT%\"`h '$(OBJEXT)'`\"" \
-	    -e "s\"%LIBEXT%\"`h '$(LIBEXT)'`\"" \
-	    -e "s\"%DLLEXT%\"`h '$(DLLEXT)'`\"" \
 	    $(srcdir)/src/config/main/Version.sml.in > $@
 
 # ---- autoconf ----

@@ -36,6 +36,7 @@ sig
   type counter
 
   val dump : unit -> string
+  val reset : unit -> unit
 
   (***************************************************************************)
   val root : counterSet

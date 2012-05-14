@@ -32,20 +32,20 @@ NORMALIZE_CRLF = \
   }; normalize
 
 fast-all: $(SMLSHARP_DEP)
-	$(FASTBUILD_FUNCS); . precompiled/fastbuild1
+	$(FASTBUILD_FUNCS); set +e; . precompiled/fastbuild1; :
 	$(MAKE) src/smlformat/generator/main/ml.grm.sml \
 	        src/smlformat/generator/main/ml.lex.sml
 	case '$(host_os)' in *mingw*) \
 	  $(NORMALIZE_CRLF) \
 	    src/smlformat/generator/main/ml.grm.sml \
 	    src/smlformat/generator/main/ml.lex.sml;; esac
-	$(FASTBUILD_FUNCS); . precompiled/fastbuild2
+	$(FASTBUILD_FUNCS); set +e; . precompiled/fastbuild2; :
 	$(MAKE) sources
 	case '$(host_os)' in *mingw*) \
 	  $(NORMALIZE_CRLF) \
 	    `for i in $(GEN_SOURCES); do \
 	       case "$$i" in src/smlformat/*) ;; *) echo "$$i";; esac; \
 	     done`;; esac
-	$(FASTBUILD_FUNCS); . precompiled/fastbuild3
+	$(FASTBUILD_FUNCS); set +e; . precompiled/fastbuild3; :
 	-awk 'BEGIN{print "/^include.*fastbuild.mk$$/s/^/\043/\nw\nq"}' | ed Makefile > /dev/null
 	$(MAKE) all

@@ -4,13 +4,8 @@ struct
   val Version : string
   val ReleaseDate : string
   val DefaultSystemBaseDir : string
-  val DefaultDLLEXT : string
-  val DefaultLIBEXT : string
-  val DefaultASMEXT : string
-  val DefaultOBJEXT : string
-  val DefaultNativeTarget : string
 
   datatype os = Windows | Unix
-  val HostOS : os
+  val HostOS : os ref
 
 end

@@ -39,6 +39,8 @@ typedef struct sml_intinf sml_intinf_t;
 #endif /* SMLSHARP__SMLSHARP_H__ */
 
 /* compiler builtin primitives */
+int prim_fesetround(int x);
+int prim_fegetround(void);
 int prim_String_cmp(const char *, const char *);
 int prim_IntInf_cmp(sml_intinf_t *, sml_intinf_t *);
 sml_intinf_t * prim_IntInf_load(const char *);
@@ -202,10 +204,6 @@ float frexpf(float, int *);
 float modff(float, float *);
 double nextafter(double, double);
 float nextafterf(float, float);
-
-/* fenv.h */
-int fesetround(int x);
-int fegetround(void);
 
 /* POSIX */
 /* unistd.h */

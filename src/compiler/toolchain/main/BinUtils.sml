@@ -78,7 +78,7 @@ struct
                          @ [SMLSharp_Config.LIBS (),
                             "-o", quote (Filename.toString dst)])
         val post =
-            case (quiet, SMLSharp_Version.HostOS) of
+            case (quiet, !SMLSharp_Version.HostOS) of
               (true, SMLSharp_Version.Unix) => post ^ " > /dev/null 2>&1"
             | (true, SMLSharp_Version.Windows) => post ^ " > nul 2>&1"
             | (false, _) => post

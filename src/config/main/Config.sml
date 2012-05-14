@@ -10,6 +10,7 @@ structure SMLSharp_Config : sig
   exception Load
   val loadConfig : Filename.filename -> unit
 
+  exception Unset
   val CC : unit -> string
   val LD : unit -> string
   val AR : unit -> string
@@ -26,6 +27,56 @@ structure SMLSharp_Config : sig
 
 end =
 struct
+
+  val r_CC = ref NONE : string option ref
+  val r_LD = ref NONE : string option ref
+  val r_AR = ref NONE : string option ref
+  val r_RANLIB = ref NONE : string option ref
+  val r_LDFLAGS = ref NONE : string option ref
+  val r_LIBS = ref NONE : string option ref
+  val r_DLLEXT = ref NONE : string option ref
+  val r_LIBEXT = ref NONE : string option ref
+  val r_ASMEXT = ref NONE : string option ref
+  val r_OBJEXT = ref NONE : string option ref
+  val r_NATIVE_TARGET = ref NONE : string option ref
+  val r_A_OUT = ref NONE : string option ref
+  val r_RUNLOOP_DLDFLAGS = ref NONE : string option ref
+
+  val parameters =
+      [("CC", r_CC),
+       ("LD", r_LD),
+       ("AR", r_AR),
+       ("RANLIB", r_RANLIB),
+       ("LDFLAGS", r_LDFLAGS),
+       ("LIBS", r_LIBS),
+       ("DLLEXT", r_DLLEXT),
+       ("LIBEXT", r_LIBEXT),
+       ("ASMEXT", r_ASMEXT),
+       ("OBJEXT", r_OBJEXT),
+       ("NATIVE_TARGET", r_NATIVE_TARGET),
+       ("A_OUT", r_A_OUT),
+       ("RUNLOOP_DLDFLAGS", r_RUNLOOP_DLDFLAGS)]
+
+  exception Unset
+
+  local
+    fun get (ref (SOME x)) = x
+      | get (ref NONE) = raise Unset
+  in
+  fun CC () = get r_CC
+  fun LD () = get r_LD
+  fun AR () = get r_AR
+  fun RANLIB () = get r_RANLIB
+  fun LDFLAGS () = get r_LDFLAGS
+  fun LIBS () = get r_LIBS
+  fun DLLEXT () = get r_DLLEXT
+  fun LIBEXT () = get r_LIBEXT
+  fun ASMEXT () = get r_ASMEXT
+  fun OBJEXT () = get r_OBJEXT
+  fun NATIVE_TARGET () = get r_NATIVE_TARGET
+  fun A_OUT () = get r_A_OUT
+  fun RUNLOOP_DLDFLAGS () = get r_RUNLOOP_DLDFLAGS
+  end
 
   fun isSpace #" " = true
     | isSpace #"\t" = true
@@ -94,50 +145,21 @@ struct
         StringCvt.scanString scanFile src
       end
 
-  val currentConfig = ref NONE : string SEnv.map option ref
-
   exception Load
 
-  fun load systemBaseDir =
+  fun loadConfig systemBaseDir =
       let
         val filename = Filename.fromString "config.mk"
         val filename = Filename.concatPath (systemBaseDir, filename)
         val conf = parse filename handle _ => raise Load
         val conf = case conf of SOME conf => conf | NONE => raise Load
       in
-        currentConfig := SOME conf;
-        conf
+        app (fn (key, r) => r := SEnv.find (conf, key)) parameters;
+        case SEnv.find (conf, "OS_TYPE") of
+          SOME "Windows" => SMLSharp_Version.HostOS := SMLSharp_Version.Windows
+        | SOME "Unix" => SMLSharp_Version.HostOS := SMLSharp_Version.Unix
+        | SOME _ => raise Load
+        | NONE => ()
       end
-
-  fun loadConfig systemBaseDir =
-      (load systemBaseDir; ())
-
-  fun get (key, default) =
-      let
-        val conf =
-            case !currentConfig of
-              SOME c => c
-            | NONE =>
-              load (Filename.fromString SMLSharp_Version.DefaultSystemBaseDir)
-      in
-        case SEnv.find (conf, key) of
-          NONE => default
-        | SOME x => x
-      end
-
-  fun CC () = get ("CC", "cc")
-  fun LD () = get ("LD", "ld")
-  fun AR () = get ("AR", "ar")
-  fun RANLIB () = get ("RANLIB", "ranlib")
-  fun LDFLAGS () = get ("LDFLAGS", "")
-  fun LIBS () = get ("LIBS", "")
-  fun DLLEXT () = get ("DLLEXT", SMLSharp_Version.DefaultDLLEXT)
-  fun LIBEXT () = get ("LIBEXT", SMLSharp_Version.DefaultLIBEXT)
-  fun ASMEXT () = get ("ASMEXT", SMLSharp_Version.DefaultASMEXT)
-  fun OBJEXT () = get ("OBJEXT", SMLSharp_Version.DefaultOBJEXT)
-  fun NATIVE_TARGET () =
-      get ("NATIVE_TARGET", SMLSharp_Version.DefaultNativeTarget)
-  fun A_OUT () = get ("A_OUT", "a.out")
-  fun RUNLOOP_DLDFLAGS () = get ("RUNLOOP_DLDFLAGS", "")
 
 end
