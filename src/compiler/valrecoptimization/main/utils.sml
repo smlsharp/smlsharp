@@ -111,8 +111,7 @@ in
                 | (ICFFIARGSIZEOF (ty, NONE, loc), z) => z)
               (getFreeIdsInExp funExp)
               args
-      | ICSQLSERVER (server, schema, loc) =>
-        getFreeIdsInExpList (map #2 server)
+      | ICSQLSERVER (server, schema, loc) => VarID.Set.empty
       | ICSQLDBI (pat, exp, loc) =>
         VarID.Set.difference(getFreeIdsInExp exp, getFreeIdsInPat pat)
 

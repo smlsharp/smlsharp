@@ -1194,8 +1194,8 @@ in
           in
             enqueueWarning (loc, E.AbstypeNotSupported);
             ([PC.PDLOCALDEC
-                (PC.PDDATATYPE (newDataBinds, loc) :: typeDecs,
-                 newDecs @ [PC.PDTYPE (typbinds, loc)],
+                ([PC.PDDATATYPE (newDataBinds, loc)],
+                 typeDecs @ newDecs @ [PC.PDTYPE (typbinds, loc)],
                  loc)],
              newEnv)
           end

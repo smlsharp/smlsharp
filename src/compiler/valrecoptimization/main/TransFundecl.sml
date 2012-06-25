@@ -155,8 +155,7 @@ in
                             ICFFIARGSIZEOF (ty, NONE, loc))
                         args,
                     retTy, loc)
-      | ICSQLSERVER (str, schema, loc) =>
-        ICSQLSERVER (map (fn (x,y) => (x,transExp y)) str, schema, loc)
+      | ICSQLSERVER (str, schema, loc) => icexp
       | ICSQLDBI (icpat, icexp, loc) => ICSQLDBI (icpat, transExp icexp, loc)
   and transDecl icdecl =
       case icdecl of

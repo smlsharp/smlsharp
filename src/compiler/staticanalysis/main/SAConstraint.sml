@@ -102,6 +102,33 @@ structure SAConstraint : SACONSTRAINT = struct
         annotation := {labels = labels, boxed = true, align = align}
       | _ => ()
 
+  (* 2012-5-19 ohori:
+     This is added to fix the bug 
+      fun f x = #a (#b x);
+      f {b={a=1}}
+    Analysis of this bug:
+      f : ['a#{b:'b}, 'b#{a:'c}, 'c. 'a -> 'a]
+    then f {b={a=1}} is type reconstructed to
+      f {b:{a:int}} {a:int} int
+    This is annotated to
+      f {b:{a:int}^{}}^{B} {a:int}^{B} int
+     The second {a:int} is correctly annotated with {B} but the same instance
+     type in {b:{a:int}} is not since singleValueType only converts the top-level
+     constructore.
+   *)
+  fun strictlySingleValueType ty =
+      case ty of 
+        AT.FUNMty {argTyList, bodyTy, annotation as ref {labels, ...},...} => 
+        (map strictlySingleValueType argTyList;
+         strictlySingleValueType bodyTy;
+        annotation := {labels = labels, boxed = true}
+        )
+      | AT.RECORDty {fieldTypes, annotation as ref {labels, align,...},...} => 
+        (LabelEnv.map strictlySingleValueType fieldTypes;
+        annotation := {labels = labels, boxed = true, align = align}
+        )
+      | _ => ()
+
   fun convertGlobalType ty =
       case ReduceTy.reduceTy ty of
         T.SINGLETONty sty =>
@@ -228,10 +255,20 @@ structure SAConstraint : SACONSTRAINT = struct
              body = convertLocalType body
             }
 
+  (* 2012-5-19 ohori.
+   This is changed to fix the bug fun f x = #a (#b x) but
   and convertSingleValueType ty =
       let 
         val newTy = convertLocalType ty
         val _ = singleValueType newTy
+      in
+        newTy
+      end
+  *)
+  and convertSingleValueType ty =
+      let 
+        val newTy = convertLocalType ty
+        val _ = strictlySingleValueType newTy
       in
         newTy
       end

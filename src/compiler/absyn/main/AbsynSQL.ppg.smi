@@ -36,7 +36,7 @@ struct
   datatype ('exp, 'pat, 'ty) exp =
       SQLFIELDSELECT of string * 'exp * Loc.loc
     | SQLFN of 'pat * 'exp command * Loc.loc
-    | SQLSERVER of (string * 'exp) list * 'ty * Loc.loc
+    | SQLSERVER of string * 'ty * Loc.loc
     | SQLEXEC of 'exp * Loc.loc
     | SQLEVAL of 'exp * Loc.loc
   val format_exp

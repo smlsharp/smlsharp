@@ -48,7 +48,7 @@ structure PatternCalc =
       | PLSELECT of string * plexp * Loc.loc
       | PLSEQ of plexp list * Loc.loc
       | PLSQLDBI of plpat * plexp * Loc.loc
-      | PLSQLSERVER of (string * plexp) list * Absyn.ty * Loc.loc
+      | PLSQLSERVER of string * Absyn.ty * Loc.loc
       | PLTYPED of plexp * Absyn.ty * Loc.loc
       | PLVAR of Absyn.longid * Loc.loc
     and ffiArg

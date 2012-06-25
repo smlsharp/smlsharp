@@ -84,7 +84,7 @@ structure TypedCalc =
       | TPSIZEOF of Types.ty * Loc.loc
       | TPSQLSERVER of {loc:Loc.loc, resultTy:Types.ty,
                         schema:Types.ty LabelEnv.map LabelEnv.map,
-                        server:(string * tpexp) list}
+                        server:string}
       | TPTAPP of {exp:tpexp, expTy:Types.ty, instTyList:Types.ty list,
                    loc:Loc.loc}
       | TPVAR of Types.varInfo * Loc.loc

@@ -505,13 +505,9 @@ in
       
     | TC.TPSIZEOF (_,loc) => makeApply (tpexp, spine, loc)
     | TC.TPSQLSERVER {server, schema, resultTy, loc} =>
-      let
-        val server = map (fn (l,e) => (l,uncurryExp nil e)) server
-      in
-        makeApply (TC.TPSQLSERVER{server=server, schema=schema,
-                                  resultTy=resultTy, loc=loc},
-                   spine, loc)
-      end
+      makeApply (TC.TPSQLSERVER{server=server, schema=schema,
+                                resultTy=resultTy, loc=loc},
+                 spine, loc)
 
   and uncurryDecl tpdecl = 
       case tpdecl of

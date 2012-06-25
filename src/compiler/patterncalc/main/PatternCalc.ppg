@@ -300,12 +300,10 @@ in
     PLFFIAPPLY of ffiAttributes option * plexp * ffiArg list * ffiTy * loc
 
   | (*%
-     * @format(str strs * ty * loc)
-     *   N0{ "_sqlserver" + strs(str)("," +) + ":" + ty }
-     * @format:str(str * exp)
-        N0{ str + "," + exp }
+     * @format(str * ty * loc)
+     *   N0{ "_sqlserver" + str + ":" + ty }
      *)
-    PLSQLSERVER of (string * plexp) list * ty * loc
+    PLSQLSERVER of string * ty * loc
   | (*%
      * @format(pat * exp * loc)
      * "_sqldbi" + pat

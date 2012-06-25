@@ -921,7 +921,7 @@ in
            to form 
              val x = ['a. (#1 x, #2 x {'a})]  
          *)
-      TC.TPSELECT {exp, expTy, label, loc, resultTy} => expansive exp
+        TC.TPSELECT {exp, expTy, label, loc, resultTy} => expansive exp
 (*
       | TC.TPSELECT _ => true
 *)
@@ -1105,15 +1105,6 @@ in
         (context:TIC.context)
         (icpat, icexp) =
     let
-(*
-val _ = P.print "decomposeValbind\n"
-val _ = P.print "icpat\n"
-val _ = P.printIcpat icpat
-val _ = P.print "\n"
-val _ = P.print "icexp\n"
-val _ = P.printIcexp icexp
-val _ = P.print "\n"
-*)
       fun generalizeIfNotExpansive lambdaDepth ((ty, tpexp), loc) =
         if E.isError() orelse expansive tpexp then (ty, tpexp)
         else
@@ -1216,15 +1207,6 @@ val _ = P.print "\n"
             (context:TIC.context)
             (icpat, icexp) = 
         let
-(*
-val _ = P.print "decompose\n"
-val _ = P.print "icpat\n"
-val _ = P.printIcpat icpat
-val _ = P.print "\n"
-val _ = P.print "icexp\n"
-val _ = P.printIcexp icexp
-val _ = P.print "\n"
-*)
           val icpatLoc = IC.getLocPat icpat
           val icexpLoc = IC.getLocExp icexp
           fun makeCase (icpat, icexp) = 
@@ -1340,32 +1322,13 @@ val _ = P.print "\n"
                 end
             | IC.ICPATVAR ({path,id}, loc) =>
                 let
-(*
-val _ = print "ICPATVAR in decomposeValBind\n"
-*)
                   val (ty, tpexp) = 
                       typeinfExp lambdaDepth zero context icexp
-(*
-val _ = print "ty after typeinfExp\n"
-val _ = T.printTy ty
-val _ = print "\n"
-val _ = print "tpexp\n"
-val _ = printTpexp tpexp
-val _ = print "\n"
-*)
                   val (ty, tpexp) =
                     generalizeIfNotExpansive
                     lambdaDepth
                     ((ty, tpexp), icexpLoc)
                   val varInfo  = {path = path, id=id, ty = ty}
-(*
-val _ = print "ty after generalizeIfNotExpansive\n"
-val _ = T.printTy ty
-val _ = print "\n"
-val _ = print "tpexp\n"
-val _ = printTpexp tpexp
-val _ = print "\n"
-*)
                 in
                   (
                    nil,
@@ -1485,43 +1448,15 @@ val _ = print "\n"
                  end
                | _ =>
                  let
-(*
-val _ = P.print "record pat; and non record exp\n"
-val _ = P.print "icpat\n"
-val _ = P.printIcpat icpat
-val _ = P.print "\n"
-val _ = P.print "icexp\n"
-val _ = P.printIcexp icexp
-val _ = P.print "\n"
-*)
                    val (tyBody, tpexpBody) =
                        typeinfExp lambdaDepth inf context icexp
-(*
-val _ = P.print "tpexpBody"
-val _ = P.printTpexp tpexpBody
-val _ = P.print "\n"
-val _ = P.print "tyBody\n"
-val _ = P.printTy tyBody
-val _ = P.print "\n"
-*)
                    val (_, tyPat, _ ) = typeinfPat lambdaDepth context icpat
-(*
-val _ = P.print "tyPat\n"
-val _ = P.printTy tyPat
-val _ = P.print "\n"
-*)
                    val _ =
                        (U.unify [(tyBody, tyPat)])
                        handle U.Unify =>
                               raise
                                 E.PatternExpMismatch
                                   ("011",{patTy = tyPat, expTy= tyBody})
-(*
-val _ = P.print "after unify\n"
-val _ = P.print "tyBody\n"
-val _ = P.printTy tyBody
-val _ = P.print "\n"
-*)
                    val (bodyVar as {path, id}) = IC.newICVar()
                    val icBodyVar = IC.ICVAR (bodyVar, loc1)
                    val tpVarInfo = {path=path, id=id, ty=tyBody}
@@ -1584,17 +1519,6 @@ val _ = P.print "\n"
                              end)
                          (nil, nil, nil, nil, nil)
                          labelIcpatIcexpList
-
-(*
-val _ = P.print "localbinds\n"
-val _ = map (fn (v,e) => (P.printTpVarInfo v; P.print " = "; P.printTpexp e; P.print "\n")) localBinds
-val _ = P.print "variablebinds\n"
-val _ = map (fn (v,e) => (P.printTpVarInfo v; P.print " = "; P.printTpexp e; P.print "\n")) variableBinds
-val _ = P.print "extrabinds\n"
-val _ = map (fn (v,e) => (P.printTpVarInfo v; P.print " = "; P.printTpexp e; P.print "\n")) extraBinds
-val _ = P.print "labelTpexpList\n"
-val _ = map (fn (l,e) => (P.print l; P.print " = "; P.printTpexp e; P.print "\n")) labelTpexpList
-*)
                  in
                    (
                     [(tpVarInfo,tpexpBody)]@localBinds, 
@@ -2138,23 +2062,30 @@ print "\n";
               let
                 val (argTyList,argExpList) = evalArgsVar lambdaDepth icexpList
                 val _ =
-                    app
-                      (fn ity =>
-                          let
-                            val annotatedTy = ITy.evalIty context ity
-                                handle e => raise e
-                          in
-                            (U.unify [(funTy, annotatedTy)])
-                            handle
-                            U.Unify =>
-                            E.enqueueError "Typeinf 012"
-                              (
-                               funLoc,
-                               E.TypeAnnotationNotAgree
-                                 ("013",{ty=funTy, annotatedTy=annotatedTy})
-                              )
-                          end)
-                      funItyList
+                   case funItyList of
+                     nil => ()
+                   | _ =>
+                     let
+                       val (funTy, _) = TIU.freshTopLevelInstTy funTy
+                     in
+                       app
+                         (fn ity =>
+                             let
+                               val annotatedTy = ITy.evalIty context ity
+                                   handle e => raise e
+                             in
+                               (U.unify [(funTy, annotatedTy)])
+                               handle
+                               U.Unify =>
+                               E.enqueueError "Typeinf 012"
+                                              (
+                                               funLoc,
+                                               E.TypeAnnotationNotAgree
+                                                 ("013",{ty=funTy, annotatedTy=annotatedTy})
+                                              )
+                             end)
+                         funItyList
+                     end
 	      in
                 monoApplyM
                   context
@@ -2173,6 +2104,7 @@ print "\n";
                   val (argTy, argExp) = TCU.freshInst (argTy, argExp)
                   val polyFunTy = ITy.evalIty context funITy
                       handle e => raise e
+                  (*  a con type must be rank zero *)
                   val (funTy, instTyList) = TIU.freshTopLevelInstTy polyFunTy
                   val _ = 
                       app
@@ -2295,15 +2227,7 @@ print "\n";
                     (TC.TPVAR (var, funVarLoc), ty)
                   | SOME (TC.RECFUNID(var as {ty,...},arity)) => 
                     (TC.TPRECFUNVAR{var=var,arity=arity,loc=funVarLoc},ty)
-                  | NONE =>
-                    (
-(*
-P.print "var not found (1)\n";
-P.printIcexp funExp;
-P.print "\n";
-*)
-                     raise bug "var not found (1)"
-                    )
+                  | NONE => raise bug "var not found (1)"
               val (funTy, funExp) = 
                   case funItyList of
                     nil => (funTy, funExp)
@@ -2592,14 +2516,14 @@ val _ = print "\n"
                       if expansive tpexp then
                         let
                           val newVarInfo = TCU.newTCVarInfo ty
-                     in
-                       (
-                        LabelEnv.insert
-                          (tpexpSmap, label, TC.TPVAR (newVarInfo, loc)),
-                        LabelEnv.insert(tySmap, label, ty),
-                        (newVarInfo, tpexp) :: tpbinds
-                        )
-                     end
+                        in
+                          (
+                           LabelEnv.insert
+                             (tpexpSmap, label, TC.TPVAR (newVarInfo, loc)),
+                           LabelEnv.insert(tySmap, label, ty),
+                           (newVarInfo, tpexp) :: tpbinds
+                          )
+                        end
                    else 
                      (
                       LabelEnv.insert (tpexpSmap, label, tpexp),
@@ -3149,26 +3073,8 @@ val _ = print "\n"
                       argExpList = [argTupleExp],
                       loc = loc})
         end
-      | IC.ICSQLSERVER (labeledExps, ty, loc) =>
+      | IC.ICSQLSERVER (server, ty, loc) =>
         let
-          val labeledExps =
-              map
-                (fn (label, icexp) =>
-                    let
-                      val (expTy, tpexp) =
-                          TCU.freshInst
-                            (typeinfExp lambdaDepth inf context icexp)
-                      val _ = U.unify [(BE.STRINGty, expTy)]
-                          handle U.Unify =>
-                                 E.enqueueError "Typeinf 033"
-                                   (loc,
-                                    E.TyConMismatch
-                                      ("032",{argTy = expTy,
-                                              domTy = BE.STRINGty}))
-                    in
-                      (label, tpexp)
-                    end)
-                labeledExps
           val ty = ITy.evalIty context ty
               handle e => raise e
           val schema =
@@ -3202,7 +3108,7 @@ val _ = print "\n"
                  args = [ty]}
         in
           (resultTy,
-           TC.TPSQLSERVER {server = labeledExps, schema = schema,
+           TC.TPSQLSERVER {server = server, schema = schema,
                            resultTy = resultTy, loc = loc})
         end
       | IC.ICSQLDBI (icpat, icexp, loc) =>

@@ -90,11 +90,13 @@ struct
           | charOf _ = NONE
         fun byteOf (AN.ANWORD v) = SOME v
           | byteOf _ = NONE
+(* 2012-6-16 ohori: Something is worng; bool is represented as ANWORD.
         fun boolOf (AN.ANINT v) =
             if v = 0
             then SOME false
             else SOME true
           | boolOf _ = NONE
+*)
 (*
         fun stringOf (AN.ANCONST (CT.STRING v)) = SOME v
           | stringOf _ = NONE
@@ -114,8 +116,17 @@ struct
         fun byteToExp v = AN.ANWORD v
         fun boolToExp v =
             if v
+            then AN.ANWORD 0w1 
+            else AN.ANWORD 0w0
+(* 2012-6-16 Ohori:
+  This is the cause of bug 203_anormalOptimize.sml.
+  The internal representation of bool is word, and the TC.compare return false
+  for (AN.ANINT n, AN.WORD w).
+        fun boolToExp v =
+            if v
             then AN.ANINT 1
             else AN.ANINT 0
+*)
 (*
         fun stringToExp v = AN.ANCONSTANT (CT.STRING v)
 *)

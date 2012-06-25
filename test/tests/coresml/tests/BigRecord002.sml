@@ -22,7 +22,6 @@ creation of a record block which has many fields.
   </li>
 </ul>
 *)
-(*
 (********************)
 val topPoly40 =
     (
@@ -386,5 +385,3 @@ val rENVPoly80_tv33_70 = #70(ENVPoly80_tv33 topPoly80 "70");
 val rENVPoly80_tv33_71 = #71(ENVPoly80_tv33 topPoly80 "71");
 val rENVPoly80_tv33_79 = #79(ENVPoly80_tv33 topPoly80 "79");
 val rENVPoly80_tv33_80 = #80(ENVPoly80_tv33 topPoly80 "80");
-
-*)

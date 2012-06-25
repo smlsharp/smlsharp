@@ -1127,25 +1127,23 @@ in
        *)
       TPSIZEOF of ty * loc
     | (*%
-         @format({server:str strs,
+         @format({server,
                   schema:schema schemas:genericLmapTy, resultTy, loc})
-            N0{ "_sqlserver" + strs(str)("," +) 
+            N0{ "_sqlserver" + server
                 + ":"
                 + "{" schemas(schema)(":", ",", "*") "}" }
-         @format:str(l * e) N0{ l + ":" + e()(btvEnv) }
          @format:schema(ty tys:genericLmapTy)
          "{" tys(ty()(btvEnv))(":", ",", "*") "}"
        *)
       (*% @prefix formatWithType_
-         @format({server:str strs,
+         @format({server,
                   schema:schema schemas:genericLmapTy, resultTy, loc})
-            N0{ "_sqlserver" + strs(str)("," +) + ":"
+            N0{ "_sqlserver" + server + ":"
                 + "{" schemas(schema)(":", ",", "*") "}" }
-         @format:str(l * e) N0{ l + ":" + e()(btvEnv) }
          @format:schema(ty tys:genericLmapTy)
          "{" tys(ty()(btvEnv))(":", ",", "*") "}"
        *)
-       TPSQLSERVER of {server: (string * tpexp) list,
+       TPSQLSERVER of {server: string,
                        schema: ty LabelEnv.map LabelEnv.map,
                        resultTy: ty, loc: loc}
 

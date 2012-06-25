@@ -80,19 +80,27 @@ struct
   val k2 = 0wx8F1BBCDC : Word32.word
   val k3 = 0wxCA62C1D6 : Word32.word
 
-  fun makeBlocks words =
+  fun makeBlocksAccum (words : Word32.word list, blocks) =
       case words of
         w0::w1::w2::w3::w4::w5::w6::w7::w8::w9::wA::wB::wC::wD::wE::wF::t =>
-        (w0,w1,w2,w3,w4,w5,w6,w7,w8,w9,wA,wB,wC,wD,wE,wF) :: makeBlocks t
-      | _ => nil
+        makeBlocksAccum
+          (t, (w0,w1,w2,w3,w4,w5,w6,w7,w8,w9,wA,wB,wC,wD,wE,wF)::blocks)
+      | _ => blocks
 
-  fun wordSeq 0 _ = nil
-    | wordSeq n (w0,w1,w2,w3,w4,w5,w6,w7,w8,w9,wA,wB,wC,wD,wE,wF) =
+  fun makeBlocks words =
+      rev (makeBlocksAccum (words, nil))
+
+  fun wordSeqAccum (0, block, ret) = ret
+    | wordSeqAccum (n, (w0,w1,w2,w3,w4,w5,w6,w7,w8,w9,wA,wB,wC,wD,wE,wF), ret) =
       let
         val w = rotl (0w1, wD xorb w8 xorb w2 xorb w0)
       in
-        w :: wordSeq (n-1) (w1,w2,w3,w4,w5,w6,w7,w8,w9,wA,wB,wC,wD,wE,wF,w)
+        wordSeqAccum (n-1, (w1,w2,w3,w4,w5,w6,w7,w8,w9,wA,wB,wC,wD,wE,wF,w),
+                      w::ret)
       end
+
+  fun wordSeq n block =
+      rev (wordSeqAccum (n, block, nil))
 
   fun makeWordSeq (ws as (w0,w1,w2,w3,w4,w5,w6,w7,w8,w9,wA,wB,wC,wD,wE,wF)) =
       w0::w1::w2::w3::w4::w5::w6::w7::w8::w9::wA::wB::wC::wD::wE::wF

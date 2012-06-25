@@ -124,10 +124,7 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
                      ICFFIARGSIZEOF (ty, NONE, loc))
 		 args,
              retTy, loc)
-      | ICSQLSERVER (str, schema, loc) =>
-          ICSQLSERVER
-              (map (fn (x,y) => (x, optimizeExp y)) str,
-               schema, loc)
+      | ICSQLSERVER (str, schema, loc) => icexp
       | ICSQLDBI (icpat, icexp, loc) =>
         ICSQLDBI (icpat, optimizeExp icexp, loc)
   

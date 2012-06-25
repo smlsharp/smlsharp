@@ -125,6 +125,9 @@ structure NameEvalError =
     exception DuplicateStrName of string * string
     exception DuplicateRecordLabelInKind of string * string
     exception DuplicateRecordLabelInRawType of string * string
+    exception DuplicateRecordLabelInExp of string * string
+    exception DuplicateRecordLabelInPat of string * string
+    exception DuplicateRecordLabelInUpdate of string * string
     exception DuplicateSigname of string * string
     exception ImproperSigshare of string * {longid:string list}
     exception ImproperSigwhere of string * {longid:string list}
