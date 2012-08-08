@@ -101,7 +101,10 @@ struct
              | UserError.UserErrorsWithoutLoc errs =>
                app (fn (k,e) => puts (userErrorToString (Loc.noloc,k,e))) errs
              | Control.Bug s => puts ("Compiler bug:" ^ s)
+(*
              | exn => puts "Compilation failed."
+*)
+             | exn => raise exn
             ;
             raise CompileError Top.emptyNewContext
             )

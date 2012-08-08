@@ -1,4 +1,3 @@
 signature TRANS_FUNDECL = sig
-  val transIcdeclList :
-	    IDCalc.icdecl list -> IDCalc.icdecl list
+    val transIcdeclList : IDCalc.topdecl -> IDCalc.topdecl
 end

@@ -10,23 +10,29 @@ local
 in
   fun transFunDeclVarInfo loc funbind =
       let
-        val (varInfo, body) = transFunDeclInner loc funbind
+        val (varInfo, tyList, body) = transFunDeclInner loc funbind
       in
-        {varInfo = varInfo, body = body}
+        {varInfo = varInfo, tyList = tyList, body = body}
       end
   and transFunDeclPat loc funbind =
       let
-        val (varInfo, body) = transFunDeclInner loc funbind
+        val (varInfo, tyList, body) = transFunDeclInner loc funbind
+        val pat =
+            foldr
+            (fn (ty, pat) => ICPATTYPED(pat, ty, loc))
+            (ICPATVAR (varInfo, loc))
+            tyList
       in
-        (ICPATVAR (varInfo, loc), body)
+        (pat, body)
       end
-  and transFunDeclInner loc {funVarInfo, rules as ({args=[pat], body}::_)} =
+  and transFunDeclInner loc {funVarInfo, tyList, rules as ({args=[pat], body}::_)} =
       (funVarInfo,
+       tyList,
        ICFNM
          (map
             (fn {args,body} => {args = args, body = transExp body}) rules,
           loc))
-    | transFunDeclInner loc {funVarInfo, rules as [{args, body}]} =
+    | transFunDeclInner loc {funVarInfo, tyList, rules as [{args, body}]} =
       let
         val funBody = 
             foldr
@@ -34,9 +40,9 @@ in
                   ICFNM([{args = [pat], body = funBody}], loc))
               (transExp body) args
       in
-        (funVarInfo, funBody)
+        (funVarInfo, tyList, funBody)
       end
-    | transFunDeclInner loc {funVarInfo, rules as ({args, body}::_)} =
+    | transFunDeclInner loc {funVarInfo, tyList, rules as ({args, body}::_)} =
       let
         val funBody =
             let
@@ -76,7 +82,7 @@ in
                 newVarPats
             end
       in
-        (funVarInfo, funBody)
+        (funVarInfo, tyList, funBody)
       end
     | transFunDeclInner _ _ = raise Control.Bug "illegal fun decl "
        
@@ -166,20 +172,19 @@ in
         ICVALREC {guard = guard,
                   recbinds = map (transFunDeclVarInfo loc) funbinds,
                   loc = loc}
-      | ICNONRECFUN {guard, funVarInfo, rules, loc} =>
+      | ICNONRECFUN {guard, funVarInfo, tyList, rules, loc} =>
         ICVAL(guard,
-              [transFunDeclPat loc {funVarInfo = funVarInfo, rules = rules}],
+              [transFunDeclPat loc {funVarInfo = funVarInfo, tyList = tyList, rules = rules}],
               loc)
         (*raise Fail "FIX ICNONRECFUN!!"*)
       | ICVALREC {guard, recbinds, loc} =>
         ICVALREC {guard = guard,
-                  recbinds = map (fn ({varInfo, body}) =>
+                  recbinds = map (fn ({varInfo, tyList, body}) =>
                                      {varInfo = varInfo,
+                                      tyList = tyList,
                                       body = transExp body})
                                  recbinds,
                   loc = loc}
-      | ICABSTYPE {tybinds, body, loc} =>
-        ICABSTYPE {tybinds = tybinds, body = map transDecl body, loc = loc}
       | ICEXND ( exdList, loc) => icdecl
       | ICEXNTAGD (_, loc) => icdecl
       | ICEXPORTVAR (varInfo, ty, loc) => icdecl
@@ -188,8 +193,9 @@ in
       | ICEXPORTEXN (exnInfo, loc) => icdecl
       | ICEXTERNVAR ({path, ty}, loc) => icdecl
       | ICEXTERNEXN ({path, ty}, loc) => icdecl
+      | ICTYCASTDECL (tycastList, icdeclList, loc) => icdecl
       | ICOVERLOADDEF {boundtvars, id, path, overloadCase, loc} => icdecl
                                                     
-  fun transIcdeclList icdeclList = map transDecl icdeclList      
+  fun transIcdeclList {decls, loc} = {decls=map transDecl decls, loc=loc}
 end
 end

@@ -30,22 +30,6 @@ local
   val ffiApplyTyvars = ref nil : (T.ty * Loc.loc) list ref
   fun bug s = Control.Bug ("InferType: " ^ s)
 
-  fun printPath path =
-      print (String.concatWith "." path)
-
-  fun printIcexp icexp =
-      print (Control.prettyPrint (IC.format_icexp icexp))
-  fun printIcpat icpat =
-      print (Control.prettyPrint (IC.format_icpat icpat))
-  fun printTpexp tpexp =
-      print (Control.prettyPrint (TC.format_tpexp nil tpexp))
-  fun printTpdecl tpdecl =
-      print (Control.prettyPrint (TC.format_tpdecl nil tpdecl))
-  fun printIcdecl icdecl =
-      print (Control.prettyPrint (IC.format_icdecl icdecl))
-  fun printITy ty = 
-      print (Control.prettyPrint (IC.format_ty ty))
-
   val emptyScopedTvars = nil : IC.scopedTvars
 
   fun mapi f l =
@@ -130,20 +114,8 @@ local
               (case TypID.Map.find(typIdMap, #id tyCon) of
                  NONE => T.CONSTRUCTty {tyCon=tyCon,
                                         args= map tySubst args}
-               | SOME ({id,iseq,arity,runtimeTy,conSet,extraArgs,dtyKind,...}:T.tyCon) =>
-                 let
-                   val tyCon =
-                       {id=id,
-                        iseq=iseq,
-                        arity=arity,
-                        runtimeTy=runtimeTy,
-                        path=path,
-                        conSet=conSet,
-                        extraArgs=extraArgs,
-                        dtyKind=dtyKind}
-                 in
-                   T.CONSTRUCTty{tyCon=tyCon,args =map tySubst args}
-                 end
+               | SOME tyCon =>
+                 T.CONSTRUCTty{tyCon=tyCon,args =map tySubst args}
               )
             | T.POLYty {boundtvars, body} =>
               T.POLYty {boundtvars =
@@ -552,6 +524,21 @@ local
         expSubst tpexp
       end
 
+  fun tyConSubstVarInfo typIdMap {path, id, ty} = 
+      {path=path, id=id, ty = tyConSubstTy typIdMap ty}
+  fun tyConSubstIdstatus typIdMap idstatus =
+      case idstatus of
+        TC.RECFUNID (varInfo, int) =>
+        TC.RECFUNID (tyConSubstVarInfo typIdMap varInfo, int)
+      | TC.VARID varInfo => TC.VARID (tyConSubstVarInfo typIdMap varInfo)
+  fun tyConSubstContext typIdMap {tvarEnv, varEnv, oprimEnv} =
+      let
+        val tvarEnv = TvarMap.map (tyConSubstTy typIdMap) tvarEnv
+        val varEnv = VarMap.map (tyConSubstIdstatus typIdMap) varEnv
+      in
+        {tvarEnv=tvarEnv, varEnv=varEnv, oprimEnv = oprimEnv}
+      end
+
 in
 
   fun isForceImportAttribute (attribute:A.ffiAttributes option) =
@@ -626,7 +613,7 @@ in
       case ffity of
         IC.FFIBASETY (ty, loc) =>
         (ITy.evalIty context ty
-         handle e => raise e)
+         handle e => (P.print "ity1\n"; raise e))
       | IC.FFIFUNTY (_, _, _, loc) =>
         (E.enqueueError "Typeinf 001" (loc, E.ForceImportForeignFunction("001", ffity));
          T.ERRORty)
@@ -689,7 +676,7 @@ in
       | IC.FFIBASETY (ty, loc) =>
         let
           val ty = ITy.evalIty context ty
-                   handle e => raise e
+                   handle e => (P.print "ity2\n";raise e)
         in
           if isInteroperableTy dir ty
           then TC.FFIBASETY (ty, loc)
@@ -756,7 +743,10 @@ in
     case tvarkind of
       IC.UNIV => T.UNIV
     | IC.REC fields => 
-      T.REC (LabelEnv.map (ITy.evalIty context) fields)
+      T.REC 
+        (LabelEnv.map 
+           (ITy.evalIty context handle e => (P.print "ity3\n"; raise e))
+           fields)
       handle e => raise e
 
   fun evalScopedTvars lambdaDepth (context:TIC.context) kindedTvarList loc =
@@ -1192,7 +1182,7 @@ in
           | IC.ICPATCONSTANT (constant, loc) => false
           | IC.ICPATCONSTRUCT {con=icpat1, arg=icpat2, loc} => false
           | IC.ICPATRECORD {flex, fields, loc} => 
-            foldr
+            foldl
               (fn ((_, icpat), bool) =>
                   bool andalso isStrictValuePat icpat)
               true
@@ -1315,7 +1305,7 @@ in
                   val (ty, tpexp) =
                     generalizeIfNotExpansive
                     lambdaDepth
-                    (typeinfExp lambdaDepth inf context icexp, icexpLoc)
+                    (typeinfExp lambdaDepth zero context icexp, icexpLoc)
                   val newVarInfo = TCU.newTCVarInfo ty
                 in
                   (nil,[(newVarInfo,tpexp)], nil, TC.TPVAR (newVarInfo,loc), ty)
@@ -1386,18 +1376,18 @@ in
                    val (localBinds,
                         patternVarBinds,
                         extraBinds,
-                        labelTpexpList,
-                        labelTyList
+                        labelTpexpListRev,
+                        labelTyListRev
                        ) =
-                       foldr
+                       foldl
                         (fn (
                              (label, icpat, icexp),
                              (
                               localBinds,
                               patternVarBinds,
                               extraBinds,
-                              labelTpexpList,
-                              labelTyList
+                              labelTpexpListRev,
+                              labelTyListRev
                               )
                              ) =>
                          let 
@@ -1412,34 +1402,34 @@ in
                              (icpat, icexp) 
                          in
                            (
-                            localBinds1 @ localBinds,
-                            patternVarBinds1 @ patternVarBinds,
-                            extraBinds1 @ extraBinds,
-                            (label, tpexp) :: labelTpexpList,
-                            (label, ty) :: labelTyList
+                            localBinds @ localBinds1,
+                            patternVarBinds @ patternVarBinds1,
+                            extraBinds @ extraBinds1,
+                            (label, tpexp) :: labelTpexpListRev,
+                            (label, ty) :: labelTyListRev
                             )
                          end)
                         (nil, nil, nil, nil, nil)
                         labelIcpatIcexpList
                    val resultTy = 
                         T.RECORDty
-                        (foldr
+                        (foldl
                          (fn ((l,ty), fields) => LabelEnv.insert(fields, l, ty))
                          LabelEnv.empty
-                         labelTyList)
+                         labelTyListRev)
                  in
                    (
-                    localBinds, 
+                    localBinds,
                     patternVarBinds, 
                     extraBinds,
                     TC.TPRECORD
                       {
                        fields=
-                         foldr
+                         foldl
                          (fn ((l, tpexp), fields) =>
                              LabelEnv.insert(fields, l, tpexp))
                          LabelEnv.empty
-                         labelTpexpList,
+                         labelTpexpListRev,
                        recordTy=resultTy,
                        loc=loc2
                       },
@@ -1449,7 +1439,8 @@ in
                | _ =>
                  let
                    val (tyBody, tpexpBody) =
-                       typeinfExp lambdaDepth inf context icexp
+                       typeinfExp lambdaDepth zero context icexp
+(*
                    val (_, tyPat, _ ) = typeinfPat lambdaDepth context icpat
                    val _ =
                        (U.unify [(tyBody, tyPat)])
@@ -1457,6 +1448,7 @@ in
                               raise
                                 E.PatternExpMismatch
                                   ("011",{patTy = tyPat, expTy= tyBody})
+*)
                    val (bodyVar as {path, id}) = IC.newICVar()
                    val icBodyVar = IC.ICVAR (bodyVar, loc1)
                    val tpVarInfo = {path=path, id=id, ty=tyBody}
@@ -1480,45 +1472,32 @@ in
                               IC.ICSELECT(label, icBodyVar, loc1)
                              ))
                          stringIcpatList
-                   val (
-                        localBinds,
-                        variableBinds,
-                        extraBinds,
-                        labelTpexpList,
-                        labelTyList
-                   ) =
-                       foldr
-                         (fn (
-                              (label, icpat, icexp),
-                              (
-                               localBinds,
-                               variableBinds,
-                               extraBinds,
-                               labelTpexpList,
-                               labelTyList
-                              )
-                          ) =>
-                             let 
-                               val (localBinds1,
-                                    variableBinds1,
-                                    extraBinds1,
-                                    tpexp,
-                                    ty) =
-                                   decompose
-                                     lambdaDepth
-                                     context
-                                     (icpat, icexp) 
-                             in
-                               (
-                                localBinds1 @ localBinds,
-                                variableBinds1 @ variableBinds,
-                                extraBinds @ extraBinds1,
-                                (label, tpexp) :: labelTpexpList,
-                                (label, ty) :: labelTyList
-                               )
-                             end)
-                         (nil, nil, nil, nil, nil)
-                         labelIcpatIcexpList
+                   val (localBinds,variableBinds,extraBinds) 
+                     =
+                     foldl
+                       (fn ((label, icpat, icexp),
+                            (localBinds,variableBinds,extraBinds)
+                           )
+                           =>
+                           let 
+                             val (localBinds1,
+                                  variableBinds1,
+                                  extraBinds1,
+                                  tpexp,
+                                  ty) =
+                                 decompose
+                                   lambdaDepth
+                                   context
+                                   (icpat, icexp) 
+                           in
+                             (
+                              localBinds @ localBinds1,
+                              variableBinds @ variableBinds1,
+                              extraBinds @ extraBinds1
+                             )
+                           end)
+                       (nil, nil, nil)
+                       labelIcpatIcexpList
                  in
                    (
                     [(tpVarInfo,tpexpBody)]@localBinds, 
@@ -1671,7 +1650,7 @@ val _ = P.print "\n"
       | IC.ICEXVAR ({path, ty}, loc) =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity4\n"; raise e)
         in
           (ty, TC.TPEXVAR ({path=path, ty=ty},loc))
         end
@@ -1679,7 +1658,7 @@ val _ = P.print "\n"
       | IC.ICBUILTINVAR {primitive, ty, loc} =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity5\n";raise e)
           val primInfo = {primitive=primitive, ty=ty}
         in
           case ty of
@@ -1743,7 +1722,7 @@ val _ = P.print "\n"
       | IC.ICCON (con as {path, id, ty}, loc) =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity6\n";raise e)
           val conInfo = {path=path, ty=ty, id=id}
         in
           case ty of
@@ -1811,7 +1790,7 @@ val _ = P.print "\n"
       | IC.ICEXN (exn as {path, id, ty}, loc) =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity7\n";raise e)
           val exnInfo = {path=path, ty=ty, id=id}
         in
           case ty of
@@ -1847,7 +1826,7 @@ val _ = P.print "\n"
       | IC.ICEXN_CONSTRUCTOR (exn as {path, id, ty}, loc) =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity8\n";raise e)
           val exnInfo = {path=path, ty=ty, id=id}
         in
           (BE.EXNTAGty,
@@ -1857,7 +1836,7 @@ val _ = P.print "\n"
       | IC.ICEXEXN_CONSTRUCTOR (exn as {path, ty}, loc) =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity9\n";raise e)
           val exExnInfo = {path=path, ty=ty}
         in
           (BE.EXNTAGty,
@@ -1867,7 +1846,7 @@ val _ = P.print "\n"
       | IC.ICEXEXN ({path, ty}, loc) =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity10\n"; raise e)
           val exExnInfo = {path=path, ty=ty}
         in
           case ty of
@@ -1951,7 +1930,7 @@ val _ = P.print "\n"
          let
            val (ty1, tpexp) = typeinfExp lambdaDepth inf context icexp
            val (instTy, tpexp) = TCU.freshInst (ty1, tpexp)
-           val ty2 = ITy.evalIty context ty handle e => raise e
+           val ty2 = ITy.evalIty context ty handle e => (P.print "ity11\n"; raise e)
            val ty2 = TU.freshRigidInstTy ty2
          in
            (
@@ -1972,35 +1951,35 @@ val _ = P.print "\n"
       | IC.ICSIGTYPED {path, icexp=exp, ty, revealKey, loc} =>
          let
 (*
-val _ = print "ICSIGTYPED\n"
-val _ = print "icexp\n"
-val _ = printIcexp icexp
-val _ = print "\n"
-val _ = print "path\n"
-val _ = print (String.concatWith "." path)
-val _ = print "\nty\n"
-val _ = printITy ty
-val _ = print "\n"
+val _ = P.print "ICSIGTYPED\n"
+val _ = P.print "icexp\n"
+val _ = P.printIcexp icexp
+val _ = P.print "\n"
+val _ = P.print "path\n"
+val _ = P.print (String.concatWith "." path)
+val _ = P.print "\nty\n"
+val _ = P.printITy ty
+val _ = P.print "\n"
 *)
            val (ty1, tpexp) = typeinfExp lambdaDepth inf context exp
            val (instTy, tpexp) = TCU.freshInst (ty1, tpexp)
-           val ty2 = ITy.evalIty context ty handle e => raise e
+           val ty2 = ITy.evalIty context ty handle e => (P.print "ity12\n"; raise e)
 (*
-val _ = print "ty2****\n"
-val _ = T.printTy ty2
-val _ = print "\n"
+val _ = P.print "ty2****\n"
+val _ = P.printTy ty2
+val _ = P.print "\n"
 *)
            val ty22 = TU.freshRigidInstTy ty2
 (*
-val _ = print "ty22****\n"
-val _ = T.printTy ty22
-val _ = print "\n"
+val _ = P.print "ty22****\n"
+val _ = P.printTy ty22
+val _ = P.print "\n"
 *)
            val revealedTy2 = revealTy revealKey ty22
 (*
-val _ = print "reverledTy2****\n"
+val _ = P.print "reverledTy2****\n"
 val _ = T.printTy revealedTy2
-val _ = print "\n"
+val _ = P.print "\n"
 *)
          in
            (
@@ -2072,7 +2051,7 @@ print "\n";
                          (fn ity =>
                              let
                                val annotatedTy = ITy.evalIty context ity
-                                   handle e => raise e
+                                   handle e => (P.print "ity13\n"; raise e)
                              in
                                (U.unify [(funTy, annotatedTy)])
                                handle
@@ -2103,14 +2082,14 @@ print "\n";
                 let
                   val (argTy, argExp) = TCU.freshInst (argTy, argExp)
                   val polyFunTy = ITy.evalIty context funITy
-                      handle e => raise e
+                      handle e => (P.print "ity14\n"; raise e)
                   (*  a con type must be rank zero *)
                   val (funTy, instTyList) = TIU.freshTopLevelInstTy polyFunTy
                   val _ = 
                       app
                         (fn ity =>
                             let val annotatedTy1 = ITy.evalIty context ity
-                                    handle e => raise e
+                                    handle e => (P.print "ity15\n"; raise e)
                             in
                               U.unify [(funTy, annotatedTy1)]
                               handle U.Unify =>
@@ -2177,7 +2156,7 @@ print "\n";
                        (fn ity =>
                            let
                              val annotatedTy1 = ITy.evalIty context ity
-                                 handle e => raise e
+                                 handle e => (P.print "ity16\n"; raise e)
                            in
                              U.unify [(funTy, annotatedTy1)]
                              handle U.Unify =>
@@ -2238,7 +2217,7 @@ print "\n";
           | IC.ICEXVAR ({path, ty}, loc) =>
 	    let
               val ty = ITy.evalIty context ty
-                  handle e => raise e
+                  handle e => (P.print "ity17\n"; raise e)
 	      val funExp = TC.TPEXVAR ({path=path, ty=ty}, loc)
             in
               processVar (ty, funExp, loc)
@@ -2246,7 +2225,7 @@ print "\n";
           | IC.ICBUILTINVAR {primitive, ty, loc} =>
             let
               val ty = ITy.evalIty context ty
-                  handle e => raise e
+                  handle e => (P.print "ity18\n"; raise e)
               fun makeNewTermBody (argExp, funTy, instTyList) = 
                   TC.TPPRIMAPPLY
                     {primOp={primitive=primitive, ty=funTy},
@@ -2393,13 +2372,13 @@ print "\n";
       | IC.ICAPPM_NOUNIFY (icexp, icexpList, loc) =>
         let
 (*
-val _ = print "ICAPPM_NOUNIFY\n"
-val _ = print "icexp\n"
-val _ = printIcexp icexp
-val _ = print "\n"
-val _ = print "icexpList\n"
-val _ = map printIcexp icexpList
-val _ = print "\n"
+val _ = P.print "ICAPPM_NOUNIFY\n"
+val _ = P.print "icexp\n"
+val _ = P.printIcexp icexp
+val _ = P.print "\n"
+val _ = P.print "icexpList\n"
+val _ = map P.printIcexp icexpList
+val _ = P.print "\n"
 *)
           fun eqList (tyList1, tyList2) =
               U.eqTyList BoundTypeVarID.Map.empty (tyList1, tyList2)
@@ -2423,9 +2402,9 @@ val _ = print "\n"
                   T.FUNMty(tyList, ty) => (tyList, ty)
                 | T.ERRORty => raise Fail
                 | _ => 
-                  (print "APPM_NOUNIFY\n";
-                   T.printTy funTy;
-                   print "\n";
+                  (P.print "APPM_NOUNIFY\n";
+                   P.printTy funTy;
+                   P.print "\n";
                    raise bug "APPM_NOUNIFY"
                   )
             val _ = if length argTyList = length domTyList then ()
@@ -2464,31 +2443,34 @@ val _ = print "\n"
               typeinfDeclList lambdaDepth context icdeclList 
           val newContext =
               TIC.extendContextWithContext (context, context1)
-          val (tyList, tpexpList) = 
-              foldr
-                (fn (ptexp, (tyList, tpexpList)) =>
+          val (tyListRev, tpexpListRev) = 
+              foldl
+                (fn (ptexp, (tyListRev, tpexpListRev)) =>
                     let 
                       val (ty, tpexp) = 
                           typeinfExp lambdaDepth applyDepth newContext ptexp
                     in 
-                      (ty::tyList, tpexp :: tpexpList)
+                      (ty::tyListRev, tpexp :: tpexpListRev)
                     end)
                 (nil, nil)
                 icexpList
         in
-          (List.last tyList,
-           TC.TPLET{decls=tpdeclList, body=tpexpList, tys=tyList, loc=loc})
+          (List.hd tyListRev,
+           TC.TPLET{decls = tpdeclList, 
+                    body = List.rev tpexpListRev, 
+                    tys = List.rev tyListRev, 
+                    loc = loc})
         end
       | IC.ICTYCAST (tycastList, icexp, loc) =>
         let
           val {varEnv, tvarEnv, oprimEnv} = context
           val typIdMap =
-              foldr
+              foldl
               (fn ({from, to}, typIdMap) =>
                   let
                     val fromId = IC.tfunId from
                     val to = ITy.evalTfun context ["dummy"] to
-                             handle e => raise e
+                             handle e => (P.print "ity19\n"; raise e)
                   in
                     TypID.Map.insert(typIdMap, fromId, to)
                   end
@@ -2506,9 +2488,9 @@ val _ = print "\n"
         end          
       | IC.ICRECORD (stringIcexpList, loc) =>
         let 
-          val (tpexpSmap, tySmap, tpbinds) =
-              foldr 
-                (fn ((label, icexp), (tpexpSmap, tySmap, tpbinds)) =>
+          val (tpexpSmap, tySmap, tpbindsRev) =
+              foldl
+                (fn ((label, icexp), (tpexpSmap, tySmap, tpbindsRev)) =>
                     let 
                       val (ty, tpexp) =
                           typeinfExp lambdaDepth applyDepth context icexp
@@ -2521,29 +2503,30 @@ val _ = print "\n"
                            LabelEnv.insert
                              (tpexpSmap, label, TC.TPVAR (newVarInfo, loc)),
                            LabelEnv.insert(tySmap, label, ty),
-                           (newVarInfo, tpexp) :: tpbinds
+                           (newVarInfo, tpexp) :: tpbindsRev
                           )
                         end
                    else 
                      (
                       LabelEnv.insert (tpexpSmap, label, tpexp),
                       LabelEnv.insert (tySmap, label, ty),
-                      tpbinds
+                      tpbindsRev
                       )
                  end)
                (LabelEnv.empty, LabelEnv.empty, nil)
                stringIcexpList
-           val resultTy = T.RECORDty tySmap
-         in
+          val tpbinds = List.rev tpbindsRev
+          val resultTy = T.RECORDty tySmap
+        in
            (
              resultTy,
              case tpbinds of
                nil => TC.TPRECORD {fields=tpexpSmap,recordTy=resultTy,loc=loc}
              | _ =>
                TC.TPMONOLET
-                 {binds=tpbinds, 
+                 {binds=tpbinds,
                   bodyExp=
-                    TC.TPRECORD {fields=tpexpSmap,recordTy=resultTy,loc=loc}, 
+                    TC.TPRECORD {fields=tpexpSmap,recordTy=resultTy,loc=loc},
                   loc=loc}
            )
          end
@@ -2699,7 +2682,7 @@ val _ = print "\n"
                         app
                           (fn ity =>
                               let val annotatedTy1 = ITy.evalIty newContext ity
-                                      handle e => raise e
+                                      handle e => (P.print "ity20\n"; raise e)
                               in
                                 U.unify [(domTy, annotatedTy1)]
                                 handle
@@ -2770,6 +2753,7 @@ val _ = print "\n"
                       (newContext, tyVarInfoList)) => 
                   let 
                     val domTy = ITy.evalIty newContext ity
+                                handle e => (P.print "ity21\n"; raise e)
                     val varInfo = {path=path, id=id, ty=domTy}
                     val newContext =
                         TIC.bindVar(lambdaDepth,
@@ -2820,42 +2804,45 @@ val _ = print "\n"
          end
       | IC.ICCASEM (icexpList, argsBodyList, caseKind, loc) =>
         let
-          val (tyList, tpexpList) =
-              foldr 
-                (fn (ptexp, (tyList, tpexpList)) =>
+          val (tyListRev, tpexpListRev) =
+              foldl
+                (fn (ptexp, (tyListRev, tpexpListRev)) =>
                     let
                       val (ty,tpexp) = typeinfExp lambdaDepth inf context ptexp
                       val (ty,tpexp) = TCU.freshInst (ty,tpexp)
                     in
-                      (ty::tyList, tpexp::tpexpList)
+                      (ty::tyListRev, tpexp::tpexpListRev)
                     end
                 )
                 (nil,nil)
                 icexpList
-           val (ruleTy, tpMatchM) =
-               typeinfMatch lambdaDepth applyDepth tyList context argsBodyList
-           val ranTy = 
-               case TU.derefTy ruleTy of 
-                 T.FUNMty(_, ranTy) => ranTy
-               | T.ERRORty => T.ERRORty
-               | _ => raise bug "Case Type Inference"
-         in
-           (ranTy, TC.TPCASEM
-                     {
-                      expList=tpexpList, 
-                      expTyList=tyList, 
-                      ruleList=tpMatchM, 
-                      ruleBodyTy=ranTy, 
-                      caseKind=caseKind, 
-                      loc=loc
-                     }
-           )
-         end
+          val (tyList, tpexpList) = (List.rev tyListRev, List.rev tpexpListRev)
+          val (ruleTy, tpMatchM) =
+              typeinfMatch lambdaDepth applyDepth tyList context argsBodyList
+          val ranTy = 
+              case TU.derefTy ruleTy of 
+                T.FUNMty(_, ranTy) => ranTy
+              | T.ERRORty => T.ERRORty
+              | _ => raise bug "Case Type Inference"
+        in
+          (ranTy, TC.TPCASEM
+                    {
+                     expList=tpexpList, 
+                     expTyList=tyList, 
+                     ruleList=tpMatchM, 
+                     ruleBodyTy=ranTy, 
+                     caseKind=caseKind, 
+                     loc=loc
+                    }
+          )
+        end
       | IC.ICRECORD_UPDATE (icexp, stringIcexpList, loc) =>
         let
           val (ty1, tpexp1) =
               TCU.freshInst (typeinfExp lambdaDepth applyDepth context icexp)
           val (modifyTpexp, tySmap) =
+              (* this inside-out term is correct under the call-by-value
+                 semantics *)
               foldl
 	        (fn ((label, icexp), (modifyTpexp, tySmap)) =>
                     let
@@ -3001,20 +2988,22 @@ val _ = print "\n"
          end
       | IC.ICSEQ (icexpList, loc) =>
         let
-          val (tyList, tpexpList) =
-              foldr 
-                (fn (icexp, (tyList, tpexpList)) =>
+          val (tyListRev, tpexpListRev) =
+              foldl
+                (fn (icexp, (tyListRev, tpexpListRev)) =>
                     let
                       val (ty, tpexp) =
                           typeinfExp lambdaDepth applyDepth context icexp
                     in 
-                      (ty :: tyList, tpexp :: tpexpList)
+                      (ty :: tyListRev, tpexp :: tpexpListRev)
                     end)
                 (nil, nil)
                 icexpList
         in
-          (List.last tyList,
-           TC.TPSEQ {expList=tpexpList, expTyList=tyList, loc=loc}
+          (List.hd tyListRev,
+           TC.TPSEQ {expList=List.rev tpexpListRev,
+                     expTyList=List.rev tyListRev,
+                     loc=loc}
           )
         end
       | IC.ICCAST (icexp, loc) =>
@@ -3076,7 +3065,7 @@ val _ = print "\n"
       | IC.ICSQLSERVER (server, ty, loc) =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity22\n"; raise e)
           val schema =
               case TU.derefTy ty of
                 T.RECORDty fieldTys =>
@@ -3184,7 +3173,7 @@ val _ = print "\n"
       | IC.ICPATCON ({path, id, ty=ity}, loc) =>
         let
           val ty = ITy.evalIty context ity
-              handle e => raise e
+              handle e => (P.print "ity23\n"; raise e)
           val conInfo = {path=path, id=id, ty=ty}
           val (ty1, tylist) = 
               case ty of
@@ -3223,7 +3212,7 @@ val _ = print "\n"
       | IC.ICPATEXN ({path, id, ty=ity}, loc) =>
         let
           val ty = ITy.evalIty context ity
-              handle e => raise e
+              handle e => (P.print "ity24\n"; raise e)
           val exnInfo = {path=path, id=id, ty=ty}
         in
           case TU.derefTy ty of
@@ -3252,7 +3241,7 @@ val _ = print "\n"
       | IC.ICPATEXEXN ({path, ty=ity}, loc) =>
         let
           val ty = ITy.evalIty context ity
-              handle e => raise e
+              handle e => (P.print "ity25\n"; raise e)
           val exExnInfo = {path=path, ty=ty}
         in
           case TU.derefTy ty of
@@ -3289,7 +3278,7 @@ val _ = print "\n"
            IC.ICPATCON({path, id, ty=ity}, loc) =>
            let
              val ty = ITy.evalIty context ity
-                 handle e => raise e
+                 handle e => (P.print "ity26\n"; raise e)
              val conInfo = {path=path, id=id, ty=ty}
              val (ty1, tylist) =
                  case ty of
@@ -3338,7 +3327,7 @@ val _ = print "\n"
          | IC.ICPATEXN ({path, id, ty=ity}, loc) =>
            let
              val ty = ITy.evalIty context ity
-                 handle e => raise e
+                 handle e => (P.print "ity27\n"; raise e)
              val exnInfo = {path=path, id=id, ty=ty}
              val (varEnv1, patTy2, tppat2) =
                  typeinfPat lambdaDepth context icpat2
@@ -3374,7 +3363,7 @@ val _ = print "\n"
          | IC.ICPATEXEXN ({path, ty=ity}, loc) =>
            let
              val ty = ITy.evalIty context ity
-                 handle e => raise e
+                 handle e => (P.print "ity28\n"; raise e)
              val exExnInfo = {path=path, ty=ty}
              val (varEnv1, patTy2, tppat2) =
                  typeinfPat lambdaDepth context icpat2
@@ -3416,7 +3405,7 @@ val _ = print "\n"
       | IC.ICPATRECORD {flex, fields, loc} =>
         let 
           val (varEnv1, tyFields, tppatFields) =
-              foldr
+              foldl
                 (fn ((label, icpat), (varEnv1, tyFields, tppatFields)) =>
                     let
                       val (varEnv2, ty, tppat) =
@@ -3457,7 +3446,7 @@ val _ = print "\n"
                 NONE => ()
               | SOME ity => 
                 let val ty2 = ITy.evalIty context ity
-                        handle e => raise e
+                        handle e => (P.print "ity29\n"; raise e)
                 in
                   U.unify [(ty1, ty2)]
                   handle U.Unify =>
@@ -3481,7 +3470,7 @@ val _ = print "\n"
         let
           val (varEnv1, ty1, tppat) = typeinfPat lambdaDepth context icpat
           val ty2 = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity30\n"; raise e)
           val _ = U.unify [(ty1, ty2)]
               handle U.Unify =>
                      E.enqueueError "Typeinf 049"
@@ -3514,7 +3503,7 @@ val _ = print "\n"
       | IC.ICFFIARGSIZEOF (ty, factorExpOpt, loc) =>
         let
           val ty = ITy.evalIty context ty
-              handle e => raise e
+              handle e => (P.print "ity31\n"; raise e)
           val sizeofExp = TC.TPCAST (TC.TPSIZEOF (ty, loc), BE.WORDty, loc)
           val argExp =
               case factorExpOpt of
@@ -3683,33 +3672,39 @@ val _ = print "\n"
       end
 
   and typeinfPatList lambdaDepth context icpatList =
-        foldr
-        (fn (icpat, (varEnv1, tyPatList, tppatList)) =>
-         let
-           val (varEnv2, ty, tppat) = typeinfPat lambdaDepth context icpat
-         in
-           (
-            VarMap.unionWith
-              (fn (varId as (TC.VARID{path, ...}), _) =>
-               (E.enqueueError "Typeinf 056"
-                (
-                 IC.getLocPat icpat, 
-                 E.DuplicatePatternVar
-                   ("055",{vars = [String.concatWith "." path]}));
-                varId)
-                | _ =>
-               raise
-                 bug
-                 "non VARID in varEnv1 or 2\
-                 \ (typeinference/main/TypeInferCore.sml)"
-              )
-              (varEnv2, varEnv1),
-            ty::tyPatList,
-            tppat::tppatList
-            )
-         end)
-        (VarMap.empty, nil, nil)
-        icpatList
+      let
+        val (varEnv1, tyPatListRev, tppatListRev) =
+            foldl
+              (fn (icpat, (varEnv1, tyPatListRev, tppatListRev)) =>
+                  let
+                    val (varEnv2, ty, tppat) = typeinfPat lambdaDepth context icpat
+                  in
+                    (
+                     VarMap.unionWith
+                       (fn (varId as (TC.VARID{path, ...}), _) =>
+                           (E.enqueueError 
+                              "Typeinf 056"
+                              (
+                               IC.getLocPat icpat, 
+                               E.DuplicatePatternVar
+                                 ("055",{vars = [String.concatWith "." path]}));
+                            varId)
+                         | _ =>
+                           raise
+                             bug
+                               "non VARID in varEnv1 or 2\
+                               \ (typeinference/main/TypeInferCore.sml)"
+                       )
+                       (varEnv2, varEnv1),
+                     ty::tyPatListRev,
+                     tppat::tppatListRev
+                    )
+                  end)
+              (VarMap.empty, nil, nil)
+              icpatList
+      in
+        (varEnv1, List.rev tyPatListRev, List.rev tppatListRev)
+      end
 
   (**
    * infer a type for ptdecl
@@ -3722,16 +3717,17 @@ val _ = print "\n"
       let 
         val (newContext1:TIC.context, tpdeclList1) =
             typeinfDecl lambdaDepth context icdecl
+
 (*
-        val _ = print "typeinfDeclList\n"
-        val _ = print "icdecl\n"
-        val _ = printIcdecl icdecl
-        val _ = print "\n context\n"
-        val _ = Printers.printContext context
-        val _ = print "\n"
-        val _ = print "\n newContext1\n"
-        val _ = Printers.printContext newContext1
-        val _ = print "\n"
+        val _ = P.print "typeinfDeclList\n"
+        val _ = P.print "icdecl\n"
+        val _ = P.printIcdecl icdecl
+        val _ = P.print "\n context\n"
+        val _ = P.printContext context
+        val _ = P.print "\n"
+        val _ = P.print "\n newContext1\n"
+        val _ = P.printContext newContext1
+        val _ = P.print "\n"
 *)
         val (newContext2:TIC.context, tpdeclList) = 
             typeinfDeclList
@@ -3764,12 +3760,18 @@ val _ = P.printIcdecl icdecl
 val _ = P.print "\n"
 *)
           val lambdaDepth = incDepth ()
+          (* 2012-7-25 ohori: bug val003.sml.
+              scopedTvars must be evaluated for each icexp   
           val (newContext, addedUtvars) =
               evalScopedTvars lambdaDepth context scopedTvars loc
+          *)
+
           val (localBinds, patternVarBinds, extraBinds) = 
-              foldr
+              foldl
                 (fn ((icpat,icexp),(localBinds,patternVarBinds,extraBinds)) =>
                     let
+                      val (newContext, addedUtvars) =
+                          evalScopedTvars lambdaDepth context scopedTvars loc
                       val (localBinds1, patternVarBinds1, extraBinds1) = 
                           (decomposeValbind
                              lambdaDepth
@@ -3847,9 +3849,9 @@ val _ = P.print "\n"
                           handle x => raise x
                     in
                       (
-                       localBinds1 @ localBinds,
-                       patternVarBinds1 @ patternVarBinds,
-                       extraBinds1 @ extraBinds
+                       localBinds @ localBinds1,
+                       patternVarBinds @ patternVarBinds1,
+                       extraBinds @ extraBinds1
                       )
                     end)
                 (nil, nil, nil)
@@ -3920,6 +3922,7 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
               foldr
                 (* tyList in funbinds should not be there *)
                 (fn ({funVarInfo=funVar as {path, id},
+                      tyList,
                       rules=icmatch},
                      (newContext,funTyList)) =>
                     let
@@ -3927,6 +3930,10 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
                       val funTy =
                           T.newtyWithLambdaDepth (lambdaDepth, T.univKind)
                       val funVarInfo = {path=path, id=id, ty=funTy}
+                      val tyList = map (ITy.evalIty context) tyList
+                      (* ty should be all mono,
+                         so the following should not be needed *)
+                      val tyList = map TU.freshRigidInstTy tyList 
                     in
                       (
                        TIC.bindVar
@@ -3935,16 +3942,16 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
                           funVar, 
                           TC.RECFUNID (funVarInfo, arity)
                          ),
-                       funTy::funTyList)
+                       (funTy, tyList)::funTyList)
                     end
                 )
                 (newContext, nil)
                 funbinds
           val icpatRuleFunTyList = ListPair.zip (funbinds,funTyList)
-          val funBindList = 
-              foldr
-                (fn (({funVarInfo={path,id},rules=icmatch},funTy),
-                     funBindList) =>
+          val funBindListRev = 
+              foldl
+                (fn (({funVarInfo={path,id},tyList=_, rules=icmatch},(funTy, tyList)),
+                     funBindListRev) =>
                     let
                       val argTyList = argTyListOfMatch icmatch
                       val funVarInfo = {path=path, id=id, ty=funTy}
@@ -3958,8 +3965,9 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
                             argTyList
                         | curryTy ty = ty
                       val funType = curryTy (TU.derefTy tpmatchTy)
+                      val tyEquations = map (fn x => (funTy, x)) (funType::tyList)
                       val _ =
-                          U.unify [(funTy, funType)]
+                          U.unify tyEquations
                           handle U.Unify =>
                                  E.enqueueError "Typeinf 060"
                                    (
@@ -3982,15 +3990,16 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
                                 | _ => raise bug "non fun type in fundecl",
                        argTyList = argTyList,
                        ruleList = tpmatch
-                      } ::funBindList
+                      } ::funBindListRev
                     end 
                 )
                 nil
                 icpatRuleFunTyList
 
+          val funBindList = List.rev funBindListRev
           val TypesOfAllElements =  
               T.RECORDty
-                (foldr
+                (foldl
                    (fn ({funVarInfo={path, id, ty},...}, tyFields) =>
                        LabelEnv.insert(tyFields, String.concat path, ty))
                    LabelEnv.empty
@@ -4039,7 +4048,7 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
           if BoundTypeVarID.Map.isEmpty boundEnv
           then
             (
-             foldr
+             foldl
                (fn
                 (
                  {
@@ -4063,7 +4072,7 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
             )
           else 
             (
-             foldr
+             foldl
                (fn ({funVarInfo={path, id, ty}, argTyList,...},
                     newContext) => 
                    TIC.bindVar
@@ -4085,14 +4094,18 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
              [TC.TPPOLYFUNDECL (boundEnv, funBindList, loc)]
             )
         end
-      | IC.ICNONRECFUN{guard, funVarInfo, rules, loc} =>
+      | IC.ICNONRECFUN{guard, funVarInfo, tyList, rules, loc} =>
          let
            val lambdaDepth = lambdaDepth
+           val funPat = 
+               foldl
+               (fn (ty, pat) => IC.ICPATTYPED(pat, ty, loc))
+               (IC.ICPATVAR(funVarInfo,loc))
+               tyList
            val icdecls = 
              case rules of
                {args = [pat], body} :: _ =>
-               [(IC.ICPATVAR(funVarInfo,loc),
-                 IC.ICFNM(rules, loc))]
+               [(funPat, IC.ICFNM(rules, loc))]
              | [{args=patList as (pat::_), body}] =>
                let
                  val firstLoc = IC.getLocPat pat
@@ -4105,7 +4118,7 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
                         fields=patFields,
                         loc = Loc.mergeLocs(firstLoc, lastLoc)})
                in
-                 [(IC.ICPATVAR (funVarInfo, loc),
+                 [(funPat,
                    foldr
                      (fn (pat, funBody) =>
                          IC.ICFNM([{args=[pat], body=funBody}],
@@ -4127,14 +4140,18 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
               evalScopedTvars lambdaDepth context guard loc
           val (recbinds, newContext) = 
               foldr
-                (fn ({varInfo = var as {path,id}, body},
+                (fn ({varInfo = var as {path,id}, tyList, body},
                      (recbinds, newContext)) =>
                     let
                       val ty = T.newtyWithLambdaDepth (lambdaDepth, T.univKind)
                       val varInfo = {path=path, id=id, ty=ty}
+                      val tyList = map (ITy.evalIty context) tyList
+                      (* ty should be all mono,
+                         so the following should not be needed *)
+                      val tyList = map TU.freshRigidInstTy tyList 
                     in
                       (
-                       (varInfo, body) :: recbinds,
+                       (varInfo, tyList, body) :: recbinds,
                        TIC.bindVar
                          (lambdaDepth, newContext, var, TC.VARID varInfo)
                       )
@@ -4143,12 +4160,13 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
                 recbinds
           val varInfoTyTpexpList =
               let
-                fun inferRule (varInfo as {path, ty, id}, icexp) =
+                fun inferRule (varInfo as {path, ty, id}, tyList, icexp) =
                     let 
                       val (icexpTy, tpexp) =
                           typeinfExp lambdaDepth inf newContext icexp
+                      val tyEquations = map (fn x => (ty, x)) (icexpTy::tyList)
                       val _ =
-                          U.unify [(ty, icexpTy)]
+                          U.unify tyEquations
                           handle
                           U.Unify =>
                           E.enqueueError "Typeinf 063"
@@ -4171,7 +4189,7 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
               end
           val TypesOfAllElements =
               T.RECORDty
-                (foldr
+                (foldl
                    (fn ({var={path,ty,id},...}, tyFields) =>
                        LabelEnv.insert(tyFields, String.concatWith "." path, ty))
                    LabelEnv.empty
@@ -4202,7 +4220,7 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
           if BoundTypeVarID.Map.isEmpty boundEnv
           then
             (
-             foldr
+             foldl
                (fn ({var=varInfo as {path,id,ty},...}, newContext) =>
                    TIC.bindVar
                      (
@@ -4218,7 +4236,7 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
             )
           else 
             (
-             foldr
+             foldl
                (fn ({var={path, id, ty},...}, newContext) => 
                    TIC.bindVar
                      (
@@ -4236,8 +4254,6 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
              [TC.TPVALPOLYREC (boundEnv, varInfoTyTpexpList, loc)]
             )
         end
-      | IC.ICABSTYPE _  =>
-        raise bug "ABSTYPE is not supported in this version"
       | IC.ICEXND (exnconLocList, loc) =>
         (TIC.emptyContext,
          [TC.TPEXD 
@@ -4246,7 +4262,7 @@ val _ = map (fn d => (P.printTpdecl d; P.print "\n")) decls
                    {exnInfo={path=path,
                              id=id,
                              ty=ITy.evalIty context ity
-                             handle e => raise e
+                             handle e => (P.print "ity32\n"; raise e)
                             },
                     loc=loc})
                exnconLocList,
@@ -4288,7 +4304,10 @@ P.print "\n";
           (TIC.emptyContext,
            [TC.TPEXNTAGD
               (
-               {exnInfo = {path=path,id=id,ty=ITy.evalIty context ity},
+               {exnInfo = {path=path,id=id,
+                           ty=ITy.evalIty context ity 
+                              handle e => (P.print "ity33\n"; raise e)
+                          },
                 varInfo = varInfo},
                loc
               )
@@ -4314,12 +4333,12 @@ P.print "\n";
          *)
         let
 (*
-val _ = print "ICEXPORTFUNCTOR\n"
-val _ = print "path\n"
-val _ = printPath path
-val _ = print "\n"
+val _ = P.print "ICEXPORTFUNCTOR\n"
+val _ = P.print "path\n"
+val _ = P.printPath path
+val _ = P.print "\n"
 *)
-          val ty1 = ITy.evalIty context ity handle e => raise e
+          val ty1 = ITy.evalIty context ity handle e => (P.print "ity34\n"; raise e)
           val (ty2, idstatus) =
               case VarMap.find(#varEnv context, var) of
                      SOME (idstatus as TC.VARID {ty,...}) =>
@@ -4546,10 +4565,10 @@ print "\n";
                    )
                 )
               | _ => 
-                (print "illeagal functor annotation type";
-                 print "ty1\n";
-                 T.printTy ty1;
-                 print "\n";
+                (P.print "illeagal functor annotation type";
+                 P.print "ty1\n";
+                 P.printTy ty1;
+                 P.print "\n";
                  raise bug "illeagal functor annotation type"
                 )
         in
@@ -4572,14 +4591,14 @@ print "\n";
       | IC.ICEXPORTVAR (var as {path, id}, ity, loc) =>
         let
 (*
-val _ = print "ICEXPORTVAR\n"
-val _ = print "path\n"
-val _ = printPath path
-val _ = print "\n"
-val _ = printIcdecl icdecl
-val _ = print "\n"
+val _ = P.print "ICEXPORTVAR\n"
+val _ = P.print "path\n"
+val _ = P.printPath path
+val _ = P.print "\n"
+val _ = P.printIcdecl icdecl
+val _ = P.print "\n"
 *)
-          val ty1 = ITy.evalIty context ity handle e => raise e
+          val ty1 = ITy.evalIty context ity handle e => (P.print "ity35\n"; raise e)
           val ty11 = TU.freshRigidInstTy ty1
           val (ty2, idstatus) = 
               case VarMap.find(#varEnv context, var) of
@@ -4598,7 +4617,7 @@ P.print "\n";
                 )
 
 (*
-val _ = print "ty2\n"
+val _ = P.print "ty2\n"
 val _ = T.printTy ty2
 *)
         in
@@ -4623,9 +4642,9 @@ val _ = T.printTy ty2
                     TC.VARID _ => TC.VARID newVar
                   | TC.RECFUNID (_, arity) => TC.RECFUNID(newVar, arity)
 (*
-val _ = print "path\n"
-val _ = printPath path
-val _ = print "\n"
+val _ = P.print "path\n"
+val _ = P.printPath path
+val _ = P.print "\n"
 *)
             in
               (TIC.emptyContext,
@@ -4643,7 +4662,7 @@ val _ = print "\n"
       | IC.ICEXPORTEXN ({path, id, ty=ity}, loc) =>
         let
           val ty = ITy.evalIty context ity
-              handle e => raise e
+              handle e => (P.print "ity36\n"; raise e)
         in
           (TIC.emptyContext,
            [TC.TPEXPORTEXN ({path=path, id=id, ty=ty}, loc)]
@@ -4652,7 +4671,7 @@ val _ = print "\n"
       | IC.ICEXTERNVAR ({path, ty=ity}, loc) =>
         let
           val ty = ITy.evalIty context ity
-              handle e => raise e
+              handle e => (P.print "ity37\n"; raise e)
         in
           (TIC.emptyContext,
            [TC.TPEXTERNVAR ({path=path, ty=ty}, loc)]
@@ -4661,12 +4680,34 @@ val _ = print "\n"
       | IC.ICEXTERNEXN ({path, ty=ity}, loc) =>
         let
           val ty = ITy.evalIty context ity
-              handle e => raise e
+              handle e => (P.print "ity38\n"; raise e)
         in
           (TIC.emptyContext,
            [TC.TPEXTERNEXN ({path=path, ty=ty}, loc)]
            )
         end
+      | IC.ICTYCASTDECL (tycastList, icdeclList, loc) =>
+        let
+          val {varEnv, tvarEnv, oprimEnv} = context
+          val typIdMap =
+              foldl
+              (fn ({from, to}, typIdMap) =>
+                  let
+                    val fromId = IC.tfunId from
+                    val to = ITy.evalTfun context ["dummy"] to
+                             handle e => (P.print "ity19\n"; raise e)
+                  in
+                    TypID.Map.insert(typIdMap, fromId, to)
+                  end
+              )
+              TypID.Map.empty
+              tycastList
+          val (context, tpdeclList) =
+              typeinfDeclList lambdaDepth context icdeclList
+          val context = tyConSubstContext typIdMap context
+        in
+          (context, tpdeclList)
+        end          
       | IC.ICOVERLOADDEF {boundtvars,id,path,overloadCase,loc} =>
         let
           val lambdaDepth = incDepth ()
@@ -4705,7 +4746,7 @@ val _ = print "\n"
                     | IC.INST_EXVAR ({path, used, ty}, loc) =>
                       let
                         val ty = ITy.evalIty context ty
-                            handle e => raise e
+                            handle e => (P.print "ity39\n"; raise e)
                         val exVarInfo = {path = path, ty = ty}
                         val (monoTy, instTyList) = TIU.freshTopLevelInstTy ty
                       in
@@ -4716,7 +4757,7 @@ val _ = print "\n"
                     | IC.INST_PRIM ({primitive, ty}, loc) =>
                       let
                         val ty = ITy.evalIty context ty
-                            handle e => raise e
+                            handle e => (P.print "ity40\n"; raise e)
                         val primInfo = {primitive = primitive, ty = ty}
                         val (monoTy, instTyList) = TIU.freshTopLevelInstTy ty
                       in
@@ -4759,11 +4800,11 @@ val _ = print "\n"
                       (r, id)
                     | _ => raise bug "typeinfOverloadCase"
                 val expTy = ITy.evalIty context expTy
-                    handle e => raise e
+                    handle e => (P.print "ity41\n"; raise e)
                 val matches =
                     map (fn {instTy, instance} =>
                             {instTy = ITy.evalIty context instTy
-                                      handle e => raise e,
+                                      handle e => (P.print "ity42\n"; raise e),
                              instance = instance})
                         matches
                 val instTys = map #instTy matches
@@ -4850,8 +4891,10 @@ end
         end
     end
 
-  fun typeinf icdecls =
+  fun typeinf {decls=icdecls, loc} =
       let
+       (* 2012-7-11 ohori: to fix bug 195_dummtType.sml *)
+        val startDummyTyId = ! TIU.dummyTyId
         val _ = E.initializeTypeinfError ()
         val _ = T.kindedTyvarList := nil
         val ({varEnv,...}, tpdecls) =
@@ -4870,7 +4913,8 @@ end
                           case TU.derefTy ty of
                             T.SINGLETONty _ => ()
                           | T.ERRORty => ()
-                          | T.DUMMYty _ => raise DUMMY
+                            (* 2012-7-11 ohori: to fix bug 195_dummtType.sml *)
+                          | T.DUMMYty id => if id >= startDummyTyId then raise DUMMY else ()
                           | T.TYVARty _ => ()
                           | T.BOUNDVARty _ => ()
                           | T.FUNMty (tyList, ty) =>
@@ -4898,8 +4942,7 @@ end
                       nil => ()
                     | _ =>
                       E.enqueueWarning
-                        (IC.getLocDec (hd icdecls),
-                         E.ValueRestriction("065",{dummyTyPaths=dummyTyPaths}))
+                        (loc, E.ValueRestriction("065",{dummyTyPaths=dummyTyPaths}))
 (* FIXME: do we need the following?
                 val _ = List.app (fn (ty as T.TYVARty(ref(T.TVAR _)), loc) =>
                                      E.enqueueError "Typeinf 077" (loc, E.FFIInvalidTyvar ty)

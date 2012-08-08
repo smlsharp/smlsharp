@@ -53,9 +53,9 @@ struct
   datatype typbind =
       TRANSPARENT of {tyvars: Absyn.tvar list, tycon: string, ty: ty, loc: loc}
     | OPAQUE_NONEQ of {tyvars: Absyn.tvar list, tycon: string,
-                       runtimeTy: string, loc: loc}
+                       runtimeTy: string list, loc: loc}
     | OPAQUE_EQ of {tyvars: Absyn.tvar list, tycon: string,
-                    runtimeTy: string, loc: loc}
+                    runtimeTy: string list, loc: loc}
   val format_typbind
       : typbind -> SMLFormat.FormatExpression.expression list
   type conbind =

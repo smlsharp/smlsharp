@@ -1324,6 +1324,23 @@ struct
 
   fun selectRaise (context:context) code exnVar infoVar =
       let
+        (* If both try and catch clause of a handle expression
+         * end with raise, REQUIRE_SLOT for the handler slot
+         * never emitted due to dead code elimination.
+         * To avoid this, not only popHandler but also selectRaise
+         * inserts REQUIRE_SLOT. *)
+        val code =
+            case #handler context of
+              R.NO_HANDLER => code
+            | R.HANDLER {handlers,...} =>
+              foldl (fn (label, code) =>
+                        let
+                          val (code, slot) = handlerSlot (code, label)
+                        in
+                          insert (code, [R.REQUIRE_SLOT slot])
+                        end)
+                    code
+                    handlers
         fun handlerInfo ptrTy disp =
             R.MEM (R.Ptr ptrTy, R.ADDR (R.DISP (R.INT32 disp, R.BASE infoVar)))
         val v2 = newVar (R.Ptr R.Code)

@@ -50,7 +50,6 @@ structure NameEvalUtils =
     val printTypidSet : TypID.Set.set -> unit
     val printSubst : {conIdS:IDCalc.idstatus ConID.Map.map,
                       exnIdS:ExnID.id ExnID.Map.map,
-                      tfvS:IDCalc.tfunkind ref TfvMap.map,
                       tvarS:IDCalc.ty TvarMap.map}
                      -> unit
     val printTfvSubst : IDCalc.tfunkind ref TfvMap.map -> unit

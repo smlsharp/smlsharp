@@ -14,9 +14,6 @@ rule 15
 </ul>
  *)
 val v1 = 1;
-
 val 'x v2 = fn x => x : 'x;
-
 val ('x, 'y) v3 = fn x => fn y => (x : 'x, y : 'y);
-
 val ('x, 'y) v4 = fn x => fn y => (x : 'x, y);

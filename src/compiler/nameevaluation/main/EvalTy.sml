@@ -22,6 +22,10 @@ sig
       IDCalc.path -> NameEvalEnv.env
                    -> PatternCalc.datbind list * Loc.loc
                    -> NameEvalEnv.env * 'a list
+  val evalRuntimeTy : 
+      Loc.loc -> tvarEnv -> NameEvalEnv.env -> PatternCalcInterface.runtimeTy -> IDCalc.runtimeTy
+  val compatRuntimeTy : 
+      {absTy:IDCalc.runtimeTy, implTy:IDCalc.runtimeTy} -> bool
 end
 =
 struct
@@ -36,6 +40,7 @@ local
   structure E = NameEvalError
   structure A = Absyn
   structure L = SetLiftedTys
+  structure PI = PatternCalcInterface
   fun bug s = Control.Bug ("NameEval(EvalTy): " ^ s)
 in
   type tvarEnv = I.tvar SEnv.map
@@ -169,6 +174,33 @@ in
         (tvarEnv, tvarKindList)
       end
 
+  fun compatRuntimeTy {absTy, implTy} = 
+      case (absTy, implTy) of 
+        (I.LIFTEDty {id=id1,...}, I.LIFTEDty {id=id2,...}) =>
+        TvarID.eq(id1,id2) 
+      | (I.BUILTINty bty1, I.BUILTINty bty2) => 
+        BuiltinType.compatTy {absTy=bty1, implTy=bty2}
+      | _ => false
+
+  fun evalRuntimeTy loc tvarEnv evalEnv runtimeTy =
+      case runtimeTy of
+        PI.BUILTINty ty => I.BUILTINty ty
+      | PI.LIFTEDty path => 
+        let
+          val aty = A.TYCONSTRUCT(nil, path, loc)
+          val ity = evalTy tvarEnv evalEnv aty
+        in
+          case ity of
+            I.TYVAR (tvar as {lifted,...}) => 
+            if lifted then I.LIFTEDty tvar
+            else raise bug "non lifted tvar in evalRuntimeTy"
+          | _ => 
+            (case I.runtimeTyOfIty ity of
+               SOME ty =>  ty
+             | NONE => raise bug "no runtimeTy in evalRuntimeTy"
+            )
+        end
+
   fun ffiTyToAbsynTy ffiTy =
       case ffiTy of
         P.FFIFUNTY (attributes, [argTy], [retTy], loc) =>
@@ -287,7 +319,7 @@ in
                     val id = TypID.generate()
                     val iseqRef = ref true
                     val tfv =
-                        I.mkTfv(I.TFV_SPEC{id=id,iseq=true,formals=tvarList})
+                        I.mkTfv(I.TFV_SPEC{name=string, id=id,iseq=true,formals=tvarList})
                     val tfun = I.TFUN_VAR tfv
                     val newEnv =V.rebindTstr(newEnv,string,V.TSTR tfun)
                     val datbindListRev =
@@ -386,7 +418,7 @@ in
               (fn ({name,id,tfv,conVarE,conSpec,iseqRef,args,conbind},
                    newEnv) =>
                   let
-                    val runtimeTy = U.runtimeTyOfConspec conSpec
+                    val runtimeTy = I.BUILTINty (U.runtimeTyOfConspec conSpec)
                     val tfunkind =
                         I.TFUN_DTY
                           {id=id,

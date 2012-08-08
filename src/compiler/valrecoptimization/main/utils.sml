@@ -4,7 +4,13 @@
  * @author Liu Bochao
  * @version $Id: utils.sml,v 1.16.6.6 2010/01/29 06:41:35 hiro-en Exp $
  *)
-structure VALREC_Utils =
+structure VALREC_Utils 
+ : sig
+    val getFreeIdsInExp : IDCalc.icexp -> VarID.Set.set
+    val getFreeIdsInRule : {args:IDCalc.icpat list, body:IDCalc.icexp} list
+                           -> VarID.Set.set
+  end
+=
 struct
 local
   open IDCalc
@@ -125,13 +131,13 @@ in
       let
 	val boundList =       
             foldl
-		(fn ({funVarInfo,rules},S) =>
+		(fn ({funVarInfo,tyList,rules},S) =>
 		    VarID.Set.add(S,#id funVarInfo))
 		VarID.Set.empty
 		fidRuleListList
 	val freeList = 
             foldl
-		(fn ({funVarInfo,rules},S) =>
+		(fn ({funVarInfo,tyList,rules},S) =>
 		    VarID.Set.union(getFreeIdsInRule rules,S))
 		VarID.Set.empty
           fidRuleListList
@@ -186,7 +192,6 @@ in
       | ICVALREC {guard, recbinds, loc} =>
         VarID.Set.difference(getFreeIdsInRecBinds recbinds,
                              getBoundIdsInRecBinds recbinds)
-      | ICABSTYPE {tybinds,body,loc} => getFreeIdsInDeclList body
       | ICEXND (_, loc) => VarID.Set.empty
       | ICEXNTAGD ({exnInfo, varInfo}, loc) =>
         VarID.Set.singleton (#id varInfo)
@@ -196,6 +201,7 @@ in
       | ICEXPORTEXN _ => VarID.Set.empty
       | ICEXTERNVAR _ => VarID.Set.empty
       | ICEXTERNEXN _ => VarID.Set.empty
+      | ICTYCASTDECL _ => VarID.Set.empty
       | ICOVERLOADDEF _ => VarID.Set.empty
 
   and getFreeIdsInDeclList icdeclList =
@@ -216,7 +222,6 @@ in
       | ICDECFUN {guard, funbinds, loc} => getBoundIdsInFundeclList funbinds
       | ICNONRECFUN _ => raise Control.Bug "invalid declaration"
       | ICVALREC {guard, recbinds, loc} => getBoundIdsInRecBinds recbinds
-      | ICABSTYPE {tybinds, body, loc} => getBoundIdsInDeclList body
       | ICEXND _ => VarID.Set.empty
       | ICEXNTAGD _ => VarID.Set.empty
       | ICEXPORTVAR _ => VarID.Set.empty
@@ -225,6 +230,7 @@ in
       | ICEXPORTEXN _ => VarID.Set.empty
       | ICEXTERNVAR _ => VarID.Set.empty
       | ICEXTERNEXN _ => VarID.Set.empty
+      | ICTYCASTDECL _ => VarID.Set.empty
       | ICOVERLOADDEF _ => VarID.Set.empty
 
   and getBoundIdsInDeclList icdeclList =
@@ -245,7 +251,7 @@ in
       
   and getFreeIdsInRecBinds bindList =
       #1 (foldl
-              (fn ({varInfo,body},(freeIds,boundIds)) =>
+              (fn ({varInfo,tyList,body},(freeIds,boundIds)) =>
                   (VarID.Set.union(freeIds,
 				   VarID.Set.difference
 				       (getFreeIdsInExp body,boundIds)),
@@ -261,14 +267,14 @@ in
 	  
   and getBoundIdsInRecBinds bindList =
       foldl
-          (fn ({varInfo,body},S) => 
+          (fn ({varInfo,tyList,body},S) => 
 	      VarID.Set.add(S,#id varInfo))
           VarID.Set.empty
           bindList
 	  
   and getBoundIdsInFundeclList fidRuleListList =
       foldl
-          (fn ({funVarInfo,rules},S) => 
+          (fn ({funVarInfo,tyList, rules},S) => 
 	      VarID.Set.add(S,#id funVarInfo))
           VarID.Set.empty
           fidRuleListList

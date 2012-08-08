@@ -39,7 +39,7 @@ structure NameEval =
                     systemDecls: IDCalc.icdecl list}
                     -> PatternCalcInterface.compileUnit
                     -> NameEvalEnv.topEnv
-                       * IDCalc.icdecl list
+                       * IDCalc.topdecl
                        * UserError.errorInfo list
     val evalRequire
         : NameEvalEnv.topEnv * IDCalc.icdecl list

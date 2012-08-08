@@ -99,17 +99,17 @@ struct
        *)
       TRANSPARENT of {tyvars: Absyn.tvar list, tycon: string, ty: ty, loc: loc}
     | (*%
-       * @format({tyvars: tv tvs, tycon, runtimeTy, loc})
+       * @format({tyvars: tv tvs, tycon, runtimeTy:name names, loc})
        * tvs(tv)("(","," 1,")" +d) tycon +d "="
-       * 2[ +1 runtimeTy +1 "as" +d "opaqueNoneq" ]
+       * 2[ +1 names(name)(,".",) +1 "as" +d "opaqueNoneq" ]
        *)
-      OPAQUE_NONEQ of {tyvars: Absyn.tvar list, tycon: string, runtimeTy: string, loc: loc}
+      OPAQUE_NONEQ of {tyvars: Absyn.tvar list, tycon: string, runtimeTy: string list, loc: loc}
     | (*%
-       * @format({tyvars: tv tvs, tycon, runtimeTy, loc})
+       * @format({tyvars: tv tvs, tycon, runtimeTy:name names, loc})
        * tvs(tv)("(","," 1,")" +d) tycon +d "="
-       * 2[ +1 runtimeTy +1 "as" +d "opaqueEq" ]
+       * 2[ +1 names(name)(,".",) +1 "as" +d "opaqueEq" ]
        *)
-      OPAQUE_EQ of {tyvars: Absyn.tvar list, tycon: string, runtimeTy: string, loc: loc}
+      OPAQUE_EQ of {tyvars: Absyn.tvar list, tycon: string, runtimeTy: string list, loc: loc}
 
 
   (*%

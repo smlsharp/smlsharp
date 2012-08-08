@@ -98,24 +98,25 @@ local
           handle exn => raise exn
       val tfvSubst = 
           TfvMap.foldri
-          (fn (tfv as ref (I.TFV_SPEC {iseq, formals,...}), _, tfvSubst) =>
+          (fn (tfv as ref (I.TFV_SPEC {name, iseq, formals,...}), _, tfvSubst) =>
               let
                 val id = TypID.generate()
                 val newTfv =
-                    I.mkTfv (I.TFV_SPEC{id=id,iseq=iseq,formals=formals})
+                    I.mkTfv (I.TFV_SPEC{name=name, id=id,iseq=iseq,formals=formals})
               in 
                 TfvMap.insert(tfvSubst, tfv, newTfv)
               end
-            | (tfv as ref (I.TFV_DTY {iseq,formals,conSpec,liftedTys,...}), _,
+            | (tfv as ref (I.TFV_DTY {name, iseq,formals,conSpec,liftedTys,...}), _,
                tfvSubst) =>
               let
                 val id = TypID.generate()
                 val newTfv =
                     I.mkTfv (I.TFV_DTY{id=id,
-                                     iseq=iseq,
-                                     conSpec=conSpec,
-                                     liftedTys=liftedTys,
-                                     formals=formals}
+                                       name=name,
+                                       iseq=iseq,
+                                       conSpec=conSpec,
+                                       liftedTys=liftedTys,
+                                       formals=formals}
                           )
               in 
                 TfvMap.insert(tfvSubst, tfv, newTfv)
@@ -134,17 +135,18 @@ local
           handle exn => raise exn
       val _ =
           TfvMap.app
-          (fn (tfv as ref (I.TFV_DTY {iseq,formals,conSpec,liftedTys,id})) =>
+          (fn (tfv as ref (I.TFV_DTY {name, iseq,formals,conSpec,liftedTys,id})) =>
               let
                 val conSpec =
                     SEnv.map
                     (fn tyOpt =>
-                        Option.map (Subst.substTfvTy tfvSubst) tyOpt)
+                        Option.map (S.substTfvTy tfvSubst) tyOpt)
                     conSpec
               in
                 tfv:=
                     I.TFV_DTY
                       {iseq=iseq,
+                       name=name,
                        formals=formals,
                        conSpec=conSpec,
                        liftedTys=liftedTys,
@@ -153,7 +155,7 @@ local
             | _ => ())
           tfvSubst
           handle exn => raise exn
-      val env =Subst.substTfvEnv tfvSubst specEnv
+      val env =S.substTfvEnv tfvSubst specEnv
     in
       (tfvSubst, env)
     end
@@ -458,7 +460,7 @@ local
                                  I.REALIZED {id=id, tfun=realizerTfun}
                                end
                    | I.TFUN_VAR
-                       (ref (I.TFV_SPEC {id=id2,iseq=eq2,formals})) =>
+                       (ref (I.TFV_SPEC {name,id=id2,iseq=eq2,formals})) =>
                      tfv := I.REALIZED {id=id2, tfun=realizerTfun}
                    | I.TFUN_VAR (ref (I.TFV_DTY {iseq=eq2,...})) =>
                      if eq1 andalso not eq2 then raise Eq
@@ -591,17 +593,17 @@ local
             | Type1 =>
               (EU.enqueueError
                  (loc,E.TypeErrorInSigwhere("Sig-100",
-                                            {longid=longid@["(1)"]}));
+                                            {longid=longid}));
                specEnv)
             | Type2 =>
               (EU.enqueueError
                  (loc,E.TypeErrorInSigwhere("Sig-110",
-                                            {longid=longid@["(2)"]}));
+                                            {longid=longid}));
                specEnv)
             | Type3 =>
               (EU.enqueueError
                  (loc,E.TypeErrorInSigwhere("Sig-120",
-                                            {longid=longid@["(3)"]}));
+                                            {longid=longid}));
                specEnv)
             | Eq =>
               (EU.enqueueError
@@ -653,7 +655,7 @@ local
                       val (_, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tvarList
                       val id = TypID.generate()
                       val tfunvar =
-                          I.mkTfv (I.TFV_SPEC{id=id,iseq=iseq,formals=tvarList})
+                          I.mkTfv (I.TFV_SPEC{name=string, id=id,iseq=iseq,formals=tvarList})
                       val tfun = I.TFUN_VAR tfunvar
                       val specEnv =
                           V.bindTstr loc (specEnv,string,V.TSTR tfun)
@@ -720,11 +722,12 @@ local
                       val iseqRef = ref true
                       val tfv =
                           I.mkTfv(I.TFV_DTY{id=id,
-                                           iseq=true,
-                                           formals=tvarList,
-                                           conSpec=SEnv.empty,
-                                           liftedTys=I.emptyLiftedTys
-                                          }
+                                            name=string,
+                                            iseq=true,
+                                            formals=tvarList,
+                                            conSpec=SEnv.empty,
+                                            liftedTys=I.emptyLiftedTys
+                                           }
                                )
                       val tfun = I.TFUN_VAR tfv
                       val specEnv =
@@ -801,6 +804,7 @@ local
                           tfv :=
                                I.TFV_DTY
                                  {id=id,
+                                  name=name,
                                   iseq = !iseqRef,
                                   conSpec=conSpec,
                                   formals=args,

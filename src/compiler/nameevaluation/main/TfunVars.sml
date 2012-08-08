@@ -81,12 +81,25 @@ in
       case I.derefTfun tfun of
         I.TFUN_DEF _ => set
       | I.TFUN_VAR tfv =>
-        if tfvKind tfv then TfvMap.insert(set, tfv, path@[name])
-        else set
+(* 2012-7-19 ohori: bug 210_functor.sml:
+    dtyKind must be processed
+*)
+        let
+          val set =
+              case !tfv of
+                I.TFUN_DTY{dtyKind = I.OPAQUE{tfun, ...},...} =>
+                tfvsTfun tfvKind path (name, tfun, set)
+              | _ => set
+        in
+          if tfvKind tfv then TfvMap.insert(set, tfv, path@[name])
+          else set
+        end
+
   fun tfvsTstr tfvKind path (name, tstr, set) =
       case tstr of
         IV.TSTR tfun => tfvsTfun tfvKind path (name, tfun, set)
       | IV.TSTR_DTY {tfun,...} => tfvsTfun tfvKind path (name, tfun, set)
+
   fun tfvsTyE tfvKind path (tyE, set) =
       SEnv.foldri (tfvsTstr tfvKind path) set tyE
   fun tfvsStrE tfvKind path (IV.STR envMap, set) = 
@@ -94,6 +107,7 @@ in
         (fn (name, {env, strKind}, set) => tfvsEnv tfvKind (path@[name]) (env, set))
         set
         envMap 
+
  and tfvsEnv tfvKind path (IV.ENV {tyE, strE, varE}, set) =
       let
         val set = tfvsTyE tfvKind path (tyE, set)

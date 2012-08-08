@@ -474,6 +474,11 @@ struct
         (
           case #dtyKind tyCon of
             T.DTY => tyCon
+          (* 2012-15 ohori: bug 208_constraint.sml
+             tyCon is a datatype if dtykind is either 
+             DTY or OPAQUE.
+           *)
+          | T.OPAQUE _ => tyCon
           | _ => raise Control.Bug "extractDatatypeTyCon: not a datatype"
         )
       | _ => raise Control.Bug "extractTyCon"

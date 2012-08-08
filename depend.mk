@@ -6846,12 +6846,12 @@ src/compiler/nameevaluation/main/EvalSig.o: \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
   src/compiler/util/main/utils.smi \
+  src/compiler/absyn/main/AbsynInterface.ppg.smi \
+  src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
   src/compiler/absyn/main/Fixity.smi \
-  src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/elaborate/main/ELABORATOR.sig \
   src/compiler/elaborate/main/ElaborateError.ppg.smi \
   src/compiler/elaborate/main/ElaboratorUtils.smi \
@@ -6966,12 +6966,12 @@ src/compiler/nameevaluation/main/EvalTy.o: \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
   src/compiler/util/main/utils.smi \
+  src/compiler/absyn/main/AbsynInterface.ppg.smi \
+  src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
   src/compiler/absyn/main/Fixity.smi \
-  src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/elaborate/main/ELABORATOR.sig \
   src/compiler/elaborate/main/ElaborateError.ppg.smi \
   src/compiler/elaborate/main/ElaboratorUtils.smi \
@@ -7085,12 +7085,12 @@ src/compiler/nameevaluation/main/FunctorUtils.o: \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/usererror/main/UserErrorUtils.smi \
   src/compiler/util/main/utils.smi \
+  src/compiler/absyn/main/AbsynInterface.ppg.smi \
+  src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalError.ppg.smi \
   src/compiler/nameevaluation/main/NameEvalEnv.sig \
   src/compiler/nameevaluation/main/NameEvalEnv.ppg.smi \
   src/compiler/absyn/main/Fixity.smi \
-  src/compiler/absyn/main/AbsynInterface.ppg.smi \
-  src/compiler/patterncalc/main/PatternCalcInterface.ppg.smi \
   src/compiler/elaborate/main/ELABORATOR.sig \
   src/compiler/elaborate/main/ElaborateError.ppg.smi \
   src/compiler/elaborate/main/ElaboratorUtils.smi \
@@ -9651,6 +9651,7 @@ src/compiler/reflection/main/PrinterGeneration.o: \
   src/compiler/elaborate/main/Elaborator.smi \
   src/compiler/nameevaluation/main/TfunVars.smi \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
+  src/compiler/nameevaluation/main/NormalizeTy.smi \
   src/reifiedterm/main/ReflectionControl.smi \
   src/reifiedterm/main/TermPrintUtils.ppg.smi \
   src/reifiedterm/main/ReifiedTerm.ppg.smi \
@@ -9879,6 +9880,7 @@ src/compiler/reflection/main/Reify.o: src/compiler/reflection/main/Reify.sml \
   src/compiler/elaborate/main/Elaborator.smi \
   src/compiler/nameevaluation/main/TfunVars.smi \
   src/compiler/nameevaluation/main/NameEvalUtils.smi \
+  src/compiler/nameevaluation/main/NormalizeTy.smi \
   src/reifiedterm/main/ReflectionControl.smi \
   src/reifiedterm/main/TermPrintUtils.ppg.smi \
   src/reifiedterm/main/ReifiedTerm.ppg.smi \
@@ -11983,12 +11985,11 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/reifiedterm/main/TermPrintUtils.ppg.smi \
-  src/reifiedterm/main/ReifiedTerm.ppg.smi src/compiler/control/main/LOC.sig \
-  src/compiler/control/main/Loc.ppg.smi \
-  src/compiler/control/main/Control.ppg.smi src/prelude.smi \
-  src/smlnj-lib/Util/ord-set-sig.sml src/smlnj-lib/Util/binary-set-fn.smi \
-  src/compiler-utils/env/main/IEnv.smi src/compiler/util/main/COUNTER.sig \
-  src/compiler/util/main/Counter.smi \
+  src/reifiedterm/main/ReifiedTerm.ppg.smi src/prelude.smi \
+  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IEnv.smi \
+  src/compiler/util/main/COUNTER.sig src/compiler/util/main/Counter.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/toolchain/main/CoreUtils.smi \
@@ -15163,6 +15164,7 @@ src/compiler/types/main/EvalIty.o: src/compiler/types/main/EvalIty.sml \
   src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
+  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/util/main/ListSorter.smi \
   src/compiler/util/main/BigInt_IntInf.smi \
   src/compiler/util/main/TermFormat.smi src/compiler-utils/env/main/SOrd.smi \
@@ -15172,7 +15174,6 @@ src/compiler/types/main/EvalIty.o: src/compiler/types/main/EvalIty.sml \
   src/compiler/absyn/main/AbsynSQL.ppg.smi src/compiler/absyn/main/ABSYN.sig \
   src/compiler/absyn/main/Absyn.ppg.smi \
   src/compiler/patterncalc/main/PatternCalc.ppg.smi \
-  src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
   src/compiler/types/main/VarMap.smi src/compiler/types/main/OPrimMap.smi \

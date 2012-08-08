@@ -82,6 +82,18 @@ local
               in
                 TfvMap.insert(map, tfv, dependSet)
               end
+(* 2012-7-19 ohori: bug 210_functor.sml:
+    dtyKind must be processed
+*)
+            | I.TFUN_DTY {dtyKind=I.OPAQUE{tfun=I.TFUN_VAR tfv',...},...} =>
+              let
+                val dependSet = 
+                    if TfvMap.inDomain(tfvMap, tfv')
+                    then TfvSet.add(TfvSet.empty, tfv')
+                    else TfvSet.empty
+              in
+                TfvMap.insert(map, tfv, dependSet)
+              end
             | I.TFUN_DTY {conSpec,...} =>
               let
                 val targetTfvs = dtysConSpec tfvKind (conSpec, TfvSet.empty)
@@ -177,8 +189,8 @@ local
         val liftedTys = foldr liftedTysConSpec I.emptyLiftedTys conSpecList
       in
         app
-          (fn (tfv as (ref (I.TFV_DTY{id, iseq, formals, conSpec,...}))) =>
-              tfv := I.TFV_DTY{id=id, iseq=iseq, formals=formals,
+          (fn (tfv as (ref (I.TFV_DTY{name, id, iseq, formals, conSpec,...}))) =>
+              tfv := I.TFV_DTY{name=name,id=id, iseq=iseq, formals=formals,
                                conSpec=conSpec, liftedTys=liftedTys}
             |  (tfv as (ref (I.TFUN_DTY{id,iseq,formals,
                                         dtyKind,
@@ -203,22 +215,12 @@ local
       let
         val IV.ENV{tyE, varE, strE} = env
         val freeTfvs = TF.tfvsEnv tfvKind nil (env, TfvMap.empty)
-(*
-        val _ = U.print "freeTfvs in setLiftedTysEnv\n"
-        val _ = TfvMap.appi
-                  (fn (tfv,path) => (U.printPath path;
-                                     U.print ":";
-                                     U.printTfv tfv
-                                    )
-                  )
-                  freeTfvs
-        val _ = U.print "\n"
-*)
         val _ = 
             TfvMap.appi
-              (fn (tfv as (ref (I.TFV_DTY{id,iseq,formals,conSpec,...})),
+              (fn (tfv as (ref (I.TFV_DTY{name, id,iseq,formals,conSpec,...})),
                    path) =>
                    tfv := I.TFV_DTY{id=id,
+                                    name=name,
                                     iseq=iseq,
                                     formals=formals,
                                     conSpec=conSpec,

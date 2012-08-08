@@ -755,6 +755,9 @@ end
                               eqKind,
                               utvarOpt = NONE})) => 
           let 
+            (* 2012-7-27 ohori. eqKind must be NONEQ *)
+            val _ = case eqKind of A.EQ => raise CoerceFun | _ => ()
+(* 2012-7-27 ohori. The following does not make sense:
             val tyList = 
                 map (fn x => 
                         let
@@ -766,9 +769,8 @@ end
                               newTy
                           end)
                       tyList
-              (*
-               val tyList = map (fn x => T.newty T.univKind) tyList
-               *)
+*)
+              val tyList = map (fn x => T.newty T.univKind) tyList
               val ty2 = T.newty T.univKind
               val resTy = T.FUNMty(tyList, ty2)
               val _ = adjustDepthInTy lambdaDepth resTy

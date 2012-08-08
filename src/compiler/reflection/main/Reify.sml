@@ -189,7 +189,11 @@ in
       end
     | T.CONSTRUCTty {tyCon=tyCon as {path,...}, args} =>
       reifyTyCon (tyCon, args, path, tpexp)
-    | T.POLYty  {boundtvars, body} => RD.unprintable()
+    | T.POLYty  {boundtvars, body} => 
+      (case body of
+         T.FUNMty _ => RD.mkFUNtyRepTerm()
+        | _ => RD.unprintable()
+      )
     (* FIXME: we can do someting more for poly *)
 
   and makeReifyFun ty =
@@ -260,14 +264,23 @@ in
       else if eqTyCon(tyCon, BE.EXNtyCon) then
         RD.mkEXNtyRepTerm ()
       else if eqTyCon(tyCon, BE.LISTtyCon()) then
-        let
-          val (makeTermVar, makeTermVarTy) = 
-              case !RD.makeListTerm of
-                SOME (var, ty) => (var, ty)
-              | NONE => raise bug "makeListTerm not set"
-        in
-          makePolyReify args (makeTermVar, makeTermVarTy) exp
-        end
+        (let
+           val (makeTermVar, makeTermVarTy) = 
+               case !RD.makeListTerm of
+                 SOME (var, ty) => (var, ty)
+               | NONE => raise bug "makeListTerm not set"
+         in
+           makePolyReify args (makeTermVar, makeTermVarTy) exp
+         end
+         handle exn => 
+                (let
+                   val pathName = String.concatWith "." path
+                   val pathNameTerm = makeString pathName
+                 in
+                   RD.mkCONSTRUCTtyRepTerm pathNameTerm
+                 end
+                )
+        )
       else if eqTyCon(tyCon, BE.ARRAYtyCon) then
         let
           val (makeTermVar, makeTermVarTy) = 
@@ -369,9 +382,62 @@ in
         makeMonoApply2 RD.makeSigentry (makeString "") tyVal
       end
 
-  fun reifyEnv (env:V.env as V.ENV {varE, tyE, strE=V.STR strE}) =
+  fun filterSpecConVarE varE =
+      SEnv.foldri
+        (fn (name, I.IDSPECCON, varE) => varE
+          | (name, idstatus, varE) => SEnv.insert(varE, name, idstatus))
+      SEnv.empty
+      varE
+  fun filterSpecConEnv (V.ENV {varE, tyE, strE}) =
       let
+        val varE = filterSpecConVarE varE
+      in
+        V.ENV{varE=varE, tyE=tyE, strE=strE}
+      end
+  fun filterSpecCon 
+        {id,
+         version,
+         used,
+         argSig,
+         argStrEntry,
+         argStrName,
+         dummyIdfunArgTy,
+         polyArgTys,
+         typidSet,
+         exnIdSet,
+         bodyEnv,
+         bodyVarExp
+        } =
+        {id = id,
+         version = version,
+         used = used,
+         argSig = filterSpecConEnv argSig,
+         argStrEntry = argStrEntry,
+         argStrName = argStrName,
+         dummyIdfunArgTy = dummyIdfunArgTy,
+         polyArgTys = polyArgTys,
+         typidSet = typidSet,
+         exnIdSet = exnIdSet,
+         bodyEnv = bodyEnv,
+         bodyVarExp = bodyVarExp
+        }
+
+  fun reifyFunEntry (name, funEntry) =
+      let
+        (* 2012-8-7 ohori ad-hoc fix for bug 232_functorSigNewLines.sml
+         *)
+        val funEntry = filterSpecCon funEntry
+        val name = ("functor " ^ name)
+        val funE = makeString (name ^ (prettyPrint tstrWidth (V.printTy_funEEntry funEntry)))
+      in
+        funE
+      end
+
+  fun reifyEnv env = 
+      let
+        val env = NormalizeTy.reduceEnv env
         (* tyE *)
+        val V.ENV {varE, tyE, strE=V.STR strE} = env
         val stringTstrList = SEnv.listItemsi tyE
         val termList = map reifyTstr stringTstrList
         val listTermTyE = case !RD.tstrNil of
@@ -473,17 +539,17 @@ in
       end
   fun reifyFunE (funE:V.funE) =
       let
-        val stringList = SEnv.listKeys funE
+        val stringFunEntryList = SEnv.listItemsi funE
         val nilTerm = case !RD.stringNil of
                         NONE => raise bug "funeNil not set"
                       | SOME (term, ty) => term
         val termList =
             foldr 
-              (fn (name, listTerm) => 
-                  makeMonoApply2 RD.stringCons (makeString name) listTerm
+              (fn (nameFunEntry, listTerm) => 
+                  makeMonoApply2 RD.stringCons (reifyFunEntry nameFunEntry) listTerm
               )
               nilTerm
-              stringList
+              stringFunEntryList
       in
         termList
       end

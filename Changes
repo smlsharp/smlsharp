@@ -1,3 +1,21 @@
+SML# version 1.1.0 (released on 2012-08-08)
+
+Improvements:
+* Functor definition is now available in interactive mode.
+* SML# compiler now rejects signatures that do not have any instance.
+  Rejecting them is not strictly compliant with the definiton of SML,
+  but necessary for separately compiling a functor.
+* Refined value, type and signature printers of interactive mode.
+* Refined type error messages.
+
+Fixed bugs:
+* Fixed several bugs of functor with signature constraints.
+* Fixed a bug of eqtype constraint.
+* Fixed a bug of opaque signature constraint with datatype.
+* Fixed a bug of exception replication.
+* Fixed a bug that handle expresions may cause infinite loop.
+
+-----------------------------------------------------------------------------
 SML# version 1.0.3 (released on 2012-06-25)
 
 Fixed bugs:

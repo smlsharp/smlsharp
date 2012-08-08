@@ -14,17 +14,11 @@ sig
                        firstArgPat : (IDCalc.varInfo * IDCalc.ty list) option,
                        polyArgPats : (IDCalc.varInfo * IDCalc.ty) list, 
                        tfvDecls : IDCalc.icdecl list}
-  val varsInEnv : ExnID.Set.set
-                  -> Loc.loc
-                  -> string list
-                  -> (string list * IDCalc.icexp) list
-                  -> NameEvalEnv.env
+  val varsInEnv : NameEvalEnv.env * Loc.loc
                   -> (string list * IDCalc.icexp) list * ExnID.Set.set
-  val makeBodyEnv : NameEvalEnv.env
-                    -> Loc.loc
-                       -> {allVars:(string list * IDCalc.icexp) list,
-                           exnIdSet:ExnID.Set.set, typidSet:TypID.Set.set}
+  val typidSet : NameEvalEnv.env -> TypID.Set.set
   val eqEnv : {specEnv:NameEvalEnv.env, implEnv:NameEvalEnv.env} -> bool
+  val eqShape : NameEvalEnv.env * NameEvalEnv.env -> bool
   val eqSize : NameEvalEnv.env * NameEvalEnv.env -> bool
   val makeFunctorArgs : Loc.loc -> string list list -> NameEvalEnv.env -> IDCalc.icexp list
 end
@@ -40,6 +34,7 @@ local
   structure N = NormalizeTy
   structure BV = BuiltinEnv
   structure Sig = EvalSig
+  structure Ty = EvalTy
   structure P = PatternCalc
   structure EU = UserErrorUtils
   fun bug s = Control.Bug ("NameEval (FunctorUtils): " ^ s)
@@ -54,7 +49,7 @@ in
               (case I.derefTfun tfun of
                  tfun as (I.TFUN_VAR (tfv as ref tfunkind)) =>
                  (case tfunkind of
-                    I.TFV_SPEC {id, iseq, formals} =>
+                    I.TFV_SPEC {name, id, iseq, formals} =>
                     (case formals of 
                        nil => 
                        (U.print "spec tfv\n";
@@ -76,10 +71,13 @@ in
                              I.TFUN_DTY
                                {id=id,
                                 iseq=iseq,
-				runtimeTy = BuiltinType.BOXEDty,
+				runtimeTy = I.BUILTINty BuiltinType.BOXEDty,
                                 formals=formals,
                                 conSpec=SEnv.empty,
+(* 2012-8-6 ohori bug 062_functorPoly.sml; Bug : nil path
                                 originalPath=path,
+*)
+                                originalPath=path@[name],
                                 liftedTys=I.emptyLiftedTys,
                                 dtyKind=I.FUNPARAM
                                }
@@ -129,7 +127,7 @@ in
                   | I.TFUN_DTY _ => V.rebindTstr(env, name, tstr)
                   | I.REALIZED _ => raise bug "REALIZED"
                   | I.INSTANTIATED {tfunkind, tfun} => raise bug "INSTANTIATED"
-                  | I.FUN_DTY {tfun, varE, formals, conSpec, liftedTys} =>
+                  | I.FUN_DTY _ =>
                     V.rebindTstr(env, name, V.TSTR tfun)
                  )
               )
@@ -149,7 +147,7 @@ in
                   | I.TFUN_DTY _ => V.rebindTstr(env, name, tstr)
                   | I.REALIZED _ => raise bug "REALIZED"
                   | I.INSTANTIATED _ => raise bug "INSTANTIATED"
-                  | I.FUN_DTY {tfun,varE,formals,liftedTys,conSpec} =>
+                  | I.FUN_DTY {originalPath, tfun,varE,formals,liftedTys,conSpec} =>
                     let
                       val envTstr = V.TSTR_DTY {tfun=tfun,
                                                 varE=varE,
@@ -290,7 +288,7 @@ val _ = U.print "\n"
             in
               case !tfv of
                  I.TFV_SPEC _ => raise bug "non dty tfv (4)"
-               | I.TFV_DTY {id, iseq, formals, conSpec, liftedTys} =>
+               | I.TFV_DTY {name, id, iseq, formals, conSpec, liftedTys} =>
                  let
                    val returnTy =
                        I.TYCONSTRUCT
@@ -332,7 +330,7 @@ val _ = U.print "\n"
                          (SEnv.empty, nil)
                          conSpec
                          (* is it safe to create a new var here? *)
-		   val runtimeTy = U.runtimeTyOfConspec conSpec
+		   val runtimeTy = I.BUILTINty (U.runtimeTyOfConspec conSpec)
                    val envTfun =
                        I.TFUN_VAR
                          (ref
@@ -341,7 +339,7 @@ val _ = U.print "\n"
                                         formals=formals,
 					runtimeTy=runtimeTy,
                                         conSpec=conSpec,
-                                        originalPath=path,
+                                        originalPath=path@[name],
                                         liftedTys=liftedTys,
                                         dtyKind=I.DTY
 				       }
@@ -349,6 +347,7 @@ val _ = U.print "\n"
                          )
                    val _ = tfv := I.FUN_DTY{tfun=envTfun,
                                             varE=varE,
+                                            originalPath=path@[name],
                                             formals=formals,
                                             liftedTys=liftedTys,
                                             conSpec=conSpec
@@ -510,82 +509,89 @@ val _ = U.print "\n"
         expList@exnCons
       end
 
-  fun varsInEnv set loc path vars (V.ENV{varE, strE=V.STR envMap,...})
-      : ((string list * I.icexp) list * ExnID.Set.set) =
-        let
-          val (vars, set) = varsInVarE set loc path vars varE
-        in
-          varsInStrE 
-            set
-            loc
-            path
-            vars
-            envMap
-        end
-  and varsInVarE set loc path vars varE
-      : ((string list * I.icexp) list * ExnID.Set.set) =
-      SEnv.foldri
-        (fn (name, I.IDVAR id, (vars, set)) => 
-            ((path@[name],I.ICVAR({id=id, path=path@[name]}, loc))
-             :: vars, set)
-          | (name, I.IDVAR_TYPED {id, ty}, (vars, set)) => 
-            ((path@[name],I.ICVAR({id=id, path=path@[name]}, loc))
-             :: vars, set)
-          | (name, I.IDEXVAR {path=exPath, ty, used, loc, version, internalId}, (vars, set)) =>
-            (* CHECKME:
-               Here we change the external name to the effective name.
-             *)
-            let
-              val exPath = case version of NONE => exPath | SOME i => exPath @ [Int.toString i]
-            in
-              ((path@[name], I.ICEXVAR ({path=exPath, ty=ty},loc))
+  local 
+    fun varsInEnv set loc path vars (V.ENV{varE, strE=V.STR envMap,...})
+        : ((string list * I.icexp) list * ExnID.Set.set) =
+          let
+            val (vars, set) = varsInVarE set loc path vars varE
+          in
+            varsInStrE 
+              set
+              loc
+              path
+              vars
+              envMap
+          end
+    and varsInVarE set loc path vars varE
+        : ((string list * I.icexp) list * ExnID.Set.set) =
+        SEnv.foldri
+          (fn (name, I.IDVAR id, (vars, set)) => 
+              ((path@[name],I.ICVAR({id=id, path=path@[name]}, loc))
                :: vars, set)
-            end
-          | (name, I.IDEXVAR_TOBETYPED _, (vars, set)) => raise bug "IDEXVAR_TOBETYPED"
-          | (name, I.IDCON _, (vars, set)) => (vars, set)
-          | (name, I.IDEXN {id, ty}, (vars, set)) =>
-            if ExnID.Set.member(set, id) then (vars, set)
-            else
-              ((path@[name],
-               I.ICEXN_CONSTRUCTOR({id=id,ty=ty,path=path@[name]},loc))
-              ::vars,
-               ExnID.Set.add(set,id)
-              )
-          | (name, I.IDEXNREP {id, ty}, (vars, set)) =>
-            if ExnID.Set.member(set, id) then (vars, set)
-            else
-              ((path@[name],
-                I.ICEXN_CONSTRUCTOR({id=id,ty=ty,path=path@[name]},loc))
-               ::vars,
-               ExnID.Set.add(set,id)
-              )
+            | (name, I.IDVAR_TYPED {id, ty}, (vars, set)) => 
+              ((path@[name],I.ICVAR({id=id, path=path@[name]}, loc))
+               :: vars, set)
+            | (name, I.IDEXVAR {path=exPath, ty, used, loc, version, internalId}, 
+               (vars, set)) =>
+              (* CHECKME:
+                 Here we change the external name to the effective name.
+               *)
+              let
+                val exPath = case version of 
+                               NONE => exPath 
+                             | SOME i => exPath @ [Int.toString i]
+              in
+                ((path@[name], I.ICEXVAR ({path=exPath, ty=ty},loc))
+                 :: vars, set)
+              end
+            | (name, I.IDEXVAR_TOBETYPED _, (vars, set)) => raise bug "IDEXVAR_TOBETYPED"
+            | (name, I.IDCON _, (vars, set)) => (vars, set)
+            | (name, I.IDEXN {id, ty}, (vars, set)) =>
+              if ExnID.Set.member(set, id) then (vars, set)
+              else
+                ((path@[name],
+                  I.ICEXN_CONSTRUCTOR({id=id,ty=ty,path=path@[name]},loc))
+                 ::vars,
+                 ExnID.Set.add(set,id)
+                )
+            | (name, I.IDEXNREP {id, ty}, (vars, set)) =>
+              if ExnID.Set.member(set, id) then (vars, set)
+              else
+                ((path@[name],
+                  I.ICEXN_CONSTRUCTOR({id=id,ty=ty,path=path@[name]},loc))
+                 ::vars,
+                 ExnID.Set.add(set,id)
+                )
 (*
             I.ICEXN ({id=id, ty=ty, path=path@[name]}, loc) :: vars
 *)
-          | (name, I.IDEXEXN {path,ty, used, loc, version}, (vars, set)) => (vars,set)
-          | (name, I.IDEXEXNREP {path,ty, used, loc, version}, (vars, set)) => (vars,set)
+            | (name, I.IDEXEXN {path,ty, used, loc, version}, (vars, set)) => (vars,set)
+            | (name, I.IDEXEXNREP {path,ty, used, loc, version}, (vars, set)) => (vars,set)
 (*
             I.ICEXEXN({path=path, ty=ty}, loc) :: vars
 *)
-          | (name, I.IDOPRIM _, _) =>
-            (print name; print "\n"; raise bug "IDOPRIM varsInVarE")
-          | (name, I.IDBUILTINVAR _, (vars, set)) => (vars, set)
-          | (name, I.IDSPECVAR _, (vars, set)) => (vars, set)
-          | (name, I.IDSPECEXN _, (vars, set)) => (vars, set)
-          | (name, I.IDSPECCON, (vars, set)) => (vars, set)
-        )
-        (vars, set)
-        varE
-  and varsInStrE set loc path vars envMap
-      : ((string list * I.icexp) list * ExnID.Set.set) =
-      SEnv.foldri
-        (fn (strName, {env,strKind}, (vars, set)) =>
-            varsInEnv set loc (path@[strName]) vars env
-        )
-        (vars, set)
-        envMap
+            | (name, I.IDOPRIM _, _) =>
+              (print name; print "\n"; raise bug "IDOPRIM varsInVarE")
+            | (name, I.IDBUILTINVAR _, (vars, set)) => (vars, set)
+            | (name, I.IDSPECVAR _, (vars, set)) => (vars, set)
+            | (name, I.IDSPECEXN _, (vars, set)) => (vars, set)
+            | (name, I.IDSPECCON, (vars, set)) => (vars, set)
+          )
+          (vars, set)
+          varE
+    and varsInStrE set loc path vars envMap
+        : ((string list * I.icexp) list * ExnID.Set.set) =
+        SEnv.foldri
+          (fn (strName, {env,strKind}, (vars, set)) =>
+              varsInEnv set loc (path@[strName]) vars env
+          )
+          (vars, set)
+          envMap
+  in
+    val varsInEnv = fn (env, loc) => varsInEnv ExnID.Set.empty loc nil nil env
+  end
 
-  fun makeBodyEnv returnEnv loc =
+  fun typidSet env =
       let
         fun typidSetEnv (V.ENV {tyE,strE=V.STR envMap,...},typidSet) =
             let
@@ -601,18 +607,15 @@ val _ = U.print "\n"
             | V.TSTR_DTY {tfun,...} => typidSetTfun (tfun, typidSet)
         and typidSetTfun (tfun, typidSet) =
             case I.derefTfun tfun of
-              I.TFUN_VAR(ref (I.TFUN_DTY{id,...})) =>
-              TypID.Set.add(typidSet, id)
-            | _ => typidSet
-        val typidSet = typidSetEnv (returnEnv, TypID.Set.empty)
-        val (allVars,exnIdSet) = varsInEnv ExnID.Set.empty loc nil nil returnEnv
+                (* 2012-7-31 ohori: bug 228_abstypeInFunctor.sml; dtyKind must be processed  *)
+                I.TFUN_VAR(ref (I.TFUN_DTY{id, dtyKind = I.OPAQUE{tfun, ...},...})) =>
+                TypID.Set.add(typidSetTfun (tfun,typidSet), id)
+              | I.TFUN_VAR(ref (I.TFUN_DTY{id,...})) =>
+                TypID.Set.add(typidSet, id)
+              | _ => typidSet
       in
-        {allVars=allVars,
-         typidSet=typidSet,
-         exnIdSet=exnIdSet
-        }
+        typidSetEnv (env, TypID.Set.empty)
       end
-
 
   exception Fail
   fun makeEqEnv (formals1, formals2) =
@@ -631,19 +634,21 @@ val _ = U.print "\n"
   fun visitTfun {specTfun=tfun1, implTfun=tfun2} =
       case (I.derefTfun tfun1, I.derefTfun tfun2) of
         (I.TFUN_VAR
-           (tfv as (ref(I.TFV_DTY{id=id1,iseq,formals, conSpec, liftedTys}))),
-         I.TFUN_VAR (ref((I.TFV_DTY{id=id2,...})))) =>
+           (tfv as (ref(I.TFV_DTY{id=id1,iseq,formals, conSpec, liftedTys,...}))),
+         I.TFUN_VAR (ref((I.TFV_DTY{name,id=id2,...})))) =>
         tfv := I.TFV_DTY{id=id2,
-                          iseq=iseq,
-                          formals=formals,
-                          conSpec=conSpec,
-                          liftedTys=liftedTys}
+                         iseq=iseq,
+                         name=name,
+                         formals=formals,
+                         conSpec=conSpec,
+                         liftedTys=liftedTys}
       | (I.TFUN_VAR
-           (tfv as (ref(I.TFV_SPEC{id=id1,iseq,formals}))),
-         I.TFUN_VAR (ref((I.TFV_SPEC{id=id2,...})))) =>
+           (tfv as (ref(I.TFV_SPEC{id=id1,iseq,formals,...}))),
+         I.TFUN_VAR (ref((I.TFV_SPEC{name, id=id2,...})))) =>
         tfv := I.TFV_SPEC{id=id2,
-                           iseq=iseq,
-                           formals=formals}
+                          name=name,
+                          iseq=iseq,
+                          formals=formals}
       | (I.TFUN_VAR
            (tfv as (ref(I.TFUN_DTY{id=id1,
                                    iseq,
@@ -726,15 +731,8 @@ val _ = U.print "\n"
 
   fun eqTfunkind {specTfunkind=tfunkind1, implTfunkind=tfunkind2} =
       case (tfunkind1, tfunkind2) of
-        (I.TFUN_DTY {id=id1,
-                      iseq=iseq1,
-                      formals=formals1,
-                      conSpec=conSpec1,...},
-         I.TFUN_DTY {id=id2,
-                      iseq=iseq2,
-                      formals=formals2,
-                      conSpec=conSpec2,...}
-        ) => if TypID.eq(id1, id2) then () else raise Fail
+        (I.TFUN_DTY {id=id1,...}, I.TFUN_DTY {id=id2,...}) 
+        => if TypID.eq(id1, id2) then () else raise Fail
 (*
         if TypID.eq(id1, id2) andalso iseq1 = iseq2 then
           eqConSpec ((formals1,conSpec1),(formals2,conSpec2)) 
@@ -744,8 +742,7 @@ val _ = U.print "\n"
       | (_, I.INSTANTIATED _) => raise bug "INSTANTIATED in spec"
       | (I.FUN_DTY _, _) => raise bug "FUN_DTY in spec"
       | (_, I.FUN_DTY _) => raise bug "FUN_DTY in spec"
-      | (I.TFV_SPEC{id=id1, iseq=iseq1, formals=formals1},
-         I.TFV_SPEC{id=id2, iseq=iseq2, formals=formals2})
+      | (I.TFV_SPEC{id=id1,...}, I.TFV_SPEC{id=id2,...})
         => if TypID.eq(id1, id2) then () else raise Fail
 (*
         if TypID.eq(id1, id2) andalso
@@ -754,16 +751,7 @@ val _ = U.print "\n"
            then ()
            else raise Fail
 *)
-      | (I.TFV_DTY {id=id1,
-                     iseq=iseq1,
-                     formals=formals1,
-                     conSpec=conSpec1,
-                     liftedTys=liftedTys1},
-         I.TFV_DTY {id=id2,
-                     iseq=iseq2,
-                     formals=formals2,
-                     conSpec=conSpec2,
-                     liftedTys=liftedTys2}
+      | (I.TFV_DTY {id=id1,...}, I.TFV_DTY {id=id2,...}
         ) => if TypID.eq(id1, id2) then () else raise Fail
 (*
         if TypID.eq(id1, id2) andalso iseq1 = iseq2 then
@@ -800,7 +788,7 @@ val _ = U.print "\n"
                                  dtyKind=I.DTY_INTERFACE,...}))) =>
       if TypID.eq(id1,id2) then ()
       else 
-        if BuiltinType.compatTy {absTy=ty1, implTy=ty2}
+        if Ty.compatRuntimeTy {absTy=ty1, implTy=ty2}
            andalso List.length formals1 = List.length formals2
            andalso (not eq1 orelse eq2)
         then tfv := I.REALIZED {id=id1, tfun=tfun2}
@@ -811,7 +799,7 @@ val _ = U.print "\n"
         val implRuntimeTy = case I.tfunRuntimeTy tfun2 of 
                               SOME ty => ty | NONE => raise Fail
         val implIseq = I.tfunIseq tfun2
-        val _ = if BuiltinType.compatTy {absTy=runtimeTy, implTy=implRuntimeTy}
+        val _ = if Ty.compatRuntimeTy {absTy=runtimeTy, implTy=implRuntimeTy}
                    andalso List.length formals = I.tfunArity tfun2
                    andalso (not iseq orelse implIseq)
                 then () 
@@ -980,6 +968,109 @@ val _ = U.print "\n"
         true
         )
       )
+      handle Fail => false
+
+  fun setEquiv ((typIdMap1,typIdMap2),id1,id2) = 
+      let
+        val typIdMap1 = 
+            case TypID.Map.find(typIdMap1,id1) of
+              SOME id3 => if TypID.eq(id2,id3) then typIdMap1
+                          else raise Fail
+            | NONE => TypID.Map.insert(typIdMap1, id1, id2)
+        val typIdMap2 = 
+            case TypID.Map.find(typIdMap2,id2) of
+              SOME id3 => if TypID.eq(id1,id3) then typIdMap2
+                          else raise Fail
+            | NONE => TypID.Map.insert(typIdMap2, id2, id1)
+      in
+        (typIdMap1, typIdMap2)
+      end
+
+  fun eqShapeTfunkind (tfunkind1, tfunkind2) typEquiv =
+      case (tfunkind1, tfunkind2) of
+      (I.TFUN_DTY {id=id1,...}, I.TFUN_DTY {id=id2,...}) => setEquiv(typEquiv, id1,id2)
+    | (I.TFV_SPEC {id=id1,...}, I.TFV_SPEC {id=id2,...}) =>setEquiv(typEquiv, id1,id2)
+    | (I.TFV_DTY {id=id1,...}, I.TFV_DTY {id=id2,...})=> setEquiv(typEquiv, id1,id2)
+    | (I.FUN_DTY {tfun=tfun1, ...}, I.FUN_DTY{tfun=tfun2,...}) => eqShapeTfun (tfun2, tfun2) typEquiv
+    | _ => raise Fail
+
+  and eqShapeTfun (tfun1, tfun2) typEquiv =
+      case (I.derefTfun tfun1, I.derefTfun tfun2) of
+        (I.TFUN_DEF _,I.TFUN_DEF _) => typEquiv
+      | (I.TFUN_VAR (ref tfunkind1), I.TFUN_VAR (ref tfunkind2)) =>
+        eqShapeTfunkind (tfunkind1, tfunkind2) typEquiv
+      | _ => raise Fail
+
+  fun eqShapeTstr (tstr1, tstr2) typEquiv =
+      case (tstr1, tstr2) of
+        (V.TSTR tfun1, V.TSTR tfun2) => 
+        eqShapeTfun (tfun1, tfun2) typEquiv
+      | (V.TSTR_DTY {tfun=tfun1,...}, 
+         V.TSTR_DTY {tfun=tfun2,...}) => 
+        eqShapeTfun (tfun1, tfun2) typEquiv
+      | _ => raise Fail
+
+  fun eqShapeTyE (tyE1, tyE2) typEquiv = 
+      SEnv.foldli
+      (fn (name, tstr1, typEquiv) =>
+          case SEnv.find(tyE2, name) of
+            NONE => raise Fail
+          | SOME tstr2 => eqShapeTstr (tstr1,tstr2) typEquiv
+      )
+      typEquiv
+      tyE1
+
+  fun eqShapeIdstatus (idstatus1, idstatus2) =
+      case (idstatus1, idstatus2) of
+      (I.IDSPECVAR _, I.IDSPECVAR _) => ()
+    | (I.IDSPECEXN _, I.IDSPECEXN _) => ()
+    | (I.IDSPECCON, I.IDSPECCON) => ()
+    | (I.IDVAR _,I.IDVAR _) => ()
+    | (I.IDVAR_TYPED _,I.IDVAR_TYPED _) => ()
+    | (I.IDEXVAR _,I.IDEXVAR _) => ()
+    | (I.IDEXVAR_TOBETYPED _,I.IDEXVAR_TOBETYPED _) => ()
+    | (I.IDBUILTINVAR _,I.IDBUILTINVAR _) => ()
+    | (I.IDCON _,I.IDCON _) => ()
+    | (I.IDEXN _,I.IDEXN _) => ()
+    | (I.IDEXNREP _,I.IDEXNREP _) => ()
+    | (I.IDEXEXN _,I.IDEXEXN _) => ()
+    | (I.IDEXEXNREP _,I.IDEXEXNREP _) => ()
+    | (I.IDOPRIM _,I.IDOPRIM _) => ()
+    | _ => raise Fail
+        
+  fun eqShapeVarE (varE1, varE2) =
+      SEnv.appi
+      (fn (name, idstatus1) =>
+          case SEnv.find(varE2, name) of
+            SOME idstatus2 => eqShapeIdstatus (idstatus1, idstatus2) 
+          | NONE => raise Fail
+      )
+      varE1
+
+  fun eqShapeEnv (V.ENV {varE=varE1, tyE=tyE1, strE=V.STR strE1},
+                  V.ENV {varE=varE2, tyE=tyE2, strE=V.STR strE2}) typEquiv =
+      let
+        val _ = eqShapeVarE (varE1, varE2)
+        val typEquiv = eqShapeTyE (tyE1,tyE2) typEquiv
+        val typEquiv = eqShapeStrE (strE1,strE2) typEquiv
+      in
+        typEquiv
+      end
+  and eqShapeStrE (strE1, strE2) typEquiv =
+      SEnv.foldli
+      (fn (name, {env=env1, strKind}, typEquiv) =>
+          case SEnv.find(strE2, name) of
+            SOME {env=env2, strKind=_} => eqShapeEnv(env1,env2) typEquiv
+          | NONE => raise Fail
+      )
+      typEquiv
+      strE1
+  fun eqShape (env1,env2) =
+      let
+        val typEquiv = (TypID.Map.empty, TypID.Map.empty)
+      in
+        (eqShapeEnv (env1, env2) typEquiv; true)
+      end
       handle Fail => false
 end
 end

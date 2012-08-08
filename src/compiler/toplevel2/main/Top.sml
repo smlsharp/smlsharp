@@ -43,7 +43,15 @@ struct
 
   fun printLines title formatter elems =
       (if title = "" then () else (printError title; printError ":\n");
-       app (fn elem => (printError (formatter elem); printError "\n")) elems;
+       app (fn elem => 
+               let
+                 val s = formatter elem
+               in
+                 if s <> "" then 
+                   (printError s; printError "\n")
+                 else ()
+               end
+           ) elems;
        flushError ())
 
   fun userErrorToString x =
@@ -83,7 +91,7 @@ struct
                 (Control.prettyPrint o PatternCalcInterface.format_compileUnit)
                 title code
 
-  fun printIDCalc title code =
+  fun printIDCalc title {decls=code, loc} =
       printCode Control.printNE 
                 (if !Control.printWithType 
                  then (Control.prettyPrint o IDCalc.formatWithType_icdecl)
@@ -91,7 +99,7 @@ struct
                 )
                 title code
 
-  fun printVR title code =
+  fun printVR title {decls=code, loc} =
       printCode Control.printVR 
                 (Control.prettyPrint o IDCalc.format_icdecl)
                 title code
@@ -220,11 +228,11 @@ struct
         (nameevalTopEnv, icdecls)
       end
 
-  fun doTypeInference icdecls =
+  fun doTypeInference idcalc =
       let
         val _ = printPhase "TypeInference"
         val _ = #start Counter.typeInferenceTimeCounter()
-        val (typeinfVarE, tpdecs, warnings) = InferTypes.typeinf icdecls
+        val (typeinfVarE, tpdecs, warnings) = InferTypes.typeinf idcalc
         val _ = #stop Counter.typeInferenceTimeCounter()
         val _ = printWarnings warnings
         val _ = printTypedCalc "Type Inference" tpdecs
@@ -814,7 +822,7 @@ struct
             NameEval.evalRequire (topEnv, nil) plunit
         val _ = #stop Counter.nameEvaluationTimeCounter()
         val _ = printWarnings warnings
-        val _ = printIDCalc "Name Evaluation" icdecls
+        val _ = printIDCalc "Name Evaluation" {decls=icdecls, loc=Loc.noloc}
 
         val fixEnv = Elaborator.extendFixEnv (fixEnv, newFixEnv)
 

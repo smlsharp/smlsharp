@@ -553,8 +553,7 @@ struct
     = (*% @format({id, path, iseq, runtimeTy, arity, conSet,
                    extraArgs:ty tys,
                    dtyKind})
-          tys:ifCons()(tys:enclosedList(ty()(btvOrdEnv))("{",",","}"))
-          path 
+          path
        *)
       (*% @prefix formatWithType_ 
           @format({id, path, iseq, runtimeTy, arity, conSet,

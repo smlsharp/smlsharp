@@ -237,7 +237,7 @@ to re-structure builtins.
           end
         | I.TFUN_VAR tfv => 
           case !tfv of
-            I.TFV_SPEC {id, iseq, formals} => tfun
+            I.TFV_SPEC _ => tfun
           | I.TFUN_DTY {id, iseq, formals, runtimeTy, originalPath,
                         conSpec, liftedTys, dtyKind} =>
             if isVisited tfv then tfun 
@@ -259,7 +259,7 @@ to re-structure builtins.
             in
               tfun
             end
-          | I.TFV_DTY {id, iseq, formals, conSpec, liftedTys} =>
+          | I.TFV_DTY {name, id, iseq, formals, conSpec, liftedTys} =>
             if isVisited tfv then tfun 
             else
               let
@@ -267,6 +267,7 @@ to re-structure builtins.
                 val conSpec = redConSpec tvarEnv conSpec
                 val _ = 
                     tfv := I.TFV_DTY{id=id,
+                                     name=name,
                                      iseq=iseq,
                                      formals=formals,
                                      conSpec=conSpec,
@@ -313,7 +314,8 @@ to re-structure builtins.
     fun redIdstatus idstatus =
         case idstatus of
           I.IDVAR varId => idstatus
-        | I.IDVAR_TYPED _ => idstatus
+        | I.IDVAR_TYPED {id, ty} => 
+          I.IDVAR_TYPED {id=id, ty= redTy TvarMap.empty ty}
         | I.IDEXVAR {path, ty, used, loc, version, internalId} =>
           I.IDEXVAR {path=path, 
                      ty= redTy TvarMap.empty ty, 

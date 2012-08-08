@@ -12,12 +12,9 @@ rule 26, 32, 35, 37
   </li>
 </ul>
  *)
-
 val rec v1 = fn x => if 0 = x then 1 else v1 (x - 1);
 val w1 = v1 1;
-
 val rec (v2) =  fn x => if 0 = x then 2 else v2 (x - 1);
 val w2 = v2 2;
-
 val rec _ = fn x => x;
 

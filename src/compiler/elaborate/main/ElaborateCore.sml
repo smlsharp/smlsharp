@@ -1162,7 +1162,6 @@ in
         | A.DECREPLICATEDAT (tyCon, longTyCon, loc) =>
           ([PC.PDREPLICATEDAT (tyCon, longTyCon, loc)], SEnv.empty) 
         | A.DECABSTYPE (dataBinds, withTypeBinds, decs, loc) =>
-(*
           let
             val (newDataBinds, newWithTypeBinds) =
                 elabDataBindsWithTypeBinds env (dataBinds, withTypeBinds, loc)
@@ -1171,11 +1170,10 @@ in
                 case newWithTypeBinds of
                   [] => newDecs
                 | _ => PC.PDTYPE(newWithTypeBinds, loc) :: newDecs
-                    newDataBinds
           in
             ([PC.PDABSTYPE(newDataBinds, newVisibleDecs, loc)], newEnv)
           end
-*)
+(*
           let
             val (newDataBinds, newWithTypeBinds) =
                 elabDataBindsWithTypeBinds env (dataBinds, withTypeBinds, loc)
@@ -1199,6 +1197,7 @@ in
                  loc)],
              newEnv)
           end
+*)
         | A.DECEXN (exnBinds, loc) =>
           let
             fun elabExnBind (A.EXBINDDEF(isOp, name, NONE, loc)) =

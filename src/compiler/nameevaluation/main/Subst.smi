@@ -16,7 +16,7 @@ struct
   type conIdSubst = IDCalc.idstatus ConID.Map.map
   type exnIdSubst = ExnID.id ExnID.Map.map
   type subst =
-      {conIdS:conIdSubst, exnIdS:exnIdSubst, tfvS:tfvSubst, tvarS:tvarSubst}
+      {conIdS:conIdSubst, exnIdS:exnIdSubst, tvarS:tvarSubst}
   val emptyConIdSubst : conIdSubst
   val emptyExnIdSubst : exnIdSubst
   val emptySubst : subst
