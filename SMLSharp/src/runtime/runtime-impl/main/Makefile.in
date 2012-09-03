@@ -7,6 +7,8 @@ include @top_builddir@/commonrule
 
 VPATH = @srcdir@
 
+SUBDIRS = FFISwitchGen
+
 LOCAL_DEFS = $(RUNTIME_DEFS)
 LOCAL_CPPFLAGS = $(RUNTIME_CPPFLAGS) \
                  $(LIBFFI_BUILD:libffi_build=-I../../libffi_build/include)
@@ -40,23 +42,11 @@ TARGETS = libimlruntimeimpl.$(LIBEXT)
 all: $(TARGETS)
 
 clean:
-	-rm -f $(srcdir)/FFISwitchGen/LARGEFFISWITCH.cc
-	-rm -f $(srcdir)/FFISwitchGen/FFIGenData.ppg.sml
-	-rm -rf $(srcdir)/FFISwitchGen/CM $(srcdir)/FFISwitchGen/.cm
 	-rm -f $(OBJECTS) $(TARGETS)
 
 libimlruntimeimpl.$(LIBEXT): $(OBJECTS)
 	$(AR) rcu $@ $(OBJECTS)
 	-$(RANLIB) $@
-
-FFISwitchGen/LARGEFFISWITCH.cc: Makefile FFISwitchGen/FFISwitchGen.sml \
-                                FFISwitchGen/FFIGenData.ppg.sml
-	cd $(srcdir) \
-	&& cd FFISwitchGen \
-	&& $(SHELL) -x $(BUILD_ROOT)/mksmlheap \
-	   --exec 'FFISwitchGen.main $(FFI_MAX_ARGS);'
-
-FFISwitchGen/FFIGenData.ppg.sml: FFISwitchGen/FFIGenData.ppg
 
 ##---- dependency (automatically generated) ----
 ByteArrayInputChannel.$(OBJEXT): ByteArrayInputChannel.cc \

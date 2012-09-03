@@ -29,7 +29,7 @@ struct
             ^ " -stack " ^ (Int.toString (!Control.VMStackSize))
             ^ " -client " ^ (Int.toString port)
             ^ concat (map (fn arg => " " ^ arg) arguments)
-        val _ = if OS.Process.system command = OS.Process.success
+        val _ = if OS.Process.isSuccess (OS.Process.system command)
                 then ()
                 else raise RPT.Error ("Runtime cannot run.:" ^ command)
         val (runtimeInputChannel, runtimeOutputChannel) =

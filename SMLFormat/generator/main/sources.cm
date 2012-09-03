@@ -3,40 +3,36 @@
  * @copyright 2010, Tohoku University.
  *)
 Group is
-(*
-#if defined(NEW_CM)
-	$/basis_compat.cm
-#endif
-*)
-$/basis.cm
 
 #if defined(NEW_CM)
-	$/ml-yacc-lib.cm
-#else
-	ml-yacc-lib.cm
+	$/basis.cm
 #endif
 
-        Utility.sml
-        ErrorQueue.sml
+	../../../mlyacc/lib/ml-yacc-lib.cm
+
+	Utility.sml
+	ErrorQueue.sml
+
+	FormatTemplate.sml
 
 	AST.sig
 	Ast.sml
 	ASTUTIL.sig
 	AstUtil.sml
 
-        Constants_SMLNJ.sml
-	ml.lex
+	Constants_MLton.sml
+	ml.grm.sig
+	ml.grm.sml
 	TokenTable.sml
-	ml.grm
+	ml.lex.sml
 	MLPARSER.sig
 	MLParser.sml
 
-        FormatTemplate.sml
-        FORMATTER_GENERATOR.sig
-        FormatterGenerator.sml
-        BasicFormattersEnv.sml
+	FORMATTER_GENERATOR.sig
+	FormatterGenerator.sml
+	BasicFormattersEnv.sml
 
-        PPGMain.sml
+	PPGMain.sml
 
 (*
  *  To register the SMLPPG to the tools registry of the CM,
@@ -45,4 +41,9 @@ $/basis.cm
  *)
 (*        PPGSourceTool.sml*)
 
-        Main.sml
+	Main.sml
+
+#if defined(SMLNJ_VERSION)
+#else
+	call-main.sml
+#endif

@@ -31,7 +31,6 @@ Group is
 	RuntimeProxyTypes.sml
 	RUNTIME_PROXY.sig
 
-#if defined(SMLNJ_VERSION)
 	ServerSocketChannel.sml
 	ClientSocketChannel.sml
 	NetworkRuntimeProxy.sml
@@ -41,7 +40,6 @@ Group is
 	YAUnixProcessChannel.sml
 	YAUnixProcessRuntimeProxy.sml
 #endif (* structure Posix *)
-#endif (* SMLNJ_VERSION *)
 
 	SessionTypes.sml
 	SESSION.sig

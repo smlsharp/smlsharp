@@ -1,0 +1,279 @@
+#!/bin/sh
+#
+# makesml - support script for building and installing SML commands.
+# @copyright (C) 2010, Tohoku University.
+# @author UENO Katsuhiro
+#
+
+### settings
+[ -z "$CYGPATH" ] && CYGPATH=cygpath
+[ -z "$SML" ] && SML=sml
+[ -z "$SML_BAT" ] && SML_BAT=sml.bat
+[ -z "$SML_HEAP_SUFFIX" ] && SML_HEAP_SUFFIX=
+[ -z "$MLTON" ] && MLTON=mlton
+[ -z "$INSTALL" ] && INSTALL=install
+[ -z "$CPPFLAGS" ] && CPPFLAGS=
+[ -z "$LDFLAGS" ] && LDFLAGS=
+[ -z "$CXXLDFLAGS" ] && CXXLDFLAGS=
+[ -z "$MLTON_FLAGS" ] && MLTON_FLAGS='-verbose 1'
+[ -z "$MLTON_LIBS" ] && MLTON_LIBS=
+[ -z "$COMPILER" ] && COMPILER=smlnj
+[ -z "$BINDIR" ] && BINDIR=/usr/local/bin
+[ -z "$HEAPDIR" ] && HEAPDIR=/usr/local/lib
+[ -z "$host_os" ] && host_os=`uname -s`
+if [ -z "$EXEEXT" ]; then
+  case "$host_os" in
+    *[Mm]sys*|*[Mm]ingw*|*MINGW*|*[Cc]ygwin*|*CYGWIN*) EXEEXT=.exe ;;
+    *) EXEEXT=
+  esac
+fi
+
+### flags
+compiler="$COMPILER"
+mode=compile
+mainfunc=Main.main
+bindir="$BINDIR"
+heapdir="$HEAPDIR"
+source=
+dstfile=
+temporal=no
+
+### parse command line arguments
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -h) mode=help;;
+    -i) mode=install;;
+    -r) mode=remove;;
+    -t) temporal=yes;;
+    -o) dstfile="$2"; shift 1;;
+    -f) mainfunc="$2"; shift 1;;
+    -H) heapdir="$2"; shift 1;;
+    -B) bindir="$2"; shift 1;;
+    -C) compiler="$2"; shift 1;;
+    -*) echo "$0: invalid option $1" 1>&2; exit 1;;
+    *) if [ -z "$source" ]
+       then source="$1"
+       else echo "$0: multiple source file are specified." 1>&2; exit 1
+       fi;;
+  esac
+  shift 1
+done
+
+[ "x$mode" = "xcompile" ] && [ -z "$source" ] && mode=help
+[ -z "$dstfile" ] && dstfile=`echo "$source" | sed 's/\.[^.]*$//'`
+[ -z "$dstfile" ] && mode=help
+[ -f "$dstfile" ] || temporal=no
+
+if [ "x$mode" = "xhelp" ]; then
+  echo "$0 -- Tool for building and installing SML commands."
+  echo "usage: $0 [options...] [sources.cm]"
+  echo "options:"
+  echo "  -h             show this help message"
+  echo "  -i             install mode"
+  echo "  -r             clean mode"
+  echo "  -t             don't update if source is unchanged"
+  echo "  -o NAME        base name of executable and heap image file"
+  echo "  -f FUNC        name of function to be exported (for SML/NJ)"
+  echo "  -H DIR         install heap image files to DIR"
+  echo "  -B DIR         install executable files to DIR"
+  echo "  -C COMPILER    select compiler (smlnj or mlton)"
+  exit 1
+fi
+
+case "$compiler" in
+smlnj)
+  if [ -z "$SML_HEAP_SUFFIX" ]; then
+    SML_HEAP_SUFFIX=`echo 'TextIO.output (TextIO.stdErr, SMLofNJ.SysInfo.getHeapSuffix ());' | $SML 2>&1 1>/dev/null`
+    if [ "$?" != 0 ]; then
+      echo "$0: failed to obtain heap suffix." 1>&2
+      exit 1
+    fi
+  fi
+  ;;
+esac
+
+### subroutines
+
+abspath () {
+  case "$1" in
+    /*) echo "$1";;
+    *) dir=`pwd | sed 's,/\$,,'`; echo "$dir/$1";;
+  esac
+}
+
+nj_heap_path () {
+  src="$1"
+  case "::$SML_HEAP_SUFFIX::$host_os::" in
+  ::*win32*::*[Mm]sys*::|::*win32*::*mingw*::|::*win32*::*MINGW*::)
+    # convert MSYS style to DOSish style.
+    case "$src" in
+      /[a-zA-Z]/*) ret=`echo "$src" | sed 's,/\\(.\\)/,\\1:/,'`;;
+      /[a-zA-Z]) ret=`echo "$src" | sed 's,/\\(.\\),\\1:/,'`;;
+      /*) root=`cd / && pwd -W`; ret="$root$src";;
+      [a-zA-Z]:*) ret="$src";;
+      *) dir=`pwd -W`; ret="$dir/$src";;
+    esac
+    ret=`echo "$ret" | sed 's,/,\\\\,g'`
+    ;;
+  ::*win32*::*[Cc]ygwin*::|::*win32*::*CYGWIN*::)
+    # convert Cygwin style to DOSish style.
+    ret=`"$CYGPATH" -aw "$src"`
+    ;;
+  *)
+    # no need to convert path.
+    ret=`abspath "$src"`
+    ;;
+  esac
+  echo "$ret"
+}
+
+make_nj_script () {
+  dst="$1"
+  heap="$2.$SML_HEAP_SUFFIX"
+  case "$SML_HEAP_SUFFIX" in
+  *win32*)
+    bat="$dst.bat"
+    SML_BAT=`echo "$SML_BAT" | sed 's,/,\\\\,g'`
+    cat <<EOF > "$bat" || exit $?
+@echo OFF
+$SML_BAT @SMLload=$heap %*
+EOF
+    cat <<EOF > "$dst" || exit $?
+#!/bin/sh
+cmd /c '$SML_BAT @SMLload=$heap '"\$*"
+EOF
+    chmod +x "$bat" "$dst" || exit $?
+    ;;
+  *cygwin*)
+    cat <<EOF > "$dst" || exit $?
+#!/bin/sh
+SMLNJ_CYGWIN_RUNTIME=1
+export SMLNJ_CYGWIN_RUNTIME
+$SML @SMLload='$heap' "\$@"
+EOF
+    chmod +x "$dst" || exit $?
+    ;;
+  *)
+    cat <<EOF > "$dst" || exit $?
+#!/bin/sh
+exec $SML @SMLload='$heap' "\$@"
+EOF
+    chmod +x "$dst" || exit $?
+    ;;
+  esac
+}
+
+### main routine
+
+case "$compiler-$mode" in
+smlnj-compile)
+  heapfile="$dstfile.$SML_HEAP_SUFFIX"
+  heappath=`nj_heap_path "$dstfile"`
+  heappathstr=`echo "$heappath" | sed 's/["\\\\]/\\\\&/g'`
+  [ -f "$heapfile" ] || temporal=no
+
+  if [ "x$temporal" = "xyes" ]; then
+    mv "$heapfile" "$heapfile._old_"
+  else
+    rm -f "$heapfile"
+  fi
+
+  trap 'rm -f "$heapfile._log_" "$heapfile._old_"' EXIT
+  srcdir=`dirname "$source"`
+  srcfile=`basename "$source"`
+  {
+    echo "CM.make \"$srcfile\";"
+    echo "SMLofNJ.exportFn (\"$heappathstr\", $mainfunc)"
+  } | (cd "$srcdir" && $SML) | tee "$heapfile._log_"
+  [ -f "$heapfile" ] || exit 1
+
+  if [ "x$temporal" = "xyes" ]; then
+    if grep '^\[compiling' "$heapfile._log_" > /dev/null; then :; else
+      echo "** no update **" 1>&2
+      rm -f "$heapfile" "$heapfile._log_"
+      mv "$heapfile._old_" "$heapfile"
+      exit
+    fi
+    rm -f "$heapfile._old_"
+  fi
+
+  make_nj_script "$dstfile" "$heappath" || exit $?
+  ;;
+
+smlnj-install)
+  heapfile="$dstfile.$SML_HEAP_SUFFIX"
+  if [ -f "$heapfile" ]; then
+    basename=`basename "$dstfile"`
+    heappath=`nj_heap_path "$heapdir/$basename"`
+    echo $INSTALL -d -m 755 "$heapdir"
+    $INSTALL -d -m 755 "$heapdir"
+    echo $INSTALL "$heapfile" "$heapdir/$basename.$SML_HEAP_SUFFIX"
+    $INSTALL "$heapfile" "$heapdir/$basename.$SML_HEAP_SUFFIX" || exit $?
+    echo make_nj_script "$bindir/$basename" "$heappath"
+    make_nj_script "$bindir/$basename" "$heappath" || exit $?
+  else
+    echo "$0: no heap image" 1>&2
+    exit 1
+  fi
+  ;;
+
+smlnj-remove)
+  echo rm -f "$dstfile" "$dstfile.$SML_HEAP_SUFFIX"
+  rm -f "$dstfile" "$dstfile.$SML_HEAP_SUFFIX"
+  case "$SML_HEAP_SUFFIX" in
+  *win32*)
+    echo rm -f "$dstfile.bat"
+    rm -f "$dstfile.bat"
+    ;;
+  esac
+  ;;
+
+mlton-compile)
+  exefile="$dstfile$EXEEXT"
+  for i in $CPPFLAGS; do
+    MLTON_FLAGS="$MLTON_FLAGS -cc-opt $i"
+  done
+  for i in $LDFLAGS $CXXLDFLAGS $MLTON_LIBS; do
+    MLTON_FLAGS="$MLTON_FLAGS -link-opt $i"
+  done
+
+  if [ "x$temporal" = "xyes" ] && [ -f "$exefile" ]; then
+    echo "** destinaton file already exists. **"
+    exit
+  fi
+
+  rm -f "$exefile"
+  eval "$MLTON $MLTON_FLAGS -output \"\$exefile\" \"\$source\"" || exit $?
+  [ -f "$exefile" ] || exit 1
+  if [ "x$dstfile" != "x$exefile" ]; then
+    absexefile=`abspath "$exefile"`
+    echo "#!/bin/sh" > "$dstfile"
+    echo "exec '$absexefile' \"\$@\"" >> "$dstfile"
+  fi
+  ;;
+
+mlton-install)
+  exefile="$dstfile$EXEEXT"
+  if [ -f "$exefile" ]; then
+    echo $INSTALL "$exefile" "$bindir/$exefile"
+    $INSTALL "$exefile" "$bindir/$exefile" || exit $?
+  else
+    echo "$0: no executable file" 1>&2
+    exit 1
+  fi
+  ;;
+
+mlton-remove)
+  echo "$dstfile" "$dstfile$EXEEXT"
+  rm -f "$dstfile" "$dstfile$EXEEXT"
+  ;;
+
+*)
+  echo "$0: invalid mode \`$compiler-$mode'" 1>&2
+  exit 1
+  ;;
+
+esac
+
+# makesml ends here.

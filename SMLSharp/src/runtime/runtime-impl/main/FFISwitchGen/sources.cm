@@ -1,20 +1,17 @@
 Group is
 
-$/basis.cm
-
-(*
 #if defined(NEW_CM)
-      $/basis_compat.cm
+	$/basis.cm
 #endif
-*)
 
-../../../../../../smlnj-lib/Util/smlnj-lib.cm
-(*
-#if defined(NEW_CM)
-      $/smlnj-lib.cm
+	../../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../../SMLFormat/smlformatlib.cm
+	FFIGenData.ppg.sml
+	Printer.sml
+	FFISwitchGen.sml
+	main.sml
+
+#if defined(SMLNJ_VERSION)
+#else
+	start.sml
 #endif
-*)
-        ../../../../../../SMLFormat/smlformatlib.cm
-      FFIGenData.ppg.sml
-      Printer.sml
-      FFISwitchGen.sml

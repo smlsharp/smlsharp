@@ -4,15 +4,18 @@ structure ParseGen
    
 is
 
+#if defined(NEW_CM)
 $/basis.cm
+#endif
 ../lib/ml-yacc-lib.cm
 
 utils.sig
 utils.sml
 sigs.sml
 hdr.sml
-yacc.grm
-yacc.lex
+yacc.grm.sig
+yacc.grm.sml
+yacc.lex.sml
 parse.sml
 grammar.sml
 core.sml

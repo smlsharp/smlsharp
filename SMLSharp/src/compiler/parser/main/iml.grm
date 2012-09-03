@@ -62,6 +62,7 @@
     | INFIX
     | INFIXR
     | INT of BigInt.int
+    | INT0 of BigInt.int
     | LBRACE
     | LBRACKET
     | LET
@@ -150,6 +151,7 @@
        | funbindseq of Absyn.funbind list
        | id of string
        | idseq of string list
+       | int of BigInt.int
        | label of string
        | longid of Absyn.longid
        | longtycon of Absyn.longTyCon
@@ -286,7 +288,10 @@ start : unit (Absyn.UNIT unit)
       | USEOBJ STRING (Absyn.USEOBJ(STRING,(USEOBJleft,STRINGright)))
 
 (****************** constant ***************************)
-constant : INT (Absyn.INT(INT,(INTleft,INTright)))
+int      : INT (INT)
+         | INT0 (INT0)
+
+constant : int (Absyn.INT(int,(intleft,intright)))
          | WORD (Absyn.WORD(WORD,(WORDleft,WORDright)))
          | STRING (Absyn.STRING(STRING,(STRINGleft,STRINGright)))
          | REAL (Absyn.REAL(REAL,(REALleft,REALright)))
@@ -446,10 +451,10 @@ dec : VAL valbind (Absyn.DECVAL(nil,valbind,(VALleft,valbindright)))
                (Absyn.LOCALDEC(decseq_semicolon1,decseq_semicolon2,(LOCALleft,ENDright)))
 *)
     | OPEN longidseq (Absyn.DECOPEN(longidseq,(OPENleft,longidseqright)))
-    | INFIX INT idseq
-                (Absyn.DECINFIX(BigInt.toInt INT,idseq,(INFIXleft,idseqright)))
-    | INFIXR INT idseq
-          (Absyn.DECINFIXR(BigInt.toInt INT,idseq,(INFIXRleft,idseqright)))
+    | INFIX int idseq
+                (Absyn.DECINFIX(BigInt.toInt int,idseq,(INFIXleft,idseqright)))
+    | INFIXR int idseq
+          (Absyn.DECINFIXR(BigInt.toInt int,idseq,(INFIXRleft,idseqright)))
 (*  infix/infixr without number is added. 2004.3.21. Ohori *)
     | INFIX idseq (Absyn.DECINFIX(0,idseq,(INFIXleft,idseqright)))
     | INFIXR idseq (Absyn.DECINFIXR(0,idseq,(INFIXRleft,idseqright)))
@@ -622,7 +627,8 @@ patseq_comma : pat COMMA pat ([pat1,pat2])
 (* end of pattern *)
 
 (****************  types *********************)
-tycon : id (id)
+tycon : ID (ID)
+      | EQ ("=")
 
 tyrow : label COLON ty ([(label,ty)])
       | label COLON ty COMMA tyrow ((label,ty)::tyrow)

@@ -18,23 +18,10 @@ Group is
 
 	BASIC_TYPE_SERIALIZER.sig
 	BasicTypeSerializerBase.sml
+	BasicTypeSerializer_ForBigEndian.sml
+	BasicTypeSerializer_ForLittleEndian.sml
 	BasicTypeSerializerForNetworkByteOrder.sml
-
-#if defined(SMLNJ_VERSION)
-#if defined(BIG_ENDIAN)
-	BasicTypeSerializer_ForBigEndian.sml
-#elif defined(LITTLE_ENDIAN)
-	BasicTypeSerializer_ForLittleEndian.sml
-#else
-#error neither 'LITTLE_ENDIAN' nor 'BIG_ENDIAN' is defined.
-#endif (* BIG_ENDIAN *)
-#else
-#if defined(BIG_ENDIAN)
-	BasicTypeSerializer_ForBigEndian.sml
-#else
-	BasicTypeSerializer_ForLittleEndian.sml
-#endif (* BIG_ENDIAN *)
-#endif (* SMLNJ_VERSION *)
+	BasicTypeSerializer.sml
 
 	INSTRUCTION_SERIALIZER.sig
 	InstructionSerializer.sml

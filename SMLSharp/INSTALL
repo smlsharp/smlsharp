@@ -7,16 +7,13 @@ The following softwares are required to build and install SML#:
 
   * GNU Compiler Collection (version 3.4.0 or higher)
   * GNU make or BSD make
-  * Standard ML of New Jersey (version 110.65 or higher)
+  * Standard ML compiler (one of the following)
+    * Standard ML of New Jersey (version 110.65 or higher), or
+    * MLton version 20100608
   * GNU MP library
 
 It is required that Standard ML of New Jersey is built with target
 options enabling legacy ml-lex in CM.
-
-To obtain native executable files of SML#, the following software
-is additionally required.
-
-  * MLton-20070826
 
 The following tool is used to build documents, but they are not
 required to build compiler and runtime.
@@ -33,28 +30,27 @@ Things will be installed under /usr/local/bin and /usr/local/lib/smlsharp.
 
 == Configurations
 
+If you use MLton as a Standard ML compiler, specify --with-mlton option.
+Otherwise, the build system intends to use SML/NJ to compile SML#.
+
+  $ ./configure --with-mlton.
+
 If you meet some troubles caused by C compiler, rerun configure
 to try to compile with another compiler.
 
-  $ CXX=<ANOTHER_COMPILER> ./configure
+  $ ./configure CC=<C_COMPILER> CXX=<C++_COMPILER>
 
 If some required libraries are installed in non-standard directory on your
 system, you need to specify CPPFLAGS and LDFLAGS so that compiler can
 find them. For example:
 
-  $ CPPFLAGS=-I/opt/pkg/include LDFLAGS=-L/opt/pkg/lib ./configure
+  $ ./configure CPPFLAGS=-I/opt/pkg/include LDFLAGS=-L/opt/pkg/lib
 
 On Solaris, not only -L but -R option is needed to notice the library path
-to runtime linker:
+to dynamic linker:
 
-  $ CPPFLAGS=-I/opt/pkg/include \
-    LDFLAGS="-L/opt/pkg/lib -Wl,-R/opt/pkg/lib" \
-    ./configure
-
-If you use C shell, "env" is needed to set environment variables for
-configure command.
-
-  % env CPPFLAGS=... LDFLAGS=... ./configure
+  $ ./configure CPPFLAGS=-I/opt/pkg/include \
+    LDFLAGS="-L/opt/pkg/lib -Wl,-R/opt/pkg/lib"
 
 You will see all build-time configurations by invoking configure with
 --help option.
@@ -74,14 +70,3 @@ Things are installed in those locations:
   <PREFIX>/bin/smldoc            SMLDoc
   <PREFIX>/bin/smlformat         SMLFormat
   <PREFIX>/lib/smlsharp/         Directory for libraries of SML#
-
-== Compiling with MLton
-
-Even using MLton, SML/NJ is required to build.  Run "make all" at
-first, then run "make mlton" before install. Native executable files
-compiled by MLton will be installed by "make install".
-
-  $ ./configure
-  $ make
-  $ make mlton
-  $ make install

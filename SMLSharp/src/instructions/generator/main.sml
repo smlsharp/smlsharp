@@ -1,5 +1,7 @@
 structure Main = struct
-fun main () =
+fun main (_,args) =
+(
+case args of h::t => OS.FileSys.chDir h | _ => ();
 InstructionGenerator.generateFiles
 "../Instructions.sml"
 [
@@ -8,5 +10,7 @@ InstructionGenerator.generateFiles
   "../compiler/main/Instructions.sml",
   "../runtime/main/Instructions.cc",
   "../runtime/main/Instructions.hh"
-]
+];
+OS.Process.success
+)
 end

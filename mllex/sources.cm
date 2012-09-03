@@ -8,7 +8,14 @@
 
 Group is
 
+#if defined(NEW_CM)
 $/basis.cm
+#endif
 
 lexgen.sml
 main.sml
+
+#if defined(SMLNJ_VERSION)
+#else
+call-main.sml
+#endif

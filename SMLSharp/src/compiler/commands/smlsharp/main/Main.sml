@@ -868,15 +868,25 @@ struct
 
   fun getNativeBatchSession mode (parameters : parameters) =
       let
+        fun abspath filename =
+            PR.resolve getEnv (!(#libPaths parameters)) "." filename
+            handle PR.InvalidPath msg => raise InvalidOption msg
+
         val preludeLibraryFileName =
             case !(#preludeFileName parameters) of
                 Compiled filename =>
                 let
                   val {base, ext} = OS.Path.splitBaseExt filename
                 in
-                  SOME (OS.Path.joinBaseExt {base=base, ext=SOME "o"})
+                  SOME (abspath (OS.Path.joinBaseExt {base=base, ext=SOME "o"}))
                 end
               | _ => NONE
+
+        val entryObjectFileName =
+            case mode of
+              CompileAndExecuteMode => SOME (abspath "smlsharp_entry.o")
+            | CompileOnlyMode => NONE
+            | MakeCompiledLibraryMode => NONE
 
         val compileMode =
             case mode of
@@ -893,7 +903,8 @@ struct
             NativeStandAloneSession.openSession
                 {outputFileName = !(#outputFileName parameters),
                  compileMode = compileMode,
-                 preludeLibraryFileName = preludeLibraryFileName}
+                 preludeLibraryFileName = preludeLibraryFileName,
+                 entryObjectFileName = entryObjectFileName}
 
         fun cleanUp NONE = ()
           | cleanUp (SOME context) =
@@ -968,9 +979,7 @@ struct
              | ("newvm", Unspecified) =>
                Compiled (OS.Path.joinDirFile {dir=Configuration.LibDirectory,
                                               file="yaprelude.smo"})
-             | (_, Unspecified) =>
-               Compiled (OS.Path.joinDirFile {dir=Configuration.LibDirectory,
-                                              file="ntprelude.smc"})
+             | (_, Unspecified) => Compiled "ntprelude.smc"
              | (_, x) => x)
 
       (* reverse directories specified by -I options here, because they are

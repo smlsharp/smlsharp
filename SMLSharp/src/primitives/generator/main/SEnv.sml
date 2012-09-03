@@ -2,12 +2,12 @@
  * @copyright (c) 2007, Tohoku University.
  * @version $Id: SEnv.sml,v 1.1 2007/08/29 06:28:04 kiyoshiy Exp $
  *)
+signature ordsig =
+sig
+  type ord_key
+  val compare : ord_key * ord_key -> order
+end
 local
-  signature ordsig =
-  sig
-    type ord_key
-    val compare : ord_key * ord_key -> order
-  end
   structure Sord : ordsig =
   struct 
     type ord_key = string

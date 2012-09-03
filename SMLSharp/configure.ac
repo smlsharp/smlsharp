@@ -26,6 +26,7 @@ fi
 if test "x$ac_env_CXXFLAGS_value" = "x"; then
   CXXFLAGS=`echo "$CXXFLAGS" | sed 's,-O2,-O,'`
 fi
+AC_SUBST(CXXLDFLAGS)
 
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
@@ -128,25 +129,25 @@ case "$host_os" in
 esac
 
 SML_PATH_PROG_OR_BAT(SML, sml)
-SML_PATH_PROG_OR_BAT(MLYACC, ml-yacc)
-SML_PATH_PROG_OR_BAT(MLLEX, ml-lex)
+#SML_PATH_PROG_OR_BAT(MLYACC, ml-yacc)
+#SML_PATH_PROG_OR_BAT(MLLEX, ml-lex)
 AC_SUBST(SML_BAT)
 if test "x$SML" = "x"; then
   AC_MSG_ERROR([sml command is not found.])
 fi
-if test "x$MLYACC" = "x"; then
-  AC_MSG_ERROR([ml-yacc command is not found.])
-fi
-if test "x$MLLEX" = "x"; then
-  SML_PATH_PROG_OR_BAT(MLLEX, ml-ulex)
-  if test "x$MLLEX" = "x"; then
-    AC_MSG_ERROR([ml-lex command is not found.])
-  fi
-  MLLEX="$MLLEX --ml-lex-mode"
-fi
+#if test "x$MLYACC" = "x"; then
+#  AC_MSG_ERROR([ml-yacc command is not found.])
+#fi
+#if test "x$MLLEX" = "x"; then
+#  SML_PATH_PROG_OR_BAT(MLLEX, ml-ulex)
+#  if test "x$MLLEX" = "x"; then
+#    AC_MSG_ERROR([ml-lex command is not found.])
+#  fi
+#  MLLEX="$MLLEX --ml-lex-mode"
+#fi
 AC_SUBST(SML)
-AC_SUBST(MLYACC)
-AC_SUBST(MLLEX)
+#AC_SUBST(MLYACC)
+#AC_SUBST(MLLEX)
 
 AC_MSG_CHECKING([for version of SML/NJ])
 SMLNJ_VERSION=`echo | $SML 2>&1`
@@ -233,6 +234,7 @@ rm -rf conftest
 
 # -------- Checks for MLton --------
 
+SML_COMPILER=smlnj
 USE_MLTON=no
 MLTON=mlton
 MLTON_LEX=mllex
@@ -241,6 +243,7 @@ MLTON_YACC=mlyacc
 AC_ARG_WITH(mlton,
 AS_HELP_STRING([--with-mlton=DIR],[use MLton for compiling frontend]),
 [
+  SML_COMPILER=mlton
   USE_MLTON=yes
 
   if test "x$with_mlton" = "x"; then
@@ -265,6 +268,7 @@ AS_HELP_STRING([--with-mlton=DIR],[use MLton for compiling frontend]),
   fi
 ])
 
+AC_SUBST(SML_COMPILER)
 AC_SUBST(USE_MLTON)
 AC_SUBST(MLTON)
 AC_SUBST(MLTON_LEX)
@@ -325,7 +329,7 @@ AC_SUBST(srcdir_smlnjlib)
 AC_SUBST(SMLNJLIBDIR)
 AC_CONFIG_FILES([smlnj-lib/Makefile:../smlnj-lib/Makefile.in])
 
-#SUBPROJECTS="$SUBPROJECTS mllex"
+SUBPROJECTS="$SUBPROJECTS mllex"
 srcdir_mllex="../$srcdir/../mllex"
 SMLLEXDIR='$(top_srcdir)/../mllex'
 SMLLEX='$(top_builddir)/mllex/smllex'
@@ -334,7 +338,10 @@ AC_SUBST(SMLLEXDIR)
 AC_SUBST(SMLLEX)
 AC_CONFIG_FILES([mllex/Makefile:../mllex/Makefile.in])
 
-#SUBPROJECTS="$SUBPROJECTS mlyacc"
+MLLEX="$SMLLEX"
+AC_SUBST(MLLEX)
+
+SUBPROJECTS="$SUBPROJECTS mlyacc"
 srcdir_mlyacc="../$srcdir/../mlyacc"
 SMLYACCDIR='$(top_srcdir)/../mlyacc'
 SMLYACC='$(top_builddir)/mlyacc/smlyacc'
@@ -342,6 +349,9 @@ AC_SUBST(srcdir_mlyacc)
 AC_SUBST(SMLYACCDIR)
 AC_SUBST(SMLYACC)
 AC_CONFIG_FILES([mlyacc/Makefile:../mlyacc/Makefile.in])
+
+MLYACC="$SMLYACC"
+AC_SUBST(MLYACC)
 
 SUBPROJECTS="$SUBPROJECTS SMLFormat"
 srcdir_smlformat="../$srcdir/../SMLFormat"
@@ -756,9 +766,6 @@ AC_SUBST(STUBLIBS)
 
 # -------- Finale --------
 
-# For subprojects.
-AC_SUBST(DEFAULT_SML_COMPILER, "smlnj")
-
 AC_CONFIG_FILES([commonrule
                  mksmlheap
                  mksmlrun
@@ -789,6 +796,7 @@ AC_CONFIG_FILES([commonrule
                  src/runtime/Makefile
                  src/runtime/runtime-core/main/Makefile
                  src/runtime/runtime-impl/main/Makefile
+                 src/runtime/runtime-impl/main/FFISwitchGen/Makefile
                  src/runtime/icons/Makefile
                  src/runtime/byterun/main/Makefile
                  src/tool/Makefile

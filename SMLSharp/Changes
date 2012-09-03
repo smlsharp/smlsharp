@@ -1,8 +1,28 @@
+SML# version 0.57 (released on 2010-10-01)
+
+1. Overview
+
+This is a patch release of SML# 0.50 series.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+- Updated parser and improved conformance with the Definition.
+ - accept unmatched "*)".
+ - reject "*" as a tycon.
+ - reject integer starting with "0" as a record label.
+- Updated the build system so that SML# can be built only by MLton.
+ If --with-mlton option is specified to configure, and the build
+ system uses MLton (without SML/NJ) to compile SML# compiler and
+ other tools.
+
+-----------------------------------------------------------------------------
 SML# version 0.56 (released on 2010-09-17)
 
 1. Overview
 
-This is a patch release of SML# 0.56.
+This is a patch release of SML# 0.50 series.
 This version is still experimental.
 
 2. Changes and improvements
@@ -21,7 +41,7 @@ SML# version 0.55 (released on 2010-09-03)
 
 1. Overview
 
-This is a bug-fix release of SML# 0.55.
+This is a patch release of SML# 0.50 series.
 This version is still experimental.
 
 2. Changes and improvements

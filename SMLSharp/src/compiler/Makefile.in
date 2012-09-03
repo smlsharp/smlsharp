@@ -9,11 +9,7 @@ VPATH = @srcdir@
 
 # FIXME: all generating files should be placed in builddir, not in srcdir.
 
-HEAP    = $(srcdir)/commands/smlsharp/main/smlsharp.$(SML_HEAP_SUFFIX)
-
-TARGETS = $(HEAP) \
-          smlsharp \
-          smlsharp_build
+TARGETS = smlsharp
 
 MLTON_TARGET_PLATFORM=self
 MLTON_OBJDIR=mlton_$(MLTON_TARGET_PLATFORM)
@@ -103,27 +99,17 @@ clean:
 	-rm -f $(srcdir)/parser/main/interface.grm.mlton.sig
 	-rm -f $(srcdir)/parser/main/interface.lex.mlton.sml
 	-rm -rf $(MLTON_OBJDIR)
+	$(MAKESML) -r -o smlsharp
 
 install: $(TARGETS)
-	$(INSTALL) -m 755 -d '$(DESTDIR)$(heapdir)'
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
-	$(INSTALL_HEAP) $(HEAP) '$(DESTDIR)$(heapdir)'
-	if test -f '$(MLTON_TARGET)'; then \
-	  $(INSTALL_PROGRAM) $(MLTON_TARGET) '$(DESTDIR)$(bindir)/smlsharp$(EXEEXT)'; \
-	else \
-	  $(INSTALL_PROGRAM) smlsharp '$(DESTDIR)$(bindir)'; \
-	fi
+	$(MAKESML) -i -o smlsharp
 
-$(HEAP): $(GENSOURCES) PHONY
-	cd $(srcdir)/commands/smlsharp/main \
-	&& $(SHELL) $(BUILD_ROOT)/mksmlheap smlsharp
-
-smlsharp: $(top_builddir)/mksmlrun
-	$(SHELL) $(top_builddir)/mksmlrun smlsharp '$(heapdir)'
-
-smlsharp_build: $(top_builddir)/mksmlrun
-	$(SHELL) $(top_builddir)/mksmlrun smlsharp \
-	         $(SRC_ROOT)/src/compiler/commands/smlsharp/main $@
+smlsharp: $(GENSOURCES) PHONY
+	MLTON_FLAGS="-verbose 2 -default-ann 'allowFFI true' -cc '$(CXX)' -cc-opt '-xc' $(MLTON_FLAGS) -link-opt '$(LIBSMLSHARP_O)'" \
+	CXXLDFLAGS='$(CXXLDFLAGS)' \
+	MLTON_LIBS='$(LIBS)' \
+	$(MAKESML) -t -o $@ $(srcdir)/commands/smlsharp/main/sources.cm
 
 ####################
 # To generate C files for host A by MLton for host B;

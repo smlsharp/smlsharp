@@ -72,7 +72,8 @@ install: $(TARGETS)
 	$(INSTALL_PROGRAM) $(TARGETS) '$(DESTDIR)$(bindir)'
 
 mlb2use: $(SOURCES) $(GENSOURCES)
-	$(MLTON) -output $@ $(srcdir)/sources.cm
+	$(MAKESML) -o $@ $(srcdir)/sources.cm
+#	$(MLTON) -output $@ $(srcdir)/sources.cm
 #	$(SMLSHARP) -c -o $@ $(srcdir)/sources.use
 
 ###############################################################################

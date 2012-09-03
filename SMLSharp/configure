@@ -639,7 +639,6 @@ ac_includes_default="\
 ac_header_list=
 ac_func_list=
 ac_subst_vars='LTLIBOBJS
-DEFAULT_SML_COMPILER
 STUBLIBS
 NATIVE_HEAPIMPL
 NATIVE_PRELUDE
@@ -669,9 +668,11 @@ srcdir_smldoc
 SMLFORMAT
 SMLFORMATDIR
 srcdir_smlformat
+MLYACC
 SMLYACC
 SMLYACCDIR
 srcdir_mlyacc
+MLLEX
 SMLLEX
 SMLLEXDIR
 srcdir_mllex
@@ -685,6 +686,7 @@ JAVALIBDIR
 JAVADIR
 MLTON_FLAGS
 USE_MLTON
+SML_COMPILER
 MLTON_YACC
 MLTON_LEX
 MLTON
@@ -693,8 +695,6 @@ NEW_CM
 SMLCM
 SMLNJ_VERSION
 SML_BAT
-MLLEX
-MLYACC
 SML
 CMD
 DL_LDFLAGS
@@ -714,6 +714,7 @@ INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
 SET_MAKE
+CXXLDFLAGS
 ac_ct_CC
 CFLAGS
 CC
@@ -3419,6 +3420,7 @@ if test "x$ac_env_CXXFLAGS_value" = "x"; then
   CXXFLAGS=`echo "$CXXFLAGS" | sed 's,-O2,-O,'`
 fi
 
+
 { $as_echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 $as_echo_n "checking whether ${MAKE-make} sets \$(MAKE)... " >&6; }
 set x ${MAKE-make}
@@ -4377,454 +4379,27 @@ $as_echo "$as_me: error: sml is found, but ${SML_BAT} is not found." >&2;}
     esac
   fi
 
-
-  # Extract the first word of "ml-yacc", so it can be a program name with args.
-set dummy ml-yacc; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLYACC+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLYACC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLYACC="$MLYACC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLYACC="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLYACC=$ac_cv_path_MLYACC
-if test -n "$MLYACC"; then
-  { $as_echo "$as_me:$LINENO: result: $MLYACC" >&5
-$as_echo "$MLYACC" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  MLYACC_BAT="${MLYACC}"
-  if test "x${MLYACC}" = "x"; then
-    case "$host_os" in
-      *cygwin*)
-        # Extract the first word of "ml-yacc.bat", so it can be a program name with args.
-set dummy ml-yacc.bat; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLYACC+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLYACC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLYACC="$MLYACC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLYACC="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLYACC=$ac_cv_path_MLYACC
-if test -n "$MLYACC"; then
-  { $as_echo "$as_me:$LINENO: result: $MLYACC" >&5
-$as_echo "$MLYACC" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-        MLYACC_BAT="${MLYACC}"
-        ;;
-      *mingw*)
-        # Extract the first word of "ml-yacc.bat", so it can be a program name with args.
-set dummy ml-yacc.bat; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLYACC+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLYACC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLYACC="$MLYACC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLYACC="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLYACC=$ac_cv_path_MLYACC
-if test -n "$MLYACC"; then
-  { $as_echo "$as_me:$LINENO: result: $MLYACC" >&5
-$as_echo "$MLYACC" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-        if test "x${MLYACC}" != "x"; then
-          MLYACC_BAT=`echo "${MLYACC}" | sed 's,^/\\([a-zA-Z]\\)/,\\1:/,;s,//*,/,g'`
-          if test -f "${MLYACC_BAT}"; then
-            MLYACC="$SHELL $PWD/$srcdir/execbat.sh ${MLYACC_BAT}"
-          else
-            { { $as_echo "$as_me:$LINENO: error: ml-yacc is found, but ${MLYACC_BAT} is not found." >&5
-$as_echo "$as_me: error: ml-yacc is found, but ${MLYACC_BAT} is not found." >&2;}
-   { (exit 1); exit 1; }; }
-          fi
-        fi
-        ;;
-    esac
-  fi
-
-
-  # Extract the first word of "ml-lex", so it can be a program name with args.
-set dummy ml-lex; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLLEX+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLLEX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLLEX="$MLLEX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLLEX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLLEX=$ac_cv_path_MLLEX
-if test -n "$MLLEX"; then
-  { $as_echo "$as_me:$LINENO: result: $MLLEX" >&5
-$as_echo "$MLLEX" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  MLLEX_BAT="${MLLEX}"
-  if test "x${MLLEX}" = "x"; then
-    case "$host_os" in
-      *cygwin*)
-        # Extract the first word of "ml-lex.bat", so it can be a program name with args.
-set dummy ml-lex.bat; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLLEX+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLLEX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLLEX="$MLLEX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLLEX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLLEX=$ac_cv_path_MLLEX
-if test -n "$MLLEX"; then
-  { $as_echo "$as_me:$LINENO: result: $MLLEX" >&5
-$as_echo "$MLLEX" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-        MLLEX_BAT="${MLLEX}"
-        ;;
-      *mingw*)
-        # Extract the first word of "ml-lex.bat", so it can be a program name with args.
-set dummy ml-lex.bat; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLLEX+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLLEX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLLEX="$MLLEX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLLEX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLLEX=$ac_cv_path_MLLEX
-if test -n "$MLLEX"; then
-  { $as_echo "$as_me:$LINENO: result: $MLLEX" >&5
-$as_echo "$MLLEX" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-        if test "x${MLLEX}" != "x"; then
-          MLLEX_BAT=`echo "${MLLEX}" | sed 's,^/\\([a-zA-Z]\\)/,\\1:/,;s,//*,/,g'`
-          if test -f "${MLLEX_BAT}"; then
-            MLLEX="$SHELL $PWD/$srcdir/execbat.sh ${MLLEX_BAT}"
-          else
-            { { $as_echo "$as_me:$LINENO: error: ml-lex is found, but ${MLLEX_BAT} is not found." >&5
-$as_echo "$as_me: error: ml-lex is found, but ${MLLEX_BAT} is not found." >&2;}
-   { (exit 1); exit 1; }; }
-          fi
-        fi
-        ;;
-    esac
-  fi
-
+#SML_PATH_PROG_OR_BAT(MLYACC, ml-yacc)
+#SML_PATH_PROG_OR_BAT(MLLEX, ml-lex)
 
 if test "x$SML" = "x"; then
   { { $as_echo "$as_me:$LINENO: error: sml command is not found." >&5
 $as_echo "$as_me: error: sml command is not found." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test "x$MLYACC" = "x"; then
-  { { $as_echo "$as_me:$LINENO: error: ml-yacc command is not found." >&5
-$as_echo "$as_me: error: ml-yacc command is not found." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test "x$MLLEX" = "x"; then
+#if test "x$MLYACC" = "x"; then
+#  AC_MSG_ERROR([ml-yacc command is not found.])
+#fi
+#if test "x$MLLEX" = "x"; then
+#  SML_PATH_PROG_OR_BAT(MLLEX, ml-ulex)
+#  if test "x$MLLEX" = "x"; then
+#    AC_MSG_ERROR([ml-lex command is not found.])
+#  fi
+#  MLLEX="$MLLEX --ml-lex-mode"
+#fi
 
-  # Extract the first word of "ml-ulex", so it can be a program name with args.
-set dummy ml-ulex; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLLEX+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLLEX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLLEX="$MLLEX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLLEX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLLEX=$ac_cv_path_MLLEX
-if test -n "$MLLEX"; then
-  { $as_echo "$as_me:$LINENO: result: $MLLEX" >&5
-$as_echo "$MLLEX" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  MLLEX_BAT="${MLLEX}"
-  if test "x${MLLEX}" = "x"; then
-    case "$host_os" in
-      *cygwin*)
-        # Extract the first word of "ml-ulex.bat", so it can be a program name with args.
-set dummy ml-ulex.bat; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLLEX+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLLEX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLLEX="$MLLEX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLLEX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLLEX=$ac_cv_path_MLLEX
-if test -n "$MLLEX"; then
-  { $as_echo "$as_me:$LINENO: result: $MLLEX" >&5
-$as_echo "$MLLEX" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-        MLLEX_BAT="${MLLEX}"
-        ;;
-      *mingw*)
-        # Extract the first word of "ml-ulex.bat", so it can be a program name with args.
-set dummy ml-ulex.bat; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_MLLEX+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $MLLEX in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_MLLEX="$MLLEX" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_MLLEX="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-MLLEX=$ac_cv_path_MLLEX
-if test -n "$MLLEX"; then
-  { $as_echo "$as_me:$LINENO: result: $MLLEX" >&5
-$as_echo "$MLLEX" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-        if test "x${MLLEX}" != "x"; then
-          MLLEX_BAT=`echo "${MLLEX}" | sed 's,^/\\([a-zA-Z]\\)/,\\1:/,;s,//*,/,g'`
-          if test -f "${MLLEX_BAT}"; then
-            MLLEX="$SHELL $PWD/$srcdir/execbat.sh ${MLLEX_BAT}"
-          else
-            { { $as_echo "$as_me:$LINENO: error: ml-ulex is found, but ${MLLEX_BAT} is not found." >&5
-$as_echo "$as_me: error: ml-ulex is found, but ${MLLEX_BAT} is not found." >&2;}
-   { (exit 1); exit 1; }; }
-          fi
-        fi
-        ;;
-    esac
-  fi
-
-  if test "x$MLLEX" = "x"; then
-    { { $as_echo "$as_me:$LINENO: error: ml-lex command is not found." >&5
-$as_echo "$as_me: error: ml-lex command is not found." >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-  MLLEX="$MLLEX --ml-lex-mode"
-fi
-
-
-
+#AC_SUBST(MLYACC)
+#AC_SUBST(MLLEX)
 
 { $as_echo "$as_me:$LINENO: checking for version of SML/NJ" >&5
 $as_echo_n "checking for version of SML/NJ... " >&6; }
@@ -4922,6 +4497,7 @@ rm -rf conftest
 
 # -------- Checks for MLton --------
 
+SML_COMPILER=smlnj
 USE_MLTON=no
 MLTON=mlton
 MLTON_LEX=mllex
@@ -4931,6 +4507,7 @@ MLTON_YACC=mlyacc
 # Check whether --with-mlton was given.
 if test "${with_mlton+set}" = set; then
   withval=$with_mlton;
+  SML_COMPILER=mlton
   USE_MLTON=yes
 
   if test "x$with_mlton" = "x"; then
@@ -5078,6 +4655,7 @@ $as_echo "$as_me: error: ml-yacc command is not found." >&2;}
   fi
 
 fi
+
 
 
 
@@ -5266,7 +4844,7 @@ SMLNJLIBDIR='$(top_srcdir)/../smlnj-lib'
 ac_config_files="$ac_config_files smlnj-lib/Makefile:../smlnj-lib/Makefile.in"
 
 
-#SUBPROJECTS="$SUBPROJECTS mllex"
+SUBPROJECTS="$SUBPROJECTS mllex"
 srcdir_mllex="../$srcdir/../mllex"
 SMLLEXDIR='$(top_srcdir)/../mllex'
 SMLLEX='$(top_builddir)/mllex/smllex'
@@ -5276,7 +4854,10 @@ SMLLEX='$(top_builddir)/mllex/smllex'
 ac_config_files="$ac_config_files mllex/Makefile:../mllex/Makefile.in"
 
 
-#SUBPROJECTS="$SUBPROJECTS mlyacc"
+MLLEX="$SMLLEX"
+
+
+SUBPROJECTS="$SUBPROJECTS mlyacc"
 srcdir_mlyacc="../$srcdir/../mlyacc"
 SMLYACCDIR='$(top_srcdir)/../mlyacc'
 SMLYACC='$(top_builddir)/mlyacc/smlyacc'
@@ -5284,6 +4865,9 @@ SMLYACC='$(top_builddir)/mlyacc/smlyacc'
 
 
 ac_config_files="$ac_config_files mlyacc/Makefile:../mlyacc/Makefile.in"
+
+
+MLYACC="$SMLYACC"
 
 
 SUBPROJECTS="$SUBPROJECTS SMLFormat"
@@ -14126,11 +13710,7 @@ fi
 
 # -------- Finale --------
 
-# For subprojects.
-DEFAULT_SML_COMPILER="smlnj"
-
-
-ac_config_files="$ac_config_files commonrule mksmlheap mksmlrun mksmlpath Makefile stublibs/Makefile src/Makefile src/configuration/Makefile src/primitives/Makefile src/primitives/generator/main/Makefile src/primitives/runtime/main/Makefile src/primitives/compiler/main/Makefile src/instructions/Makefile src/instructions/generator/Makefile src/instructions/runtime/main/Makefile src/instructions/compiler/main/Makefile src/vmgen/Makefile src/yaruntime/Makefile src/nativeruntime/Makefile src/compiler/Makefile src/lib/Makefile src/lib/basis/Makefile src/lib/CConfig/Makefile src/lib/FFI/Makefile src/lib/LMLML/Makefile src/lib/Script/Makefile src/lib/SMLSharp/Makefile src/runtime/Makefile src/runtime/runtime-core/main/Makefile src/runtime/runtime-impl/main/Makefile src/runtime/icons/Makefile src/runtime/byterun/main/Makefile src/tool/Makefile src/tool/Java/Makefile src/tool/OLE/Makefile src/tool/smlsharp2exe/Makefile src/tool/mlb2use/Makefile doc/Makefile"
+ac_config_files="$ac_config_files commonrule mksmlheap mksmlrun mksmlpath Makefile stublibs/Makefile src/Makefile src/configuration/Makefile src/primitives/Makefile src/primitives/generator/main/Makefile src/primitives/runtime/main/Makefile src/primitives/compiler/main/Makefile src/instructions/Makefile src/instructions/generator/Makefile src/instructions/runtime/main/Makefile src/instructions/compiler/main/Makefile src/vmgen/Makefile src/yaruntime/Makefile src/nativeruntime/Makefile src/compiler/Makefile src/lib/Makefile src/lib/basis/Makefile src/lib/CConfig/Makefile src/lib/FFI/Makefile src/lib/LMLML/Makefile src/lib/Script/Makefile src/lib/SMLSharp/Makefile src/runtime/Makefile src/runtime/runtime-core/main/Makefile src/runtime/runtime-impl/main/Makefile src/runtime/runtime-impl/main/FFISwitchGen/Makefile src/runtime/icons/Makefile src/runtime/byterun/main/Makefile src/tool/Makefile src/tool/Java/Makefile src/tool/OLE/Makefile src/tool/smlsharp2exe/Makefile src/tool/mlb2use/Makefile doc/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -14765,6 +14345,7 @@ do
     "src/runtime/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/Makefile" ;;
     "src/runtime/runtime-core/main/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-core/main/Makefile" ;;
     "src/runtime/runtime-impl/main/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-impl/main/Makefile" ;;
+    "src/runtime/runtime-impl/main/FFISwitchGen/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-impl/main/FFISwitchGen/Makefile" ;;
     "src/runtime/icons/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/icons/Makefile" ;;
     "src/runtime/byterun/main/Makefile") CONFIG_FILES="$CONFIG_FILES src/runtime/byterun/main/Makefile" ;;
     "src/tool/Makefile") CONFIG_FILES="$CONFIG_FILES src/tool/Makefile" ;;

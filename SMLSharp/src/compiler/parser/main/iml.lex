@@ -283,7 +283,8 @@ hexnum=[0-9a-fA-F]+;
           (yytext, left(yypos, arg), right(yypos, String.size yytext, arg)));
 <INITIAL>{num} =>
         (let val loc = strToLoc(yytext, yypos, arg)
-         in T.INT (atoi(yytext, 0, loc), #1 loc, #2 loc)
+             val con = if String.isPrefix "0" yytext then T.INT0 else T.INT
+         in con (atoi(yytext, 0, loc), #1 loc, #2 loc)
          end);
 <INITIAL>~{num} =>
         (let val loc = strToLoc(yytext, yypos, arg)
@@ -321,16 +322,9 @@ hexnum=[0-9a-fA-F]+;
                   );
 <INITIAL>"(*" => (YYBEGIN A;
                   commentStart := left(yypos, arg) :: !commentStart;
-                  continue());
-<INITIAL>"*)" => (
-                   errorPrinter
-                   (
-                     "unmatched close comment",
-                     left(yypos, arg),
-                     right(yypos, 2, arg)
-                   );
-                   anyErrors := true;
-                   continue()
+                  continue()
+ (* Unlike "(*", unmatched "*)" should not cause parse error. It should
+  * be regarded as two tokens "*" and ")". *)
                  );
 <INITIAL>\h => (
                  errorPrinter

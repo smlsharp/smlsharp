@@ -4,7 +4,7 @@
 structure SystemDefTypes =
 struct
 
-  datatype byteOrder = LittleEndian | BigEndian
+  datatype byteOrder = datatype Configuration.byteOrder
 
   fun byteOrderToWord LittleEndian = 0w0
     | byteOrderToWord BigEndian = 0w1

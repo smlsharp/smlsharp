@@ -26,15 +26,26 @@ DEFINITIONS = $(srcdir)/../Instructions.sml \
               $(srcdir)/../../primitives/primitives.csv \
               $(srcdir)/../../primitives/constants.csv \
 
+SOURCES = InstructionParserTypes.sml \
+          StringReplacer.sml \
+          InstructionGenerator.sml \
+          main.sml \
+          start.sml \
+          $(GENSOURCES)
+
 all: $(TARGETS)
 
-$(TARGETS): $(GENSOURCES) $(TEMPLATES) $(DEFINITIONS)
-	cd $(srcdir) && $(SHELL) $(BUILD_ROOT)/mksmlheap --exec 'Main.main();'
+$(TARGETS): insngen $(TEMPLATES) $(DEFINITIONS)
+	./insngen $(srcdir)
+
+insngen: sources.cm $(SOURCES)
+	$(MAKESML) -o $@ $(srcdir)/sources.cm
 
 clean:
 	-rm -rf $(srcdir)/CM $(srcdir)/.cm
 	-rm -f $(TEMPLATES:.in=)
 	-rm -f $(GENSOURCES)
+	$(MAKESML) -r -o insngen
 
 $(srcdir)/Parser.grm.sig $(srcdir)/Parser.grm.sml $(srcdir)/Parser.grm.desc: Parser.grm
 $(srcdir)/Tokens.lex.sml: Tokens.lex
