@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: Parser.sml,v 1.10 2006/05/23 05:24:00 kiyoshiy Exp $
+ * @version $Id: Parser.sml,v 1.11 2007/09/19 05:28:55 matsu Exp $
  *)
 structure Parser : PARSER =
 struct
@@ -97,7 +97,8 @@ struct
               handle EndOfParse => List.rev results
                    | MLParser.ParseError => List.rev results
 
-        fun getLine length = TextIO.inputLine sourceStream
+        fun getLine length = case TextIO.inputLine sourceStream of NONE => ""
+								 | SOME s => s
 
         val asts =
             untilEOF (MLParser.makeLexer getLine initialArg) []
@@ -160,7 +161,8 @@ struct
          *)
         fun getLine () =
             let
-              val line = TextIO.inputLine sourceStream
+              val line = case TextIO.inputLine sourceStream of NONE => ""
+							     | SOME s => s
               val range = (!readChars, !readChars + size line)
             in
               readChars := #2 range;
@@ -179,7 +181,8 @@ struct
         fun parseParamPattern (text, (textBeginPos, _)) =
             let
               val stream = TextIO.openString text
-              fun getLine length = TextIO.inputLine stream
+              fun getLine length = case TextIO.inputLine stream of NONE => ""
+								 | SOME s => s
               fun onParseError' (message, left, right) =
                   onParseError
                       (message, textBeginPos + left, textBeginPos + right)
@@ -295,7 +298,7 @@ struct
               val summaryLength = findSentencePeriod 0
               val summary =
                   if summaryLength = 0
-                  then SS.all ""
+                  then SS.full ""
                   else SS.slice(substring, 0, SOME(summaryLength - 1))
             in SS.string summary end
 

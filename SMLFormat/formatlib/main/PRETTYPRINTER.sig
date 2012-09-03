@@ -2,10 +2,14 @@
  *  This module translates the symbols into a text representation which fits
  * within the specified column width.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PRETTYPRINTER.sig,v 1.3 2007/05/30 14:18:31 kiyoshiy Exp $
+ * @version $Id: PRETTYPRINTER.sig,v 1.4 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 signature PRETTYPRINTER =
 sig
+
+  (***************************************************************************)
+
+  structure FormatExpression : FORMAT_EXPRESSION
 
   (***************************************************************************)
 

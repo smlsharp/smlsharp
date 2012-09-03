@@ -1,0 +1,23 @@
+signature S1 =
+sig
+  type s
+  include sig type t datatype dt = D of t val x : s * t * dt end
+  val y : dt * t
+end
+signature S2Top = sig type t datatype dt = D of t val x : t * dt end
+signature S2 = sig include S2Top val y : dt * t end
+../tests/module/tests/includeSpec0001.sml:31.3-31.17 Error:
+  unbound signature: S3Inner
+../tests/module/tests/includeSpec0001.sml:32.11-32.12 Error:
+  unbound type constructor: dt
+../tests/module/tests/includeSpec0001.sml:32.16-32.16 Error:
+  unbound type constructor: t
+
+signature S4 =
+sig
+  type s
+  include
+  sig type t datatype dt = D of t val x : s * t * dt end
+  where type t = s
+  val y : dt * t
+end

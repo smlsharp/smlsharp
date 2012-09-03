@@ -1,0 +1,14 @@
+functor F1 (S : sig val x : int end) : sig val x : int end
+functor F2 (S : sig val x : int end) : sig val x : int end
+functor F3 (S : sig val x : int end) : sig val x : int end
+structure S : sig val x : int end
+structure S1 : sig val x : int end
+structure S2 : sig val x : int end
+structure S3 : sig val x : int end
+val sx1 = 2 : int
+val sx2 = 2 : int
+val sx3 = 2 : int
+../tests/module/tests/functorBinding001.sml:26.10-26.15 Error:
+  unbound structure: T1
+../tests/module/tests/functorBinding001.sml:27.10-27.15 Error:
+  unbound structure: T2

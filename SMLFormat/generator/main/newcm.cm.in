@@ -1,2 +1,0 @@
-Group is
-	sources.cm (bind:(anchor:basis_compat.cm value:"@BASISDIR@"))

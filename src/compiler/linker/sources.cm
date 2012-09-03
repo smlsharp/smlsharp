@@ -1,7 +1,0 @@
-Group 
-    structure Linker
-    structure LinkageUnit
-    structure LinkageUnitPickler
-    structure LinkerUtils	
-is
-    main/module.cm

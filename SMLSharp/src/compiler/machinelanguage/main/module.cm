@@ -1,0 +1,12 @@
+Group is
+        $/basis.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../control/sources.cm
+        ../../name/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../abstractinstruction/sources.cm
+
+        MachineLanguage.ppg.sml
+        MachineLanguageFormatter.sml
+        Linearize.sml

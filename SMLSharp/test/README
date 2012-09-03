@@ -1,0 +1,37 @@
+Compiler Test Suite
+
+ This directoy contains regression test suites and shell scripts for
+running them.
+
+There are 4 active test suites, found in the directories:
+
+  coresml     core SML tests (based on tests from Peter Sestoft)
+  modules     modules
+  bugs	      bug tests
+  basis	      Basis tests
+
+Each test suite directory contains two subdirectories
+
+  tests	      source files for tests
+  outputs     corresponding output files
+
+========================================
+
+ The driver is in the driver directory.
+To run the test, follow this procedure:
+
+To run one test suite:
+  $ cd bin/
+  $ ./runtest.sh -html coresml
+
+To run one test case:
+  $ cd bin/
+  $ ./runonetest.sh -html coresml abstype001.sml
+
+If you configured SML# at a directory other than iml3/SMLSharp/, you have to specify TOP_BUILDDIR environment.
+  $ env TOP_BUILDDIR=/home/yamato/iml3/SMLSharp/release ./runtest.sh ...
+
+========================================
+
+This test suit is originally a product of the SML/NJ developer team.
+The original README document is "original_README" in this directory.

@@ -1,0 +1,9 @@
+
+ann
+  "nonexhaustiveMatch warn" "redundantMatch warn"
+  "sequenceNonUnit warn"
+  "warnUnused false" "forceUsed"
+in
+
+
+end

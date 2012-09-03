@@ -1,7 +1,7 @@
 (**
  * Pretty-printer library for Standard ML.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SMLFORMAT.sig,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
+ * @version $Id: SMLFORMAT.sig,v 1.3 2008/03/01 00:51:27 kiyoshiy Exp $
  *)
 signature SMLFORMAT =
 sig
@@ -30,6 +30,12 @@ sig
   exception Fail of string
 
   (***************************************************************************)
+
+  (**
+   * verbosity of trace message.
+   * No trace is output if 0.
+   *)
+  val traceLevel : int ref
 
   (**
    *  translates the format expressions into a text representation which

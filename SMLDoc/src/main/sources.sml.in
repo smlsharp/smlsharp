@@ -1,5 +1,4 @@
 use "ml-yacc-lib.sml";
-use "@BASISDIR@/basis_compat.sml";
 use "smlnj-lib.sml";
 use "@SMLFORMATDIR@/smlformatlib.sml";
 

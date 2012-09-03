@@ -1,0 +1,10 @@
+signature SExn = sig exception E of int end
+structure PExn : sig exception E : string -> exn end
+functor FExnTrans (S : sig exception E of string end) : SExn
+structure SExnTrans : sig exception E : int -> exn end
+val xExnTrans = E 1 : exn
+val eExnTrans = 1 : int
+functor FExnOpaque (S : sig exception E of string end) : SExn
+structure SExnOpaque : sig exception E : int -> exn end
+val xExnOpaque = E 1 : exn
+val eExnOpaque = 1 : int

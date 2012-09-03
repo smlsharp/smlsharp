@@ -1,0 +1,5 @@
+Library
+	structure SMLFormatTool
+is
+	$smlnj/cm/tools.cm
+	smlformat-tool.sml

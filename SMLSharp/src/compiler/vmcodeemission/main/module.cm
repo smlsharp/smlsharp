@@ -1,0 +1,16 @@
+Group is
+        $/basis.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../machinelanguage/sources.cm
+        ../../vmcodeselection/sources.cm
+        ../../assemblycode/sources.cm
+        ../../../vmgen/module.cm
+
+        FrameLayout.sml
+        VMCODEEMISSION.sig
+        VMCodeEmission.sml
+        VMASSEMBLER.sig
+        VMAssembler.sml
+        VMAsmCodeFormatter.sml

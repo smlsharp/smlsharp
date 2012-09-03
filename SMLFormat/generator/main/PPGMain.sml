@@ -9,7 +9,7 @@
  * </ul>
  * </p>
  * @author YAMATODANI Kiyoshi
- * @version $Id: PPGMain.sml,v 1.11 2007/02/12 04:33:20 kiyoshiy Exp $
+ * @version $Id: PPGMain.sml,v 1.14 2008/08/10 13:44:01 kiyoshiy Exp $
  *)
 structure PPGMain :
   sig
@@ -18,7 +18,8 @@ structure PPGMain :
         {
           sourceFileName : string,
           sourceStream : TextIO.instream,
-          destinationStream : TextIO.outstream
+          destinationStream : TextIO.outstream,
+          withLineDirective : bool
         } -> unit
   end =
 struct
@@ -221,14 +222,18 @@ struct
    *  generates a file which contains codes of formatters for the type/datatype
    * defined in the souce file.
    *
-   * @params (sourceFileName, sourceStream) destinationStream
+   * @params
+   *    {sourceFileName, sourceStream, destinationStream, withLineDirective}
    * @param sourceFileName name of the SML source file which contains
    *               type/datatype declarations annotated with format comments.
    * @param sourceStream the stream of SML source code
    * @param destinationStream the stream to which the generated code is emit
+   * @param withLineDirective if true, line directives should be inserted in
+   *         the result code to point positions in the original source code.
    * @return unit
    *)
-  fun main {sourceFileName, sourceStream, destinationStream} =
+  fun main
+        {sourceFileName, sourceStream, destinationStream, withLineDirective} =
       let
         (* the all contents of source stream is pulled out here,
          * because the source code is scanned twice in the following process.
@@ -294,38 +299,59 @@ struct
         (**
          *  outputs source code in which generated formatters are inserted at
          * appropriate location.
-         * @params sourceStream readChars codes
+         * @params sourceStream readChars position texts codes
          * @param sourceStream the stream from which source code is read.
          * @param readChars the number of chars which have been read from
          *                   the source stream so far.
+         * @param position current position
+         * @param texts intermediate result of merge of source code and
+         *             generated code. They are in reversed order.
          * @param codes a list of codes of generated formatters
-         * @return unit
+         * @return source code in which generated codes are inserted
+         *         at appropriate positions.
          *)
-        fun merge sourceStream readChars [] texts =
-            rev ((TextIO.inputAll sourceStream) :: texts)
-          | merge _ readChars ((NONE, _) :: _) _ = 
+        fun merge sourceStream readChars pos texts =
+         fn [] => rev ((TextIO.inputAll sourceStream) :: texts)
+          | ((NONE, _) :: _) =>
             raise Fail "BUG: cannot fix the location to insert a code."
-          | merge
-            sourceStream readChars ((SOME insertPosition, codes)::tail) texts
-            =
+          | ((SOME insertPosition, codes)::tail) =>
             let
               val toCopy = (adjustLexPos insertPosition) - readChars
-              val newTexts = 
-                  (rev
-                   ([TextIO.inputN (sourceStream, toCopy), "\n"] @
-                    (U.interleave
-                     "\n"
-                     (map
-                      (fn (_, code) => code)
-                      (List.filter
-                       (fn (NONE, _) => true | _ => false)
-                       codes))))) @
-                  texts
+              val input = TextIO.inputN (sourceStream, toCopy)
+              (* get pos at the end of input. *)
+              val pos as (line, col) =
+                  CharVector.foldl
+                      (fn (c, (line, col)) =>
+                          case c
+                           of #"\n" => (line + 1, 1)
+                            | _  => (line, col + 1))
+                      pos
+                      input
+              (* This line directive points at the end of input. *)
+              val directive =
+                  if withLineDirective
+                  then 
+                    String.concat
+                        ["(*#line ", Int.toString line, ".", Int.toString col,
+                         " \"", sourceFileName, "\"*)"]
+                  else ""
+              val generatedCode = 
+                  String.concat
+                      (U.interleave
+                           "\n"
+                           (map
+                                (fn (_, code) => code)
+                                (List.filter
+                                     (fn (NONE, _) => true | _ => false)
+                                     codes)))
+              (* new texts are prepended. they are reversed at last. *)
+              val newTexts =
+                  directive :: generatedCode :: (input ^ "\n") :: texts
             in
-              merge sourceStream (readChars + toCopy) tail newTexts
+              merge sourceStream (readChars + toCopy) pos newTexts tail
             end
 
-        val merged = merge (TextIO.openString sourceCode) 0 codes []
+        val merged = merge (TextIO.openString sourceCode) 0 (1, 1) [] codes
         val replaced = map replaceFormatters merged
       in
         app (fn text => TextIO.output (destinationStream, text)) replaced

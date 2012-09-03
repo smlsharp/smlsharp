@@ -1,0 +1,25 @@
+Group is
+        $/basis.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../absyn/sources.cm
+        ../../constantterm/sources.cm
+        ../../primitive/sources.cm
+        ../../util/sources.cm
+        ../../pickle/sources.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../usererror/sources.cm
+        ../../annotatedtypes/sources.cm
+
+        MultipleValueCalc.ppg.sml
+        MULTIPLEVALUECALCFORMATTER.sig
+        MultipleValueCalcFormatter.sml
+        MULTIPLEVALUECALCUTILS.sig
+        MultipleValueCalcUtils.sml
+        MVTypeCheck.sml
+        MVTypeCheckError.ppg.sml
+        MultipleValueCalcPickler.sml

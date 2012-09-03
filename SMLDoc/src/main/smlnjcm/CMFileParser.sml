@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: CMFileParser.sml,v 1.3 2004/10/20 03:26:07 kiyoshiy Exp $
+ * @version $Id: CMFileParser.sml,v 1.4 2007/09/19 05:28:55 matsu Exp $
  *)
 structure CMFileParser : CMFILE_PARSER =
 struct
@@ -108,7 +108,8 @@ struct
                 }
               end
 
-          fun getLine length = TextIO.inputLine sourceStream
+          fun getLine length = case TextIO.inputLine sourceStream of NONE => ""
+								   | SOME s => s
           val lexer = CMParser.makeLexer getLine initialArg
 
           val (description, _) =

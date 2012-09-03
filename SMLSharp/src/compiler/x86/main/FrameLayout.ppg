@@ -1,0 +1,161 @@
+(* -*- sml -*- *)
+(**
+ * stack frame layout
+ * @copyright (c) 2008-2009, Tohoku University.
+ * @author UENO Katsuhiro
+ * @version $Id: $
+ *)
+
+structure FrameLayout =
+struct
+
+  local
+    fun format_word_asInt x =
+        SMLFormat.BasicFormatters.format_string (Word.fmt (StringCvt.DEC) x)
+    fun formatMap foldli formatKey (formatter,prefix,sep,suffix) map =
+        foldli
+            (fn (k,v,z) =>
+                z @ prefix @ formatKey k @ sep @ formatter v @ suffix)
+            nil map
+    fun formatIDMap x y =
+        formatMap LocalVarID.Map.foldli LocalVarID.format_id x y
+  in
+
+  (*% *)
+  type tid =
+       (*% @format(x) "t" x *)
+       int
+
+(*
+  (*% *)
+  datatype tag =
+      (*% @format "1" *)
+      Boxed
+    | (*% @format "0" *)
+      Unboxed
+    | (*% @format(tid) tid *)
+      Generic of tid
+
+  (*% *)
+  type format =
+      (*%
+       * @format({size, align, tag})
+       * "{" { "size=" size ","
+       *       +1 "align=" align ","
+       *       +1 "tag=" tag "}" }
+       *)
+      {size: word, align: word, tag: tag}
+*)
+
+  (*% *)
+  datatype tag =
+      (*% @format "1" *)
+      BOXED
+    | (*% @format "0" *)
+      UNBOXED
+    | (*% @format(t) t *)
+      GENERIC of tid
+
+  (*% *)
+  type format =
+      (*%
+       * @format({size, align, tag})
+       * tag "<" size "," align ">"
+       *)
+      {size: word, align: word, tag: tag}
+
+  (*% *)
+  datatype ('reg,'addr) frameBitmapSource =
+      (*% @format(r) r *)
+      REG of 'reg
+    | (*% @format(m) "[" m "]" *)
+      MEM of 'addr
+
+  (*% @formatter(option) SmlppgUtil.formatOptWithDefault *)
+  type ('reg,'addr) frameBitmap =
+      (*%
+       * @format({source: (r,m) src, bits:bit bits})
+       * src(r,m) ":[" { bits(bit)("," +d) "]" }
+       * @format:bit(bi bo) bo(bi)("_")
+       *)
+      {
+        source: ('reg,'addr) frameBitmapSource,
+        (* bits makes correspondence between tid and bit of frame bitmap.
+         * If a tid is n-th (starting with 0) element of bits, frame bit
+         * of that tid is n-th bit (LSB is 0) of source.
+         * NONE means that there is no tid corresponding to this bit.
+         *)
+        bits: tid option list
+      }
+
+(*
+  (*%
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(word) format_word_dec
+   * @formatter(LocalVarID.id) LocalVarID.format_id
+   *)
+  type varInfo =
+       (*% @format({id, size, align, tag})
+        *  "v" id "<" size "," align "," tag ">"
+        *)
+       {id: LocalVarID.id, size: word, align: word, tag: tag}
+*)
+
+  (*% 
+   * @formatter(Word32.word) SmlppgUtil.format_word32
+   *)
+  datatype ('reg,'addr) headerComposition =
+      (*% @format(reg * w) "LSHIFT\t" reg ", " w *)
+      LSHIFT of 'reg * word
+    | (*% @format(reg * w) "ORBIT\t" reg ", " w *)
+      ORBIT of 'reg * 'reg
+    | (*% @format(reg * w) "ANDBIT\t" reg ", " w *)
+      ANDBIT of 'reg * Word32.word
+    | (*% @format(reg * w) "MOVEREG\t" reg ", " w*)
+      MOVEREG of 'reg * 'reg             (* move registers *)
+    | (*% @format(reg * w) "MOVEIMM\t" reg ", " w*)
+      MOVEIMM of 'reg * Word32.word      (* move immediate *)
+    | (*% @format(dst * mem) "LOAD\t" dst ", " mem *)
+      LOAD of 'reg * 'addr            (* dst, mem *)
+    | (*% @format(off * reg) "SAVEREG\t" "[sp + " off "], " reg *)
+      SAVEREG of word * 'reg          (* offset, reg *)
+    | (*% @format(off * imm) "SAVEIMM\t" "[sp + " off "], " imm *)
+      SAVEIMM of word * Word32.word   (* offset, imm *)
+    | (*% @format(off offs) "SETNULL\t" "[" offs(off)("," +) "]" *)
+      SETNULL of word list
+
+  (*%
+   * @formatter(word) format_word_asInt
+   * @formatter(Word32.word) SmlppgUtil.format_word32
+   * @formatter(LocalVarID.Map.map) formatIDMap
+   *)
+  type ('reg,'addr) frameLayout =
+      (*%
+       * @format({frameSize,
+       *          variableOffsets: var varMap,
+       *          headerCode:(r,a) code codes,
+       *          headerOffset: off offopt})
+       * "{" 2[ {
+       *     1 "frameSize=" frameSize ","
+       *    +1 "offsets" + "=" + "{"
+       *    2[ varMap(var)(+1 "v", + ":" +, ",")
+       *     ] +1 "}" ","
+       *    +1 "headerOffset=" offopt(off) ","
+       *    +1 "headerCode" + "=" + "["
+       *    2[ +1 codes(code(r,a))("," +2)
+       *     ] +1 "]"
+       * } ] 1 "}"
+       *)
+      {
+        (* size of the whole of stack frame. (header + slots) *)
+        frameSize: word,
+        (* map from variable ID to offset from the end of stack frame. *)
+        variableOffsets: word LocalVarID.Map.map,
+        (* frame bitmap composition code. *)
+        headerCode: ('reg,'addr) headerComposition list,
+        (* frame header *)
+        headerOffset: word option
+      }
+
+  end
+end

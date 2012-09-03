@@ -45,7 +45,7 @@ fun makeString stringBuf = (concat(rev(!stringBuf)) before stringBuf := nil)
 
 local
   fun cvt radix (s, i) =
-	#1(valOf(Int.scan radix Substring.getc (Substring.triml i (Substring.all s))))
+	#1(valOf(Int.scan radix Substring.getc (Substring.triml i (Substring.full s))))
 in
 val atoi = cvt StringCvt.DEC
 val xtoi = cvt StringCvt.HEX
@@ -83,6 +83,7 @@ sym={some_sym}|"\\";
 quote="`";
 full_sym={sym}|{quote};
 num=[0-9]+;
+positive=[1-9][0-9]*;
 frac="."{num};
 exp=[eE](~?){num};
 real=(~?)(({num}{frac}?{exp})|({num}{frac}{exp}?));
@@ -183,6 +184,7 @@ hexnum=[0-9a-fA-F]+;
 <FC>^{ws}*"*" => (continue());
 <FC>\"          => (stringBuf := [""]; stringStart := yypos;
                     stringType := true; YYBEGIN S; continue());
+<FC>"@ditto"  => (Tokens.DITTOTAG(yypos,yypos+size yytext));
 <FC>"@prefix"   => (Tokens.PREFIXTAG(yypos,yypos+size yytext));
 <FC>"@formatter"   => (Tokens.FORMATTERTAG(yypos,yypos+size yytext));
 <FC>"@params"   => (Tokens.FORMATPARAMSTAG(yypos,yypos+size yytext));
@@ -190,9 +192,10 @@ hexnum=[0-9a-fA-F]+;
 <FC>"@header" => (Tokens.HEADERTAG(yypos,yypos+size yytext));
 <FC>"@format"   => (Tokens.FORMATTAG(yypos,yypos+size yytext));
 <FC>"@format:"{id} => (Tokens.LOCALFORMATTAG(String.extract (yytext, 8, NONE),yypos,yypos+size yytext));
+<FC>"\\n" => (Tokens.NEWLINE(yypos,yypos+size yytext));
 <FC>("~")?{num}"["    => (Tokens.STARTOFINDENT(atoi(yytext, 0), yypos, yypos+size yytext));
 <FC>"+"         => (Tokens.FORMATINDICATOR({space = true, newline = NONE}, yypos,yypos+size yytext));
-<FC>"+"?("d"|{num}) => 
+<FC>"+"?("d"|{positive}) => 
    (let
       val space = String.sub (yytext, 0) = #"+"
       val priorityText =

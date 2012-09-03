@@ -1,0 +1,170 @@
+
+ann
+  "nonexhaustiveMatch warn" "redundantMatch warn"
+  "sequenceNonUnit ignore"
+  "warnUnused false" "forceUsed"
+in
+
+local
+  basis l4 = 
+    bas
+      (* $/basis.cm ====> *) $(SML_LIB)/basis/basis.mlb 
+    end
+  basis l11 = 
+    bas
+      (* $/smlnj-lib.cm ====> *) $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+    end
+in
+local
+   $(SML_LIB)/basis/pervasive.mlb
+   local
+      open l4
+   in
+      structure gs_0 = Option
+   end
+   local
+      open l4
+   in
+      structure gs_1 = List
+   end
+   local
+      open l11
+   in
+      structure gs_2 = Atom
+   end
+   local
+      open l4
+   in
+      structure gs_3 = Int
+   end
+   local
+      controls-sig.sml
+   in
+      signature gs_4 = CONTROLS
+   end
+   local
+      open l11
+   in
+      structure gs_5 = AtomTable
+   end
+   local
+      structure Atom = gs_2
+      structure AtomTable = gs_5
+      structure Int = gs_3
+      structure List = gs_1
+      control-reps.sml
+   in
+      structure gs_6 = ControlReps
+   end
+   local
+      structure Atom = gs_2
+      signature CONTROLS = gs_4
+      structure ControlReps = gs_6
+      structure Int = gs_3
+      structure List = gs_1
+      structure Option = gs_0
+      controls.sml
+   in
+      structure gs_7 = Controls
+   end
+   local
+      open l11
+   in
+      structure gs_8 = ListMergeSort
+   end
+   local
+      structure Atom = gs_2
+      structure Controls = gs_7
+      control-set-sig.sml
+   in
+      signature gs_9 = CONTROL_SET
+   end
+   local
+      structure AtomTable = gs_5
+      signature CONTROL_SET = gs_9
+      structure ControlReps = gs_6
+      structure Controls = gs_7
+      structure ListMergeSort = gs_8
+      structure Option = gs_0
+      control-set.sml
+   in
+      structure gs_10 = ControlSet
+   end
+   local
+      structure ControlSet = gs_10
+      structure Controls = gs_7
+      registry-sig.sml
+   in
+      signature gs_11 = CONTROL_REGISTRY
+   end
+   local
+      open l4
+   in
+      structure gs_12 = String
+   end
+   local
+      open l4
+   in
+      structure gs_13 = Real
+   end
+   local
+      open l4
+   in
+      structure gs_14 = Char
+   end
+   local
+      open l4
+   in
+      structure gs_15 = Bool
+   end
+   local
+      structure Controls = gs_7
+      control-util-sig.sml
+   in
+      signature gs_16 = CONTROL_UTIL
+   end
+   local
+      structure Bool = gs_15
+      signature CONTROL_UTIL = gs_16
+      structure Char = gs_14
+      structure Controls = gs_7
+      structure Int = gs_3
+      structure List = gs_1
+      structure Real = gs_13
+      structure String = gs_12
+      control-util.sml
+   in
+      structure gs_17 = ControlUtil
+   end
+   local
+      open l4
+   in
+      structure gs_18 = OS
+   end
+   local
+      structure Atom = gs_2
+      structure AtomTable = gs_5
+      signature CONTROL_REGISTRY = gs_11
+      structure ControlReps = gs_6
+      structure ControlSet = gs_10
+      structure Controls = gs_7
+      structure List = gs_1
+      structure ListMergeSort = gs_8
+      structure OS = gs_18
+      registry.sml
+   in
+      structure gs_19 = ControlRegistry
+   end
+in
+   signature CONTROLS = gs_4
+   signature CONTROL_REGISTRY = gs_11
+   signature CONTROL_SET = gs_9
+   signature CONTROL_UTIL = gs_16
+   structure ControlRegistry = gs_19
+   structure ControlSet = gs_10
+   structure ControlUtil = gs_17
+   structure Controls = gs_7
+end
+end
+
+end

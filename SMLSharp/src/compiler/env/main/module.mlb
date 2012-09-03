@@ -1,0 +1,20 @@
+        ../../../preludes.mlb
+        ../../pickle/main/module.mlb
+
+        IOrd.sml
+        WOrd.sml
+        SOrd.sml
+        BinaryMapMaker_Lazy.sml
+(*
+        BinaryMapMaker_NonLazy.sml
+*)
+        BinarySetMaker_NonLazy.sml
+        ISet.sml
+        WSet.sml
+        SSet.sml
+        IEnv.sml
+        WEnv.sml
+        SEnv.sml
+        OrdSetPickler.sml
+        OrdMapPickler.sml
+	EnvPickler.sml

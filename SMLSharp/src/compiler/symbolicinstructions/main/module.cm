@@ -1,0 +1,21 @@
+Group is
+
+      $/basis.cm
+
+(*
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+*)
+
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../../primitives/primitives.cm
+
+        ../../systemdef/sources.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../name/sources.cm
+
+        SymbolicInstructions.ppg.sml
+        SymbolicInstructionsFormatter.sml

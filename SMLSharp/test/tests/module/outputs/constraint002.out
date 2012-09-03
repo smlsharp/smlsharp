@@ -1,0 +1,33 @@
+datatype dt
+con D : dt
+signature SType = sig type t end
+signature SDatatype = sig datatype dt = E end
+signature SReplication = sig datatype dtr = datatype dt end
+signature SWhereType = sig include sig type t end where type t = dt end
+structure SType : sig datatype t con E : t end
+structure STypeTrans : SType
+../tests/module/tests/constraint002.sml:33.19-33.30 Error:
+  unbound variable or constructor: STypeTrans.E
+
+structure STypeOpaque : SType
+../tests/module/tests/constraint002.sml:36.20-36.32 Error:
+  unbound variable or constructor: STypeOpaque.E
+
+structure SDatatype : sig datatype dt con E : dt end
+structure SDatatypeTrans : SDatatype
+val xSDatatypeTrans = E : SDatatypeTrans.dt
+structure SDatatypeOpaque : SDatatype
+val xSDatatypeOpaque = E : SDatatypeOpaque.dt
+structure SReplication : sig datatype dtr con D : dtr end
+structure SReplicationTrans : SReplication
+val xSReplicationTrans = D : SReplicationTrans.dtr
+structure SReplicationOpaque : SReplication
+val xSReplicationOpaque = D : SReplicationOpaque.dtr
+structure SWhereType : sig datatype t con D : t end
+structure SWhereTypeTrans : SWhereType
+../tests/module/tests/constraint002.sml:63.24-63.40 Error:
+  unbound variable or constructor: SWhereTypeTrans.E
+
+structure SWhereTypeOpaque : SWhereType
+../tests/module/tests/constraint002.sml:66.25-66.42 Error:
+  unbound variable or constructor: SWhereTypeOpaque.E

@@ -1,0 +1,107 @@
+# Makefile for SMLDoc
+# $Id: Makefile.in,v 1.1 2007/11/16 04:36:20 kiyoshiy Exp $
+
+srcdir = @abs_srcdir@
+builddir = @abs_builddir@
+top_srcdir = @abs_top_srcdir@
+top_builddir = @abs_top_builddir@
+
+include @abs_top_builddir@/commonrule
+
+VPATH = @srcdir@
+
+MLYACC = $(MLTON_YACC)
+MLLEX = $(MLTON_LEX)
+SMLSHARP = smlsharp
+
+CONFIG_FILES = \
+
+
+LEXFILES =  \
+	src/yacc.lex \
+
+
+YACCFILES = \
+	src/yacc.grm \
+
+
+SMLNJ_HEAP = $(srcdir)/smlyacc.$(SML_HEAP_SUFFIX)
+
+SMLSHARP_TARGET = bin/smlyacc
+SMLNJ_TARGET = bin/smlyacc
+MLTON_TARGET = bin/smlyacc$(EXEEXT)
+MLTON_TARGET_PLATFORM = self
+
+all: config all-@DEFAULT_SML_COMPILER@
+
+install: install-@DEFAULT_SML_COMPILER@
+
+clean:
+	-rm -f $(SMLSHARP_TARGET) $(SMLNJ_HEAP) $(SMLNJ_TARGET) $(MLTON_TARGET)
+	-rm -f $(CONFIG_FILES:.in=)
+	-rm -f $(LEXFILES:.lex=.lex.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sig)
+	-rm -f $(YACCFILES:.grm=.grm.desc)
+	-rm -rf $(srcdir)/CM
+	-rm -rf $(srcdir)/.cm
+	-rm -rf $(srcdir)/src/CM
+	-rm -rf $(srcdir)/src/.cm
+
+config: $(CONFIG_FILES:.in=)
+
+$(CONFIG_FILES:.in=): Makefile $(CONFIG_FILES)
+	sed \
+	-e "s|@"SMLUNITDIR"@|`$(MKSMLPATH) -sh '$(SMLUNITDIR)'`|g" \
+	$@.in > $@
+
+# -------- Rules for SML# --------
+
+all-smlsharp: grammar
+	$(SMLSHARP) -o $(SMLSHARP_TARGET) -c $(srcdir)/smlyacc.use
+
+install-smlsharp:
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(SMLSHARP_TARGET) '$(DESTDIR)$(bindir)'
+
+# -------- Rules for SML/NJ --------
+
+all-smlnj: $(SMLNJ_TARGET)
+
+$(SMLNJ_TARGET):
+	-rm -f $(LEXFILES:.lex=.lex.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sig)
+	-rm -f $(YACCFILES:.grm=.grm.desc)
+	$(MKSMLHEAP) smlyacc
+	$(MKSMLRUN) smlyacc $(srcdir) $(SMLNJ_TARGET)
+
+install-smlnj:
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(heapdir)'
+	$(MKSMLRUN) smlyacc $(heapdir) '$(DESTDIR)$(bindir)/smlyacc'
+	$(INSTALL_DATA) $(SMLNJ_HEAP) '$(DESTDIR)$(heapdir)'
+
+# -------- Rules for MLton --------
+
+all-mlton: grammar
+	$(MLTON) -verbose 1 -output $(MLTON_TARGET) \
+	         -target $(MLTON_TARGET_PLATFORM) \
+	         -cc '$(CC)' $(MLTON_FLAGS) \
+	         $(srcdir)/smlyacc.mlb
+
+install-mlton:
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(MLTON_TARGET) '$(DESTDIR)$(bindir)'
+
+# -------- Common Rules --------
+
+grammar:
+	-rm -f $(LEXFILES:.lex=.lex.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sig)
+	-rm -f $(YACCFILES:.grm=.grm.desc)
+	@set -x; for i in $(LEXFILES); do $(MLLEX) "$$i"; done
+	@set -x; for i in $(YACCFILES); do $(MLYACC) "$$i"; done
+
+# Makefile.in ends here.

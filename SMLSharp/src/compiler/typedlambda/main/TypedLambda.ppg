@@ -1,0 +1,843 @@
+(**
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori 
+ * @author Duc-Huu NGUYEN
+ * @version $Id: TypedLambda.ppg,v 1.50 2008/08/06 17:23:41 ohori Exp $
+ *)
+structure TypedLambda = struct
+
+ structure BT = BasicTypes
+
+ type loc = Loc.loc
+
+ (*%
+  * @formatter(Absyn.callingConvenvtion) Absyn.format_callingConvenvtion
+  *)
+ type ffiAttributes = Absyn.ffiAttributes
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(tyformat) Types.format_ty
+  *)
+ type ty = 
+  (*%
+   * @format(ty:tyformat) ty()(btvEnv)
+   *)
+   Types.ty
+
+ (*% 
+  * @params(btvEnv)
+  * @formatter(tyConFormat) Types.format_tyCon
+  *)
+ type tyCon = 
+    (*%
+     * @format(tyCon:tyConFormat) tyCon()(btvEnv)
+     *)
+    Types.tyCon
+
+(*
+ (*% 
+  * @formatter(LocalVarID.id) LocalVarID.format_id
+  *)
+ type id = 
+     (*%
+      * @format(id) id
+      *)
+      LocalVarID.id
+*)
+
+ (*
+  * Switch the tag "typed" to trun on/off for printing/suppressing
+  * type information
+  *)
+ (*% 
+  * @params(btvEnv)
+  * @formatter(typesValdInfo) Types.format_varIdInfoWithoutType
+  *)
+ (*% 
+  * @prefix typed
+  * @params(btvEnv)
+  * @formatter(typesValdInfo) Types.format_varIdInfo
+  *)
+ type varIdInfo = 
+     (*%
+      * @format(id:typesValdInfo) id()(btvEnv)
+      *)
+      Types.varIdInfo
+
+ (*% 
+  * @params(btvEnv) 
+  * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
+  *)
+ type primInfo =
+      (*%
+       * @format({name,ty}) name ":" ty()(btvEnv)
+       *)
+      {name : BuiltinPrimitive.primitive, ty : ty}
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(btvKindFormat) Types.format_btvKind
+  *)
+ type btvKind = 
+     (*%
+      * @format(value:btvKindFormat) value()(btvEnv)
+      *)
+      Types.btvKind
+
+  (*% 
+   * @formatter(ExnTagID.id) ExnTagID.format_id
+   *)
+  type globalTag = 
+       (*%
+        * @format(tag) tag
+        *)
+       ExnTagID.id
+
+ datatype constant =  datatype ConstantTerm.constant
+
+
+(*%
+ * @params(btvEnv)
+ *
+ * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+ * @formatter(formatConst) ConstantTerm.format_constant
+ * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+ * @formatter(imap) SmlppgUtil.formatImap
+ * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+ *)
+(*%
+ * @prefix typed
+ * @params(btvEnv)
+ *
+ * @formatter(id) format_id
+ * @formatter(ty) format_ty
+ * @formatter(btvKind) format_btvKind
+ * @formatter(primInfo) format_primInfo
+ * @formatter(varIdInfo) format_varIdInfo
+ * @formatter(enclosedListIfMoreThanOne)
+ *              SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+ * @formatter(formatConst) ConstantTerm.format_constant
+ * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+ * @formatter(imap) SmlppgUtil.formatImap
+ * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+ *)
+ datatype tlexp 
+   =
+     (*%
+      * @format(
+      *        {
+      *          funExp:funExp,
+      *          funTy,
+      *          argExpList: arg args,
+      *          attributes,
+      *          loc:loc
+      *         }
+      *        )
+      * R1{d
+      *      {
+      *       "FFIApply" +  funExp()(btvEnv) 1
+      *       "(" {args(arg()(btvEnv))(","1)} ")"
+      *      }
+      *   }
+      *)
+     (*%
+      * @prefix typed
+      * @format(
+      *        {
+      *          funExp:funExp,
+      *          funTy,
+      *          argExpList: arg args,
+      *          attributes,
+      *          loc:loc
+      *         }
+      *        )
+      * R1{d
+      *      {
+      *        "FFIApply" + funExp()(btvEnv) 1
+      *        "(" {args(arg()(btvEnv))(","1)} ")"
+      *      }
+      *   }
+      *)
+      TLFOREIGNAPPLY of 
+          {
+           funExp:tlexp,
+           funTy : ty, 
+           argExpList:tlexp list, 
+           attributes : ffiAttributes,
+           loc:loc
+          }
+   | (*%
+      * @format({funExp,
+      *          funTy,
+      *          attributes,
+      *          loc})
+      * L10{ "CALLBACK(" funExp()(btvEnv) 
+      *              ")" }
+      *)
+     (*%
+      * @prefix typed
+      * @format({funExp,
+      *          funTy,
+      *          attributes,
+      *          loc})
+      * L10{ "CALLBACK(" funExp()(btvEnv) 
+      *       +1 ":" + {funTy()(btvEnv)}
+      *               ")" }
+      *)
+      TLEXPORTCALLBACK of 
+       {
+         funExp : tlexp,  (* must be TLFNM *)
+	 funTy : ty,
+         attributes : ffiAttributes,
+         loc: loc
+       }
+   | 
+     (*%
+      * @format({tagValue,loc}) "EXNTAG(" tagValue ")"
+      *)
+     TLEXCEPTIONTAG of {tagValue : globalTag, loc : loc}
+   | 
+     (*%
+      * @prefix typed
+      * @format({value:const:formatConst, loc}) const
+      *)
+     (*%
+      * @format({value:const:formatConst, loc}) const
+      *)
+     (** constant int or real or string *)
+     TLCONSTANT of {value : constant, loc : loc}
+   | (*%
+      * @prefix typed
+      * @format({name, kind, ty, loc}) name ":" ty()(btvEnv)
+      *)
+     (*%
+      * @format({name, kind, ty, loc}) name
+      *)
+     TLGLOBALSYMBOL of {name:string, kind:Absyn.globalSymbolKind, ty:ty, loc:loc}
+   | (*%
+      * @prefix typed
+      * @format({ty, loc})
+      * "_sizeof(" ty()(btvEnv) ")"
+      *)
+     (*%
+      * @format({ty, loc})
+      * "_sizeof(" ty()(btvEnv) ")"
+      *)
+     TLSIZEOF of {ty: ty, loc: loc}
+   | 
+     (*%
+      * @prefix typed
+      * @format({varInfo : id, loc }) id()(btvEnv)
+      *)
+     (*%
+      * @format({varInfo : id, loc }) id()(btvEnv)
+      *)
+     TLVAR of {varInfo : varIdInfo, loc : loc}
+   |
+     (*%
+      * @prefix typed
+      * @format({arrayExp, indexExp, elementTy, loc})
+      * "arraySub(" arrayExp()(btvEnv) "," indexExp()(btvEnv) ")" ":" elementTy()(btvEnv)
+      *)
+     (*%
+      * @format({arrayExp, indexExp, elementTy, loc})
+      * "arraySub(" arrayExp()(btvEnv) "," indexExp()(btvEnv) ")" ":" elementTy()(btvEnv)
+      *)
+     TLGETFIELD of {arrayExp:tlexp, indexExp:tlexp, elementTy:ty, loc:loc}
+   |
+     (*%
+      * @prefix typed
+      * @format({valueExp, arrayExp, indexExp, elementTy, loc})  
+      * "SetField"
+      * + arrayExp()(btvEnv) "[" indexExp()(btvEnv) "]" "=" valueExp()(btvEnv) 
+      *)
+     (*%
+      * @format({valueExp, arrayExp, indexExp, elementTy, loc})  
+      * "SetField"
+      * + arrayExp()(btvEnv) "[" indexExp()(btvEnv) "]" "=" valueExp()(btvEnv) 
+      *)
+     TLSETFIELD of {valueExp:tlexp, arrayExp:tlexp, indexExp:tlexp, elementTy: ty, loc: loc}
+  | 
+   (*%
+    * @prefix typed
+    * @format({consExp, newTailExp, listTy, consRecordTy, tailLabel, loc})  
+    * "SetTail"
+    * + consExp()(btvEnv) "[" tailLabel "]" "=" newTailExp()(btvEnv)
+    *)
+   (*%
+    * @format({consExp, newTailExp, listTy, consRecordTy, tailLabel, loc})  
+    * "SetTail"
+    * + consExp()(btvEnv) ":" consRecordTy()(btvEnv) "[" tailLabel "]" "=" newTailExp()(btvEnv)
+    *)
+    TLSETTAIL of 
+     {
+       consExp : tlexp, 
+       newTailExp : tlexp, 
+       listTy : ty,
+       consRecordTy : ty,
+       tailLabel : string,
+       loc: loc
+      }
+   |
+     (*%
+      * @prefix typed
+      * @format({sizeExp, initialValue, elementTy, isMutable, loc}) 
+      * !N0 {elementTy()(btvEnv) "[" 2[1 sizeExp()(btvEnv) ] 1"]" "{" initialValue()(btvEnv) "}"}
+      *)
+     (*%
+      * @format({sizeExp, initialValue, elementTy, isMutable, loc}) 
+      * !N0 {
+      *       elementTy()(btvEnv) "[" 2[1 sizeExp()(btvEnv) ] 1"]" "{" initialValue()(btvEnv) "}"
+      *	    }
+      *)
+     TLARRAY of 
+       {
+        sizeExp:tlexp, 
+        initialValue:tlexp, 
+        elementTy:ty,
+        isMutable : bool,
+        loc:loc
+       }
+   |
+     (*%
+      * @prefix typed
+      * @format({srcExp, srcIndexExp, dstExp, dstIndexExp, lengthExp, elementTy, loc})  
+      * "CopyArray"
+      * + srcExp()(btvEnv) "[" srcIndexExp()(btvEnv) "]" + "<="
+      * + dstExp()(btvEnv) "[" dstIndexExp()(btvEnv) "]"
+      * + "(" lengthExp()(btvEnv) ")"
+      *)
+     (*%
+      * @format({srcExp, srcIndexExp, dstExp, dstIndexExp, lengthExp, elementTy, loc})  
+      * "CopyArray"
+      * + srcExp()(btvEnv) "[" srcIndexExp()(btvEnv) "]" + "<="
+      * + dstExp()(btvEnv) "[" dstIndexExp()(btvEnv) "]"
+      * + "(" lengthExp()(btvEnv) ")"
+      *)
+     TLCOPYARRAY of {srcExp:tlexp, srcIndexExp:tlexp, dstExp:tlexp, dstIndexExp:tlexp, lengthExp:tlexp, elementTy: ty, loc: loc}
+   |
+     (*%
+      * @prefix typed
+      * @format(
+      *         {
+      *          primInfo,
+      *          argExpList:arg args:formatListWithEnclosure,
+      *          instTyList:ty tys:formatListWithEnclosure,
+      *          loc
+      *          }
+      *         )
+      *       R1{d {primInfo()(btvEnv) 1 {tys(ty()(btvEnv))(","1,"{","}")}
+      *                               +1 {args(arg()(btvEnv))(","1,"(",")")}}}
+      *)
+     (*%
+      * @format(
+      *         {
+      *          primInfo,
+      *          argExpList:arg args:formatListWithEnclosure,
+      *          instTyList:ty tys:formatListWithEnclosure,
+      *          loc
+      *          }
+      *         )
+      *       R1{d {primInfo()(btvEnv) 1 {tys(ty()(btvEnv))(","1,"{","}")}
+      *                               +1 {args(arg()(btvEnv))(","1,"(",")")}}}
+      *)
+     TLPRIMAPPLY of 
+       {
+        primInfo:primInfo, 
+        argExpList:tlexp list, 
+        instTyList:ty list,
+        loc:loc
+       }
+   | 
+    (*%
+     * @prefix typed
+     * @format({funExp, funTy, argExpList:arg args:enclosedListIfMoreThanOne, loc})  
+     *  L10{ 
+     *   funExp()(btvEnv) 
+     *       2[
+     *      +1 
+     *        !N0{
+     *             2[args(arg()(btvEnv))(","+2, "{", "}")] 
+     *           } 
+     *      1
+     *      ]
+     *   }
+     *)
+    (*%
+     * @format({funExp, funTy, argExpList:arg args:enclosedListIfMoreThanOne, loc})  
+     *   L10{ 
+     *   funExp()(btvEnv) 
+     *      2[
+     *      +1 
+     *        !N0{
+     *             2[args(arg()(btvEnv))(","+2, "{", "}")] 
+     *           } 
+     *      1
+     *      ]
+     *   }
+     *)
+     TLAPPM of 
+       {
+        funExp:tlexp, 
+        funTy:ty, 
+        argExpList:tlexp list,
+        loc:loc
+       }
+   |
+     (*%
+      * @prefix typed
+      * @format({localDeclList : dec decs, mainExp, loc})
+      *     !N0{ {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]}  +1
+      *          {"in" 2[ +2 mainExp()(btvEnv) ] +2
+      *           "end"} }
+      *)
+     (*%
+      * @format({localDeclList : dec decs, mainExp, loc})
+      *     !N0{ {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]}  +1
+      *          {"in" 2[ +2 mainExp()(btvEnv) ] +2
+      *           "end"} }
+      *)
+     TLLET of 
+       {
+        localDeclList : tldecl list,
+        mainExp : tlexp,
+        loc : loc
+       }
+   | 
+    (*%
+      * @prefix typed
+      * @format({expList:field fields, recordTy, isMutable, loc}) 
+      *  !N0{"(" d 2[ fields(field()(btvEnv))("," +1) ] d ")" }
+      *)
+    (*%
+      * @format({expList:field fields, recordTy, isMutable, loc}) 
+      *  !N0{"(" d 2[ fields(field()(btvEnv))("," +1) ] d ")" }
+      *)
+    TLRECORD of 
+      {
+       isMutable : bool,
+       expList:tlexp list,
+       recordTy:ty, 
+       loc:loc
+      }
+   |
+     (*%
+      * @prefix typed
+      * @format({recordExp, label, recordTy, resultTy, loc})
+      *     recordExp()(btvEnv) "[" label "]"
+      *)
+     (*%
+      * @format({recordExp, label, recordTy, resultTy, loc})
+      *     recordExp()(btvEnv) "[" label "]"
+      *)
+     TLSELECT of 
+       {
+        recordExp:tlexp, 
+        label : string, 
+        recordTy:ty, 
+	resultTy:ty,
+        loc:loc
+       }
+   |
+     (*%
+      * @prefix typed
+      * @format({recordExp, recordTy, label, valueExp, loc})
+      *   recordExp()(btvEnv) "[" label "=" valueExp()(btvEnv) "]"
+      *)
+     (*%
+      * @format({recordExp, recordTy, label, valueExp, loc})
+      *   recordExp()(btvEnv) "[" label "=" valueExp()(btvEnv) "]"
+      *)
+     TLMODIFY of 
+       {
+        recordExp:tlexp, 
+        recordTy:ty, 
+        label : string, 
+        valueExp:tlexp, 
+        loc:loc
+       }
+   |
+     (*%
+      * @prefix typed
+      * @format({argExp, resultTy, loc}) N0{ "raise" +d {argExp()(btvEnv)} }
+      *)
+     (*%
+      * @format({argExp, resultTy, loc}) N0{ "raise" +d {argExp()(btvEnv)} }
+      *)
+     TLRAISE of 
+       {
+        argExp:tlexp, 
+        resultTy:ty, 
+        loc:loc
+       }
+   |
+     (*%
+      * @prefix typed
+      * @format({exp, exnVar, handler, loc})
+      *      "handle" + N0{exp()(btvEnv)} +1
+      *      "with letexp" +  exnVar()(btvEnv)  + "in" + {handler()(btvEnv)}
+      *)
+     (*%
+      * @format({exp, exnVar, handler, loc})
+      *      "handle" + N0{exp()(btvEnv)} +1
+      *      "with letexp" +  exnVar()(btvEnv)  + "in" + {handler()(btvEnv)}
+      *)
+     TLHANDLE of
+       {
+        exp : tlexp,
+        exnVar : varIdInfo,
+        handler : tlexp,
+        loc : loc
+       }
+   |
+     (*%
+      * @prefix typed
+      * @format({argVarList:arg args:enclosedListIfMoreThanOne, bodyTy, bodyExp, loc}) 
+      *     R1{ 
+      *        "fn" + "{" 5[+ args(arg()(btvEnv))(","+, "", +"}") ]
+      *          +1
+      *          "=>" 
+      *          2[ +1 {bodyExp()(btvEnv)}]
+      *      }
+      *)
+     (*%
+      * @format({argVarList:arg args:enclosedListIfMoreThanOne, bodyTy, bodyExp, loc}) 
+      *     R1{ 
+      *        "fn" + {args(arg()(btvEnv))(","+, "{", "}") + "=>" }
+      *         2[ +1 {bodyExp()(btvEnv)}]
+      *      }
+      *)
+     TLFNM of 
+       {
+        argVarList:varIdInfo list, 
+        bodyTy:ty, 
+        bodyExp:tlexp, 
+        loc:loc
+       }
+   |
+     (*%
+      * @prefix typed
+      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs, exp, loc})
+      *  {
+      *   "[" imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *      2[
+      *        +1
+      *        {exp()(imap:createBtvKindMap()(btvEnv))}
+      *        +1 
+      *        ":" + {expTyWithoutTAbs()(imap:createBtvKindMap()(btvEnv))}
+      *       ] 
+      *    +1 
+      *    "]"
+      *  }
+      *)
+     (*%
+      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs, exp, loc})
+      *  {
+      *   "[" imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *      2[
+      *        +1
+      *        {exp()(imap:createBtvKindMap()(btvEnv))}
+      *        +1 
+      *        ":" + {expTyWithoutTAbs()(imap:createBtvKindMap()(btvEnv))}
+      *       ] 
+      *    +1 
+      *    "]"
+      *  }
+      *)
+     TLPOLY of 
+       {
+        btvEnv : btvKind IEnv.map,
+        expTyWithoutTAbs:ty, 
+        exp:tlexp, 
+        loc:loc
+       }
+   | 
+     (*%
+      * @prefix typed
+      * @format({exp, expTy, instTyList:tyArg tyArgs , loc}) 
+      *    {
+      *      exp()(btvEnv) 
+      *        2[d 
+      *           !N0{
+      *               "{" 
+      *                  d
+      *                  2[
+      *                    tyArgs(tyArg()(btvEnv))("," +1) 
+      *                   ]  
+      *                  d
+      *                "}" 
+      *	     }
+      *         ]
+      *    }
+      *)
+     (*%
+      * @format({exp, expTy, instTyList:tyArg tyArgs , loc}) 
+      *    {
+      *      exp()(btvEnv) 
+      *        2[d 
+      *           !N0{
+      *               "{" 
+      *                  d
+      *                  2[
+      *                    tyArgs(tyArg()(btvEnv))("," +1) 
+      *                   ]  
+      *                  d
+      *                "}" 
+      *	     }
+      *         ]
+      *    }
+      *)
+     TLTAPP of 
+       {
+        exp:tlexp, 
+        expTy:ty, 
+        instTyList:ty list, 
+        loc:loc
+       }
+   |
+     (*%
+      * @prefix typed
+      * @format({switchExp, expTy, branches:rule rules, defaultExp, loc})
+      *  2[
+      *    "switch" 
+      *     +1
+      *     switchExp()(btvEnv)
+      *     ~2[+1 "of" +]
+      *     rules(rule)(~2[ +1 " |" ]+)
+      *     ~2[+1 " |" +]
+      *     {"_ =>" 2[+2] 2[{defaultExp()(btvEnv)}]}
+      *   ]
+      * @format:rule({constant, exp})
+      *    constant()(btvEnv) + "=>" 2[+2] 2[exp()(btvEnv)]
+      *)
+     (*%
+      * @format({switchExp, expTy, branches:rule rules, defaultExp, loc})
+      *    "switch" 
+      *      2[+1 {switchExp()(btvEnv)}]
+      *     +1 "of" +
+      *     {rules(rule)(~2[+1 "|"] +)}
+      *     +1 " |" +
+      *     {"_ =>" 2[+1{defaultExp()(btvEnv)}]}
+      * @format:rule({constant,exp})
+      *     {constant()(btvEnv) + "=>" 2[+1{exp()(btvEnv)}]}
+      *)
+     TLSWITCH of 
+       {
+        switchExp:tlexp, 
+        expTy:ty, 
+        branches: {constant:tlexp , exp : tlexp} list, 
+        defaultExp:tlexp, 
+        loc:loc
+       }
+  |
+    (*%
+     * @prefix typed
+     * @format({exp, targetTy, loc}) 
+     *    {
+     *    "("
+     *      1
+     *      2["cast" + 2[{exp()(btvEnv)}]]
+     *        +1
+     *        2["to" + 2[{targetTy()(btvEnv)}]]
+     *      1
+     *    ")"
+     *    }
+     *)
+    (*%
+     * @format({exp, targetTy, loc}) 
+     *   {
+     *    "("
+     *        +1
+     *      2["cast" + 2[{exp()(btvEnv)}]]
+     *        +1
+     *        2["to" + 2[{targetTy()(btvEnv)}]]
+     *      +1
+     *    ")"
+     *     }
+     *)
+     TLCAST of {exp:tlexp, targetTy:ty, loc:loc}
+
+ and tldecl 
+   = (*%
+      * @prefix typed
+      * @format({boundVar, boundExp, loc})  
+      *  2[
+      *   "val" 
+      *   + 
+      *   boundVar()(btvEnv) +d "=" +1 {boundExp()(btvEnv)}
+      *   ]
+      *)
+     (*%
+      * @format({boundVar, boundExp, loc})  
+      *  2[
+      *   "val" 
+      *   + 
+      *   boundVar()(btvEnv) +d "=" +1 {boundExp()(btvEnv)}
+      *   ]
+      *)
+    TLVAL of 
+     {
+      boundVar : varIdInfo, 
+      boundExp : tlexp,
+      loc : loc
+     }
+   |
+     (*%
+      * @prefix typed
+      * @format({recbindList:bind binds,loc})
+      *     "val rec" + 2[binds(bind)(~2[ +1 "and"] +)]
+      * @format:bind({boundVar, boundExp}) 
+      *     {boundVar()(btvEnv) +d "=" +1 {boundExp()(btvEnv)}}
+      *)
+     (*%
+      * @format({recbindList:bind binds,loc})
+      *  2[
+      *    "val rec" 
+      *    + 
+      *    binds(bind)(~2[ +1 "and"] +)
+      *    ]
+      * @format:bind({boundVar, boundExp}) 
+      *   boundVar()(btvEnv) +d "=" +1 {boundExp()(btvEnv)}
+      *)
+    TLVALREC of 
+     {
+      recbindList : {boundVar:varIdInfo, boundExp : tlexp } list,
+      loc : loc
+     }
+   |
+     (*%
+      * @prefix typed
+      * @format({
+      *          btvEnv:btvKind:btvKind imap, 
+      *          recbindList : bind binds,
+      *          loc : loc
+      *         })
+      *    {"[" 
+      *       2[ 
+      *         imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *          +1
+      *          2["val rec" +d binds(bind)(~2[ +1 "and"] +)]
+      *        ]
+      *      1 "]"}
+      * @format:bind({boundVar, boundExp})
+      *       boundVar()(imap:createBtvKindMap()(btvEnv)) +d "=" 
+      *       +2
+      *       {boundExp()(imap:createBtvKindMap()(btvEnv))}
+      *)
+     (*%
+      * @format({
+      *          btvEnv:btvKind:btvKind imap, 
+      *          recbindList : bind binds,
+      *          loc : loc
+      *         })
+      *    {
+      *     "[" 
+      *       2[ 
+      *         imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *          +1
+      *          2[  
+      *           "val rec" 
+      *           +
+      *           binds(bind)(~2[ +1 "and"] +)
+      *           ]
+      *        ]
+      *      1 "]"
+      *   }
+      * @format:bind({boundVar, boundExp})
+      *     boundVar()(imap:createBtvKindMap()(btvEnv)) +d "=" 
+      *     +1
+      *     {boundExp()(imap:createBtvKindMap()(btvEnv))}
+      *)
+     TLVALPOLYREC of 
+       {
+        btvEnv : btvKind IEnv.map,
+        recbindList : {boundVar:varIdInfo, boundExp : tlexp } list,
+        loc : loc
+       }
+
+ val format_tldecl' =  format_tldecl nil
+
+ (*%
+  * @formatter(tldecl) format_tldecl'
+  *)
+ (*%
+  * @prefix typed
+  * @formatter(tldecl) format_tldecl'
+  *)
+ datatype basicBlock =
+          (*%
+           * @prefix typed
+           * @format({code, exnIDSet}) code
+           * @format:code(dec decs) 
+           *  decs(dec)(+1)
+           *  
+           *)
+          (*%
+           * @format({code, exnIDSet}) code
+           * @format:code(dec decs)            
+           *  decs(dec)(+1)
+           *  
+           *)
+          TLVALBLOCK of {code : tldecl list, exnIDSet : ExnTagID.Set.set}
+        | (*%
+           * @prefix typed
+           * @format({name, 
+                      actualArgName, 
+                      typeResolutionTable,
+                      exnTagResolutionTable, 
+                      externalVarIDResolutionTable,
+                      refreshedExceptionTagTable, 
+                      refreshedExternalVarIDTable, 
+                      loc})
+           * name "(" actualArgName ")"
+           *)
+        (*%
+         * @format({name, 
+                    actualArgName, 
+                    typeResolutionTable,
+                    exnTagResolutionTable, 
+                    externalVarIDResolutionTable,
+                    refreshedExceptionTagTable, 
+                    refreshedExternalVarIDTable, 
+                    loc})
+         * name "(" actualArgName ")"
+         *)
+          TLLINKFUNCTORBLOCK of {name : string, 
+                                 actualArgName : string,
+                                 typeResolutionTable : Types.tyBindInfo TyConID.Map.map,
+                                 exnTagResolutionTable : ExnTagID.id ExnTagID.Map.map,
+                                 externalVarIDResolutionTable : ExternalVarID.id ExternalVarID.Map.map,
+                                 refreshedExceptionTagTable : ExnTagID.id ExnTagID.Map.map,
+                                 refreshedExternalVarIDTable : ExternalVarID.id ExternalVarID.Map.map,
+                                 loc : loc}
+ (*%
+  *)
+ datatype topBlock = 
+          (*%
+           * @format({name, formalAbstractTypeIDSet, formalVarIDSet, formalExnIDSet, 
+                      generativeVarIDSet, generativeExnIDSet, bodyCode:dec decs})
+           * "functor" + name +  "=" +d  
+           *  "{" +d 3[decs(dec)(+3)] +d "}"
+           *)
+          (*%
+           * @format({name, formalAbstractTypeIDSet, formalVarIDSet, formalExnIDSet, 
+                      generativeVarIDSet, generativeExnIDSet, bodyCode:dec decs})
+           * "functor" + name +  "=" +d  
+           *  "{" +d 3[decs(dec)(+3)] +d "}"
+           *)
+          TLFUNCTORBLOCK of {name : string, 
+                             formalAbstractTypeIDSet : TyConID.Set.set, 
+                             formalVarIDSet : ExternalVarID.Set.set,
+                             formalExnIDSet : ExnTagID.Set.set,
+                             generativeVarIDSet : ExternalVarID.Set.set,
+                             generativeExnIDSet : ExnTagID.Set.set,
+                             bodyCode : basicBlock list}      
+        | (*%
+           * @format(info) info
+           *)
+          TLBASICBLOCK of basicBlock
+
+end

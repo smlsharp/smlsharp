@@ -1,0 +1,7 @@
+Group
+        structure Absyn
+        structure AbsynFormatter
+        structure AbsynPickler
+        structure Fixity
+is
+	main/module.cm

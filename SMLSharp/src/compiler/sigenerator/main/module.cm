@@ -1,0 +1,30 @@
+Group is
+
+      $/basis.cm
+
+
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../systemdef/sources.cm
+        ../../env/sources.cm
+        ../../util/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../pickle/sources.cm
+        ../../../instructions/compiler/sources.cm
+        ../../../primitives/primitives.cm
+        ../../anormal/sources.cm
+        ../../intermediatelanguage/sources.cm
+        ../../symbolicinstructions/sources.cm
+        ../../constantterm/sources.cm
+
+	Counters.sml
+        GLOBALINDEXENV.sig
+        GlobalIndexEnv.sml
+        SIGCONTEXT.sig
+        SIGContext.sml
+        SIOPTIMIZER.sig
+        SIOptimizer.sml
+        SIGENERATOR.sig
+        SIGenerator.sml

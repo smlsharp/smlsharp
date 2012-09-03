@@ -1,7 +1,7 @@
 (**
  * This module generates formatter code for types.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FormatterGenerator.sml,v 1.16 2006/12/31 09:20:58 kiyoshiy Exp $
+ * @version $Id: FormatterGenerator.sml,v 1.17 2007/06/30 11:04:42 kiyoshiy Exp $
  *)
 structure FormatterGenerator : FORMATTER_GENERATOR =
 struct
@@ -17,7 +17,7 @@ struct
   datatype errorCause =
            (** no formatter for the specified type is included in the
             * formatter environment. *)
-           FormatterOfTypeNotFound of string
+           FormatterOfTypeNotFound of string * string
          | (** The identifier is not included in the type environment. *)
            TypeOfIDNotFound of string
          | (** type pattern and defining type expression do not match. *)
@@ -30,6 +30,8 @@ struct
          | (** An ID in a custom format tag conflicts with type name or
             * datatype name. *)
            CustomFormatNameConflict of string
+         | (** error about @ditto (EXPERIMENTAL EXTENSION by Ueno) *)
+           DittoError of string
 
   (***************************************************************************)
 
@@ -94,7 +96,10 @@ struct
    *)
   fun getErrorCauseMessage errorCause =
       case errorCause of
-        FormatterOfTypeNotFound name => "formatter of type not found:" ^ name
+        FormatterOfTypeNotFound (prefix, name) =>
+        if prefix = Ast.DefaultFormatterPrefix
+        then "formatter of type not found: " ^ name
+        else "formatter of type for prefix `" ^ prefix ^ "' not found: " ^ name
       | TypeOfIDNotFound name => "type of ID not found:" ^ name
       | UnMatchPatternAndType message =>
         "pattern and type do not match:" ^ message
@@ -102,6 +107,7 @@ struct
       | Unimplemented message => "unimplemented:" ^ message
       | CustomFormatNameConflict name =>
         "custom format tag conflicts with tyCon name:" ^ name
+      | DittoError message => message
 
   (**
    * translates an error into a GenerationError
@@ -199,8 +205,8 @@ struct
    * empty formatter environment which fails on any search.
    *)
   val initialFormatterEnv : formatterEnv =
-      fn (_, ty) =>
-         raise InternalError(FormatterOfTypeNotFound(getTyConName ty))
+      fn (prefix, ty) =>
+         raise InternalError(FormatterOfTypeNotFound(prefix, getTyConName ty))
 
   (**
    *  adds an entry to the formatter environment.
@@ -377,6 +383,8 @@ struct
               "(" ^ (Int.toString (size arg)) ^ ","^
               "\"" ^ (escapeString arg) ^ "\")" ^
               "]"
+            | Newline =>
+              "[" ^ prefixOfFormatExpressionName ^ "Newline]"
             | Guard (assoc, templates) =>
               let
                 val templateCodes = map (translate isDefault) templates
@@ -926,15 +934,23 @@ struct
 
   (****************************************)
 
+  fun findOneOf nil eq l = NONE
+    | findOneOf (h::t) eq l =
+      case List.find (eq h) l of
+        x as SOME _ => x
+      | NONE => findOneOf t eq l
+
   (**
    *  generates a SML code which formats a value built by the specified
    * value constructor.
    * @params
-   *     (F, T, P, prefix) argVar {formatComments, valConName, argTypeOpt}
+   *     (F, T, P, prefix, ditto)
+   *     argVar {formatComments, valConName, argTypeOpt}
    * @param F the formatter environment
    * @param T the type environment
    * @param P the additional parameter set
    * @param prefix the prefix indicating the current namespace
+   * @param list of ditto prefixes (EXPERIMENTAL EXTENSION by Ueno)
    * @param argVar the name of variable which is bound to the argument to the
    *             value constructor if the constructor takes an argument.
    * @param formatComments a list of defining format comments
@@ -945,12 +961,13 @@ struct
    *        which encode the value constructed by the <code>valConName</code>.
    *)
   fun generateForValConBind
-      (F, P, prefix) argVarName {formatComments, valConName, argTypeOpt} =
+      (F, P, prefix, ditto)
+      argVarName {formatComments, valConName, argTypeOpt} =
       let
-        fun isSamePrefix (formatComment : Ast.definingFormatComment) =
+        fun isSamePrefix prefix (formatComment : Ast.definingFormatComment) =
             #prefix formatComment = prefix
       in
-        case List.find isSamePrefix formatComments of
+        case findOneOf (prefix::ditto) isSamePrefix formatComments of
           SOME {primaryTag, localTags, ...} =>
           (case argTypeOpt of
              NONE =>
@@ -1003,17 +1020,18 @@ struct
       
   (**
    *  generates a SML code of body of formatter for the datatype binding.
-   * @params (F, P, prefix) (formatterName, datatypeDef)
+   * @params (F, P, prefix, ditto) (formatterName, datatypeDef)
    * @param F the formatter environment
    * @param P the additional parameter set
    * @param prefix the prefix indicating the current namespace
+   * @param list of ditto prefixes (EXPERIMENTAL EXTENSION by Ueno)
    * @param formatterName the name of formatter to generate
    * @param datatypeDef an AST node of the datatype definition generated by
    *                the parser.
    * @return a text of SML code of formatter
    *)
   fun generateForDataTypeBind
-      (F, formatParams, prefix)
+      (F, formatParams, prefix, ditto)
       (
         formatterName,
         {tyConName, tyvars, rhs = Ast.Constrs valconBinds, lazyp,
@@ -1043,7 +1061,7 @@ struct
             params
         val exps =
             map
-            (generateForValConBind (F', P, prefix) varNameForValConArg)
+            (generateForValConBind (F', P, prefix, ditto) varNameForValConArg)
             valconBinds
         val rules =
             map
@@ -1065,7 +1083,7 @@ struct
         (U.interleaveString (newline ^ " | ") rules) ^ newline
       end
     | generateForDataTypeBind
-      (F, params, prefix)
+      (F, params, prefix, ditto)
       (
         formatterName,
         {tyConName, tyvars, rhs = Ast.Repl replTyConName, lazyp, ...}
@@ -1078,16 +1096,17 @@ struct
 
   (**
    *  generates a SML code of body of formatter for a type binding.
-   * @params (F, P, prefix) (formatterName, typeDef)
+   * @params (F, P, prefix, ditto) (formatterName, typeDef)
    * @param F the formatter environment
    * @param P the additional parameter set
    * @param prefix the prefix indicating the current namespace
+   * @param list of ditto prefixes (EXPERIMENTAL EXTENSION by Ueno)
    * @param formatterName the name of formatter to generate
    * @param typeDef an AST node of the type definition generated by the parser.
    * @return a text of SML code of formatter
    *)
   fun generateForTypeBind
-      (F, formatParams, prefix)
+      (F, formatParams, prefix, ditto)
       (formatterName,
        {tyConName, tyvars, ty, formatComments,
         innerHeaderFormatComments : Ast.innerHeaderFormatComment list}) =
@@ -1095,10 +1114,10 @@ struct
         val localParams = List.concat (map #params innerHeaderFormatComments)
         val formatParams = case localParams of nil => formatParams
                                              | _ => localParams
-        fun isSamePrefix (formatComment : Ast.definingFormatComment) =
+        fun isSamePrefix prefix (formatComment : Ast.definingFormatComment) =
             #prefix formatComment = prefix
         val ((primaryTag, localTags), isDefault) =
-            case List.find isSamePrefix formatComments of
+            case findOneOf (prefix::ditto) isSamePrefix formatComments of
               NONE => (generateDefaultFormatTags ty, true)
             | SOME {primaryTag, localTags, ...} =>
               ((primaryTag, localTags), false)
@@ -1137,17 +1156,18 @@ struct
 
   (**
    *  generates a SML code of body of formatter for the exception binding.
-   * @params (F, P, prefix) formatterRefName exceptionDef
+   * @params (F, P, prefix, ditto) formatterRefName exceptionDef
    * @param F the formatter environment
    * @param P the additional parameter set
    * @param prefix the prefix indicating the current namespace
+   * @param ditto list of super-prefixes (EXPERIMENTAL EXTENSION by Ueno)
    * @param formatterRefName the name of formatter to generate
    * @param exceptionDef an AST node of the exception definition generated by
    *                the parser.
    * @return a text of SML code of formatter
    *)
   fun generateForExceptionBind
-      (F, formatParams, prefix)
+      (F, formatParams, prefix, ditto)
       formatterRefName
       (Ast.EbGen
          {formatComments, exn, etype,
@@ -1166,7 +1186,7 @@ struct
             params
         val exp =
             generateForValConBind
-                (F, P, prefix)
+                (F, P, prefix, ditto)
                 varNameForValConArg
                 {
                   formatComments = formatComments,
@@ -1193,7 +1213,7 @@ struct
         "in end" ^ newline
       end
     | generateForExceptionBind
-      (F, params, prefix)
+      (F, params, prefix, ditto)
       formatterRefName
       (Ast.EbDef{formatComments, exn, edef, innerHeaderFormatComments}) =
       (* formatter is not generated for EbDef *)
@@ -1243,6 +1263,63 @@ struct
 *)
 
   (**
+   * resolve ditto references. (EXPERIMENTAL EXTENSION by Ueno)
+   * @params formatComments
+   * @param formatComments
+   * @return formatComments with complete list of ancestor prefixes and
+   *         inherited formatters.
+   *)
+  fun resolveDitto (formatComments : Ast.headerFormatComment list) =
+      let
+        fun error msg =
+            raise InternalError(DittoError(msg))
+
+        fun find prefix =
+            case List.find (fn {prefix=p,...} => p = prefix) formatComments of
+              SOME x => x
+            | NONE => error ("undefined prefix `"^prefix^"'")
+
+        fun copyFormatters (fmt as {formatters, ditto, ...}
+                            : Ast.headerFormatComment) =
+            {
+              destinationOpt = #destinationOpt fmt,
+              funHeaderOpt = #funHeaderOpt fmt,
+              params = #params fmt,
+              ditto = ditto,
+              prefix = #prefix fmt,
+              formatters =
+                foldl (fn (prefix, z) => #formatters (find prefix) @ z)
+                      formatters
+                      ditto
+            } : Ast.headerFormatComment
+
+        val modified = ref false
+        val newFormatComments =
+            map (fn fmt as {ditto = nil, ...} => fmt
+                  | fmt as {prefix, ditto, ...} =>
+                    case #ditto (find (List.last ditto)) of
+                      nil => fmt
+                    | l =>
+                      case List.find (fn p => p = prefix) l of
+                        SOME _ => error ("ditto chain is looped: "^prefix)
+                      | NONE => 
+                        (modified := true;
+                         {
+                           destinationOpt = #destinationOpt fmt,
+                           formatters = #formatters fmt,
+                           funHeaderOpt = #funHeaderOpt fmt,
+                           params = #params fmt,
+                           ditto = ditto @ l,
+                           prefix = prefix
+                         } : Ast.headerFormatComment))
+                formatComments
+      in
+        if !modified
+        then resolveDitto newFormatComments
+        else map copyFormatters newFormatComments
+      end
+
+  (**
    * generates SML code of the formatter for a datatype declaration.
    *
    * @params formatterEnv (regionOpt, dec)
@@ -1272,7 +1349,7 @@ struct
 
         fun generate
             (
-              {destinationOpt, funHeaderOpt, formatters, params, prefix}
+              {destinationOpt, funHeaderOpt, formatters, params, prefix, ditto}
               : Ast.headerFormatComment,
               (formatterCodes, F)
             ) =
@@ -1318,10 +1395,10 @@ struct
               (* generate codes of formatters for each datatype bindings. *)
               val tyconFormatters =
                   (map
-                       (generateForDataTypeBind (F''', params, prefix))
+                       (generateForDataTypeBind (F''', params, prefix, ditto))
                        (zipEq (datatypeFormatterNames, datatypeBinds))) @
                   (map
-                       (generateForTypeBind (F''', params, prefix))
+                       (generateForTypeBind (F''', params, prefix, ditto))
                        (zipEq (typeFormatterNames, typeBinds)))
             in
               (
@@ -1335,6 +1412,8 @@ struct
                 appendFormatterEnv (F'', F) (* excludes local formatters *)
               )
             end
+
+        val formatComments = resolveDitto formatComments
       in
         (* process left to right *)
         foldl generate ([], F) formatComments
@@ -1373,7 +1452,7 @@ struct
 
         fun generate
             (
-              {destinationOpt, funHeaderOpt, formatters, params, prefix}
+              {destinationOpt, funHeaderOpt, formatters, params, prefix, ditto}
               : Ast.headerFormatComment,
               (formatterCodes, F)
             ) =
@@ -1414,7 +1493,7 @@ struct
               (* generate codes of formatters for each type bindings. *)
               val tyconFormatters =
                   map
-                      (generateForTypeBind (F''', params, prefix))
+                      (generateForTypeBind (F''', params, prefix, ditto))
                       (zipEq (formatterNames, typeBinds))
             in
               (
@@ -1428,6 +1507,8 @@ struct
                 appendFormatterEnv (F'', F) (* excludes local formatters *)
               )
             end
+
+        val formatComments = resolveDitto formatComments
       in
         foldl generate ([], F) formatComments
       end
@@ -1463,7 +1544,7 @@ struct
 
         fun generate
             (
-              {destinationOpt, funHeaderOpt, formatters, params, prefix}
+              {destinationOpt, funHeaderOpt, formatters, params, prefix, ditto}
               : Ast.headerFormatComment,
               (formatterCodes, F)
             ) =
@@ -1499,7 +1580,7 @@ struct
               val exceptionFormatters =
                   map
                   (generateForExceptionBind
-                       (F', params, prefix)
+                       (F', params, prefix, ditto)
                        formatterExnRefName)
                   exceptionBinds
             in
@@ -1513,6 +1594,8 @@ struct
                 F (* exclude local formatters. *)
               )
             end
+
+        val formatComments = resolveDitto formatComments
       in
         foldl generate ([], F) formatComments
       end

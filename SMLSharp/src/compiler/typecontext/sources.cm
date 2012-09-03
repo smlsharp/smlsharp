@@ -1,0 +1,8 @@
+Group
+ 	structure TypeContext
+        structure InitialTypeContext
+ 	structure TypeContextUtils
+        structure TypeContextPickler
+	structure InitialNameMap
+is
+	main/module.cm

@@ -3,5 +3,5 @@ $(SML_LIB)/basis/sml-nj.mlb
 $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
 
-"@BASISDIR@/basis_compat.mlb"
+
 "@SMLFORMATDIR@/smlformatlib.mlb"

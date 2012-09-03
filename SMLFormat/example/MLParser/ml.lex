@@ -40,7 +40,7 @@ fun makeString (buf) = concat (rev (!buf)) before buf := nil
 val eof = fn s => Tokens.EOF (left(0,s),right(0,0,s))
 local
   fun cvt radix (s, i) =
-      #1(valOf(Int.scan radix Substring.getc (Substring.triml i (Substring.all s))))
+      #1(valOf(Int.scan radix Substring.getc (Substring.triml i (Substring.full s))))
 in
 val atoi = cvt StringCvt.DEC
 val xtoi = cvt StringCvt.HEX

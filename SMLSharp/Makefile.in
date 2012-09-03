@@ -1,0 +1,32 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@/commonrule
+
+SUBDIRS = $(SUBPROJECTS) \
+          stublibs \
+          src \
+          doc
+
+clean:
+	-rm -rf autom4te.cache
+
+distclean:
+	-rm -f config.status config.log config.h config.sml
+	-rm -f commonrule mksmlheap mksmlrun mksmlpath newcm.cm
+	-for i in $(SUBPROJECTS); do test -f "$$i/Makefile" && rm -rf $$i; done
+	-rm -f `find . -name Makefile.in -print | sed 's,\.in$$,,'`
+
+# DUMMY is to avoid syntax error when SUBPROJECTS is empty.
+mlton:
+	for i in $(SUBPROJECTS) DUMMY; do \
+	  test "x$$i" = "xDUMMY" && continue; \
+	  test "x$$i" = "xSMLUnit" && continue; \
+	  (sed 's/^\([a-z]*\):\(.*\)-smlnj/\1:\2-mlton/' $$i/Makefile > tmp_mk \
+	   && mv tmp_mk $$i/Makefile) || exit $$?; \
+	  (cd $$i && $(MAKE) clean && $(MAKE)) || exit $$?; \
+	done
+	$(MAKE) -C stublibs
+	$(MAKE) -C src mlton

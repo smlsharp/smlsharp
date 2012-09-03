@@ -1,8 +1,0 @@
-Group
-        structure MultipleValueCalc
-        structure MultipleValueCalcFormatter
-        structure MultipleValueCalcUtils
-        structure MVTypeCheck
-        structure MVTypeCheckError       
-is
-	main/module.cm

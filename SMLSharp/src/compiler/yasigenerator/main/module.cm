@@ -1,0 +1,16 @@
+Group is
+        $/basis.cm
+        ../../control/sources.cm
+        ../../systemdef/sources.cm
+        ../../util/sources.cm
+        ../../../primitives/primitives.cm
+        ../../name/sources.cm
+        ../../symbolicinstructions/sources.cm
+        ../../anormal/sources.cm
+        ../../abstractinstruction/sources.cm
+        ../../sigenerator/sources.cm      (* GlobalIndexEnv *)
+        ../../aigenerator/main/module.cm  (* AIPrimitive *)
+
+        Counters.sml
+        SIGENERATOR.sig
+        SIGenerator.sml

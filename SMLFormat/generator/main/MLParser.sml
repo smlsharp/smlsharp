@@ -1,9 +1,8 @@
 (**
  * implementation of SML source code parser.
  *
- * @author (C) 2001 Lucent Technologies, Bell Labs
  * @author YAMATODANI Kiyoshi
- * @version $Id: MLParser.sml,v 1.4 2005/12/07 08:09:14 kiyoshiy Exp $
+ * @version $Id: MLParser.sml,v 1.6 2008/08/10 12:54:32 kiyoshiy Exp $
  *)
 structure MLParser : MLPARSER =
 struct
@@ -128,7 +127,8 @@ struct
             in untilEOF lexer' (ast :: results) end
               handle EndOfParse => List.rev results
 
-        fun getLine length = TextIO.inputLine sourceStream
+        fun getLine length = case TextIO.inputLine sourceStream of SOME x => x
+								 | NONE => "" 
 
         val asts =
             untilEOF (MLParser.makeLexer getLine initialArg) []

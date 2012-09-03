@@ -1,0 +1,157 @@
+// -*- idl-*-
+
+/*
+ * The specification of messages transmitted between the IML compiler and the
+ * IML runtime.
+ * This specification is described in the Microsoft IDL.
+ * 
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: MessageSpecification.txt,v 1.1 2008/03/13 02:14:10 kiyoshiy Exp $
+ */
+
+///////////////////////////////////////////////////////////////////////////////
+// Primitive types
+
+/*
+ * Multi byte value is transmitted in network byte order (= big endian).
+ */
+
+typedef char ByteValue;
+typedef unsigned short UInt16Value; /* 16 bit unsigned integer */
+typedef signed short SInt16Value; /* 16 bit signed integer */
+typedef unsigned int UInt32Value; /* 32 bit unsigned integer */
+typedef signed int SInt32Value; /* 32 bit signed integer */
+
+///////////////////////////////////////////////////////////////////////////////
+// Basic types
+
+typedef
+struct {
+  UInt32Value length; /* bytes */
+  [length_is(length)] ByteValue data[];
+} ByteArray;
+
+typedef
+UInt32Value FileDescriptor;
+
+typedef
+enum [type_is(UInt32Value)] {
+  LittleEndian = 0,
+  BigEndian = 1
+} ByteOrder;
+
+typedef
+enum [type_is(ByteValue)] {
+  Success = 0,
+  Failure = 1,  /* recoverable error */
+  Fatal = 2     /* unrecoverable error. Both endpoints should terminate. */
+} MajorCode;
+
+typedef ByteValue MinorCode;
+
+typedef
+struct {
+  MajorCode majorCode;
+  [switch_type(MajorCode), switch_is(majorCode)] union {
+    [case(Success)]
+      ;
+    [default]
+      MinorCode minorCode;
+      ByteArray description;
+  };
+} Result;
+
+///////////////////////////////////////////////////////////////////////////////
+// Message contents
+
+typedef
+Result InitializationResult;
+
+////////////////////////////////////////
+
+typedef
+struct {
+  SInt32Value exitCode; // ???
+} ExitRequest;
+
+////////////////////////////////////////
+
+/* format of the executable is described in another document. */
+typedef
+struct {
+  ByteArray executable;
+} ExecutionRequest;
+
+typedef
+Result ExecutionResult;
+
+////////////////////////////////////////
+
+typedef
+struct {
+  FileDescriptor descriptor; /* STDOUT_FILENO, STDERR_FILENO only ? */
+  ByteArray data;
+} OutputRequest;
+
+typedef
+Result OutputResult;
+
+////////////////////////////////////////
+
+typedef
+struct {
+  UInt32Value length;
+} InputRequest;
+
+typedef
+struct {
+  Result result;
+  [switch_type(MajorCode), switch_is(result.majorCode)] union {
+    [case(Success)]
+      ByteArray data; /* if detected EOF, length of data is 0. */
+    [default]
+      ;
+  };
+} InputResult;
+
+////////////////////////////////////////
+
+typedef
+struct {
+  ByteArray directory;
+} ChangeDirectoryRequest;
+
+///////////////////////////////////////////////////////////////////////////////
+// Message
+
+typedef
+enum [type_is(ByteValue)] {
+  InitializationResult = 0,
+  ExitRequest = 1,
+  ExecutionRequest = 2,
+  ExecutionResult = 3,
+  OutputRequest = 4,
+  OutputResult = 5,
+  InputRequest = 6,
+  InputResult = 7,
+  ChangeDirectoryRequest = 8,
+} MessageType;
+
+typedef
+struct {
+  MessageType messageType;
+  [switch_is(messageType), switch_type(MessageType)] union {
+    [case(InitializationResult)] InitializationResult initializationResult;
+    [case(ExitRequest)] ExitRequest exitRequest;
+    [case(ExecutionRequest)] ExecutionRequest executionRequest;
+    [case(ExecutionResult)] ExecutionResult executionResult;
+    [case(OutputRequest)] OutputRequest outputRequest;
+    [case(OutputResult)] OutputResult outputResult;
+    [case(InputRequest)] InputRequest inputRequest;
+    [case(InputResult)] InputResult inputResult;
+    [case(ChangeDirectoryRequest)]
+        ChangeDirectoryRequest changeDirectoryRequest;
+  };
+} Message;
+
+///////////////////////////////////////////////////////////////////////////////

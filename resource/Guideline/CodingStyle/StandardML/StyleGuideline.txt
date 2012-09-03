@@ -1,0 +1,383 @@
+Style guideline
+
+author: YAMATODANI Kiyoshi
+version: $Id: StyleGuideline.txt,v 1.1 2008/03/13 02:14:10 kiyoshiy Exp $
+
+----------------------------------------
+1, General
+
+--------------------
+1.1, Readability
+
+"Readability" is a property of program text to enable readers to
+understand the meaning of the program straightforwardly and correctly.
+It can safely be said that humans interpret program texts like the
+compiler parses them. Scanning a text sequentially, we build, in our minds,
+a syntax tree from it according to the grammar rule of the language.
+So, it will be the first step toward readability if we take care to keep
+the surface structure of the program text analogous to the syntax
+structure of the program.
+
+--------------------
+1.2, Maintainability
+
+The principal purpose of this guideline is to put constraints on code
+writers to keep readability for readers.
+As the second target, the guideline also should be defined in order to
+keep "maintainability" of program for maintainer, who may be not the
+original writer.
+Program codes are rewritten constantly in their lifecycle in order to keep
+up with changes of required specifications.
+The guideline should restrict writers not to diverge to unreasonable
+coding style which requires unnecessary work of future maintainers.
+
+----------------------------------------
+2, Indentation and line break
+
+--------------------
+2.1, multiple lines
+
+Readability is most required especially for codes implementing a
+complicated processing.
+Complicated processing requires much codes to be written, which
+inevitably extend across multiple lines.
+The guideline has to assume codes spanning multiple lines.
+
+--------------------
+2.2, comments for the ML
+
+The ML language puts many terms, which would be divided into different
+categories in other languages, into a same class "expression". 
+For example, "if" term, "let" term and etc. are all expressions. 
+Expressions can be nested to any arbitrary depth, and, in fact, we tend
+to write much nested expressions. It harms readability of the code.
+This guideline proposes a style in which terms can be nested without
+spoiling readability as much as possible.
+
+But you are recommended to avoid writing such nested terms, by binding
+sub-expressions to temporary variables in "let" or "local".
+
+--------------------
+2.3, patterns in syntax rule
+
+As described above, this style guideline is defined based on the syntax
+structure of program.
+
+Syntax rules of languages are made by combination of three patterns.
+-----
+(1) repetition 
+Repetition of terms of the same kind, which might be interleaved with
+separators.
+Example: a list of elements in a tuple expression is a repetition of
+expressions separated by commas.
+-----
+(2) hierarchy
+A term and each of its direct or indirect subterms are related in a
+hierarchy.
+Example: a tuple expression and each of its element expressions are in a
+hierarchy.
+-----
+(3) composition
+Sequence of terms, which might be heterogeneous and be interleaved with
+reserved keywords.
+Example: an "if" expression consists of "if" keyword, condition
+expression, "then" keyword, expression for case of true, "else" keyword
+and expression for case of false.
+
+
+--------------------
+2.4, guidelines for syntax patterns
+
+The following presents style guidelines for these patterns.
+
+-----
+(1) repetition
+Every elements in repetition have equal presence in semantics.
+Therefore, they should be positioned symmetrically in the text.
+  ----------------------------------------
+  (NG)
+  (e1,
+   e2,
+   e3,
+   e4)
+
+  (NG)
+  [e1, e2, e3,
+   e4, e5, e6]
+
+  (OK)
+  {
+    l1 = e1,
+    l2 = e2,
+    l3 = e3
+  }
+  ----------------------------------------
+
+-----
+(2) hierarchy
+In semantics, a upper term has more significance than its lower sub
+terms.
+On program text, structure of a upper term should be presented in
+clarified in preference to its lower sub terms.
+Concretely speaking, if the whole term does not fit within a single line,
+upper term should be folded to multiple lines before folding its
+subterms.
+  ----------------------------------------
+  (NG)
+  let val v1 = e1 in if b
+                     then eT
+                     else eF end
+
+  (NG)
+  let val v1 = if b 
+               then eT 
+               else eF in e1 end
+
+  (OK)
+  let val v1 = e1
+  in if b then eT else eF end
+
+  (OK)
+  let
+    val v1 = e1
+  in
+    if b then eT else eF
+  end
+
+  (OK)
+  let
+    val v1 = e1
+  in
+    if b
+    then eT 
+    else eF
+  end
+  ----------------------------------------
+
+-----
+(3) composition
+For this pattern, we don't have a general rule with definite reason.
+Here presents an observation that line break before keyword is better
+than after keyword, because structure of the term becomes easy to
+recognize.
+  ----------------------------------------
+  (break after keywords)
+  some_fun e1 e2 e3 andalso
+  e4
+
+  (break before keywords)
+  some_fun e1 e2 e3 
+  andalso e4
+  ----------------------------------------
+If expression is much complicated, you need to turn your eyes to the end
+of line in order to distinguish the former from function application.
+On the contrary, by keywords at the beginning of line, readers can
+instantly recognize that the latter is not function application.
+
+
+--------------------
+2.5, term specific guidelines
+
+And, rules specific for some terms are presented below.
+
+(Function application)
+Arguments of function application also constitute a repetition of
+expressions.
+Applied function expression may be considered to be included in the
+repetition or not.
+  ----------------------------------------
+  (NG)
+  fold (fn x => e1)
+    e2
+    e3
+
+  (OK)
+  fold
+  (fn x => e1)
+  e2
+  e3
+
+  (OK)
+  fold
+    (fn x => e1)
+    e2
+    e3
+  ----------------------------------------
+
+("If" expression)
+In "if" expression, true branch and false branch should be placed
+symmetric.
+  ----------------------------------------
+  (NG)
+  if cond then e1
+  else 2
+
+  (NG)
+  if cond then
+    e1
+  else e2
+
+  (OK)
+  if cond
+  then e1
+  else e2
+  ----------------------------------------
+
+----------------------------------------
+3, arrangement 
+
+There may be some arrangement in which entities are declared in an order
+that contributes to keep readability and maintainability of program text.
+
+For example, it is reasonable to arrange entities in program text so that
+public (= global) entities stand out from private (= local) entities.
+
+An arrangement in which public entities are declared at the head before
+private entities may be such one.
+In Java, class members can be arranged in arbitrary order. A member A can
+be declared prior to another member B even if A depends on B.
+For such language, we can define a guideline which forces some order
+rigorously. For example, public fields should be declared first, then,
+public constructors, public methods, private fields, so on.
+
+But, in ML, possible arrangement of entities is restricted by dependency
+between them, so that an entity A cannot be declared prior to another
+entity B if A depends on B.
+
+Thus, this guideline does not define rigid rule about the order of
+entities.
+Instead, here proposes a standard you can refer to.
+
+Basically, specifications in a signature are declared in the following
+order:
+  ----------------------------------------
+  include 
+  sharing descriptions 
+  type, eqtype and datatype descriptions 
+  exception descriptions 
+  inner structure 
+  value descriptions 
+  ----------------------------------------
+and, declarations in a structure:
+  ----------------------------------------
+  open declaration 
+  infix directive 
+  type, eqtype, datatype and abstype declaration 
+  exception declaration 
+  inner structure 
+  value and function declaration 
+  ----------------------------------------
+
+Of course, you are allowed to depart from this because of dependency
+between entities.
+
+----------------------------------------
+4, miscellaneous rules for portability
+
+Source codes will be released to public.
+They will be browsed in various environment.
+To keep the same appearance anywhere, we should pay attention to
+"portability" of source code format.
+
+There are two advices.
+
+* Use no tab character.
+The number of columns which a tab character is extended to depends on
+environment.
+Constant appearance can not be assured if tab characters are used.
+For Emacs user, the following code suppresses use of tabs for indent.
+
+  (custom-set-variables '(indent-tabs-mode nil))
+
+* Keep each line within 80 columns.
+If a line exceeds the window width, it makes inconvenience to read.
+We have to scroll window horizontally, or to move eyes between the right
+and left sides of window.
+80 columns is assumed the minimum width to be considered.
+This is an Emacs-lisp code to specify window size.
+
+  (setq default-frame-alist
+      (append
+          (list
+              '(width . 80)  ;; or 81
+              '(height . 46))
+          default-frame-alist))
+
+And, length of each line can be reduced by following ways.
+
+  * Insert newlines at appropriate positions according to the guideline.
+  * Avoid much nested terms by using "let" and "local".
+
+------------------------
+For example, assume a long expression.
+
+  List.map (foldl (fn ((name, tyOpt, loc), binds) => (name, case tyOpt of
+NONE => NONE | SOME ty => SOME(transTy env ty), loc) :: binds) [])
+bindsList
+
+This is difficult to read, because we have to switch attention back and
+forth. 
+Firstly, scan the whole code to parse its syntactic structure, then, go
+from inside to outside reversely to understand the meaning.
+
+This can be rewritten into the following one.
+We just have to scan only once from top to bottom sequentially to
+understand it.
+
+  let
+    fun transBind (name, tyOpt, loc) =
+        let
+          val newTyOpt =
+              case tyOpt of
+                NONE => NONE | SOME ty => SOME(transTy env ty)
+        in (name, newTyOpt, loc)
+        end
+    fun transBinds binds =
+        foldl (fn (bind, binds) => transBind bind :: binds) [] binds
+  in
+    List.map transBinds bindsList
+  end
+
+
+===============================================================================
+
+ This is a guideline about interface of functions that "you should take
+care to reduce ambiguity when defining interface of function".
+
+ Assume to define a function which takes two environments (=
+maps/dictionaries) and returns a new environment by merging them. When
+two environments contain entries of the same key, this function adds only
+the entry in the first environment to the result environment.
+
+ Then, think the following spec of this function.
+
+  val merge : env * env -> env
+
+From this spec, user cannot decide correct order of two environments
+arguments to pass without any descriptive comment. User might write a
+code that passes arguments to this function in incorrect order.
+
+  merge (oldENV, newENV)
+
+This expression is evaluated to an environment in which entries from the
+old environment override entries from the new environment. Usual case,
+this will be a bug. Correct code will be as follows.
+
+  merge (newENV, oldENV)
+
+ An improvement is to make the function take a record parameter with
+descriptive labels.
+
+  val merge : {old : env, new : env} -> env
+
+ Less obvious another option is to include prepositions into function
+name.
+
+  val addTo : env * env -> env
+
+From this spec, user might be able to read that "this function adds the
+first environment to the second environment", and, with usual sense,
+might be able to imagine that "the first argument has a priority over the
+second argument", although this contains some ambiguity compared to the
+above option.
+===============================================================================

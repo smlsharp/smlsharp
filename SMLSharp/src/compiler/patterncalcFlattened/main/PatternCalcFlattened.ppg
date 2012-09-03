@@ -1,0 +1,638 @@
+(**
+ * The pattern calculus for the IML.
+ * @author Liu Bochao
+ * @author Atsushi Ohori
+ * @version $Id: PatternCalcFlattened.ppg,v 1.17 2008/08/24 03:54:41 ohori Exp $
+ *)
+structure PatternCalcFlattened = 
+struct
+local
+  type loc = Loc.loc
+  type path = Path.path
+  type namePath = NameMap.namePath
+  type caseKind = PatternCalc.caseKind
+  type constant = Absyn.constant
+  type ty = Absyn.ty
+  type tvar = Absyn.tvar
+  type tvarKind = Absyn.tvarKind
+  type kindedTvar = Absyn.kindedTvar
+  type ffiAttributes = Absyn.ffiAttributes
+in
+  type printSigInfo = 
+    {
+     strName : string, (* structure Name *)
+     topSigConstraint : PatternCalc.plsigexp option, (* constraint signature *) 
+     strNameMap : NameMap.strNameMap
+     }
+
+  (*%
+   * @params(expFormatter,patFormatter)
+   * @formatter(formatGenericFieldsExp) SmlppgUtil.formatGenericFieldsExp
+   * @formatter(option) SmlppgUtil.formatPrependedOpt
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
+   *
+   * @formatter(path) Path.format_pathWithoutDotend
+   * @formatter(namePath) NameMap.format_namePath
+   * @formatter(caseKind) PatternCalc.format_caseKind
+   * @formatter(constant) Absyn.format_constant
+   * @formatter(ty) Absyn.format_ty
+   * @formatter(tvar) Absyn.format_tvar
+   * @formatter(tvarKind) Absyn.format_tvarKind
+   * @formatter(kindedTvar) Absyn.format_kindedTvar
+   * @formatter(ffiAttributes) Absyn.format_ffiAttributes
+   *)
+  datatype plfexp = 
+     (*%
+      * @format(value * loc) {value}
+      *)
+     PLFCONSTANT of constant * loc
+   | (*%
+      * @format(name * gk * loc) {name}
+      *)
+     PLFGLOBALSYMBOL of string * Absyn.globalSymbolKind * loc
+   | (*%
+      * @format(longid * loc) {longid}
+      *)
+     PLFVAR of namePath  * loc
+   | (*%
+      * @format(exp * ty * loc)
+      * N0{ {exp()(expFormatter,patFormatter)} + ":" {ty}}
+      *)
+     PLFTYPED of plfexp *  ty * loc
+   | (*%
+      * @format(exp1 * arg args:formatListWithEnclosureOne * loc)
+      * L10{
+      *      exp1()(expFormatter,patFormatter) +
+      *      args(arg()(expFormatter,patFormatter))(","+1, "{", "}")
+      *    }
+      *)
+     PLFAPPM of plfexp * plfexp list * loc
+   | (*%
+      * @format(dec decs * exp exps * loc)
+      * !N0{
+      *      {"let" 2[ +1 decs(dec()(expFormatter,patFormatter))( +1) ]} +1
+      *      {
+      *        "in" 2[ +2 exps(exp()(expFormatter,patFormatter))( +3 ) ] +2
+      *        "end"
+      *      }
+      *    }
+      *)
+     PLFLET of pdfdecl list * plfexp list * loc
+   | (*%
+      * @format(value:formatGenericFieldsExp * loc) value()(expFormatter,"=",",")
+      *)
+     PLFRECORD of (string * plfexp) list * loc
+   | (*%
+      * @format(exp * field fields * loc)
+      * N0{
+      *     {exp()(expFormatter,patFormatter)} +
+      *     "#" + "{" 2[ 1 fields(field)( "," +1) ] 1 "}"
+      *   }
+      * @format:field(label * exp)
+      * {{label} +d "=" +2 {exp()(expFormatter,patFormatter)}}
+      *)
+     PLFRECORD_UPDATE of plfexp * (string * plfexp) list * loc
+   | (*%
+      * @format(value values:formatListWithEnclosure * loc)
+      * values(value()(expFormatter,patFormatter))("," +, + "(", ")")
+      *)
+     PLFTUPLE of plfexp list * loc
+   | (*%
+      * @format(value values * loc)
+      *      {"[" 2[ 1 values(value()(expFormatter,patFormatter))("," +1) ] 1 "]"}
+      *)
+     PLFLIST of plfexp list * loc
+   | (*%
+      * @format(exp * loc) N0{ "raise" +d {exp()(expFormatter,patFormatter)} }
+      *)
+     PLFRAISE of plfexp * loc
+   | (*%
+      * @format(exp * rule rules * loc)
+      * N0{
+      *     {exp()(expFormatter,patFormatter)} +1
+      *     "handle" +d rules(rule)( ~2[ +1 "|"] +)
+      *   }
+      * @format:rule(pat * exp)
+      * {pat()(expFormatter,patFormatter)} + "=>" +1
+      * {exp()(expFormatter,patFormatter)}
+      *)
+     PLFHANDLE of plfexp * (plfpat * plfexp) list * loc
+   | (*%
+      * @format(rule rules * loc) !N0{ "fn" + {rules(rule)(~2[ +1 "|"] +)} }
+      * @format:rule(pat pats:formatListWithEnclosureOne * exp)
+      * {pats(pat()(expFormatter,patFormatter))(","+1, "{", "}")} + "=>" +1
+      * {exp()(expFormatter,patFormatter)}
+      *)
+     PLFFNM of (plfpat list * plfexp) list * loc 
+   | (*%
+      * @format(exp exps:formatListWithEnclosureOne * rule rules * caseKind * loc)
+      * N0{
+      *     caseKind 2[ +d {exps(exp()(expFormatter,patFormatter))(",","{","}")} ]
+      *     2[ +1 "of" ]+ {rules(rule)(~2[ +1 "|" ]+)}
+      *   }
+      * @format:rule(pat pats:formatListWithEnclosureOne * exp)
+      * {{pats(pat()(expFormatter,patFormatter))(",","{","}")} + "=>" +1
+      * {exp()(expFormatter,patFormatter)}}
+      *)
+     PLFCASEM of plfexp list 
+              * (plfpat list * plfexp) list 
+              * caseKind 
+              * loc  (* primitive; caseKind added *)
+   | (*%
+      * @format(selector * loc)  {"#"{selector}}
+      *)
+     PLFRECORD_SELECTOR of string * loc 
+   | (*%
+      * @format(selector * exp * loc)
+      * L10{"#"{selector} + {exp()(expFormatter,patFormatter)}}
+      *)
+     PLFSELECT of string * plfexp * loc  (* this must be kept as a primitive *)
+  | (*%
+     * @format(exp exps * loc)
+     * !N0{ "(" 2[ 1 exps(exp()(expFormatter,patFormatter))(";" +1) ] 1 ")" }
+     *)
+     PLFSEQ of plfexp list * loc
+  | (*%
+     * @format(exp * loc) "_cast" "(" exp()(expFormatter,patFormatter) ")"
+     *)
+     PLFCAST of plfexp * loc
+  | (*%
+     * @format(exp * ty * loc)
+     *     N0{ {exp()(expFormatter,patFormatter)}
+     *         + ":" +1 "_import" +2 {ty} }
+     *)
+    PLFFFIIMPORT of plfexp * ty * loc
+  | (*%
+     * @format(exp * ty * loc)
+     *     N0{ {exp()(expFormatter,patFormatter)}
+     *         + ":" +1 "_export" +2 {ty} }
+     *)
+    PLFFFIEXPORT of plfexp * ty * loc
+  | (*%
+     * @format(cconv * exp * arg args * ty * loc)
+     *     N0{ "_ffiapply" + cconv + exp()(expFormatter,patFormatter)
+     *         + "(" args(arg()(expFormatter,patFormatter))("," +) ")"
+     *         + ":" + ty}
+     *)
+    PLFFFIAPPLY of ffiAttributes * plfexp * ffiArg list * ty * loc
+
+ and ffiArg =
+    (*%
+     * @format(exp * ty * loc)  exp()(expFormatter,patFormatter) + ":" + ty	
+     *)    
+     PLFFFIARG of plfexp * ty * loc
+   | (*%
+      * @format(ty * exp opt * loc)
+      *   "_sizeof(" ty ")" {opt(exp()(expFormatter,patFormatter))(+d "*" +)}
+      *)
+     PLFFFIARGSIZEOF of ty * plfexp option * loc
+
+ and pdfdecl = 
+     (*%
+      * @format(var vars:formatListWithEnclosure * bind binds * loc)
+      *       "val" {vars(var)("," +, + "(", ")")} +
+      *             {binds(bind)(~4[ +1 "and"] +)}
+      * @format:bind(pat * exp)
+      * {pat()(expFormatter,patFormatter)} +d "=" +2
+      * {exp()(expFormatter,patFormatter)}
+      *)
+     PDFVAL of kindedTvar list * (plfpat * plfexp ) list * loc 
+   | (*%
+      * @format(var vars:formatListWithEnclosure * dec binds * loc)
+      *  "fun" {vars(var)("," +, + "(", ")")} + 
+      *                   {binds(dec)(~4[ +1 "and"] +)}
+      * @format:dec(fid * rules) {fid()(expFormatter,patFormatter) + rules}
+      * @format:rules(rule rules) {rules(rule)(~2[ +1"|"] +)}
+      * @format:rule(pat pats *  exp)
+      *    {pats(pat()(expFormatter,patFormatter))(+d)} +d "=" +1 {exp()(expFormatter,patFormatter)}
+      *)
+      PDFDECFUN of kindedTvar list * (plfpat * (plfpat list * plfexp) list) list * loc 
+   | (*%
+      * @format(var vars:formatListWithEnclosure * dec * loc)
+      *  "nonrecfun" {vars(var)("," +, + "(", ")")} + {dec}
+      * @format:dec(fid * rules) {fid()(expFormatter,patFormatter) + rules}
+      * @format:rules(rule rules) {rules(rule)(~2[ +1"|"] +)}
+      * @format:rule(pat pats *  exp)
+      *    {pats(pat()(expFormatter,patFormatter))(+d)} +d "=" +1 {exp()(expFormatter,patFormatter)}
+      *)
+      PDFNONRECFUN of kindedTvar list * (plfpat * (plfpat list * plfexp) list) * loc 
+   | (*%
+      * @format(var vars:formatListWithEnclosure * bind binds * loc)
+      *  "val" {vars(var)("," +, + "(", ")")} +d
+      *          "rec" +d {binds(bind)(~4[ +1 "and"] +)}
+      * @format:bind(pat * exp)
+      * {pat()(expFormatter,patFormatter)} +d "=" +2
+      * {exp()(expFormatter,patFormatter)}
+      *)
+     PDFVALREC of kindedTvar list * (plfpat * plfexp ) list * loc
+   | (*%
+      * @format(id ids * dec decs * loc)
+      * "valrecgroup" +1 2[decs(dec()(expFormatter,patFormatter))(+ 1)] +1
+      * "endvalrecgroup"
+      *)
+     PDFVALRECGROUP of string list * pdfdecl list * loc
+   | (*%
+      * @format(bind binds * loc) "type" + {binds(bind)(~4[ +1 "and"] +)}
+      * @format:bind(tyvar tyvars:formatListWithEnclosure * name * ty)
+      *            {tyvars(tyvar)("," +, "(", ")" +)} {name} +d "=" +2 {ty}
+      *)
+     PDFTYPE of (tvar list * namePath * ty) list * loc
+   | (*%
+      * @format(constructorPrefix * bind binds * loc)
+      *                 "datatype" + {binds(bind)(~4[ +1 "and" ] +)}
+      * @format:bind(tyvar tyvars:formatListWithEnclosure * tyCon * (valcon valcons))
+      * {tyvars(tyvar)("," +, "(", ")" +) {tyCon} + "=" +1
+      *                                {valcons(valcon)(~2[ +1 "|" ] +)}}
+      * @format:valcon(b * name * ty option)
+      *          {b()("op" +, "")} {name} {option(ty)(~2[ +d "of" ] +)}
+      *)
+     PDFDATATYPE of path 
+                  * (tvar list * namePath * (bool * string * ty option) list) list 
+                  * loc
+   | (*%  
+      * @format(tyCon * longid * loc)
+      *     "datatype" + tyCon + "=" + "datatype" + longid
+      *)
+     PDFREPLICATEDAT of namePath * namePath * loc
+   | (*%
+      * @format(constructorPrefix * bind binds * decl decls * loc) 
+      *                 "abstype" + {binds(bind)(~4[ +1 "and" ] +)}
+      * @format:bind(tyvar tyvars:formatListWithEnclosure * tyCon * (valcon valcons))
+      * {tyvars(tyvar)("," +, "(", ")" +) {tyCon} + "=" +1
+      *                                {valcons(valcon)(~2[ +1 "|" ] +)}}
+      * @format:valcon(b * name * ty option)
+      *          {b()("op" +, "")} {name} {option(ty)(~2[ +d "of" ] +)}
+      * +d "with" +d
+      *  decls(decl()(expFormatter,patFormatter))(+)
+      * +d "end"
+      *)
+     PDFABSTYPE of path
+                   * (tvar list * namePath * (bool * string * ty option) list) list 
+                   * pdfdecl list
+                   * loc
+   | (*%
+      * @format(exc excs * loc)
+      * "exception" + {excs(exc()(expFormatter,patFormatter))(~4[ +1 "and" ]+)}
+      *)
+     PDFEXD of plfexbind list * loc
+   | (*%
+      * @format(localdec localdecs * dec decs * loc)
+      *  "local"
+      *    2[ +2 localdecs(localdec()(expFormatter,patFormatter))(+d) ] +1
+      *  "in"
+      *    2[ +2 decs(dec()(expFormatter,patFormatter))(+3) ] +2
+      *  "end"
+      *)
+     PDFLOCALDEC of pdfdecl list * pdfdecl list * loc
+   | (*%
+      * @format(introNames * {original:original, current:current} * loc)
+      *   "structure " current + "="  2["struct" + "open" +  original + "end"]
+      *)
+     PDFINTRO of NameMap.basicNameNPEnv * {original : path, current : path} * loc
+   | (*%
+      * @format(int * name names * loc)
+      *                   "infix" +d {int} +d names(name)(+d)
+      *)
+     PDFINFIXDEC of int * string list * loc
+   | (*%
+      * @format(int * name names * loc)
+      *                   "infixr" +d {int} +d names(name)(+d)
+      *)
+     PDFINFIXRDEC of int * string list * loc
+   | (*%
+      * @format(name names * loc) "nonfix" +d names(name)(+d)
+      *)
+     PDFNONFIXDEC of string list * loc
+   | (*%
+      * @format ""
+      *)
+     PDFEMPTY 
+
+ and pdfStrDecl =
+     (*%
+      * @format(dec decs * loc)
+      * decs(dec()(expFormatter,patFormatter))(+1)
+      *)
+     PDFCOREDEC of pdfdecl list* loc
+   | (*%
+      * @format(dec decs * namemap * spec * specnamemap * loc) 
+      * "{" decs(dec()(expFormatter,patFormatter))( +1) "}" + ":" 
+      * + "{" 2[spec()(expFormatter,patFormatter)] "}"
+      *)
+     PDFTRANCONSTRAINT of pdfStrDecl list * 
+                          NameMap.basicNameNPEnv *
+                          plfspec * 
+                          NameMap.basicNameNPEnv *
+                          loc
+   | (*%
+      * @format(dec decs * namemap * spec * specnamemap * loc) 
+      * "{" decs(dec()(expFormatter,patFormatter))( +1) "}" + ":>" 
+      * + "{" 2[spec()(expFormatter,patFormatter)] "}"
+      *)
+     PDFOPAQCONSTRAINT of pdfStrDecl list * 
+                          NameMap.basicNameNPEnv *
+                          plfspec * 
+                          NameMap.basicNameNPEnv *
+                          loc
+   | (*%
+      * @format(prefix * name * (actualArg * argNameMap) * loc) 
+      * prefix "=" name "(" actualArg ")"
+      *)
+     PDFFUNCTORAPP of path * string * (path * NameMap.basicNameNPEnv) * loc
+   | (*%  
+      * @format(unit units * loc)
+      * {units(unit)(0[ +1 "and"] +)}
+      * @format:unit(printSigInfo * dec decs) "{" decs(dec()(expFormatter,patFormatter))(+1) "}" +d
+      *)
+     PDFANDFLATTENED of (printSigInfo * pdfStrDecl list) list * loc 
+   | (*%
+      * @format(localdec localdecs * dec decs * loc)
+      *  "local"
+      *    2[ +2 localdecs(localdec()(expFormatter,patFormatter))(+d) ] +1
+      *  "in"
+      *    2[ +2 decs(dec()(expFormatter,patFormatter))(+3) ] +2
+      *  "end"
+      *)
+     PDFSTRLOCAL of pdfStrDecl list * pdfStrDecl list * loc
+
+                        
+
+ and plfpat 
+  = (*%
+     * @format(loc) "_"
+     *)
+     PLFPATWILD of loc
+   | (*%
+      * @format(longid * loc) longid
+      *)
+     PLFPATID of namePath * loc
+   | (*%
+      * @format(const * loc) const
+      *)
+     PLFPATCONSTANT of constant * loc
+   | (*%
+      * @format(pat1 * pat2 * loc)
+      * R1{d
+      *      {pat1()(expFormatter,patFormatter)} +
+      *      "(" + N0{pat2()(expFormatter,patFormatter)} ")"
+      *   }
+      *)
+     PLFPATCONSTRUCT of plfpat * plfpat * loc
+   | (*%
+      * @format(b * value:formatGenericFieldsExp * loc) value()(patFormatter,"=",",")
+      *)
+     PLFPATRECORD of bool * (string * plfpat) list * loc
+   | (*%
+      * @format(id * ty opt * pat2 * loc)
+      * {id} +d "as" +d {pat2()(expFormatter,patFormatter)}
+      *)
+     PLFPATLAYERED of string * ty option * plfpat * loc
+   | (*%
+      * @format(pat * ty * loc)
+      * {pat()(expFormatter,patFormatter)} + ":" +d {ty}
+      *)
+     PLFPATTYPED of plfpat * ty * loc
+   | (*%
+      * @format(pat1 * pat2 * loc)
+      * "(" pat1()(expFormatter,patFormatter) + "|" + pat2()(expFormatter,patFormatter) ")"
+      *)
+     PLFPATORPAT of plfpat * plfpat * loc
+ 
+
+ and plfexbind =
+     (*%
+      * @format(b * name * ty option * loc)
+      *          {name} {option(ty)(+d "of" +)}
+      *)               
+     PLFEXBINDDEF of bool * namePath * ty option * loc
+   | (*%
+      * @format(b1 * left * b2 * right * loc)
+      *          {left} +d "=" +2 {right}
+      *)
+     PLFEXBINDREP of bool * namePath * bool * namePath * loc
+
+
+ and plfspec =
+     (*%
+      * @format(specval specvals * loc)
+      * "val" + {specvals(specval)(~4[ +1 "and"] +)} 
+      * @format:specval(vid * ty) {{vid} + ":" +1 {ty}}
+      *)
+     PLFSPECVAL of (namePath * ty) list * loc 
+   | (*%
+      * @format(typdesc typdescs * loc)
+      * "type" + {typdescs(typdesc)(~4[ +1 "and"] +)}
+      * @format:typdesc(tyvar tyvars:formatListWithEnclosure * tyCon) 
+      * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+      *)
+     PLFSPECTYPE of (tvar list * namePath) list * loc 
+   | (*%
+      * @format(derivedtyp * loc)  derivedtyp
+      * @format:derivedtyp(tyvar tyvars:formatListWithEnclosure * tyCon * ty)
+      * "type" + {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} } + "=" + ty
+      *)
+     PLFSPECTYPEEQUATION of (tvar list * namePath * ty) * loc
+   | (*%
+      * @format(typdesc typdescs * loc)
+      * "eqtype" + {typdescs(typdesc)(~4[ +1 "and"] +)}
+      * @format:typdesc(tyvar tyvars:formatListWithEnclosure * tyCon) 
+      * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+      *)
+     PLFSPECEQTYPE of (tvar list * namePath) list * loc (* eqtype *)
+   | (*%
+      * @format(path * datdesc datdescs * loc)
+      * "datatype" + {datdescs(datdesc)(~4[ +1 "and"] +)}
+      * @format:datdesc(tyvar tyvars:formatListWithEnclosure * tyCon * (condesc condescs)) 
+      * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} + "=" +1
+      *                                 {condescs(condesc)(~2[ +1 "|" ] +)}}
+      * @format:condesc(vid * ty option)
+      * {vid} {option(ty)(~2[ +d "of" ] +)}
+      *)
+     PLFSPECDATATYPE of path
+                      * (tvar list * namePath * (string * ty option) list) list 
+                      * loc 
+   | (*%
+      * @format(tyCon * longid * loc)
+      * "datatype" + tyCon + "=" + "datatype" + longid
+      *)
+     PLFSPECREPLIC of namePath * namePath * loc 
+   | (*%
+      * @format(exdesc exdescs * loc)
+      * "exception" + {exdescs(exdesc)(~4[ +1 "and" ]+)}
+      * @format:exdesc(vid * ty option)
+      * {vid} {option(ty)(+d "of" +)}
+      *)
+     PLFSPECEXCEPTION of (namePath * ty option) list * loc (* exception *)
+   | (*%
+      * @format(spec1 * spec2 * loc)
+      * spec1()(expFormatter,patFormatter) + ";" +1
+      * spec2()(expFormatter,patFormatter)
+      *)
+     PLFSPECSEQ of plfspec * plfspec * loc 
+   | (*%
+      * @format(spec * longid longids * loc)
+      * spec()(expFormatter,patFormatter) +
+      * !N0{ "sharing type" + {longids(longid)(~2[ +1 "="] +)} }
+      *)
+     PLFSPECSHARE of plfspec * namePath list * loc 
+   | (*%
+      * @format 
+      *)
+     PLFSPECEMPTY
+   | (*%
+      * @format(namePath * loc)
+      * namePath
+      *)
+     PLFSPECPREFIXEDSIGID of namePath * loc (* include *)
+   | (*%
+      * @format(spec * rlstn rlstns * loc)
+      * spec()(expFormatter,patFormatter) +1
+      * "where" + "type" + rlstns(rlstn)(+1 "where" + "type")
+      * @format:rlstn(tyvarseq * longid * ty) tyvarseq + longid +  "=" + ty
+      * @format:tyvarseq(tyvar tyvars:formatListWithEnclosure)
+      * tyvars(tyvar) ("," +, "(", ")" +)
+      *)
+     PLFSPECSIGWHERE of plfspec 
+                      * (tvar list * namePath * ty) list 
+                      * loc (* include *)
+(*
+   | (*%
+       * @format(fundesc fundescs * loc)
+       * !N0{ "functor" + {fundescs(fundesc)(~2[ +1 "and" ] +)}}
+       * @format:fundesc(funid * (sigexp1 * argNamePathEnv) * (sigexp2 * bodyNamePathEnv))
+       * funid ":" +d  sigexp1()(expFormatter,patFormatter) +d "=>" sigexp2()(expFormatter,patFormatter)
+       *)
+      PLFSPECFUNCTOR of (
+                         string * 
+                         (plfspec * NameMap.basicNameNPEnv) * 
+                         (plfspec * NameMap.basicNameNPEnv)
+                        ) list * loc 
+*)
+
+and plftopdec = 
+    (*%
+     * @format (dec decs * loc) decs(dec()(expFormatter,patFormatter))(+1)
+     *)
+    PLFDECSTR of pdfStrDecl list * loc
+  | (*%
+     * @format(sigdec sigdecs * loc)
+     * "signature" + {sigdecs(sigdec)(~4[ +1 "and"] +)}
+     * @format:sigdec(signame * (sigexp * printSigExp))
+     * signame +d "=" +1 sigexp()(expFormatter,patFormatter)
+     *)
+    PLFDECSIG of (string * (plfspec * PatternCalc.plsigexp)) list * loc 
+  | (*%
+     * @format(funbind funbinds * loc)
+     * !N0{ "functor" + {funbinds(funbind)(~2[ +1 "and"] +)} }
+     * @format:funbind(funid * (spec * argName * argNameMap * printSigExp) * 
+                       (dec decs * bodyNameMap * printSigExpBodyOpt) * loc) 
+     * funid + "(" spec()(expFormatter,patFormatter) +")"
+     *       +  "=" +1 4[decs(dec()(expFormatter,patFormatter))(+1)]
+     *)
+    PLFDECFUN of  (string *
+                   (plfspec * string * NameMap.basicNameNPEnv * PatternCalc.plsigexp) * 
+                   (pdfStrDecl list * NameMap.basicNameMap * PatternCalc.plsigexp option) *
+                   loc) list *
+                  loc 
+
+  fun getLeftPosExp plfexp =
+      case plfexp of
+     PLFCONSTANT x => #1 (#2 x)
+   | PLFGLOBALSYMBOL x => #1 (#3 x)
+   | PLFVAR x => #1 (#2 x)
+   | PLFTYPED x => #1 (#3 x)
+   | PLFAPPM x => #1 (#3 x)
+   | PLFLET x => #1 (#3 x)
+   | PLFRECORD x => #1 (#2 x)
+   | PLFRECORD_UPDATE x => #1 (#3 x)
+   | PLFTUPLE x => #1 (#2 x)
+   | PLFLIST x => #1 (#2 x)
+   | PLFRAISE x => #1 (#2 x)
+   | PLFHANDLE x => #1 (#3 x)
+   | PLFFNM x => #1 (#2 x)
+   | PLFCASEM x => #1 (#4 x)
+   | PLFRECORD_SELECTOR x => #1 (#2 x)
+   | PLFSELECT x => #1 (#3 x)
+   | PLFSEQ x => #1 (#2 x)
+   | PLFCAST x => #1 (#2 x)
+   | PLFFFIIMPORT x => #1 (#3 x)
+   | PLFFFIEXPORT x => #1 (#3 x)
+   | PLFFFIAPPLY x =>  #1 (#5 x)
+
+
+  fun getRightPosExp plfexp =
+      case plfexp of
+     PLFCONSTANT x => #2 (#2 x)
+   | PLFGLOBALSYMBOL x => #2 (#3 x)
+   | PLFVAR x => #2 (#2 x)
+   | PLFTYPED x => #2 (#3 x)
+   | PLFAPPM x => #2 (#3 x)
+   | PLFLET x => #2 (#3 x)
+   | PLFRECORD x => #2 (#2 x)
+   | PLFRECORD_UPDATE x => #2 (#3 x)
+   | PLFTUPLE x => #2 (#2 x)
+   | PLFLIST x => #2 (#2 x)
+   | PLFRAISE x => #2 (#2 x)
+   | PLFHANDLE x => #2 (#3 x)
+   | PLFFNM x => #2 (#2 x)
+   | PLFCASEM x => #2 (#4 x)
+   | PLFRECORD_SELECTOR x => #2 (#2 x)
+   | PLFSELECT x => #2 (#3 x)
+   | PLFSEQ x => #2 (#2 x)
+   | PLFCAST x => #2 (#2 x)
+   | PLFFFIIMPORT x => #2 (#3 x)
+   | PLFFFIEXPORT x => #2 (#3 x)
+   | PLFFFIAPPLY x =>  #2 (#5 x)
+
+
+
+ fun getLocDec dec =
+     case dec of
+     PDFVAL (_, _, loc) => loc
+   | PDFDECFUN (_, _, loc) => loc
+   | PDFNONRECFUN (_, _, loc) => loc
+   | PDFVALREC (_, _, loc) => loc
+   | PDFVALRECGROUP (_, _, loc) => loc
+   | PDFTYPE (_, loc) => loc
+   | PDFABSTYPE (_, _, _, loc) => loc
+   | PDFDATATYPE (_, _, loc) => loc
+   | PDFREPLICATEDAT (_, _, loc) => loc
+   | PDFEXD (_, loc) => loc
+   | PDFLOCALDEC (_, _, loc) => loc
+   | PDFINTRO (_, _, loc) => loc
+   | PDFINFIXDEC (_, _, loc) => loc
+   | PDFINFIXRDEC (_, _, loc) => loc
+   | PDFNONFIXDEC (_, loc) => loc
+   | PDFEMPTY => Loc.noloc
+
+
+  fun getLeftPosPat pat =
+      case pat of
+     PLFPATWILD x => #1 x
+   | PLFPATID x => #1 (#2 x)
+   | PLFPATCONSTANT x => #1 (#2 x)
+   | PLFPATCONSTRUCT x => #1 (#3 x)
+   | PLFPATRECORD x => #1 (#3 x)
+   | PLFPATLAYERED x => #1 (#4 x)
+   | PLFPATTYPED x => #1 (#3 x)
+   | PLFPATORPAT x => #1 (#3 x)
+        
+  fun getRightPosPat pat =
+      case pat of
+     PLFPATWILD x => #2 x
+   | PLFPATID x => #2 (#2 x)
+   | PLFPATCONSTANT x => #2 (#2 x)
+   | PLFPATCONSTRUCT x => #2 (#3 x)
+   | PLFPATRECORD x => #2 (#3 x)
+   | PLFPATLAYERED x => #2 (#4 x)
+   | PLFPATTYPED x => #2 (#3 x)
+   | PLFPATORPAT x => #2 (#3 x)
+        
+ fun getLocPat pat = (getLeftPosPat pat, getRightPosPat pat)
+
+ fun getLocExp exp = (getLeftPosExp exp, getRightPosExp exp)
+
+end
+end

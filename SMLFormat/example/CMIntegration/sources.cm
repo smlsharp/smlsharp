@@ -1,8 +1,12 @@
 Group
 is
+(*
 #if defined(NEW_CM)
         $/basis_compat.cm
 #endif
+*)
+$/basis.cm
+
 
         ../../smlformatlib.cm
 

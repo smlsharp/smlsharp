@@ -1,0 +1,3 @@
+signature S31 = sig type t datatype dt = D of t val x : t * dt end
+signature S32 = sig include S31 val y : t * dt end
+signature S33 = sig include S32 val z : dt * t end

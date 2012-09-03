@@ -1,0 +1,13 @@
+structure SMLFormatTool =
+struct
+  val _ = Tools.registerStdShellCmdTool
+             { tool = "SMLFormat",
+               class = "smlformat",
+               cmdStdPath = fn () => ("@SMLFORMAT@", []),
+               template = NONE,
+               extensionStyle = Tools.EXTEND [("sml", SOME "sml", fn x => x)],
+               dflopts = [] }
+
+  val _ = Tools.registerClassifier
+              (Tools.stdSfxClassifier { sfx = "ppg", class = "smlformat" })
+end

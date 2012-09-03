@@ -15,6 +15,7 @@ open SMLFormat.FormatExpression
     | LBRACE | LBRACKET | LPAREN | RBRACE | RBRACKET | RPAREN
     | EXIT | USE | PRINT | SET
 
+    | NEWLINE
     | FORMATINDICATOR of
       {
         space : bool,
@@ -59,3 +60,4 @@ expression: STRING                (Term (size STRING, STRING))
      | FORMATINDICATOR            (Indicator FORMATINDICATOR)
      | STARTOFINDENT              (StartOfIndent STARTOFINDENT)
      | RBRACKET                   (EndOfIndent)
+     | NEWLINE                    (Newline)

@@ -1,0 +1,84 @@
+Naming guideline
+
+author: YAMATODANI Kiyoshi
+version: $Id: NamingGuideline.txt,v 1.1 2008/03/13 02:14:10 kiyoshiy Exp $
+
+----------------------------------------
+1, General
+
+--------------------
+1.1, abbreviation
+
+Avoid cryptic abbreviation and too abstract name.
+
+Because main users of the ML are in academic community, their codes tend
+to have a style like mathematic expressions in which entities are
+abstracted and given very simple name, such as "x" or "f".
+But, actual application programs, including the compiler, are some kind
+of description of the real world. Entities in the code represent concrete
+entities in the world, most of which have their own name.
+
+Imagine that you are a reader, not a writer.
+Especially when giving name to public entities, you should take
+convenience of users and readers of your code into consideration. 
+(In ML, public entities include top level modules and their top level
+bindings.)
+
+For reference, see the class names in the Java library:
+  http://java.sun.com/j2se/1.5.0/docs/api/
+You can find that names are full length. For example,
+"FormatFlagsConversionMismatchException" and
+"ClientRequestInterceptorOperations" at the extreme.
+
+Burden of using long name is not so much for users.
+Many editors and shells provide auto-completion. 
+And, in ML, long name can be abbreviated by using alias declaration, if
+needed:
+  structure M = XXXXXXXX
+
+--------------------
+1.2, General rules
+
+ 1, If a name is composed of conjunction of words, the first character of
+each word should be upper case except for the first word.
+
+ 2, Avoid using abbreviation, especially in name of public entities
+preferably.
+  Excepted are commonly used abbreviations.
+
+ 3, When using abbreviation, every abbreviated word should be composed of
+upper case characters only.
+
+For example, "XXXenv" should be renamed to "XXXEnv" according to the
+fist rule, and to "XXXENV" according to the third rule.
+The first rule and the second rule are highly recommended to be obeyed.
+
+
+----------------------------------------
+1.3, Module name
+
+ Modules of the IML compiler can be classified into data module and
+processor module.
+
+ Each processor module has its main task. 
+Then, it is one of natural idea to take name of a processor module from
+its main task.
+
+ For example, a module which infers type of terms should be given
+name like "TypeInferencer" (for structure) or "TYPE_INFERENCER" 
+(for signature).
+
+----------------------------------------
+1.4, File name
+
+ Match the file name and the module name.
+ When exploring source files, it is very inconvenient if the name of
+module and the name of the file in which the module is defined do not
+match. And automatic processing by Make or other tools will be
+ difficult also.
+
+ This rule assumes that only one of top level module is declared in
+each source file.
+
+----------------------------------------
+

@@ -1,5 +1,0 @@
-Group
-        structure StaticAnalysis
-is
-	main/module.cm
-

@@ -1,0 +1,17 @@
+Group is
+        $/basis.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../systemdef/sources.cm
+        ../../control/sources.cm
+        ../../util/sources.cm
+
+        TARGET_PLATFORM.sig
+        TARGET_PROPERTY.sig
+        TargetProperty.sml
+        TargetPlatformFormatter.sml
+(*
+        ANSI_C.sml
+        LPI32.sml
+*)
+        VMTarget.sml

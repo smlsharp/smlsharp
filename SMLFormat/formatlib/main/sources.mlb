@@ -2,7 +2,9 @@ $(SML_LIB)/basis/basis.mlb
 $(SML_LIB)/basis/sml-nj.mlb
 $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 
+FORMAT_EXPRESSION_TYPES.sig
 FORMAT_EXPRESSION.sig
+FormatExpressionTypes.sml
 FormatExpression.sml
 PRINTER_PARAMETER.sig
 PrinterParameter.sml
@@ -13,5 +15,5 @@ PreProcessor.sml
 BASIC_FORMATTERS.sig
 BasicFormatters.sml
 SMLFORMAT.sig
+SMLFormatBase.sml
 SMLFormat.sml
-

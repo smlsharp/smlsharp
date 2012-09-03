@@ -1,0 +1,13 @@
+signature S1 = sig datatype 'a dt = D of 'a end
+../tests/module/tests/datatypeSpecMatching0003.sml:21.11-21.61 Error:
+  Signature mismatch (tycon): dt
+                                                                      
+../tests/module/tests/datatypeSpecMatching0003.sml:22.11-22.63 Error:
+  Signature mismatch (tycon): dt
+
+signature S2 = sig datatype 'a dt = D of int end
+../tests/module/tests/datatypeSpecMatching0003.sml:25.11-25.60 Error:
+  Signature mismatch (tycon): dt
+                                                                      
+../tests/module/tests/datatypeSpecMatching0003.sml:26.11-26.62 Error:
+  Signature mismatch (tycon): dt

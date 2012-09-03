@@ -1,0 +1,14 @@
+Group 
+      structure Primitives
+is
+
+      $/basis.cm
+      ../../../../../SMLFormat/smlformatlib.cm
+      ../../../compiler/systemdef/sources.cm
+      ../../../instructions/compiler/sources.cm
+      ../../../compiler/control/sources.cm
+      ../../../compiler/env/sources.cm
+      ../../../compiler/types/sources.cm
+      ../../../compiler/name/sources.cm
+
+      Primitives.ppg.sml

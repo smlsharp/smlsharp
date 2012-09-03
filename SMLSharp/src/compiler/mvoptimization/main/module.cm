@@ -1,0 +1,18 @@
+Group is
+        $/basis.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../primitive/sources.cm
+        ../../annotatedtypes/sources.cm
+        ../../multiplevaluecalc/sources.cm
+        ../../constantterm/sources.cm
+
+	Counters.sml
+        MVOPTIMIZATION.sig
+        MVOptimization.sml
+        USELESSCODEELIMINATION.sig
+        UselessCodeElimination.sml

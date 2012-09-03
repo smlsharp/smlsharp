@@ -1,0 +1,26 @@
+Group is
+        $/basis.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../control/sources.cm
+        ../../util/sources.cm
+        ../../name/sources.cm
+        ../../env/sources.cm
+        ../../systemdef/sources.cm
+(*
+        ../../anormal/sources.cm
+        ../../targetplatform/sources.cm
+*)
+        ../../abstractinstruction2/sources.cm
+        ../../absyn/sources.cm
+
+        Counters.sml
+        X86Mnemonic.ppg.sml
+        X86Formatter.sml
+        X86CODESELECTION.sig
+        X86CodeSelection.sml
+        X86REGISTERALLOCATION.sig
+        X86RegisterAllocation.sml
+        FrameLayout.ppg.sml
+        FRAMEALLOCATION.sig
+        FrameAllocation.sml
+        X86CodeGeneration.sml

@@ -1,0 +1,12 @@
+Group
+        signature TARGET_PLATFORM
+        signature TARGET_PROPERTY
+        functor TargetProperty
+        functor TargetPlatformFormatter
+(*
+        structure LPI32
+        structure ANSI_C
+*)
+	structure VMTarget
+is
+        main/module.cm

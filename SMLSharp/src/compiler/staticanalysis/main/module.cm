@@ -1,0 +1,19 @@
+Group is
+        $/basis.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../env/sources.cm
+        ../../constantterm/sources.cm
+        ../../typedlambda/sources.cm
+        ../../annotatedtypes/sources.cm
+        ../../annotatedcalc/sources.cm
+
+        STATICANALYSIS.sig
+        StaticAnalysis.sml
+        SACONTEXT.sig
+        SAContext.sml
+        SACONSTRAINT.sig
+        SAConstraint.sml

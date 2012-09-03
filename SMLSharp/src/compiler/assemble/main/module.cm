@@ -1,0 +1,38 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../name/sources.cm
+        ../../env/sources.cm
+        ../../util/sources.cm
+        ../../control/sources.cm
+        ../../systemdef/sources.cm
+        ../../../instructions/compiler/sources.cm
+        ../../../primitives/primitives.cm
+        ../../types/sources.cm
+        ../../absyn/sources.cm
+        ../../usererror/sources.cm
+        ../../symbolicinstructions/sources.cm
+
+	Counters.sml
+        AssembleError.ppg.sml
+        AllocationInfo.sml
+        LABEL_MAP.sig
+        LabelMap.sml
+        SLOT_MAP.sig
+        SlotMap.sml
+        STACK_FRAME.sig
+        StackFrame.sml
+        SLOT_ALLOCATOR.sig
+        SlotAllocator.sml
+        INSTRUCTION_SIZE_CALCULATOR.sig
+        InstructionSizeCalculator.sml
+        SOURCE_LOCATION_MAP.sig
+        SourceLocationMap.sml
+        SOURCE_NAME_SLOT_MAP.sig
+        SourceNameSlotMap.sml
+        ASSEMBLER.sig
+        Assembler.sml

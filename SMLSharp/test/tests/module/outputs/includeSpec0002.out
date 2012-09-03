@@ -1,0 +1,20 @@
+signature Ival = sig val x : int end
+signature Sval = sig include Ival end
+signature Itype = sig type t end
+signature Stype = sig include Itype end
+signature Ieqtype = sig eqtype t end
+signature Seqtype = sig include Ieqtype end
+signature Idatatype = sig datatype dt = D end
+signature Sdatatype = sig include Idatatype end
+datatype dt
+con D : dt
+signature IdatatypeRep = sig datatype dt = datatype dt end
+signature SdatatypeRep = sig include IdatatypeRep end
+signature Iexception = sig exception E end
+signature Sexception = sig include Iexception end
+signature Istructure =
+sig structure S : sig type t datatype dt = D val x : t end end
+signature Sstructure = sig include Istructure end
+signature Tinclude = sig type t datatype dt = D val x : t end
+signature Iinclude = sig include Tinclude end
+signature Sinclude = sig include Iinclude end

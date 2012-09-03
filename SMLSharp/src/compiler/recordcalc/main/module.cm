@@ -1,0 +1,23 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+        ../../absyn/sources.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../util/sources.cm
+        ../../systemdef/sources.cm
+        ../../primitive/sources.cm
+        ../../constantterm/sources.cm
+(*
+OHORI: why MVcalc is needed?
+	../../multiplevaluecalc/sources.cm
+*)
+        RecordCalc.ppg.sml
+        RecordCalcUtils.sml
+        RecordCalcFormatter.sml

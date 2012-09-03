@@ -1,0 +1,18 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../usererror/sources.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+
+        ../../absyn/sources.cm
+        ../../patterncalc/sources.cm
+        ../../patterncalcFlattened/sources.cm
+
+        MODULE_COMPILER.sig
+        ModuleCompiler.sml
+        ModuleCompilationError.ppg.sml

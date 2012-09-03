@@ -1,0 +1,4 @@
+Group
+        structure YASIGenerator
+is
+        main/module.cm

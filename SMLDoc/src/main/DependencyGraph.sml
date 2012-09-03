@@ -3,7 +3,7 @@
  * graph.
  *
  * @author YAMATODANI Kiyoshi
- * @version $Id: DependencyGraph.sml,v 1.2 2004/10/20 03:18:39 kiyoshiy Exp $
+ * @version $Id: DependencyGraph.sml,v 1.3 2007/09/19 05:28:55 matsu Exp $
  *)
 structure DependencyGraph :> DEPENDENCY_GRAPH =
 struct
@@ -43,7 +43,7 @@ struct
                       | NONE => visit (destIndex, closure)
                  else closure)
              closure
-             (Array.sub (graph, index), 0, NONE)))
+             (Array.sub (graph, index)(*, 0, NONE*))))
       in
         visit (startIndex, [])
       end
@@ -73,7 +73,7 @@ struct
                          | NONE => visit (srcIndex, closure)
                     else closure)
               closure
-              (graph, 0, NONE)))
+              (graph(*, 0, NONE*))))
       in
         visit (startIndex, [])
       end
@@ -111,14 +111,14 @@ struct
                       | NONE => visit (destIndex, sorted)
                  else sorted)
              sorted
-             (Array.sub (graph, index), 0, NONE)))
+             (Array.sub (graph, index)(*, 0, NONE*))))
       in
         List.rev
         (Array.foldli
          (fn (index, _, sorted) =>
              if isVisited index then sorted else visit (index, sorted))
          []
-         (graph, 0, NONE))
+         (graph(*, 0, NONE*)))
       end
 end
 

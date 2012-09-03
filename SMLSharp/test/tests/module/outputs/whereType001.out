@@ -1,0 +1,5 @@
+datatype dt
+con D : dt
+datatype t
+con E : t
+signature S = sig type t datatype dt = F end where type t = dt

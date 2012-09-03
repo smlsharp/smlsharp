@@ -222,7 +222,7 @@ struct
       	            TextIO.flushOut TextIO.stdOut
                   )
               else ();
-              TextIO.inputLine (#stream arg)
+              Option.getOpt(TextIO.inputLine (#stream arg), "")
             )
 
         val lexer = CoreMLParser.makeLexer getLine arg

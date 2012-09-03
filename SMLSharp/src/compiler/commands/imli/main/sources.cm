@@ -1,0 +1,26 @@
+Group is
+
+      $/basis.cm
+
+(*
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+*)
+
+        ../../../../configuration/sources.cm
+
+(*
+        ../../../../lib/sources.cm
+*)
+        ../../../toplevel/sources.cm
+        ../../../session/sources.cm
+        ../../../util/sources.cm
+
+#if defined(structure Posix)
+        RuntimeProxyFactory_Unix.sml
+#else
+        RuntimeProxyFactory_General.sml
+#endif
+
+        Main.sml

@@ -1,0 +1,11 @@
+ann 
+  "nonexhaustiveMatch ignore"
+in
+        ../../../preludes.mlb
+
+        $(CONFIGDIR)/Configuration.sml
+
+        LOC.sig
+        Loc.ppg.sml
+        Control.ppg.sml
+end

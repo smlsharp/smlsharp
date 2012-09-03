@@ -1,0 +1,18 @@
+#!/bin/sh
+
+JAR_DIR=${JAR_DIR:-%JAR_DIR%}
+JAVA=${JAVA:-%JAVA%}
+
+case "%target_os%" in
+  *cygwin*|*mingw*)
+    PS=';'
+    ;;
+  *)
+    PS=':'
+    ;;
+esac
+
+# NOTE: We cannot use -jar option to invoke java command,
+# because CLASSPATH environment and -cp option are ignored if -jar option is
+# used.
+${JAVA} -cp "${CLASSPATH}${PS}${JAR_DIR}/java2sml.jar" org.smlsharp.java2sml.Java2SML $*

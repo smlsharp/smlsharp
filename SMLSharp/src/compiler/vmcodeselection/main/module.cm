@@ -1,0 +1,32 @@
+Group is
+        $/basis.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../control/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+
+        ../../targetplatform/sources.cm
+        ../../absyn/sources.cm
+        ../../abstractinstruction/sources.cm
+        ../../../vmgen/module.cm
+        ../../machinelanguage/sources.cm
+
+(*
+        ../../systemdef/sources.cm
+        ../../util/sources.cm
+        ../../../primitives/compiler/sources.cm
+        ../../symbolicinstructions/sources.cm
+        ../../abstractinstruction/sources.cm
+        ../../sigenerator/sources.cm
+        ../../anormal/sources.cm
+*)
+(*
+        ../../../primitives/compiler/sources.cm
+	../../absyn/sources.cm
+*)
+
+        Counters.sml
+        VMCODESELECTION.sig
+        VMCodeSelection.sml
+        VMCodeFormatter.sml

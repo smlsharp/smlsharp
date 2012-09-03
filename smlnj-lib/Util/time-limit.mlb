@@ -1,0 +1,16 @@
+ann
+  "nonexhaustiveMatch warn" "redundantMatch warn"
+  "sequenceNonUnit warn"
+  "warnUnused false" "forceUsed"
+in
+
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/basis/mlton.mlb
+  engine.mlton.sml
+  time-limit.mlton.sml      
+in
+  structure TimeLimit = TimeLimit
+end
+
+end

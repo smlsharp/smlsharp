@@ -1,0 +1,15 @@
+datatype 'a dt
+con D : ['a .'a dt]
+val x1 = D : ['a .'a dt]
+../tests/coresml/tests/valueRestriction001.sml:16.1-16.17 Warning:
+  dummy type variable(s) X0 are introduced due to value restriction
+val x2 = D : X0 dt
+val f1 = fn : ['a .'a -> int]
+val f2 = fn : ['a .'a dt -> int]
+val r11 = 0 : int
+val r12 = 0 : int
+val r21 = 0 : int
+../tests/coresml/tests/valueRestriction001.sml:24.11-24.15 Error:
+  operator and operand don't agree
+  operator domain: 'A dt
+  operand: X0 dt

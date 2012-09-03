@@ -1,0 +1,56 @@
+Group is
+
+      $/basis.cm
+
+      ../../../configuration/sources.cm
+
+      ../../../instructions/sources.cm
+
+      ../../../primitives/constants.cm
+
+      ../../util/sources.cm
+
+      ../../systemdef/sources.cm
+      ../../control/sources.cm
+      ../../objectfile/sources.cm
+      ../../elf/sources.cm
+
+      ChannelTypes.sml
+      ChannelUtility.sml
+      FileChannel.sml
+      ByteListChannel.sml
+      ByteArrayChannel.sml
+      ByteVectorChannel.sml
+      TextIOChannel.sml
+      ServerSocketChannel.sml
+      ClientSocketChannel.sml
+#if defined(structure Posix)
+      UnixProcessChannel.sml
+#endif
+
+      SIGNAL_UTILITY.sig
+#if defined(structure Signals)
+      SignalUtility.sml
+#else
+      SignalUtility_dummy.sml
+#endif
+
+      RuntimeProxyTypes.sml
+      RUNTIME_PROXY.sig
+#if defined(structure Posix)
+      UnixProcessRuntimeProxy.sml
+#endif
+      NetworkRuntimeProxy.sml
+
+      SessionTypes.sml
+      SESSION.sig
+      StandAloneSession.sml
+      InteractiveSession.sml
+      YAStandAloneSession.sml
+      YAStandAloneSessionNoLink.sml
+      YAInteractiveSession.sml
+#if defined(structure Posix)
+      YAUnixProcessChannel.sml
+      YAUnixProcessRuntimeProxy.sml
+#endif
+      NativeStandAloneSession.sml

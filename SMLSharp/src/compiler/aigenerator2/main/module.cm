@@ -1,0 +1,25 @@
+Group is
+        $/basis.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../util/sources.cm
+        ../../primitive/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../constantterm/sources.cm
+        ../../systemdef/sources.cm
+        ../../yaanormal/sources.cm
+        ../../abstractinstruction2/sources.cm
+        ../../absyn/sources.cm
+
+        ../../anormal/sources.cm       (* for generating global index *)
+        ../../sigenerator/sources.cm   (* for generating global index *)
+
+        Counters.sml
+        BinarySearchCode.sml
+        CallAnalysis.sml
+        Simplify.sml
+        AIPrimitive.sml
+        AIGENERATOR.sig
+        AIGenerator.sml

@@ -1,0 +1,8 @@
+group is
+        $/basis.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../control/sources.cm
+        ../../pickle/sources.cm
+
+        BuiltinPrimitive.ppg.sml
+        BuiltinPrimitivePickler.sml

@@ -1,0 +1,22 @@
+signature Smm1 = sig val x : int end
+structure Smm1Trans : Smm1
+structure Smm1Opaque : Smm1
+signature Smp1 = sig val f : int -> int * int end
+structure Smp1Trans : Smp1
+structure Smp1Opaque : Smp1
+signature Spm1 = sig val f : 'a -> int * 'a end
+../tests/module/tests/valSpecMatching0002.sml:55.11-58.3 Error:
+  Signature mismatch (instance): f :
+                                                                
+  structure: int -> int * int
+  spec: ['a .'a -> int * 'a]
+
+../tests/module/tests/valSpecMatching0002.sml:59.11-62.3 Error:
+  Signature mismatch (instance): f :
+                                                                
+  structure: int -> int * int
+  spec: ['a .'a -> int * 'a]
+
+signature Spp1 = sig val f : 'a -> int * 'a end
+structure Spp1Trans : Spp1
+structure Spp1Opaque : Spp1

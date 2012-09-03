@@ -1,0 +1,504 @@
+(* -*- sml -*- *)
+(**
+ * Machine Language.
+ * @copyright (c) 2007, Tohoku University.
+ * @author UENO Katsuhiro
+ * @version $Id: MachineLanguage.ppg,v 1.6 2008/08/06 17:23:40 ohori Exp $
+ *)
+structure MachineLanguage =
+struct
+
+  local
+    val term = SMLFormat.BasicFormatters.format_string
+    fun format_asInt x = term (Word.fmt (StringCvt.DEC) x)
+
+    fun formatIfCons ifCons =
+        fn nil => nil | _::_ => ifCons
+
+    fun formatMap fold formatKey (formatter,prefix,sep,suffix) map =
+        fold (fn (k,v,z) =>
+                 z @ prefix @ formatKey k @ sep @ formatter v @ suffix)
+             nil map
+
+    val formatSEnv = formatMap SEnv.foldli term
+    val formatWEnv = formatMap WEnv.foldli format_asInt
+
+    fun formatLive (formatter,sep) map =
+        SMLFormat.BasicFormatters.format_list (formatter,sep)
+                                              (LocalVarID.Map.listItems map)
+  in
+
+  (*% @formatter(Loc.loc) Loc.format_loc *)
+  type loc = Loc.loc
+
+  (*% @formatter(AbstractInstruction.id) AbstractInstruction.format_id *)
+  type id = AbstractInstruction.id
+
+  (*% @formatter(AbstractInstruction.clusterId)
+   * AbstractInstruction.format_clusterId *)
+  type clusterId = AbstractInstruction.clusterId
+
+  (*% @formatter(word) format_asInt *)
+  type registerId =
+       (*% @format(x) "r" x *)
+       word
+
+  (*% *)
+  type registerClassId = int
+
+  (*% @formatter(word) format_asInt *)
+  type slotId =
+       (*% @format(x) "s" x *)
+       word
+
+  (*% *)
+  datatype entity =
+      (*% @format(rc * r) r "-" rc *)
+      REGISTER of registerClassId * registerId   (* certain register *)
+    | (*% @format(rc * s) s "-" rc *)
+      STACK of registerClassId * slotId          (* a slot of local frame *)
+(*
+    | (*% @format(rc * s) "a" s "-" rc *)
+      ARG of registerClassId * word           (* a slot of argument frame *)
+*)
+    | (*% *)
+      HANDLER of registerClassId      (* a slot holding current handler *)
+
+  (*% *)
+  datatype tag =
+      (*% @format "B" *)
+      BOXED
+    | (*% @format "A" *)
+      UNBOXED
+    | (*% @format(e) "G" e *)
+      (* entity which holds tag information at Enter of this function. *)
+      GENERIC of entity               (* general purpose with ParamTag *)
+    | (*% @format({entity, offset, bit})
+       *  "F" "[" entity ":" offset ":" bit "]" *)
+      FREEGENERIC of                  (* general purpose with IndirectTag *)
+      {entity: entity, offset: word, bit: word}
+
+  (*%
+   * @formatter(word) format_asInt
+   *)
+  (*%
+   * @prefix format_short_
+   * @formatter(tag) format_tag
+   * @formatter(word) format_asInt
+   * @formatter(WEnv.map) formatWEnv
+   *)
+  type registerClassDesc =
+      (*%
+       * @format({tag, size, align, registers: reg regs, interference:itf itfs})
+       * "{" 2[ { tag "," + size "," + align "," +
+       * "[" { regs(reg)("," +d) "]" } } ] "}"
+       *)
+      (*%
+       * @prefix format_short_
+       * @format({tag, size, align, registers, interference})
+       * tag "," + size "," + align
+       *)
+      {
+        tag: tag,
+        size: word,
+        align: word,
+        registers: registerId list,
+        interference: word list WEnv.map   (* regId -> interferenced regIds *)
+      }
+
+  (*% *)
+  type registerDesc =
+      (*%
+       * @format({classes: class classes, boxedClass, bitmapClass})
+       * "{"
+       * 2[ +1 "boxedClass" + "=" + boxedClass
+       *    +1 "bitmapClass" + "=" + bitmapClass
+       *    +1 "classes" + "=" + "{"
+       *    2[ +1 {classes(class)("," +2)} ]
+       *    +1 "}" ]
+       * +1 "}"
+       *)
+      {
+        classes: registerClassDesc list,
+        boxedClass: registerClassId,
+        bitmapClass: registerClassId
+      }
+
+  (*% *)
+  datatype ty =
+      (*% @format(x) "v_-" x *)
+      VAR of registerClassId            (* unallocated *)
+    | (*% @format(x) "r_-" x *)
+      REG of registerClassId            (* unallocated; register only *)
+    | (*% @format(x) "s_-" x *)
+      STK of registerClassId            (* unallocated; stack only *)
+(*
+    | (*% @format(b * r) "P" r *)
+      (* unallocated; unboxed register only, which TEMPORALLY holds an
+       * boxed value.
+       * When this appears in use, it must hold a FRESH copy of the value.
+       * When do so in def, it must save to root set as soon as possible.
+       *)
+      PTR of registerClassId
+*)
+    | (*% @format(e) e *)
+      ALLOCED of entity
+
+
+  (*% *)
+  type varInfo =
+      (*% @format({id, displayName, ty})  { "$" id ":" ty } *)
+      {id: id, displayName: string, ty: ty}
+
+  (*%
+   * @formatter(registerClassDesc) format_short_registerClassDesc
+   *)
+  type frameAlloc =
+      (*%
+       * @format({class, slotIds: slot slots})
+       * "{" class "," + "[" {slots(slot)("," +d) "]" } "}"
+       *)
+      {
+        class: registerClassDesc,
+        slotIds: slotId list
+      }
+
+  (*%
+   * @formatter(ifCons) formatIfCons
+   *)
+  type frameInfo =
+      (*%
+       * @format({handler: handler handlers,
+       *          boxed: box boxes,
+       *          unboxed: unbox unboxes,
+       *          generic: gen gens,
+       *          freeGeneric: free frees})
+       * "{"
+       * 2[ handlers:ifCons()(+1 "handler:")
+       *      2[ handlers:ifCons()(+1) handlers(handler)("," +2) ]
+       *    boxes:ifCons()(+1 "boxed:")
+       *      2[ boxes:ifCons()(+1) boxes(box)("," +2) ]
+       *    unboxes:ifCons()(+1 "unboxed:")
+       *      2[ unboxes:ifCons()(+1) unboxes(unbox)("," +2) ]
+       *    gens:ifCons()(+1 "generic:")
+       *      2[ gens:ifCons()(+1) gens(gen)("," +2) ]
+       *    frees:ifCons()(+1 "freeGeneric:")
+       *      2[ frees:ifCons()(+1) frees(free)("," +2) ]
+       * ]
+       * +1 "}"
+       *)
+      {
+        handler: frameAlloc list,
+        boxed: frameAlloc list,
+        unboxed: frameAlloc list,
+        generic: frameAlloc list,
+        freeGeneric: frameAlloc list
+      }
+
+  val dummyFrameInfo =
+      {
+        handler = nil,
+        boxed = nil,
+        unboxed = nil,
+        generic = nil,
+        freeGeneric = nil
+      }
+
+  (*% *)
+  datatype instructionKind =
+      (*% @format 1 "{MOVE}" *)
+      MOVE
+    | (*% @format *)
+      NORMAL
+
+  (*%
+   * @formatter(ifCons) formatIfCons
+   *)
+  datatype 'target instruction =
+      (*%
+       * @format({dst, src})
+       * 1 "Spill:" + src + "->" + dst
+       *)
+      Spill of                   (* spill; inserted by regalloc *)
+      {
+        dst: entity,
+        src: entity
+      }
+    | (*%
+       * @format({code,
+       *          use: use uses,
+       *          def: def defs,
+       *          clob: clob clobs,
+       *          kind,
+       *          loc})
+       *   kind
+       *   uses:ifCons()(+1 "use:" +) { uses(use)("," +d) }
+       *   8[ +1 code ]
+       *   clobs:ifCons()(+1 "clob:" +) { clobs(clob)("," +d) }
+       *   defs:ifCons()(+1 "def:" +) { defs(def)("," +d) }
+       *)
+      Code of
+      {
+        code: 'target,
+        use: varInfo list,     (* used by this code *)
+        def: varInfo list,     (* defined by this code *)
+        clob: entity list,     (* clobbered by this code *)
+        kind: instructionKind,
+        loc: loc
+      }
+
+  (*%
+   * @formatter(enclosedOpt) SmlppgUtil.formatEnclosedOpt
+   * @formatter(ifCons) formatIfCons
+   *)
+  type 'target basicBlock =
+      (*%
+       * @format({label,
+       *          instructionList: insn insns,
+       *          continue: cont contOpt:enclosedOpt,
+       *          jump: jump jumps,
+       *          loc})
+       * "BEGIN" + label
+       * 2[ insns(insn)(+1 "--")
+       *    contOpt(cont)(+1 "=>" +,)
+       *    jumps:ifCons()(+1 "->" +) { jumps(jump)("," +d) } ]
+       *
+       * @format:insn(x y) y(x)
+       *)
+      {
+        label: id,
+        instructionList: 'target instruction list,
+        continue: id option,
+        jump: id list,
+        loc: loc
+      }
+
+  (*% *)
+  type 'target cluster =
+      (*%
+       * @format({name,
+       *          entries: entry entries,
+       *          registerDesc,
+       *          frameInfo,
+       *          body: block blocks,
+       *          alignment,
+       *          loc})
+       * +1 "cluster" + name +1
+       * "{"
+       *    2[
+       *       +1 "loc" + "=" + loc
+       *       +1 "entries" + "=" + { entries(entry)("," +d) }
+       *       +1 "registerDesc" + "=" + registerDesc
+       *       +1 "frameInfo" + "=" + frameInfo
+       *       +1 "alignment" + "=" + alignment
+       *       +1 1 blocks(block)(1 1)
+       *     ] 1
+       * "}"
+       *
+       * @format:block(x y) y(x)
+       *)
+      {
+        name: clusterId,
+        entries: id list,
+        registerDesc: registerDesc,
+        frameInfo: frameInfo,
+        body: 'target basicBlock list,
+        alignment: word,
+        loc: loc
+      }
+
+  (*% *)
+  type 'target constCluster =
+      (*%
+       * @format({code: code codes, alignment})
+       * +1 "constCluster" +1
+       * "{"
+       *    2[
+       *       +1 "alignment" + "=" + alignment
+       *       +1 1 codes(code)(+1)
+       *     ] 1
+       * "}"
+       *)
+      {
+        code: 'target list,
+        alignment: word
+      }
+
+  (*% @formatter(word) format_asInt *)
+  type globalSlot =
+      (*%
+       * @format({label, offset})
+       * +1 label ":" + ".offset" + offset
+       *)
+      {
+        label: string,
+        offset: word
+      }
+
+  (*% @formatter(word) format_asInt *)
+  type globalSegment =
+      (*%
+       * @format({size, slots: slot slots, alignment})
+       * "size=" size "," + "align=" alignment 2[ slots(slot)() ]
+       *)
+      {
+        size: word,
+        slots: globalSlot list,
+        alignment: word
+      }
+
+  (*% @formatter(word) format_asInt *)
+  type 'target program =
+      (*%
+       * @format({toplevel: tt toplevel,
+       *          clusters: cluster clusters,
+       *          constants: ct constants,
+       *          unboxedGlobals,
+       *          boxedGlobals})
+       * "Toplevel:"
+       * 2[ toplevel(tt) ]
+       * +1 +1 "Clusters:"
+       * 2[ clusters(cluster)(+1) ]
+       * +1 +1 "Constants:"
+       * 2[ constants(ct) ]
+       * +1 "UnboxedGlobals:" + unboxedGlobals
+       * +1 "BoxedGlobals:" + boxedGlobals
+       *
+       * @format:cluster(x y) y(x)
+       *)
+      {
+        toplevel: 'target constCluster,
+        clusters: 'target cluster list,
+        constants: 'target constCluster,
+        unboxedGlobals: globalSegment,
+        boxedGlobals: globalSegment
+(*
+        linkexps: (* linker expression *)
+*)
+      }
+
+
+  (* for debugging liveness analysis *)
+
+  (*% @formatter(LocalVarID.Map.map) formatLive *)
+  type 'target instructionWithLiveness =
+      (*%
+       * @format({insn, liveIn: lin lins, liveOut: lout louts})
+       * +1 "liveIn:" + {lins(lin)("," +d)}
+       * insn
+       * +1 "liveOut:" + {louts(lout)("," +d)}
+       *
+       * @format:insn(x y) y(x)
+       *)
+      {
+        insn: 'target instruction,
+        liveIn: varInfo LocalVarID.Map.map,
+        liveOut: varInfo LocalVarID.Map.map
+      }
+
+  local
+    fun formatBlockLabel ({label,...}:'target basicBlock) = format_id label
+  in
+  (*%
+   * @formatter(basicBlock) formatBlockLabel
+   * @formatter(ifCons) formatIfCons
+   *)
+  type 'target blockWithLiveness =
+      (*%
+       * @format({block, insnList:insn insns})
+       * "BEGIN" + block
+       * 2[ insns(insn)(+1 "--") ]
+       *
+       * @format:insn(x y) y(x)
+       *)
+      {
+        block: 'target basicBlock,
+        insnList: 'target instructionWithLiveness list
+      }
+  end
+
+  (*% *)
+  type 'target clusterWithLiveness =
+      (*%
+       * @format({name, body: block blocks})
+       * +1 "cluster" + name +1
+       * "{" 2[ +1 blocks(block)(1 1) ] 1 "}"
+       *
+       * @format:block(x y) y(x)
+       *)
+      {
+        name: clusterId,
+        body: 'target blockWithLiveness list
+      }
+
+
+  (* for constructing stack frame structure *)
+
+  (*% *)
+  datatype bitmapComposition =
+      (*% *)
+      LSHIFT of
+      {
+        dst: entity,
+        arg: entity,
+        shift: word
+      }
+    | (*% *)
+      RSHIFT of
+      {
+        dst: entity,
+        arg: entity,
+        shift: word
+      }
+    | (*% *)
+      ORB of
+      {
+        dst: entity,
+        arg1: entity,
+        arg2: entity
+      }
+    | (*% *)
+      MASK of
+      {
+        dst: entity,
+        arg: entity,
+        numBits: word
+      }
+    | (*% *)
+      LOAD of
+      {
+        dst: entity,
+        block: entity,
+        offset: word
+      }
+    | (*% *)
+      SAVE of
+      {
+        offset: word,
+        arg: entity
+      }
+
+  (*% *)
+  type wordComposition =
+      {shift: word, value: word} list
+
+  (*% *)
+  type headerComposition =
+      {offset: word, value: wordComposition}
+
+  (*% *)
+  type stackFrameLayout =
+      (*% *)
+      {
+        slotAlloc: word WEnv.map,        (* slot ID -> slot offset *)
+        initHeader: headerComposition list,
+        (* takes 2 registers used for bitmap calculation, and returns
+         * concrete bitmap composition code. *)
+        initBitmap: entity * entity -> bitmapComposition list,
+        initPointers: word list,         (* list of offset of pointer slots *)
+        frameSize: word                  (* entire size of stack frame *)
+      }
+
+  end
+
+end

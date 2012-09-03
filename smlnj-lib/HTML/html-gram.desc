@@ -1,0 +1,6055 @@
+
+state 0:
+
+	Document : . StartHTML Head Body EndHTML 
+
+	START_HTML	shift 2
+
+	Document	goto 282
+	StartHTML	goto 1
+
+	.	reduce by rule 1
+
+
+state 1:
+
+	Document : StartHTML . Head Body EndHTML 
+
+	START_HEAD	shift 5
+
+	Head	goto 4
+	StartHEAD	goto 3
+
+	.	reduce by rule 6
+
+
+state 2:
+
+	StartHTML : START_HTML .  (reduce by rule 2)
+
+
+
+	.	reduce by rule 2
+
+
+state 3:
+
+	Head : StartHEAD . HeadContents EndHEAD 
+
+	TAG_BASE	shift 14
+	TAG_ISINDEX	shift 13
+	TAG_LINK	shift 12
+	TAG_META	shift 11
+	START_SCRIPT	shift 10
+	START_STYLE	shift 9
+
+	HeadContents	goto 8
+	HeadElements	goto 7
+	HeadElement	goto 6
+
+	.	reduce by rule 11
+
+
+state 4:
+
+	Document : StartHTML Head . Body EndHTML 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	START_BODY	shift 73
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	Body	goto 27
+	BodyContent0	goto 26
+	BodyElement	goto 25
+	BlockWOIndex	goto 24
+	Paragraph	goto 23
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 20
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	error
+
+
+state 5:
+
+	StartHEAD : START_HEAD .  (reduce by rule 7)
+
+
+
+	.	reduce by rule 7
+
+
+state 6:
+
+	HeadElements : HeadElement . HeadElements 
+
+	TAG_BASE	shift 14
+	TAG_ISINDEX	shift 13
+	TAG_LINK	shift 12
+	TAG_META	shift 11
+	START_SCRIPT	shift 10
+	START_STYLE	shift 9
+
+	HeadElements	goto 80
+	HeadElement	goto 6
+
+	.	reduce by rule 11
+
+
+state 7:
+
+	HeadContents : HeadElements . START_TITLE PCData END_TITLE HeadElements 
+
+	START_TITLE	shift 81
+
+
+	.	error
+
+
+state 8:
+
+	Head : StartHEAD HeadContents . EndHEAD 
+
+	END_HEAD	shift 83
+
+	EndHEAD	goto 82
+
+	.	reduce by rule 8
+
+
+state 9:
+
+	HeadElement : START_STYLE . PCData END_STYLE 
+
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	PCData	goto 86
+	PCDataList	goto 85
+	PCDataElem	goto 84
+
+	.	reduce by rule 150
+
+
+state 10:
+
+	HeadElement : START_SCRIPT . PCData END_SCRIPT 
+
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	PCData	goto 87
+	PCDataList	goto 85
+	PCDataElem	goto 84
+
+	.	reduce by rule 150
+
+
+state 11:
+
+	HeadElement : TAG_META .  (reduce by rule 13)
+
+
+
+	.	reduce by rule 13
+
+
+state 12:
+
+	HeadElement : TAG_LINK .  (reduce by rule 14)
+
+
+
+	.	reduce by rule 14
+
+
+state 13:
+
+	HeadElement : TAG_ISINDEX .  (reduce by rule 15)
+
+
+
+	.	reduce by rule 15
+
+
+state 14:
+
+	HeadElement : TAG_BASE .  (reduce by rule 16)
+
+
+
+	.	reduce by rule 16
+
+
+state 15:
+
+	TextWOScript : PCDataElem .  (reduce by rule 108)
+
+
+
+	.	reduce by rule 108
+
+
+state 16:
+
+	TextWOScript : Form .  (reduce by rule 112)
+
+
+
+	.	reduce by rule 112
+
+
+state 17:
+
+	TextWOScript : Special .  (reduce by rule 111)
+
+
+
+	.	reduce by rule 111
+
+
+state 18:
+
+	TextWOScript : Phrase .  (reduce by rule 110)
+
+
+
+	.	reduce by rule 110
+
+
+state 19:
+
+	TextWOScript : Font .  (reduce by rule 109)
+
+
+
+	.	reduce by rule 109
+
+
+state 20:
+
+	BodyContent0 : TextWOScript . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 94
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 21:
+
+	BlockWOIndex : Preformatted .  (reduce by rule 55)
+
+
+
+	.	reduce by rule 55
+
+
+state 22:
+
+	BlockWOIndex : List .  (reduce by rule 54)
+
+
+
+	.	reduce by rule 54
+
+
+state 23:
+
+	BodyContent0 : Paragraph . END_P BodyContent1 
+	BodyContent0 : Paragraph . BodyContent2 
+
+	START_ADDRESS	shift 78
+	START_BLOCKQUOTE	shift 74
+	START_CENTER	shift 71
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	TAG_ISINDEX	shift 96
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	END_P	shift 101
+	START_PRE	shift 44
+	START_TABLE	shift 36
+	START_UL	shift 32
+
+	BodyContent2	goto 100
+	BodyElement	goto 99
+	BlockWOIndex	goto 92
+	Block	goto 98
+	Paragraph	goto 97
+	List	goto 22
+	Preformatted	goto 21
+
+	.	reduce by rule 35
+
+
+state 24:
+
+	BodyContent0 : BlockWOIndex . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 102
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 25:
+
+	BodyContent0 : BodyElement . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 103
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 26:
+
+	Body : BodyContent0 . EndBODY 
+
+	END_BODY	shift 105
+
+	EndBODY	goto 104
+
+	.	reduce by rule 20
+
+
+state 27:
+
+	Document : StartHTML Head Body . EndHTML 
+
+	END_HTML	shift 107
+
+	EndHTML	goto 106
+
+	.	reduce by rule 3
+
+
+state 28:
+
+	PCDataElem : ENTITY_REF .  (reduce by rule 154)
+
+
+
+	.	reduce by rule 154
+
+
+state 29:
+
+	PCDataElem : CHAR_REF .  (reduce by rule 153)
+
+
+
+	.	reduce by rule 153
+
+
+state 30:
+
+	PCDataElem : PCDATA .  (reduce by rule 152)
+
+
+
+	.	reduce by rule 152
+
+
+state 31:
+
+	Phrase : START_VAR . TextList END_VAR 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 110
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 32:
+
+	List : START_UL . ListItemList END_UL 
+
+	START_LI	shift 113
+
+	ListItemList	goto 112
+	ListItem	goto 111
+
+	.	reduce by rule 70
+
+
+state 33:
+
+	Font : START_U . TextList END_U 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 114
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 34:
+
+	Font : START_TT . TextList END_TT 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 115
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 35:
+
+	Form : START_TEXTAREA . PCData END_TEXTAREA 
+
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	PCData	goto 116
+	PCDataList	goto 85
+	PCDataElem	goto 84
+
+	.	reduce by rule 150
+
+
+state 36:
+
+	BlockWOIndex : START_TABLE . optCaption TableRowList END_TABLE 
+
+	START_CAPTION	shift 118
+
+	optCaption	goto 117
+
+	.	reduce by rule 93
+
+
+state 37:
+
+	Font : START_SUP . TextList END_SUP 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 119
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 38:
+
+	Font : START_SUB . TextList END_SUB 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 120
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 39:
+
+	Phrase : START_STRONG . TextList END_STRONG 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 121
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 40:
+
+	Font : START_STRIKE . TextList END_STRIKE 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 122
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 41:
+
+	Font : START_SMALL . TextList END_SMALL 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 123
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 42:
+
+	Form : START_SELECT . OptionList END_SELECT 
+
+	START_OPTION	shift 125
+
+	OptionList	goto 124
+
+	.	reduce by rule 145
+
+
+state 43:
+
+	Phrase : START_SAMP . TextList END_SAMP 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 126
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 44:
+
+	Preformatted : START_PRE . TextList END_PRE 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 127
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 45:
+
+	Special : TAG_PARAM .  (reduce by rule 139)
+
+
+
+	.	reduce by rule 139
+
+
+state 46:
+
+	Paragraph : START_P . TextList 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 128
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 47:
+
+	List : START_OL . ListItemList END_OL 
+
+	START_LI	shift 113
+
+	ListItemList	goto 129
+	ListItem	goto 111
+
+	.	reduce by rule 70
+
+
+state 48:
+
+	List : START_MENU . ListItemList END_MENU 
+
+	START_LI	shift 113
+
+	ListItemList	goto 130
+	ListItem	goto 111
+
+	.	reduce by rule 70
+
+
+state 49:
+
+	Special : START_MAP . AreaList END_MAP 
+
+	TAG_AREA	shift 132
+
+	AreaList	goto 131
+
+	.	reduce by rule 140
+
+
+state 50:
+
+	Phrase : START_KBD . TextList END_KBD 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 133
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 51:
+
+	Form : TAG_INPUT .  (reduce by rule 142)
+
+
+
+	.	reduce by rule 142
+
+
+state 52:
+
+	Special : TAG_IMG .  (reduce by rule 133)
+
+
+
+	.	reduce by rule 133
+
+
+state 53:
+
+	Font : START_I . TextList END_I 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 134
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 54:
+
+	BlockWOIndex : TAG_HR .  (reduce by rule 60)
+
+
+
+	.	reduce by rule 60
+
+
+state 55:
+
+	BodyElement : START_H6 . TextList END_H6 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 135
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 56:
+
+	BodyElement : START_H5 . TextList END_H5 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 136
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 57:
+
+	BodyElement : START_H4 . TextList END_H4 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 137
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 58:
+
+	BodyElement : START_H3 . TextList END_H3 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 138
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 59:
+
+	BodyElement : START_H2 . TextList END_H2 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 139
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 60:
+
+	BodyElement : START_H1 . TextList END_H1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 140
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 61:
+
+	BlockWOIndex : START_FORM . BodyContent END_FORM 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent	goto 142
+	BodyContent1	goto 141
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 62:
+
+	Special : START_BASEFONT . TextList END_BASEFONT 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 143
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 63:
+
+	Special : START_FONT . TextList END_FONT 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 144
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 64:
+
+	Phrase : START_EM . TextList END_EM 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 145
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 65:
+
+	List : START_DL . DLItemList END_DL 
+
+	START_DD	shift 149
+	START_DT	shift 148
+
+	DLItemList	goto 147
+	DLItem	goto 146
+
+	.	reduce by rule 73
+
+
+state 66:
+
+	BlockWOIndex : START_DIV . BodyContent END_DIV 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent	goto 150
+	BodyContent1	goto 141
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 67:
+
+	List : START_DIR . ListItemList END_DIR 
+
+	START_LI	shift 113
+
+	ListItemList	goto 151
+	ListItem	goto 111
+
+	.	reduce by rule 70
+
+
+state 68:
+
+	Phrase : START_DFN . TextList END_DFN 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 152
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 69:
+
+	Phrase : START_CODE . TextList END_CODE 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 153
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 70:
+
+	Phrase : START_CITE . TextList END_CITE 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 154
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 71:
+
+	BlockWOIndex : START_CENTER . BodyContent END_CENTER 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent	goto 155
+	BodyContent1	goto 141
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 72:
+
+	Special : TAG_BR .  (reduce by rule 137)
+
+
+
+	.	reduce by rule 137
+
+
+state 73:
+
+	BodyContent0 : START_BODY . BodyContent 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent	goto 156
+	BodyContent1	goto 141
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 74:
+
+	BlockWOIndex : START_BLOCKQUOTE . BodyContent END_BLOCKQUOTE 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent	goto 157
+	BodyContent1	goto 141
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 75:
+
+	Font : START_BIG . TextList END_BIG 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 158
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 76:
+
+	Font : START_B . TextList END_B 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 159
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 77:
+
+	Special : START_APPLET . TextList END_APPLET 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 160
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 78:
+
+	BodyElement : START_ADDRESS . AddressContent1 END_ADDRESS 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	AddressContent1	goto 163
+	Paragraph	goto 162
+	TextWOScript	goto 89
+	Text	goto 161
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 47
+
+
+state 79:
+
+	Special : START_A . TextList END_A 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 164
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 80:
+
+	HeadElements : HeadElement HeadElements .  (reduce by rule 12)
+
+
+
+	.	reduce by rule 12
+
+
+state 81:
+
+	HeadContents : HeadElements START_TITLE . PCData END_TITLE HeadElements 
+
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	PCData	goto 165
+	PCDataList	goto 85
+	PCDataElem	goto 84
+
+	.	reduce by rule 150
+
+
+state 82:
+
+	Head : StartHEAD HeadContents EndHEAD .  (reduce by rule 5)
+
+
+
+	.	reduce by rule 5
+
+
+state 83:
+
+	EndHEAD : END_HEAD .  (reduce by rule 9)
+
+
+
+	.	reduce by rule 9
+
+
+state 84:
+
+	PCDataList : PCDataElem . PCDataList 
+
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	PCDataList	goto 166
+	PCDataElem	goto 84
+
+	.	reduce by rule 150
+
+
+state 85:
+
+	PCData : PCDataList .  (reduce by rule 149)
+
+
+
+	.	reduce by rule 149
+
+
+state 86:
+
+	HeadElement : START_STYLE PCData . END_STYLE 
+
+	END_STYLE	shift 167
+
+
+	.	error
+
+
+state 87:
+
+	HeadElement : START_SCRIPT PCData . END_SCRIPT 
+
+	END_SCRIPT	shift 168
+
+
+	.	error
+
+
+state 88:
+
+	BodyContent1 : Text . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 169
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 89:
+
+	Text : TextWOScript .  (reduce by rule 113)
+
+
+
+	.	reduce by rule 113
+
+
+state 90:
+
+	BodyContent1 : Paragraph . END_P BodyContent1 
+	BodyContent1 : Paragraph . BodyContent2 
+
+	START_ADDRESS	shift 78
+	START_BLOCKQUOTE	shift 74
+	START_CENTER	shift 71
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	TAG_ISINDEX	shift 96
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	END_P	shift 171
+	START_PRE	shift 44
+	START_TABLE	shift 36
+	START_UL	shift 32
+
+	BodyContent2	goto 170
+	BodyElement	goto 99
+	BlockWOIndex	goto 92
+	Block	goto 98
+	Paragraph	goto 97
+	List	goto 22
+	Preformatted	goto 21
+
+	.	reduce by rule 35
+
+
+state 91:
+
+	BodyContent1 : Block . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 172
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 92:
+
+	Block : BlockWOIndex .  (reduce by rule 62)
+
+
+
+	.	reduce by rule 62
+
+
+state 93:
+
+	BodyContent1 : BodyElement . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 173
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 94:
+
+	BodyContent0 : TextWOScript BodyContent1 .  (reduce by rule 24)
+
+
+
+	.	reduce by rule 24
+
+
+state 95:
+
+	Text : START_SCRIPT . PCData END_SCRIPT 
+
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	PCData	goto 174
+	PCDataList	goto 85
+	PCDataElem	goto 84
+
+	.	reduce by rule 150
+
+
+state 96:
+
+	Block : TAG_ISINDEX .  (reduce by rule 63)
+
+
+
+	.	reduce by rule 63
+
+
+state 97:
+
+	BodyContent2 : Paragraph . END_P BodyContent1 
+	BodyContent2 : Paragraph . BodyContent2 
+
+	START_ADDRESS	shift 78
+	START_BLOCKQUOTE	shift 74
+	START_CENTER	shift 71
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	TAG_ISINDEX	shift 96
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	END_P	shift 176
+	START_PRE	shift 44
+	START_TABLE	shift 36
+	START_UL	shift 32
+
+	BodyContent2	goto 175
+	BodyElement	goto 99
+	BlockWOIndex	goto 92
+	Block	goto 98
+	Paragraph	goto 97
+	List	goto 22
+	Preformatted	goto 21
+
+	.	reduce by rule 35
+
+
+state 98:
+
+	BodyContent2 : Block . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 177
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 99:
+
+	BodyContent2 : BodyElement . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 178
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 100:
+
+	BodyContent0 : Paragraph BodyContent2 .  (reduce by rule 28)
+
+
+
+	.	reduce by rule 28
+
+
+state 101:
+
+	BodyContent0 : Paragraph END_P . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 179
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 102:
+
+	BodyContent0 : BlockWOIndex BodyContent1 .  (reduce by rule 26)
+
+
+
+	.	reduce by rule 26
+
+
+state 103:
+
+	BodyContent0 : BodyElement BodyContent1 .  (reduce by rule 25)
+
+
+
+	.	reduce by rule 25
+
+
+state 104:
+
+	Body : BodyContent0 EndBODY .  (reduce by rule 19)
+
+
+
+	.	reduce by rule 19
+
+
+state 105:
+
+	EndBODY : END_BODY .  (reduce by rule 21)
+
+
+
+	.	reduce by rule 21
+
+
+state 106:
+
+	Document : StartHTML Head Body EndHTML .  (reduce by rule 0)
+
+
+
+	.	reduce by rule 0
+
+
+state 107:
+
+	EndHTML : END_HTML .  (reduce by rule 4)
+
+
+
+	.	reduce by rule 4
+
+
+state 108:
+
+	TextList' : Text . TextList' 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList'	goto 180
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 109:
+
+	TextList : TextList' .  (reduce by rule 105)
+
+
+
+	.	reduce by rule 105
+
+
+state 110:
+
+	Phrase : START_VAR TextList . END_VAR 
+
+	END_VAR	shift 181
+
+
+	.	error
+
+
+state 111:
+
+	ListItemList : ListItem . ListItemList 
+
+	START_LI	shift 113
+
+	ListItemList	goto 182
+	ListItem	goto 111
+
+	.	reduce by rule 70
+
+
+state 112:
+
+	List : START_UL ListItemList . END_UL 
+
+	END_UL	shift 183
+
+
+	.	error
+
+
+state 113:
+
+	ListItem : START_LI . Flow1 EndLI 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BlockWOIndex	goto 92
+	Block	goto 187
+	Paragraph	goto 186
+	List	goto 22
+	Flow1	goto 185
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 184
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 77
+
+
+state 114:
+
+	Font : START_U TextList . END_U 
+
+	END_U	shift 188
+
+
+	.	error
+
+
+state 115:
+
+	Font : START_TT TextList . END_TT 
+
+	END_TT	shift 189
+
+
+	.	error
+
+
+state 116:
+
+	Form : START_TEXTAREA PCData . END_TEXTAREA 
+
+	END_TEXTAREA	shift 190
+
+
+	.	error
+
+
+state 117:
+
+	BlockWOIndex : START_TABLE optCaption . TableRowList END_TABLE 
+
+	START_TR	shift 193
+
+	TableRowList	goto 192
+	TableRow	goto 191
+
+	.	error
+
+
+state 118:
+
+	optCaption : START_CAPTION . TextList END_CAPTION 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 194
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 119:
+
+	Font : START_SUP TextList . END_SUP 
+
+	END_SUP	shift 195
+
+
+	.	error
+
+
+state 120:
+
+	Font : START_SUB TextList . END_SUB 
+
+	END_SUB	shift 196
+
+
+	.	error
+
+
+state 121:
+
+	Phrase : START_STRONG TextList . END_STRONG 
+
+	END_STRONG	shift 197
+
+
+	.	error
+
+
+state 122:
+
+	Font : START_STRIKE TextList . END_STRIKE 
+
+	END_STRIKE	shift 198
+
+
+	.	error
+
+
+state 123:
+
+	Font : START_SMALL TextList . END_SMALL 
+
+	END_SMALL	shift 199
+
+
+	.	error
+
+
+state 124:
+
+	Form : START_SELECT OptionList . END_SELECT 
+
+	END_SELECT	shift 200
+
+
+	.	error
+
+
+state 125:
+
+	OptionList : START_OPTION . PCData EndOPTION OptionList 
+
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	PCData	goto 201
+	PCDataList	goto 85
+	PCDataElem	goto 84
+
+	.	reduce by rule 150
+
+
+state 126:
+
+	Phrase : START_SAMP TextList . END_SAMP 
+
+	END_SAMP	shift 202
+
+
+	.	error
+
+
+state 127:
+
+	Preformatted : START_PRE TextList . END_PRE 
+
+	END_PRE	shift 203
+
+
+	.	error
+
+
+state 128:
+
+	Paragraph : START_P TextList .  (reduce by rule 64)
+
+
+
+	.	reduce by rule 64
+
+
+state 129:
+
+	List : START_OL ListItemList . END_OL 
+
+	END_OL	shift 204
+
+
+	.	error
+
+
+state 130:
+
+	List : START_MENU ListItemList . END_MENU 
+
+	END_MENU	shift 205
+
+
+	.	error
+
+
+state 131:
+
+	Special : START_MAP AreaList . END_MAP 
+
+	END_MAP	shift 206
+
+
+	.	error
+
+
+state 132:
+
+	AreaList : TAG_AREA . AreaList 
+
+	TAG_AREA	shift 132
+
+	AreaList	goto 207
+
+	.	reduce by rule 140
+
+
+state 133:
+
+	Phrase : START_KBD TextList . END_KBD 
+
+	END_KBD	shift 208
+
+
+	.	error
+
+
+state 134:
+
+	Font : START_I TextList . END_I 
+
+	END_I	shift 209
+
+
+	.	error
+
+
+state 135:
+
+	BodyElement : START_H6 TextList . END_H6 
+
+	END_H6	shift 210
+
+
+	.	error
+
+
+state 136:
+
+	BodyElement : START_H5 TextList . END_H5 
+
+	END_H5	shift 211
+
+
+	.	error
+
+
+state 137:
+
+	BodyElement : START_H4 TextList . END_H4 
+
+	END_H4	shift 212
+
+
+	.	error
+
+
+state 138:
+
+	BodyElement : START_H3 TextList . END_H3 
+
+	END_H3	shift 213
+
+
+	.	error
+
+
+state 139:
+
+	BodyElement : START_H2 TextList . END_H2 
+
+	END_H2	shift 214
+
+
+	.	error
+
+
+state 140:
+
+	BodyElement : START_H1 TextList . END_H1 
+
+	END_H1	shift 215
+
+
+	.	error
+
+
+state 141:
+
+	BodyContent : BodyContent1 .  (reduce by rule 22)
+
+
+
+	.	reduce by rule 22
+
+
+state 142:
+
+	BlockWOIndex : START_FORM BodyContent . END_FORM 
+
+	END_FORM	shift 216
+
+
+	.	error
+
+
+state 143:
+
+	Special : START_BASEFONT TextList . END_BASEFONT 
+
+	END_BASEFONT	shift 217
+
+
+	.	error
+
+
+state 144:
+
+	Special : START_FONT TextList . END_FONT 
+
+	END_FONT	shift 218
+
+
+	.	error
+
+
+state 145:
+
+	Phrase : START_EM TextList . END_EM 
+
+	END_EM	shift 219
+
+
+	.	error
+
+
+state 146:
+
+	DLItemList : DLItem . DLItemList 
+
+	START_DD	shift 149
+	START_DT	shift 148
+
+	DLItemList	goto 220
+	DLItem	goto 146
+
+	.	reduce by rule 73
+
+
+state 147:
+
+	List : START_DL DLItemList . END_DL 
+
+	END_DL	shift 221
+
+
+	.	error
+
+
+state 148:
+
+	DLItem : START_DT . TextList EndDT 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	TextList	goto 222
+	TextList'	goto 109
+	TextWOScript	goto 89
+	Text	goto 108
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 106
+
+
+state 149:
+
+	DLItem : START_DD . Flow1 EndDD 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BlockWOIndex	goto 92
+	Block	goto 187
+	Paragraph	goto 186
+	List	goto 22
+	Flow1	goto 223
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 184
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 77
+
+
+state 150:
+
+	BlockWOIndex : START_DIV BodyContent . END_DIV 
+
+	END_DIV	shift 224
+
+
+	.	error
+
+
+state 151:
+
+	List : START_DIR ListItemList . END_DIR 
+
+	END_DIR	shift 225
+
+
+	.	error
+
+
+state 152:
+
+	Phrase : START_DFN TextList . END_DFN 
+
+	END_DFN	shift 226
+
+
+	.	error
+
+
+state 153:
+
+	Phrase : START_CODE TextList . END_CODE 
+
+	END_CODE	shift 227
+
+
+	.	error
+
+
+state 154:
+
+	Phrase : START_CITE TextList . END_CITE 
+
+	END_CITE	shift 228
+
+
+	.	error
+
+
+state 155:
+
+	BlockWOIndex : START_CENTER BodyContent . END_CENTER 
+
+	END_CENTER	shift 229
+
+
+	.	error
+
+
+state 156:
+
+	BodyContent0 : START_BODY BodyContent .  (reduce by rule 23)
+
+
+
+	.	reduce by rule 23
+
+
+state 157:
+
+	BlockWOIndex : START_BLOCKQUOTE BodyContent . END_BLOCKQUOTE 
+
+	END_BLOCKQUOTE	shift 230
+
+
+	.	error
+
+
+state 158:
+
+	Font : START_BIG TextList . END_BIG 
+
+	END_BIG	shift 231
+
+
+	.	error
+
+
+state 159:
+
+	Font : START_B TextList . END_B 
+
+	END_B	shift 232
+
+
+	.	error
+
+
+state 160:
+
+	Special : START_APPLET TextList . END_APPLET 
+
+	END_APPLET	shift 233
+
+
+	.	error
+
+
+state 161:
+
+	AddressContent1 : Text . AddressContent1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	AddressContent1	goto 234
+	Paragraph	goto 162
+	TextWOScript	goto 89
+	Text	goto 161
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 47
+
+
+state 162:
+
+	AddressContent1 : Paragraph . END_P AddressContent1 
+	AddressContent1 : Paragraph . AddressContent2 
+
+	START_P	shift 46
+	END_P	shift 237
+
+	AddressContent2	goto 236
+	Paragraph	goto 235
+
+	.	reduce by rule 51
+
+
+state 163:
+
+	BodyElement : START_ADDRESS AddressContent1 . END_ADDRESS 
+
+	END_ADDRESS	shift 238
+
+
+	.	error
+
+
+state 164:
+
+	Special : START_A TextList . END_A 
+
+	END_A	shift 239
+
+
+	.	error
+
+
+state 165:
+
+	HeadContents : HeadElements START_TITLE PCData . END_TITLE HeadElements 
+
+	END_TITLE	shift 240
+
+
+	.	error
+
+
+state 166:
+
+	PCDataList : PCDataElem PCDataList .  (reduce by rule 151)
+
+
+
+	.	reduce by rule 151
+
+
+state 167:
+
+	HeadElement : START_STYLE PCData END_STYLE .  (reduce by rule 17)
+
+
+
+	.	reduce by rule 17
+
+
+state 168:
+
+	HeadElement : START_SCRIPT PCData END_SCRIPT .  (reduce by rule 18)
+
+
+
+	.	reduce by rule 18
+
+
+state 169:
+
+	BodyContent1 : Text BodyContent1 .  (reduce by rule 30)
+
+
+
+	.	reduce by rule 30
+
+
+state 170:
+
+	BodyContent1 : Paragraph BodyContent2 .  (reduce by rule 34)
+
+
+
+	.	reduce by rule 34
+
+
+state 171:
+
+	BodyContent1 : Paragraph END_P . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 241
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 172:
+
+	BodyContent1 : Block BodyContent1 .  (reduce by rule 32)
+
+
+
+	.	reduce by rule 32
+
+
+state 173:
+
+	BodyContent1 : BodyElement BodyContent1 .  (reduce by rule 31)
+
+
+
+	.	reduce by rule 31
+
+
+state 174:
+
+	Text : START_SCRIPT PCData . END_SCRIPT 
+
+	END_SCRIPT	shift 242
+
+
+	.	error
+
+
+state 175:
+
+	BodyContent2 : Paragraph BodyContent2 .  (reduce by rule 39)
+
+
+
+	.	reduce by rule 39
+
+
+state 176:
+
+	BodyContent2 : Paragraph END_P . BodyContent1 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent1	goto 243
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 177:
+
+	BodyContent2 : Block BodyContent1 .  (reduce by rule 37)
+
+
+
+	.	reduce by rule 37
+
+
+state 178:
+
+	BodyContent2 : BodyElement BodyContent1 .  (reduce by rule 36)
+
+
+
+	.	reduce by rule 36
+
+
+state 179:
+
+	BodyContent0 : Paragraph END_P BodyContent1 .  (reduce by rule 27)
+
+
+
+	.	reduce by rule 27
+
+
+state 180:
+
+	TextList' : Text TextList' .  (reduce by rule 107)
+
+
+
+	.	reduce by rule 107
+
+
+state 181:
+
+	Phrase : START_VAR TextList END_VAR .  (reduce by rule 130)
+
+
+
+	.	reduce by rule 130
+
+
+state 182:
+
+	ListItemList : ListItem ListItemList .  (reduce by rule 71)
+
+
+
+	.	reduce by rule 71
+
+
+state 183:
+
+	List : START_UL ListItemList END_UL .  (reduce by rule 65)
+
+
+
+	.	reduce by rule 65
+
+
+state 184:
+
+	Flow1 : Text . Flow1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BlockWOIndex	goto 92
+	Block	goto 187
+	Paragraph	goto 186
+	List	goto 22
+	Flow1	goto 244
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 184
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 77
+
+
+state 185:
+
+	ListItem : START_LI Flow1 . EndLI 
+
+	END_LI	shift 246
+
+	EndLI	goto 245
+
+	.	reduce by rule 86
+
+
+state 186:
+
+	Flow1 : Paragraph . END_P Flow1 
+	Flow1 : Paragraph . Flow2 
+
+	START_BLOCKQUOTE	shift 74
+	START_CENTER	shift 71
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	TAG_ISINDEX	shift 96
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	END_P	shift 250
+	START_PRE	shift 44
+	START_TABLE	shift 36
+	START_UL	shift 32
+
+	BlockWOIndex	goto 92
+	Block	goto 249
+	Paragraph	goto 248
+	List	goto 22
+	Flow2	goto 247
+	Preformatted	goto 21
+
+	.	reduce by rule 82
+
+
+state 187:
+
+	Flow1 : Block . Flow1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BlockWOIndex	goto 92
+	Block	goto 187
+	Paragraph	goto 186
+	List	goto 22
+	Flow1	goto 251
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 184
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 77
+
+
+state 188:
+
+	Font : START_U TextList END_U .  (reduce by rule 118)
+
+
+
+	.	reduce by rule 118
+
+
+state 189:
+
+	Font : START_TT TextList END_TT .  (reduce by rule 115)
+
+
+
+	.	reduce by rule 115
+
+
+state 190:
+
+	Form : START_TEXTAREA PCData END_TEXTAREA .  (reduce by rule 144)
+
+
+
+	.	reduce by rule 144
+
+
+state 191:
+
+	TableRowList : TableRow .  (reduce by rule 95)
+	TableRowList : TableRow . TableRowList 
+
+	START_TR	shift 193
+
+	TableRowList	goto 252
+	TableRow	goto 191
+
+	.	reduce by rule 95
+
+
+state 192:
+
+	BlockWOIndex : START_TABLE optCaption TableRowList . END_TABLE 
+
+	END_TABLE	shift 253
+
+
+	.	error
+
+
+state 193:
+
+	TableRow : START_TR . TableCellList 
+	TableRow : START_TR . TableCellList END_TR 
+
+	START_TD	shift 257
+	START_TH	shift 256
+
+	TableCellList	goto 255
+	TableCell	goto 254
+
+	.	error
+
+
+state 194:
+
+	optCaption : START_CAPTION TextList . END_CAPTION 
+
+	END_CAPTION	shift 258
+
+
+	.	error
+
+
+state 195:
+
+	Font : START_SUP TextList END_SUP .  (reduce by rule 123)
+
+
+
+	.	reduce by rule 123
+
+
+state 196:
+
+	Font : START_SUB TextList END_SUB .  (reduce by rule 122)
+
+
+
+	.	reduce by rule 122
+
+
+state 197:
+
+	Phrase : START_STRONG TextList END_STRONG .  (reduce by rule 125)
+
+
+
+	.	reduce by rule 125
+
+
+state 198:
+
+	Font : START_STRIKE TextList END_STRIKE .  (reduce by rule 119)
+
+
+
+	.	reduce by rule 119
+
+
+state 199:
+
+	Font : START_SMALL TextList END_SMALL .  (reduce by rule 121)
+
+
+
+	.	reduce by rule 121
+
+
+state 200:
+
+	Form : START_SELECT OptionList END_SELECT .  (reduce by rule 143)
+
+
+
+	.	reduce by rule 143
+
+
+state 201:
+
+	OptionList : START_OPTION PCData . EndOPTION OptionList 
+
+	END_OPTION	shift 260
+
+	EndOPTION	goto 259
+
+	.	reduce by rule 147
+
+
+state 202:
+
+	Phrase : START_SAMP TextList END_SAMP .  (reduce by rule 128)
+
+
+
+	.	reduce by rule 128
+
+
+state 203:
+
+	Preformatted : START_PRE TextList END_PRE .  (reduce by rule 92)
+
+
+
+	.	reduce by rule 92
+
+
+state 204:
+
+	List : START_OL ListItemList END_OL .  (reduce by rule 66)
+
+
+
+	.	reduce by rule 66
+
+
+state 205:
+
+	List : START_MENU ListItemList END_MENU .  (reduce by rule 68)
+
+
+
+	.	reduce by rule 68
+
+
+state 206:
+
+	Special : START_MAP AreaList END_MAP .  (reduce by rule 138)
+
+
+
+	.	reduce by rule 138
+
+
+state 207:
+
+	AreaList : TAG_AREA AreaList .  (reduce by rule 141)
+
+
+
+	.	reduce by rule 141
+
+
+state 208:
+
+	Phrase : START_KBD TextList END_KBD .  (reduce by rule 129)
+
+
+
+	.	reduce by rule 129
+
+
+state 209:
+
+	Font : START_I TextList END_I .  (reduce by rule 116)
+
+
+
+	.	reduce by rule 116
+
+
+state 210:
+
+	BodyElement : START_H6 TextList END_H6 .  (reduce by rule 45)
+
+
+
+	.	reduce by rule 45
+
+
+state 211:
+
+	BodyElement : START_H5 TextList END_H5 .  (reduce by rule 44)
+
+
+
+	.	reduce by rule 44
+
+
+state 212:
+
+	BodyElement : START_H4 TextList END_H4 .  (reduce by rule 43)
+
+
+
+	.	reduce by rule 43
+
+
+state 213:
+
+	BodyElement : START_H3 TextList END_H3 .  (reduce by rule 42)
+
+
+
+	.	reduce by rule 42
+
+
+state 214:
+
+	BodyElement : START_H2 TextList END_H2 .  (reduce by rule 41)
+
+
+
+	.	reduce by rule 41
+
+
+state 215:
+
+	BodyElement : START_H1 TextList END_H1 .  (reduce by rule 40)
+
+
+
+	.	reduce by rule 40
+
+
+state 216:
+
+	BlockWOIndex : START_FORM BodyContent END_FORM .  (reduce by rule 59)
+
+
+
+	.	reduce by rule 59
+
+
+state 217:
+
+	Special : START_BASEFONT TextList END_BASEFONT .  (reduce by rule 136)
+
+
+
+	.	reduce by rule 136
+
+
+state 218:
+
+	Special : START_FONT TextList END_FONT .  (reduce by rule 135)
+
+
+
+	.	reduce by rule 135
+
+
+state 219:
+
+	Phrase : START_EM TextList END_EM .  (reduce by rule 124)
+
+
+
+	.	reduce by rule 124
+
+
+state 220:
+
+	DLItemList : DLItem DLItemList .  (reduce by rule 74)
+
+
+
+	.	reduce by rule 74
+
+
+state 221:
+
+	List : START_DL DLItemList END_DL .  (reduce by rule 69)
+
+
+
+	.	reduce by rule 69
+
+
+state 222:
+
+	DLItem : START_DT TextList . EndDT 
+
+	END_DT	shift 262
+
+	EndDT	goto 261
+
+	.	reduce by rule 88
+
+
+state 223:
+
+	DLItem : START_DD Flow1 . EndDD 
+
+	END_DD	shift 264
+
+	EndDD	goto 263
+
+	.	reduce by rule 90
+
+
+state 224:
+
+	BlockWOIndex : START_DIV BodyContent END_DIV .  (reduce by rule 56)
+
+
+
+	.	reduce by rule 56
+
+
+state 225:
+
+	List : START_DIR ListItemList END_DIR .  (reduce by rule 67)
+
+
+
+	.	reduce by rule 67
+
+
+state 226:
+
+	Phrase : START_DFN TextList END_DFN .  (reduce by rule 127)
+
+
+
+	.	reduce by rule 127
+
+
+state 227:
+
+	Phrase : START_CODE TextList END_CODE .  (reduce by rule 126)
+
+
+
+	.	reduce by rule 126
+
+
+state 228:
+
+	Phrase : START_CITE TextList END_CITE .  (reduce by rule 131)
+
+
+
+	.	reduce by rule 131
+
+
+state 229:
+
+	BlockWOIndex : START_CENTER BodyContent END_CENTER .  (reduce by rule 57)
+
+
+
+	.	reduce by rule 57
+
+
+state 230:
+
+	BlockWOIndex : START_BLOCKQUOTE BodyContent END_BLOCKQUOTE .  (reduce by rule 58)
+
+
+
+	.	reduce by rule 58
+
+
+state 231:
+
+	Font : START_BIG TextList END_BIG .  (reduce by rule 120)
+
+
+
+	.	reduce by rule 120
+
+
+state 232:
+
+	Font : START_B TextList END_B .  (reduce by rule 117)
+
+
+
+	.	reduce by rule 117
+
+
+state 233:
+
+	Special : START_APPLET TextList END_APPLET .  (reduce by rule 134)
+
+
+
+	.	reduce by rule 134
+
+
+state 234:
+
+	AddressContent1 : Text AddressContent1 .  (reduce by rule 48)
+
+
+
+	.	reduce by rule 48
+
+
+state 235:
+
+	AddressContent2 : Paragraph . END_P AddressContent1 
+	AddressContent2 : Paragraph . AddressContent2 
+
+	START_P	shift 46
+	END_P	shift 266
+
+	AddressContent2	goto 265
+	Paragraph	goto 235
+
+	.	reduce by rule 51
+
+
+state 236:
+
+	AddressContent1 : Paragraph AddressContent2 .  (reduce by rule 50)
+
+
+
+	.	reduce by rule 50
+
+
+state 237:
+
+	AddressContent1 : Paragraph END_P . AddressContent1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	AddressContent1	goto 267
+	Paragraph	goto 162
+	TextWOScript	goto 89
+	Text	goto 161
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 47
+
+
+state 238:
+
+	BodyElement : START_ADDRESS AddressContent1 END_ADDRESS .  (reduce by rule 46)
+
+
+
+	.	reduce by rule 46
+
+
+state 239:
+
+	Special : START_A TextList END_A .  (reduce by rule 132)
+
+
+
+	.	reduce by rule 132
+
+
+state 240:
+
+	HeadContents : HeadElements START_TITLE PCData END_TITLE . HeadElements 
+
+	TAG_BASE	shift 14
+	TAG_ISINDEX	shift 13
+	TAG_LINK	shift 12
+	TAG_META	shift 11
+	START_SCRIPT	shift 10
+	START_STYLE	shift 9
+
+	HeadElements	goto 268
+	HeadElement	goto 6
+
+	.	reduce by rule 11
+
+
+state 241:
+
+	BodyContent1 : Paragraph END_P BodyContent1 .  (reduce by rule 33)
+
+
+
+	.	reduce by rule 33
+
+
+state 242:
+
+	Text : START_SCRIPT PCData END_SCRIPT .  (reduce by rule 114)
+
+
+
+	.	reduce by rule 114
+
+
+state 243:
+
+	BodyContent2 : Paragraph END_P BodyContent1 .  (reduce by rule 38)
+
+
+
+	.	reduce by rule 38
+
+
+state 244:
+
+	Flow1 : Text Flow1 .  (reduce by rule 78)
+
+
+
+	.	reduce by rule 78
+
+
+state 245:
+
+	ListItem : START_LI Flow1 EndLI .  (reduce by rule 72)
+
+
+
+	.	reduce by rule 72
+
+
+state 246:
+
+	EndLI : END_LI .  (reduce by rule 87)
+
+
+
+	.	reduce by rule 87
+
+
+state 247:
+
+	Flow1 : Paragraph Flow2 .  (reduce by rule 81)
+
+
+
+	.	reduce by rule 81
+
+
+state 248:
+
+	Flow2 : Paragraph . END_P Flow1 
+	Flow2 : Paragraph . Flow2 
+
+	START_BLOCKQUOTE	shift 74
+	START_CENTER	shift 71
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	TAG_ISINDEX	shift 96
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	END_P	shift 270
+	START_PRE	shift 44
+	START_TABLE	shift 36
+	START_UL	shift 32
+
+	BlockWOIndex	goto 92
+	Block	goto 249
+	Paragraph	goto 248
+	List	goto 22
+	Flow2	goto 269
+	Preformatted	goto 21
+
+	.	reduce by rule 82
+
+
+state 249:
+
+	Flow2 : Block . Flow1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BlockWOIndex	goto 92
+	Block	goto 187
+	Paragraph	goto 186
+	List	goto 22
+	Flow1	goto 271
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 184
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 77
+
+
+state 250:
+
+	Flow1 : Paragraph END_P . Flow1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BlockWOIndex	goto 92
+	Block	goto 187
+	Paragraph	goto 186
+	List	goto 22
+	Flow1	goto 272
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 184
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 77
+
+
+state 251:
+
+	Flow1 : Block Flow1 .  (reduce by rule 79)
+
+
+
+	.	reduce by rule 79
+
+
+state 252:
+
+	TableRowList : TableRow TableRowList .  (reduce by rule 96)
+
+
+
+	.	reduce by rule 96
+
+
+state 253:
+
+	BlockWOIndex : START_TABLE optCaption TableRowList END_TABLE .  (reduce by rule 61)
+
+
+
+	.	reduce by rule 61
+
+
+state 254:
+
+	TableCellList : TableCell .  (reduce by rule 99)
+	TableCellList : TableCell . TableCellList 
+
+	START_TD	shift 257
+	START_TH	shift 256
+
+	TableCellList	goto 273
+	TableCell	goto 254
+
+	.	reduce by rule 99
+
+
+state 255:
+
+	TableRow : START_TR TableCellList .  (reduce by rule 97)
+	TableRow : START_TR TableCellList . END_TR 
+
+	END_TR	shift 274
+
+
+	.	reduce by rule 97
+
+
+state 256:
+
+	TableCell : START_TH . BodyContent END_TH 
+	TableCell : START_TH . BodyContent 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent	goto 275
+	BodyContent1	goto 141
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 257:
+
+	TableCell : START_TD . BodyContent END_TD 
+	TableCell : START_TD . BodyContent 
+
+	START_A	shift 79
+	START_ADDRESS	shift 78
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	START_H1	shift 60
+	START_H2	shift 59
+	START_H3	shift 58
+	START_H4	shift 57
+	START_H5	shift 56
+	START_H6	shift 55
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BodyContent	goto 276
+	BodyContent1	goto 141
+	BodyElement	goto 93
+	BlockWOIndex	goto 92
+	Block	goto 91
+	Paragraph	goto 90
+	List	goto 22
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 88
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 29
+
+
+state 258:
+
+	optCaption : START_CAPTION TextList END_CAPTION .  (reduce by rule 94)
+
+
+
+	.	reduce by rule 94
+
+
+state 259:
+
+	OptionList : START_OPTION PCData EndOPTION . OptionList 
+
+	START_OPTION	shift 125
+
+	OptionList	goto 277
+
+	.	reduce by rule 145
+
+
+state 260:
+
+	EndOPTION : END_OPTION .  (reduce by rule 148)
+
+
+
+	.	reduce by rule 148
+
+
+state 261:
+
+	DLItem : START_DT TextList EndDT .  (reduce by rule 75)
+
+
+
+	.	reduce by rule 75
+
+
+state 262:
+
+	EndDT : END_DT .  (reduce by rule 89)
+
+
+
+	.	reduce by rule 89
+
+
+state 263:
+
+	DLItem : START_DD Flow1 EndDD .  (reduce by rule 76)
+
+
+
+	.	reduce by rule 76
+
+
+state 264:
+
+	EndDD : END_DD .  (reduce by rule 91)
+
+
+
+	.	reduce by rule 91
+
+
+state 265:
+
+	AddressContent2 : Paragraph AddressContent2 .  (reduce by rule 53)
+
+
+
+	.	reduce by rule 53
+
+
+state 266:
+
+	AddressContent2 : Paragraph END_P . AddressContent1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	TAG_BR	shift 72
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	AddressContent1	goto 278
+	Paragraph	goto 162
+	TextWOScript	goto 89
+	Text	goto 161
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 47
+
+
+state 267:
+
+	AddressContent1 : Paragraph END_P AddressContent1 .  (reduce by rule 49)
+
+
+
+	.	reduce by rule 49
+
+
+state 268:
+
+	HeadContents : HeadElements START_TITLE PCData END_TITLE HeadElements .  (reduce by rule 10)
+
+
+
+	.	reduce by rule 10
+
+
+state 269:
+
+	Flow2 : Paragraph Flow2 .  (reduce by rule 85)
+
+
+
+	.	reduce by rule 85
+
+
+state 270:
+
+	Flow2 : Paragraph END_P . Flow1 
+
+	START_A	shift 79
+	START_APPLET	shift 77
+	START_B	shift 76
+	START_BIG	shift 75
+	START_BLOCKQUOTE	shift 74
+	TAG_BR	shift 72
+	START_CENTER	shift 71
+	START_CITE	shift 70
+	START_CODE	shift 69
+	START_DFN	shift 68
+	START_DIR	shift 67
+	START_DIV	shift 66
+	START_DL	shift 65
+	START_EM	shift 64
+	START_FONT	shift 63
+	START_BASEFONT	shift 62
+	START_FORM	shift 61
+	TAG_HR	shift 54
+	START_I	shift 53
+	TAG_IMG	shift 52
+	TAG_INPUT	shift 51
+	TAG_ISINDEX	shift 96
+	START_KBD	shift 50
+	START_MAP	shift 49
+	START_MENU	shift 48
+	START_OL	shift 47
+	START_P	shift 46
+	TAG_PARAM	shift 45
+	START_PRE	shift 44
+	START_SAMP	shift 43
+	START_SCRIPT	shift 95
+	START_SELECT	shift 42
+	START_SMALL	shift 41
+	START_STRIKE	shift 40
+	START_STRONG	shift 39
+	START_SUB	shift 38
+	START_SUP	shift 37
+	START_TABLE	shift 36
+	START_TEXTAREA	shift 35
+	START_TT	shift 34
+	START_U	shift 33
+	START_UL	shift 32
+	START_VAR	shift 31
+	PCDATA	shift 30
+	CHAR_REF	shift 29
+	ENTITY_REF	shift 28
+
+	BlockWOIndex	goto 92
+	Block	goto 187
+	Paragraph	goto 186
+	List	goto 22
+	Flow1	goto 279
+	Preformatted	goto 21
+	TextWOScript	goto 89
+	Text	goto 184
+	Font	goto 19
+	Phrase	goto 18
+	Special	goto 17
+	Form	goto 16
+	PCDataElem	goto 15
+
+	.	reduce by rule 77
+
+
+state 271:
+
+	Flow2 : Block Flow1 .  (reduce by rule 83)
+
+
+
+	.	reduce by rule 83
+
+
+state 272:
+
+	Flow1 : Paragraph END_P Flow1 .  (reduce by rule 80)
+
+
+
+	.	reduce by rule 80
+
+
+state 273:
+
+	TableCellList : TableCell TableCellList .  (reduce by rule 100)
+
+
+
+	.	reduce by rule 100
+
+
+state 274:
+
+	TableRow : START_TR TableCellList END_TR .  (reduce by rule 98)
+
+
+
+	.	reduce by rule 98
+
+
+state 275:
+
+	TableCell : START_TH BodyContent . END_TH 
+	TableCell : START_TH BodyContent .  (reduce by rule 102)
+
+	END_TH	shift 280
+
+
+	.	reduce by rule 102
+
+
+state 276:
+
+	TableCell : START_TD BodyContent . END_TD 
+	TableCell : START_TD BodyContent .  (reduce by rule 104)
+
+	END_TD	shift 281
+
+
+	.	reduce by rule 104
+
+
+state 277:
+
+	OptionList : START_OPTION PCData EndOPTION OptionList .  (reduce by rule 146)
+
+
+
+	.	reduce by rule 146
+
+
+state 278:
+
+	AddressContent2 : Paragraph END_P AddressContent1 .  (reduce by rule 52)
+
+
+
+	.	reduce by rule 52
+
+
+state 279:
+
+	Flow2 : Paragraph END_P Flow1 .  (reduce by rule 84)
+
+
+
+	.	reduce by rule 84
+
+
+state 280:
+
+	TableCell : START_TH BodyContent END_TH .  (reduce by rule 101)
+
+
+
+	.	reduce by rule 101
+
+
+state 281:
+
+	TableCell : START_TD BodyContent END_TD .  (reduce by rule 103)
+
+
+
+	.	reduce by rule 103
+
+
+state 282:
+
+
+	EOF	accept
+
+
+	.	error
+
+398 of 2987 action table entries left after compaction
+788 goto table entries

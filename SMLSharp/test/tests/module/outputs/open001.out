@@ -1,0 +1,37 @@
+structure Sval1 : sig val x : int * int end
+structure Sval2 : sig val x : int * int val y : int * int end
+val xval = (1, 2) : int * int
+structure Stype1 : sig type t = int * int end
+structure Stype2 : sig type t = int * int val y : t end
+val xtype = (2, 3) : Stype2.t
+structure Sdatatype1 : sig datatype dt con D : dt end
+structure Sdatatype2 : sig datatype dt con D : dt val y : dt end
+val xdatatype = D : Sdatatype2.dt
+structure SdatatypeReplication1 : sig datatype dt con D : dt end
+structure SdatatypeReplication2 : sig datatype dt con D : dt val y : dt end
+val xdatatypeReplication = D : Sdatatype2.dt
+structure Sabstype1 : sig type at type t = int * int val x : at end
+structure Sabstype2 : sig type at type t = int * int val x : at val y : at end
+val xabstype = - : Sabstype2.at
+structure Sexception1 : sig exception E : int -> exn end
+structure Sexception2 : sig exception E : int -> exn val y : exn end
+val xexception = Sexception1.E 1 : exn
+structure Sopen1 : sig datatype dt con D : dt val x : dt end
+structure Sopen2 : sig datatype dt con D : dt val x : dt end
+structure Sopen3 : sig datatype dt con D : dt val x : dt val y : dt end
+val xopen = (D, D) : Sopen3.dt * Sopen3.dt
+structure Sinfix1 : sig val ## : int * int -> int end
+structure Sinfix2 : sig val ## : int * int -> int end
+structure Sinfixr1 : sig val ## : int * int -> int end
+structure Sinfixr2 : sig val ## : int * int -> int end
+structure Snonfix1 : sig end
+structure Snonfix2 : sig val ## : int * int -> int end
+structure Sstructure1
+: sig structure S : sig datatype dt con D : dt val x : dt end end
+structure Sstructure2
+: sig
+  structure S : sig datatype dt con D : dt val x : dt end
+  structure T : sig datatype dt con D : dt val x : dt end
+  end
+structure T : sig datatype dt con D : dt val x : dt end
+val xstructure = (D, D) : Sstructure2.S.dt * Sstructure2.S.dt

@@ -1,0 +1,14 @@
+signature S = sig type t datatype dt = D val x : t val y : dt end
+structure S : sig datatype dt con D : dt type t = dt val x : dt val y : dt end
+structure STrans : S
+datatype dtTrans
+con DTrans : STrans.t * STrans.dt -> dtTrans
+val xTrans = D : STrans.t
+val yTrans = D : STrans.dt
+val dtTrans = DTrans (D,D) : dtTrans
+structure SOpaque : S
+datatype dtOpaque
+con DOpaque : SOpaque.t * SOpaque.dt -> dtOpaque
+val xOpaque = - : SOpaque.t
+val yOpaque = D : SOpaque.dt
+val dtOpaque = DOpaque (-,D) : dtOpaque

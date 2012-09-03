@@ -1,0 +1,23 @@
+(* reactive-lib.cm
+ *
+ * COPYRIGHT (c) 1997 Bell Labs, Lucent Technologies
+ *
+ * Sources file for reactive engine library.
+ *)
+
+Library
+  signature REACTIVE
+  structure Reactive
+is
+#if defined(NEW_CM)
+  $/basis.cm
+  $/smlnj-lib.cm
+#else
+  ../Util/smlnj-lib.cm
+#endif
+
+  instruction.sml
+  machine.sml
+  reactive-sig.sml
+  reactive.sml
+

@@ -1,14 +1,14 @@
-SMLPPG sample: Core ML parser
+SMLFormat sample: Core ML parser
 
 Running.
 
-1) make SMLPPG at the package root directory
+1) make SMLFormat at the package root directory
 
  $ make
 
 2) generate formatter
 
- $ ./bin/smlppg example/MLParser/Absyn.ppg
+ $ ./bin/smlformat example/MLParser/Absyn.ppg
 
 3) change the working directory.
 

@@ -1,0 +1,126 @@
+# Makefile for SMLLex
+# $Id: Makefile.in,v 1.1 2007/11/16 04:36:19 kiyoshiy Exp $
+
+srcdir = @abs_srcdir@
+builddir = @abs_builddir@
+top_srcdir = @abs_top_srcdir@
+top_builddir = @abs_top_builddir@
+
+include @abs_top_builddir@/commonrule
+
+VPATH = @srcdir@
+
+MLYACC = $(MLTON_YACC)
+MLLEX = $(MLTON_LEX)
+SMLSHARP = smlsharp
+
+CONFIG_FILES =
+
+LIBFILES = 
+
+LEXFILES = 
+
+YACCFILES = 
+
+SMLNJ_HEAP = $(srcdir)/smllex.$(SML_HEAP_SUFFIX)
+
+SMLSHARP_TARGET = smllex
+SMLNJ_TARGET = smllex
+MLTON_TARGET = smllex$(EXEEXT)
+MLTON_TARGET_PLATFORM = self
+
+all: config all-@DEFAULT_SML_COMPILER@
+
+install: install-@DEFAULT_SML_COMPILER@
+
+clean:
+	-rm -f $(SMLSHARP_TARGET) $(SMLNJ_HEAP) $(SMLNJ_TARGET) $(MLTON_TARGET)
+	-rm -f $(CONFIG_FILES:.in=)
+	-rm -f $(LEXFILES:.lex=.lex.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sig)
+	-rm -f $(YACCFILES:.grm=.grm.desc)
+	-rm -rf $(srcdir)/generator/main/CM
+	-rm -rf $(srcdir)/formatlib/main/CM
+	-rm -rf $(srcdir)/generator/main/.cm
+	-rm -rf $(srcdir)/formatlib/main/.cm
+
+config: $(CONFIG_FILES:.in=)
+
+$(CONFIG_FILES:.in=): Makefile $(CONFIG_FILES)
+	sed \
+	-e "s|@"SMLLEXDIR"@|`$(MKSMLPATH) -sh '$(SMLLEXDIR)'`|g" \
+	-e "s|@"SMLUNITDIR"@|`$(MKSMLPATH) -sh '$(SMLUNITDIR)'`|g" \
+	-e "s|@"BASISDIR"@|`$(MKSMLPATH) -sh '$(BASISDIR)'`|g" \
+	$@.in > $@
+
+# -------- Rules for SML# --------
+
+all-smlsharp: grammar
+	$(SMLSHARP) -o $(SMLSHARP_TARGET) -c smllex.use
+
+install-smlsharp: install-lib
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(SMLSHARP_TARGET) '$(DESTDIR)$(bindir)'
+
+# -------- Rules for SML/NJ --------
+
+all-smlnj: $(SMLNJ_TARGET)
+
+$(SMLNJ_TARGET):
+	-rm -f $(LEXFILES:.lex=.lex.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sig)
+	-rm -f $(YACCFILES:.grm=.grm.desc)
+	$(MKSMLHEAP) smllex
+	$(MKSMLRUN) smllex $(srcdir) $(SMLNJ_TARGET)
+
+install-smlnj: install-lib
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(heapdir)'
+	$(MKSMLRUN) smllex $(heapdir) '$(DESTDIR)$(bindir)/smllex'
+	$(INSTALL_DATA) $(SMLNJ_HEAP) '$(DESTDIR)$(heapdir)'
+
+# -------- Rules for MLton --------
+
+all-mlton: grammar
+	$(MLTON) -verbose 1 -output $(MLTON_TARGET) \
+	         -target $(MLTON_TARGET_PLATFORM) \
+	         -cc '$(CC)' $(MLTON_FLAGS) \
+	         $(srcdir)/smllex.mlb
+
+install-mlton: install-lib
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(MLTON_TARGET) '$(DESTDIR)$(bindir)'
+
+# -------- Common Rules --------
+
+grammar:
+	-rm -f $(LEXFILES:.lex=.lex.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sml)
+	-rm -f $(YACCFILES:.grm=.grm.sig)
+	-rm -f $(YACCFILES:.grm=.grm.desc)
+	@set -x; for i in $(LEXFILES); do $(MLLEX) "$$i"; done
+	@set -x; for i in $(YACCFILES); do $(MLYACC) "$$i"; done
+
+install-lib:
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smllex)'
+	@set -x; \
+	cd $(srcdir); \
+	find $(LIBFILES) -type d -print \
+	| $(EGREP) -v '\.svn|CVS|CM|\.cm' \
+	| (while read i; do \
+	    $(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smllex)/'$$i \
+	    || exit $$?; \
+	   done)
+	@set -x; \
+	cd $(srcdir); \
+	find $(LIBFILES) -type f -print \
+	| $(EGREP) -v '\.svn|CVS|\.cvsignore|\~$$|\.in$$|Makefile|CM|\.cm' \
+	| (while read i; do \
+	    $(INSTALL_DATA) $$i '$(DESTDIR)$(libdir_smllex)/'$$i \
+	    || exit $$?; \
+	   done)
+
+
+# Makefile.in ends here.

@@ -47,8 +47,10 @@ fun qidToString [id] = id
     | ENDQ of string | OBJL of string | AQID of string
 
     | FORMATCOMMENTSTART | FORMATCOMMENTEND
+    | DITTOTAG
     | PREFIXTAG | FORMATTERTAG | FORMATPARAMSTAG | DESTINATIONTAG | HEADERTAG
     | FORMATTAG | LOCALFORMATTAG of string
+    | NEWLINE
     | STARTOFINDENT of int
     | FORMATINDICATOR of
       {
@@ -178,6 +180,7 @@ fun qidToString [id] = id
        | inner_header_format_comment_list of innerHeaderFormatComment list
        | inner_header_format_specs of innerHeaderFormatComment
        | inner_header_format_spec of innerHeaderFormatComment
+       | ditto_spec of string
        | prefix_spec of string
        | prefix_spec_opt of string
        | formatter_spec of string * string
@@ -921,7 +924,17 @@ header_format_specs :
              funHeaderOpt = NONE,
              formatters = [],
              params = [],
+             ditto = [],
              prefix = Ast.DefaultFormatterPrefix
+           })
+       | ditto_spec header_format_specs
+          ({
+             destinationOpt = #destinationOpt header_format_specs,
+             funHeaderOpt = #funHeaderOpt header_format_specs,
+             formatters = #formatters header_format_specs,
+             params = #params header_format_specs,
+             ditto = [ditto_spec],
+             prefix = #prefix header_format_specs
            })
        | prefix_spec header_format_specs
           ({
@@ -929,6 +942,7 @@ header_format_specs :
              funHeaderOpt = #funHeaderOpt header_format_specs,
              formatters = #formatters header_format_specs,
              params = #params header_format_specs,
+             ditto = #ditto header_format_specs,
              prefix = prefix_spec
            })
        | formatter_spec header_format_specs
@@ -937,6 +951,7 @@ header_format_specs :
              funHeaderOpt = #funHeaderOpt header_format_specs,
              formatters = formatter_spec :: (#formatters header_format_specs),
              params = #params header_format_specs,
+             ditto = #ditto header_format_specs,
              prefix = #prefix header_format_specs
            })
        | formatparams_spec header_format_specs
@@ -945,6 +960,7 @@ header_format_specs :
              funHeaderOpt = #funHeaderOpt header_format_specs,
              formatters = #formatters header_format_specs,
              params = formatparams_spec @ (#params header_format_specs),
+             ditto = #ditto header_format_specs,
              prefix = #prefix header_format_specs
            })
        | destination_spec header_format_specs
@@ -953,6 +969,7 @@ header_format_specs :
              funHeaderOpt = #funHeaderOpt header_format_specs,
              formatters = #formatters header_format_specs,
              params = #params header_format_specs,
+             ditto = #ditto header_format_specs,
              prefix = #prefix header_format_specs
            })
        | funheader_spec header_format_specs
@@ -961,6 +978,7 @@ header_format_specs :
              funHeaderOpt = SOME funheader_spec,
              formatters = #formatters header_format_specs,
              params = #params header_format_specs,
+             ditto = #ditto header_format_specs,
              prefix = #prefix header_format_specs
            })
 
@@ -1015,6 +1033,8 @@ inner_header_format_spec
 
 prefix_spec : PREFIXTAG ID (ID)
 
+ditto_spec : DITTOTAG ID (ID)
+
 prefix_spec_opt : (Ast.DefaultFormatterPrefix)
                 | prefix_spec (prefix_spec)
 
@@ -1042,14 +1062,30 @@ defining_format_comment : FORMATCOMMENTSTART
                            })
 
 defining_format_comment_list : ([])
-                             | defining_format_comment
-                               defining_format_comment_list
-                               (defining_format_comment
-                                :: defining_format_comment_list)
-                             | FORMATCOMMENTSTART
+                             | defining_format_comment_list
+                               defining_format_comment
+                               (defining_format_comment_list @
+                                [defining_format_comment])
+                             | defining_format_comment_list
+                               FORMATCOMMENTSTART
                                FORMATCOMMENTEND
-                               defining_format_comment_list
                                (defining_format_comment_list)
+                             | defining_format_comment_list
+                               FORMATCOMMENTSTART
+                               prefix_spec_opt DITTOTAG
+                               FORMATCOMMENTEND
+                               (let
+                                  val {primaryTag, localTags, ...} =
+                                      List.last defining_format_comment_list
+                                in
+                                  defining_format_comment_list @
+                                  [{
+                                     prefix = prefix_spec_opt,
+                                     primaryTag = primaryTag,
+                                     localTags = localTags
+                                   }]
+                                end
+                                handle Empty => defining_format_comment_list)
 
 defining_format_comment_list_with_inners
         : (* none *)
@@ -1141,6 +1177,7 @@ templates : template templates (template :: templates)
           | ([])
 
 template : STRING (marktemplate(Term STRING, STRINGleft, STRINGright))
+         | NEWLINE (marktemplate(Newline, NEWLINEleft, NEWLINEright))
          | ASSOCINDICATOR LBRACE templates RBRACE
            (marktemplate
             (

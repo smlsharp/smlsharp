@@ -2,10 +2,12 @@ Group is
 (*
   to build this example, see ../../README.txt
 *)
-
+(*
 #if defined(NEW_CM)
         $/basis_compat.cm
 #endif
+*)
+$/basis.cm
 
 #if defined(NEW_CM)
         $/ml-yacc-lib.cm

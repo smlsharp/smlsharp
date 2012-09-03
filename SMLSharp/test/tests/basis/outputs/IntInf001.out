@@ -1,0 +1,336 @@
+val tilda_m = 1 : IntInf.int
+val tilda_z = 0 : IntInf.int
+val tilda_p = ~1 : IntInf.int
+val mul_mm = 6 : IntInf.int
+val mul_mp = ~6 : IntInf.int
+val mul_pm = ~6 : IntInf.int
+val mul_pp = 6 : IntInf.int
+val mul_zp = 0 : IntInf.int
+val mul_pz = 0 : IntInf.int
+val mul_zz = 0 : IntInf.int
+val mul_c1_f = fn : largeInt  -> largeInt
+val mul_c1 = 6 : largeInt
+val mul_c2_f = fn : largeInt  -> largeInt
+val mul_c2 = 20 : largeInt
+val div_mm = 2 : IntInf.int
+val div_mp = ~3 : IntInf.int
+val div_pm = ~3 : IntInf.int
+val div_pp = 2 : IntInf.int
+val div_zp = 0 : IntInf.int
+val div_c1_f = fn : largeInt  -> largeInt
+val div_c1 = 0 : largeInt
+val div_c2_f = fn : largeInt  -> largeInt
+val div_c2 = 1 : largeInt
+val mod_mm = ~2 : IntInf.int
+val mod_mp = 1 : IntInf.int
+val mod_pm = ~1 : IntInf.int
+val mod_pp = 2 : IntInf.int
+val mod_zp = 0 : IntInf.int
+val mod_c1_f = fn : largeInt  -> largeInt
+val mod_c1 = 2 : largeInt
+val mod_c2_f = fn : largeInt  -> largeInt
+val mod_c2 = 1 : largeInt
+val quot_mm = 2 : IntInf.int
+val quot_mp = ~2 : IntInf.int
+val quot_pm = ~2 : IntInf.int
+val quot_pp = 2 : IntInf.int
+val quot_zp = 0 : IntInf.int
+val rem_mm = ~2 : IntInf.int
+val rem_mp = ~2 : IntInf.int
+val rem_pm = 2 : IntInf.int
+val rem_pp = 2 : IntInf.int
+val rem_zp = 0 : IntInf.int
+val add_mm = ~11 : IntInf.int
+val add_mp = ~5 : IntInf.int
+val add_pm = 5 : IntInf.int
+val add_pp = 11 : IntInf.int
+val add_zp = 3 : IntInf.int
+val add_pz = 8 : IntInf.int
+val add_zz = 0 : IntInf.int
+val add_c1_f = fn : largeInt  -> largeInt
+val add_c1 = 5 : largeInt
+val add_c2_f = fn : largeInt  -> largeInt
+val add_c2 = 9 : largeInt
+val sub_mm = ~5 : IntInf.int
+val sub_mp = ~11 : IntInf.int
+val sub_pm = 11 : IntInf.int
+val sub_pp = 5 : IntInf.int
+val sub_zp = ~3 : IntInf.int
+val sub_pz = 8 : IntInf.int
+val sub_zz = 0 : IntInf.int
+val sub_c1_f = fn : largeInt  -> largeInt
+val sub_c1 = ~1 : largeInt
+val sub_c2_f = fn : largeInt  -> largeInt
+val sub_c2 = 1 : largeInt
+val compare_mmL = LESS : order
+val compare_mmE = EQUAL : order
+val compare_mmG = GREATER : order
+val compare_mp = LESS : order
+val compare_pm = GREATER : order
+val compare_ppL = LESS : order
+val compare_ppE = EQUAL : order
+val compare_ppG = GREATER : order
+val compare_zp = LESS : order
+val compare_pz = GREATER : order
+val compare_zz = EQUAL : order
+val gt_mmL = false : bool
+val gt_mmE = false : bool
+val gt_mmG = true : bool
+val gt_mp = false : bool
+val gt_pm = true : bool
+val gt_ppL = false : bool
+val gt_ppE = false : bool
+val gt_ppG = true : bool
+val gt_zp = false : bool
+val gt_pz = true : bool
+val gt_zz = false : bool
+val gt_c1_f = fn : largeInt  -> bool
+val gt_c1 = false : bool
+val gt_c2_f = fn : largeInt  -> bool
+val gt_c2 = true : bool
+val ge_mmL = false : bool
+val ge_mmE = true : bool
+val ge_mmG = true : bool
+val ge_mp = false : bool
+val ge_pm = true : bool
+val ge_ppL = false : bool
+val ge_ppE = true : bool
+val ge_ppG = true : bool
+val ge_zp = false : bool
+val ge_pz = true : bool
+val ge_zz = true : bool
+val ge_c1_f = fn : largeInt  -> bool
+val ge_c1 = false : bool
+val ge_c2_f = fn : largeInt  -> bool
+val ge_c2 = true : bool
+val lt_mmL = true : bool
+val lt_mmE = false : bool
+val lt_mmG = false : bool
+val lt_mp = true : bool
+val lt_pm = false : bool
+val lt_ppL = true : bool
+val lt_ppE = false : bool
+val lt_ppG = false : bool
+val lt_zp = true : bool
+val lt_pz = false : bool
+val lt_zz = false : bool
+val lt_c1_f = fn : largeInt  -> bool
+val lt_c1 = true : bool
+val lt_c2_f = fn : largeInt  -> bool
+val lt_c2 = false : bool
+val le_mmL = true : bool
+val le_mmE = true : bool
+val le_mmG = false : bool
+val le_mp = true : bool
+val le_pm = false : bool
+val le_ppL = true : bool
+val le_ppE = true : bool
+val le_ppG = false : bool
+val le_zp = true : bool
+val le_pz = false : bool
+val le_zz = true : bool
+val le_c1_f = fn : largeInt  -> bool
+val le_c1 = true : bool
+val le_c2_f = fn : largeInt  -> bool
+val le_c2 = false : bool
+val abs_m = 1 : IntInf.int
+val abs_z = 0 : IntInf.int
+val abs_p = 1 : IntInf.int
+val min_mmL = ~8 : IntInf.int
+val min_mmE = ~8 : IntInf.int
+val min_mmG = ~8 : IntInf.int
+val min_mp = ~8 : IntInf.int
+val min_pm = ~3 : IntInf.int
+val min_ppL = 3 : IntInf.int
+val min_ppE = 8 : IntInf.int
+val min_ppG = 3 : IntInf.int
+val min_zp = 0 : IntInf.int
+val min_pz = 0 : IntInf.int
+val min_zz = 0 : IntInf.int
+val max_mmL = ~3 : IntInf.int
+val max_mmE = ~8 : IntInf.int
+val max_mmG = ~3 : IntInf.int
+val max_mp = 3 : IntInf.int
+val max_pm = 8 : IntInf.int
+val max_ppL = 8 : IntInf.int
+val max_ppE = 8 : IntInf.int
+val max_ppG = 8 : IntInf.int
+val max_zp = 3 : IntInf.int
+val max_pz = 8 : IntInf.int
+val max_zz = 0 : IntInf.int
+val sign_m = ~1 : Int.int
+val sign_z = 0 : Int.int
+val sign_p = 1 : Int.int
+val sameSign_mm = true : bool
+val sameSign_mz = false : bool
+val sameSign_mp = false : bool
+val sameSign_zm = false : bool
+val sameSign_zz = true : bool
+val sameSign_zp = false : bool
+val sameSign_pm = false : bool
+val sameSign_pz = false : bool
+val sameSign_pp = true : bool
+val fmt_bin_m1 = "~1" : string
+val fmt_bin_m2 = "~1111011" : string
+val fmt_bin_z = "0" : string
+val fmt_bin_p1 = "1" : string
+val fmt_bin_p2 = "1111011" : string
+val fmt_oct_m1 = "~1" : string
+val fmt_oct_m2 = "~173" : string
+val fmt_oct_z = "0" : string
+val fmt_oct_p1 = "1" : string
+val fmt_oct_p2 = "173" : string
+val fmt_dec_m1 = "~1" : string
+val fmt_dec_m2 = "~123" : string
+val fmt_dec_z = "0" : string
+val fmt_dec_p1 = "1" : string
+val fmt_dec_p2 = "123" : string
+val fmt_hex_m1 = "~1" : string
+val fmt_hex_m2 = "~7B" : string
+val fmt_hex_z = "0" : string
+val fmt_hex_p1 = "1" : string
+val fmt_hex_p2 = "7B" : string
+val toString_m1 = "~1" : string
+val toString_m2 = "~123" : string
+val toString_z = "0" : string
+val toString_p1 = "1" : string
+val toString_p2 = "123" : string
+val fromString_null = NONE : IntInf.int option
+val fromString_nonum = NONE : IntInf.int option
+val fromString_m1 = SOME ~1 : IntInf.int option
+val fromString_m12 = SOME ~1 : IntInf.int option
+val fromString_m2 = SOME ~123 : IntInf.int option
+val fromString_m22 = SOME ~123 : IntInf.int option
+val fromString_z1 = SOME 0 : IntInf.int option
+val fromString_z12 = SOME 0 : IntInf.int option
+val fromString_z12 = SOME 0 : IntInf.int option
+val fromString_p1 = SOME 1 : IntInf.int option
+val fromString_p12 = SOME 1 : IntInf.int option
+val fromString_p2 = SOME 123 : IntInf.int option
+val fromString_p22 = SOME 123 : IntInf.int option
+val reader = fn : ['a.'a list -> ('a * 'a list) option]
+val scan = fn : StringCvt.radix -> string -> (IntInf.int * char list) option
+val scan_bin_null = NONE : (IntInf.int * char list) option
+val scan_bin_0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_bin_01 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_bin_p0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_bin_t0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_bin_m0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_bin_t1 = SOME (~1,[]) : (IntInf.int * char list) option
+val scan_bin_t1b =
+    SOME (~1, [#"a", #"b", #"c"])
+    : (IntInf.int * char list) option
+val scan_bin_t1c = SOME (~1,[]) : (IntInf.int * char list) option
+val scan_bin_m1 = SOME (~1,[]) : (IntInf.int * char list) option
+val scan_bin_m1b =
+    SOME (~1, [#"a", #"b", #"c"])
+    : (IntInf.int * char list) option
+val scan_bin_m1c = SOME (~1,[]) : (IntInf.int * char list) option
+val scan_bin_p1 = SOME (1,[]) : (IntInf.int * char list) option
+val scan_bin_p1b =
+    SOME (1, [#"a", #"b", #"c"])
+    : (IntInf.int * char list) option
+val scan_bin_p1c = SOME (1,[]) : (IntInf.int * char list) option
+val scan_bin_1 = SOME (1,[]) : (IntInf.int * char list) option
+val scan_bin_1b = SOME (1,[#"a",#"b",#"c"]) : (IntInf.int * char list) option
+val scan_bin_1c = SOME (1,[]) : (IntInf.int * char list) option
+val scan_oct_null = NONE : (IntInf.int * char list) option
+val scan_oct_0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_oct_01 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_oct_p0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_oct_t0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_oct_m0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_oct_t1 = SOME (~83,[]) : (IntInf.int * char list) option
+val scan_oct_t1b =
+    SOME (~83, [#"8", #"9", #"a"])
+    : (IntInf.int * char list) option
+val scan_oct_t1c = SOME (~83,[]) : (IntInf.int * char list) option
+val scan_oct_m1 = SOME (~83,[]) : (IntInf.int * char list) option
+val scan_oct_m1b =
+    SOME (~83, [#"8", #"9", #"a"])
+    : (IntInf.int * char list) option
+val scan_oct_m1c = SOME (~83,[]) : (IntInf.int * char list) option
+val scan_oct_p1 = SOME (83,[]) : (IntInf.int * char list) option
+val scan_oct_p1b =
+    SOME (83, [#"8", #"9", #"a"])
+    : (IntInf.int * char list) option
+val scan_oct_p1c = SOME (83,[]) : (IntInf.int * char list) option
+val scan_oct_1 = SOME (83,[]) : (IntInf.int * char list) option
+val scan_oct_1b =
+    SOME (83, [#"8", #"9", #"a"])
+    : (IntInf.int * char list) option
+val scan_oct_1c = SOME (83,[]) : (IntInf.int * char list) option
+val scan_dec_null = NONE : (IntInf.int * char list) option
+val scan_dec_0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_dec_01 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_dec_p0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_dec_t0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_dec_m0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_dec_t1 = SOME (~123,[]) : (IntInf.int * char list) option
+val scan_dec_t1b = SOME (~12389,[#"a"]) : (IntInf.int * char list) option
+val scan_dec_t1c = SOME (~123,[]) : (IntInf.int * char list) option
+val scan_dec_m1 = SOME (~123,[]) : (IntInf.int * char list) option
+val scan_dec_m1b = SOME (~12389,[#"a"]) : (IntInf.int * char list) option
+val scan_dec_m1c = SOME (~123,[]) : (IntInf.int * char list) option
+val scan_dec_p1 = SOME (123,[]) : (IntInf.int * char list) option
+val scan_dec_p1b = SOME (12389,[#"a"]) : (IntInf.int * char list) option
+val scan_dec_p1c = SOME (123,[]) : (IntInf.int * char list) option
+val scan_dec_1 = SOME (123,[]) : (IntInf.int * char list) option
+val scan_dec_1b = SOME (12389,[#"a"]) : (IntInf.int * char list) option
+val scan_dec_1c = SOME (123,[]) : (IntInf.int * char list) option
+val scan_hex_null = NONE : (IntInf.int * char list) option
+val scan_hex_head1 = SOME (0,[#"x",#" "]) : (IntInf.int * char list) option
+val scan_hex_head2 = SOME (0,[#"X",#" "]) : (IntInf.int * char list) option
+val scan_hex_0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_01 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_0h1 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_0h2 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_p0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_p0h1 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_p0h2 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_t0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_m0 = SOME (0,[]) : (IntInf.int * char list) option
+val scan_hex_t1 = SOME (~291,[]) : (IntInf.int * char list) option
+val scan_hex_t1b =
+    SOME (~1223423, [#"G", #"g"])
+    : (IntInf.int * char list) option
+val scan_hex_t1b_h1 =
+    SOME (~1223423, [#"G",#"g"])
+    : (IntInf.int * char list) option
+val scan_hex_t1b_h2 =
+    SOME (~1223423, [#"G",#"g"])
+    : (IntInf.int * char list) option
+val scan_hex_t1c = SOME (~291,[]) : (IntInf.int * char list) option
+val scan_hex_m1 = SOME (~291,[]) : (IntInf.int * char list) option
+val scan_hex_m1b =
+    SOME (~1223423, [#"G", #"g"])
+    : (IntInf.int * char list) option
+val scan_hex_m1b_h1 =
+    SOME (~1223423, [#"G",#"g"])
+    : (IntInf.int * char list) option
+val scan_hex_m1b_h2 =
+    SOME (~1223423, [#"G",#"g"])
+    : (IntInf.int * char list) option
+val scan_hex_m1c = SOME (~291,[]) : (IntInf.int * char list) option
+val scan_hex_p1 = SOME (291,[]) : (IntInf.int * char list) option
+val scan_hex_p1b =
+    SOME (1223423, [#"G", #"g"])
+    : (IntInf.int * char list) option
+val scan_hex_p1b_h1 =
+    SOME (1223423, [#"G", #"g"])
+    : (IntInf.int * char list) option
+val scan_hex_p1b_h2 =
+    SOME (1223423, [#"G", #"g"])
+    : (IntInf.int * char list) option
+val scan_hex_p1c = SOME (291,[]) : (IntInf.int * char list) option
+val scan_hex_1 = SOME (291,[]) : (IntInf.int * char list) option
+val scan_hex_1b = SOME (1223423,[#"G",#"g"]) : (IntInf.int * char list) option
+val scan_hex_1b_h1 =
+    SOME (1223423, [#"G", #"g"])
+    : (IntInf.int * char list) option
+val scan_hex_1b_h2 =
+    SOME (1223423, [#"G", #"g"])
+    : (IntInf.int * char list) option
+val scan_hex_1c = SOME (291,[]) : (IntInf.int * char list) option
+val scan_skipWS1 = SOME (123,[]) : (IntInf.int * char list) option
+val scan_skipWS2 = SOME (123,[]) : (IntInf.int * char list) option

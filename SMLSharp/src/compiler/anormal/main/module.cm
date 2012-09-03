@@ -1,0 +1,21 @@
+Group is
+
+      $/basis.cm
+
+         ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../absyn/sources.cm
+        ../../constantterm/sources.cm
+        ../../util/sources.cm
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../systemdef/sources.cm
+        ../../types/sources.cm
+
+        ANormal.ppg.sml
+        ANORMALUTILS.sig
+        ANormalUtils.sml
+        ANORMALFORMATTER.sig
+        ANormalFormatter.sml

@@ -1,0 +1,145 @@
+(**
+ * LinkageUnit
+ *
+ * @copyright (c) 2006, Tohoku University. 
+ * @author Liu Bochao
+ * @version $Id: LinkageUnit.ppg,v 1.17 2008/03/25 02:39:44 bochao Exp $
+ *)
+structure LinkageUnit =
+struct
+      type staticInterface = 
+           {
+            basicInterfaceNameMap : NameMap.basicInterfaceNameMap,
+            basicInterfaceSig : Types.basicInterfaceSig,
+            externalVarIDBasis : VarIDContext.topExternalVarIDBasis
+           }
+
+      type basicInterfaceSig = Types.basicInterfaceSig
+           
+      type linkageUnit = 
+           {
+            fileName : string,
+            import : basicInterfaceSig,
+            require : basicInterfaceSig,
+            export : Types.interfaceEnv,
+            object : ObjectFile.objectFile
+           }
+           
+      val emptyStaticInterface = 
+          {basicInterfaceNameMap = NameMap.emptyBasicInterfaceNameMap,
+           basicInterfaceSig = {boundTyConIdSet = TyConID.Set.empty, 
+                                env = Types.emptyInterfaceEnv},
+           externalVarIDBasis = (SEnv.empty, SEnv.empty)} : staticInterface
+
+      val emptyInterfaceSig = 
+          {boundTyConIdSet = TyConID.Set.empty, env = Types.emptyInterfaceEnv} : basicInterfaceSig
+
+      fun mergeInterfaceEnv {new : Types.interfaceEnv, old : Types.interfaceEnv} =
+          (
+           (SEnv.unionWith #1 (#1 (#1 new), #1 (#1 old)),
+            SEnv.unionWith #1 (#2 (#1 new), #2 (#1 old))),
+           SEnv.unionWith #1 (#2 new, #2 old)
+          )
+
+      fun mergeInterfaceSig {new : basicInterfaceSig, old : basicInterfaceSig} = 
+          {
+           boundTyConIdSet = TyConID.Set.union (#boundTyConIdSet new, #boundTyConIdSet old),
+           env = mergeInterfaceEnv {new = #env new, old = #env old}
+          } : basicInterfaceSig
+          
+      fun extendStaticInterface {new : staticInterface, old : staticInterface} =
+          {
+           basicInterfaceNameMap = 
+           NameMap.mergeBasicInterfaceNameMap {new = #basicInterfaceNameMap new, old = #basicInterfaceNameMap old},
+           basicInterfaceSig = 
+           {
+            boundTyConIdSet = TyConID.Set.union (#boundTyConIdSet (#basicInterfaceSig new),
+                                                  #boundTyConIdSet (#basicInterfaceSig old)),
+            env = 
+            (
+             (SEnv.unionWith #1 (#1 (#1 (#env (#basicInterfaceSig new))), #1 (#1 (#env (#basicInterfaceSig old)))),
+              SEnv.unionWith #1 (#2 (#1 (#env (#basicInterfaceSig new))), #2 (#1 (#env (#basicInterfaceSig old))))
+             ),
+             SEnv.unionWith #1 (#2 (#env (#basicInterfaceSig new)), #2 (#env (#basicInterfaceSig new)))
+            ) 
+           },
+           externalVarIDBasis = 
+           (SEnv.unionWith #1 (#1 (#externalVarIDBasis new), (#1 (#externalVarIDBasis old))),
+            SEnv.unionWith #1 (#2 (#externalVarIDBasis new), (#2 (#externalVarIDBasis old))))
+          }:staticInterface
+
+
+      fun injectSEnv SEnv namespaceString = 
+          SEnv.foldli (fn (name, item, newEnv) =>
+                          SEnv.insert(newEnv,
+                                      namespaceString^"."^name,
+                                      item))
+                      SEnv.empty
+                      SEnv
+
+      fun injectBasicInterfaceNameMapInNamespace (basicInterfaceNameMap:NameMap.basicInterfaceNameMap) namespace =
+          let
+              val namespaceList = Namespace.toStringList namespace
+              val reversedNamespace = 
+                  case List.rev namespaceList of
+                      name :: tail => tail
+                    | nil => raise Control.Bug "nil namespace"
+              fun reverseNamespaceToPath namespaceList =
+                  foldl (fn (name, childPath) =>
+                            Path.PUsrStructure(name, childPath))
+                        Path.NilPath
+                        namespaceList
+              val (basicNameMap, _) =
+                  foldr (fn (name, (basicNameMap, reverseNamespace)) =>
+                            ((SEnv.empty,
+                              SEnv.empty,
+                              SEnv.singleton(name,
+                                             NameMap.NAMEAUX {name = name,
+                                                              wrapperSysStructure = NONE,
+                                                              parentPath = 
+                                                              reverseNamespaceToPath reverseNamespace,
+                                                              basicNameMap = basicNameMap})),
+                             case reverseNamespace of
+                                 nil => nil
+                               | h :: tail => tail))
+                        (#1 basicInterfaceNameMap, reversedNamespace)
+                        namespaceList
+          in 
+              (basicNameMap, injectSEnv (#2 basicInterfaceNameMap) (Namespace.toString namespace))
+          end
+              
+      fun injectInterfaceEnvInNamespace (interfaceEnv : Types.interfaceEnv) namespace =
+          let 
+              val namespaceString = Namespace.toString namespace
+          in 
+              ((injectSEnv (#1 (#1 interfaceEnv)) namespaceString, 
+                injectSEnv (#2 (#1 interfaceEnv)) namespaceString),
+               injectSEnv (#2 interfaceEnv) namespaceString) : Types.interfaceEnv
+          end
+
+      fun injectExternalVarIDEnvInNamespace (topFunVarIDEnv, topVarIDEnv) namespace =
+          let 
+              val namespaceString = Namespace.toString namespace
+          in 
+              (injectSEnv topFunVarIDEnv namespaceString, injectSEnv topVarIDEnv namespaceString)
+          end
+
+      fun injectStaticInterfaceInNamespace (staticInterface : staticInterface) (namespace : Namespace.namespace) =
+          let 
+              val newNameMap = 
+                  injectBasicInterfaceNameMapInNamespace (#basicInterfaceNameMap staticInterface) namespace
+              val newInterfaceSig = 
+                  {
+                   boundTyConIdSet = #boundTyConIdSet (#basicInterfaceSig staticInterface),
+                   env = injectInterfaceEnvInNamespace (#env (#basicInterfaceSig staticInterface)) namespace
+                  }
+              val newExternalVarIDEnv = 
+                  injectExternalVarIDEnvInNamespace (#externalVarIDBasis staticInterface) namespace
+          in 
+              {
+               basicInterfaceNameMap = newNameMap,
+               basicInterfaceSig = newInterfaceSig,
+               externalVarIDBasis = newExternalVarIDEnv
+              } : staticInterface
+          end
+end

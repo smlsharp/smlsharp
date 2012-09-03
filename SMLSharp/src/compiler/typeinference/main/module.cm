@@ -1,0 +1,40 @@
+Group is
+
+      $/basis.cm
+
+        ../../../../../SMLFormat/smlformatlib.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+        ../../typecontext/sources.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../types/sources.cm
+        ../../constantterm/sources.cm
+        ../../primitive/sources.cm
+        ../../patterncalcWithTvars/sources.cm
+        ../../patterncalc/sources.cm
+        ../../patterncalcFlattened/sources.cm
+        ../../typedcalc/sources.cm
+        ../../name/sources.cm
+        ../../usererror/sources.cm
+
+	Counters.sml
+        checkeq.sml
+        UNIFY.sig
+        Unify.sml
+        tyinfBase.sig
+        tyinfBase.sml 
+        TYPE_INFERENCER.sig
+        TypeInferenceError.ppg.sml
+        TypeInferenceContext.sml
+        SigUtils.sml
+        SignatureCheck.sml
+        TypeInstantiationTerm.sml
+        TypeInferenceUtils.sml
+        TypeInferCore.sml
+        UncurryFundecl.sml
+        UNCURRYFUNDECL.sig
+        TypeInferModule.sml
+        TypeInferencer.sml 

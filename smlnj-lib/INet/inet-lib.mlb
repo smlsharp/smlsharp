@@ -1,0 +1,144 @@
+
+ann
+  "nonexhaustiveMatch warn" "redundantMatch warn"
+  "sequenceNonUnit ignore"
+  "warnUnused false" "forceUsed"
+in
+
+local
+  basis l4 = 
+    bas
+      (* $/basis.cm ====> *) $(SML_LIB)/basis/basis.mlb 
+    end
+  basis l31 = 
+    bas
+      (* $/smlnj-lib.cm ====> *) $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+    end
+in
+local
+   $(SML_LIB)/basis/pervasive.mlb
+   local
+      open l4
+   in
+      structure gs_0 = StringCvt
+   end
+   local
+      open l4
+   in
+      structure gs_1 = Word8Array
+   end
+   local
+      open l4
+   in
+      structure gs_2 = Word8Vector
+   end
+   local
+      open l4
+   in
+      structure gs_3 = NetHostDB
+   end
+   local
+      open l4
+   in
+      structure gs_4 = Socket
+   end
+   local
+      open l4
+   in
+      structure gs_5 = INetSock
+   end
+   local
+      structure INetSock = gs_5
+      structure NetHostDB = gs_3
+      structure Socket = gs_4
+      structure StringCvt = gs_0
+      structure Word8Array = gs_1
+      structure Word8Vector = gs_2
+      sock-util-sig.sml
+   in
+      signature gs_6 = SOCK_UTIL
+   end
+   local
+      open l4
+   in
+      structure gs_7 = UnixSock
+   end
+   local
+      open l31
+   in
+      structure gs_8 = ParserComb
+   end
+   local
+      open l4
+   in
+      structure gs_9 = Char
+   end
+   local
+      open l4
+   in
+      structure gs_10 = Word8VectorSlice
+   end
+   local
+      open l4
+   in
+      structure gs_11 = Word8ArraySlice
+   end
+   local
+      open l4
+   in
+      structure gs_12 = NetServDB
+   end
+   local
+      open l4
+   in
+      structure gs_13 = Byte
+   end
+   local
+      open l4
+   in
+      structure gs_14 = Int
+   end
+   local
+      open l4
+   in
+      structure gs_15 = OS
+   end
+   local
+      structure Byte = gs_13
+      structure Char = gs_9
+      structure INetSock = gs_5
+      structure Int = gs_14
+      structure NetHostDB = gs_3
+      structure NetServDB = gs_12
+      structure OS = gs_15
+      structure ParserComb = gs_8
+      signature SOCK_UTIL = gs_6
+      structure Socket = gs_4
+      structure StringCvt = gs_0
+      structure Word8Array = gs_1
+      structure Word8ArraySlice = gs_11
+      structure Word8Vector = gs_2
+      structure Word8VectorSlice = gs_10
+      sock-util.sml
+   in
+      structure gs_16 = SockUtil
+   end
+   local
+      signature SOCK_UTIL = gs_6
+      structure SockUtil = gs_16
+      structure Socket = gs_4
+      structure UnixSock = gs_7
+      unix-sock-util.sml
+   in
+      signature gs_17 = UNIX_SOCK_UTIL
+      structure gs_18 = UnixSockUtil
+   end
+in
+   signature SOCK_UTIL = gs_6
+   structure SockUtil = gs_16
+   signature UNIX_SOCK_UTIL = gs_17
+   structure UnixSockUtil = gs_18
+end
+end
+
+end

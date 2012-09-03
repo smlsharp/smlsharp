@@ -1,0 +1,21 @@
+Group is
+        $/basis.cm
+        ../../name/sources.cm
+        ../../control/sources.cm
+        ../../types/sources.cm
+        ../../rbucalc/sources.cm
+        ../../yaanormal/sources.cm
+        ../../systemdef/sources.cm
+        ../../primitive/sources.cm
+        ../../absyn/sources.cm
+        ../../constantterm/sources.cm
+
+        Counters.sml
+        ANORMALIZATION.sig
+        ANormalization.sml
+        ANORMALOPTIMIZATION.sig
+        ANormalOptimization.sml
+
+        ../../typecontext/sources.cm
+        ../../env/sources.cm
+        DeclarationRecovery.sml

@@ -1,0 +1,6 @@
+signature S1 = sig type t datatype dt = D val x : t * dt end
+signature S21 = sig type t datatype dt = D val x : t * dt end
+signature S22 = sig type t datatype dt = D val x : t * dt end
+signature S31 = sig type t datatype dt = D val x : t * dt end
+signature S32 = sig type t datatype dt = D val x : t * dt end
+signature S33 = sig type t datatype dt = D val x : t * dt end

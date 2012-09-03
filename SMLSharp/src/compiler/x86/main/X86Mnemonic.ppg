@@ -1,0 +1,1335 @@
+(* -*- sml -*- *)
+(**
+ * x86 mnemonic
+ * @copyright (c) 2009, Tohoku University.
+ * @author UENO Katsuhiro
+ * @version $Id: $
+ *)
+
+structure X86Mnemonic =
+struct
+
+  local
+
+  fun format_cnum_str str =
+      SMLFormat.BasicFormatters.format_string
+        (String.map (fn #"~" => #"-" | x => x) str)
+
+  fun format_cint fmt x = format_cnum_str (fmt StringCvt.DEC x)
+
+  fun format_chex fmt x =
+      SMLFormat.BasicFormatters.format_string
+        ("0x" ^ String.map Char.toLower (fmt StringCvt.HEX x))
+
+  fun format_int32 x = format_cint Int32.fmt x
+  fun format_word32_hex x = format_chex Word32.fmt x
+  fun format_word8_hex x = format_chex Word8.fmt x
+  fun format_word32_dec x = format_cint Word32.fmt x
+  fun format_word_dec x = format_chex Word.fmt x
+
+  fun format_int32_disp 0 = nil
+    | format_int32_disp x = format_int32 x
+  fun format_word32_disp 0w0 = nil
+    | format_word32_disp x = format_word32_dec x
+
+  fun format_int_log2 x =
+      let
+        val x = Real.floor (Math.ln(real x) / Math.ln(2.0))
+      in
+        SMLFormat.BasicFormatters.format_string (Int.fmt StringCvt.DEC x)
+      end
+
+  fun format_word_log2 x = format_int_log2 (Word.toInt x)
+
+  local
+    fun left (s,n) = substring (s, size s - n, n)
+    fun pad0 (s,n) = if size s > n then s else left ("0000" ^ s, n)
+    fun oct3 i = pad0 (Int.fmt StringCvt.OCT i, 3)
+    fun hex4 i = pad0 (Int.fmt StringCvt.HEX i, 4)
+  in
+  fun format_ascii s =
+      SMLFormat.BasicFormatters.format_string
+        ("\"" ^
+         String.translate
+          (fn #"\008" => "\\b"
+            | #"\012" => "\\f"
+            | #"\010" => "\\n"
+            | #"\013" => "\\r"
+            | #"\009" => "\\t"
+            | #"\\" => "\\\\"
+            | #"\"" => "\\\""
+            | c => if Char.isPrint c andalso ord c < 128 then str c
+                   else if ord c < 256 then "\\" ^ oct3 (ord c)
+                   else "\\u" ^ hex4 (ord c))
+          s ^
+        "\"")
+  end (* local *)
+
+  in
+
+  (* att_ is general AT&T syntax formatter. *)
+  (* <target>_ is for specified target. *)
+
+  (*%
+   * @prefix att_
+   * @formatter(Loc.loc) Loc.format_loc
+   *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type loc = Loc.loc
+
+  (*%
+   * @prefix att_
+   * @formatter(LocalVarID.id) LocalVarID.format_id
+   *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type id = LocalVarID.id
+
+  (* local label *)
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type label =
+      (*% @prefix att_ @format(x) x *)
+      string
+
+  (* global label *)
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type globalLabel =
+      (*% @prefix att_ @format(x) x *)
+      (*% @prefix debug_ @format(x) x "$globl" *)
+      (*% @prefix darwin_ @format(x) "_" x *)
+      label
+
+  (* global code label *)
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type globalCodeLabel =
+      (*% @prefix att_ @format(x) x *)
+      (*% @prefix debug_ @format(x) x "$code" *)
+      globalLabel
+
+  (* global variable label *)
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type globalDataLabel =
+      (*% @prefix att_ @format(x) x *)
+      (*% @prefix debug_ @format(x) x "$var" *)
+      globalLabel
+
+  (* reference label to external code label *)
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type externCodeStubLabel =
+      (*% @prefix att_ @format(x) x *)
+      (*% @prefix debug_ @format(x) x "$codeStub" *)
+      (*% @prefix darwin_ @format(x) x "$stub" *)
+      label
+
+  (* reference label to external data label *)
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type externDataRefLabel =
+      (*% @prefix att_ @format(x) x *)
+      (*% @prefix debug_ @format(x) x "$externStub" *)
+      (*% @prefix darwin_ @format(x) x "$non_lazy_ptr" *)
+      label
+
+  (* reference label to global variable label *)
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type globalDataRefLabel =
+      (*% @prefix att_ @format(x) x *)
+      (*% @prefix debug_ @format(x) x "$globalStub" *)
+      (*% @prefix darwin_ @format(x) x "$non_lazy_ptr" *)
+      label
+
+  (*%
+   * @prefix att_
+   * @formatter (Int32.int) format_int32
+   * @formatter (Word32.word) format_word32_hex
+   *)
+  (*%
+   * @prefix att_disp_ @ditto att_
+   * @formatter (Int32.int) format_int32_disp
+   * @formatter (Word32.word) format_word32_disp
+   * @formatter (label) att_label
+   * @formatter (globalCodeLabel) att_globalCodeLabel
+   * @formatter (globalDataRefLabel) att_globalDataRefLabel
+   * @formatter (externDataRefLabel) att_externDataRefLabel
+   * @formatter (externCodeStubLabel) att_externCodeStubLabel
+   *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*%
+   * @prefix debug_disp_ @ditto att_disp_
+   * @formatter (label) debug_label
+   * @formatter (globalCodeLabel) debug_globalCodeLabel
+   * @formatter (globalDataRefLabel) debug_globalDataRefLabel
+   * @formatter (externDataRefLabel) debug_externDataRefLabel
+   * @formatter (externCodeStubLabel) debug_externCodeStubLabel
+   *)
+  (*% @prefix darwin_ @ditto att_ *)
+  (*%
+   * @prefix darwin_disp_ @ditto att_disp_
+   * @formatter (label) darwin_label
+   * @formatter (globalCodeLabel) darwin_globalCodeLabel
+   * @formatter (globalDataRefLabel) darwin_globalDataRefLabel
+   * @formatter (externDataRefLabel) darwin_externDataRefLabel
+   * @formatter (externCodeStubLabel) darwin_externCodeStubLabel
+   *)
+  datatype imm =
+       (*% @prefix att_ @format(x) x *)
+       INT of Int32.int      (* imm8/imm16/imm32 *)
+     | (*% @prefix att_ @format(x) x *)
+       WORD of Word32.word   (* imm8/imm16/imm32 *)
+     | (*% @prefix att_ @format(l) l *)
+       LABEL of label
+     | (*% @prefix att_ @format(l) l *)
+       ENTRYLABEL of globalCodeLabel
+     | (*% @prefix att_ @format(x * y) L2{ x "-" y } *)
+       CONSTSUB of imm * imm
+     | (*% @prefix att_ @format(x * y) L2{ x "+" y } *)
+       CONSTADD of imm * imm
+     | (*% @prefix att_ @format(x * y) L3{ x "&" y } *)
+       CONSTAND of imm * imm
+     | (*% @prefix att_ @format(l) l *)
+       GLOBALLABEL of globalDataRefLabel
+     | (*% @prefix att_ @format(l) l *)
+       EXTERNLABEL of externDataRefLabel
+     | (*% @prefix att_ @format(l) l *)
+       EXTSTUBLABEL of externCodeStubLabel
+
+  (*% @prefix att_ *)
+  (*% @prefix att_w_ @formatter(id) att_id *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype r32 =
+       (*% @prefix att_ @format "%eax" *)
+       (*% @prefix att_w_ @format "%a" *)
+       EAX
+     | (*% @prefix att_ @format "%ebx" *)
+       (*% @prefix att_w_ @format "%b" *)
+       EBX
+     | (*% @prefix att_ @format "%ecx" *)
+       (*% @prefix att_w_ @format "%c" *)
+       ECX
+     | (*% @prefix att_ @format "%edx" *)
+       (*% @prefix att_w_ @format "%d" *)
+       EDX
+     | (*% @prefix att_ @format "%esi" *)
+       (*% @prefix att_w_ @format "%si" *)
+       ESI
+     | (*% @prefix att_ @format "%edi" *)
+       (*% @prefix att_w_ @format "%di" *)
+       EDI
+     | (*% @prefix att_ @format "%ebp" *)
+       (*% @prefix att_w_ @format "%bp" *)
+       EBP
+     | (*% @prefix att_ @format "%esp" *)
+       (*% @prefix att_w_ @format "%sp" *)
+       ESP
+     | (*% @prefix att_ @format({id,candidates}) "%" id *)
+       (*% @prefix att_w_ @format({id,candidates}) "%" id *)
+       (*%
+        * @prefix debug_
+        * @format({id, candidates:c cs}) "%" id ":" cs(c)("|")
+        *)
+       ANY of {id: id, candidates: r32 list}
+
+  (*% @prefix att_ @formatter(w) att_w_r32 *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype r16 =
+       (*% @prefix att_ @format(x:w) x "x" *)
+       X of r32
+
+  (*% @prefix att_ @formatter(w) att_w_r32 *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype r8 =
+       (*% @prefix att_ @format(x:w) x "h" *)
+       XH of r32
+     | (*% @prefix att_ @format(x:w) x "l" *)
+       XL of r32
+
+  (*% @prefix att_ *)
+  (*%
+   * @prefix debug_ @ditto att_
+   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+   * @formatter(word) format_word_dec
+   * @formatter(FrameLayout.format) FrameLayout.format_format
+   *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type varInfo =
+       (*% @prefix att_ @format({id,format,candidates}) "***VAR"id"***" *)
+       (*%
+        * @prefix debug_ @format({id, format, candidates:c cs})
+        * "v" id ":" format ":" cs(c)("|")
+        *)
+       {id: id, format: FrameLayout.format, candidates: r32 list}
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype sti =
+       (*% @prefix att_ @format(x) "%st(" x ")" *)
+       ST of int   (* FPU register stack index : 0 - 7 *)
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype scale =
+       (*% @prefix att_ @format *)
+       S1
+     | (*% @prefix att_ @format "2" *)
+       S2
+     | (*% @prefix att_ @format "4" *)
+       S4
+     | (*% @prefix att_ @format "8" *)
+       S8
+
+  (*%
+   * @prefix att_withDisp_
+   * @params(disp)
+   * @formatter(word) format_word_dec
+   * @formatter(dispImm) att_disp_imm
+   * @formatter(withDisp) att_withDisp_mem
+   * @formatter(r32) att_r32
+   * @formatter(imm) att_imm
+   * @formatter(scale) att_scale
+   * @formatter(varInfo) att_varInfo
+   *)
+  (*%
+   * @prefix att_
+   * @formatter(word) format_word_dec
+   * @formatter(dispImm) att_disp_imm
+   * @formatter(withDisp) att_withDisp_mem
+   *)
+  (*%
+   * @prefix debug_withDisp_ @ditto att_withDisp_
+   * @params(disp)
+   * @formatter(dispImm) debug_disp_imm
+   * @formatter(withDisp) debug_withDisp_mem
+   * @formatter(r32) debug_r32
+   * @formatter(imm) debug_imm
+   * @formatter(scale) debug_scale
+   * @formatter(varInfo) debug_varInfo
+   *)
+  (*%
+   * @prefix debug_ @ditto att_
+   * @formatter(dispImm) debug_disp_imm
+   * @formatter(withDisp) debug_withDisp_mem
+   *)
+  (*%
+   * @prefix darwin_withDisp_ @ditto att_withDisp_
+   * @params(disp)
+   * @formatter(dispImm) darwin_disp_imm
+   * @formatter(withDisp) darwin_withDisp_mem
+   * @formatter(r32) darwin_r32
+   * @formatter(imm) darwin_imm
+   * @formatter(scale) darwin_scale
+   * @formatter(varInfo) darwin_varInfo
+   *)
+  (*%
+   * @prefix darwin_ @ditto att_
+   * @formatter(dispImm) darwin_disp_imm
+   * @formatter(withDisp) darwin_withDisp_mem
+   *)
+  datatype mem =
+      (*%
+       * @prefix att_
+       * @format(imm * mem)
+       * mem:withDisp()(imm:dispImm)
+       *)
+      (*%
+       * @prefix att_withDisp_
+       * @format(imm * mem)
+       * mem:withDisp()(imm:dispImm "+" disp)
+       *)
+      DISP of imm * mem
+    | (*% @prefix att_ @format(imm) imm *)
+      (*% @prefix att_withDisp_ @format(imm) disp "+" imm *)
+      ABSADDR of imm
+    | (*% @prefix att_ @format(v) v *)
+      (*% @prefix att_withDisp_ @format(v) disp "+" v *)
+      VAR of varInfo
+    | (*% @prefix att_ @format(r) "(" r ")" *)
+      (*% @prefix att_withDisp_ @format(r) disp "(" r ")" *)
+      BASE of r32
+    | (*%
+       * @prefix att_
+       * @format(base * scale * index)
+       * "(" base "," index "," scale ")"
+       *)
+      (*%
+       * @prefix att_withDisp_
+       * @format(base * scale * index)
+       * disp "(" base "," index "," scale ")"
+       *)
+       MEM of r32 * scale * r32
+    | (*% @prefix att_ @format({offset,size}) "***POSTFRAME" offset "***" *)
+      (*% @prefix att_withDisp_ @format({offset,size})
+       * disp "+" "***POSTFRAME" offset "***" *)
+      (*%
+       * @prefix debug_
+       * @format({offset, size})
+       * "POSTFRAME(" offset "," size ")"
+       *)
+      (*%
+       * @prefix debug_withDisp_
+       * @format({offset, size})
+       * disp "+" "POSTFRAME(" offset "," size ")"
+       *)
+      POSTFRAME of {offset: int, size: word}
+    | (*% @prefix att_ @format({offset,size}) "***PREFRAME" offset "***" *)
+      (*% @prefix att_withDisp_ @format({offset,size})
+       * disp "+" "***POSTFRAME" offset "***" *)
+      (*%
+       * @prefix debug_
+       * @format({offset, size})
+       * "PREFRAME(" offset "," size ")"
+       *)
+      (*%
+       * @prefix debug_withDisp_
+       * @format({offset, size})
+       * disp "+" "PREFRAME(" offset "," size ")"
+       *)
+      PREFRAME of {offset: int, size: word}
+
+(*  addr
+ *   ^
+ *   | :             :
+ *   | +-------------+0
+ *   | |  PreFrame   |
+ *   | +-------------+n
+ *   | | return addr |
+ *   | +-------------+  <------ ebp
+ *   | :  Frame      :
+ *   | |             |
+ *   | +-------------+n
+ *   | |  PostFrame  |
+ *   | +-------------+0 <------ esp
+ *   | :             :
+ *)
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype rm8 =
+      (*% @prefix att_ @format(x) x *)
+      R8 of r8
+    | (*% @prefix att_ @format(x) x *)
+      M8 of mem
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype rmi8 =
+      (*% @prefix att_ @format(x) x *)
+      R_8 of r8
+    | (*% @prefix att_ @format(x) x *)
+      M_8 of mem
+    | (*% @prefix att_ @format(x) L10{ "$" x } *)
+      I_8 of imm
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype rm16 =
+      (*% @prefix att_ @format(x) x *)
+      R16 of r16
+    | (*% @prefix att_ @format(x) x *)
+      M16 of mem
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype rmi16 =
+      (*% @prefix att_ @format(x) x *)
+      R_16 of r16
+    | (*% @prefix att_ @format(x) x *)
+      M_16 of mem
+    | (*% @prefix att_ @format(x) L10{ "$" x } *)
+      I_16 of imm
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype rm32 =
+      (*% @prefix att_ @format(x) x *)
+      R of r32
+    | (*% @prefix att_ @format(x) x *)
+      M of mem
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype rmi32 =
+      (*% @prefix att_ @format(x) x *)
+      R_ of r32
+    | (*% @prefix att_ @format(x) x *)
+      M_ of mem
+    | (*% @prefix att_ @format(x) L10{ "$" x } *)
+      I_ of imm
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype jumpTo =
+      (*% @prefix att_ @format(x) "*" x *)
+      ABS of rmi32
+    | (*% @prefix att_ @format(x) x *)
+      REL of imm
+
+  (*%
+   * @prefix att_
+   * @formatter (Int32.int) format_int32
+   * @formatter (Word32.word) format_word32_hex
+   * @formatter (Word8.word) format_word8_hex
+   * @formatter (ascii) format_ascii
+   * @formatter (cnum) format_cnum_str
+   *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype data =
+           (*% @prefix att_ @format(x) "\t.long\t" x 1 *)
+           (*% @prefix debug_ @format(x) "\t.int\t" x 1 *)
+           IntData of Int32.int
+         | (*% @prefix att_ @format(x) "\t.long\t" x 1 *)
+           (*% @prefix debug_ @format(x) "\t.word\t" x 1 *)
+           WordData of Word32.word
+         | (*% @prefix att_ @format(x:cnum) "\t.single\t" x 1 *)
+           SingleData of string
+         | (*% @prefix att_ @format(x:cnum) "\t.double\t" x 1 *)
+           DoubleData of string
+         | (*% @prefix att_ @format(x) "\t.long\t" x 1 *)
+           (*% @prefix debug_ @format(x) "\t.label\t" x 1 *)
+           LabelData of label
+         | (*% @prefix att_ @format(x) "\t.long\t" x 1 *)
+           (*% @prefix debug_ @format(x) "\t.globallabel\t" x 1 *)
+           GlobalLabelData of globalLabel
+         | (*% @prefix att_ @format(x xs) "\t.byte\t" xs(x)("," +) 1 *)
+           BytesData of Word8.word list
+         | (*% @prefix att_ @format(x:ascii) "\t.ascii\t" x 1 *)
+           AsciiData of string
+         | (*% @prefix att_ @format(size) "\t.fill\t" size ", 1, 0" 1 *)
+           FillZeroData of int
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype sectionName =
+           (*% @prefix att_ @format "\t.text" 1 *)
+           TextSection
+         | (*% @prefix att_ @format "\t.data" 1 *)
+           DataSection
+         | (*% @prefix att_ @format "\t.rodata" 1 *)
+           (*% @prefix debug_ @format "\t.literal4" 1 *)
+           (*% @prefix darwin_ @format "\t.literal4" 1 *)
+           Literal4Section
+         | (*% @prefix att_ @format "\t.rodata" 1 *)
+           (*% @prefix debug_ @format "\t.literal8" 1 *)
+           (*% @prefix darwin_ @format "\t.literal8" 1 *)
+           Literal8Section
+         | (*% @prefix att_ @format "\t.rodata" 1 *)
+           (*% @prefix debug_ @format "\t.cstring" 1 *)
+           (*% @prefix darwin_ @format "\t.cstring" 1 *)
+           CStringSection
+         | (*% @prefix att_ @format "\t.rodata" 1 *)
+           (*% @prefix debug_ @format "\t.const" 1 *)
+           (*% @prefix darwin_ @format "\t.const" 1 *)
+           ConstSection
+         | (*% @prefix att_ @format "\t.rodata" 1 *)
+           (*% @prefix debug_ @format "\t.const_data" 1 *)
+           (*% @prefix darwin_ @format "\t.const_data" 1 *)
+           ConstDataSection
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  datatype cc =
+      (*% @prefix att_ @format "o" *)
+      O     (* overflow *)
+    | (*% @prefix att_ @format "no" *)
+      NO    (* no overflow *)
+    | (*% @prefix att_ @format "b" *)
+      B     (* below = carry *)
+    | (*% @prefix att_ @format "ae" *)
+      AE    (* above equal = not-carry *)
+    | (*% @prefix att_ @format "e" *)
+      E     (* equal = zero *)
+    | (*% @prefix att_ @format "ne" *)
+      NE    (* not equal = non-zero *)
+    | (*% @prefix att_ @format "be" *)
+      BE    (* below equal *)
+    | (*% @prefix att_ @format "a" *)
+      A     (* above *)
+    | (*% @prefix att_ @format "s" *)
+      S     (* sign *)
+    | (*% @prefix att_ @format "ns" *)
+      NS    (* no sign *)
+    | (*% @prefix att_ @format "p" *)
+      P     (* parity = even *)
+    | (*% @prefix att_ @format "np" *)
+      NP    (* no parity = odd *)
+    | (*% @prefix att_ @format "l" *)
+      L     (* less *)
+    | (*% @prefix att_ @format "ge" *)
+      GE    (* greater equal *)
+    | (*% @prefix att_ @format "le" *)
+      LE    (* less equal *)
+    | (*% @prefix att_ @format "g" *)
+      G     (* greater *)
+
+  (* intel opcode name + AT&T size suffix *)
+  (* memory to memory operation is not allowed *)
+  (*%
+   * @prefix att_
+   * @formatter(withPrefix) SmlppgUtil.formatPrependedOpt
+   *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*%
+   * @prefix darwin_ @ditto att_
+   * @formatter(log2) format_int_log2
+   *)
+  datatype instruction =
+      (*% @prefix att_ @format "\tnop" 1 *)
+      NOP
+    | (*% @prefix att_ @format(dst * src) "\tmovb\t" src ", " dst 1 *)
+      MOVB of rm8 * rmi8
+    | (*% @prefix att_ @format(dst * src) "\tmovw\t" src ", " dst 1 *)
+      MOVW of rm16 * rmi16
+    | (*% @prefix att_ @format(dst * src) "\tmovl\t" src ", " dst 1 *)
+      MOVL of rm32 * rmi32
+(*
+    | (*% @prefix att_ @format(cc * dst * src) "\tcmov"cc"w\t" src ", " dst 1 *)
+      CMOVW of cc * r16 * rm16
+    | (*% @prefix att_ @format(cc * dst * src) "\tcmov"cc"l\t" src ", " dst 1 *)
+      CMOVL of cc * r32 * rm32
+*)
+    | (*% @prefix att_ @format(dst * src) "\tleal\t" src ", " dst 1 *)
+      LEAL of r32 * mem
+    | (*% @prefix att_ @format "\tcbtw" 1 *)
+      CBW                           (* ax <- al *)
+    | (*% @prefix att_ @format "\tcwtl" 1 *)
+      CWDE                          (* eax <- ax *)
+    | (*% @prefix att_ @format "\tcltd" 1 *)
+      CDQ                           (* edx:eax <- eax *)
+    | (*% @prefix att_ @format(dst * src) "\tmovzbw\t" src ", " dst 1 *)
+      MOVZBW of r16 * rm8
+    | (*% @prefix att_ @format(dst * src) "\tmovzbl\t" src ", " dst 1 *)
+      MOVZBL of r32 * rm8
+    | (*% @prefix att_ @format(dst * src) "\tmovzwl\t" src ", " dst 1 *)
+      MOVZWL of r32 * rm16
+    | (*% @prefix att_ @format "\tcld" 1 *)
+      CLD                           (* clear direction flag *)
+    | (*% @prefix att_ @format "\trep movsb" 1 *)
+      REP_MOVSB                     (* copy ecx bytes from esi to edi *)
+    | (*% @prefix att_ @format "\trep stosl" 1 *)
+      REP_STOSD                     (* set ecx words of aax to edi *)
+(*
+    | (*% @prefix att_ @format "\tinto" 1 *)
+      INTO
+    | (*% @prefix att_ @format(dst * src) "\taddb\t" src ", " dst 1 *)
+      ADDB of rm8 * rmi8
+    | (*% @prefix att_ @format(dst * src) "\taddw\t" src ", " dst 1 *)
+      ADDW of rm16 * rmi16
+*)
+    | (*% @prefix att_ @format(dst * src) "\taddl\t" src ", " dst 1 *)
+      ADDL of rm32 * rmi32
+(*
+    | (*% @prefix att_ @format(dst * src) "\tsubb\t" src ", " dst 1 *)
+      SUBB of rm8 * rmi8
+    | (*% @prefix att_ @format(dst * src) "\tsubw\t" src ", " dst 1 *)
+      SUBW of rm16 * rmi16
+*)
+    | (*% @prefix att_ @format(dst * src) "\tsubl\t" src ", " dst 1 *)
+      SUBL of rm32 * rmi32
+(*
+    | (*% @prefix att_ @format(x) "\timulb\t" x 1 *)
+      IMULB of rm8                  (* ax <- al * rm8 (signed) *)
+    | (*% @prefix att_ @format(x) "\timulw\t" x 1 *)
+      IMULW of rm16                 (* dx:ax <- ax * rm16 (signed) *)
+*)
+    | (*% @prefix att_ @format(x) "\timull\t" x 1 *)
+      IMULL of rm32                 (* edx:eax <- eax * rm32 (signed) *)
+(*
+    | (*% @prefix att_ @format(dst * src) "\timulw\t" src ", " dst 1 *)
+      IMULW2 of r16 * rmi16         (* r16 <- r16 * rmi16 (signed) *)
+    | (*% @prefix att_
+       * @format(dst * src * i) "\timulw\t" i ", " src ", " dst 1 *)
+      IMULW3 of r16 * rm16 * imm    (* r16 <- rm16 * imm (signed) *)
+    | (*% @prefix att_ @format(dst * src) "\timulw\t" src ", " dst 1 *)
+      IMULL2 of r32 * rmi32         (* r32 <- r32 * rmi32 (signed) *)
+    | (*% @prefix att_
+       * @format(dst * src * i) "\timull\t" i ", " src ", " dst 1 *)
+      IMULL3 of r32 * rm32 * imm    (* r32 <- rm32 * imm (signed) *)
+    | (*% @prefix att_ @format(x) "\tmulb\t" x 1 *)
+      MULB of rm8                 (* ax <- al * rm8 (unsigned) *)
+    | (*% @prefix att_ @format(x) "\tmulw\t" x 1 *)
+      MULW of rm16                (* dx:ax <- ax * rm16 (unsigned) *)
+*)
+    | (*% @prefix att_ @format(x) "\tmull\t" x 1 *)
+      MULL of rm32                (* edx:eax <- eax * rm32 (unsigned) *)
+(*
+    | (*% @prefix att_ @format(x) "\tidivb\t" x 1 *)
+      IDIVB of rm8                (* rx / rm8 = al ... ah (signed) *)
+    | (*% @prefix att_ @format(x) "\tidivw\t" x 1 *)
+      IDIVW of rm16               (* dx:ax / rm16 = ax ... dx (signed) *)
+*)
+    | (*% @prefix att_ @format(x) "\tidivl\t" x 1 *)
+      IDIVL of rm32               (* edx:eax / rm32 = eax ... edx (signed) *)
+(*
+    | (*% @prefix att_ @format(x) "\tdivb\t" x 1 *)
+      DIVB of rm8                 (* ax / rm8 = al ... ah (unsigned) *)
+    | (*% @prefix att_ @format(x) "\tdivw\t" x 1 *)
+      DIVW of rm16                (* dx:ax / rm16 = ax ... dx (unsigned) *)
+*)
+    | (*% @prefix att_ @format(x) "\tdivl\t" x 1 *)
+      DIVL of rm32                (* edx:eax / rm32 = eax ... edx (unsigned) *)
+    | (*% @prefix att_ @format(dst * src) "\tandb\t" src ", " dst 1 *)
+      ANDB of rm8 * rmi8
+(*
+    | (*% @prefix att_ @format(dst * src) "\tandw\t" src ", " dst 1 *)
+      ANDW of rm16 * rmi16
+*)
+    | (*% @prefix att_ @format(dst * src) "\tandl\t" src ", " dst 1 *)
+      ANDL of rm32 * rmi32
+    | (*% @prefix att_ @format(dst * src) "\torb\t" src ", " dst 1 *)
+      ORB of rm8 * rmi8
+(*
+    | (*% @prefix att_ @format(dst * src) "\torw\t" src ", " dst 1 *)
+      ORW of rm16 * rmi16
+*)
+    | (*% @prefix att_ @format(dst * src) "\torl\t" src ", " dst 1 *)
+      ORL of rm32 * rmi32
+(*
+    | (*% @prefix att_ @format(dst * src) "\txorb\t" src ", " dst 1 *)
+      XORB of rm8 * rmi8
+    | (*% @prefix att_ @format(dst * src) "\txorw\t" src ", " dst 1 *)
+      XORW of rm16 * rmi16
+*)
+    | (*% @prefix att_ @format(dst * src) "\txorl\t" src ", " dst 1 *)
+      XORL of rm32 * rmi32
+(*
+    | (*% @prefix att_ @format(dst * c) "\tshlb\t" c ", " dst 1 *)
+      SHLB of rm8 * int             (* shift count = 0 - 31 *)
+    | (*% @prefix att_ @format(dst) "\tshlb\t%cl," dst 1 *)
+      SHLB_CL of rm8                (* rm8 <- rm8 << %cl *)
+    | (*% @prefix att_ @format(dst * c) "\tshlw\t" c ", " dst 1 *)
+      SHLW of rm16 * int
+    | (*% @prefix att_ @format(dst) "\tshlw\t%cl," dst 1 *)
+      SHLW_CL of rm16
+*)
+    | (*% @prefix att_ @format(dst * c) "\tshll\t$" c ", " dst 1 *)
+      SHLL of rm32 * int
+    | (*% @prefix att_ @format(dst) "\tshll\t%cl," dst 1 *)
+      SHLL_CL of rm32
+(*
+    | (*% @prefix att_ @format(dst * c) "\tshrb\t" c ", " dst 1 *)
+      SHRB of rm8 * int
+    | (*% @prefix att_ @format(dst) "\tshrb\t%cl," dst 1 *)
+      SHRB_CL of rm8
+    | (*% @prefix att_ @format(dst * c) "\tshrw\t" c ", " dst 1 *)
+      SHRW of rm16 * int
+    | (*% @prefix att_ @format(dst) "\tshrw\t%cl," dst 1 *)
+      SHRW_CL of rm16
+*)
+    | (*% @prefix att_ @format(dst * c) "\tshrl\t$" c ", " dst 1 *)
+      SHRL of rm32 * int
+    | (*% @prefix att_ @format(dst) "\tshrl\t%cl," dst 1 *)
+      SHRL_CL of rm32
+(*
+    | (*% @prefix att_ @format(dst * c) "\tsarb\t" c ", " dst 1 *)
+      SARB of rm8 * int
+    | (*% @prefix att_ @format(dst) "\tsarb\t%cl," dst 1 *)
+      SARB_CL of rm8
+    | (*% @prefix att_ @format(dst * c) "\tsarw\t" c ", " dst 1 *)
+      SARW of rm16 * int
+    | (*% @prefix att_ @format(dst) "\tsarw\t%cl," dst 1 *)
+      SARW_CL of rm16
+*)
+    | (*% @prefix att_ @format(dst * c) "\tsarl\t$" c ", " dst 1 *)
+      SARL of rm32 * int
+    | (*% @prefix att_ @format(dst) "\tsarl\t%cl," dst 1 *)
+      SARL_CL of rm32
+(*
+    | (*% @prefix att_ @format(dst) "\tnotb\t" dst 1 *)
+      NOTB of rm8
+    | (*% @prefix att_ @format(dst) "\tnotw\t" dst 1 *)
+      NOTW of rm16
+*)
+    | (*% @prefix att_ @format(dst) "\tnotl\t" dst 1 *)
+      NOTL of rm32
+(*
+    | (*% @prefix att_ @format(dst) "\tnegb\t" dst 1 *)
+      NEGB of rm8
+    | (*% @prefix att_ @format(dst) "\tnegw\t" dst 1 *)
+      NEGW of rm16
+*)
+    | (*% @prefix att_ @format(dst) "\tnegl\t" dst 1 *)
+      NEGL of rm32
+    | (*% @prefix att_ @format(dst * src) "\tcmpb\t" src ", " dst 1 *)
+      CMPB of rm8 * rmi8
+(*
+    | (*% @prefix att_ @format(dst * src) "\tcmpw\t" src ", " dst 1 *)
+      CMPW of rm16 * rmi16
+*)
+    | (*% @prefix att_ @format(dst * src) "\tcmpl\t" src ", " dst 1 *)
+      CMPL of rm32 * rmi32
+    | (*% @prefix att_ @format(dst * src) "\ttestb\t" src ", " dst 1 *)
+      TESTB of rm8 * rmi8
+(*
+    | (*% @prefix att_ @format(dst * src) "\ttestw\t" src ", " dst 1 *)
+      TESTW of rm16 * rmi16
+*)
+    | (*% @prefix att_ @format(dst * src) "\ttestl\t" src ", " dst 1 *)
+      TESTL of rm32 * rmi32
+    | (*% @prefix att_ @format(cc * dst) "\tset"cc"\t" dst 1 *)
+      SET of cc * rm8
+    | (*% @prefix att_ @format(cc * l * throughLabel) "\tj"cc"\t" l 1 *)
+      J of cc * label * label
+    | (*% @prefix att_ @format(l * succs) "\tjmp\t" l 1 *)
+      (*%
+       * @prefix debug_
+       * @format(l * succ succs) "\tjmp\t" l "\t# => " succs(succ)(",") 1
+       *)
+      JMP of jumpTo * label list
+    | (*% @prefix att_ @format(l) "\tcall\t" l 1 *)
+      CALL of jumpTo
+    | (*% @prefix att_ @format(i io:withPrefix) "\tret" io(i)("\t$") 1 *)
+      RET of imm option
+    | (*% @prefix att_ @format "\tleave" 1 *)
+      LEAVE
+    | (*% @prefix att_ @format(x) "\tpushl\t" x 1 *)
+      PUSHL of rmi32
+    | (*% @prefix att_ @format(x) "\tpopl\t" x 1 *)
+      POPL of rm32
+
+    (* ALLOC *)
+    (* ALLOCX *)
+    (* PUSHTRAP *)
+    (* POPTRAP *)
+    (* RAISE *)
+    (* | ENTER    (* pseudo instruction? *) *)
+    (* | LEAVE    (* pseudo instruction? *) *)
+    (*
+    | (* insn.def:1365.0-1368.1 *)
+    SYSCALL of extern
+    | (* insn.def:1448.0-1453.1 *)
+    FFCALL of extern * var * var
+    | (* insn.def:1463.0-1470.1 *)
+    FFEXPORT of extern * var * var * var
+     *)
+
+    | (*% @prefix att_ @format(x) "\tflds\t" x 1 *)
+      FLDS of mem      (* push float32 to stack *)
+    | (*% @prefix att_ @format(x) "\tfldl\t" x 1 *)
+      FLDL of mem      (* push float64 to stack *)
+    | (*% @prefix att_ @format(x) "\tfldt\t" x 1 *)
+      FLDT of mem      (* push float80 to stack *)
+    | (*% @prefix att_ @format(src) "\tfld\t" src 1 *)
+      FLD of sti       (* push st(i) *)
+(*
+    | (*% @prefix att_ @format "\tfldz" 1 *)
+      FLDZ             (* push +0.0 *)
+    | (*% @prefix att_ @format "\tfld1" 1 *)
+      FLD1             (* push +1.0 *)
+    | (*% @prefix att_ @format(x) "\tfilds\t" x 1 *)
+      FILDS of mem     (* push int16 *)
+*)
+    | (*% @prefix att_ @format(x) "\tfildl\t" x 1 *)
+      FILDL of mem     (* push int32 *)
+    | (*% @prefix att_ @format(x) "\tfildq\t" x 1 *)
+      FILDQ of mem     (* push int64 *)
+(*
+    | (*% @prefix att_ @format(x) "\tfsts\t" x 1 *)
+      FSTS of mem      (* store float32 from st(0) *)
+    | (*% @prefix att_ @format(x) "\tfstt\t" x 1 *)
+      FSTL of mem      (* store float64 from st(0) *)
+    | (*% @prefix att_ @format(dst) "\tfst\t" dst 1 *)
+      FST of sti       (* copy st(0) to st(i) *)
+*)
+    | (*% @prefix att_ @format(x) "\tfstps\t" x 1 *)
+      FSTPS of mem     (* store float32 from st(0) and pop *)
+    | (*% @prefix att_ @format(x) "\tfstpl\t" x 1 *)
+      FSTPL of mem     (* store float64 from st(0) and pop *)
+(*
+    | (*% @prefix att_ @format(x) "\tfstpt\t" x 1 *)
+      FSTPT of mem     (* store float80 from st(0) and pop *)
+    | (*% @prefix att_ @format(dst) "\tfstp\t" dst 1 *)
+      FSTP of sti      (* copy st(0) to st(i) and pop *)
+    | (*% @prefix att_ @format(x) "\tfists\t" x 1 *)
+      FISTS of mem     (* store int16 from st(0) *)
+    | (*% @prefix att_ @format(x) "\tfistl\t" x 1 *)
+      FISTL of mem     (* store int32 from st(0) *)
+    | (*% @prefix att_ @format(x) "\tfistps\t" x 1 *)
+      FISTPS of mem    (* store int16 from st(0) and pop *)
+*)
+    | (*% @prefix att_ @format(x) "\tfistpl\t" x 1 *)
+      FISTPL of mem    (* store int32 from st(0) and pop *)
+    | (*% @prefix att_ @format(x) "\tfistpq\t" x 1 *)
+      FISTPQ of mem    (* store int64 from st(0) and pop *)
+(*
+    | (*% @prefix att_ @format(dst) "\tfxch\t" dst 1 *)
+      FXCH of sti      (* exchange st(0) and st(i) *)
+    | (*% @prefix att_ @format(cc, x) "\tfcmov\t" cc ", " x 1 *)
+      FCMOV of cc * sti  (* conditional move from st(0) to st(i) *)
+    | (*% @prefix att_ @format(x) "\tfadds\t" x 1 *)
+      FADDS of mem       (* st(0) <- st(0) + float32 *)
+    | (*% @prefix att_ @format(x) "\tfaddl\t" x 1 *)
+      FADDL of mem       (* st(0) <- st(0) + float64 *)
+    | (*% @prefix att_ @format(dst * src) "\tfadd\t" src ", " dst 1 *)
+      FADD of sti * sti  (* st(d) <- st(d) + st(s); either d or s must be 0 *)
+*)
+    | (*% @prefix att_ @format(dst) "\tfaddp\t%st(0), " dst 1 *)
+      FADDP of sti       (* st(i) <- st(i) + st(0) and pop *)
+(*
+    | (*% @prefix att_ @format(x) "\tfiadds\t" x 1 *)
+      FIADDS of mem      (* st(0) <- st(0) + int16 *)
+    | (*% @prefix att_ @format(x) "\tfiaddl\t" x 1 *)
+      FIADDL of mem      (* st(0) <- st(0) + int32 *)
+    | (*% @prefix att_ @format(x) "\tfsubs\t" x 1 *)
+      FSUBS of mem       (* st(0) <- st(0) - float32 *)
+    | (*% @prefix att_ @format(x) "\tfsubl\t" x 1 *)
+      FSUBL of mem       (* st(0) <- st(0) - float64 *)
+    | (*% @prefix att_ @format(dst * src) "\tfsub\t" src ", " dst 1 *)
+      FSUB of sti * sti  (* st(d) <- st(d) - st(s); either d or s must be 0 *)
+*)
+    | (*% @prefix att_ @format(dst) "\tfsubrp\t%st(0), " dst 1 *)
+      FSUBP of sti       (* st(i) <- st(i) - st(0) and pop *)
+      (*
+       * NOTE: Intel  fOP  st0, sti     sti = sti OP st0
+       *              fOPr st0, sti     sti = st0 OP sti
+       *       AT&T   fOP  st0, sti     sti = st0 OP sti
+       *              fOPr st0, sti     sti = sti OP st0
+       *)
+(*
+    | (*% @prefix att_ @format(x) "\tfisubs\t" x 1 *)
+      FISUBS of mem      (* st(0) <- st(0) - int16 *)
+    | (*% @prefix att_ @format(x) "\tfisubl\t" x 1 *)
+      FISUBL of mem      (* st(0) <- st(0) - int32 *)
+    | (*% @prefix att_ @format(x) "\tfsubrs\t" x 1 *)
+      FSUBRS of mem      (* st(0) <- float32 - st(0) *)
+    | (*% @prefix att_ @format(x) "\tfsubrl\t" x 1 *)
+      FSUBRL of mem      (* st(0) <- float64 - st(0) *)
+    | (*% @prefix att_ @format(dst * src) "\tfsubr\t" src ", " dst 1 *)
+      FSUBR of sti * sti (* st(d) <- st(s) - st(d); either d or s must be 0 *)
+    | (*% @prefix att_ @format(dst) "\tfsubrp\t" d ",%st(0)" 1 *)
+      FSUBRP of sti      (* st(i) <- st(0) - st(i) and pop *)
+    | (*% @prefix att_ @format(x) "\tfisubrs\t" x 1 *)
+      FISUBRS of mem     (* st(0) <- int16 - st(0) *)
+    | (*% @prefix att_ @format(x) "\tfisubrl\t" x 1 *)
+      FISUBRL of mem     (* st(0) <- int32 - st(0) *)
+    | (*% @prefix att_ @format(x) "\tfmuls\t" x 1 *)
+      FMULS of mem       (* st(0) <- st(0) * float32 *)
+    | (*% @prefix att_ @format(x) "\tfmull\t" x 1 *)
+      FMULL of mem       (* st(0) <- st(0) * float64 *)
+    | (*% @prefix att_ @format(dst * src) "\tfmul\t" src ", " dst 1 *)
+      FMUL of sti * sti  (* st(d) <- st(d) * st(s); either d or s must be 0 *)
+*)
+    | (*% @prefix att_ @format(dst) "\tfmulp\t%st(0), " dst 1 *)
+      FMULP of sti       (* st(i) <- st(i) * st(0) and pop *)
+(*
+    | (*% @prefix att_ @format(x) "\tfimuls\t" x 1 *)
+      FIMULS of mem      (* st(0) <- st(0) * int16 *)
+    | (*% @prefix att_ @format(x) "\tfimull\t" x 1 *)
+      FIMULL of mem      (* st(0) <- st(0) * int32 *)
+    | (*% @prefix att_ @format(x) "\tfdivs\t" x 1 *)
+      FDIVS of mem       (* st(0) <- st(0) / float32 *)
+    | (*% @prefix att_ @format(x) "\tfdivl\t" x 1 *)
+      FDIVL of mem       (* st(0) <- st(0) / float64 *)
+    | (*% @prefix att_ @format(dst * src) "\tfdiv\t" src ", " dst 1 *)
+      FDIV of sti * sti  (* st(d) <- st(d) / st(s); either d or s must be 0 *)
+*)
+    | (*% @prefix att_ @format(dst) "\tfdivrp\t%st(0), " dst 1 *)
+      FDIVP of sti       (* st(i) <- st(i) / st(0) and pop *)
+(*
+    | (*% @prefix att_ @format(x) "\tfidivs\t" x 1 *)
+      FIDIVS of mem      (* st(0) <- st(0) / int16 *)
+    | (*% @prefix att_ @format(x) "\tfidivl\t" x 1 *)
+      FIDIVL of mem      (* st(0) <- st(0) / int32 *)
+    | (*% @prefix att_ @format(x) "\tfdivrs\t" x 1 *)
+      FDIVRS of mem      (* st(0) <- float32 / st(0) *)
+    | (*% @prefix att_ @format(x) "\tfdivrl\t" x 1 *)
+      FDIVRL of mem      (* st(0) <- float64 / st(0) *)
+    | (*% @prefix att_ @format(dst * src) "\tfdivr\t" src ", " dst 1 *)
+      FDIVR of sti * sti (* st(d) <- st(s) / st(d); either d or s must be 0 *)
+    | (*% @prefix att_ @format(dst) "\tfdivrp\t" d ",%st(0)" 1 *)
+      FDIVRP of sti      (* st(i) <- st(0) / st(i) and pop *)
+    | (*% @prefix att_ @format(x) "\tfidivrs\t" x 1 *)
+      FIDIVRS of mem     (* st(0) <- int16 / st(0) *)
+    | (*% @prefix att_ @format(x) "\tfidivrl\t" x 1 *)
+      FIDIVRL of mem     (* st(0) <- int32 / st(0) *)
+*)
+    | (*% @prefix att_ @format "\tfabs" 1 *)
+      FABS             (* st(0) <- abs(st(0)) *)
+    | (*% @prefix att_ @format "\tfchs" 1 *)
+      FCHS             (* st(0) <- -st(0) *)
+(*
+    | (*% @prefix att_ @format "\tfprem" 1 *)
+      FPREM            (* st(0) <- st(0) % st(1) *)
+    | (*% @prefix att_ @format "\tfprem1" 1 *)
+      FPREM1           (* st(0) <- st(0) % st(1) IEEE *)
+    | (*% @prefix att_ @format "\tfrndint" 1 *)
+      FRNDINT          (* st(0) <- round(st(0)) *)
+    | (*% @prefix att_ @format "\tfxtract" 1 *)
+      FXTRACT          (* st(0) <- ext(st(0)), push man(st(0)) *)
+    | (*% @prefix att_ @format(x) "\tfcoms\t" x 1 *)
+      FCOMS of mem     (* compare st(0) with float32 *)
+    | (*% @prefix att_ @format(x) "\tfcoml\t" x 1 *)
+      FCOML of mem     (* compare st(0) with float64 *)
+    | (*% @prefix att_ @format(src) "\tfcom\t" src 1 *)
+      FCOM of sti      (* compare st(0) with st(i) *)
+    | (*% @prefix att_ @format(x) "\tfcomps\t" x 1 *)
+      FCOMPS of mem    (* compare st(0) with float32 and pop *)
+    | (*% @prefix att_ @format(x) "\tfcompl\t" x 1 *)
+      FCOMPL of mem    (* compare st(0) with float64 and pop *)
+    | (*% @prefix att_ @format(src) "\tfcomp\t" src 1 *)
+      FCOMP of sti     (* compare st(0) with st(i) and pop *)
+    | (*% @prefix att_ @format "\tfcompp" 1 *)
+      FCOMPP           (* compare st(0) with st(1) and pop twice *)
+    | (*% @prefix att_ @format(src) "\tfcomi\t" src 1 *)
+      FCOMI of sti     (* compare st(0) with st(i) and set EFLAGS *)
+    | (*% @prefix att_ @format(src) "\tfcomip\t" src 1 *)
+      FCOMIP of sti    (* compare st(0) with st(i) and pop and set EFLAGS *)
+    | (*% @prefix att_ @format "\tftst" 1 *)
+      FTST             (* compare st(0) with 0.0 *)
+    | (*% @prefix att_ @format(src) "\tfucom\t" src 1 *)
+      FUCOM of sti     (* unordered compare st(0) with st(i) *)
+    | (*% @prefix att_ @format(src) "\tfucomp\t" src 1 *)
+      FUCOMP of sti    (* unordered compare st(0) with st(i) and pop *)
+*)
+    | (*% @prefix att_ @format "\tfucompp" 1 *)
+      FUCOMPP          (* unordered compare st(0) with st(1) and pop twice *)
+(*
+    | (*% @prefix att_ @format(src) "\tfucomi\t" src 1 *)
+      FUCOMI of sti    (* unordered compare st(0) with st(i) and set EFLAGS *)
+    | (*% @prefix att_ @format(src) "\tfucomip\t" src 1 *)
+      FUCOMIP of sti   (* unordered compare st(0) with st(i) and pop and set EFLAGS *)
+    | (*% @prefix att_ @format "\tfxam" 1 *)
+      FXAM             (* examine *)
+*)
+    | (*% @prefix att_ @format "\tfstsw\t%ax" 1 *)
+      FSTSW_AX         (* store fpu status word to %ax *)
+(*
+    | (*% @prefix att_ @format "\tfnstsw\t%ax" 1 *)
+      FNSTSW_AX      (* store fpu status word to %ax without exception check *)
+    | (*% @prefix att_ @format "\tfincstp" 1 *)
+      FINCSTP          (* increment stack-top pointer *)
+    | (*% @prefix att_ @format "\tfdecstp" 1 *)
+      FDECSTP          (* decrement stack-top pointer *)
+    | (*% @prefix att_ @format "\tfwait" 1 *)
+      FWAIT            (* check FPU exception *)
+    | (*% @prefix att_ @format "\tfclex" 1 *)
+      FCLEX            (* clear exception *)
+    | (*% @prefix att_ @format(dst) "\tffree\t" dst 1 *)
+      FFREE of sti     (* free st(i) *)
+*)
+    | (*% @prefix att_ @format(m) "\tfnstcw\t" m 1 *)
+      FNSTCW of mem
+    | (*% @prefix att_ @format(m) "\tfldcw\t" m 1 *)
+      FLDCW of mem
+
+    (* pseudo instructions *)
+(*
+    | (*% @prefix att_ @format(l) "\t.globl\t" l 1 *)
+      Global of globalCodeLabel
+*)
+    | (*% @prefix att_ @format(l) l ":" 1 *)
+      Label of label
+    | (*% @prefix att_ @format(l) "\t.globl\t" l 1 l ":" 1 *)
+      GlobalCodeLabel of globalCodeLabel
+    | (*% @prefix att_ @format(l) "\t.globl\t" l 1 l ":" 1 *)
+      GlobalDataLabel of globalDataLabel
+(*
+    | Const of imm list
+    | (*% @prefix att_ @format(str) "\t.ascii\t" str:asciiString 1 *)
+      ConstString of string
+*)
+    | (*% @prefix att_ @format(x) "\t;; .loc " x 1 *)
+      (*% @prefix darwin_ @format(x) "\t# .loc " x 1 *)
+      Loc of loc
+    | (*% @prefix att_
+       * @format({align,filler}) "\t.align\t" align ", " filler 1 *)
+      (*%
+       * @prefix darwin_
+       * @format({align,filler})
+       * "\t.align\t" align:log2 ", " filler 1
+       *)
+      Align of {align:int, filler:word}    (* align must be 2^n *)
+    | (*%
+       * @prefix att_
+       * @format({preFrameSize, instructions:insn insns})
+       * insns(insn)()
+       *)
+      (*%
+       * @prefix debug_
+       * @format({preFrameSize, instructions:insn insns})
+       * "\t# begin prologue" + preFrameSize 1
+       * insns(insn)() "\t# end prologue" 1
+       *)
+      Prologue of {preFrameSize: int, instructions: instruction list}
+    | (*%
+       * @prefix att_
+       * @format({preFrameSize, instructions:insn insns})
+       * insns(insn)()
+       *)
+      (*%
+       * @prefix debug_
+       * @format({preFrameSize, instructions:insn insns})
+       * "\t# begin epilogue" 1
+       * insns(insn)() "\t# end epilogue" + preFrameSize 1
+       *)
+      Epilogue of {preFrameSize: int, instructions: instruction list}
+    | (*% @prefix att_ @format *)
+      (*% @prefix debug_ @format(reg regs) "\t# use\t" regs(reg)("," +) 1 *)
+      Use of r32 list
+    | (*% @prefix att_ @format *)
+      (*% @prefix debug_ @format(reg regs) "\t# def\t" regs(reg)("," +) 1 *)
+      Def of r32 list
+(*
+    | (*% @prefix att_ @format *)
+      (*% @prefix debug_ *)
+      CallRequire of {suffix: string, labels: extCodeRefLabel list}
+    | Text
+    | Data
+    | Long
+*)
+    | (*% @prefix att_ @format(x) x *)
+      (*% @prefix debug_ @format(x) "\t.section" x *)
+      Section of sectionName
+    | (*% @prefix att_ @format(x xs) xs(x)() *)
+      (*%
+       * @prefix debug_ @format(x xs)
+       * "\t# data begin" 1 xs(x)() "\t# data end" 1
+       *)
+      Data of data list
+
+(*
+    | (*% @prefix att_ @format(l) "\t.jump\t" l 1 *)
+      Jump of label
+    | (*% @prefix att_ @format(l ls) "\t.mayjump\t" ls(l)(","+) 1 *)
+      MayJump of label list
+    | (*% @prefix att_ @format "\t.end" 1 *)
+      End
+*)
+
+  (*%
+   * @prefix att_
+   * @formatter(FrameLayout.frameBitmap) FrameLayout.format_frameBitmap
+   *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type frameBitmap =
+      (r32, mem) FrameLayout.frameBitmap
+
+  (*% @prefix att_ *)
+  (*%
+   * @prefix debug_ @ditto att_
+   * @formatter(enclosedList) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+   *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type cluster =
+      (*%
+       * @prefix att_
+       * @format({frameBitmap, body: insn insns, preFrameAligned, loc})
+       * insns(insn)()
+       *)
+      (*%
+       * @prefix debug_
+       * @format({frameBitmap: bitmap bitmaps:enclosedList,
+       *          body: insn insns,
+       *          preFrameAligned, loc})
+       * "# cluster begin" 1
+       * "# loc = " loc 1
+       * bitmaps(bitmap)("# frameBitmap: " 1,1,1)
+       * "# preFrameAligned = " preFrameAligned 1
+       * insns(insn)()
+       * "# cluster end" 1
+       *)
+      {
+        frameBitmap: frameBitmap list,
+        body: instruction list,
+        preFrameAligned: bool,
+        loc: loc
+      }
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_
+   * @formatter(globalCodeLabel) darwin_globalCodeLabel
+   *)
+  type externCodeStub =
+       (*% @prefix att_ @format *)
+       (*% @prefix debug_ @format(x) x ": .ExternCodeRef" 1 *)
+       (*%
+        * @prefix darwin_
+        * @format(label)
+        * "\t.section __IMPORT,__jump_table,symbol_stubs,"
+        * "self_modifying_code+pure_instructions,5" 1
+        * label ":" 1
+        * "\t.indirect_symbol " label:globalCodeLabel 1
+        * "\thlt ; hlt ; hlt ; hlt ; hlt" 1
+        * "\t.subsections_via_symbols" 1
+        *)
+       externCodeStubLabel
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*%
+   * @prefix darwin_ @ditto att_
+   * @formatter(globalDataLabel) darwin_globalDataLabel
+   *)
+  type externDataRef =
+       (*% @prefix att_ @format *)
+       (*% @prefix debug_ @format(x) x ": .ExternDataRef" 1 *)
+       (*%
+        * @prefix darwin_
+        * @format(label)
+        * "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers" 1
+        * label ":" 1
+        * "\t.indirect_symbol " label:globalDataLabel 1
+        * "\t.long\t0" 1
+        * "\t.subsections_via_symbols" 1
+        *)
+       externDataRefLabel
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*%
+   * @prefix darwin_ @ditto att_
+   * @formatter(externDataRef) darwin_externDataRef
+   *)
+  type globalDataRef =
+       (*% @prefix att_ @format *)
+       (*% @prefix debug_ @format(x) x ": .GlobalDataRef" 1 *)
+       (*% @prefix darwin_ @format(x) x:externDataRef *)
+       globalDataRefLabel
+
+(*
+  (*%
+   * @prefix att_
+   * @formatter(word) format_word_dec
+   *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*%
+   * @prefix darwin_ @ditto att_
+   * @formatter(log2) format_word_log2
+   *)
+  type globalVarDef =
+       (*%
+        * @prefix att_
+        * @format({label, size, align})
+        * "\t.comm " label "," size "," align 1
+        *)
+       (*%
+        * @prefix darwin_
+        * @format({label, size, align})
+        * "\t.comm " label "," size "," align:log2 1
+        *)
+       {label: globalVarLabel, size: word, align: word}
+*)
+
+  (* stub code for sequential toplevel evaluation *)
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type toplevelStubCode =
+       (*%
+        * @prefix att_
+        * @format({label, code:insn insns})
+        * "\t.text" 1
+        * "\t.align\t4, 0x90" 1
+        * "\t.weak\t" label
+        * label ":" 1
+        * insns(insn)()
+        *)
+       (*%
+        * @prefix debug_
+        * @format({label, code:insn insns})
+        * "# toplevel stub code" 1
+        * label ":" 1
+        * insns(insn)()
+        * "# toplevel stub code end" 1
+        *)
+       (*%
+        * @prefix darwin_
+        * @format({label, code:insn insns})
+        * "\t.section __TEXT,smlsharp_toplevl,coalesced" 1
+        * "\t.weak_definition " label 1
+        * "\t.globl\t" label 1
+        * "\t.align\t2, 0x90" 1
+        * label ":" 1
+        * insns(insn)()
+        *)
+       {
+         label: globalCodeLabel,
+         code: instruction list
+       }
+
+  (*% @prefix att_ *)
+  (*% @prefix debug_ @ditto att_ *)
+  (*% @prefix darwin_ @ditto att_ *)
+  type program =
+      (*%
+       * @prefix att_
+       * @format({entryCode: code codes,
+       *          clusters: cluster clusters,
+       *          data: dat dats,
+       *          globalReferences: gr grs,
+       *          externReferences: er ers,
+       *          externCodeStubs: fr frs,
+       *          toplevelStubCode: stub stubop})
+       * "\t.text" 1
+       * codes(code)()
+       * clusters(cluster)()
+       * dats(dat)()
+       * grs(gr)()
+       * ers(er)()
+       * frs(fr)()
+       * stubop(stub)
+       *)
+      (*%
+       * @prefix debug_
+       * @format({entryCode: code codes,
+       *          clusters: cluster clusters,
+       *          data: dat dats,
+       *          globalReferences: gr grs,
+       *          externReferences: er ers,
+       *          externCodeStubs: fr frs,
+       *          toplevelStubCode: stub stubop})
+       * "# EntryCode:" 1
+       * codes(code)()
+       * clusters(cluster)()
+       * "# Data:" 1
+       * dats(dat)()
+       * "# GlobalReferences:" 1
+       * grs(gr)()
+       * "# ExternReferences:" 1
+       * ers(er)()
+       * "# ExternCodeStubs:" 1
+       * frs(fr)()
+       * "# Toplevel stub code:" 1
+       * stubop(stub)
+       *)
+       {
+         entryCode: instruction list,
+         clusters: cluster list,
+         data: instruction list,
+         globalReferences: globalDataRef list,
+         externReferences: externDataRef list,
+         externCodeStubs: externCodeStub list,
+         toplevelStubCode: toplevelStubCode option
+       }
+
+  end (* local *)
+end

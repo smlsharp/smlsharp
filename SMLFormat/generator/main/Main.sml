@@ -1,7 +1,7 @@
 (**
  * The entry point to smlformat for invokation as a standalone command.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.7 2007/01/25 09:02:28 katsu Exp $
+ * @version $Id: Main.sml,v 1.8 2008/08/10 13:44:01 kiyoshiy Exp $
  *)
 structure Main =
 struct
@@ -18,8 +18,13 @@ struct
         val (options, sourceFileNames) =
             List.partition (String.isPrefix "--") commandLineArgs
 
+        (* NOTE: Following code is not efficient, but we assume here
+         * that so many command options are not given.
+         *)
         val toStandardOut =
             List.exists (fn option => option = "--stdout") options
+        val withLineDirective =
+            List.exists (fn option => option = "--with-line-directive") options
 
         val (openOut, closeOut, removeOut) =
             if toStandardOut
@@ -42,7 +47,8 @@ struct
                 {
                   sourceFileName = sourceFileName,
                   sourceStream = sourceStream,
-                  destinationStream = outputStream
+                  destinationStream = outputStream,
+                  withLineDirective = withLineDirective
                 }
                 handle error => (closeOut outputStream;
                                  removeOut sourceFileName;

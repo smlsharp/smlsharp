@@ -1,0 +1,94 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@/commonrule
+
+VPATH = @srcdir@
+
+TARGETS = mlb2use
+
+SOURCES = \
+	$(srcdir)/FILE.sig \
+	$(srcdir)/File.sml \
+	$(srcdir)/MLB2Use.sml \
+	$(srcdir)/MLBParser.sml \
+	$(srcdir)/PathMap.sml \
+	$(srcdir)/SOURCE.sig \
+	$(srcdir)/SOURCE_POS.sig \
+	$(srcdir)/Source.sml \
+	$(srcdir)/SourcePos.sml \
+	$(srcdir)/basis_compatible.sml \
+	$(srcdir)/main.sml \
+	$(srcdir)/mlb.grm.sig \
+	$(srcdir)/mlb.grm.sml \
+	$(srcdir)/mlb.lex.sml \
+	$(srcdir)/sources.mlb \
+	$(srcdir)/sources.use \
+
+
+GENSOURCES = \
+	smlsharp-path-map.txt \
+	smlsharp.use \
+	smlsharp.sme \
+
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(TARGETS) $(GENSOURCES)
+
+install: $(TARGETS)
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(TARGETS) '$(DESTDIR)$(bindir)'
+
+mlb2use: $(SOURCES)
+	$(MLTON) -output $@ $(srcdir)/sources.mlb
+#	$(SMLSHARP) -c -o $@ $(srcdir)/sources.use
+
+###############################################################################
+# self-compiling SML#
+
+smlsharp-path-map.txt:
+	-rm -f $@
+	echo "SML_LIB \$${SML_LIB}" >> $@
+	echo "CONFIGDIR `$(MKSMLPATH) -sh '$(SRC_ROOT)/src/configuration'`" >> $@
+	if test "x$(BYTE_ORDER)" = "xLittle"; then \
+	  echo 'ARCH x86' >> $@; \
+	else \
+	  echo 'ARCH Sparc' >> $@; \
+	fi
+	echo "BYTE_ORDER ${BYTE_ORDER}" >> $@
+	echo "MLCOMPILER SMLSharp" >> $@
+
+smlsharp.use: mlb2use
+	-rm -f $@
+	echo 'use "smlnj-lib.sml";' >> $@
+	echo 'use "ml-yacc-lib.sml";' >> $@
+	echo "use \"$(BASISDIR)/basis_compat.sml\";" >> $@
+	./mlb2use \
+	        -d . \
+		-e \
+	        -p ./smlsharp-path-map.txt \
+		$(top_srcdir)/src/compiler/commands/smlsharp/main/sources.mlb \
+		>> smlsharp.use
+
+mlton_parser_g:
+	$(MAKE) -C ../../compiler/ mlton_parser_g
+
+smlsharp.sme: 	mlb2use \
+		smlsharp-path-map.txt \
+		smlsharp.use \
+		mlton_parser_g
+	IML_skipPrinter=yes \
+	IML_switchTrace=yes \
+	IML_traceFileLoad=yes \
+	$(SMLSHARP) \
+		-o smlsharp.sme \
+		-c \
+		./smlsharp.use
+
+self-compile: smlsharp.sme
+
+###############################################################################

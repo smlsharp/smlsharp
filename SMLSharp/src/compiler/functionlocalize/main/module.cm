@@ -1,0 +1,17 @@
+Group is
+        $/basis.cm
+        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../control/sources.cm
+	../../util/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+        ../../types/sources.cm
+        ../../annotatedtypes/sources.cm
+        ../../multiplevaluecalc/sources.cm
+
+	FunIDMapData.ppg.sml
+	FunIDMap.sml
+	FUNCTION_LOCALIZE.sig
+	FunctionLocalize.sml

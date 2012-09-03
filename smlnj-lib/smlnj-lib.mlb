@@ -1,0 +1,13 @@
+local
+   Controls/controls-lib.mlb
+   HashCons/hash-cons-lib.mlb
+   HTML/html-lib.mlb
+   INet/inet-lib.mlb
+   PP/pp-lib.mlb
+   Reactive/reactive-lib.mlb
+   RegExp/regexp-lib.mlb
+   Unix/unix-lib.mlb
+   Util/smlnj-lib.mlb
+   Util/time-limit.mlb
+in 
+end

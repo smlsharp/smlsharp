@@ -1,0 +1,20 @@
+Group is
+
+$/basis.cm
+
+(*
+#if defined(NEW_CM)
+      $/basis_compat.cm
+#endif
+*)
+
+../../../../../../smlnj-lib/Util/smlnj-lib.cm
+(*
+#if defined(NEW_CM)
+      $/smlnj-lib.cm
+#endif
+*)
+        ../../../../../../SMLFormat/smlformatlib.cm
+      FFIGenData.ppg.sml
+      Printer.sml
+      FFISwitchGen.sml

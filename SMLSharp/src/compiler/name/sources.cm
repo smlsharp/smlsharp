@@ -1,0 +1,41 @@
+Group
+	signature ID
+
+	signature IDGEN
+
+	signature PATH
+        structure Path
+
+	structure NameMap
+	structure NamePickler
+	structure NameMapPickler
+        structure BoundTypeVarID
+
+        structure TyConID
+        structure TyConIDKeyGen
+        structure ReservedTyConIDKeyGen
+
+        structure FreeTypeVarID
+        structure FreeTypeVarIDGen
+
+        structure BoundTypeVarIDGen
+        structure ReservedBoundTypeVarIDGen
+
+        structure ExnTagID
+        structure ExnTagIDKeyGen
+
+        structure ExternalVarID
+        structure ExternalVarIDKeyGen
+
+        structure LocalVarID
+        structure LocalVarIDGen
+
+        structure VarNameID
+        structure VarNameGen
+
+        structure ClusterID
+        structure ClusterIDGen
+
+        structure Constants
+is
+	main/module.cm

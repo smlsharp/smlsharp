@@ -1,0 +1,11 @@
+*.class
+ArrayTestee1.sml
+ClassBasicsTestee1.sml
+ClassBasicsTestee1_Child.sml
+ClassBasicsTestee1_NotChild.sml
+ExceptionTestee1.sml
+ExceptionTestee1Exception.sml
+MemberAccessTestee1.sml
+MethodCallTestee1.sml
+MethodCallTestee1_Child.sml
+ObjectBasicsTestee1.sml

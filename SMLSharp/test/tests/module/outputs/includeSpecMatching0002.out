@@ -1,0 +1,14 @@
+signature SA = sig type t val x : t end
+signature SB = sig datatype dt = D val y : dt end
+signature S = sig include SA include SB val z : t * dt end
+structure S
+: sig
+    datatype dt
+    con D : dt
+    type t = int
+    val x : int
+    val y : dt
+    val z : int * dt
+  end
+structure STrans : S
+structure SOpaque : S

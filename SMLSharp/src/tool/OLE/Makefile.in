@@ -1,0 +1,40 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@/commonrule
+
+VPATH = @srcdir@
+
+SOURCES = OLE2SML.cc
+
+OBJECTS = $(SOURCES:.cc=.$(OBJEXT))
+
+TARGETS = OLE2SML$(EXEEXT)
+
+clean:
+	-rm -f $(OBJECTS) $(TARGETS)
+
+all: $(TARGETS)
+
+install: $(TARGETS)
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL_PROGRAM) OLE2SML$(EXEEXT) '$(DESTDIR)$(bindir)'
+	$(INSTALL_DATA) $(srcdir)/OLE.sml '$(DESTDIR)$(libdir_smlsharp)'
+
+OLE2SML$(EXEEXT): OLE2SML.$(OBJEXT)
+	$(CXX) $(LDFLAGS) $(LIBSTDCXX) $(LIBS) \
+	-o $@ OLE2SML.$(OBJEXT) -loleaut32 -lole32 -luuid
+
+doc:
+	-$(MAKE) smldoc
+
+smldoc: 
+	@if test 'x$(SMLDOC)' = 'x'; then \
+	  echo '*** smldoc not found.'; exit 1; \
+	fi
+	-rm -rf ./doc/api
+	mkdir -p ./doc/api
+	$(SMLDOC) -a $(srcdir)/smldoc.cfg

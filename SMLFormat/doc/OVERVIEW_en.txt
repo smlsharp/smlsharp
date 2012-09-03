@@ -1,7 +1,7 @@
 SMLFormat: Pretty Printer for Standard ML
 
 @author YAMATODANI Kiyoshi
-@version $Id: OVERVIEW_en.txt,v 1.7 2006/12/07 13:43:12 kiyoshiy Exp $
+@version $Id: OVERVIEW_en.txt,v 1.9 2008/08/10 13:44:01 kiyoshiy Exp $
 
 ========================================
 1. SMLFormat
@@ -71,6 +71,14 @@ The SMLFormat consists of the two components:
 
   val format_exp : exp -> FormatExpression.expression list
 
+Command options smlformat command accepts are as follows.
+
+  --stdout
+    writes the result source code to standard output instead of .ppg.sml file..
+
+  --with-line-directive
+    insert line directives into the result source code to indicate to SML
+    compiler the position of the code which follows the directive.
 
 ====================
 1.2. formatlib
@@ -505,6 +513,34 @@ The base column is 0 if the indicator is not in a guard.
   123456789012345678901234567890
 
  In this example, because the guard starts just after the indent at the first newline indicator, the base column of the guard is 4. The indent width at two newline indicators within the guard are 9 (= 4 + 5) and 1 (= 4 + -3) respectively.
+
+
+====================
+2.7. Constant newline
+
+ A constant newline is notated as a backslash followed by a character 'n'.
+A constant newline is almost a syntax sugar.
+A constant newline can be thought as a newline indicator of preferred priority of higher precedence than any other newline indicators, followed by a long sequence of null characters which occupies no column when printed.
+
+  "jugemu" \n "jugemu"
+  20=>
+  jugemu
+  jugemu
+  --------------------
+  12345678901234567890
+
+In this example, the line is broken even though it can be formatted in the specified width 20.
+
+  "jugemu" 1 { 4[ "jugemu" +2 "gokounosurikire" \n "kaijarisuigyono" ] }
+  50=>
+  jugemu
+  jugemu gokounosurikire
+      kaijarisuigyono
+  --------------------------------------------------
+  12345678901234567890123456789012345678901234567890
+
+In this example, newline is inserted at all newline indicators at upper level than the inner most guard enclosing the constant newline.
+And, the line is indented at the constant newline according to the indent stack as usual newline indicator.
 
 
 ========================================
