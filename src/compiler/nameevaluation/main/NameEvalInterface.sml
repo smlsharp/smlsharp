@@ -55,6 +55,25 @@ in
                        source: PatternCalcInterface.pitopdec list,
                        topEnv: NameEvalEnv.topEnv} InterfaceID.Map.map
 
+  fun evalRuntimeTy loc tvarEnv evalEnv runtimeTy =
+      case runtimeTy of
+        PI.BUILTINty ty => I.BUILTINty ty
+      | PI.LIFTEDty path => 
+        let
+          val aty = Absyn.TYCONSTRUCT(nil, path, loc)
+          val ity = Ty.evalTy tvarEnv evalEnv aty
+        in
+          case ity of
+            I.TYVAR (tvar as {lifted,...}) => 
+            if lifted then I.LIFTEDty tvar
+            else raise bug "non lifted tvar in evalRuntimeTy"
+          | _ => 
+            (case I.runtimeTyOfIty ity of
+               SOME ty =>  ty
+             | NONE => raise bug "no runtimeTy in evalRuntimeTy"
+            )
+        end
+
   fun genTypedExternVarsIdstatus loc path idstatus (externSet, icdecls) =
       case idstatus of
         I.IDVAR varId => (externSet, idstatus, icdecls)
@@ -340,13 +359,14 @@ in
                     (fn s => E.DuplicateTypParms("EI-090",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
           val id = TypID.generate()
+          val runtimeTy = evalRuntimeTy loc tvarEnv env runtimeTy
           val absTfun =
               I.TFUN_VAR
                 (I.mkTfv
                    (I.TFUN_DTY {id=id,
                                 iseq=false,
                                 formals=tvarList,
-                                runtimeTy=runtimeTy,
+                                runtimeTy= runtimeTy,
                                 conSpec=SEnv.empty,
                                 originalPath=[tycon],
                                 liftedTys=I.emptyLiftedTys,
@@ -367,13 +387,14 @@ in
                     (fn s => E.DuplicateTypParms("EI-090",s))
           val (tvarEnv, tvarList) = Ty.genTvarList Ty.emptyTvarEnv tyvars
           val id = TypID.generate()
+          val runtimeTy = evalRuntimeTy loc tvarEnv env runtimeTy
           val absTfun =
               I.TFUN_VAR
                 (I.mkTfv(
                  I.TFUN_DTY {id=id,
                              iseq=true,
                              formals=tvarList,
-                             runtimeTy=runtimeTy,
+                             runtimeTy= runtimeTy,
                              conSpec=SEnv.empty,
                              originalPath=[tycon],
                              liftedTys=I.emptyLiftedTys,
@@ -544,6 +565,7 @@ in
         end
       | PI.PIFUNCTORAPP{functorName, argumentPath, loc} => 
         let
+          val copyPath = path
           val {Env, FunE,...} = topEnv
         in
           case (SEnv.find(FunE, functorName), V.findStr(Env, argumentPath)) of
@@ -559,7 +581,7 @@ in
             let
               val {id,version, used,argSig,argStrName,argStrEntry,dummyIdfunArgTy,polyArgTys,
                    typidSet,exnIdSet,bodyEnv,bodyVarExp} = funEEntry
-              fun instVarE (varE,actualVarE) {tvarS, tfvS, conIdS, exnIdS} =
+              fun instVarE (varE,actualVarE) {tvarS, conIdS, exnIdS} =
                 let
                   val conIdS =
                         SEnv.foldri
@@ -576,10 +598,10 @@ in
                           conIdS
                           varE
                   in
-                    {tvarS=tvarS,tfvS=tfvS,exnIdS=exnIdS, conIdS=conIdS}
+                    {tvarS=tvarS,exnIdS=exnIdS, conIdS=conIdS}
                   end
               fun instTfun path (tfun, actualTfun)
-                           (subst as {tvarS, tfvS, conIdS, exnIdS}) =
+                           (subst as {tvarS, conIdS, exnIdS}) =
                   let
                     val tfun = I.derefTfun tfun
                     val actualTfun = I.derefTfun actualTfun
@@ -589,9 +611,7 @@ in
                       (case actualTfun of
                          I.TFUN_VAR(tfv2 as ref (tfunkind as I.TFUN_DTY _)) =>
                          (tfv1 := tfunkind;
-                          {tfvS=TfvMap.insert (tfvS, tfv1, tfv2)
-                           handle e => raise e,
-                           tvarS=tvarS,
+                          {tvarS=tvarS,
                            exnIdS=exnIdS,
                            conIdS=conIdS}
                          )
@@ -611,7 +631,6 @@ in
                         val ty = N.reduceTy TvarMap.empty ty
                       in
                         {tvarS=TvarMap.insert(tvarS,tvar,ty),
-                         tfvS=tfvS,
                          conIdS=conIdS,
                          exnIdS=exnIdS
                         }
@@ -620,7 +639,7 @@ in
                   end
               fun instTstr 
                     path (tstr, actualTstr)
-                    (subst as {tvarS,tfvS,conIdS, exnIdS}) =
+                    (subst as {tvarS,conIdS,exnIdS}) =
                   (
                    case tstr of
                      V.TSTR tfun =>
@@ -727,7 +746,7 @@ in
                     ExnID.Map.empty
                     exnIdSet
               val ((tfvSubst, conIdSubst), tempEnv) =
-                  SC.refreshEnv (typidSet, exnIdSubst) tempEnv
+                  SC.refreshEnv copyPath (typidSet, exnIdSubst) tempEnv
                   handle e => raise e
               val typIdSubst =
                   TfvMap.foldri
@@ -846,12 +865,8 @@ in
 *)
         val bodyEnv = internalizeEnv bodyInterfaceEnv
 
-        val
-        {
-         allVars = allVars,
-         typidSet = typidSet,
-         exnIdSet = exnIdSet
-        } = FunctorUtils.makeBodyEnv bodyEnv loc
+        val typidSet = FU.typidSet bodyEnv
+        val (allVars, exnIdSet) = FU.varsInEnv (bodyEnv, loc)
 
         (* FIXME (not a bug):
            The following is to restrict the typids to be refreshed

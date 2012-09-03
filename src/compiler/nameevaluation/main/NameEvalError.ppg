@@ -111,7 +111,7 @@ in
      @format((code * {pat}))
      "(name evaluation" +d code ")" +d
      "variable" +d "pattern" +d "expected" +d "for" +d "function" +d "id:"
-     +d pat 
+     +1 pat 
    *)
   IlleagalFunID of (string * {pat : PatternCalc.plpat})
 
@@ -120,7 +120,7 @@ in
     @format((code * {pat}))
      "(name evaluation" +d code ")" +d
     "constructor" +d "expected" +d "in" +d "a"
-    +d "constructor" +d "pattern:" +d pat 
+    +d "constructor" +d "pattern:" +1 pat 
    *)
   NonConstructor of (string * {pat : PatternCalc.plpat})
 
@@ -593,7 +593,7 @@ in
      "(name evaluation" +d code ")" +d
      "Type" +d "constructor" +d
      "arity" +d "mismatch" +d "in" +d "where" +d "type" +d "clause:" 
-     +d longids(longid)(",")
+     +1 longids(longid)(",")
    *)
     ArityErrorInSigwhere of (string * {longidList : longid list})
 
@@ -603,7 +603,7 @@ in
      "(name evaluation" +d code ")" +d
      "Type" +d "constructor" +d
      "arity" +d "mismatch" +d "in" +d "sharing" +d "type" +d "clause:" 
-     +d longids(longid)(",")
+     +1 longids(longid)(",")
    *)
     ArityErrorInSigShare of (string * {longidList : longid list})
 
@@ -613,7 +613,7 @@ in
      "(name evaluation" +d code ")" +d
      "Equality" +d "constraint" +d
      "violation" +d "in" +d "sharing" +d "type" +d "clause:" 
-     +d longids(longid)(",")
+     +1 longids(longid)(",")
    *)
     EqtypeInSigShare of (string * {longidList : longid list})
 
@@ -632,7 +632,7 @@ in
      @format((code * {longidList:longid longids}))
      "(name evaluation" +d code ")" +d
      "Signature" +d "mismatch" +d
-     "in" +d "sharing" +d "type" +d "clause:"  +d longids(longid)(",")
+     "in" +d "sharing" +d "type" +d "clause:" +1 longids(longid)(",")
    *)
     SigErrorInSigShare of (string * {longidList : longid list})
 
@@ -756,7 +756,7 @@ in
      "(name evaluation" +d code ")" +d
      "Signature mismatch." +d
      "sharing" +d "constraint" +d
-     "not" +d "satisfied:" +d
+     "not" +d "satisfied:" +1
      longids(longid)(",")
    *)
     SIGShare of (string * {longidList : longid list})

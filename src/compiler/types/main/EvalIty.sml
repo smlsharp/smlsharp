@@ -77,18 +77,34 @@ in
         (case tfunKindRef of
            ref(I.TFUN_DTY{id,iseq,formals,runtimeTy,originalPath,
                            conSpec,liftedTys,dtyKind}) =>
-           {id = id,
-            path = path,
-            iseq = iseq,
-	    runtimeTy = runtimeTy,
-            arity = List.length formals,
-            conSet =SEnv.map
-                      (fn NONE => {hasArg=false} | SOME ity => {hasArg=true})
-                      conSpec,
-            extraArgs = map (evalIty context) (I.liftedTysToTy liftedTys),
-            dtyKind = evalDtyKind context path dtyKind
-           }
-         | ref(I.TFV_SPEC {id, iseq, formals}) =>
+           let
+             (* Here we changed LIFTEDty to BOXED.
+               I think this is OK since this type only occurrs in the functor body
+               and we changes all of them.
+               The other possibility is to introduce (LIFTEDty builtinTy) in
+               tyCon. 
+               *)
+             val runtimeTy = 
+                 case runtimeTy of
+                   I.BUILTINty ty => ty
+                 | I.LIFTEDty _ => BuiltinType.BOXEDty
+           in
+              {id = id,
+             (* 2012-7-15 ohori: bug 207_printer.sml. 
+               path = path,
+              *)
+               path = originalPath,
+               iseq = iseq,
+	       runtimeTy = runtimeTy,
+               arity = List.length formals,
+               conSet =SEnv.map
+                         (fn NONE => {hasArg=false} | SOME ity => {hasArg=true})
+                         conSpec,
+               extraArgs = map (evalIty context) (I.liftedTysToTy liftedTys),
+               dtyKind = evalDtyKind context path dtyKind
+              }
+           end
+         | ref(I.TFV_SPEC {name, id, iseq, formals}) =>
            (debugPrint "****** evalTfun ******\n";
             printPath path;
             debugPrint "\n";
@@ -97,7 +113,7 @@ in
             debugPrint "\n";
             raise bug "TFV_SPEC in evalTfun"
            )
-         | ref(I.TFV_DTY {id,iseq,formals,conSpec,liftedTys}) =>
+         | ref(I.TFV_DTY {name, id,iseq,formals,conSpec,liftedTys}) =>
            (debugPrint "****** evalTfun ******\n";
             printPath path;
             debugPrint "\n";
@@ -132,26 +148,27 @@ in
           in
             T.CONSTRUCTty{tyCon=tyCon, args=args}
           end
-          handle EVALTFUN {iseq, formals, realizerTy} =>
-                 if length formals = length args then
-                   let
-                     val args = map (evalIty context) args
-                     val tvarTyPairs = ListPair.zip (formals, args)
-                     val tvarEnv = #tvarEnv context
-                     val tvarEnv = 
-                         foldr
-                         (fn ((tvar, ty), tvarEnv) =>
-                             TvarMap.insert(tvarEnv, tvar, ty))
-                         tvarEnv
-                         tvarTyPairs
-                     val context = {tvarEnv = tvarEnv,
-                                    varEnv = #varEnv context,
-                                    oprimEnv = #oprimEnv context}
-                   in
-                     evalIty context realizerTy
-                   end
-                 else
-                   raise bug "TYCONSTRUCT ARITY"
+          handle 
+          EVALTFUN {iseq, formals, realizerTy} =>
+          if length formals = length args then
+            let
+              val args = map (evalIty context) args
+              val tvarTyPairs = ListPair.zip (formals, args)
+              val tvarEnv = #tvarEnv context
+              val tvarEnv = 
+                  foldr
+                    (fn ((tvar, ty), tvarEnv) =>
+                        TvarMap.insert(tvarEnv, tvar, ty))
+                    tvarEnv
+                    tvarTyPairs
+              val context = {tvarEnv = tvarEnv,
+                             varEnv = #varEnv context,
+                             oprimEnv = #oprimEnv context}
+            in
+              evalIty context realizerTy
+            end
+          else
+            raise bug "TYCONSTRUCT ARITY"
          )
        | I.TYFUNM (tyList,ty2) =>
          T.FUNMty (map (evalIty context) tyList, evalIty context ty2)

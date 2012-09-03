@@ -8,7 +8,9 @@ sig
   val nameEval : {topEnv: NameEvalEnv.topEnv, version: int option,
                   systemDecls: IDCalc.icdecl list}
                  -> PatternCalcInterface.compileUnit
-                    -> NameEvalEnv.topEnv * IDCalc.icdecl list * UserError.errorInfo list
+                    -> NameEvalEnv.topEnv 
+                       * IDCalc.topdecl 
+                       * UserError.errorInfo list
   val evalRequire
       : NameEvalEnv.topEnv * IDCalc.icdecl list
         -> PatternCalcInterface.compileUnit
@@ -71,20 +73,34 @@ local
 
   fun generateFunVar path funIdPat =
     let
-      val {funVarInfo, funName} =
-          case funIdPat of
+      fun stripTy pat =
+          case pat of
+            P.PLPATTYPED(pat, ty, loc) =>
+            let
+              val (pat, tyList) = stripTy pat
+            in
+              (pat, ty::tyList)
+            end
+          | _ => (pat, nil)
+      val (idPat, tyList) = stripTy funIdPat
+      val {funVarInfo, funName, tyList} =
+          case idPat of
             P.PLPATID ([funName], loc) =>
             {funVarInfo={path=path@[funName], id=VarID.generate()},
-             funName=funName}
+             funName=funName,
+             tyList=tyList
+            }
           | _ =>
             (EU.enqueueError
                (P.getLocPat funIdPat,
                 E.IlleagalFunID ("010",{pat = funIdPat}));
              {funVarInfo = {path=path @ ["_"], id = VarID.generate()},
-              funName = "_"}
+              funName = "_",
+              tyList=nil
+             }
             )
     in
-      {name = funName, varInfo = funVarInfo}
+      {name = funName, varInfo = funVarInfo, tyList=tyList}
     end
 
   (* type function variable substitution *)
@@ -340,6 +356,35 @@ local
         | _ => ((icpat, icexp)::icpatIcexpListRev, env)
       end
 
+  fun makeCastExp (tfvSubst, icexp) loc = 
+      let
+        val castList = 
+            TfvMap.foldri 
+              (fn (fromTfv, toTfv, castList) => 
+                  {from=I.TFUN_VAR fromTfv,
+                   to=I.TFUN_VAR toTfv}
+                  :: castList
+              )
+            nil
+            tfvSubst
+      in
+        I.ICTYCAST (castList, icexp, loc)
+      end
+  fun makeCastDec (tfvSubst, icdeclList) loc = 
+      let
+        val castList = 
+            TfvMap.foldri 
+              (fn (fromTfv, toTfv, castList) => 
+                  {from=I.TFUN_VAR fromTfv,
+                   to=I.TFUN_VAR toTfv}
+                  :: castList
+              )
+            nil
+            tfvSubst
+      in
+        [I.ICTYCASTDECL (castList, icdeclList, loc)]
+      end
+        
   (* P.PLCOREDEC (pdecl, loc) *)
   fun evalPdecl (path:I.path) (tvarEnv:Ty.tvarEnv) (env:V.env) pdecl
       : V.env * I.icdecl list =
@@ -373,7 +418,7 @@ local
           val (tvarEnv, guard) = Ty.evalScopedTvars loc tvarEnv env scopedTvars
           val declList = map (fn (x,y)=>(generateFunVar path x,y)) fundeclList
           val _ = EU.checkNameDuplication
-                    (fn ({name, varInfo}, rules) => name)
+                    (fn ({name, varInfo, tyList}, rules) => name)
                     declList
                     loc
                     (fn s => E.DuplicateFunVarInFunDecl("100",s))
@@ -387,8 +432,9 @@ local
           val evalEnv = V.envWithEnv (env, returnEnv)
           val fundeclList =
               map
-                (fn ({name, varInfo}, rules) =>
+                (fn ({name, varInfo, tyList}, rules) =>
                     {funVarInfo = varInfo,
+                     tyList = map (Ty.evalTy tvarEnv env) tyList,
                      rules = map (evalRule tvarEnv evalEnv loc) rules
                     }
                 )
@@ -402,7 +448,7 @@ local
           val recList =
               map (fn(x,y) => (generateFunVar path x,y)) plpatPlexpList
           val _ = EU.checkNameDuplication
-                    (fn ({name, varInfo}, body) => name)
+                    (fn ({name, varInfo, tyList}, body) => name)
                     recList
                     loc
                     (fn s => E.DuplicateVarInRecDecl("110",s))
@@ -416,8 +462,9 @@ local
           val evalEnv = V.envWithEnv (env, returnEnv)
           val recbindList =
               map
-                (fn ({name, varInfo}, body) =>
+                (fn ({name, varInfo, tyList}, body) =>
                     {varInfo = varInfo,
+                     tyList = map (Ty.evalTy tvarEnv env) tyList,
                      body = evalPlexp tvarEnv evalEnv body}
                 )
                 recList
@@ -487,7 +534,66 @@ local
            end
         )
       | P.PDABSTYPE (datadeclList, pdeclList, loc) =>
-        raise bug "abstype not implemented."
+        let
+          fun abstractTfun tfun tfvSubst =
+              case tfun of
+                I.TFUN_VAR 
+                (tfv as 
+                 (ref 
+                    (I.TFUN_DTY
+                       {id,
+                        iseq,
+                        conSpec,
+                        originalPath,
+		        runtimeTy,
+                        formals,
+                        liftedTys,
+                        dtyKind
+                      })
+                 )
+                ) =>
+                if TfvMap.inDomain(tfvSubst, tfv) then tfvSubst
+                else
+                  let
+                    val id = TypID.generate()
+                    val tfunkind = 
+                        I.TFUN_DTY
+                          {id = id,
+                           iseq = false,
+                           conSpec = SEnv.empty,
+                           originalPath = originalPath,
+		           runtimeTy = runtimeTy,
+                           formals = formals,
+                           liftedTys = liftedTys,
+                           dtyKind = I.OPAQUE {tfun=tfun, revealKey = RevealID.generate()}
+                          }
+                    val newTfv = ref tfunkind
+                  in
+                    TfvMap.insert(tfvSubst, tfv, newTfv)
+                  end
+              | _ => raise bug "PDABSTYPE: non TFUN_DTY in evalDatatype"
+          fun abstractTstr tstr tfvSubst =
+              case tstr of
+              V.TSTR tfun => raise bug "PDABSTYPE:TSRT in evalDatatype"
+            | V.TSTR_DTY {tfun, varE, formals, conSpec} =>
+              abstractTfun tfun tfvSubst
+          fun abstractTyE tyE tfvSubst =
+              SEnv.foldl
+              (fn (tstr, tfvSubst) => 
+                  abstractTstr tstr tfvSubst)
+              tfvSubst
+              tyE
+          val (env1 as V.ENV {varE, tyE, strE}, _) = Ty.evalDatatype path env (datadeclList, loc)
+          val evalEnv = V.envWithEnv (env, env1)
+          val (newEnv, icdeclList) = evalPdeclList path tvarEnv evalEnv pdeclList
+          val absEnv = V.ENV{varE=SEnv.empty, tyE=tyE, strE=V.STR SEnv.empty}
+          val returnEnv = V.envWithEnv (absEnv, newEnv)
+          val tfvSubst = abstractTyE tyE TfvMap.empty
+          val icdeclList = makeCastDec (tfvSubst, icdeclList) loc
+          val returnEnv = S.substTfvEnv tfvSubst returnEnv
+        in
+          (returnEnv, icdeclList)
+        end
 
       | P.PDEXD (plexbindList, loc) =>
         let
@@ -1005,7 +1111,7 @@ local
           3. apply tvarSubst to the updated env
          *)
         fun instVarE (varE,actualVarE)
-                     {tvarS, tfvS, conIdS, exnIdS} =
+                     {tvarS, conIdS, exnIdS} =
             let
               val conIdS =
                   SEnv.foldri
@@ -1022,24 +1128,22 @@ local
                   conIdS
                   varE
             in
-              {tvarS=tvarS,tfvS=tfvS,exnIdS=exnIdS, conIdS=conIdS}
+              {tvarS=tvarS, exnIdS=exnIdS, conIdS=conIdS}
             end
         fun instTfun path (tfun, actualTfun)
-                     (subst as {tvarS, tfvS, conIdS, exnIdS}) =
+                     (subst as {tvarS, conIdS, exnIdS}) =
             let
               val tfun = I.derefTfun tfun
               val actualTfun = I.derefTfun actualTfun
             in
               case tfun of
-                I.TFUN_VAR (tfv1 as ref (I.TFUN_DTY {dtyKind,...})) =>
+                I.TFUN_VAR (tfv1 as ref (oldTfunKind as I.TFUN_DTY {dtyKind,...})) =>
                 (case actualTfun of
                    I.TFUN_VAR(tfv2 as ref (tfunkind as I.TFUN_DTY _)) =>
+                   (* The tfvS generated by instEnv is the identity and
+                      this does not make sense. *)
                    (tfv1 := tfunkind;
-                    {tfvS=TfvMap.insert (tfvS, tfv1, tfv2)
-                          handle e => raise e,
-                     tvarS=tvarS,
-                     exnIdS=exnIdS,
-                     conIdS=conIdS}
+                    {tvarS=tvarS, exnIdS=exnIdS, conIdS=conIdS}
                    )
                  | I.TFUN_DEF _ =>
                    (case dtyKind of
@@ -1057,7 +1161,6 @@ local
                   val ty = N.reduceTy TvarMap.empty ty
                 in
                   {tvarS=TvarMap.insert(tvarS,tvar,ty),
-                   tfvS=tfvS,
                    conIdS=conIdS,
                    exnIdS=exnIdS
                   }
@@ -1066,7 +1169,7 @@ local
             end
         fun instTstr 
               path (tstr, actualTstr)
-              (subst as {tvarS,tfvS,conIdS, exnIdS}) =
+              (subst as {tvarS,conIdS, exnIdS}) =
             (
             case tstr of
               V.TSTR tfun =>
@@ -1101,8 +1204,8 @@ local
                           (
                           raise bug "tstr not found"
                           )
-                  in
-                    instTstr (path@[name]) (tstr, actualTstr) subst
+                  in 
+                   instTstr (path@[name]) (tstr, actualTstr) subst
                   end
               )
               subst
@@ -1185,6 +1288,7 @@ local
                         {env=bodyEnv, strKind=V.STRENV(StructureID.generate())})
                     )
                  }
+
         val exnIdSubst = 
             ExnID.Set.foldr
             (fn (id, exnIdSubst) =>
@@ -1196,9 +1300,11 @@ local
             )
             ExnID.Map.empty
             exnIdSet
+
         val ((tfvSubst, conIdSubst), tempEnv) =
-            SC.refreshEnv (typidSet, exnIdSubst) tempEnv
+            SC.refreshEnv copyPath (typidSet, exnIdSubst) tempEnv
             handle e => raise e
+
         val typIdSubst =
             TfvMap.foldri
             (fn (tfv1, tfv2, typIdSubst) =>
@@ -1211,6 +1317,7 @@ local
             )
             TypID.Map.empty
             tfvSubst
+
         val typidSet =
             TypID.Set.map
             (fn id => case TypID.Map.find(typIdSubst, id) of
@@ -1225,32 +1332,37 @@ local
             case V.findStr(tempEnv, ["body"]) of
               SOME env => env
             | NONE => raise bug "impossible"
+
         val subst = instEnv nil (argEnv, actualArgEnv) S.emptySubst
+
         val bodyEnv = S.substEnv subst bodyEnv
                       handle e => raise e
+
         val bodyEnv = N.reduceEnv bodyEnv 
                       handle e => raise e
+
         val pathTfvListList = L.setLiftedTysEnv bodyEnv
                 handle e => raise e
+
         val dummyIdfunArgTy = 
             Option.map (S.substTy subst) dummyIdfunArgTy
             handle e => raise e
         val dummyIdfunArgTy = 
             Option.map (N.reduceTy TvarMap.empty) dummyIdfunArgTy
             handle e => raise e
+(*
         fun makeCast (fromTfv, toTfv, castList) =
-            let
-              val {tvarS,...} = subst
-            in
-              {from=I.TFUN_VAR fromTfv,
-               to=I.TFUN_VAR toTfv}
-              :: castList
-            end
+            {from=I.TFUN_VAR fromTfv,
+             to=I.TFUN_VAR toTfv}
+            :: castList
         val castList = TfvMap.foldri makeCast nil tfvSubst
                        handle e => raise e
         val bodyVarExp = I.ICTYCAST (castList, bodyVarExp, loc)
         (* functor body variables for generating env and for patterns to be used in bind*)
-        val (bodyVarList, _) = FU.varsInEnv ExnID.Set.empty loc nil nil bodyEnv
+*)
+        val bodyVarExp = makeCastExp (tfvSubst, bodyVarExp) loc
+
+        val (bodyVarList, _) = FU.varsInEnv  (bodyEnv, loc)
         (*  returnEnv : env for functor generated by this functor application
             patFields : patterns used in binding of variables generated by this application
             exntagDecls : rebinding exceptions generated by this application
@@ -1386,9 +1498,8 @@ CHECKME: bug 119
         (* actual parameters passed to the functor. 
            This must corresponds to functor param polyArgPats (negative) 
            generated by evalFunArg.
-
-        val (argExpList, _) = FU.varsInEnv ExnID.Set.empty loc argPath nil actualArgEnv
-         *)
+         val (argExpList, _) = FU.varsInEnv ExnID.Set.empty loc argPath nil actualArgEnv
+        *)
 
         fun exnTagsVarE path varE exnTags =
             SEnv.foldli
@@ -1425,6 +1536,7 @@ CHECKME: bug 119
             )
             exnTags
             envMap
+
         val exnTagPathList = exnTagsEnv nil argSig nil
         val argExpList = FU.makeFunctorArgs loc exnTagPathList actualArgEnv
         val functorBody1 =
@@ -1472,6 +1584,7 @@ CHECKME: bug 119
 
   fun evalFunctor {topEnv, version:int option} {name, argStrName, argSig, body, loc} =
       let
+        val startTypid = TypID.generate()
         val 
         {
          argSig,
@@ -1484,18 +1597,19 @@ CHECKME: bug 119
          tfvDecls
         } = FU.evalFunArg (topEnv, argSig, loc)
         val topArgEnv = V.ENV {varE=SEnv.empty,
-                            tyE=SEnv.empty,
-                            strE=V.STR (SEnv.singleton(argStrName, argStrEntry))
-                            }
+                               tyE=SEnv.empty,
+                               strE=V.STR (SEnv.singleton(argStrName, argStrEntry))
+                              }
+
+        val typidSetArg = FU.typidSet (#env argStrEntry)
+
         val evalEnv = V.topEnvWithEnv (topEnv, topArgEnv)
-        val startTypid = TypID.generate()
         val ({env=returnEnv,strKind}, bodyDecls) = evalPlstrexp evalEnv nilPath body
-        val
-        {
-         allVars = allVars,  (* functor body expressions (positive) *)
-         typidSet = typidSet,
-         exnIdSet = exnIdSet
-        } = FU.makeBodyEnv returnEnv loc
+        val typidSet = FU.typidSet returnEnv
+        val (allVars, exnIdSet) = FU.varsInEnv (returnEnv, loc)
+
+        val typidSet = TypID.Set.union(typidSetArg, typidSet)
+
         val allVars = map #2 allVars
         (* FIXME (not a bug):
            The following is to restrict the typids to be refreshed
@@ -1660,15 +1774,43 @@ CHECKME: bug 119
       end
 *)
 
+(*
+ 2012-07-11 ohori: bug 205_exnExport.sml
+  # exception A of int
+  > exception B = A;
+  exception B of int
+  # exception C = A;
+  Compiler bug:compileDecl: RCEXPORTEXN
+This is caused due to the following:
+ 1. exn is exported only once.
+ 2. exn replication is not exported.
+So the 
+  exception A of int
+  exception B = A
+will generate:
+  the decls:
+    export exception B
+  and environment:
+     A: exn e12 (local id)
+     B: external exn B
+The correct output should be:
+  decl:
+    export exception B (or A)
+  env:
+     A: external exn B (or A)
+     B: external exn B (or A)
+To do this, we should keep track of the exported exn id with its external name.
+So we change exnSet to path exnMap in genExportIdstatus
+*)
   fun genExport (version, {FunE=RFunE,Env=REnv, SigE=RSigE}) loc =
       let
-        fun genExportIdstatus exnSet path version idstatus icdecls = 
+        fun genExportIdstatus exnPathMap path version idstatus icdecls = 
             case idstatus of
               I.IDVAR varId => 
               let
                 val externPath=I.setVersion(path, version)
               in
-                (exnSet,
+                (exnPathMap,
                  I.IDEXVAR_TOBETYPED{path=path,version=version,id=varId,loc=loc, internalId = SOME varId}, 
                  I.ICEXPORTTYPECHECKEDVAR ({path=externPath, id=varId}, loc)::icdecls)
               end
@@ -1676,79 +1818,100 @@ CHECKME: bug 119
               let
                 val externPath=I.setVersion(path, version)
               in
-                (exnSet,
+                (exnPathMap,
                  I.IDEXVAR{path=path,version=version, ty=ty, used=ref false, loc=loc, internalId = SOME id}, 
                  I.ICEXPORTTYPECHECKEDVAR ({path=externPath, id=id}, loc)::icdecls)
               end
-            | I.IDEXVAR {path, ty, used, loc, version, internalId} => (exnSet, idstatus, icdecls)
-            | I.IDEXVAR_TOBETYPED _ => (exnSet, idstatus, icdecls)  (* this should be a bug *)
-            | I.IDBUILTINVAR {primitive, ty}  => (exnSet, idstatus, icdecls)
-            | I.IDCON {id, ty} => (exnSet, idstatus, icdecls)
+            | I.IDEXVAR {path, ty, used, loc, version, internalId} => (exnPathMap, idstatus, icdecls)
+            | I.IDEXVAR_TOBETYPED _ => (exnPathMap, idstatus, icdecls)  (* this should be a bug *)
+            | I.IDBUILTINVAR {primitive, ty}  => (exnPathMap, idstatus, icdecls)
+            | I.IDCON {id, ty} => (exnPathMap, idstatus, icdecls)
             | I.IDEXN {id, ty} =>
-              if not (ExnID.Set.member(exnSet, id)) then
-                let
-                  val externPath=I.setVersion(path, version)
-                in
-                  (ExnID.Set.add(exnSet, id), 
-                   I.IDEXEXN{path=path,version=version, ty=ty, used=ref false, loc=loc}, 
-                   I.ICEXPORTEXN ({path=externPath, ty=ty, id=id}, loc) :: icdecls)
-                end
-              else (exnSet, idstatus, icdecls)
+              (case ExnID.Map.find(exnPathMap, id) of
+                 NONE => 
+                 let
+                   val externPath=I.setVersion(path, version)
+                 in
+                   (ExnID.Map.insert(exnPathMap, id, {path=path, version=version}), 
+                    I.IDEXEXN{path=path,version=version, ty=ty, used=ref false, loc=loc}, 
+                    I.ICEXPORTEXN ({path=externPath, ty=ty, id=id}, loc) :: icdecls)
+                 end
+               | SOME {path, version} =>
+                 (exnPathMap,
+                  I.IDEXEXNREP{path=path,version=version, ty=ty, used=ref false, loc=loc}, 
+                  icdecls)
+              )
             | I.IDEXNREP {id, ty} =>
-              if not (ExnID.Set.member(exnSet, id)) then
-                let
-                  val externPath=I.setVersion(path, version)
-                in
-                  (ExnID.Set.add(exnSet, id), 
-                   I.IDEXEXN{path=path,version=version, ty=ty, used=ref false, loc=loc}, 
-                   I.ICEXPORTEXN ({path=externPath, ty=ty, id=id}, loc) :: icdecls)
-                end
-              else (exnSet, idstatus, icdecls)
-            | I.IDEXEXN {path, ty, used, loc, version} => (exnSet, idstatus, icdecls)
-            | I.IDEXEXNREP {path, ty, used, loc, version} => (exnSet, idstatus, icdecls)
-            | I.IDOPRIM {id, overloadDef, used, loc} => (exnSet, idstatus, icdecls)
+              (case ExnID.Map.find(exnPathMap, id) of
+                 NONE => 
+                 let
+                   val externPath=I.setVersion(path, version)
+                 in
+                   (ExnID.Map.insert(exnPathMap, id, {path=path, version=version}), 
+                    I.IDEXEXN{path=path,version=version, ty=ty, used=ref false, loc=loc}, 
+                    I.ICEXPORTEXN ({path=externPath, ty=ty, id=id}, loc) :: icdecls)
+                 end
+               | SOME {path, version} =>
+                 (exnPathMap,
+                  I.IDEXEXNREP{path=path,version=version, ty=ty, used=ref false, loc=loc}, 
+                  icdecls)
+              )
+            | I.IDEXEXN {path, ty, used, loc, version} => 
+              let
+                val idstatus = I.IDEXEXNREP {path=path, ty=ty, used=used, loc=loc, version=version}
+              in
+                (exnPathMap, idstatus, icdecls)
+              end
+            | I.IDEXEXNREP {path, ty, used, loc, version} => (exnPathMap, idstatus, icdecls)
+            | I.IDOPRIM {id, overloadDef, used, loc} => (exnPathMap, idstatus, icdecls)
             | I.IDSPECVAR ty => raise bug "IDSPECVAR in mergeIdstatus"
             | I.IDSPECEXN ty  => raise bug "IDSPECEXN in mergeIdstatus"
             | I.IDSPECCON => raise bug "IDSPECCON in mergeIdstatus"
 
-        fun genExportVarE exnSet path (vesion, RVarE) icdecls =
-            SEnv.foldri
-              (fn (name, idstatus, (exnSet, varE, icdecls)) =>
+        fun genExportVarE exnPathMap path (vesion, RVarE) icdecls =
+            SEnv.foldli
+            (* we should use foldli here to give the first exn to be the one that
+               should be exported.
+            *)
+              (fn (name, idstatus, (exnPathMap, varE, icdecls)) =>
                   let
-                    val (exnSet, idstatus, icdecls) = 
-                        genExportIdstatus exnSet (path@[name]) version idstatus icdecls
+                    val (exnPathMap, idstatus, icdecls) = 
+                        genExportIdstatus exnPathMap (path@[name]) version idstatus icdecls
                   in
-                    (exnSet, SEnv.insert(varE, name, idstatus), icdecls)
+                    (exnPathMap, SEnv.insert(varE, name, idstatus), icdecls)
                   end
               )
-              (exnSet, SEnv.empty, icdecls)
+              (exnPathMap, SEnv.empty, icdecls)
               RVarE
                 
-        fun genExportEnvMap exnSet path (version, REnvMap) icdecls =
-            SEnv.foldri
-            (fn (name, {env=REnv, strKind}, (exnSet, envMap, icdecls)) =>
+        fun genExportEnvMap exnPathMap path (version, REnvMap) icdecls =
+            SEnv.foldli 
+            (* we should use foldli here to give the first exn to be the one that
+               should be exported.
+            *) 
+           (fn (name, {env=REnv, strKind}, (exnPathMap, envMap, icdecls)) =>
                 let
-                  val (exnSet, env, icdecls) = 
-                      genExportEnv exnSet (path@[name]) (version, REnv) icdecls
+                  val (exnPathMap, env, icdecls) = 
+                      genExportEnv exnPathMap (path@[name]) (version, REnv) icdecls
                 in
-                  (exnSet, 
+                  (exnPathMap, 
                    SEnv.insert(envMap, name, {env=env, strKind=strKind}), 
                    icdecls)
                 end
             )
-            (exnSet, SEnv.empty, icdecls)
+            (exnPathMap, SEnv.empty, icdecls)
             REnvMap
 
-        and genExportEnv exnSet path
+        and genExportEnv exnPathMap path
                          (version, V.ENV{varE=RVarE, strE=V.STR REnvMap, tyE}) 
                          icdecls =
             let
-              val (exnSet, varE, icdecls) = 
-                  genExportVarE exnSet path (version, RVarE) icdecls
-              val (exnSet, envMap, icdecls) = 
-                  genExportEnvMap exnSet path (version, REnvMap) icdecls
+              val (exnPathMap, varE, icdecls) = 
+                  genExportVarE exnPathMap path (version, RVarE) icdecls
+              val (exnPathMap, envMap, icdecls) = 
+                  genExportEnvMap exnPathMap path (version, REnvMap) icdecls
             in
-              (exnSet, V.ENV{varE=varE, strE=V.STR envMap, tyE=tyE}, icdecls)
+              (exnPathMap, V.ENV{varE=varE, strE=V.STR envMap, tyE=tyE}, icdecls)
             end
 
         fun genExportFunEEntry (version, RFunEntry:V.funEEntry) icdecls =
@@ -1766,7 +1929,10 @@ CHECKME: bug 119
                    bodyEnv,
                    bodyVarExp
                   }  = RFunEntry
+(* 2012-7-10 ohori bug 204
               val bodyVarExp = 
+*)
+              val exBodyVarExp = 
                   case bodyVarExp of
                     I.ICVAR ({path, id}, loc) =>
                     let
@@ -1787,7 +1953,7 @@ CHECKME: bug 119
                    typidSet = typidSet,
                    exnIdSet = exnIdSet,
                    bodyEnv = bodyEnv,
-                   bodyVarExp = bodyVarExp
+                   bodyVarExp = exBodyVarExp
                   }
               val icdecl =
                   case bodyVarExp of 
@@ -1816,7 +1982,7 @@ CHECKME: bug 119
             RFunE
 
         val (FunE, icdecls) = genExportFunE (version, RFunE) nil
-        val (_, Env, icdecls) = genExportEnv ExnID.Set.empty nil (version, REnv) icdecls
+        val (_, Env, icdecls) = genExportEnv ExnID.Map.empty nil (version, REnv) icdecls
       in
         ({FunE=FunE, Env=Env, SigE=RSigE}, icdecls)
       end
@@ -1889,7 +2055,10 @@ CHECKME: bug 119
       (fn ({env, strKind}, (externSet, icdecls)) =>
            case strKind of 
              V.SIGENV => (externSet,icdecls)
+(* 2012-7-10 ohori : bug 204
            | V.FUNAPP _ => (externSet, icdecls)
+*)
+           | V.FUNAPP _ => genExterndeclsEnv externSet env icdecls
            | V.STRENV _ => genExterndeclsEnv externSet env icdecls)
       (externSet, icdecls)
       strEntryMap
@@ -1917,6 +2086,44 @@ CHECKME: bug 119
       in
         icdecls
       end
+
+  fun reduceTopEnv ({Env, FunE, SigE}:V.topEnv) =
+      let
+        val env = N.reduceEnv Env
+        val FunE = reduceFunE FunE
+        val SigE = SEnv.map N.reduceEnv SigE
+      in
+        {Env=Env, FunE=FunE, SigE=SigE}
+      end
+  and reduceFunE funE =
+      SEnv.map reduceFunEEntry funE
+  and reduceFunEEntry
+        {id,
+        version,
+        used,
+        argSig,
+        argStrEntry = {env=argEnv, strKind=argStrKind},
+        argStrName,
+        dummyIdfunArgTy,
+        polyArgTys,
+        typidSet,
+        exnIdSet,
+        bodyEnv,
+        bodyVarExp
+       } : V.funEEntry =
+        {id = id,
+        version = version,
+        used = used,
+        argSig = N.reduceEnv argSig,
+        argStrEntry = {env=N.reduceEnv argEnv, strKind=argStrKind},
+        argStrName = argStrName,
+        dummyIdfunArgTy = dummyIdfunArgTy,
+        polyArgTys = polyArgTys,
+        typidSet = typidSet,
+        exnIdSet = exnIdSet,
+        bodyEnv = N.reduceEnv bodyEnv,
+        bodyVarExp = bodyVarExp
+       } : V.funEEntry
 
 in (* local *)
 
@@ -1962,7 +2169,6 @@ in (* local *)
             evalPltopdecList {topEnv=evalTopEnv, version=version} topdecs
             handle e => raise e
 
-
         val (returnTopEnv, exportList) =
           if !Control.interactiveMode
           then genExport (version, returnTopEnv) Loc.noloc
@@ -1974,13 +2180,18 @@ in (* local *)
 
         val topdecs = systemDecls @ interfaceDecls @ topdecList @ exportList
 
+        val returnDecls = {decls=topdecs, loc=loc}
+
+        val returnTopEnv = reduceTopEnv returnTopEnv
       in
         case EU.getErrors () of
-          [] => (returnTopEnv, topdecs, EU.getWarnings())
+          [] => (returnTopEnv, returnDecls, EU.getWarnings())
         | errors => raise UserError.UserErrors (EU.getErrorsAndWarnings ())
       end
       handle exn as UserError.UserErrors _ => raise exn
-           | exn => raise bug "uncaught exception in NameEval"
+(*
+           | exn => raise bug "name eval failed"
+*)
 
   fun evalRequire (topEnv, systemDecls) 
                   (compileUnit 
@@ -2017,7 +2228,7 @@ in (* local *)
             {interface = {decls = nil, requires = nil, topdecs = provideDecs,
                           interfaceName = NONE},
              topdecs = topdecs} : PI.compileUnit
-        val (newTopEnv, topdecs, warnings2) =
+        val (newTopEnv, {decls=topdecs,loc}, warnings2) =
             nameEval {topEnv=topEnv, version=NONE, systemDecls=systemDecls}
                      compileUnit
         (* ignore errors during unionTopEnv;

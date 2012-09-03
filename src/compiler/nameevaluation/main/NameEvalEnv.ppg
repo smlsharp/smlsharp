@@ -80,7 +80,7 @@ local
       I.formals
 
   (*%
-      @formatter(I.varE) I.print_varE
+      @formatter(I.varE) I.format_varE
    *)
   (*% @prefix printTy_
       @formatter(I.varE) I.print_varE
@@ -88,7 +88,7 @@ local
   type varE
     = 
       (*%
-          @format(x)  x()(,)
+          @format(x)  x
        *)
       (*% @prefix printTy_
           @format(x)
@@ -289,7 +289,7 @@ in
        *)
       (*% @prefix printTy_
         @format(tstr senv) 
-           senv(tstr)(\n,+1,)
+           senv(tstr)(\n,\n,)
        *)
       tstr SEnv.map
 
@@ -347,7 +347,7 @@ in
        *)
       (*% @prefix printTy_
          @format(strEntry senv)
-           senv(strEntry)(+":"+1, ~2[+1 "and" +], \n "structure" +,)
+           senv(strEntry)(+":"+1, ~2[\n "and" +], \n "structure" +,)
        *)
       STR of strEntry SEnv.map
 
@@ -451,6 +451,13 @@ in
                  exnIdSet,
                  bodyEnv,
                  bodyVarExp})
+              2[
+                \n
+                "(" argSig ")" 
+                 +1
+                 "="
+                 2[\n bodyEnv]
+              ]
          *)
        {id: functorId,
         version: int option,
@@ -522,7 +529,7 @@ in
        *)
       (*% @prefix printTy_
          @format(sige siges)
-           siges(sige)(1)
+           siges(sige)(\n)
          @format:sige(name * env)
           2[
             "signature" + name + "="

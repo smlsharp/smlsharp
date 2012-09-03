@@ -6,5 +6,5 @@ _require "TRANS_FUNDECL.sig"
 
 structure TransFundecl =
   struct
-    val transIcdeclList : IDCalc.icdecl list -> IDCalc.icdecl list
+    val transIcdeclList : IDCalc.topdecl -> IDCalc.topdecl
   end

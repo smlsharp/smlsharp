@@ -14,7 +14,7 @@ sig
         specEnv:NameEvalEnv.env}
   type sigCheckResult = NameEvalEnv.env * IDCalc.icdecl list 
   val sigCheck : sigCheckParam -> sigCheckResult
-  val refreshEnv : TypID.Set.set *  Subst.exnIdSubst -> NameEvalEnv.env 
+  val refreshEnv : string list -> TypID.Set.set *  Subst.exnIdSubst -> NameEvalEnv.env 
                    -> (Subst.tfvSubst * Subst.conIdSubst) * NameEvalEnv.env
 end
 =
@@ -65,19 +65,42 @@ in
                 | I.TFUN_VAR (tfv as (ref (I.FUN_DTY _))) => ()
                 | I.TFUN_VAR (tfv as (ref (I.TFUN_DTY _))) => ()
                 | I.TFUN_VAR (tfv as (ref (tfunkind as I.TFV_SPEC _))) =>
-                  (case strTstr of
-                     V.TSTR tfun => 
-                     tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tfun}
-                   | V.TSTR_DTY {tfun, ...} =>
-                     tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tfun}
-                  )
+                  (* 2012-7-14 ohori: bug 206_eqtype.sml eq check is added.
+                     2012-7-19 ohori: bug 214_typeSpecMaching.sml arity check is added
+                   *)
+                  let
+                    val tstrTfun = 
+                        case strTstr of
+                          V.TSTR tfun => tfun
+                        | V.TSTR_DTY {tfun, ...} => tfun
+                    val _ = if I.tfunIseq tfun andalso not (I.tfunIseq tstrTfun) then
+                              EU.enqueueError
+                                (loc,E.SIGEqtype("200",{longid=path@[name]}))
+                            else ()
+                    val _ = if I.tfunArity tfun <> I.tfunArity tstrTfun then
+                              EU.enqueueError
+                                (loc,E.SIGArity("200",{longid=path@[name]}))
+                            else ()
+                  in
+                    tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tstrTfun}
+                  end
                 | I.TFUN_VAR (tfv as (ref (tfunkind as I.TFV_DTY _))) =>
-                  (case strTstr of
-                     V.TSTR tfun => 
-                     tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tfun}
-                   | V.TSTR_DTY {tfun, ...} =>
-                     tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tfun}
-                  )
+                  let
+                    val tstrTfun = 
+                        case strTstr of
+                          V.TSTR tfun => tfun
+                        | V.TSTR_DTY {tfun, ...} => tfun
+                    val _ = if I.tfunIseq tfun andalso not (I.tfunIseq tstrTfun) then
+                              EU.enqueueError
+                                (loc,E.SIGEqtype("200",{longid=path@[name]}))
+                            else ()
+                    val _ = if I.tfunArity tfun <> I.tfunArity tstrTfun then
+                              EU.enqueueError
+                                (loc,E.SIGArity("200",{longid=path@[name]}))
+                            else ()
+                  in
+                    tfv := I.INSTANTIATED {tfunkind=tfunkind, tfun=tstrTfun}
+                  end
               end                                           
           fun instantiateTyE (specTyE, strTyE) =
               SEnv.appi
@@ -120,7 +143,7 @@ in
                    I.TFUN_DEF {formals=strFormals, realizerTy=strTy,...}) =>
                   if List.length specFormals <> List.length strFormals then
                      EU.enqueueError
-                       (loc,E.SIGArity("200",{longid=path@[name]}))
+                       (loc,E.SIGArity("205",{longid=path@[name]}))
                   else if N.eqTydef N.emptyTypIdEquiv ((specFormals,specTy),(strFormals,strTy))
                   then ()
                   else
@@ -136,12 +159,12 @@ in
                     (
                      EU.enqueueError
                        (loc,
-                        E.SIGDtyMismatch("220",{longid=path@[name ^ "(2)"]}))
+                        E.SIGDtyMismatch("220",{longid=path@[name]}))
                     )
                 | _ => 
                   (
                    EU.enqueueError
-                     (loc,E.SIGDtyMismatch("230",{longid=path@[name ^ "(3)"]}))
+                     (loc,E.SIGDtyMismatch("230",{longid=path@[name]}))
                   )
               end
 
@@ -155,7 +178,7 @@ in
                             EU.enqueueError
                               (loc,
                                E.SIGConNotFound
-                                 ("240",{longid=path@[name ^ ":(1)"]}))
+                                 ("240",{longid=path@[name]}))
                           | SOME strIdstatus =>
                             (case (idstatus, strIdstatus) of
                                (I.IDCON {id=conid1,ty=ty1},
@@ -166,14 +189,14 @@ in
                                   EU.enqueueError
                                     (loc,
                                      E.SIGConNotFound
-                                       ("250",{longid=path@[name ^ ":(2)"]}))
+                                       ("250",{longid=path@[name]}))
                                  )
                              | (I.IDSPECCON, I.IDCON _) => ()
                              | (I.IDCON _, _) => 
                                EU.enqueueError
                                  (loc,
                                   E.SIGConNotFound
-                                    ("260",{longid=path@[name ^ ":(3)"]}))
+                                    ("260",{longid=path@[name]}))
                              | _ => raise bug "non conid"
                             )
                       )
@@ -208,7 +231,7 @@ in
                         | _ =>
                           EU.enqueueError
                             (loc,E.SIGDtyMismatch
-                                   ("280",{longid=path@[name ^ "(4)"]}))
+                                   ("280",{longid=path@[name]}))
                       end;
                       checkVarE strVarE;
                       V.TSTR_DTY{tfun=specTfun, formals=formals, conSpec=conSpec, varE=strVarE}
@@ -456,7 +479,7 @@ in
                        | SOME _ => 
                          (EU.enqueueError
                             (loc, E.SIGConNotFound
-                                    ("370",{longid = path@[name ^ ":(4)"]}));
+                                    ("370",{longid = path@[name]}));
                           (varE, icdeclList)
                          )
                       )
@@ -474,13 +497,13 @@ in
                          else 
                            (EU.enqueueError
                               (loc, E.SIGConNotFound
-                                      ("390",{longid = path@[name ^ ":(5)"]}));
+                                      ("390",{longid = path@[name]}));
                             (varE, icdeclList)
                            )
                        | SOME _ => 
                          (EU.enqueueError
                             (loc, E.SIGConNotFound
-                                    ("400",{longid = path@[name ^ ":(6)"]}));
+                                    ("400",{longid = path@[name]}));
                           (varE, icdeclList)
                          )
                       )
@@ -535,14 +558,24 @@ in
                         val runtimeTy = 
                             case I.tfunRuntimeTy tfun of
                               SOME ty => ty
-                            | NONE => raise bug "runtimeTy"
+                            | NONE => 
+(
+U.print "tfunRuntimeTy\n";
+U.printTfun tfun;
+U.print "\n";
+U.print "liftedTys\n";
+U.printLiftedTys liftedTys;
+U.print "\n";
+                              raise bug "runtimeTy"
+)
                         val newTfunkind =
                             I.TFUN_DTY {id=id,
                                         iseq=iseq,
                                         formals=formals,
                                         runtimeTy=runtimeTy,
                                         conSpec=SEnv.empty,
-                                        originalPath=path,
+                                        (* 2012-7-14: ohori [name] is added. *)
+                                        originalPath=path@[name],
                                         liftedTys=liftedTys,
                                         dtyKind=I.OPAQUE
                                                   {tfun=tfun,
@@ -567,7 +600,8 @@ in
                                         formals=formals,
                                         runtimeTy=runtimeTy,
                                         conSpec=SEnv.empty,
-                                        originalPath=path,
+                                        (* 2012-7-14: ohori [name] is added. *)
+                                        originalPath=path @ [name], 
                                         liftedTys=liftedTys,
                                         dtyKind=
                                         I.OPAQUE
@@ -589,7 +623,7 @@ in
                    I.TFUN_VAR
                      (tfv as ref (I.INSTANTIATED{tfunkind,tfun=strTfun})) =>
                       (case tfunkind of
-                         I.TFV_DTY {id, iseq, formals, conSpec, liftedTys} =>
+                         I.TFV_DTY {name=_, id, iseq, formals, conSpec, liftedTys} =>
                          let
                            val runtimeTy = 
                                case I.tfunRuntimeTy strTfun of
@@ -601,7 +635,8 @@ in
                                            formals=formals,
                                            runtimeTy=runtimeTy,
                                            conSpec=conSpec,
-                                           originalPath=path,
+                                           (* 2012-7-14: ohori [name] is added. *)
+                                           originalPath=path @ [name],
                                            liftedTys=liftedTys,
                                            dtyKind=
                                            I.OPAQUE
@@ -806,18 +841,18 @@ in
       (env, icdeclList1)
     end
 
-  fun refreshEnv (typidSet, exnIdSubst) specEnv
+  fun refreshEnv copyPath (typidSet, exnIdSubst) specEnv
       : (S.tfvSubst * S.conIdSubst) * V.env =
     let
       val tfvMap = TF.tfvsEnv TF.allTfvKind nil (specEnv, TfvMap.empty)
       val (tfvSubst, conIdSubst) = 
           TfvMap.foldri
-          (fn (tfv as ref (I.TFV_SPEC {iseq, formals,...}),path,
+          (fn (tfv as ref (I.TFV_SPEC {name, iseq, formals,...}),path,
                (tfvSubst, conIdSubst)) =>
               let
                 val id = TypID.generate()
                 val newTfv =
-                    I.mkTfv (I.TFV_SPEC{id=id,iseq=iseq,formals=formals})
+                    I.mkTfv (I.TFV_SPEC{name=name, id=id,iseq=iseq,formals=formals})
               in 
                 (TfvMap.insert(tfvSubst, tfv, newTfv), conIdSubst)
               end
@@ -828,16 +863,17 @@ in
               in 
                 (TfvMap.insert(tfvSubst, tfv, newTfv), conIdSubst)
               end
-            | (tfv as ref (I.TFV_DTY {iseq,formals,conSpec,liftedTys,...}),
+            | (tfv as ref (I.TFV_DTY {name, iseq,formals,conSpec,liftedTys,...}),
                path, (tfvSubst, conIdSubst)) =>
               let
                 val id = TypID.generate()
                 val newTfv =
                     I.mkTfv (I.TFV_DTY{id=id,
-                                         iseq=iseq,
-                                         conSpec=conSpec,
-                                         liftedTys=liftedTys,
-                                         formals=formals}
+                                       name=name,
+                                       iseq=iseq,
+                                       conSpec=conSpec,
+                                       liftedTys=liftedTys,
+                                       formals=formals}
                           )
               in 
                 (TfvMap.insert(tfvSubst, tfv, newTfv), conIdSubst)
@@ -851,19 +887,36 @@ in
                 let
                   val (name, path) = case List.rev path of
                                        h::tl => (h, List.rev tl)
-                                     | _ => raise bug "nil path"
+                                     | _ => raise bug "nil path (2)"
+                  val (name, _) = case List.rev originalPath of
+                                       h::tl => (h, List.rev tl)
+                                     (* 2012-8-6 ohori bug 062_functorPoly.sml
+                                        This should not happen; but
+                                        in case we can use the the above 
+                                        name here; they should be the same.
+                                     | _ => raise bug "nil path (2)"
+                                      *)
+                                     | _ => (name, path)
                   val id = TypID.generate()
                   val newTfv =
-                      I.mkTfv (I.TFUN_DTY {id=id,
-                                           iseq=iseq,
-                                           formals=formals,
-                                           runtimeTy=runtimeTy,
-                                           conSpec=conSpec,
-                                           originalPath=originalPath,
-                                           liftedTys=liftedTys,
-                                           dtyKind=dtyKind
-                                          }
-                            )
+                      I.mkTfv 
+                        (I.TFUN_DTY 
+                           {id=id,
+                            iseq=iseq,
+                            formals=formals,
+                            runtimeTy=runtimeTy,
+                            conSpec=conSpec,
+                            originalPath=copyPath @ [name],
+                            (*
+                             originalPath=originalPath,
+                             2012-7-22 ohori: bug 222_functorArgumentTyconName.sml
+                             This is the real tycon generated here. So we set
+                             its real name here.
+                             *)
+                            liftedTys=liftedTys,
+                            dtyKind=dtyKind
+                           }
+                        )
                   val conIdSubst =
                       SEnv.foldri
                       (fn (name, _, conIdSubst) =>
@@ -892,17 +945,18 @@ in
       val _ =
           TfvMap.app
           (fn (tfv as 
-                   ref (I.TFV_DTY{iseq,formals,conSpec,liftedTys,id})) =>
+                   ref (I.TFV_DTY{name,iseq,formals,conSpec,liftedTys,id})) =>
               let
                 val conSpec =
                     SEnv.map
                     (fn tyOpt =>
-                        Option.map (Subst.substTfvTy tfvSubst) tyOpt)
+                        Option.map (S.substTfvTy tfvSubst) tyOpt)
                     conSpec
               in
                 tfv:=
                     I.TFV_DTY
                       {iseq=iseq,
+                       name=name,
                        formals=formals,
                        conSpec=conSpec,
                        liftedTys=liftedTys,
@@ -921,13 +975,13 @@ in
                 val dtyKind =
                     case dtyKind of
                       I.OPAQUE{tfun, revealKey} => 
-                      I.OPAQUE{tfun=Subst.substTfvTfun tfvSubst tfun,
+                      I.OPAQUE{tfun=S.substTfvTfun tfvSubst tfun,
                                 revealKey=revealKey}
                     | _ => dtyKind
                 val conSpec =
                     SEnv.map
                     (fn tyOpt =>
-                        Option.map (Subst.substTfvTy tfvSubst) tyOpt)
+                        Option.map (S.substTfvTy tfvSubst) tyOpt)
                     conSpec
               in
                 tfv:=
@@ -945,11 +999,10 @@ in
           tfvSubst
           handle exn => raise exn
       val subst = {tvarS=S.emptyTvarSubst,
-                   tfvS=S.emptyTfvSubst,
                    exnIdS=exnIdSubst,
                    conIdS=conIdSubst} 
-      val env =Subst.substTfvEnv tfvSubst specEnv
-      val env =Subst.substEnv subst env
+      val env =S.substTfvEnv tfvSubst specEnv
+      val env =S.substEnv subst env
     in
       ((tfvSubst, conIdSubst), env)
     end

@@ -33,7 +33,7 @@ struct
      strEnv:NameEvalEnv.env, strPath:string list}
   type sigCheckResult = NameEvalEnv.env * IDCalc.icdecl list
   val sigCheck : sigCheckParam -> sigCheckResult
-  val refreshEnv : TypID.Set.set * Subst.exnIdSubst
+  val refreshEnv : string list -> TypID.Set.set * Subst.exnIdSubst
                    -> NameEvalEnv.env
-                      -> (Subst.tfvSubst * Subst.conIdSubst) * NameEvalEnv.env
+                   -> (Subst.tfvSubst * Subst.conIdSubst) * NameEvalEnv.env
 end

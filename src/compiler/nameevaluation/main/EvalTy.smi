@@ -12,6 +12,9 @@ _require "../../util/main/utils.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
 _require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
 _require "NameEvalEnv.ppg.smi"
 _require "NameEvalError.ppg.smi"
 _require "NameEvalUtils.smi"
@@ -25,6 +28,8 @@ struct
   val genTvar : tvarEnv -> Absyn.tvar -> tvarEnv * IDCalc.tvar
   val genTvarList : tvarEnv -> Absyn.tvar list -> tvarEnv * IDCalc.tvar list
   val evalTy : tvarEnv -> NameEvalEnv.env -> Absyn.ty -> IDCalc.ty
+  val evalRuntimeTy : Loc.loc -> tvarEnv -> NameEvalEnv.env -> PatternCalcInterface.runtimeTy -> IDCalc.runtimeTy
+  val compatRuntimeTy : {absTy:IDCalc.runtimeTy, implTy:IDCalc.runtimeTy} -> bool
   val evalTvar : Loc.loc -> tvarEnv -> Absyn.tvar -> IDCalc.tvar
   val evalFfity : tvarEnv -> NameEvalEnv.env -> PatternCalc.ffiTy -> IDCalc.ffiTy
   val emptyScopedTvars : IDCalc.scopedTvars

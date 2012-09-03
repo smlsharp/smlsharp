@@ -39,6 +39,10 @@ structure PatternCalcInterface =
     val format_datbind : {conbind:{ty:ty option, vid:string} list,
                           tycon:string, tyvars:tvar list}
                          -> SMLFormat.FormatExpression.expression list
+  datatype runtimeTy 
+   = BUILTINty of BuiltinType.ty
+   | LIFTEDty of longid
+
     datatype pidec
       = PIDATATYPE of {datbind:datbind list, loc:loc}
       | PIEXCEPTION of {loc:loc, ty:ty option, externPath:string list option, vid:string}
@@ -47,9 +51,9 @@ structure PatternCalcInterface =
       | PITYPE of {loc:loc, ty:ty, tycon:string,
                    tyvars:tvar list}
       | PIOPAQUE_TYPE of {tyvars: tvar list, tycon: string,
-                          runtimeTy: BuiltinType.ty, loc: loc}
+                          runtimeTy:runtimeTy , loc: loc}
       | PIOPAQUE_EQTYPE of {tyvars: tvar list, tycon: string,
-                            runtimeTy: BuiltinType.ty, loc: loc}
+                            runtimeTy:runtimeTy, loc: loc}
       | PITYPEBUILTIN of {builtinName:string, loc:loc,
                           tycon:string}
       | PITYPEREP of {loc:loc, origTycon:string list,

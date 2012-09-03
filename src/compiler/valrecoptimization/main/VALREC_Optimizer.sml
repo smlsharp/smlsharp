@@ -4,17 +4,22 @@
  * @version $Id: VALREC_Optimizer.sml,v 1.39.6.6 2010/01/29 06:41:35 hiro-en Exp $
  *)
 structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
+local
+  structure U = VALREC_Utils
+in
+  
   open IDCalc
   open Graph
-  open VALREC_Utils
+(* open  VALREC_Utils *)
 
   type recNodeinfo = {functionId : VarID.id,
                       dependentIds : VarID.Set.set,
-                      functionDecl : {varInfo:varInfo,body:icexp}}
+                      functionDecl : {varInfo:varInfo,tyList:ty list,body:icexp}}
 		     
   type funNodeinfo = {functionId : VarID.id,
                       dependentIds : VarID.Set.set,
                       functionDecl : {funVarInfo:varInfo,
+                                      tyList:ty list,
 				      rules:{args:icpat list,body:icexp} list}}
     
   fun optimizeExp icexp =
@@ -140,16 +145,17 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 		loc)]
       | ICDECFUN {guard, funbinds, loc} =>
         let
-          val boundIDList = map (fn ({funVarInfo,rules})=>
-				    (#id funVarInfo)) funbinds
+          val boundIDList = 
+              map (fn ({funVarInfo, tyList, rules})=> (#id funVarInfo)) 
+                  funbinds
           val g = Graph.empty :  funNodeinfo Graph.graph
           val g =
               foldl 
-                  (fn ({funVarInfo,rules},g) =>
+                  (fn ({funVarInfo, tyList, rules},g) =>
                       let 
 			val fid = (#id funVarInfo)
 			val dependentIds =
-                            getFreeIdsInRule rules
+                            U.getFreeIdsInRule rules
                       in
 			#1
 			    (Graph.addNode
@@ -158,6 +164,7 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 				  dependentIds=dependentIds,
 				  functionDecl=
 				  {funVarInfo=funVarInfo,
+                                   tyList=tyList,
 				   rules=optimizeRule rules}})
                       end)
                   (Graph.empty : funNodeinfo Graph.graph)
@@ -169,13 +176,20 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
                       foldl 
                           (fn ((nid2,{functionId as fid2,... }),g) =>
                               if VarID.Set.member(dids1, fid2)
+                              then Graph.addEdge g (nid1, nid2)
+                           (* 2012-8-4 bug 231_refFunOrder.sml
+                              In order to preserve the non-connected component.
                               then Graph.addEdge g (nid2,nid1)
+                            *)
                               else g)
                           g
                           nodeList)
                   g
                   nodeList
           val scc = Graph.scc g          
+          (* 2012-8-4 bug 231_refFunOrder.sml
+             In order to preserve the non-connected component. *)
+          val sccRevRev = map List.rev (List.rev scc)
         in
           map 
               (fn nidList =>
@@ -196,6 +210,7 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 			       {
 				guard=guard,
 				funVarInfo=(#funVarInfo functionDecl),
+                                tyList= #tyList functionDecl,
 				rules=(#rules functionDecl),
 				loc=loc
 			       }
@@ -214,20 +229,21 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
                       ICDECFUN {guard=guard,funbinds=functionDeclList,loc=loc}
                     end
               )
-              scc
+              sccRevRev
         end 
-      | ICNONRECFUN {guard, funVarInfo, rules, loc} =>
+      | ICNONRECFUN {guard, funVarInfo, tyList, rules, loc} =>
 	raise Control.Bug "invalid declaration"
       | ICVALREC {guard, recbinds, loc} =>
         let
-          val boundIDList = map (fn ({varInfo,body})=>(#id varInfo)) recbinds
+          val boundIDList = 
+              map (fn ({varInfo,tyList,body})=>(#id varInfo)) recbinds
           val g = Graph.empty :  recNodeinfo Graph.graph
           val g =
 	      foldl 
-                  (fn ({varInfo,body},g) =>
+                  (fn ({varInfo,tyList,body},g) =>
 		      let 
 			val fid = (#id varInfo) 
-			val dependentIds = getFreeIdsInExp body
+			val dependentIds = U.getFreeIdsInExp body
 		      in
 			#1
 			    (Graph.addNode
@@ -235,7 +251,9 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 				 {functionId=fid,
 				  dependentIds=dependentIds,
 				  functionDecl=
-				  {varInfo=varInfo,body=optimizeExp body}})
+				  {varInfo=varInfo,
+                                   tyList=tyList,
+                                   body=optimizeExp body}})
 		      end)
                   (Graph.empty : recNodeinfo Graph.graph)
                   recbinds
@@ -246,13 +264,20 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 		      foldl 
 			  (fn ((nid2,{functionId as fid2,... }),g) =>
 			      if VarID.Set.member(dids1, fid2)
-			      then Graph.addEdge g (nid2,nid1)
+			      then Graph.addEdge g (nid1, nid2)
+                             (* 2012-8-4 bug 231_refFunOrder.sml
+                                In order to preserve the non-connected component.
+			      then Graph.addEdge g (nid2, nid1)
+                              *)
 			      else g)
 			  g
 			  nodeList)
                   g
                   nodeList
           val scc = Graph.scc g 
+          (* 2012-8-4 bug 231_refFunOrder.sml
+             In order to preserve the non-connected component. *)
+          val sccRevRev = map List.rev (List.rev scc)
         in
 	  map 
 	      (fn nidList =>
@@ -269,10 +294,18 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 		      then ICVALREC {guard=guard,
 				     recbinds=[functionDecl],
 				     loc=loc}
-		      else ICVAL (guard,
-				  [(ICPATVAR (#varInfo functionDecl,loc),
-				    #body functionDecl)],
-				  loc)
+		      else 
+                        let
+                          val pat = 
+                              foldr
+                                (fn (ty, pat) => ICPATTYPED(pat, ty, loc))
+                                (ICPATVAR (#varInfo functionDecl,loc))
+                                (#tyList functionDecl)
+                        in
+                          ICVAL (guard,
+				 [(pat, #body functionDecl)],
+				 loc)
+                        end
 		    end
 		  | _ => 
 		    let
@@ -288,10 +321,8 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 		      ICVALREC {guard=guard,recbinds=functionDeclList,loc=loc}
 		    end
 	      )
-	      scc
+	      sccRevRev
 	end
-      | ICABSTYPE {tybinds, body, loc} =>
-	raise Control.Bug "abstype"
       | ICEXND (_, loc) => [icdecl]
       | ICEXNTAGD (_, loc) => [icdecl]
       | ICEXPORTVAR (varInfo, ty, loc) => [icdecl]
@@ -300,14 +331,16 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
       | ICEXPORTEXN (exnInfo, loc) => [icdecl]
       | ICEXTERNVAR ({path, ty}, loc) => [icdecl]
       | ICEXTERNEXN ({path, ty}, loc) => [icdecl]
+      | ICTYCASTDECL (tycastList, icdeclList, loc) => [icdecl]
       | ICOVERLOADDEF {boundtvars, id, path, overloadCase, loc} => [icdecl]
 
   and optimizeDeclList icdeclList = List.concat (map optimizeDecl icdeclList)
 
-  fun optimize topdecs =
+  fun optimize {decls, loc} =
       let 
-	val newTopdecs = optimizeDeclList topdecs
+	val newTopdecs = optimizeDeclList decls
       in
-	newTopdecs
+	{decls=newTopdecs, loc=loc}
       end
+end
 end

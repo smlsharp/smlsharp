@@ -108,7 +108,7 @@ struct
           (I.mkTfv(I.TFUN_DTY {id = id,
                                iseq=iseq,
                                formals=formals,
-			       runtimeTy = runtimeTy,
+			       runtimeTy = I.BUILTINty runtimeTy,
                                conSpec=SEnv.empty,
                                originalPath = path,
                                liftedTys=I.emptyLiftedTys,

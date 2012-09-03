@@ -134,12 +134,12 @@ struct
     | I.OPAQUE_NONEQ {tyvars, tycon, runtimeTy, loc} =>
       let
         val runtimeTy = 
-            case BuiltinType.findType runtimeTy of
-              SOME ty => ty
-            | NONE => 
-              (ElaboratorUtils.enqueueError
-                 (loc, ElaborateError.RuntimeTyNotFound runtimeTy);
-               BuiltinType.BOXEDty)
+            case runtimeTy of 
+              [name] =>
+              (case BuiltinType.findType name of
+                 SOME ty => P.BUILTINty ty
+               | NONE => P.LIFTEDty runtimeTy)
+            | _ => P.LIFTEDty runtimeTy
       in
         P.PIOPAQUE_TYPE 
           {tyvars=tyvars, tycon=tycon, runtimeTy=runtimeTy, loc=loc}
@@ -147,12 +147,12 @@ struct
     | I.OPAQUE_EQ {tyvars, tycon, runtimeTy, loc} =>
       let
         val runtimeTy = 
-            case BuiltinType.findType runtimeTy of
-              SOME ty => ty
-            | NONE => 
-              (ElaboratorUtils.enqueueError
-                 (loc, ElaborateError.RuntimeTyNotFound runtimeTy);
-               BuiltinType.BOXEDty)
+            case runtimeTy of 
+              [name] => 
+              (case BuiltinType.findType name of
+                 SOME ty => P.BUILTINty ty
+               | NONE => P.LIFTEDty runtimeTy)
+            | _ => P.LIFTEDty runtimeTy
       in
         P.PIOPAQUE_EQTYPE 
           {tyvars=tyvars, tycon=tycon, runtimeTy=runtimeTy, loc=loc}

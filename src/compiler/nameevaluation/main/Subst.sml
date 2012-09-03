@@ -33,7 +33,6 @@ in
   type conIdSubst = I.idstatus ConID.Map.map
   type exnIdSubst = ExnID.id ExnID.Map.map
   type subst = {tvarS:tvarSubst,
-                tfvS:tfvSubst,
                 exnIdS:exnIdSubst,
                 conIdS:conIdSubst}
   val emptyTvarSubst = TvarMap.empty
@@ -41,7 +40,6 @@ in
   val emptyConIdSubst = ConID.Map.empty
   val emptyExnIdSubst = ExnID.Map.empty
   val emptySubst = {tvarS=emptyTvarSubst,
-                    tfvS=emptyTfvSubst,
                     exnIdS=emptyExnIdSubst,
                     conIdS=emptyConIdSubst}
   local
@@ -51,9 +49,10 @@ in
     fun isVisited tfv = TfvSet.member(!visitedSet, tfv)
     fun substTfunkind subst tfunkind =
         case tfunkind of
-          I.TFV_SPEC {id, iseq, formals} => tfunkind
-        | I.TFV_DTY {id,iseq,formals,conSpec,liftedTys} =>
+          I.TFV_SPEC {name, id, iseq, formals} => tfunkind
+        | I.TFV_DTY {name, id,iseq,formals,conSpec,liftedTys} =>
           I.TFV_DTY {id=id,
+                     name=name,
                      iseq=iseq,
                      formals=formals,
                      conSpec=substConSpec subst conSpec,
@@ -63,7 +62,11 @@ in
                       conSpec,liftedTys,dtyKind} =>
           I.TFUN_DTY {id=id,
                       iseq=iseq,
+                      (* 
 		      runtimeTy=runtimeTy,
+                      2012-7-18 ohori: bug 210_functor.sml
+                       *)
+		      runtimeTy=substRuntimeTy subst runtimeTy,
                       formals=formals,
                       conSpec=substConSpec subst conSpec,
                       originalPath=originalPath,
@@ -82,6 +85,20 @@ in
         | I.INSTANTIATED {tfunkind, tfun} => raise bug "REALIZED"
         | I.FUN_DTY _ => raise bug "FUN_DTY"
 
+    and substRuntimeTy (subst:subst as {tvarS,...}) runtimeTy =
+        case runtimeTy of
+          I.BUILTINty _ => runtimeTy
+        | I.LIFTEDty tvar => 
+          (case TvarMap.find(tvarS, tvar) of
+             SOME (I.TYVAR (tvar as {lifted,...})) => 
+             I.LIFTEDty tvar
+           | SOME ty =>
+             (case I.runtimeTyOfIty ty of
+                SOME runtimeTy => runtimeTy
+              | NONE => raise bug "runtimeTy not found in substRuntimeTy"
+             )
+           | NONE => runtimeTy
+          )
     and substConSpec subst conSpec =
         SEnv.map
         (fn tyOpt => Option.map (substTy subst) tyOpt)
@@ -213,21 +230,10 @@ in
             IV.TSTR tfun => IV.TSTR (substTfun subst tfun)
           | IV.TSTR_DTY {tfun, varE, formals, conSpec} =>
             IV.TSTR_DTY {tfun=substTfun subst tfun,
-                        varE=substVarE subst varE,
-                        formals=formals,
-                        conSpec= SEnv.map (Option.map (substTy subst)) conSpec
-                       }
-(* This is now mover to substTfun (TFUN_DEF)
-          | IV.TSTR_TOTVAR {id, iseq, tvar} => 
-            case TvarMap.find(tvarS, tvar) of
-              SOME ty =>
-              let
-                val tfun = I.TFUN_DEF{iseq=iseq, formals=nil, realizerTy=ty}
-              in
-                IV.TSTR tfun
-              end
-            | NONE => tstr
-*)
+                         varE=substVarE subst varE,
+                         formals=formals,
+                         conSpec= SEnv.map (Option.map (substTy subst)) conSpec
+                        }
         end
     fun substTyE subst tyE = SEnv.map (substTstr subst) tyE
     fun substEnv subst (IV.ENV {varE, tyE, strE}) =
@@ -307,7 +313,8 @@ in
   fun substTfvIdstatus tfvSubst idstatus = 
       case idstatus of
         I.IDVAR varId => idstatus
-      | I.IDVAR_TYPED _ => idstatus
+      | I.IDVAR_TYPED {id, ty} => 
+        I.IDVAR_TYPED {id=id, ty=substTfvTy tfvSubst ty}
       | I.IDEXVAR {path, ty, used, loc, version, internalId} => 
         I.IDEXVAR {path=path, ty=substTfvTy tfvSubst ty, used=used, loc=loc, 
                    version=version, internalId=internalId}

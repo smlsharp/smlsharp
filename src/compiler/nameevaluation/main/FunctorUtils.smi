@@ -14,6 +14,7 @@ _require "../../types/main/IDCalc.ppg.smi"
 _require "../../types/main/tvarMap.smi"
 _require "../../util/main/utils.smi"
 _require "EvalSig.smi"
+_require "EvalTy.smi"
 _require "NameEvalEnv.ppg.smi"
 _require "NameEvalUtils.smi"
 _require "NormalizeTy.smi"
@@ -31,17 +32,11 @@ struct
                        firstArgPat : (IDCalc.varInfo * IDCalc.ty list) option,
                        polyArgPats : (IDCalc.varInfo * IDCalc.ty) list, 
                        tfvDecls : IDCalc.icdecl list}
-  val varsInEnv : ExnID.Set.set
-                  -> Loc.loc
-                  -> string list
-                  -> (string list * IDCalc.icexp) list
-                  -> NameEvalEnv.env
+  val varsInEnv : NameEvalEnv.env * Loc.loc
                   -> (string list * IDCalc.icexp) list * ExnID.Set.set
-  val makeBodyEnv : NameEvalEnv.env
-                    -> Loc.loc
-                       -> {allVars:(string list * IDCalc.icexp) list,
-                           exnIdSet:ExnID.Set.set, typidSet:TypID.Set.set}
+  val typidSet : NameEvalEnv.env -> TypID.Set.set
   val eqEnv : {specEnv:NameEvalEnv.env, implEnv:NameEvalEnv.env} -> bool
   val eqSize : NameEvalEnv.env * NameEvalEnv.env -> bool
+  val eqShape : NameEvalEnv.env * NameEvalEnv.env -> bool
   val makeFunctorArgs : Loc.loc -> string list list -> NameEvalEnv.env -> IDCalc.icexp list
 end

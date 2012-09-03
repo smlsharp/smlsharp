@@ -18,20 +18,14 @@ rule 25, 32, 33, 34, 35, 36, 37
  *)
 
 val _ = 1;
-
 val 2 = 2;
-
 datatype dt3 = C3
 val C3 = C3;
-
 val v4 = 4;
 val w4 = v4 + 4;
-
 val {x = v5, y} = {x = 5, y = "five"};
 val w5 = v5 + 5;
-
 val (v6, y) = (6, "six");
 val w6 = v6 + 6;
-
 val (v7) = 7;
 val w7 = v7 + 7;

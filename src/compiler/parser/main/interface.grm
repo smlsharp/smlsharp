@@ -173,7 +173,6 @@ structure InterfaceLrVals
   | longId of string list
   | longvid of string list
   | longtycon of string list
-  | runtimeTy of string
   | tyvarCommaList of A.tvar list
   | tyvarseq_noNIL of A.tvar list
   | tyvarseq of A.tvar list
@@ -343,8 +342,10 @@ tyvarseq        : (* none *)
                 | tyvarseq_noNIL
                     (tyvarseq_noNIL)
 
+(*
 runtimeTy       : id
                     (id)
+*)
 
 (******** The Interface Language ********)
 
@@ -372,8 +373,8 @@ valbind         : valbind_1
                 | valbind_1 AND valbind
                     (valbind_1 :: valbind)
 
-typbind_1       : tyvarseq tycon LPAREN EQ runtimeTy RPAREN
-                    (I.OPAQUE_NONEQ {tyvars = tyvarseq, tycon = tycon, runtimeTy = runtimeTy,
+typbind_1       : tyvarseq tycon LPAREN EQ longId RPAREN
+                    (I.OPAQUE_NONEQ {tyvars = tyvarseq, tycon = tycon, runtimeTy = longId,
 				     loc = (tyvarseqleft, RPARENright)})
                 | tyvarseq tycon EQ ty
                     (I.TRANSPARENT {tyvars = tyvarseq, tycon = tycon, ty = ty,
@@ -384,8 +385,8 @@ typbind         : typbind_1
                 | typbind_1 AND typbind
                     (typbind_1 :: typbind)
 
-eqtypbind_1     : tyvarseq tycon LPAREN EQ runtimeTy RPAREN
-                    (I.OPAQUE_EQ {tyvars = tyvarseq, tycon = tycon, runtimeTy = runtimeTy,
+eqtypbind_1     : tyvarseq tycon LPAREN EQ longId RPAREN
+                    (I.OPAQUE_EQ {tyvars = tyvarseq, tycon = tycon, runtimeTy = longId,
 				  loc = (tyvarseqleft, RPARENright)})
 
 eqtypbind       : eqtypbind_1

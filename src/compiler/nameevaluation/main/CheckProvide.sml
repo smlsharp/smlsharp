@@ -538,7 +538,8 @@ local
                 SOME ty => ty
               | NONE => raise bug "tfunRuntimeTy"
           val _ =
-              if BuiltinType.compatTy {absTy=runtimeTy, implTy=defRuntimeTy} then  ()
+              if Ty.compatRuntimeTy {absTy=Ty.evalRuntimeTy loc tvarEnv evalEnv runtimeTy, implTy=defRuntimeTy} 
+              then  ()
               else 
                 (
                  EU.enqueueError
@@ -582,7 +583,8 @@ local
                 SOME ty => ty
               | NONE => raise bug "tfunRuntimeTy"
           val _ =
-              if BuiltinType.compatTy {absTy=runtimeTy, implTy=defRuntimeTy} then ()
+              if Ty.compatRuntimeTy {absTy=Ty.evalRuntimeTy loc tvarEnv evalEnv runtimeTy, implTy=defRuntimeTy} 
+              then ()
               else 
                 (
                  EU.enqueueError
@@ -676,7 +678,7 @@ local
               )
             else 
               (EU.enqueueError
-                 (loc, E.ProvideExceptionType("CP-400", {longid = path}));
+                 (loc, E.ProvideExceptionType("CP-400", {longid = internalPath}));
                raise Fail)
           | SOME (I.IDEXNREP {id,ty}) =>
             (* BUG 128_functor.sml *)
@@ -691,20 +693,20 @@ local
                 (exnSet, V.emptyEnv, nil)
             else 
               (EU.enqueueError
-                 (loc, E.ProvideExceptionType("CP-410", {longid = path}));
+                 (loc, E.ProvideExceptionType("CP-410", {longid = internalPath}));
                raise Fail)
           | SOME (idstatus as I.IDEXEXN {path=_,ty, used, loc=_, version}) => 
             (EU.enqueueError
-               (loc, E.ProvideExceptionType("CP-420", {longid = path}));
+               (loc, E.ProvideExceptionType("CP-420", {longid = internalPath}));
              raise Fail)
           | SOME (idstatus as I.IDEXEXNREP {path=_,ty, used, loc=_, version}) => 
             (EU.enqueueError
-               (loc, E.ProvideExceptionType("CP-430", {longid = path}));
+               (loc, E.ProvideExceptionType("CP-430", {longid = internalPath}));
              raise Fail)
           | _ => 
             (EU.enqueueError
                (loc,
-                E.ProvideUndefinedException("CP-440", {longid = path}));
+                E.ProvideUndefinedException("CP-440", {longid = internalPath}));
              raise Fail)
         end
       | PI.PIEXCEPTIONREP {vid=name, origId=origPath, loc} =>
@@ -969,8 +971,13 @@ local
             | SOME entry => entry
           val specArgSig = Sig.evalPlsig evalTopEnv specArgSig
           val _ = if EU.isAnyError () then raise Fail
-                  else if FU.eqSize (specArgSig, argSig) 
+                  else if FU.eqSize(specArgSig, argSig) 
+(*
                           andalso FU.eqEnv {specEnv=specArgSig, implEnv=argSig} then ()
+*)
+                          andalso FU.eqShape (specArgSig, argSig)
+                  then
+                    FU.eqEnv {specEnv=specArgSig, implEnv=argSig}
                   else
                     (
                      EU.enqueueError
@@ -999,11 +1006,9 @@ local
                                                   {longid=[functorName]}));
                      raise Fail
                     )
-          val {allVars=allVars,
-               typidSet=typidSet,
-               exnIdSet = exnIdSet
-              } =
-              FU.makeBodyEnv specBodyEnv loc 
+          val typidSet = FU.typidSet specBodyEnv
+          val (allVars,exnIdSet) = FU.varsInEnv (specBodyEnv, loc)
+
           fun varToTy (_, var) =
               case var of
                 I.ICEXVAR ({path, ty},_) => ty
@@ -1115,6 +1120,9 @@ in
         icdecls
       end
       handle Fail => nil
+           | exn => raise exn
+(*
            | exn => raise bug "Uncought exception in checkPitopdecList"
+*)
 end
 end

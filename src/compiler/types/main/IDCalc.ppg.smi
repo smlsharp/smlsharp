@@ -33,6 +33,11 @@ struct
   type oprimInfo = {path: path, id: oprimId}
   type constant = Absyn.constant
   type typesTy = Types.ty
+
+  datatype runtimeTy
+    = BUILTINty of BuiltinType.ty
+    | LIFTEDty of tvar
+
   datatype ty
     = TYWILD
     | TYERROR
@@ -55,12 +60,13 @@ struct
                    formals:formals,
                    originalPath:path,
                    conSpec:(ty option) SEnv.map,
-		   runtimeTy:BuiltinType.ty,
+		   runtimeTy:runtimeTy,
                    liftedTys:liftedTys,
                    dtyKind:dtyKind
                   }
-    | TFV_SPEC of {id:typId, iseq:bool, formals:formals}
+    | TFV_SPEC of {name:string, id:typId, iseq:bool, formals:formals}
     | TFV_DTY of {id:typId,
+                  name:string,
                   iseq:bool,
                   formals:formals,
                   conSpec:(ty option) SEnv.map,
@@ -68,6 +74,7 @@ struct
     | REALIZED of {id:typId, tfun:tfun}
     | INSTANTIATED of {tfunkind:tfunkind, tfun:tfun}
     | FUN_DTY of {tfun:tfun,
+                  originalPath:path,
                   varE:idstatus SEnv.map,
                   formals:formals,
                   conSpec:(ty option) SEnv.map,
@@ -163,6 +170,7 @@ struct
           funbinds:
             {
              funVarInfo: varInfo,
+             tyList:ty list,
              rules: {args: icpat list, body: icexp} list
             } list,
           loc:Loc.loc
@@ -171,22 +179,15 @@ struct
          {
           guard: (tvar * tvarKind) list,
           funVarInfo: varInfo,
+          tyList: ty list,
           rules: {args: icpat list, body: icexp} list,
           loc:Loc.loc
          }
     | ICVALREC of {guard: (tvar * tvarKind) list,
                    recbinds: {varInfo: varInfo,
+                              tyList:ty list,
                               body: icexp} list,
                    loc:Loc.loc}
-    | ICABSTYPE of
-        {tybinds: 
-          {args: tvar list,
-           typInfo: {path: path, tfun: tfun},
-           datacon: {datacon: {path: path, ty:ty, id: conId}, tyOpt: ty option} list
-          } list,
-         body: icdecl list,
-         loc:Loc.loc
-        }
     | ICEXND of {exnInfo: {path: path, id: exnId, ty:ty}, loc:Loc.loc} list * Loc.loc
     | ICEXNTAGD of {exnInfo: {path: path, id: exnId, ty:ty}, varInfo:varInfo} * Loc.loc
     | ICEXPORTVAR of varInfo * ty * Loc.loc
@@ -195,6 +196,7 @@ struct
     | ICEXPORTEXN of {path: path, id: exnId, ty:ty} * Loc.loc
     | ICEXTERNVAR of {path:path, ty:ty} * Loc.loc
     | ICEXTERNEXN of {path:path, ty:ty} * Loc.loc
+    | ICTYCASTDECL of {from:tfun, to:tfun} list * icdecl list * Loc.loc
     | ICOVERLOADDEF of {boundtvars:(tvar * tvarKind) list,
                         id:oprimId,path:path,
                         overloadCase:
@@ -231,6 +233,8 @@ struct
         expTy: ty,
         matches: {instTy: ty, instance: overloadInstance} list,
         loc: Loc.loc}
+
+  type topdecl = {decls:icdecl list, loc:Loc.loc}
 
   val derefTfun : tfun -> tfun
   val emptyLiftedTys : liftedTys
@@ -367,14 +371,14 @@ struct
   val print_varE : TermFormat.format * TermFormat.format -> varE -> TermFormat.format
 
   val pruneTfun : tfun -> tfun
-  val runtimeTyOfIty : ty -> BuiltinType.ty option
   val setVersion : (string list * int option) -> string list
   val tfunArity : tfun -> int
   val tfunFormals : tfun -> formals
   val tfunId : tfun -> typId
   val tfunIseq : tfun -> bool
   val tfunLiftedTys : tfun -> liftedTys
-  val tfunRuntimeTy : tfun -> BuiltinType.ty option
+  val runtimeTyOfIty : ty ->  runtimeTy option
+  val tfunRuntimeTy : tfun -> runtimeTy option
   val tfunkindId : tfunkind -> typId
   val tfvId : tfunkind ref -> typId
   val tvarIseq : tvar -> bool

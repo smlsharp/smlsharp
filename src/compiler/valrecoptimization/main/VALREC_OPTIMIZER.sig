@@ -5,5 +5,5 @@
  *)
 signature VALREC_OPTIMIZER =
 sig
-  val optimize : IDCalc.icdecl list -> IDCalc.icdecl list
+  val optimize : IDCalc.topdecl -> IDCalc.topdecl
 end

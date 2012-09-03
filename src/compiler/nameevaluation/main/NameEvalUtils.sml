@@ -93,7 +93,7 @@ in
          typidSet;
        print "}\n"
       )
-  fun printSubst {tvarS, tfvS, exnIdS, conIdS} =
+  fun printSubst {tvarS, exnIdS, conIdS} =
       let
         val _ = print "tvarS\n"
         val _ =
@@ -106,19 +106,6 @@ in
                     print "\n")
                )
                tvarS;
-             print "\n]\n"
-            )
-        val _ = print "tfvS\n"
-        val _ =
-            (print "[\n";
-             TfvMap.appi
-               (fn (ref tfunkind1, ref tfunkind2) =>
-                   (printTfunkind tfunkind1;
-                    print "=>";
-                    printTfunkind tfunkind2;
-                    print "\n")
-               )
-               tfvS;
              print "\n]\n"
             )
         val _ = print "conIdS\n"

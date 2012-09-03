@@ -17,6 +17,5 @@ rule 15
 </ul>
  *)
 val v11 = 1 and v12 = 2;
-
 val v21 = 1;
 val v21 = true and v22 = (v21 + 2, 1);

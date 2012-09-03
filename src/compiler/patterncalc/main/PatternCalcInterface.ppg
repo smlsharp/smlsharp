@@ -50,6 +50,19 @@ struct
   type datbind = AbsynInterface.datbind
 
   (*%
+   * @formatter(BuiltinType.ty) BuiltinType.format_ty
+   *)
+  datatype runtimeTy 
+   = (*%
+       @format(ty) ty
+      *)
+     BUILTINty of BuiltinType.ty
+   |  (*%
+       @format(path) path
+      *)
+     LIFTEDty of longid
+
+  (*%
    * @formatter(option) TermFormat.formatOptionalOption
    * @formatter(declist) TermFormat.formatDeclList
    * @formatter(PatternCalc.plsigexp) PatternCalc.format_plsigexp
@@ -102,7 +115,7 @@ struct
       {
         tyvars: tvar list,
         tycon: string,
-	runtimeTy: BuiltinType.ty,
+	runtimeTy: runtimeTy,
         loc: loc
       }
     | (*%
@@ -119,7 +132,7 @@ struct
       {
         tyvars: tvar list,
         tycon: string,
-	runtimeTy: BuiltinType.ty,
+	runtimeTy: runtimeTy,
         loc: loc
       }
     | (*%

@@ -2514,9 +2514,7 @@ src/basis/main/Option.sml \
 src/basis/main/OPTION.sig \
 src/basis/main/General.sml \
 src/basis/main/GENERAL.sig
-PRELUDE_LIB_OBJECTS = src/compiler/control/main/Control.ppg.o \
-src/compiler/control/main/Loc.ppg.o \
-src/reifiedterm/main/ReifiedTerm.ppg.o \
+PRELUDE_LIB_OBJECTS = src/reifiedterm/main/ReifiedTerm.ppg.o \
 src/reifiedterm/main/TermPrintUtils.ppg.o \
 src/compiler-utils/env/main/LabelEnv.o \
 src/compiler-utils/env/main/LabelOrd.o \
@@ -2608,9 +2606,6 @@ src/basis/main/List.o \
 src/basis/main/Option.o \
 src/basis/main/General.o
 PRELUDE_LIB_SOURCES = \
-src/compiler/control/main/Control.ppg.sml \
-src/compiler/control/main/Loc.ppg.sml \
-src/compiler/control/main/LOC.sig \
 src/reifiedterm/main/ReifiedTerm.ppg.sml \
 src/reifiedterm/main/TermPrintUtils.ppg.sml \
 src/compiler-utils/env/main/LabelEnv.sml \

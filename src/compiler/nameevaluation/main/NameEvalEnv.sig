@@ -34,6 +34,7 @@ sig
   val printTy_sigEList : sigEList -> TermFormat.format
   val format_strEntry : strEntry -> TermFormat.format
   val format_funEEntry : funEEntry -> SMLFormat.FormatExpression.expression list
+  val printTy_funEEntry : funEEntry -> SMLFormat.FormatExpression.expression list
   val format_funE : funE -> SMLFormat.FormatExpression.expression list
   val format_sigE : sigE -> SMLFormat.FormatExpression.expression list
   val format_topEnv : topEnv -> SMLFormat.FormatExpression.expression list
