@@ -1,18 +1,21 @@
 Group is
-        $/basis.cm
-	../../../../../SMLFormat/smlformatlib.cm
-        ../../primitive/sources.cm
-        ../../constantterm/sources.cm
-        ../../control/sources.cm
-        ../../name/sources.cm
-        ../../util/sources.cm
-        ../../types/sources.cm
-        ../../absyn/sources.cm
-        ../../systemdef/sources.cm
-        ../../usererror/sources.cm
 
-        ANormal.ppg.sml
-        ANormalUtils.sml
-        ANormalFormatter.sml
-        ANormalTypeCheckError.ppg.sml
-        ANormalTypeCheck.sml
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../util/sources.cm
+	../../name/sources.cm
+	../../usererror/sources.cm
+	../../primitive/sources.cm
+	../../absyn/sources.cm
+	../../constantterm/sources.cm
+
+	ANormal.ppg.sml
+	ANormalUtils.sml
+	ANormalFormatter.sml
+	ANormalTypeCheckError.ppg.sml
+	ANormalTypeCheck.sml

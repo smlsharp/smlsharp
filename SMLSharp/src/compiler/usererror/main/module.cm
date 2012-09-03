@@ -1,10 +1,12 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../control/sources.cm
-        ../../name/sources.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../name/sources.cm
 
-        USER_ERROR.sig
-        UserError.ppg.sml
+	USER_ERROR.sig
+	UserError.ppg.sml

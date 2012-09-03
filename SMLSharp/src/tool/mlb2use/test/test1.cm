@@ -1,0 +1,33 @@
+(**
+ * test case for conditional.
+ * @copyright (c) 2010, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: MLB2Use.sml,v 1.5 2007/08/10 15:15:18 kiyoshiy Exp $
+ *)
+Group is
+
+#if defined(SMLNJ)
+        source1IF.sml
+#endif
+
+#if defined(SMLNJ)
+        source2IF.sml
+#else
+        source2ELSE.sml
+#endif
+
+#if defined(SMLNJ)
+        source3IF.sml
+#elif defined(MLTON)
+        source3ELIF.sml
+#endif
+
+#if defined(SMLNJ)
+        source4IF.sml
+#elif defined(MLTON)
+        source4ELIF.sml
+#else
+        source4ELSE.sml
+#endif
+
+        source5.sml

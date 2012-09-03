@@ -1,21 +1,17 @@
 Group
-        structure TypeFormatter
-        structure TypeParser
-        structure Types
-        structure VarIdEnv
-        structure VarEnv
-        structure TEnv
-        structure VarIdSet
-        structure VarSet
-(*
-        structure Vars
-        structure Fixity
-*)
-        structure OTSet
-        structure TypesUtils
-        signature TYPE_TRANSDUCER
-        structure TypeTransducer
-        structure TypesPickler
+	structure TypeFormatter
+	structure TypeParser
+	structure Types
+	structure VarIdEnv
+	structure VarEnv
+	structure TEnv
+	structure VarIdSet
+	structure VarSet
+	structure OTSet
+	structure TypesUtils
+	signature TYPE_TRANSDUCER
+	structure TypeTransducer
+	structure TypesPickler
 
 	structure VarIDContext
 	structure VarIDContextPickler	  

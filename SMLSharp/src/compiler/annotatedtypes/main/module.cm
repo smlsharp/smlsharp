@@ -1,19 +1,20 @@
 Group is
-        $/basis.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../../../../SMLFormat/smlformatlib.cm
 
-        ../../control/sources.cm
-        ../../pickle/sources.cm
-        ../../util/sources.cm
-        ../../env/sources.cm
-        ../../name/sources.cm
-        ../../systemdef/sources.cm
-        ../../primitive/sources.cm
-        ../../types/sources.cm
-        ../../constantterm/sources.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        AnnotatedTypes.ppg.sml
-        ANNOTATEDTYPESUTILS.sig
-        AnnotatedTypesUtils.sml
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../util/sources.cm
+	../../pickle/sources.cm
+	../../types/sources.cm
+	../../primitive/sources.cm
+	../../constantterm/sources.cm
+
+	AnnotatedTypes.ppg.sml
+	ANNOTATEDTYPESUTILS.sig
+	AnnotatedTypesUtils.sml
 	AnnotatedTypesPickler.sml

@@ -1,23 +1,19 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../types/sources.cm
+	../../patterncalcFlattened/sources.cm
 
-        ../../control/sources.cm
-        ../../env/sources.cm
-        ../../patterncalc/sources.cm
-        ../../patterncalcFlattened/sources.cm
-        ../../absyn/sources.cm
-        ../../typecontext/sources.cm
-        ../../types/sources.cm
-        ../../name/sources.cm
-
-        VALREC_OPTIMIZER.sig
-        VALREC_Optimizer.sml
-        GRAPH.sig
-        Graph.sml
-        utils.sml
-        TRANS_FUNDECL.sig
-        TransFundecl.sml
+	GRAPH.sig
+	Graph.sml
+	utils.sml
+	VALREC_OPTIMIZER.sig
+	VALREC_Optimizer.sml
+	TRANS_FUNDECL.sig
+	TransFundecl.sml

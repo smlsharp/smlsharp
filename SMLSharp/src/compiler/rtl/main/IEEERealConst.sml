@@ -85,15 +85,13 @@ struct
   fun fromString str =
       case IEEEReal.fromString str of
         NONE => NONE
-      | SOME {kind=IEEEReal.NAN IEEEReal.QUIET, ...} =>
+      | SOME {class=IEEEReal.NAN, ...} =>
         SOME {man = 0, exp = expInf, sign = false}
-      | SOME {kind=IEEEReal.NAN IEEEReal.SIGNALLING, ...} =>
-        SOME {man = manMSB, exp = expInf, sign = false}
-      | SOME {kind=IEEEReal.INF, sign, ...} =>
+      | SOME {class=IEEEReal.INF, sign, ...} =>
         SOME {man = 0, exp = expInf, sign = sign}
-      | SOME {kind=IEEEReal.ZERO, sign, ...} =>
+      | SOME {class=IEEEReal.ZERO, sign, ...} =>
         SOME  {man = 0, exp = 0w0, sign = sign}
-      | SOME {kind, sign, digits, exp} =>
+      | SOME {class, sign, digits, exp} =>
         let
           val float =
               foldl (fn (x, {man, exp}) =>

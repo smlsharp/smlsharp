@@ -1,91 +1,77 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../util/sources.cm
+	../../usererror/sources.cm
+	../../pathresolver/sources.cm
+	../../pickle/sources.cm
+	../../types/sources.cm
+	../../typecontext/sources.cm
 
-        ../../../configuration/sources.cm
+	../../absyn/sources.cm
+	../../patterncalc/sources.cm
+	../../patterncalcFlattened/sources.cm
+	../../patterncalcWithTvars/sources.cm
+	../../typedcalc/sources.cm
+	../../typedflatcalc/sources.cm
+	../../recordcalc/sources.cm
+	../../typedlambda/sources.cm
+	../../annotatedtypes/sources.cm
+	../../annotatedcalc/sources.cm
+	../../multiplevaluecalc/sources.cm
+	../../clustercalc/sources.cm
+	../../rbucalc/sources.cm
+	../../anormal/sources.cm
+	../../intermediatelanguage/sources.cm
+	../../symbolicinstructions/sources.cm
+	../../../instructions/compiler/sources.cm
+	../../yaanormal/sources.cm
+	../../abstractinstruction/sources.cm
+	../../abstractinstruction2/sources.cm
+	../../machinelanguage/sources.cm
+	../../objectfile/sources.cm
+	../../assemblycode/sources.cm
 
-        ../../types/sources.cm
-        ../../typecontext/sources.cm
-        ../../control/sources.cm
-        ../../absyn/sources.cm
-        ../../parser/sources.cm
-        ../../util/sources.cm
-        ../../env/sources.cm
-        ../../name/sources.cm
-        ../../pickle/sources.cm
-        ../../usererror/sources.cm
-
-        ../../patterncalc/sources.cm
-        ../../patterncalcFlattened/sources.cm
-        ../../patterncalcWithTvars/sources.cm
-        ../../typedcalc/sources.cm
-        ../../typedflatcalc/sources.cm
-        ../../recordcalc/sources.cm
-        ../../typedlambda/sources.cm
-        ../../annotatedtypes/sources.cm
-        ../../annotatedcalc/sources.cm
-        ../../multiplevaluecalc/sources.cm
-        ../../clustercalc/sources.cm
-        ../../rbucalc/sources.cm
-        ../../anormal/sources.cm
-        ../../intermediatelanguage/sources.cm
-        ../../symbolicinstructions/sources.cm
-        ../../../instructions/compiler/sources.cm
-
-        ../../elaborate/sources.cm
-        ../../modulecompilation/sources.cm
-        ../../settvars/sources.cm
-        ../../valrecoptimization/sources.cm
-        ../../typeinference/sources.cm
-        ../../printergeneration/sources.cm
-        ../../uniqueidallocation/sources.cm
-        ../../matchcompilation/sources.cm
-        ../../overloadcompilation/sources.cm
-        ../../tlnormalization/sources.cm
-        ../../staticanalysis/sources.cm
-        ../../recordunboxing/sources.cm
+	../../parser/sources.cm
+	../../elaborate/sources.cm
+	../../modulecompilation/sources.cm
+	../../settvars/sources.cm
+	../../valrecoptimization/sources.cm
+	../../typeinference/sources.cm
+	../../printergeneration/sources.cm
+	../../uniqueidallocation/sources.cm
+	../../matchcompilation/sources.cm
+	../../overloadcompilation/sources.cm
+	../../tlnormalization/sources.cm
+	../../staticanalysis/sources.cm
+	../../recordunboxing/sources.cm
 	../../inline/sources.cm 
-        ../../mvoptimization/sources.cm
-        ../../functionlocalize/sources.cm
+	../../mvoptimization/sources.cm
+	../../functionlocalize/sources.cm
 	../../functorlinker/sources.cm	
-        ../../clustering/sources.cm
-        ../../rbutransformation/sources.cm
-        ../../anormalization/sources.cm
-        ../../iltransformation/sources.cm
-        ../../sigenerator/sources.cm
-        ../../sioptimization/sources.cm 
-        ../../assemble/sources.cm
-        ../../session/sources.cm
-(*
-        ../../linker/sources.cm 
-*)
+	../../clustering/sources.cm
+	../../rbutransformation/sources.cm
+	../../anormalization/sources.cm
+	../../iltransformation/sources.cm
+	../../sigenerator/sources.cm
+	../../sioptimization/sources.cm 
+	../../assemble/sources.cm
+	../../session/sources.cm
+	../../yaanormalization/sources.cm
+	../../aigenerator/sources.cm
+	../../yasigenerator/sources.cm
+	../../aigenerator2/sources.cm
+	../../vmcodeselection/sources.cm
+	../../stackallocation/sources.cm
+	../../vmcodeemission/sources.cm
+	../../x86/sources.cm
+	../../rtl/sources.cm
 
-        ../../yaanormal/sources.cm
-        ../../abstractinstruction/sources.cm
-        ../../abstractinstruction2/sources.cm
-        ../../yaanormalization/sources.cm
-        ../../aigenerator/sources.cm
-        ../../aigenerator2/sources.cm
-        ../../yasigenerator/sources.cm
-        ../../vmcodeselection/sources.cm
-        ../../stackallocation/sources.cm
-        ../../vmcodeemission/sources.cm
-        ../../machinelanguage/sources.cm
-        ../../objectfile/sources.cm
-        ../../assemblycode/sources.cm
-
-        ../../pathresolver/sources.cm
-
-        ../../x86/sources.cm
-        ../../rtl/sources.cm
-
-        (* TOP.sig *)
 	TopBasis.sml
-        Top.sml
-
-(*
-	CompileObject.sml
-*)
+	Top.sml

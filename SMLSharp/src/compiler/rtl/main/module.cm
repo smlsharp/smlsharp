@@ -1,67 +1,44 @@
 Group is
-        $/basis.cm
 
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../control/sources.cm
-        ../../util/sources.cm
-        ../../name/sources.cm
-        ../../env/sources.cm
-        ../../systemdef/sources.cm
-(*
-        ../../anormal/sources.cm
-        ../../targetplatform/sources.cm
-*)
-        ../../abstractinstruction2/sources.cm
-        ../../absyn/sources.cm
-        ../../session/sources.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../util/sources.cm
+	../../session/sources.cm
+	../../absyn/sources.cm
+	../../abstractinstruction2/sources.cm
 
-        newlabel.sml
-(*
-        X86Mnemonic.ppg.sml
-        X86Formatter.sml
-        X86CODESELECTION.sig
-        X86CodeSelection.sml
-        X86REGISTERALLOCATION.sig
-        X86RegisterAllocation.sml
-        FrameLayout.ppg.sml
-        FRAMEALLOCATION.sig
-        FrameAllocation.sml
-        X86CodeGeneration.sml
-        X86RTL.ppg.sml
-        X86RTLUtils.sml
-	X86RTLSelection.sml
+#if defined(SMLNJ_VERSION)
+	IEEEReal_SMLNJ.sml
+#endif
 
-	ColoringGraph.sml
-	X86RTLRegisterAllocation.sml
-*)
-
-        IEEERealConst.sml
 	FormatByHand.sml
-
-        X86Asm.ppg.sml
-(*
-        FrameLayout.ppg
-        FrameAllocation.sml
-*)
+	IEEERealConst.sml
+	newlabel.sml
 	RTL.ppg.sml
+	RTLEdit.sml
+	RTLUtils.sml
+	RTLLiveness.sml
 	RTLTypeCheckError.ppg.sml
 	RTLTypeCheck.sml
-	RTLUtils.sml
-	RTLEdit.sml
-        RTLEMIT.sig
-	RTLLiveness.sml
-        RTLSUBST.sig
 	Interference.sml
-        RTLCONSTRAINT.sig
-	RTLStabilize.sml
-	RTLCOLORING.sig
-	X86Coloring.sml
-	X86Emit.sml
-	X86Subst.sml
-	X86Constraint.sml
 	RTLSELECT.sig
+	RTLSUBST.sig
+	RTLEMIT.sig
+	RTLCONSTRAINT.sig
+	RTLCOLORING.sig
+	X86Asm.ppg.sml
+	X86Subst.sml
+	X86Emit.sml
+	X86Constraint.sml
+	RTLStabilize.sml
+	X86Coloring.sml
 	X86Select.sml
+	RTLFrame.sml
 	X86RTLBackend.sml
-        RTLFrame.sml

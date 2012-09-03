@@ -1,4 +1,4 @@
 Group
-        structure FunctorLinker
+	structure FunctorLinker
 is
 	main/module.cm

@@ -1,12 +1,15 @@
 Group is
-        $/basis.cm
-        ../../control/sources.cm
-        ../../name/sources.cm
-        ../../env/sources.cm
 
-        ../../machinelanguage/sources.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../control/sources.cm
+	../../name/sources.cm
+	../../env/sources.cm
+	../../machinelanguage/sources.cm
 	../../vmcodeselection/sources.cm   (* test *)
-        ../../../vmgen/module.cm           (* test *)
+	../../../vmgen/module.cm           (* test *)
 
-        STACKALLOCATION.sig
-        StackAllocation.sml
+	STACKALLOCATION.sig
+	StackAllocation.sml

@@ -1,7 +1,4 @@
 Group
-(*
-        signature TOP
-*)
-        structure Top
+	structure Top
 is
-        main/module.cm
+	main/module.cm

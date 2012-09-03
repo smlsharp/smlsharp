@@ -1,4 +1,4 @@
 Group
-        structure SetTVars
+	structure SetTVars
 is
 	main/module.cm

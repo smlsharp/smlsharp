@@ -1,25 +1,38 @@
 Group is
 
-      $/basis.cm
-
-
-      ../../../../../SMLFormat/smlformatlib.cm
-      ../../../../../smlnj-lib/Util/smlnj-lib.cm
-
-      ../../env/sources.cm
-      ../../control/sources.cm
-
-      PATH_UTILITY.sig
-      PathUtility_SMLNJ.sml
-      COUNTER.sig
-      Counter.sml
-      ListSorter.sml
-      ExtensibleArray.sml
-      SmlppgUtil.ppg.sml
-      TermFormat.sml
-
-#if defined(structure IntInf)
-        BigInt_IntInf.sml
-#else
-        BigInt_Int32.sml
+#if defined(NEW_CM)
+	$/basis.cm
 #endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../env/sources.cm
+	../../control/sources.cm
+
+	PATH_UTILITY.sig
+(*
+#if defined(SMLNJ_VERSION)
+*)
+	PathUtility_SMLNJ.sml
+(*
+#else
+	PathUtility_MLton.sml
+#endif
+*)
+	COUNTER.sig
+	Counter.sml
+	ListSorter.sml
+	ExtensibleArray.sml
+
+#if defined(SMLNJ_VERSION)
+#if defined(structure IntInf)
+	BigInt_IntInf.sml
+#else
+	BigInt_Int32.sml
+#endif
+#else
+	BigInt_IntInf.sml
+#endif
+
+	SmlppgUtil.ppg.sml
+	TermFormat.sml

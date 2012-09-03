@@ -1,20 +1,21 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-         ../../../../../SMLFormat/smlformatlib.cm
-         ../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../primitives/compiler/constants.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../primitive/sources.cm
+	../../types/sources.cm
+	../../annotatedtypes/sources.cm
+	../../constantterm/sources.cm
+	../../rbucalc/sources.cm
+	../../anormal/sources.cm
 
-        ../../control/sources.cm
-        ../../env/sources.cm
-        ../../systemdef/sources.cm
-        ../../name/sources.cm
-        ../../types/sources.cm
-        ../../constantterm/sources.cm
-        ../../primitive/sources.cm
-        ../../annotatedtypes/sources.cm
-        ../../rbucalc/sources.cm
-        ../../anormal/sources.cm
-
-        ANORMALIZATION.sig
-        ANormalization.sml
+	ANORMALIZATION.sig
+	ANormalization.sml

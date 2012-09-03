@@ -1,4 +1,4 @@
 Group
-        structure AIGenerator2
+	structure AIGenerator2
 is
-        main/module.cm
+	main/module.cm

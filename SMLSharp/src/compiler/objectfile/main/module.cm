@@ -1,14 +1,17 @@
 Group is
-        $/basis.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../control/sources.cm
-        ../../name/sources.cm
-        ../../env/sources.cm
-        ../../util/sources.cm
 
-        Hexdump.sml
-        ObjectFile.ppg.sml
-        ObjectFileFormatter.sml
-        ObjectFileUtils.sml
-        ObjectFileLinker.sml
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../util/sources.cm
+
+	Hexdump.sml
+	ObjectFile.ppg.sml
+	ObjectFileFormatter.sml
+	ObjectFileUtils.sml
+	ObjectFileLinker.sml

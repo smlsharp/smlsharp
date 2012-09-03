@@ -1,18 +1,23 @@
 group is
-        $/basis.cm
-        $/smlnj-lib.cm
-        ../../control/sources.cm
-        ../../env/sources.cm
-        ../../name/sources.cm
-        ../../types/sources.cm
-        ../../../primitives/primitives.cm
-        primitive.cm
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../primitives/compiler/constants.cm
+	../../../primitives/compiler/primitives.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../types/sources.cm
+	../primitive.cm
 
 	OPrimInstance.sml
-        BuiltinPrimitiveInfo.sml
-        BuiltinPrimitiveType.sml
-        BuiltinPrimitiveUtils.sml
-        BuiltinContextMaker.sml
-        BuiltinContext.sml
-        PREDEFINED_TYPES.sig
-        PredefinedTypes.sml
+	BuiltinPrimitiveInfo.sml
+	BuiltinPrimitiveType.sml
+	BuiltinPrimitiveUtils.sml
+	BuiltinContextMaker.sml
+	BuiltinContext.sml
+	PREDEFINED_TYPES.sig
+	PredefinedTypes.sml

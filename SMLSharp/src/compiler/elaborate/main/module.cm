@@ -1,18 +1,17 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../usererror/sources.cm
+	../../absyn/sources.cm
+	../../patterncalc/sources.cm
 
-        ../../control/sources.cm
-        ../../usererror/sources.cm
-        ../../util/sources.cm
-        ../../env/sources.cm
-        ../../name/sources.cm
-
-        ../../absyn/sources.cm
-        ../../patterncalc/sources.cm
-
-        ElaborateError.ppg.sml
-        ELABORATOR.sig
-        Elaborator.sml
+	ElaborateError.ppg.sml
+	ELABORATOR.sig
+	Elaborator.sml

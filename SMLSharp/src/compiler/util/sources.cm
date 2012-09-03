@@ -1,14 +1,13 @@
 Group
+	signature COUNTER
+	structure Counter
 
-        signature COUNTER
-        structure Counter
+	structure PathUtility
+	structure ListSorter
+	structure SmlppgUtil
+	structure TermFormat
+	structure BigInt
 
-        structure PathUtility
-        structure ListSorter
-        structure SmlppgUtil
-        structure TermFormat
-        structure BigInt
-
-        functor ExtensibleArray
+	functor ExtensibleArray
 is
 	main/module.cm

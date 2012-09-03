@@ -1,11 +1,12 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../../configuration/sources.cm
 
-        ../../../configuration/sources.cm
-
-        LOC.sig
-        Loc.ppg.sml
-        Control.ppg.sml
+	LOC.sig
+	Loc.ppg.sml
+	Control.ppg.sml

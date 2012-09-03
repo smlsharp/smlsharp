@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# easy configuration script for SMLFormat
+# easy configuration script for SMLDoc
 #
 # This script does
 #   * generate Makefile from Makefile.in

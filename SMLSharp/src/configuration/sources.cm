@@ -1,3 +1,4 @@
-Group is
-
-        Configuration.sml
+Group
+	structure Configuration
+is
+	Configuration.sml

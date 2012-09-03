@@ -1,6 +1,6 @@
 Group
-        structure ELFWriterLE
-        structure ELFWriterBE
-        structure ELFReader
+	structure ELFWriterLE
+	structure ELFWriterBE
+	structure ELFReader
 is
-        main/module.cm
+	main/module.cm

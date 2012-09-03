@@ -24,10 +24,12 @@ struct
       then TextIO.output(TextIO.stdErr, msg ^ "\n")
       else ()
 
-  fun isMLBFile path =
+  datatype fileType = MLB | CM | OTHER
+  fun fileType path =
       case OS.Path.ext path of
-        SOME "mlb" => true
-      | _ => false
+        SOME "mlb" => MLB
+      | SOME "cm" => CM
+      | _ => OTHER
 
   fun trPath path =
       (* OS.Path of SML# accepts both '/' and '\\'. *)
@@ -101,12 +103,16 @@ struct
                   trans paths seenMLBs seenSMLs
                 )
               else 
-                if isMLBFile path
-                then
+                case fileType path
+                 of OTHER => trans paths seenMLBs (path :: seenSMLs)
+                  | ftype =>
                   let
                     val {dir = cwd, ...} = OS.Path.splitDirFile path
                     val files =
-                        MLBParser.parseFile path
+                        (case ftype 
+                          of MLB => MLBParser.parseFile path
+                           | CM => CMFileParser.readCMFile path
+                           | _ => raise Fail "Bug:ftype")
                         handle e => (trace (exnMessage e); [])
                     val files = 
                         if excludeAbsPath
@@ -121,7 +127,6 @@ struct
                   in
                     trans (newPaths @ paths) (path :: seenMLBs) seenSMLs
                   end
-                else trans paths seenMLBs (path :: seenSMLs)
             end
         val absPaths = trans [(cwd, rootMLB)] [] []
         val relativePaths = map mkRelative absPaths

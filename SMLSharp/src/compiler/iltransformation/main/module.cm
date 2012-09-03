@@ -1,18 +1,16 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../name/sources.cm
+	../../types/sources.cm
+	../../constantterm/sources.cm
+	../../anormal/sources.cm
+	../../intermediatelanguage/sources.cm
 
-        ../../control/sources.cm
-        ../../env/sources.cm
-        ../../systemdef/sources.cm
-        ../../name/sources.cm
-        ../../types/sources.cm
-        ../../constantterm/sources.cm
-        ../../anormal/sources.cm
-        ../../intermediatelanguage/sources.cm
-
-        ILTRANSFORMATION.sig
-        ILTransformation.sml
+	ILTRANSFORMATION.sig
+	ILTransformation.sml

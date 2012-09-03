@@ -1,15 +1,18 @@
 Group is
-        $/basis.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../../../../SMLFormat/smlformatlib.cm
 
-        ../../control/sources.cm
-	../../util/sources.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../control/sources.cm
 	../../env/sources.cm
 	../../name/sources.cm
-        ../../types/sources.cm
-        ../../annotatedtypes/sources.cm
-        ../../multiplevaluecalc/sources.cm
+	../../util/sources.cm
+	../../types/sources.cm
+	../../annotatedtypes/sources.cm
+	../../multiplevaluecalc/sources.cm
 
 	FunIDMapData.ppg.sml
 	FunIDMap.sml

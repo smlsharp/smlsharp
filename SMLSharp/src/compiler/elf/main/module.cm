@@ -1,22 +1,17 @@
 Group is
-        $/basis.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../../configuration/sources.cm
-        ../../control/sources.cm
-        ../../env/sources.cm
-(*
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../format/sources.cm
-*)
-(*
-        ../../name/sources.cm
-        ../../abstractinstruction/sources.cm
-        ../../machinelanguage/sources.cm
-*)
-        ../../../vmgen/module.cm
-        ../../objectfile/sources.cm
 
-        ELFConst.sml
-        StringTable.sml
-        ELFWriter.sml
-        ELFReader.sml
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../configuration/sources.cm
+	../../../vmgen/module.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../objectfile/sources.cm
+
+	ELFConst.sml
+	StringTable.sml
+	ELFWriter.sml
+	ELFReader.sml

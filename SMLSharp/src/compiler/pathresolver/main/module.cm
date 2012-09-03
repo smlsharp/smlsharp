@@ -1,13 +1,14 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-       ../../../../../smlnj-lib/Util/smlnj-lib.cm
-       ../../../../../SMLFormat/smlformatlib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../util/sources.cm
+	../../env/sources.cm
 
-       ../../util/sources.cm
-       ../../env/sources.cm
-
-       PATH_RESOLVER.sig
-       PathResolver.sml
-       PathResolverError.ppg.sml
+	PathResolverError.ppg.sml
+	PATH_RESOLVER.sig
+	PathResolver.sml

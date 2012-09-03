@@ -1,5 +1,5 @@
 Group
-        signature PATH_RESOLVER
-        structure PathResolver
+	signature PATH_RESOLVER
+	structure PathResolver
 is
 	main/module.cm

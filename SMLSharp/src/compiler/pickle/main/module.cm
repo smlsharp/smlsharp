@@ -1,26 +1,15 @@
 Group is
 
-      $/basis.cm
-
-(*
 #if defined(NEW_CM)
-        $/basis_compat.cm
+	$/basis.cm
 #endif
-#if defined(NEW_CM)
-        $/smlnj-lib.cm
-#else
-        smlnj-lib.cm
-#endif
-*)
 
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../instructions/compiler/sources.cm
+	../../control/sources.cm
 
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../../instructions/compiler/sources.cm
-
-        ../../control/sources.cm
-
-        DYN.sig
-        Dyn.sml
-        PICKLE.sig
-        Stream.sml
-        Pickle.sml
+	DYN.sig
+	Dyn.sml
+	PICKLE.sig
+	Stream.sml
+	Pickle.sml

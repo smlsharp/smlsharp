@@ -1,16 +1,16 @@
 Group is
-        $/basis.cm
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../control/sources.cm
-        ../../util/sources.cm
-        ../../name/sources.cm
-(*
-        ../../format/sources.cm
-*)
-        ../../env/sources.cm
-        ../../objectfile/sources.cm
 
-        AssemblyCode.ppg.sml
-        AssemblyCodeFormatter.sml
-        ASSEMBLE.sig
-        Assemble.sml
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../util/sources.cm
+	../../objectfile/sources.cm
+
+	AssemblyCode.ppg.sml
+	AssemblyCodeFormatter.sml
+	ASSEMBLE.sig
+	Assemble.sml

@@ -1,27 +1,24 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-       ../../../../../SMLFormat/smlformatlib.cm
-       ../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../types/sources.cm
+	../../name/sources.cm
+	../../util/sources.cm
+	../../usererror/sources.cm
+	../../primitive/sources.cm
+	../../constantterm/sources.cm
+	../../patterncalc/sources.cm
+	../../typedflatcalc/sources.cm
+	../../recordcalc/sources.cm
 
-        ../../control/sources.cm
-        ../../env/sources.cm
-        ../../name/sources.cm
-        ../../types/sources.cm
-        ../../util/sources.cm
-        ../../usererror/sources.cm
-
-
-        ../../patterncalc/sources.cm
-        ../../absyn/sources.cm
-        ../../constantterm/sources.cm
-        ../../primitive/sources.cm
-        ../../typedflatcalc/sources.cm
-        ../../recordcalc/sources.cm
-
-        MatchData.sml
-        MatchError.ppg.sml
-        MatchCompiler.sml
-        MATCH_COMPILER.sig
-
+	MatchData.sml
+	MatchError.ppg.sml
+	MATCH_COMPILER.sig
+	MatchCompiler.sml

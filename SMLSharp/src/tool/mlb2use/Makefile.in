@@ -21,14 +21,42 @@ SOURCES = \
 	$(srcdir)/SourcePos.sml \
 	$(srcdir)/basis_compatible.sml \
 	$(srcdir)/main.sml \
-	$(srcdir)/mlb.grm.sig \
-	$(srcdir)/mlb.grm.sml \
-	$(srcdir)/mlb.lex.sml \
-	$(srcdir)/sources.mlb \
+	$(srcdir)/mlb.grm \
+	$(srcdir)/mlb.lex \
+	$(srcdir)/sources.cm \
 	$(srcdir)/sources.use \
+	$(srcdir)/smlnjcm/CM.grm \
+	$(srcdir)/smlnjcm/CM.lex \
+	$(srcdir)/smlnjcm/CMFILE_PARSER.sig \
+	$(srcdir)/smlnjcm/CMFileParser.sml \
+	$(srcdir)/smlnjcm/CMSemantic.sml \
+	$(srcdir)/smlnjcm/FileID.sml \
+	$(srcdir)/smlnjcm/ParserUtil.sml \
+	$(srcdir)/smlnjcm/SourcePath.sml \
 
 
+LEXFILES =  \
+	$(srcdir)/mlb.lex \
+	$(srcdir)/smlnjcm/CM.lex \
+
+
+YACCFILES = \
+	$(srcdir)/mlb.grm \
+	$(srcdir)/smlnjcm/CM.grm \
+
+
+# We assume that mllex and mlyacc of MLton are used to generate sources.
+# User should specify MLLEX and MLYACC for make command if necessary.
+#  $ make MLLEX=mllex MLYACC=mlyacc
 GENSOURCES = \
+	$(LEXFILES:.lex=.lex.sml) \
+	$(YACCFILES:.grm=.grm.sml) \
+	$(YACCFILES:.grm=.grm.sig) \
+	$(YACCFILES:.grm=.grm.desc) \
+
+
+GENFILES = \
+	$(GENSOURCES) \
 	smlsharp-path-map.txt \
 	smlsharp.use \
 	smlsharp.sme \
@@ -37,14 +65,14 @@ GENSOURCES = \
 all: $(TARGETS)
 
 clean:
-	-rm -f $(TARGETS) $(GENSOURCES)
+	-rm -f $(TARGETS) $(GENFILES)
 
 install: $(TARGETS)
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
 	$(INSTALL_PROGRAM) $(TARGETS) '$(DESTDIR)$(bindir)'
 
-mlb2use: $(SOURCES)
-	$(MLTON) -output $@ $(srcdir)/sources.mlb
+mlb2use: $(SOURCES) $(GENSOURCES)
+	$(MLTON) -output $@ $(srcdir)/sources.cm
 #	$(SMLSHARP) -c -o $@ $(srcdir)/sources.use
 
 ###############################################################################

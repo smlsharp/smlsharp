@@ -1,34 +1,27 @@
 group
-        structure VMMnemonic
-(*
-        functor VMMnemonicFormatterFn
-*)
-        structure VMMnemonicFormatter
-        structure VMMnemonicAssembler32LE
-        structure VMMnemonicAssembler32BE
-        structure VMMnemonicAssembler64LE
-        structure VMMnemonicAssembler64BE
-        structure SerializeLE
-        structure SerializeBE
-(*
-        functor VMMnemonicParserFn
-*)
+	structure VMMnemonic
+	structure VMMnemonicFormatter
+	structure VMMnemonicAssembler32LE
+	structure VMMnemonicAssembler32BE
+	structure VMMnemonicAssembler64LE
+	structure VMMnemonicAssembler64BE
+	structure SerializeLE
+	structure SerializeBE
 is
-        $/basis.cm
-        ../../../SMLFormat/smlformatlib.cm
-(*
-        ../../../smlnj-lib/Util/smlnj-lib.cm
-*)
-        ../compiler/env/sources.cm
-        VMMnemonic.sml
-        VMMnemonicFormatterFn.sml
-        VM_MNEMONIC_ASSEMBLER_FN.sig
-        VMMnemonicAssemblerFn32.sml
-        VMMnemonicAssemblerFn64.sml
-(*
-        VMMnemonicParserFn.sml
-*)
-        IEEE754.sml
-        Serialize.sml
-        VMMnemonicFormatter.sml
-        VMMnemonicAssembler.sml
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../SMLFormat/smlformatlib.cm
+	../compiler/env/sources.cm
+
+	VMMnemonic.sml
+	VMMnemonicFormatterFn.sml
+	VM_MNEMONIC_ASSEMBLER_FN.sig
+	VMMnemonicAssemblerFn32.sml
+	VMMnemonicAssemblerFn64.sml
+	IEEE754.sml
+	Serialize.sml
+	VMMnemonicFormatter.sml
+	VMMnemonicAssembler.sml

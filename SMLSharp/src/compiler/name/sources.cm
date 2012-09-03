@@ -10,20 +10,18 @@ Group
 	structure NameMapPickler
         structure BoundTypeVarID
 
-        structure PrimID
-        structure OPrimID
-        structure TyConID
-        structure BoundTypeVarID
-        structure ExnTagID
-        structure ExVarID
-        structure FreeTypeVarID
-        structure VarID
-        structure VarName
+	structure PrimID
+	structure OPrimID
+	structure TyConID
+	structure BoundTypeVarID
+	structure ExnTagID
+	structure ExVarID
+	structure FreeTypeVarID
+	structure VarID
+	structure VarName
 
 	structure GlobalCounters
 
-        structure ClusterID
-
-        structure Constants
+	structure ClusterID
 is
 	main/module.cm

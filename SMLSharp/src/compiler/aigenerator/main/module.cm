@@ -1,24 +1,26 @@
 Group is
-        $/basis.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
-        ../../control/sources.cm
-        ../../env/sources.cm
-        ../../util/sources.cm
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
+	../../name/sources.cm
+	../../env/sources.cm
+	../../util/sources.cm
 	../../primitive/sources.cm
-        ../../name/sources.cm
-        ../../types/sources.cm
-        ../../constantterm/sources.cm
-        ../../systemdef/sources.cm
-        ../../yaanormal/sources.cm
-        ../../abstractinstruction/sources.cm
+	../../constantterm/sources.cm
+	../../yaanormal/sources.cm
+	../../abstractinstruction/sources.cm
+	../../anormal/sources.cm       (* for generating global index *)
+	../../sigenerator/sources.cm   (* for generating global index *)
 
-        ../../anormal/sources.cm       (* for generating global index *)
-        ../../sigenerator/sources.cm   (* for generating global index *)
-
-        BinarySearchCode.sml
-        CallAnalysis.sml
-        Simplify.sml
-        AIPrimitive.sml
-        AIGENERATOR.sig
-        AIGenerator.sml
-        GlobalIndexAllocator.sml
+	BinarySearchCode.sml
+	CallAnalysis.sml
+	Simplify.sml
+	AIPrimitive.sml
+	AIGENERATOR.sig
+	AIGenerator.sml
+	GlobalIndexAllocator.sml

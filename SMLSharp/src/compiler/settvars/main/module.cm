@@ -1,18 +1,17 @@
 Group is
 
-      $/basis.cm
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
 
-        ../../../../../SMLFormat/smlformatlib.cm
-        ../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../usererror/sources.cm
+	../../absyn/sources.cm
+	../../patterncalcFlattened/sources.cm
+	../../patterncalcWithTvars/sources.cm
 
-        ../../control/sources.cm
-        ../../usererror/sources.cm
-        ../../absyn/sources.cm
-        ../../util/sources.cm
-        ../../env/sources.cm
-        ../../types/sources.cm
-        ../../patterncalcFlattened/sources.cm
-        ../../patterncalcWithTvars/sources.cm
-        SETTVARS.sig
-        SetTVars.sml 
-        SetTVarsError.ppg.sml
+	SetTVarsError.ppg.sml
+	SETTVARS.sig
+	SetTVars.sml 
