@@ -294,7 +294,8 @@ in
                        tyCon = #tyCon e}
                   val _ = TextIO.output
                             (TextIO.stdErr,
-                             "found a reference to DUMMY global name `" ^
+                             Control.prettyPrint (Loc.format_loc loc) ^
+                             ": found a reference to DUMMY global name `" ^
                              displayName ^ "'; program won't work\n");
                 in
                   TFPRAISE
