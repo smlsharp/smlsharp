@@ -13,9 +13,13 @@ Group is
 	../../absyn/sources.cm
 	../../patterncalc/sources.cm
 
+	ElaboratorUtils.sml
 	ElaborateError.ppg.sml
 	ElaborateErrorSQL.ppg.sml
+	ElaborateSQL.sml
+	ElaborateCore.sml
+	ElaborateModule.sml
+	UserTvarScope.sml
+	ElaborateInterface.sml
 	ELABORATOR.sig
-	ElaboratorUtils.sml
-	ElaboratorSQL.sml
 	Elaborator.sml

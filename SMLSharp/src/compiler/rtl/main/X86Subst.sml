@@ -630,8 +630,10 @@ struct
         substFP subst code I.X86FDIVR (ty, mem)
       | I.X86 (I.X86FDIVR_ST (st1, st2)) => (code, insn)
       | I.X86 (I.X86FDIVRP st1) => (code, insn)
+      | I.X86 (I.X86FPREM) => (code, insn)
       | I.X86 (I.X86FABS) => (code, insn)
       | I.X86 (I.X86FCHS) => (code, insn)
+      | I.X86 I.X86FINCSTP => (code, insn)
       | I.X86 (I.X86FFREE st) => (code, insn)
       | I.X86 (I.X86FXCH st) => (code, insn)
       | I.X86 (I.X86FUCOM st) => (code, insn)
@@ -646,12 +648,12 @@ struct
           (code, I.X86 (I.X86FSTSW (dst, test)))
         end
 *)
-      | I.X86 (I.X86FSW_GT {clob}) =>
-        (code, I.X86 (I.X86FSW_GT {clob = substClob subst clob}))
-      | I.X86 (I.X86FSW_GE {clob}) =>
-        (code, I.X86 (I.X86FSW_GE {clob = substClob subst clob}))
-      | I.X86 (I.X86FSW_EQ {clob}) =>
-        (code, I.X86 (I.X86FSW_EQ {clob = substClob subst clob}))
+      | I.X86 (I.X86FSW_TESTH {clob,mask}) =>
+        (code, I.X86 (I.X86FSW_TESTH {clob = substClob subst clob,
+                                      mask = mask}))
+      | I.X86 (I.X86FSW_MASKCMPH {clob,mask,compare}) =>
+        (code, I.X86 (I.X86FSW_MASKCMPH {clob = substClob subst clob,
+                                         mask = mask, compare = compare}))
       | I.X86 (I.X86FLDCW mem) =>
         let
           val (code, dst) = substMem subst code mem

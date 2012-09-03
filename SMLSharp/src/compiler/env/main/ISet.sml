@@ -3,4 +3,4 @@
  * @author Atsushi Ohori
  * @version $Id: ISet.sml,v 1.2 2007/09/10 14:13:30 kiyoshiy Exp $
  *)
-structure ISet = BinarySetMaker(IOrd)
+structure ISet = BinarySetFn(IOrd)

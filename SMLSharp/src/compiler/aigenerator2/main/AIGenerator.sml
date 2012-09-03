@@ -26,8 +26,10 @@ struct
   fun sizeOfFloat () = if Control.nativeGen() then 0w4 else 0w1 : Target.uint
   fun sizeOfDouble () = if Control.nativeGen() then 0w8 else 0w2 : Target.uint
 
-  val SubscriptExceptionTag = AI.Extern ("sml_exn_Subscript", AI.BOXED)
-  val DivExceptionTag = AI.Extern ("sml_exn_Div", AI.BOXED)
+  val SubscriptExceptionTag = AI.Extern ("SML9Subscript", AI.BOXED)
+  val DivExceptionTag = AI.Extern ("SML3Div", AI.BOXED)
+  val SizeExceptionTag = AI.Extern ("SML4Size", AI.BOXED)
+  val arrayMaxLen = 0x01ffffff
 
   fun newArg (ty, argKind) =
       {id = newLocalId (), ty = ty, argKind = argKind} : AI.argInfo
@@ -108,6 +110,7 @@ struct
   type context =
        {
          raiseDivLabel: AI.label option,
+         raiseSizeLabel: AI.label option,
          boundaryCheckFailedLabel: AI.label option,
          envVar: AI.varInfo option,
          linkVar: AI.varInfo,
@@ -138,6 +141,7 @@ struct
       in
         ({
            raiseDivLabel = #raiseDivLabel context,
+           raiseSizeLabel = #raiseSizeLabel context,
            boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
            envVar = #envVar context,
            linkVar = #linkVar context,
@@ -163,6 +167,7 @@ struct
   fun addParamMap (context as {paramMapMap, ...}:context) label paramMap =
       {
         raiseDivLabel = #raiseDivLabel context,
+        raiseSizeLabel = #raiseSizeLabel context,
         boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
         envVar = #envVar context,
         linkVar = #linkVar context,
@@ -179,6 +184,7 @@ struct
   fun setBoundaryCheckFailedLabel (context:context) label =
       {
         raiseDivLabel = #raiseDivLabel context,
+        raiseSizeLabel = #raiseSizeLabel context,
         boundaryCheckFailedLabel = SOME label,
         envVar = #envVar context,
         linkVar = #linkVar context,
@@ -195,6 +201,24 @@ struct
   fun setRaiseDivLabel (context:context) label =
       {
         raiseDivLabel = SOME label,
+        raiseSizeLabel = #raiseSizeLabel context,
+        boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
+        envVar = #envVar context,
+        linkVar = #linkVar context,
+        funIdMap = #funIdMap context,
+(*
+        genericTys = #genericTys context,
+*)
+        routineInfoMap = #routineInfoMap context,
+        paramMapMap = #paramMapMap context,
+        passVars = #passVars context,
+        constants = #constants context
+      } : context
+
+  fun setRaiseSizeLabel (context:context) label =
+      {
+        raiseDivLabel = #raiseDivLabel context,
+        raiseSizeLabel = SOME label,
         boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
         envVar = #envVar context,
         linkVar = #linkVar context,
@@ -312,7 +336,6 @@ struct
         AN.UINT => AI.UINT
       | AN.SINT => AI.SINT
       | AN.BYTE => AI.BYTE
-      | AN.CHAR => AI.BYTE
       | AN.BOXED => AI.BOXED
       | AN.POINTER => AI.CPOINTER
       | AN.CODEPOINT => AI.CODEPOINTER
@@ -320,17 +343,6 @@ struct
       | AN.FOREIGNFUN => AI.CODEPOINTER
       | AN.FLOAT => AI.FLOAT
       | AN.DOUBLE => AI.DOUBLE
-      | AN.PAD => raise Control.Bug "transformTy': PAD"
-      | AN.SIZE => AI.SIZE
-      | AN.INDEX => AI.INDEX
-      | AN.BITMAP => AI.BITMAP
-      | AN.OFFSET => AI.OFFSET
-      | AN.TAG => AI.TAG
-      | AN.ATOMty => AI.ATOMty
-      | AN.DOUBLEty => AI.DOUBLEty
-      (* FIXME: deal with SINGLEty and UNBOXEDty *)
-      | AN.SINGLEty tid => AI.GENERIC tid
-      | AN.UNBOXEDty tid => AI.GENERIC tid
       | AN.GENERIC tid => AI.GENERIC tid
 
 (*
@@ -374,15 +386,15 @@ struct
       | AI.UInt 0w1 => AI.WriteBarrier
       | _ => AI.BarrierTag value
 
-  fun transformGlobalRef ((name, kind), ty) =
-        case (kind, ty) of
-          (AN.EXTERNSYMBOL, AN.FOREIGNFUN) => AI.ExtFunLabel name
-        | (AN.EXTERNSYMBOL, AN.POINTER) => AI.Extern (name, AI.CPOINTER)
-        | (AN.GLOBALSYMBOL, AN.POINTER) => AI.Global (name, AI.CPOINTER)
-        | (AN.EXTERNSYMBOL, _) => AI.Extern (name, AI.BOXED)
-        | (AN.GLOBALSYMBOL, _) => AI.Global (name, AI.BOXED)
-        | (AN.UNDECIDED _, _) =>
-          raise Control.Bug "transformGlobalRef: UNDECIDED"
+  fun transformGlobalRef (name, ty) =
+        case (name, ty) of
+          (AN.TOP_EXTERN name, AN.FOREIGNFUN) => AI.ExtFunLabel name
+        | (AN.TOP_EXTERN name, AN.POINTER) => AI.Extern (name, AI.CPOINTER)
+        | (AN.TOP_EXPORT (AN.TOP_GLOBAL name), AN.POINTER) =>
+          AI.Global (name, AI.CPOINTER)
+        | (AN.TOP_EXTERN name, _) => AI.Extern (name, AI.BOXED)
+        | (AN.TOP_EXPORT (AN.TOP_GLOBAL name), _) => AI.Global (name, AI.BOXED)
+        | (AN.TOP_EXPORT (AN.TOP_LOCAL id), _) => AI.Const id
 
   fun getPassVars (context as {passVars, ...}:context) antyList =
       pickupVars passVars antyList
@@ -510,9 +522,6 @@ struct
       let
         fun initField (code, index, nil, nil, nil, nil) =
             code
-          | initField (code, index, [AN.PAD], [_], [_], [_]) =
-            (* last field is padding. need to do nothing. *)
-            code
           | initField (code, index, [anty], [size], [value], [_]) =
             (* last field; no need to generate next index *)
             let
@@ -534,20 +543,16 @@ struct
                        value::values, fieldSize::fieldSizes) =
             let
               val code =
-                  case anty of
-                    AN.PAD => code
-                  | _ =>
-                    addInsn code
-                      [
-                        AI.Update {block = block,
-                                   offset = index,
-                                   size = size,
-                                   ty = transformTy anty,
-                                   value = value,
-                                   barrier = AI.NoBarrier,
-                                   loc = loc}
-                      ]
-
+                  addInsn code
+                    [
+                      AI.Update {block = block,
+                                 offset = index,
+                                 size = size,
+                                 ty = transformTy anty,
+                                 value = value,
+                                 barrier = AI.NoBarrier,
+                                 loc = loc}
+                    ]
               val (newIndex, code) =
                   case (index, fieldSize) of
                     (AI.UInt x, AI.UInt y) => (AI.UInt (x + y), code)
@@ -585,6 +590,51 @@ struct
         val code = initializeBlock
                        context code (AI.Var dst)
                        fieldTyList fieldSizeList fieldList nextOffsetList
+                       loc
+      in
+        code
+      end
+
+  (* initializeBlock doesn't generate codes calling barrier. *)
+  fun yaInitializeBlock (context:context) code block
+                        {antyList, sizeList, indexList, valueList} loc =
+      let
+        fun initField (code, nil, nil, nil, nil) =
+            code
+          | initField (code, anty::antys, size::sizes, index::indexes,
+                       value::values) =
+            let
+              val code =
+                  addInsn code
+                    [
+                      AI.Update {block = block,
+                                 offset = index,
+                                 size = size,
+                                 ty = transformTy anty,
+                                 value = value,
+                                 barrier = AI.NoBarrier,
+                                 loc = loc}
+                    ]
+            in
+              initField (code, antys, sizes, indexes, values)
+            end
+          | initField _ =
+            raise Control.Bug "initField"
+      in
+        initField (code, antyList, sizeList, indexList, valueList)
+      end
+
+  fun yaMakeRecord context code
+                   (args as {dst, fieldTyList, fieldSizeList, loc, ...})
+                   {fieldList, fieldIndexList} =
+      let
+        val code = allocRecord context code args
+        val code = yaInitializeBlock
+                       context code (AI.Var dst)
+                       {antyList=fieldTyList,
+                        sizeList=fieldSizeList,
+                        indexList=fieldIndexList,
+                        valueList=fieldList}
                        loc
       in
         code
@@ -736,7 +786,7 @@ struct
                 (fn ((n1, _), (n2, _)) => Target.UInt.compare (n1, n2))
                 cases
       in
-        map (fn (x, l) => (AI.UInt x, l)) cases
+        map (fn (x, l) => (AI.Byte x, l)) cases
       end
 
   fun setupSwitchByte branchCases =
@@ -751,7 +801,7 @@ struct
                 (fn ((n1, _), (n2, _)) => Target.UInt.compare (n1, n2))
                 cases
       in
-        map (fn (x, l) => (AI.UInt x, l)) cases
+        map (fn (x, l) => (AI.Byte x, l)) cases
       end
 
   fun transformBinarySwitch cmpOp
@@ -895,13 +945,16 @@ struct
                                switchValue branchCases defaultLabel loc =
       let
         val (context, branchCases) =
-            foldr (fn ((AN.ANVALUE (AN.ANGLOBALSYMBOL {name,ty,...}), label, _),
+            foldr (fn ((AN.ANVALUE (AN.ANTOPSYMBOL {name,ty,...}), label, _),
                        (context,branches)) =>
                       let
                         val tag = transformGlobalRef (name, ty)
                       in
                         (context, (tag,label)::branches)
                       end
+                    | ((AN.ANCONST CT.NULLBOXED, label, _),
+                        (context, branches)) =>
+                      (context, (AI.Empty, label)::branches)
                     | _ => raise Control.Bug "transformExceptionTag")
                   (context, nil)
                   branchCases
@@ -1030,12 +1083,78 @@ struct
         (context, code)
       end
 
+  fun arraySizeCheck context env code value loc =
+      if (case value of
+            AI.UInt n => n < Target.intToUInt arrayMaxLen
+          | AI.SInt n => n < 0 andalso n < Target.intToSInt arrayMaxLen
+          | _ => false)
+      then (context, code)   (* no need to check dynamically *)
+      else
+        let
+          val (context, addFailBlock, failLabel) =
+              checkFailedBlock context
+                               #raiseSizeLabel
+                               setRaiseSizeLabel
+                               SizeExceptionTag
+                               loc
+          val ty =
+              case value of
+                AI.UInt _ => AI.UINT
+              | AI.SInt _ => AI.SINT
+              | AI.Var {ty,...} => ty
+              | _ => raise Control.Bug "arraySizeCheck"
+          val passLabel = newLabel ()
+          val code =
+              case ty of
+                AI.SINT =>
+                let
+                  val passLabel = newLabel ()
+                  val code =
+                      addInsn code
+                        [
+                          AI.If {value1 = value,
+                                 value2 = AI.SInt 0,
+                                 op2 = (AI.Lt, ty, ty, AI.UINT),
+                                 thenLabel = failLabel,
+                                 elseLabel = passLabel,
+                                 loc = loc}
+                        ]
+                  val code = closeBlock code
+                  val code = beginBlock code passLabel AI.Branch env loc
+                in
+                  code
+                end
+              | _ => code
+          val arrayMaxLen =
+              case ty of
+                AI.UINT => AI.UInt (Target.intToUInt arrayMaxLen)
+              | AI.SINT => AI.SInt (Target.intToSInt arrayMaxLen)
+              | _ => raise Control.Bug "arraySizeCheck"
+          val code =
+              addInsn code
+                [
+                  AI.If {value1 = value,
+                         value2 = arrayMaxLen,
+                         op2 = (AI.Gt, ty, ty, AI.UINT),
+                         thenLabel = failLabel,
+                         elseLabel = passLabel,
+                         loc = loc}
+                ]
+          val code = closeBlock code
+          val code = addFailBlock code env
+          val code = beginBlock code passLabel AI.Branch env loc
+        in
+          (context, code)
+        end
+
   fun divZeroCheck context env code value ty loc =
       if (case value of
             AI.UInt 0w0 => false
           | AI.UInt _ => true
           | AI.SInt 0 => false
           | AI.SInt _ => true
+          | AI.Byte 0w0 => false
+          | AI.Byte _ => true
           | _ => false)
       then (context, code)   (* no need to check dynamically *)
       else
@@ -1051,7 +1170,7 @@ struct
               case ty of
                 AI.UINT => AI.UInt 0w0
               | AI.SINT => AI.SInt 0
-              | AI.BYTE => AI.UInt 0w0
+              | AI.BYTE => AI.Byte 0w0
               | _ => raise Control.Bug ("divZeroCheck "
                                         ^ Control.prettyPrint (AI.format_ty ty))
           val code =
@@ -1098,10 +1217,15 @@ struct
                                          ty = AI.UINT,
                                          value = AI.UInt 0w0,
                                          loc = loc}])
-      | CT.NULL =>
+      | CT.NULLPOINTER =>
         (context, addInsn code [AI.Move {dst = dst,
                                          ty = AI.CPOINTER,
                                          value = AI.Null,
+                                         loc = loc}])
+      | CT.NULLBOXED =>
+        (context, addInsn code [AI.Move {dst = dst,
+                                         ty = AI.BOXED,
+                                         value = AI.Empty,
                                          loc = loc}])
 
       | CT.STRING s =>
@@ -1184,14 +1308,16 @@ struct
         AN.ANINT n => AI.SIntData (Target.toSInt n)
       | AN.ANWORD n => AI.UIntData (Target.toUInt n)
       | AN.ANBYTE n => AI.UIntData (Target.toUInt n)
-      | AN.ANCHAR c => AI.UIntData (Target.charToUInt c)
+      | AN.ANCHAR c => AI.ByteData (Target.intToUInt (ord c))
       | AN.ANUNIT => AI.UIntData 0w0
-      | AN.ANGLOBALSYMBOL {name=(name,AN.EXTERNSYMBOL), ...} =>
+      | AN.ANNULLPOINTER => AI.NullPointerData
+      | AN.ANNULLBOXED => AI.NullBoxedData
+      | AN.ANTOPSYMBOL {name=AN.TOP_EXTERN name, ...} =>
         AI.ExternLabelData name
-      | AN.ANGLOBALSYMBOL {name=(name,AN.GLOBALSYMBOL), ...} =>
+      | AN.ANTOPSYMBOL {name=AN.TOP_EXPORT (AN.TOP_GLOBAL name), ...} =>
         AI.GlobalLabelData name
-      | AN.ANGLOBALSYMBOL {name=(name,AN.UNDECIDED _), ...} =>
-        raise Control.Bug "transformPrimData: UNDECIDED"
+      | AN.ANTOPSYMBOL {name=AN.TOP_EXPORT (AN.TOP_LOCAL id), ...} =>
+        AI.ConstData id
       | AN.ANVAR _ => raise Control.Bug "transformPrimData: ANVAR"
       | AN.ANLABEL id =>
         (
@@ -1206,10 +1332,12 @@ struct
       case anvalue of
         AN.ANINT n => (context, AI.SInt (Target.toSInt n))
       | AN.ANWORD n => (context, AI.UInt (Target.toUInt n))
-      | AN.ANBYTE n => (context, AI.UInt (Target.toUInt n))
-      | AN.ANCHAR c => (context, AI.UInt (Target.charToUInt c))
+      | AN.ANBYTE n => (context, AI.Byte (Target.toUInt n))
+      | AN.ANCHAR c => (context, AI.Byte (Target.charToUInt c))
       | AN.ANUNIT => (context, AI.UInt 0w0)  (* assume UNIT is an integer. *)
-      | AN.ANGLOBALSYMBOL {name,ty,...} =>
+      | AN.ANNULLPOINTER => (context, AI.Null)
+      | AN.ANNULLBOXED => (context, AI.Empty)
+      | AN.ANTOPSYMBOL {name,ty,...} =>
         (context, transformGlobalRef (name, ty))
       | AN.ANVAR (varInfo as {varKind = AN.ARG, id, ...}) =>
         let
@@ -1340,7 +1468,7 @@ struct
 
   fun transformDecl context env code andecl =
       case andecl of
-        AN.ANVAL {varList, sizeList,
+        AN.ANVAL {varList,
                   exp = AN.ANCONST const,
                   loc} =>
         let
@@ -1350,7 +1478,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANVALUE anvalue,
                   loc} =>
         let
@@ -1359,25 +1487,25 @@ struct
           makeMove context env code varList [value] loc
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANRECORD {totalSize = AN.ANWORD 0w0,
                                      ...},
                   loc} =>
         makeEmpty context env code varList loc
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANENVRECORD {totalSize = 0w0, ...},
                   loc} =>
         makeEmpty context env code varList loc
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANARRAY {totalSize = AN.ANWORD 0w0,
                                     isMutable = false,
                                     ...},
                   loc} =>
         makeEmpty context env code varList loc
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANENVACC {nestLevel, offset, size, ty},
                   loc} =>
         let
@@ -1403,7 +1531,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANSELECT {record, nestLevel, offset, size, ty},
                   loc} =>
         let
@@ -1429,7 +1557,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANGETFIELD {array, offset, size, ty,
                                        needBoundaryCheck},
                   loc} =>
@@ -1549,7 +1677,7 @@ struct
             end
           | _ =>
             let
-              val lenVar = newVar AI.OFFSET
+              val lenVar = newVar AI.UINT
               val code =
                   addInsn code
                     (
@@ -1572,7 +1700,7 @@ struct
             end
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANARRAY {bitmap, totalSize as anTotalSize,
                                     initialValue,
                                     elementTy,
@@ -1583,16 +1711,35 @@ struct
           val dst = transformVarInfo (onlyOne varList)
           val (context, bitmap) = transformArg context env bitmap
           val (context, totalSize) = transformArg context env totalSize
-          val (context, initialValue) = transformArg context env initialValue
+          val (context, initialValue) =
+              case initialValue of
+                NONE => (context, NONE)
+              | SOME initialValue =>
+                let val (context, v) = transformArg context env initialValue
+                in (context, SOME v)
+                end
           val elementTy = transformTy elementTy
           val (context, elementSize) = transformArg context env elementSize
           val objectType = if isMutable then AI.Array else AI.Vector
+
+          val (elementSize, elementTy, initialValue) =
+              case (bitmap, initialValue) of
+                (AI.UInt 0w0, NONE) => (elementSize, elementTy, NONE)
+              | (_, SOME _) => (elementSize, elementTy, initialValue)
+              | _ =>
+                (* no initial value but need initialization *)
+                (AI.UInt 0w1, AI.BYTE, SOME (AI.UInt 0w0))
+          fun toInt (AI.UInt v1) = SOME v1
+            | toInt (AI.SInt v1) = SOME (Target.SIntToUInt v1)
+            | toInt _ = NONE
+          val isOneElement =
+              toInt totalSize = toInt elementSize
+              orelse (case (totalSize, elementSize) of
+                        (AI.Var v1, AI.Var v2) => ID.eq (#id v1, #id v2)
+                      | _ => false)
         in
-          if (case (anTotalSize, anElementSize) of
-                (AN.ANWORD v1, AN.ANWORD v2) => v1 = v2
-              | (AN.ANVAR v1, AN.ANVAR v2) => ID.eq (#id v1, #id v2)
-              | _ => false)
-          then
+          case (isOneElement, initialValue) of
+            (true, SOME initialValue) =>
             (* one element array; this is frequently used for "ref." *)
             let
               val code =
@@ -1615,10 +1762,30 @@ struct
             in
               (context, env, code)
             end
-          else
+          | (_, NONE) =>
+            (* alloc array without initialization. *)
+            let
+              val (context, code) =
+                  arraySizeCheck context env code totalSize loc
+              val code =
+                  addInsn code
+                    [
+                      AI.Alloc  {dst = dst,
+                                 objectType = objectType,
+                                 bitmaps = [bitmap],
+                                 payloadSize = totalSize,
+                                 loc = loc}
+                    ]
+            in
+              (context, env, code)
+            end
+          | (_, SOME initialValue) =>
             (* ordinary array. split ANARRAY into two parts; one is array
              * allocation, and another is initialization loop. *)
             let
+              val (context, code) =
+                  arraySizeCheck context env code totalSize loc
+
               val currentLabel = getCurrentLabel code
               val loopLabel = newLabel ()
               val bodyLabel = newLabel ()
@@ -1691,7 +1858,7 @@ struct
             end
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANMODIFY {record, nestLevel, offset,
                                      value, valueTy, valueSize, valueTag},
                   loc} =>
@@ -1862,13 +2029,14 @@ struct
             end
         end
 
-      | AN.ANVAL {varList, sizeList,
-                  exp = AN.ANRECORD {bitmap, totalSize, fieldList,
-                                     fieldSizeList, fieldTyList, isMutable},
+      | AN.ANVAL {varList,
+                  exp = AN.ANRECORD {bitmaps, totalSize, fieldList,
+                                     fieldSizeList, fieldIndexList=NONE,
+                                     fieldTyList, isMutable},
                   loc} =>
         let
           val dst = transformVarInfo (onlyOne varList)
-          val (context, bitmap) = transformArg context env bitmap
+          val (context, bitmaps) = transformArgList context env bitmaps
           val (context, totalSize) = transformArg context env totalSize
           val (context, fieldList) = transformArgList context env fieldList
           val (context, fieldSizeList) =
@@ -1876,7 +2044,7 @@ struct
 
           val code =
               makeRecord context code {dst = dst,
-                                       bitmaps = [bitmap],
+                                       bitmaps = bitmaps,
                                        payloadSize = totalSize,
                                        fieldTyList = fieldTyList,
                                        fieldSizeList = fieldSizeList,
@@ -1887,7 +2055,35 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
+                  exp = AN.ANRECORD {bitmaps, totalSize, fieldList,
+                                     fieldSizeList,
+                                     fieldIndexList = SOME fieldIndexList,
+                                     fieldTyList, isMutable},
+                  loc} =>
+        let
+          val dst = transformVarInfo (onlyOne varList)
+          val (context, bitmaps) = transformArgList context env bitmaps
+          val (context, totalSize) = transformArg context env totalSize
+          val (context, fieldList) = transformArgList context env fieldList
+          val (context, fieldSizeList) =
+              transformArgList context env fieldSizeList
+          val (context, fieldIndexList) =
+              transformArgList context env fieldIndexList
+
+          val code =
+              yaMakeRecord context code {dst = dst,
+                                         bitmaps = bitmaps,
+                                         payloadSize = totalSize,
+                                         fieldTyList = fieldTyList,
+                                         fieldSizeList = fieldSizeList,
+                                         loc = loc}
+                           {fieldList=fieldList, fieldIndexList=fieldIndexList}
+        in
+          (context, env, code)
+        end
+
+      | AN.ANVAL {varList,
                   exp = AN.ANENVRECORD {bitmap, totalSize, fieldList,
                                         fieldSizeList, fieldTyList,
                                         fixedSizeList},
@@ -1928,9 +2124,15 @@ struct
                          (* ToDo: not all "raise" go outside of ML.
                           * We should choose RaiseExt only for unhandled
                           * raise in toplevel functions. *)
-                         case #ffiAttributes routine of
-                           NONE => AI.Raise {exn = exnArg, loc = loc}
-                         | SOME attributes =>
+                         case (#ffiAttributes routine, #handler env) of
+                           (NONE, _) => AI.Raise {exn = exnArg, loc = loc}
+                         | (SOME _, AI.StaticHandler _) =>
+                           AI.Raise {exn = exnArg, loc = loc}
+                         | (SOME _, AI.DynamicHandler {outside=false,...}) =>
+                           AI.Raise {exn = exnArg, loc = loc}
+                         | (SOME _, AI.DynamicHandler {outside=true,...}) =>
+                           raise Control.Bug "ANRAISE"
+                         | (SOME attributes, AI.NoHandler) =>
                            AI.RaiseExt {exn = exnArg,
                                         attributes = attributes,
                                         loc = loc}
@@ -1939,7 +2141,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANRETURN {valueList, tyList, sizeList, loc} =>
+      | AN.ANRETURN {valueList, tyList, loc} =>
         let
           val (context, valueList) = transformArgList context env valueList
           val tyList = map transformTy tyList
@@ -1972,7 +2174,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANCLOSURE {funLabel, env = closEnv},
                   loc} =>
         let
@@ -1984,7 +2186,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANRECCLOSURE {funLabel},
                   loc} =>
         let
@@ -1996,7 +2198,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANCALLBACKCLOSURE {funLabel, env=closEnv,
                                               argTyList, resultTyList,
                                               attributes},
@@ -2022,7 +2224,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANFOREIGNAPPLY {function, argList, argTyList,
                                            resultTyList, attributes},
                   loc} =>
@@ -2057,7 +2259,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANPRIMAPPLY {prim, argList,
                                         argTyList, resultTyList,
                                         instSizeList, instTagList},
@@ -2096,9 +2298,8 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
-                  exp = AN.ANAPPLY {closure, argList, argTyList, resultTyList,
-                                    argSizeList},
+      | AN.ANVAL {varList,
+                  exp = AN.ANAPPLY {closure, argList, argTyList, resultTyList},
                   loc} =>
         let
           val dsts = map transformVarInfo varList
@@ -2136,8 +2337,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANTAILAPPLY {closure, argList, argTyList, resultTyList,
-                        argSizeList, loc} =>
+      | AN.ANTAILAPPLY {closure, argList, argTyList, resultTyList, loc} =>
         let
           val (context, closure) = transformArg context env closure
           val (context, argList) = transformArgList context env argList
@@ -2174,9 +2374,9 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANCALL {funLabel, env = closEnv, argList,
-                                   argSizeList, argTyList, resultTyList},
+                                   argTyList, resultTyList},
                   loc} =>
         let
           val dsts = map transformVarInfo varList
@@ -2212,7 +2412,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANTAILCALL {funLabel, env = closEnv, argList, argSizeList,
+      | AN.ANTAILCALL {funLabel, env = closEnv, argList,
                        argTyList, resultTyList, loc} =>
         let
           val (context, funLabel) = transformArg context env funLabel
@@ -2245,9 +2445,9 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
+      | AN.ANVAL {varList,
                   exp = AN.ANRECCALL {funLabel, argList,
-                                      argSizeList, argTyList, resultTyList},
+                                      argTyList, resultTyList},
                   loc} =>
         let
           val dsts = map transformVarInfo varList
@@ -2282,8 +2482,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANTAILRECCALL {funLabel, argList, argSizeList, argTyList,
-                          resultTyList, loc} =>
+      | AN.ANTAILRECCALL {funLabel, argList, argTyList, resultTyList, loc} =>
         let
           val (context, funLabel) = transformArg context env funLabel
           val (context, argList) = transformArgList context env argList
@@ -2313,8 +2512,8 @@ struct
           (context, env, code)
         end
 
-      | AN.ANVAL {varList, sizeList,
-                  exp = AN.ANLOCALCALL {codeLabel, argList, argSizeList,
+      | AN.ANVAL {varList,
+                  exp = AN.ANLOCALCALL {codeLabel, argList,
                                         argTyList, resultTyList,
                                         knownDestinations, returnLabel},
                   loc} =>
@@ -2357,7 +2556,7 @@ struct
           (context, env, code)
         end
 
-      | AN.ANTAILLOCALCALL {codeLabel, argList, argSizeList, argTyList,
+      | AN.ANTAILLOCALCALL {codeLabel, argList, argTyList,
                             resultTyList, knownDestinations, loc} =>
         if (case !knownDestinations of
               [label] => ID.eq (label, #routineLabel env) | _ => false)
@@ -2423,8 +2622,7 @@ struct
             (context, env, code)
           end
 
-      | AN.ANLOCALRETURN {valueList, tyList, sizeList, loc,
-                          knownDestinations} =>
+      | AN.ANLOCALRETURN {valueList, tyList, loc, knownDestinations} =>
         let
           val (context, valueList) = transformArgList context env valueList
 
@@ -2510,9 +2708,14 @@ struct
                 raise Control.Bug "transformDecl: ANSWITCH FLOAT"
               | (AN.ANCONST CT.UNIT, _, _)::_ =>
                 raise Control.Bug "transformDecl: ANSWITCH UNIT"
+              | (AN.ANCONST CT.NULLBOXED, _, _)::_ =>
+                transformExceptionSwitch
+                    context env code value branchCases defaultLabel loc
+(*
               | (AN.ANVALUE (AN.ANGLOBALSYMBOL _), _, _)::_ =>
                 transformExceptionSwitch
                     context env code value branchCases defaultLabel loc
+*)
               | _ =>
                 raise Control.Bug "transformDecl: ANSWITCH invalid branches"
 
@@ -2677,7 +2880,7 @@ struct
               (AN.ANVALUE (AN.ANWORD 0w0), _) => NONE
             | (AN.ANENVACC {nestLevel = 0w0, offset,
                             size = AN.ANWORD size,
-                            ty = AN.BITMAP}, SOME envArg) =>
+                            ty = AN.UINT}, SOME envArg) =>
               (* ASSERT: size must be equal to the size of a bitmap word. *)
               SOME (AI.EnvBitmap (envArg, BasicTypes.UInt32ToWord offset))
             | _ => raise Control.Bug "makeFrameBitmap: invalid bitmapFree"
@@ -2983,15 +3186,12 @@ struct
                          ({label, routine, callCount, tailCallCount,
                            selfCallCount, handlers}:CA.routineInfo) =
       let
-        val {codeId, body, argVarList, argSizeList, resultTyList,
-             ffiAttributes, loc, ...} =
+        val {codeId, body, argVarList, resultTyList, ffiAttributes, loc, ...} =
             case routine of
               CA.EntryFunction x => x
-            | CA.Code {codeId, argVarList, argSizeList, body, resultTyList,
-                       loc} =>
+            | CA.Code {codeId, argVarList, body, resultTyList, loc} =>
               {codeId = codeId,
                argVarList = argVarList,
-               argSizeList = argSizeList,
                body = body,
                resultTyList = resultTyList,
                ffiAttributes = NONE,
@@ -3139,6 +3339,7 @@ struct
         val context =
             {
               raiseDivLabel = NONE,
+              raiseSizeLabel = NONE,
               boundaryCheckFailedLabel = NONE,
               envVar = envVar,
               linkVar = linkVar,
@@ -3214,6 +3415,19 @@ struct
         clusters = nil
       } : AI.program
 
+  fun programWithSingleConst (k,v) =
+      {
+        toplevel = NONE,
+        constants = VarID.Map.singleton (k, v),
+        globals = SEnv.empty,
+        clusters = nil
+      } : AI.program
+
+  fun programWithSingleData (AN.TOP_GLOBAL name, v) =
+      programWithSingleGlobal (name, AI.GlobalData v)
+    | programWithSingleData (AN.TOP_LOCAL id, v) =
+      programWithSingleConst (id, v)
+
   fun mergeProgram (p1:AI.program, p2:AI.program) =
       let
         fun fail _ = raise Control.Bug "mergeProgram"
@@ -3244,7 +3458,7 @@ struct
           }
         end
 
-      | AN.ANTOPCONST {globalName, export, constant} =>
+      | AN.ANTOPCONST {globalName, constant} =>
         let
           val value =
               case constant of
@@ -3254,10 +3468,10 @@ struct
               | CT.FLOAT x => AI.PrimData (AI.FloatData x)
               | _ => raise Control.Bug "ANTOPCONST"
         in
-          programWithSingleGlobal (globalName, AI.GlobalData value)
+          programWithSingleData (globalName, value)
         end
 
-      | AN.ANTOPRECORD {globalName, export, bitmaps, totalSize, fieldList,
+      | AN.ANTOPRECORD {globalName, bitmaps, totalSize, fieldList,
                         fieldTyList, fieldSizeList, isMutable} =>
         let
           fun makeFields (field::fields, size::sizes) =
@@ -3273,10 +3487,10 @@ struct
                              payloadSize = Target.toUInt totalSize,
                              fields = makeFields (fieldList, fieldSizeList)}
         in
-          programWithSingleGlobal (globalName, AI.GlobalData data)
+          programWithSingleData (globalName, data)
         end
 
-      | AN.ANTOPARRAY {globalName, export,
+      | AN.ANTOPARRAY {globalName,
                        bitmap, totalSize,
                        initialValues, elementTy, elementSize,
                        isMutable} =>
@@ -3291,28 +3505,26 @@ struct
                                         size=size})
                               initialValues}
         in
-          programWithSingleGlobal (globalName, AI.GlobalData data)
+          programWithSingleData (globalName, data)
         end
 
-      | AN.ANTOPVAR {globalName, externalVarID, initialValue,
-                     elementTy, elementSize} =>
+      | AN.ANTOPVAR {globalName, initialValue, elementTy, elementSize} =>
         let
           val data =
               AI.VarSlot {size = Target.toUInt elementSize,
                           value = Option.map (transformPrimData funIdMap)
                                              initialValue}
         in
-          programWithSingleGlobal (globalName, AI.GlobalData data)
+          programWithSingleData (globalName, data)
         end
 
-      | AN.ANTOPCLOSURE {globalName, export, funLabel, closureEnv} =>
+      | AN.ANTOPCLOSURE {globalName, funLabel, closureEnv} =>
         let
           val {closureBitmap, closureFieldTys, closureFieldSizes, closureSize} =
               closureLayout ()
         in
           transformTopdecl funIdMap
             (AN.ANTOPRECORD {globalName = globalName,
-                             export = export,
                              bitmaps = [closureBitmap],
                              totalSize = closureSize,
                              fieldList = [closureEnv, AN.ANLABEL funLabel],
@@ -3321,13 +3533,12 @@ struct
                              isMutable = false})
         end
 
-      | AN.ANTOPALIAS {globalName, export, originalGlobalName} =>
+      | AN.ANTOPALIAS {globalName, originalGlobalName} =>
         (
-          case originalGlobalName of
-            (origName, AN.GLOBALSYMBOL) =>
-            programWithSingleGlobal (globalName, AI.GlobalAlias origName)
-          | (_, AN.EXTERNSYMBOL) => raise Control.Bug "ANTOPALIAS: EXTERNNAME"
-          | (_, AN.UNDECIDED _) => raise Control.Bug "ANTOPALIAS: UNDECIDED"
+          case (globalName, originalGlobalName) of
+            (AN.TOP_GLOBAL name, AN.TOP_GLOBAL origName) =>
+            programWithSingleGlobal (name, AI.GlobalAlias origName)
+          | _ => raise Control.Bug "ANTOPALIAS: EXTERNNAME"
         )
 
       | AN.ANENTERTOPLEVEL id =>

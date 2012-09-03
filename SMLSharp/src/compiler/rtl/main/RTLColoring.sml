@@ -111,6 +111,36 @@ struct
 
   end (* local *)
 
+  local
+    fun varsNode node =
+        let
+          val {defs, uses} = RTLUtils.Var.defuse node
+          val clobs = RTLUtils.Var.clobs node
+        in
+          RTLUtils.Var.setUnion (RTLUtils.Var.setUnion (defs, uses), clobs)
+        end
+
+    fun varsBlock (first, insns, last) =
+        let
+          val set1 = varsNode (RTLEdit.FIRST first)
+          val set2 = varsNode (RTLEdit.LAST last)
+        in
+          foldl (fn (insn, set) =>
+                    RTLUtils.Var.setUnion (varsNode (RTLEdit.MIDDLE insn), set))
+                (RTLUtils.Var.setUnion (set1, set2))
+                insns
+        end              
+  in
+
+  fun allVarSet graph =
+      VarID.Map.foldl
+        (fn (block, set) =>
+            RTLUtils.Var.setUnion (varsBlock block, set))
+        RTLUtils.Var.emptySet
+        graph
+
+  end (* local *)
+
   fun composeSubst color =
       VarID.Map.map (fn i => Vector.sub (Constraint.registers, i - 1)) color
 
@@ -123,24 +153,51 @@ struct
               SOME (R.REG {id = Vector.sub (regSubst, colorId - 1), ty = ty}))
         graph
 
+  fun makeSlot (vars, spill) =
+      let
+        fun maxFormat (fmt1:RTL.format, fmt2:RTL.format) =
+            {size = Int.max (#size fmt1, #size fmt2),
+             align = Int.max (#align fmt1, #align fmt2),
+             tag = #tag fmt1} : RTL.format
+        val formats =
+            RTLUtils.Var.fold
+              (fn ({id, ty}, slots) =>
+                  case VarID.Map.find (spill, id) of
+                    NONE => slots
+                  | SOME slotid =>
+                    let
+                      val fmt = Emit.formatOf ty
+                      val fmt = case VarID.Map.find (slots, slotid) of
+                                  NONE => fmt
+                                | SOME fmt2 => maxFormat (fmt2, fmt)
+                    in
+                      VarID.Map.insert (slots, slotid, fmt)
+                    end)
+              VarID.Map.empty
+              vars
+      in
+        VarID.Map.map
+          (fn slotid =>
+              case VarID.Map.find (formats, slotid) of
+                NONE => raise Control.Bug "makeSlotFormat"
+              | SOME fmt => {id = slotid, format = fmt})
+          spill
+      end
+
   fun applySpill (graph, spill) =
       Subst.substitute
         (fn {id, ty} =>
             case VarID.Map.find (spill, id) of
               NONE => NONE
-            | SOME slotid =>
-              let
-                val fmt = Emit.formatOf ty
-              in
-                SOME (R.MEM (ty, R.SLOT {id=slotid, format=fmt}))
-              end)
+            | SOME slot => SOME (R.MEM (ty, R.SLOT slot)))
         graph
 
-  fun regallocLoop regSubst 0w0 graph =
+  fun regallocLoop 0w0 graph =
       raise Control.Bug "regallocLoop: too many loops"
-    | regallocLoop regSubst count origGraph =
+    | regallocLoop count origGraph =
       let
         val graph = Constraint.split origGraph
+        val vars = allVarSet graph
         val interference = makeInterference graph
         val interference = Constraint.constrain graph interference
 
@@ -152,10 +209,11 @@ struct
         val {spill, color} =
             Coloring.color {maxColorId = Vector.length Constraint.registers}
                            interference
+        val spill = makeSlot (vars, spill)
       in
         if VarID.Map.isEmpty spill
-        then applyColor (graph, color, regSubst)
-        else regallocLoop regSubst (count - 0w1) (applySpill (origGraph, spill))
+        then (graph, color)
+        else regallocLoop (count - 0w1) (applySpill (origGraph, spill))
       end
 
   fun regalloc program =
@@ -168,9 +226,15 @@ struct
                   VarID.Map.insert (map, Vector.sub (regSubst, i), reg))
               VarID.Map.empty
               Constraint.registers
-
         val program =
-            RTLUtils.mapCluster (regallocLoop regSubst maxIterations) program
+            RTLUtils.mapCluster
+              (fn graph =>
+                  let
+                    val (graph, color) = regallocLoop maxIterations graph
+                  in
+                    applyColor (graph, color, regSubst)
+                  end)
+              program
       in
         (program, registerMap)
       end

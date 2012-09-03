@@ -178,6 +178,7 @@
  *	a decimal expansion to decide close cases. This logic is only
  *	used for input more than STRTOD_DIGLIM digits long (default 40).
  */
+
 #ifndef Long
 #define Long long
 #endif
@@ -279,10 +280,13 @@ static double private_mem[PRIVATE_mem], *pmem_next = private_mem;
 #include "math.h"
 #endif
 
+/******** ADDED FOR SMLSHARP BEGIN ********/
+/* here is the only difference from the original version. */
 #define dtoa sml_dtoa
 #define freedtoa sml_freedtoa
 #define strtod sml_strtod
 #define gethex sml_gethex
+/******** ADDED FOR SMLSHARP END   ********/
 
 #ifdef __cplusplus
 extern "C" {
@@ -2088,7 +2092,7 @@ gethex( CONST char **sp, U *rvp, int rounding, int sign)
 #endif
 	Bfree(b);
 	}
-#endif /*}!NO_HEX_FP*/
+#endif /*!NO_HEX_FP}*/
 
  static int
 #ifdef KR_headers
@@ -2135,7 +2139,13 @@ quorem
 	bxe = bx + n;
 	q = *bxe / (*sxe + 1);	/* ensure q <= true quotient */
 #ifdef DEBUG
+#ifdef NO_STRTOD_BIGCOMP
 	/*debug*/ if (q > 9)
+#else
+	/* An oversized q is possible when quorem is called from bigcomp and */
+	/* the input is near, e.g., twice the smallest denormalized number. */
+	/*debug*/ if (q > 15)
+#endif
 	/*debug*/	Bug("oversized quotient in quorem");
 #endif
 	if (q) {
@@ -2221,8 +2231,29 @@ quorem
 	return q;
 	}
 
-#ifndef NO_STRTOD_BIGCOMP
+#if defined(Avoid_Underflow) || !defined(NO_STRTOD_BIGCOMP) /*{*/
+ static double
+sulp
+#ifdef KR_headers
+	(x, bc) U *x; BCinfo *bc;
+#else
+	(U *x, BCinfo *bc)
+#endif
+{
+	U u;
+	double rv;
+	int i;
 
+	rv = ulp(x);
+	if (!bc->scale || (i = 2*P + 1 - ((word0(x) & Exp_mask) >> Exp_shift)) <= 0)
+		return rv; /* Is there an example where i <= 0 ? */
+	word0(&u) = Exp_1 + (i << Exp_shift);
+	word1(&u) = 0;
+	return rv * u.d;
+	}
+#endif /*}*/
+
+#ifndef NO_STRTOD_BIGCOMP
  static void
 bigcomp
 #ifdef KR_headers
@@ -2381,7 +2412,7 @@ bigcomp
 				}
 			if (!dsign)
 				goto rethi1;
-			dval(rv) += 2.*ulp(rv);
+			dval(rv) += 2.*sulp(rv,bc);
 			}
 		else {
 			bc->inexact = 0;
@@ -2398,17 +2429,27 @@ bigcomp
 	else if (dd < 0) {
 		if (!dsign)	/* does not happen for round-near */
 retlow1:
-			dval(rv) -= ulp(rv);
+			dval(rv) -= sulp(rv,bc);
 		}
 	else if (dd > 0) {
 		if (dsign) {
  rethi1:
-			dval(rv) += ulp(rv);
+			dval(rv) += sulp(rv,bc);
 			}
 		}
 	else {
 		/* Exact half-way case:  apply round-even rule. */
-		if (word1(rv) & 1) {
+		if ((j = ((word0(rv) & Exp_mask) >> Exp_shift) - bc->scale) <= 0) {
+			i = 1 - j;
+			if (i <= 31) {
+				if (word1(rv) & (0x1 << i))
+					goto odd;
+				}
+			else if (word0(rv) & (0x1 << (i-32)))
+				goto odd;
+			}
+		else if (word1(rv) & 1) {
+ odd:
 			if (dsign)
 				goto rethi1;
 			goto retlow1;
@@ -2431,7 +2472,7 @@ strtod
 #endif
 {
 	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, e, e1;
-	int esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
+	int esign, i, j, k, nd, nd0, nf, nz, nz0, nz1, sign;
 	CONST char *s, *s0, *s1;
 	double aadj, aadj1;
 	Long L;
@@ -2439,8 +2480,14 @@ strtod
 	ULong y, z;
 	BCinfo bc;
 	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
+#ifdef Avoid_Underflow
+	ULong Lsb, Lsb1;
+#endif
 #ifdef SET_INEXACT
 	int oldinexact;
+#endif
+#ifndef NO_STRTOD_BIGCOMP
+	int req_bigcomp = 0;
 #endif
 #ifdef Honor_FLT_ROUNDS /*{*/
 #ifdef Trust_FLT_ROUNDS /*{{ only define this if FLT_ROUNDS really works! */
@@ -2458,7 +2505,7 @@ strtod
 	CONST char *s2;
 #endif
 
-	sign = nz0 = nz = bc.dplen = bc.uflchk = 0;
+	sign = nz0 = nz1 = nz = bc.dplen = bc.uflchk = 0;
 	dval(&rv) = 0.;
 	for(s = s00;;s++) switch(*s) {
 		case '-':
@@ -2508,6 +2555,8 @@ strtod
 			z = 10*z + c - '0';
 	nd0 = nd;
 	bc.dp0 = bc.dp1 = s - s0;
+	for(s1 = s; s1 > s0 && *--s1 == '0'; )
+		++nz1;
 #ifdef USE_LOCALE
 	s1 = localeconv()->decimal_point;
 	if (c == *s1) {
@@ -2535,6 +2584,8 @@ strtod
 			for(; c == '0'; c = *++s)
 				nz++;
 			if (c > '0' && c <= '9') {
+				bc.dp0 = s0 - s;
+				bc.dp1 = bc.dp0 + bc.dplen;
 				s0 = s;
 				nf += nz;
 				nz = 0;
@@ -2556,7 +2607,7 @@ strtod
 					y = 10*y + c;
 				else if (nd <= DBL_DIG + 1)
 					z = 10*z + c;
-				nz = 0;
+				nz = nz1 = 0;
 				}
 			}
 		}
@@ -2753,9 +2804,6 @@ strtod
 		if (e1 &= ~15) {
 			if (e1 > DBL_MAX_10_EXP) {
  ovfl:
-#ifndef NO_ERRNO
-				errno = ERANGE;
-#endif
 				/* Can't trust HUGE_VAL */
 #ifdef IEEE_Arith
 #ifdef Honor_FLT_ROUNDS
@@ -2782,6 +2830,17 @@ strtod
 				word0(&rv) = Big0;
 				word1(&rv) = Big1;
 #endif /*IEEE_Arith*/
+ range_err:
+				if (bd0) {
+					Bfree(bb);
+					Bfree(bd);
+					Bfree(bs);
+					Bfree(bd0);
+					Bfree(delta);
+					}
+#ifndef NO_ERRNO
+				errno = ERANGE;
+#endif
 				goto ret;
 				}
 			e1 >>= 4;
@@ -2821,6 +2880,8 @@ strtod
 						>> Exp_shift)) > 0) {
 				/* scaled rv is denormal; clear j low bits */
 				if (j >= 32) {
+					if (j > 54)
+						goto undfl;
 					word1(&rv) = 0;
 					if (j >= 53)
 					 word0(&rv) = (P+2)*Exp_msk1;
@@ -2844,10 +2905,7 @@ strtod
 				if (!dval(&rv)) {
  undfl:
 					dval(&rv) = 0.;
-#ifndef NO_ERRNO
-					errno = ERANGE;
-#endif
-					goto ret;
+					goto range_err;
 					}
 #ifndef Avoid_Underflow
 				word0(&rv) = Tiny0;
@@ -2864,7 +2922,7 @@ strtod
 
 	/* Put digits into bd: true value = bd * 10^e */
 
-	bc.nd = nd;
+	bc.nd = nd - nz1;
 #ifndef NO_STRTOD_BIGCOMP
 	bc.nd0 = nd0;	/* Only needed if nd > strtod_diglim, but done here */
 			/* to silence an erroneous warning about bc.nd0 */
@@ -2877,7 +2935,7 @@ strtod
 		if (i > nd0)
 			j += bc.dplen;
 		for(;;) {
-			if (--j <= bc.dp1 && j >= bc.dp0)
+			if (--j < bc.dp1 && j >= bc.dp0)
 				j = bc.dp0 - 1;
 			if (s0[j] != '0')
 				break;
@@ -2922,12 +2980,21 @@ strtod
 			bs2++;
 #endif
 #ifdef Avoid_Underflow
+		Lsb = LSB;
+		Lsb1 = 0;
 		j = bbe - bc.scale;
 		i = j + bbbits - 1;	/* logb(rv) */
-		if (i < Emin)	/* denormal */
-			j += P - Emin;
-		else
-			j = P + 1 - bbbits;
+		j = P + 1 - bbbits;
+		if (i < Emin) {	/* denormal */
+			i = Emin - i;
+			j -= i;
+			if (i < 32)
+				Lsb <<= i;
+			else if (i < 52)
+				Lsb1 = Lsb << (i-32);
+			else
+				Lsb1 = Exp_mask;
+			}
 #else /*Avoid_Underflow*/
 #ifdef Sudden_Underflow
 #ifdef IBM
@@ -2975,24 +3042,26 @@ strtod
 		bc.dsign = delta->sign;
 		delta->sign = 0;
 		i = cmp(delta, bs);
-#ifndef NO_STRTOD_BIGCOMP
+#ifndef NO_STRTOD_BIGCOMP /*{*/
 		if (bc.nd > nd && i <= 0) {
-			if (bc.dsign)
-				break;	/* Must use bigcomp(). */
+			if (bc.dsign) {
+				/* Must use bigcomp(). */
+				req_bigcomp = 1;
+				break;
+				}
 #ifdef Honor_FLT_ROUNDS
 			if (bc.rounding != 1) {
-				if (i < 0)
+				if (i < 0) {
+					req_bigcomp = 1;
 					break;
+					}
 				}
 			else
 #endif
-				{
-				bc.nd = nd;
 				i = -1;	/* Discarded digits make delta smaller. */
-				}
 			}
-#endif
-#ifdef Honor_FLT_ROUNDS
+#endif /*}*/
+#ifdef Honor_FLT_ROUNDS /*{*/
 		if (bc.rounding != 1) {
 			if (i < 0) {
 				/* Error is less than an ulp */
@@ -3026,7 +3095,7 @@ strtod
 						  }
 						}
  apply_adj:
-#ifdef Avoid_Underflow
+#ifdef Avoid_Underflow /*{*/
 					if (bc.scale && (y = word0(&rv) & Exp_mask)
 						<= 2*P*Exp_msk1)
 					  word0(&adj) += (2*P+1)*Exp_msk1 - y;
@@ -3040,7 +3109,7 @@ strtod
 						}
 					else
 #endif /*Sudden_Underflow*/
-#endif /*Avoid_Underflow*/
+#endif /*Avoid_Underflow}*/
 					dval(&rv) += adj.d*ulp(&rv);
 					}
 				break;
@@ -3057,7 +3126,7 @@ strtod
 					adj.d = y;
 					}
 				}
-#ifdef Avoid_Underflow
+#ifdef Avoid_Underflow /*{*/
 			if (bc.scale && (y = word0(&rv) & Exp_mask) <= 2*P*Exp_msk1)
 				word0(&adj) += (2*P+1)*Exp_msk1 - y;
 #else
@@ -3073,7 +3142,7 @@ strtod
 				goto cont;
 				}
 #endif /*Sudden_Underflow*/
-#endif /*Avoid_Underflow*/
+#endif /*Avoid_Underflow}*/
 			adj.d *= ulp(&rv);
 			if (bc.dsign) {
 				if (word0(&rv) == Big0 && word1(&rv) == Big1)
@@ -3084,20 +3153,20 @@ strtod
 				dval(&rv) -= adj.d;
 			goto cont;
 			}
-#endif /*Honor_FLT_ROUNDS*/
+#endif /*}Honor_FLT_ROUNDS*/
 
 		if (i < 0) {
 			/* Error is less than half an ulp -- check for
 			 * special case of mantissa a power of two.
 			 */
 			if (bc.dsign || word1(&rv) || word0(&rv) & Bndry_mask
-#ifdef IEEE_Arith
+#ifdef IEEE_Arith /*{*/
 #ifdef Avoid_Underflow
 			 || (word0(&rv) & Exp_mask) <= (2*P+1)*Exp_msk1
 #else
 			 || (word0(&rv) & Exp_mask) <= Exp_msk1
 #endif
-#endif
+#endif /*}*/
 				) {
 #ifdef SET_INEXACT
 				if (!delta->x[0] && delta->wds <= 1)
@@ -3128,6 +3197,8 @@ strtod
 #endif
 						   0xffffffff)) {
 					/*boundary case -- increment exponent*/
+					if (word0(&rv) == Big0 && word1(&rv) == Big1)
+						goto ovfl;
 					word0(&rv) = (word0(&rv) & Exp_mask)
 						+ Exp_msk1
 #ifdef IBM
@@ -3188,18 +3259,39 @@ strtod
 #ifdef IBM
 				goto cont;
 #else
+#ifndef NO_STRTOD_BIGCOMP
+				if (bc.nd > nd)
+					goto cont;
+#endif
 				break;
 #endif
 				}
 #ifndef ROUND_BIASED
+#ifdef Avoid_Underflow
+			if (Lsb1) {
+				if (!(word0(&rv) & Lsb1))
+					break;
+				}
+			else if (!(word1(&rv) & Lsb))
+				break;
+#else
 			if (!(word1(&rv) & LSB))
 				break;
 #endif
+#endif
 			if (bc.dsign)
+#ifdef Avoid_Underflow
+				dval(&rv) += sulp(&rv, &bc);
+#else
 				dval(&rv) += ulp(&rv);
+#endif
 #ifndef ROUND_BIASED
 			else {
+#ifdef Avoid_Underflow
+				dval(&rv) -= sulp(&rv, &bc);
+#else
 				dval(&rv) -= ulp(&rv);
+#endif
 #ifndef Sudden_Underflow
 				if (!dval(&rv)) {
 					if (bc.nd >nd) {
@@ -3292,9 +3384,23 @@ strtod
 				dval(&aadj2) = aadj1;
 				word0(&aadj2) += (2*P+1)*Exp_msk1 - y;
 				aadj1 = dval(&aadj2);
+				adj.d = aadj1 * ulp(&rv);
+				dval(&rv) += adj.d;
+				if (rv.d == 0.)
+#ifdef NO_STRTOD_BIGCOMP
+					goto undfl;
+#else
+					{
+					if (bc.nd > nd)
+						bc.dsign = 1;
+					break;
+					}
+#endif
 				}
-			adj.d = aadj1 * ulp(&rv);
-			dval(&rv) += adj.d;
+			else {
+				adj.d = aadj1 * ulp(&rv);
+				dval(&rv) += adj.d;
+				}
 #else
 #ifdef Sudden_Underflow
 			if ((word0(&rv) & Exp_mask) <= P*Exp_msk1) {
@@ -3377,8 +3483,16 @@ strtod
 	Bfree(bd0);
 	Bfree(delta);
 #ifndef NO_STRTOD_BIGCOMP
-	if (bc.nd > nd)
+	if (req_bigcomp) {
+		bd0 = 0;
+		bc.e0 += nz1;
 		bigcomp(&rv, s0, &bc);
+		y = word0(&rv) & Exp_mask;
+		if (y == Exp_mask)
+			goto ovfl;
+		if (y == 0 && rv.d == 0.)
+			goto undfl;
+		}
 #endif
 #ifdef SET_INEXACT
 	if (bc.inexact) {
@@ -3918,7 +4032,12 @@ dtoa
 				  }
 #endif
 				dval(&u) += dval(&u);
-				if (dval(&u) > ds || (dval(&u) == ds && L & 1)) {
+#ifdef ROUND_BIASED
+				if (dval(&u) >= ds)
+#else
+				if (dval(&u) > ds || (dval(&u) == ds && L & 1))
+#endif
+					{
  bump_up:
 					while(*--s == '9')
 						if (s == s0) {
@@ -4002,15 +4121,6 @@ dtoa
 	 * and for all and pass them and a shift to quorem, so it
 	 * can do shifts and ors to compute the numerator for q.
 	 */
-#ifdef Pack_32
-	if ((i = ((s5 ? 32 - hi0bits(S->x[S->wds-1]) : 1) + s2) & 0x1f))
-		i = 32 - i;
-#define iInc 28
-#else
-	if (i = ((s5 ? 32 - hi0bits(S->x[S->wds-1]) : 1) + s2) & 0xf)
-		i = 16 - i;
-#define iInc 12
-#endif
 	i = dshift(S, s2);
 	b2 += i;
 	m2 += i;
@@ -4103,7 +4213,11 @@ dtoa
 				if (j1 > 0) {
 					b = lshift(b, 1);
 					j1 = cmp(b, S);
+#ifdef ROUND_BIASED
+					if (j1 >= 0 /*)*/
+#else
 					if ((j1 > 0 || (j1 == 0 && dig & 1))
+#endif
 					&& dig++ == '9')
 						goto round_9_up;
 					}
@@ -4163,7 +4277,12 @@ dtoa
 #endif
 	b = lshift(b, 1);
 	j = cmp(b, S);
-	if (j > 0 || (j == 0 && dig & 1)) {
+#ifdef ROUND_BIASED
+	if (j >= 0)
+#else
+	if (j > 0 || (j == 0 && dig & 1))
+#endif
+		{
  roundoff:
 		while(*--s == '9')
 			if (s == s0) {

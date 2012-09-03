@@ -623,7 +623,9 @@ structure ILTransformation : ILTRANSFORMATION = struct
               AN.ANFOREIGNAPPLY {funExp, argExpList, argTyList, argSizeExpList, attributes, loc} =>
               IL.ForeignApply
                   {
-                   funExp = transformArg funExp,
+                   funExp = case funExp of
+                              AN.ANPRIMSYMBOL {name, loc} => IL.PrimSymbol name
+                            | _ => transformArg funExp,
                    argExpList = map transformArg argExpList,
                    argSizeExpList = map transformArg argSizeExpList,
                    argTyList = argTyList,
@@ -637,6 +639,7 @@ structure ILTransformation : ILTRANSFORMATION = struct
                    resultSizeExpList = map transformArg resultSizeExpList
                   }
             | AN.ANCONSTANT {value, loc} => IL.Constant value
+            | AN.ANPRIMSYMBOL {name, loc} => IL.PrimSymbol name
             | AN.ANEXCEPTIONTAG {tagValue, displayName, loc} => IL.ExceptionTag tagValue
             | AN.ANENVACC {nestLevel, offset, loc} =>
               IL.AccessEnv
@@ -661,10 +664,10 @@ structure ILTransformation : ILTRANSFORMATION = struct
                    elementTy = elementTy,
                    isMutable = isMutable
                   }
-            | AN.ANPRIMAPPLY {primName, argExpList, argTyList, argSizeExpList, loc} =>
+            | AN.ANPRIMAPPLY {primitive, argExpList, argTyList, argSizeExpList, loc} =>
               IL.CallPrim
                   {
-                   primName = primName,
+                   primitive = primitive,
                    argExpList = map transformArg argExpList,
                    argSizeExpList = map transformArg argSizeExpList,
                    argTyList = argTyList

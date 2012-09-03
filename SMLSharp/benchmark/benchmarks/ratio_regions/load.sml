@@ -1,4 +1,3 @@
 use "./ratio-regions.sml";
 
-Main.doit ();
-print "Done";
+use "./doit.sml";

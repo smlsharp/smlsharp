@@ -74,7 +74,7 @@ struct
       | I.Real80 => {tag = UNBOXED, size = 12, align = 16}
       | I.Generic tid => {tag = GENERIC tid, size = 16, align = 16}
       | I.PtrDiff _ => {tag = UNBOXED, size = 4, align = 4}
-      | I.Atom => {tag = UNBOXED, size = 4, align = 4}
+  val formatOfGeneric = {size = 16, align = 16}
 
   fun R32toR8 EAX = XL EAX
     | R32toR8 EBX = XL EBX
@@ -399,7 +399,6 @@ struct
         | MOVE (ty as Int32 _, dst, op1) => emitMove env (dst, op1)
         | MOVE (ty as NoType, dst, op1) => emitMove env (dst, op1)
         (* due to split or spill *)
-        | MOVE (ty as Atom, dst, op1) => emitMove env (dst, op1)
         | MOVE (ty as Ptr _, dst, op1) => emitMove env (dst, op1)
         | MOVE (ty as Real32, dst, op1) => emitMove env (dst, op1)
         | MOVE (ty as Int16 _, dst, op1) => emitMove16 env (dst, op1)
@@ -709,33 +708,23 @@ struct
         | X86 (X86FDIVR_ST (X86ST n, X86ST 0)) => [FDIVR (ST n, ST n)]
         | X86 (X86FDIVR_ST _) => raise Control.Bug "emitInsn: X86FDIVR_ST"
         | X86 (X86FDIVRP (X86ST n)) => [FDIVRP (ST n)]
+        | X86 (I.X86FPREM) => [FPREM]
         | X86 (X86FABS) => [FABS]
         | X86 (X86FCHS) => [FCHS]
+        | X86 X86FINCSTP => [FINCSTP]
         | X86 (X86FFREE (X86ST st)) => [FFREE (ST st)]
         | X86 (X86FXCH (X86ST st)) => [FXCH (ST st)]
         | X86 (X86FUCOM (X86ST st)) => [FUCOM (ST st)]
         | X86 (X86FUCOMP (X86ST st)) => [FUCOMP (ST st)]
         | X86 X86FUCOMPP => [FUCOMPP]
-          (*            C3:14 C2:10 C0:8
-           * st0 > src    0     0     0
-           * st0 < src    0     0     1
-           * st0 = src    1     0     0
-           * unordered    1     1     1
-           *)
-        | X86 (X86FSW_GT {clob}) =>
+        | X86 (X86FSW_TESTH {clob, mask}) =>
           (assert 150 (r32 (REG clob) = EAX);
-           (* hi & 0b01000101 == 0 *)
-           [FSTSW_AX, TESTB (R8 (XH EAX), I_8 (WORD 0wx45))])
-        | X86 (X86FSW_GE {clob}) =>
+           [FSTSW_AX, TESTB (R8 (XH EAX), I_8 (emitImm env mask))])
+        | X86 (X86FSW_MASKCMPH {clob, mask, compare}) =>
           (assert 160 (r32 (REG clob) = EAX);
-           (* hi & 0b00000101 == 0 *)
-           [FSTSW_AX, TESTB (R8 (XH EAX), I_8 (WORD 0wx5))])
-        | X86 (X86FSW_EQ {clob}) =>
-          (assert 170 (r32 (REG clob) = EAX);
-           (* hi & 0b01000101 == 0b01000000 *)
            [FSTSW_AX,
-            ANDB (R8 (XH EAX), I_8 (WORD 0wx45)),
-            CMPB (R8 (XH EAX), I_8 (WORD 0wx40))])
+            ANDB (R8 (XH EAX), I_8 (emitImm env mask)),
+            CMPB (R8 (XH EAX), I_8 (emitImm env compare))])
         | X86 (X86FLDCW mem) => [FLDCW (emitMem mem)]
         | X86 (X86FNSTCW mem) => [FNSTCW (emitMem mem)]
         | X86 X86FWAIT => [FWAIT]
@@ -979,7 +968,7 @@ struct
            then [PUSHL (R_ EBP),
                  MOVL  (R EBP, R_ ESP),
                  ANDL  (R ESP, I_ (WORD 0wxfffffff0)),
-                 PUSHL (I_ (INT 0))]   (* dummy *)
+                 PUSHL (M_ (X.DISP (INT 4, X.BASE EBP)))]
            else nil) @
           allocFrame env preFrameSize
         end
@@ -1028,7 +1017,7 @@ struct
       end
 
   fun emitCluster {regAlloc, layoutMap}
-                  ({clusterId, frameBitmap, baseLabel, body,
+                  ({clusterId, frameBitmap, baseLabel, body, numHeaderWords,
                     preFrameSize, postFrameSize, loc}
                    :I.cluster) =
       let
@@ -1138,95 +1127,86 @@ struct
 
   fun emitTopdecl env topdecl =
       case topdecl of
-        CLUSTER cluster =>
-        {code = emitCluster env cluster, nextDummy = nil}
-      | DATA data =>
-        {code = emitData data, nextDummy = nil}
+        CLUSTER cluster => emitCluster env cluster
+      | DATA data => emitData data
       | BSS {scope, symbol, size} =>
-        {code = (case scope of GLOBAL => [Global symbol] | LOCAL => nil) @
-                [Comm (symbol, {size=size})],
-         nextDummy = nil}
+        (case scope of GLOBAL => [Global symbol] | LOCAL => nil) @
+        [Comm (symbol, {size=size})]
       | X86GET_PC_THUNK_BX symbol =>
-        {code = [GET_PC_THUNK_Decl symbol,
-                 MOVL (R EBX, M_ (X.BASE ESP)),
-                 RET NONE],
-         nextDummy = nil}
+        [GET_PC_THUNK_Decl symbol,
+         MOVL (R EBX, M_ (X.BASE ESP)),
+         RET NONE]
       | EXTERN {symbol, linkStub, linkEntry, ptrTy} =>
-        {code = (if linkEntry then [LinkPtrEntry symbol] else nil) @
-                (if linkStub then [LinkStubEntry symbol] else nil),
-         nextDummy = nil}
+        (if linkEntry then [LinkPtrEntry symbol] else nil) @
+        (if linkStub then [LinkStubEntry symbol] else nil)
       | TOPLEVEL {symbol, toplevelEntry, nextToplevel,
                   smlPushHandlerLabel, smlPopHandlerLabel} =>
         (* toplevel code takes no argument and returns unhandled exception. *)
         let
-          val (returnCode, nextDummyCode) =
+          val returnCode =
               case nextToplevel of
-                NONE => ([RET NONE], nil)
+                NONE => [RET NONE]
               | SOME nextSymbol =>
-                ([JMP (I_ (X.LABEL (X.SYMBOL nextSymbol)), nil)],
-                 [DUMMY_NEXT_TOPLEVEL nextSymbol])
+                [JMP (I_ (X.LABEL (X.SYMBOL nextSymbol)), nil)]
         in
-          {code =
-             [
-               Section TextSection,
-               Align {align = 4, filler = 0wx90},
-               Global symbol,
-               Symbol (symbol, NONE),
-               PUSHL (R_ EBP),
-               MOVL  (R EBP, R_ ESP),
+          [
+            Section TextSection,
+            Align {align = 4, filler = 0wx90},
+            Global symbol,
+            Symbol (symbol, NONE),
+            PUSHL (R_ EBP),
+            MOVL  (R EBP, R_ ESP),
 
-               (* call toplevel cluster. *)
-               MOVL (R EAX, (I_ (X.INT 0))),
-               X.CALL (I_ (X.LABEL (X.SYMBOL toplevelEntry))),
+            (* call toplevel cluster. *)
+            MOVL (R EAX, (I_ (X.INT 0))),
+            X.CALL (I_ (X.LABEL (X.SYMBOL toplevelEntry))),
 
-               MOVL  (R ESP, R_ EBP),
-               POPL  (R EBP)
-             ] @
-             returnCode,
-           nextDummy = nextDummyCode}
+            MOVL  (R ESP, R_ EBP),
+            POPL  (R EBP)
+          ] @
+          returnCode
         end
 
   fun emitTopdeclList env (topdecl::topdecls) =
       let
-        val {code, nextDummy} = emitTopdecl env topdecl
-        val {code=code2, nextDummy=nextDummy2} = emitTopdeclList env topdecls
+        val code1 = emitTopdecl env topdecl
+        val code2 = emitTopdeclList env topdecls
       in
-        {code = code @ code2, nextDummy = nextDummy @ nextDummy2}
+        code1 @ code2
       end
-    | emitTopdeclList env nil = {code = nil, nextDummy = nil}
+    | emitTopdeclList env nil = nil
 
   fun emit env program =
       let
         val result = emitTopdeclList env program
       in
         if !Control.debugCodeGen then
-          {code = #code result @
-                  [
-                    Section TextSection,
-                    Align {align = 4, filler = 0wx90},
-                    Symbol ("__debug__clearframe__", NONE),
-                    PUSHL (R_ EDI),
-                    PUSHL (R_ EDX),
-                    PUSHL (R_ ECX),
-                    PUSHL (R_ EAX),
-                    LEAL (EDI, X.DISP (X.INT 20, X.BASE ESP)),
-                    MOVL (R EDX, M_ (X.BASE EDI)),
-                    MOVL (R ECX, R_ EBP),
-                    SUBL (R ECX, R_ EDI),
-                    MOVL (R EAX, I_ (X.WORD 0wx55555555)),
-                    CLD,
-                    REP_STOSB,
-                    ADDL (R EAX, I_ (X.INT 2)),
-                    ADDL (R EDI, I_ (X.INT 8)),
-                    MOVL (R ECX, R_ EDX),
-                    REP_STOSB,
-                    POPL (R EAX),
-                    POPL (R ECX),
-                    POPL (R EDX),
-                    POPL (R EDI),
-                    RET (SOME (X.INT 4))
-                  ],
-           nextDummy = #nextDummy result}
+          result @
+          [
+            Section TextSection,
+            Align {align = 4, filler = 0wx90},
+            Symbol ("__debug__clearframe__", NONE),
+            PUSHL (R_ EDI),
+            PUSHL (R_ EDX),
+            PUSHL (R_ ECX),
+            PUSHL (R_ EAX),
+            LEAL (EDI, X.DISP (X.INT 20, X.BASE ESP)),
+            MOVL (R EDX, M_ (X.BASE EDI)),
+            MOVL (R ECX, R_ EBP),
+            SUBL (R ECX, R_ EDI),
+            MOVL (R EAX, I_ (X.WORD 0wx55555555)),
+            CLD,
+            REP_STOSB,
+            ADDL (R EAX, I_ (X.INT 2)),
+            ADDL (R EDI, I_ (X.INT 8)),
+            MOVL (R ECX, R_ EDX),
+            REP_STOSB,
+            POPL (R EAX),
+            POPL (R ECX),
+            POPL (R EDX),
+            POPL (R EDI),
+            RET (SOME (X.INT 4))
+          ]
         else result
       end
 

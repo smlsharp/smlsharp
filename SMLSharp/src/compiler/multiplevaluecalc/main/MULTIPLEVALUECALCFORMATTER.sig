@@ -10,5 +10,4 @@ sig
 
     val mvdeclToString : MultipleValueCalc.mvdecl -> string
 
-    val topBlockToString :MultipleValueCalc.topBlock -> string
 end

@@ -1,9 +1,6 @@
 #ifndef SMLSHARP__HEAP_OTOMO_H__
 #define SMLSHARP__HEAP_OTOMO_H__
 
-#define HEAP_LOCK_IMPL   ((void)0)
-#define HEAP_UNLOCK_IMPL ((void)0)
-
 struct _bitptr{
   unsigned int *cur;
   unsigned int mask;
@@ -108,7 +105,7 @@ struct heap_bitmap_space {
 
 #define ALLOC_SIZE_MIN       (OBJ_HEADER_SIZE + sizeof(void*))
 //#define HEAP_ROUND_SIZE(sz)  ALIGN(sz,ALIGN(ALLOC_SIZE_MIN, MAXALIGN))
-#define HEAP_ROUND_SIZE_IMPL(sz)  (sz)
+#define HEAP_ROUND_SIZE(sz)  (sz)
 //#define HEAP_ROUND_BLOCK_SIZE(sz,bsz)  ALIGN(sz,bsz)
 
 int sml_heap_check_obj(void*);
@@ -186,7 +183,7 @@ void sml_heap_malloced(size_t);
 
 #ifdef PRINT_ALLOC_TIME
 extern size_t count_alloc,count_alloc_another;
-#define HEAP_FAST_ALLOC_IMPL(obj__,size_,IFFAIL)		\
+#define HEAP_FAST_ALLOC(obj__,size_,IFFAIL)			\
   do{								\
     struct bitmap_info_space *b_info;				\
     								\
@@ -231,7 +228,7 @@ extern size_t count_alloc,count_alloc_another;
     }									\
   }while(0)
 #else /* PRINT_ALLOC_TIME */
-#define HEAP_FAST_ALLOC_IMPL(obj__,size_,IFFAIL)		\
+#define HEAP_FAST_ALLOC(obj__,size_,IFFAIL)			\
   do{								\
     struct bitmap_info_space *b_info;					\
     									\
@@ -261,10 +258,5 @@ extern size_t count_alloc,count_alloc_another;
     }									\
   }while(0)
 #endif /* PRINT_ALLOC_TIME */
-
-void sml_heap_barrier(void **writeaddr, void *objaddr);
-
-#define HEAP_WRITE_BARRIER_IMPL(writeaddr, objaddr)	\
-  sml_heap_barrier(writeaddr, objaddr)
 
 #endif /* SMLSHARP__HEAP_OTOMO_H */

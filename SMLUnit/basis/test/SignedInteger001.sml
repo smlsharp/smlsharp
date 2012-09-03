@@ -18,7 +18,9 @@ functor SignedInteger001
              : sig
                  include INTEGER
                  val assertEqualInt : int SMLUnit.Assert.assertEqual
-               end) =
+               end) : sig
+  val suite : unit -> SMLUnit.Test.test
+end =
 struct
 
   (************************************************************)

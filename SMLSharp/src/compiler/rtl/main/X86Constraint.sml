@@ -252,16 +252,17 @@ struct
       | R.X86 (R.X86FDIVR (ty, op1)) => (code, insn)
       | R.X86 (R.X86FDIVR_ST (x86st1, x86st2)) => (code, insn)
       | R.X86 (R.X86FDIVRP x86st1) => (code, insn)
+      | R.X86 R.X86FPREM => (code, insn)
       | R.X86 (R.X86FABS) => (code, insn)
       | R.X86 (R.X86FCHS) => (code, insn)
+      | R.X86 (R.X86FINCSTP) => (code, insn)
       | R.X86 (R.X86FFREE st) => (code, insn)
       | R.X86 (R.X86FXCH st) => (code, insn)
       | R.X86 (R.X86FUCOM st) => (code, insn)
       | R.X86 (R.X86FUCOMP st) => (code, insn)
       | R.X86 R.X86FUCOMPP => (code, insn)
-      | R.X86 (R.X86FSW_GT {clob}) => (code, insn)
-      | R.X86 (R.X86FSW_GE {clob}) => (code, insn)
-      | R.X86 (R.X86FSW_EQ {clob}) => (code, insn)
+      | R.X86 (R.X86FSW_TESTH {clob,mask}) => (code, insn)
+      | R.X86 (R.X86FSW_MASKCMPH {clob,mask,compare}) => (code, insn)
       | R.X86 (R.X86FLDCW op1) => (code, insn)
       | R.X86 (R.X86FNSTCW dst) => (code, insn)
       | R.X86 R.X86FWAIT => (code, insn)
@@ -676,16 +677,19 @@ struct
       | R.X86 (R.X86FDIVR (ty, addr)) => interference
       | R.X86 (R.X86FDIVR_ST (x86st1, x86st2)) => interference
       | R.X86 (R.X86FDIVRP x86st1) => interference
+      | R.X86 R.X86FPREM => interference                                     
       | R.X86 (R.X86FABS) => interference
       | R.X86 (R.X86FCHS) => interference
+      | R.X86 (R.X86FINCSTP) => interference
       | R.X86 (R.X86FFREE st) => interference
       | R.X86 (R.X86FXCH st) => interference
       | R.X86 (R.X86FUCOM st) => interference
       | R.X86 (R.X86FUCOMP st) => interference
       | R.X86 R.X86FUCOMPP => interference
-      | R.X86 (R.X86FSW_GT {clob}) => precolorVar (interference, clob, EAX)
-      | R.X86 (R.X86FSW_GE {clob}) => precolorVar (interference, clob, EAX)
-      | R.X86 (R.X86FSW_EQ {clob}) => precolorVar (interference, clob, EAX)
+      | R.X86 (R.X86FSW_TESTH {clob,mask}) =>
+        precolorVar (interference, clob, EAX)
+      | R.X86 (R.X86FSW_MASKCMPH {clob,mask,compare}) =>
+        precolorVar (interference, clob, EAX)
       | R.X86 (R.X86FLDCW addr) => interference
       | R.X86 (R.X86FNSTCW addr) => interference
       | R.X86 R.X86FWAIT => interference

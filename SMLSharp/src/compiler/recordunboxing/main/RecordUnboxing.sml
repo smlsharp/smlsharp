@@ -4,7 +4,13 @@
  * @author Huu-Duc Nguyen
  * @version $$
  *)
-structure RecordUnboxing : RECORDUNBOXING = struct 
+structure RecordUnboxing : sig
+
+  val transform : AnnotatedCalc.acdecl list ->  MultipleValueCalc.mvdecl list
+
+end =
+struct
+
   structure AT = AnnotatedTypes
   structure AC = AnnotatedCalc
   structure ATU = AnnotatedTypesUtils
@@ -18,16 +24,16 @@ structure RecordUnboxing : RECORDUNBOXING = struct
        print "\n")
 
   fun printKind kind = 
-      (print (Control.prettyPrint (AT.format_recordKind kind));
+      (print (Control.prettyPrint (AT.format_tvarKind kind));
        print "\n")
 
    fun newVar ty = 
        let
            val id = VarID.generate ()
        in
-           {displayName = "$" ^ VarID.toString id,
+           {path = ["$" ^ VarID.toString id],
             ty = ty,
-            varId = Types.INTERNAL id}
+            id = id} : varInfo
        end
 
   (*====================================================================*)
@@ -54,13 +60,8 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           
   fun transformType ty =
       case ty of
-        AT.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
-        AT.INSTCODEty {oprimId = oprimId,
-                       oprimPolyTy = oprimPolyTy,
-                       name = name,
-                       keyTyList =  map transformType keyTyList,
-                       instTyList = map transformType instTyList
-                      }
+        AT.SINGLETONty sty =>
+        AT.SINGLETONty (transformSingletonTy sty)
       | AT.ERRORty => ty
       | AT.DUMMYty _ => ty
       | AT.BOUNDVARty _ => ty
@@ -84,40 +85,45 @@ structure RecordUnboxing : RECORDUNBOXING = struct
       | AT.RECORDty {fieldTypes, annotation} =>
         AT.RECORDty {fieldTypes = transformFieldTypes fieldTypes,
                      annotation = annotation}
-      | AT.RAWty {tyCon, args} => 
-        AT.RAWty {tyCon = tyCon, args = map transformType args}
+      | AT.CONty {tyCon, args} => 
+        AT.CONty {tyCon = tyCon, args = map transformType args}
       | AT.POLYty {boundtvars, body} =>
-        AT.POLYty {boundtvars = IEnv.map transformBtvKind boundtvars,
+        AT.POLYty {boundtvars = BoundTypeVarID.Map.map
+                                  transformBtvKind boundtvars,
                    body = transformType body}
-      | AT.SPECty _ => ty
 
-  and transformBtvKind {id, recordKind, eqKind, instancesRef} =
+  and transformSingletonTy singletonTy =
+      case singletonTy of
+        AT.INSTCODEty {oprimId, path, keyTyList} =>
+        AT.INSTCODEty {oprimId = oprimId,
+                       path = path,
+                       keyTyList =  map transformType keyTyList
+                      }
+      | AT.INDEXty (label, ty) =>
+        AT.INDEXty (transformIndexTy (label, ty))
+      | AT.TAGty ty =>
+        AT.TAGty (transformType ty)
+      | AT.SIZEty ty =>
+        AT.SIZEty (transformType ty)
+      | AT.RECORDSIZEty ty =>
+        AT.RECORDSIZEty (transformType ty)
+      | AT.RECORDBITMAPty (index, ty) =>
+        AT.RECORDBITMAPty (index, transformType ty)
+
+  and transformBtvKind {id, tvarKind, eqKind} =
         {
          id = id,
-         recordKind = transformRecKind recordKind,
-         eqKind = eqKind,
-         instancesRef = instancesRef
+         tvarKind = transformRecKind tvarKind,
+         eqKind = eqKind
         }
 
-  and transformRecKind recordKind =
-      case recordKind
+  and transformRecKind tvarKind =
+      case tvarKind
        of AT.UNIV => AT.UNIV
         | AT.REC flty => AT.REC (transformFieldTypes flty)
-        | AT.OPRIMkind {instances, operators} 
+        | AT.OPRIMkind instances
           =>
-          AT.OPRIMkind
-          {instances = map transformType instances,
-           operators = 
-             map
-               (fn {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
-                {oprimId = oprimId,
-                 oprimPolyTy = oprimPolyTy,
-                 name = name,
-                 keyTyList =  map transformType keyTyList,
-                 instTyList = map transformType instTyList}
-                )
-             operators
-            }
+          AT.OPRIMkind (map transformType instances)
 
   and transformFieldTypes flty =
       SEnv.foldli
@@ -132,19 +138,53 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           )
           SEnv.empty
           flty
+
+  and transformIndexTy (label, recordTy) =
+      let
+        val newRecordTy = transformType recordTy
+      in
+        case newRecordTy of
+          AT.MVALty _ =>
+          (* The record is unboxed. Any variables and expressions of
+           * this type should be discarded. To keep consistency of
+           * INDEXty (the recordTy field of INDEXty must be a record type),
+           * we do not apply any transformation to this INDEXty. *)
+          (label, recordTy)
+        | AT.RECORDty _ =>
+          (* Note that some nested records may be unboxed. The label may
+           * be not found in the recordTy after unboxing. *)
+          let
+            val fieldTypes =
+                case recordTy of
+                  AT.RECORDty {fieldTypes,...} => fieldTypes
+                | _ => raise Control.Bug "transformIndexTy: fieldTypes"
+            val fieldTy =
+                case SEnv.find (fieldTypes, label) of
+                  SOME ty => ty
+                | NONE => raise Control.Bug "transformIndexTy: fieldTy"
+          in
+            case transformType fieldTy of
+              AT.MVALty _ =>
+              (* The selected record is unboxed. *)
+              (label, recordTy)
+            | _ =>
+              (ATU.convertLabel label, newRecordTy)
+          end
+        | _ => (ATU.convertLabel label, newRecordTy)
+      end
   
-  fun transformVar {displayName, ty, varId} =
+  fun transformVar {path, ty, id} =
       case flatTyList (transformType ty)
-       of [ty] => [{displayName = displayName,
+       of [ty] => [{path = path,
                     ty = transformType ty,
-                    varId = varId}]
+                    id = id}]
         | tyList => map newVar tyList
 
   fun indexesOf (label, recordTy) =
       case recordTy of
         AT.RECORDty {fieldTypes,...} =>
         let
-          fun computeFirstIndex (n, []) = raise Control.Bug "label not found"
+          fun computeFirstIndex (n, []) = raise Control.Bug ("label not found " ^ label)
             | computeFirstIndex (n, (l,ty)::rest) =
               if l = label 
               then (n,ty) 
@@ -183,9 +223,10 @@ structure RecordUnboxing : RECORDUNBOXING = struct
   struct
 
   type context = {varEnv : (AC.varInfo list) VarID.Map.map,
-                  tyEnv : AT.btvKind IEnv.map}
+                  tyEnv : AT.btvKind BoundTypeVarID.Map.map}
 
-  val empty = {varEnv = VarID.Map.empty, tyEnv = IEnv.empty} : context
+  val empty =
+      {varEnv = VarID.Map.empty, tyEnv = BoundTypeVarID.Map.empty} : context
 
   fun insertVariable ({varEnv, tyEnv}:context) (id, varList) = 
       {
@@ -195,10 +236,10 @@ structure RecordUnboxing : RECORDUNBOXING = struct
 
   fun extendBtvEnv ({varEnv, tyEnv}:context) btvEnv =
       let
-        val newBtvEnv = IEnv.map transformBtvKind btvEnv
+        val newBtvEnv = BoundTypeVarID.Map.map transformBtvKind btvEnv
         val tyEnv =
-            IEnv.foldli
-                (fn (id,btvKind,S) => IEnv.insert(S,id,btvKind))
+            BoundTypeVarID.Map.foldli
+                (fn (id,btvKind,S) => BoundTypeVarID.Map.insert(S,id,btvKind))
                 tyEnv
                 newBtvEnv
       in
@@ -215,8 +256,8 @@ structure RecordUnboxing : RECORDUNBOXING = struct
                       raise FieldType)
           )
         | AT.BOUNDVARty tid =>
-          (case IEnv.find(tyEnv,tid)
-            of SOME {recordKind = AT.REC flty,...} =>
+          (case BoundTypeVarID.Map.find(tyEnv,tid)
+            of SOME {tvarKind = AT.REC flty,...} =>
                (case SEnv.find(flty,label) of
                   SOME x => x
                 | NONE =>
@@ -266,10 +307,8 @@ structure RecordUnboxing : RECORDUNBOXING = struct
            case newExp of
              MVCONSTANT _ => (decls, [newExp], [newTy])
            | MVGLOBALSYMBOL _ => (decls, [newExp], [newTy])
-           | MVEXCEPTIONTAG _ => (decls, [newExp], [newTy])
            | MVVAR _ => (decls, [newExp], [newTy])
            | MVCAST {exp = MVCONSTANT _,...} => (decls, [newExp], [newTy])
-           | MVCAST {exp = MVEXCEPTIONTAG _,...} => (decls, [newExp], [newTy])
            | MVCAST {exp = MVVAR _,...} => (decls, [newExp], [newTy])
            | MVCAST {exp, expTy, targetTy, loc} => 
              let
@@ -317,69 +356,76 @@ structure RecordUnboxing : RECORDUNBOXING = struct
 
   and transformExp context exp =
       case exp of
-        AC.ACFOREIGNAPPLY {funExp, funTy, argExpList, attributes, loc} =>
+        AC.ACFOREIGNAPPLY {funExp, foreignFunTy, argExpList, loc} =>
         let
           val (funDecls, newFunExp, _) = transformArgSingle context funExp
-          val {argTyList, bodyTy, annotation, funStatus} =
-              ATU.expandFunTy funTy
+          val {argTyList, resultTy=bodyTy, attributes} = foreignFunTy
           val (argDecls, newArgExpList, newArgTyList) =
               transformArgList context argExpList
           val newBodyTy = transformType bodyTy
-          val newFunTy = AT.FUNMty {argTyList = newArgTyList, 
-                                    bodyTy = newBodyTy, 
-                                    annotation = annotation,
-                                    funStatus = funStatus
-                                    }
+          val newForeignFunTy = {argTyList = newArgTyList,
+                                 resultTy = newBodyTy,
+                                 attributes = attributes}
           val newExp =
               MVFOREIGNAPPLY
                   {
                    funExp = newFunExp,
-                   funTy = newFunTy,
+                   foreignFunTy = newForeignFunTy,
                    argExpList = newArgExpList,
-                   attributes = attributes,
                    loc = loc
                   }
         in
           (funDecls @ argDecls, newExp, newBodyTy)
         end
-      | AC.ACEXPORTCALLBACK {funExp as AC.ACFNM _, funTy, attributes, loc} =>
+      | AC.ACEXPORTCALLBACK {funExp as AC.ACFNM _, foreignFunTy, loc} =>
         let
           val (decls, newFunExp, newFunTy) = transformExp context funExp
+          val {argTyList, bodyTy, ...} = ATU.expandFunTy newFunTy
           val newExp = 
               MVEXPORTCALLBACK
                   {
                    funExp = newFunExp,
-                   funTy = newFunTy,
-                   attributes = attributes,
+                   foreignFunTy = {argTyList = argTyList,
+                                   resultTy = bodyTy,
+                                   attributes = #attributes foreignFunTy},
                    loc = loc
                   }
         in
           (decls, newExp, AT.foreignfunty)
         end
-      | AC.ACEXPORTCALLBACK {funExp, funTy, attributes, loc} =>
+      | AC.ACEXPORTCALLBACK {funExp, foreignFunTy, loc} =>
         raise Control.Bug "transformExp: ACEXPORTCALLBACK"
+      | AC.ACTAGOF {ty, loc} =>
+        let
+          val ty = transformType ty
+        in
+          (nil, MVTAGOF {ty = ty, loc = loc}, AT.SINGLETONty (AT.TAGty ty))
+        end
       | AC.ACSIZEOF {ty, loc} =>
-        (nil,
-         MVSIZEOF
-             {
-              ty = transformType ty,
-              loc = loc
-             },
-         AT.sizeofty)
-      | AC.ACEXCEPTIONTAG v => ([], MVEXCEPTIONTAG v, AT.exntagty)
+        let
+          val ty = transformType ty
+        in
+          (nil, MVSIZEOF {ty = ty, loc = loc}, AT.SINGLETONty (AT.SIZEty ty))
+        end
+      | AC.ACINDEXOF {label, recordTy, loc} =>
+        let
+          val (newLabel, newRecordTy) = transformIndexTy (label, recordTy)
+        in
+          (nil,
+           MVINDEXOF {label = newLabel, recordTy = newRecordTy, loc = loc},
+           AT.SINGLETONty (AT.INDEXty (newLabel, newRecordTy)))
+        end
       | AC.ACCONSTANT (v as {value, loc}) =>
         ([], MVCONSTANT v, ATU.constDefaultTy value)
       | AC.ACGLOBALSYMBOL (v as {ty,...}) => ([], MVGLOBALSYMBOL v, ty)
-      | AC.ACVAR {varInfo as {displayName, ty, varId as T.EXTERNAL _}, loc} =>
+      | AC.ACEXVAR {exVarInfo as {path, ty}, loc} =>
         let
           val newTy = transformType ty
-          val newVarInfo = {displayName = displayName,
-                            ty = newTy,
-                            varId = varId}
+          val newVarInfo = {path = path, ty = newTy}
         in 
-          ([], MVVAR {varInfo = newVarInfo, loc = loc}, newTy)
+          ([], MVEXVAR {exVarInfo = newVarInfo, loc = loc}, newTy)
         end
-      | AC.ACVAR {varInfo as {displayName, ty,varId = T.INTERNAL id}, loc} =>
+      | AC.ACVAR {varInfo as {path, ty, id}, loc} =>
         (
          case CTX.findVariable(context, id) of 
            SOME [v] => ([], MVVAR {varInfo = v, loc = loc}, #ty v)
@@ -396,6 +442,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
            in ([], newExp, AT.MVALty tyList) end
          | NONE => raise Control.Bug "internal variable not found"
         )
+(*
       | AC.ACGETFIELD {arrayExp, indexExp, elementTy, loc} =>
         let
           val (arrayDecls, newArrayExp, newArrayTy) =
@@ -506,28 +553,27 @@ structure RecordUnboxing : RECORDUNBOXING = struct
            newExp,
            AT.unitty)
         end
+*)
       | AC.ACPRIMAPPLY {primInfo, argExpList, instTyList, loc} =>
         let
+          val monoTy = ATU.tpappTy (#ty primInfo, instTyList)
           val {argTyList, bodyTy, annotation, funStatus} =
-              ATU.expandFunTy (#ty primInfo)
+              ATU.expandFunTy monoTy
           val (decls, newArgExpList, newArgTyList) =
               transformArgList context argExpList
           val newBodyTy = transformType bodyTy
           val newPrimInfo =
               {
-               name = #name primInfo,
-               ty = AT.FUNMty {argTyList = newArgTyList, 
-                               bodyTy = newBodyTy, 
-                               annotation = annotation,
-                               funStatus = funStatus
-                               }
+               primitive = #primitive primInfo,
+               ty = transformType (#ty primInfo)
               }
+          val newInstTyList = map transformType instTyList
           val newExp =
               MVPRIMAPPLY
                   {
                    primInfo = newPrimInfo,
                    argExpList = newArgExpList,
-                   instTyList = instTyList,
+                   instTyList = newInstTyList,
                    loc = loc
                   }
         in
@@ -588,13 +634,14 @@ structure RecordUnboxing : RECORDUNBOXING = struct
         in
           (localDecls @ mainDecls, newMainExp, newTy)
         end
-      | AC.ACRECORD {expList,
+      | AC.ACRECORD {fields,
                      recordTy, annotation = expAnnotation, isMutable, loc} =>
         if !Control.doRecordUnboxing
         then
           case recordTy
            of AT.RECORDty {annotation as ref {boxed = false,...},...} =>
               let
+                val expList = map #fieldExp fields
                 val (decls, args, tys) = transformArgList context expList 
               in
                 case (args,tys)
@@ -606,27 +653,31 @@ structure RecordUnboxing : RECORDUNBOXING = struct
               end
             | AT.RECORDty {fieldTypes, annotation} => 
               let
-                val (decls, args, flty)=
-                    ListPair.foldl
-                      (fn (label,(decls,args,tys),(L1,L2,S)) =>
+                val (decls, newFields, flty) =
+                    foldl
+                      (fn ({label, fieldExp}, (decls, fields, flty)) =>
                           let
-                            val labels = genLabels(label,List.length tys)
-                            val S =
+                            val (decls2, args, tys) =
+                                transformArg context fieldExp
+                            val labels = genLabels (label, List.length tys)
+                            val fields2 =
+                                ListPair.mapEq
+                                  (fn (l, arg) => {label=l, fieldExp=arg})
+                                  (labels, args)
+                            val flty =
                                 ListPair.foldl
-                                  (fn (l,ty,S) => SEnv.insert(S,l,ty))
-                                  S
-                                  (labels,tys)
+                                  (fn (l, ty, z) => SEnv.insert (z, l, ty))
+                                  flty
+                                  (labels, tys)
                           in
-                            (L1 @ decls, L2 @ args, S)
-                          end
-                      )
-                      ([],[],SEnv.empty)
-                      (SEnv.listKeys fieldTypes,
-                       map (transformArg context) expList)
+                            (decls @ decls2, fields @ fields2, flty)
+                          end)
+                      (nil, nil, SEnv.empty)
+                      fields
                 val newRecordTy =
                     AT.RECORDty {fieldTypes = flty, annotation = annotation}
                 val newExp =
-                    MVRECORD {expList = args, 
+                    MVRECORD {fields = newFields,
                               recordTy = newRecordTy, 
                               annotation = expAnnotation, 
                               isMutable = isMutable,
@@ -637,12 +688,20 @@ structure RecordUnboxing : RECORDUNBOXING = struct
             | _ => raise Control.Bug "invalid record type"
         else
           let 
+            val (labelList, expList) =
+                ListPair.unzip
+                  (map (fn {label, fieldExp} => (label, exp)) fields)
             val (decls, newExpList, _) = transformArgList context expList
             val newRecordTy = transformType recordTy
+            val newLabels = map ATU.convertLabel labelList
+            val newFields =
+                ListPair.mapEq
+                  (fn (label, exp) => {label=label, fieldExp=exp})
+                  (labelList, newExpList)
             val newExp =
                 MVRECORD
                     {
-                     expList = newExpList,
+                     fields = newFields,
                      recordTy = newRecordTy,
                      annotation = expAnnotation,
                      isMutable = isMutable,
@@ -651,7 +710,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           in 
             (decls, newExp, newRecordTy)
           end
-      | AC.ACSELECT {recordExp, label, recordTy, resultTy, loc} =>
+      | AC.ACSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
         if !Control.doRecordUnboxing 
         then
           case recordTy
@@ -686,19 +745,40 @@ structure RecordUnboxing : RECORDUNBOXING = struct
                       Control.Bug 
                         "RECORDty expected :\
                         \ (recordunboxing/main/RecordUnboxing.sml)"
+                val (decls2, indexExp, indexTy) =
+                    transformArgSingle context indexExp
+                val decls = decls @ decls2
                 fun fieldTy label =
                     case SEnv.find(fieldTypes,label) of
                          SOME x => x
                        | NONE => raise Control.Bug "option inb filedType (3)"
-                fun fieldExp label = MVSELECT {recordExp = newRecordExp, 
-                                               recordTy = newRecordTy, 
-                                               label = label, 
-                                               resultTy = fieldTy label,
-                                               loc = loc}
+                fun fieldExp (label, indexExp) =
+                    MVSELECT {recordExp = newRecordExp,
+                              recordTy = newRecordTy, 
+                              indexExp = indexExp,
+                              label = label,
+                              resultTy = fieldTy label,
+                              loc = loc}
+                val newLabel = ATU.convertLabel label
                 val labels = labelsOf (label, recordTy)
+                val fieldIndexes =
+                    foldr
+                      (fn (l, indexes) =>
+                          if l = newLabel
+                          then (l, indexExp)::indexes else
+                          let
+                            val exp = MVINDEXOF {label=l,
+                                                 recordTy=newRecordTy,
+                                                 loc=loc}
+                          in
+                            (l, exp)::indexes
+                          end)
+                      nil
+                      labels
                 val (decls,newExp, newTy) =
-                    case labels of
-                      [label] => (decls, fieldExp label, fieldTy label)
+                    case fieldIndexes of
+                      [(label, indexExp)] =>
+                      (decls, fieldExp (label, indexExp), fieldTy label)
                     | _ =>
                       let
                         val tyList = map fieldTy labels
@@ -708,7 +788,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
                               (fn (varInfo, exp) =>
                                   MVVAL {boundVars = [varInfo],
                                          boundExp = exp, loc = loc})
-                                (varInfoList, map fieldExp labels)
+                                (varInfoList, map fieldExp fieldIndexes)
                         val expList =
                             map (fn v => MVVAR {varInfo = v, loc = loc})
                                 varInfoList
@@ -725,6 +805,9 @@ structure RecordUnboxing : RECORDUNBOXING = struct
               let
                 val (decls, newRecordExp, newRecordTy) =
                     transformArgSingle context recordExp
+                val (decls2, newIndexExp, indexTy) =
+                    transformArgSingle context indexExp
+                val decls = decls @ decls2
                 val newLabel = ATU.convertLabel label
                 val newFieldTy =
                     CTX.fieldType context (newLabel, newRecordTy)
@@ -734,13 +817,14 @@ structure RecordUnboxing : RECORDUNBOXING = struct
                       printTy recordTy;
                       print "newRecordTy\n";
                       printTy newRecordTy;
-                      print label;
+                      print newLabel;
                       raise Control.Bug "CTX filedType"
                      )
                 val newExp = 
                     MVSELECT
                         {
                          recordExp = newRecordExp,
+                         indexExp = newIndexExp,
                          label = newLabel,
                          recordTy = newRecordTy,
                          resultTy = newFieldTy,
@@ -753,13 +837,16 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           let
             val (decls, newRecordExp, newRecordTy) =
                 transformArgSingle context recordExp
+            val (decls2, newIndexExp, indexTy) =
+                transformArgSingle context indexExp
+            val decls = decls @ decls2
             val newLabel = ATU.convertLabel label
             val newFieldTy =
                 CTX.fieldType context (newLabel, newRecordTy)
                 handle CTX.FieldType =>
                  (
                   printTy newRecordTy;
-                  print label;
+                  print newLabel;
                   raise Control.Bug "CTX filedType"
                  )
                 
@@ -767,6 +854,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
                 MVSELECT
                     {
                      recordExp = newRecordExp,
+                     indexExp = newIndexExp,
                      label = newLabel,
                      recordTy = newRecordTy,
                      resultTy = newFieldTy,
@@ -776,24 +864,28 @@ structure RecordUnboxing : RECORDUNBOXING = struct
             (decls, newExp, newFieldTy)
           end
 
-      | AC.ACMODIFY {recordExp, recordTy, label, valueExp, valueTy, loc} =>
+      | AC.ACMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy,
+                     loc} =>
         let
           val (decls1, newRecordExp, newRecordTy) =
               transformArgSingle context recordExp
-          val (decls2, newValueExp, newValueTy) =
+          val (decls2, newIndexExp, _) =
+              transformArgSingle context indexExp
+          val (decls3, newValueExp, newValueTy) =
               transformArgSingle context valueExp
           val newExp =
               MVMODIFY
                   {
                    recordExp = newRecordExp,
                    recordTy = newRecordTy,
+                   indexExp = newIndexExp,
                    label = ATU.convertLabel label,
                    valueExp = newValueExp,
                    valueTy = newValueTy,
                    loc = loc
                   }
         in 
-          (decls1 @ decls2, newExp, newRecordTy)
+          (decls1 @ decls2 @ decls3, newExp, newRecordTy)
         end
         
       | AC.ACRAISE {argExp, resultTy, loc} =>
@@ -807,7 +899,7 @@ structure RecordUnboxing : RECORDUNBOXING = struct
         end
 
       | AC.ACHANDLE {exp,
-                     exnVar as {varId = T.INTERNAL id,...}, handler, loc} =>
+                     exnVar as {id,...}, handler, loc} =>
         let
           val (mainDecls, newMainExp, newTy) = transformExp context exp
           val newExnVar = 
@@ -833,10 +925,6 @@ structure RecordUnboxing : RECORDUNBOXING = struct
         in
           ([],newExp,newTy)
         end
-      | AC.ACHANDLE {exp,
-                     exnVar as {varId = T.EXTERNAL _,...},
-                     handler, loc} =>        
-        raise Control.Bug "expect local variable in handler"
       | AC.ACFNM {argVarList, funTy as AT.FUNMty {funStatus, annotation,...}, 
                   bodyExp, 
                   annotation = funAnnotation, 
@@ -844,16 +932,12 @@ structure RecordUnboxing : RECORDUNBOXING = struct
         let
           val (newArgVarList,newContext) = 
               foldr
-                  (fn (v as {varId = T.INTERNAL id,...}, (L,C)) =>
+                  (fn (v as {id,...}, (L,C)) =>
                       let
                         val varList = transformVar v
                       in
                         (varList @ L, CTX.insertVariable C (id,varList))
                       end
-                    | (v as {varId = T.EXTERNAL _,...}, (L,C)) =>
-                      raise
-                        Control.Bug
-                          "expect local variable in function argument"
                   )
                   ([],context)
                   argVarList
@@ -922,10 +1006,9 @@ structure RecordUnboxing : RECORDUNBOXING = struct
               transformExp context defaultExp
           fun transformBranch {constant, exp} =
               let
-                val (_, newConstant, _) = transformExp context constant
                 val (decls, newExp, _) = transformExp context exp
               in 
-                {constant = newConstant, exp = makeLetExp (decls, newExp, loc)}
+                {constant = constant, exp = makeLetExp (decls, newExp, loc)}
               end
           val newExp = 
               MVSWITCH
@@ -958,21 +1041,32 @@ structure RecordUnboxing : RECORDUNBOXING = struct
 
   and transformDecl context decl =
       case decl of 
-        AC.ACVAL {boundVar as {displayName, ty, varId = T.INTERNAL id},
+        AC.ACVAL {boundVar as {path, ty, id},
                   boundExp , loc} =>
         let
           val (decls1, args, tyList) = transformArg context boundExp
           val (varList, decls2) =
-              ListPair.foldr
-                (fn (arg,ty,(L1,L2)) =>
-                    case arg of
-                      MVVAR {varInfo, loc} => (varInfo :: L1,L2)
-                    | _ =>
-                      let
-                        val varInfo = newVar ty
-                        val decl = MVVAL {boundVars = [varInfo],
-                                          boundExp = arg,
-                                          loc = loc}
+              case (args, tyList) of
+                ([arg], [ty]) =>
+                let
+                  val varInfo = {path = path, ty = ty, id = id}
+                  val decl = MVVAL {boundVars = [varInfo],
+                                    boundExp = arg,
+                                    loc = loc}
+                in
+                  ([varInfo], [decl])
+                end
+              | _ =>
+                ListPair.foldr
+                  (fn (arg,ty,(L1,L2)) =>
+                      case arg of
+                        MVVAR {varInfo, loc} => (varInfo :: L1,L2)
+                      | _ =>
+                        let
+                          val varInfo = newVar ty
+                          val decl = MVVAL {boundVars = [varInfo],
+                                            boundExp = arg,
+                                            loc = loc}
                         in
                           (varInfo :: L1, decl :: L2)
                         end
@@ -983,34 +1077,37 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           (decls1 @ decls2, CTX.insertVariable context (id,varList))
         end
 
-      | AC.ACVAL {boundVar as {displayName, ty, varId as T.EXTERNAL _},
-                  boundExp , loc} =>
+      | AC.ACEXPORTVAR {varInfo={path, ty, id}, loc} =>
         let
-          val (decls1, newBoundExp, newBoundTy) =
-              transformExp context boundExp
-          val newBoundVar = {displayName = displayName,
-                             ty = newBoundTy,
-                             varId = varId}
-          val newDecl = MVVAL {boundVars = [newBoundVar],
-                               boundExp = newBoundExp,
-                               loc = loc}
+          val newVarInfo =
+              case CTX.findVariable (context, id) of
+                SOME [v as {id,ty,...}] => {path = path, ty = ty, id = id}
+              | _ => raise Control.Bug "ACEXPORTVAR"
+          val newDecl = MVEXPORTVAR {varInfo = newVarInfo, loc = loc}
         in
-          (decls1 @ [newDecl], context)
+          ([newDecl], context)
+        end
+
+      | AC.ACEXTERNVAR {exVarInfo={path, ty}, loc} =>
+        let
+          val newTy = transformType ty
+          val newVar = {path = path, ty = newTy}
+          val newDecl = MVEXTERNVAR {exVarInfo = newVar, loc = loc}
+        in
+          ([newDecl], context)
         end
 
       | AC.ACVALREC {recbindList, loc} =>
         let
           val newBoundVarList = 
               map
-                  (fn {boundVar as {displayName, ty, varId},...} => 
-                      {displayName = displayName,
-                       ty = transformType ty, varId = varId})
+                  (fn {boundVar as {path, ty, id},...} => 
+                      {path = path, ty = transformType ty, id = id})
                   recbindList
           val newContext = 
               foldl
-                  (fn (v as {varId = T.INTERNAL id,...},C) =>
-                      CTX.insertVariable C (id,[v])
-                    | (v as {varId = T.EXTERNAL _,...},C) => C)
+                  (fn (v as {id,...},C) =>
+                      CTX.insertVariable C (id,[v]))
                   context
                   newBoundVarList
           val newRecbindList =
@@ -1028,59 +1125,6 @@ structure RecordUnboxing : RECORDUNBOXING = struct
           ([MVVALREC{recbindList = newRecbindList, loc = loc}], newContext)
         end
 
-      | AC.ACVALPOLYREC {btvEnv, recbindList, loc} =>
-        let
-          val newBoundVarList = 
-              map
-                (fn {boundVar as {displayName, ty, varId},...} => 
-                    {displayName = displayName,
-                     ty = transformType ty,
-                     varId = varId})
-                recbindList
-          val newContext = 
-              foldl
-                (fn (v as {varId = T.INTERNAL id,...},C) =>
-                    CTX.insertVariable C (id,[v])
-                  | (v as {varId = T.EXTERNAL _,...},C) => C)
-                  context
-                  newBoundVarList
-          val (newBtvEnv, newContext) = CTX.extendBtvEnv newContext btvEnv
-          val newRecbindList =
-              ListPair.map
-                (fn ({boundExp,...}, boundVar) =>
-                    let
-                      val ( _, newBoundExp, _) =
-                          transformExp newContext boundExp
-                    in
-                      {boundVar = boundVar, boundExp = newBoundExp}
-                    end
-                )
-                (recbindList,newBoundVarList)
-          val newContext =
-              foldl
-                (fn ({displayName,
-                      ty,
-                      varId = varId as (T.INTERNAL internalID)},C) =>
-                      let
-                        val v =
-                        {
-                         displayName = displayName, 
-                         ty = AT.POLYty {boundtvars = newBtvEnv, body = ty}, 
-                         varId = varId}
-                      in 
-                        CTX.insertVariable C (internalID,[v])
-                      end
-                    | ({displayName, ty, varId = T.EXTERNAL _},C) => C
-                  )
-                  context
-                  newBoundVarList
-        in
-          ([MVVALPOLYREC{btvEnv = newBtvEnv,
-                         recbindList = newRecbindList,
-                         loc = loc}],
-           newContext)
-        end
-        
   and transformDeclList context ([]) = ([],context)
     | transformDeclList context (decl::rest) =
       let
@@ -1090,70 +1134,11 @@ structure RecordUnboxing : RECORDUNBOXING = struct
         (decls1 @ decls2,newContext)
       end
 
-  fun transformBasicBlock context basicBlock =
-      case basicBlock of
-          AC.ACVALBLOCK {code, exnIDSet} =>
-          let
-              val (newCode, context) = 
-                  transformDeclList context code
-          in
-              (MVVALBLOCK {code = newCode, exnIDSet = exnIDSet}, context)
-          end
-        | AC.ACLINKFUNCTORBLOCK x => (MVLINKFUNCTORBLOCK x, context)
-
-  fun transformBasicBlocks context nil = ([], context)
-    | transformBasicBlocks context (basicBlock :: rest) = 
+  fun transform declList = 
       let
-          val (basicBlock1, newContext) =
-              transformBasicBlock context basicBlock
-          val (basicBlocks2, newContext) =
-              transformBasicBlocks newContext rest
+        val (newDeclList, _) = transformDeclList CTX.empty declList
       in
-          (basicBlock1 :: basicBlocks2, newContext)
+        newDeclList
       end
-                             
-  fun transfromTopBlock context topBlock =
-      case topBlock of
-          AC.ACBASICBLOCK basicBlock =>
-          let
-            val (newBasicBlock, context) =
-                transformBasicBlock context basicBlock
-          in
-              (MVBASICBLOCK newBasicBlock, context)
-          end
-        | AC.ACFUNCTORBLOCK
-            {name, formalAbstractTypeIDSet, formalVarIDSet, formalExnIDSet,
-             generativeExnIDSet, generativeVarIDSet, bodyCode} =>
-          let
-            val (bodyCode, _) = transformBasicBlocks CTX.empty bodyCode
-          in
-            (MVFUNCTORBLOCK
-               {name = name, 
-                formalAbstractTypeIDSet = formalAbstractTypeIDSet, 
-                formalVarIDSet = formalVarIDSet,
-                formalExnIDSet = formalExnIDSet,
-                generativeExnIDSet = generativeExnIDSet, 
-                generativeVarIDSet = generativeVarIDSet, 
-                bodyCode = bodyCode}, 
-             context)
-          end
-
-  fun transformTopBlocks context nil = ([], context)
-    | transformTopBlocks context (block :: rest) = 
-      let
-          val (block1, newContext) = transfromTopBlock context block
-          val (blocks2, newContext) = transformTopBlocks newContext rest
-      in
-          (block1 :: blocks2, newContext)
-      end
-      
-  fun transform  blockList = 
-      let
-        val (newBlockList, _) = transformTopBlocks CTX.empty blockList
-      in
-        newBlockList
-      end
-      handle exn => raise exn
-
 
 end

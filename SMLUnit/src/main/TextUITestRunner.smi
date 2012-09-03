@@ -1,0 +1,10 @@
+_require "basis.smi"
+_require "Assert.smi"
+_require "Test.smi"
+_require "TESTRUNNER.sig"
+
+structure TextUITestRunner =
+struct
+  type parameter = {output : TextIO.outstream}
+  val runTest : parameter -> Test.test -> unit
+end

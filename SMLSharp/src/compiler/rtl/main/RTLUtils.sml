@@ -281,8 +281,10 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
         | I.X86 (I.X86FDIVR (ty, mem)) => duOp (I.REF_ (I.MEM (ty, mem)))
         | I.X86 (I.X86FDIVR_ST (st1, st2)) => duEmpty
         | I.X86 (I.X86FDIVRP st1) => duEmpty
+        | I.X86 (I.X86FPREM) => duEmpty
         | I.X86 (I.X86FABS) => duEmpty
         | I.X86 (I.X86FCHS) => duEmpty
+        | I.X86 I.X86FINCSTP => duEmpty
         | I.X86 (I.X86FFREE st) => duEmpty
         | I.X86 (I.X86FXCH st) => duEmpty
         | I.X86 (I.X86FUCOM st) => duEmpty
@@ -292,9 +294,8 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
         | I.X86 (I.X86FSTSW (dst, insn)) =>
           defuseInsn varSet duDst insn ++ duDst dst
 *)
-        | I.X86 (I.X86FSW_GT {clob}) => duEmpty
-        | I.X86 (I.X86FSW_GE {clob}) => duEmpty
-        | I.X86 (I.X86FSW_EQ {clob}) => duEmpty
+        | I.X86 (I.X86FSW_TESTH {clob,mask}) => duEmpty
+        | I.X86 (I.X86FSW_MASKCMPH {clob,mask,compare}) => duEmpty
         | I.X86 (I.X86FLDCW mem) => duOp (I.REF_ (I.MEM (I.Int16 I.U, mem)))
         | I.X86 (I.X86FNSTCW mem) => duDst (I.MEM (I.Int16 I.U, mem))
         | I.X86 I.X86FWAIT => duEmpty
@@ -396,16 +397,17 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       | I.X86 (I.X86FDIVR (ty, mem)) => emptySet
       | I.X86 (I.X86FDIVR_ST (st1, st2)) => emptySet
       | I.X86 (I.X86FDIVRP st1) => emptySet
+      | I.X86 (I.X86FPREM) => emptySet
       | I.X86 (I.X86FABS) => emptySet
       | I.X86 (I.X86FCHS) => emptySet
+      | I.X86 I.X86FINCSTP => emptySet
       | I.X86 (I.X86FFREE st) => emptySet
       | I.X86 (I.X86FXCH st) => emptySet
       | I.X86 (I.X86FUCOM st) => emptySet
       | I.X86 (I.X86FUCOMP st) => emptySet
       | I.X86 I.X86FUCOMPP => emptySet
-      | I.X86 (I.X86FSW_GT {clob}) => varSet [clob]
-      | I.X86 (I.X86FSW_GE {clob}) => varSet [clob]
-      | I.X86 (I.X86FSW_EQ {clob}) => varSet [clob]
+      | I.X86 (I.X86FSW_TESTH {clob,mask}) => varSet [clob]
+      | I.X86 (I.X86FSW_MASKCMPH {clob,mask,compare}) => varSet [clob]
       | I.X86 (I.X86FLDCW mem) => emptySet
       | I.X86 (I.X86FNSTCW mem) => emptySet
       | I.X86 I.X86FWAIT => emptySet
@@ -536,7 +538,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
           | I.Void => I.Void
         )
       | I.BASE {id, ty=I.Ptr ptrTy} => ptrTy
-      | I.BASE {id, ty=I.Atom} => I.Void
       | I.BASE _ => raise Control.Bug "addrTy: BASE"
       | ABSINDEX {base, index, scale} =>
         (
@@ -552,7 +553,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
           | I.Code => I.Code
           | I.Void => I.Void
         )
-      | BASEINDEX {base={id,ty=I.Atom}, index, scale} => I.Void
       | BASEINDEX {base, index, scale} => raise Control.Bug "addrTy: BASEINDEX"
       | POSTFRAME {offset, size} => I.Void
       | PREFRAME {offset, size} => I.Void
@@ -806,13 +806,14 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
 
   fun mapCluster f topdecls =
       map (fn I.CLUSTER {clusterId, frameBitmap, baseLabel, body,
-                         preFrameSize, postFrameSize, loc} =>
+                         preFrameSize, postFrameSize, numHeaderWords, loc} =>
               I.CLUSTER {clusterId = clusterId,
                          frameBitmap = frameBitmap,
                          baseLabel = baseLabel,
                          body = f body,
                          preFrameSize = preFrameSize,
                          postFrameSize = postFrameSize,
+                         numHeaderWords = numHeaderWords,
                          loc = loc}
             | x as I.TOPLEVEL _ => x
             | x as I.DATA _ => x

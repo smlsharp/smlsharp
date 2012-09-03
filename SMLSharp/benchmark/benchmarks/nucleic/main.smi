@@ -1,0 +1,6 @@
+_require "basis.smi"
+_require "nucleic.smi"
+structure Main =
+struct
+  val doit : unit -> unit
+end

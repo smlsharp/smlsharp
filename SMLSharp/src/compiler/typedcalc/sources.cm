@@ -1,6 +1,5 @@
 Group
 	structure TypedCalc
-	structure TypedCalcFormatter
 	structure TypedCalcUtils
 is
 	main/module.cm

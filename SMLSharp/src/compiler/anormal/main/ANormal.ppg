@@ -40,12 +40,12 @@ structure ANormal = struct
         *)
        Types.varId
        
-  (*% *)
+  (*% @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id *)
   type tyvarId = 
        (*%
         * @format(id) id
         *)
-       int
+       BoundTypeVarID.id
 
   (*% *)
   datatype ty =
@@ -134,6 +134,7 @@ structure ANormal = struct
    * @formatter(BT.UInt32) BasicTypeFormatters.format_UInt32
    * @formatter(formatVarInfoWithType) format_varInfoWithType
    * @formatter(formatLabel) formatLabel
+   * @formatter(BuiltinPrimitive.primitive) BuiltinPrimitive.format_primitive
    *)
   datatype anexp =
            (*%
@@ -181,6 +182,10 @@ structure ANormal = struct
       	    * @format({value:value:formatConst, loc}) value
       	    *)
 	   ANCONSTANT of {value :constant, loc : loc}
+         | (*%
+            * @format({name, loc}) name
+            *)
+	   ANPRIMSYMBOL of {name : string, loc : loc}
          | (*%
             * @format({tagValue,displayName,loc}) tagValue
             *)
@@ -271,17 +276,17 @@ structure ANormal = struct
            }
          | (*%
             * @format({
-            *          primName,
+            *          primitive,
             *          argExpList :exp exps:formatListWithEnclosure,
             *          argTyList,
             *          argSizeExpList,
             *          loc
             *         })
-            * {primName {exps(exp)(",","(",")")}}
+            * {primitive {exps(exp)(",","(",")")}}
             *)
            ANPRIMAPPLY of 
            {
-            primName : string, 
+            primitive : BuiltinPrimitive.primitive, 
             argExpList : anexp list, 
             argTyList : ty list,
             argSizeExpList : anexp list,

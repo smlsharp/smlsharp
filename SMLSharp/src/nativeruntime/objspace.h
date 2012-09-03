@@ -31,20 +31,9 @@ void sml_objspace_init(void);
 void sml_objspace_free(void);
 
 /*
- * register an root set enumerator of current thread.
- */
-typedef void sml_rootset_fn(sml_trace_cls *, enum sml_gc_mode, void *data);
-void sml_add_rootset(sml_rootset_fn *enumfn, void *data);
-
-/*
- * unregister an root set enumerator of current thread.
- */
-void sml_remove_rootset(sml_rootset_fn *, void *data);
-
-/*
  * enumerate pointer slots in root set.
  */
-void sml_rootset_enum_ptr(sml_trace_cls *, enum sml_gc_mode);
+void sml_rootset_enum_ptr(void (*callback)(void **), enum sml_gc_mode);
 
 /*
  * allocate an ML object by malloc.
@@ -54,71 +43,75 @@ void sml_rootset_enum_ptr(sml_trace_cls *, enum sml_gc_mode);
 void *sml_obj_malloc(size_t objsize);
 
 /*
- * trace pointer which is outside of heap.
- * if ptr is a malloc'ed object, mark it and trace its children.
- * ptr: pointer to be traced.
- * trace: object trace function.
+ * write barrier for global memory.
+ * writeaddr : write address.
+ * objaddr : address of object including writeaddr.
  *
- * This function will be called from garbage collector when collectors meets
- * an ML pointer at outside of heap.
- * If ptr is NULL, garbage collector may skip calling this function.
+ * Write barrier must call this function if writeadr is not in heap.
  */
-void *sml_trace_ptr(void *ptr, enum sml_gc_mode);
+void sml_global_barrier(void **writeaddr, void *objaddr);
+
+/*
+ * trace pointer which is outside of heap.
+ * ptr: pointer to be traced.
+ *
+ * Garbage collector must call this function when it meets an ML object
+ * pointer at outside of its heap.
+ * If ptr is NULL, garbage collector is not needed to call this function.
+ */
+void sml_trace_ptr(void *ptr);
+
+/*
+ * pop and mark malloc'ed objects until mark stack of malloc heap becomes
+ * empty.
+ *
+ * Garbage collector must call this function at tracing phase.
+ * Before leaving tracing phase, make sure that the mark stack of malloc heap
+ * is empty.
+ */
+void sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode);
 
 /*
  * sweep malloc'ed objects.
  *
- * This function will be called from garbage collector at collection phase.
+ * Garbage collector must call this function at collection phase.
  */
 void sml_malloc_sweep(enum sml_gc_mode);
 
 /*
- * enumerate pointer slots in malloc'ed objects.
+ * register a finalizer function for an malloc'ed object.
+ * obj : malloc'ed object which is related to the finalizer.
+ * finalizer : finalizer function. This function is invoked when the object
+ *             is to be freed.
  */
-void sml_malloc_enum_ptr(sml_trace_cls *trace);
+void sml_set_finalizer(void *obj, void (*finalizer)(void *obj));
 
 /*
- * add writeaddr to global barrier.
- * writeaddr : address of pointer variable holding address of an ML object.
- * objaddr : address of object including writeaddr.
+ * Check whether each finalizer-related object is traced at the last live
+ * object tracing and activate finalizer functions if the object is not
+ * traced.
+ * trace_rec : trace given object and its descendants in the heap.
  *
- * This function will be called from implementation of HEAP_WRITE_BARRIER.
+ * Garbage collector must call this function between tracing phase and
+ * collection phase.
  */
-void *sml_global_barrier(void **writeaddr, void *objaddr,
-			 enum sml_gc_mode trace_mode);
+void sml_check_finalizer(void (*trace_rec)(void **), enum sml_gc_mode mode);
 
 /*
- * register a finalizer of current thread for an object.
- * obj : finalizable object.
- * finalize_fn : finalizer function. This function is invoked when the object
- *               is to be freed.
- * data : extra data passed to finalize_fn.
+ * Execute finalizers which are activated by sml_check_finalizer.
+ * reserved_obj : an uninitialized object to be saved from garbage collection.
  *
- * Return value is a pointer to the finalizable object.
- * Note that obj and return value is not always equal due to garbage
- * collection invoked during finalizer registration.
- */
-typedef void sml_finalizer_fn(void *obj, void *data);
-void *sml_add_finalizer(void *obj, sml_finalizer_fn *finalize_fn, void *data);
-
-/*
- * Check whether each object with finalizer survived garbage collection and
- * reserve execution of finalizer.
- * save : keep given object and its descendants alive.
- * survived : return true if given object is in heap and survives.
+ * Garbage collector must call this function after garbage collection is
+ * finished.
  *
- * This function will be called from garbage collector after survival phase
- * and before collection phase.
+ * Note that sml_run_finalizer may run ML code, so object allocation and
+ * garbage collection may occur. Hence after calling sml_check_finalizer,
+ * heap may be full. If an allocation function calls this function, allocate
+ * a new object before calling this function and pass the new object to this
+ * function as reserved_obj. This function protects the new object from
+ * garbage collection and ensures that the new object is live even after
+ * finalizer execution.
  */
-void sml_check_finalizer(enum sml_gc_mode mode, int (*survived)(void *),
-			 sml_trace_cls *save);
-
-/*
- * Execute finalizers which are reserved by sml_check_finalizer.
- *
- * This function will be called from garbage collector after collection phase,
- * i.e., heap goes back to stable state.
- */
-void sml_run_finalizer(void);
+void *sml_run_finalizer(void *reserved_obj);
 
 #endif /* SMLSHARP__OBJSPACE_H__ */

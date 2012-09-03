@@ -1,0 +1,35 @@
+infix  7 * / div mod
+infix  6 + - ^
+infixr 5 :: @
+infix  4 = <> > >= < <=
+infix  3 := o
+infix  0 before
+
+val + = _builtin val Int_add_noov : int * int -> int
+val - = _builtin val Int_sub_noov : int * int -> int
+val * = _builtin val Int_mul_noov : int * int -> int
+val < = _builtin val Int_lt : int * int -> bool
+val > = _builtin val Int_gt : int * int -> bool
+val >= = _builtin val Int_gteq : int * int -> bool
+val := = _builtin val Ref_assign : 'a ref * 'a -> unit
+
+structure PrimString =
+struct
+  val size = _builtin val String_size : string -> int
+  val copy_unsafe = _builtin val String_copy_unsafe
+                    : string * int * string * int * int -> unit
+end
+
+structure Word =
+struct
+  val fromInt = _builtin val Word_fromInt : int -> word
+end
+
+structure PrimArray =
+struct
+  val array = _builtin val Array_array : int * 'a -> 'a array
+  val update = _builtin val Array_update : 'a array * int * 'a -> unit
+  val sub = _builtin val Array_sub : 'a array * int -> 'a
+  val vector = _builtin val Array_vector : int * 'a -> 'a array
+  val length = _builtin val Array_length : 'a array -> int
+end

@@ -13,7 +13,7 @@ struct
     fun acdeclToString decl = 
       Control.prettyPrint (AnnotatedCalc.format_acdecl decl)
 
-    fun topBlockToString topBlock = 
-      Control.prettyPrint (AnnotatedCalc.format_topBlock topBlock)
+    fun acdeclToStringWithType decl = 
+      Control.prettyPrint (AnnotatedCalc.formatWithType_acdecl decl)
 
 end

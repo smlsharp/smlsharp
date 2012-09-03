@@ -40,7 +40,23 @@
  *
  *)
 
+(*
+Modification made by Atsushi Ohori, 2011-09-12.
+
+This file contain one extra function 
+ insertWith
+after insrt' for optimization.
+*)
+
+
+(*
 functor BinaryMapFn (K : ORD_KEY) : ORD_MAP =
+*)
+functor BinaryMapFn (K : ORD_KEY) : sig
+  include ORD_MAP
+  val insertWith  : ('a -> unit) -> 'a map * Key.ord_key * 'a -> 'a map
+  (* Insert an item with invoking a function when there is an old item.*)
+end =
   struct
 
     structure Key = K
@@ -162,6 +178,19 @@ in
           | LESS => T'(key,value,left,insert(right,x,v))
           | _ => T{key=x,value=v,left=left,right=right,cnt= #cnt set}
     fun insert' ((k, x), m) = insert(m, k, x)
+
+(* 
+  Added the following function by Atsushi Ohori for optimization.
+*)
+    fun insertWith f (E,x,v) = T{key=x,value=v,cnt=1,left=E,right=E}
+      | insertWith f (T(set as {key,left,right,value,...}),x,v) =
+        case K.compare (key,x) of
+          GREATER => T'(key,value,insert(left,x,v),right)
+        | LESS => T'(key,value,left,insert(right,x,v))
+        | _ => (f value; T{key=x,value=v,left=left,right=right,cnt= #cnt set})
+(* 
+  The end of the addition.
+*)
 
     fun inDomain (set, x) = let 
 	  fun mem E = false

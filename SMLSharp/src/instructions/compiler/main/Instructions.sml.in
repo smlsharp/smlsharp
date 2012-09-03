@@ -25,6 +25,13 @@ in
 @SMLOpcodeToStringFunction@
 
 @SMLEqualInstructionFunction@
+
+  type unaryInstructionCon =
+      {argIndex:UInt32, destination:UInt32} -> instruction
+
+  type binaryInstructionCon =
+      {argIndex1:UInt32, argIndex2:UInt32, destination:UInt32} -> instruction
+
 end
 
 end

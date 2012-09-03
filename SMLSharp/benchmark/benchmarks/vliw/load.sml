@@ -1,4 +1,3 @@
 use "./vliw.sml";
 
-Main.doit ();
-print "Done";
+use "./doit.sml";

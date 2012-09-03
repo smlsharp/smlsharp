@@ -155,13 +155,13 @@ in
                        boundtvars = #tyargs tyFun
                      })
       in
-        case IEnv.numItems argTys of
+        case BoundTypeVarID.Map.numItems argTys of
           0 => TY.FUNMty([bodyTy], formatExpressionTy)
         | arity =>
           let
             (* type ('a1,...'an) name *)
             (*['X1,...,'Xn.('X1->r)->...->('Xn->r)->('X1,...,'Xn) name->r] *)
-            val tyVars = IEnv.listItems argTys
+            val tyVars = BoundTypeVarID.Map.listItems argTys
             (* ('X1,...,'Xn) name -> r *)
             val actualFormatterTy = tyOfFormatterOfTy bodyTy
             (* ('X1->r) -> ... ('Xn->r) -> ('X1,...,'Xn) name -> r *)

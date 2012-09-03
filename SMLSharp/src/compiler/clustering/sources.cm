@@ -1,4 +1,4 @@
 Group
-        structure Clustering
+	structure Clustering
 is
 	main/module.cm

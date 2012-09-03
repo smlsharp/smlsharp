@@ -11,6 +11,7 @@
 #include "IllegalArgumentException.hh"
 #include "IncompatibleExecutableException.hh"
 #include "MalformedExecutableException.hh"
+#include "Primitives.hh"
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
@@ -149,11 +150,16 @@ ExecutableLinker::link(Executable *executable)
     // executable->buffer_[1] = version
     // executable->buffer_[2] = byteOrder
 
-    // executable->buffer_[3] = codeWordLength
+    // executable->buffer_[3] = linkSymbolTableLength
     toNativeOrderQuad(executable->buffer_ + 3);
-    executable->codeWordLength_ = *(executable->buffer_ + 3);
-    // executable->buffer_[4] = start of code
-    executable->code_ = executable->buffer_ + 4;
+    UInt32Value symtabLength = executable->buffer_[3];
+    const char *symtab = (char*)(executable->buffer_ + 4);
+
+    // executable->buffer_[4+N] = codeWordLength
+    toNativeOrderQuad(executable->buffer_ + 4 + symtabLength);
+    executable->codeWordLength_ = *(executable->buffer_ + 4 + symtabLength);
+    // executable->buffer_[5+N] = start of code
+    executable->code_ = executable->buffer_ + 4 + symtabLength + 1;
 
     UInt32Value* code = executable->code_;
     UInt32Value* PC = code;
@@ -641,7 +647,8 @@ ExecutableLinker::link(Executable *executable)
           case CallPrim:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // primitiveIndex
+                toNativeOrderQuad(PC); // primitiveSymbolNameIndex
+		*PC = find_primitive_index(symtab + *PC);
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);

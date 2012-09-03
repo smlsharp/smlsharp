@@ -4,214 +4,273 @@
  * @author Atsushi Ohori 
  * @version $Id: TypedCalcUtils.sml,v 1.20.6.5 2010/01/29 06:41:34 hiro-en Exp $
  *)
-structure TypedCalcUtils : TYPEDCALCUTILS = struct
+structure TypedCalcUtils = struct
 local 
-    open Types TypedCalc TypesUtils
+  structure T = Types 
+  structure TC = TypedCalc
+  structure TU = TypesUtils
+  val tempVarNamePrefix = "$T_"
 in
-
+  fun newTCVarName () =  tempVarNamePrefix ^ Gensym.gensym()
+  fun newTCVarInfo ty =
+      let
+        val newVarId = VarID.generate()
+      in
+        {path=[newTCVarName()], id=newVarId, ty = ty}
+      end
+  fun newTCVarInfoWithPath (path,ty) =
+      let
+        val newVarId = VarID.generate()
+      in
+        {path=path, id=newVarId, ty = ty}
+      end
   fun getLocOfExp exp =
       case exp of
-        TPFOREIGNAPPLY {loc,...} => loc
-      | TPEXPORTCALLBACK {loc,...} => loc
-      | TPSIZEOF (_, loc) => loc
-      | TPERROR => Loc.noloc
-      | TPCONSTANT (_, _, loc) => loc
-      | TPGLOBALSYMBOL (_, _, _, loc) => loc
-      | TPVAR (_, loc) => loc
-      | TPRECFUNVAR {loc,...} => loc
-      | TPPRIMAPPLY {loc,...} => loc
-      | TPOPRIMAPPLY {loc,...} => loc
-      | TPDATACONSTRUCT {loc,...} => loc
-      | TPEXNCONSTRUCT {loc,...} => loc
-      | TPAPPM {loc,...} => loc
-      | TPMONOLET {loc,...} => loc
-      | TPLET(tpdecs,tpexps,tys, loc) => loc
-      | TPRECORD {loc,...} => loc
-      | TPSELECT {loc,...} => loc
-      | TPMODIFY {loc,...} => loc
-      | TPRAISE (tpexp,ty,loc) => loc
-      | TPHANDLE {loc,...} => loc
-      | TPCASEM {loc,...} => loc
-      | TPFNM  {loc,...} => loc
-      | TPPOLYFNM {loc,...} => loc
-      | TPPOLY {loc,...} => loc
-      | TPTAPP {loc,...} => loc
-      | TPSEQ {loc,...} => loc
-      | TPLIST {loc,...} => loc
-      | TPCAST (toexo, ty, loc) => loc
-      | TPSQLSERVER {loc,...} => loc
+        TC.TPERROR => Loc.noloc
+      | TC.TPCONSTANT {const, ty, loc} => loc
+      | TC.TPGLOBALSYMBOL {name, kind,ty,loc} => loc
+      | TC.TPVAR (_, loc) => loc
+      | TC.TPEXVAR (exVarInfo, loc) => loc
+      | TC.TPRECFUNVAR {loc,...} => loc
+      | TC.TPFNM  {loc,...} => loc
+      | TC.TPAPPM {loc,...} => loc
+      | TC.TPDATACONSTRUCT {loc,...} => loc
+      | TC.TPEXNCONSTRUCT {loc,...} => loc
+      | TC.TPEXN_CONSTRUCTOR {loc,...} => loc
+      | TC.TPCASEM {loc,...} => loc
+      | TC.TPPRIMAPPLY {loc,...} => loc
+      | TC.TPOPRIMAPPLY {loc,...} => loc
+      | TC.TPRECORD {loc,...} => loc
+      | TC.TPSELECT {loc,...} => loc
+      | TC.TPMODIFY {loc,...} => loc
+      | TC.TPSEQ {loc,...} => loc
+      | TC.TPMONOLET {loc,...} => loc
+      | TC.TPLET {decls, body, tys, loc} => loc
+      | TC.TPRAISE {exp, ty, loc} => loc
+      | TC.TPHANDLE {loc,...} => loc
+      | TC.TPPOLYFNM {loc,...} => loc
+      | TC.TPPOLY {loc,...} => loc
+      | TC.TPTAPP {loc,...} => loc
+      | TC.TPCAST (toexo, ty, loc) => loc
+      | TC.TPFFIIMPORT {loc,...} => loc
+      | TC.TPSIZEOF (_, loc) => loc
+      | TC.TPSQLSERVER {loc,...} => loc
 
   (**
    * Make a fresh instance of a polytype and a term of that type.
    *)
-  fun freshInst (ty,ex) =
-    if monoTy ty then (ty,ex)
-    else
-      let
-        val exLoc = getLocOfExp ex
-      in
-        case ty 
-          of (POLYty{boundtvars,body,...}) =>
-             let 
-               val subst = freshSubst boundtvars
-               val bty = substBTvar subst body
-               val newEx = 
-                 case ex of
-                   TPDATACONSTRUCT {con, instTyList=nil, argExpOpt=NONE, loc}
-                   => TPDATACONSTRUCT {con=con, 
-                                       instTyList=IEnv.listItems subst,
-                                       argExpOpt=NONE, 
-                                       loc=loc}
-                 | _ => TPTAPP{exp=ex,
-                               expTy=ty,
-                               instTyList=IEnv.listItems subst,
-                               loc=exLoc}
-             in  
-               freshInst (bty,newEx)
-             end
-           | FUNMty (tyList, bodyTy) =>
-             (* 
-              OLD: (fn f:ty => fn x :ty1 => inst(f x)) ex 
-              NEW   fn {x1:ty1,...,xn:tyn} => inst(ex {x1,...,xn})
-              *)
-             let
-               val varname = VarName.generate ()
-               val xList = map (fn ty => {namePath=(varname, Path.NilPath), ty=ty}) tyList
-               val xexList = map (fn x => TPVAR (x, exLoc)) xList
-               val (instBodyTy, instBody) = 
-                 freshInst 
-                 (bodyTy,TPAPPM {funExp=ex, funTy=ty, argExpList=xexList, loc=exLoc})
-             in 
-               (
-                (FUNMty(tyList, instBodyTy), 
-                 TPFNM {argVarList = xList, bodyTy=instBodyTy, bodyExp=instBody, loc=exLoc})
+  fun freshInst (ty,exp) =
+      if TU.monoTy ty then (ty,exp)
+      else
+        let
+          val expLoc = getLocOfExp exp
+        in
+          case ty of
+            T.POLYty{boundtvars,body,...} =>
+            let 
+              val subst = TU.freshSubst boundtvars
+              val bty = TU.substBTvar subst body
+              val newExp = 
+                  case exp of
+                    TC.TPDATACONSTRUCT {con,instTyList=nil,argExpOpt=NONE,loc}
+                    => TC.TPDATACONSTRUCT
+                         {con=con,
+                          instTyList=BoundTypeVarID.Map.listItems subst,
+                          argExpOpt=NONE, 
+                          loc=loc}
+                  | _ => TC.TPTAPP
+                           {exp=exp,
+                            expTy=ty,
+                            instTyList=BoundTypeVarID.Map.listItems subst,
+                            loc=expLoc}
+            in  
+              freshInst (bty,newExp)
+            end
+          | T.FUNMty (tyList, bodyTy) =>
+            (* 
+             OLD: (fn f:ty => fn x :ty1 => inst(f x)) exp 
+             NEW:  fn {x1:ty1,...,xn:tyn} => inst(exp {x1,...,xn})
+            *)
+              let
+                val argVarList = map newTCVarInfo tyList
+                val argExpList = map (fn x => TC.TPVAR (x,expLoc)) argVarList
+                val (instBodyTy, instBody) = 
+                    freshInst
+                      (bodyTy,
+                       TC.TPAPPM{funExp=exp,
+                                 funTy=ty,
+                                 argExpList=argExpList,
+                                 loc=expLoc})
+              in 
+                (
+                 (T.FUNMty(tyList, instBodyTy), 
+                  TC.TPFNM
+                    {argVarList = argVarList,
+                     bodyTy = instBodyTy,
+                     bodyExp = instBody,
+                     loc = expLoc})
                 )
-             end
-           | RECORDty fl => 
-             (* 
+              end
+          | T.RECORDty tyFields => 
+            (* 
               OLD: (fn r => {...,l=inst(x.l,ty) ...}) ex 
               NEW: let val xex = ex in {...,l=inst(x.l,ty) ...}
-              *)
-             (case ex of 
-                TPRECORD {fields=flex, recordTy=ty,loc=loc} =>
-                  let val (newfl,newflex) =
-                    SEnv.foldli
-                    (fn (l,_,(newfl,newflex)) =>
-                     (case (SEnv.find(fl,l),
-                            SEnv.find(flex,l)) of
-                        (SOME ty,SOME ex) => 
-                          let 
-                            val (ty',ex') = 
-                              freshInst 
-                              (ty,ex)
-                          in (SEnv.insert(newfl,l,ty'),
-                              SEnv.insert(newflex,l,ex'))
-                          end
-                      | _ => raise Control.Bug "freshInst"
-                          ))
-                    (SEnv.empty, SEnv.empty)
-                    fl
-                  in
-                    (
-                     RECORDty newfl,
-                     TPRECORD {fields=newflex, recordTy = RECORDty newfl, loc=loc}
-                     )
-                  end
-              | _ =>
-                let 
-                  fun isAtom exp =
-                    case exp of
-                      TPVAR v => true
-                    | TPCONSTANT _ => true
-                    | TPGLOBALSYMBOL _ => true
-                    | _ => false
-                in
-                  if isAtom ex then
-                    let 
-                      val (flty,flex) =
-                        SEnv.foldri 
-                        (fn (label,fieldTy,(flty,flex)) =>
-                         let
-                           val (fieldTy,litem) = 
-                             freshInst
-                             (fieldTy,TPSELECT{label=label, exp=ex, expTy=ty, resultTy=fieldTy, loc=exLoc})
-                         in (SEnv.insert(flty,label,fieldTy),
-                             SEnv.insert(flex,label,litem)
-                             )
-                         end)
-                        (SEnv.empty,SEnv.empty)
-                        fl
-                    in 
-                      (
-                       RECORDty flty, 
-                       TPRECORD {fields=flex, recordTy = RECORDty flty, loc=exLoc}
+            *)
+              (case exp of
+                 TC.TPRECORD {fields, recordTy=_, loc=loc} =>
+                 let
+                   val (newTyFields, newFields) =
+                       SEnv.foldli
+                         (fn (l, fieldTy, (newTyFields,newFields)) =>
+                             (case SEnv.find(fields,l) of
+                                SOME field => 
+                                let
+                                  val (ty',exp') = freshInst (fieldTy, field)
+                                in (SEnv.insert(newTyFields, l, ty'),
+                                    SEnv.insert(newFields, l, exp'))
+                                end
+                              | _ => raise Control.Bug "freshInst"
+                         ))
+                         (SEnv.empty, SEnv.empty)
+                         tyFields
+                 in
+                   (
+                    T.RECORDty newTyFields,
+                    TC.TPRECORD{fields=newFields,
+                                recordTy=T.RECORDty newTyFields,
+                                loc=loc}
+                   )
+                 end
+               | _ =>
+                 let 
+                   fun isAtom exp = case exp of
+                                      TC.TPVAR v => true
+                                    | TC.TPCONSTANT _ => true
+                                    | TC.TPGLOBALSYMBOL _ => true
+                                    | _ => false
+                 in
+                   if isAtom exp then
+                     let 
+                       val (flty,flexp) =
+                           SEnv.foldri 
+                             (fn (label, fieldTy, (flty,flexp)) =>
+                                 let
+                                   val (fieldTy,litem) = 
+                                       freshInst
+                                         (fieldTy,
+                                          TC.TPSELECT{label=label,
+                                                      exp=exp,
+                                                      expTy=ty,
+                                                      resultTy=fieldTy,
+                                                      loc=expLoc})
+                                 in
+                                   (SEnv.insert(flty,label,fieldTy),
+                                    SEnv.insert(flexp,label,litem)
+                                   )
+                                 end)
+                             (SEnv.empty,SEnv.empty)
+                             tyFields
+                     in 
+                       (
+                        T.RECORDty flty, 
+                        TC.TPRECORD{fields=flexp,
+                                    recordTy=T.RECORDty flty,
+                                    loc=expLoc}
                        )
-                    end
-                  else
-                    let 
-                      val varname = VarName.generate ()
-                      val var = {namePath = (varname, Path.NilPath), ty = ty}
-                      val varex = TPVAR (var, exLoc)
-                      val (flty,flex) =
-                        SEnv.foldri 
-                        (fn (label,fieldTy,(flty,flex)) =>
-                         let val (fieldTy,litem) =
-                           freshInst 
-                           (fieldTy, TPSELECT {label=label, exp=varex, expTy=ty, resultTy=fieldTy, loc=exLoc})
-                         in (SEnv.insert(flty,label,fieldTy),
-                             SEnv.insert(flex,label,litem)
+                     end
+                   else
+                     let 
+                       val var = newTCVarInfo ty
+                       val varExp = TC.TPVAR (var, expLoc)
+                       val (flty,flexp) =
+                           SEnv.foldri 
+                             (fn (label,fieldTy,(flty,flexp)) =>
+                                 let val (fieldTy,litem) =
+                                         freshInst
+                                           (fieldTy,
+                                            TC.TPSELECT
+                                              {label=label,
+                                               exp=varExp,
+                                               expTy=ty,
+                                               resultTy=fieldTy,
+                                               loc=expLoc})
+                                 in
+                                   (SEnv.insert(flty,label,fieldTy),
+                                    SEnv.insert(flexp,label,litem)
+                                   )
+                                 end
                              )
-                         end)
-                        (SEnv.empty,SEnv.empty)
-                        fl
-                    in 
-                      (
-                       RECORDty flty, 
-                       TPLET(
-                             [TPVAL([(VALIDVAR ({namePath = (varname,Path.NilPath), ty = ty}),
-                                      ex)], 
-                                    exLoc)],
-                             [TPRECORD {fields=flex, recordTy=RECORDty flty, loc=exLoc}],
-                             [RECORDty flty],
-                             exLoc
-                             )
+                             (SEnv.empty,SEnv.empty)
+                             tyFields
+                     in 
+                       (
+                        T.RECORDty flty, 
+                        TC.TPLET
+                          {decls = 
+                           [TC.TPVAL ([(var, exp)], expLoc)],
+                           body =
+                           [TC.TPRECORD
+                              {fields=flexp,
+                               recordTy=T.RECORDty flty,
+                               loc=expLoc}],
+                           tys = [T.RECORDty flty],
+                           loc = expLoc
+                          }
                        )
-                    end
-                end
+                     end
+                 end
               )
-           | ty => (ty,ex)
-      end
+          | ty => (ty,exp)
+        end
+
+  (**
+   * Make a fresh instance of a polytype and a term of that type.
+   *)
+  fun freshToplevelInst (ty,exp) =
+      if TU.monoTy ty then (ty,exp)
+      else
+        case ty of
+          T.POLYty{boundtvars,body,...} =>
+          let 
+            val subst = TU.freshSubst boundtvars
+            val bty = TU.substBTvar subst body
+            val newExp = 
+                case exp of
+                  TC.TPDATACONSTRUCT {con,instTyList=nil,argExpOpt=NONE,loc}
+                  => TC.TPDATACONSTRUCT
+                       {con=con,
+                        instTyList=BoundTypeVarID.Map.listItems subst,
+                        argExpOpt=NONE, 
+                        loc=loc}
+                | _ => TC.TPTAPP
+                         {exp=exp,
+                          expTy=ty,
+                          instTyList=BoundTypeVarID.Map.listItems subst,
+                          loc=getLocOfExp exp}
+          in  
+            (bty,newExp)
+          end
+        | ty => (ty,exp)
+
+end
+end
+(***************************************************************************
+
+
 
   fun tpExpExnTagTransducer applyFunction accumMerge defaultAccumValue tpexp =
       case tpexp of
-          TPFOREIGNAPPLY{funExp, funTy, instTyList, argExpList, argTyList, attributes, loc} =>
+          TPFFIIMPORT {ptrExp, ffiTy, stubTy, loc} =>
           let
-              val (newFunExp, accum') =
-                  tpExpExnTagTransducer applyFunction accumMerge defaultAccumValue funExp
-              val (newArgExpList, accum'') =
-                  tpExpListExnTagTransducer applyFunction accumMerge defaultAccumValue argExpList
+              val (newPtrExp, accum') =
+                  tpExpExnTagTransducer applyFunction accumMerge defaultAccumValue ptrExp
           in
-              (TPFOREIGNAPPLY{funExp = newFunExp,
-                              funTy = funTy, 
-                              instTyList = instTyList, 
-                              argExpList = newArgExpList, 
-                              argTyList = argTyList , 
-                              attributes = attributes, 
-                              loc = loc},
-               accumMerge(accum', accum'')
+              (TPFFIIMPORT {ptrExp = newPtrExp,
+                            ffiTy = ffiTy,
+                            stubTy = stubTy,
+                            loc = loc},
+               accum'
               )
-          end
-        | TPEXPORTCALLBACK {funExp, argTyList, resultTy, attributes, loc} =>
-          let
-              val (newFunExp, accum') =
-                  tpExpExnTagTransducer applyFunction accumMerge defaultAccumValue funExp
-          in
-              (TPEXPORTCALLBACK {funExp = newFunExp, 
-                                 argTyList = argTyList, 
-                                 resultTy = resultTy, 
-                                 attributes = attributes,
-                                 loc = loc},
-               accum')
           end
         | TPSIZEOF _ => (tpexp, defaultAccumValue)
         | TPERROR  =>  (tpexp, defaultAccumValue)
@@ -875,5 +934,16 @@ in
       in
           topDecs
       end
+
+  fun stripSysStrpathFFIty ffity =
+      case ffity of
+        FFIBASETY (ty, loc) => FFIBASETY (TypesUtils.stripSysStrpathTy ty, loc)
+      | FFIFUNTY (attr, argTys, retTys, loc) =>
+        FFIFUNTY (attr, map stripSysStrpathFFIty argTys,
+                  map stripSysStrpathFFIty retTys, loc)
+      | FFIRECORDTY (fields, loc) =>
+        FFIRECORDTY (map (fn (k,v) => (k, stripSysStrpathFFIty v)) fields, loc)
+
 end
 end
+***************************************************************************)

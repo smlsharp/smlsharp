@@ -5,7 +5,5 @@
  *)
 signature VALREC_OPTIMIZER =
 sig
-  val optimize : VALREC_Utils.globalContext -> 
-                 PatternCalcFlattened.plftopdec list -> 
-                 PatternCalcFlattened.plftopdec list
+  val optimize : IDCalc.icdecl list -> IDCalc.icdecl list
 end

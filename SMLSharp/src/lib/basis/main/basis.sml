@@ -22,7 +22,7 @@ infix 0 before
 (* bindings used by basic formatters definition. *)
 
 fun not true = false
-  | not fasle = true
+  | not false = true
 
 fun x <> y = not(x = y)
 

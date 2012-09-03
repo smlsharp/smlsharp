@@ -33,6 +33,7 @@ sig
         isPure: bool,
         noCallback: bool,
         allocMLValue: bool,
+        suspendThread: bool,
         callingConvention: callingConvention option
       }
 
@@ -52,15 +53,20 @@ sig
   |  TYID of tvar * Loc.loc
   | TYRECORD of (string * ty) list * Loc.loc
   | TYCONSTRUCT of ty list * string list * Loc.loc
-  | TYCONSTRUCT_WITH_NAMEPATH of ty list * NameMap.namePath * Loc.loc
   | TYTUPLE of ty list * Loc.loc
   | TYFUN of ty * ty * Loc.loc
-  | TYFFI of ffiAttributes * string list * ty list * ty * Loc.loc
   | TYPOLY of kindedTvar list * ty * Loc.loc
 
   datatype tvarKind = 
     UNIV
-  | REC of (string * ty) list
+  | REC of (string * ty) list * Loc.loc
+
+  datatype ffiTy =
+      FFIFUNTY of string list * ffiTy list * ffiTy list * Loc.loc
+    | FFITUPLETY of ffiTy list * Loc.loc
+    | FFITYVAR of tvar * Loc.loc
+    | FFIRECORDTY of (string * ffiTy) list * Loc.loc
+    | FFICONTY of ffiTy list * string list * Loc.loc
 
   datatype pat = 
     PATWILD of Loc.loc
@@ -72,7 +78,6 @@ sig
   | PATAPPLY of pat list * Loc.loc
   | PATTYPED of pat * ty * Loc.loc
   | PATLAYERED of pat * pat * Loc.loc
-  | PATORPAT of pat * pat * Loc.loc
 
   and patrow =
       PATROWPAT of string * pat * Loc.loc
@@ -107,12 +112,12 @@ sig
     | EXPFN of (pat * exp) list * Loc.loc
     | EXPLET of dec list * exp list * Loc.loc
     | EXPCAST of exp * Loc.loc
-    | EXPFFIIMPORT of exp * ty * Loc.loc
-    | EXPFFIEXPORT of exp * ty * Loc.loc
-    | EXPFFIAPPLY of string list * exp * ffiArg list * ty * Loc.loc
+    | EXPFFIIMPORT of exp * ffiTy * Loc.loc
+    | EXPFFIEXPORT of exp * ffiTy * Loc.loc
+    | EXPFFIAPPLY of string list * exp * ffiArg list * ffiTy * Loc.loc
     | EXPSQL of (exp,pat,ty) AbsynSQL.exp * Loc.loc
   and ffiArg =
-      FFIARG of exp * ty * Loc.loc
+      FFIARG of exp * ffiTy * Loc.loc
     | FFIARGSIZEOF of ty * exp option * Loc.loc
   and dec =
       DECVAL of kindedTvar list * (pat * exp) list * Loc.loc
@@ -176,10 +181,17 @@ sig
     | TOPDECSIG of ( string * sigexp ) list * Loc.loc 
     | TOPDECFUN of funbind list * Loc.loc (* functor binding*)
 
+  datatype top =
+      TOPDEC of topdec list
+    | USE of string * Loc.loc
+
+  datatype interface =
+      INTERFACE of {name: string, loc: Loc.loc}
+    | NOINTERFACE
+
   datatype unitparseresult
     = UNIT of unit
-    | USE of string * Loc.loc
-    | USEOBJ of string * Loc.loc
+    | EOF
 
   val getLocTy : ty -> Loc.loc
   val getLocPat : pat -> Loc.loc
@@ -189,8 +201,12 @@ sig
   val getLastIdOfLongid : longid -> string
   val getParentIdsOfLongid : longid -> longid
   val format_constant : constant -> SMLFormat.FormatExpression.expression list
+  val format_globalSymbolKind:
+      globalSymbolKind -> SMLFormat.FormatExpression.expression list
   val format_ffiAttributes :
       ffiAttributes -> SMLFormat.FormatExpression.expression list
+  val format_sigexp : sigexp -> SMLFormat.FormatExpression.expression list
+  val format_spec : spec -> SMLFormat.FormatExpression.expression list
   val format_dec : dec -> SMLFormat.FormatExpression.expression list
   val format_topdec : topdec -> SMLFormat.FormatExpression.expression list
   val format_exp : exp -> SMLFormat.FormatExpression.expression list
@@ -203,6 +219,7 @@ sig
   val format_tvarKind : tvarKind -> SMLFormat.FormatExpression.expression list
   val format_kindedTvar : kindedTvar -> SMLFormat.FormatExpression.expression list
   val format_ty : ty -> SMLFormat.FormatExpression.expression list
+  val format_ffiTy : ffiTy -> SMLFormat.FormatExpression.expression list
   val format_typbind : typbind -> SMLFormat.FormatExpression.expression list
   val replaceLoc : exp * Loc.loc -> exp
   val format_unit : unit -> SMLFormat.FormatExpression.expression list

@@ -22,7 +22,7 @@ fun salaryRank condFn =
                where condFn r
                order by #r.salary desc;
 
-fun salaryRankOf (deptId:int) condFn =
+fun salaryRankOf condFn deptId =
     salaryRank (fn r => SQL.andAlso (SQL.== (#r.deptid, SQL.toSQL deptId),
                                      condFn r));
 
@@ -41,21 +41,19 @@ fun printList depts =
                  employees))
         depts;
 
-val cond1 = fn r => SQL.> (#r.salary, 500);
-val list1 =
+fun forEachDept queryFn =
     map (fn {deptId, deptName} =>
-            {deptName = deptName,
-             employees = fetch (_sqleval (salaryRankOf deptId cond1))})
-        depts;
+            {deptName = deptName, employees = fetch (queryFn deptId)})
+        depts
+    
+val q1 = fn x => salaryRankOf (fn r => SQL.> (#r.salary, 500)) x;
+val l1 = forEachDept (fn deptId => _sqleval (q1 deptId))
 
 val _ = print "List1:\n"
-val _ = printList list1;
+val _ = printList l1;
 
-val cond2 = fn r => SQL.> (#r.age, 30);
-val list2 =
-    map (fn {deptId, deptName} =>
-            {deptName = deptName,
-             employees = fetch (_sqleval (salaryRankOf deptId cond2))})
-        depts;
+val q2 = fn x => salaryRankOf (fn r => SQL.> (#r.age, 30)) x;
+val l2 = forEachDept (fn deptId => _sqleval (q2 deptId));
+
 val _ = print "\nList2:\n"
-val _ = printList list2;
+val _ = printList l2;

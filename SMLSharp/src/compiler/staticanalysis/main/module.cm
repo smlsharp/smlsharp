@@ -17,5 +17,4 @@ Group is
 	SAContext.sml
 	SACONSTRAINT.sig
 	SAConstraint.sml
-	STATICANALYSIS.sig
 	StaticAnalysis.sml

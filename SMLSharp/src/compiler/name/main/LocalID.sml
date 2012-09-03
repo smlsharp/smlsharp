@@ -9,27 +9,37 @@ in
   val compare = Int.compare
   fun eq (id1:id, id2:id) =  id1 = id2
   fun generate () =  !state before state := !state + 1
-  val pu_ID = Pickle.int 
   fun toInt id =  id
   structure IDOrd =
   struct 
     type ord_key = id
     val compare = compare
   end
-  structure Map = BinaryMapMaker(IDOrd);
-  structure Set = BinarySetMaker(IDOrd);
-  fun reset () = state := 0
+  structure Map = BinaryMapFn(IDOrd);
+  structure Set = BinarySetFn(IDOrd);
 end
-end :> LOCAL_ID
+end 
 
-structure FreeTypeVarID = MakeLocalID()
-structure VarName =
-struct
+structure FreeTypeVarID :> LOCAL_ID = MakeLocalID()
+structure BoundTypeVarID :> LOCAL_ID = MakeLocalID()
+structure ClusterID :> LOCAL_ID = MakeLocalID()
+structure ConID :> LOCAL_ID = MakeLocalID()
+structure ExnID :> LOCAL_ID = MakeLocalID()
+structure ExExnID :> LOCAL_ID = MakeLocalID()
+structure InterfaceID :> LOCAL_ID  = MakeLocalID()
+structure OPrimID :> LOCAL_ID = MakeLocalID()
+structure PrimID :> LOCAL_ID = MakeLocalID()
+structure TvarID :> LOCAL_ID = MakeLocalID()
+structure TypID :> LOCAL_ID = MakeLocalID()
+structure VarID :> LOCAL_ID = MakeLocalID()
+structure FunctionAnnotationID :> LOCAL_ID = MakeLocalID()
+structure AnnotationLabelID :> LOCAL_ID = MakeLocalID()
+structure RevealID :> LOCAL_ID = MakeLocalID()
+structure VarName = struct
 local
   structure VarNameID = MakeLocalID()
 in
   type id = VarNameID.id
-  fun reset () = VarNameID.reset()
   fun generate () =
       let
         val id = VarNameID.generate ()
@@ -38,12 +48,4 @@ in
       end
 end
 end
-
-(* ids of the ID calculus *)
-structure VarID = MakeLocalID() (* variables *)
-structure TypID = MakeLocalID() (* variables *)
-structure ExnID = MakeLocalID() (* variables *)
-structure ConID = MakeLocalID() (* variables *)
-structure StrID = MakeLocalID() (* variables *)
-
 

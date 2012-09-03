@@ -8,10 +8,9 @@ Group is
 	../../env/sources.cm
 	../../name/sources.cm
 	../../types/sources.cm
-	../../patterncalcFlattened/sources.cm
+	../../idcalc/sources.cm
+	../../util/sources.cm
 
-	GRAPH.sig
-	Graph.sml
 	utils.sml
 	VALREC_OPTIMIZER.sig
 	VALREC_Optimizer.sml

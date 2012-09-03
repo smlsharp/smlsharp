@@ -30,6 +30,7 @@ sig
            byteOrder : SystemDefTypes.byteOrder,
            instructionsSize: BasicTypes.UInt32,
            instructionsArray : Word8Array.array,
+           linkSymbolTable : string,
            locationTable : Executable.locationTable,
            nameSlotTable : Executable.nameSlotTable
          }

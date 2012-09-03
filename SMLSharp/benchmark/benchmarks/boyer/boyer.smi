@@ -1,0 +1,7 @@
+_require "basis.smi"
+_require "terms.smi"
+_require "terms.sig"
+structure Main =
+struct
+  val doit : unit -> unit
+end

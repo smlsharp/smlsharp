@@ -1,0 +1,24 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+(*
+	../../namemap/sources.cm
+*)
+	../../util/sources.cm
+(*
+	../../primitive/sources.cm
+*)
+	../../types/sources.cm
+	../../recordcalc/sources.cm
+
+	OverloadKind.sml
+	RecordKind.sml
+	UnivKind.sml
+	RecordCompilation.sml

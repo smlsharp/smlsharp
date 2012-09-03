@@ -1,22 +1,24 @@
 Group
 	structure IEnv
-	structure WEnv
 	structure SEnv
+        structure PathEnv
 
-	structure IEnvLazy
-	structure WEnvLazy
-	structure SEnvLazy
+
 
 	structure ISet
-	structure WSet
 	structure SSet
-
-	structure EnvPickler
-
-	functor OrdSetPickler
-	functor OrdMapPickler
 	functor BinaryMapMaker
+
+(*
+        structure IEnvLazy
+        structure WEnvLazy
+        structure SEnvLazy
 	functor BinaryMapMakerLazy
 	functor BinarySetMaker
+*)
+
+	signature ORD_KEY
+	signature ORD_MAP
+	signature ORD_SET
 is
 	main/module.cm

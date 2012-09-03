@@ -6,12 +6,11 @@
  * @author Liu Bochao
  * @version $Id: FunctorLinker.sml,v 1.23 2008/08/06 17:23:39 ohori Exp $
  *)
-structure FunctorLinker : FUNCTOR_LINKER = 
+structure FunctorLinker :> FUNCTOR_LINKER = 
 struct
 local
 
   structure T  = Types
-  structure P = Path
   structure ATU = AnnotatedTypesUtils
   structure AT = AnnotatedTypes
   structure VIC = VarIDContext
@@ -21,11 +20,15 @@ local
   fun printx x = if debug then (print "\n"; print x; print "\n") else ()
   val newLocalId = VarID.generate
 
+  structure SEnv' = SEnv
+  structure SEnv = SEnvLazy
 in
   type functorEnv = (MultipleValueCalc.mvdecl list) SEnv.map 
   val initialFunctorEnv = SEnv.empty
+  val emptyFunctorEnv = SEnv.empty
+  fun extendFunctorEnv (x,y) = SEnv.unionWith #2 (x,y)
   val pu_functorEnv =
-      EnvPickler.SEnv (Pickle.list MultipleValueCalcPickler.mvdecl)
+      SEnvLazy.pu_map (Pickle.list MultipleValueCalcPickler.mvdecl)
 
   type linkContext =
        {
@@ -52,7 +55,7 @@ in
 
   fun betaReduceAnnotatedTy ({tyargs, body}, tyl) =
       let
-        val argsBtyList = IEnv.listItemsi tyargs
+        val argsBtyList = BoundTypeVarID.Map.listItemsi tyargs
       in
         if List.length argsBtyList <> List.length tyl then
           raise Control.Bug "betaReduceAnnotatedTy arity mismatch"
@@ -60,8 +63,8 @@ in
           let
             val subst = 
                 ListPair.foldr
-                  (fn ((i, _), ty, S) => IEnv.insert(S, i, ty))
-                  IEnv.empty
+                  (fn ((i, _), ty, S) => BoundTypeVarID.Map.insert(S, i, ty))
+                  BoundTypeVarID.Map.empty
                   (argsBtyList, tyl)
           in 
             ATU.substitute subst body
@@ -70,14 +73,8 @@ in
 
   fun linkTemplateTy (linkContext:linkContext) ty = 
       case ty of
-        AT.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} => 
-        AT.INSTCODEty
-          {oprimId = oprimId,
-           oprimPolyTy = oprimPolyTy,
-           name = name,
-           keyTyList = map (linkTemplateTy linkContext) instTyList,
-           instTyList = map (linkTemplateTy linkContext) instTyList
-          }
+        AT.SINGLETONty sty =>
+        AT.SINGLETONty (linkTemplateSingletonTy linkContext sty)
         | AT.ERRORty => ty
         | AT.DUMMYty _ => ty
         | AT.BOUNDVARty _ => ty
@@ -91,12 +88,13 @@ in
           AT.MVALty (map (linkTemplateTy linkContext) tyList)
         | AT.RECORDty {fieldTypes, annotation} =>
           AT.RECORDty
-            {fieldTypes = SEnv.map (linkTemplateTy linkContext) fieldTypes,
+            {fieldTypes = SEnv'.map (linkTemplateTy linkContext) fieldTypes,
              annotation = annotation}
         | AT.POLYty {boundtvars, body} =>
           AT.POLYty
             {boundtvars =
-               IEnv.map (linkTemplateBtvKind linkContext) boundtvars, 
+               BoundTypeVarID.Map.map (linkTemplateBtvKind linkContext)
+                                      boundtvars, 
              body = linkTemplateTy linkContext body}
         | AT.RAWty {tyCon, args} =>
           AT.RAWty {tyCon = tyCon,
@@ -118,13 +116,34 @@ in
             resultTy
           end
 
+  and linkTemplateSingletonTy (linkContext:linkContext) singletonTy = 
+      case singletonTy of
+        AT.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} => 
+        AT.INSTCODEty
+          {oprimId = oprimId,
+           oprimPolyTy = oprimPolyTy,
+           name = name,
+           keyTyList = map (linkTemplateTy linkContext) instTyList,
+           instTyList = map (linkTemplateTy linkContext) instTyList
+          }
+      | AT.INDEXty (label, ty) =>
+        AT.INDEXty (label, linkTemplateTy linkContext ty)
+      | AT.TAGty ty =>
+        AT.TAGty (linkTemplateTy linkContext ty)
+      | AT.SIZEty ty =>
+        AT.SIZEty (linkTemplateTy linkContext ty)
+      | AT.RECORDSIZEty ty =>
+        AT.RECORDSIZEty (linkTemplateTy linkContext ty)
+      | AT.RECORDBITMAPty (index, ty) =>
+        AT.RECORDBITMAPty (index, linkTemplateTy linkContext ty)
+
   and linkTemplateBtvKind linkContext {id, recordKind, eqKind, instancesRef} =
       let
         val recordKind =
             case recordKind of 
               AT.UNIV => AT.UNIV
             | AT.REC tySEnvMap => 
-              AT.REC (SEnv.map (linkTemplateTy linkContext) tySEnvMap)
+              AT.REC (SEnv'.map (linkTemplateTy linkContext) tySEnvMap)
             | AT.OPRIMkind {instances, operators} =>
               AT.OPRIMkind 
                 {instances = map (linkTemplateTy linkContext) instances,
@@ -327,84 +346,6 @@ in
           (incTemplateVarRenamingBasis,
            MVVALREC {recbindList = newRecbindList, loc = loc})
         end
-      | MVVALPOLYREC {btvEnv, recbindList, loc} =>
-        let
-          val incTemplateVarRenamingBasis = 
-              foldr
-                (fn ({boundVar =
-                      {displayName, ty, varId = T.INTERNAL oldId},
-                      boundExp}, 
-                     templateVarRenamingBasis) => 
-                    let
-                      val newId = newLocalId()
-                    in
-                      (
-                       VIC.mergeTemplateVarRenamingBasis
-                         {new = VarID.Map.singleton
-                                  (oldId, (displayName, newId)),
-                          old = templateVarRenamingBasis})
-                    end
-                  | ({boundVar = {displayName, ty, varId = T.EXTERNAL index},
-                      boundExp}, 
-                     templateVarRenamingBasis) =>
-                    templateVarRenamingBasis)
-                VIC.emptyTemplateRenamingVarBasis
-                recbindList
-          val newLinkContext = 
-              extendLinkContextWithTemplateRenamingVarBasis
-                (linkContext, incTemplateVarRenamingBasis)
-          val newRecbindList =
-              foldr
-                (fn ({boundVar =
-                      {displayName, ty = oldTy, varId = T.INTERNAL id},
-                      boundExp},
-                     newRecbindList) =>
-                    let
-                      val newId = 
-                          case VIC.lookupLocalIdInTemplateVarRenamingBasis
-                                 (id, incTemplateVarRenamingBasis) of
-                            SOME (displayName, newId) => newId
-                          | NONE =>
-                            raise Control.Bug ("unbound var:"^displayName)
-                      val newTy = linkTemplateTy newLinkContext oldTy
-                      val newBoundVar =
-                          {
-                           displayName = displayName,
-                           ty = newTy,
-                           varId = T.INTERNAL newId
-                          }
-                      val newMvexp = linkTemplateMvexp newLinkContext boundExp
-                    in
-                      {boundVar = newBoundVar, boundExp = newMvexp}
-                        :: newRecbindList
-                    end
-                  | ({boundVar =
-                      {displayName, ty = oldTy, varId = T.EXTERNAL index},
-                      boundExp},
-                     newRecbindList) =>
-                    let
-                      val newIndex = linkTemplateIndex linkContext index
-                      val newTy = linkTemplateTy newLinkContext oldTy
-                      val newBoundVar =
-                          {
-                           displayName = displayName,
-                           ty = newTy,
-                           varId = T.EXTERNAL newIndex
-                          }
-                      val newMvexp = 
-                          linkTemplateMvexp newLinkContext boundExp
-                    in
-                      {boundVar = newBoundVar, boundExp = newMvexp}
-                      :: newRecbindList
-                    end)
-                nil
-                recbindList
-        in
-          (
-           incTemplateVarRenamingBasis,
-           MVVALPOLYREC
-             {btvEnv = btvEnv, recbindList = newRecbindList, loc = loc})
-        end
 
   and linkTemplateMvexpList linkContext mvexpList =
       map (linkTemplateMvexp linkContext) mvexpList
@@ -427,7 +368,9 @@ in
                           funTy = linkTemplateTy linkContext funTy,
                           attributes = attributes,
                           loc = loc}
+      | MVTAGOF _ => mvexpression
       | MVSIZEOF _ => mvexpression
+      | MVINDEXOF _ => mvexpression
       | MVCONSTANT _ => mvexpression
       | MVGLOBALSYMBOL _ => mvexpression
       | MVEXCEPTIONTAG {tagValue, displayName, loc} =>
@@ -533,16 +476,19 @@ in
                   annotation = annotation, 
                   isMutable = isMutable, 
                   loc = loc}
-      | MVSELECT {recordExp, label, recordTy, resultTy, loc} =>
+      | MVSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
         MVSELECT {recordExp = linkTemplateMvexp linkContext recordExp,
-                  label = label, 
+                  indexExp = linkTemplateMvexp linkContext indexExp,
+                  label = label,
                   recordTy = linkTemplateTy linkContext recordTy, 
                   resultTy = linkTemplateTy linkContext resultTy, 
                   loc = loc}
-      | MVMODIFY {recordExp, recordTy, label, valueExp, valueTy, loc} =>
+      | MVMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy,
+                  loc} =>
         MVMODIFY {recordExp = linkTemplateMvexp linkContext recordExp,
                   recordTy = linkTemplateTy linkContext recordTy, 
-                  label = label, 
+                  indexExp = linkTemplateMvexp linkContext indexExp,
+                  label = label,
                   valueExp =  linkTemplateMvexp linkContext valueExp,
                   valueTy = linkTemplateTy linkContext valueTy, 
                   loc = loc}
@@ -620,7 +566,8 @@ in
                  loc = loc}
         end
       | MVPOLY {btvEnv, expTyWithoutTAbs, exp, loc} =>
-        MVPOLY {btvEnv = IEnv.map (linkTemplateBtvKind linkContext) btvEnv,
+        MVPOLY {btvEnv = BoundTypeVarID.Map.map
+                           (linkTemplateBtvKind linkContext) btvEnv,
                 expTyWithoutTAbs = linkTemplateTy linkContext expTyWithoutTAbs,
                 exp = linkTemplateMvexp linkContext exp,
                 loc = loc}
@@ -649,7 +596,6 @@ in
       case dec of
           MVVAL _ => dec
         | MVVALREC _ => dec
-        | MVVALPOLYREC _ => dec
 
   fun linkBasicBlock functorEnv basicBlock =
       case basicBlock of

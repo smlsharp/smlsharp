@@ -1,4 +1,3 @@
 use "./life.sml";
 
-Main.doit ();
-print "Done";
+use "./doit.sml";

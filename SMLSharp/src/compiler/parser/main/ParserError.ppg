@@ -1,0 +1,14 @@
+(* -*- sml -*- *)
+(**
+ * parse error message.
+ * @author UENO Katsuhiro
+ *)
+structure ParserError =
+struct
+
+  (*% *)
+  exception
+  (*% @format(msg) msg *)
+  ParseError of string
+
+end

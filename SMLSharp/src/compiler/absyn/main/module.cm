@@ -9,7 +9,6 @@ Group is
 	../../env/sources.cm
 	../../util/sources.cm
 	../../name/sources.cm
-	../../pickle/sources.cm
 
 	Fixity.sml
 	AbsynSQL.ppg.sml
@@ -17,4 +16,4 @@ Group is
 	Absyn.ppg.sml
 	ABSYN_FORMATTER.sig
 	AbsynFormatter.sml
-	AbsynPickler.sml
+	AbsynInterface.ppg.sml

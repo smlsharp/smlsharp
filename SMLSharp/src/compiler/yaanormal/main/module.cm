@@ -10,12 +10,14 @@ Group is
 	../../util/sources.cm
 	../../name/sources.cm
 	../../usererror/sources.cm
-	../../primitive/sources.cm
+	../../builtin/sources.cm
 	../../absyn/sources.cm
 	../../constantterm/sources.cm
 
 	ANormal.ppg.sml
+(*
 	ANormalUtils.sml
 	ANormalFormatter.sml
 	ANormalTypeCheckError.ppg.sml
 	ANormalTypeCheck.sml
+*)

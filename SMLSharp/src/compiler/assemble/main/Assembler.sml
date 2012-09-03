@@ -25,7 +25,6 @@ struct
   structure ISC = InstructionSizeCalculator
   structure LocMap = SourceLocationMap
   structure NameSlotMap = SourceNameSlotMap
-  structure P = Primitives
   structure SD = SystemDef
   structure SF = StackFrame
   structure SI = SymbolicInstructions
@@ -256,6 +255,24 @@ struct
         )
       | Control.Bug message => raise Control.BugWithLoc (message, loc)
 
+  (* link symbol table *)
+  type symbolTable =
+      {index: int SEnv.map, symbols: string list, length: int}
+
+  val emptySymbolTable =
+      {index = SEnv.empty, symbols = nil, length = 0}
+
+  fun symbolTableEntry (tab as ref ({index, symbols, length}:symbolTable))
+                       name =
+      case SEnv.find (index, name) of
+        SOME n => n
+      | NONE => (tab := {index = SEnv.insert (index, name, length),
+                         symbols = name :: symbols,
+                         length = length + size name + 1}; length)
+
+  fun makeSymbolTable ({symbols, ...}:symbolTable) =
+      String.concat (map (fn x => x ^ "\000") (rev symbols))
+
   local
     (* zero of 16 bits width *)
     val zeroPadding = BT.IntToUInt16 0
@@ -293,7 +310,7 @@ struct
    * NOTE:the instruction should not be a Label instruction
    * </p>
    *)
-  fun toRawInstruction VI LO instruction =
+  fun toRawInstruction VI LO symbolEntry instruction =
       let
       in
         case instruction of
@@ -729,47 +746,28 @@ struct
                 argEntries,
                 destination
               } =>
-          (case #instruction primitive of
-             P.Internal1 maker =>
+          (case VMPrimitive.primImpl primitive of
+             VMPrimitive.Internal1 maker =>
              maker
-                 ({
+                 {
                    argIndex = VI (hd argEntries),
                    destination = VI destination
-                 } : P.operand1)
-           | P.Internal2 maker => 
+                 }
+           | VMPrimitive.Internal2 maker => 
              maker
-                 ({
+                 {
                    argIndex1 = VI (hd argEntries),
                    argIndex2 = VI (hd (tl argEntries)),
                    destination = VI destination
-                 } : P.operand2)
-           | P.Internal3 maker => 
-             maker
-                 ({
-                   argIndex1 = VI (hd argEntries),
-                   argIndex2 = VI (hd (tl argEntries)),
-                   argIndex3 = VI (hd (tl (tl argEntries))),
-                   destination = VI destination
-                 } : P.operand3)
-           | P.InternalN maker => 
-             maker
-                 ({
-                   argsCount = length argEntries,
-                   argIndexes = map VI argEntries,
-                   destination = VI destination
-                 } : P.operandN)
-           | P.External primitive => 
+                 }
+           | VMPrimitive.External name => 
              I.CallPrim
              {
                argsCount = length argEntries,
-               primitive = BT.IntToUInt32 primitive,
+               primSymbolIndex = BT.IntToUInt32 (symbolEntry name),
                argIndexes = map VI argEntries,
                destination = VI destination
              }
-           | P.None =>  
-             raise 
-               Control.Bug 
-               "empty primitive instruction : (assemble/main/Assembler.sml)"
              )
         | SI.ForeignApply
               {
@@ -3240,6 +3238,7 @@ struct
    *)
   fun toRawInstructions
           labelMap
+          symbolTableRef
           (
             ((slotMap, funInfo, instructions) : IMFunctionCode, loc),
             rawInstructions
@@ -3267,12 +3266,14 @@ struct
               recordGroups = #recordsSlots funInfo
            }
 
+        val symbolEntry = symbolTableEntry symbolTableRef
+
         fun translate (SI.Label _, rawInstructions) = rawInstructions
           | translate (SI.Location _, rawInstructions) = rawInstructions
           | translate (symInstruction, rawInstructions) =
             let
               val rawInstruction =
-                  toRawInstruction VI LO symInstruction
+                  toRawInstruction VI LO symbolEntry symInstruction
 (*
               (* check code *)
               val tempBuffer = Word8Array.array (10240, 0w0)
@@ -3480,8 +3481,9 @@ val _ = print "end\n\n"
         val _ = #start secondPassTimeCounter ()
 
         (* second subphase *)
+        val symbolTable = ref emptySymbolTable
         val rawInstructions =
-            foldr (toRawInstructions labelMap) [] IMfunctionCodes
+            foldr (toRawInstructions labelMap symbolTable) [] IMfunctionCodes
 
         val _ = #stop secondPassTimeCounter ()
 
@@ -3496,6 +3498,7 @@ val _ = print "end\n\n"
             byteOrder = SD.NativeByteOrder,
             instructionsSize = lastOffset,
             instructions = rawInstructions,
+            linkSymbolTable = makeSymbolTable (!symbolTable),
             locationTable = locationTable,
             nameSlotTable = nameSlotTable
             } : Executable.executable)

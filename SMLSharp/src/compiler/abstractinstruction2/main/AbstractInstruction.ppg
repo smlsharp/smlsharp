@@ -42,8 +42,8 @@ struct
   (*% @formatter(VarID.id) VarID.format_id *)
   type id = VarID.id
 
-  (*% @formatter(ANormal.ffiAttributes) ANormal.format_ffiAttributes *)
-  type ffiAttributes = ANormal.ffiAttributes
+  (*% @formatter(Absyn.ffiAttributes) Absyn.format_ffiAttributes *)
+  type ffiAttributes = Absyn.ffiAttributes
 
   (*% *)
   type label =
@@ -55,10 +55,10 @@ struct
        (*% @format(id) "C" id *)
        ClusterID.id
 
-  (*% *)
+  (*% @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id *)
   type tid =
        (*% @format(x) "t" x *)
-       int
+       BoundTypeVarID.id
 
   (* TODO: we need more types! *)
   (*% *)
@@ -75,13 +75,6 @@ struct
     | ENTRY               (* pointer to cluster entry (clusterId * entryAddr) *)
     | FLOAT               (* single precision floating-point *)
     | DOUBLE              (* double precision floating-point *)
-    | INDEX               (* < UINT? *)
-    | BITMAP              (* < UINT? *)
-    | OFFSET              (* < UINT? *)
-    | SIZE                (* < UINT? *)
-    | TAG                 (* < UINT? *)
-    | ATOMty              (* deprecated *)
-    | DOUBLEty            (* deprecated *)
 
   (*%
    * @formatter(enclosedList) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
@@ -233,6 +226,8 @@ struct
     | (*% @format(x) x *)
       SInt of targetSInt
     | (*% @format(x) x *)
+      Byte of targetUInt
+    | (*% @format(x) x *)
       Var of varInfo
     | (*% *)
       Nowhere                     (* null code pointer *)
@@ -265,6 +260,8 @@ struct
       UIntData of targetUInt
     | (*% @format(x) x *)
       SIntData of targetSInt
+    | (*% @format(x) x "B" *)
+      ByteData of targetUInt
     | (*% @format(x) x *)
       RealData of string
     | (*% @format(x) x *)
@@ -275,6 +272,12 @@ struct
       ExternLabelData of globalLabel
     | (*% @format(label) "GLOBAL:" label *)
       GlobalLabelData of globalLabel
+    | (*% @format(id) "c" id *)
+      ConstData of id
+    | (*% @format "NullPointer" *)
+      NullPointerData
+    | (*% @format "NullBoxed" *)
+      NullBoxedData
 
   (*%
    * @formatter(BigInt.int) SmlppgUtil.format_BigInt
@@ -366,6 +369,8 @@ struct
     | (*% @format L2{ x +1 "==" +2 y } *)
       (* monomorphic equality *)
       MonoEqual
+    | (*% @format L2{ x +1 "?=" +2 y } *)
+      UnorderedOrEqual
     | (*% @format L3{ x +1 "&" +2 y } *)
       Andb
     | (*% @format L3{ x +1 "|" +2 y } *)

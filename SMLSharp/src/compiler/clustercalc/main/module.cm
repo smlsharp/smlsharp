@@ -6,6 +6,7 @@ Group is
 
 	../../../../../SMLFormat/smlformatlib.cm
 	../../control/sources.cm
+	../../env/sources.cm
 	../../name/sources.cm
 	../../util/sources.cm
 	../../annotatedtypes/sources.cm

@@ -10,7 +10,9 @@ struct
   (***************************************************************************)
   
   (*%
-   * @formatter(Absyn.ty) Absyn.format_ty
+   * @formatter(Absyn.ffiTy) Absyn.format_ffiTy
+   * @formatter(Absyn.tvar) Absyn.format_tvar
+   * @formatter(Loc.loc) Loc.format_loc
    *)
   exception
 
@@ -79,6 +81,17 @@ struct
    * @format(name) "Duplicate" +d  "type" +d "constructor:" + name
    *)
   DuplicateTypDesc of string
+
+  and
+  (**
+   * <pre>
+   *    type ('a,'a) foo = ty
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "type" +d "parameter:" + name
+   *)
+  DuplicateTypParam of string
 
   and
   (**
@@ -192,6 +205,12 @@ struct
 
   and
   (*%
+   * @format(id) "non-fix" +d "identifier" +d "expected" +d ":" +d id
+   *)
+ ArgWithInfixID of string
+
+  and
+  (*%
    * @format "can't" +d "find" +d "function" +d "arguments" +d "in" +d "clause"
    *)
   FunctionParameterNotFound
@@ -242,7 +261,8 @@ struct
 
   and
   (*%
-   * @format "clauses" +d "don't" +d "all" +d "have" +d "function" +d "name"
+   * @format "clauses" +d "don't" +d "all" +d "have" +d "same"
+              +d "function" +d "name"
    *)
   NotAllHaveFunctionName
 
@@ -290,7 +310,7 @@ struct
    * @format({ty})
    * "not" +d "a" +d "foreign" +d "function" +d "type:" +d ty
    *)
-  NotForeignFunctionType of {ty: Absyn.ty}
+  NotForeignFunctionType of {ty: Absyn.ffiTy}
 
   and
   (*
@@ -300,5 +320,83 @@ struct
    * "undefined" +d "foreign" +d "attribute:" +d attr
    *)
   UndefinedFFIAttribute of {attr:string}
+
+  and
+  (*%
+   * @format({tvar})
+   * "type" +d "variable" +d tvar +d "has" +d "inconsistent" +d "equality"
+   * +d "kind"
+   *)
+  DifferentEqkindOfSameTvar of {tvar: Absyn.tvar}
+
+  and
+  (*%
+   * @format({tvar})
+   * "duplicate" +d "user" +d "type" +d "variable" +d "in" +d "declaration:"
+   * +d tvar
+   *)
+  DuplicateUserTvar of {tvar: Absyn.tvar}
+
+  and
+  (*%
+   * @format({tvar})
+   * "user" +d "type" +d "variable" +d tvar +d "is" +d "scoped" +d "at"
+   * +d "outer" +d "declaration"
+   *)
+  UserTvarScopedAtOuterDecl of {tvar: Absyn.tvar}
+
+  and
+  (*%
+   * @format({filename, msg})
+   * "failed to load inteface file:" +d filename +d ":" +d msg
+   *)
+  LoadInterfaceFailed of {filename: string, msg: string}
+
+  and
+  (*%
+   * @format(string)
+   * "multiple" +d "_provide" +d "declaration:" +d string
+   *)
+  MultipleProvide of string
+
+  and
+  (*%
+   * @format
+   * "fixity" +d "precedence" +d "must" +d "be" +d "between" +d "0" +d "and"
+   * +d "9"
+   *)
+  InvalidFixityPrecedence
+
+  and
+  (*%
+   * @format(vid * prevLoc)
+   * "found" +d "multiple" +d "infix" +d "declaration" +d "for" +d vid +d
+   * "with" +d "different" +d "fixity." +1 "Previous" +d "infix"
+   * +d "declaratation" +d "is" +d "at:" +d prevLoc
+   *)
+  MultipleInfixInInterface of string * Loc.loc
+
+  and
+  (*%
+   * @format
+   * "derived" +d "form" +d "for" +d "functor" +d "argument" +d "is" +d
+   * "not" +d "supported" +d "in" +d "interface" +d "file"
+   *)
+  DerivedFormFunArg
+
+  and
+  (*%
+   * @format(sigid)
+   * "signature" +d "is" +d "referenced" +d "by" +d "ID" +d "from" +d
+   * "interface:" +d sigid
+   *)
+  SigIDFoundInInterface of string
+
+  and
+  (*%
+   * @format
+   * "abstype" +d "is" +d "not" +d "yet" +d "supported" +d "completely"
+   *)
+  AbstypeNotSupported
 
 end

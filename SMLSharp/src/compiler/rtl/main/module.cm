@@ -10,7 +10,6 @@ Group is
 	../../env/sources.cm
 	../../name/sources.cm
 	../../util/sources.cm
-	../../session/sources.cm
 	../../absyn/sources.cm
 	../../abstractinstruction2/sources.cm
 
@@ -21,6 +20,7 @@ Group is
 	IEEERealConst.sml
 
 	RTL.ppg.sml
+	RTLBackendContext.sml
 	RTLEdit.sml
 	RTLUtils.sml
 	RTLLiveness.sml
@@ -40,7 +40,9 @@ Group is
 	RTLASMGEN.sig
 	RTLColoring.sml
 	RTLStabilize.sml
+(*
 	RTLBackend.sml
+*)
 
 	X86Asm.ppg.sml
 	X86Subst.sml
@@ -51,4 +53,6 @@ Group is
 	X86Coloring.sml
 	X86Frame.sml
 	X86AsmGen.sml
+(*
 	X86Backend.sml
+*)

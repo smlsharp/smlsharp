@@ -1,7 +1,0 @@
-Group
-	signature VMCODEEMISSION
-	structure VMCodeEmission
-	structure VMAssembler
-	structure VMAsmCodeFormatter
-is
-	main/module.cm

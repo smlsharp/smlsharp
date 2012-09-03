@@ -5,13 +5,17 @@ structure FrameLayout : sig
         preOffset: word,  (* offset of the beginning of a frame *)
         postOffset: word, (* offset of the end of frame *)
         frameAlign: int,  (* alignment of frame (same as generic alignment) *)
-        wordSize: int     (* the number of bytes in a word *)
+        wordSize: int,    (* the number of bytes in a word *)
+        pointerSize: int, (* the number of bytes in a pointer *)
+        frameHeaderOffset: int,  (* FRAMEINFO offset of frame header *)
+        frameOffset:      (* translate offset in a frame to FRAMEINFO offset *)
+          {frameSize: int, offset: int} -> int
       } ->
       RTL.cluster ->
       {
         (* size of the whole of frame *)
         frameSize: int,
-        (* slotId -> offset from the beginning of frame*)
+        (* slotId -> offset from the beginning of frame *)
         slotIndex: int VarID.Map.map,
         (* frame initialization code to be inserted after CODEENTRY *)
         initCode: RTL.instruction list,
@@ -22,9 +26,144 @@ structure FrameLayout : sig
 end =
 struct
 
+  (*
+   * See also nativeruntime/frame.h.
+   *
+   * Frame pointer points the address of memory holding previous frame pointer.
+   * The next (in the direction of stack growing) word of the previous frame
+   * pointer holds the frame header. If the header indicates that there is
+   * an extra word, then the extra word appears at the next of the header.
+   * The size of both the header and the extra word is same as the size of
+   * pointers on the target platform.
+   *
+   * For example, on a 32-bit architecture whose the stack grows down
+   * (x86 etc.),
+   * [fp + 0] is previous frame pointer, and
+   * [fp - 4] is the relative address of frame info word.
+   * [fp - 8] is for the extra word of frame header.
+   *
+   * Frame Stack Chain:
+   *                                     :          :
+   *                                     |          |
+   *                                     +==========+ current frame begin
+   *                                     |          |
+   *            +--------+               :          :
+   *            | header |-------------->|frame info|
+   *            +--------+               :          :
+   *     fp --->|  prev  |               |          |
+   *            +--|-----+               +==========+ current frame end
+   *               |                     |          |
+   *               |                     :          :
+   *               |                     |          |
+   *               |                     +==========+ previous frame begin
+   *               |                     |          |
+   *               |   +--------+        :          :
+   *               |   | header |------->|frame info|
+   *               |   +--------+        :          :
+   *               +-->|  prev  |        |          |
+   *                   +---|----+        +==========+ previous frame end
+   *                       |             |          |
+   *                       :             :          :
+   *
+   * header:
+   *  31                            2   1     0
+   * +--------------------------------+----+----+
+   * |           info-offset          |next| gc |
+   * +--------------------------------+----+----+
+   * MSB                                      LSB
+   *
+   * info-offset holds the high 30 bit of the offset of frame info of this
+   * frame from the frame pointer. Low 2 bit is always 0.
+   * If info-offset is 0, this frame has no frame info and thus there is no
+   * boxed or generic slot in this frame.
+   * If the pointer size is larger than 32 bit, info-offset field is
+   * expanded to the pointer size.
+   *
+   * If next bit is 1, the header has an extra word which holds the address
+   * of previous ML frame. (this is used to skip C frames between two ML
+   * frames due to callback functions.)
+   *
+   * gc bit is reserved for non-moving gc. It must be 0 for new frames.
+   * If the root-set enumerator meets this frame during pointer enumeration,
+   * the gc bit is set to 1.
+   *
+   * To make sure that we may use last 2 bits for the flags, the frame info
+   * must be aligned at the address of multiple of 4.
+   *
+   * frame info:
+   *  31                16 15                 0
+   * +--------------------+--------------------+
+   * |  num boxed slots   |  num bitmap bits   |
+   * +--------------------+--------------------+
+   *
+   * The size of frame info is same as the size of pointers on the target
+   * platform. If the pointer size is larger than 32 bit, then padding bits
+   * must be added to the most significant side of the frame info.
+   *
+   * Structure of Frame:
+   *
+   * addr
+   *   | :               :
+   *   | +---------------+ [align in frameAlign] <------- offset origin
+   *   | | pre-offset    |
+   *   | +===============+ ================== beginning of frame
+   *   | |               |
+   *   | +---------------+ [align in frameAlign]
+   *   | | slots of tN   | generic slot 0 of tN
+   *   | |  :            |   :
+   *   | +---------------+ [align in frameAlign]
+   *   | :               :
+   *   | +---------------+ [align in frameAlign]
+   *   | | slots of t1   | generic slot 0 of t1
+   *   | :               :   :
+   *   | +---------------+ [align in frameAlign]
+   *   | | slots of t0   | generic slot 0 of t0
+   *   | |               | generic slot 1 of t0
+   *   | :               :   :
+   *   | +---------------+ [align in frameAlign] <---- pointed by the header
+   *   | | frame info    |
+   *   | +---------------+ [align in void*]
+   *   | | boxed part    |
+   *   | :               :
+   *   | |               |
+   *   | +---------------+ [align in void*]
+   *   | |               |
+   *   | +---------------+ [align in unsigned int]
+   *   | | sizes         | number of slots of t0
+   *   | |               | number of slots of t1
+   *   | :               :   :
+   *   | |               | number of slots of t(N-1)
+   *   | +---------------+ [align in unsigned int]
+   *   | | bitmaps       | bitmap of (t0-t31)
+   *   | :               :   :
+   *   | |               | bitmap of (t(N-32)-t(N-1))
+   *   | +---------------+ [align in unsigned int]
+   *   | | unboxed part  |
+   *   | |               |
+   *   | |               |
+   *   | :               :
+   *   | |               |
+   *   | +===============+ ================== end of frame
+   *   | | post-offset   |
+   *   | +---------------+ [align in frameAlign]
+   *   | :               :
+   *   v
+   *)
+
   structure R = RTL
 
   datatype reg = REG1 | REG2
+
+  type frameLayoutInfo =
+      {
+        preOffset: word, 
+        postOffset: word,
+        frameAlign: int, 
+        wordSize: int,   
+        pointerSize: int,
+        frameHeaderOffset: int,
+        frameOffset: {frameSize: int, offset: int} -> int
+      }
 
   (*%
    * @formatter(Word32.word) SmlppgUtil.format_word32
@@ -49,11 +188,11 @@ struct
 
 
   (* FIXME: make target dependent more *)
-  fun generateCode frameSize clobRegs code =
+  fun generateCode frameSize ({frameOffset, frameHeaderOffset, ...}
+                              : frameLayoutInfo) clobRegs code =
       let
-        val offsetBase = frameSize + 4
-        fun frameOffset off = off - offsetBase
-        fun addr off = R.FRAMEINFO (frameOffset off)
+        fun frameInfoOffset off = frameOffset {frameSize=frameSize, offset=off}
+        fun addr off = R.FRAMEINFO (frameInfoOffset off)
         fun reg r =
             case (r, clobRegs) of
               (REG1, r::_) => r
@@ -87,16 +226,16 @@ struct
                       R.ABSADDR (R.NULL R.Data))
         | SAVEHEAD (SOME offset) =>
           R.MOVE (R.Int32 R.S,
-                  R.MEM (R.Int32 R.S, R.ADDR (R.FRAMEINFO ~4)),
-                  R.CONST (R.INT32 (Int32.fromInt (frameOffset offset))))
+                  R.MEM (R.Int32 R.S, R.ADDR (R.FRAMEINFO frameHeaderOffset)),
+                  R.CONST (R.INT32 (Int32.fromInt (frameInfoOffset offset))))
         | SAVEHEAD NONE =>
           R.MOVE (R.Int32 R.S,
-                  R.MEM (R.Int32 R.S, R.ADDR (R.FRAMEINFO ~4)),
+                  R.MEM (R.Int32 R.S, R.ADDR (R.FRAMEINFO frameHeaderOffset)),
                   R.CONST (R.INT32 0))
       end
 
-  fun generateCodeList frameSize clobRegs codeList =
-      map (generateCode frameSize clobRegs) codeList
+  fun generateCodeList frameSize frameOffset clobRegs codeList =
+      map (generateCode frameSize frameOffset clobRegs) codeList
 
   fun bitmapToWord32 bitList =
       foldl (fn (x,z) => Word32.orb (Word32.<< (z, 0w1), x)) 0w0 bitList
@@ -211,121 +350,8 @@ struct
             (offset, VarID.Map.empty)
             vars
 
-  (*
-   * Frame pointer points the address of memory holding previous frame pointer.
-   * The next (in the direction of stack growing) word of the previous frame
-   * pointer holds relative address of frame information word of current frame
-   * from the frame pointer.
-   *
-   * For example, on architecture whose the stack grows down (x86 etc.),
-   * [ebp + 0] is previous frame pointer, and
-   * [ebp - 4] is the relative address of frame info word.
-   *
-   * If the relative address of the frame info is 0, then the frame has no
-   * info. If the frame info address is 2, the chain of frames is terminated
-   * here.
-   *
-   *                                     :          :
-   *            +--------+               | generics |
-   *            |infoaddr|-------------->+----------+
-   *  ebp ----->+--------+               | info     | current frame
-   *            |  prev  |               | boxed    |
-   *            +--|-----+               | ...      |
-   *               |                     |          |
-   *               |                     :          :
-   *               |
-   *               |                     :          :
-   *               |   +--------+        | generics |
-   *               |   |infoaddr|------->+----------+
-   *               +-->+--------+        | info     | previous frame
-   *                   |  prev  |        | boxed    |
-   *                   +---|----+        | ....     |
-   *                       |             |          |
-   *                       :             :          :
-   *                       |
-   *                       v
-   *                   +--------+
-   *                   | 0x0002 |
-   *                   +--------+
-   *                   |  prev  |
-   *                   +--------+
-   *
-   * infoaddr:
-   *  31                            2    1    0
-   * +--------------------------------+----+----+
-   * |             address            |next| gc |
-   * +--------------------------------+----+----+
-   * MSB                                      LSB
-   *
-   * if next bit is 0, address & 0xfffffffc is the offset of frame info of
-   * this frame from frame pointer.
-   * if next bit is 1, address & 0xfffffffc is the absolute address of previous
-   * ML frame pointer. (this is used in callback function entry for gc to
-   * skip C frames between ML frames.) If the address of previous frame is
-   * NULL, it means that ML frame stack is ended here.
-   *
-   * gc bit is reserved for gc. mutator must set it to 0.
-   *
-   * To make sure that we may use last 2 bits for the flags, frameAlign must
-   * be at least multiple of 4.
-   *
-   *
-   * Structure of Frame:
-   *
-   * addr
-   *   | :               :
-   *   | +---------------+ [align in frameAlign] <------- offset origin
-   *   | | pre-offset    |
-   *   | +===============+ ================== beginning of frame
-   *   | |               |
-   *   | +---------------+ [align in frameAlign]
-   *   | | slots of tN   | generic slot 0 of tN
-   *   | |  :            |   :
-   *   | +---------------+ [align in frameAlign]
-   *   | :               :
-   *   | +---------------+ [align in frameAlign]
-   *   | | slots of t1   | generic slot 0 of t1
-   *   | :               :   :
-   *   | +---------------+ [align in frameAlign]
-   *   | | slots of t0   | generic slot 0 of t0
-   *   | |               | generic slot 1 of t0
-   *   | :               :   :
-   *   | +---------------+ [align in frameAlign]
-   *   | | frame info    | info = (numBoxed, numBitmapBits)
-   *   | +---------------+ [align in unsigned int]
-   *   | |               |
-   *   | +---------------+ [align in void*]
-   *   | | boxed part    |
-   *   | :               :
-   *   | |               |
-   *   | +---------------+ [align in void*]
-   *   | |               |
-   *   | +---------------+ [align in unsigned int]
-   *   | | sizes         | number of slots of t0
-   *   | |               | number of slots of t1
-   *   | :               :   :
-   *   | |               | number of slots of t(N-1)
-   *   | +---------------+ [align in unsigned int]
-   *   | | bitmaps       | bitmap of (t0-t31)
-   *   | :               :   :
-   *   | |               | bitmap of (t(N-32)-t(N-1))
-   *   | +---------------+ [align in unsigned int]
-   *   | | unboxed part  |
-   *   | |               |
-   *   | |               |
-   *   | :               :
-   *   | |               |
-   *   | +===============+ ================== end of frame
-   *   | | post-offset   |
-   *   | +---------------+ [align in frameAlign]
-   *   | :               :
-   *   v
-   *
-   *  (info & 0xffff) is the number of bitmap bits.
-   *  (info >> 16) is the number of pointers in boxed slots part.
-   *)
-
-  fun constructFrame {preOffset, postOffset, frameAlign, wordSize}
+  fun constructFrame ({preOffset, postOffset, frameAlign, wordSize,
+                       pointerSize, ...} : frameLayoutInfo)
                      (frameBitmap : R.frameBitmap list)
                      (slots : RTLUtils.Slot.set) =
       let
@@ -346,26 +372,28 @@ struct
                   | R.UNBOXED => (boxed, (id,format)::unboxed, generic)
                   | R.GENERIC tid =>
                     let
-                      val vars = case IEnv.find (generic, tid) of
+                      val vars = case BoundTypeVarID.Map.find (generic, tid) of
                                    SOME x => x | NONE => nil
                       val generic =
-                          IEnv.insert (generic, tid, (id,format)::vars)
+                          BoundTypeVarID.Map.insert
+                            (generic, tid, (id,format)::vars)
                     in
                       (boxed, unboxed, generic)
                     end)
-              (nil, nil, IEnv.empty)
+              (nil, nil, BoundTypeVarID.Map.empty)
               slots
 
         (* compose frame bitmap *)
         val bitmaps =
             map (fn {source,bits} =>
                     {source = source,
-                     bits = map (fn NONE => nil
-                                  | SOME tid =>
-                                    case IEnv.find (generic, tid) of
-                                      SOME vars => vars
-                                    | NONE => nil)  (* unused tid *)
-                                bits})
+                     bits =
+                       map (fn NONE => nil
+                             | SOME tid =>
+                               case BoundTypeVarID.Map.find (generic, tid) of
+                                 SOME vars => vars
+                               | NONE => nil)  (* unused tid *)
+                           bits})
                 frameBitmap
 
         val wordBits = wordSize * 0w8
@@ -388,7 +416,7 @@ struct
 
         (* put frame info *)
         val infoOffset = offset
-        val offset = offset + wordSize
+        val offset = offset + Word.fromInt pointerSize
 
         (* allocate boxed slots. *)
         val (offset, boxedAlloc) = allocSlots 0w1 offset boxed
@@ -476,8 +504,10 @@ struct
         val {frameSize, slotIndex, initCode, bitmapCode} =
             constructFrame frameInfo frameBitmap slots
 
-        val initCode = generateCodeList frameSize nil initCode
-        val frameCode = fn clobs => generateCodeList frameSize clobs bitmapCode
+        val initCode =
+            generateCodeList frameSize frameInfo nil initCode
+        val frameCode =
+            fn clobs => generateCodeList frameSize frameInfo clobs bitmapCode
       in
         {
           frameSize = frameSize,

@@ -22,8 +22,10 @@ struct
   (*% @formatter(ClusterID.id) ClusterID.format_id *)
   type clusterId = ClusterID.id
 
-  (*% *)
-  type tyvarId = int
+  (*% @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id *)
+  type tyvarId =
+      (*% @format(id) "t" id *)
+      BoundTypeVarID.id
 
   (*%
    * @formatter(prepended) SmlppgUtil.formatPrependedOpt
@@ -32,7 +34,6 @@ struct
       UINT
     | SINT
     | BYTE
-    | CHAR
     | BOXED
     | POINTER               (* type for C pointer *)
     | FUNENTRY              (* type for ANLABEL *)
@@ -40,21 +41,6 @@ struct
     | FOREIGNFUN            (* type for C function pointer *)
     | FLOAT                 (* single-precision floating point *)
     | DOUBLE                (* double-precision floating point *)
-    | PAD
-    | SIZE
-    | INDEX
-    | BITMAP
-    | OFFSET
-    | TAG
-(*
-    | EXNTAG                (* type for exception tag *)
-*)
-    | DOUBLEty              (* deprecated *)
-    | ATOMty                (* deprecated *)
-    | (*% @format(tid) "SINGLE(" tid ")" *)
-      SINGLEty of tyvarId   (* deprecated *)
-    | (*% @format(tid) "UNBOXED(" tid ")" *)
-      UNBOXEDty of tyvarId  (* deprecated *)
     | (*% @format(tid) "GENERIC(" tid ")" *)
       GENERIC of tyvarId
 
@@ -93,61 +79,20 @@ struct
   (*% @formatter(Absyn.ffiAttributes) Absyn.format_ffiAttributes *)
   type ffiAttributes = Absyn.ffiAttributes
 
-  (* for YASIGenerator *)
   (*% *)
-  datatype sisize =
-       (*% @format "<1>" *)
-       SISINGLE
-     | (*% @format "<2>" *)
-       SIDOUBLE
-     | (*% @format(v) "<" v ">" *)
-       SIVARIANT of varInfo
-     | (*% @format "_" *)
-       SIIGNORE
-
-  (* for YASIGenerator *)
-  (*% @formatter(BasicTypes.UInt32) BasicTypeFormatters.format_UInt32 *)
-  datatype siexp =
-       (*% @format(v) v *)
-       SISIZE of sisize
-     | (*%
-        * @format({nestLevel, offset, size, ty})
-        * { "ENV" "[" { nestLevel "/" +2 offset "," +1 size } "]" +1 ":" +2 ty }
-        *)
-       SIENVACC of
-       {
-         nestLevel: BasicTypes.UInt32,
-         offset: BasicTypes.UInt32,
-         size: BasicTypes.UInt32,
-         ty: ty
-       }
-
-  (* for backward compatibility *)
-  (*%
-   * @formatter(ExnTagID.id) ExnTagID.format_id
-   * @formatter(ExVarID.id) ExVarID.format_id
-   *)
-  datatype globalSymbolAnn =
-      (*% @format(id) "g" id *)
-      GLOBALVAR of ExVarID.id
-    | (*% @format(id) "e" id *)
-      EXCEPTIONTAG of ExnTagID.id
-    | (*% @format "c" *)
-      GLOBALOTHER
+  datatype topSymbol =
+      (*% @format(x) "local:" x *)
+      TOP_LOCAL of id
+    | (*% @format(x) "globl:" x *)
+      TOP_GLOBAL of string
+     
 
   (*% *)
-  datatype globalSymbolKind =
-      (*% @format "E" *)
-      EXTERNSYMBOL
-    | (*% @format "G" *)
-      GLOBALSYMBOL
-    | (*% @format "_" *)
-      UNDECIDED of ty       (* for DeclarationRecovery *)
-
-  (*% *)
-  type globalSymbolName =
-      (*% @format(name * k) name "<" k ">" *)
-      string * globalSymbolKind
+  datatype topSymbolRef =
+      (*% @format(x) "local:" x *)
+      TOP_EXPORT of topSymbol
+    | (*% @format(x) "extrn:" x *)
+      TOP_EXTERN of string
 
   (*%
    * @formatter(BasicTypes.SInt32) BasicTypeFormatters.format_SInt32
@@ -164,6 +109,10 @@ struct
       ANCHAR of char
     | (*% @format "()" *)
       ANUNIT
+    | (*% @format "NULLPOINTER" *)
+      ANNULLPOINTER
+    | (*% @format "NULLBOXED" *)
+      ANNULLBOXED
     | (*% @format(v) v *)
       ANVAR of varInfo
     | (*% @format(id) "F" id *)
@@ -175,11 +124,10 @@ struct
        * Every function may LOCALCALL a function defined in the same cluster.
        *)
       ANLOCALCODE of id
-    | (*% @format({name, ann, ty}) name ":" ann ":" ty *)
-      ANGLOBALSYMBOL of
+    | (*% @format({name, ty}) name ":" ty *)
+      ANTOPSYMBOL of
       {
-        name: globalSymbolName,
-        ann: globalSymbolAnn,
+        name: topSymbolRef,
         ty: ty     (* BOXED or FOREIGNFUN *)
       }
       (* EXCEPTIONTAG is compiled into ANGLOBALREF or ANVAR. *)
@@ -277,12 +225,12 @@ struct
         needBoundaryCheck: bool
       }
     | (*%
-       * @format({bitmap, totalSize, initialValue, elementTy, elementSize,
+       * @format({bitmap, totalSize, initialValue: v vo, elementTy, elementSize,
        *          isMutable})
        * "Array"
        * "(" { "bitmap" "=" bitmap "," +1
        *       "size" "=" totalSize "," +1
-       *       "init" "=" { initialValue
+       *       "init" "=" { vo(v)
        *                    +2 ":" +d elementTy
        *                    +3 ":" +d elementSize }
        * } ")"
@@ -291,20 +239,21 @@ struct
       {
         bitmap: anvalue,
         totalSize: anvalue,
-        initialValue: anvalue,
+        initialValue: anvalue option,
         elementTy: ty,
         elementSize: anvalue,
         isMutable : bool
       }
     | (*%
-       * @format({bitmap,
+       * @format({bitmaps: bm bms:enclosedList,
        *          totalSize,
        *          fieldList: value values:enclosedList,
        *          fieldSizeList: size sizes:enclosedList,
        *          fieldTyList: ty tys:enclosedList,
+       *          fieldIndexList,
        *          isMutable})
        * "Record"
-       * "(" { "bitmap" "=" bitmap "," +1
+       * "(" { "bitmap" "=" {bms(bm)("," +1, "(", ")")} "," +1
        *       "size" "=" totalSize "," +1
        *       "init" "=" { {values(value)("," +1, "(", ")")}
        *                    +3 ":" +d {tys(ty)("," +1, "(", ")")}
@@ -313,10 +262,15 @@ struct
        *)
       ANRECORD of
       {
-        bitmap: anvalue,
+        bitmaps: anvalue list,
         totalSize: anvalue,
         fieldList: anvalue list,
         fieldSizeList: anvalue list,
+        (* fieldIndexList is for new bitmap compilation.
+         * If this is SOME, the pad size between every pair of two adjacent 
+         * fields is calculated according to this field.
+         * If NONE, pad is explicitly included in expList whose type is PAD. *)
+        fieldIndexList: anvalue list option,
         fieldTyList: ty list,
         isMutable: bool
       }
@@ -423,32 +377,27 @@ struct
        * @format({closure,
        *          argList: arg args:enclosedList,
        *          argTyList: argTy argTys:enclosedList,
-       *          resultTyList: retTy retTys:enclosedList,
-       *          argSizeList: size sizes:enclosedList})
+       *          resultTyList: retTy retTys:enclosedList})
        * closure 2[ +d {args(arg)("," +1, "(", ")")}
        * +2 ":" +d { {argTys(argTy)("," +1, "(", ")")}
-       *             +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} }
-       * +3 ":" +d {sizes(size)("," +1, "(", ")")} ]
+       *             +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} } ]
        *)
       ANAPPLY of
       {
         closure: anvalue,          (* closure *)
         argList: anvalue list,
         argTyList: ty list,
-        resultTyList: ty list,
-        argSizeList: sisize list  (* for YASIGenerator *)
+        resultTyList: ty list
       }
     | (*%
        * @format({funLabel,
        *          env,
        *          argList: arg args:enclosedList,
        *          argTyList: argTy argTys:enclosedList,
-       *          resultTyList: retTy retTys:enclosedList,
-       *          argSizeList: size sizes:enclosedList})
+       *          resultTyList: retTy retTys:enclosedList})
        * funLabel 2[ +d "<" env ">" +d {args(arg)("," +1, "(", ")")}
        * +2 ":" +d { {argTys(argTy)("," +1, "(", ")")}
-       *             +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} }
-       * +3 ":" +d {sizes(size)("," +1, "(", ")")} ]
+       *             +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} } ]
        *)
       (*
        * special version of ANAPPLY; call without closure.
@@ -458,7 +407,6 @@ struct
         funLabel: anvalue,         (* FUNENTRY *)
         env: anvalue,
         argList: anvalue list,
-        argSizeList: sisize list,  (* for YASIGenerator *)
         argTyList: ty list,
         resultTyList: ty list
       }
@@ -466,12 +414,10 @@ struct
        * @format({funLabel,
        *          argList: arg args:enclosedList,
        *          argTyList: argTy argTys:enclosedList,
-       *          resultTyList: retTy retTys:enclosedList,
-       *          argSizeList: size sizes:enclosedList})
+       *          resultTyList: retTy retTys:enclosedList})
        * "REC:" funLabel 2[ +d {args(arg)("," +1, "(", ")")}
        * +2 ":" +d { {argTys(argTy)("," +1, "(", ")")}
-       *             +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} }
-       * +3 ":" +d {sizes(size)("," +1, "(", ")")} ]
+       *             +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} } ]
        *)
       (*
        * special version of ANCALL; let env be current closure environment.
@@ -480,27 +426,23 @@ struct
       {
         funLabel: anvalue,         (* FUNENTRY *)
         argList: anvalue list,
-        argSizeList: sisize list,  (* for YASIGenerator *)
         argTyList: ty list,
         resultTyList: ty list
       }
     | (*%
        * @format({codeLabel,
        *          argList: arg args:enclosedList,
-       *          argSizeList: size sizes:enclosedList,
        *          argTyList: argTy argTys:enclosedList,
        *          resultTyList: retTy retTys:enclosedList,
        *          returnLabel, knownDestinations})
        * "LOCAL:" codeLabel 2[ +d {args(arg)("," +1, "(", ")")}
        * +2 ":" +d { {argTys(argTy)("," +1, "(", ")")}
-       *             +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} }
-       * +3 ":" +d {sizes(size)("," +1, "(", ")")} ]
+       *             +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} } ]
        *)
       ANLOCALCALL of
       {
         codeLabel: anvalue,        (* CODEPOINT *)
         argList: anvalue list,
-        argSizeList: sisize list,  (* for YASIGenerator *)
         argTyList: ty list,
         resultTyList: ty list,
         (* unique label for each ANLOCALCALL.
@@ -598,13 +540,11 @@ struct
        *          argList: arg args:enclosedList,
        *          argTyList: argTy argTys:enclosedList,
        *          resultTyList: retTy retTys:enclosedList,
-       *          argSizeList: size sizes:enclosedList,
        *          loc})
        * { "in" +d
        *   closure 2[ +d {args(arg)("," +1, "(", ")")}
        *   +2 ":" +d { {argTys(argTy)("," +1, "(", ")")}
-       *                +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} }
-       *   +3 ":" +d {sizes(size)("," +1, "(", ")")} ]
+       *                +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} } ]
        * }
        *)
       ANTAILAPPLY of
@@ -613,22 +553,19 @@ struct
         argList: anvalue list,
         argTyList: ty list,
         resultTyList: ty list,
-        argSizeList: sisize list,  (* for YASIGenerator *)
         loc: loc
       }
     | (*%
        * @format({funLabel,
        *          env,
        *          argList: arg args:enclosedList,
-       *          argSizeList: size sizes:enclosedList,
        *          argTyList: argTy argTys:enclosedList,
        *          resultTyList: retTy retTys:enclosedList,
        *          loc})
        * { "in" +d
        *   funLabel 2[ +d "<" env ">" +d {args(arg)("," +1, "(", ")")}
        *   +2 ":" +d { {argTys(argTy)("," +1, "(", ")")}
-       *               +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} }
-       *   +3 ":" +d {sizes(size)("," +1, "(", ")")} ]
+       *               +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} } ]
        * }
        *)
       (*
@@ -639,7 +576,6 @@ struct
         funLabel: anvalue,         (* FUNENTRY *)
         env: anvalue,
         argList: anvalue list,
-        argSizeList: sisize list,  (* for YASIGenerator *)
         argTyList: ty list,
         resultTyList: ty list,
         loc: loc
@@ -647,15 +583,13 @@ struct
     | (*%
        * @format({funLabel,
        *          argList: arg args:enclosedList,
-       *          argSizeList: size sizes:enclosedList,
        *          argTyList: argTy argTys:enclosedList,
        *          resultTyList: retTy retTys:enclosedList,
        *          loc})
        * { "in" +d
        *   "REC:" funLabel 2[ +d {args(arg)("," +1, "(", ")")}
        *   +2 ":" +d { {argTys(argTy)("," +1, "(", ")")}
-       *               +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} }
-       *   +3 ":" +d {sizes(size)("," +1, "(", ")")} ]
+       *               +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} } ]
        * }
        *)
       (*
@@ -665,7 +599,6 @@ struct
       {
         funLabel: anvalue,         (* FUNENTRY *)
         argList: anvalue list,
-        argSizeList: sisize list,  (* for YASIGenerator *)
         argTyList: ty list,
         resultTyList: ty list,
         loc: loc
@@ -673,22 +606,19 @@ struct
     | (*%
        * @format({codeLabel,
        *          argList: arg args:enclosedList,
-       *          argSizeList: size sizes:enclosedList,
        *          argTyList: argTy argTys:enclosedList,
        *          resultTyList: retTy retTys:enclosedList,
        *          loc, knownDestinations})
        * { "in" +d
        *   "LOCAL:" codeLabel 2[ +d {args(arg)("," +1, "(", ")")}
        *   +2 ":" +d { {argTys(argTy)("," +1, "(", ")")}
-       *               +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} }
-       *   +3 ":" +d {sizes(size)("," +1, "(", ")")} ]
+       *               +1 "->" +2 {retTys(retTy)("," +1, "(", ")")} } ]
        * }
        *)
       ANTAILLOCALCALL of
       {
         codeLabel: anvalue,        (* CODEPOINT *)
         argList: anvalue list,
-        argSizeList: sisize list,  (* for YASIGenerator *)
         argTyList: ty list,
         resultTyList: ty list,
         loc: loc,
@@ -698,50 +628,41 @@ struct
     | (*%
        * @format({valueList: value values:enclosedList,
        *          tyList: ty tys:enclosedList,
-       *          sizeList: size sizes:enclosedList,
        *          loc})
        * { "in" +d {values(value)("," +1, "(", ")")}
-       *   +2 ":" +d {tys(ty)("," +1, "(", ")")}
-       *   +3 ":" +d {sizes(size)("," +1, "(", ")")} }
+       *   +2 ":" +d {tys(ty)("," +1, "(", ")")} }
        *)
       ANRETURN of
       {
         valueList: anvalue list,
         tyList: ty list,
-        sizeList: sisize list,    (* for YASIGenerator *)
         loc: loc
       }
     | (*%
        * @format({valueList: value values:enclosedList,
        *          tyList: ty tys:enclosedList,
-       *          sizeList: size sizes:enclosedList,
        *          loc, knownDestinations
        *          })
        * { "in localReturn" +d {values(value)("," +1, "(", ")")}
-       *   +2 ":" +d {tys(ty)("," +1, "(", ")")}
-       *   +3 ":" +d {sizes(size)("," +1, "(", ")")} }
+       *   +2 ":" +d {tys(ty)("," +1, "(", ")")} }
        *)
       ANLOCALRETURN of
       {
         valueList: anvalue list,
         tyList: ty list,
-        sizeList: sisize list,    (* for YASIGenerator *)
         loc: loc,
         (* workspace for AIGeneration. initialize it with nil. *)
         knownDestinations: id list ref
       }
     | (*%
        * @format({varList: var:withType vars:enclosedList,
-       *          sizeList: size sizes:enclosedList,
        *          exp, loc})
        * { "let" +d {vars(var)("," +1, "(", ")")}
-       *         2[ +2 ":" +d {sizes(size)("," +1, "(", ")")} ]
        *   +d "=" 4[ +1 exp ] }
        *)
       ANVAL of
       {
         varList: varInfo list,
-        sizeList: sisize list,    (* for YASIGenerator *)
         exp: anexp,
         loc: loc
       }
@@ -869,14 +790,12 @@ struct
       (*%
        * @format({codeId,
        *          argVarList: arg:withType args,
-       *          argSizeList: argSize argSizes,
        *          body: body bodies,
        *          resultTyList: retTy retTys,
        *          loc})
        * "code" + "L" codeId
        * 1 "{"
-       * 2[ 1 { "arg" +d "=" +d "(" { args(arg)("," +1) ")" }
-       *              +3 ":" +d "(" { argSizes(argSize)("," +1) ")" } }
+       * 2[ 1 { "arg" +d "=" +d "(" { args(arg)("," +1) ")" } }
        *    1 { "ret" +d ":" +d "(" { retTys(retTy)("," +1) ")" } }
        *    1 1 bodies(body)(1) ]
        * 1 "}"
@@ -884,7 +803,6 @@ struct
       {
         codeId : id,
         argVarList : varInfo list,
-        argSizeList: siexp list,   (* for YASIGenerator *)
         body : andecl list,
         resultTyList : ty list,
         loc:loc
@@ -898,15 +816,13 @@ struct
       (*%
        * @format({codeId,
        *          argVarList: arg:withType args,
-       *          argSizeList: argSize argSizes,
        *          body: body bodies,
        *          resultTyList: retTy retTys,
        *          ffiAttributes: att attopt:prepended,
        *          loc})
        * "function" + "L" codeId
        * 1 "{"
-       * 2[ 1 { "arg" +d "=" +d "(" { args(arg)("," +1) ")" }
-       *              +3 ":" +d "(" { argSizes(argSize)("," +1) ")" } }
+       * 2[ 1 { "arg" +d "=" +d "(" { args(arg)("," +1) ")" } }
        *    1 { "ret" +d ":" +d "(" { retTys(retTy)("," +1) ")" } }
        *    attopt(att)(1)
        *    1 1 bodies(body)(1) ]
@@ -915,7 +831,6 @@ struct
       {
         codeId: id,
         argVarList: varInfo list,
-        argSizeList: siexp list,   (* for YASIGenerator *)
         body: andecl list,
         resultTyList: ty list,
         ffiAttributes: ffiAttributes option,
@@ -1007,24 +922,23 @@ struct
       }
 *)
     | (*%
-       * @format({globalName, export, constant})
-       * { globalName ":" + export:choice()("global", "local") "," + constant }
+       * @format({globalName, constant})
+       * { globalName ":" + constant }
        *)
       ANTOPCONST of
       {
-        globalName: string,
-        export: bool,
+        globalName: topSymbol,
         constant: constant            (* LARGEINT, STRING, REAL, FLOAT *)
       }
     | (*%
-       * @format({globalName, export,
+       * @format({globalName,
        *          bitmaps:bm bms:enclosedList,
        *          totalSize,
        *          fieldList:value values:enclosedList,
        *          fieldTyList: ty tys:enclosedList,
        *          fieldSizeList:size sizes:enclosedList,
        *          isMutable})
-       * { globalName ":" + export:choice()("global", "local") ","
+       * { globalName ":"
        *   4[ +1 "Record" "("
        *      { "bitmaps" "=" { bms(bm)("," +1, "(", ")") } "," +1
        *        "size" "=" totalSize "," +1
@@ -1035,8 +949,7 @@ struct
        *)
       ANTOPRECORD of
       {
-        globalName: string,
-        export: bool,
+        globalName: topSymbol,
         bitmaps: BasicTypes.UInt32 list,
         totalSize: BasicTypes.UInt32,
         fieldList: anvalue list,         (* ANVAR never occur *)
@@ -1045,12 +958,12 @@ struct
         isMutable: bool
       }
     | (*%
-       * @format({globalName, export,
+       * @format({globalName,
        *          bitmap,
        *          totalSize,
        *          initialValues:init inits:enclosedList,
        *          elementTy, elementSize, isMutable})
-       * { globalName ":" + export:choice()("global", "local") ","
+       * { globalName ":"
        *   4[ +1 "Array" "("
        *         { "bitmap" "=" bitmap "," +1
        *           "size" "=" totalSize "," +1
@@ -1061,8 +974,7 @@ struct
        *)
       ANTOPARRAY of
       {
-        globalName: string,
-        export: bool,
+        globalName: topSymbol,
         bitmap: BasicTypes.UInt32,
         totalSize: BasicTypes.UInt32,
         initialValues: anvalue list,      (* ANVAR never occur *)
@@ -1071,7 +983,7 @@ struct
         isMutable : bool
       }
     | (*%
-       * @format({globalName, externalVarID,
+       * @format({globalName,
        *          initialValue:init initopt,
        *          elementTy, elementSize})
        * { globalName ":" +
@@ -1082,34 +994,31 @@ struct
        *)
       ANTOPVAR of (* write once, always exported, no header array *)
       {
-        globalName: string,
-        externalVarID: ExVarID.id option, (* for YASIGenerator *)
+        globalName: topSymbol,
         initialValue: anvalue option,
         elementTy: ty,
         elementSize: BasicTypes.UInt32
       }
     | (*%
-       * @format({globalName, export, funLabel, closureEnv})
-       * { globalName ":" + export:choice()("global", "local") ","
+       * @format({globalName, funLabel, closureEnv})
+       * { globalName ":"
        *   + "Closure" "(" funLabel "," + closureEnv ")" }
        *)
       ANTOPCLOSURE of
       {
-        globalName: string,
-        export: bool,
+        globalName: topSymbol,
         funLabel: id,                 (* FUNENTRY *)
         closureEnv: anvalue
       }
     | (*%
-       * @format({globalName, export, originalGlobalName})
-       * { globalName ":" + export:choice()("global", "local") ","
+       * @format({globalName, originalGlobalName})
+       * { globalName ":"
        *   + "alias" "(" originalGlobalName ")" }
        *)
       ANTOPALIAS of
       {
-        globalName: string,
-        export: bool,
-        originalGlobalName: globalSymbolName  (* must be GLOBALNAME *)
+        globalName: topSymbol,
+        originalGlobalName: topSymbol
       }
     | (*%
        * @format(id)

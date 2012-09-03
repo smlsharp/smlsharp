@@ -1,8 +1,0 @@
-Group
-	structure ObjectFile
-	structure ObjectFileUtils
-	structure ObjectFileFormatter
-	structure Hexdump
-	structure ObjectFileLinker
-is
-	main/module.cm

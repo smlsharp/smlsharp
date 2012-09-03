@@ -27,6 +27,4 @@ use "./yacc.sml";
 use "./link.sml";
 use "./main.sml";
 
-
-Main.doit ();
-print "Done";
+use "./doit.sml";

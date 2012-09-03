@@ -10,6 +10,7 @@ Group is
 	../../util/sources.cm
 	../../name/sources.cm
 	../../types/sources.cm
+	../../primitive/sources.cm
 	../../absyn/sources.cm
 	../../constantterm/sources.cm
 	../../anormal/sources.cm

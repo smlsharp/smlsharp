@@ -1,0 +1,11 @@
+_require "basis.smi"
+structure Tree =
+struct
+  datatype tree =
+      ND of {left:tree, next:tree ref, prev:tree ref, right:tree, sz:int,
+             x:real, y:real}
+    | NULL
+  val mkNode : tree * tree * real * real * int -> tree
+  val printTree : TextIO.outstream * tree -> unit
+  val printList : TextIO.outstream * tree -> unit
+end

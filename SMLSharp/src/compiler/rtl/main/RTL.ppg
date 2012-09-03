@@ -119,10 +119,10 @@ struct
     | (*% @format "Cp" *)
       Code        (* pointer to code *)
 
-  (*% *)
+  (*% @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id *)
   type genericId =
       (*% @format(x) "t" x *)
-      int
+      BoundTypeVarID.id
 
   (*% *)
   datatype sign =
@@ -155,8 +155,6 @@ struct
       Generic of genericId
     | (*% @format "_" *)
       NoType         (* for untyped temporally register *)
-    | (*% @format "A" *)
-      Atom           (* either Int32, Real32, or Ptr; FIXME: deprecated *)
 
   (*% @formatter(Int64.int) format_int64_dec *)
   type sint64 = Int64.int
@@ -370,10 +368,10 @@ struct
       (*% @format({id, ty}) L2{ "v" id ":" ty } *)
       {id: id, ty: ty}
 
-  (*% *)
+  (*% @formatter(BoundTypeVarID.id) BoundTypeVarID.format_id *)
   type tid =
        (*% @format(x) "t" x *)
-       int
+       BoundTypeVarID.id
 
   (*% *)
   datatype tag =
@@ -825,10 +823,14 @@ struct
       X86FDIVR_ST of x86st * x86st   (* st(i) <- st(j) / st(i) *)
     | (*% @format(i) "fdivrp\t" i *)
       X86FDIVRP of x86st             (* st(i) <- st(0) / st(i) and pop *)
+    | (*% @format "fprem" *)
+      X86FPREM                       (* st(0) <- st(0) mod st(1) *)
     | (*% @format "fabs" *)
       X86FABS                        (* st(0) <- abs(st(0)) *)
     | (*% @format "fchs" *)
       X86FCHS                        (* st(0) <- -st(0) *)
+    | (*% @format "fincstp\n" *)
+      X86FINCSTP                     (* increment stack top pointer *)
     | (*% @format "ffree\t" *)
       X86FFREE of x86st              (* free st(i) *)
     | (*% @format(i) "fxch\t" i *)
@@ -843,15 +845,15 @@ struct
     | (*% @format(dst * insn) insn "; fstsw\t" dst *)
       X86FSTSW of dst * instruction  (* store x87 status to dst *)
 *)
-    | (*% @format({clob}) "fsw_gt\t" clob *)
-      (* set zero flag if x87 status register holds st(0) > st(i) *)
-      X86FSW_GT of {clob: var}
-    | (*% @format({clob}) "fsw_ge\t" clob *)
-      (* set zero flag if x87 status register holds st(0) >= st(i) *)
-      X86FSW_GE of {clob: var}
-    | (*% @format({clob}) "fsw_eq\t" clob *)
-      (* set zero flag if x87 status register holds st(0) == st(i) *)
-      X86FSW_EQ of {clob: var}
+    | (*% @format({clob, mask}) "fsw_testh\t" clob "," + mask *)
+      (* test high byte of x86 control word *)
+      X86FSW_TESTH of {clob: var, mask: const}
+    | (*%
+       * @format({clob, mask, compare})
+       * "fsw_maskcmph\t" clob "," + mask "," + compare
+       *)
+      (* apply mask to high byte of x86 control word and compare *)
+      X86FSW_MASKCMPH of {clob: var, mask: const, compare: const}
     | (*% @format(op1) "fldcw\t" op1 *)
       X86FLDCW of mem                (* fcw <- [mem:uint16] *)
     | (*% @format(dst) "fnstcw\t" dst *)
@@ -976,13 +978,14 @@ struct
   type cluster =
       (*%
        * @format({clusterId, frameBitmap: bitmap bitmaps:lines,
-       *          preFrameSize, postFrameSize,
+       *          preFrameSize, postFrameSize, numHeaderWords,
        *          baseLabel: bl blopt, body, loc})
        * "# begin cluster " clusterId \n
        * "# loc = " loc \n
        * blopt(bl)("# base = ", \n)
        * bitmaps(bitmap)("# frameBitmap: ", \n)
        * "# pre/post = " preFrameSize "/" postFrameSize \n
+       * "# numHeaderWords = " numHeaderWords \n
        * body
        * "# end cluster"
        *)
@@ -993,6 +996,7 @@ struct
         body: graph,
         preFrameSize: int,
         postFrameSize: int,
+        numHeaderWords: int,
         loc: loc
       }
 
@@ -1068,7 +1072,7 @@ struct
                    nextToplevel: next nextOpt,
                    smlPushHandlerLabel,
                    smlPopHandlerLabel})
-       * symbol ":\t.toplevel" + (*toplevelId*) nextOpt(next)(+ "=>" +,) *)
+       * symbol ":\t.toplevel" + toplevelEntry nextOpt(next)(+ "=>" +,) *)
       TOPLEVEL of {symbol: symbol,
                    (*toplevelId: clusterId,*)
                    toplevelEntry: symbol,

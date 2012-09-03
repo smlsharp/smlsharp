@@ -51,6 +51,7 @@ sig
          byteOrder : SystemDefTypes.byteOrder,
          instructionsSize : BasicTypes.UInt32,
          instructions : Instructions.instruction list,
+         linkSymbolTable : string,
          locationTable : locationTable,
          nameSlotTable : nameSlotTable
        }

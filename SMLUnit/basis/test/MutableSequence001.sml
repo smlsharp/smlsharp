@@ -6,7 +6,9 @@
  * @author YAMATODANI Kiyoshi
  * @copyright 2010, Tohoku University.
  *)
-functor MutableSequence001(A : MUTABLE_SEQUENCE) =
+functor MutableSequence001(A : MUTABLE_SEQUENCE) : sig
+  val suite : unit -> SMLUnit.Test.test
+end =
 struct
 
   (************************************************************)

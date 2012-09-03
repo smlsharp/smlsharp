@@ -4,7 +4,6 @@ Group is
 	$/basis.cm
 #endif
 
-	../../../../../smlnj-lib/Util/smlnj-lib.cm
 	../../../primitives/compiler/constants.cm
 	../../control/sources.cm
 	../../env/sources.cm

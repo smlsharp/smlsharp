@@ -123,6 +123,7 @@ structure ClusterCalc = struct
   * @formatter(listWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
   * @formatter(listWithEnclosure) SmlppgUtil.formatListWithEnclosure
   * @formatter(bool) SmlppgUtil.formatBinaryChoice
+  * @formatter(recordTy) TermFormat.formatRecordTy
   *)
  datatype ccexp =
           (*%
@@ -181,6 +182,14 @@ structure ClusterCalc = struct
           }
 *)
         | (*%
+           * @format({ty, loc}) "_tagof(" !N0{ ty } ")"
+           *)
+          (*%
+           * @prefix typed
+           * @format({ty, loc}) "_tagof(" !N0{ ty } ")"
+           *)
+          CCTAGOF of {ty : ty, loc : loc}
+        | (*%
            * @format({ty, loc}) "_sizeof(" !N0{ ty } ")"
            *)
           (*%
@@ -188,6 +197,15 @@ structure ClusterCalc = struct
            * @format({ty, loc}) "_sizeof(" !N0{ ty } ")"
            *)
           CCSIZEOF of {ty : ty, loc : loc}
+        | (*%
+           * @format({label, recordTy, loc})
+           * "_indexof(" !N0{ label ")" }
+           *)
+          (*% @prefix typed
+           * @format({label, recordTy, loc})
+           * "_indexof(" !N0{ label "," +1 recordTy ")" }
+           *)
+          CCINDEXOF of {label : string, recordTy : ty, loc : loc}
         | (*%
            * @format({value, loc}) value
            *)
@@ -492,43 +510,46 @@ structure ClusterCalc = struct
            loc : loc
           }
         | (*%
-           * @format({recordExp, label, recordTy, resultTy, loc})
-           * L9{ recordExp 2[ 1 "[" label "]" ] }
+           * @format({recordExp, indexExp, label, recordTy, resultTy, loc})
+           * L9{ recordExp 2[ 1 "[" indexExp "]" ] }
            *)
           (*%
            * @prefix typed
-           * @format({recordExp, label, recordTy, resultTy, loc})
+           * @format({recordExp, indexExp, label, recordTy, resultTy, loc})
            * L2{
-           *   L9{ recordExp 2[ 1 "[" label "]" ] }
+           *   L9{ recordExp 2[ 1 "[" indexExp "]" ] }
            *   +1 ":" +d resultTy
            * }
            *)
           CCSELECT of
           {
            recordExp : ccexp,
+           indexExp : ccexp,
            label : string,
            recordTy : ty,
            resultTy : ty,
            loc : loc
           }
         | (*%
-           * @format({recordExp, recordTy, label, valueExp, valueTy, loc})
+           * @format({recordExp, recordTy, indexExp, label, valueExp, valueTy,
+           *          loc})
            * L9{
            *   recordExp
            *   2[ +1 "#" +d
            *      !N0{ "{"
-           *           2[ 1 label + "=" 2[ +1 valueExp ] ]
+           *           2[ 1 indexExp + "=" 2[ +1 valueExp ] ]
            *           1 "}" } ]
            * }
            *)
           (*%
            * @prefix typed
-           * @format({recordExp, recordTy, label, valueExp, valueTy, loc})
+           * @format({recordExp, recordTy, indexExp, label, valueExp, valueTy,
+           *          loc})
            * L9{
            *   recordExp
            *   2[ +1 "#" +d
            *      !N0{ "{"
-           *           2[ 1 label + "=" 2[ +1 valueExp ] ]
+           *           2[ 1 indexExp + "=" 2[ +1 valueExp ] ]
            *           1 "}" } ]
            * }
            *)
@@ -536,6 +557,7 @@ structure ClusterCalc = struct
           {
            recordExp : ccexp,
            recordTy : ty,
+           indexExp : ccexp,
            label : string,
            valueExp : ccexp,
            valueTy : ty,

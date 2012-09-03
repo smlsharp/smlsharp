@@ -1,7 +1,9 @@
 Group
 	structure BasicTypeFormatters
 	structure BasicTypes
+(*
 	structure SystemDefTypes
 	structure SystemDef
+*)
 is
 	main/module.cm

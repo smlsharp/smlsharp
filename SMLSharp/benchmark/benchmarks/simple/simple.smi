@@ -1,0 +1,502 @@
+_require "basis.smi"
+_require "array2.smi"
+_require "control.smi"
+functor Simple(
+  A : sig
+    val grid_max : int
+    val step_count : int
+  end) =
+struct
+  val fold : ('a * 'b -> 'b) -> 'a list -> 'b -> 'b
+  val min : real * real -> real
+  val max : real * real -> real
+  exception MaxList
+  exception MinList
+  exception SumList
+  val max_list : real list -> real
+  val min_list : real list -> real
+  val sum_list : real list -> real
+  val for : {from:int, step:int, to:int} -> (int -> 'a) -> unit
+  val from : int * int -> int list
+  val flatten : 'a list list -> 'a list
+  val pow : real * int -> real
+  val array2 : ((int * int) * (int * int)) * 'a
+               -> 'a Array2.array2 * ((int * int) * (int * int))
+  val sub2 : ('a Array2.array2 * ((int * int) * (int * int))) * 
+             (int * int)
+             -> 'a
+  val update2 : ('a Array2.array2 * ((int * 'b) * (int * 'c)))
+                * (int * int) * 'a
+                -> unit
+  val bounds2 : 'a * 'b -> 'b
+  val printarray2 : real Array2.array2 * 
+                    ((int * int) * (int * int))
+                    -> unit
+  val array1 : (int * int) * 'a -> 'a array * (int * int)
+  val sub1 : ('a array * (int * int)) * int -> 'a
+  val update1 : ('a array * (int * 'b)) * int * 'a -> unit
+  val bounds1 : 'a * 'b -> 'b
+  val grid_size : (int * int) * (int * int)
+  val north : int * 'a -> int * 'a
+  val south : int * 'a -> int * 'a
+  val east : 'a * int -> 'a * int
+  val west : 'a * int -> 'a * int
+  val northeast : int * int -> int * int
+  val southeast : int * int -> int * int
+  val northwest : int * int -> int * int
+  val southwest : int * int -> int * int
+  val farnorth : int * 'a -> int * 'a
+  val farsouth : int * 'a -> int * 'a
+  val fareast : 'a * int -> 'a * int
+  val farwest : 'a * int -> 'a * int
+  val zone_A : 'a * 'b -> 'a * 'b
+  val zone_B : int * 'a -> int * 'a
+  val zone_C : int * int -> int * int
+  val zone_D : 'a * int -> 'a * int
+  val zone_corner_northeast : int * 'a -> int * 'a
+  val zone_corner_northwest : int * int -> int * int
+  val zone_corner_southeast : 'a -> 'a
+  val zone_corner_southwest : 'a * int -> 'a * int
+  val kmin : int
+  val kmax : int
+  val lmin : int
+  val lmax : int
+  val dimension_all_nodes : (int * int) * (int * int)
+  val for_all_nodes : (int -> int -> 'a) -> unit
+  val dimension_interior_nodes : (int * int) * (int * int)
+  val for_interior_nodes : (int -> int -> 'a) -> unit
+  val dimension_all_zones : (int * int) * (int * int)
+  val for_all_zones : (int * int -> 'a) -> unit
+  val dimension_interior_zones : (int * int) * (int * int)
+  val for_interior_zones : (int * int -> 'a) -> unit
+  val map_interior_nodes : (int * int -> 'a) -> 'a list
+  val map_interior_zones : (int * int -> 'a) -> 'a list
+  val for_north_ward_interior_zones : (int * int -> 'a) -> unit
+  val for_west_ward_interior_zones : (int * int -> 'a) -> unit
+  val for_north_zones : (int * int -> 'a) -> unit
+  val for_south_zones : (int * int -> 'a) -> unit
+  val for_east_zones : (int * int -> 'a) -> unit
+  val for_west_zones : (int * int -> 'a) -> unit
+  val reflect : ('a -> int * int)
+                -> 'a
+                   -> 'b Array2.array2 * 
+                      ((int * int) * (int * int))
+                      -> 'b
+  val reflect_north : int * int
+                      -> 'a Array2.array2 * 
+                         ((int * int) * (int * int))
+                         -> 'a
+  val reflect_south : int * int
+                      -> 'a Array2.array2 * 
+                         ((int * int) * (int * int))
+                         -> 'a
+  val reflect_east : int * int
+                     -> 'a Array2.array2 * 
+                        ((int * int) * (int * int))
+                        -> 'a
+  val reflect_west : int * int
+                     -> 'a Array2.array2 * 
+                        ((int * int) * (int * int))
+                        -> 'a
+  val for_north_nodes : (int * int -> 'a) -> unit
+  val for_south_nodes : (int * int -> 'a) -> unit
+  val for_east_nodes : (int * int -> 'a) -> unit
+  val for_west_nodes : (int * int -> 'a) -> unit
+  val north_east_corner : int * int
+  val north_west_corner : int * int
+  val south_east_corner : int * int
+  val south_west_corner : int * int
+  val west_of_north_east : int * int
+  val west_of_south_east : int * int
+  val north_of_south_east : int * int
+  val north_of_south_west : int * int
+  val constant_heat_source : real
+  val deltat_maximum : real
+  val specific_heat : real
+  val p_coeffs : real Array2.array2 * 
+                 ((int * int) * (int * int))
+  val e_coeffs : real Array2.array2 * 
+                 ((int * int) * (int * int))
+  val p_poly : (real Array2.array2 * ((int * int) * (int * int)))
+                 Array2.array2 * ((int * int) * (int * int))
+  val e_poly : (real Array2.array2 * ((int * int) * (int * int)))
+                 Array2.array2 * ((int * int) * (int * int))
+  val rho_table : real array * (int * int)
+  val theta_table : real array * (int * int)
+  val extract_energy_tables_from_constants : ((real 
+                                                 Array2.array2
+                                               * 
+                                               ((int * int) * 
+                                                (int * int))) 
+                                                Array2.array2 * 
+                                              ((int * int) * 
+                                               (int * int))) * 
+                                             int * 
+                                             (real array * 
+                                              (int * int)) * 
+                                             (real array * 
+                                              (int * int))
+  val extract_pressure_tables_from_constants : ((real 
+                                                   Array2.array2
+                                                 * 
+                                                 ((int * int) * 
+                                                  (int * int))) 
+                                                  Array2.array2
+                                                * 
+                                                ((int * int) * 
+                                                 (int * int)))
+                                               * int * 
+                                               (real array * 
+                                                (int * int)) * 
+                                               (real array * 
+                                                (int * int))
+  val nbc : int Array2.array2 * ((int * int) * (int * int))
+  val pbb : real array * (int * int)
+  val pb : real array * (int * int)
+  val qb : real array * (int * int)
+  val all_zero_nodes : real Array2.array2 * 
+                       ((int * int) * (int * int))
+  val all_zero_zones : real Array2.array2 * 
+                       ((int * int) * (int * int))
+  val make_position_matrix : (int * int -> real * real)
+                             -> (real Array2.array2 * 
+                                 ((int * int) * (int * int))) * 
+                                (real Array2.array2 * 
+                                 ((int * int) * (int * int)))
+  val zone_area_vol : ((real Array2.array2 * 
+                        ((int * int) * (int * int))) * 
+                       (real Array2.array2 * 
+                        ((int * int) * (int * int)))) * 
+                      (int * int)
+                      -> real * real
+  val make_velocity : ((real Array2.array2 * 
+                        ((int * int) * (int * int))) * 
+                       (real Array2.array2 * 
+                        ((int * int) * (int * int)))) * 
+                      ((real Array2.array2 * 
+                        ((int * int) * (int * int))) * 
+                       (real Array2.array2 * 
+                        ((int * int) * (int * int)))) * 
+                      (real Array2.array2 * 
+                       ((int * int) * (int * int))) * 
+                      (real Array2.array2 * 
+                       ((int * int) * (int * int))) * 
+                      (real Array2.array2 * 
+                       ((int * int) * (int * int))) * 
+                      (real Array2.array2 * 
+                       ((int * int) * (int * int))) * real
+                      -> (real Array2.array2 * 
+                          ((int * int) * (int * int))) * 
+                         (real Array2.array2 * 
+                          ((int * int) * (int * int)))
+  val make_position : ((real Array2.array2 * 
+                        ((int * int) * (int * int))) * 
+                       (real Array2.array2 * 
+                        ((int * int) * (int * int)))) * real * 
+                      ((real Array2.array2 * 
+                        ((int * int) * (int * int))) * 
+                       (real Array2.array2 * 
+                        ((int * int) * (int * int))))
+                      -> (real Array2.array2 * 
+                          ((int * int) * (int * int))) * 
+                         (real Array2.array2 * 
+                          ((int * int) * (int * int)))
+  val make_area_density_volume : (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 ((real Array2.array2 * 
+                                   ((int * int) * (int * int)))
+                                  * 
+                                  (real Array2.array2 * 
+                                   ((int * int) * (int * int))))
+                                 -> (real Array2.array2 * 
+                                     ((int * int) * (int * int)))
+                                    * 
+                                    (real Array2.array2 * 
+                                     ((int * int) * (int * int)))
+                                    * 
+                                    (real Array2.array2 * 
+                                     ((int * int) * (int * int)))
+  val make_viscosity : (real Array2.array2 * 
+                        ((int * int) * (int * int))) * 
+                       ((real Array2.array2 * 
+                         ((int * int) * (int * int))) * 
+                        (real Array2.array2 * 
+                         ((int * int) * (int * int)))) * 
+                       ((real Array2.array2 * 
+                         ((int * int) * (int * int))) * 
+                        (real Array2.array2 * 
+                         ((int * int) * (int * int)))) * 
+                       (real Array2.array2 * 
+                        ((int * int) * (int * int))) * 
+                       (real Array2.array2 * 
+                        ((int * int) * (int * int)))
+                       -> (real Array2.array2 * 
+                           ((int * int) * (int * int))) * 
+                          (real Array2.array2 * 
+                           ((int * int) * (int * int)))
+  val polynomial : ((real Array2.array2 * 
+                     ((int * int) * (int * int))) Array2.array2
+                    * ((int * int) * (int * int))) * int * 
+                   (real array * (int * int)) * 
+                   (real array * (int * int)) * real * real
+                   -> real
+  val zonal_pressure : real * real -> real
+  val zonal_energy : real * real -> real
+  val dx : real
+  val tiny : real
+  val newton_raphson : (real -> real) * real -> real
+  val make_temperature : (real Array2.array2 * 
+                          ((int * int) * (int * int))) * 
+                         (real Array2.array2 * 
+                          ((int * int) * (int * int))) * 
+                         (real Array2.array2 * 
+                          ((int * int) * (int * int))) * 
+                         (real Array2.array2 * 
+                          ((int * int) * (int * int))) * 
+                         (real Array2.array2 * 
+                          ((int * int) * (int * int))) * 
+                         (real Array2.array2 * 
+                          ((int * int) * (int * int)))
+                         -> real Array2.array2 * 
+                            ((int * int) * (int * int))
+  val make_cc : (real Array2.array2 * 
+                 ((int * int) * (int * int))) * 
+                (real Array2.array2 * 
+                 ((int * int) * (int * int)))
+                -> real Array2.array2 * 
+                   ((int * int) * (int * int))
+  val make_sigma : real * 
+                   (real Array2.array2 * 
+                    ((int * int) * (int * int))) * 
+                   (real Array2.array2 * 
+                    ((int * int) * (int * int)))
+                   -> real Array2.array2 * 
+                      ((int * int) * (int * int))
+  val make_gamma : ((real Array2.array2 * 
+                     ((int * int) * (int * int))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int)))) * 
+                   (real Array2.array2 * 
+                    ((int * int) * (int * int))) * 
+                   (int * int -> int * int) * 
+                   (int * int -> int * int)
+                   -> real Array2.array2 * 
+                      ((int * int) * (int * int))
+  val make_ab : (real Array2.array2 * 
+                 ((int * int) * (int * int))) * 
+                (real Array2.array2 * 
+                 ((int * int) * (int * int))) * 
+                (real Array2.array2 * 
+                 ((int * int) * (int * int))) * 
+                (int * int -> int * int)
+                -> (real Array2.array2 * 
+                    ((int * int) * (int * int))) * 
+                   (real Array2.array2 * 
+                    ((int * int) * (int * int)))
+  val make_theta : (real Array2.array2 * 
+                    ((int * int) * (int * int))) * 
+                   (real Array2.array2 * 
+                    ((int * int) * (int * int))) * 
+                   (int * int -> int * int) * 
+                   ((int * int -> unit) -> 'a)
+                   -> real Array2.array2 * 
+                      ((int * int) * (int * int))
+  val compute_heat_conduction : (real Array2.array2 * 
+                                 ((int * int) * (int * int))) * 
+                                real * 
+                                ((real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int))))
+                                * 
+                                (real Array2.array2 * 
+                                 ((int * int) * (int * int))) * 
+                                (real Array2.array2 * 
+                                 ((int * int) * (int * int)))
+                                -> (real Array2.array2 * 
+                                    ((int * int) * (int * int)))
+                                   * 
+                                   (real Array2.array2 * 
+                                    ((int * int) * (int * int)))
+                                   * 
+                                   (real Array2.array2 * 
+                                    ((int * int) * (int * int)))
+  val make_pressure : (real Array2.array2 * 
+                       ((int * int) * (int * int))) * 
+                      (real Array2.array2 * 
+                       ((int * int) * (int * int)))
+                      -> real Array2.array2 * 
+                         ((int * int) * (int * int))
+  val make_energy : (real Array2.array2 * 
+                     ((int * int) * (int * int))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int)))
+                    -> real Array2.array2 * 
+                       ((int * int) * (int * int))
+  val compute_energy_error : ((real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int)))) * 
+                             ((real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int)))) * 
+                             (real Array2.array2 * 
+                              ((int * int) * (int * int))) * 
+                             (real Array2.array2 * 
+                              ((int * int) * (int * int))) * 
+                             (real Array2.array2 * 
+                              ((int * int) * (int * int))) * 
+                             (real Array2.array2 * 
+                              ((int * int) * (int * int))) * 
+                             (real Array2.array2 * 
+                              ((int * int) * (int * int))) * 
+                             (real Array2.array2 * 
+                              ((int * int) * (int * int))) * 
+                             (real Array2.array2 * 
+                              ((int * int) * (int * int))) * 
+                             (real Array2.array2 * 
+                              ((int * int) * (int * int))) * 
+                             real
+                             -> real
+  val compute_time_step : (real Array2.array2 * 
+                           ((int * int) * (int * int))) * 
+                          (real Array2.array2 * 
+                           ((int * int) * (int * int))) * 
+                          (real Array2.array2 * 
+                           ((int * int) * (int * int)))
+                          -> real
+  val compute_initial_state : unit
+                              -> ((real Array2.array2 * 
+                                   ((int * int) * (int * int)))
+                                  * 
+                                  (real Array2.array2 * 
+                                   ((int * int) * (int * int))))
+                                 * 
+                                 ((real Array2.array2 * 
+                                   ((int * int) * (int * int)))
+                                  * 
+                                  (real Array2.array2 * 
+                                   ((int * int) * (int * int))))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * 
+                                 (real Array2.array2 * 
+                                  ((int * int) * (int * int)))
+                                 * real * real
+  val compute_next_state : ((real Array2.array2 * 
+                             ((int * int) * (int * int))) * 
+                            (real Array2.array2 * 
+                             ((int * int) * (int * int)))) * 
+                           ((real Array2.array2 * 
+                             ((int * int) * (int * int))) * 
+                            (real Array2.array2 * 
+                             ((int * int) * (int * int)))) * 
+                           (real Array2.array2 * 
+                            ((int * int) * (int * int))) * 
+                           (real Array2.array2 * 
+                            ((int * int) * (int * int))) * 
+                           (real Array2.array2 * 
+                            ((int * int) * (int * int))) * 
+                           (real Array2.array2 * 
+                            ((int * int) * (int * int))) * 
+                           (real Array2.array2 * 
+                            ((int * int) * (int * int))) * 
+                           (real Array2.array2 * 
+                            ((int * int) * (int * int))) * 
+                           (real Array2.array2 * 
+                            ((int * int) * (int * int))) * real
+                           * 'a
+                           -> ((real Array2.array2 * 
+                                ((int * int) * (int * int))) * 
+                               (real Array2.array2 * 
+                                ((int * int) * (int * int)))) * 
+                              ((real Array2.array2 * 
+                                ((int * int) * (int * int))) * 
+                               (real Array2.array2 * 
+                                ((int * int) * (int * int)))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              (real Array2.array2 * 
+                               ((int * int) * (int * int))) * 
+                              real * real
+  val runit : unit
+              -> ((real Array2.array2 * 
+                   ((int * int) * (int * int))) * 
+                  (real Array2.array2 * 
+                   ((int * int) * (int * int)))) * 
+                 ((real Array2.array2 * 
+                   ((int * int) * (int * int))) * 
+                  (real Array2.array2 * 
+                   ((int * int) * (int * int)))) * 
+                 (real Array2.array2 * 
+                  ((int * int) * (int * int))) * 
+                 (real Array2.array2 * 
+                  ((int * int) * (int * int))) * 
+                 (real Array2.array2 * 
+                  ((int * int) * (int * int))) * 
+                 (real Array2.array2 * 
+                  ((int * int) * (int * int))) * 
+                 (real Array2.array2 * 
+                  ((int * int) * (int * int))) * 
+                 (real Array2.array2 * 
+                  ((int * int) * (int * int))) * 
+                 (real Array2.array2 * 
+                  ((int * int) * (int * int))) * real * real
+  val print_state : ((real Array2.array2 * 
+                      ((int * int) * (int * int))) * 
+                     (real Array2.array2 * 
+                      ((int * int) * (int * int)))) * 
+                    ((real Array2.array2 * 
+                      ((int * int) * (int * int))) * 
+                     (real Array2.array2 * 
+                      ((int * int) * (int * int)))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int))) * 
+                    (real Array2.array2 * 
+                     ((int * int) * (int * int))) * real * real
+                    -> unit
+  val testit : 'a -> unit
+  val doit : unit -> unit
+end

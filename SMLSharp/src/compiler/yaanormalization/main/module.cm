@@ -4,24 +4,22 @@ Group is
 	$/basis.cm
 #endif
 
-	../../../primitives/compiler/constants.cm
 	../../control/sources.cm
 	../../systemdef/sources.cm
-	../../env/sources.cm
 	../../name/sources.cm
-	../../pickle/sources.cm
-	../../primitive/sources.cm
-	../../types/sources.cm
-	../../typecontext/sources.cm
-	../../absyn/sources.cm
+	../../env/sources.cm
+	../../builtin/sources.cm
 	../../constantterm/sources.cm
-	../../rbucalc/sources.cm
 	../../yaanormal/sources.cm
 
+(*
 	Counters.sml
 	ANORMALIZATION.sig
 	ANormalization.sml
+*)
 	ANORMALOPTIMIZATION.sig
 	ANormalOptimization.sml
+(*
 	DeclarationRecovery.sml
+*)
 	StaticAllocation.sml

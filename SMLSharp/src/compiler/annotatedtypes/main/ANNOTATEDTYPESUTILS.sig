@@ -5,9 +5,12 @@
  * @version $$
  *)
 signature ANNOTATEDTYPESUTILS = sig
+(*
   val flatTyList : AnnotatedTypes.ty -> AnnotatedTypes.ty list
 
+*)
   val constDefaultTy : ConstantTerm.constant -> AnnotatedTypes.ty
+(*
 
   val fieldTypes : AnnotatedTypes.ty -> AnnotatedTypes.ty SEnv.map
 
@@ -17,6 +20,7 @@ signature ANNOTATEDTYPESUTILS = sig
 
   val argTyList : AnnotatedTypes.ty -> AnnotatedTypes.ty list
 
+*)
   val expandFunTy : 
       AnnotatedTypes.ty -> 
       {
@@ -25,6 +29,7 @@ signature ANNOTATEDTYPESUTILS = sig
        annotation : AnnotatedTypes.functionAnnotation ref,
        funStatus : AnnotatedTypes.funStatus
       }
+(*
 
   val expandRecordTy :
       AnnotatedTypes.ty -> 
@@ -33,10 +38,11 @@ signature ANNOTATEDTYPESUTILS = sig
        annotation : AnnotatedTypes.recordAnnotation ref
       }
  
-  val substitute : AnnotatedTypes.ty IEnv.map -> AnnotatedTypes.ty -> AnnotatedTypes.ty
+  val substitute : AnnotatedTypes.ty BoundTypeVarID.Map.map -> AnnotatedTypes.ty -> AnnotatedTypes.ty
 
-  val makeSubst : AnnotatedTypes.btvEnv * AnnotatedTypes.ty list -> AnnotatedTypes.ty IEnv.map
+  val makeSubst : AnnotatedTypes.btvEnv * AnnotatedTypes.ty list -> AnnotatedTypes.ty BoundTypeVarID.Map.map
 
+*)
   val tpappTy : AnnotatedTypes.ty * AnnotatedTypes.ty list -> AnnotatedTypes.ty
 
   val cardinality : AnnotatedTypes.ty -> int
@@ -44,7 +50,7 @@ signature ANNOTATEDTYPESUTILS = sig
   val convertNumericalLabel : int -> string
 
   val convertLabel : string -> string
-
+(*
 (*
   val newVar : AnnotatedTypes.ty -> AnnotatedTypes.varInfo
 *)
@@ -55,29 +61,36 @@ signature ANNOTATEDTYPESUTILS = sig
       
   val wordPairCompare : ((Word32.word * Word32.word) * (Word32.word * Word32.word)) -> order
 
-  val initialize : unit -> unit
-
-  val initializeFunID : unit -> unit
-
   val freshAnnotationLabel : unit -> AnnotatedTypes.annotationLabel
 
   val freshRecordAnnotation : unit -> AnnotatedTypes.recordAnnotation
-
+*)
   val freshFunctionAnnotation : unit -> AnnotatedTypes.functionAnnotation ref
-
+(*
   val coerceClosure : AnnotatedTypes.ty -> unit
 
   val globalFunStatus : unit -> AnnotatedTypes.funStatus
-
+*)
   val newClosureFunStatus : unit -> AnnotatedTypes.funStatus
-
+(*
   val newLocalFunStatus : AnnotatedTypes.funStatus -> AnnotatedTypes.funStatus
 
-  val substituteBtvEnv : AnnotatedTypes.ty IEnv.map -> AnnotatedTypes.btvEnv
+  val substituteBtvEnv : AnnotatedTypes.ty BoundTypeVarID.Map.map -> AnnotatedTypes.btvEnv
 			 -> AnnotatedTypes.btvEnv
-
+*)
+  val makeClosureFunTy : AnnotatedTypes.ty list
+                         * AnnotatedTypes.ty
+                         -> AnnotatedTypes.ty
+(*
+  val makeLocalFunTy : AnnotatedTypes.ty list
+                       * AnnotatedTypes.ty
+                       -> AnnotatedTypes.ty
+*)
+  val isLocalFunTy : AnnotatedTypes.ty -> bool
+(*
 (*
   val generateExtraList : {tagTyCon : int -> 'a, sizeTyCon : int -> 'a, indexTyCon : (int * string) -> 'a} ->
                            AnnotatedTypes.btvEnv -> 'a list
+*)
 *)
 end

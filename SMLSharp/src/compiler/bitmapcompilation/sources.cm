@@ -1,0 +1,6 @@
+Group
+	structure BitmapCompilation
+	structure SingletonTyEnv
+	structure RecordLayout
+is
+	main/module.cm

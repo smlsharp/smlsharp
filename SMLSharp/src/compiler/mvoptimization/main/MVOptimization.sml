@@ -70,10 +70,10 @@ structure MVOptimization : MVOPTIMIZATION = struct
         | (MV.MVRECORD {isMutable=false,...}, _) => LESS
 
         | (MV.MVSELECT _, MV.MVRECORD {isMutable=false,...}) => GREATER
-        | (MV.MVSELECT {recordExp = recordExp1, label = label1,...},
-           MV.MVSELECT {recordExp = recordExp2, label = label2,...}) =>
+        | (MV.MVSELECT {recordExp = recordExp1, indexExp = indexExp1,...},
+           MV.MVSELECT {recordExp = recordExp2, indexExp = indexExp2,...}) =>
           (
-           case String.compare(label1,label2) of
+           case argCompare(indexExp1,indexExp2) of
              EQUAL => argCompare(recordExp1,recordExp2)
            | d => d 
           )
@@ -81,10 +81,10 @@ structure MVOptimization : MVOPTIMIZATION = struct
 
         | (MV.MVMODIFY _, MV.MVRECORD {isMutable=false,...}) => GREATER
         | (MV.MVMODIFY _, MV.MVSELECT _) => GREATER
-        | (MV.MVMODIFY {recordExp = recordExp1, label = label1, valueExp = valueExp1,...},
-           MV.MVMODIFY {recordExp = recordExp2, label = label2, valueExp = valueExp2,...}) =>
+        | (MV.MVMODIFY {recordExp = recordExp1, indexExp = indexExp1, valueExp = valueExp1,...},
+           MV.MVMODIFY {recordExp = recordExp2, indexExp = indexExp2, valueExp = valueExp2,...}) =>
           (
-           case String.compare(label1,label2) of
+           case argCompare(indexExp1,indexExp2) of
              EQUAL => argsCompare([recordExp1,valueExp1],[recordExp2,valueExp2])
            | d => d 
           )
@@ -350,30 +350,43 @@ structure MVOptimization : MVOPTIMIZATION = struct
            | (P.Word_arshift,[arg1,arg2 as MV.MVCONSTANT {value = CT.WORD 0w0,...}]) => arg1
            | (P.Word_arshift, _) => optimize2 wordOf genericWordOf wordToExp ( Word32.~>> ) 
 
+(*
            | (P.RuntimePrim "Int_toString", _) => optimize1 intOf stringToExp (Int32.toString)          
            | (P.RuntimePrim "Word_toString", _) => optimize1 wordOf stringToExp (Word32.toString)       
+*)
 
            | (P.Real_fromInt, _) => optimize1 intOf realToExp (Real.fromLargeInt o Int32.toLarge)             
+(*
            | (P.RuntimePrim "Real_toString", _) => optimize1 realOf stringToExp (Real.toString)       
            | (P.RuntimePrim "Real_floor", _) => optimize1 realOf genericIntToExp (Real.floor)
            | (P.RuntimePrim "Real_ceil", _) => optimize1 realOf genericIntToExp (Real.ceil)
+*)
            | (P.Real_trunc_unsafe _, _) => optimize1 realOf genericIntToExp (Real.trunc)
+(*
            | (P.RuntimePrim "Real_round", _) => optimize1 realOf genericIntToExp (Real.round)
+*)
 
            | (P.Float_fromInt, _) => optimize1 intOf floatToExp (Float.fromLargeInt o Int32.toLarge)             
+(*
            | (P.RuntimePrim "Float_toString", _) => optimize1 floatOf stringToExp (Float.toString)       
            | (P.RuntimePrim "Float_floor", _) => optimize1 floatOf genericIntToExp (Float.floor)
            | (P.RuntimePrim "Float_ceil", _) => optimize1 floatOf genericIntToExp (Float.ceil)
+*)
            | (P.Float_trunc_unsafe _, _) => optimize1 floatOf genericIntToExp (Float.trunc)
+(*
            | (P.RuntimePrim "Float_round", _) => optimize1 floatOf genericIntToExp (Float.round)
 
            | (P.RuntimePrim "Char_toString", _) => optimize1 charOf stringToExp (Char.toString)       
+*)
            | (P.Char_ord, _) => optimize1 charOf genericIntToExp (Char.ord)       
            | (P.Char_chr_unsafe, _) => optimize1 genericIntOf charToExp (Char.chr)
 
+(*
            | (P.RuntimePrim "String_concat2", _) => optimize2 stringOf stringOf stringToExp ( op ^ )        
+*)
            | (P.String_sub_unsafe, _) => optimize2 stringOf genericIntOf charToExp ( String.sub )        
            | (P.String_size, _) => optimize1 stringOf genericIntToExp ( String.size )        
+(*
            | (P.RuntimePrim "String_substring", _) => optimize3 stringOf genericIntOf genericIntOf stringToExp ( String.substring )        
 
            | (P.RuntimePrim "Math_sqrt", _) => optimize1 realOf realToExp ( Math.sqrt )
@@ -391,6 +404,7 @@ structure MVOptimization : MVOPTIMIZATION = struct
            | (P.RuntimePrim "Math_sinh", _) => optimize1 realOf realToExp ( Math.sinh )
            | (P.RuntimePrim "Math_cosh", _) => optimize1 realOf realToExp ( Math.cosh )
            | (P.RuntimePrim "Math_tanh", _) => optimize1 realOf realToExp ( Math.tanh )
+*)
 
            | _ => exp          
           ) handle _ => exp
@@ -454,7 +468,9 @@ structure MVOptimization : MVOPTIMIZATION = struct
                attributes = attributes,
                loc = loc
               }
+        | MV.MVTAGOF _ => mvexp
         | MV.MVSIZEOF _ => mvexp
+        | MV.MVINDEXOF _ => mvexp
         | MV.MVCONSTANT _ => mvexp
         | MV.MVGLOBALSYMBOL _ => mvexp
         | MV.MVEXCEPTIONTAG _ => mvexp
@@ -580,9 +596,10 @@ structure MVOptimization : MVOPTIMIZATION = struct
             if isMutable then newExp
             else commonSubexpressionEliminate commonExpEnv newExp
           end
-        | MV.MVSELECT {recordExp, label, recordTy, resultTy, loc} =>
+        | MV.MVSELECT {recordExp, indexExp, label, recordTy, resultTy, loc} =>
           let 
             val newRecordExp = optimizeArg varEnv recordExp
+            val indexExp = optimizeArg varEnv indexExp
 
             fun lookupField kind =
                 case VarIdEnv.find(recordEnv, kind)
@@ -599,7 +616,8 @@ structure MVOptimization : MVOPTIMIZATION = struct
                   | NONE => 
                     let 
                       val newExp = MV.MVSELECT {recordExp = newRecordExp, 
-                                                label = label, 
+                                                indexExp = indexExp,
+                                                label = label,
                                                 recordTy = recordTy, 
                                                 resultTy = resultTy,
                                                 loc = loc}
@@ -616,12 +634,13 @@ structure MVOptimization : MVOPTIMIZATION = struct
                           *) 
                 MV.MVCONSTANT {value = CT.INT 0, loc = loc}
           end
-        | MV.MVMODIFY {recordExp, recordTy, label, valueExp, valueTy, loc} =>
+        | MV.MVMODIFY {recordExp, recordTy, indexExp, label, valueExp, valueTy, loc} =>
           let
             val newExp = MV.MVMODIFY
                              {
                               recordExp = optimizeArg varEnv recordExp,
                               recordTy = recordTy,
+                              indexExp = optimizeArg varEnv indexExp,
                               label = label,
                               valueExp = optimizeArg varEnv valueExp,
                               valueTy = valueTy,
@@ -744,7 +763,6 @@ structure MVOptimization : MVOPTIMIZATION = struct
                        | _ => [decl]
                     )
                   | MV.MVVALREC {recbindList, loc} => [decl]
-                  | MV.MVVALPOLYREC {btvEnv, recbindList, loc} => [decl]
 
             fun uncastedExp (exp, expTy, targetTy, expLoc) =
                 let 
@@ -927,18 +945,6 @@ structure MVOptimization : MVOPTIMIZATION = struct
                     )
                     recbindList
             val decl = MV.MVVALREC {recbindList = newRecbindList, loc = loc}
-          in 
-            ([decl], varEnv, recordEnv, commonExpEnv)
-          end
-        | MV.MVVALPOLYREC {btvEnv, recbindList, loc} => 
-          let 
-            val newRecbindList =
-                map 
-                    (fn {boundVar, boundExp} =>
-                        {boundVar = boundVar, boundExp = optimizeExp varEnv recordEnv commonExpEnv boundExp}
-                    )
-                    recbindList
-            val decl = MV.MVVALPOLYREC {btvEnv = btvEnv, recbindList = newRecbindList, loc = loc}
           in 
             ([decl], varEnv, recordEnv, commonExpEnv)
           end

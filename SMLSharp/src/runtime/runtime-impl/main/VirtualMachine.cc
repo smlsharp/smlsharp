@@ -3389,7 +3389,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                         throw IllegalArgumentException();// IllegalArgument???
                     }
 #endif
-                    Primitive primitive = primitives[primitiveIndex];
+                    PrimitiveEntry *primitive = &primitives[primitiveIndex];
 
                     // copy argument values into the buffer array.
                     for(int index = 0; index < argsCount; index += 1){
@@ -3401,7 +3401,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                     // Because GC may be caused by allocation in primitive,
                     // save registers.
                     SAVE_REGISTERS;
-                    primitive(argsCount, argRefsBuffer, resultBuf);
+                    primitive->prim(argsCount, argRefsBuffer, resultBuf);
                     RESTORE_REGISTERS;
 
                     if(isPrimitiveExceptionRaised_){
@@ -6672,7 +6672,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
 void
 VirtualMachine::signalHandler(int signal)
 {
-    DBGWRAP(LOG.debug("SIGNAL caught: %d", signal));
+    //DBGWRAP(LOG.debug("SIGNAL caught: %d", signal));
     switch(signal){
       case SIGINT:
         interrupted_ = true;

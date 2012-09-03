@@ -12,5 +12,5 @@ sig
 
     val acdeclToString : AnnotatedCalc.acdecl -> string
 
-    val topBlockToString : AnnotatedCalc.topBlock -> string
+    val acdeclToStringWithType : AnnotatedCalc.acdecl -> string
 end

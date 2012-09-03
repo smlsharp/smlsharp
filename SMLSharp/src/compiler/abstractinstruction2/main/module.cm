@@ -9,7 +9,7 @@ Group is
 	../../env/sources.cm
 	../../util/sources.cm
 	../../name/sources.cm
-	../../anormal/sources.cm
+	../../absyn/sources.cm
 	../../targetplatform/sources.cm
 
 	AbstractInstruction.ppg.sml

@@ -10,35 +10,40 @@ struct
   (****************************************)
   (* switches to control conpilation pahse *)
   val Elab      = 2
-  val FunOpt    = 3
-  val TVar      = 4
-  val TyInf     = 5
-  val LayoutOpt = 6
-  val Print     = 7
-  val UniqueID  = 8
-  val MatchComp = 9
-  val SQLComp   = 10
-  val OverloadComp = 11
-  val Lambda    = 12
-  val Static    = 13
-  val Unbox     = 14
-  val Inline    = 15
-  val RefElim   = 16
-  val DeadCode  = 17
-  val Localize  = 18
-  val Functor   = 19
-  val Cluster   = 20
-  val RBUComp   = 21
-  val Anormal   = 22
-  val SI        = 23
-  val SIOpt     = 24
-  val AI        = 25
-  val AIOpt     = 26
-  val Assem     = 27
-  val Code      = 28
-  val Run       = 29
+  val Name      = 3
+  val Module    = 4
+  val FunOpt    = 5
+  val TVar      = 6
+  val TyInf     = 7
+  val LayoutOpt = 8
+  val Print     = 9
+  val UniqueID  = 10
+  val MatchComp = 11
+  val SQLComp   = 12
+  val FFIComp   = 13
+  val OverloadComp = 14
+  val Lambda    = 15
+  val Static    = 16
+  val Unbox     = 17
+  val Inline    = 18
+  val RefElim   = 19
+  val DeadCode  = 20
+  val Localize  = 21
+  val Functor   = 22
+  val Cluster   = 23
+  val RBUComp   = 24
+  val Anormal   = 25
+  val SI        = 26
+  val SIOpt     = 27
+  val AI        = 28
+  val AIOpt     = 29
+  val Assem     = 30
+  val Code      = 31
+  val Run       = 32
 
   val doUntil = ref Run
+
+  val doNameEval = ref false
 
   fun doPhase current = current <=  !doUntil
 
@@ -76,6 +81,11 @@ struct
 
   (****************************************)
   (* switches to control informations reported to user *)
+
+  val printCommand = ref true
+
+  (** true if binding informations are to be printed. *)
+  val debugPrint = ref false
 
   (** true if binding informations are to be printed. *)
   val printBinds = ref true
@@ -197,6 +207,12 @@ struct
   val traceFileLoad = ref false
   val tracePrelude = ref false
   val printSource = ref false
+ 
+  val printEL = ref false (* elabolation *)
+  val printNE = ref false (* name evaluation *)
+  val printMC = ref false (* module compile *)
+  val printVR = ref false (* valrec optimization *)
+
   val printPL = ref false
   val printUC = ref false
   val printTP = ref false
@@ -214,7 +230,7 @@ struct
   val printSR = ref false
   val printRTL = ref false
   val printCode = ref false
-  val checkType = ref false
+  val checkType = ref true
 
   (** true if detailed type information should b printed. *)
   val printWithType = ref false
@@ -226,8 +242,6 @@ struct
   val withoutLink = ref false
   val keepAsm = ref false
   val debugCodeGen = ref false
-  val CFLAGS = ref ""
-  val LDFLAGS = ref ""
   val targetPlatform = ref ""  (* cpu-manufacturer-ossys:options *)
 
   local
@@ -325,14 +339,18 @@ struct
    *     boolSwitch ==> BoolSwitch
    *     intSwitch ==> IntSwitch
    *)
-
+  val newRBU = ref true
   val switchTable : switchTable =
       [
+    ("debugPrint", BoolSwitch debugPrint),
+    ("doNameEval", BoolSwitch doNameEval),
+    ("newRBU", BoolSwitch newRBU),
     ("doUntil", IntSwitch doUntil),
     ("alignRecord", BoolSwitch alignRecord),
     ("checkType", BoolSwitch checkType),
     ("debugCodeGen", BoolSwitch debugCodeGen),
-    ("doCommonSubexpressionElimination", BoolSwitch doCommonSubexpressionElimination),
+    ("doCommonSubexpressionElimination",
+       BoolSwitch doCommonSubexpressionElimination),
     ("doConstantFolding", BoolSwitch doConstantFolding),
     ("doFunctionCallSpecialization", BoolSwitch doFunctionCallSpecialization),
     ("doFunctionLocalize", BoolSwitch doFunctionLocalize),
@@ -352,7 +370,8 @@ struct
     ("doStaticAllocation", BoolSwitch doStaticAllocation),
     ("doSymbolicInstructionsOptimization", BoolSwitch doSymbolicInstructionsOptimization),
     ("doTailCallOptimize", BoolSwitch doTailCallOptimize),
-    ("doUncurryingOptimizeInMatchCompile", BoolSwitch doUncurryingOptimizeInMatchCompile),
+    ("doUncurryingOptimizeInMatchCompile",
+       BoolSwitch doUncurryingOptimizeInMatchCompile),
     ("doUncurryOptimization", BoolSwitch doUncurryOptimization),
     ("doUselessCodeElimination", BoolSwitch doUselessCodeElimination),
     ("enableUnboxedFloat", BoolSwitch enableUnboxedFloat),
@@ -361,8 +380,6 @@ struct
     ("generateExnHistory", BoolSwitch generateExnHistory),
     ("headerOfExecutable", StringSwitch headerOfExecutable),
     ("keepAsm", BoolSwitch keepAsm),
-    ("CFLAGS", StringSwitch CFLAGS),
-    ("LDFLAGS", StringSwitch LDFLAGS),
     ("limitOfBlockFields", IntSwitch limitOfBlockFields),
     ("limitOfInlineCaseBranch", IntSwitch limitOfInlineCaseBranch),
     ("pageSizeOfGlobalArray", IntSwitch pageSizeOfGlobalArray),
@@ -379,6 +396,11 @@ struct
     ("printIS", BoolSwitch printIS),
     ("printLS", BoolSwitch printLS),
     ("printPL", BoolSwitch printPL),
+    ("printEL", BoolSwitch printEL),
+    ("printNE", BoolSwitch printNE),
+    ("printMC", BoolSwitch printMC),
+    ("printVR", BoolSwitch printVR),
+
     ("printRBU", BoolSwitch printRBU),
     ("printRC", BoolSwitch printRC),
     ("printRTL", BoolSwitch printRTL),

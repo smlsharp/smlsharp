@@ -6,5 +6,5 @@ top_builddir = @top_builddir@
 include @top_builddir@/commonrule
 
 SUBDIRS = generator \
-          runtime/main \
           compiler/main
+#          runtime/main

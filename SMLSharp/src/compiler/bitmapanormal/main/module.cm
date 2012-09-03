@@ -1,0 +1,20 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../name/sources.cm
+	../../env/sources.cm (* for typecheck *)
+	../../util/sources.cm
+	../../absyn/sources.cm
+	../../types/sources.cm (* for typecheck *)
+	../../constantterm/sources.cm
+	../../annotatedtypes/sources.cm
+	../../runtimetypes/sources.cm
+	../../bitmapcalc/sources.cm
+
+	BitmapANormal.ppg.sml
+	TypeCheckBitmapANormal.sml

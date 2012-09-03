@@ -2,12 +2,24 @@ Group
 	signature COUNTER
 	structure Counter
 
+(*
 	structure PathUtility
+*)
 	structure ListSorter
 	structure SmlppgUtil
 	structure TermFormat
 	structure BigInt
 
+	structure Utils
+
+	structure Graph
+	functor SCCFun
+
+(*
 	functor ExtensibleArray
+*)
+
+	structure Gensym
+
 is
 	main/module.cm

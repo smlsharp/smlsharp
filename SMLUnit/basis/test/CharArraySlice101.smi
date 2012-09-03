@@ -1,0 +1,8 @@
+_require "../../src/main/SMLUnit.smi"
+_require "basis.smi"
+_require "SequenceSlice101.smi"
+
+structure CharArraySlice101 =
+struct
+  val suite : unit -> SMLUnit.Test.test
+end

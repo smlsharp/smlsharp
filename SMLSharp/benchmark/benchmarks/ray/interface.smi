@@ -1,0 +1,11 @@
+_require "basis.smi"
+_require "objects.smi"
+_require "interp.smi"
+_require "ray.smi"
+structure Interface =
+struct
+  val ps_color : Objects.object list -> Objects.object list
+  val ps_sphere : Objects.object list -> Objects.object list
+  val ps_raytrace : Objects.object list -> 'a list
+  val rtInit : unit -> unit
+end

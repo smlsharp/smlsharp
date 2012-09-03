@@ -7,6 +7,8 @@ Group is
 	../../../../../SMLFormat/smlformatlib.cm
 	../../control/sources.cm
 	../../name/sources.cm
+	../../env/sources.cm
 
 	USER_ERROR.sig
 	UserError.ppg.sml
+	UserErrorUtils.sml

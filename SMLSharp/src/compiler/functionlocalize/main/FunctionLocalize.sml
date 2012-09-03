@@ -25,15 +25,8 @@ in
 
   fun convertTy ty =
     case ty of
-      AT.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
-      AT.INSTCODEty
-        {
-         oprimId = oprimId,
-         oprimPolyTy = convertTy oprimPolyTy,
-         name = name,
-         keyTyList = map convertTy keyTyList,
-         instTyList = map convertTy instTyList
-        }
+      AT.SINGLETONty sty =>
+      AT.SINGLETONty (convertSingletonTy sty)
     | AT.ERRORty => ty
     | AT.DUMMYty int => ty
     | AT.BOUNDVARty int => ty
@@ -106,6 +99,27 @@ in
     | AT.SPECty ty => AT.SPECty (convertTy ty)
 *)
 
+  and convertSingletonTy singletonTy =
+    case singletonTy of
+      AT.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+      AT.INSTCODEty
+        {
+         oprimId = oprimId,
+         oprimPolyTy = convertTy oprimPolyTy,
+         name = name,
+         keyTyList = map convertTy keyTyList,
+         instTyList = map convertTy instTyList
+        }
+    | AT.INDEXty (label, ty) =>
+      AT.INDEXty (label, convertTy ty)
+    | AT.TAGty ty =>
+      AT.TAGty (convertTy ty)
+    | AT.SIZEty ty =>
+      AT.SIZEty (convertTy ty)
+    | AT.RECORDSIZEty ty =>
+      AT.RECORDSIZEty (convertTy ty)
+    | AT.RECORDBITMAPty (index, ty) =>
+      AT.RECORDBITMAPty (index, convertTy ty)
 
    and convertRecKind recordKind =
      case recordKind of
@@ -155,7 +169,7 @@ in
      eqKind = eqKind,
      tyvarName = stringOption
      }
-  and convertBtvEnv btvEnv = IEnv.map convertBtvKind btvEnv
+  and convertBtvEnv btvEnv = BoundTypeVarID.Map.map convertBtvKind btvEnv
 
   fun convertPrimInfo {name, ty} = {name = name, ty = convertTy ty}
 
@@ -227,6 +241,17 @@ in
          loc = loc
          }
       end
+    | MVTAGOF 
+      {
+       ty, 
+       loc
+       }
+       =>
+        MVTAGOF 
+        {
+         ty = convertTy ty, 
+         loc = loc
+         }
     | MVSIZEOF 
       {
        ty, 
@@ -236,6 +261,19 @@ in
         MVSIZEOF 
         {
          ty = convertTy ty, 
+         loc = loc
+         }
+    | MVINDEXOF
+      {
+       label,
+       recordTy, 
+       loc
+       }
+       =>
+        MVINDEXOF 
+        {
+         label = label,
+         recordTy = convertTy recordTy,
          loc = loc
          }
     | MVCONSTANT 
@@ -587,7 +625,8 @@ in
     | MVSELECT
       {
        recordExp = recordExpMvexp, 
-       label = labelString, 
+       indexExp = indexMvexp,
+       label = labelString,
        recordTy = recordTyTy, 
        resultTy = resultTyTy,
        loc
@@ -595,12 +634,14 @@ in
        =>
       let
         val recordExpMvexp = analyze varEnv MIDDLE currentFunStatus recordExpMvexp
+        val indexMvexp = analyze varEnv MIDDLE currentFunStatus indexMvexp
         val recordTyTy = convertTy recordTyTy
       in
         MVSELECT
         {
          recordExp = recordExpMvexp, 
-         label = labelString, 
+         indexExp = indexMvexp,
+         label = labelString,
          recordTy = recordTyTy, 
          resultTy = resultTyTy,
          loc = loc
@@ -610,7 +651,8 @@ in
       {
        recordExp = recordExpMvexp, 
        recordTy = recordTyTy, 
-       label = labelString, 
+       indexExp = indexMvexp,
+       label = labelString,
        valueExp = valueExpMvexp,
        valueTy = valueTyTy,
        loc
@@ -619,6 +661,7 @@ in
       let
         val recordExpMvexp = analyze varEnv MIDDLE currentFunStatus recordExpMvexp
         val recordTyTy =  convertTy recordTyTy
+        val indexMvexp = analyze varEnv MIDDLE currentFunStatus indexMvexp
         val valueExpMvexp = analyze varEnv MIDDLE currentFunStatus valueExpMvexp
         val valueTyTy =convertTy valueTyTy
       in
@@ -626,7 +669,8 @@ in
         {
          recordExp = recordExpMvexp, 
          recordTy = recordTyTy, 
-         label = labelString, 
+         indexExp = indexMvexp,
+         label = labelString,
          valueExp = valueExpMvexp,
          valueTy = valueTyTy,
          loc = loc
@@ -976,41 +1020,6 @@ in
            newVarEnv
           )
         end
-    | MVVALPOLYREC {btvEnv, recbindList, loc}
-       =>
-        let
-          val newLocalFunStatus = 
-            if isStaticPoly btvEnv then
-              ATU.newLocalFunStatus currentFunStatus
-            else ATU.newClosureFunStatus()
-          val btvEnv = convertBtvEnv btvEnv
-          val (newBoundVarList, newRecbindList) = analyzeRecBind varEnv newLocalFunStatus currentFunStatus recbindList
-          val newBoundVarList = 
-              map
-                  (fn {displayName, ty, varId} =>
-                      let
-                        val ty = AT.POLYty {boundtvars = btvEnv, body = ty}
-                      in
-                        {
-                         displayName = displayName,
-                         ty = ty,
-                         varId = varId
-                        }
-                      end
-                  )
-                  newBoundVarList
-          val newVarEnv = insertVariables varEnv newBoundVarList
-        in
-          (
-           MVVALPOLYREC
-               {
-                btvEnv = btvEnv,
-                recbindList = newRecbindList,
-                loc = loc
-               },
-           newVarEnv
-          )
-        end
 
   and analyzeRecBind varEnv newLocalFunStatus currentFunStatus recbindList =
     let
@@ -1167,7 +1176,6 @@ in
 
   fun localize blockList =
       let
-        val _ = ATU.initializeFunID ()
         val _ = FID.initialize ()
         val newFunStatus = ATU.globalFunStatus()
         val (newBlockList, _) = analyzeTopBlockList VarIdEnv.empty newFunStatus blockList

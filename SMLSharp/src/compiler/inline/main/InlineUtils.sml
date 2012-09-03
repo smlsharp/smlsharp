@@ -116,7 +116,7 @@ fun renameID {varId,displayName,ty} =
 fun typeSubst subst ty =
     case ty of
         AT.BOUNDVARty tid =>
-        (case IEnv.find(subst,tid) of
+        (case BoundTypeVarID.Map.find(subst,tid) of
              SOME ty => ty
            | NONE => ty
         )
@@ -149,7 +149,7 @@ fun typeSubst subst ty =
       | AT.POLYty {boundtvars, body} =>
 	let val (substitution,boundtvars) = 
                 copyBtvEnv boundtvars
-	    val subst = IEnv.foldri (fn (oldId,btv,subst) => IEnv.insert (subst,oldId,btv))
+	    val subst = BoundTypeVarID.Map.foldri (fn (oldId,btv,subst) => BoundTypeVarID.Map.insert (subst,oldId,btv))
 				    subst substitution
 	in
             AT.POLYty
@@ -167,7 +167,7 @@ fun typeSubst subst ty =
       | _ => ty
 
   and substituteBtvEnv subst btvEnv =
-      IEnv.map (substituteBtvKind subst) btvEnv
+      BoundTypeVarID.Map.map (substituteBtvKind subst) btvEnv
 
   and substituteBtvKind subst {id, recordKind, eqKind, instancesRef = ref instances} =
       {
@@ -205,15 +205,15 @@ fun typeSubst subst ty =
   and copyBtvEnv btvEnv =
       let 
 	  val newSubst = 
-              IEnv.map (fn _ => 
+              BoundTypeVarID.Map.map (fn _ => 
                            let
                                val newBoundVarId = BoundTypeVarID.generate ()
                            in AT.BOUNDVARty (newBoundVarId) end) 
                        btvEnv
-	  val newBtvEnv = IEnv.foldri
+	  val newBtvEnv = BoundTypeVarID.Map.foldri
 			      (fn (oldId, {id,recordKind,eqKind,instancesRef}, newBtvEnv) =>
 				  let val newId =
-					  case IEnv.find (newSubst, oldId) of
+					  case BoundTypeVarID.Map.find (newSubst, oldId) of
 					      SOME (AT.BOUNDVARty newId) => newId
 					    | _ => raise Control.Bug "copyBtvEnv"
 				      val recordKind = substituteRecKind newSubst recordKind
@@ -223,9 +223,9 @@ fun typeSubst subst ty =
 						     instancesRef=instancesRef
 						    }
 				  in
-				      IEnv.insert (newBtvEnv, newId, btvKind)
+				      BoundTypeVarID.Map.insert (newBtvEnv, newId, btvKind)
 				  end)
-			      IEnv.empty btvEnv
+			      BoundTypeVarID.Map.empty btvEnv
       in
 	  (newSubst, newBtvEnv)
       end
@@ -243,8 +243,8 @@ fun substVarInfo subst {varId,displayName,ty} =
     
 fun insertTyEnv (subst, key, ty) =
     case subst of
-	NONE => SOME (IEnv.insert (IEnv.empty, key, ty))
-      | SOME subst => SOME (IEnv.insert (subst, key, ty))
+	NONE => SOME (BoundTypeVarID.Map.insert (BoundTypeVarID.Map.empty, key, ty))
+      | SOME subst => SOME (BoundTypeVarID.Map.insert (subst, key, ty))
 
 end
 end

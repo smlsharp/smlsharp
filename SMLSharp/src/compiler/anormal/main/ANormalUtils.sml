@@ -14,6 +14,7 @@ structure ANormalUtils : ANORMALUTILS = struct
            ANFOREIGNAPPLY {loc,...} => loc
          | ANEXPORTCALLBACK {loc,...} => loc
          | ANCONSTANT {loc,...} => loc
+         | ANPRIMSYMBOL {loc,...} => loc
          | ANEXCEPTIONTAG {loc,...} => loc
          | ANVAR {loc,...} => loc
          | ANENVACC {loc,...} => loc

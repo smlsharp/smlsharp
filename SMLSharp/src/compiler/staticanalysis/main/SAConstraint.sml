@@ -26,9 +26,9 @@ structure SAConstraint : SACONSTRAINT = struct
   (* StaticAnalysis keeps a set of generic bound type variable for 
    * resolve later
    *)
-  val genericTyVars = ref (ISet.empty)
+  val genericTyVars = ref (BoundTypeVarID.Set.empty)
 
-  val btvInfo = ref (IEnv.empty : AT.btvEnv)
+  val btvInfo = ref (BoundTypeVarID.Map.empty : AT.btvEnv)
 
 (*
   fun btvEq (btvKind1 : AT.btvKind, btvKind2 : AT.btvKind) =
@@ -45,7 +45,8 @@ structure SAConstraint : SACONSTRAINT = struct
       | _ => false
 *)
              
-  fun genericTyVar tid = genericTyVars := ISet.add(!genericTyVars, tid)
+  fun genericTyVar tid =
+      genericTyVars := BoundTypeVarID.Set.add(!genericTyVars, tid)
 
   fun recordEquivalence (annotationRef1,annotationRef2) = 
       constraintsRef := (RECORD_EQUIV(annotationRef1, annotationRef2))
@@ -69,14 +70,14 @@ structure SAConstraint : SACONSTRAINT = struct
          annotation := {labels = AT.LE_GENERIC, boxed = true, align = true};
          SEnv.app globalType fieldTypes
         )
-      | AT.RAWty {tyCon, args} => List.app globalType args
+      | AT.CONty {tyCon, args} => List.app globalType args
       | AT.POLYty {boundtvars, body} => 
         (
-         IEnv.appi 
-             (fn (tid,{recordKind, ...}) =>
+         BoundTypeVarID.Map.appi 
+             (fn (tid,{tvarKind, ...}) =>
                  (
                   genericTyVar tid;
-                  globalKind recordKind
+                  globalKind tvarKind
                  )
              )
              boundtvars;
@@ -87,13 +88,7 @@ structure SAConstraint : SACONSTRAINT = struct
   and globalKind kind = 
       case kind of
         AT.UNIV => ()
-      | AT.OPRIMkind {instances, operators} =>
-        (app globalType instances;
-         app (fn {oprimPolyTy, keyTyList, instTyList,...} =>
-                 (globalType oprimPolyTy;
-                  app globalType keyTyList;
-                  app globalType instTyList))
-         operators)
+      | AT.OPRIMkind instances => app globalType instances
       | AT.REC tySEnvMap => SEnv.app globalType tySEnvMap
 
 
@@ -107,14 +102,8 @@ structure SAConstraint : SACONSTRAINT = struct
 
   fun convertGlobalType ty =
       case ty of
-        T.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
-        AT.INSTCODEty
-          {oprimId = oprimId,
-           oprimPolyTy = convertGlobalType oprimPolyTy,
-           name = name,
-           keyTyList =  map convertGlobalType keyTyList,
-           instTyList = map convertGlobalType instTyList
-          }
+        T.SINGLETONty sty =>
+        AT.SINGLETONty (convertGlobalSingletonTy sty)
       | T.ERRORty => AT.ERRORty
       | T.DUMMYty i => AT.DUMMYty i                  
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => convertGlobalType ty
@@ -139,8 +128,8 @@ structure SAConstraint : SACONSTRAINT = struct
              annotation =
                ref {labels = AT.LE_GENERIC, boxed = true, align = true}
             }
-      | T.RAWty {tyCon, args} =>
-        AT.RAWty
+      | T.CONSTRUCTty {tyCon, args} =>
+        AT.CONty
             {
              tyCon = tyCon,
              args = map convertGlobalType args
@@ -151,79 +140,53 @@ structure SAConstraint : SACONSTRAINT = struct
              boundtvars = convertGlobalBtvEnv boundtvars,
              body = convertGlobalType body
             }
-      | T.ALIASty (_, realTy) => convertGlobalType realTy
-      | T.OPAQUEty {implTy,...} => convertGlobalType implTy
-      | T.SPECty {tyCon, args} =>
-(* FIXME: is this correct? *)
-        AT.SPECty
-            {
-              tyCon = tyCon,
-              args = map convertGlobalType args
-            }
-(*
-      | T.SPECty abstractTy => 
-        let
-            val s = Control.prettyPrint (Types.format_ty [] ty)
-        in
-            if !Control.doCompileObj orelse !Control.doFunctorCompile then 
-                convertGlobalType abstractTy
-            else
-                raise Control.Bug ("invalid type 3:" ^ s )
-        end
-*)
+
+  and convertGlobalSingletonTy singletonTy =
+      case singletonTy of
+        T.INSTCODEty {oprimId, path, keyTyList, match, instMap} =>
+        AT.INSTCODEty
+          {oprimId = oprimId,
+           path = path,
+           keyTyList =  map convertGlobalType keyTyList
+          }
+      | T.INDEXty (label, ty) =>
+        AT.INDEXty (label, convertGlobalType ty)
+      | T.TAGty ty =>
+        AT.TAGty (convertGlobalType ty)
+      | T.SIZEty ty =>
+        AT.SIZEty (convertGlobalType ty)
 
   and convertGlobalBtvKind
-        (id, btvKind as {recordKind, eqKind} : Types.btvKind) =
+        (id, btvKind as {tvarKind, eqKind} : Types.btvKind) =
       let
         val _ = genericTyVar id
-        val newRecordKind = convertGlobalRecKind recordKind
+        val newTvarKind = convertGlobalRecKind tvarKind
         val newBtvKind = 
             {
              id = id,
              eqKind = eqKind,
-             recordKind = newRecordKind,
-             instancesRef = ref []
+             tvarKind = newTvarKind
             }
       in
         newBtvKind
       end
 
   and convertGlobalBtvEnv (btvEnv : Types.btvEnv) =
-      IEnv.mapi convertGlobalBtvKind btvEnv
+      BoundTypeVarID.Map.mapi convertGlobalBtvKind btvEnv
 
-  and convertGlobalRecKind recordKind =
-      case recordKind of
+  and convertGlobalRecKind tvarKind =
+      case tvarKind of
         T.UNIV => AT.UNIV
       | T.REC flty => AT.REC (SEnv.map convertGlobalType flty)
       | T.OPRIMkind {instances, operators} =>
-        AT.OPRIMkind
-          {instances = map convertGlobalType instances,
-           operators =
-           map (fn {oprimId,oprimPolyTy,name,keyTyList,instTyList} =>
-                   {
-                    oprimId = oprimId,
-                    oprimPolyTy = convertGlobalType oprimPolyTy,
-                    name = name,
-                    keyTyList = map convertGlobalType keyTyList,
-                    instTyList = map convertGlobalType instTyList
-                   }
-               )
-               operators
-          }
+        AT.OPRIMkind (map convertGlobalType instances)
       | T.OCONSTkind tyList =>
         raise Control.Bug "convertGlobalRecKind: OVERLOADED"
 
   fun convertLocalType ty =
       case ty of
-        T.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
-        AT.INSTCODEty
-          {
-           oprimId = oprimId,
-           oprimPolyTy = convertLocalType oprimPolyTy,
-           name = name,
-           keyTyList = map convertLocalType keyTyList,
-           instTyList = map convertLocalType instTyList
-          }
+        T.SINGLETONty sty =>
+        AT.SINGLETONty (convertLocalSingletonTy sty)
       | T.ERRORty => AT.ERRORty
       | T.DUMMYty i => AT.DUMMYty i                  
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => convertLocalType ty
@@ -249,8 +212,8 @@ structure SAConstraint : SACONSTRAINT = struct
                                boxed = false,
                                align = false}
             }
-      | T.RAWty {tyCon, args} =>
-        AT.RAWty
+      | T.CONSTRUCTty {tyCon, args} =>
+        AT.CONty
             {
              tyCon = tyCon,
              args = map convertSingleValueType args
@@ -262,26 +225,6 @@ structure SAConstraint : SACONSTRAINT = struct
              boundtvars = convertLocalBtvEnv boundtvars,
              body = convertLocalType body
             }
-      | T.ALIASty (_, realTy) => convertLocalType realTy
-      | T.OPAQUEty {implTy,...} => convertLocalType implTy
-      | T.SPECty {tyCon, args} =>
-(* FIXME: is this correct? *)
-        AT.SPECty
-            {
-              tyCon = tyCon,
-              args = map convertLocalType args
-            }
-(*
-      | T.SPECty ty => convertLocalType ty
-*)
-(*
-            (print "SPECty\n";
-             let
-                 val s = Control.prettyPrint (Types.format_ty [] ty)
-             in
-               raise Control.Bug ("invalid type 1:" ^ s )
-             end)
-*)
 
   and convertSingleValueType ty =
       let 
@@ -291,85 +234,86 @@ structure SAConstraint : SACONSTRAINT = struct
         newTy
       end
 
+  and convertLocalSingletonTy ty =
+      case ty of
+        T.INSTCODEty {oprimId, path, keyTyList, match, instMap} =>
+        AT.INSTCODEty
+          {
+           oprimId = oprimId,
+           path = path,
+           keyTyList = map convertLocalType keyTyList
+          }
+      | T.INDEXty (label, ty) =>
+        AT.INDEXty (label, convertLocalType ty)
+      | T.TAGty ty =>
+        AT.TAGty (convertLocalType ty)
+      | T.SIZEty ty =>
+        AT.SIZEty (convertLocalType ty)
+
   and convertLocalBtvKind
-        (id, btvKind as {recordKind, eqKind} : Types.btvKind) =
+        (id, btvKind as {tvarKind, eqKind} : Types.btvKind) =
       (
-       case IEnv.find(!btvInfo, id) of
+       case BoundTypeVarID.Map.find(!btvInfo, id) of
          SOME newBtvKind => newBtvKind
        | NONE =>
          let
-           val newRecordKind = convertLocalRecKind recordKind
+           val newTvarKind = convertLocalRecKind tvarKind
            val newBtvKind = 
                {
                 id = id,
                 eqKind = eqKind,
-                recordKind = newRecordKind,
-                instancesRef = ref []
+                tvarKind = newTvarKind
                }
          in
            (
-            btvInfo := (IEnv.insert(!btvInfo,id,newBtvKind));
+            btvInfo := (BoundTypeVarID.Map.insert(!btvInfo,id,newBtvKind));
             newBtvKind
            )
          end
       )
 
   and convertLocalBtvEnv (btvEnv : Types.btvEnv) =
-      IEnv.mapi convertLocalBtvKind btvEnv
+      BoundTypeVarID.Map.mapi convertLocalBtvKind btvEnv
 
-  and convertLocalRecKind recordKind =
-      case recordKind of
+  and convertLocalRecKind tvarKind =
+      case tvarKind of
         T.UNIV => AT.UNIV
       | T.REC flty => AT.REC (SEnv.map convertLocalType flty)
       | T.OPRIMkind {instances, operators} =>
-        AT.OPRIMkind
-          {instances = map convertLocalType instances,
-           operators =
-             map (fn {oprimId, oprimPolyTy, name,keyTyList,instTyList} =>
-                     {oprimId = oprimId,
-                      oprimPolyTy = convertLocalType oprimPolyTy,
-                      name = name,
-                      keyTyList = map convertLocalType keyTyList,
-                      instTyList = map convertLocalType instTyList
-                     }
-                 )
-                 operators
-          }
+        AT.OPRIMkind (map convertLocalType instances)
       | T.OCONSTkind tyList =>
         raise Control.Bug "convertLocalRecKind: OVERLOADED"
 
-  and convertTyBindInfo tyBindInfo =
-      case tyBindInfo of
-        T.TYCON {tyCon, datacon} => AT.TYCON tyCon
-      | T.TYSPEC spec => AT.TYSPEC spec 
-      | T.TYFUN {name, strpath, tyargs, body} =>
-        AT.TYFUN {tyargs = convertGlobalBtvEnv tyargs,
-                  body = convertGlobalType body}
-      | T.TYOPAQUE {spec, impl} => convertTyBindInfo impl
+  datatype tvState =
+      SUBSTITUTED of BoundTypeVarID.id
+    | TVAR of AT.btvKind
 
-  fun unify (ty1,ty2) =
+  fun unify btvSubst (ty1,ty2) =
       case (ty1,ty2) of
-        (AT.INSTCODEty {oprimId,
-                        name,
-                        oprimPolyTy,
-                        keyTyList,
-                        instTyList
-                       },
-         AT.INSTCODEty _) (* ??? *)
-        => ()
+        (AT.SINGLETONty sty1, AT.SINGLETONty sty2) =>
+        unifySingletonTy btvSubst (sty1, sty2)
       | (AT.ERRORty, AT.ERRORty) => ()
       | (AT.DUMMYty _, AT.DUMMYty _) => ()
       | (AT.BOUNDVARty tid1, AT.BOUNDVARty tid2) =>
-        if tid1 = tid2 
-        then () 
-        else
-          let
-            val s1 = Control.prettyPrint (AT.format_ty ty1)
-            val s2 = Control.prettyPrint (AT.format_ty ty2)
-          in
-            raise Unify 
-            before print ("Unification fails (2) " ^ s1 ^ "," ^ s2)
-          end
+        (
+          case (BoundTypeVarID.Map.find (#1 btvSubst, tid1),
+                BoundTypeVarID.Map.find (#2 btvSubst, tid2)) of
+            (SOME (ref (SUBSTITUTED id1)), SOME (ref (SUBSTITUTED id2))) =>
+            if BoundTypeVarID.eq (id1, id2) then () else raise Unify
+          | (SOME (r1 as ref (TVAR kind1)), SOME (r2 as ref (TVAR kind2))) =>
+            (unifyBtvKind btvSubst (kind1, kind2);
+             r1 := SUBSTITUTED tid1; r2 := SUBSTITUTED tid1)
+          | (NONE, NONE) =>
+            if BoundTypeVarID.eq (tid1, tid2) then () else raise Unify
+          | (t1, t2) =>
+            let
+              val s1 = Control.prettyPrint (AT.format_ty ty1)
+              val s2 = Control.prettyPrint (AT.format_ty ty2)
+            in
+              raise Unify 
+              before print ("Unification fails (2) " ^ s1 ^ "," ^ s2)
+            end
+        )
       | (AT.FUNMty {argTyList=argTyList1,
                     bodyTy=bodyTy1,
                     annotation = annotation1,...},
@@ -378,74 +322,96 @@ structure SAConstraint : SACONSTRAINT = struct
                     annotation = annotation2,...}
         ) =>
         (
-         ListPair.app unify (argTyList1,argTyList2);
-         unify (bodyTy1,bodyTy2);
+         ListPair.app (unify btvSubst) (argTyList1,argTyList2);
+         unify btvSubst (bodyTy1,bodyTy2);
          functionEquivalence (annotation1,annotation2)
         )
       | (AT.RECORDty {fieldTypes = fieldTypes1, annotation = annotation1},
          AT.RECORDty {fieldTypes = fieldTypes2, annotation = annotation2}
         ) =>
         (
-         ListPair.app unify (SEnv.listItems fieldTypes1,
-                             SEnv.listItems fieldTypes2);
+         ListPair.app (unify btvSubst) (SEnv.listItems fieldTypes1,
+                                        SEnv.listItems fieldTypes2);
          recordEquivalence (annotation1,annotation2)
         )
-      | (AT.RAWty {tyCon=tyCon1, args = args1},
-         AT.RAWty {tyCon=tyCon2, args = args2}) => 
-        ListPair.app unify (args1,args2)
+      | (AT.CONty {tyCon=tyCon1, args = args1},
+         AT.CONty {tyCon=tyCon2, args = args2}) => 
+        ListPair.app (unify btvSubst) (args1,args2)
       | (AT.POLYty {boundtvars = boundtvars1, body=body1},
          AT.POLYty {boundtvars = boundtvars2, body=body2}) => 
-        (
-         ListPair.app
-           unifyBtvKind
-           (IEnv.listItems boundtvars1, IEnv.listItems boundtvars2);
-         unify(body1,body2) 
-        )
-      | (AT.SPECty {args = args1,...}, AT.SPECty {args = args2, ...}) => 
-        ListPair.app unify (args1,args2)
-      | (AT.SPECty {args = args1,...}, AT.RAWty {args = args2,...}) => 
-        (* Liu: this case and the following case between SPECty and CONty are 
-         * due to the sharing specification. For example,
-         * sig datatype t = foo
-               type s 
-	       sharing type s = t
-               val x : s 
-               val y : t
-         * end
-         * Here "s" for "x" is represented as "SPECty(s)",
-           while "t" for "y" as "CONty(t)" 
-         * with the same tyConId of "s".
-         *)
-        ListPair.app unify (args1,args2)
-      | (AT.RAWty {args = args1,...}, AT.SPECty {args = args2,...}) => 
-        ListPair.app unify (args1,args2)
+        let
+          val toBtvSubst = BoundTypeVarID.Map.map (fn kind => ref (TVAR kind))
+          val btv1 = toBtvSubst boundtvars1
+          val btv2 = toBtvSubst boundtvars2
+          val btvSubst =
+              (BoundTypeVarID.Map.unionWith #2 (#1 btvSubst, btv1),
+               BoundTypeVarID.Map.unionWith #2 (#2 btvSubst, btv2))
+        in
+          unify btvSubst (body1, body2)
+        end
       | _ => 
           let
             val s1 = Control.prettyPrint (AT.format_ty ty1)
             val s2 = Control.prettyPrint (AT.format_ty ty2)
           in
             raise Unify 
-            before print ("Unification fails (3)  " ^ s1 ^ "," ^ s2)
+            before 
+            (print "Unification fails (3)\n";
+             print s1;
+             print "\n";
+             print s2;
+             print "\n"
+            )
           end
 
-  and unifyRecKind (recordKind1 : AT.recordKind,
-                    recordKind2 : AT.recordKind) =
-      case (recordKind1, recordKind2) 
+  and unifySingletonTy btvSubst (ty1,ty2) =
+      case (ty1,ty2) of
+        (AT.INSTCODEty {oprimId=id1, path=_, keyTyList=tys1},
+         AT.INSTCODEty {oprimId=id2, path=_, keyTyList=tys2}) =>
+        (if OPrimID.eq (id1, id2) then () else raise Unify;
+         ListPair.appEq (unify btvSubst) (tys1, tys2)
+         handle ListPair.UnequalLengths => raise Unify)
+      | (AT.INDEXty (l1, ty1), AT.INDEXty (l2, ty2)) =>
+        (if l1 = l2 then () else raise Unify;
+         unify btvSubst (ty1, ty2))
+      | (AT.SIZEty ty1, AT.SIZEty ty2) =>
+        unify btvSubst (ty1, ty2)
+      | (AT.TAGty ty1, AT.TAGty ty2) =>
+        unify btvSubst (ty1, ty2)
+      | (AT.RECORDSIZEty ty1, AT.RECORDSIZEty ty2) =>
+        unify btvSubst (ty1, ty2)
+      | (AT.RECORDBITMAPty (i1,ty1), AT.RECORDBITMAPty (i2,ty2)) =>
+        (if i1 = i2 then () else raise Unify;
+         unify btvSubst (ty1, ty2))
+      | (AT.INSTCODEty _, _) => raise Unify
+      | (AT.INDEXty _, _) => raise Unify
+      | (AT.SIZEty _, _) => raise Unify
+      | (AT.TAGty _, _) => raise Unify
+      | (AT.RECORDSIZEty _, _) => raise Unify
+      | (AT.RECORDBITMAPty _, _) => raise Unify
+
+  and unifyRecKind btvSubst (tvarKind1 : AT.tvarKind,
+                             tvarKind2 : AT.tvarKind) =
+      case (tvarKind1, tvarKind2) 
        of (AT.UNIV, AT.UNIV) => ()
         | (AT.REC flty1, AT.REC flty2) => 
-          ListPair.app unify (SEnv.listItems flty1, SEnv.listItems flty2)
-        | (AT.OPRIMkind {instances = I1, operators = O1},
-           AT.OPRIMkind {instances = I2, operators = O2}) => ()
+          ListPair.app (unify btvSubst)
+                       (SEnv.listItems flty1, SEnv.listItems flty2)
+        | (AT.OPRIMkind I1,
+           AT.OPRIMkind I2) => ()
         | _ =>
           raise
             Control.Bug
               "inconsistent reckind to unifyRecKind\
               \ (staticanalysis/main/SAConstraint.sml)"
 
-  and unifyBtvKind (btvKind1 : AT.btvKind, btvKind2 : AT.btvKind) =
-      unifyRecKind (#recordKind btvKind1, #recordKind btvKind2)
-          
+  and unifyBtvKind btvSubst (btvKind1 : AT.btvKind, btvKind2 : AT.btvKind) =
+      unifyRecKind btvSubst (#tvarKind btvKind1, #tvarKind btvKind2)
 
+  val unify =
+      fn tys => unify (BoundTypeVarID.Map.empty, BoundTypeVarID.Map.empty) tys
+
+(*
   (* is a polymorphic type is instanciated with a list of instance types,
    * we may need  to perform unification if some instance type refer to
    * the same type
@@ -457,22 +423,23 @@ structure SAConstraint : SACONSTRAINT = struct
 
   fun addInstances (btvEnv : AT.btvEnv, tyList) =
       let
-        val instanceMap = ref (IEnv.empty : AT.ty IEnv.map)
+        val instanceMap =
+            ref (BoundTypeVarID.Map.empty : AT.ty BoundTypeVarID.Map.map)
         fun instanceUnify (generalTy,instanceTy) =
             case (generalTy,instanceTy) of
               (AT.ERRORty, AT.ERRORty) => ()
             | (AT.DUMMYty _, AT.DUMMYty _) => ()
             | (AT.BOUNDVARty tid1, _) =>
               (
-               case IEnv.find(btvEnv,tid1) of
-                 SOME {recordKind, ...} => 
+               case BoundTypeVarID.Map.find(btvEnv,tid1) of
+                 SOME {tvarKind, ...} => 
                  (
-                  case IEnv.find(!instanceMap, tid1) of 
+                  case BoundTypeVarID.Map.find(!instanceMap, tid1) of 
                     SOME ty => unify(ty,instanceTy)
-                  | _ => instanceMap := IEnv.insert(!instanceMap,
-                                                    tid1,
-                                                    instanceTy);
-                  case recordKind of
+                  | _ => instanceMap := BoundTypeVarID.Map.insert(!instanceMap,
+                                                                  tid1,
+                                                                  instanceTy);
+                  case tvarKind of
                     AT.REC flty1 =>
                     let
                       val flty2 =
@@ -480,8 +447,8 @@ structure SAConstraint : SACONSTRAINT = struct
                             AT.RECORDty {fieldTypes, ...} => fieldTypes
                           | AT.BOUNDVARty tid2 =>
                             (
-                             case IEnv.find(!btvInfo, tid2) of
-                               SOME {recordKind = AT.REC fieldTypes,...} =>
+                             case BoundTypeVarID.Map.find(!btvInfo, tid2) of
+                               SOME {tvarKind = AT.REC fieldTypes,...} =>
                                fieldTypes
                              | _ =>
                                (print "outr btvenv\n";
@@ -533,7 +500,7 @@ structure SAConstraint : SACONSTRAINT = struct
                  (SEnv.listItems fieldTypes1, SEnv.listItems fieldTypes2);
                recordEquivalence (annotation1,annotation2)
               )
-            | (AT.RAWty {args = args1,...},AT.RAWty {args = args2,...}) =>
+            | (AT.CONty {args = args1,...},AT.CONty {args = args2,...}) =>
               ListPair.app instanceUnify (args1, args2)
             | (AT.POLYty {body=body1,...}, AT.POLYty {body=body2,...}) =>
               raise Control.Bug "never unifying second order type"
@@ -558,14 +525,15 @@ structure SAConstraint : SACONSTRAINT = struct
             (
              singleValueType ty;
              instanceUnify (AT.BOUNDVARty tid, ty);
-             case IEnv.find(!btvInfo, tid) of
+             case BoundTypeVarID.Map.find(!btvInfo, tid) of
                SOME {instancesRef,...} => instancesRef := ty::(!instancesRef)
              | _ => () (*global type variables always have generic
                                                representation *)
             )        
       in
-        ListPair.app addInstance (IEnv.listKeys btvEnv, tyList)
+        ListPair.app addInstance (BoundTypeVarID.Map.listKeys btvEnv, tyList)
       end 
+*)
 
   fun solveAnnotation () = 
       let
@@ -573,7 +541,7 @@ structure SAConstraint : SACONSTRAINT = struct
         fun labelsDiff (AT.LE_GENERIC, AT.LE_GENERIC) = false
           | labelsDiff (AT.LE_UNKNOWN, AT.LE_UNKNOWN) = false
           | labelsDiff (AT.LE_LABELS S1, AT.LE_LABELS S2) =
-            not (ISet.equal(S1,S2))
+            not (AnnotationLabelID.Set.equal(S1,S2))
           | labelsDiff _ = true
 
         fun unifyLabels (labels1,labels2) =
@@ -583,7 +551,7 @@ structure SAConstraint : SACONSTRAINT = struct
             | (AT.LE_UNKNOWN,_) => labels2
             | (_,AT.LE_UNKNOWN) => labels1
             | (AT.LE_LABELS lset1,AT.LE_LABELS lset2) => 
-              AT.LE_LABELS (ISet.union(lset1,lset2))
+              AT.LE_LABELS (AnnotationLabelID.Set.union(lset1,lset2))
                     
         fun loop () =
             if !flag 
@@ -646,8 +614,8 @@ structure SAConstraint : SACONSTRAINT = struct
   fun initialize () =
       (
        constraintsRef := ([] : constraint list);
-       btvInfo := (IEnv.empty : AT.btvEnv);
-       genericTyVars := ISet.empty
+       btvInfo := (BoundTypeVarID.Map.empty : AT.btvEnv);
+       genericTyVars := BoundTypeVarID.Set.empty
       )
 
 end

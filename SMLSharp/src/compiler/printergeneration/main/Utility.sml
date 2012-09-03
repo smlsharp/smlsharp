@@ -274,7 +274,7 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
         val ({boundEnv, removedTyIds}) =
             TU.generalizer (ty, TY.toplevelDepth)
       in
-        if 0 = IEnv.numItems boundEnv
+        if 0 = BoundTypeVarID.Map.numItems boundEnv
         then ty
         else TY.POLYty{boundtvars = boundEnv, body = ty}
       end
@@ -308,7 +308,7 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
       in
         (monoTy, argTys)
       end
-    | instantiateTy ty = (ty, IEnv.empty)
+    | instantiateTy ty = (ty, BoundTypeVarID.Map.empty)
 
   (**
    * instantiates an expression into an expression of monomorphic type if it is
@@ -338,7 +338,8 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
       in
         (
           TP.TPTAPP
-              {exp=exp, expTy=ty, instTyList=IEnv.listItems argTys, loc=loc},
+              {exp=exp, expTy=ty,
+               instTyList=BoundTypeVarID.Map.listItems argTys, loc=loc},
           monoTy
         )
       end

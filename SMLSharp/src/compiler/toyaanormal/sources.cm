@@ -1,0 +1,4 @@
+Group
+	structure ToYAANormal
+is
+	main/module.cm

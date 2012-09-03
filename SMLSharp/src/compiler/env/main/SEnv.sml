@@ -5,4 +5,3 @@
  *)
 
 structure SEnv = BinaryMapMaker(SOrd)
-structure SEnvLazy = BinaryMapMaker(SOrd)

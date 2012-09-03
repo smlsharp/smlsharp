@@ -6,9 +6,11 @@
 structure SOrd : ORD_KEY =
 struct 
   type ord_key = string
-  fun compare (x,y) = 
-      let val (a,b) = (valOf(Int.fromString x),valOf(Int.fromString y))
-      in Int.compare (a,b)
-      end
-        handle Option => String.compare (x,y)
+  fun compare (x,y) =
+      case (Int.fromString x, Int.fromString y) of
+        (SOME i, SOME j) =>
+        (case Int.compare (i, j) of
+           EQUAL => String.compare (x, y)
+         | order => order)
+      | _ => String.compare (x, y)
 end

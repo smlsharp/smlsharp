@@ -4,7 +4,9 @@
  * @author YAMATODANI Kiyoshi
  * @copyright 2010, Tohoku University.
  *)
-functor ImmutableSequenceSlice001(V : IMMUTABLE_SEQUENCE_SLICE) =
+functor ImmutableSequenceSlice001(V : IMMUTABLE_SEQUENCE_SLICE) : sig
+  val suite : unit -> SMLUnit.Test.test
+end =
 struct
 
   (************************************************************)

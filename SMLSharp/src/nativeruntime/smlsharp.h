@@ -17,9 +17,9 @@
 #else
 #define __func__ "(unknown)"
 #endif
-#define FILELINE__(x,y,z) x":"#y"("z")"
-#define FILELINE_(x,y,z) FILELINE__(x,y,z)
-#define FILELINE FILELINE_(__FILE__, __LINE__, __func__)
+#define FILELINE__(x,y) x":"#y
+#define FILELINE_(x,y) FILELINE__(x,y)
+#define FILELINE FILELINE_(__FILE__, __LINE__)
 
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
 #define restrict restrict
@@ -35,6 +35,12 @@
 #define inline __inline__
 #else
 #define inline
+#endif
+
+#if defined __GNUC__ && __GNUC__ >= 2
+#define NOINLINE __attribute__((noinline))
+#else
+#define NOINLINE
 #endif
 
 /* GNU C extensions */
@@ -247,46 +253,38 @@ void sml_obstack_shrink(sml_obstack_t **obstack, void *p);
 void sml_obstack_enum_chunk(sml_obstack_t *obstack,
 			    void (*f)(void *start, void *end, void *data),
 			    void *data);
+int sml_obstack_is_empty(sml_obstack_t *obstack);
 
 /*
- * Binary search tree
+ * giant lock of SML# runtime
  */
-struct sml_tree {
-	struct sml_tree_node *root;
-	int (*cmp)(void *, void *);
-	void *(*alloc)(size_t);
-	void (*free)(void *);
-};
-typedef struct sml_tree sml_tree_t;
-
-void **sml_splay_find(sml_tree_t *tree, void *key);
-void **sml_splay_insert(sml_tree_t *tree, void *key);
-int sml_splay_delete(sml_tree_t *tree, void *key, void **value_ret);
-void sml_splay_reject(sml_tree_t *tree, int (*f)(void *key, void **value));
-void sml_tree_delete_all(sml_tree_t *tree);
-void sml_tree_traverse(struct sml_tree_node *node,
-		       void (*f)(void *key, void **value, void *data),
-		       void *data);
-
-/*
- * SML# thread environment
- */
-struct sml_heap_thread;    /* defined in heap implementation */
-struct sml_thread_env {
-	void *saved_frame_pointer;
-	struct sml_heap_thread *heap;
-	void *current_handler;
-	/* temporary root slots of garbage collection. */
-	sml_obstack_t *tmp_root;
-	/* uncaught exception protection. */
-	struct sml_exn_jmpbuf *exn_jmpbuf;
-};
-
-struct sml_thread_env *sml_thread_env_get(void);
-#define SML_THREAD_ENV sml_thread_env_get()
-
-void **sml_push_tmp_rootset(size_t num_slots);
-void sml_pop_tmp_rootset(void **slots);
+#ifdef MULTITHREAD
+#ifdef DEBUG
+void sml_giant_lock(void *frame_pointer, const char *lock_at);
+#else
+void sml_giant_lock(void *frame_pointer);
+#endif /* DEBUG */
+void sml_giant_unlock(void);
+void sml_stop_the_world(void);
+void sml_run_the_world(void);
+#ifdef DEBUG
+int sml_giant_locked(void);
+#define GIANT_LOCKED()     sml_giant_locked()
+#define GIANT_LOCK(fp)     sml_giant_lock(fp, FILELINE)
+#else
+#define GIANT_LOCKED()     0
+#define GIANT_LOCK(fp)     sml_giant_lock(fp)
+#endif /* DEBUG */
+#define GIANT_UNLOCK()     sml_giant_unlock()
+#define STOP_THE_WORLD()   sml_stop_the_world()
+#define RUN_THE_WORLD()    sml_run_the_world()
+#else /* MULTITHREAD */
+#define GIANT_LOCKED()     1
+#define GIANT_LOCK(fp)     ((void)0)
+#define GIANT_UNLOCK()     ((void)0)
+#define STOP_THE_WORLD()   ((void)0)
+#define RUN_THE_WORLD()    ((void)0)
+#endif /* MULTITHREAD */
 
 /*
  * SML# heap object management
@@ -294,11 +292,9 @@ void sml_pop_tmp_rootset(void **slots);
 struct sml_intinf;
 typedef struct sml_intinf sml_intinf_t;
 
-typedef void (*sml_trace_cls)(void **slot, void *self);
-
 int sml_obj_equal(void *obj1, void *obj2);
 void *sml_obj_dup(void *obj);
-void sml_obj_enum_ptr(void *obj, sml_trace_cls *fn);
+void sml_obj_enum_ptr(void *obj, void (*callback)(void **));
 void *sml_obj_alloc(unsigned int objtype, size_t payload_size);
 void *sml_record_alloc(size_t payload_size);
 char *sml_str_alloc(size_t len);
@@ -310,35 +306,49 @@ SML_PRIMITIVE void *sml_alloc(unsigned int objsize, void *frame_pointer);
 SML_PRIMITIVE void *sml_alloc_callback(unsigned int objsize, void *codeaddr,
 				       void *envaddr);
 SML_PRIMITIVE void *sml_obj_empty(void);
-SML_PRIMITIVE void sml_write_barrier(void *writeaddr, void *objaddr);
+SML_PRIMITIVE void sml_write_barrier(void **writeaddr, void *objaddr);
+
+void sml_heap_gc(void);
+
+/* temporally root slots for C code */
+void **sml_push_tmp_rootset(size_t num_slots);
+void sml_pop_tmp_rootset(void **slots);
 
 /*
- * frame stack management
+ * execution context
  */
+void *sml_load_frame_pointer(void);
 SML_PRIMITIVE void sml_save_frame_pointer(void *p);
-SML_PRIMITIVE void *sml_load_frame_pointer(void);
+void *sml_current_thread_heap(void);
+
+/* called when SML code is started. */
+SML_PRIMITIVE void sml_control_start(void *frame_pointer);
+/* called when SML code is successfully finished. */
+SML_PRIMITIVE void sml_control_finish(void *frame_pointer);
+
+SML_PRIMITIVE void sml_state_suspend(void);
+SML_PRIMITIVE void sml_state_running(void);
 
 /*
  * exception support
  */
 SML_PRIMITIVE void sml_push_handler(void *);
-SML_PRIMITIVE void *sml_pop_handler(void);
-SML_PRIMITIVE void sml_check_handler(void *exn);
+SML_PRIMITIVE void *sml_pop_handler(void *exn);
 int sml_protect(void (*func)(void *), void *data);
 
 struct sml_exntag;
-extern struct sml_exntag sml_exn_Bind;
-extern struct sml_exntag sml_exn_Match;
-extern struct sml_exntag sml_exn_Subscript;
-extern struct sml_exntag sml_exn_Size;
-extern struct sml_exntag sml_exn_Overflow;
-extern struct sml_exntag sml_exn_Div;
-extern struct sml_exntag sml_exn_Domain;
-extern struct sml_exntag sml_exn_Fail;
-extern struct sml_exntag sml_exn_SysErr;
-extern struct sml_exntag sml_exn_MatchCompBug;
-extern struct sml_exntag sml_exn_Formatter;
-extern struct sml_exntag sml_exn_Bootstrap;
+extern const struct sml_exntag SML4Bind;
+extern const struct sml_exntag SML5Match;
+extern const struct sml_exntag SML9Subscript;
+extern const struct sml_exntag SML4Size;
+extern const struct sml_exntag SML8Overflow;
+extern const struct sml_exntag SML3Div;
+extern const struct sml_exntag SML6Domain;
+extern const struct sml_exntag SML4Fail;
+extern const struct sml_exntag SMLN2OS6SysErrE;
+extern const struct sml_exntag SMLN8SMLSharp12MatchCompBugE;
+
+void sml_matchcomp_bug(void) ATTR_NORETURN;
 
 /*
  * Initialize and finalize SML# runtime

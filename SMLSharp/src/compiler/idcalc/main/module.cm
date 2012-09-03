@@ -1,0 +1,19 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+        ../../../../../SMLFormat/smlformatlib.cm
+
+        ../../absyn/sources.cm
+        ../../control/sources.cm
+        ../../name/sources.cm
+	../../util/sources.cm
+	../../builtin/sources.cm
+        ../../patterncalc/sources.cm
+        ../../types/sources.cm
+
+	IDCalc.ppg.sml
+

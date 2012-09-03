@@ -14,6 +14,8 @@ Group is
 	iml.grm.sig
 	iml.grm.sml
 	iml.lex.sml
-	ParserConstants_MLton.sml (* assume bugfixed version *)
-	PARSER.sig
+	interface.grm.sig
+	interface.grm.sml
+	ParserError.ppg.sml
 	Parser.sml
+	InterfaceParser.sml

@@ -55,6 +55,7 @@ struct
          byteOrder : SystemDefTypes.byteOrder,
          instructionsSize : BT.UInt32,
          instructions : Instructions.instruction list,
+         linkSymbolTable : string,
          locationTable : locationTable,
          nameSlotTable : nameSlotTable
        }

@@ -12,5 +12,4 @@ Group is
 	../../annotatedcalc/sources.cm
 	../../multiplevaluecalc/sources.cm
 
-	RECORDUNBOXING.sig
 	RecordUnboxing.sml

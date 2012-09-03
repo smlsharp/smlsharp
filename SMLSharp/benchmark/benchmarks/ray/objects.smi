@@ -1,0 +1,29 @@
+_require "basis.smi"
+structure Objects =
+struct
+  datatype point = PT of {x:real, y:real, z:real}
+  datatype vector = VEC of {l:real, m:real, n:real}
+  datatype ray = Ray of {d:vector, s:point}
+  datatype camera = Camera of {ll:point, lr:point, ul:point, ur:point, vp:point}
+  datatype color = Color of {blu:real, grn:real, red:real}
+  datatype sphere = Sphere of {c:point, color:color, r:real}
+  datatype hit = Hit of {s:sphere, t:real} | Miss
+  datatype visible = Visible of {h:point, s:sphere}
+  datatype object =
+      CAMERA of camera
+    | COLOR of color
+    | HIT
+    | LIST of object list
+    | LITERAL of string
+    | MARK
+    | NAME of string
+    | NUMBER of real
+    | OPERATOR of object list -> object list
+    | POINT of point
+    | RAY of ray
+    | SPHERE of sphere
+    | TOP
+    | UNMARK
+    | VECTOR of vector
+    | VISIBLE
+end

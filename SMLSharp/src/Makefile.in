@@ -6,31 +6,11 @@ top_builddir = @top_builddir@
 include @top_builddir@/commonrule
 
 SUBDIRS = configuration \
-          primitives \
-          instructions \
-          vmgen \
-          runtime \
           @NATIVE_RUNTIME@ \
           compiler \
-          lib \
-	  tool
-
-CONFIG = $(srcdir)/preludes.mlb
-
-clean:
-	-rm -f $(CONFIG)
-
-distclean:
-	-rm -f $(CONFIG)
-
-config: $(CONFIG)
-
-mlton:
-	$(MAKE) all
-	cd compiler && $(MAKE) mlton
-
-$(srcdir)/preludes.mlb: $(srcdir)/preludes.mlb.in Makefile \
-                        $(top_builddir)/mksmlpath
-	sed -e "s|%SMLFORMAT_MLB%|`$(MKSMLPATH) -sh '$(SMLFORMATDIR)/smlformatlib.mlb'`|" \
-	    -e "s|%BASIS_MLB%|`$(MKSMLPATH) -sh '$(BASISDIR)/basis_compat.mlb'`|" \
-	    $(srcdir)/preludes.mlb.in > $@
+          lib2
+#          primitives 
+#          instructions 
+#          runtime
+#          lib
+#          tool

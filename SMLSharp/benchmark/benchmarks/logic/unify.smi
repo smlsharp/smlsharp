@@ -1,0 +1,8 @@
+_require "basis.smi"
+_require "term.smi"
+_require "trail.smi"
+structure Unify =
+struct
+  val deref : Term.term -> Term.term
+  val unify : Term.term * Term.term -> (unit -> unit) -> unit
+end

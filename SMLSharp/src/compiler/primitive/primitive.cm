@@ -1,5 +1,0 @@
-group
-	structure BuiltinPrimitive
-	structure BuiltinPrimitivePickler
-is
-	main/primitive.cm

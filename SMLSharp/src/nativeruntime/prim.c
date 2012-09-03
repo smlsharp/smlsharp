@@ -57,7 +57,6 @@
 #include "smlsharp.h"
 #include "intinf.h"
 #include "object.h"
-#include "heap.h"
 #include "prim.h"
 
 #ifdef HAVE_CONFIG_H
@@ -444,35 +443,32 @@ prim_Word_toString(unsigned int value)
 	return fmt_word(value, 16);
 }
 
-#define IEEEREAL_CLASS_SNAN     0
-#define IEEEREAL_CLASS_QNAN     1
-#define IEEEREAL_CLASS_NINF     2
-#define IEEEREAL_CLASS_PINF     3
-#define IEEEREAL_CLASS_NDENORM  4
-#define IEEEREAL_CLASS_PDENORM  5
-#define IEEEREAL_CLASS_NZERO    6
-#define IEEEREAL_CLASS_PZERO    7
-#define IEEEREAL_CLASS_NNORM    8
-#define IEEEREAL_CLASS_PNORM    9
-#define IEEEREAL_CLASS_UNKNOWN  10
+#define IEEEREAL_CLASS_SNAN     1   /* signaling NaN */
+#define IEEEREAL_CLASS_QNAN     2   /* quiet NaN */
+#define IEEEREAL_CLASS_INF      3   /* infinity */
+#define IEEEREAL_CLASS_ZERO     4   /* zero */
+#define IEEEREAL_CLASS_DENORM   5   /* denormal */
+#define IEEEREAL_CLASS_NORM     6   /* normal */
+#define IEEEREAL_CLASS_UNKNOWN  0
 
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_FPCLASSIFY)
 #define FPCLASS(d) \
 	switch (fpclassify(d)) { \
 	case FP_INFINITE: \
-		return signbit(d) ? IEEEREAL_CLASS_NINF \
-				  : IEEEREAL_CLASS_PINF; \
+		return signbit(d) ? -IEEEREAL_CLASS_INF \
+				  : IEEEREAL_CLASS_INF; \
 	case FP_NAN: \
-		return IEEEREAL_CLASS_SNAN; \
+		return signbit(d) ? -IEEEREAL_CLASS_QNAN \
+				  : IEEEREAL_CLASS_QNAN; \
 	case FP_NORMAL: \
-		return signbit(d) ? IEEEREAL_CLASS_NNORM \
-				  : IEEEREAL_CLASS_PNORM; \
+		return signbit(d) ? -IEEEREAL_CLASS_NORM \
+				  : IEEEREAL_CLASS_NORM; \
 	case FP_SUBNORMAL: \
-		return signbit(d) ? IEEEREAL_CLASS_NDENORM \
-				  : IEEEREAL_CLASS_PDENORM; \
+		return signbit(d) ? -IEEEREAL_CLASS_DENORM \
+				  : IEEEREAL_CLASS_DENORM; \
 	case FP_ZERO: \
-		return signbit(d) ? IEEEREAL_CLASS_NZERO \
-				  : IEEEREAL_CLASS_PZERO; \
+		return signbit(d) ? -IEEEREAL_CLASS_ZERO \
+				  : IEEEREAL_CLASS_ZERO; \
 	default: \
 		return IEEEREAL_CLASS_UNKNOWN; \
 	}
@@ -480,44 +476,47 @@ prim_Word_toString(unsigned int value)
 #define FPCLASS(d) \
 	switch(fpclass(d)) { \
 	case FP_SNAN: \
-		return IEEEREAL_CLASS_SNAN; \
+		return signbit(d) ? -IEEEREAL_CLASS_SNAN \
+				  : IEEEREAL_CLASS_SNAN; \
 	case FP_QNAN: \
-		return IEEEREAL_CLASS_QNAN; \
+		return signbit(d) ? -IEEEREAL_CLASS_QNAN \
+				  : IEEEREAL_CLASS_QNAN; \
 	case FP_NINF: \
-		return IEEEREAL_CLASS_NINF; \
+		return -IEEEREAL_CLASS_INF; \
 	case FP_PINF: \
-		return IEEEREAL_CLASS_PINF; \
+		return IEEEREAL_CLASS_INF; \
 	case FP_NDENORM: \
-		return IEEEREAL_CLASS_NDENORM; \
+		return -IEEEREAL_CLASS_DENORM; \
 	case FP_PDENORM: \
-		return IEEEREAL_CLASS_PDENORM; \
+		return IEEEREAL_CLASS_DENORM; \
 	case FP_NZERO: \
-		return IEEEREAL_CLASS_NZERO; \
+		return -IEEEREAL_CLASS_ZERO; \
 	case FP_PZERO: \
-		return IEEEREAL_CLASS_PZERO; \
+		return IEEEREAL_CLASS_ZERO; \
 	case FP_NNORM: \
-		return IEEEREAL_CLASS_NNORM; \
+		return -IEEEREAL_CLASS_NORM; \
 	case FP_PNORM: \
-		return IEEEREAL_CLASS_PNORM; \
+		return IEEEREAL_CLASS_NORM; \
 	default: \
 		return IEEEREAL_CLASS_UNKNOWN; \
 	}
 #else
 #define FPCLASS(d) \
 	if (iszero(d)) \
-		return signbit(d) ? IEEEREAL_CLASS_NZERO \
-				  : IEEEREAL_CLASS_PZERO; \
+		return signbit(d) ? -IEEEREAL_CLASS_ZERO \
+				  : IEEEREAL_CLASS_ZERO; \
 	else if (isinf(d)) \
-		return signbit(d) ? IEEEREAL_CLASS_NINF \
-				  : IEEEREAL_CLASS_PINF; \
+		return signbit(d) ? -IEEEREAL_CLASS_INF \
+				  : IEEEREAL_CLASS_INF; \
 	else if (isnan(d)) \
-		return IEEEREAL_CLASS_SNAN; \
+		return signbit(d) ? -IEEEREAL_CLASS_QNAN \
+				  : IEEEREAL_CLASS_QNAN; \
 	else if (!isnormal(d)) \
-		return signbit(d) ? IEEEREAL_CLASS_NDENORM \
-				  : IEEEREAL_CLASS_PDENORM; \
+		return signbit(d) ? -IEEEREAL_CLASS_DENORM \
+				  : IEEEREAL_CLASS_DENORM; \
 	else \
-		return signbit(d) ? IEEEREAL_CLASS_NNORM \
-				  : IEEEREAL_CLASS_PNORM;
+		return signbit(d) ? -IEEEREAL_CLASS_NORM \
+				  : IEEEREAL_CLASS_NORM;
 #endif /* HAVE_FPCLASSIFY */
 
 int
@@ -1781,7 +1780,7 @@ prim_CopyMemory(void *dst, unsigned int doff,
 	if (tag != TAG_UNBOXED) {
 		p = (char*)dst + doff;
 		for (i = 0; i < len; i += sizeof(void*))
-			HEAP_WRITE_BARRIER(dst, (void**)(p + i));
+			sml_write_barrier((void**)(p + i), dst);
 	}
 }
 

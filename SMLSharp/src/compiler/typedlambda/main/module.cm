@@ -4,22 +4,32 @@ Group is
 	$/basis.cm
 #endif
 
-	../../../../../smlnj-lib/Util/smlnj-lib.cm
+
 	../../../../../SMLFormat/smlformatlib.cm
 	../../control/sources.cm
-	../../systemdef/sources.cm
-	../../util/sources.cm
 	../../env/sources.cm
 	../../name/sources.cm
+	../../util/sources.cm
+	../../absyn/sources.cm
+	../../types/sources.cm
+	../../constantterm/sources.cm
+(*
+
+	../../../../../smlnj-lib/Util/smlnj-lib.cm
+	../../control/sources.cm
+	../../systemdef/sources.cm
 	../../usererror/sources.cm
 	../../primitive/sources.cm
-	../../absyn/sources.cm
 	../../constantterm/sources.cm
-	../../types/sources.cm
+*)
 
 	TypedLambda.ppg.sml
+(*
 	TypedLambdaUtils.sml
+*)
 	TypedLambdaFormatter.sml
+(*
 	TypeCheckTypedLambdaError.ppg.sml
 	TYPECHECK_TYPEDLAMBDA.sig
 	TypeCheckTypedLambda.sml
+*)

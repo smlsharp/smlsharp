@@ -4,17 +4,17 @@ Group is
 	$/basis.cm
 #endif
 
-	../../../../../smlnj-lib/Util/smlnj-lib.cm
 	../../../../../SMLFormat/smlformatlib.cm
 	../../control/sources.cm
-	../../systemdef/sources.cm
 	../../env/sources.cm
 	../../util/sources.cm
-	../../name/sources.cm
-	../../types/sources.cm
 	../../absyn/sources.cm
+	../../types/sources.cm
 	../../constantterm/sources.cm
+	../../typedcalc/sources.cm
 
 	RecordCalc.ppg.sml
-	RecordCalcUtils.sml
 	RecordCalcFormatter.sml
+(*
+	RecordCalcUtils.sml
+*)

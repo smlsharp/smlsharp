@@ -4,17 +4,16 @@ Group is
 	$/basis.cm
 #endif
 
-	../../../../../smlnj-lib/Util/smlnj-lib.cm
 	../../../../../SMLFormat/smlformatlib.cm
 	../../../instructions/compiler/sources.cm
 	../../../primitives/compiler/constants.cm
-	../../../primitives/compiler/primitives.cm
 	../../control/sources.cm
 	../../systemdef/sources.cm
 	../../name/sources.cm
 	../../env/sources.cm
 	../../util/sources.cm
 	../../usererror/sources.cm
+	../../primitive/sources.cm
 	../../absyn/sources.cm
 	../../types/sources.cm
 	../../symbolicinstructions/sources.cm
@@ -27,6 +26,7 @@ Group is
 	LABEL_MAP.sig
 	LabelMap.sml
 	AssembleError.ppg.sml
+	VMPrimitive.sml
 	INSTRUCTION_SIZE_CALCULATOR.sig
 	InstructionSizeCalculator.sml
 	SOURCE_LOCATION_MAP.sig

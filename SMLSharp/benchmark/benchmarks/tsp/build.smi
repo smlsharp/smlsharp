@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "rand.smi"
+_require "tree.smi"
+structure BuildTree =
+struct
+  datatype axis = X_AXIS | Y_AXIS
+  val buildTree : {dir:axis, max_x:real, max_y:real, min_x:real, min_y:real,
+                   n:int} -> Tree.tree
+end

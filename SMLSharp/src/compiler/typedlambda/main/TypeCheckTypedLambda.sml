@@ -20,10 +20,10 @@ local
   exception NotYet
 
   structure btvEq:ORD_KEY = struct 
-                             type ord_key = int * int
+                             type ord_key = BoundTypeVarID.id * BoundTypeVarID.id
                              fun compare ((i1,j1), (i2,j2)) = 
-                               case Int.compare(i1,i2) of
-                                 EQUAL => Int.compare (j1,j2)
+                               case BoundTypeVarID.compare(i1,i2) of
+                                 EQUAL => BoundTypeVarID.compare (j1,j2)
                                | result => result
                            end
   structure BtvEquiv = BinarySetFn(btvEq)
@@ -32,20 +32,20 @@ local
    * used to compute equality of polymorphic types
    *)
   fun addToBtvEquiv (btvEquiv, (i1,i2)) =
-    if i1 > i2 
-    then BtvEquiv.add(btvEquiv,(i2,i1))
-    else BtvEquiv.add(btvEquiv,(i1,i2))
+      case BoundTypeVarID.compare (i1, i2) of
+        GREATER => BtvEquiv.add(btvEquiv,(i2,i1))
+      | _ => BtvEquiv.add(btvEquiv,(i1,i2))
   fun isBtvEquiv (btvEquiv, (i1,i2)) =
-    if i1 > i2 
-    then BtvEquiv.member(btvEquiv,(i2,i1))
-    else BtvEquiv.member(btvEquiv,(i1,i2))
+      case BoundTypeVarID.compare (i1, i2) of
+        GREATER => BtvEquiv.member(btvEquiv,(i2,i1))
+      | _ => BtvEquiv.member(btvEquiv,(i1,i2))
   val emptyBtvEquiv = BtvEquiv.empty
 
   val intTy = PT.intty
   fun makeArrayTy elementTy = RAWty {tyCon = PT.arrayTyCon, args = [elementTy]}
 
-  val emptyBtvEnv = IEnv.empty
-  fun extendBtvEnv (oldBtvEnv, newBtvEnv) = IEnv.unionWith #1 (newBtvEnv, oldBtvEnv)
+  val emptyBtvEnv = BoundTypeVarID.Map.empty
+  fun extendBtvEnv (oldBtvEnv, newBtvEnv) = BoundTypeVarID.Map.unionWith #1 (newBtvEnv, oldBtvEnv)
 
 
   fun eqTyList L =
@@ -74,6 +74,13 @@ local
           | (DUMMYty n2, DUMMYty n1) => if n1 = n2 then () else (print "Eqty 3\n";raise Eqty)
           | (DUMMYty _, _) => (print "Eqty 4\n";raise Eqty)
           | (_, DUMMYty _) => (print "Eqty 5\n";raise Eqty)
+          | (SINGLETONty (INSTCODEty {oprimId=id1, oprimPolyTy=ty1, ...}),
+             SINGLETONty (INSTCODEty {oprimId=id2, oprimPolyTy=ty2, ...})) =>
+            if OPrimID.eq (id1, id2) then eqTy btvEquiv (ty1, ty2)
+            else raise Eqty
+          | (SINGLETONty (INDEXty (l1, ty1)),
+             SINGLETONty (INDEXty (l2, ty2))) =>
+            if l1 = l2 then eqTy btvEquiv (ty1, ty2) else raise Eqty
           | (TYVARty(ref(TVAR {id = id1, ...})), TYVARty(ref(TVAR {id = id2, ...}))) =>
             if FreeTypeVarID.eq(id1,id2)
               then () 
@@ -137,8 +144,8 @@ local
           | (POLYty{boundtvars = btvenv1, body = body1},
              POLYty{boundtvars = btvenv2, body = body2}) =>
             let
-              val btvlist1 = IEnv.listKeys btvenv1
-              val btvlist2 = IEnv.listKeys btvenv2
+              val btvlist1 = BoundTypeVarID.Map.listKeys btvenv1
+              val btvlist2 = BoundTypeVarID.Map.listKeys btvenv2
               val newBtvEquiv =
                   if length btvlist1 = length btvlist2 
                   then 
@@ -207,7 +214,7 @@ local
        end
      | _ => raise ApplyTy
 
- fun staticFieldSelect (btvEnv:Types.btvKind IEnv.map) (recordTy, label, loc) =
+ fun staticFieldSelect (btvEnv:Types.btvKind BoundTypeVarID.Map.map) (recordTy, label, loc) =
    case TU.derefTy recordTy of
      RECORDty tyFields =>
      (
@@ -228,7 +235,7 @@ local
      )
    | BOUNDVARty i =>
      (
-      case IEnv.find(btvEnv, i) of
+      case BoundTypeVarID.Map.find(btvEnv, i) of
         SOME {recordKind = REC fields,...} =>
         (case SEnv.find(fields, label) of 
            SOME ty => ty
@@ -339,7 +346,11 @@ local
 *)
      | TLCONSTANT {value,...} => CT.constDefaultTy value
      | TLGLOBALSYMBOL {ty,...} => ty
+     | TLTAGOF {ty, loc} => PT.wordty
      | TLSIZEOF {ty, loc} => PT.wordty
+     | TLINDEXOF {label, recordTy, loc} =>
+       (staticFieldSelect btvEnv (recordTy, label, loc);
+        SINGLETONty (INDEXty (label, recordTy)))
      | TLVAR {varInfo, ...} => #ty varInfo
      | TLGETFIELD {arrayExp, indexExp, elementTy, loc} => 
        let
@@ -666,7 +677,7 @@ local
        in
          recordTy
        end
-     | TLSELECT {recordExp, label, recordTy, resultTy = resultTyAnnotation, loc} => 
+     | TLSELECT {recordExp, indexExp, label, recordTy, resultTy = resultTyAnnotation, loc} => 
        let
          val expRecordTy = typecheckExp btvEnv recordExp
          val _ = 
@@ -682,14 +693,29 @@ local
                               expType = expRecordTy
                              }
                         )
-         val resultTy = staticFieldSelect btvEnv (recordTy, label, loc)
-         val _ = 
-             eqTyList [(resultTy,resultTyAnnotation)]
+         val indexExpTy = typecheckExp btvEnv indexExp
+         val _ =
+             eqTyList
+               [(indexExpTy, SINGLETONty (INDEXty (label, recordTy)))]
              handle Eqty =>
                     E.enqueueDiagnosis 
                         (
                          loc,
                          "typecheckExp 16-2",
+                         E.TypeAndAnnotationMismatch
+                             {
+                              annotation = indexExpTy,
+                              expType = SINGLETONty (INDEXty (label, recordTy))
+                             }
+                        )
+         val resultTy = staticFieldSelect btvEnv (recordTy, label, loc)
+         val _ = 
+             eqTyList [(resultTy, resultTyAnnotation)]
+             handle Eqty =>
+                    E.enqueueDiagnosis 
+                        (
+                         loc,
+                         "typecheckExp 16-3",
                          E.TypeAndAnnotationMismatch
                              {
                               annotation = resultTyAnnotation,
@@ -699,7 +725,7 @@ local
        in
          resultTy
        end
-     | TLMODIFY {recordExp, recordTy, label, valueExp, loc} => 
+     | TLMODIFY {recordExp, recordTy, indexExp, label, valueExp, loc} => 
        let
          val expRecordTy = typecheckExp btvEnv recordExp
          val _ = 
@@ -715,15 +741,30 @@ local
                               expType = expRecordTy
                              }
                         )
-         val valueTy = typecheckExp btvEnv valueExp
+         val indexExpTy = typecheckExp btvEnv indexExp
+         val _ = 
+             eqTyList
+               [(indexExpTy, SINGLETONty (INDEXty (label, recordTy)))]
+             handle Eqty =>
+                    E.enqueueDiagnosis 
+                        (
+                         loc,
+                         "typecheckExp 18",
+                         E.TypeAndAnnotationMismatch
+                             {
+                              annotation = indexExpTy,
+                              expType = SINGLETONty (INDEXty (label, recordTy))
+                             }
+                        )
          val fieldTy = staticFieldSelect btvEnv (recordTy, label, loc)
+         val valueTy = typecheckExp btvEnv valueExp
          val _ = 
              eqTyList [(valueTy, fieldTy)]
              handle Eqty =>
                     E.enqueueDiagnosis 
                         (
                          loc,
-                         "typecheckExp 18",
+                         "typecheckExp 18-2",
                          E.TypeAndAnnotationMismatch
                              {
                               annotation = valueTy,
@@ -831,7 +872,7 @@ local
              case TypesUtils.derefTy expTy of
                POLYty {boundtvars, body} => 
                let
-                 val polyArity = IEnv.numItems boundtvars 
+                 val polyArity = BoundTypeVarID.Map.numItems boundtvars 
                  val numTyArgs = List.length instTyList
                in
                  if polyArity = numTyArgs
@@ -962,30 +1003,6 @@ local
                            (
                             loc,
                             "typecheckTldecl 2",
-                            E.TypeAndAnnotationMismatch
-                                {
-                                 annotation = ty,
-                                 expType = expTy
-                                }
-                           )
-              end
-          )
-          recbindList;
-      ()
-     )
-   | TLVALPOLYREC {btvEnv = btvKinds, recbindList, loc} => 
-     (
-      map 
-          (fn {boundVar = {ty,...}, boundExp} =>
-              let
-                val expTy = typecheckExp (extendBtvEnv(btvEnv,btvKinds)) boundExp
-              in
-                eqTyList [(ty, expTy)]
-                handle Eqty =>
-                       E.enqueueDiagnosis 
-                           (
-                            loc,
-                            "typecheckTldecl 3",
                             E.TypeAndAnnotationMismatch
                                 {
                                  annotation = ty,

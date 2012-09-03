@@ -13,6 +13,9 @@ structure T = Tokens
 structure UE = UserError
 structure SS = Substring
 
+(* if you use ml-lex of SML/NJ, you need to specify this to 2. *)
+val INITIAL_POS_OF_LEXER = 0
+
 type svalue = T.svalue
 type ('a,'b) token = ('a,'b) T.token
 type lexresult= (svalue,Loc.pos) token
@@ -25,32 +28,52 @@ type arg =
 {
   fileName : string,
   isPrelude : bool,
-  errorPrinter : (string * pos * pos) -> unit,
+  enableMeta : bool,
+  lexError : (string * pos * pos) -> unit,
   stringBuf : string list ref,
   stringStart : pos ref,
   stringType : stringType ref,
   commentStart : Loc.pos list ref,
-  anyErrors : bool ref,
   lineMap : {lineCount : int, beginPos : int} list ref,
   lineCount : int ref,
   charCount : int ref,
   initialCharCount : int
 }
 
+fun initArg {sourceName, isPrelude, enableMeta, lexErrorFn, initialLineno} =
+    let
+      val startPos = Loc.makePos {fileName = sourceName, line = 0, col = 0}
+    in
+      {fileName = sourceName,
+       isPrelude = isPrelude,
+       enableMeta = enableMeta,
+       lexError = lexErrorFn,
+       stringBuf = ref nil,
+       stringStart = ref startPos,
+       stringType = ref NOSTR,
+       commentStart = ref nil,
+       lineMap = ref [{lineCount = initialLineno,
+                       beginPos = INITIAL_POS_OF_LEXER}],
+       lineCount = ref initialLineno,
+       charCount = ref INITIAL_POS_OF_LEXER,
+       initialCharCount = 0} : arg
+    end
+
+fun isINITIAL ({commentStart = ref nil, stringType = ref NOSTR, ...}:arg) = true
+  | isINITIAL _ = false
+
 (*
 val error = Error.printError
  *)
 
-(* NOTE: the length of eol can be 2 on DOS/Windows. *)
 fun newLine (pos, eolString, arg : arg) =
     (
-(* Note: lineMap is updated by Parser, not here.
-      #ln arg := (!(#ln arg)) + 1;
+      #lineCount arg := !(#lineCount arg) + 1;
       #lineMap arg :=
-      {lineCount = !(#ln arg), beginPos = pos + size eolString}
-      :: (!(#lineMap arg))
-*)
+      {lineCount = !(#lineCount arg), beginPos = pos + size eolString}
+      :: !(#lineMap arg)
     )
+
 fun currentPos (pos, offset, arg : arg) =
     let
       (*  pos is the number of chars which has been read by this lexer.
@@ -90,7 +113,7 @@ fun currentPos (pos, offset, arg : arg) =
           val message = 
               "lineCount of " ^ Int.toString absolutePos ^ " is not found."
         in
-          #errorPrinter arg (message, Loc.nopos, Loc.nopos); Loc.nopos
+          #lexError arg (message, Loc.nopos, Loc.nopos); Loc.nopos
       (*
           raise Control.Bug message
        *)
@@ -110,19 +133,16 @@ fun strToLoc (text, pos, arg) =
 fun addChar (buffer, string) = buffer := String.str string :: (!buffer)
 fun makeString (buffer) = concat (rev (!buffer)) before buffer := nil
 
-fun eof ({commentStart, stringStart, stringType, anyErrors, errorPrinter,
+fun eof ({commentStart, stringStart, stringType, lexError,
           ...}:arg) =
     (case !commentStart of
        nil => ()
-     | pos::_ => (errorPrinter ("unclosed comment", pos, Loc.nopos);
-                  anyErrors := true);
+     | pos::_ => lexError ("unclosed comment", pos, Loc.nopos);
      case !stringType of
        NOSTR => ()
-     | STRING => (errorPrinter ("unclosed string", !stringStart, Loc.nopos);
-                  anyErrors := true)
-     | CHAR => (errorPrinter ("unclosed character constant",
-                              !stringStart, Loc.nopos);
-                anyErrors := true);
+     | STRING => lexError ("unclosed string", !stringStart, Loc.nopos)
+     | CHAR => lexError ("unclosed character constant",
+			 !stringStart, Loc.nopos);
      T.EOF (Loc.nopos, Loc.nopos))
 
 local
@@ -152,12 +172,12 @@ fun isSuffix char string =
       {
         fileName,
         isPrelude,
-        errorPrinter,
+        enableMeta,
+        lexError,
         stringBuf,
         stringStart,
         stringType,
         commentStart,
-        anyErrors,
         lineMap,
         lineCount,
         charCount,
@@ -188,6 +208,7 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"and" => (T.AND (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"as" => (T.AS (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"__attribute__" => (T.ATTRIBUTE (left(yypos,arg),right(yypos,13,arg)));
+<INITIAL>"_builtin" => (T.BUILTIN (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"case" => (T.CASE (left(yypos,arg),right(yypos,4,arg)));
 <INITIAL>"_cast" => (T.CAST (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"_cdecl" => (T.CDECL (left(yypos,arg),right(yypos,6,arg)));
@@ -206,11 +227,11 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"handle" => (T.HANDLE (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"if" => (T.IF (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"_import" => (T.IMPORT (left(yypos,arg),right(yypos,7,arg)));
-<INITIAL>"_require" => (T.REQUIRE (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"in" => (T.IN (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"include" => (T.INCLUDE (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"infix" => (T.INFIX (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"infixr" => (T.INFIXR (left(yypos,arg),right(yypos,6,arg)));
+<INITIAL>"_interface" => (T.INTERFACE (left(yypos,arg),right(yypos,10,arg)));
 <INITIAL>"nonfix" => (T.NONFIX (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"let" => (T.LET (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"local" => (T.LOCAL (left(yypos,arg),right(yypos,5,arg)));
@@ -220,8 +241,10 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"orelse" => (T.ORELSE (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"_namespace" => (T.NAMESPACE (left(yypos,arg),right(yypos,10,arg)));
 <INITIAL>"_NULL" => (T.NULL (left(yypos,arg),right(yypos,5,arg)));
+<INITIAL>"_private" => (T.PRIVATE (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"raise" => (T.RAISE (left(yypos,arg),right(yypos,5,arg)));
 <INITIAL>"rec" => (T.REC (left(yypos,arg),right(yypos,3,arg)));
+<INITIAL>"_require" => (T.REQUIRE (left(yypos,arg),right(yypos,8,arg)));
 <INITIAL>"sharing" => (T.SHARING (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"sig"=> (T.SIG (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"signature" => (T.SIGNATURE (left(yypos,arg),right(yypos,9,arg)));
@@ -231,7 +254,9 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"structure" => (T.STRUCTURE (left(yypos,arg),right(yypos,9,arg)));
 <INITIAL>"then" => (T.THEN (left(yypos,arg),right(yypos,4,arg)));
 <INITIAL>"type" => (T.TYPE (left(yypos,arg),right(yypos,4,arg)));
-<INITIAL>"use" => (T.USE (left(yypos,arg),right(yypos,3,arg)));
+<INITIAL>"use" => (if enableMeta
+                   then T.USE (left(yypos,arg),right(yypos,3,arg))
+                   else T.ID (yytext,left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"_useobj" => (T.USEOBJ (left(yypos,arg),right(yypos,7,arg)));
 <INITIAL>"val" => (T.VAL (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"where" => (T.WHERE (left(yypos,arg),right(yypos,5,arg)));
@@ -349,19 +374,17 @@ hexnum=[0-9a-fA-F]+;
   * be regarded as two tokens "*" and ")". *)
                  );
 <INITIAL>\h => (
-                 errorPrinter
+                 lexError
                  (
                    "non-Ascii character",
                    left(yypos, arg),
                    right(yypos, 1, arg)
                  );
-                 anyErrors := true;
                  continue()
                );
 <INITIAL>. => (
-                errorPrinter
+                lexError
                 ("illegal token", left(yypos, arg), right(yypos, 1, arg));
-                anyErrors := true;
                 continue()
               );
 <A>"(*"  => (commentStart := left(yypos, arg) :: !commentStart;
@@ -381,13 +404,12 @@ hexnum=[0-9a-fA-F]+;
              val s = if size s <> 1 andalso !stringType = CHAR
                      then
                        (
-                         errorPrinter
+                         lexError
                          (
                            "character constant not length 1",
                            left(yypos, arg),
                            right(yypos, 1, arg) (* pos of double quote *)
                          );
-                         anyErrors := true;
                          if 0 = size s then "?" else s
                        )
                      else s
@@ -402,9 +424,8 @@ hexnum=[0-9a-fA-F]+;
            end
          );
 <S>{eol} => (
-              errorPrinter
+              lexError
               ("unclosed string", left(yypos, arg), right(yypos, 1, arg));
-              anyErrors := true;
               stringType := NOSTR;
               newLine(yypos, yytext, arg); 
               YYBEGIN INITIAL;
@@ -431,14 +452,13 @@ hexnum=[0-9a-fA-F]+;
                   continue()
                 );
 <S>\\\^. => (
-              errorPrinter
+              lexError
               (
                 "illegal control escape; must be one of \
                 \@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_",
                 left(yypos, arg),
                 right(yypos, size yytext, arg)
               );
-              anyErrors := true;
               continue()
             );
 <S>\\[0-9]{3} => (let
@@ -450,13 +470,12 @@ hexnum=[0-9a-fA-F]+;
                     if x > 255
                     then
                       (
-                        errorPrinter
+                        lexError
                         (
                           "illegal ascii escape",
                           left(yypos, arg),
                           right(yypos, size yytext, arg)
-                        );
-                        anyErrors := true
+                        )
                       )
                     else addChar(stringBuf, Char.chr x);
                     continue()
@@ -471,31 +490,28 @@ hexnum=[0-9a-fA-F]+;
                     if Char.maxOrd < x
                     then
                       (
-                        errorPrinter
+                        lexError
                         (
                           "illegal ascii escape",
                           left(yypos, arg),
                           right(yypos, size yytext, arg)
-                        );
-                        anyErrors := true
+                        )
                       )
                     else addChar(stringBuf, Char.chr x);
                     continue()
                   end);
 <S>\\  => (
-            errorPrinter
+            lexError
             ("illegal string escape", left(yypos, arg), right(yypos, 1, arg));
-            anyErrors := true;
             continue()
           );
 <S>[\000-\031] => (
-                    errorPrinter
+                    lexError
                     (
                       "illegal non-printing character in string",
                       left(yypos, arg),
                       right(yypos, 1, arg)
                     );
-                    anyErrors := true;
                     continue()
                   );
 <S>({idchars}|{sym}|\[|\]|\(|\)|{quote}|[,.;^{}])+|.  =>
@@ -504,9 +520,8 @@ hexnum=[0-9a-fA-F]+;
 <F>{ws} => (continue());
 <F>\\  => (YYBEGIN S; continue());
 <F>.  => (
-           errorPrinter
+           lexError
            ("unclosed string", left(yypos, arg), right(yypos, 1, arg));
-           anyErrors := true;
            stringType := NOSTR;
            YYBEGIN INITIAL;
            T.STRING

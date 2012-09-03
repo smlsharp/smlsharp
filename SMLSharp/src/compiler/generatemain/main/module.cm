@@ -1,0 +1,15 @@
+Group is
+
+#if defined(NEW_CM)
+	$/basis.cm
+#endif
+
+	../../../../../SMLFormat/smlformatlib.cm
+	../../control/sources.cm
+	../../env/sources.cm
+	../../name/sources.cm
+	../../usererror/sources.cm
+	../../absyn/sources.cm
+
+	GenerateMainError.ppg.sml
+	GenerateMain.sml

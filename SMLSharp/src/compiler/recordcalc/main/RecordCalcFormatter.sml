@@ -16,8 +16,5 @@ struct
 	Control.prettyPrint (RecordCalc.format_rcexp btvenv rcexp)
     fun rcexpToStringWithoutType btvenv rcexp = 
 	Control.prettyPrint (RecordCalc.formatWithoutType_rcexp btvenv rcexp)
-    fun topGroupToString group =
-        Control.prettyPrint (RecordCalc.format_topBlock group)
-    fun topGroupToStringWithoutType group =
-        Control.prettyPrint (RecordCalc.formatWithoutType_topBlock group)
+
 end

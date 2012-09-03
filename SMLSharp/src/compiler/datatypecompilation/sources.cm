@@ -1,0 +1,4 @@
+Group
+	structure DatatypeCompilation
+is
+	main/module.cm

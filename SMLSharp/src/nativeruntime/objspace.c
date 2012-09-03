@@ -7,32 +7,54 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#ifdef MULTITHREAD
+#include <pthread.h>
+#endif /* MULTITHREAD */
 #include "smlsharp.h"
 #include "object.h"
-#include "heap.h"
+#include "control.h"
 #include "objspace.h"
+#include "splay.h"
 
-/* rootset array */
-struct rootset {
-	struct sml_heap_thread *thread;
-	sml_rootset_fn *enumfn;
-	void *data;
-};
-static sml_obstack_t *rootset_obstack = NULL;
+/* tree node allocator for persistent trees. */
+static sml_obstack_t *persistent_node_obstack = NULL;
+static void *persistent_node_alloc(size_t size);
 
 /* barriered slot */
-static sml_obstack_t *barrier_obstack = NULL;
-static sml_tree_t global_barrier;
+static int voidp_cmp(void *, void *);
+static sml_tree_t global_barrier =
+	{NULL, voidp_cmp, persistent_node_alloc, NULL};
+
+/* callback closures */
+static int callback_cmp(void *, void *);
+static sml_tree_t callback_closures =
+	{NULL, callback_cmp, persistent_node_alloc, NULL};
+
+struct callback_item {
+	void *closure;
+	void *entry;
+	void *env;    /* ML object. global_barrier keeps track here. */
+	struct callback_item *next;
+};
 
 /* malloc heap */
-static sml_tree_t malloc_heap;
+
+static sml_tree_t malloc_heap = {NULL, voidp_cmp, xmalloc, free};
 static size_t malloc_count;
 
 struct malloc_obj_header {
-	struct malloc_obj_header *barrier; /* list of barriered malloc object */
+	struct malloc_obj_header *next;  /* next object in the stack */
+	unsigned int flags;
 };
-static struct malloc_obj_header barrier_list_last;
-static struct malloc_obj_header *malloc_barrier_list = &barrier_list_last;
+
+#define MALLOC_FLAG_REMEMBER  0x1
+#define MALLOC_FLAG_TRACED    0x2
+
+/* top of mark stack.
+ * mark stark is used not only for collection but also remembered set for
+ * the next minor collection.
+ */
+static struct malloc_obj_header *malloc_stack_top = NULL;
 
 #define MALLOC_PADDING \
 	ALIGNSIZE(sizeof(struct malloc_obj_header) + OBJ_HEADER_SIZE, MAXALIGN)
@@ -42,62 +64,72 @@ static struct malloc_obj_header *malloc_barrier_list = &barrier_list_last;
 	((void*)((char*)(headptr) + MALLOC_PADDING))
 #define MALLOC_LIMIT  (1024 * 1024 * 4)
 
-#define UNMARKED      ((void*)0)
-#define MARKED        ((void*)1)
-
-/* finalizer array */
+/* finalizer */
 struct finalizer {
-	int active;  /* true = requested to run the finalizer. */
+	struct finalizer *next;   /* for linked list */
 	void *obj;
-	sml_finalizer_fn *finalize_fn;
-	void *data;
+	void (*finalizer)(void *);
+	int active;  /* true = requested to run the finalizer. */
 };
-static sml_obstack_t *finalizer_obstack = NULL;
-static int finalizer_is_running = 0;
 
-/* callback closures */
-static sml_tree_t callback_closures;
+static int finalizer_cmp(void *, void *);
+static sml_tree_t finalizer_set = {NULL, finalizer_cmp, xmalloc, free};
+static struct finalizer *active_finalizers;
 
 static void *
-barrier_node_alloc(size_t size)
+persistent_node_alloc(size_t size)
 {
-	return sml_obstack_alloc(&barrier_obstack, size);
+	return sml_obstack_alloc(&persistent_node_obstack, size);
 }
 
-/* for debug */
 static void
-dump_barrier_node(void *key, void **value ATTR_UNUSED, void *data ATTR_UNUSED)
+dump_malloc(void *item, void *data ATTR_UNUSED)
 {
-	sml_debug("%p, ", key);
+	sml_notice("%p (flags=%08x, size=%lu)", item,
+		   MALLOC_HEAD(item)->flags, (unsigned long)OBJ_SIZE(item));
+}
+
+static void
+dump_finalizer(void *item, void *data ATTR_UNUSED)
+{
+	struct finalizer *final = item;
+	sml_notice("active=%d, obj=%p, fn=%p",
+		   final->active, final->obj, final->finalizer);
+}
+
+static void
+dump_callback(void *item, void *data ATTR_UNUSED)
+{
+	struct callback_item *cls = item;
+	while (cls) {
+		sml_notice("closure=%p, entry=%p, env=%p",
+			   cls->closure, cls->entry, cls->env);
+		cls = cls->next;
+	}
+}
+
+static void
+dump_barrier(void *item, void *data ATTR_UNUSED)
+{
+	sml_notice("%p -> %p", item, *(void**)item);
 }
 
 /* for debug */
 void
 sml_objspace_dump()
 {
-	sml_debug("rootset :\n");
-	if (rootset_obstack) {
-		struct rootset *start, *end, *i;
-		start = sml_obstack_base(rootset_obstack);
-		end = sml_obstack_next_free(rootset_obstack);
-		for (i = start; i < end; i++)
-			sml_debug("enumfn=%p, data=%p\n", i->enumfn, i->data);
-	}
-
-	sml_debug("finalizers :\n");
-	if (finalizer_obstack) {
-		struct finalizer *start, *end, *i;
-		start = sml_obstack_base(finalizer_obstack);
-		end = sml_obstack_next_free(finalizer_obstack);
-		for (i = start; i < end; i++) {
-			sml_debug("active=%d, obj=%p, fn=%p, data=%p\n",
-				  i->active, i->obj, i->finalize_fn, i->data);
-		}
-	}
-
-	sml_debug("barriered :\n");
-	sml_tree_traverse(global_barrier.root, dump_barrier_node, NULL);
-	sml_debug("\n");
+	struct malloc_obj_header *p;
+	sml_notice("malloc :");
+	sml_tree_each(&malloc_heap, dump_malloc, NULL);
+	sml_notice("finalizers :");
+	sml_tree_each(&finalizer_set, dump_finalizer, NULL);
+	sml_notice("callbacks :");
+	sml_tree_each(&callback_closures, dump_callback, NULL);
+	sml_notice("barriered :");
+	sml_tree_each(&global_barrier, dump_barrier, NULL);
+	sml_notice("mark stack :");
+	for (p = malloc_stack_top; p; p = p->next)
+		dump_malloc(MALLOC_BODY(p), NULL);
 }
 
 static int
@@ -112,129 +144,28 @@ voidp_cmp(void *x, void *y)
 void
 sml_objspace_init(void)
 {
-	global_barrier.root = NULL;
-	global_barrier.cmp = voidp_cmp;
-	global_barrier.alloc = barrier_node_alloc;
-	global_barrier.free = NULL;
+}
 
-	malloc_heap.root = NULL;
-	malloc_heap.cmp = voidp_cmp;
-	malloc_heap.alloc = xmalloc;
-	malloc_heap.free = free;
-
-	callback_closures.root = NULL;
-	callback_closures.cmp = voidp_cmp;
-	callback_closures.alloc = xmalloc;
-	callback_closures.free = free;
+static void
+finalize_heap(void *data ATTR_UNUSED)
+{
+	/* To run finalizers forcely, invoke GC with empty root set. */
+	while (finalizer_set.root != NULL)
+		sml_heap_gc();
+	GIANT_LOCK(NULL);
+	sml_malloc_sweep(MAJOR);  /* free all malloc'ed objects */
+	GIANT_UNLOCK();
 }
 
 void
 sml_objspace_free(void)
 {
-	/* remove all rootset. */
-	if (rootset_obstack) {
-		sml_obstack_shrink(&rootset_obstack,
-				   sml_obstack_base(rootset_obstack));
-	}
+	ASSERT(sml_num_threads() == 0);
 
-	/* remove global barrier. */
+	callback_closures.root = NULL;
 	global_barrier.root = NULL;
-	sml_obstack_free(&barrier_obstack, NULL);
-
-	/* To run finalizers forcely, invoke GC with empty root set. */
-	if (finalizer_obstack) {
-		while (sml_obstack_object_size(finalizer_obstack) > 0)
-			sml_heap_gc();
-	}
-
-	sml_malloc_sweep(MAJOR);  /* free all malloc'ed objects */
-	sml_tree_delete_all(&malloc_heap);
-	sml_obstack_free(&finalizer_obstack, NULL);
-	sml_obstack_free(&rootset_obstack, NULL);
-}
-
-/* root set management */
-
-void
-sml_add_rootset(sml_rootset_fn *enumfn, void *data)
-{
-	struct rootset *rootset;
-
-	HEAP_LOCK();
-	rootset = sml_obstack_extend(&rootset_obstack, sizeof(struct rootset));
-	rootset->enumfn = enumfn;
-	rootset->data = data;
-	rootset->thread = SML_THREAD_ENV->heap;
-	HEAP_UNLOCK();
-}
-
-void
-sml_remove_rootset(sml_rootset_fn *enumfn, void *data)
-{
-	struct sml_heap_thread *th = SML_THREAD_ENV->heap;
-	struct rootset *start, *end;
-	struct rootset *i, *free;
-
-	HEAP_LOCK();
-
-	start = sml_obstack_base(rootset_obstack);
-	end = sml_obstack_next_free(rootset_obstack);
-	for (free = start, i = start; i < end; i++) {
-		if (i->thread == th && i->enumfn == enumfn && i->data == data)
-			continue;
-		*(free++) = *i;
-	}
-	sml_obstack_shrink(&rootset_obstack, free);
-
-	HEAP_UNLOCK();
-}
-
-static void
-visit_barrier_node(void *key, void **value ATTR_UNUSED, void *data)
-{
-	sml_trace_cls *trace = data;
-	(*trace)((void**)key, trace);
-}
-
-static void
-visit_callback_node(void *key ATTR_UNUSED, void **value, void *data)
-{
-	sml_trace_cls *trace = data;
-	(*trace)(value, trace);
-}
-
-void
-sml_rootset_enum_ptr(sml_trace_cls *trace, enum sml_gc_mode mode)
-{
-	struct rootset *start, *end, *i;
-	struct malloc_obj_header *head, *next;
-
-	if (mode == MINOR) {
-		ASSERT(malloc_barrier_list != NULL);
-		head = malloc_barrier_list;
-		if (head != &barrier_list_last) {
-			do {
-				next = head->barrier;
-				ASSERT(next != NULL);
-				sml_obj_enum_ptr(MALLOC_BODY(head), trace);
-				head->barrier = NULL;
-				head = next;
-			} while (head != &barrier_list_last);
-			malloc_barrier_list = head;
-		}
-	} else {
-		sml_tree_traverse(global_barrier.root, visit_barrier_node,
-				  (void*)trace);
-		sml_tree_traverse(callback_closures.root, visit_callback_node,
-				  (void*)trace);
-	}
-
-	if (rootset_obstack != NULL) {
-		start = sml_obstack_base(rootset_obstack);
-		end = sml_obstack_next_free(rootset_obstack);
-		for (i = start; i < end; i++)
-			i->enumfn(trace, mode, i->data);
-	}
+	sml_obstack_free(&persistent_node_obstack, NULL);
+	sml_protect(finalize_heap, NULL);
 }
 
 /* malloc heap */
@@ -244,55 +175,113 @@ sml_obj_malloc(size_t objsize)
 {
 	/* objsize = payload_size + bitmap_size */
 	struct malloc_obj_header *head;
-	void *obj, **node;
+	void *obj;
 	size_t alloc_size;
 
-	if (malloc_count > MALLOC_LIMIT)
-		sml_heap_gc();
+	GIANT_LOCK(NULL);
 
-	HEAP_LOCK();
+	if (malloc_count > MALLOC_LIMIT) {
+		GIANT_UNLOCK();
+		sml_heap_gc();
+		GIANT_LOCK(NULL);
+	}
 
 	alloc_size = MALLOC_PADDING + objsize;
 	head = xmalloc(alloc_size);
-	head->barrier = NULL;
 	obj = MALLOC_BODY(head);
-	node = sml_splay_insert(&malloc_heap, obj);
-	*node = UNMARKED;
+	sml_tree_insert(&malloc_heap, obj);
 	malloc_count += alloc_size;
 
-	HEAP_UNLOCK();
+	/* if the new object is an immutable object such as record, ML
+	 * object pointer may be stored without write barrier during
+	 * initialization of the new object. */
+	head->next = malloc_stack_top;
+	malloc_stack_top = head;
+	head->flags = MALLOC_FLAG_REMEMBER;
+
+	GIANT_UNLOCK();
 
 	OBJ_HEADER(obj) = 0;
 	return obj;
 }
 
-void *
-sml_trace_ptr(void *obj, enum sml_gc_mode mode)
+void
+sml_trace_ptr(void *obj)
 {
-	/* assume HEAP_LOCK'ed */
-	void **node;
+	ASSERT(GIANT_LOCKED());
 
-	if (mode == MINOR)
-		return NULL;
-
-	node = sml_splay_find(&malloc_heap, obj);
-	if (node != NULL && *node == UNMARKED) {
-		*node = MARKED;
-		return obj;
+	if (sml_tree_find(&malloc_heap, obj)) {
+		struct malloc_obj_header *head = MALLOC_HEAD(obj);
+		ASSERT(head->flags != 0 || head->next == NULL);
+		if (head->flags == 0) {
+			head->next = malloc_stack_top;
+			malloc_stack_top = head;
+		}
+		head->flags |= MALLOC_FLAG_TRACED;
 	}
-	return NULL;
+}
+
+static void
+malloc_barrier(void *obj)
+{
+	struct malloc_obj_header *head = MALLOC_HEAD(obj);
+
+	ASSERT(GIANT_LOCKED());
+
+	ASSERT(head->flags == MALLOC_FLAG_REMEMBER
+	       || (head->flags == 0 && head->next == NULL));
+	if (head->flags == 0) {
+		head->flags |= MALLOC_FLAG_REMEMBER;
+		head->next = malloc_stack_top;
+		malloc_stack_top = head;
+	}
+}
+
+void
+sml_malloc_pop_and_mark(void (*trace)(void **), enum sml_gc_mode mode)
+{
+	struct malloc_obj_header *head;
+
+	ASSERT(GIANT_LOCKED());
+
+	if (mode == MINOR) {
+		/* check only remembered set */
+		while (malloc_stack_top) {
+			head = malloc_stack_top;
+			malloc_stack_top = malloc_stack_top->next;
+			if (head->flags & MALLOC_FLAG_REMEMBER)
+				sml_obj_enum_ptr(MALLOC_BODY(head), trace);
+			head->next = NULL;
+			head->flags = 0;
+		}
+	} else {
+		/* check only traced objects */
+		while (malloc_stack_top) {
+			head = malloc_stack_top;
+			malloc_stack_top = malloc_stack_top->next;
+			head->next = NULL;
+			if (head->flags & MALLOC_FLAG_TRACED)
+				sml_obj_enum_ptr(MALLOC_BODY(head), trace);
+			else
+				head->flags = 0;
+		}
+	}
 }
 
 static int
-malloc_heap_sweep(void *obj, void **mark)
+malloc_heap_sweep(void *item)
 {
-	/* assume HEAP_LOCK'ed */
-	if (*mark != MARKED) {
-		free(MALLOC_HEAD(obj));
+	void **obj = item;
+	struct malloc_obj_header *head = MALLOC_HEAD(obj);
+
+	ASSERT(GIANT_LOCKED());
+	ASSERT(head->next == NULL);
+
+	if (head->flags == 0) {   /* unmarked */
+		free(head);
 		return 1;
 	} else {
-		*mark = UNMARKED;   /* clear mark */
-		MALLOC_HEAD(obj)->barrier = NULL;
+		head->flags = 0;  /* clear mark */
 		return 0;
 	}
 }
@@ -300,223 +289,277 @@ malloc_heap_sweep(void *obj, void **mark)
 void
 sml_malloc_sweep(enum sml_gc_mode mode)
 {
-	/* assume HEAP_LOCK'ed */
+	ASSERT(GIANT_LOCKED());
+	ASSERT(malloc_stack_top == NULL);
 
-	if (mode == MINOR) {
-#ifdef DEBUG
-		ASSERT(malloc_barrier_list == &barrier_list_last);
-#endif /* DEBUG */
+	if (mode == MINOR)
 		return;
-	}
 
-	sml_splay_reject(&malloc_heap, malloc_heap_sweep);
+	sml_tree_reject(&malloc_heap, malloc_heap_sweep);
 	malloc_count = 0;
-	malloc_barrier_list = &barrier_list_last;
 }
 
+/* root set management */
+
 static void
-visit_malloc_obj(void *key, void **value ATTR_UNUSED, void *data)
+each_barrier(void *item, void *data)
 {
-	sml_trace_cls *trace = data;
-	sml_obj_enum_ptr(key, trace);
+	void (**trace)(void **) = data;
+	void **addr = item;
+	(*trace)(addr);
 }
 
 void
-sml_malloc_enum_ptr(sml_trace_cls *trace)
+sml_rootset_enum_ptr(void (*trace)(void **), enum sml_gc_mode mode)
 {
-	sml_tree_traverse(malloc_heap.root, visit_malloc_obj, (void*)trace);
+	ASSERT(GIANT_LOCKED());
+
+	if (mode != MINOR) {
+		/* global_barrier includes every addresses in
+		 * callback_closures where holds an ML object. */
+		sml_tree_each(&global_barrier, each_barrier, &trace);
+	}
+	sml_control_enum_ptr(trace, mode);
 }
 
 /* global barrier */
 
-void *
-sml_global_barrier(void **writeaddr, void *obj, enum sml_gc_mode trace_mode)
+void
+sml_global_barrier(void **writeaddr, void *obj)
 {
-	void **node, *ret;
-
-	HEAP_LOCK();
+	GIANT_LOCK(NULL);
 
 	/* check whether obj is in malloc heap. */
-	node = sml_splay_find(&malloc_heap, obj);
-	if (node != NULL) {
-		if (trace_mode == MINOR && MALLOC_HEAD(obj)->barrier == NULL) {
-			ASSERT(malloc_barrier_list != NULL);
-			MALLOC_HEAD(obj)->barrier = malloc_barrier_list;
-			malloc_barrier_list = MALLOC_HEAD(obj);
-		}
-		ret = NULL;
-	}
-	/* check whether finalizer update. */
-	else if (obj == &finalizer_obstack) {
-		ret = *writeaddr;
+	if (sml_tree_find(&malloc_heap, obj)) {
+		malloc_barrier(obj);
 	} else {
-		/* remember the writeaddr as a root pointer which is outside
-		 * of the heap. */
-		sml_splay_insert(&global_barrier, writeaddr);
-		ret = *writeaddr;
+		/* There is a reference to an ML object from outside.
+		 * remember the writeaddr as a root set. */
+		sml_tree_insert(&global_barrier, writeaddr);
 	}
 
-	HEAP_UNLOCK();
-	return ret;
+	GIANT_UNLOCK();
 }
 
 /* finalizer */
 
+static int
+finalizer_cmp(void *x, void *y)
+{
+	struct finalizer *final1 = x;
+	struct finalizer *final2 = y;
+	return voidp_cmp(final1->obj, final2->obj);
+}
+
+void
+sml_set_finalizer(void *obj, void (*finalizer)(void *))
+{
+	struct finalizer *final, key;
+
+	key.obj = obj;
+
+	GIANT_LOCK(NULL);
+
+	if (finalizer == NULL) {
+		sml_tree_delete(&finalizer_set, &key);
+		return;
+	}
+
+	final = sml_tree_find(&finalizer_set, &key);
+	if (final == NULL) {
+		ASSERT(sml_tree_find(&malloc_heap, obj));
+		final = xmalloc(sizeof(struct finalizer));
+		final->active = 0;
+		final->obj = obj;
+		sml_tree_insert(&finalizer_set, final);
+	}
+
+	/* obj is a malloc'ed object. No need to call write barrier. */
+	ASSERT(final->active == 0);
+	final->finalizer = finalizer;
+
+	GIANT_UNLOCK();
+}
+
+static void
+each_check_finalizer(void *item, void *data)
+{
+	void (**p_trace_rec)(void **) = data;
+	void (*trace_rec)(void **) = *p_trace_rec;
+	struct finalizer *final = item;
+
+	if (final->finalizer == NULL)
+		return;
+
+	if (MALLOC_HEAD(final->obj)->flags & MALLOC_FLAG_TRACED) {
+		DBG(("%p: survived", final->obj));
+		return;
+	}
+
+	/* Save all descendants of the finalizable object.
+	 * If the object itself is forwarded during this process,
+	 * there is a cyclic dependency. If so, we discard its
+	 * finalizer in order to prevent inconsistency. */
+	for(;;) {
+		sml_obj_enum_ptr(final->obj, trace_rec);
+		if (malloc_stack_top == NULL)
+			break;
+		sml_malloc_pop_and_mark(trace_rec, MAJOR);
+	}
+
+	if (MALLOC_HEAD(final->obj)->flags & MALLOC_FLAG_TRACED) {
+		sml_warn(0, "%p : circular finalizer detected."
+			 " The finalizer is discarded to prevent"
+			 " inconsistency.", final->obj);
+		final->finalizer = NULL;
+	}
+}
+
+static int
+each_activate_finalizer(void *item)
+{
+	struct finalizer *final = item;
+
+	if (final->finalizer == NULL)
+		return 1;
+
+	if (!(MALLOC_HEAD(final->obj)->flags & MALLOC_FLAG_TRACED)) {
+		DBG(("%p: activated", final->obj));
+		final->active = 1;
+		MALLOC_HEAD(final->obj)->flags |= MALLOC_FLAG_TRACED;
+	} else {
+		final->active = 0;
+	}
+	return 0;
+}
+
+void
+sml_check_finalizer(void (*trace_rec)(void **), enum sml_gc_mode mode)
+{
+	ASSERT(GIANT_LOCKED());
+
+	if (mode == MINOR)
+		return;
+
+	sml_tree_each(&finalizer_set, each_check_finalizer, &trace_rec);
+	sml_tree_reject(&finalizer_set, each_activate_finalizer);
+}
+
+static int
+each_run_finalizer(void *item)
+{
+	struct finalizer *final = item;
+
+	if (final->active) {
+		final->next = active_finalizers;
+		active_finalizers = final;
+		return 1;
+	}
+	return 0;
+}
+
 void *
-sml_add_finalizer(void *obj, sml_finalizer_fn *fn, void *data)
+sml_run_finalizer(void *reserved_obj)
 {
-	struct finalizer *finalizer;
-	/* ASSERT(IS_IN_HEAP_SPACE(sml_heap_from_space, obj)); */
+	struct finalizer *final, *next;
+	void **slot = NULL;
 
-	HEAP_LOCK();
-
-	finalizer = sml_obstack_extend(&finalizer_obstack,
-				       sizeof(struct finalizer));
-	finalizer->active = 0;
-	finalizer->obj = obj;
-	finalizer->finalize_fn = fn;
-	finalizer->data = data;
-	sml_write_barrier(&finalizer->obj, &finalizer_obstack);
-
-	HEAP_UNLOCK();
-	return obj;
-}
-
-void
-sml_check_finalizer(enum sml_gc_mode mode, int (*survived)(void *),
-		    sml_trace_cls *save)
-{
-	/* assume HEAP_LOCK'ed */
-	struct finalizer *start, *end, *i;
-
-	if (mode == MINOR) {
-#ifdef DEBUG
-		if (finalizer_obstack) {
-			start = sml_obstack_base(finalizer_obstack);
-			end = sml_obstack_next_free(finalizer_obstack);
-			for (i = start; i < end; i++)
-				ASSERT(survived(i->obj));
-		}
-#endif /* DEBUG */
-		return;
+	/* During execution of finalizers, garbage collection may occur
+	 * and eventually the new object allocated by the caller of
+	 * sml_run_finalizer may be lost. To protect the new object from
+	 * garbage collection, we put the new object to root set.
+	 */
+	if (reserved_obj) {
+		slot = sml_push_tmp_rootset(1);
+		*slot = reserved_obj;
+		OBJ_HEADER(reserved_obj) = OBJ_DUMMY_HEADER;
 	}
 
-	if (finalizer_obstack == NULL)
-		return;
+	GIANT_LOCK(NULL);
 
-	DBG(("check finalization"));
+	/* If there is at least one active finalizer, do nothing. */
+	if (active_finalizers != NULL) goto finished;
+	sml_tree_reject(&finalizer_set, each_run_finalizer);
 
-	start = sml_obstack_base(finalizer_obstack);
-	end = sml_obstack_next_free(finalizer_obstack);
-
-	for (i = start; i < end; i++) {
-		/* forward the finalizable object if the finalizer is
-		 * already in active. */
-		if (i->active) {
-			DBG(("%p: finalizer is active", i->obj));
-			(*save)(&i->obj, save);
-			continue;
-		}
-
-		/* keep inactive the finalizer if the finalizable object
-		 * survived. */
-		if (survived(i->obj)) {
-			DBG(("%p: survived", i->obj));
-			continue;
-		}
-
-		/* Forward all descendants of the finalizable object.
-		 * If the object itself is forwarded during this process,
-		 * there is a cyclic dependency. If the object is in cyclic
-		 * dependency, we discard its finalizer in order to prevent
-		 * inconsistency. */
-		sml_obj_enum_ptr(i->obj, save);
-		if (survived(i->obj)) {
-			sml_warn(0, "%p : cyclic finalizer. discarded.",
-				 i->obj);
-			i->finalize_fn = NULL;
-			continue;
-		}
-	}
-
-	DBG(("finalizer activation"));
-
-	for (i = start; i < end; i++) {
-		if (i->active)
-			continue;
-		/* activate finalizer if the object is not survived.
-		 * At this timing, every object with finalizer always
-		 * survives here whether the finalizer is active or not. */
-		i->active = !survived(i->obj);
-		(*save)(&i->obj, save);
-	}
-
-	DBG(("check finalizer end"));
-}
-
-void
-sml_run_finalizer()
-{
-	struct finalizer *start, *end, *i, *free;
-
-	if (finalizer_obstack == NULL)
-		return;
-
-	/* If GC is invoked from a finalizer function, do nothing. */
-	if (finalizer_is_running)
-		return;
+	GIANT_UNLOCK();
 
 	DBG(("run finalizer"));
 
-	finalizer_is_running = 1;
-	start = sml_obstack_base(finalizer_obstack);
-	end = sml_obstack_next_free(finalizer_obstack);
-
-	for (free = start, i = start; i < end; i++) {
-		if (!i->active) {
-			*(free++) = *i;
-			continue;
+	for (final = active_finalizers; final; final = next) {
+		next = final->next;
+		if (final->finalizer) {
+			DBG(("start finalizer for %p", final->obj));
+			final->finalizer(final->obj);
 		}
-		if (i->finalize_fn == NULL)
-			continue;
-
-		DBG(("start finalizer for %p", i->obj));
-		i->finalize_fn(i->obj, i->data);
+		free(final);
 	}
-	sml_obstack_shrink(&finalizer_obstack, free);
 
-	finalizer_is_running = 0;
+	DBG(("finished"));
 
-	DBG(("finalizer finished. %d remains.", free - start));
+	GIANT_LOCK(NULL);
+	active_finalizers = NULL;
+ finished:
+	GIANT_UNLOCK();
+	if (slot) {
+		reserved_obj = *slot;
+		sml_pop_tmp_rootset(slot);
+	}
+	return reserved_obj;
+}
+
+/**** callback closures ****/
+
+static int
+callback_cmp(void *x, void *y)
+{
+	struct callback_item *item1 = x, *item2 = y;
+	return voidp_cmp(item1->entry, item2->entry);
 }
 
 SML_PRIMITIVE void *
 sml_alloc_callback(unsigned int objsize, void *codeaddr, void *envobj)
 {
-	void **p, **entry, *obj, **slots;
+	/* NOTE: returned object may be stored an ML object pointer
+	 * without write barrier. sml_alloc_callback need to add
+	 * the resulting object to remembered set so that such an
+	 * ML pointer may be traced by the next minor collection. */
 
-	p = sml_splay_find(&callback_closures, codeaddr);
-	if (p == NULL) {
-		p = sml_splay_insert(&callback_closures, codeaddr);
-		*p = NULL;
-	} else {
-		for (entry = *p; entry; entry = entry[2]) {
-			if (sml_obj_equal(envobj, entry[1]))
-				return entry[0];
+	struct callback_item key, *item, *prev;
+
+	key.entry = codeaddr;
+
+	GIANT_LOCK(NULL);
+
+	prev = sml_tree_find(&callback_closures, &key);
+	if (prev != NULL) {
+		/* if a same closure is already created, return it. */
+		for (item = prev; item; item = item->next) {
+			if (sml_obj_equal(envobj, item->env)) {
+				malloc_barrier(item->closure);
+				GIANT_UNLOCK();
+				return item->closure;
+			}
 		}
 	}
 
-	slots = sml_push_tmp_rootset(1);
-	slots[0] = envobj;
-	entry = sml_obj_alloc(OBJTYPE_BOXED_VECTOR, sizeof(void*) * 3);
-	entry[0] = NULL;
-	entry[1] = slots[0];
-	entry[2] = *p;
-	*p = entry;
-	obj = sml_obj_malloc(objsize);
-	entry = *p;
-	entry[0] = obj;
+	/* using persistent_node_alloc is safe under the assumption that
+	 * sizeof(struct callback_item) == sizeof(struct sml_tree_node). */
+	item = persistent_node_alloc(sizeof(struct callback_item));
 
-	sml_pop_tmp_rootset(slots);
-	return obj;
+	item->entry = codeaddr;
+	item->next = prev;
+	item->env = envobj;
+	item->closure = NULL;
+ 	sml_tree_insert(&callback_closures, item);
+
+	/* remember callback item as a part of root set. */
+	sml_tree_insert(&global_barrier, &item->env);
+	sml_tree_insert(&global_barrier, &item->closure);
+
+	GIANT_UNLOCK();
+
+	/* assume that malloc returns memory with executable permission. */
+	item->closure = sml_obj_malloc(objsize);
+
+	return item->closure;
 }

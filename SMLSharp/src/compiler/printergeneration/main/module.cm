@@ -8,6 +8,7 @@ Group is
 	../../control/sources.cm
 	../../env/sources.cm
 	../../name/sources.cm
+	../../namemap/sources.cm
 	../../util/sources.cm
 	../../primitive/sources.cm
 	../../types/sources.cm
