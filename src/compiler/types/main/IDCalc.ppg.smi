@@ -135,7 +135,7 @@ struct
     | ICFFIEXPORT of icexp * ffiTy * Loc.loc
     | ICFFIAPPLY of Absyn.ffiAttributes option
                     * icexp * ffiArg list * ffiTy * Loc.loc
-    | ICSQLSERVER of (string * icexp) list * ty * Loc.loc
+    | ICSQLSERVER of string * ty * Loc.loc
     | ICSQLDBI of icpat * icexp * Loc.loc
     
   and ffiArg

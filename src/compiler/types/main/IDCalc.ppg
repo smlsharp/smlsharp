@@ -1534,21 +1534,17 @@ in
       ICFFIAPPLY of Absyn.ffiAttributes option
                     * icexp * ffiArg list * ffiTy * loc
     | (*%
-         @format(str strs * ty * loc)
-           N0{ "_sqlserver" + strs(str)("," +) + ":" + ty }
-         @format:str(str * exp)
-          N0{ str + "," + exp }
+         @format(str * ty * loc)
+           N0{ "_sqlserver" + str + ":" + ty }
        *)
       (*% @prefix formatWithType_
-         @format(str strs * ty * loc)
-           N0{ "_sqlserver" + strs(str)("," +) + ":" + ty }
-         @format:str(str * exp)
-          N0{ str + "," + exp }
+         @format(str * ty * loc)
+           N0{ "_sqlserver" + str + ":" + ty }
        *)
       (*% @prefix print_
-         @format(str strs * ty * loc)
+         @format(str * ty * loc)
        *)
-      ICSQLSERVER of (string * icexp) list * ty * loc
+      ICSQLSERVER of string * ty * loc
     | (*%
          @format(pat * exp * loc)
          "_sqldbi" + pat

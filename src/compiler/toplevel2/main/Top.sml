@@ -30,110 +30,13 @@ struct
          fixEnv = Elaborator.extendFixEnv (fixEnv, newFixEnv),
          builtinDecls = builtinDecls} : toplevelContext
       end
-(*
-  fun extendVersionEnv
-        ({topEnv, fixEnv, versionEnv, builtinDecls} : toplevelContext,
-         {topEnv=newTopEnv, fixEnv=newFixEnv} : newContext) =
-      {topEnv = topEnv,
-       versionEnv = NameEvalEnv.topEnvWithTopEnv (topEnv, newTopEnv),
-       fixEnv = fixEnv,
-       builtinDecls = builtinDecls} : toplevelContext
-*)
+
   val emptyNewContext =
       {
         topEnv = NameEvalEnv.emptyTopEnv,
         fixEnv = SEnv.empty
       } : newContext
 
-(*
-  val Counter.CounterSetInternal TopCounterSet =
-      #addSet Counter.root "Top"
-  val Counter.CounterSetInternal ElapsedCounterSet =
-      #addSet TopCounterSet "elapsed time"
-
-  val parseTimeCounter =
-      #addElapsedTime ElapsedCounterSet "parse"
-  val loadFileTimeCounter =
-      #addElapsedTime ElapsedCounterSet "loadfile"
-  val generateMainTimeCounter =
-      #addElapsedTime ElapsedCounterSet "generateMain"
-  val elaborationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "elaboration"
-  val nameEvaluationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "name eval"
-  val valRecOptimizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "val rec optimize"
-  val fundeclElaborationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "fundecl optimize"
-  val typeInferenceTimeCounter =
-      #addElapsedTime ElapsedCounterSet "type inference"
-  val printerGenerationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "printer generation"
-  val UncurryOptimizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "uncurry optimize"
-  val matchCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "match compilation"
-  val sqlCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "SQL compilation"
-  val ffiCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "FFI compilation"
-  val recordCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "record compilation"
-  val datatypeCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "datatype compilation"
-  val staticAnalysisTimeCounter =
-      #addElapsedTime ElapsedCounterSet "static annalysis"
-  val recordUnboxingTimeCounter =
-      #addElapsedTime ElapsedCounterSet "record unboxing"
-(*
-  val inliningTimeCounter =
-      #addElapsedTime ElapsedCounterSet "inlining"
-  val mvOptimizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "multiple value optimization"
-*)
-  val bitmapCompilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "bitmap compilation"
-  val bitmapANormalizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "bitmap A-normlization"
-  val bitmapANormalReorderTimeCounter =
-      #addElapsedTime ElapsedCounterSet "bitmap A-normal reorder"
-  val typeCheckBitmapANormalTimeCounter =
-      #addElapsedTime ElapsedCounterSet "typecheck bitmapAN"
-  val closureConversionTimeCounter =
-      #addElapsedTime ElapsedCounterSet "closure conversion"
-  val toYAANormalTimeCounter =
-      #addElapsedTime ElapsedCounterSet "toYAANormal"
-(*
-  val functionLocalizeTimeCounter =
-      #addElapsedTime ElapsedCounterSet "function localization"
-*)
-  val anormalOptimizationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "anormal optimization"
-  val staticAllocationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "static allocation"
-  val aigenerationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "aigeneration"
-  val rtlselectTimeCounter =
-      #addElapsedTime ElapsedCounterSet "rtl select"
-  val rtlTypecheckTimeCounter =
-      #addElapsedTime ElapsedCounterSet "rtl typecheck"
-  val rtlstabilizeTimeCounter =
-      #addElapsedTime ElapsedCounterSet "rtl stabilize"
-  val rtlrenameTimeCounter =
-      #addElapsedTime ElapsedCounterSet "rtl rename"
-  val rtlcoloringTimeCounter =
-      #addElapsedTime ElapsedCounterSet "rtl coloring"
-  val rtlframeTimeCounter =
-      #addElapsedTime ElapsedCounterSet "rtl frame"
-  val rtlemitTimeCounter =
-      #addElapsedTime ElapsedCounterSet "rtl emit"
-  val rtlasmgenTimeCounter =
-      #addElapsedTime ElapsedCounterSet "rtl asmgen"
-  val assembleTimeCounter =
-      #addElapsedTime ElapsedCounterSet "assemble"
-  val compilationTimeCounter =
-      #addElapsedTime ElapsedCounterSet "compilation"
-*)
   val errorOutput = TextIO.stdErr
   fun printError msg = TextIO.output (errorOutput, msg)
   fun flushError () = TextIO.flushOut errorOutput
@@ -753,7 +656,7 @@ struct
             then NameEvalEnvUtils.mergeTypeEnv (nameevalTopEnv, typeinfVarE)
             else nameevalTopEnv
 
-        val (_, tpcalc) = if !Control.interactiveMode
+        val (_, tpcalc) = if !Control.interactiveMode andalso not (!Control.skipPrinter)
                      then doPrinterGeneration (nameevalTopEnv, tpcalc)
                      else (nameevalTopEnv, tpcalc)
 

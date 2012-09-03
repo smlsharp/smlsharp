@@ -818,17 +818,16 @@ struct
 
   and rcsqlexp =
       (*%
-       * @format({server:str strs, schema:schema schemas})
-       * N0{ "_sqlserver" + strs(str)("," +) + ":"
+       * @format({server, schema:schema schemas})
+       * N0{ "_sqlserver" + server + ":"
        *     + schemas:enclosedLabelEnv(schema)("{",",","=","}") }
-       * @format:str(l * e) N0{ l + ":" + e()(btvEnv) }
        * @format:schema(ty tys) tys:enclosedLabelEnv(ty()(btvEnv))("{",",","=","}")
        *)
       (*% @prefix formatWithoutType_
-       * @format({server:str strs, schema:schema schemas})
+       * @format({server, schema:schema schemas})
        * "<<SQL>>"
        *)
-      RCSQLSERVER of {server: (string * rcexp) list,
+      RCSQLSERVER of {server: string,
                       schema: ty LabelEnv.map LabelEnv.map}
 
   and rcffiexp =

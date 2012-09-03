@@ -1,3 +1,16 @@
+SML# version 1.0.3 (released on 2012-06-25)
+
+Fixed bugs:
+* Fixed a bug of type inference phase.
+* Fixed a bug that some form of polymorphic record selector caused a
+  runtime error.
+* Fixed a bug that accepted duplicate labels in a record expression
+  in some cases.
+* Fixed a bug of evaluation of comparison operators with two constant
+  literals.
+* Fixed a bug of elaboration of "withtype" of "abstype" declaration.
+
+-----------------------------------------------------------------------------
 SML# version 1.0.2 (released on 2012-05-14)
 
 Fixed bugs:

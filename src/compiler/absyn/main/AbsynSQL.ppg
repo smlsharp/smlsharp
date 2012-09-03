@@ -52,11 +52,10 @@ struct
        *)
       SQLFN of 'pat * 'exp command * Loc.loc
     | (*%
-       * @format(str strs * ty * loc)
-       * N0{ "_sqlserver" +d "\"" strs(str)("," +) "\"" +1 ":" +d ty }
-       * @format:str(label * value) N0{ label + "=" + value }
+       * @format(str * ty * loc)
+       * N0{ "_sqlserver" +d "\"" str "\"" +1 ":" +d ty }
        *)
-      SQLSERVER of (string * 'exp) list * 'ty * Loc.loc
+      SQLSERVER of string * 'ty * Loc.loc
     | (*%
        * @format(exp * loc) "_sqlexec" +d exp
        *)

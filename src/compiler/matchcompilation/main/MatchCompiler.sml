@@ -128,8 +128,7 @@ local
             | TC.TPFFIIMPORT {ptrExp, ffiTy, stubTy, loc} => get(ptrExp, set)
             | TC.TPCAST (tpexp, ty, loc) => get(tpexp, set)
             | TC.TPSIZEOF (ty, loc) => set
-            | TC.TPSQLSERVER {server, schema, resultTy, loc} =>
-              foldl (fn ((l,exp), set)=>get(exp,set)) set server
+            | TC.TPSQLSERVER {server, schema, resultTy, loc} => set
         and getDecl (decl, set) =
             case decl of
               TC.TPVAL (valIdTpexpList, loc) =>
@@ -309,7 +308,7 @@ in
         | TC.TPCAST (tpexp, ty, loc) =>
           limitCheck (Exp tpexp :: itemList) (n + 1)
         | TC.TPSQLSERVER {server, schema, resultTy, loc} =>
-            limitCheck (map (Exp o #2) server @ itemList) (n + 1)
+            limitCheck itemList (n + 1)
 
 
       and limitCheckDecl tfpdecl itemList n = 
@@ -1473,11 +1472,7 @@ in
          RC.RCCAST(tpexpToRcexp varEnv btvEnv exp, ty, loc)
       | TC.TPSQLSERVER {server, schema, resultTy, loc} =>
         RC.RCSQL
-          (RC.RCSQLSERVER
-             {server =
-              map (fn (l,e) => (l,tpexpToRcexp varEnv btvEnv e)) server,
-              schema = schema},
-           resultTy, loc)
+          (RC.RCSQLSERVER {server = server, schema = schema}, resultTy, loc)
 
   and tpdecToRcdec varEnv btvEnv tpdec = 
       case tpdec of

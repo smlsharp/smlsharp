@@ -214,7 +214,7 @@ struct
                       tyvarsList (tyvarsFFIArg btvEnv) args),
                tyvarsFFIty btvEnv ffiTy)
       | P.PLSQLSERVER (rows, ty, loc) =>
-        union (tyvarsList (tyvarsRow btvEnv) rows, tyvarsTy btvEnv ty)
+        tyvarsTy btvEnv ty
       | P.PLSQLDBI (pat, exp, loc) =>
         union (tyvarsPat btvEnv pat, tyvarsExp btvEnv exp)
 
@@ -340,8 +340,7 @@ struct
         P.PLFFIAPPLY (attr, decideExp btvEnv exp,
                       map (decideFFIArg btvEnv) args,
                       ffiTy, loc)
-      | P.PLSQLSERVER (rows, ty, loc) =>
-        P.PLSQLSERVER (map (decideRow btvEnv) rows, ty, loc)
+      | P.PLSQLSERVER (str, ty, loc) => exp
       | P.PLSQLDBI (pat, exp, loc) =>
         P.PLSQLDBI (pat, decideExp btvEnv exp, loc)
 

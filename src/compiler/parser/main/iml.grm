@@ -551,23 +551,11 @@ exp : appexp (appexp)
     | CAST LPAREN exp RPAREN (Absyn.EXPCAST(exp,(CASTleft,RPARENright)))
     | SQLSERVER COLON ty
         (Absyn.EXPSQL
-           (AbsynSQL.SQLSERVER(nil,ty,(SQLSERVERleft,tyright)),
+           (AbsynSQL.SQLSERVER("",ty,(SQLSERVERleft,tyright)),
             (SQLSERVERleft,tyright)))
     | SQLSERVER STRING COLON ty
-        (let
-           val const = Absyn.STRING(STRING,(STRINGleft,STRINGright))
-           val constExp = Absyn.EXPCONSTANT(const,(STRINGleft,STRINGright))
-           val loc = (SQLSERVERleft,tyright)
-         in
-           Absyn.EXPSQL (AbsynSQL.SQLSERVER([("",constExp)],ty,loc), loc)
-         end)
-    | SQLSERVER LPAREN atexp RPAREN COLON ty
         (Absyn.EXPSQL
-           (AbsynSQL.SQLSERVER([("",atexp)],ty,(SQLSERVERleft,tyright)),
-            (SQLSERVERleft,tyright)))
-    | SQLSERVER sqlserver COLON ty
-        (Absyn.EXPSQL
-           (AbsynSQL.SQLSERVER(sqlserver,ty,(SQLSERVERleft,tyright)),
+           (AbsynSQL.SQLSERVER(STRING,ty,(SQLSERVERleft,tyright)),
             (SQLSERVERleft,tyright)))
 
 expOrSQL : exp (exp)
@@ -575,8 +563,6 @@ expOrSQL : exp (exp)
              (Absyn.EXPSQL
                 (AbsynSQL.SQLFN (pat, sql, (SQLleft, sqlright)),
                  (SQLleft, sqlright)))
-
-sqlserver : LPAREN exprow RPAREN (exprow)
 
 (*
 match : mrule                        ([mrule])

@@ -139,7 +139,7 @@ structure RecordCalc =
       | RCVAR of varInfo * loc
     and rcsqlexp
       = RCSQLSERVER of {schema:ty LabelEnv.map LabelEnv.map,
-                        server:(string * rcexp) list}
+                        server:string}
     and rcffiexp = RCFFIIMPORT of {ffiTy:TypedCalc.ffiTy, ptrExp:rcexp}
     and rcdecl
       = RCEXD of {exnInfo:exnInfo, loc:loc} list * loc

@@ -310,30 +310,9 @@ struct
          witness = Record (map #witness tables, loc)}
       end
 
-  fun compileServerDesc (fields, loc) =
-      let
-        val fields =
-            map (fn ("", exp) => ("", exp)
-                  | (label, exp) => (label ^ " = ", exp))
-                fields
-      in
-        case fields of
-          nil => StringConst ("", loc)
-        | (l,e)::t =>
-          foldl
-            (fn ((l,e),r) =>
-                StringConcat
-                  (StringConcat (r, StringConst (" " ^ l, loc), loc),
-                   (e, BE.STRINGty), loc))
-            (case l of "" => (e, BE.STRINGty)
-                     | _ => StringConcat (StringConst (l, loc),
-                                          (e, BE.STRINGty), loc))
-            t
-      end
-
   fun compileSQLServer (server, schema, resultTy, loc) =
       let
-        val server = compileServerDesc (server, loc)
+        val server = StringConst (server, loc)
         val {schema, witness} = compileSchema (schema, loc)
         val conInfo = BE.lookupCon BuiltinName.sqlServerConName
         val instTyList = case TypesUtils.derefTy resultTy of
@@ -350,11 +329,7 @@ struct
   fun compileSqlexp (rcsqlexp, resultTy, loc) =
       case rcsqlexp of
         R.RCSQLSERVER {server, schema} =>
-        let
-          val server = map (fn (l, e) => (l, compileExp e)) server
-        in
-          compileSQLServer (server, schema, resultTy, loc)
-        end
+        compileSQLServer (server, schema, resultTy, loc)
 
   and compileExp rcexp =
       case rcexp of

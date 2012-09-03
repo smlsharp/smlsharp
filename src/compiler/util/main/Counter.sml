@@ -342,7 +342,7 @@ struct
     fun reset counters () =
         app
             (fn {reset, ...} : counter => reset ())
-            (listCounters counters ORDER_BY_NAME)
+            (listCounters counters ORDER_OF_ADDITION)
     fun addSet counters name =
         let
           val newCounters = createEmptyCounters ()
@@ -373,9 +373,7 @@ struct
   in
     val CounterSetInternal root = addSet rootSet "/"
     fun dump () = 
-        (#toString (hd(listCounters rootSet ORDER_OF_ADDITION)) ORDER_OF_ADDITION "")
-          ^
-        (#toString (hd(listCounters rootSet ORDER_OF_ADDITION)) ORDER_BY_TIME "")
+        #toString (hd(listCounters rootSet ORDER_OF_ADDITION)) ORDER_BY_TIME ""
     val reset = fn () => reset rootSet ()
   end
 

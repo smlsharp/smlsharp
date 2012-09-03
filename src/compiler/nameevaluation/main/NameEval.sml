@@ -237,6 +237,11 @@ local
                 in
                   (returnEnv, (l, icpat))
                 end
+            val _ = EU.checkNameDuplication
+                      (fn (name, _) => name)
+                      patfieldList
+                      loc
+                      (fn s => E.DuplicateRecordLabelInPat("085",s))
             val (returnEnv, icpatfieldList) =
                 U.evalList
                   {eval=evalField,
@@ -299,6 +304,7 @@ local
 
   fun optimizeValBind (icpat, icexp) (icpatIcexpListRev, env) = 
       let
+(*
         val _ = U.print "icpat\n"
         val _ = U.printPat icpat
         val _ = U.print "\n"
@@ -308,6 +314,7 @@ local
         val _ = U.print "env\n"
         val _ = U.printEnv env
         val _ = U.print "\n"
+*)
       in
         case icpat of 
           I.ICPATVAR (varInfo as {path,...}, loc) => 
@@ -332,6 +339,7 @@ local
           end
         | _ => ((icpat, icexp)::icpatIcexpListRev, env)
       end
+
   (* P.PLCOREDEC (pdecl, loc) *)
   fun evalPdecl (path:I.path) (tvarEnv:Ty.tvarEnv) (env:V.env) pdecl
       : V.env * I.icdecl list =
@@ -696,14 +704,28 @@ local
                      loc)
           end
         | P.PLRECORD (expfieldList, loc) =>
-          I.ICRECORD (map (fn (l, exp)=>(l,evalExp exp)) expfieldList, loc)
+          let
+            val _ = EU.checkNameDuplication
+                      (fn (name, _) => name)
+                      expfieldList
+                      loc
+                      (fn s => E.DuplicateRecordLabelInExp("192",s))
+            val expfieldList = map (fn (l, exp)=>(l,evalExp exp)) expfieldList
+          in
+            I.ICRECORD (expfieldList, loc)
+          end
         | P.PLRECORD_UPDATE (plexp, expfieldList, loc) =>
-          I.ICRECORD_UPDATE
-            (
-             evalExp plexp,
-             map (fn (label, exp) => (label, evalExp exp)) expfieldList,
-             loc
-            )
+          let
+            val icexp = evalExp plexp
+            val _ = EU.checkNameDuplication
+                      (fn (name, _) => name)
+                      expfieldList
+                      loc
+                      (fn s => E.DuplicateRecordLabelInUpdate("194",s))
+            val expfieldList = map (fn (l, exp)=>(l,evalExp exp)) expfieldList
+          in
+            I.ICRECORD_UPDATE (icexp, expfieldList, loc)
+          end
         | P.PLRAISE (plexp, loc) => I.ICRAISE (evalExp plexp, loc)
         | P.PLHANDLE (plexp, plpatPlexpList, loc) =>
           I.ICHANDLE
@@ -772,14 +794,8 @@ local
                loc
               )
           end
-        | P.PLSQLSERVER (stringPlexpList, ty, loc) =>
-          I.ICSQLSERVER
-            (
-             map (fn (string, plexp) => (string, evalExp plexp))
-                 stringPlexpList,
-             evalTy' ty,
-             loc
-            )
+        | P.PLSQLSERVER (str, ty, loc) =>
+          I.ICSQLSERVER (str, evalTy' ty, loc)
         | P.PLSQLDBI (plpat, plexp, loc) =>
           let
             val (newEnv, icpat) = evalPat plpat
@@ -967,16 +983,6 @@ local
          funId:FunctorID.id, 
          argId:StructureID.id} = 
       let
-
-
-val _ = U.print "applyFunctor\n"
-val _ = U.print "funName\n"
-val _ = U.print funName
-val _ = U.print "\n"
-val _ = U.print "argPath\n"
-val _ = U.printPath argPath
-val _ = U.print "\n"
- 
       (*
           1. eliminate TSTR_TOTVAR and generate tvarSubst;
              TSTR_TOTVAR tvar vs TSTR tfun =>
@@ -1141,14 +1147,7 @@ val _ = U.print "\n"
               SOME funEEntry => funEEntry
             | NONE => raise FunIDUndefind
 
-       val _ = used := true
-
-val _ = U.print "funEEntry\n"
-val _ = U.printFunEEntry funEEntry
-val _ = U.print "\n"
-val _ = U.print "funName\n"
-val _ = U.print funName
-val _ = U.print "\n"
+        val _ = used := true
 
         val ((actualArgEnv, actualArgDecls), argId) =
             let

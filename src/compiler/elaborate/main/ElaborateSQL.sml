@@ -260,9 +260,7 @@ struct
                        ty, loc)
       | A.EXPSQL (S.SQLFIELDSELECT (label, exp, loc), _) =>
         f (label, substSQLexp f exp, loc)
-      | A.EXPSQL (S.SQLSERVER (str, schema, loc), loc2) =>
-        A.EXPSQL (S.SQLSERVER (map (fn (x, y) => (x, substSQLexp f y)) str,
-                               schema, loc), loc2)
+      | A.EXPSQL (S.SQLSERVER (str, schema, loc), loc2) => exp
       | A.EXPSQL (S.SQLFN _, _) => exp
       | A.EXPSQL (S.SQLEXEC _, _) => exp
       | A.EXPSQL (S.SQLEVAL _, _) => exp
@@ -816,35 +814,7 @@ struct
                      loc),
              loc)
         end
-      | S.SQLSERVER (strs, schema, loc) =>
-        let
-          val _ = UserErrorUtils.checkNameDuplication
-                    #1 strs loc
-                    ElaborateErrorSQL.DuplicateSQLRecordLabel
-          fun isAvailableLabel s =
-              s = "" orelse
-              s = "dbname" orelse
-              s = "host" orelse
-              s = "hostaddr" orelse
-              s = "port" orelse
-              s = "user" orelse
-              s = "password" orelse
-              s = "connect_timeout" orelse
-              s = "options" orelse
-              s = "tty" orelse
-              s = "sslmode" orelse
-              s = "requiressl" orelse
-              s = "krbsrvname" orelse
-              s = "gsslib" orelse
-              s = "service"
-          val strs =
-              map (fn (l,v) =>
-                      if (isAvailableLabel l)
-                      then (l, elabExp v)
-                      else raise ElaborateErrorSQL.NotAvailableSQLKeyword l)
-                  strs
-        in
-          P.PLSQLSERVER (strs, schema, loc)
-        end
+      | S.SQLSERVER (str, schema, loc) =>
+        P.PLSQLSERVER (str, schema, loc)
 
 end
