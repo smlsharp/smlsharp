@@ -76,8 +76,8 @@ struct
 
   type globalIndexAllocator =
       {
-        find: ExternalVarID.id -> AI.globalIndex option,
-        alloc: ExternalVarID.id * ANormal.ty -> unit
+        find: ExVarID.id -> AI.globalIndex option,
+        alloc: ExVarID.id * ANormal.ty -> unit
       }
 
   val globalIndexAllocatorRef = ref NONE : globalIndexAllocator option ref
@@ -88,7 +88,7 @@ struct
       | SOME globalIndexAllocator =>
         case #find globalIndexAllocator extId of
           NONE => raise Control.Bug ("findGlobalIndex: undefined external ID"
-                                     ^ExternalVarID.toString extId)
+                                     ^ExVarID.toString extId)
         | SOME index => SOME (AI.GLOBAL_VAR index)
 
   fun allocGlobalIndex extId ty =

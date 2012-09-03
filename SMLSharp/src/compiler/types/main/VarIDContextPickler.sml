@@ -19,7 +19,7 @@ struct
                       (fn (VIC.External x) => x
                         | _ => raise Control.Bug "non EXTERNAL to pu_EXTERNAL"
                       )
-                      (ExternalVarID.pu_ID)
+                      (ExVarID.pu_ID)
 
               fun pu_INTERNAL pu =
                   P.con1

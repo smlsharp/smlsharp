@@ -12,7 +12,7 @@ structure MP = MultipleValueCalcPickler
 structure ATP = AnnotatedTypesPickler
 structure MV = MultipleValueCalc
 
-structure GlobalEnvPickler = OrdMapPickler(ExternalVarID.Map)
+structure GlobalEnvPickler = OrdMapPickler(ExVarID.Map)
 
 
 val globalInlineInfo = 
@@ -39,7 +39,7 @@ val globalInlineInfo =
 	P.data (toInt, [pu_GFN, pu_GPFN, pu_GSIMPLE])
     end
 
-val gmapP = GlobalEnvPickler.map (ExternalVarID.pu_ID, globalInlineInfo)
+val gmapP = GlobalEnvPickler.map (ExVarID.pu_ID, globalInlineInfo)
 
 in
 

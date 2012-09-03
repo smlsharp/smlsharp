@@ -45,6 +45,9 @@ struct
       in
         ()
       end
+  (* ToDo : tests fromList with a list the length of which is greater than
+   * S.maxLen. But SML/NJ aborts on creation of such a long list. *)
+
   end (* local *)
 
   (********************)
@@ -59,12 +62,16 @@ struct
         val tabulate0 = test 0 []
         val tabulate1 = test 1 [n0]
         val tabulate2 = test 2 [n0, n1]
-        val tabulatem1 =
-            (S.tabulate (~1, tabulateFun); fail "tabulate")
+      in () end
+  fun tabulate101 () =
+      let
+        val tabulate_m1 =
+            (S.tabulate (~1, tabulateFun); fail "tabulate(~1)")
             handle General.Size => ()
-      in
-        ()
-      end
+        val tabulate_maxLenPlus1 =
+            (S.tabulate (S.maxLen + 1, tabulateFun); fail "tabulate(maxLen+1)")
+            handle General.Size => ()
+      in () end
   end (* local *)
 
   (********************)
@@ -426,6 +433,7 @@ struct
       [
         ("fromList001", fromList001),
         ("tabulate001", tabulate001),
+        ("tabulate101", tabulate101),
         ("length001", length001),
         ("sub001", sub001),
         ("appi001", appi001),

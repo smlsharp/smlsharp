@@ -11,8 +11,8 @@ struct
 
   structure A = SMLUnit.Assert
   structure T = SMLUnit.Test
-  structure AD = AssertDate
-  structure AT = AssertTime
+  structure AD = SMLUnit.Assert.AssertDate
+  structure AT = SMLUnit.Assert.AssertTime
   open A
   open AD
 
@@ -149,6 +149,59 @@ struct
         val _ = assertEqualInt 0 (D.minute d)
         val _ = assertEqualInt 0 (D.second d)
         val _ = assertEqualTimeOption (SOME(Time.fromSeconds 1)) (D.offset d)
+      in () end
+
+  fun date_leap_001 () =
+      let
+        (* Because 1987 is not leap year, Feb 29 is canonicalized to Mar 1. *)
+        val d = D.date (makeDate (1987, D.Feb, 29, 0, 0, 0, NONE))
+        val _ = assertEqualInt 1987 (D.year d)
+        val _ = assertEqualMonth D.Mar (D.month d)
+        val _ = assertEqualInt 1 (D.day d)
+        val _ = assertEqualInt 0 (D.hour d)
+        val _ = assertEqualInt 0 (D.minute d)
+        val _ = assertEqualInt 0 (D.second d)
+        val _ = assertEqualTimeOption NONE (D.offset d)
+      in () end
+
+  fun date_leap_002 () =
+      let
+        (* Because 1988 is a leap year, Feb 29 is unchanged. *)
+        val d = D.date (makeDate (1988, D.Feb, 29, 0, 0, 0, NONE))
+        val _ = assertEqualInt 1988 (D.year d)
+        val _ = assertEqualMonth D.Feb (D.month d)
+        val _ = assertEqualInt 29 (D.day d)
+        val _ = assertEqualInt 0 (D.hour d)
+        val _ = assertEqualInt 0 (D.minute d)
+        val _ = assertEqualInt 0 (D.second d)
+        val _ = assertEqualTimeOption NONE (D.offset d)
+      in () end
+
+  fun date_leap_003 () =
+      let
+        (* Because 1900 is NOT a leap year,
+         * Feb 29 is canonicalized to Mar 1. *)
+        val d = D.date (makeDate (1900, D.Feb, 29, 0, 0, 0, NONE))
+        val _ = assertEqualInt 1900 (D.year d)
+        val _ = assertEqualMonth D.Mar (D.month d)
+        val _ = assertEqualInt 1 (D.day d)
+        val _ = assertEqualInt 0 (D.hour d)
+        val _ = assertEqualInt 0 (D.minute d)
+        val _ = assertEqualInt 0 (D.second d)
+        val _ = assertEqualTimeOption NONE (D.offset d)
+      in () end
+
+  fun date_leap_004 () =
+      let
+        (* Because 2000 is a leap year, Feb 29 is unchanged. *)
+        val d = D.date (makeDate (2000, D.Feb, 29, 0, 0, 0, NONE))
+        val _ = assertEqualInt 2000 (D.year d)
+        val _ = assertEqualMonth D.Feb (D.month d)
+        val _ = assertEqualInt 29 (D.day d)
+        val _ = assertEqualInt 0 (D.hour d)
+        val _ = assertEqualInt 0 (D.minute d)
+        val _ = assertEqualInt 0 (D.second d)
+        val _ = assertEqualTimeOption NONE (D.offset d)
       in () end
 
   (********************)
@@ -509,6 +562,10 @@ struct
         ("date_offset_1sec", date_offset_1sec),
         ("date_offset_1hour", date_offset_1hour),
         ("date_offset_over24h", date_offset_over24h),
+        ("date_leap_001", date_leap_001),
+        ("date_leap_002", date_leap_002),
+        ("date_leap_003", date_leap_003),
+        ("date_leap_004", date_leap_004),
         ("year0001", year0001),
         ("month0001", month0001),
         ("day0001", day0001),

@@ -17,10 +17,7 @@ struct
 
   local
     fun testSuccess value1 value2 =
-        if Assert.assertEqualAlternatives Assert.assertEqualInt value1 value2
-           = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualAlternatives Assert.assertEqualInt value1 value2
     fun testFailure value1 value2 =
         (Assert.assertEqualAlternatives Assert.assertEqualInt value1 value2;
         raise TestFail)
@@ -68,9 +65,7 @@ struct
       let
         val value = 100
       in
-        (if Assert.assertEqualInt value value = value
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualInt value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -89,9 +84,7 @@ struct
       let
         val value = Word.fromInt 100
       in
-        (if Assert.assertEqualWord value value = value
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualWord value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -110,9 +103,7 @@ struct
       let
         val value = Word8.fromInt 100
       in
-        (if Assert.assertEqualWord8 value value = value
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualWord8 value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -131,9 +122,7 @@ struct
       let
         val value = Word32.fromInt 100
       in
-        (if Assert.assertEqualWord32 value value = value
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualWord32 value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -152,9 +141,7 @@ struct
       let
         val value = 1.234
       in
-        (if Real.== (Assert.assertEqualReal value value, value)
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualReal value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -173,9 +160,7 @@ struct
       let
         val value = #"a"
       in
-        (if Assert.assertEqualChar value value = value
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualChar value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -194,9 +179,7 @@ struct
       let
         val value = "a"
       in
-        (if Assert.assertEqualString value value = value
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualString value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -204,9 +187,7 @@ struct
       let
         val value = ""
       in
-        (if Assert.assertEqualString value value = value
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualString value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -214,9 +195,7 @@ struct
       let
         val value = "abcdefghijklmnopqrstuvwxyz "
       in
-        (if Assert.assertEqualString value value = value
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualString value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -253,11 +232,7 @@ struct
       let
         val value = Substring.full "a"
       in
-        (if
-           Substring.compare (Assert.assertEqualSubstring value value, value) =
-           EQUAL
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualSubstring value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -265,11 +240,7 @@ struct
       let
         val value = Substring.full ""
       in
-        (if
-           Substring.compare (Assert.assertEqualSubstring value value, value) =
-           EQUAL
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualSubstring value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -277,11 +248,7 @@ struct
       let
         val value = Substring.full "abcdefghijklmnopqrstuvwxyz "
       in
-        (if 
-           Substring.compare (Assert.assertEqualSubstring value value, value) =
-           EQUAL
-         then ()
-         else raise TestFail)
+        (Assert.assertEqualSubstring value value)
         handle Assert.Fail message => raise TestFail
       end
 
@@ -321,10 +288,7 @@ struct
         val message = "test"
         val value = TestException message
       in
-        case Assert.assertEqualExceptionName value value
-         of TestException errorMessage =>
-            if message = errorMessage then () else raise TestFail
-          | _ => raise TestFail
+        Assert.assertEqualExceptionName value value
       end
 
   fun testEqualExceptionName0002 () =
@@ -334,10 +298,7 @@ struct
         val value1 = TestException message1
         val value2 = TestException message2
       in
-        case Assert.assertEqualExceptionName value1 value2
-         of TestException errorMessage =>
-            if message2 = errorMessage then () else raise TestFail
-          | _ => raise TestFail
+        Assert.assertEqualExceptionName value1 value2
       end
 
   fun testEqualExceptionName0003 () =
@@ -396,9 +357,7 @@ struct
       let
         val value = ref 1
       in
-        if Assert.assertEqualRef Assert.assertEqualInt value value = value
-        then ()
-        else raise TestFail
+        Assert.assertEqualRef Assert.assertEqualInt value value
       end
 
   fun testAssertEqualRef0002 () =
@@ -410,9 +369,7 @@ struct
         val value1 = ref 1
         val value2 = ref 1
       in
-        if Assert.assertEqualRef Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualRef Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualRef0003 () =
@@ -434,9 +391,7 @@ struct
       let
         val value = ref 1
       in
-        if Assert.assertSameRef value value = value
-        then ()
-        else raise TestFail
+        Assert.assertSameRef value value
       end
 
   fun testAssertSameRef0002 () =
@@ -469,18 +424,14 @@ struct
       let
         val value = true
       in
-        if Assert.assertEqualBool value value = value
-        then ()
-        else raise TestFail
+        Assert.assertEqualBool value value
       end
 
   fun testAssertEqualBool0002 () =
       let
         val value = false
       in
-        if Assert.assertEqualBool value value = value
-        then ()
-        else raise TestFail
+        Assert.assertEqualBool value value
       end
 
   fun testAssertEqualBool0003 () =
@@ -488,7 +439,7 @@ struct
         val value1 = true
         val value2 = false
       in
-        (Assert.assertEqualBool value1 value2 = value2; raise TestFail)
+        (Assert.assertEqualBool value1 value2; raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
@@ -498,7 +449,7 @@ struct
         val value1 = false
         val value2 = true
       in
-        (Assert.assertEqualBool value1 value2 = value2; raise TestFail)
+        (Assert.assertEqualBool value1 value2; raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
@@ -509,9 +460,7 @@ struct
       let
         val value = true
       in
-        if Assert.assertTrue value = value
-        then ()
-        else raise TestFail
+        Assert.assertTrue value
       end
 
   fun testAssertTrue0002 () =
@@ -529,9 +478,7 @@ struct
       let
         val value = false
       in
-        if Assert.assertFalse value = value
-        then ()
-        else raise TestFail
+        Assert.assertFalse value
       end
 
   fun testAssertFalse0002 () =
@@ -549,18 +496,14 @@ struct
       let
         val value = SOME 1
       in
-        if Assert.assertEqualOption Assert.assertEqualInt value value = value
-        then ()
-        else raise TestFail
+        Assert.assertEqualOption Assert.assertEqualInt value value
       end
 
   fun testAssertEqualOption0002 () =
       let
         val value = NONE
       in
-        if Assert.assertEqualOption Assert.assertEqualInt value value = value
-        then ()
-        else raise TestFail
+        Assert.assertEqualOption Assert.assertEqualInt value value
       end
 
   fun testAssertEqualOption0003 () =
@@ -595,9 +538,7 @@ struct
       let
         val value = SOME 1
       in
-        if Assert.assertSome value = value
-        then ()
-        else raise TestFail
+        Assert.assertSome value
       end
 
   fun testAssertSome0002 () =
@@ -615,9 +556,7 @@ struct
       let
         val value = NONE
       in
-        if Assert.assertNone value = value
-        then ()
-        else raise TestFail
+        Assert.assertNone value
       end
 
   fun testAssertNone0002 () =
@@ -636,9 +575,7 @@ struct
         val value1 = LESS
         val value2 = LESS
       in
-        if Assert.assertEqualOrder value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualOrder value1 value2
       end
 
   fun testAssertEqualOrderLE () =
@@ -676,9 +613,7 @@ struct
         val value1 = EQUAL
         val value2 = EQUAL
       in
-        if Assert.assertEqualOrder value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualOrder value1 value2
       end
 
   fun testAssertEqualOrderEG () =
@@ -716,9 +651,7 @@ struct
         val value1 = GREATER
         val value2 = GREATER
       in
-        if Assert.assertEqualOrder value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualOrder value1 value2
       end
 
   (****************************************)
@@ -728,16 +661,10 @@ struct
         val value1 = (1, true)
         val value2 = (1, true)
       in
-        if
           Assert.assertEqual2Tuple
           (Assert.assertEqualInt, Assert.assertEqualBool)
           value1
-          value2 =
           value2
-        then
-          ()
-        else
-          raise TestFail
       end
 
   fun testAssertEqual2Tuple0002 () =
@@ -775,7 +702,6 @@ struct
         val value1 = (1, true, "foo")
         val value2 = (1, true, "foo")
       in
-        if
           Assert.assertEqual3Tuple
           (
             Assert.assertEqualInt,
@@ -783,12 +709,7 @@ struct
             Assert.assertEqualString
           )
           value1
-          value2 =
           value2
-        then
-          ()
-        else
-          raise TestFail
       end
 
   fun testAssertEqual3Tuple0002 () =
@@ -852,7 +773,6 @@ struct
         val value1 = (1, true, "foo", 0w1)
         val value2 = (1, true, "foo", 0w1)
       in
-        if
           Assert.assertEqual4Tuple
           (
             Assert.assertEqualInt,
@@ -861,12 +781,7 @@ struct
             Assert.assertEqualWord
           )
           value1
-          value2 =
           value2
-        then
-          ()
-        else
-          raise TestFail
       end
 
   fun testAssertEqual4Tuple0002 () =
@@ -952,7 +867,6 @@ struct
         val value1 = (1, true, "foo", 0w1, #"a")
         val value2 = (1, true, "foo", 0w1, #"a")
       in
-        if
           Assert.assertEqual5Tuple
           (
             Assert.assertEqualInt,
@@ -962,12 +876,7 @@ struct
             Assert.assertEqualChar
           )
           value1
-          value2 =
           value2
-        then
-          ()
-        else
-          raise TestFail
       end
 
   fun testAssertEqual5Tuple0002 () =
@@ -1078,10 +987,7 @@ struct
         val value1 = Vector.fromList list1
         val value2 = Vector.fromList list1
       in
-        if
-          Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualVector Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualVector0002 () =
@@ -1090,10 +996,7 @@ struct
         val value1 = Vector.fromList list1
         val value2 = Vector.fromList list1
       in
-        if
-          Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualVector Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualVector0003 () =
@@ -1102,10 +1005,7 @@ struct
         val value1 = Vector.fromList list1
         val value2 = Vector.fromList list1
       in
-        if
-          Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualVector Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualVector0004 () =
@@ -1114,9 +1014,7 @@ struct
         val value1 = Vector.fromList list1
         val value2 = Vector.fromList list1
       in
-        if Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualVector Assert.assertEqualInt value1 value2
       end
 
   (*
@@ -1127,7 +1025,7 @@ struct
         val value1 = Vector.fromList []
         val value2 = Vector.fromList [1]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1140,7 +1038,7 @@ struct
         val value1 = Vector.fromList [1]
         val value2 = Vector.fromList []
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1153,7 +1051,7 @@ struct
         val value1 = Vector.fromList [2]
         val value2 = Vector.fromList [3]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1166,7 +1064,7 @@ struct
         val value1 = Vector.fromList [2]
         val value2 = Vector.fromList [2, 3]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1179,7 +1077,7 @@ struct
         val value1 = Vector.fromList [1, 2]
         val value2 = Vector.fromList []
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1192,7 +1090,7 @@ struct
         val value1 = Vector.fromList [1, 2]
         val value2 = Vector.fromList [1]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1205,7 +1103,7 @@ struct
         val value1 = Vector.fromList [1, 2]
         val value2 = Vector.fromList [1, 3]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1218,7 +1116,7 @@ struct
         val value1 = Vector.fromList [1, 2]
         val value2 = Vector.fromList [1, 2, 3]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1231,7 +1129,7 @@ struct
         val value1 = Vector.fromList [1, 2, 3]
         val value2 = Vector.fromList []
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1244,7 +1142,7 @@ struct
         val value1 = Vector.fromList [1, 2, 3]
         val value2 = Vector.fromList [1]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1257,7 +1155,7 @@ struct
         val value1 = Vector.fromList [1, 2, 3]
         val value2 = Vector.fromList [1, 2]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1270,7 +1168,7 @@ struct
         val value1 = Vector.fromList [1, 2, 3]
         val value2 = Vector.fromList [1, 2, 4]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1283,7 +1181,7 @@ struct
         val value1 = Vector.fromList [1, 2, 3]
         val value2 = Vector.fromList [1, 2, 3, 4]
       in
-        (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualVector Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1296,9 +1194,7 @@ struct
         val value1 = Array.fromList list1
         val value2 = Array.fromList list1
       in
-        if Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualArray Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualArray0002 () =
@@ -1307,9 +1203,7 @@ struct
         val value1 = Array.fromList list1
         val value2 = Array.fromList list1
       in
-        if Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualArray Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualArray0003 () =
@@ -1318,9 +1212,7 @@ struct
         val value1 = Array.fromList list1
         val value2 = Array.fromList list1
       in
-        if Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualArray Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualArray0004 () =
@@ -1329,9 +1221,7 @@ struct
         val value1 = Array.fromList list1
         val value2 = Array.fromList list1
       in
-        if Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualArray Assert.assertEqualInt value1 value2
       end
 
   (*
@@ -1342,7 +1232,7 @@ struct
         val value1 = Array.fromList []
         val value2 = Array.fromList [1]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1355,7 +1245,7 @@ struct
         val value1 = Array.fromList [1]
         val value2 = Array.fromList []
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1368,7 +1258,7 @@ struct
         val value1 = Array.fromList [2]
         val value2 = Array.fromList [3]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1381,7 +1271,7 @@ struct
         val value1 = Array.fromList [2]
         val value2 = Array.fromList [2, 3]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1394,7 +1284,7 @@ struct
         val value1 = Array.fromList [1, 2]
         val value2 = Array.fromList []
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1407,7 +1297,7 @@ struct
         val value1 = Array.fromList [1, 2]
         val value2 = Array.fromList [1]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1420,7 +1310,7 @@ struct
         val value1 = Array.fromList [1, 2]
         val value2 = Array.fromList [1, 3]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1433,7 +1323,7 @@ struct
         val value1 = Array.fromList [1, 2]
         val value2 = Array.fromList [1, 2, 3]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1446,7 +1336,7 @@ struct
         val value1 = Array.fromList [1, 2, 3]
         val value2 = Array.fromList []
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1459,7 +1349,7 @@ struct
         val value1 = Array.fromList [1, 2, 3]
         val value2 = Array.fromList [1]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1472,7 +1362,7 @@ struct
         val value1 = Array.fromList [1, 2, 3]
         val value2 = Array.fromList [1, 2]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1485,7 +1375,7 @@ struct
         val value1 = Array.fromList [1, 2, 3]
         val value2 = Array.fromList [1, 2, 4]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1498,7 +1388,7 @@ struct
         val value1 = Array.fromList [1, 2, 3]
         val value2 = Array.fromList [1, 2, 3, 4]
       in
-        (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualArray Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1511,10 +1401,7 @@ struct
         val value1 = list1
         val value2 = list1
       in
-        if
-          Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualList Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualList0002 () =
@@ -1523,10 +1410,7 @@ struct
         val value1 = list1
         val value2 = list1
       in
-        if
-          Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualList Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualList0003 () =
@@ -1535,10 +1419,7 @@ struct
         val value1 = list1
         val value2 = list1
       in
-        if
-          Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualList Assert.assertEqualInt value1 value2
       end
 
   fun testAssertEqualList0004 () =
@@ -1547,9 +1428,7 @@ struct
         val value1 = list1
         val value2 = list1
       in
-        if Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2
-        then ()
-        else raise TestFail
+        Assert.assertEqualList Assert.assertEqualInt value1 value2
       end
 
   (*
@@ -1560,7 +1439,7 @@ struct
         val value1 = []
         val value2 = [1]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1573,7 +1452,7 @@ struct
         val value1 = [1]
         val value2 = []
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1586,7 +1465,7 @@ struct
         val value1 = [2]
         val value2 = [3]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1599,7 +1478,7 @@ struct
         val value1 = [2]
         val value2 = [2, 3]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1612,7 +1491,7 @@ struct
         val value1 = [1, 2]
         val value2 = []
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1625,7 +1504,7 @@ struct
         val value1 = [1, 2]
         val value2 = [1]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1638,7 +1517,7 @@ struct
         val value1 = [1, 2]
         val value2 = [1, 3]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1651,7 +1530,7 @@ struct
         val value1 = [1, 2]
         val value2 = [1, 2, 3]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1664,7 +1543,7 @@ struct
         val value1 = [1, 2, 3]
         val value2 = []
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1677,7 +1556,7 @@ struct
         val value1 = [1, 2, 3]
         val value2 = [1]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1690,7 +1569,7 @@ struct
         val value1 = [1, 2, 3]
         val value2 = [1, 2]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1703,7 +1582,7 @@ struct
         val value1 = [1, 2, 3]
         val value2 = [1, 2, 4]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
@@ -1716,7 +1595,7 @@ struct
         val value1 = [1, 2, 3]
         val value2 = [1, 2, 3, 4]
       in
-        (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
+        (Assert.assertEqualList Assert.assertEqualInt value1 value2;
          raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end

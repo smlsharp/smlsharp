@@ -98,6 +98,122 @@ VirtualMachine::MonitorList VirtualMachine::executionMonitors_;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
+// Primitive operators.
+
+INLINE_FUN
+static
+SInt32Value divInt(SInt32Value left, SInt32Value right){
+    /* div rounds toward negative infinity. */
+    if(0 == right){
+        Cell exn = PrimitiveSupport::constructExnDiv();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    div_t temp;
+    /* The return value of of ::div is rounded towards 0.
+     * We have to adjust it towards negative infinity, if the denominator is
+     * negative.
+     * This calculation should be the same with native backend.
+     * See src/compiler/rtl/main/X86Select.sml.
+     */
+    temp = ::div(left, right);
+    SInt32Value q = temp.quot + ((temp.quot < 0 && temp.rem != 0) ? -1 : 0);
+    return q;
+}
+
+INLINE_FUN
+static
+SInt32Value quotInt(SInt32Value left, SInt32Value right){
+    /* quot rounds toward 0. */
+    if(0 == right){
+        Cell exn = PrimitiveSupport::constructExnDiv();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    div_t temp;
+    /* ::div rounds toward 0 always. */
+    temp = ::div(left, right);
+    return temp.quot;
+}
+
+INLINE_FUN
+static
+SInt32Value modInt(SInt32Value left, SInt32Value right){
+    if(0 == right){
+        Cell exn = PrimitiveSupport::constructExnDiv();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    div_t temp;
+    /* modInt is the partner of divInt.
+     * See divInt.
+     */
+    temp = ::div(left, right);
+    SInt32Value r = temp.rem + ((temp.quot < 0 && temp.rem != 0) ? right : 0);
+    return r;
+}
+
+INLINE_FUN
+static
+SInt32Value remInt(SInt32Value left, SInt32Value right){
+    if(0 == right){
+        Cell exn = PrimitiveSupport::constructExnDiv();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    div_t temp;
+    /* remInt is the partner of quotInt. */
+    temp = ::div(left, right);
+    return temp.rem;
+}
+
+INLINE_FUN
+static
+UInt32Value divWord(UInt32Value left, UInt32Value right){
+    if(0 == right){
+        Cell exn = PrimitiveSupport::constructExnDiv();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    UInt32Value q = left / right;
+    return q;
+}
+
+INLINE_FUN
+static
+UInt32Value modWord(UInt32Value left, UInt32Value right){
+    if(0 == right){
+        Cell exn = PrimitiveSupport::constructExnDiv();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    UInt32Value r = left % right;
+    return r;
+}
+
+INLINE_FUN
+static
+ByteValue divByte(ByteValue left, ByteValue right){
+    if(0 == right){
+        Cell exn = PrimitiveSupport::constructExnDiv();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    ByteValue q = left / right;
+    return q;
+}
+
+INLINE_FUN
+static
+ByteValue modByte(ByteValue left, ByteValue right){
+    if(0 == right){
+        Cell exn = PrimitiveSupport::constructExnDiv();
+        PrimitiveSupport::raiseException(exn);
+        return 0;
+    }
+    ByteValue r = left % right;
+    return r;
+}
 
 INLINE_FUN
 static
@@ -147,6 +263,27 @@ UInt32Value arithmeticRightShift(UInt32Value left, UInt32Value right)
         return ((SInt32Value)left) < 0 ? (UInt32Value)-1 : 0;
     }
 }
+
+INLINE_FUN
+static
+UInt32Value byteToIntX(UInt32Value arg)
+{
+    if(arg & 0x80){
+        return (arg | 0xFFFFFF00);
+    }
+    else{
+        return arg;
+    }
+}
+
+INLINE_FUN
+static
+UInt32Value intToByte(UInt32Value arg)
+{
+    return (arg & 0xFF);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 VirtualMachine::VirtualMachine(const char* name,
                                const char* executableImageName,
@@ -1774,6 +1911,8 @@ VirtualMachine::execute(Executable* executable)
     // initialize machine registers
     UInt32Value* PC = (UInt32Value*)(executable->code_);
     Cell* ENV = NULL;
+    SP_ = FrameStack::getBottom();
+    HandlerStack::clear();
 
     interrupted_ = false;
     setSignalHandler();
@@ -3090,8 +3229,6 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                                       "length=%d",
                                       srcOffset, dstOffset, length));
 */
-                    ASSERT(srcOffset < Heap::getPayloadSize(src));
-                    ASSERT(dstOffset < Heap::getPayloadSize(dst));
                     ASSERT(srcOffset + copyCells <= Heap::getPayloadSize(src));
                     ASSERT(dstOffset + copyCells <= Heap::getPayloadSize(dst));
 
@@ -5476,6 +5613,14 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                     break;
                 }
 
+/* Functions which are called in macros PRIMITIVE_*_fun may set an exception.
+ * CHECK_EXCEPTION detects it and invokes VM exception handler. */
+#define CHECK_EXCEPTION \
+                if(isPrimitiveExceptionRaised_){ \
+                     raiseException(SP, PC, ENV, primitiveException_); \
+                     resetPrimitiveException(); \
+                     break; \
+                }
 #define PRIMITIVE_I_I_op(op) \
             { \
                 UInt32Value argIndex = getWordAndInc(PC); \
@@ -5493,6 +5638,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 f(*(largeInt*)block, \
                    *(largeInt*)(FRAME_ENTRY(SP, argIndex).blockRef)); \
                 FRAME_ENTRY(SP, destination).blockRef = block; \
+                CHECK_EXCEPTION; \
                 break; \
             } 
 #define PRIMITIVE_W_W_op(op) \
@@ -5501,6 +5647,15 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 UInt32Value destination = getWordAndInc(PC); \
                 FRAME_ENTRY(SP, destination).uint32 = \
                 op (FRAME_ENTRY(SP, argIndex).uint32); \
+                break; \
+            } 
+#define PRIMITIVE_W_W_fun(f) \
+            { \
+                UInt32Value argIndex = getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).uint32 = \
+                f(FRAME_ENTRY(SP, argIndex).uint32); \
+                CHECK_EXCEPTION; \
                 break; \
             } 
 #ifdef FLOAT_UNBOXING
@@ -5567,6 +5722,17 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 op FRAME_ENTRY(SP, argIndex2).sint32; \
                 break; \
             } 
+#define PRIMITIVE_II_I_fun(f) \
+            { \
+                UInt32Value argIndex1 = getWordAndInc(PC); \
+                UInt32Value argIndex2 = getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).sint32 = \
+                f(FRAME_ENTRY(SP, argIndex1).sint32, \
+                  FRAME_ENTRY(SP, argIndex2).sint32); \
+                CHECK_EXCEPTION; \
+                break; \
+            } 
 #define PRIMITIVE_II_I_Const_1_op(op) \
             { \
                 SInt32Value arg1 = (SInt32Value)getWordAndInc(PC); \
@@ -5576,6 +5742,16 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 arg1 op FRAME_ENTRY(SP, argIndex2).sint32; \
                 break; \
             } 
+#define PRIMITIVE_II_I_Const_1_fun(f) \
+            { \
+                SInt32Value arg1 = (SInt32Value)getWordAndInc(PC); \
+                UInt32Value argIndex2 = getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).sint32 = \
+                f(arg1, FRAME_ENTRY(SP, argIndex2).sint32); \
+                CHECK_EXCEPTION; \
+                break; \
+            } 
 #define PRIMITIVE_II_I_Const_2_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
@@ -5583,6 +5759,16 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 UInt32Value destination = getWordAndInc(PC); \
                 FRAME_ENTRY(SP, destination).sint32 = \
                 FRAME_ENTRY(SP, argIndex1).sint32 op arg2; \
+                break; \
+            } 
+#define PRIMITIVE_II_I_Const_2_fun(f) \
+            { \
+                UInt32Value argIndex1 = getWordAndInc(PC); \
+                SInt32Value arg2 = (SInt32Value)getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).sint32 = \
+                f(FRAME_ENTRY(SP, argIndex1).sint32, arg2); \
+                CHECK_EXCEPTION; \
                 break; \
             } 
 #define PRIMITIVE_LL_L_fun(f) \
@@ -5595,6 +5781,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 f(*(largeInt*)block, \
                     *(largeInt*)(FRAME_ENTRY(SP, argIndex1).blockRef), \
                     *(largeInt*)(FRAME_ENTRY(SP, argIndex2).blockRef)); \
+                CHECK_EXCEPTION; \
                 FRAME_ENTRY(SP, destination).blockRef = block; \
                 break; \
             } 
@@ -5608,6 +5795,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 f(*(largeInt*)block, \
                     *argPtr1, \
                     *(largeInt*)(FRAME_ENTRY(SP, argIndex2).blockRef)); \
+                CHECK_EXCEPTION; \
                 FRAME_ENTRY(SP, destination).blockRef = block; \
                 break; \
             } 
@@ -5621,6 +5809,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 f(*(largeInt*)block, \
                     *(largeInt*)(FRAME_ENTRY(SP, argIndex1).blockRef), \
                     *argPtr2); \
+                CHECK_EXCEPTION; \
                 FRAME_ENTRY(SP, destination).blockRef = block; \
                 break; \
             } 
@@ -5642,6 +5831,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 FRAME_ENTRY(SP, destination).uint32 = \
                 f(FRAME_ENTRY(SP, argIndex1).uint32, \
                   FRAME_ENTRY(SP, argIndex2).uint32); \
+                CHECK_EXCEPTION; \
                 break; \
             } 
 #define PRIMITIVE_WW_W_Const_1_op(op) \
@@ -5660,6 +5850,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 UInt32Value destination = getWordAndInc(PC); \
                 FRAME_ENTRY(SP, destination).uint32 = \
                 f(arg1, FRAME_ENTRY(SP, argIndex2).uint32); \
+                CHECK_EXCEPTION; \
                 break; \
             } 
 #define PRIMITIVE_WW_W_Const_2_op(op) \
@@ -5678,6 +5869,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 UInt32Value destination = getWordAndInc(PC); \
                 FRAME_ENTRY(SP, destination).uint32 = \
                 f(FRAME_ENTRY(SP, argIndex1).uint32, arg2); \
+                CHECK_EXCEPTION; \
                 break; \
             } 
 #define PRIMITIVE_BB_B_op(op) \
@@ -5691,6 +5883,18 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                    op ((ByteValue)FRAME_ENTRY(SP, argIndex2).uint32)); \
                 break; \
             } 
+#define PRIMITIVE_BB_B_fun(f) \
+            { \
+                UInt32Value argIndex1 = getWordAndInc(PC); \
+                UInt32Value argIndex2 = getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).uint32 = \
+                (ByteValue) \
+                  f((ByteValue)(FRAME_ENTRY(SP, argIndex1).uint32), \
+                    ((ByteValue)FRAME_ENTRY(SP, argIndex2).uint32)); \
+                CHECK_EXCEPTION; \
+                break; \
+            } 
 #define PRIMITIVE_BB_B_Const_1_op(op) \
             { \
                 ByteValue arg1 = (ByteValue)getWordAndInc(PC); \
@@ -5701,6 +5905,17 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                   (arg1 op ((ByteValue)FRAME_ENTRY(SP, argIndex2).uint32)); \
                 break; \
             } 
+#define PRIMITIVE_BB_B_Const_1_fun(f) \
+            { \
+                ByteValue arg1 = (ByteValue)getWordAndInc(PC); \
+                UInt32Value argIndex2 = getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).uint32 = \
+                (ByteValue) \
+                  f(arg1, ((ByteValue)FRAME_ENTRY(SP, argIndex2).uint32)); \
+                CHECK_EXCEPTION; \
+                break; \
+            } 
 #define PRIMITIVE_BB_B_Const_2_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
@@ -5709,6 +5924,17 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 FRAME_ENTRY(SP, destination).uint32 = \
                 (ByteValue) \
                   (((ByteValue)FRAME_ENTRY(SP, argIndex1).uint32) op arg2); \
+                break; \
+            } 
+#define PRIMITIVE_BB_B_Const_2_fun(f) \
+            { \
+                UInt32Value argIndex1 = getWordAndInc(PC); \
+                ByteValue arg2 = (ByteValue)getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).uint32 = \
+                (ByteValue) \
+                  f(((ByteValue)FRAME_ENTRY(SP, argIndex1).uint32), arg2); \
+                CHECK_EXCEPTION; \
                 break; \
             } 
 #ifdef FLOAT_UNBOXING
@@ -5845,6 +6071,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 bool result = \
                   f(*(largeInt*)(FRAME_ENTRY(SP, argIndex1).blockRef), \
                     *(largeInt*)(FRAME_ENTRY(SP, argIndex2).blockRef)); \
+                CHECK_EXCEPTION; \
                 FRAME_ENTRY(SP, destination) = \
                   PrimitiveSupport::boolToCell(result); \
                 break; \
@@ -5857,6 +6084,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 bool result = \
                   f(*argPtr1, \
                     *(largeInt*)(FRAME_ENTRY(SP, argIndex2).blockRef)); \
+                CHECK_EXCEPTION; \
                 FRAME_ENTRY(SP, destination) = \
                   PrimitiveSupport::boolToCell(result); \
                 break; \
@@ -5869,6 +6097,7 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
                 bool result = \
                   f(*(largeInt*)(FRAME_ENTRY(SP, argIndex1).blockRef), \
                     *argPtr2); \
+                CHECK_EXCEPTION; \
                 FRAME_ENTRY(SP, destination) = \
                   PrimitiveSupport::boolToCell(result); \
                 break; \
@@ -6098,52 +6327,51 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
               case MulByte: PRIMITIVE_BB_B_op(*);
               case MulByte_Const_1: PRIMITIVE_BB_B_Const_1_op(*);
               case MulByte_Const_2: PRIMITIVE_BB_B_Const_2_op(*);
-              case DivInt: PRIMITIVE_II_I_op(/);
-              case DivInt_Const_1: PRIMITIVE_II_I_Const_1_op(/);
-              case DivInt_Const_2: PRIMITIVE_II_I_Const_2_op(/);
+              case DivInt: PRIMITIVE_II_I_fun(divInt);
+              case DivInt_Const_1: PRIMITIVE_II_I_Const_1_fun(divInt);
+              case DivInt_Const_2: PRIMITIVE_II_I_Const_2_fun(divInt);
               case DivLargeInt: PRIMITIVE_LL_L_fun(LargeInt::div);
               case DivLargeInt_Const_1:
                 PRIMITIVE_LL_L_Const_1_fun(LargeInt::div);
               case DivLargeInt_Const_2:
                 PRIMITIVE_LL_L_Const_2_fun(LargeInt::div);
-              case DivWord: PRIMITIVE_WW_W_op(/);
-              case DivWord_Const_1: PRIMITIVE_WW_W_Const_1_op(/);
-              case DivWord_Const_2: PRIMITIVE_WW_W_Const_2_op(/);
-              case DivByte: PRIMITIVE_BB_B_op(/);
-              case DivByte_Const_1: PRIMITIVE_BB_B_Const_1_op(/);
-              case DivByte_Const_2: PRIMITIVE_BB_B_Const_2_op(/);
+              case DivWord: PRIMITIVE_WW_W_fun(divWord);
+              case DivWord_Const_1: PRIMITIVE_WW_W_Const_1_fun(divWord);
+              case DivWord_Const_2: PRIMITIVE_WW_W_Const_2_fun(divWord);
+              case DivByte: PRIMITIVE_BB_B_fun(divByte);
+              case DivByte_Const_1: PRIMITIVE_BB_B_Const_1_fun(divByte);
+              case DivByte_Const_2: PRIMITIVE_BB_B_Const_2_fun(divByte);
               case DivReal: PRIMITIVE_RR_R_op(/);
               case DivReal_Const_1: PRIMITIVE_RR_R_Const_1_op(/);
               case DivReal_Const_2: PRIMITIVE_RR_R_Const_2_op(/);
               case DivFloat: PRIMITIVE_FF_F_op(/);
               case DivFloat_Const_1: PRIMITIVE_FF_F_Const_1_op(/);
               case DivFloat_Const_2: PRIMITIVE_FF_F_Const_2_op(/);
-              case ModInt: PRIMITIVE_II_I_op(%);
-              case ModInt_Const_1: PRIMITIVE_II_I_Const_1_op(%);
-              case ModInt_Const_2: PRIMITIVE_II_I_Const_2_op(%);
+              case ModInt: PRIMITIVE_II_I_fun(modInt);
+              case ModInt_Const_1: PRIMITIVE_II_I_Const_1_fun(modInt);
+              case ModInt_Const_2: PRIMITIVE_II_I_Const_2_fun(modInt);
               case ModLargeInt: PRIMITIVE_LL_L_fun(LargeInt::mod);
               case ModLargeInt_Const_1:
                 PRIMITIVE_LL_L_Const_1_fun(LargeInt::mod);
               case ModLargeInt_Const_2:
                 PRIMITIVE_LL_L_Const_2_fun(LargeInt::mod);
-              case ModWord: PRIMITIVE_WW_W_op(%);
-              case ModWord_Const_1: PRIMITIVE_WW_W_Const_1_op(%);
-              case ModWord_Const_2: PRIMITIVE_WW_W_Const_2_op(%);
-              case ModByte: PRIMITIVE_BB_B_op(%);
-              case ModByte_Const_1: PRIMITIVE_BB_B_Const_1_op(%);
-              case ModByte_Const_2: PRIMITIVE_BB_B_Const_2_op(%);
-                /* ToDo : implement */
-              case QuotInt: PRIMITIVE_II_I_op(/);
-              case QuotInt_Const_1: PRIMITIVE_II_I_Const_1_op(/);
-              case QuotInt_Const_2: PRIMITIVE_II_I_Const_2_op(/);
+              case ModWord: PRIMITIVE_WW_W_fun(modWord);
+              case ModWord_Const_1: PRIMITIVE_WW_W_Const_1_fun(modWord);
+              case ModWord_Const_2: PRIMITIVE_WW_W_Const_2_fun(modWord);
+              case ModByte: PRIMITIVE_BB_B_fun(modByte);
+              case ModByte_Const_1: PRIMITIVE_BB_B_Const_1_fun(modByte);
+              case ModByte_Const_2: PRIMITIVE_BB_B_Const_2_fun(modByte);
+              case QuotInt: PRIMITIVE_II_I_fun(quotInt);
+              case QuotInt_Const_1: PRIMITIVE_II_I_Const_1_fun(quotInt);
+              case QuotInt_Const_2: PRIMITIVE_II_I_Const_2_fun(quotInt);
               case QuotLargeInt: PRIMITIVE_LL_L_fun(LargeInt::quot);
               case QuotLargeInt_Const_1:
                 PRIMITIVE_LL_L_Const_1_fun(LargeInt::quot);
               case QuotLargeInt_Const_2:
                 PRIMITIVE_LL_L_Const_2_fun(LargeInt::quot);
-              case RemInt: PRIMITIVE_II_I_op(%);
-              case RemInt_Const_1: PRIMITIVE_II_I_Const_1_op(%);
-              case RemInt_Const_2: PRIMITIVE_II_I_Const_2_op(%);
+              case RemInt: PRIMITIVE_II_I_fun(remInt);
+              case RemInt_Const_1: PRIMITIVE_II_I_Const_1_fun(remInt);
+              case RemInt_Const_2: PRIMITIVE_II_I_Const_2_fun(remInt);
               case RemLargeInt: PRIMITIVE_LL_L_fun(LargeInt::rem);
               case RemLargeInt_Const_1:
                 PRIMITIVE_LL_L_Const_1_fun(LargeInt::rem);
@@ -6253,8 +6481,8 @@ VirtualMachine::executeLoop(UInt32Value* startPC, Cell* initialENV)
               case GteqChar_Const_1: PRIMITIVE_WW_T_Const_1_op(>=);
               case GteqChar_Const_2: PRIMITIVE_WW_T_Const_2_op(>=);
               case GteqString: PRIMITIVE_COMPARE_SS_T_op(>= 0);
-              case Byte_toIntX: PRIMITIVE_W_W_op(+);// argument unchanged
-              case Byte_fromInt: PRIMITIVE_W_W_op(+);// argument unchanged
+              case Byte_toIntX: PRIMITIVE_W_W_fun(byteToIntX);
+              case Byte_fromInt: PRIMITIVE_W_W_fun(intToByte);
               case Word_toIntX: PRIMITIVE_W_W_op(+);// argument unchanged
               case Word_fromInt: PRIMITIVE_W_W_op(+);// argument unchanged
               case Word_andb: PRIMITIVE_WW_W_op(&);

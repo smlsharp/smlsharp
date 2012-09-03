@@ -346,7 +346,7 @@ ARITHI  closure/R11 := allocptr/R1 iadd 0
 NOP
 NOP
 NOP
-GETREAL real0.0/R10 := 0.0
+GETREAL real0.0/R10 := 0
 NOP
 NOP
 NOP

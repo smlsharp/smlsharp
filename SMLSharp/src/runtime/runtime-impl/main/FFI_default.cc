@@ -171,6 +171,9 @@ class FFIDefault
 
     void *callback(UInt32Value *entryPoint, Cell *env, UInt32Value sizeTag)
         throw(IMLException);
+
+  private:
+    DBGWRAP(static LogAdaptor LOG;)
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -187,7 +190,7 @@ void FFI::init()
 #ifdef LARGEFFISWITCH
 
 #define SWITCHFUNCDEFAULT do { \
-    DBGWRAP(printf("Error:bad tag %d", tag);) \
+    DBGWRAP(fprintf(stderr, "Error:bad tag %d", tag);) \
     throw FFIException("unsupported foreign function call;" \
                        " maybe parameters are too many"); \
     break; \
@@ -257,7 +260,7 @@ void FFIDefault::call(Cell *returnValue, void *function, UInt32Value *SP,
         break;
       default:
         DBGWRAP
-            (printf("Error:bad convention %d", convention);)
+            (LOG.debug("Error:bad convention %d", convention);)
         throw IllegalStateException();
         break;
     }
@@ -319,13 +322,13 @@ void *FFIDefault::callback(UInt32Value *entryPoint, Cell *env,
 
     if (callbackEntries.size() >= NUM_CALLBACK_ENTRIES) {
         DBGWRAP
-          (printf
-           ("Error: too many callbacks %d\n", callbackEntries.size());)
+          (LOG.debug
+           ("Error: too many callbacks %d", callbackEntries.size());)
         throw FFIException("too many callbacks");
     }
 
     callbackEntries.push_back(callback);
-    DBGWRAP(printf("callback: %d = (%p, %p)\n", callbackEntries.size() - 1,
+    DBGWRAP(LOG.debug("callback: %d = (%p, %p)", callbackEntries.size() - 1,
                    callback.entryPoint, callback.env);)
     return C_callbackEntries[callbackEntries.size() - 1];
 }
@@ -339,6 +342,8 @@ void FFIDefault::trace(RootTracer *tracer)
             tracer->trace(&(*i).env, 1);
     }
 }
+
+DBGWRAP(LogAdaptor FFIDefault::LOG = LogAdaptor("FFIDefault"));
 
 ///////////////////////////////////////////////////////////////////////////////
 

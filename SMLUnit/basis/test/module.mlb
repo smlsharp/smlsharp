@@ -5,12 +5,6 @@
         $(SML_LIB)/basis/basis.mlb
 
         ../../smlunitlib.mlb
-        AssertDate.sml
-        AssertIEEEReal.sml
-        AssertLargeInt.sml
-        AssertLargeWord.sml
-        AssertLargeReal.sml
-        AssertTime.sml
 
         (* sequence modules *)
         SEQUENCE.sig
@@ -60,6 +54,7 @@
         SignedInteger001.sml
         Int001.sml
         LargeInt001.sml
+        Position001.sml
 
         (* WORD modules *)
         UnsignedInteger001.sml

@@ -486,6 +486,23 @@ class PrimitiveSupport
     static
     INLINE_FUN
     Cell
+    constructExnDiv()
+    {
+        // we will construct Div
+
+        Bitmap bitmap = 0; // (tag) = (0)
+        Cell tag;
+        tag.sint32 = TAG_exn_Div;
+        Cell exception;
+        exception.blockRef = Heap::allocRecordBlock(bitmap, 1);
+        Heap::initializeField(exception.blockRef, 0, tag);
+        
+        return exception;
+    }
+
+    static
+    INLINE_FUN
+    Cell
     constructExnSysErr(int errorNumber, const char* message)
     {
         // we will construct SysErr(message, SOME errorNumber)
@@ -539,7 +556,7 @@ class PrimitiveSupport
     void
     raiseFail(const char* message)
     {
-        DBGWRAP(printf("raiseFail: %s \n", message);)
+        DBGWRAP(LOG.debug("raiseFail: %s", message);)
 
         Cell exception = constructExnFail(message);
         VirtualMachine::getInstance()->setPrimitiveException(exception);

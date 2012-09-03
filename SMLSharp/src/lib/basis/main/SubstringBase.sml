@@ -139,6 +139,15 @@ struct
       in append substrings (string substring)
       end
 
+  fun concatWith separator [] = P.emptyString
+    | concatWith separator (substring :: substrings) =
+      let
+        fun append [] result = result
+          | append (head :: tail) result =
+            append tail (P.concat2 (result, P.concat2(separator, string head)))
+      in append substrings (string substring)
+      end
+
   fun explode ({string, start, length} : substring) =
     let
       fun accum 0 chars = chars

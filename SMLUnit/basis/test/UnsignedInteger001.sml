@@ -16,7 +16,7 @@ struct
 
   structure A = SMLUnit.Assert
   structure T = SMLUnit.Test
-  structure AL = AssertLargeWord
+  structure AL = SMLUnit.Assert.AssertLargeWord
   open A
 
   structure LW = LargeWord
@@ -56,7 +56,7 @@ struct
   val assertEqual2LargeWord = 
       assertEqual2Tuple (AL.assertEqualWord, AL.assertEqualWord)
 
-  val assertEqualLargeInt = AssertLargeInt.assertEqualInt
+  val assertEqualLargeInt = SMLUnit.Assert.AssertLargeInt.assertEqualInt
   val assertEqual2LargeInt =
       assertEqual2Tuple (assertEqualLargeInt, assertEqualLargeInt)
 
@@ -150,47 +150,113 @@ struct
   (* test for toInt and toIntX *)
   local
     fun test arg expected =
-        assertEqual2Int expected (W.toInt arg, W.toIntX arg)
+        (assertEqual2Int expected (W.toInt arg, W.toIntX arg); ())
+    fun testFail arg =
+        (W.toInt arg; fail "toInt: expect Overflow.")
+        handle General.Overflow => ()
+    fun testFailX arg =
+        (W.toIntX arg; fail "toInt: expect Overflow.")
+        handle General.Overflow => ()
   in
   fun toInt0001 () =
       let
         val toInt_0 = test w0 (0, 0)
         val toInt_123 = test w123 (123, 123)
+      in () end
+  (* all bits of the argument, except for the most significant bit, are 1.
+   *)
+  fun toInt0002 () =
+      let
+        val arg =
+            case W.wordSize
+             of 8 => I2w 0x7F
+              | 31 => I2w 0x3FFFFFFF
+              | 32 => I2w 0x7FFFFFFF
+              | 64 => I2w 0x7FFFFFFFFFFFFFFF
         val toInt_maxInt =
-            test
-                (case Int.precision
-                  of SOME 31 => I2w 0x3FFFFFFF
-                   | SOME 32 => I2w 0x7FFFFFFF) (* = Int.maxInt *)
-                (
-                  case Int.precision
-                   of SOME 31 => I2i 0x3FFFFFFF
-                    | SOME 32 => I2i 0x7FFFFFFF,
-                  case Int.precision
-                   of SOME 31 => I2i 0x3FFFFFFF
-                    | SOME 32 => I2i 0x7FFFFFFF
-                )
-
-        (* toInt raises Overflow. *)
+            if W.wordSize <= Option.getOpt (Int.precision, W.wordSize)
+            then
+              test
+                  arg
+                  (case W.wordSize
+                    of 8 => (I2i 0x7F, I2i 0x7F)
+                     | 31 => (I2i 0x3FFFFFFF, I2i 0x3FFFFFFF)
+                     | 32 => (I2i 0x7FFFFFFF, I2i 0x7FFFFFFF)
+                     | 64 => (I2i 0x7FFFFFFFFFFFFFFF, I2i 0x7FFFFFFFFFFFFFFF))
+            else testFail arg
+      in () end
+  (* test of toInt on arguments of which the most significant bit is set. *)
+  fun toInt0003 () =
+      let
+        (* arg = -1 in 2's complement representaion. *)
+        val arg =
+            case W.wordSize
+             of 8 => I2w 0xFF
+              | 31 => I2w 0x7FFFFFFF
+              | 32 => I2w 0xFFFFFFFF
+              | 64 => I2w 0xFFFFFFFFFFFFFFFF
+        val toInt_m1 =
+            if W.wordSize < Option.getOpt (Int.precision, W.wordSize + 1)
+            then
+              (
+                assertEqualInt
+                    (case W.wordSize
+                      of 8 => I2i 0xFF
+                       | 31 => I2i 0x7FFFFFFF
+                       | 32 => I2i 0xFFFFFFFF
+                       | 64 => I2i 0xFFFFFFFFFFFFFFFF)
+                    (W.toInt arg);
+                ()
+              )
+            else
+              ((W.toInt arg; fail "toInt: expect Overflow")
+               handle General.Overflow => ())
+        val toIntX_m1 = assertEqualInt ~1 (W.toIntX arg)
+      in () end
+  (* all bits of the argument, except for the most significant bit, are 0.
+   *)
+  fun toInt0004 () =
+      let
+        val arg =
+            case W.wordSize
+             of 8 => I2w 0x80
+              | 31 => I2w 0x40000000
+              | 32 => I2w 0x80000000
+              | 64 => I2w 0x8000000000000000
+        (* To toInt succeeds, int must be wider than word at least 1 bit. *)
         val toInt_minInt =
-            (
-              W.toInt
-                  (case Int.precision
-                    of SOME 31 => I2w 0x40000000
-                     | SOME 32 => I2w 0x80000000);
-              fail "toInt:Overflow expected."
-            )
-            handle General.Overflow => ()
-
-        (* toIntX does not raise Overflow. *)
-        val toInt_minIntX =
-            assertEqualInt
-                (case Int.precision
-                  of SOME 31 => I2i ~0x40000000
-                   | SOME 32 => I2i ~0x80000000) (* = Int.minInt *)
-                (W.toIntX
-                  (case Int.precision
-                    of SOME 31 => I2w 0x40000000
-                     | SOME 32 => I2w 0x80000000))
+            if W.wordSize < Option.getOpt (Int.precision, W.wordSize + 1)
+            then
+              (
+                assertEqualInt
+                    (case W.wordSize
+                      of 8 => I2i 0x80
+                       | 31 => I2i 0x40000000
+                       | 32 => I2i 0x80000000
+                       | 64 => I2i 0x8000000000000000)
+                    (W.toInt arg);
+                ()
+              )
+            else
+              ((W.toInt arg; fail "toInt: expect Overflow")
+               handle General.Overflow => ())
+        (* If word and int are same bit width, toIntX succeeds. *)
+        val toIntX_minInt =
+            if W.wordSize <= Option.getOpt (Int.precision, W.wordSize)
+            then
+              (
+                assertEqualInt
+                    (case W.wordSize
+                      of 8 => I2i ~0x80
+                       | 31 => I2i ~0x40000000
+                       | 32 => I2i ~0x80000000
+                       | 64 => I2i ~0x8000000000000000)
+                    (W.toIntX arg);
+                ()
+              )
+            else
+              ((W.toIntX arg; fail "toIntX: expect Overflow")
+               handle General.Overflow => ())
       in () end
   end (* local *)
 
@@ -240,7 +306,8 @@ struct
                 (case W.wordSize
                   of 8 => I2w 0x0F
                    | 31 => I2w 0x7FFFFF0F
-                   | 32 => I2w 0xFFFFFF0F)
+                   | 32 => I2w 0xFFFFFF0F
+                   | 64 => I2w 0xFFFFFFFFFFFFFF0F)
                 (W.notb (I2w 0xF0))
       in () end
 
@@ -263,7 +330,8 @@ struct
                   case W.wordSize
                    of 8 => I2w 0x80
                     | 31 => I2w 0x40000000
-                    | 32 => I2w 0x80000000,
+                    | 32 => I2w 0x80000000
+                    | 64 => I2w 0x8000000000000000,
                   w0,
                   w0
                 )
@@ -277,7 +345,8 @@ struct
                   case W.wordSize
                   of 8 => I2w 0x80
                    | 31 => I2w 0x40000000
-                   | 32 => I2w 0x80000000,
+                   | 32 => I2w 0x80000000
+                   | 64 => I2w 0x8000000000000000,
                   w0,
                   w0
                 )
@@ -294,7 +363,8 @@ struct
                   case W.wordSize
                    of 8 => I2w 0x80
                     | 31 => I2w 0x40000000
-                    | 32 => I2w 0x80000000,
+                    | 32 => I2w 0x80000000
+                    | 64 => I2w 0x8000000000000000,
                   w1,
                   maxWord
                 )
@@ -744,6 +814,9 @@ struct
 *)
         ("fromLargeInt0001", fromLargeInt0001),
         ("toInt0001", toInt0001),
+        ("toInt0002", toInt0002),
+        ("toInt0003", toInt0003),
+        ("toInt0004", toInt0004),
         ("fromInt0001", fromInt0001),
 
         ("binBit0001", binBit0001),

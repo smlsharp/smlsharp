@@ -711,9 +711,9 @@ in
                      P.string, 
                      NamePickler.TyConIDMap AP.tyBindInfo,
                      NamePickler.ExnTagIDMap ExnTagID.pu_globalID,
-                     NamePickler.ExternalVarIDMap ExternalVarID.pu_globalID,
+                     NamePickler.ExternalVarIDMap ExVarID.pu_globalID,
                      NamePickler.ExnTagIDMap ExnTagID.pu_globalID,
-                     NamePickler.ExternalVarIDMap ExternalVarID.pu_globalID,
+                     NamePickler.ExternalVarIDMap ExVarID.pu_globalID,
                      loc
                      ))
            )

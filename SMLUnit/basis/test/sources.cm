@@ -3,8 +3,8 @@
  * @copyright 2010, Tohoku University.
  *)
 Group is
-        $/basis.cm
-        ../../smlunitlib.cm
+        basis_compat.cm
+        smlunitlib_compat.cm
 
         module.cm
         TestMain.sml

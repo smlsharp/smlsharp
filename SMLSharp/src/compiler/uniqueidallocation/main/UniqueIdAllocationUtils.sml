@@ -124,7 +124,7 @@ in
            varId = newId}
       end
 
-  type vidFun = (string * ExternalVarID.id) VarID.Map.map -> varIdInfo -> varIdInfo
+  type vidFun = (string * ExVarID.id) VarID.Map.map -> varIdInfo -> varIdInfo
 
   fun annotateExternalIdValIdent (annotateFunctionVarIdInfo:vidFun) IDMap valIdent =
       case valIdent of
@@ -375,30 +375,30 @@ in
 
   fun collectVarExternalVarIDVarIdInfo {displayName, ty, varId} =
       case varId of
-          T.EXTERNAL index => ExternalVarID.Set.singleton (index)
-        | T.INTERNAL _ => ExternalVarID.Set.empty
+          T.EXTERNAL index => ExVarID.Set.singleton (index)
+        | T.INTERNAL _ => ExVarID.Set.empty
 
   fun collectVarExternalVarIDValIdent valIdent =
       case valIdent of
           T.VALIDENT varIdInfo => collectVarExternalVarIDVarIdInfo varIdInfo
-        | T.VALIDENTWILD _ => ExternalVarID.Set.empty
+        | T.VALIDENTWILD _ => ExVarID.Set.empty
 
   fun collectVarExternalVarIDTfpdec tfpdec =
       case tfpdec of
           TFPVAL (binds, loc) =>
           foldl (fn ((valIdent, _), indexSet) =>
-                    ExternalVarID.Set.union(collectVarExternalVarIDValIdent valIdent, indexSet))
-                ExternalVarID.Set.empty
+                    ExVarID.Set.union(collectVarExternalVarIDValIdent valIdent, indexSet))
+                ExVarID.Set.empty
                 binds
         | TFPVALREC (binds, loc) =>
           foldl (fn ((varIdInfo, ty, exp), indexSet) =>
-                    ExternalVarID.Set.union(collectVarExternalVarIDVarIdInfo varIdInfo, indexSet))
-                ExternalVarID.Set.empty
+                    ExVarID.Set.union(collectVarExternalVarIDVarIdInfo varIdInfo, indexSet))
+                ExVarID.Set.empty
                 binds
         | TFPVALPOLYREC (localBtvEnv, binds, loc) =>
           foldl (fn ((varIdInfo, ty, exp), indexSet) =>
-                    ExternalVarID.Set.union(collectVarExternalVarIDVarIdInfo varIdInfo, indexSet))
-                ExternalVarID.Set.empty      
+                    ExVarID.Set.union(collectVarExternalVarIDVarIdInfo varIdInfo, indexSet))
+                ExVarID.Set.empty      
                 binds
         | TFPLOCALDEC (localDecs, decs, loc) => 
           collectVarExternalVarIDTfpdecs decs
@@ -406,15 +406,15 @@ in
           raise Control.Bug "setfield inside functor body"
         | TFPFUNCTORDEC x => raise Control.Bug "functor declaration inside functor body"
         | TFPLINKFUNCTORDEC {refreshedExternalVarIDTable, ...} => 
-          foldl (fn (index, set) => ExternalVarID.Set.add(set, index))
-                ExternalVarID.Set.empty
-                (ExternalVarID.Map.listItems refreshedExternalVarIDTable)
-        | TFPEXNBINDDEF _ => ExternalVarID.Set.empty      
+          foldl (fn (index, set) => ExVarID.Set.add(set, index))
+                ExVarID.Set.empty
+                (ExVarID.Map.listItems refreshedExternalVarIDTable)
+        | TFPEXNBINDDEF _ => ExVarID.Set.empty      
 
   and collectVarExternalVarIDTfpdecs tfpdecs =
       foldl (fn (tfpdec, indexSet) =>
-                ExternalVarID.Set.union (collectVarExternalVarIDTfpdec tfpdec, indexSet))
-            ExternalVarID.Set.empty
+                ExVarID.Set.union (collectVarExternalVarIDTfpdec tfpdec, indexSet))
+            ExVarID.Set.empty
             tfpdecs
 
   (**************************************************************************************************************)
@@ -634,21 +634,21 @@ in
                                   VIC.External externalID =>
                                   let
                                       val newID = 
-                                           ExternalVarID.generate ()
+                                           ExVarID.generate ()
                                   in
                                       (
                                        SEnv.insert(newTopVarEnv, 
                                                    sourceName, 
                                                    VIC.External newID
                                                   ),
-                                       ExternalVarID.Map.insert(newDeltaIDMap, externalID, (sourceName, newID))
+                                       ExVarID.Map.insert(newDeltaIDMap, externalID, (sourceName, newID))
                                       )
                                   end
                                 | VIC.Dummy =>
                                   (SEnv.insert (newTopVarEnv,sourceName,VIC.Dummy),
                                    newDeltaIDMap)
                                 | VIC.Internal _ => raise Control.Bug "illegal Internal item in top Env")
-                          (SEnv.empty, ExternalVarID.Map.empty)
+                          (SEnv.empty, ExVarID.Map.empty)
                           topVarEnv
       in
           ((topFunEnv, newTopVarEnv), newDeltaIDMap)
@@ -656,7 +656,7 @@ in
       
   fun IDMapJoinExternalVarIDMap IDMap externalVarIDMap =
       VarID.Map.foldli (fn (srcID, entry as (displayName1, objExternalID), newIDMap) =>
-                        case ExternalVarID.Map.find(externalVarIDMap, objExternalID) of
+                        case ExVarID.Map.find(externalVarIDMap, objExternalID) of
                             NONE => VarID.Map.insert(newIDMap, srcID, entry)
                           | SOME entry => VarID.Map.insert(newIDMap, srcID, entry))
                     VarID.Map.empty

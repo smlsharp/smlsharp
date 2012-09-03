@@ -11,7 +11,7 @@ struct
 
   structure A = SMLUnit.Assert
   structure T = SMLUnit.Test
-  structure AI = AssertIEEEReal
+  structure AI = SMLUnit.Assert.AssertIEEEReal
   open A
   open AI
 
@@ -54,7 +54,9 @@ struct
   in
   fun toString001 () =
       let
+(*
         val toString_NAN = test (R.NAN, false, [], 0) "nan" 
+*)
         val toString_POS_INF = test (R.INF, false, [], 0) "inf" 
         val toString_NEG_INF = test (R.INF, true, [], 0) "~inf" 
         val toString_POS_ZERO = test (R.ZERO, false, [], 0) "0.0" 
@@ -117,11 +119,13 @@ struct
 
   fun fromString_nan () =
       let
+(*
         val fromString_n_nan = test "nan" (R.NAN, false, [], 0)
         val fromString_p_nan = test "+nan" (R.NAN, false, [], 0)
         val fromString_m_nan = test "-nan" (R.NAN, true, [], 0)
         val fromString_t_nan = test "~nan" (R.NAN, true, [], 0)
         val fromString_upper_nan = test "NAN" (R.NAN, false, [], 0)
+*)
       in () end
 
   (* The fromString must parse the following regular expression.

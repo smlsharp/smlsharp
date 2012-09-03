@@ -10,10 +10,8 @@ signature IEEE_REAL =
 
     datatype real_order = LESS | EQUAL | GREATER | UNORDERED
 
-    datatype nan_mode = QUIET | SIGNALLING
-
     datatype float_class
-      = NAN of nan_mode
+      = NAN
       | INF
       | ZERO
       | NORMAL
@@ -29,7 +27,7 @@ signature IEEE_REAL =
     val getRoundingMode : unit -> rounding_mode
 
     type decimal_approx = {
-	kind : float_class,
+	class : float_class,
 	sign : bool,
 	digits : int list,
 	exp : int

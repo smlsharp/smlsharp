@@ -13244,10 +13244,12 @@ rm -f conftest.data
 
 
 
+
+
 for ac_func in bzero floor getcwd gettimeofday localtime_r memmove \
                 memset mkdir modf pow rmdir socket sqrt strerror utime \
                 sigaction sigprocmask sleep dlopen finite fpclass copysign \
-                copysignf ldexpf frexpf modff \
+                copysignf ldexpf frexpf modff nextafter nextafterf \
                 clock_gettime getrusage times utimes readlink poll select \
                 mmap
 do

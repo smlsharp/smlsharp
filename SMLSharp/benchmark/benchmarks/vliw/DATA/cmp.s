@@ -288,7 +288,7 @@ LABEL   entry/L3:      ( /R0 /R2 /R3 /R4 /R5 /R1 )
 LABEL   node143/L67:      ( /R0 /R2 /R3 /R4 /R5 /R1 )
 NOP
 ARITHI  new_allocptr/R12 := allocptr/R1 iadd 2
-GETREAL real0.0/R10 := 0.0
+GETREAL real0.0/R10 := 0
 ARITHI  closure/R11 := allocptr/R1 iadd 0
 GETLAB  v/R6 := node213/L2
 NOP

@@ -144,7 +144,7 @@ sig
       : formatBtvEnv -> topEnv -> SMLFormat.FormatExpression.expression list
 
   datatype varId =
-      EXTERNAL of ExternalVarID.id
+      EXTERNAL of ExVarID.id
     | INTERNAL of VarID.id
 
   type varIdInfo

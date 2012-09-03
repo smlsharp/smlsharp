@@ -11,9 +11,9 @@ signature GLOBALINDEXENV = sig
 
   val emptyGlobalIndexEnv : globalIndexEnv
 
-  val findIndex : globalIndexEnv * ExternalVarID.id -> implementationIndex option
+  val findIndex : globalIndexEnv * ExVarID.id -> implementationIndex option
 
-  val allocateIndex : globalIndexEnv * ExternalVarID.id * IntermediateLanguage.ty -> 
+  val allocateIndex : globalIndexEnv * ExVarID.id * IntermediateLanguage.ty -> 
                       globalIndexEnv * implementationIndex
 
   val globalBoxedArraySize : BasicTypes.UInt32

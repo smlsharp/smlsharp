@@ -66,6 +66,8 @@ struct
   end
 end 
 
+structure PrimID :> GLOBAL_ID =
+  MakeGlobalID(val initialID = 0 val counterName = "PrimID")
 structure OPrimID :> GLOBAL_ID =
   MakeGlobalID(val initialID = 0 val counterName = "OPrimID")
 structure TyConID :> GLOBAL_ID =
@@ -76,8 +78,8 @@ structure ExnTagID :> GLOBAL_ID =
   MakeGlobalID(val initialID = Constants.TAG_exn_MAX
                val counterName = "ExnTagID"
               )
-structure ExternalVarID :> GLOBAL_ID =
-  MakeGlobalID(val initialID = 0 val counterName = "ExternalVarID")
+structure ExVarID :> GLOBAL_ID =
+  MakeGlobalID(val initialID = 0 val counterName = "ExVarID")
 structure ClusterID :> GLOBAL_ID =
   MakeGlobalID(val initialID = 0 val counterName = "ClusterID")
 
@@ -85,11 +87,12 @@ structure GlobalCounters =
 struct
   fun stop () = 
       (
+       PrimID.stop();
        OPrimID.stop();
        TyConID.stop();
        BoundTypeVarID.stop();
        ExnTagID.stop();
-       ExternalVarID.stop();
+       ExVarID.stop();
        ClusterID.stop()
       )
 end

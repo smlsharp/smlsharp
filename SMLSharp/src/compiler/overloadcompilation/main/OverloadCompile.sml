@@ -42,7 +42,7 @@ struct
    fun compare (varId1,varId2) = 
        case (varId1,varId2) of
          (T.EXTERNAL eid1, T.EXTERNAL eid2) => 
-         ExternalVarID.compare(eid1,eid2)
+         ExVarID.compare(eid1,eid2)
        | (T.EXTERNAL _, T.INTERNAL _) => LESS
        | (T.INTERNAL _, T.EXTERNAL _) => GREATER
        | (T.INTERNAL iid1, T.INTERNAL iid2) => 

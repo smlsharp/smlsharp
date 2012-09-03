@@ -113,18 +113,18 @@ signature RECORDCALC = sig
      RCFUNCTOR of {name : string, 
                    formalAbstractTypeIDSet : TyConID.Set.set, 
                    formalExnIDSet : ExnTagID.Set.set,
-                   formalVarIDSet : ExternalVarID.Set.set,
+                   formalVarIDSet : ExVarID.Set.set,
                    generativeExnIDSet : ExnTagID.Set.set,
-                   generativeVarIDSet : ExternalVarID.set,
+                   generativeVarIDSet : ExVarID.set,
                    bodyCode : rcdecl list}
    | RCLINKFUNCTOR of {name : string, 
                        actualArgName : string,
                        typeResolutionTable : Types.tyBindInfo GlobalID.Map.map,
                        exnTagResolutionTable : GlobalTag.globalTag GlobalTag.Map.map,
                        externalVarIDResolutionTable : 
-                       ExternalVarID.externalVarID ExternalVarID.Map.map,
+                       ExVarID.externalVarID ExVarID.Map.map,
                        refreshedExceptionTagTable : GlobalTag.globalTag GlobalTag.Map.map,
-                       refreshedExternalVarIDTable : ExternalVarID.externalVarID ExternalVarID.Map.map,
+                       refreshedExternalVarIDTable : ExVarID.externalVarID ExVarID.Map.map,
                        loc : loc}
 
  and rcdecl 

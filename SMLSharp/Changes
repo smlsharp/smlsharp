@@ -1,8 +1,34 @@
+-----------------------------------------------------------------------------
+SML# version 0.53 (released on 2010-08-06)
+
+1. Overview
+
+This is a patch release of SML# 0.50 series.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+- fixed a bug of raising Div exception.
+- fixed a bug of floating-point literal compilation in native backend.
+- fixed a problem of SIGINT handling.
+- fixed many bugs in Array, Char, CharVector, Real, IEEEReal, String,
+ VectorSlice, and Word, Word8 structures.
+- implemented String.scan, String.concatWith, and Real.nextAfter.
+- improved conformance of IEEEReal structure with the Basis library
+ specification.
+
+[SMLUnit]
+* added assert functions for tuples and datatypes defined in Basis
+  structures.
+* changed the type of assert functions to return a unit.
+
+-----------------------------------------------------------------------------
 SML# version 0.52 (released on 2010-07-23)
 
 1. Overview
 
-This is a bug-fix release of SML# 0.52.
+This is a patch release of SML# 0.50 series.
 This version is still experimental.
 
 2. Changes and improvements

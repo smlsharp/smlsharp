@@ -23,7 +23,7 @@ struct
   structure P =
   struct
     fun makeVector (intSize, initial) =
-        if maxLen < intSize
+        if intSize < 0 orelse maxLen < intSize
         then raise General.Size
         else SMLSharp.PrimArray.vector(intSize, initial)
     (* ToDo : to create an empty array, new primitive should be added ? *)
@@ -57,20 +57,17 @@ struct
   fun tabulate (number, generator) =
       if number = 0 then P.makeEmptyVector ()
       else
-        if number < 0
-        then raise General.Size
-        else
-          let
-            val target = P.makeVector(number, generator 0)
-            fun fill i = 
-                if i = number
-                then ()
-                else (P.update(target, i, generator i); fill (i + 1))
-            val _ = fill 1
-          in
-            target
-          end
-      
+        let
+          val target = P.makeVector (number, generator 0)
+          fun fill i = 
+              if i = number
+              then ()
+              else (P.update(target, i, generator i); fill (i + 1))
+          val _ = fill 1
+        in
+          target
+        end
+
   fun length vector = P.length vector
 
   fun sub (vector, index) =
@@ -141,9 +138,12 @@ struct
   fun app appFun vector = appi (fn (_, element) => appFun element) vector
 
   fun update (vector, index, value) =
-      let fun valueOfIndex i = if i = index then value else sub (vector, i)
-      in tabulate (length vector, valueOfIndex)
-      end
+      if index < 0 orelse length vector <= index
+      then raise General.Subscript
+      else
+        let fun valueOfIndex i = if i = index then value else sub (vector, i)
+        in tabulate (length vector, valueOfIndex)
+        end
 
   (** A utility for VectorSlice and other structures.*)
   fun copy {src, si, dst, di, len} =

@@ -21,6 +21,8 @@ using namespace jp_ac_jaist_iml_runtime;
 
 Session* session_ = 0;
 
+DBGWRAP(static LogAdaptor LOG = LogAdaptor("byterun"));
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void showVersion(){
@@ -86,14 +88,15 @@ skipMagicNumberHeaderLine(int fd)
 char* getEnvironment(const char* name)
 {
     char* envValue = ::getenv(name);
-    DBGWRAP(printf("getenv(%s) = %s\n", name, envValue ? envValue : "(null)"));
+    DBGWRAP
+        (LOG.debug("getenv(%s) = %s", name, envValue ? envValue : "(null)"));
     return envValue;
 }
 
 int
 main(int argc, const char** argv)
 {
-    DBGWRAP(FileLogFacade::setup(stdout));
+    DBGWRAP(FileLogFacade::setup(stderr));
 
     if(argc < 2){
         usage(argv[0]);
@@ -342,8 +345,9 @@ main(int argc, const char** argv)
 
     ////////////////////////////////////////
 
-    DBGWRAP(printf("heapSize = %d, stackSize = %d\n", heapSize, stackSize);)
-    DBGWRAP(printf("argc = %d, nextArg - argv = %d\n", argc, nextArg - argv);)
+    DBGWRAP(LOG.debug("heapSize = %d, stackSize = %d", heapSize, stackSize);)
+    DBGWRAP
+        (LOG.debug("argc = %d, nextArg - argv = %d", argc, nextArg - argv);)
 
     Heap::initialize(heapSize);
     VirtualMachine vm(argv[0],
@@ -360,11 +364,11 @@ main(int argc, const char** argv)
 #ifdef IML_ENABLE_EXECUTION_MONITORING
     InstructionTracer instructionTracer;
     {
-        DBGWRAP(printf("execution monitoring is enabled.\n");)
+        DBGWRAP(LOG.debug("execution monitoring is enabled.");)
         char* envValue = getEnvironment(IML_ENV_ENABLE_INSTTRACE);
         if(envValue && (0 == strcmp(envValue, "yes")))
         {
-            DBGWRAP(printf("enable instTrace\n");)
+            DBGWRAP(LOG.debug("enable instTrace");)
             InstructionTracer::_enableTrace = true;
         }
         if(InstructionTracer::_enableTrace){
@@ -377,11 +381,11 @@ main(int argc, const char** argv)
 #ifdef IML_ENABLE_ALLOCATION_MONITORING
     HeapAllocationTracer allocationTracer;
     {
-        DBGWRAP(printf("heap allocation monitoring is enabled.\n");)
+        DBGWRAP(LOG.debug("heap allocation monitoring is enabled.");)
         char* envValue = getEnvironment(IML_ENV_ENABLE_ALLOCTRACE);
         if(envValue && (0 == strcmp(envValue, "yes")))
         {
-            DBGWRAP(printf("enable allocationTrace\n");)
+            DBGWRAP(LOG.debug("enable allocationTrace");)
             HeapAllocationTracer::_enableTrace = true;
         }
         if(HeapAllocationTracer::_enableTrace){
@@ -419,7 +423,8 @@ main(int argc, const char** argv)
     ////////////////////////////////////////
 
 #ifdef IML_ENABLE_ALLOCATION_MONITORING
-    printf("allocated fields: %d\n", allocationTracer._allocatedFields);
+    DBGWRAP
+      (LOG.debug("allocated fields: %d", allocationTracer._allocatedFields));
 #endif
 
     return exitCode;

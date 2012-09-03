@@ -3,13 +3,8 @@
  * @copyright 2010, Tohoku University.
  *)
 Group is
-$/basis.cm
-
-(*
-#if defined(NEW_CM)
   $/basis.cm
-#endif
-*)
+
   ASSERT.sig
   Assert.sml
   TEST.sig

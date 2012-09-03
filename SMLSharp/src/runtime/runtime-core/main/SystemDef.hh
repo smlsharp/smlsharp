@@ -138,13 +138,15 @@ int IEEEREAL_CLASS(double realValue)
         return IEEEREAL_CLASS_SNAN;
     }
     else if(isinf(realValue)){
-        return (realValue < 0.0) ? IEEEREAL_CLASS_NINF : IEEEREAL_CLASS_PINF;
+        return signbit(realValue) ? IEEEREAL_CLASS_NINF : IEEEREAL_CLASS_PINF;
     }
     else if(0.0 == realValue){
-        return IEEEREAL_CLASS_PZERO;
+        return
+            signbit(realValue) ? IEEEREAL_CLASS_NZERO : IEEEREAL_CLASS_PZERO;
     }
     else{
-        return (realValue < 0.0) ? IEEEREAL_CLASS_NNORM : IEEEREAL_CLASS_PNORM;
+        return
+            signbit(realValue) ? IEEEREAL_CLASS_NNORM : IEEEREAL_CLASS_PNORM;
     }
 }
 

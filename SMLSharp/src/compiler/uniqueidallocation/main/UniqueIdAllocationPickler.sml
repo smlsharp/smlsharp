@@ -37,7 +37,7 @@ struct
                 Control.Bug 
                 "Internal to pu_External (modulecompilation/main/ModuleCompilationPickler.sml)"
            ) 
-          ExternalVarID.pu_ID
+          ExVarID.pu_ID
         fun pu_Internal pu =
           P.con1 
           VIC.Internal 

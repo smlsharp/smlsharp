@@ -35,6 +35,7 @@ signature SUBSTRING =
     val size : substring -> int
 
     val concat : substring list -> string
+    val concatWith : string -> substring list -> string
 
     val explode : substring -> char list
 

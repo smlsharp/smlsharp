@@ -7,5 +7,6 @@
 structure LargeWord001 =
 UnsignedInteger001(struct
                      open LargeWord
-                     val assertEqualWord = AssertLargeWord.assertEqualWord
+                     val assertEqualWord =
+                         SMLUnit.Assert.AssertLargeWord.assertEqualWord
                    end);

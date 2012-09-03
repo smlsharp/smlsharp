@@ -54,7 +54,7 @@ struct
         exnTagIDKeyStamp : ExnTagID.id,
         tyConIDKeyStamp : TyConID.id,
         clusterIDKeyStamp : ClusterID.id,
-        externalVarIDKeyStamp : ExternalVarID.id
+        externalVarIDKeyStamp : ExVarID.id
        }
   *)           
            
@@ -143,7 +143,7 @@ struct
        globalIndexEnv =
          GlobalIndexEnv.emptyGlobalIndexEnv : GlobalIndexEnv.globalIndexEnv,
        inlineEnv =
-         InlineEnv.GIE ExternalVarID.Map.empty : InlineEnv.globalInlineEnv,
+         InlineEnv.GIE ExVarID.Map.empty : InlineEnv.globalInlineEnv,
        functorEnv = SEnv.empty : FunctorLinker.functorEnv
       } : context
       

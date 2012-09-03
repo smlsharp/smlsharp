@@ -138,6 +138,7 @@ val Real_copySign : real * real -> real
 val Real_class : real -> int
 val Real_dtoa : real * int -> string * int
 val Real_strtod : string -> real
+val Real_nextAfter : real * real -> real
 
 (*P Real_toFloat,,"real -> float",1,,IMLPrim_Real_toFloat,effective *)
 (*P Real_fromFloat,,"float -> real",1,,IMLPrim_Real_fromFloat,effective *)
@@ -156,6 +157,7 @@ val Float_copySign : Real32.real * Real32.real -> Real32.real
 val Float_class : Real32.real -> int
 val Float_dtoa : Real32.real * int -> string * int
 val Float_strtod : string -> Real32.real
+val Float_nextAfter : Real32.real * Real32.real -> Real32.real
 
 (* # Char_chr may raise Chr exception. *)
 val Char_toString : char -> string

@@ -19,11 +19,33 @@ struct
       assertEqualOption
           (assertEqual2Tuple (assertEqualChar, assertEqualCharList))
 
+  val assertEqual2Bool = assertEqual2Tuple (assertEqualBool, assertEqualBool)
+
   val assertEqual4Bool =
       assertEqual4Tuple
           (assertEqualBool, assertEqualBool, assertEqualBool, assertEqualBool)
 
+  val assertEqual5Bool =
+      assertEqual5Tuple
+          (
+            assertEqualBool,
+            assertEqualBool,
+            assertEqualBool,
+            assertEqualBool,
+            assertEqualBool
+          )
+
   val assertEqual2Char = assertEqual2Tuple (assertEqualChar, assertEqualChar)
+
+  val TTTT = (true, true, true, true)
+  val TTFT = (true, true, false, true)
+  val TTFF = (true, true, false, false)
+  val TFTF = (true, false, true, false)
+  val FTTT = (false, true, true, true)
+  val FTTF = (false, true, true, false)
+  val FTFF = (false, true, false, false)
+  val FFTT = (false, false, true, true)
+  val FFFF = (false, false, false, false)
 
   (****************************************)
 
@@ -111,9 +133,9 @@ struct
   in
   fun binComp001 () =
       let
-        val lt_lt = test (#"a", #"b") (true, true, false, false)
-        val lt_eq = test (#"a", #"a") (false, true, true, false)
-        val lt_gt = test (#"b", #"a") (false, false, true, true)
+        val lt_lt = test (#"a", #"b") TTFF
+        val lt_eq = test (#"a", #"a") FTTF
+        val lt_gt = test (#"b", #"a") FFTT
       in () end
   end (* local *)
 
@@ -171,6 +193,19 @@ struct
 
   (********************)
 
+  local fun test arg expected = assertEqualBool expected (Char.isAscii arg)
+  in
+  fun isAscii001 () =
+      let
+        val isAscii_Chr0 = test (Char.chr 0) true
+        val isAscii_Chr127 = test (Char.chr 127) true
+        val isAscii_Chr128 = test (Char.chr 128) false
+        val isAscii_Chr255 = test (Char.chr 255) false
+      in () end
+  end (* local *)
+
+  (********************)
+
   local
     fun test arg expected =
         assertEqual2Char expected (Char.toLower arg, Char.toUpper arg)
@@ -191,25 +226,100 @@ struct
   (********************)
 
   local
-    fun test arg expected = assertEqualBool expected (Char.isAlpha arg)
+    fun test arg expected =
+        assertEqual4Bool
+            expected
+            (
+              Char.isAlpha arg,
+              Char.isAlphaNum arg,
+              Char.isDigit arg,
+              Char.isHexDigit arg
+            )
   in
-  fun isAlpha001 () =
+  (* classification of alphabet and digit characters.*)
+  fun isAlphaDigit001 () =
       let
-        val isAlpha_A = test #"A" true (* 065 *)
-        val isAlpha_Z = test #"Z" true (* 090 *)
-        val isAlpha_a = test #"a" true (* 097 *)
-        val isAlpha_z = test #"z" true (* 122 *)
-        val isAlpha_0 = test #"0" false 
-        val isAlpha_9 = test #"9" false
-        val isAlpha_F = test #"F" true
-        val isAlpha_AT = test #"@" false (* @ = 064 *)
-        val isAlpha_LQ = test #"[" false (* [ = 091 *)
-        val isAlpha_BQ = test #"`" false (* ` = 096 *)
-        val isAlpha_LB = test #"{" false (* { = 123 *)
+        val isAlphaDigit_A = test #"A" TTFT (* 065 *)
+        val isAlphaDigit_Z = test #"Z" TTFF (* 090 *)
+        val isAlphaDigit_a = test #"a" TTFT (* 097 *)
+        val isAlphaDigit_z = test #"z" TTFF (* 122 *)
+        val isAlphaDigit_0 = test #"0" FTTT
+        val isAlphaDigit_9 = test #"9" FTTT
+        val isAlphaDigit_F = test #"F" TTFT
+        val isAlphaDigit_AT = test #"@" FFFF (* @ = 064 *)
+        val isAlphaDigit_LQ = test #"[" FFFF (* [ = 091 *)
+        val isAlphaDigit_BQ = test #"`" FFFF (* ` = 096 *)
+        val isAlphaDigit_LB = test #"{" FFFF (* { = 123 *)
       in () end
   end (* local *)
 
-(* ToDo : test of other functions (isALphaNum, isAscii, ...) *)
+  local
+    val TFFFF = (true, false, false, false, false)
+    val TFFTF = (true, false, false, true, false)
+    val TFTTF = (true, false, true, true, false)
+    val FFTTF = (false, false, true, true, false)
+    val FTTFT = (false, true, true, false, true)
+    val FTTFF = (false, true, true, false, false)
+    fun test arg expected =
+        assertEqual5Bool
+            expected
+            (
+              Char.isCntrl arg,
+              Char.isGraph arg, (* isPrint && not isSpace *)
+              Char.isPrint arg, (* not isCntrl *)
+              Char.isSpace arg,
+              Char.isPunct arg  (* isGraph && not isAlphaNum *)
+            )
+  in
+  (* classification of control and space characters.*)
+  fun isCntrlSpace001 () =
+      let
+        val isCntrlSpace_ascii000 = test #"\000" TFFFF (* '^@' *)
+        val isCntrlSpace_ascii009 = test #"\009" TFFTF (* '\t' *)
+        val isCntrlSpace_ascii010 = test #"\010" TFFTF (* '\n' *)
+        val isCntrlSpace_ascii011 = test #"\011" TFFTF (* '\v' *)
+        val isCntrlSpace_ascii012 = test #"\012" TFFTF (* '\f' *)
+        val isCntrlSpace_ascii013 = test #"\013" TFFTF (* '\r' *)
+        val isCntrlSpace_ascii014 = test #"\014" TFFFF (* '^N' *)
+        val isCntrlSpace_ascii031 = test #"\031" TFFFF (* '^_' *)
+        val isCntrlSpace_ascii032 = test #"\032" FFTTF (* ' ' *)
+        val isCntrlSpace_ascii033 = test #"\033" FTTFT (* '!' *)
+        val isCntrlSpace_ascii047 = test #"\047" FTTFT (* '/' *)
+        val isCntrlSpace_ascii048 = test #"\048" FTTFF (* '0' *)
+        val isCntrlSpace_ascii057 = test #"\057" FTTFF (* '9' *)
+        val isCntrlSpace_ascii058 = test #"\058" FTTFT (* ':' *)
+        val isCntrlSpace_ascii064 = test #"\064" FTTFT (* '@' *)
+        val isCntrlSpace_ascii065 = test #"\065" FTTFF (* 'A' *)
+        val isCntrlSpace_ascii090 = test #"\090" FTTFF (* 'Z' *)
+        val isCntrlSpace_ascii091 = test #"\091" FTTFT (* '[' *)
+        val isCntrlSpace_ascii096 = test #"\096" FTTFT (* '`' *)
+        val isCntrlSpace_ascii097 = test #"\097" FTTFF (* 'a' *)
+        val isCntrlSpace_ascii122 = test #"\122" FTTFF (* 'z' *)
+        val isCntrlSpace_ascii123 = test #"\123" FTTFT (* '{' *)
+      in () end
+  end (* local *)
+
+  local
+    val FF = (false, false)
+    val FT = (false, true)
+    val TF = (true, false)
+    fun test arg expected =
+        assertEqual2Bool expected (Char.isLower arg, Char.isUpper arg)
+  in
+  fun isLowerUpper001 () =
+      let
+        val isLowerUpper_A = test #"A" FT (* 065 *)
+        val isLowerUpper_Z = test #"Z" FT (* 090 *)
+        val isLowerUpper_a = test #"a" TF (* 097 *)
+        val isLowerUpper_z = test #"z" TF (* 122 *)
+        val isLowerUpper_0 = test #"0" FF (* 048 *)
+        val isLowerUpper_9 = test #"9" FF (* 057 *)
+        val isLowerUpper_AT = test #"@" FF (* @ = 064 *)
+        val isLowerUpper_LQ = test #"[" FF (* [ = 091 *)
+        val isLowerUpper_BQ = test #"`" FF (* ` = 096 *)
+        val isLowerUpper_LB = test #"{" FF (* { = 123 *)
+      in () end
+  end (* local *)
 
   (********************)
 
@@ -404,8 +514,11 @@ struct
         ("compare001", compare001),
         ("contains001", contains001),
         ("notContains001", notContains001),
+        ("isAscii001", isAscii001),
         ("toLowerUpper001", toLowerUpper001),
-        ("isAplha001", isAlpha001),
+        ("isAlphaDigit001", isAlphaDigit001),
+        ("isCntrlSpace001", isCntrlSpace001),
+        ("isLowerUpper001", isLowerUpper001),
         ("fromString001", fromString001),
         ("fromString002", fromString002),
         ("scan001", scan001),

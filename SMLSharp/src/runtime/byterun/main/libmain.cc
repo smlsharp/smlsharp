@@ -135,7 +135,7 @@ smlsharp_initialize(int heapSize,
                     int commandArgsCount,
                     const char** commandArgs)
 {
-    DBGWRAP(FileLogFacade::setup(stdout));
+    DBGWRAP(FileLogFacade::setup(stderr));
 
     session_ = new StandAloneSession();
 

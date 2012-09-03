@@ -18,6 +18,7 @@ struct
   (***************************************************************************)
 
   val wordSize = 32
+  val MAX_WORD = 0xFFFFFFFF : IntInf.int
 
   fun toLarge word = word
 
@@ -76,17 +77,8 @@ struct
   val op ~>> = fn (left, right) => Word_arithmeticRightShift (left, right)
 *)
 
-  val ~ = fn word => fromInt(Int.~(toInt word))
-
-  val op + = fn (left : word, right) => left + right
-
-  val op - = fn (left : word, right) => left - right
-
-  val op * = fn (left : word, right) => left * right
-
-  val op div = op div : word * word -> word
-
-  val op mod = op mod : word * word -> word
+  (** returns the 2's complement. *)
+  val ~ = fn word => notb word + 0w1
 
   fun compare (left : word, right) =
       if left < right
@@ -124,32 +116,32 @@ struct
         | _ => raise Fail "bug: Word.charOfNum"
     fun numOfChar char = 
         case char of
-          #"0" => 0w0
-        | #"1" => 0w1
-        | #"2" => 0w2
-        | #"3" => 0w3
-        | #"4" => 0w4
-        | #"5" => 0w5
-        | #"6" => 0w6
-        | #"7" => 0w7
-        | #"8" => 0w8
-        | #"9" => 0w9
-        | #"A" => 0w10
-        | #"a" => 0w10
-        | #"B" => 0w11
-        | #"b" => 0w11
-        | #"C" => 0w12
-        | #"c" => 0w12
-        | #"D" => 0w13
-        | #"d" => 0w13
-        | #"E" => 0w14
-        | #"e" => 0w14
-        | #"F" => 0w15              
-        | #"f" => 0w15
+          #"0" => 0 : IntInf.int
+        | #"1" => 1
+        | #"2" => 2
+        | #"3" => 3
+        | #"4" => 4
+        | #"5" => 5
+        | #"6" => 6
+        | #"7" => 7
+        | #"8" => 8
+        | #"9" => 9
+        | #"A" => 10
+        | #"a" => 10
+        | #"B" => 11
+        | #"b" => 11
+        | #"C" => 12
+        | #"c" => 12
+        | #"D" => 13
+        | #"d" => 13
+        | #"E" => 14
+        | #"e" => 14
+        | #"F" => 15              
+        | #"f" => 15
         | _ => raise Fail "bug: Int.numOfChar"
     fun numOfRadix radix =
         case radix of
-          SC.BIN => 0w2 | SC.OCT => 0w8 | SC.DEC => 0w10 | SC.HEX => 0w16
+          SC.BIN => 2 | SC.OCT => 8 | SC.DEC => 10 | SC.HEX => 16
     fun isNumChar radix =
         case radix of
           SC.BIN => (fn char => char = #"0" orelse char = #"1")
@@ -163,7 +155,7 @@ struct
   in
   fun fmt radix (num : word) =
       let
-        val radixNum = numOfRadix radix
+        val radixNum = fromInt (numOfRadix radix)
         fun loop 0w0 chars = implode chars
           | loop n chars =
             loop (n div radixNum) ((charOfNum (n mod radixNum)) :: chars)
@@ -177,8 +169,20 @@ struct
 
   local
     structure PC = ParserComb
+    (*  Basis spec requires that Word.scan raises an Overflow exception
+     * when the scanned number is too large to fit in a word.
+     * On the other hand, Basis spec requires that arithmetic operations of
+     * Word do NOT raise Overflow.
+     * So, we have to check any occurrence of overflow here.
+     *)
     fun accumIntList base ints =
-        foldl (fn (int, accum) => accum * base + int) 0w0 ints
+        foldl
+            (fn (int, accum) =>
+                let val value = accum * base + int
+                in if IntInf.< (MAX_WORD, value) then raise Overflow else value
+                end)
+            0
+            ints
     fun scanNumbers radix reader stream =
         let
           val (isNumberChar, charToNumber, base) =
@@ -187,27 +191,26 @@ struct
           PC.wrap
               (
                 PC.oneOrMore(PC.wrap(PC.eatChar isNumberChar, charToNumber)),
-                accumIntList base
+                fromLargeInt o accumIntList (IntInf.fromInt base)
               )
               reader
               stream
         end
-    fun scanZeroW reader stream =
-        PC.option(PC.string "0w") reader stream
+    fun scanZeroW reader stream = PC.string "0w" reader stream
     fun scanZeroX reader stream =
-        PC.option
-        (PC.or'
-         [PC.string "0wx", PC.string "0wX", PC.string "0x", PC.string "0X"])
+        PC.or'
+         [PC.string "0wx", PC.string "0wX", PC.string "0x", PC.string "0X"]
         reader
         stream
   in
   fun scan radix reader stream =
       let
+        val scanNumbers = scanNumbers radix
         fun scanBody reader stream =
             (case radix of
                StringCvt.HEX =>
-               PC.seqWith #2 (scanZeroX, scanNumbers radix)
-             | _ => PC.seqWith #2 (scanZeroW, scanNumbers radix))
+               PC.or(PC.seqWith #2 (scanZeroX, scanNumbers), scanNumbers)
+             | _ => PC.or(PC.seqWith #2 (scanZeroW, scanNumbers), scanNumbers))
             reader
             stream
       in
@@ -217,6 +220,15 @@ struct
   end
   fun fromString string = (SC.scanString (scan SC.HEX)) string
 
+  val op + = fn (left : word, right) => left + right
+
+  val op - = fn (left : word, right) => left - right
+
+  val op * = fn (left : word, right) => left * right
+
+  val op div = op div : word * word -> word
+
+  val op mod = op mod : word * word -> word
 
   fun op < (left : word, right : word) =
       case compare (left, right) of General.LESS => true | _ => false

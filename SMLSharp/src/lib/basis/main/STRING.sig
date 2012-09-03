@@ -39,9 +39,10 @@ signature STRING =
     val >  : (string * string) -> bool
     val >= : (string * string) -> bool
 
-    val fromString  : String.string -> string option
     val toString    : string -> String.string
-    val fromCString : String.string -> string option
+    val scan : (char, 'a) StringCvt.reader -> (string, 'a) StringCvt.reader
+    val fromString  : String.string -> string option
     val toCString   : string -> String.string
+    val fromCString : String.string -> string option
 
   end

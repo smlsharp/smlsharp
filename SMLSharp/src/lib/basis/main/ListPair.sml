@@ -34,36 +34,51 @@ struct
       in scan pairs [] []
       end
 
-  fun mapImpl checkEq f (lefts, rights) =
-      List.map f (zipImpl checkEq (lefts, rights))
-  val map = mapImpl false
-  val mapEq = mapImpl true
+  fun map f (lefts, rights) = List.map f (zip (lefts, rights))
 
-  fun appImpl checkEq f (lefts, rights) =
-      List.app f (zipImpl checkEq (lefts, rights))
-  val app = appImpl false
-  val appEq = appImpl true
+  fun mapEq f =
+      let
+        fun m accum ([], []) = List.rev accum
+          | m accum (left :: lefts, right :: rights) =
+            m (f (left, right) :: accum) (lefts, rights)
+          | m _ _ = raise UnequalLengths
+      in m []
+      end
 
-  fun foldlImpl checkEq f init (lefts, rights) =
+  fun app f (lefts, rights) = List.app f (zip (lefts, rights))
+
+  fun appEq f ([], []) = ()
+    | appEq f (left :: lefts, right :: rights) =
+      (f (left, right); appEq f (lefts, rights))
+    | appEq f _ = raise UnequalLengths
+
+  fun foldl f init (lefts, rights) =
       List.foldl
           (fn ((left, right), accum) => f (left, right, accum))
           init
-          (zipImpl checkEq (lefts, rights))
-  val foldl = foldlImpl false
-  val foldlEq = foldlImpl true
+          (zip (lefts, rights))
 
-  fun foldrImpl checkEq f init (lefts, rights) =
+  fun foldlEq f init ([], []) = init
+    | foldlEq f init (left :: lefts, right :: rights) =
+      foldlEq f (f (left, right, init)) (lefts, rights)
+    | foldlEq f _ _ = raise UnequalLengths
+
+  fun foldr f init (lefts, rights) =
       List.foldr
           (fn ((left, right), accum) => f (left, right, accum))
           init
-          (zipImpl checkEq (lefts, rights))
-  val foldr = foldrImpl false
-  val foldrEq = foldrImpl true
+          (zip (lefts, rights))
 
-  fun allImpl checkEq f (lefts, rights) =
-      List.all f (zipImpl checkEq (lefts, rights))
-  val all = allImpl false
-  val allEq = allImpl true
+  fun foldrEq f init ([], []) = init
+    | foldrEq f init (left :: lefts, right :: rights) =
+      f (left, right, foldrEq f init (lefts, rights))
+    | foldrEq f _ _ = raise UnequalLengths
+
+  fun all f (lefts, rights) = List.all f (zip (lefts, rights))
+
+  fun allEq f ([], []) = true
+    | allEq f (x :: xs, y :: ys) = f (x, y) andalso allEq f (xs, ys)
+    | allEq _ _ = false
 
   fun exists f (lefts, rights) = List.exists f (zip (lefts, rights))
 

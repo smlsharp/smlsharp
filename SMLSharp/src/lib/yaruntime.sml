@@ -334,6 +334,13 @@ struct
       _import "copysignf"
       : __attribute__((pure,no_callback))
       (Real32.real, Real32.real) -> Real32.real
+  val Real_nextAfter =
+      _import "nextafter"
+      : __attribute__((pure,no_callback)) (real, real) -> real
+  val Float_nextAfter =
+      _import "nextafterf"
+      : __attribute__((pure,no_callback))
+      (Real32.real, Real32.real) -> Real32.real
   val ceilf =
       _import "ceilf"
       : __attribute__((pure,no_callback)) Real32.real -> Real32.real
@@ -508,7 +515,7 @@ struct
         val intg = ref 0.0
         val frac = modf (x, intg)
       in
-        (frac, !intg)
+        (!intg, frac)
       end
 
   fun Float_split (x:Real32.real) : Real32.real * Real32.real =
@@ -516,7 +523,7 @@ struct
         val intg = ref 0.0
         val frac = modff (x, intg)
       in
-        (frac, !intg)
+        (!intg, frac)
       end
 
   fun Real_toManExp (x:real) : real * int =

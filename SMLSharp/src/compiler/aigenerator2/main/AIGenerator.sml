@@ -27,6 +27,7 @@ struct
   fun sizeOfDouble () = AI.UInt (if Control.nativeGen() then 0w8 else 0w2)
 
   val SubscriptExceptionTag = AI.Extern "sml_exn_Subscript"
+  val DivExceptionTag = AI.Extern "sml_exn_Div"
 
   fun newArg (ty, argKind) =
       {id = newLocalId (), ty = ty, argKind = argKind} : AI.argInfo
@@ -106,6 +107,7 @@ struct
 
   type context =
        {
+         raiseDivLabel: AI.label option,
          boundaryCheckFailedLabel: AI.label option,
          envVar: AI.varInfo option,
          linkVar: AI.varInfo,
@@ -135,6 +137,7 @@ struct
         val constid = newLocalId ()
       in
         ({
+           raiseDivLabel = #raiseDivLabel context,
            boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
            envVar = #envVar context,
            linkVar = #linkVar context,
@@ -159,6 +162,7 @@ struct
 
   fun addParamMap (context as {paramMapMap, ...}:context) label paramMap =
       {
+        raiseDivLabel = #raiseDivLabel context,
         boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
         envVar = #envVar context,
         linkVar = #linkVar context,
@@ -174,7 +178,24 @@ struct
 
   fun setBoundaryCheckFailedLabel (context:context) label =
       {
+        raiseDivLabel = #raiseDivLabel context,
         boundaryCheckFailedLabel = SOME label,
+        envVar = #envVar context,
+        linkVar = #linkVar context,
+        funIdMap = #funIdMap context,
+(*
+        genericTys = #genericTys context,
+*)
+        routineInfoMap = #routineInfoMap context,
+        paramMapMap = #paramMapMap context,
+        passVars = #passVars context,
+        constants = #constants context
+      } : context
+
+  fun setRaiseDivLabel (context:context) label =
+      {
+        raiseDivLabel = SOME label,
+        boundaryCheckFailedLabel = #boundaryCheckFailedLabel context,
         envVar = #envVar context,
         linkVar = #linkVar context,
         funIdMap = #funIdMap context,
@@ -927,41 +948,56 @@ struct
         (context, genSwitch code branchCases, map (fn _ => env) branchCases)
       end
 
+  fun checkFailedBlock context get set exnTag loc =
+      case get context of
+        SOME label => (context, fn x => fn _ => x, label)
+      | NONE =>
+        let
+          val label = newLabel ()
+          val exnVar = newArg (AI.BOXED, AI.Exn)
+          val exnValue = newVar AI.BOXED
+          val context = set context label
+          val insns =
+              [
+                AI.Alloc  {dst = exnValue,
+                           objectType = AI.Vector,
+                           bitmaps = [AI.UInt 0w0],
+                           payloadSize = sizeOfBoxed (),
+                           loc = loc},
+                AI.Update {block = AI.Var exnValue,
+                           offset = AI.UInt 0w0,
+                           size = sizeOfBoxed (),
+                           ty = AI.BOXED,
+                           value = exnTag,
+                           barrier = AI.NoBarrier,
+                           loc = loc},
+                AI.Set    {dst = exnVar,
+                           ty = AI.BOXED,
+                           value = AI.Var exnValue,
+                           loc = loc},
+                AI.Raise  {exn = exnVar,
+                           loc = loc}
+              ]
+          fun addCode code env =
+              let
+                val code = beginBlock code label AI.CheckFailed env loc
+                val code = addInsn code insns
+                val code = closeBlock code
+              in
+                code
+              end
+        in
+          (context, addCode, label)
+        end
+
   fun boundaryCheck context env code block offset size loc =
       let
-        val (context, failInsns, failLabel) =
-            case #boundaryCheckFailedLabel context of
-              SOME label => (context, nil, label)
-            | NONE =>
-              let
-                val label = newLabel ()
-                val exnVar = newArg (AI.BOXED, AI.Exn)
-                val exnValue = newVar AI.BOXED
-                val context = setBoundaryCheckFailedLabel context label
-                val insns =
-                    [
-                      AI.Alloc  {dst = exnValue,
-                                 objectType = AI.Vector,
-                                 bitmaps = [AI.UInt 0w0],
-                                 payloadSize = sizeOfBoxed (),
-                                 loc = loc},
-                      AI.Update {block = AI.Var exnValue,
-                                 offset = AI.UInt 0w0,
-                                 size = sizeOfBoxed (),
-                                 ty = AI.BOXED,
-                                 value = SubscriptExceptionTag,
-                                 barrier = AI.NoBarrier,
-                                 loc = loc},
-                      AI.Set    {dst = exnVar,
-                                 ty = AI.BOXED,
-                                 value = AI.Var exnValue,
-                                 loc = loc},
-                      AI.Raise  {exn = exnVar,
-                                 loc = loc}
-                    ]
-              in
-                (context, insns, label)
-              end
+        val (context, addFailBlock, failLabel) =
+            checkFailedBlock context
+                             #boundaryCheckFailedLabel
+                             setBoundaryCheckFailedLabel
+                             SubscriptExceptionTag
+                             loc
 
         val passLabel = newLabel ()
         val objectSize = newVar AI.UINT
@@ -982,23 +1018,52 @@ struct
               ]
 
         val code = closeBlock code
-        val code =
-            case failInsns of
-              nil => code
-            | _ =>
-              let
-                val code = beginBlock code failLabel AI.BoundaryCheckFailed
-                                      env loc
-                val code = addInsn code failInsns
-                val code = closeBlock code
-              in
-                code
-              end
-
+        val code = addFailBlock code env
         val code = beginBlock code passLabel AI.Branch env loc
       in
         (context, code)
       end
+
+  fun divZeroCheck context env code value ty loc =
+      if (case value of
+            AI.UInt 0w0 => false
+          | AI.UInt _ => true
+          | AI.SInt 0 => false
+          | AI.SInt _ => true
+          | _ => false)
+      then (context, code)   (* no need to check dynamically *)
+      else
+        let
+          val (context, addFailBlock, failLabel) =
+              checkFailedBlock context
+                               #raiseDivLabel
+                               setRaiseDivLabel
+                               DivExceptionTag
+                               loc
+          val passLabel = newLabel ()
+          val zero =
+              case ty of
+                AI.UINT => AI.UInt 0w0
+              | AI.SINT => AI.SInt 0
+              | AI.BYTE => AI.UInt 0w0
+              | _ => raise Control.Bug ("divZeroCheck "
+                                        ^ Control.prettyPrint (AI.format_ty ty))
+          val code =
+              addInsn code
+                [
+                  AI.If {value1 = value,
+                         value2 = zero,
+                         op2 = (AI.MonoEqual, ty, ty, AI.UINT),
+                         thenLabel = failLabel,
+                         elseLabel = passLabel,
+                         loc = loc}
+                ]
+          val code = closeBlock code
+          val code = addFailBlock code env
+          val code = beginBlock code passLabel AI.Branch env loc
+        in
+          (context, code)
+        end
 
   fun transformConst context env code dst const loc =
       case const of
@@ -1997,6 +2062,13 @@ struct
               transformArgList context env instSizeList
           val (context, instTagList) =
               transformArgList context env instTagList
+
+          val (context, code) =
+              case (AIPrimitive.needDivZeroCheck prim, argList) of
+                (SOME ty, [_, v2]) =>
+                divZeroCheck context env code v2 ty loc
+              | (SOME ty, _) => raise Control.Bug "PRIMAPPLY: divZero"
+              | _ => (context, code)
 
           val insn =
               AIPrimitive.transform
@@ -3056,6 +3128,7 @@ struct
 
         val context =
             {
+              raiseDivLabel = NONE,
               boundaryCheckFailedLabel = NONE,
               envVar = envVar,
               linkVar = linkVar,

@@ -38,6 +38,7 @@ local
     val split = SMLSharp.Runtime.Real_split
     val toManExp = SMLSharp.Runtime.Real_toManExp
     val fromManExp = SMLSharp.Runtime.Real_fromManExp
+    val nextAfter = SMLSharp.Runtime.Real_nextAfter
     val copySign = SMLSharp.Runtime.Real_copySign
     val equal = Real.==
     val class = SMLSharp.Runtime.Real_class

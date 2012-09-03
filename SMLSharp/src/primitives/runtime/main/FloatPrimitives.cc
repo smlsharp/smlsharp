@@ -226,6 +226,20 @@ IMLPrim_Float_strtodImpl(UInt32Value argsCount,
     return;
 }
 
+/*
+ * val nextAfter : (float * float) -> float
+ */
+void
+IMLPrim_Float_nextAfterImpl(UInt32Value argsCount,
+                            Cell* argumentRefs[],
+                            Cell* resultRef)
+{
+    Real32Value left = argumentRefs[0]->real32;
+    Real32Value right = argumentRefs[1]->real32;
+    Real32Value resultValue = ::nextafterf(left, right);
+    resultRef->real32 = resultValue;
+};
+
 Primitive IMLPrim_Float_toString = IMLPrim_Float_toStringImpl;
 Primitive IMLPrim_Float_fromInt = IMLPrim_Float_fromIntImpl;
 Primitive IMLPrim_Float_floor = IMLPrim_Float_floorImpl;
@@ -240,6 +254,7 @@ Primitive IMLPrim_Float_equal = IMLPrim_Float_equalImpl;
 Primitive IMLPrim_Float_class = IMLPrim_Float_classImpl;
 Primitive IMLPrim_Float_dtoa = IMLPrim_Float_dtoaImpl;
 Primitive IMLPrim_Float_strtod = IMLPrim_Float_strtodImpl;
+Primitive IMLPrim_Float_nextAfter = IMLPrim_Float_nextAfterImpl;
 
 ///////////////////////////////////////////////////////////////////////////////
 

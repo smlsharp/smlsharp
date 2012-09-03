@@ -124,6 +124,7 @@ Real_equal,,"real * real -> bool",2,,IMLPrim_Real_equal,effective
 Real_class,,"real -> int",1,,IMLPrim_Real_class,effective
 Real_dtoa,,"(real * int) -> string * int",2,,IMLPrim_Real_dtoa,effective
 Real_strtod,,"string -> real",1,,IMLPrim_Real_strtod,noneffective
+Real_nextAfter,,"real * real -> real",2,,IMLPrim_Real_nextAfter,noneffective
 
 Real_toFloat,,"real -> float",1,,IMLPrim_Real_toFloat,effective
 Real_fromFloat,,"float -> real",1,,IMLPrim_Real_fromFloat,effective
@@ -142,6 +143,7 @@ Float_equal,,"float * float -> bool",2,,IMLPrim_Float_equal,effective
 Float_class,,"float -> int",1,,IMLPrim_Float_class,effective
 Float_dtoa,,"(float * int) -> string * int",2,,IMLPrim_Float_dtoa,effective
 Float_strtod,,"string -> float",1,,IMLPrim_Float_strtod,noneffective
+Float_nextAfter,,"float * float -> float",2,,IMLPrim_Float_nextAfter,noneffective
 
 # Char_chr may raise Chr exception.
 Char_toString,,"char -> string",1,,IMLPrim_Char_toString,effective

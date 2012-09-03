@@ -38,8 +38,14 @@ IMLPrim_Date_ascTimeImpl(UInt32Value argsCount,
     assert(sizeof(struct tm) / sizeof(Cell) == argsCount);
     argumentsToTM(argumentRefs, &TM);
 
-    char* formatted = ::asctime(&TM);
-    *resultRef = PrimitiveSupport::stringToCell(formatted);
+    char formatted[32];
+    if(::strftime(formatted, 32, "%a %b %d %H:%M:%S %Y", &TM)){
+        *resultRef = PrimitiveSupport::stringToCell(formatted);
+    }
+    else{
+        Cell exn = PrimitiveSupport::constructExnSysErr(0, "ascTime fails.");
+        PrimitiveSupport::raiseException(exn);
+    }
 // printf("end Date_ascTime\n");
     return;
 }
@@ -56,9 +62,16 @@ IMLPrim_Date_localTimeImpl(UInt32Value argsCount,
     assert(9 == numFields);
     Cell* block = Heap::allocAtomBlock(numFields);
     struct tm* local_tm = ::localtime((time_t*)&seconds);
-    COPY_MEMORY((struct tm*)block, local_tm, sizeof(struct tm));
-    resultRef->blockRef = block;
+    if(local_tm){
+        COPY_MEMORY((struct tm*)block, local_tm, sizeof(struct tm));
+        resultRef->blockRef = block;
 // printf("end Date_localTime\n");
+    }
+    else{
+        Cell exn = PrimitiveSupport::constructExnSysErr(0, "localTime fails.");
+        PrimitiveSupport::raiseException(exn);
+            
+    }
     return;
 }
 
@@ -74,8 +87,14 @@ IMLPrim_Date_gmTimeImpl(UInt32Value argsCount,
     assert(9 == numFields);
     Cell* block = Heap::allocAtomBlock(numFields);
     struct tm* gm_tm = ::gmtime((time_t*)&seconds);
-    COPY_MEMORY((struct tm*)block, gm_tm, sizeof(struct tm));
-    resultRef->blockRef = block;
+    if(gm_tm){
+        COPY_MEMORY((struct tm*)block, gm_tm, sizeof(struct tm));
+        resultRef->blockRef = block;
+    }
+    else{
+        Cell exn = PrimitiveSupport::constructExnSysErr(0, "gmTime fails.");
+        PrimitiveSupport::raiseException(exn);
+    }
 // printf("end Date_gmTime\n");
     return;
 }
@@ -90,13 +109,17 @@ IMLPrim_Date_mkTimeImpl(UInt32Value argsCount,
     struct tm TM;
     assert(sizeof(struct tm) / sizeof(Cell) == argsCount);
     argumentsToTM(argumentRefs, &TM);
-/*
-printf("call mktime(TM = %x)\n", TM);
-printf("sec = %d, min = %d, hour = %d, mday = %d, mon = %d, year = %d, wday = %d, yday = %d, isdst = %d\n",
-       TM.tm_sec, TM.tm_min, TM.tm_hour, TM.tm_mday, TM.tm_mon, TM.tm_year, TM.tm_wday, TM.tm_yday, TM.tm_isdst);
-*/
     int seconds = ::mktime(&TM);
-    resultRef->sint32 = seconds;
+    if(-1 == seconds){
+        DBGWRAP(LOG.error("mktime(TM = %x) fails.\n", TM));
+        DBGWRAP(LOG.error("sec = %d, min = %d, hour = %d, mday = %d, mon = %d, year = %d, wday = %d, yday = %d, isdst = %d\n",
+                          TM.tm_sec, TM.tm_min, TM.tm_hour, TM.tm_mday, TM.tm_mon, TM.tm_year, TM.tm_wday, TM.tm_yday, TM.tm_isdst));
+        Cell exn = PrimitiveSupport::constructExnSysErr(0, "mkTime fails.");
+        PrimitiveSupport::raiseException(exn);
+    }
+    else{
+        resultRef->sint32 = seconds;
+    }
 // printf("end Date_mkTime\n");
     return;
 }
@@ -112,9 +135,12 @@ IMLPrim_Date_strfTimeImpl(UInt32Value argsCount,
     struct tm *TM = (struct tm*)(argumentRefs[1]->blockRef);
     char buffer[MAX_STRFTIME_LEN];
     if(0 == strftime(buffer, MAX_STRFTIME_LEN, format, TM)){
-        // ToDo : raise an error "too long string"
+        Cell exn = PrimitiveSupport::constructExnSysErr(0, "strfTime fails.");
+        PrimitiveSupport::raiseException(exn);
     }
-    *resultRef = PrimitiveSupport::stringToCell(buffer);
+    else{
+        *resultRef = PrimitiveSupport::stringToCell(buffer);
+    }
 // printf("end Date_strfTime\n");
     return;
 }

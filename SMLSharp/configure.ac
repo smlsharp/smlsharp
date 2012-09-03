@@ -579,7 +579,7 @@ AC_FUNC_UTIME_NULL
 AC_CHECK_FUNCS([bzero floor getcwd gettimeofday localtime_r memmove \
                 memset mkdir modf pow rmdir socket sqrt strerror utime \
                 sigaction sigprocmask sleep dlopen finite fpclass copysign \
-                copysignf ldexpf frexpf modff \
+                copysignf ldexpf frexpf modff nextafter nextafterf \
                 clock_gettime getrusage times utimes readlink poll select \
                 mmap])
 AC_CHECK_DECLS([CLOCK_PROCESS_CPUTIME_ID],,,[#include <time.h>])

@@ -130,6 +130,7 @@ val Real_copySign = _import "Real_copySign" : real * real -> real
 val Real_class = _import "Real_class" : real -> int
 val Real_dtoa = _import "Real_dtoa" : (real * int) -> string * int
 val Real_strtod = _import "Real_strtod" : string -> real
+val Real_nextAfter = _import "Real_nextAfter" : real * real -> real
 val Real_toFloat = _import "Real_toFloat" : real -> Real32.real
 val Real_fromFloat = _import "Real_fromFloat" : Real32.real -> real
 
@@ -147,6 +148,7 @@ val Float_copySign = _import "Float_copySign" : Real32.real * Real32.real -> Rea
 val Float_class = _import "Float_class" : Real32.real -> int
 val Float_dtoa = _import "Float_dtoa" : (Real32.real * int) -> string * int
 val Float_strtod = _import "Float_strtod" : string -> Real32.real
+val Float_nextAfter = _import "Float_nextAfter" : Real32.real * Real32.real -> Real32.real
 
 (* # Char_chr may raise Chr exception. *)
 val Char_toString = _import "Char_toString" : char -> string

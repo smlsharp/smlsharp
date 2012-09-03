@@ -30,7 +30,7 @@ struct
         codeEnv: AN.codeDecl VarID.Map.map,
         funEnv: AN.funDecl VarID.Map.map,
         mergePointEnv: AN.varInfo list VarID.Map.map,
-        globalEnv: (AN.ty * AN.anvalue) ExternalVarID.Map.map
+        globalEnv: (AN.ty * AN.anvalue) ExVarID.Map.map
       }
 
   fun setPosition (context:context) position =
@@ -111,7 +111,7 @@ struct
         codeEnv = #codeEnv context,
         funEnv = #funEnv context,
         mergePointEnv = #mergePointEnv context,
-        globalEnv = ExternalVarID.Map.insert (globalEnv, id, (ty, size))
+        globalEnv = ExVarID.Map.insert (globalEnv, id, (ty, size))
       } : context
 
   fun eqList eq (nil, nil) = true
@@ -858,7 +858,7 @@ struct
               codeEnv = VarID.Map.empty,
               funEnv = funEnv,
               mergePointEnv = VarID.Map.empty,
-              globalEnv = ExternalVarID.Map.empty
+              globalEnv = ExVarID.Map.empty
             } : context
       in
         app (typecheckCluster context) clusters;

@@ -3,8 +3,7 @@ SMLUnit
 @author YAMATODANI Kiyoshi
 @version $Id: README.txt,v 1.5 2007/04/12 05:51:16 kiyoshiy Exp $
 
- This directory contains SMLUnit.
-SMLUnit is a unit testing framework for Standard ML.
+ SMLUnit is a unit testing framework for Standard ML.
 SMLUnit is a simple framework and its specification is similar to HUnit,
 OUnit, JUnit and other xUnit frameworks.
 
@@ -21,10 +20,8 @@ Files/Directories
   src/
     source files of SMLUnit
 
-  sources.cm
-    description file for CM of SML/NJ.
-    To use the SMLUnit in your project, add reference to this file in your cm
-   file.
+  sources.{sml,cm,mlb}
+    loader scripts for SML#, SML/NJ and MLton.
 
   doc/
     documents
@@ -37,12 +34,21 @@ Files/Directories
 
 
 ========================================
-Install
+Usage
 
-copy this directory to the install directory.
+Loader scripts are provided for SML#, SML/NJ and MLton.
 
-sources.cm must be at the top of the install directory.
-Other packages, including SMLFormat and SMLDoc, assume that this file is there.
+SML#: 
+  smlunitlib.sml
+
+SML/NJ: 
+  smlunitlib.cm
+
+MLton: 
+  smlunitlib.mlb
+
+To use the SMLUnit in your project, add reference to these files in your
+project files.
 
 ========================================
 References

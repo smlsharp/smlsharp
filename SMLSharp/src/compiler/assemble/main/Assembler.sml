@@ -274,6 +274,7 @@ struct
           case value of
             "nan" => nan
           | "inf" => inf
+          | "~inf" => ~inf
           | _ => raise Control.Bug("invalid real format:" ^ value)
 
     fun floatOf value =
@@ -283,6 +284,7 @@ struct
           case value of
             "nan" => nan
           | "inf" => inf
+          | "~inf" => ~inf
           | _ => raise Control.Bug("invalid float format:" ^ value)
 
   (**

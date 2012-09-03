@@ -39,6 +39,7 @@ struct
                   TestLabel ("ListPair001", ListPair001.suite ()),
                   TestLabel ("Math001", Math001.suite ()),
                   TestLabel ("Option001", Option001.suite ()),
+                  TestLabel ("Position001", Position001.suite ()),
                   TestLabel ("Real001", Real001.suite ()),
                   TestLabel ("String001", String001.suite ()),
                   TestLabel ("StringCvt001", StringCvt001.suite ()),
@@ -58,6 +59,7 @@ struct
                   TestLabel ("Word8Vector101", Word8Vector101.suite ()),
                   TestLabel ("Word8VectorSlice101", Word8VectorSlice101.suite ()),
                   TestLabel ("Word8VectorSlice001", Word8VectorSlice001.suite ())
+
                 ]
       in SMLUnit.TextUITestRunner.runTest {output = TextIO.stdOut} tests
       end

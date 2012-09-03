@@ -191,7 +191,7 @@ struct
           stream
       and scanString reader stream =
           PC.or(PC.seqWith #2 (PC.char #"\\", scanEscaped),
-                PC.eatChar (fn ch => ch <> #"\\"))
+                PC.eatChar (fn ch => ch <> #"\\" andalso not(isCntrl ch)))
                reader
                stream
     in

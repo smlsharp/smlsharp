@@ -3,11 +3,12 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: MonoVectorSliceBase.sml,v 1.3 2007/09/01 03:21:16 kiyoshiy Exp $
  *)
-functor MonoVectorSliceBase(V : sig
-                                  include MONO_VECTOR
-                                  type slice = vector * int * int
-                                  val concatSlices : slice list -> vector
-                            end) =
+functor MonoVectorSliceBase
+          (V : sig
+             include MONO_VECTOR
+             type slice = vector * int * int
+             val concatSlices : slice list -> vector
+           end) =
 struct
 
   (***************************************************************************)
@@ -103,11 +104,10 @@ struct
       foldli (fn (_, element, accum) => foldFun(element, accum)) initial slice
   fun foldr foldFun initial slice = 
       foldri (fn (_, element, accum) => foldFun (element, accum)) initial slice
-  fun mapi mapFun slice =
-      V.fromList
-          (List.rev
-               (foldli
-                    (fn (index, a, l) => (mapFun (index, a) :: l)) [] slice))
+
+  fun mapi mapFun (vector, start, length) =
+      V.tabulate
+          (length, fn index => mapFun (index, V.sub (vector, start + index)))
   fun map mapFun slice = mapi (fn (_, element) => mapFun element) slice
   fun appi appFun slice =
       foldli (fn (index, a, _) => (appFun (index, a))) () slice

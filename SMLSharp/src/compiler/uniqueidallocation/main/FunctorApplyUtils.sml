@@ -36,7 +36,7 @@ in
                                         ^ NameMap.namePathToString(varNamePath) ^ " undefined"),
                                        loc)
                           | SOME (VIC.External newIndex) =>
-                            ExternalVarID.Map.insert(newPathHoleEnv, index, newIndex)
+                            ExVarID.Map.insert(newPathHoleEnv, index, newIndex)
                           | SOME VIC.Dummy =>
                             raise Control.BugWithLoc ("argument should not be dummy: " ^ NameMap.namePathToString(varNamePath), loc)
                           | SOME (VIC.Internal _) => 
@@ -45,7 +45,7 @@ in
                                         ^ NameMap.namePathToString(varNamePath) ^ " is local id"),
                                        loc)
                                       ))
-                   ExternalVarID.Map.empty
+                   ExVarID.Map.empty
                    formalArgVarEnv
 
            
@@ -61,7 +61,7 @@ in
                       | (varNamePath, VIC.Dummy, newVarIDEnv) =>
                         raise Control.Bug ("functor inner declared variable should not be dummy:" ^ NameMap.namePathToString varNamePath)
                       | (varNamePath, VIC.External index, newVarIDEnv) =>
-                        case ExternalVarID.Map.find(externalVarIDResolutionTable, index) of
+                        case ExVarID.Map.find(externalVarIDResolutionTable, index) of
                             (* functor argument provides the actual item *)
                             SOME index =>
                             NPEnv.insert
@@ -69,7 +69,7 @@ in
                                  (#1 varNamePath, Path.joinPath(prefix, #2 varNamePath)),
                                  (VIC.External index))
                           | NONE => 
-                            (case ExternalVarID.Map.find(refreshedExternalVarIDTable, index) of
+                            (case ExVarID.Map.find(refreshedExternalVarIDTable, index) of
                                  SOME index =>
                                  NPEnv.insert(newVarIDEnv, 
                                               (#1 varNamePath, Path.joinPath(prefix, #2 varNamePath)),
@@ -93,7 +93,7 @@ in
        case tfpdecs of
            nil => 
            (* functor body is a structure name *)
-           (varIDEnv, ExternalVarID.Set.empty, tfpdecs)
+           (varIDEnv, ExVarID.Set.empty, tfpdecs)
          | _ => 
            (* functor body is a sequence of code. *)
            let
