@@ -655,6 +655,7 @@ struct
   fun doRTLX86Coloring rtl =
       let
         val _ = printPhase "RTLX86Coloring"
+        val _ = #start Counter.rtlcoloringTimeCounter()
         val (rtl, regAlloc) = X86Coloring.regalloc rtl
         val _ = #stop Counter.rtlcoloringTimeCounter()
         val _ = printRTL "X86 RTL Coloring" rtl

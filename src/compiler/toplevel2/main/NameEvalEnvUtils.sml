@@ -46,7 +46,10 @@ struct
     | I.IDEXNREP {id, ty} => idstatus
     | I.IDEXEXN {path, ty, used, loc, version} => idstatus
     | I.IDEXEXNREP {path, ty, used, loc, version} => idstatus
+(*
     | I.IDOPRIM _ => raise bug "IDOPRIM in setTy"
+*)
+    | I.IDOPRIM _ => idstatus  (* FIXME *)
     | I.IDSPECVAR ty => raise bug "IDSPECVAR in setTy"
     | I.IDSPECEXN ty => raise bug "IDSPECEXN in setTy"
     | I.IDSPECCON => raise bug "IDSPECCON in setTy"

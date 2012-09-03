@@ -1,3 +1,17 @@
+SML# version 1.0.1 (released on 2012-04-24)
+
+Fixed bugs:
+* Vector.update caused segentation fault.
+* Bound type variables in a record kind caused a BUG exception.
+
+Improvements:
+* builtin-primitives are now printed in the interactive session.
+* link time warning about tmpnam(3) is suppressed.
+* --enable-fast-build option is added to configure script.
+  This option reduces the time for building SML# compiler by
+  reusing assembly code of minismlsharp.
+
+-----------------------------------------------------------------------------
 SML# version 1.0.0 (released on 2012-04-06)
 
 SML# 1.0.0 is the first fully functional version of the SML# language

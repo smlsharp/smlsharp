@@ -28,7 +28,9 @@ structure SAConstraint : SACONSTRAINT = struct
    *)
   val genericTyVars = ref (BoundTypeVarID.Set.empty)
 
+(*
   val btvInfo = ref (BoundTypeVarID.Map.empty : AT.btvEnv)
+*)
 
 (*
   fun btvEq (btvKind1 : AT.btvKind, btvKind2 : AT.btvKind) =
@@ -253,9 +255,11 @@ structure SAConstraint : SACONSTRAINT = struct
   and convertLocalBtvKind
         (id, btvKind as {tvarKind, eqKind} : Types.btvKind) =
       (
+(*
        case BoundTypeVarID.Map.find(!btvInfo, id) of
          SOME newBtvKind => newBtvKind
        | NONE =>
+*)
          let
            val newTvarKind = convertLocalRecKind tvarKind
            val newBtvKind = 
@@ -266,7 +270,9 @@ structure SAConstraint : SACONSTRAINT = struct
                }
          in
            (
+(*
             btvInfo := (BoundTypeVarID.Map.insert(!btvInfo,id,newBtvKind));
+*)
             newBtvKind
            )
          end
@@ -614,7 +620,9 @@ structure SAConstraint : SACONSTRAINT = struct
   fun initialize () =
       (
        constraintsRef := ([] : constraint list);
+(*
        btvInfo := (BoundTypeVarID.Map.empty : AT.btvEnv);
+*)
        genericTyVars := BoundTypeVarID.Set.empty
       )
 

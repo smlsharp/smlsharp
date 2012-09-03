@@ -33,6 +33,7 @@ struct
     | STRINGtyRep of string
     | UNITtyRep
     | UNPRINTABLERep
+    | BUILTINRep
     | WORD8tyRep of Word8.word
     | WORDtyRep of word
   val format_reifiedTerm 

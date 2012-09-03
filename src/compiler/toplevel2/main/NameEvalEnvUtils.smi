@@ -6,6 +6,7 @@ _require "../../nameevaluation/main/NameEvalUtils.smi"
 _require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
 _require "../../typeinference2/main/TypeInferenceContext.ppg.smi"
 _require "../../types/main/VarMap.smi"
+_require "../../types/main/TypesUtils.smi"
 _require "../../types/main/IDCalc.ppg.smi"
 _require "../../typedcalc/main/TypedCalc.ppg.smi"
 

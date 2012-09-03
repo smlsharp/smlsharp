@@ -645,6 +645,7 @@ CPP
 HEAPIMPL
 SNAPDATE_RULE_
 NATIVE_TARGET
+INCLUDE_FASTBUILD
 MLTON
 SMLNJ_HEAP_SUFFIX
 SMLBAT
@@ -730,6 +731,7 @@ ac_user_opts='
 enable_option_checking
 with_smlsharp
 with_stage0
+enable_fast_build
 enable_thread
 enable_native
 enable_heapimpl
@@ -1374,6 +1376,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-fast-build     reuse pre-compiled assembly file to build SML#
   --enable-thread         enable experimental native thread support
                           [default=no]
   --enable-native         enable native code generation [default=yes]
@@ -3717,6 +3720,14 @@ $as_echo "$as_me: error: no Standard ML compiler is found" >&2;}
   SMLSHARP=stage0/smlsharp
   SMLSHARP_DEP=
 fi
+
+INCLUDE_FASTBUILD='#'
+
+# Check whether --enable-fast-build was given.
+if test "${enable_fast_build+set}" = set; then
+  enableval=$enable_fast_build;  test "x$enableval" = "xyes" && INCLUDE_FASTBUILD=
+fi
+
 
 # -------- Checks for multithreading --------
 
@@ -10774,6 +10785,7 @@ $as_echo "$as_me: error: unknown endianness
 
 
 
+
 for ac_func in  \
 ceilf \
 clock_gettime \
@@ -10790,6 +10802,7 @@ ftime \
 getrusage \
 gettimeofday \
 ldexpf \
+mkstemp \
 mmap  \
 modf  \
 modff \

@@ -129,7 +129,8 @@ struct
                              @ ldflags,
                      libs = libfiles @ LIBS,
                      objects = [code],
-                     dst = sofile}
+                     dst = sofile,
+                     quiet = not (!Control.printCommand)}
                     
           val RTLD_GLOBAL = SMLSharpRuntime.cconstInt "RTLD_GLOBAL"
           val RTLD_NOW = SMLSharpRuntime.cconstInt "RTLD_NOW"
@@ -185,6 +186,8 @@ struct
                | e =>
                  puts ("uncaught exception: " ^ exnMessage e)
               )
+            | CoreUtils.Failed {command, message} =>
+              (puts ("command failed: " ^ command); puts message)
             | _ => raise e;
             (FAILED, newContext)
           )

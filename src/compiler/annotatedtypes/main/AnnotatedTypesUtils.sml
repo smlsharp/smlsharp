@@ -88,11 +88,22 @@ before print (Control.prettyPrint (AT.format_ty ty))
       | AT.CONty {tyCon, args} =>
         AT.CONty {tyCon = tyCon, args = map (substitute subst) args}
       | AT.POLYty {boundtvars, body} =>
-        AT.POLYty
-            {
-             boundtvars = boundtvars,  (* keep original kinds*)
-             body = substitute subst body
-            }
+        let
+          val subst =
+              BoundTypeVarID.Map.foldli
+                (fn (tid, _, subst) =>
+                    if BoundTypeVarID.Map.inDomain (subst, tid)
+                    then #1 (BoundTypeVarID.Map.remove (subst, tid))
+                    else subst)
+                subst
+                boundtvars
+        in
+           AT.POLYty
+              {
+               boundtvars = substituteBtvEnv subst boundtvars,
+               body = substitute subst body
+              }
+        end
       | _ => ty
 
   and substituteSingletonTy subst singletonTy =
@@ -118,13 +129,12 @@ before print (Control.prettyPrint (AT.format_ty ty))
   and substituteBtvEnv subst btvEnv =
       BoundTypeVarID.Map.map (substituteBtvKind subst) btvEnv
 
-  and substituteBtvKind subst {id, recordKind, eqKind, instancesRef = ref instances} =
+  and substituteBtvKind subst {id, tvarKind, eqKind} =
       {
        id = id,
-       recordKind = substituteRecordKind subst recordKind,
-       eqKind = eqKind,
-       instancesRef = ref (map (substitute subst) instances)
-      }
+       tvarKind = substituteRecordKind subst tvarKind,
+       eqKind = eqKind
+      } : AT.btvKind
 
   and substituteRecordKind subst recordKind =
       case recordKind of 

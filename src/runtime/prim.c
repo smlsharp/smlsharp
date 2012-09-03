@@ -1770,21 +1770,33 @@ prim_CopyMemory(void *dst, unsigned int doff,
 	void **writeaddr, **srcaddr;
 	unsigned int i;
 
-	/* FIXME: untested */
-	ASSERT((tag == TAG_UNBOXED && OBJ_TYPE(dst) == OBJTYPE_UNBOXED_ARRAY)
-	       || (tag == TAG_BOXED && OBJ_TYPE(dst) == OBJTYPE_BOXED_ARRAY));
-	ASSERT((tag == TAG_UNBOXED && OBJ_TYPE(src) == OBJTYPE_UNBOXED_ARRAY)
-	       || (tag == TAG_BOXED && OBJ_TYPE(src) == OBJTYPE_BOXED_ARRAY));
+	ASSERT((tag == TAG_UNBOXED
+		&& (OBJ_TYPE(dst) == OBJTYPE_UNBOXED_ARRAY
+		    || OBJ_TYPE(dst) == OBJTYPE_UNBOXED_VECTOR))
+	       || (tag == TAG_BOXED
+		   && (OBJ_TYPE(dst) == OBJTYPE_BOXED_ARRAY
+		       || OBJ_TYPE(dst) == OBJTYPE_BOXED_VECTOR)));
+	ASSERT((tag == TAG_UNBOXED
+		&& (OBJ_TYPE(src) == OBJTYPE_UNBOXED_ARRAY
+		    || OBJ_TYPE(src) == OBJTYPE_UNBOXED_VECTOR))
+	       || (tag == TAG_BOXED
+		   && (OBJ_TYPE(src) == OBJTYPE_BOXED_ARRAY
+		       || OBJ_TYPE(src) == OBJTYPE_BOXED_VECTOR)));
 	ASSERT(doff + len <= OBJ_SIZE(dst));
 	ASSERT(soff + len <= OBJ_SIZE(src));
 
 	if (tag == TAG_UNBOXED) {
 		memmove((char*)dst + doff, (char*)src + soff, len);
-	} else {
+	} else if (src != dst || doff < soff) {
 		writeaddr = (void**)((char*)dst + doff);
 		srcaddr = (void**)((char*)src + soff);
-		for (i = 0; i < len; i++, writeaddr++, srcaddr++)
-			sml_write(dst, writeaddr, *srcaddr);
+		for (i = 0; i < len / sizeof(void*); i++)
+			sml_write(dst, writeaddr++, *(srcaddr++));
+	} else {
+		writeaddr = (void**)((char*)dst + doff + len);
+		srcaddr = (void**)((char*)src + soff + len);
+		for (i = 0; i < len / sizeof(void*); i++)
+			sml_write(dst, --writeaddr, *(--srcaddr));
 	}
 }
 
@@ -1920,6 +1932,37 @@ prim_executable_path()
 #endif /* MINGW32 */
 }
 
+STRING
+prim_tmpName()
+{
+#ifdef MINGW32
+	char path[MAX_PATH + 1], name[MAX_PATH + 1];
+	char *buf;
+	DWORD ret1;
+	UINT ret2;
+
+	ret1 = GetTempPath(sizeof(path), path);
+	if (ret1 == 0)
+		return sml_str_new("");
+	ret2 = GetTempFileName(path, "tmp", 0, name);
+	if (ret2 == 0)
+		return sml_str_new("");
+
+	return sml_str_new(name);
+#elif defined(HAVE_MKSTEMP)
+	char *buf = sml_str_new("/tmp/tmp.XXXXXX");
+	int fd = mkstemp(buf);
+	if (fd == -1) {
+		return sml_str_new("");
+	} else {
+		close(fd);
+		return buf;
+	}
+#else
+	return sml_str_new(tmpnam(NULL));
+#endif /* MINGW32 || HAVE_MKSTEMP */
+}
+
 typedef void primfn();
 struct sml_prim_tabent {
        const char *name;
@@ -2037,7 +2080,6 @@ const struct sml_prim_tabent sml_runtime_primitives[] = {
 	{"getenv", (primfn*)getenv},
 	{"free", (primfn*)free},
 	{"system", (primfn*)system},
-	{"tmpnam", (primfn*)tmpnam},
 	{"remove", (primfn*)remove},
 	{"rename", (primfn*)rename},
 

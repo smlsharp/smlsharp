@@ -174,6 +174,13 @@ elif test "${with_stage0+set}" = set && test "x${with_smlsharp}" != "xno"; then
   SMLSHARP_DEP=
 fi
 
+INCLUDE_FASTBUILD='#'
+AC_SUBST(INCLUDE_FASTBUILD)
+AC_ARG_ENABLE(fast-build,
+AS_HELP_STRING([--enable-fast-build],
+               [reuse pre-compiled assembly file to build SML#]),
+[ test "x$enableval" = "xyes" && INCLUDE_FASTBUILD= ])
+
 # -------- Checks for multithreading --------
 
 AC_ARG_ENABLE(thread,
@@ -416,6 +423,7 @@ ftime \
 getrusage \
 gettimeofday \
 ldexpf \
+mkstemp \
 mmap  \
 modf  \
 modff \

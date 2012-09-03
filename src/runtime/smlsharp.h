@@ -311,7 +311,7 @@ SML_PRIMITIVE void *sml_alloc(unsigned int objsize, void *frame_pointer);
 SML_PRIMITIVE void *sml_alloc_callback(unsigned int objsize, void *codeaddr,
 				       void *envaddr);
 SML_PRIMITIVE void *sml_obj_empty(void);
-SML_PRIMITIVE void sml_write_barrier(void **writeaddr, void *objaddr);
+SML_PRIMITIVE void sml_write(void *objaddr, void **writeaddr, void *new_value);
 
 void sml_heap_gc(void);
 

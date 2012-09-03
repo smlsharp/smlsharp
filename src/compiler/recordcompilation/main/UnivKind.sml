@@ -10,8 +10,10 @@ structure UnivKind : sig
 
   val generateSingletonTy : BoundTypeVarID.id -> Types.singletonTy list
 
-  val generateTagInstance : Types.ty -> Loc.loc -> RecordCalc.rcexp option
-  val generateSizeInstance : Types.ty -> Loc.loc -> RecordCalc.rcexp option
+  val generateTagInstance
+      : Types.btvEnv -> Types.ty -> Loc.loc -> RecordCalc.rcexp option
+  val generateSizeInstance
+      : Types.btvEnv -> Types.ty -> Loc.loc -> RecordCalc.rcexp option
 
 end =
 struct
@@ -31,14 +33,22 @@ struct
   fun generateSingletonTy btv =
       [T.SIZEty (T.BOUNDVARty btv), T.TAGty (T.BOUNDVARty btv)]
 
-  fun generateTagInstance ty loc =
+  fun generateTagInstance (btvEnv:T.btvEnv) ty loc =
       case TypesUtils.derefTy ty of
-        T.BOUNDVARty _ => NONE
+        ty as T.BOUNDVARty tid =>
+        (case BoundTypeVarID.Map.find (btvEnv, tid) of
+           SOME {tvarKind=T.REC _, ...} =>
+           SOME (RC.RCTAGOF (ty, loc))
+         | _ => NONE)
       | _ => SOME (RC.RCTAGOF (ty, loc))
 
-  fun generateSizeInstance ty loc =
+  fun generateSizeInstance (btvEnv:T.btvEnv) ty loc =
       case TypesUtils.derefTy ty of
-        T.BOUNDVARty _ => NONE
+        ty as T.BOUNDVARty tid =>
+        (case BoundTypeVarID.Map.find (btvEnv, tid) of
+           SOME {tvarKind=T.REC _, ...} =>
+           SOME (RC.RCSIZEOF (ty, loc))
+         | _ => NONE)
       | _ => SOME (RC.RCSIZEOF (ty, loc))
 
 end
