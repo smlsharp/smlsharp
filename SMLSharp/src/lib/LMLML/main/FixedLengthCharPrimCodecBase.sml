@@ -19,7 +19,7 @@
  * VariableLengthCharPrimCodecBase.
  * </p>
  * @author YAMATODANI Kiyoshi
- * @version $Id: FixedLengthCharPrimCodecBase.sml,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ * @version $Id: FixedLengthCharPrimCodecBase.sml,v 1.1.28.2 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 functor FixedLengthCharPrimCodecBase
           (P
@@ -43,6 +43,16 @@ struct
   type string = Word32.word VS.slice
   type char = Word32.word
 
+  fun dumpString slice =
+      let
+        val strings = List.map Word32.toString (VS.foldr (op ::) [] slice)
+        val string = String.concatWith ", " strings
+      in
+        "[" ^ string ^ "]"
+      end
+      
+  fun dumpChar word = Word32.toString word
+
   val names = P.names
 
   val decode = P.decode
@@ -53,6 +63,7 @@ struct
   fun substring (buffer, start, length) =
       VS.subslice (buffer, start, SOME length)
   val size = VS.length
+  val maxSize = V.maxLen
   fun concat strings = VS.full(VS.concat strings)
 
   local

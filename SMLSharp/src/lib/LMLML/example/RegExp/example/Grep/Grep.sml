@@ -1,8 +1,8 @@
 structure Grep =
 struct
 
-  structure MBS = MBString
-  structure MBSS = MBSubstring
+  structure MBS = MultiByteText.String
+  structure MBSS = MultiByteText.Substring
 
   fun grep pattern =
       let
@@ -18,28 +18,28 @@ struct
   fun grep' pattern =
       let
         val search =
-            Option.map MBS.toString o (grep (MBS.fromString pattern))
+            Option.map MBS.MBSToString o (grep (MBS.stringToMBS pattern))
       in
-       fn text => search (MBSS.full (MBS.fromString text))
+        fn text => search (MBSS.full (MBS.stringToMBS text))
       end
 
   fun main (commandName, codec :: pattern :: args) =
       let
-        val _ = MultiByteString.setDefaultCodecName codec
+        val _ = MultiByteText.setDefaultCodec(MultiByteText.getCodec codec)
         val instream = 
             case args
              of [] => TextIO.stdIn
               | fileName :: _ => TextIO.openIn fileName
-        val search = grep (MBS.fromString pattern)
+        val search = grep (MBS.stringToMBS pattern)
         fun loop () =
             case TextIO.inputLine instream
              of NONE => ()
               | SOME line => 
                 (
-                  case search (MBSS.full (MBS.fromString line))
+                  case search (MBSS.full (MBS.stringToMBS line))
                    of NONE => ()
                     | SOME matched =>
-                      (print (MBS.toString matched); print "\n");
+                      (print (MBS.MBSToString matched); print "\n");
                   loop ()
                 )
       in

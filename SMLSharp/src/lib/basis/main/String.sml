@@ -1,7 +1,7 @@
 (**
  * String structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: String.sml,v 1.11 2007/12/19 02:00:56 kiyoshiy Exp $
+ * @version $Id: String.sml,v 1.11.12.2 2010/05/09 03:53:48 kiyoshiy Exp $
  *)
 (*
  * Because the STRING signature refers to String structure, the STRING
@@ -232,20 +232,26 @@ struct
 
   local structure PC = ParserComb
   in
-  fun fromString string =
+  (* NONE indicates that the argument starts with an invalid escape sequence
+   * or a non-printable (= non-ASCII) character.
+   * If the argument is zero-length, SOME("") is returned.
+   *)
+  fun fromString "" = SOME ""
+    | fromString string =
       StringCvt.scanString
-          (PC.wrap(PC.zeroOrMore Char.scan, fn chars => implode chars))
+          (PC.wrap(PC.oneOrMore Char.scan, fn chars => implode chars))
           string
   end  
   fun toString string = translate Char.toString string
 
   local structure PC = ParserComb
   in
-  fun fromCString string =
+  fun fromCString "" = SOME ""
+    | fromCString string =
       StringCvt.scanString
-          (PC.wrap(PC.zeroOrMore Char.scanCString, fn chars => implode chars))
+          (PC.wrap(PC.oneOrMore Char.scanCString, fn chars => implode chars))
           string
   end  
-  fun toCString string = string
+  fun toCString string = translate Char.toCString string
 
 end;

@@ -5,8 +5,17 @@ top_builddir = @top_builddir@
 
 include @top_builddir@/commonrule
 
-SOURCES = $(srcdir)/insndef.ppg
-GENSOURCES = $(SOURCES:.ppg=.ppg.sml)
+VPATH = @srcdir@
+
+PPGFILES = $(srcdir)/insndef.ppg
+YACCFILES = $(srcdir)/insndef.grm
+LEXFILES = $(srcdir)/insndef.lex
+
+GENSOURCES = $(PPGFILES:.ppg=.ppg.sml) \
+             $(YACCFILES:.grm=.grm.sml) \
+             $(YACCFILES:.grm=.grm.sig) \
+             $(YACCFILES:.grm=.grm.desc) \
+             $(LEXFILES:.lex=.lex.sml)
 
 TARGETS = $(srcdir)/VMMnemonic.sml \
           $(srcdir)/VMMnemonicFormatterFn.sml \
@@ -31,3 +40,7 @@ clean:
 	-rm -f $(TARGETS)
 	-rm -f $(GENSOURCES)
 	-rm -f insndef.grm.sml insndef.grm.sig insndef.grm.desc insndef.lex.sml
+
+$(srcdir)/insndef.ppg.sml: insndef.ppg
+$(srcdir)/insndef.grm.sml $(srcdir)/insndef.grm.sig $(srcdir)/insndef.grm.desc: insndef.grm
+$(srcdir)/insndef.lex.sml: insndef.lex

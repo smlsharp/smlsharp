@@ -1,17 +1,15 @@
 # Makefile for SMLFormat
 # $Id: Makefile.in,v 1.21 2007/12/13 08:59:46 katsu Exp $
 
-srcdir = @SMLFORMATDIR@
+srcdir = @srcdir_smlformat@
 builddir = @builddir@
 top_srcdir = @top_srcdir@
 top_builddir = @top_builddir@
 
 include @top_builddir@/commonrule
 
-VPATH = @SMLFORMATDIR@
+VPATH = @srcdir_smlformat@
 
-MLYACC = $(MLTON_YACC)
-MLLEX = $(MLTON_LEX)
 SMLSHARP = smlsharp
 
 CONFIG_FILES = $(srcdir)/generator/mlton/preludes.mlb.in \
@@ -23,6 +21,11 @@ LIBFILES = smlformatlib.sml \
 LEXFILES =  $(srcdir)/generator/main/ml.lex
 
 YACCFILES = $(srcdir)/generator/main/ml.grm
+
+GENSOURCES = $(LEXFILES:.lex=.lex.sml) \
+             $(YACCFILES:.grm=.grm.sml) \
+             $(YACCFILES:.grm=.grm.sig) \
+             $(YACCFILES:.grm=.grm.desc)
 
 SMLNJ_HEAP = $(srcdir)/generator/main/smlformat.$(SML_HEAP_SUFFIX)
 
@@ -39,10 +42,7 @@ install: install-@DEFAULT_SML_COMPILER@
 clean:
 	-rm -f $(TARGET_smlsharp) $(SMLNJ_HEAP) $(TARGET_smlnj) $(TARGET_mlton)
 	-rm -f $(CONFIG_FILES:.in=)
-	-rm -f $(LEXFILES:.lex=.lex.sml)
-	-rm -f $(YACCFILES:.grm=.grm.sml)
-	-rm -f $(YACCFILES:.grm=.grm.sig)
-	-rm -f $(YACCFILES:.grm=.grm.desc)
+	-rm -f $(GENSOURCES)
 	-rm -rf $(srcdir)/generator/main/CM
 	-rm -rf $(srcdir)/formatlib/main/CM
 	-rm -rf $(srcdir)/generator/main/.cm
@@ -74,7 +74,7 @@ cmtool/anchor.sml cmtool/ppg-ext.cm cmtool/smlformat-tool.sml: \
 
 # -------- Rules for SML# --------
 
-all-smlsharp: grammar
+all-smlsharp: $(GENSOURCES)
 	$(SMLSHARP) -o $(TARGET_smlsharp) -c generator/main/sources.sml
 
 install-smlsharp: install-lib
@@ -85,11 +85,7 @@ install-smlsharp: install-lib
 
 all-smlnj: $(TARGET_smlnj) cmtool_ppg
 
-$(TARGET_smlnj):
-	-rm -f $(LEXFILES:.lex=.lex.sml)
-	-rm -f $(YACCFILES:.grm=.grm.sml)
-	-rm -f $(YACCFILES:.grm=.grm.sig)
-	-rm -f $(YACCFILES:.grm=.grm.desc)
+$(TARGET_smlnj): $(GENSOURCES)
 	cd $(srcdir)/generator/main && $(MKSMLHEAP) smlformat
 	$(MKSMLRUN) smlformat $(srcdir)/generator/main $(TARGET_smlnj)
 
@@ -101,7 +97,7 @@ install-smlnj: install-lib
 
 # -------- Rules for MLton --------
 
-all-mlton: grammar
+all-mlton: $(GENSOURCES)
 	$(MLTON) -verbose 1 -output $(TARGET_mlton) \
 	         -target $(MLTON_TARGET_PLATFORM) \
 	         -cc '$(CC)' $(MLTON_FLAGS) \
@@ -113,11 +109,8 @@ install-mlton: install-lib
 
 # -------- Common Rules --------
 
-grammar:
-	-rm -f $(LEXFILES:.lex=.lex.sml)
-	-rm -f $(YACCFILES:.grm=.grm.sml)
-	-rm -f $(YACCFILES:.grm=.grm.sig)
-	-rm -f $(YACCFILES:.grm=.grm.desc)
+$(GENSOURCES): $(LEXFILES) $(YACCFILES)
+	-rm -f $(GENSOURCES)
 	@set -x; for i in $(LEXFILES); do $(MLLEX) "$$i"; done
 	@set -x; for i in $(YACCFILES); do $(MLYACC) "$$i"; done
 

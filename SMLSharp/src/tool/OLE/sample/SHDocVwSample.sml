@@ -52,8 +52,9 @@ val bodyText = OLE.A(#getinnerText body ());
 val _ = print bodyText
 
 (* decode bodyText. Codec is decided dynamically. *)
-val decodedText = MultiByteString.String.decodeString charset bodyText;
-val textLength = MultiByteString.String.size decodedText;
+val codec = MultiByteText.getCodec charset;
+val decodedText = MultiByteText.String.decodeString codec bodyText;
+val textLength = MultiByteText.String.size decodedText;
 
 (****************************************)
 

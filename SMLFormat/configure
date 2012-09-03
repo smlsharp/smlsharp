@@ -14,7 +14,7 @@
 
 pwd=`pwd`
 host_os=`uname -s|sed y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/`
-srcdirname=SMLFORMATDIR
+srcdirname=srcdir_smlformat
 appname=smlformat
 unittestdir=formatlib
 
@@ -158,9 +158,13 @@ esac
 
 case "$compiler" in
 mlton)
+  MLLEX=mllex
+  MLYACC=mlyacc
   ;;
 
 smlsharp)
+  MLLEX=smllex
+  MLYACC=smlyacc
   ;;
 
 smlnj)
@@ -168,6 +172,8 @@ smlnj)
   *cygwin*)
     if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
       SML=sml.bat
+      MLLEX=ml-lex.bat
+      MLYACC=ml-yacc.bat
       SML_HEAP_SUFFIX=x86-win32
       MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
     else
@@ -181,6 +187,8 @@ smlnj)
     # we don't support the combination of mingw and cygwin runtime.
     if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
       SML='cmd /c sml.bat'
+      MLLEX='cmd /c ml-lex.bat'
+      MLYACC='cmd /c ml-yacc.bat'
       SMLCM='cmd /c sml-cm.bat'
       SML_HEAP_SUFFIX=x86-win32
       MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
@@ -193,6 +201,8 @@ smlnj)
     ;;
   *)
     SML=sml
+    MLLEX=ml-lex
+    MLYACC=ml-yacc
     SMLCM=sml-cm
     SML_HEAP_SUFFIX='*'
     MAINFUNC=Main.main
@@ -242,9 +252,9 @@ EGREP = egrep
 INSTALL = install
 INSTALL_PROGRAM = \$(INSTALL)
 INSTALL_DATA = \$(INSTALL)
+MLLEX = $MLLEX
+MLYACC = $MLYACC
 MLTON = mlton
-MLTON_YACC = mlyacc
-MLTON_LEX = mllex
 SML = $SML
 SMLCM = $SMLCM
 SML_HEAP_SUFFIX = $SML_HEAP_SUFFIX

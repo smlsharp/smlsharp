@@ -1,3 +1,4 @@
 Group is
+        $/basis.cm
         ../../main/sources.cm
         Grep.sml

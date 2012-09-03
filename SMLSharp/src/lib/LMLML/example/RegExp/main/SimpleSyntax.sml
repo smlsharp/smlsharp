@@ -22,7 +22,7 @@ structure SimpleSyntax : REGEXP_PARSER =
   struct
 
     structure R = RegExpSyntax
-    structure P = MBParserCombinator
+    structure P = MultiByteText.ParserCombinator
 
     structure SC = StringCvt
     structure W8 = Word8
@@ -34,14 +34,14 @@ structure SimpleSyntax : REGEXP_PARSER =
     fun makeDotMatch () =
         R.NonmatchSet
             (R.CharSet.addList
-                 (R.CharSet.empty, explode (MBString.fromString "\000\n")))
+                 (R.CharSet.empty, explode (MBString.stringToMBS "\000\n")))
     val dotMatch = ref (makeDotMatch ())
-    fun makeMetaChars () = MBString.fromString "\\^$.[]|()*+?"
+    fun makeMetaChars () = MBString.stringToMBS "\\^$.[]|()*+?"
     val metaChars = ref (makeMetaChars())
 
     (* dotMatch must be rebuilt each time when default codec is changed. *)
     val _ =
-        MultiByteString.addDefaultCodecChangeListener
+        MultiByteText.addDefaultCodecChangeListener
             (fn _ =>
                 (dotMatch := makeDotMatch (); metaChars := makeMetaChars()))
 

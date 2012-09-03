@@ -20,7 +20,7 @@
  * And, a character of code between 0 and 127 is an ascii character.
  * </p>
  * @author YAMATODANI Kiyoshi
- * @version $Id: PRIM_CODEC.sig,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ * @version $Id: PRIM_CODEC.sig,v 1.1.28.2 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 signature PRIM_CODEC =
 sig
@@ -63,6 +63,7 @@ sig
   val sub : string * int -> char
   val substring : string * int * int -> string
   val size : string -> int
+  val maxSize : int
   val concat : string list -> string
 
   (**
@@ -99,5 +100,19 @@ sig
   val isPunct : char -> bool
   val isGraph : char -> bool
   val isCntrl : char -> bool
+
+  (**
+   * generates a string representation of internal data structure of
+   * a multibyte character.
+   * This is for development utility.
+   *)
+  val dumpChar : char -> String.string
+
+  (**
+   * generates a string representation of internal data structure of
+   * a multibyte string.
+   * This is for development utility.
+   *)
+  val dumpString : string -> String.string
 
 end;

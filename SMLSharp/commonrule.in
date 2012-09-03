@@ -82,6 +82,8 @@ SMLNJ_VERSION = @SMLNJ_VERSION@
 SML = @SML@
 SMLCM = @SMLCM@
 SML_HEAP_SUFFIX = @SML_HEAP_SUFFIX@
+MLLEX = @MLLEX@
+MLYACC = @MLYACC@
 MLTON = @MLTON@
 MLTON_FLAGS = @MLTON_FLAGS@
 MLTON_LEX = @MLTON_LEX@
@@ -128,7 +130,7 @@ TOOLS = @TOOLS@
 
 .SUFFIXES:
 .SUFFIXES: .c .cc .hh .@OBJEXT@ .@LIBEXT@ .@DLLIBEXT@ @EXEEXT@ \
-           .sml .ppg .ppg.sml
+           .sml .ppg .ppg.sml .grm .grm.sml .grm.sig .grm.desc .lex .lex.sml
 
 # ---- operational rules ----
 
@@ -256,3 +258,13 @@ mkdepend: Makefile.in $(top_builddir)/commonrule $(SOURCES) $(SOURCES_DEPEND)
 
 .ppg.ppg.sml:
 	$(SMLFORMAT) $<
+
+.grm.grm.sml:
+	$(MLYACC) $<
+.grm.grm.sig:
+	$(MLYACC) $<
+.grm.grm.desc:
+	$(MLYACC) $<
+
+.lex.lex.sml:
+	$(MLLEX) $<

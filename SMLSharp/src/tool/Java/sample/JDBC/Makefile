@@ -62,6 +62,7 @@ CLASSES= \
 
 TARGETS = \
 	JDBC.sml \
+	$(OBJECTS) \
 
 
 .SUFFIXES:
@@ -76,5 +77,6 @@ JDBC.sml:
 	$(JAVA2SML) --namespace JDBC -o $@ $(CLASSES)
 
 .java.class:
-	$(JAVAC) $(JAVA_SOURCES)
+	$(JAVAC) $<
+
 

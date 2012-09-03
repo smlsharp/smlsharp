@@ -5,23 +5,28 @@ Group
 *)
 is
 
+        $/basis.cm
+
 #if (SMLNJ_VERSION * 100 + SMLNJ_MINOR_VERSION) <= 11000
         ../basis/compatible.cm
 #endif
-        ../basis/extension.cm
-
         CODEC.sig
         CODECS.sig
-        MB_CHAR.sig
-        MB_STRING.sig
-        MB_SUBSTRING.sig
+        MULTI_BYTE_CHAR.sig
         MULTI_BYTE_STRING.sig
+        MULTI_BYTE_SUBSTRING.sig
+        MULTI_BYTE_TEXT.sig
+        MULTI_BYTE_PARSER_COMBINATOR.sig
+        MULTI_BYTE_STRING_CONVERTER.sig
         PRIM_CODEC.sig
 
         Codecs.sml
 
         CodecCharBase.sml
         CodecStringBase.sml
+        CodecSubstringBase.sml
+        CodecStringConverterBase.sml
+        CodecParserCombinatorBase.sml
         Codec.sml
 
         PrimCodecUtil.sml
@@ -29,7 +34,6 @@ is
         FixedLengthCharPrimCodecBase.sml
 
         ASCIICodec.sml
-
         EUCJPCodec.sml
         GBKCodec.sml
         GB2312Codec.sml
@@ -38,10 +42,5 @@ is
         UTF8Codec.sml
         UTF16Codec.sml
 
-        MultiByteString.sml
-        MBChar.sml
-        MBString.sml
-        MBSubstring.sml
-        MBStringConverter.sml
-        MBParserCombinator.sml
+        MultiByteText.sml
 

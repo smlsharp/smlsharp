@@ -14,13 +14,33 @@
  * into a record of functions.
  * </p>
  * @author YAMATODANI Kiyoshi
- * @version $Id: Codec.sml,v 1.2 2007/02/25 12:42:48 kiyoshiy Exp $
+ * @version $Id: Codec.sml,v 1.2.26.3 2010/05/11 07:08:03 kiyoshiy Exp $
  *)
 functor Codec(PrimCodec : PRIM_CODEC) :> CODEC =
 struct
 
   structure String = CodecStringBase(PrimCodec)
   structure Char = CodecCharBase(PrimCodec)
+  structure Substring =
+            CodecSubstringBase
+                (struct open PrimCodec val compare = String.compare end)
+  local
+    structure P =
+    struct
+      open PrimCodec
+      type string = String.string
+      type char = String.char
+      type substring = Substring.substring
+      val implode = String.implode
+      val getc = Substring.getc
+      val full = Substring.full
+      val compare = String.compare
+      val compareChar = Char.compare
+    end
+  in
+  structure ParserCombinator = CodecParserCombinatorBase(P)
+  structure StringConverter = CodecStringConverterBase(P)
+  end
 
   local
 
@@ -85,6 +105,11 @@ struct
     fun isCntrl (MBC char) = PrimCodec.isCntrl char
       | isCntrl _ = error ()
 
+    fun dumpChar (MBC char) = PrimCodec.dumpChar char
+      | dumpChar _ = error ()
+    fun dumpString (MBS string) = PrimCodec.dumpString string
+      | dumpString _ = error ()
+
     val methods = 
         {
              codecNames = PrimCodec.names,
@@ -116,7 +141,10 @@ struct
              isHexDigit = isHexDigit,
              isPunct = isPunct,
              isGraph = isGraph,
-             isCntrl = isCntrl
+             isCntrl = isCntrl,
+
+             dumpChar = dumpChar,
+             dumpString = dumpString
            } : Codecs.methods
 
     val _ = Codecs.registerCodec (PrimCodec.names, methods)

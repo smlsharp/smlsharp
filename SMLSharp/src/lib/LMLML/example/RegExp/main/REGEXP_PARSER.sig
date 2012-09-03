@@ -13,7 +13,7 @@ signature REGEXP_PARSER =
     val scan : (MBChar.char, 'a) StringCvt.reader
 	          -> (RegExpSyntax.syntax, 'a) StringCvt.reader
 *)
-    val scan : (RegExpSyntax.syntax, 'strm) MBParserCombinator.parser
+    val scan : (RegExpSyntax.syntax, 'strm) MultiByteText.ParserCombinator.parser
 
   end
 

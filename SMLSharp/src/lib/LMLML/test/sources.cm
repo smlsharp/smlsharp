@@ -1,3 +1,5 @@
 Group is
+        $/basis.cm
+
         module.cm
         TestMain.sml

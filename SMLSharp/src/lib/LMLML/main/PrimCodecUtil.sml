@@ -1,7 +1,7 @@
 (**
  * Utility functions for implementation of PRIM_CODEC.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrimCodecUtil.sml,v 1.2 2007/02/17 06:30:15 kiyoshiy Exp $
+ * @version $Id: PrimCodecUtil.sml,v 1.2.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 structure PrimCodecUtil
   : sig
@@ -142,6 +142,10 @@ struct
                   SOME(bytes, tag, next)
                 end
       in
+(*
+        (print "begin nextChar";
+        find range before print ".\n")
+*)
         find range
       end
 

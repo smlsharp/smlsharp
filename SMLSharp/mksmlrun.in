@@ -17,6 +17,10 @@ case "@target_os@" in
   ;;
 *)
   HEAPIMAGE="$HEAPDIR/$NAME"
+  case "$HEAPIMAGE" in
+  /*) ;;
+  *) HEAPIMAGE="$PWD/$HEAPIMAGE" ;;
+  esac
   ;;
 esac
 

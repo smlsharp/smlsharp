@@ -73,8 +73,14 @@ SOURCES = $(srcdir)/absyn/main/Absyn.ppg \
           $(srcdir)/rtl/main/RTL.ppg \
           $(srcdir)/rtl/main/RTLTypeCheckError.ppg
 
+YACCFILES = $(srcdir)/parser/main/iml.grm
+LEXFILES  = $(srcdir)/parser/main/iml.lex
 
-GENSOURCES = $(SOURCES:.ppg=.ppg.sml)
+GENSOURCES = $(SOURCES:.ppg=.ppg.sml) \
+             $(YACCFILES:.grm=.grm.sml) \
+             $(YACCFILES:.grm=.grm.sig) \
+             $(YACCFILES:.grm=.grm.desc) \
+             $(LEXFILES:.lex=.lex.sml)
 
 all: $(TARGETS)
 
@@ -307,3 +313,5 @@ $(srcdir)/x86/main/X86Mnemonic.ppg.sml: x86/main/X86Mnemonic.ppg
 $(srcdir)/rtl/main/X86Asm.ppg.sml: rtl/main/X86Asm.ppg
 $(srcdir)/rtl/main/RTL.ppg.sml: rtl/main/RTL.ppg
 $(srcdir)/rtl/main/RTLTypeCheckError.ppg.sml: rtl/main/RTLTypeCheckError.ppg
+$(srcdir)/parser/main/iml.grm.sml $(srcdir)/parser/main/iml.grm.sig $(srcdir)/parser/main/iml.grm.desc: parser/main/iml.grm
+$(srcdir)/parser/main/iml.lex.sml: parser/main/iml.lex

@@ -18,15 +18,18 @@ CLASSES= \
 	java.io.InputStream \
 	java.io.InputStreamReader \
 	java.io.IOException \
+	java.io.PrintStream \
 	java.lang.Throwable \
 	java.lang.Exception \
 	java.lang.String \
+	java.lang.System \
 	java.net.URL \
 	java.net.URLConnection \
 
 
 TARGETS = \
-	HTTP.sml \
+	JavaCorePackages.sml \
+	$(OBJECTS) \
 
 
 .SUFFIXES:
@@ -37,9 +40,8 @@ all: $(TARGETS)
 clean:
 	-rm -f $(OBJECTS) $(TARGETS)
 
-HTTP.sml:
-	$(JAVA2SML) --namespace HTTP -o $@ $(CLASSES)
+JavaCorePackages.sml:
+	$(JAVA2SML) --namespace $(@:.sml=) -o $@ $(CLASSES)
 
 .java.class:
-	$(JAVAC) $(JAVA_SOURCES)
-
+	$(JAVAC) $<
