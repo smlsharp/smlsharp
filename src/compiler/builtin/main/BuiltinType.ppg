@@ -1,0 +1,131 @@
+(* -*- sml -*- *)
+(**
+ * built-in types.
+ * @copyright (c) 2011, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+
+(*
+  * removed the following: INTty, LARGEINTty, POSITIONty, 
+    WORD32ty, LARGEWORDty, REAL64ty, LARGEREALty
+   2012-1-7 ohori 
+  * vector is added
+*)
+
+structure BuiltinType =
+struct
+
+  (*% *)
+  datatype ty =
+      (*% @format "int" *)
+      INTty
+    | (*% @format "int32" *)
+      INTINFty 
+    | (*% @format "word" *)
+      WORDty
+    | (*% @format "Word8_word" *)
+      WORD8ty
+    | (*% @format "char" *)
+      CHARty
+    | (*% @format "string" *)
+      STRINGty
+    | (*% @format "real" *)
+      REALty
+    | (*% @format "Real32_real" *)
+      REAL32ty
+    | (*% @format "unit" *)
+      UNITty
+    | (*% @format "ptr" *)
+      PTRty      (* 'a ptr *)
+    | (*% @format "array" *)
+      ARRAYty    (* 'a array *)
+    | (*% @format "vector" *)
+      VECTORty    (* 'a vector *)
+    | (*% @format "exn" *)
+      EXNty
+    | (*% @format "boxed" *)
+      BOXEDty    (* pointer to some ML object *)
+    | (*% @format "exntag" *)
+      EXNTAGty    (* the type of x in exception E = x *)
+(* bug 190: REFty must be primitive ty since its equality must be known in
+  name evaluation. 
+    | (*% @format "'a ref" *)
+      REFty   (* the ref type constructor *)
+*)
+
+  (* for unification *)
+  fun equalTy (ty1:ty, ty2:ty) = ty1 = ty2
+
+  fun isAdmitEquality ty =
+      case ty of
+        INTty => true
+      | INTINFty => true
+      | WORDty => true
+      | WORD8ty => true
+      | CHARty => true
+      | STRINGty => true
+      | REALty => false
+      | REAL32ty => false
+      | UNITty => true
+      | PTRty => true
+      | ARRAYty => true
+      | VECTORty => true
+      | EXNty => false
+      | BOXEDty => false
+      | EXNTAGty => false
+
+  fun arity ty =
+      case ty of
+        INTty => 0
+      | INTINFty => 0
+      | WORDty => 0
+      | WORD8ty => 0
+      | CHARty => 0
+      | STRINGty => 0
+      | REALty => 0
+      | REAL32ty => 0
+      | UNITty => 0
+      | PTRty => 1
+      | ARRAYty => 1
+      | VECTORty => 1
+      | EXNty => 0
+      | BOXEDty => 0
+      | EXNTAGty => 0
+(*
+      | REFty => 1
+*)
+
+  fun findType name =
+      case name of
+        "int" => SOME INTty
+      | "IntInf_int" => SOME INTINFty
+      | "word" => SOME WORDty
+      | "Word8_word" => SOME WORD8ty
+      | "char" => SOME CHARty
+      | "string" => SOME STRINGty
+      | "real" => SOME REALty
+      | "Real32_real" => SOME REAL32ty
+      | "unit" => SOME UNITty
+      | "ptr" => SOME PTRty
+      | "array" => SOME ARRAYty
+      | "vector" => SOME VECTORty
+      | "exn" => SOME EXNty
+      | "boxed" => SOME BOXEDty
+(*
+      | "ref" => SOME REFty
+*)
+      | _ => NONE
+
+ (* Ohori: This is used to check the compatibility of runtimeTy of TFV_DTY against 
+   that of TFUN_DTY at signature checking *)
+  fun compatTy {absTy, implTy} =
+      absTy = implTy orelse 
+      case (absTy, implTy) of
+      (BOXEDty,INTINFty) => true
+    | (BOXEDty,STRINGty) => true
+    | (BOXEDty,ARRAYty) => true
+    | (BOXEDty,VECTORty) => true
+    | (BOXEDty,EXNty) => true
+    | _ => false
+
+end

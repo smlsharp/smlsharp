@@ -1,0 +1,60 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/PathEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../builtin/main/BuiltinName.smi"
+_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../types/main/BuiltinEnv.smi"
+_require "../../types/main/EvalIty.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../types/main/tvarMap.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+_require "../../usererror/main/UserErrorUtils.smi"
+_require "../../util/main/utils.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "CheckProvide.smi"
+_require "EvalSig.smi"
+_require "EvalTy.smi"
+_require "FunctorUtils.smi"
+_require "NameEvalEnv.ppg.smi"
+_require "NameEvalError.ppg.smi"
+_require "NameEvalInterface.smi"
+_require "NameEvalUtils.smi"
+_require "NormalizeTy.smi"
+_require "SetLiftedTys.smi"
+_require "SigCheck.smi"
+_require "Subst.smi"
+_require "TfunVars.smi"
+
+structure NameEval =
+  struct
+    val nameEval : {topEnv: NameEvalEnv.topEnv, version: int option,
+                    systemDecls: IDCalc.icdecl list}
+                    -> PatternCalcInterface.compileUnit
+                    -> NameEvalEnv.topEnv
+                       * IDCalc.icdecl list
+                       * UserError.errorInfo list
+    val evalRequire
+        : NameEvalEnv.topEnv * IDCalc.icdecl list
+          -> PatternCalcInterface.compileUnit
+          -> NameEvalEnv.topEnv * IDCalc.icdecl list * UserError.errorInfo list
+    val evalBuiltin
+        : PatternCalcInterface.pitopdec list
+          -> {Env:NameEvalEnv.env,
+              FunE:NameEvalEnv.funEEntry SEnv.map,
+              SigE:NameEvalEnv.env SEnv.map}
+             * {conEnv:{id:IDCalc.conId, path:string list,
+                        ty:Types.ty} SEnv.map,
+                exnEnv:{path:IDCalc.path, ty:Types.ty} SEnv.map,
+                primEnv:{primitive:BuiltinPrimitive.primitive,
+                         ty:Types.ty} SEnv.map,
+                tyConEnv:Types.tyCon SEnv.map} BuiltinName.env
+             * IDCalc.icdecl list
+  end

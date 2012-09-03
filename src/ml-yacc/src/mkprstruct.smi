@@ -1,0 +1,36 @@
+_require "../../basis.smi"
+_require "../lib/base.sig"
+_require "../lib/lrtable.smi"
+_require "utils.sig"
+_require "sigs.sml"
+_require "mklrtable.smi"
+_require "shrink.smi"
+
+structure PrintStruct =
+struct
+  structure LrTable =
+  struct
+    datatype pairlist = datatype LrTable.pairlist
+    datatype state = datatype LrTable.state
+    datatype term = datatype LrTable.term
+    datatype nonterm = datatype LrTable.nonterm
+    datatype action = datatype LrTable.action
+    type table = LrTable.table
+    val numStates : table -> int
+    val numRules : table -> int
+    val describeActions : table -> state -> (term,action) pairlist * action
+    val describeGoto : table -> state -> (nonterm,state) pairlist
+    val action : table -> state * term -> action
+    val goto : table -> state * nonterm -> state
+    val initialState : table -> state
+    exception Goto = ShrinkLrTable.LrTable.Goto
+    val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                     gotos : (nonterm,state) pairlist array,
+                     numStates : int, numRules : int,
+                     initialState : state} -> table
+  end
+  val makeStruct : {table : LrTable.table,
+                    name : string,
+                    print: string -> unit,
+                    verbose : bool} -> int
+end

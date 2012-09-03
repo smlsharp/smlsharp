@@ -1,0 +1,72 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../builtin/main/BuiltinName.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../typedcalc/main/TypedCalcUtils.smi"
+_require "../../types/main/BuiltinEnv.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+_require "MatchData.smi"
+
+structure MatchError = 
+struct
+  val format_flag
+      : int ref -> SMLFormat.FormatExpression.expression list
+      
+  type rule
+    = (TypedCalc.tppat list * TypedCalc.tpexp) * int ref
+  val format_rule
+      : rule -> SMLFormat.FormatExpression.expression list
+
+  exception MatchError of string * rule list
+
+  val bindRedundantMessage : string
+  val bindNotExhaustiveMessage : string
+  val bindBothMessage : string
+  val matchRedundantMessage : string
+  val matchNotExhaustiveMessage : string
+  val matchBothMessage : string
+
+  val raiseBindFailExp
+      : RecordCalc.ty -> Loc.loc -> RecordCalc.rcexp
+  val raiseMatchFailExp
+      : RecordCalc.ty -> Loc.loc -> RecordCalc.rcexp
+  val handleFail
+      : RecordCalc.varInfo -> RecordCalc.ty -> Loc.loc -> RecordCalc.rcexp
+  val raiseMatchCompBugExp
+      : RecordCalc.ty -> Loc.loc -> RecordCalc.rcexp
+
+  datatype flagKind = Redundant | NotExhaustive
+
+  val clearErrorMessages
+      : unit -> unit
+  val putErrorMessage
+      : Loc.loc * UserError.errorKind * string * rule list -> unit
+  val getErrorMessages
+      : unit -> UserError.errorInfo list
+  val clearFlag
+      : flagKind -> unit
+  val setFlag
+      : flagKind -> unit
+  val isRedundant
+      : unit -> bool
+  val isNotExhaustive
+      : unit -> bool
+
+  val haveRedundantRules
+      : ('a * bool ref) list -> bool
+(*
+  val print
+      : SMLFormat.FormatExpression.expression list -> string
+*)
+  val insertNewline
+      : string list -> string
+  val checkError
+      : MatchData.kind * bool * bool * rule list * Loc.loc -> unit
+
+end

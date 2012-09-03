@@ -1,8 +1,0 @@
-Group
-	structure AnnotatedTypes
-	structure AnnotatedTypesUtils
-(*
-	structure AnnotatedTypesPickler
-*)
-is
-	main/module.cm

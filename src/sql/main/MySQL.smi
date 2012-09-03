@@ -1,0 +1,24 @@
+_require "../../basis.smi"
+_require "../../config/main/Config.smi"
+_require "../../ffi.smi"
+
+structure SMLSharp_SQL_MySQL =
+struct
+  type MYSQL = unit ptr
+  type MYSQL_RES = unit ptr
+  type MYSQL_ROW = unit ptr ptr
+  type my_ulonglong = int
+  val mysql_init : unit -> MYSQL -> MYSQL
+  val mysql_real_connect
+      : unit -> (MYSQL * string * string * string * string *
+                 int * unit ptr * int) -> MYSQL
+  val mysql_errno : unit -> MYSQL -> int
+  val mysql_error : unit -> MYSQL -> char ptr
+  val mysql_query : unit -> (MYSQL * string) -> int
+  val mysql_store_result : unit -> MYSQL -> MYSQL_RES
+  val mysql_fetch_row : unit -> MYSQL_RES -> MYSQL_ROW
+  val mysql_free_result : unit -> MYSQL -> unit
+  val mysql_data_seek : unit -> (MYSQL_RES * my_ulonglong) -> unit
+  val mysql_close : unit -> MYSQL -> unit
+  val mysql_num_rows : unit -> MYSQL_RES -> my_ulonglong
+end

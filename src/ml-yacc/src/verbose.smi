@@ -1,0 +1,47 @@
+_require "../../basis.smi"
+_require "../lib/base.sig"
+_require "mklrtable.smi"
+_require "utils.sig"
+_require "sigs.sml"
+
+structure Verbose =
+struct
+  structure Errs =
+  struct
+    structure LrTable =
+    struct
+      datatype pairlist = datatype MakeTable.Errs.LrTable.pairlist
+      datatype state = datatype MakeTable.Errs.LrTable.state
+      datatype term = datatype MakeTable.Errs.LrTable.term
+      datatype nonterm = datatype MakeTable.Errs.LrTable.nonterm
+      datatype action = datatype MakeTable.Errs.LrTable.action
+      type table = MakeTable.Errs.LrTable.table
+      val numStates : table -> int
+      val numRules : table -> int
+      val describeActions : table -> state -> (term,action) pairlist * action
+      val describeGoto : table -> state -> (nonterm,state) pairlist
+      val action : table -> state * term -> action
+      val goto : table -> state * nonterm -> state
+      val initialState : table -> state
+      exception Goto = MakeTable.Errs.LrTable.Goto
+      val mkLrTable : {actions : ((term,action) pairlist * action) array,
+                       gotos : (nonterm,state) pairlist array,
+                       numStates : int, numRules : int,
+                       initialState : state} -> table
+    end
+    datatype err = datatype MakeTable.Errs.err
+    val summary : err list -> {rr : int, sr: int,
+                                 not_reduced : int, start : int,nonshift : int}
+    val printSummary : (string -> unit) -> err list -> unit
+  end
+  val printVerbose :
+      {table : Errs.LrTable.table,
+       entries : int,
+       termToString : Errs.LrTable.term -> string,
+       nontermToString : Errs.LrTable.nonterm -> string,
+       stateErrs : Errs.LrTable.state -> Errs.err list,
+       errs : Errs.err list,
+       print: string -> unit,
+       printCores : (string -> unit) -> Errs.LrTable.state -> unit,
+       printRule : (string -> unit) -> int -> unit} -> unit
+end

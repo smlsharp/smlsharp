@@ -1,5 +1,0 @@
-Group
-	structure MVOptimization
-	structure UselessCodeElimination
-is
-	main/module.cm

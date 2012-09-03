@@ -1,0 +1,8 @@
+_require "../../../basis.smi"
+_require "../../../smlnj-lib/Util/ord-key-sig.sml"
+
+structure SOrd =
+struct 
+  type ord_key = string
+  val compare : ord_key * ord_key -> order
+end

@@ -1,0 +1,50 @@
+_require "../../basis/main/Int.smi"
+_require "../../basis/main/IntInf.smi"
+_require "../../basis/main/Word.smi"
+_require "../../basis/main/Word8.smi"
+_require "../../basis/main/Real32.smi"
+_require "../../basis/main/List.smi"
+_require "../../basis/main/Char.smi"
+_require "../../basis/main/String.smi"
+_require "../../basis/main/StringCvt.smi"
+_require "../../basis/main/Real.smi"
+_require "../../basis/main/binary-op.smi"
+_require "../../basis/main/TextIO.smi"
+_require "ReflectionControl.smi"
+_require "../../smlformat-lib.smi"
+_require "../../compiler-utils/env/main/LabelEnv.smi"
+
+structure TermPrintUtils =
+struct
+  type format = SMLFormat.FormatExpression.expression list
+  val makeLines : string -> format
+  val format_int : int -> format
+  val format_real : real -> format
+  val format_string : string -> format
+  val format_label : string -> format
+  val format_char : char -> format
+  val format_int32 : Int32.int -> format
+  val format_real32 : Real32.real -> format
+  val format_word32 : Word32.word -> format
+  val format_word8 : Word8.word -> format
+  val format_IntInf : IntInf.int -> format
+  val formatElements 
+    : 'a SMLFormat.BasicFormatters.formatter * format -> 'a list -> format
+  val format_lazyArray 
+    : 'a SMLFormat.BasicFormatters.formatter * format
+       -> (int -> 'a list * bool) -> format
+  type 'a record = (string * 'a) list
+  val format_record 
+    : ('a -> format) * format * format -> (string * 'a) list -> format
+  type 'a tuple = (string * 'a) list
+  val format_tuple 
+    : ('a -> format) * format -> ('b * 'a) list -> format
+  val formatSMLRecord 
+    : ('a -> format) * format * format -> (string * 'a) list -> format
+  val formatLmap 
+    : ('a -> format) * format * format -> 'a LabelEnv.map -> format
+  val formatPrependedOpt 
+    : ('a -> format) * format -> 'a option -> format
+  val formatIfCons : format -> 'a list -> format
+  val prettyPrint : format -> string
+end

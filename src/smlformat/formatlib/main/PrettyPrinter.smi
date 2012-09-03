@@ -1,0 +1,17 @@
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/List.smi"
+_require "../../../basis/main/General.smi"
+_require "../../../basis/main/binary-op.smi"
+
+_require "FormatExpression.smi"
+_require "PreProcessedExpression.smi"
+_require "PrinterParameter.smi"
+
+structure PrettyPrinter =
+struct
+  exception UnMatchEndOfIndent
+  exception IndentUnderFlow of int
+  val sort : ('a * 'a -> bool) -> 'a list -> 'a list 
+  val format : PrinterParameter.parameterRecord 
+	       -> PreProcessedExpression.expression -> string
+end

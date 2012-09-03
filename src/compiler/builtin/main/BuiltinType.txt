@@ -1,0 +1,27 @@
+The set of SML# builtin types and their status and their defined location files.
+
+  type        status     structure                          file
+
+  INTty       builtin    <toplevel>           ~/compiler/builtin/main/BuiltinContextCore.smi
+  INTINFty    builtin    SMLSharp.IntInf      ~/compiler/builtin/main/BuiltinContextCore.smi
+  WORDty      builtin 	 <toplevel>    	      ~/compiler/builtin/main/BuiltinContextCore.smi
+  WORD8ty     builtin    SMLSharp.Word8       ~/compiler/builtin/main/BuiltinContextCore.smi
+  CHARty      builtin	 <toplevel>    	      ~/compiler/builtin/main/BuiltinContextCore.smi
+  STRINGty    builtin	 <toplevel>	      ~/compiler/builtin/main/BuiltinContextCore.smi
+  REALty      builtin	 <toplevel>	      ~/compiler/builtin/main/BuiltinContextCore.smi
+  REAL32ty    builtin    SMLSharp.IntInf      ~/compiler/builtin/main/BuiltinContextCore.smi
+  UNITty      builtin	 <toplevel>	      ~/compiler/builtin/main/BuiltinContextCore.smi
+  PTRty	      builtin	 <toplevel>	      ~/compiler/builtin/main/BuiltinContextCore.smi
+  ARRAYty     builtin    SMLSharp.PrimArray   ~/compiler/builtin/main/BuiltinContextCore.smi
+  EXNty	      builtin	 <toplevel>	      ~/compiler/builtin/main/BuiltinContextCore.smi
+  BOXEDty     builtin	 SMLSharp	      ~/compiler/builtin/main/BuiltinContextCore.smi
+  EXNTAGty    builtin    <none>		      ~/compiler/types/main/BuiltinEnv.sml
+
+
+  INT32ty     replicate  Int32 = Int	      ~/lib2/basis/main/IntStructures.sml
+  LARGEINTty  replicate  LargeInt = IntInf    ~/lib2/basis/main/IntStructures.sml
+  POSITIONty  replicate  Position = Int       ~/lib2/basis/main/IntStructures.sml
+  WORD32ty    replicate  Word32 = Word	      ~/lib2/basis/main/IntStructures.sml
+  LARGEWORDty replicate  LargeWord = Word     ~/lib2/basis/main/IntStructures.sml
+  REAL64ty    replicate  Real64 = Real 	      ~/lib2/basis/main/RealStructures.sml
+  LARGEREALty replicate  LargeReal = Real     ~/lib2/basis/main/RealStructures.sml

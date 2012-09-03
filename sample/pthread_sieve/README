@@ -1,0 +1,12 @@
+Multithread Sieve of Eratosthenes
+
+This program creates native threads as many as prime numbers to be
+enumerated.
+
+The following things are required to run this sample:
+
+1. SML# must be compiled and installed with --enable-thread configure option.
+
+2. This sample works only in native code with non-moving GC.
+
+3. Operating system must provide POSIX thread (pthread) library.

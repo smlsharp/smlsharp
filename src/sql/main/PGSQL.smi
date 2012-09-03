@@ -1,0 +1,41 @@
+_require "../../basis.smi"
+_require "../../basis/main/SMLSharpRuntime.smi"
+_require "../../config/main/Config.smi"
+_require "../../ffi.smi"
+
+structure SMLSharp_SQL_PGSQL =
+struct
+  type conn = unit ptr
+  type result = unit ptr
+  eqtype status (= int)
+  eqtype resultStatus (= int)
+  val CONNECTION_OK : status
+  val CONNECTION_BAD : status
+  val PGRES_EMPTY_QUERY : resultStatus
+  val PGRES_COMMAND_OK : resultStatus
+  val PGRES_TUPLES_OK : resultStatus
+  val PGRES_COPY_OUT : resultStatus
+  val PGRES_COPY_IN : resultStatus
+  val PGRES_BAD_RESPONSE : resultStatus
+  val PGRES_NONFATAL_ERROR : resultStatus
+  val PGRES_FATAL_ERROR : resultStatus
+  val PQconnectdb : unit -> string -> conn
+  val PQstatus : unit -> conn -> status
+  val PQfinish : unit -> conn -> unit
+  val PQexec : unit -> (conn * string) -> result
+  val PQgetvalue : unit -> (result * int * int) -> Word8.word ptr
+  val PQgetlength : unit -> (result * int * int) -> int
+  val PQgetisnull : unit -> (result * int * int) -> bool
+  val PQntuples : unit -> result -> int
+  val PQnfields : unit -> result -> int
+  val PQresultStatus : unit -> result -> resultStatus
+  val PQerrorMessage : unit -> conn -> char ptr
+  val PQresultErrorMessage : unit -> result -> char ptr
+  val PQdb : unit -> conn -> char ptr
+  val PQuser : unit -> conn -> char ptr
+  val PQclear : unit -> result -> unit
+  val getErrorMessage : conn -> string
+  val getResErrorMessage : result -> string
+  val getDBname : conn -> string
+  val getDBuser : conn -> string
+end

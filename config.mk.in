@@ -1,0 +1,57 @@
+# -*- Makefile -*-
+
+SHELL = @SHELL@
+@SET_MAKE@
+
+exec_prefix = @exec_prefix@
+prefix = @prefix@
+bindir = @bindir@
+datarootdir = @datarootdir@
+datadir = @datadir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+libdir_smlsharp = $(libdir)/smlsharp
+BUILD_ROOT = @abs_top_builddir@
+SRC_ROOT = @abs_top_srcdir@
+DESTDIR =
+
+target = @target@
+target_cpu = @target_cpu@
+target_vendor = @target_vendor@
+target_os = @target_os@
+host_os = @host_os@
+BYTE_ORDER = @BYTE_ORDER@
+NATIVE_TARGET = @NATIVE_TARGET@
+SMLSHARP_PLATFORM = @SMLSHARP_PLATFORM@
+HEAPIMPL = @HEAPIMPL@
+
+EXEEXT = @EXEEXT@
+
+CFLAGS = @CFLAGS@
+DEFS = @DEFS@ @RUNTIME_DEFS@
+CPPFLAGS = -I. @CPPFLAGS@
+RDYNAMIC_LDFLAGS = @RDYNAMIC_LDFLAGS@
+
+SMLSHARP = @SMLSHARP@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_DATA = @INSTALL_DATA@
+#FIND = @FIND@
+#WINDRES = @WINDRES@
+#CYGPATH = @CYGPATH@
+#DOXYGEN = @DOXYGEN@
+#EGREP = @EGREP@
+
+SMLNJ = @SMLNJ@
+SMLNJ_HEAP_SUFFIX = @SMLNJ_HEAP_SUFFIX@
+MLTON = @MLTON@
+STAGE0_COMPILER = @STAGE0_COMPILER@
+
+# comment out the following lines in config.mk (not in config.mk.in!),
+# and avoid to rebuild smllex, smlyacc and smlformat.
+MLLEX_DEP = $(MLLEX)
+MLYACC_DEP = $(MLYACC)
+SMLFORMAT_DEP = $(SMLFORMAT)
+SMLSHARP_DEP = @SMLSHARP_DEP@

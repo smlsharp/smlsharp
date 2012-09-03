@@ -1,7 +1,0 @@
-Group
-	structure Filename
-	structure CoreUtils
-	structure BinUtils
-	structure TempFile
-is
-	main/module.cm

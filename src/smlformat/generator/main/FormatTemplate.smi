@@ -1,0 +1,34 @@
+_require "../../../basis.smi"
+
+structure FormatTemplate =
+struct
+  type srcpos = int
+  type region = srcpos * srcpos
+  datatype priority = Deferred | Preferred of int
+  datatype assocDirection = Left | Neutral | Right
+  type assoc = {cut:bool, direction:assocDirection, strength:int}
+  type id = string
+  datatype template =
+      EndOfIndent
+    | Guard of assoc option * template list
+    | Indicator of {newline:{priority:priority} option, space:bool}
+    | Instance of instance
+    | MarkTemplate of template * region
+    | Newline
+    | StartOfIndent of int
+    | Term of string
+  and instance =
+      App of id * id option * instance list * template list list
+    | Atom of id * id option
+    | MarkInstance of instance * region
+  datatype typepat =
+      MarkTyPat of typepat * region
+    | RecordTyPat of (string * typepat) list * bool
+    | TupleTyPat of typepat list
+    | TyConTyPat of id * typepat list
+    | TypedTyConTyPat of id * typepat list * id
+    | TypedVarTyPat of id * id
+    | VarTyPat of id
+    | WildTyPat
+  type formattag = {id:id option, templates:template list, typepat:typepat}
+end

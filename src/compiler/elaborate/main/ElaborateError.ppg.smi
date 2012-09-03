@@ -1,0 +1,54 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../control/main/Loc.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+
+structure ElaborateError =
+  struct
+    exception RuntimeTyNotFound of string
+    exception InvalidOpAssociativity of string
+    exception AbstypeNotSupported
+    exception SigIDFoundInInterface of string
+    exception DerivedFormFunArg
+    exception MultipleInfixInInterface of string * Loc.loc
+    exception InvalidFixityPrecedence
+    exception MultipleProvide of string
+    exception LoadInterfaceFailed of {filename:string, msg:string}
+    exception UserTvarScopedAtOuterDecl of {tvar:Absyn.tvar}
+    exception DuplicateUserTvar of {tvar:Absyn.tvar}
+    exception DifferentEqkindOfSameTvar of {tvar:Absyn.tvar}
+    exception UndefinedFFIAttribute of {attr:string}
+    exception NotForeignFunctionType of {ty:Absyn.ffiTy}
+    exception RealConstantInPattern
+    exception NotFnBoundInValRec
+    exception NotBoundTyvar of {tyvar:string}
+    exception NotAllHaveSameNumberPatterns
+    exception NotAllHaveFunctionName
+    exception NonVariablePatternInValRec
+    exception NonfixExpected of string
+    exception LeftOfASMustBeVariable
+    exception InfixRequired
+    exception InfixUsedWithoutOP of string
+    exception IllegalFunctionSymbol
+    exception FunctionParameterNotFound
+    exception ArgWithInfixID of string
+    exception EndWithInfixID of string
+    exception DuplicateVarNameInValRec of string
+    exception DuplicateValDesc of string
+    exception DuplicateTypeNameInDatatype of string
+    exception DuplicateTypeNameInType of string
+    exception DuplicateRecordLabelInRawType of string
+    exception DuplicateRecordLabelInPat of string
+    exception DuplicateRecordLabel of string
+    exception DuplicateFunctorDesc of string
+    exception DuplicateStrDesc of string
+    exception DuplicateTypParam of string
+    exception DuplicateTypDesc of string
+    exception DuplicateConstructorNameInException of string
+    exception DuplicateConstructorNameInDatatype of string
+    exception BindReservedName of string
+    exception BeginWithInfixID of string
+    exception ArityMismatchInTypeDeclaration of {given:int, tyCon:string,
+                                                 wants:int}
+  end

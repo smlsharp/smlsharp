@@ -1,7 +1,0 @@
-.cm
-CM
-*.call-graph.dot
-*.ssa
-mlyacc.ps
-mlyacc.sml
-mlyacc

@@ -1,5 +1,0 @@
-Group
-	signature PRINTER_GENERATOR
-	structure PrinterGenerator
-is
-	main/module.cm

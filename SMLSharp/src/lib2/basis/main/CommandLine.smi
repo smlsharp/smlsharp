@@ -1,7 +1,0 @@
-_require "basis/main/COMMAND_LINE.sig"
-
-structure CommandLine =
-struct
-  val name : unit -> string
-  val arguments : unit -> string list 
-end

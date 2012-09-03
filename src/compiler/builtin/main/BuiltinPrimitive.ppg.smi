@@ -1,0 +1,139 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+structure BuiltinPrimitive =
+struct
+  datatype overflow = OverflowCheck | NoOverflowCheck
+  val format_overflow
+      : overflow -> SMLFormat.FormatExpression.expression list
+  datatype primitive =
+      Equal
+    | IdentityEqual
+    | Exn_Name
+    | Array_allocArray
+    | Array_copy_unsafe
+    | Array_length
+    | Array_allocVector
+    | Array_sub
+    | Array_update
+    | Byte_add
+    | Byte_div
+    | Byte_equal
+    | Byte_fromInt
+    | Byte_fromWord
+    | Byte_gt
+    | Byte_gteq
+    | Byte_lt
+    | Byte_lteq
+    | Byte_mod
+    | Byte_mul
+    | Byte_sub
+    | Byte_toInt
+    | Byte_toIntX
+    | Byte_toWord
+    | Cast
+    | Char_chr_unsafe
+    | Char_equal
+    | Char_gt
+    | Char_gteq
+    | Char_lt
+    | Char_lteq
+    | Char_ord
+    | Float_abs
+    | Float_add
+    | Float_div
+    | Float_equal
+    | Float_unorderedOrEqual
+    | Float_fromInt
+    | Float_fromReal
+    | Float_gt
+    | Float_gteq
+    | Float_lt
+    | Float_lteq
+    | Float_mul
+    | Float_neg
+    | Float_rem
+    | Float_sub
+    | Float_toReal
+    | Float_trunc_unsafe of overflow
+    | Int_abs of overflow
+    | Int_add of overflow
+    | Int_div of overflow
+    | Int_equal
+    | Int_gt
+    | Int_gteq
+    | Int_lt
+    | Int_lteq
+    | Int_mod of overflow
+    | Int_mul of overflow
+    | Int_neg of overflow
+    | Int_quot of overflow
+    | Int_rem of overflow
+    | Int_sub of overflow
+    | Ptr_advance
+    | Ptr_deref_int
+    | Ptr_deref_word
+    | Ptr_deref_word8
+    | Ptr_deref_char
+    | Ptr_deref_real
+    | Ptr_deref_real32
+    | Ptr_deref_ptr
+    | Ptr_store_int
+    | Ptr_store_word
+    | Ptr_store_word8
+    | Ptr_store_char
+    | Ptr_store_real
+    | Ptr_store_real32
+    | Ptr_store_ptr
+    | Real_abs
+    | Real_add
+    | Real_div
+    | Real_equal
+    | Real_unorderedOrEqual
+    | Real_fromInt
+    | Real_gt
+    | Real_gteq
+    | Real_lt
+    | Real_lteq
+    | Real_mul
+    | Real_neg
+    | Real_rem
+    | Real_sub
+    | Real_trunc_unsafe of overflow
+    | Ref_alloc
+    | Ref_assign
+    | Ref_deref
+    | String_allocArray
+    | String_copy_unsafe
+    | String_equal
+    | String_compare
+    | String_size
+    | String_sub
+    | String_update
+    | String_allocVector
+    | Word_add
+    | Word_andb
+    | Word_arshift
+    | Word_div
+    | Word_equal
+    | Word_fromInt
+    | Word_gt
+    | Word_gteq
+    | Word_lshift
+    | Word_lt
+    | Word_lteq
+    | Word_mod
+    | Word_mul
+    | Word_neg
+    | Word_notb
+    | Word_orb
+    | Word_rshift
+    | Word_sub
+    | Word_toIntX
+    | Word_xorb
+  val format_primitive
+      : primitive -> SMLFormat.FormatExpression.expression list
+  type sideEffect = {throw: bool, update: bool, read: bool, memory: bool}
+  val haveSideEffect : primitive -> sideEffect
+  val findPrimitive : string -> primitive option
+end

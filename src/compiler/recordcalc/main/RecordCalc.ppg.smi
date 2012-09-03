@@ -1,0 +1,180 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+
+structure RecordCalc =
+  struct
+    type loc = Loc.loc
+    type ty = Types.ty
+    val format_ty
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+              TermFormat.btvEnv' list
+          -> ty -> SMLFormat.FormatExpression.expression list
+    type conInfo = Types.conInfo
+    val format_conInfo
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+              TermFormat.btvEnv' list
+          -> {id:ConID.id, path:string list, ty:ty}
+          -> SMLFormat.BasicFormatters.expression list
+    val formatWithoutType_conInfo
+        : {id:ConID.id, path:string list, ty:ty}
+          -> SMLFormat.BasicFormatters.expression list
+    type exnInfo = Types.exnInfo
+    val format_exnInfo
+        : 'a
+          -> {id:ExnID.id, path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_exnInfo
+        : {id:ExnID.id, path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    type exExnInfo = Types.exExnInfo
+    val format_exExnInfo
+        : 'a
+          -> {path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_exExnInfo
+        : {path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    datatype exnCon = datatype TypedCalc.exnCon
+    val format_exnCon
+        : exnCon -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_exnCon
+        : exnCon -> SMLFormat.FormatExpression.expression list
+    type varInfo = Types.varInfo
+    val format_varInfo
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> {id:VarID.id, path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_varInfo
+        : {id:VarID.id, path:string list, ty:ty}
+          -> SMLFormat.BasicFormatters.expression list
+    type exVarInfo = Types.exVarInfo
+    val format_exVarInfo
+        : 'a
+          -> {path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_exVarInfo
+        : {path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    type primInfo = Types.primInfo
+    val format_primInfo
+        : 'a
+          -> {primitive:BuiltinPrimitive.primitive, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_primInfo
+        : {primitive:BuiltinPrimitive.primitive, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    type oprimInfo = Types.oprimInfo
+    val format_oprimInfo
+        : 'a
+          -> {id:OPrimID.id, path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_oprimInfo
+        : {id:OPrimID.id, path:string list, ty:ty}
+          -> SMLFormat.FormatExpression.expression list
+    type btvEnv = Types.btvEnv
+    val format_btvEnv
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> {eqKind:Absyn.eq, tvarKind:Types.tvarKind} BoundTypeVarID.Map.map
+          -> SMLFormat.FormatExpression.expression list
+    type constant = Absyn.constant
+    val format_constant
+        : constant -> SMLFormat.FormatExpression.expression list
+    datatype rcexp
+      = RCAPPM of {argExpList:rcexp list, funExp:rcexp, funTy:ty, loc:loc}
+      | RCCASE of {defaultExp:rcexp, exp:rcexp, expTy:ty, loc:loc,
+                   ruleList:(conInfo * varInfo option * rcexp) list}
+      | RCCAST of rcexp * ty * loc
+      | RCCONSTANT of {const:constant, loc:loc, ty:ty}
+      | RCDATACONSTRUCT of {argExpOpt:rcexp option, con:conInfo,
+                            instTyList:ty list, loc:loc}
+      | RCEXNCASE of {defaultExp:rcexp, exp:rcexp, expTy:ty, loc:loc,
+                      ruleList:(exnCon * varInfo option * rcexp) list}
+      | RCEXNCONSTRUCT of {argExpOpt:rcexp option, exn:exnCon,
+                           instTyList:ty list, loc:loc}
+      | RCEXN_CONSTRUCTOR of {exnInfo:exnInfo, loc:loc}
+      | RCEXEXN_CONSTRUCTOR of {exExnInfo:exExnInfo, loc:loc}
+      | RCEXPORTCALLBACK of {foreignFunTy:Types.foreignFunTy, funExp:rcexp,
+                             loc:loc}
+      | RCEXVAR of exVarInfo * loc
+      | RCFFI of rcffiexp * ty * loc
+      | RCFNM of {argVarList:varInfo list, bodyExp:rcexp, bodyTy:ty, loc:loc}
+      | RCFOREIGNAPPLY of {argExpList:rcexp list,
+                           foreignFunTy:Types.foreignFunTy, funExp:rcexp,
+                           loc:loc}
+      | RCGLOBALSYMBOL of {kind:Absyn.globalSymbolKind, loc:loc, name:string,
+                           ty:ty}
+      | RCHANDLE of {exnVar:varInfo, exp:rcexp, handler:rcexp, loc:loc}
+      | RCINDEXOF of string * ty * loc
+      | RCLET of {body:rcexp list, decls:rcdecl list, loc:loc, tys:ty list}
+      | RCMODIFY of {elementExp:rcexp, elementTy:ty, indexExp:rcexp,
+                     label:string, loc:loc, recordExp:rcexp, recordTy:ty}
+      | RCMONOLET of {binds:(varInfo * rcexp) list, bodyExp:rcexp, loc:loc}
+      | RCOPRIMAPPLY of {argExp:rcexp, instTyList:ty list, loc:loc,
+                         oprimOp:oprimInfo}
+      | RCPOLY of {btvEnv:btvEnv, exp:rcexp, expTyWithoutTAbs:ty, loc:loc}
+      | RCPOLYFNM of {argVarList:varInfo list, bodyExp:rcexp, bodyTy:ty,
+                      btvEnv:btvEnv, loc:loc}
+      | RCPRIMAPPLY of {argExp:rcexp, instTyList:ty list, loc:loc,
+                        primOp:primInfo}
+      | RCRAISE of {exp:rcexp, loc:loc, ty:ty}
+      | RCRECORD of {fields:rcexp LabelEnv.map, loc:loc, recordTy:ty}
+      | RCSELECT of {exp:rcexp, expTy:ty, indexExp:rcexp, label:string,
+                     loc:loc, resultTy:ty}
+      | RCSEQ of {expList:rcexp list, expTyList:ty list, loc:loc}
+      | RCSIZEOF of ty * loc
+      | RCSQL of rcsqlexp * ty * loc
+      | RCSWITCH of {branches:(constant * rcexp) list, defaultExp:rcexp,
+                     expTy:ty, loc:loc, switchExp:rcexp}
+      | RCTAGOF of ty * loc
+      | RCTAPP of {exp:rcexp, expTy:ty, instTyList:ty list, loc:loc}
+      | RCVAR of varInfo * loc
+    and rcsqlexp
+      = RCSQLSERVER of {schema:ty LabelEnv.map LabelEnv.map,
+                        server:(string * rcexp) list}
+    and rcffiexp = RCFFIIMPORT of {ffiTy:TypedCalc.ffiTy, ptrExp:rcexp}
+    and rcdecl
+      = RCEXD of {exnInfo:exnInfo, loc:loc} list * loc
+      | RCEXNTAGD of {exnInfo:exnInfo, varInfo:varInfo} * loc
+      | RCEXPORTEXN of exnInfo * loc
+      | RCEXPORTVAR of varInfo * loc
+      | RCEXTERNEXN of exExnInfo * loc
+      | RCEXTERNVAR of exVarInfo * loc
+      | RCVAL of (varInfo * rcexp) list * loc
+      | RCVALPOLYREC of btvEnv * {exp:rcexp, expTy:ty, var:varInfo} list * loc
+      | RCVALREC of {exp:rcexp, expTy:ty, var:varInfo} list * loc
+    val format_rcexp
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> rcexp -> SMLFormat.FormatExpression.expression list
+    val format_rcsqlexp
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> rcsqlexp -> SMLFormat.FormatExpression.expression list
+    val format_rcffiexp
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> rcffiexp -> SMLFormat.FormatExpression.expression list
+    val format_rcdecl
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> rcdecl TermFormat.formatter
+    val formatWithoutType_rcexp
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> rcexp -> TermFormat.format
+    val formatWithoutType_rcsqlexp
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> rcsqlexp -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_rcffiexp
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> rcffiexp -> SMLFormat.FormatExpression.expression list
+    val formatWithoutType_rcdecl
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> rcdecl TermFormat.formatter
+    val format_rcdecl' : rcdecl TermFormat.formatter
+    val formatWithoutType_rcdecl' : rcdecl TermFormat.formatter
+  end

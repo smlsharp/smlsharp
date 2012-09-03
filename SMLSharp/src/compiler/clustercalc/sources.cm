@@ -1,5 +1,0 @@
-Group
-	structure ClusterCalc
-	structure ClusterCalcFormatter
-is
-	main/module.cm

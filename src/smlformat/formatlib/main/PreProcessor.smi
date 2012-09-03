@@ -1,0 +1,86 @@
+_require "../../../basis/main/Bool.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/List.smi"
+_require "../../../basis/main/Option.smi"
+_require "../../../basis/main/General.smi"
+_require "../../../basis/main/binary-op.smi"
+_require "FormatExpression.smi"
+_require "PreProcessedExpression.smi"
+_require "PrinterParameter.smi"
+
+structure PreProcessor =
+struct
+  exception Fail of string
+  exception UnMatchEndOfIndent of string
+  type context =
+       {
+         totalIndent : int,
+         indentStack : int list,
+         countOfEndOfIndent : int,
+         charsAfterNewline : int ref
+       }
+  val MAX_PRIORITY : int 
+  val NEWLINE_PRIORITY : int 
+  val MAX_USER_PRIORITY : int 
+  val ++ : int * int -> int 
+
+  structure Environment =
+  struct
+    type entry =
+         {
+           priority : FormatExpression.priority,
+	   newline : bool ref,
+           total : int,
+           max : int,
+           subTotal : int
+         }
+    type environment = (entry list * FormatExpression.priority)
+    val addTotal : int -> entry -> entry
+    val setTotal : int -> entry -> entry 
+    val addSubTotal : int -> entry -> entry
+    val setSubTotal : int -> entry -> entry
+    val create : unit -> 
+            {
+              priority : FormatExpression.priority,
+              newline : bool ref,
+              total : int ,
+              max : int,
+              subTotal : int
+            } list
+	    *	
+	    FormatExpression.priority	
+    val getEntry : environment 
+    		   -> int 
+		      -> FormatExpression.priority 
+		         -> entry *
+			    (entry list * FormatExpression.priority)	
+    val map : ('a -> 'b) -> 'a list * 'c -> 'b list * 'c
+    val removeEntry : entry list * 'a
+                      -> FormatExpression.priority
+                         -> entry option * (entry list * 'a)
+    val getEntries : 'a * 'b -> 'a
+    val getLastPriority : environment -> FormatExpression.priority
+    val setLastPriority : environment
+                          -> FormatExpression.priority -> environment
+    val entryToString : {max:int, newline:bool ref,
+                         priority:FormatExpression.priority,
+                         subTotal:int, total:int}
+                        -> string
+    val toString : {max:int, newline:bool ref,
+                    priority:FormatExpression.priority, subTotal:int,
+                    total:int} list * FormatExpression.priority
+                   -> string
+  end
+
+  val calculate : PrinterParameter.parameterRecord 
+  		  -> Environment.entry list * FormatExpression.priority
+		     -> context
+		        -> FormatExpression.expression
+			   -> (Environment.entry list * 
+			       FormatExpression.priority) * context * 
+			       PreProcessedExpression.expression  
+  val preProcess : PrinterParameter.parameterRecord 
+  		   -> FormatExpression.expression 
+		      -> PreProcessedExpression.expression
+end

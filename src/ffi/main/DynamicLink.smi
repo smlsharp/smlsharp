@@ -1,0 +1,12 @@
+_require "../../basis/main/SMLSharpRuntime.smi"
+
+structure DynamicLink =
+struct
+  type lib (= ptr)
+  datatype scope = LOCAL | GLOBAL
+  datatype mode = LAZY | NOW
+  val dlopen : string -> lib
+  val dlopen' : string * scope * mode -> lib
+  val dlsym : lib * string -> unit ptr
+  val dlclose : lib -> unit
+end

@@ -1,0 +1,19 @@
+_require "../../../basis.smi"
+
+structure GetOpt =
+struct
+  datatype 'a arg = OPTION of 'a | ARG of string
+  datatype 'a argDesc =
+      NOARG of 'a
+    | REQUIRED of string -> 'a
+    | OPTIONAL of string option -> 'a
+  datatype 'a optionDesc =
+      SHORT of char * 'a argDesc
+    | SLONG of string * 'a argDesc
+    | DLONG of string * 'a argDesc
+  exception NoArg of string
+  exception HasArg of string
+  exception Unknown of string
+  val allowPackedOption : bool ref
+  val getopt : 'a optionDesc list -> string list -> 'a arg list
+end

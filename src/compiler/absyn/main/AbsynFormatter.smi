@@ -1,0 +1,17 @@
+_require "../../../basis.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "Absyn.ppg.smi"
+_require "ABSYN_FORMATTER.sig"
+
+structure AbsynFormatter =
+struct
+  val unitParseResultToString : Absyn.unitparseresult -> string
+  val typebindToString : Absyn.typbind -> string
+  val tvarToString : Absyn.tvar -> string
+  val tyToString : Absyn.ty -> string
+  val locToString : Loc.loc -> string
+  val decToString : Absyn.dec -> string
+  val expToString : Absyn.exp -> string
+  val topdecToString : Absyn.topdec -> string
+end

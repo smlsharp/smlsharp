@@ -1,0 +1,20 @@
+_require "basis.smi"
+_require "objects.smi"
+
+structure Interp =
+struct
+  exception Stop
+  val error : string -> Objects.object list -> 'a
+  val installOperator : string * (Objects.object list -> Objects.object list)
+                        -> unit
+  val ps_def : Objects.object list -> Objects.object list
+  val ps_add : Objects.object list -> Objects.object list
+  val ps_sub : Objects.object list -> Objects.object list
+  val ps_mul : Objects.object list -> Objects.object list
+  val ps_div : Objects.object list -> Objects.object list
+  val ps_rand : Objects.object list -> Objects.object list
+  val ps_print : Objects.object list -> Objects.object list
+  val ps_dup : Objects.object list -> Objects.object list
+  val ps_stop : 'a -> 'b
+  val parse : TextIO.instream -> unit
+end

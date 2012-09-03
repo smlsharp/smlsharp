@@ -1,2 +1,0 @@
-use "./lexgen.sml";
-use "./main.sml";

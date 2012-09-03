@@ -1,0 +1,19 @@
+_require "basis.smi"
+_require "ffi.smi"
+
+structure Pthread =
+struct
+  type pthread_t (= ptr)
+  type pthread_mutex_t (= boxed)
+  type pthread_cond_t (= boxed)
+  val new_pthread_mutex_t : unit -> pthread_mutex_t
+  val new_pthread_cond_t : unit -> pthread_cond_t
+  val pthread_join : pthread_t * unit ptr ref -> int
+  val pthread_mutex_init : pthread_mutex_t * unit ptr -> int
+  val pthread_mutex_lock : pthread_mutex_t -> int
+  val pthread_mutex_unlock : pthread_mutex_t -> int
+  val pthread_cond_init : pthread_cond_t * unit ptr -> int
+  val pthread_cond_wait : pthread_cond_t * pthread_mutex_t -> int
+  val pthread_cond_signal : pthread_cond_t -> int
+  val create : (unit ptr -> unit ptr) -> pthread_t
+end

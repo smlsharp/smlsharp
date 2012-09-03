@@ -1,0 +1,8 @@
+_require "../../../basis.smi"
+
+structure Gensym =
+struct
+  val gensym : unit -> string
+  val initGensym : unit -> unit
+  val makeGensym : char list -> (unit -> string) * (unit -> unit)
+end

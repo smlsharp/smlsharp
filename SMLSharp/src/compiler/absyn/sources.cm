@@ -1,8 +1,0 @@
-Group
-	structure Absyn
-	structure AbsynSQL
-	structure AbsynInterface
-	structure AbsynFormatter
-	structure Fixity
-is
-	main/module.cm

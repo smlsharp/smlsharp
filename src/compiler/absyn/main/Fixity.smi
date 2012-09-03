@@ -1,0 +1,9 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+structure Fixity =
+struct
+  datatype fixity = INFIX of int | INFIXR of int | NONFIX
+  val fixityToString : fixity -> string
+  val initialFixEnv : fixity SEnv.map
+end

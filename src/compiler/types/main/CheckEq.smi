@@ -1,0 +1,15 @@
+_require "../../../basis.smi"
+_require "BuiltinEnv.smi"
+_require "Types.ppg.smi"
+_require "TypesUtils.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../name/main/LocalID.smi"
+
+structure CheckEq =
+  struct
+    exception Eqcheck
+    val checkEq : Types.ty -> unit
+  end

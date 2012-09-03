@@ -1,0 +1,8 @@
+_require "basis.smi"
+_require "./cgi.smi"
+_require "./pages.smi"
+
+structure CGIMain =
+struct
+  val main : unit -> unit
+end

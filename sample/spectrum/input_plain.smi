@@ -1,0 +1,21 @@
+_require "basis.smi"
+_require "ffi.smi"
+_require "./libc.smi"
+_require "./input.sig"
+
+functor Input
+(
+  A : sig
+    val numSamples : int
+  end
+) =
+struct
+  type input (= boxed)
+  val buffer : word array
+  val openInput : unit -> input
+  val startInput : input -> unit
+  val closeInput : input -> unit
+  val fill : input -> bool
+  val read : input -> unit
+  val finished : input -> bool
+end

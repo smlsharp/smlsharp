@@ -1,5 +1,0 @@
-Group
-	structure PatternCalc
-	structure PatternCalcInterface
-is
-	main/module.cm

@@ -1,0 +1,17 @@
+_require "../../../basis.smi"
+
+structure Utility =
+struct
+  val interleave : 'a -> 'a list -> 'a list
+  val interleaveString : string -> string list -> string
+  val isPrefixOf : ''a list * ''a list -> bool
+  val splitLast : 'a list -> 'a list * 'a
+  val sort : ('a * 'a -> bool) -> 'a list -> 'a list
+  val satisfyAny : ('a -> bool) list -> 'a -> bool
+  val satisfyAll : ('a -> bool) list -> 'a -> bool
+  val compareStringNoCase : string * string -> order
+  exception MissingEscapedChar
+  val tokenizeString : (char -> bool) -> string -> string list
+  val replaceString : string -> string -> string -> int * string
+  val replaceFile : (string * string) list -> string * string -> unit
+end

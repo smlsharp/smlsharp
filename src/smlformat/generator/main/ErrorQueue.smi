@@ -1,0 +1,10 @@
+_require "../../../basis.smi"
+
+structure ErrorQueue =
+struct
+  datatype errorInfo = Error of exn | Warning of string
+  val errors : errorInfo list ref
+  val initialize : 'a -> unit
+  val add : errorInfo -> unit
+  val getAll : 'a -> errorInfo list
+end

@@ -1,4 +1,0 @@
-Group
-	structure Elaborator
-is
-	main/module.cm

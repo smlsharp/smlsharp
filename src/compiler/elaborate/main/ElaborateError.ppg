@@ -1,0 +1,415 @@
+(**
+ * @copyright (c) 2006, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: ElaborateError.ppg,v 1.23.6.1 2009/12/23 22:24:58 hiro-en Exp $
+ *)
+structure ElaborateError =
+struct
+
+  (***************************************************************************)
+  
+  (*%
+   * @formatter(Absyn.ffiTy) Absyn.format_ffiTy
+   * @formatter(Absyn.tvar) Absyn.format_tvar
+   * @formatter(Loc.loc) Loc.format_loc
+   *)
+  exception
+
+  (**
+   * <pre>
+   *  type t = (int, int) option
+   * </pre>
+   *)
+  (*%
+   * @format({tyCon, wants, given})
+   *   "type" +d "constructor" +d tyCon +d "given" +d given +d "arguments,"
+   *  +d "wants" +d wants
+   *)
+  ArityMismatchInTypeDeclaration of {tyCon : string, wants : int, given : int}
+
+  and
+  (*%
+   * @format(id) "expression" +d "or" +d "pattern" +d "begins" +d
+   *            "with" +d "infix" +d "identifier" +d ":" +d id
+   *)
+  BeginWithInfixID of string
+
+  and
+  (**
+   * <pre>
+   *   exception true of int
+   *   datatype dt = ref of int
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Binding" +d "reserved" +d "name:" + name
+   *)
+  BindReservedName of string
+
+  and
+  (**
+   * <pre>
+   *   datatype t1 = D and t2 = D
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "constructor" +d "name" +d "in" +d
+   *      "datatype:" + name
+   *)
+  DuplicateConstructorNameInDatatype of string
+
+  and
+  (**
+   * <pre>
+   *   exception e1 of int and e1 = Fail
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "constructor" +d "name" +d "in" +d
+   *      "exception:" + name
+   *)
+  DuplicateConstructorNameInException of string
+					 
+  and
+  (**
+   * <pre>
+   *    type t and t
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "type" +d "constructor:" + name
+   *)
+  DuplicateTypDesc of string
+
+  and
+  (**
+   * <pre>
+   *    type ('a,'a) foo = ty
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "type" +d "parameter:" + name
+   *)
+  DuplicateTypParam of string
+
+  and
+  (**
+   * <pre>
+   *    type t and t
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "structure" +d "identifier:" + name
+   *)
+  DuplicateStrDesc of string
+
+  and
+  (**
+   * <pre>
+   *    type t and t
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "functor" +d "identifier:" + name
+   *)
+  DuplicateFunctorDesc of string
+
+  and
+  (**
+   * <pre>
+   *  val {a, a} = {a = 1, a = 2}
+   * </pre>
+   *)
+  (*%
+   * @format(label)
+   *    "duplicate" +d "label" +d "in" +d "record:" label
+   *)
+  DuplicateRecordLabel of string
+
+  and
+  (**
+   * <pre>
+   *  val {a, a} = {a = 1, a = 2}
+   * </pre>
+   *)
+  (*%
+   * @format(label)
+   *  "duplicate" +d "label" +d "in" +d "record pattern:" label
+   *)
+  DuplicateRecordLabelInPat of string
+
+  and
+  (**
+   * <pre>
+   *  val {a, a} = {a = 1, a = 2}
+   * </pre>
+   *)
+  (*%
+   * @format(label) "duplicate" +d "label" +d "in" +d "a record type:" label
+   *)
+  DuplicateRecordLabelInRawType of string
+
+  and
+  (**
+   * <pre>
+   *   type t1 = int and t1 = string
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "type" +d "name" +d "in" +d "type:" + name
+   *)
+  DuplicateTypeNameInType of string
+
+  and
+  (**
+   * <pre>
+   *   datatype t1 = D and t1 = E
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "type" +d "name" +d "in" +d
+   *             "datatype:" + name
+   *)
+  DuplicateTypeNameInDatatype of string
+
+  and 
+  (**
+   * <pre>
+   *    val x : int and x : bool
+   * </pre>
+   *)
+  (*%
+   * @format(name) "Duplicate" +d  "value" +d "identifier:" + name
+   *)
+  DuplicateValDesc of string
+
+  and
+  (**
+   * <pre>
+   *  val rec f = exp and f = exp
+   * </pre>
+   *)
+  (*%
+   * @format(var)
+   *   "duplicate" +d "name" +d "in" +d "val rec:" +d var
+   *)
+  DuplicateVarNameInValRec of string
+
+  and
+  (*%
+   * @format(id) "expression" +d "or" +d "pattern" +d "ends" +d
+   *            "with" +d "infix" +d "identifier" +d ":" +d id
+   *)
+  EndWithInfixID of string
+
+  and
+  (*%
+   * @format(id) "non-fix" +d "identifier" +d "expected" +d ":" +d id
+   *)
+ ArgWithInfixID of string
+
+  and
+  (*%
+   * @format "can't" +d "find" +d "function" +d "arguments" +d "in" +d "clause"
+   *)
+  FunctionParameterNotFound
+
+  and
+  (*%
+   * @format "illegal" +d "function" +d "symbol" +d "in" +d "clause"
+   *)
+  IllegalFunctionSymbol
+
+  and
+  (*%
+   * @format(id) "infix" +d "operator" +d id +d "used" +d "without" +d
+   *            "\"op\"" +d "in" +d "fun" +d "dec"
+   *)
+  InfixUsedWithoutOP of string
+
+  and
+  (*%
+   * @format "infix" +d "operator" +d "required," +d "or" +d "delete" +d
+   *        "parentheses"
+   *)
+  InfixRequired
+
+  and
+  (*%
+   * @format "pattern" +d "to" +d "left" +d "of" +d "AS" +d "must" +d "be"
+   *        +d "variable"
+   *)
+  LeftOfASMustBeVariable
+
+  and
+  (*%
+   * @format(id) "infix" +d "symbol" +d id +d "used" +d "where" +d "a" +d
+   *            "nonfix" +d "identifier" +d "was" +d "expected"
+   *)
+  NonfixExpected of string
+
+  and
+  (* Only variable pattern optionally typed is accepted in elaboration.
+   *)
+  (*%
+   * @format
+   * "only" +d "variable" +d "or" +d "typed" +d "variable" +d "pattern" +d
+   * "is" +d "allowed" +d "in" +d "val" +d "rec"
+   *)
+  NonVariablePatternInValRec
+
+  and
+  (*%
+   * @format "clauses" +d "don't" +d "all" +d "have" +d "same"
+              +d "function" +d "name"
+   *)
+  NotAllHaveFunctionName
+
+  and
+  (*%
+   * @format "clauses" +d "don't" +d "all" +d "have" +d "same" +d "number"
+   *        +d "of" +d "patterns"
+   *)
+  NotAllHaveSameNumberPatterns
+
+  and
+  (**
+   * <pre>
+   * datatype t = D of 'a
+   * val x = y : 'a   (top level)
+   * </pre>
+   *)
+  (*%
+   * @format({tyvar}) "free" +d "type" +d "variable:" +d {tyvar}
+   *)
+  NotBoundTyvar of {tyvar : string}
+
+  and
+  (*%
+   * @format
+   * "bound" +d "expression" +d "in" +d "val" +d "rec" +d "must" +d "be" +d
+   * "fn"
+   *)
+  NotFnBoundInValRec
+
+  and
+  (*
+   *)
+  (*%
+   * @format
+   * "no" +d "real" +d "constant" +d "may" +d "occur" +d "in" +d "a" +d
+   * "pattern."
+   *)
+  RealConstantInPattern
+
+  and
+  (*
+   *)
+  (*%
+   * @format({ty})
+   * "not" +d "a" +d "foreign" +d "function" +d "type:" +d ty
+   *)
+  NotForeignFunctionType of {ty: Absyn.ffiTy}
+
+  and
+  (*
+   *)
+  (*%
+   * @format({attr})
+   * "undefined" +d "foreign" +d "attribute:" +d attr
+   *)
+  UndefinedFFIAttribute of {attr:string}
+
+  and
+  (*%
+   * @format({tvar})
+   * "type" +d "variable" +d tvar +d "has" +d "inconsistent" +d "equality"
+   * +d "kind"
+   *)
+  DifferentEqkindOfSameTvar of {tvar: Absyn.tvar}
+
+  and
+  (*%
+   * @format({tvar})
+   * "duplicate" +d "user" +d "type" +d "variable" +d "in" +d "declaration:"
+   * +d tvar
+   *)
+  DuplicateUserTvar of {tvar: Absyn.tvar}
+
+  and
+  (*%
+   * @format({tvar})
+   * "user" +d "type" +d "variable" +d tvar +d "is" +d "scoped" +d "at"
+   * +d "outer" +d "declaration"
+   *)
+  UserTvarScopedAtOuterDecl of {tvar: Absyn.tvar}
+
+  and
+  (*%
+   * @format({filename, msg})
+   * "failed to load inteface file:" +d filename +d ":" +d msg
+   *)
+  LoadInterfaceFailed of {filename: string, msg: string}
+
+  and
+  (*%
+   * @format(string)
+   * "multiple" +d "_provide" +d "declaration:" +d string
+   *)
+  MultipleProvide of string
+
+  and
+  (*%
+   * @format
+   * "fixity" +d "precedence" +d "must" +d "be" +d "between" +d "0" +d "and"
+   * +d "9"
+   *)
+  InvalidFixityPrecedence
+
+  and
+  (*%
+   * @format(vid * prevLoc)
+   * "found" +d "multiple" +d "infix" +d "declaration" +d "for" +d vid +d
+   * "with" +d "different" +d "fixity." +1 "Previous" +d "infix"
+   * +d "declaratation" +d "is" +d "at:" +d prevLoc
+   *)
+  MultipleInfixInInterface of string * Loc.loc
+
+  and
+  (*%
+   * @format
+   * "derived" +d "form" +d "for" +d "functor" +d "argument" +d "is" +d
+   * "not" +d "supported" +d "in" +d "interface" +d "file"
+   *)
+  DerivedFormFunArg
+
+  and
+  (*%
+   * @format(sigid)
+   * "signature" +d "is" +d "referenced" +d "by" +d "ID" +d "from" +d
+   * "interface:" +d sigid
+   *)
+  SigIDFoundInInterface of string
+
+  and
+  (*%
+     @format
+        "abstype" +d "is" +d "obsolete;" +d "use" +d "opaque" +d "signature" +d "instead"
+   *)
+  AbstypeNotSupported
+
+  and
+  (*%
+   * @format(id)
+   * "operators" +d "of" +d "same" +d "precedence" +d "with" +d "mixed" +d
+   * "associativities:" +d id
+   *)
+  InvalidOpAssociativity of string
+
+  and
+  (*%
+   * @format(id) "runtime" +d "type" +d "not" +d "found:" +d id
+   *)
+  RuntimeTyNotFound of string
+
+end

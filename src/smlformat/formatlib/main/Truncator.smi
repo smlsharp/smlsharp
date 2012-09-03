@@ -1,0 +1,11 @@
+_require "../../../basis/main/List.smi"
+_require "../../../basis/main/binary-op.smi"
+_require "FormatExpression.smi"
+_require "PrinterParameter.smi"
+
+structure Truncator =
+struct
+  val truncate : PrinterParameter.parameterRecord
+  		 -> FormatExpression.expression 
+		    -> FormatExpression.expression
+end

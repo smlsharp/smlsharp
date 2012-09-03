@@ -1,0 +1,50 @@
+_require "../../../basis.smi"
+_require "../../../smlnj-lib/Util/lib-base.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../types/main/tvarMap.smi"
+_require "../../usererror/main/UserErrorUtils.smi"
+_require "NameEvalEnv.ppg.smi"
+_require "NameEvalError.ppg.smi"
+_require "NameEvalUtils.smi"
+_require "TfunVars.smi"
+
+structure NormalizeTy =
+struct
+  datatype checkConError =
+           Arity
+         | Name of (string list * string list)
+         | Type of string list
+         | OK
+  datatype checkConRes = FAIL of checkConError list | SUCCESS
+  datatype normalForm = TYNAME of IDCalc.typInfo | TYTERM of IDCalc.ty
+  val admitEq : TvarSet.item list -> IDCalc.ty -> bool
+  val checkConSpec :
+      ((TypID.id * TypID.id) -> bool)
+      -> (IDCalc.formals * IDCalc.conSpec) *
+         (IDCalc.formals * IDCalc.conSpec)
+      -> checkConRes
+  val eqTydef : (TypID.id * TypID.id -> bool)
+                -> (IDCalc.formals * IDCalc.ty)
+                   * (IDCalc.formals * IDCalc.ty)
+                -> bool
+  val equalTfun : ((TypID.id * TypID.id) -> bool) -> IDCalc.tfun * IDCalc.tfun -> bool
+  val reduceEnv : NameEvalEnv.env -> NameEvalEnv.env
+  val reduceTfun : IDCalc.tfun -> IDCalc.tfun
+  val reduceTy : IDCalc.ty TvarMap.map -> IDCalc.ty -> IDCalc.ty
+  val tyForm : {eq:Absyn.eq, id:TvarID.id, lifted:bool, name:string} list
+               -> IDCalc.ty -> normalForm
+  val setEq : {args:TvarSet.item list, conSpec:IDCalc.ty option SEnv.map,
+               id:TypID.id, iseqRef:bool ref} list
+              -> unit
+  val equalTy :
+      ((TypID.id * TypID.id -> bool) * (IDCalc.tvarId TvarID.Map.map))
+      -> IDCalc.ty * IDCalc.ty -> bool
+  val makeTypIdEquiv : TypID.id list list -> (TypID.id * TypID.id) -> bool
+  val emptyTypIdEquiv : (TypID.id * TypID.id) -> bool
+end

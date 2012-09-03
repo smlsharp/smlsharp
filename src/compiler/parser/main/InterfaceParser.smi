@@ -1,0 +1,17 @@
+_require "../../../basis.smi"
+_require "../../../ml-yacc-lib.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "interface.grm.smi"
+_require "iml.lex.smi"
+_require "ParserError.ppg.smi"
+
+structure InterfaceParser =
+struct
+  type source = {read : int -> string, sourceName : string}
+  type input (= boxed)
+  val setup : source -> input
+  val parse : input -> AbsynInterface.itop
+end

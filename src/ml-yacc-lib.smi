@@ -1,0 +1,5 @@
+include "ml-yacc/lib/base.sig"
+include "ml-yacc/lib/join.smi"
+include "ml-yacc/lib/lrtable.smi"
+include "ml-yacc/lib/stream.smi"
+include "ml-yacc/lib/parser2.smi"

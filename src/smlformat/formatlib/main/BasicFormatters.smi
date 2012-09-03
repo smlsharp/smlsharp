@@ -1,0 +1,40 @@
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/Word.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/Real.smi"
+_require "../../../basis/main/Char.smi"
+_require "../../../basis/main/Substring.smi"
+_require "../../../basis/main/Array.smi"
+_require "../../../basis/main/Vector.smi"
+_require "../../../basis/main/Bool.smi"
+_require "../../../basis/main/Option.smi"
+_require "../../../basis/main/General.smi"
+_require "../../../basis/main/List.smi"
+_require "../../../basis/main/binary-op.smi"
+
+_require "BASIC_FORMATTERS.sig"
+_require "FormatExpression.smi"
+
+structure BasicFormatters =
+struct
+  type expression = FormatExpression.expression
+  type 'a formatter = 'a -> expression list
+  val format_unit : General.unit formatter
+  val format_int : Int.int formatter
+  val format_word : Word.word formatter
+  val format_real : Real.real formatter
+  val format_char : Char.char formatter
+  val format_string : String.string formatter
+  val format_substring : Substring.substring formatter
+  val format_exn : General.exn formatter
+  val format_exn_Ref : General.exn formatter ref
+  val format_array :
+      ('a formatter * expression list) -> 'a Array.array formatter
+  val format_vector :
+      ('a formatter * expression list) -> 'a Vector.vector formatter
+  val format_ref : 'a formatter -> 'a ref formatter
+  val format_bool : bool formatter
+  val format_option : 'a formatter -> 'a Option.option formatter
+  val format_order : General.order formatter
+  val format_list : ('a formatter * expression list) -> 'a list formatter
+end

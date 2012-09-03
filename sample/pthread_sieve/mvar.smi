@@ -1,0 +1,11 @@
+_require "basis.smi"
+_require "ffi.smi"
+_require "./pthread.smi"
+
+structure MVar =
+struct
+  type 'a mvar (= boxed)
+  val new : unit -> 'a mvar
+  val put : 'a mvar * 'a -> unit
+  val take : 'a mvar -> 'a
+end

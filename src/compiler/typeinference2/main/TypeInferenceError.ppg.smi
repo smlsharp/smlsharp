@@ -1,0 +1,121 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+
+structure TypeInferenceError =
+  struct
+    exception InvalidSQLDBI of string * Types.ty
+    exception IncompatibleWithSQL of string * Types.ty
+    exception InvalidSQLTableDecl of string * Types.ty
+    exception ForceImportForeignFunction of string * IDCalc.ffiTy
+    exception FFIInvalidTyvar of string * Types.ty
+    exception FFIStubMismatch of string * Types.ty * Types.ty
+    exception NonInteroperableType of string * IDCalc.ffiTy
+    exception EmptyExportInterface of string * {fileName:string}
+    exception UserTvarNotGeneralized of string * {utvarName:string}
+    exception ExnConRequiredInSigMatch of string * {tyConName:string}
+    exception DataConRequiredInSigMatch of string * {tyConName:string}
+    exception DuplicateTypeNameInDatatypes of string * {tyConName:string}
+    exception InstanceCheckInSigMatch
+              of string * {ty1:Types.ty, ty2:Types.ty, tyConName:string}
+    exception unboundVarInSigMatch of string * {varName:string}
+    exception unboundStructureInSigMatch of string * {strName:string}
+    exception unboundFunctorInSigMatch of string * {name:string}
+    exception unboundTyconInSigMatch of string * {name:string}
+    exception RedunantConstructorInStructureInSigMatch
+              of string * {Cons:string}
+    exception RedunantConstructorInSignatureInSigMatch
+              of string * {Cons:string}
+    exception SharingTypeMismatchInSigMatch
+              of string * {tyConName1:string, tyConName2:string}
+    exception TyConMisMatchInSigMatch of string * {tyConName:string}
+    exception EqErrorInSigMatch of string * {tyConName:string}
+    exception ArityMismatchInSigMatch of string * {tyConName:string}
+    exception DatatypeContainUnboundType of string * {tyConName:string}
+    exception IllegalTypeFunction of string * {id:string}
+    exception RigidTypeInSharing of string * {id:string}
+    exception RigidTypeInSharingStructure of string * {id:string}
+    exception RealisationDoesNotRespectEquality of string * {id:string}
+    exception NONFlexibleTypeInRealisation of string * {id:string}
+    exception RigidTypeInRealisation of string * {id:string}
+    exception SharingOnTypeFun of string * {tyConName:string}
+    exception TyConNotFoundInWhereType of string * {tyCon:string}
+    exception ArityMismatchInWhereType
+              of string * {given:int, tyCon:string, wants:int}
+    exception EqtypeRequiredInWhereType of string * {longTyCon:string}
+    exception DatatypeNotWellFormed of string * {longTyCon:string}
+    exception TyFunWithWhereType of string * {longTyCon:string}
+    exception TyConNotFoundInRealisation of string * {tyCon:string}
+    exception StructureNotFound of string * {id:string}
+    exception FunctorNotFound of string * {id:string}
+    exception SignatureNotFound of string * {id:string}
+    exception DuplicateSpecification of string * {id:string}
+    exception DuplicateSpecs
+    exception FreeTypeVariablesInExceptionType of string * {exid:string}
+    exception VarNotFound of string * {id:string}
+    exception TyFunFoundInsteadOfTyCon of string * {tyFun:string}
+    exception TyConNotFoundInShare of string * {tyCon:string}
+    exception TyConNotFoundInReplicateData of string * {tyCon:string}
+    exception TyConNotFoundInRawTy of string * {tyCon:string}
+    exception TyConNotFoundInIntro of string * {tyCon:string}
+    exception RecordLabelSetMismatch of string
+    exception NotExnCon of string * {tyCon:string}
+    exception NonIDInLayered of string * {id:string}
+    exception SignatureMismatch
+              of string * {annotatedTy:Types.ty,
+                           path:string list,
+                           ty:Types.ty}
+    exception TypeAnnotationNotAgree
+              of string * {annotatedTy:Types.ty, ty:Types.ty}
+    exception HandlerTy of string * {expTy:Types.ty, handlerTy:Types.ty}
+    exception RuleTypeMismatch
+              of string * {otherRules:Types.ty, thisRule:Types.ty}
+    exception PatternExpMismatch of string * {expTy:Types.ty, patTy:Types.ty}
+    exception FunTyConMismatch of string * {argTy:Types.ty, funTy:Types.ty}
+    exception TyConListMismatch
+              of string * {argTyList:Types.ty list,
+                           domTyList:Types.ty list}
+    exception TyConMismatch of string * {argTy:Types.ty, domTy:Types.ty}
+    exception FieldNotInRecord of string * {label:string}
+    exception RaiseArgNonExn of string * {ty:Types.ty}
+    exception NonFunction of string * {ty:Types.ty}
+    exception NonConstruct of string * {pat:IDCalc.icpat}
+    exception DuplicateTargsInTypeDef of string * {tvars:string list}
+    exception DuplicatePatternVar of string * {vars:string list}
+    exception RecDefinitionAndOccurrenceNotAgree
+              of string * {definition:Types.ty,
+                           id:string,
+                           occurrence:Types.ty}
+    exception InconsistentEQInDatatype of string * {tyvar:string}
+    exception DifferentOrPatternTypes of string * {ty1:Types.ty, ty2:Types.ty}
+    exception InconsistentOrVarTypes
+              of string * {tys:Types.ty list, var:string}
+    exception DIfferentOrPatternVars of string * {vars:string list}
+    exception DuplicateUserTvars of string * {tyvar:string}
+    exception DuplicateTvarNameInDatatypeArgs of string * {tyvar:string}
+    exception NotBoundTyvar of string * {tyvar:string}
+    exception ConstantConApplied of string * {con:string}
+    exception ConRequireArg of string * {longid:Absyn.longid}
+    exception ValueRestriction of string * {dummyTyPaths:Absyn.longid list}
+    exception ConstructorPathNotFound of string * Absyn.longid
+    exception InconsistentListElementType
+              of string * {nextTy:Types.ty, prevTy:Types.ty}
+    exception CyclicTvarkindSpec of string * string
+    exception NonConstructorPathInPat of string * Absyn.longid
+    exception ArityMismatchInTypeDeclaration
+              of string * {given:int, tyCon:string, wants:int}
+    val isAnyError : bool ref
+    val initializeTypeinfError : unit -> unit
+    val getErrorsAndWarnings : unit -> UserError.errorInfo list
+    val getErrors : unit -> UserError.errorInfo list
+    val isError : unit -> bool
+    val getWarnings : unit -> UserError.errorInfo list
+    val enqueueError : 'a -> Loc.loc * exn -> unit
+    val enqueueWarning : Loc.loc * exn -> unit
+  end

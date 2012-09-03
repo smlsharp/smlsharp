@@ -1,0 +1,844 @@
+structure A = Absyn
+structure I = AbsynInterface
+%%
+(*
+ * grammar for the interface langauge.
+ * @copyright (c) 2011, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+
+(*
+  2011-12-12 Ohori
+  Extended the interface language with
+  (1) structure liplication,
+      structure id = longid
+   and
+  (2) a restricted functor application 
+      structure id = functorid ( structureid) 
+  In doing this, I eliminated the AND construct in strexp. 
+  It is confusing and makes grammar and code unnecessarily complicated.
+  (The same situation holds in other declarations.)
+
+  2012-1-4 Ohori
+  Extended the interface language with
+  (3) variable alias declaration
+      val id = longid  (VALALIAS_EXTERN below)
+  This allows an interface to provide builtin primitives as in
+    structure Array =
+    struct
+      ...
+      val sub = SMLSharp.PrimArray.sub
+      ...
+   end
+  where SMLSharp.PrimArray.sub is defined as the primitive Array_sub.
+  By this addition, we can effectively inline primitives in the user code.
+*)
+
+%name Interface
+%header (
+local
+  structure Token = LrParser.Token
+in
+structure InterfaceLrVals
+ : sig structure ParserData : PARSER_DATA
+        structure Tokens : Interface_TOKENS
+  end
+)
+%footer (end)
+%verbose
+%pos Loc.pos
+
+(* same token set as iml.grm *)
+%term EOF
+    | ABSTYPE
+    | ABSNAMESPACE
+    | AND
+    | ANDALSO
+    | ARROW
+    | AS
+    | ASTERISK
+    | AT
+    | ATTRIBUTE
+    | BAR
+    | BUILTIN
+    | CASE
+    | CAST
+    | CDECL
+    | CHAR of string
+    | COLON
+    | COMMA
+    | DARROW
+    | DATATYPE
+    | DO
+    | ELSE
+    | END
+    | EQ
+    | EQTYPE
+    | EQTYVAR of string
+    | EXCEPTION
+    | EXTERNAL
+    | EXPORT
+    | FFIAPPLY
+    | FN
+    | FUN
+    | FUNCTOR
+    | HANDLE
+    | HASH
+    | ID of string
+    | IF
+    | IN
+    | IMPORT
+    | INCLUDE
+    | INFIX
+    | INFIXR
+    | INT of {radix:StringCvt.radix, digits:string}
+    | INTLAB of string
+    | INTERFACE
+    | LBRACE
+    | LBRACKET
+    | LET
+    | LOCAL
+    | LPAREN
+    | NONFIX
+    | OF
+    | OP
+    | OPAQUE
+    | OPEN
+    | ORELSE
+    | NAMESPACE
+    | NULL
+    | PERIOD
+    | PERIODS
+    | PRIVATE
+    | RAISE
+    | REC
+    | REQUIRE
+    | RBRACE
+    | RBRACKET
+    | REAL of string
+    | RPAREN
+    | SEMICOLON
+    | SHARING
+    | SIG
+    | SIGNATURE
+    | SIZEOF
+    | SPECIAL of string
+    | STDCALL
+    | STRING of string
+    | STRUCT
+    | STRUCTURE
+    | THEN
+    | TYPE
+    | TYVAR of string
+    | UNDERBAR
+    | USE
+    | USE'
+    | USEOBJ
+    | VAL
+    | WHILE
+    | WHERE
+    | WITH
+    | WITHTYPE
+    | WORD of {radix:StringCvt.radix, digits:string}
+    | SQLSERVER
+    | SQLEVAL
+    | SQLEXEC
+    | SQL
+    | ASC
+    | DESC
+    | SELECT
+    | FROM
+    | INSERT
+    | INTO
+    | VALUES
+    | DELETE
+    | ORDER
+    | BY
+    | UPDATE
+    | SET
+    | DEFAULT
+    | BEGIN
+    | COMMIT
+    | ROLLBACK
+
+%nonterm
+    id_noEQSTAR of string
+  | id_noEQ of string
+  | id of string
+  | vid of string
+  | tycon of string
+  | strid of string
+  | funid of string
+  | tyvar of A.tvar
+  | longId of string list
+  | longvid of string list
+  | longtycon of string list
+  | runtimeTy of string
+  | tyvarCommaList of A.tvar list
+  | tyvarseq_noNIL of A.tvar list
+  | tyvarseq of A.tvar list
+  | valbind_1 of I.valbind
+  | valbind of I.valbind list
+  | typbind_1 of I.typbind
+  | typbind of I.typbind list
+  | eqtypbind_1 of I.typbind
+  | eqtypbind of I.typbind list
+  | datbind_t of I.datbind
+(*
+  | datbind_opq of I.datbind
+  | datbind_tList of I.datbind list
+*)
+  | datbind_1 of I.datbind
+  | datbinds of I.datbind list
+  | datbind of I.datbind list
+  | conname of string
+  | conbind_1 of I.conbind
+  | conbind of I.conbind list
+  | exbind_1 of I.exbind
+  | exbind of I.exbind list
+  | dec of I.idec
+  | strexp of I.istrexp
+  | strbind of I.strbind
+  | strdec of I.idec
+  | strdecs of I.idec list
+  | sigdec of I.sigbind list
+  | funParam of I.funParam
+  | funbindLeft of string * I.funParam (** (I.constraint * A.sigexp) option*)
+  | funbind of I.funbind
+  | fundec of I.itopdec
+  | precLevel of string option
+  | vidList of string list
+  | infixDec of I.itopdec
+  | topdec of I.itopdec
+  | topdecs of I.itopdec list
+  | sigdec' of A.topdec
+  | sigdecs of A.topdec list
+  | requires of {name: string, loc: I.loc} list
+  | includes of {name: string, loc: I.loc} list
+  | top of I.itop
+
+  | overloadExp of I.overloadCase
+  | overloadInst of I.overloadInstance
+  | overloadMatch of I.overloadMatch list
+
+  | lab of string
+  | sigid of string
+  | longstrid of string list
+(*
+  | constraint of I.constraint
+*)
+  | sigidlist of string list
+  | valdesc of (string * A.ty) list
+  | typdesc of (A.tvar list * string) list
+  | typdescAlias of (A.tvar list * string * A.ty) list
+  | datdesc_1 of A.tvar list * string * (string * A.ty option) list
+  | datdesc of (A.tvar list * string * (string * A.ty option) list) list
+  | condesc_1 of string * A.ty option
+  | condesc of (string * A.ty option) list
+  | exdesc of (string * A.ty option) list
+  | strdesc of (string * A.sigexp) list
+  | spec_1 of A.spec
+  | spec of A.spec
+  | tyEquation of A.longTyCon list
+  | strEquation of A.longid list
+  | whereSpec of A.tvar list * A.longTyCon * A.ty
+  | sigexpWhere of A.sigexp * (A.tvar list * A.longTyCon * A.ty) list
+  | sigexp of A.sigexp
+  | sigexp_AND of A.sigexp
+  | sigbind of I.sigbind list
+  | tyrow of (string * A.ty) list
+  | atty of A.ty
+  | tyargList of A.ty list
+  | tyCommaList of A.ty list
+  | tyStarList of A.ty list
+  | tuplety of A.ty
+  | ty of A.ty
+
+%start top
+%eop EOF
+%noshift EOF
+
+%nonassoc DARROW
+%nonassoc BAR
+
+
+(* for error recovery *)
+%keyword AND AS BUILTIN CASE DATATYPE END EQTYPE EXCEPTION FUNCTOR IN
+         INFIX INFIXR NONFIX OF OP OPAQUE REQUIRE SHARING SIG SIGNATURE
+        STRUCT STRUCTURE TYPE VAL WHERE
+%value TYVAR ("")
+%value ID ("")
+%change -> VAL | -> LPAREN | -> END | -> SEMICOLON
+
+%%
+
+(******** basic structures ********)
+
+id_noEQSTAR     : ID (ID)
+                | SELECT ("select")
+                | FROM ("from")
+                | ORDER ("order")
+                | BY ("by")
+                | INSERT ("insert")
+                | INTO ("into")
+                | VALUES ("values")
+                | DELETE ("delete")
+                | ASC ("asc")
+                | DESC ("desc")
+                | UPDATE ("update")
+                | SET ("set")
+                | DEFAULT ("default")
+                | BEGIN ("begin")
+                | COMMIT ("commit")
+                | ROLLBACK ("rollback")
+
+id_noEQ         : id_noEQSTAR (id_noEQSTAR)
+                | ASTERISK ("*")
+
+id              : id_noEQ (id_noEQ)
+                | EQ ("=")
+
+vid             : id
+                    (id)
+
+tycon           : id
+                    (id)
+
+strid           : id
+                    (id)
+
+funid           : id
+                    (id)
+
+tyvar           : TYVAR
+                    ({name=TYVAR, eq=A.NONEQ})
+                | EQTYVAR
+                    ({name=EQTYVAR, eq=A.EQ})
+
+longId          : id
+                    ([id])
+                | id PERIOD longId
+                    (id :: longId)
+
+longvid         : longId
+                    (longId)
+
+longtycon       : id_noEQSTAR
+                    ([id_noEQSTAR])
+                | id_noEQSTAR PERIOD longId
+                    (id_noEQSTAR :: longId)
+
+tyvarCommaList  : tyvar
+                    ([tyvar])
+                | tyvar COMMA tyvarCommaList
+                    (tyvar :: tyvarCommaList)
+
+tyvarseq_noNIL  : tyvar
+                    ([tyvar])
+                | LPAREN tyvarCommaList RPAREN
+                    (tyvarCommaList)
+
+tyvarseq        : (* none *)
+                    (nil)
+                | tyvarseq_noNIL
+                    (tyvarseq_noNIL)
+
+runtimeTy       : id
+                    (id)
+
+(******** The Interface Language ********)
+
+valbind_1       : vid COLON ty
+                    ({vid = vid, body = I.VAL_EXTERN {ty = ty},
+                      loc = (vidleft, tyright)})
+                | vid AS longId COLON ty
+                (* 2012-1-4 ohori: variable with explicit external name added *)
+                    ({vid = vid, body = I.VAL_EXTERN_WITHNAME {ty = ty, externPath=longId},
+                      loc = (vidleft, tyright)})
+                | vid EQ longId
+                (* 2012-1-4 ohori: variable alias in interface added *)
+                    ({vid = vid, body = I.VALALIAS_EXTERN {path = longId},
+                      loc = (vidleft, longIdright)})
+                | vid EQ BUILTIN VAL vid COLON ty
+                    ({vid = vid1,
+                      body = I.VAL_BUILTIN {builtinName = vid2, ty = ty},
+                      loc = (vidleft, tyright)})
+                | vid EQ overloadExp
+                    ({vid = vid, body = I.VAL_OVERLOAD overloadExp,
+                      loc = (vidleft, overloadExpright)})
+
+valbind         : valbind_1
+                    ([valbind_1])
+                | valbind_1 AND valbind
+                    (valbind_1 :: valbind)
+
+typbind_1       : tyvarseq tycon LPAREN EQ runtimeTy RPAREN
+                    (I.OPAQUE_NONEQ {tyvars = tyvarseq, tycon = tycon, runtimeTy = runtimeTy,
+				     loc = (tyvarseqleft, RPARENright)})
+                | tyvarseq tycon EQ ty
+                    (I.TRANSPARENT {tyvars = tyvarseq, tycon = tycon, ty = ty,
+				    loc = (tyvarseqleft, tyright)})
+
+typbind         : typbind_1
+                    ([typbind_1])
+                | typbind_1 AND typbind
+                    (typbind_1 :: typbind)
+
+eqtypbind_1     : tyvarseq tycon LPAREN EQ runtimeTy RPAREN
+                    (I.OPAQUE_EQ {tyvars = tyvarseq, tycon = tycon, runtimeTy = runtimeTy,
+				  loc = (tyvarseqleft, RPARENright)})
+
+eqtypbind       : eqtypbind_1
+                    ([eqtypbind_1])
+                | eqtypbind_1 AND eqtypbind
+                    (eqtypbind_1 :: eqtypbind)
+
+datbind_t       : tycon EQ conbind
+                    ({tyvars = nil, tycon = tycon, conbind = conbind})
+                | tyvarseq_noNIL tycon EQ conbind
+                    ({tyvars = tyvarseq_noNIL, tycon = tycon, conbind = conbind})
+
+(*
+datbind_opq     : tycon LPAREN EQ conbind RPAREN
+                    ({tyvars = nil, tycon = tycon,
+                      conbind = conbind, opacity = I.OPAQUE_NONEQ})
+                | tycon LPAREN EQ conbind RPAREN AS EQTYPE
+                    ({tyvars = nil, tycon = tycon,
+                      conbind = conbind, opacity = I.OPAQUE_EQ})
+                | tyvarseq_noNIL tycon LPAREN EQ conbind RPAREN
+                    ({tyvars = tyvarseq_noNIL, tycon = tycon,
+                      conbind = conbind, opacity = I.OPAQUE_NONEQ})
+                | tyvarseq_noNIL tycon LPAREN EQ conbind RPAREN AS EQTYPE
+                    ({tyvars = tyvarseq_noNIL, tycon = tycon,
+                      conbind = conbind, opacity = I.OPAQUE_EQ})
+*)
+
+(*
+datbind_tList   : datbind_t
+                    ([datbind_t])
+                | datbind_t AND datbind_tList
+                    (datbind_t :: datbind_tList)
+*)
+
+datbind_1       : datbind_t
+                    (datbind_t)
+(*
+                | datbind_opq
+                    (datbind_opq)
+*)
+
+datbinds        : datbind_1
+                    ([datbind_1])
+                | datbind_1 AND datbinds
+                    (datbind_1 :: datbinds)
+
+datbind         : datbinds
+                    (datbinds)
+(*
+                | datbinds LPAREN AND datbind_tList RPAREN
+                    (datbinds
+                     @ map (fn {tyvars, tycon, conbind, opacity} =>
+                               {tyvars=tyvars, tycon=tycon,
+                                conbind=conbind, opacity=I.OPAQUE_NONEQ})
+                           datbind_tList)
+*)
+
+conname         : vid
+                    (vid)
+                | OP vid
+                    (vid)
+
+conbind_1       : conname
+                    ({vid = conname, ty = NONE})
+                | conname OF ty
+                    ({vid = conname, ty = SOME ty})
+
+conbind         : conbind_1
+                    ([conbind_1])
+                | conbind_1 BAR conbind
+                    (conbind_1 :: conbind)
+
+exbind_1        : conname
+                    (I.EXNDEF {vid = conname, ty = NONE,
+                               loc = (connameleft, connameright)})
+                | conname OF ty
+                    (I.EXNDEF {vid = conname, ty = SOME ty,
+                               loc = (connameleft, tyright)})
+                | conname EQ longvid
+                    (I.EXNREP {vid = conname, longvid = longvid,
+                               loc = (connameleft, longvidright)})
+
+exbind          : exbind_1
+                    ([exbind_1])
+                | exbind_1 AND exbind
+                    (exbind_1 :: exbind)
+
+dec             : VAL valbind
+                    (I.IVAL valbind)
+                | TYPE typbind
+                    (I.ITYPE typbind)
+                | EQTYPE eqtypbind
+                    (I.ITYPE eqtypbind)
+                | DATATYPE datbind
+                    (I.IDATATYPE {datbind=datbind,
+                                  loc=(DATATYPEleft, datbindright)})
+                | DATATYPE tycon EQ DATATYPE longtycon
+                    (I.ITYPEREP {tycon=tycon, origTycon=longtycon,
+                                 loc=(DATATYPEleft, longtyconright)})
+(*
+                | DATATYPE tycon LPAREN EQ DATATYPE longtycon RPAREN
+                    (I.ITYPEREP {tycon=tycon, origTycon=longtycon,
+                                 opacity=I.OPAQUE_NONEQ,
+                                 loc=(DATATYPEleft, longtyconright)})
+                | DATATYPE tycon LPAREN EQ DATATYPE longtycon RPAREN AS EQTYPE
+                    (I.ITYPEREP {tycon=tycon, origTycon=longtycon,
+                                 opacity=I.OPAQUE_EQ,
+                                 loc=(DATATYPEleft, longtyconright)})
+*)
+                | EXCEPTION exbind
+                    (I.IEXCEPTION exbind)
+                | DATATYPE tycon EQ BUILTIN DATATYPE tycon
+                    (I.ITYPEBUILTIN {tycon=tycon1, builtinName=tycon2,
+                                     loc=(DATATYPEleft, tycon2right)})
+(*
+                | DATATYPE tycon LPAREN EQ BUILTIN DATATYPE tycon RPAREN
+                    (I.ITYPEBUILTIN {tycon=tycon1, builtinName=tycon2,
+                                     opacity=I.OPAQUE_NONEQ,
+                                     loc=(DATATYPEleft, tycon2right)})
+                | DATATYPE tycon LPAREN EQ BUILTIN DATATYPE tycon RPAREN
+                  AS EQTYPE
+                    (I.ITYPEBUILTIN {tycon=tycon1, builtinName=tycon2,
+                                     opacity=I.OPAQUE_EQ,
+                                     loc=(DATATYPEleft, tycon2right)})
+*)
+
+strexp          : STRUCT strdecs END
+                    (I.ISTRUCT {decs=strdecs, loc=(STRUCTleft, ENDright)})
+                | longId
+                    (I.ISTRUCTREP{strPath=longId, loc=(longIdleft, longIdright)})
+                | funid LPAREN longId RPAREN
+                    (I.IFUNCTORAPP{functorName=funid,
+                                   argumentPath=longId, 
+                                   loc=(longIdleft, RPARENright)})
+
+strbind         : strid EQ strexp
+                    ({strid = strid,strexp = strexp, loc = (stridleft, strexpright)})
+
+strdec          : dec
+                    (dec)
+                | STRUCTURE strbind
+                    (I.ISTRUCTURE strbind)
+
+strdecs         : (* none *)
+                    (nil)
+                | SEMICOLON strdecs
+                    (strdecs)
+                | strdec strdecs
+                    (strdec :: strdecs)
+
+sigdec          : SIGNATURE sigbind
+                    (sigbind)
+
+funParam        : strid COLON sigexp
+                    (I.FUNPARAM_FULL {strid=strid, sigexp=sigexp})
+                | spec  (* derived form *)
+                    (I.FUNPARAM_SPEC spec)
+
+funbindLeft     : funid LPAREN funParam RPAREN
+                    ((funid, funParam))
+
+funbind         : funbindLeft EQ strexp
+                    ({funid = #1 funbindLeft, param = #2 funbindLeft,
+                      strexp = strexp,
+                      loc = (funbindLeftleft, strexpright)})
+fundec          : FUNCTOR funbind
+                    (I.IFUNDEC funbind)
+
+precLevel       : INT
+                    (SOME (#digits INT))
+                | INTLAB
+                    (SOME INTLAB)
+                | (* none *)
+                    (NONE)
+
+vidList         : vid
+                    ([vid])
+                | vid vidList
+                    (vid :: vidList)
+
+infixDec        : INFIX precLevel vidList
+                    (I.IINFIX {fixity = I.INFIXL precLevel,
+                               vids = vidList,
+                               loc = (INFIXleft, vidListright)})
+                | INFIXR precLevel vidList
+                    (I.IINFIX {fixity = I.INFIXR precLevel,
+                               vids = vidList,
+                               loc = (INFIXRleft, vidListright)})
+                | NONFIX vidList
+                    (I.IINFIX {fixity = I.NONFIX,
+                               vids = vidList,
+                               loc = (NONFIXleft, vidListright)})
+
+topdec          : strdec
+                    (I.IDEC strdec)
+                | fundec
+                    (fundec)
+                | infixDec
+                    (infixDec)
+
+topdecs         : (* none *)
+                    (nil)
+                | topdec topdecs
+                    (topdec :: topdecs)
+                | SEMICOLON topdecs
+                    (topdecs)
+
+sigdec'         : sigdec
+                    (A.TOPDECSIG (map (fn {sigid,sigexp,loc} => (sigid,sigexp))
+                                      sigdec,
+                                  (sigdecleft, sigdecright)))
+
+sigdecs         : (* none *)
+                    (nil)
+                | sigdec' sigdecs
+                    (sigdec' :: sigdecs)
+                | SEMICOLON sigdecs
+                    (sigdecs)
+
+requires        : (* none *)
+                    (nil)
+                | REQUIRE STRING requires
+                    ({name = STRING,
+                      loc = (REQUIREleft, STRINGright)}
+                     :: requires)
+                | SEMICOLON requires
+                    (requires)
+
+includes        : INCLUDE STRING
+                    ([{name = STRING, loc = (INCLUDEleft, STRINGright)}])
+                | INCLUDE STRING includes
+                    ({name = STRING, loc = (INCLUDEleft, STRINGright)}
+                     :: includes)
+
+top             : requires topdec topdecs
+                    (I.INTERFACE {requires = requires,
+                                  topdecs = topdec::topdecs})
+                | requires
+                    (I.INTERFACE {requires = requires, topdecs = nil})
+                | includes sigdecs
+                    (I.INCLUDES {includes = includes, topdecs = sigdecs})
+                | sigdec' sigdecs
+                    (I.INCLUDES {includes = nil, topdecs = sigdec'::sigdecs})
+
+(******** overload declaration ********)
+
+overloadExp     : CASE tyvar IN ty OF overloadMatch
+                    ({tyvar = tyvar, expTy = ty, matches = overloadMatch,
+                      loc = (CASEleft, overloadMatchright)})
+
+overloadInst    : overloadExp
+                    (I.INST_OVERLOAD overloadExp)
+                | longvid
+                    (I.INST_LONGVID {vid = longvid})
+                | LPAREN overloadInst RPAREN
+                    (overloadInst)
+
+overloadMatch   : ty DARROW overloadInst
+                    ([{instTy = ty, instance = overloadInst}])
+                | ty DARROW overloadInst BAR overloadMatch
+                    ({instTy = ty, instance = overloadInst} :: overloadMatch)
+
+(******** types and signatures: same as The Definition of Standard ML ********)
+
+lab             : id
+                    (id)
+                | INTLAB
+                    (INTLAB)
+
+sigid           : id
+                    (id)
+
+longstrid       : strid
+                    ([strid])
+                | strid PERIOD longstrid
+                    (strid :: longstrid)
+
+(*
+constraint      : COLON
+                    (I.SIG_TRANSPARENT)
+                | OPAQUE
+                    (I.SIG_OPAQUE)
+*)
+
+sigidlist       : sigid sigid
+                    ([sigid, sigid])
+                | sigid sigidlist
+                    (sigid :: sigidlist)
+
+valdesc         : vid COLON ty
+                    ([(vid, ty)])
+                | vid COLON ty AND valdesc
+                    ((vid, ty) :: valdesc)
+
+typdesc         : tyvarseq tycon
+                    ([(tyvarseq, tycon)])
+                | tyvarseq tycon AND typdesc
+                    ((tyvarseq, tycon) :: typdesc)
+
+typdescAlias    : tyvarseq tycon EQ ty (* derived form *)
+                    ([(tyvarseq, tycon, ty)])
+                | tyvarseq tycon EQ ty AND typdescAlias (* derived form *)
+                    ((tyvarseq, tycon, ty) :: typdescAlias)
+
+datdesc_1       : tycon EQ condesc
+                    ((nil, tycon, condesc))
+                | tyvarseq_noNIL tycon EQ condesc
+                    ((tyvarseq_noNIL, tycon, condesc))
+
+datdesc         : datdesc_1
+                    ([datdesc_1])
+                | datdesc_1 AND datdesc
+                    (datdesc_1 :: datdesc)
+
+condesc_1       : vid
+                    ((vid, NONE))
+                | vid OF ty
+                    ((vid, SOME ty))
+
+condesc         : condesc_1
+                    ([condesc_1])
+                | condesc_1 BAR condesc
+                    (condesc_1 :: condesc)
+
+exdesc          : condesc_1
+                    ([condesc_1])
+                | condesc_1 AND exdesc
+                    (condesc_1 :: exdesc)
+
+strdesc         : strid COLON sigexp
+                    ([(strid, sigexp)])
+                | strid COLON sigexp_AND strdesc
+                    ((strid, sigexp_AND) :: strdesc)
+
+spec_1          : VAL valdesc
+                    (A.SPECVAL (valdesc, (VALleft, valdescright)))
+                | TYPE typdesc
+                    (A.SPECTYPE (typdesc, (TYPEleft, typdescright)))
+                | TYPE typdescAlias
+                    (A.SPECDERIVEDTYPE (typdescAlias,
+                                        (TYPEleft, typdescAliasright)))
+                | EQTYPE typdesc
+                    (A.SPECEQTYPE (typdesc, (EQTYPEleft, typdescright)))
+                | DATATYPE datdesc
+                    (A.SPECDATATYPE (datdesc, (DATATYPEleft, datdescright)))
+                | DATATYPE tycon EQ DATATYPE longtycon
+                    (A.SPECREPLIC (tycon, longtycon,
+                                   (DATATYPEleft, longtyconright)))
+                | EXCEPTION exdesc
+                    (A.SPECEXCEPTION (exdesc, (EXCEPTIONleft, exdescright)))
+                | STRUCTURE strdesc
+                    (A.SPECSTRUCT (strdesc, (STRUCTUREleft, strdescright)))
+                | INCLUDE sigexp
+                    (A.SPECINCLUDE (sigexp, (INCLUDEleft, sigexpright)))
+                | INCLUDE sigidlist (* derived form *)
+                    (A.SPECDERIVEDINCLUDE (sigidlist,
+                                           (INCLUDEleft, sigidlistright)))
+
+spec            : (* none *)
+                    (A.SPECEMPTY)
+                | spec spec_1
+                    (A.SPECSEQ (spec, spec_1, (specleft, spec_1right)))
+                | spec SEMICOLON
+                    (spec)
+                | spec SHARING TYPE tyEquation
+                    (A.SPECSHARE (spec, tyEquation,
+                                  (specleft, tyEquationright)))
+                | spec SHARING strEquation (* derived form *)
+                    (A.SPECSHARESTR (spec, strEquation,
+                                     (specleft, strEquationright)))
+
+tyEquation      : longtycon EQ longtycon
+                    ([longtycon, longtycon2])
+                | longtycon EQ tyEquation
+                    (longtycon :: tyEquation)
+
+strEquation     : longstrid EQ longstrid
+                    ([longstrid, longstrid2])
+                | longstrid EQ strEquation
+                    (longstrid :: strEquation)
+
+whereSpec       : TYPE tyvarseq longtycon EQ ty
+                    ((tyvarseq, longtycon, ty))
+
+sigexpWhere     : sigexp WHERE whereSpec
+                    ((sigexp, [whereSpec]))
+                | sigexpWhere AND whereSpec (* derived form *)
+                    ((#1 sigexpWhere, whereSpec :: #2 sigexpWhere))
+sigexp          : SIG spec END
+                    (A.SIGEXPBASIC (spec, (SIGleft, ENDright)))
+                | sigid
+                    (A.SIGID (sigid, (sigidleft, sigidright)))
+                | sigexpWhere
+                    (A.SIGWHERE (#1 sigexpWhere, #2 sigexpWhere,
+                                 (sigexpWhereleft, sigexpWhereright)))
+
+sigexp_AND      : SIG spec END AND
+                    (A.SIGEXPBASIC (spec, (SIGleft, ENDright)))
+                | sigid AND
+                    (A.SIGID (sigid, (sigidleft, sigidright)))
+                | sigexpWhere AND
+                    (A.SIGWHERE (#1 sigexpWhere, #2 sigexpWhere,
+                                 (sigexpWhereleft, sigexpWhereright)))
+
+sigbind         : sigid EQ sigexp
+                    ([{sigid=sigid, sigexp=sigexp,
+                       loc=(sigidleft, sigexpright)}])
+                | sigid EQ sigexp_AND sigbind
+                    ({sigid=sigid, sigexp=sigexp_AND,
+                      loc=(sigidleft, sigexp_ANDright)} :: sigbind)
+
+tyrow           : lab COLON ty
+                    ([(lab, ty)])
+                | lab COLON ty COMMA tyrow
+                    ((lab, ty) :: tyrow)
+
+atty            : tyvar
+                    (A.TYID (tyvar, (tyvarleft, tyvarright)))
+                | LBRACE RBRACE
+                    (A.TYRECORD (nil, (LBRACEleft, RBRACEright)))
+                | LBRACE tyrow RBRACE
+                    (A.TYRECORD (tyrow, (LBRACEleft, RBRACEright)))
+                | tyargList longtycon
+                    (A.TYCONSTRUCT (tyargList, longtycon,
+                                    (longtyconleft, longtyconright)))
+                | LPAREN ty RPAREN
+                    (ty)
+(*
+                    (A.TYTUPLE (nil, (LPARENleft, RPARENright)))
+*)
+tyargList       : (* none *)
+                    (nil)
+                | atty
+                    ([atty])
+                | LPAREN ty COMMA tyCommaList RPAREN
+                    (ty :: tyCommaList)
+
+tyCommaList     : ty
+                    ([ty])
+                | ty COMMA tyCommaList
+                    (ty :: tyCommaList)
+
+tyStarList      : atty ASTERISK atty
+                    ([atty, atty2])
+                | atty ASTERISK tyStarList
+                    (atty :: tyStarList)
+
+tuplety         : atty
+                    (atty)
+                | tyStarList
+                    (A.TYTUPLE (tyStarList, (tyStarListleft, tyStarListright)))
+
+ty              : tuplety
+                    (tuplety)
+                | tuplety ARROW ty
+                    (A.TYFUN (tuplety, ty, (tupletyleft, tyright)))

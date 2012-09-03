@@ -1,0 +1,18 @@
+_require "../../../basis.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "RecordCalc.ppg.smi"
+
+structure RecordCalcFormatter =
+  struct
+    val rcdecToString : RecordCalc.rcdecl -> string
+    val rcdecToStringWithoutType : RecordCalc.rcdecl -> string
+    val rcexpToString
+        : {eqKind: Absyn.eq, tvarKind: Types.tvarKind} TermFormat.btvEnv' list
+          -> RecordCalc.rcexp -> string
+    val rcexpToStringWithoutType
+        : {eqKind: Absyn.eq, tvarKind: Types.tvarKind} TermFormat.btvEnv' list
+          -> RecordCalc.rcexp -> string
+  end

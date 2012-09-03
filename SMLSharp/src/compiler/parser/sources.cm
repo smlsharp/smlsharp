@@ -1,5 +1,0 @@
-Group
-	structure Parser
-	structure InterfaceParser
-is
-	main/module.cm

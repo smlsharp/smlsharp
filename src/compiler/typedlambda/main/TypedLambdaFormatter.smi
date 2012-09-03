@@ -1,0 +1,11 @@
+_require "../../../basis.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "TypedLambda.ppg.smi"
+
+structure TypedLambdaFormatter =
+  struct
+    val tldecToString : TypedLambda.tldecl -> string
+    val tldecToStringWithType : TypedLambda.tldecl -> string
+    val tlexpToString : TypedLambda.tlexp -> string
+    val tlexpToStringWithType : TypedLambda.tlexp -> string
+  end

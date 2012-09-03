@@ -1,0 +1,17 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require "../../reflection/main/Reify.smi"
+_require "../../reflection/main/ReifiedTermData.smi"
+_require "../../types/main/BuiltinEnv.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+
+structure PrinterGeneration  =
+struct
+  val generate : NameEvalEnv.topEnv -> NameEvalEnv.topEnv * TypedCalc.tpdecl list * TypedCalc.tpdecl list
+end

@@ -1,0 +1,6 @@
+structure Try =
+struct
+  type ('a, 'b) cont (= boxed)
+  val try : (unit -> 'a) -> ('a,'b) cont -> 'b
+  val finally : ('a, (unit -> unit) -> 'a) cont
+end

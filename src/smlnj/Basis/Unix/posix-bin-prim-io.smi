@@ -1,0 +1,40 @@
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/OS.smi"
+_require "../../../basis/main/Word8Vector.smi"
+_require "../../../basis/main/SMLSharpOSFileSys.smi"
+_require "../IO/prim-io-bin.smi"
+_require "../IO/os-prim-io.sig"
+_require "../Posix/posix-io.smi"
+
+structure SMLSharpSMLNJ_PosixBinPrimIO =
+struct
+  structure PrimIO =
+  struct
+    type elem = BinPrimIO.elem
+    type vector = BinPrimIO.vector
+    type vector_slice = BinPrimIO.vector_slice
+    type array = BinPrimIO.array
+    type array_slice = BinPrimIO.array_slice
+    type pos = BinPrimIO.pos
+    val compare : pos * pos -> order
+    datatype reader = datatype BinPrimIO.reader
+    datatype writer = datatype BinPrimIO.writer
+    val openVector : vector -> reader
+    val nullRd : unit -> reader
+    val nullWr : unit -> writer
+    val augmentReader : reader -> reader
+    val augmentWriter : writer -> writer
+  end
+  type file_desc = SMLSharpSMLNJ_POSIX_IO.file_desc
+  val openRd  : string -> PrimIO.reader
+  val openWr  : string -> PrimIO.writer
+  val openApp : string -> PrimIO.writer
+  val mkReader : {fd : file_desc, name : string, initBlkMode : bool}
+                 -> PrimIO.reader
+  val mkWriter: {fd : file_desc,
+                 name : string,
+                 appendMode : bool,
+                 initBlkMode : bool,
+                 chunkSize : int}
+                -> PrimIO.writer
+end

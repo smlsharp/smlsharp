@@ -1,0 +1,44 @@
+_require "../../../basis/main/List.smi"
+
+structure PrinterParameter =
+struct
+  datatype parameter =
+           Newline of string
+         | Space of string
+         | Columns of int
+         | GuardLeft of string
+         | GuardRight of string
+         | MaxDepthOfGuards of int option
+         | MaxWidthOfGuards of int option
+         | CutOverTail of bool
+  val defaultNewline : string
+  val defaultSpace : string
+  val defaultColumns : int
+  val defaultGuardLeft : string
+  val defaultGuardRight : string
+  val defaultMaxDepthOfGuards : 'a option
+  val defaultMaxWidthOfGuards : 'a option
+  val defaultCutOverTail : bool
+  type parameterRecord =
+       {
+         newlineString : string,
+         spaceString : string,
+         columns : int,
+         guardLeft : string,
+         guardRight : string,
+         maxDepthOfGuards : int option,
+         maxWidthOfGuards : int option,
+         cutOverTail : bool
+       }
+  val convert : parameter list ->
+        {	
+          newlineString : string,
+          spaceString : string,
+          columns : int,
+          guardLeft : string,
+          guardRight : string,
+          maxDepthOfGuards : int option,
+          maxWidthOfGuards : int option,
+          cutOverTail : bool
+        }
+end

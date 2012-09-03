@@ -1,0 +1,7 @@
+_require "../../../basis.smi"
+_require "FormatterGenerator.smi"
+
+structure BasicFormattersEnv =
+struct
+  val basicFormattersEnv : FormatterGenerator.formatterEnv
+end

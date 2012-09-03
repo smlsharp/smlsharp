@@ -1,0 +1,58 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../toolchain/main/Filename.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../nameevaluation/main/NameEvalEnv.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../elaborate/main/Elaborator.smi"
+
+structure TopData =
+struct
+  datatype stopAt = SyntaxCheck | ErrorCheck | Assembly | NoStop
+  datatype code = FILE of Filename.filename
+  type interfaceNames =
+      {
+        provide: AbsynInterface.interfaceName option,
+        requires: AbsynInterface.interfaceName list,
+        depends: (AbsynInterface.filePlace * string) list
+      }
+  type toplevelOptions =
+      {
+        stopAt: stopAt,
+        dstfile: Filename.filename option,
+        baseName: Filename.filename option,
+        stdPath: Filename.filename list,
+        loadPath: Filename.filename list,
+        asmFlags: string list
+      }
+  type toplevelContext =
+      {
+        topEnv: NameEvalEnv.topEnv,
+        version: int option,
+        fixEnv: Elaborator.fixEnv,
+        builtinDecls: IDCalc.icdecl list
+      }
+  type newContext =
+      {
+        topEnv: NameEvalEnv.topEnv,
+        fixEnv: Elaborator.fixEnv
+      }
+
+  datatype result =
+      STOPPED
+    | RETURN of newContext * code
+
+  val debugPrint : string -> unit
+  val printStopAt : stopAt -> unit
+  val printInterfaceNames : interfaceNames -> unit
+  val printInterfaceName : AbsynInterface.interfaceName -> unit
+  val printFileName : Filename.filename -> unit
+  val printInterfaceNameList : AbsynInterface.interfaceName list -> unit
+  val printResult : result -> unit
+  val printToplevelOptions : toplevelOptions -> unit
+  val printCompileUnit : AbsynInterface.compileUnit -> unit
+end

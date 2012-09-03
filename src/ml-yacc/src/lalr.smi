@@ -1,0 +1,295 @@
+_require "../../basis.smi"
+_require "../lib/base.sig"
+_require "utils.smi"
+_require "utils.sig"
+_require "sigs.sml"
+_require "grammar.smi"
+_require "core.smi"
+_require "coreutils.smi"
+_require "graph.smi"
+_require "look.smi"
+
+structure Lalr =
+struct
+  structure Grammar =
+  struct
+    datatype term = datatype IntGrammar.Grammar.term
+    datatype nonterm = datatype IntGrammar.Grammar.nonterm
+    datatype symbol = datatype IntGrammar.Grammar.symbol
+    datatype grammar = datatype IntGrammar.Grammar.grammar
+  end
+  structure IntGrammar =
+  struct
+    structure Grammar =
+    struct
+      datatype term = datatype IntGrammar.Grammar.term
+      datatype nonterm = datatype IntGrammar.Grammar.nonterm
+      datatype symbol = datatype IntGrammar.Grammar.symbol
+      datatype grammar = datatype IntGrammar.Grammar.grammar
+    end
+    structure SymbolAssoc =
+    struct
+      type 'a table = 'a IntGrammar.SymbolAssoc.table
+      type key = IntGrammar.SymbolAssoc.key
+      val size : 'a table -> int
+      val empty : 'a table
+      val exists : (key * 'a table) -> bool
+      val find : (key * 'a table)  ->  'a option
+      val insert: ((key * 'a) * 'a table) -> 'a table
+      val make_table : (key * 'a ) list -> 'a table
+      val make_list : 'a table -> (key * 'a) list
+      val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+    end
+    structure NontermAssoc =
+    struct
+      type 'a table = 'a IntGrammar.NontermAssoc.table
+      type key = IntGrammar.NontermAssoc.key
+      val size : 'a table -> int
+      val empty : 'a table
+      val exists : (key * 'a table) -> bool
+      val find : (key * 'a table)  ->  'a option
+      val insert: ((key * 'a) * 'a table) -> 'a table
+      val make_table : (key * 'a ) list -> 'a table
+      val make_list : 'a table -> (key * 'a) list
+      val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+    end
+    datatype rule = datatype IntGrammar.rule
+    val gtTerm : Grammar.term * Grammar.term -> bool
+    val eqTerm : Grammar.term * Grammar.term -> bool
+    val gtNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+    val eqNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+    val gtSymbol : Grammar.symbol * Grammar.symbol -> bool
+    val eqSymbol : Grammar.symbol * Grammar.symbol -> bool
+    val DEBUG : bool
+    val prRule : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                 (string -> 'b) -> rule -> unit
+    val prGrammar : (Grammar.symbol -> string)*(Grammar.nonterm -> string) *
+                    (string -> unit) -> Grammar.grammar -> unit
+  end
+  structure Core =
+  struct
+    structure Grammar =
+    struct
+      datatype term = datatype Grammar.term
+      datatype nonterm = datatype Grammar.nonterm
+      datatype symbol = datatype Grammar.symbol
+      datatype grammar = datatype Grammar.grammar
+    end
+    structure IntGrammar =
+    struct
+      structure Grammar =
+      struct
+        datatype term = datatype Grammar.term
+        datatype nonterm = datatype Grammar.nonterm
+        datatype symbol = datatype Grammar.symbol
+        datatype grammar = datatype Grammar.grammar
+      end
+      structure SymbolAssoc =
+      struct
+        type 'a table = 'a IntGrammar.SymbolAssoc.table
+        type key = IntGrammar.SymbolAssoc.key
+        val size : 'a table -> int
+        val empty : 'a table
+        val exists : (key * 'a table) -> bool
+        val find : (key * 'a table)  ->  'a option
+        val insert: ((key * 'a) * 'a table) -> 'a table
+        val make_table : (key * 'a ) list -> 'a table
+        val make_list : 'a table -> (key * 'a) list
+        val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+      end
+      structure NontermAssoc =
+      struct
+        type 'a table = 'a IntGrammar.NontermAssoc.table
+        type key = IntGrammar.NontermAssoc.key
+        val size : 'a table -> int
+        val empty : 'a table
+        val exists : (key * 'a table) -> bool
+        val find : (key * 'a table)  ->  'a option
+        val insert: ((key * 'a) * 'a table) -> 'a table
+        val make_table : (key * 'a ) list -> 'a table
+        val make_list : 'a table -> (key * 'a) list
+        val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+      end
+      datatype rule = datatype IntGrammar.rule
+      val gtTerm : Grammar.term * Grammar.term -> bool
+      val eqTerm : Grammar.term * Grammar.term -> bool
+      val gtNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+      val eqNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+      val gtSymbol : Grammar.symbol * Grammar.symbol -> bool
+      val eqSymbol : Grammar.symbol * Grammar.symbol -> bool
+      val DEBUG : bool
+      val prRule : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                   (string -> 'b) -> rule -> unit
+      val prGrammar : (Grammar.symbol -> string)*(Grammar.nonterm -> string) *
+                      (string -> unit) -> Grammar.grammar -> unit
+    end
+    datatype item = datatype Core.item
+    val eqItem : item * item -> bool
+    val gtItem : item * item -> bool
+    val insert : item * item list -> item list
+    val union : item list * item list -> item list
+    datatype core = datatype Core.core
+    val gtCore : core * core -> bool
+    val eqCore : core * core -> bool
+    val prItem : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                 (string -> unit) -> item -> unit
+    val prCore : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                 (string -> unit) -> core -> unit
+  end
+  structure Graph =
+  struct
+    structure Grammar =
+    struct
+      datatype term = datatype Grammar.term
+      datatype nonterm = datatype Grammar.nonterm
+      datatype symbol = datatype Grammar.symbol
+      datatype grammar = datatype Grammar.grammar
+    end
+    structure IntGrammar =
+    struct
+      structure Grammar =
+      struct
+        datatype term = datatype Grammar.term
+        datatype nonterm = datatype Grammar.nonterm
+        datatype symbol = datatype Grammar.symbol
+        datatype grammar = datatype Grammar.grammar
+      end
+      structure SymbolAssoc =
+      struct
+        type 'a table = 'a IntGrammar.SymbolAssoc.table
+        type key = IntGrammar.SymbolAssoc.key
+        val size : 'a table -> int
+        val empty : 'a table
+        val exists : (key * 'a table) -> bool
+        val find : (key * 'a table)  ->  'a option
+        val insert: ((key * 'a) * 'a table) -> 'a table
+        val make_table : (key * 'a ) list -> 'a table
+        val make_list : 'a table -> (key * 'a) list
+        val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+      end
+      structure NontermAssoc =
+      struct
+        type 'a table = 'a IntGrammar.NontermAssoc.table
+        type key = IntGrammar.NontermAssoc.key
+        val size : 'a table -> int
+        val empty : 'a table
+        val exists : (key * 'a table) -> bool
+        val find : (key * 'a table)  ->  'a option
+        val insert: ((key * 'a) * 'a table) -> 'a table
+        val make_table : (key * 'a ) list -> 'a table
+        val make_list : 'a table -> (key * 'a) list
+        val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+      end
+      datatype rule = datatype IntGrammar.rule
+      val gtTerm : Grammar.term * Grammar.term -> bool
+      val eqTerm : Grammar.term * Grammar.term -> bool
+      val gtNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+      val eqNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+      val gtSymbol : Grammar.symbol * Grammar.symbol -> bool
+      val eqSymbol : Grammar.symbol * Grammar.symbol -> bool
+      val DEBUG : bool
+      val prRule : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                   (string -> 'b) -> rule -> unit
+      val prGrammar : (Grammar.symbol -> string)*(Grammar.nonterm -> string) *
+                      (string -> unit) -> Grammar.grammar -> unit
+    end
+    structure Core =
+    struct
+      structure Grammar =
+      struct
+        datatype term = datatype Grammar.term
+        datatype nonterm = datatype Grammar.nonterm
+        datatype symbol = datatype Grammar.symbol
+        datatype grammar = datatype Grammar.grammar
+      end
+      structure IntGrammar =
+      struct
+        structure Grammar =
+        struct
+          datatype term = datatype Grammar.term
+          datatype nonterm = datatype Grammar.nonterm
+          datatype symbol = datatype Grammar.symbol
+          datatype grammar = datatype Grammar.grammar
+        end
+        structure SymbolAssoc =
+        struct
+          type 'a table = 'a IntGrammar.SymbolAssoc.table
+          type key = IntGrammar.SymbolAssoc.key
+          val size : 'a table -> int
+          val empty : 'a table
+          val exists : (key * 'a table) -> bool
+          val find : (key * 'a table)  ->  'a option
+          val insert: ((key * 'a) * 'a table) -> 'a table
+          val make_table : (key * 'a ) list -> 'a table
+          val make_list : 'a table -> (key * 'a) list
+          val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+        end
+        structure NontermAssoc =
+        struct
+          type 'a table = 'a IntGrammar.NontermAssoc.table
+          type key = IntGrammar.NontermAssoc.key
+          val size : 'a table -> int
+          val empty : 'a table
+          val exists : (key * 'a table) -> bool
+          val find : (key * 'a table)  ->  'a option
+          val insert: ((key * 'a) * 'a table) -> 'a table
+          val make_table : (key * 'a ) list -> 'a table
+          val make_list : 'a table -> (key * 'a) list
+          val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+        end
+        datatype rule = datatype IntGrammar.rule
+        val gtTerm : Grammar.term * Grammar.term -> bool
+        val eqTerm : Grammar.term * Grammar.term -> bool
+        val gtNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+        val eqNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+        val gtSymbol : Grammar.symbol * Grammar.symbol -> bool
+        val eqSymbol : Grammar.symbol * Grammar.symbol -> bool
+        val DEBUG : bool
+        val prRule : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                     (string -> 'b) -> rule -> unit
+        val prGrammar : (Grammar.symbol -> string)*(Grammar.nonterm -> string) *
+                        (string -> unit) -> Grammar.grammar -> unit
+      end
+      datatype item = datatype Core.item
+      val eqItem : item * item -> bool
+      val gtItem : item * item -> bool
+      val insert : item * item list -> item list
+      val union : item list * item list -> item list
+      datatype core = datatype Core.core
+      val gtCore : core * core -> bool
+      val eqCore : core * core -> bool
+      val prItem : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                   (string -> unit) -> item -> unit
+      val prCore : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                   (string -> unit) -> core -> unit
+    end
+    type graph = Graph.graph
+    val edges : Core.core * graph -> {edge:Grammar.symbol,to:Core.core} list
+    val nodes : graph -> Core.core list
+    val shift : graph -> int * Grammar.symbol -> int (* int = state # *)
+    val core : graph -> int -> Core.core (* get core for a state *)
+    val mkGraph :  Grammar.grammar ->
+                 {graph : graph,
+                  produces : Grammar.nonterm -> IntGrammar.rule list,
+                  rules : IntGrammar.rule list,
+                  epsProds: Core.core -> IntGrammar.rule list}
+    val prGraph: (Grammar.symbol -> string)*(Grammar.nonterm -> string) *
+               (string -> unit) -> graph -> unit
+  end
+  datatype lcore = LCORE of (Core.item * Grammar.term list) list * int
+  val addLookahead : {graph : Graph.graph,
+                      first : Grammar.symbol list -> Grammar.term list,
+                      eop : Grammar.term list,
+                      nonterms : int,
+                      nullable: Grammar.nonterm -> bool,
+                      produces : Grammar.nonterm -> IntGrammar.rule list,
+                      rules : IntGrammar.rule list,
+                      epsProds : Core.core -> IntGrammar.rule list,
+                      print : string -> unit,
+                      termToString : Grammar.term -> string,
+                      nontermToString : Grammar.nonterm -> string} ->
+                     lcore list
+  val prLcore : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                (Grammar.term -> string) * (string -> unit) ->
+                lcore -> unit
+end

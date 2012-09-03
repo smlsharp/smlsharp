@@ -1,0 +1,90 @@
+(**
+ * 
+ * @author OHORI Atsushi
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: UserError.ppg,v 1.2 2008/02/06 06:11:42 bochao Exp $
+ *)
+structure UserError : USER_ERROR =
+struct
+  (***************************************************************************)
+
+  (*%
+   *)
+  datatype errorKind 
+    = (*%
+       * @format "Error"
+       *)
+    Error
+  |  (*%
+     * @format "Warning"
+     *)
+    Warning
+  | (*%
+     * @format(id) "Diagnosis("  id ")"
+     *)
+     Diagnosis of string
+
+  (*%
+   * @formatter(loc) Loc.format_loc
+   *)
+  type errorInfo 
+    = (*%
+       * @format(loc * kind * exn)
+       *    {{loc : loc} + {kind} ":" 2[+1 exn]}
+       *)
+    Loc.loc * errorKind * exn
+
+  (*% *)
+  exception
+  (*%
+   * @format(error errors) errors(error)()
+   *)
+  UserErrors of errorInfo list
+
+  (*% *)
+  exception
+  (*%
+   * @format(error errors) errors(error)()
+   * @format:error(kind * exn)
+   *    {{kind} ":" 2[+1 exn]}
+   *)
+  UserErrorsWithoutLoc of (errorKind * exn) list
+
+        
+
+  (***************************************************************************)
+
+  (** errors are stored in the reverse order.
+   * When extracting errors, it should be reversed.
+   *)
+  type errorQueue = errorInfo list ref
+
+  fun createQueue () = (ref []) : errorQueue
+
+  fun clearQueue (queueRef : errorQueue) = queueRef := []
+
+  fun isEmptyErrorQueue errorQueue =
+      case (!errorQueue) of nil => true | _ => false
+
+  fun enqueueError queueRef (loc, exn) =
+      queueRef := ((loc, Error, exn) :: (!queueRef))
+
+  fun enqueueWarning queueRef (loc, exn) =
+      queueRef := ((loc, Warning, exn) :: (!queueRef))
+
+  fun enqueueDiagnosis queueRef (loc, idTag, exn) =
+      queueRef := ((loc, Diagnosis idTag, exn) :: (!queueRef))
+
+  fun getErrorsAndWarnings (ref queue) = List.rev queue
+
+  fun getErrors (ref queue) = 
+      List.rev(List.filter (fn (_, Error, _) => true | _ => false) queue)
+
+  fun getWarnings (ref queue) =
+      List.rev(List.filter (fn (_, Warning, _) => true | _ => false) queue)
+
+  fun getDiagnoses (ref queue) =
+      List.rev(List.filter (fn (_, Diagnosis _, _) => true | _ => false) queue)
+
+  (***************************************************************************)
+end

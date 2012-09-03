@@ -1,8 +1,0 @@
-/* -*- c++ -*- */
-
-/* Version of SML# system. */
-static const char* const Version = "%VERSION%";
-
-/* Version numbers of SML# executable binary format. */
-static const int BinaryMinorVersion = %VERSION_MINOR%;
-static const int BinaryMajorVersion = %VERSION_MAJOR%;

@@ -1,0 +1,5 @@
+_require "../basis.smi"
+structure LexGen =
+struct
+  val lexGen : string -> unit
+end

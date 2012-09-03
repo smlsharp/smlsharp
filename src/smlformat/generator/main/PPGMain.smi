@@ -1,0 +1,20 @@
+_require "../../../basis.smi"
+_require "Utility.smi"
+_require "ErrorQueue.smi"
+_require "Ast.smi"
+_require "Constants_MLton.smi"
+_require "MLParser.smi"
+_require "FormatterGenerator.smi"
+_require "BasicFormattersEnv.smi"
+
+structure PPGMain =
+struct
+  exception Error of string list
+  val main :
+      {
+        sourceFileName : string,
+        sourceStream : TextIO.instream,
+        destinationStream : TextIO.outstream,
+        withLineDirective : bool
+      } -> unit
+end

@@ -1,0 +1,10 @@
+structure Libc =
+struct
+  type c_file = unit ptr
+  val fopen : string * string -> c_file
+  val fclose : c_file -> unit
+  val fread : 'a array * int * c_file -> int
+  val memcpy : unit ptr * 'a array * word -> unit
+  val fdopen : int * string -> c_file
+  val usleep : int -> int
+end

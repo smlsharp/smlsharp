@@ -1,0 +1,23 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../recordcalc/main/RecordCalc.ppg.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesUtils.smi"
+
+structure RecordKind =
+struct
+
+  val compareIndex : (string * Types.ty) * (string * Types.ty) -> order
+
+  val generateSingletonTy : BoundTypeVarID.id * Types.ty LabelEnv.map
+                            -> Types.singletonTy list
+
+  val generateInstance : (string * Types.ty)
+                         -> Loc.loc
+                         -> RecordCalc.rcexp option
+
+end

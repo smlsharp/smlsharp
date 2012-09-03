@@ -1,0 +1,62 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "../../builtin/main/BuiltinName.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "IDCalc.ppg.smi"
+_require "tvarMap.smi"
+_require "Types.ppg.smi"
+_require "EvalIty.smi"
+_require "VarMap.smi"
+_require "OPrimMap.smi"
+
+structure BuiltinEnv =
+struct
+  type env =
+      {tyConEnv: Types.tyCon SEnv.map,
+       conEnv: Types.conInfo SEnv.map,
+       exnEnv: Types.exExnInfo SEnv.map,
+       primEnv: Types.primInfo SEnv.map}
+        BuiltinName.env
+  val init : env -> unit
+  val exnTy : IDCalc.ty
+  val unitTy : IDCalc.ty
+  val exntagTy : IDCalc.ty
+  val findTfun : string -> IDCalc.tfun option
+  val CHARty : Types.ty
+  val INTty : Types.ty
+  val INTINFty : Types.ty
+  val PTRty : Types.ty
+  val REALty : Types.ty
+  val REAL32ty : Types.ty
+  val STRINGty : Types.ty
+  val UNITty : Types.ty
+  val WORD8ty : Types.ty
+  val WORDty : Types.ty
+  val ARRAYtyCon : Types.tyCon
+  val REFtyCon : unit -> Types.tyCon
+  val LISTtyCon : unit -> Types.tyCon
+  val EXNty : Types.ty
+  val BOXEDty : Types.ty
+  val EXNTAGty : Types.ty
+  val CHARtyCon : Types.tyCon
+  val INTtyCon : Types.tyCon
+  val INTINFtyCon : Types.tyCon
+  val PTRtyCon : Types.tyCon
+  val REALtyCon : Types.tyCon
+  val REAL32tyCon : Types.tyCon
+  val STRINGtyCon : Types.tyCon
+  val UNITtyCon : Types.tyCon
+  val WORD8tyCon : Types.tyCon
+  val WORDtyCon : Types.tyCon
+  val EXNtyCon : Types.tyCon
+  val BOXEDtyCon : Types.tyCon
+  val EXNTAGtyCon : Types.tyCon
+  val lookupTyCon : BuiltinName.path -> Types.tyCon
+  val lookupCon : BuiltinName.path -> Types.conInfo
+  val lookupExn : BuiltinName.path -> Types.exExnInfo
+  val findExn : BuiltinName.path -> Types.exExnInfo option
+end

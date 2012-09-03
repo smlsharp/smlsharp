@@ -1,2 +1,0 @@
-use "./unix-env-sig.sml";
-use "./unix-env.sml";

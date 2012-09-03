@@ -1,9 +1,0 @@
-(*
- * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
- *)
-Group is
-        $/basis.cm
-
-        module.cm
-        TestMain.sml

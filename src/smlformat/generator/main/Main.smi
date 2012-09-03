@@ -1,0 +1,8 @@
+_require "../../../basis.smi"
+_require "FormatterGenerator.smi"
+_require "PPGMain.smi"
+
+structure Main =
+struct
+  val main : string * string list -> OS.Process.status
+end

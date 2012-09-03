@@ -1,0 +1,38 @@
+_require "../../../basis.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+
+structure VALREC_Utils =
+  struct
+    val getFreeIdsInExp : IDCalc.icexp -> VarID.Set.set
+    val getFreeIdsInExpList : IDCalc.icexp list -> VarID.Set.set
+    val getFreeIdsInFundeclList : {funVarInfo:IDCalc.varInfo,
+                                   rules:{args:IDCalc.icpat list,
+                                          body:IDCalc.icexp} list} list
+                                  -> VarID.Set.set
+    val getFreeIdsInRule : {args:IDCalc.icpat list, body:IDCalc.icexp} list
+                           -> VarID.Set.set
+    val getFreeIdsInPatList : IDCalc.icpat list -> VarID.Set.set
+    val getFreeIdsInPat : IDCalc.icpat -> VarID.Set.set
+    val getFreeIdsInExBind : {exncon:'a, loc:'b, tyOpt:'c} -> VarID.Set.set
+    val getFreeIdsInDecl : IDCalc.icdecl -> VarID.Set.set
+    val getFreeIdsInDeclList : IDCalc.icdecl list -> VarID.Set.set
+    val getBoundIdsInExBind : {exncon:'a, loc:'b, tyOpt:'c} -> VarID.Set.set
+    val getBoundIdsInDecl : IDCalc.icdecl -> VarID.Set.set
+    val getBoundIdsInDeclList : IDCalc.icdecl list -> VarID.Set.set
+    val getFreeIdsInBindList : (IDCalc.icpat * IDCalc.icexp) list
+                               -> VarID.Set.set
+    val getFreeIdsInRecBinds
+        : {body:IDCalc.icexp, varInfo:IDCalc.varInfo} list
+          -> VarID.Set.set
+    val getBoundIdsInBindList : (IDCalc.icpat * IDCalc.icexp) list
+                                -> VarID.Set.set
+    val getBoundIdsInRecBinds
+        : {body:IDCalc.icexp, varInfo:IDCalc.varInfo} list
+          -> VarID.Set.set
+    val getBoundIdsInFundeclList : {funVarInfo:IDCalc.varInfo,
+                                    rules:{args:IDCalc.icpat list,
+                                           body:IDCalc.icexp} list} list
+                                   -> VarID.Set.set
+  end

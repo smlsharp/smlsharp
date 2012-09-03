@@ -1,0 +1,73 @@
+_require "../../basis.smi"
+_require "../lib/base.sig"
+_require "utils.smi"
+_require "utils.sig"
+_require "sigs.sml"
+_require "grammar.smi"
+
+structure Look =
+struct
+  structure Grammar =
+  struct
+    datatype term = datatype IntGrammar.Grammar.term
+    datatype nonterm = datatype IntGrammar.Grammar.nonterm
+    datatype symbol = datatype IntGrammar.Grammar.symbol
+    datatype grammar = datatype IntGrammar.Grammar.grammar
+  end
+  structure IntGrammar =
+  struct
+    structure Grammar =
+    struct
+      datatype term = datatype IntGrammar.Grammar.term
+      datatype nonterm = datatype IntGrammar.Grammar.nonterm
+      datatype symbol = datatype IntGrammar.Grammar.symbol
+      datatype grammar = datatype IntGrammar.Grammar.grammar
+    end
+    structure SymbolAssoc =
+    struct
+      type 'a table = 'a IntGrammar.SymbolAssoc.table
+      type key = IntGrammar.SymbolAssoc.key
+      val size : 'a table -> int
+      val empty : 'a table
+      val exists : key * 'a table -> bool
+      val find : key * 'a table -> 'a option
+      val insert : (key * 'a) * 'a table -> 'a table
+      val make_table : (key * 'a) list -> 'a table
+      val make_list : 'a table -> (key * 'a) list
+      val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+    end
+    structure NontermAssoc =
+    struct
+      type 'a table = 'a IntGrammar.NontermAssoc.table
+      type key = IntGrammar.NontermAssoc.key
+      val size : 'a table -> int
+      val empty : 'a table
+      val exists : key * 'a table -> bool
+      val find : key * 'a table -> 'a option
+      val insert : (key * 'a) * 'a table -> 'a table
+      val make_table : (key * 'a) list -> 'a table
+      val make_list : 'a table -> (key * 'a) list
+      val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+    end
+    datatype rule = datatype IntGrammar.rule
+    val gtTerm : Grammar.term * Grammar.term -> bool
+    val eqTerm : Grammar.term * Grammar.term -> bool
+    val gtNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+    val eqNonterm : Grammar.nonterm * Grammar.nonterm -> bool
+    val gtSymbol : Grammar.symbol * Grammar.symbol -> bool
+    val eqSymbol : Grammar.symbol * Grammar.symbol -> bool
+    val DEBUG : bool
+    val prRule : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                 (string -> 'b) -> rule -> unit
+    val prGrammar : (Grammar.symbol -> string) * (Grammar.nonterm -> string) *
+                    (string -> unit) -> Grammar.grammar -> unit
+  end
+  val union : Grammar.term list * Grammar.term list -> Grammar.term list
+  val make_set : Grammar.term list -> Grammar.term list
+  val mkFuncs : {rules : IntGrammar.rule list, nonterms : int,
+                 produces : Grammar.nonterm -> IntGrammar.rule list} ->
+                {nullable: Grammar.nonterm -> bool,
+                 first : Grammar.symbol list -> Grammar.term list}
+  val prLook : (Grammar.term -> string) * (string -> unit) -> 
+               Grammar.term list -> unit
+end

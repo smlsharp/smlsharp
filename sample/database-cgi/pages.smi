@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "sql.smi"
+_require "./cgi.smi"
+_require "./try.smi"
+
+structure Pages =
+struct
+  val dispatch : {method: string, uri: string, args: string} -> string
+end

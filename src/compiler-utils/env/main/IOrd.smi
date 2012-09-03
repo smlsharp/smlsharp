@@ -1,0 +1,8 @@
+_require "../../../basis/main/Int.smi"
+_require "../../../smlnj-lib/Util/ord-key-sig.sml"
+
+structure IOrd =
+struct
+  type ord_key = int
+  val compare = Int.compare
+end

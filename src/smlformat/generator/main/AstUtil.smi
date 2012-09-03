@@ -1,0 +1,18 @@
+_require "../../../basis.smi"
+_require "Ast.smi"
+_require "ASTUTIL.sig"
+
+structure AstUtil =
+struct
+  val makeSEQdec : Ast.dec * Ast.dec -> Ast.dec
+  val layered : Ast.pat * Ast.pat -> Ast.pat
+  val arrowTycon : string
+  val bogusID : string
+  val exnID : string
+  val symArg : string
+  val itsym : string list
+  val unitExp : Ast.exp
+  val unitPat : Ast.pat
+  val QuoteExp : string -> Ast.exp
+  val AntiquoteExp : Ast.exp -> Ast.exp
+end

@@ -1,1 +1,0 @@
-val _ = #set (CM.Anchor.anchor "ppg-ext.cm") (SOME "@CMTOOLDIR@");

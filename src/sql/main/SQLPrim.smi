@@ -1,0 +1,462 @@
+_require "../../basis.smi"
+_require "Backend.smi"
+
+structure SMLSharp_SQL_Prim =
+struct
+
+  datatype server = datatype SMLSharp.SQL.server
+  datatype 'a conn = CONN of unit ptr * 'a
+  datatype dbi = datatype SMLSharp.SQL.dbi
+  datatype ('a,'b) db = DB of 'a * 'b dbi
+  datatype ('a,'b) table = TABLE of (string * 'b dbi) * 'a
+  datatype ('a,'b) row = ROW of (string * 'b dbi) * 'a
+  datatype value = datatype SMLSharp.SQL.value
+  datatype result = RESULT of unit ptr * int
+  datatype 'a rel = REL of result * (result -> 'a)
+  datatype 'a query = QUERY of string * 'a * (result -> 'a)
+  datatype command = COMMAND of string
+
+  exception Type of string
+  exception Format = SMLSharp_SQL_Backend.Format
+  exception Exec of string
+  exception Connect of string
+  exception Link of string
+
+  val connect : 'a server -> 'a conn
+  val eval : 'a dbi * (('b, 'a) db -> 'c query) -> 'b conn -> 'c rel
+  val exec : 'a dbi * (('b, 'a) db -> command) -> 'b conn -> unit
+  val fetch : 'a rel -> ('a * 'a rel) option
+  val closeConn : 'a conn -> unit
+  val closeRel : 'a rel -> unit
+  val subquery : (('a,'b) db -> 'c query) -> ('a,'b) db -> ('c,'b) table
+  val exists : (('a,'b) db -> 'c query) -> ('a,'b) db -> (bool option, 'b) value
+  val queryString : (('a,'b) db -> 'c query) -> 'a server -> string
+  val commandString : (('a,'b) db -> command) -> 'a server -> string
+  val Some : ('a, 'b) value -> ('a option, 'b) value
+  val Null : ('a option, 'b) value
+
+  val concatDot : (string * 'a) * string -> string * 'a
+  val concatQuery : (string * 'a) list -> string
+
+  val add_int
+      : (int, 'a) value * (int, 'a) value -> (int, 'a) value
+  val add_word
+      : (word, 'a) value * (word, 'a) value -> (word, 'a) value
+  val add_real
+      : (real, 'a) value * (real, 'a) value -> (real, 'a) value
+  val add_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (int option, 'a) value
+  val add_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (word option, 'a) value
+  val add_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (real option, 'a) value
+  val sub_int
+      : (int, 'a) value * (int, 'a) value -> (int, 'a) value
+  val sub_word
+      : (word, 'a) value * (word, 'a) value -> (word, 'a) value
+  val sub_real
+      : (real, 'a) value * (real, 'a) value -> (real, 'a) value
+  val sub_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (int option, 'a) value
+  val sub_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (word option, 'a) value
+  val sub_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (real option, 'a) value
+  val mul_int
+      : (int, 'a) value * (int, 'a) value -> (int, 'a) value
+  val mul_word
+      : (word, 'a) value * (word, 'a) value -> (word, 'a) value
+  val mul_real
+      : (real, 'a) value * (real, 'a) value -> (real, 'a) value
+  val mul_intOption
+      : (int option, 'a) value
+        * (int option, 'a) value
+        -> (int option, 'a) value
+  val mul_wordOption
+      : (word option, 'a) value
+        * (word option, 'a) value
+        -> (word option, 'a) value
+  val mul_realOption
+      : (real option, 'a) value
+        * (real option, 'a) value
+        -> (real option, 'a) value
+  val div_int
+      : (int, 'a) value * (int, 'a) value -> (int, 'a) value
+  val div_word
+      : (word, 'a) value * (word, 'a) value -> (word, 'a) value
+  val div_real
+      : (real, 'a) value * (real, 'a) value -> (real, 'a) value
+  val div_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (int option, 'a) value
+  val div_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (word option, 'a) value
+  val div_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (real option, 'a) value
+  val mod_int
+      : (int, 'a) value * (int, 'a) value -> (int, 'a) value
+  val mod_word
+      : (word, 'a) value * (word, 'a) value -> (word, 'a) value
+  val mod_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (int option, 'a) value
+  val mod_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (word option, 'a) value
+  val neg_int
+      : (int, 'a) value -> (int, 'a) value
+  val neg_real
+      : (real, 'a) value -> (real, 'a) value
+  val neg_intOption
+      : (int option, 'a) value -> (int option, 'a) value
+  val neg_realOption
+      : (real option, 'a) value -> (real option, 'a) value
+  val abs_int
+      : (int, 'a) value -> (int, 'a) value
+  val abs_real
+      : (real, 'a) value -> (real, 'a) value
+  val abs_intOption
+      : (int option, 'a) value -> (int option, 'a) value
+  val abs_realOption
+      : (real option, 'a) value -> (real option, 'a) value
+  val lt_int
+      : (int, 'a) value * (int, 'a) value -> (bool option, 'a) value
+  val lt_word
+      : (word, 'a) value * (word, 'a) value -> (bool option, 'a) value
+  val lt_char
+      : (char, 'a) value * (char, 'a) value -> (bool option, 'a) value
+  val lt_string
+      : (string, 'a) value * (string, 'a) value -> (bool option, 'a) value
+  val lt_real
+      : (real, 'a) value * (real, 'a) value -> (bool option, 'a) value
+  val lt_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (bool option, 'a) value
+  val lt_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (bool option, 'a) value
+  val lt_charOption
+      : (char option, 'a) value * (char option, 'a) value
+        -> (bool option, 'a) value
+  val lt_boolOption
+      : (bool option, 'a) value * (bool option, 'a) value
+        -> (bool option, 'a) value
+  val lt_stringOption
+      : (string option, 'a) value * (string option, 'a) value
+        -> (bool option, 'a) value
+  val lt_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (bool option, 'a) value
+  val le_int
+      : (int, 'a) value * (int, 'a) value
+        -> (bool option, 'a) value
+  val le_word
+      : (word, 'a) value * (word, 'a) value
+        -> (bool option, 'a) value
+  val le_char
+      : (char, 'a) value * (char, 'a) value
+        -> (bool option, 'a) value
+  val le_string
+      : (string, 'a) value * (string, 'a) value
+        -> (bool option, 'a) value
+  val le_real
+      : (real, 'a) value * (real, 'a) value
+        -> (bool option, 'a) value
+  val le_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (bool option, 'a) value
+  val le_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (bool option, 'a) value
+  val le_charOption
+      : (char option, 'a) value * (char option, 'a) value
+        -> (bool option, 'a) value
+  val le_boolOption
+      : (bool option, 'a) value * (bool option, 'a) value
+        -> (bool option, 'a) value
+  val le_stringOption
+      : (string option, 'a) value * (string option, 'a) value
+        -> (bool option, 'a) value
+  val le_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (bool option, 'a) value
+  val gt_int
+      : (int, 'a) value * (int, 'a) value -> (bool option, 'a) value
+  val gt_word
+      : (word, 'a) value * (word, 'a) value -> (bool option, 'a) value
+  val gt_char
+      : (char, 'a) value * (char, 'a) value -> (bool option, 'a) value
+  val gt_string
+      : (string, 'a) value * (string, 'a) value -> (bool option, 'a) value
+  val gt_real
+      : (real, 'a) value * (real, 'a) value -> (bool option, 'a) value
+  val gt_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (bool option, 'a) value
+  val gt_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (bool option, 'a) value
+  val gt_charOption
+      : (char option, 'a) value * (char option, 'a) value
+        -> (bool option, 'a) value
+  val gt_boolOption
+      : (bool option, 'a) value * (bool option, 'a) value
+        -> (bool option, 'a) value
+  val gt_stringOption
+      : (string option, 'a) value * (string option, 'a) value
+        -> (bool option, 'a) value
+  val gt_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (bool option, 'a) value
+  val ge_int
+      : (int, 'a) value * (int, 'a) value
+        -> (bool option, 'a) value
+  val ge_word
+      : (word, 'a) value * (word, 'a) value
+        -> (bool option, 'a) value
+  val ge_char
+      : (char, 'a) value * (char, 'a) value
+        -> (bool option, 'a) value
+  val ge_string
+      : (string, 'a) value * (string, 'a) value
+        -> (bool option, 'a) value
+  val ge_real
+      : (real, 'a) value * (real, 'a) value
+        -> (bool option, 'a) value
+  val ge_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (bool option, 'a) value
+  val ge_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (bool option, 'a) value
+  val ge_charOption
+      : (char option, 'a) value * (char option, 'a) value
+        -> (bool option, 'a) value
+  val ge_boolOption
+      : (bool option, 'a) value * (bool option, 'a) value
+        -> (bool option, 'a) value
+  val ge_stringOption
+      : (string option, 'a) value * (string option, 'a) value
+        -> (bool option, 'a) value
+  val ge_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (bool option, 'a) value
+  val eq_int
+      : (int, 'a) value * (int, 'a) value -> (bool option, 'a) value
+  val eq_word
+      : (word, 'a) value * (word, 'a) value -> (bool option, 'a) value
+  val eq_char
+      : (char, 'a) value * (char, 'a) value -> (bool option, 'a) value
+  val eq_string
+      : (string, 'a) value * (string, 'a) value -> (bool option, 'a) value
+  val eq_real
+      : (real, 'a) value * (real, 'a) value -> (bool option, 'a) value
+  val eq_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (bool option, 'a) value
+  val eq_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (bool option, 'a) value
+  val eq_charOption
+      : (char option, 'a) value * (char option, 'a) value
+        -> (bool option, 'a) value
+  val eq_boolOption
+      : (bool option, 'a) value * (bool option, 'a) value
+        -> (bool option, 'a) value
+  val eq_stringOption
+      : (string option, 'a) value * (string option, 'a) value
+        -> (bool option, 'a) value
+  val eq_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (bool option, 'a) value
+  val neq_int
+      : (int, 'a) value * (int, 'a) value -> (bool option, 'a) value
+  val neq_word
+      : (word, 'a) value * (word, 'a) value -> (bool option, 'a) value
+  val neq_char
+      : (char, 'a) value * (char, 'a) value -> (bool option, 'a) value
+  val neq_string
+      : (string, 'a) value * (string, 'a) value -> (bool option, 'a) value
+  val neq_real
+      : (real, 'a) value * (real, 'a) value -> (bool option, 'a) value
+  val neq_intOption
+      : (int option, 'a) value * (int option, 'a) value
+        -> (bool option, 'a) value
+  val neq_wordOption
+      : (word option, 'a) value * (word option, 'a) value
+        -> (bool option, 'a) value
+  val neq_charOption
+      : (char option, 'a) value * (char option, 'a) value
+        -> (bool option, 'a) value
+  val neq_boolOption
+      : (bool option, 'a) value * (bool option, 'a) value
+        -> (bool option, 'a) value
+  val neq_stringOption
+      : (string option, 'a) value * (string option, 'a) value
+        -> (bool option, 'a) value
+  val neq_realOption
+      : (real option, 'a) value * (real option, 'a) value
+        -> (bool option, 'a) value
+  val strcat
+      : (string, 'a) value * (string, 'a) value -> (string, 'a) value
+  val andAlso
+      : (bool option, 'a) value * (bool option, 'a) value
+        -> (bool option, 'a) value
+  val orElse
+      : (bool option, 'a) value * (bool option, 'a) value
+        -> (bool option, 'a) value
+  val not
+      : (bool option, 'a) value -> (bool option, 'a) value
+  val isNull
+      : ('a option, 'a) value -> (bool option, 'a) value
+  val isNotNull
+      : ('a option, 'a) value -> (bool option, 'a) value
+  val toSQL_int
+      : int -> (int, 'a) value
+  val toSQL_word
+      : word -> (word, 'a) value
+  val toSQL_char
+      : char -> (char, 'a) value
+  val toSQL_string
+      : string -> (string, 'a) value
+  val toSQL_real
+      : real -> (real, 'a) value
+  val toSQL_intOption
+      : int option -> (int option, 'a) value
+  val toSQL_wordOption
+      : word option -> (word option, 'a) value
+  val toSQL_boolOption
+      : bool option -> (bool option, 'a) value
+  val toSQL_charOption
+      : char option -> (char option, 'a) value
+  val toSQL_stringOption
+      : string option -> (string option, 'a) value
+  val toSQL_realOption
+      : real option -> (real option, 'a) value
+  val fromSQL_int
+      : int * result * int -> int
+  val fromSQL_word
+      : int * result * word -> word
+  val fromSQL_char
+      : int * result * char -> char
+  val fromSQL_string
+      : int * result * string -> string
+  val fromSQL_real
+      : int * result * real -> real
+  val fromSQL_intOption
+      : int * result * int option -> int option
+  val fromSQL_wordOption
+      : int * result * word option -> word option
+  val fromSQL_charOption
+      : int * result * char option -> char option
+  val fromSQL_boolOption
+      : int * result * bool option -> bool option
+  val fromSQL_stringOption
+      : int * result * string option -> string option
+  val fromSQL_realOption
+      : int * result * real option -> real option
+  val default_int
+      : unit -> (int, 'a) value
+  val default_word
+      : unit -> (word, 'a) value
+  val default_char
+      : unit -> (char, 'a) value
+  val default_string
+      : unit -> (string, 'a) value
+  val default_real
+      : unit -> (real, 'a) value
+  val default_intOption
+      : unit -> (int option, 'a) value
+  val default_wordOption
+      : unit -> (word option, 'a) value
+  val default_charOption
+      : unit -> (char option, 'a) value
+  val default_boolOption
+      : unit -> (bool option, 'a) value
+  val default_stringOption
+      : unit -> (string option, 'a) value
+  val default_realOption
+      : unit -> (real option, 'a) value
+
+  val default =
+      case 'a in unit -> ('a, 'b) value of
+        int => default_int
+      | word => default_word
+      | char => default_char
+      | string => default_string
+      | real => default_real
+      | 'c option =>
+        case 'c in unit -> ('c option, 'b) value of
+          int => default_intOption
+        | word => default_wordOption
+        | char => default_charOption
+        | bool => default_boolOption
+        | string => default_stringOption
+        | real => default_realOption
+
+  val fromSQL =
+      case 'a in int * result * 'a -> 'a of
+        int => fromSQL_int
+      | word => fromSQL_word
+      | char => fromSQL_char
+      | string => fromSQL_string
+      | real => fromSQL_real
+      | 'c option =>
+        case 'c in int * result * 'c option -> 'c option of
+          int => fromSQL_intOption
+        | word => fromSQL_wordOption
+        | char => fromSQL_charOption
+        | bool => fromSQL_boolOption
+        | string => fromSQL_stringOption
+        | real => fromSQL_realOption
+
+(*
+  val op + = '_SQL_add'
+  val op - = '_SQL_sub'
+  val op * = '_SQL_mul'
+  val op div = '_SQL_div'
+  val op mod = '_SQL_mod'
+  val op / = '_SQL_divr'
+  val op ~ = '_SQL_neg'
+  val op abs = '_SQL_abs'
+  val op < = '_SQL_lt'
+  val op <= = '_SQL_le'
+  val op > = '_SQL_gt'
+  val op >= = '_SQL_ge'
+  val op == = '_SQL_eq'
+  val op <> = '_SQL_neq'
+  val op ^ = strcat
+  val toSQL = '_SQL_toSQL'
+  val fromSQL = '_SQL_fromSQL'
+*)
+
+(*
+  val + =
+      case 'a in
+        ('a, 'b) value
+        * ('a, 'b) value
+        -> ('a, 'b) value
+      of
+        int => add_int
+      | word => add_word
+      | real => add_real
+      | 'c option =>
+        case 'd in
+          ('c option, 'b) value
+          * ('c option, 'b) value
+          -> ('c option, 'b) value
+        of
+          int => add_intOption
+          word => add_wordOption
+          real => add_realOption
+*)
+
+end

@@ -1,9 +1,0 @@
-srcdir = @srcdir@
-builddir = @builddir@
-top_srcdir = @top_srcdir@
-top_builddir = @top_builddir@
-
-include @top_builddir@/commonrule
-
-clean:
-	rm -rf $(srcdir)/CM $(srcdir)/.cm

@@ -1,0 +1,38 @@
+_require "basis.smi"
+_require "./libm.smi"
+_require "./libgsl.smi"
+
+functor PowerSpectrum
+(
+  A : sig
+    val numSamples : int
+    val samplingFreq : real
+  end
+) =
+struct
+  val numSamples : int
+  val samplingFreq : real
+  val samplingCycle : real
+  val interval : real
+  val samples : real array
+  val spectrum : real array
+  val calc : unit -> unit
+end
+
+functor SpectrumAnalyzer
+(
+  A : sig
+    val numSamples : int
+    val samplingFreq : real
+  end
+) =
+struct
+  val minSample : real
+  val minPower : real
+  val powerToHeight : real array -> unit
+  val summarize : real array * int * int * real array -> unit
+  val toMonoral : word array * real array -> unit
+  val readBlockPulse : real array -> bool
+  val readSineWave : real * real array -> bool
+  val printAry : real array -> unit
+end

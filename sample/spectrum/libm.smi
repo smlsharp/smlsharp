@@ -1,0 +1,5 @@
+structure Libm =
+struct
+  val sin : real -> real
+  val log10 : real -> real
+end

@@ -1,0 +1,102 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../builtin/main/BuiltinType.ppg.smi"
+_require "PatternCalc.ppg.smi"
+
+structure PatternCalcInterface =
+  struct
+    type loc = Loc.loc
+    val format_loc : Loc.pos * Loc.pos
+                     -> SMLFormat.FormatExpression.expression list
+    type ty = Absyn.ty
+    val format_ty : ty -> SMLFormat.FormatExpression.expression list
+    type longid = Absyn.longid
+    val format_longid : longid -> SMLFormat.FormatExpression.expression list
+    type tvar = Absyn.tvar
+    val format_tvar : tvar -> SMLFormat.FormatExpression.expression list
+    type scopedTvars = PatternCalc.scopedTvars
+    val format_scopedTvars : Absyn.kindedTvar list
+                             -> SMLFormat.FormatExpression.expression list
+    type overloadCase = AbsynInterface.overloadCase
+    val format_overloadCase : overloadCase
+                              -> SMLFormat.FormatExpression.expression list
+    type overloadMatch = AbsynInterface.overloadMatch
+    datatype overloadInstance = datatype AbsynInterface.overloadInstance    
+    val format_overloadMatch : {instTy:ty, instance:overloadInstance}
+                               -> SMLFormat.FormatExpression.expression list
+    val format_overloadInstance : overloadInstance
+                                  -> SMLFormat.BasicFormatters.expression list
+    datatype valbindBody = datatype AbsynInterface.valbindBody
+    val format_valbindBody : SMLFormat.FormatExpression.expression list
+                             -> valbindBody
+                                -> SMLFormat.FormatExpression.expression list
+    type datbind = AbsynInterface.datbind
+    val format_datbind : {conbind:{ty:ty option, vid:string} list,
+                          tycon:string, tyvars:tvar list}
+                         -> SMLFormat.FormatExpression.expression list
+    datatype pidec
+      = PIDATATYPE of {datbind:datbind list, loc:loc}
+      | PIEXCEPTION of {loc:loc, ty:ty option, externPath:string list option, vid:string}
+      | PIEXCEPTIONREP of {loc:loc, origId:string list, vid:string}
+      | PISTRUCTURE of {loc:loc, strexp:pistrexp, strid:string}
+      | PITYPE of {loc:loc, ty:ty, tycon:string,
+                   tyvars:tvar list}
+      | PIOPAQUE_TYPE of {tyvars: tvar list, tycon: string,
+                          runtimeTy: BuiltinType.ty, loc: loc}
+      | PIOPAQUE_EQTYPE of {tyvars: tvar list, tycon: string,
+                            runtimeTy: BuiltinType.ty, loc: loc}
+      | PITYPEBUILTIN of {builtinName:string, loc:loc,
+                          tycon:string}
+      | PITYPEREP of {loc:loc, origTycon:string list,
+                      tycon:string}
+      | PIVAL of {body:valbindBody, loc:loc, scopedTvars:scopedTvars,
+                  vid:string}
+    and pistrexp =
+        PISTRUCT of {decs:pidec list, loc:loc}
+      | PISTRUCTREP of {strPath:longid, loc: loc}
+      | PIFUNCTORAPP of {functorName:string, argumentPath:longid, loc:loc}
+    val format_pidec : pidec -> SMLFormat.FormatExpression.expression list
+    val format_pistrexp : pistrexp -> SMLFormat.FormatExpression.expression list
+    type sigbind = {loc:loc, sigexp:PatternCalc.plsigexp, sigid:string}
+    val format_sigbind : {loc:'a, sigexp:PatternCalc.plsigexp, sigid:string}
+                         -> SMLFormat.BasicFormatters.expression list
+    type funbind =
+      {funid:string, loc:loc,
+       param:{sigexp:PatternCalc.plsigexp, strid:string}, strexp:pistrexp}
+    val format_funbind : {funid:string, loc:'a,
+                          param:{sigexp:PatternCalc.plsigexp, strid:string},
+                          strexp:pistrexp}
+                         -> SMLFormat.BasicFormatters.expression list
+    datatype pitopdec = PIDEC of pidec | PIFUNDEC of funbind
+    val format_pitopdec : pitopdec -> SMLFormat.FormatExpression.expression list
+    type interfaceId = InterfaceID.id
+    val format_interfaceId : InterfaceID.id -> SMLFormat.FormatExpression.expression list
+    type interfaceName = AbsynInterface.interfaceName
+    val format_interfaceName : AbsynInterface.interfaceName
+                               -> SMLFormat.FormatExpression.expression list
+    type interfaceDec =
+      {interfaceId:interfaceId,
+       interfaceName: interfaceName,
+       requires:{id:interfaceId, loc:loc} list,
+       topdecs:pitopdec list}
+    val format_interfaceDec
+        : interfaceDec -> SMLFormat.FormatExpression.expression list
+    type interface =
+      {decls:interfaceDec list, 
+       interfaceName: interfaceName option,
+       requires:{id:interfaceId, loc:loc} list,
+       topdecs:pitopdec list}
+    val format_interface
+        : interface -> SMLFormat.FormatExpression.expression list
+    type compileUnit =
+      {interface:interface, topdecs:PatternCalc.pltopdec list}
+    val format_compileUnit
+        : compileUnit -> SMLFormat.FormatExpression.expression list
+    val pitopdecLoc : pitopdec -> loc
+    val pidecLoc : pidec -> loc
+  end

@@ -1,0 +1,51 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../typedcalc/main/TypedCalc.ppg.smi"
+_require "../../typedcalc/main/TypedCalcUtils.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesUtils.smi"
+_require "../../types/main/Unify.smi"
+_require "TypeInferenceContext.ppg.smi"
+_require "TypeInferenceError.ppg.smi"
+
+structure TypeInferenceUtils =
+  struct
+    val dummyTyId : int ref
+    val nextDummyTy : unit -> Types.ty
+    val instOfPolyTy : Types.ty * Types.ty list -> Types.ty
+    val freshTopLevelInstTy : Types.ty -> Types.ty * Types.ty list
+    val eliminateVacuousTyvars : unit -> unit
+(*
+    exception NONEQ
+    val eqTy : BoundTypeVarID.id BoundTypeVarID.Map.map
+               -> Types.ty * Types.ty -> bool
+    val eqSMap : BoundTypeVarID.id BoundTypeVarID.Map.map
+                 -> Types.ty LabelEnv.map * Types.ty LabelEnv.map -> bool
+    val eqTyList : BoundTypeVarID.id BoundTypeVarID.Map.map
+                   -> Types.ty list * Types.ty list -> bool
+    val eqSTy : BoundTypeVarID.id BoundTypeVarID.Map.map
+                -> Types.singletonTy * Types.singletonTy -> bool
+    val eqOprimSelector
+        : BoundTypeVarID.id BoundTypeVarID.Map.map
+          -> Types.oprimSelector * Types.oprimSelector -> bool
+    val eqOprimSelectorList
+        : BoundTypeVarID.id BoundTypeVarID.Map.map
+          -> Types.oprimSelector list * Types.oprimSelector list
+          -> bool
+    val eqKind : BoundTypeVarID.id BoundTypeVarID.Map.map
+                 -> {eqKind:Absyn.eq, tvarKind:Types.tvarKind}
+                    * {eqKind:Absyn.eq, tvarKind:Types.tvarKind}
+                 -> bool
+    val eqTvarKind : BoundTypeVarID.id BoundTypeVarID.Map.map
+                     -> Types.tvarKind * Types.tvarKind -> bool
+*)
+    exception CoerceTy
+    val coerceTy : TypedCalc.tpexp * Types.ty * Types.ty * Loc.loc
+                   -> TypedCalc.tpexp
+  end

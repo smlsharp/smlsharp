@@ -1,0 +1,6 @@
+_require "../basis.smi"
+_require "lexgen.smi"
+structure ExportLexGen =
+struct
+  val lexGen : (string * string list) -> OS.Process.status
+end

@@ -1,5 +1,0 @@
-Group
-	structure TypedCalc
-	structure TypedCalcUtils
-is
-	main/module.cm

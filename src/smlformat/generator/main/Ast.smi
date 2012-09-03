@@ -1,0 +1,199 @@
+_require "../../../basis.smi"
+_require "FormatTemplate.smi"
+_require "AST.sig"
+
+structure Ast =
+struct
+  datatype fixity = INfix of int | INfixR of int | NONfix
+  type srcpos = int
+  type region = int * int
+  type path = string list
+  datatype 'a sigConst =
+      NoSig
+    | Transparent of 'a
+    | Opaque of 'a
+  type headerFormatComment = 
+      {
+        destinationOpt : string option,
+        formatters : (string * string) list,
+        funHeaderOpt : string option,
+        params : string list,
+        ditto : string list,
+        prefix : string
+      }
+  type innerHeaderFormatComment = 
+      {
+        formatters : (string * string) list,
+        params : string list,
+        prefix : string option
+      }
+  type definingFormatComment = 
+      {
+        prefix : string,
+        primaryTag : FormatTemplate.formattag,
+        localTags : FormatTemplate.formattag list
+      }
+  type exp = unit
+  datatype rule = Rule of {pat:pat,exp:exp}
+  and pat =
+      WildPat
+    | VarPat of path
+    | IntPat of int
+    | WordPat of int
+    | StringPat of string
+    | CharPat of string
+    | RecordPat of {def:(string * pat) list, flexibility:bool}
+    | ListPat of pat list
+    | TuplePat of pat list
+    | FlatAppPat of pat list
+    | AppPat of {constr:pat,argument:pat}
+    | ConstraintPat of {pattern:pat,constraint:ty}
+    | LayeredPat of {varPat:pat,expPat:pat}
+    | VectorPat of pat list
+    | MarkPat of pat * region
+    | OrPat of pat list
+  and strexp =
+      VarStr of path
+    | BaseStr of dec
+    | ConstrainedStr of strexp * sigexp sigConst
+    | AppStr of path * (strexp * bool) list
+    | AppStrI of path * (strexp * bool) list
+    | LetStr of dec * strexp
+    | MarkStr of strexp * region
+  and fctexp =
+      VarFct of path * fsigexp sigConst
+    | BaseFct of
+      {
+        params : (string option * sigexp) list,
+        body : strexp,
+        constraint : sigexp sigConst
+      }
+    | LetFct of dec * fctexp
+    | AppFct of path * (strexp * bool) list * fsigexp sigConst
+    | MarkFct of fctexp * region 
+  and wherespec =
+      WhType of string list * tyvar list * ty
+    | WhStruct of string list * string list
+  and sigexp =
+      VarSig of string
+    | AugSig of sigexp * wherespec list
+    | BaseSig of spec list
+    | MarkSig of sigexp * region
+  and fsigexp =
+      VarFsig of string
+    | BaseFsig of {param: (string option * sigexp) list, result:sigexp}
+    | MarkFsig of fsigexp * region
+  and spec =
+      StrSpec of (string * sigexp * path option) list
+    | TycSpec of ((string * tyvar list * ty option) list * bool)
+    | FctSpec of (string * fsigexp) list
+    | ValSpec of (string * ty) list
+    | DataSpec of {datatycs: db list, withtycs: tb list}
+    | ExceSpec of (string * ty option) list
+    | ShareStrSpec of path list
+    | ShareTycSpec of path list
+    | IncludeSpec of sigexp
+    | MarkSpec of spec * region
+  and dec =
+      ValDec of (vb list * tyvar list)
+    | ValrecDec of (rvb list * tyvar list)
+    | FunDec of (fb list * tyvar list)
+    | TypeDec of {formatComments : headerFormatComment list, tbs : tb list}
+    | DatatypeDec of
+      {
+        formatComments : headerFormatComment list,
+        datatycs: db list,
+        withtycs: tb list
+      }
+    | AbstypeDec of
+      {
+        formatComments : headerFormatComment list,
+        abstycs: db list,
+        withtycs: tb list,
+        bodyBeginPos : srcpos,
+        body: dec
+      }
+    | ExceptionDec of
+      {formatComments : headerFormatComment list, ebs : eb list}
+    | StrDec of strb list
+    | AbsDec of strb list
+    | FctDec of fctb list
+    | SigDec of sigb list
+    | FsigDec of fsigb list
+    | LocalDec of dec * dec
+    | SeqDec of dec list
+    | OpenDec of path list
+    | OvldDec of string * ty * exp list
+    | FixDec of {fixity: fixity, ops: string list}
+    | MarkDec of dec * region
+  and vb =
+      Vb of {pat:pat, exp:exp, lazyp:bool}
+    | MarkVb of vb * region
+  and rvb =
+      Rvb of {var:string, exp:exp, resultty: ty option, lazyp: bool}
+    | MarkRvb of rvb * region
+  and fb =
+      Fb of (clause list * bool)
+    | MarkFb of fb * region
+  and clause = Clause of {pats: pat list, resultty: ty option, exp:exp}
+  and tb =
+      Tb of
+      {
+        tyConName : string,
+        ty : ty,
+        tyvars : tyvar list,
+        formatComments : definingFormatComment list,
+        innerHeaderFormatComments: innerHeaderFormatComment list
+      }
+    | MarkTb of tb * region
+  and db =
+      Db of {tyConName : string, tyvars : tyvar list, rhs : dbrhs, lazyp: bool,
+             innerHeaderFormatComments: innerHeaderFormatComment list}
+    | MarkDb of db * region
+  and dbrhs =
+      Constrs of
+      {
+        formatComments : definingFormatComment list,
+        valConName : string,
+        argTypeOpt : ty option
+      } list
+    | Repl of string list
+  and eb =
+      EbGen of
+      {
+        formatComments : definingFormatComment list,
+        innerHeaderFormatComments: innerHeaderFormatComment list,
+        exn: string,
+        etype: ty option
+      }
+    | EbDef of
+      {
+        formatComments : definingFormatComment list,
+        innerHeaderFormatComments: innerHeaderFormatComment list,
+        exn: string,
+        edef: path
+      }
+    | MarkEb of eb * region
+  and strb =
+      Strb of {name: string,def: strexp,constraint: sigexp sigConst}
+    | MarkStrb of strb * region
+  and fctb =
+      Fctb of {name: string,def: fctexp}
+    | MarkFctb of fctb * region
+  and sigb =
+      Sigb of {name: string,def: sigexp}
+    | MarkSigb of sigb * region
+  and fsigb =
+      Fsigb of {name: string,def: fsigexp}
+    | MarkFsigb of fsigb * region
+  and tyvar =
+      Tyv of string
+    | MarkTyv of tyvar * region
+  and ty =
+      VarTy of tyvar
+    | ConTy of string list * ty list
+    | RecordTy of (string * ty) list
+    | TupleTy of ty list
+    | MarkTy of ty * region
+  val DefaultFormatterPrefix : string
+end 

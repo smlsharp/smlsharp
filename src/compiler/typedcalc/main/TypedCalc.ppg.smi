@@ -1,0 +1,158 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../control/main/Loc.ppg.smi"
+_require "../../builtin/main/BuiltinPrimitive.ppg.smi"
+_require "../../util/main/SmlppgUtil.ppg.smi"
+_require "../../util/main/TermFormat.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+
+structure TypedCalc =
+  struct
+    datatype idstatus
+      = RECFUNID of Types.varInfo * int | VARID of Types.varInfo
+    val format_idstatus
+        : idstatus -> SMLFormat.FormatExpression.expression list
+    val formatWithType_idstatus : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+                                    TermFormat.btvEnv' list
+                                  -> idstatus
+                                     -> SMLFormat.FormatExpression.expression 
+                                          list
+    datatype exnCon = EXEXN of Types.exExnInfo | EXN of Types.exnInfo
+    val format_exnCon
+        : exnCon -> SMLFormat.FormatExpression.expression list
+    val formatWithType_exnCon : exnCon -> SMLFormat.FormatExpression.expression list
+    datatype ffiTy
+      = FFIBASETY of Types.ty * Loc.loc
+      | FFIFUNTY of Absyn.ffiAttributes option * ffiTy list * ffiTy list * 
+                    Loc.loc
+      | FFIRECORDTY of (string * ffiTy) list * Loc.loc
+    val format_ffiTy
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> ffiTy TermFormat.formatter
+    val formatWithType_ffiTy : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+                                 TermFormat.btvEnv' list
+                               -> ffiTy TermFormat.formatter
+    datatype tpexp
+      = TPAPPM of {argExpList:tpexp list, funExp:tpexp, funTy:Types.ty,
+                   loc:Loc.loc}
+      | TPCASEM of {caseKind:PatternCalc.caseKind, expList:tpexp list,
+                    expTyList:Types.ty list, loc:Loc.loc, ruleBodyTy:Types.ty,
+                    ruleList:{args:tppat list, body:tpexp} list}
+      | TPCAST of tpexp * Types.ty * Loc.loc
+      | TPCONSTANT of {const:Absyn.constant, loc:Loc.loc, ty:Types.ty}
+      | TPDATACONSTRUCT of {argExpOpt:tpexp option, con:Types.conInfo,
+                            instTyList:Types.ty list, loc:Loc.loc}
+      | TPERROR
+      | TPEXNCONSTRUCT of {argExpOpt:tpexp option, exn:exnCon,
+                           instTyList:Types.ty list, loc:Loc.loc}
+      | TPEXN_CONSTRUCTOR of {exnInfo:Types.exnInfo, loc:Loc.loc}
+      | TPEXEXN_CONSTRUCTOR of {exExnInfo:Types.exExnInfo, loc:Loc.loc}
+      | TPEXVAR of Types.exVarInfo * Loc.loc
+      | TPFFIIMPORT of {ffiTy:ffiTy, loc:Loc.loc, ptrExp:tpexp,
+                        stubTy:Types.ty}
+      | TPFNM of {argVarList:Types.varInfo list, bodyExp:tpexp,
+                  bodyTy:Types.ty, loc:Loc.loc}
+      | TPGLOBALSYMBOL of {kind:Absyn.globalSymbolKind, loc:Loc.loc,
+                           name:string, ty:Types.ty}
+      | TPHANDLE of {exnVar:Types.varInfo, exp:tpexp, handler:tpexp,
+                     loc:Loc.loc}
+      | TPLET of {body:tpexp list, decls:tpdecl list, loc:Loc.loc,
+                  tys:Types.ty list}
+      | TPMODIFY of {elementExp:tpexp, elementTy:Types.ty, label:string,
+                     loc:Loc.loc, recordExp:tpexp, recordTy:Types.ty}
+      | TPMONOLET of {binds:(Types.varInfo * tpexp) list, bodyExp:tpexp,
+                      loc:Loc.loc}
+      | TPOPRIMAPPLY of {argExp:tpexp, instTyList:Types.ty list, loc:Loc.loc,
+                         oprimOp:Types.oprimInfo}
+      | TPPOLY of {btvEnv:Types.btvEnv, exp:tpexp, expTyWithoutTAbs:Types.ty,
+                   loc:Loc.loc}
+      | TPPOLYFNM of {argVarList:Types.varInfo list, bodyExp:tpexp,
+                      bodyTy:Types.ty, btvEnv:Types.btvEnv, loc:Loc.loc}
+      | TPPRIMAPPLY of {argExp:tpexp, instTyList:Types.ty list, loc:Loc.loc,
+                        primOp:Types.primInfo}
+      | TPRAISE of {exp:tpexp, loc:Loc.loc, ty:Types.ty}
+      | TPRECFUNVAR of {arity:int, loc:Loc.loc, var:Types.varInfo}
+      | TPRECORD of {fields:tpexp LabelEnv.map, loc:Loc.loc, recordTy:Types.ty}
+      | TPSELECT of {exp:tpexp, expTy:Types.ty, label:string, loc:Loc.loc,
+                     resultTy:Types.ty}
+      | TPSEQ of {expList:tpexp list, expTyList:Types.ty list, loc:Loc.loc}
+      | TPSIZEOF of Types.ty * Loc.loc
+      | TPSQLSERVER of {loc:Loc.loc, resultTy:Types.ty,
+                        schema:Types.ty LabelEnv.map LabelEnv.map,
+                        server:(string * tpexp) list}
+      | TPTAPP of {exp:tpexp, expTy:Types.ty, instTyList:Types.ty list,
+                   loc:Loc.loc}
+      | TPVAR of Types.varInfo * Loc.loc
+    and tpdecl
+      = TPEXD of {exnInfo:Types.exnInfo, loc:Loc.loc} list * Loc.loc
+      | TPEXNTAGD of {exnInfo:Types.exnInfo, varInfo:Types.varInfo} * Loc.loc
+      | TPEXPORTEXN of Types.exnInfo * Loc.loc
+      | TPEXPORTVAR of idstatus * Loc.loc
+      | TPEXTERNEXN of {path:IDCalc.path, ty:Types.ty} * Loc.loc
+      | TPEXTERNVAR of {path:IDCalc.path, ty:Types.ty} * Loc.loc
+      | TPFUNDECL of {argTyList:Types.ty list, bodyTy:Types.ty,
+                      funVarInfo:Types.varInfo,
+                      ruleList:{args:tppat list, body:tpexp} list} list * 
+                     Loc.loc
+      | TPPOLYFUNDECL of Types.btvEnv * 
+                         {argTyList:Types.ty list, bodyTy:Types.ty,
+                          funVarInfo:Types.varInfo,
+                          ruleList:{args:tppat list, body:tpexp} list} list * 
+                         Loc.loc
+      | TPVAL of (Types.varInfo * tpexp) list * Loc.loc
+      | TPVALPOLYREC of Types.btvEnv * 
+                        {exp:tpexp, expTy:Types.ty, var:Types.varInfo} list * 
+                        Loc.loc
+      | TPVALREC of {exp:tpexp, expTy:Types.ty, var:Types.varInfo} list * 
+                    Loc.loc
+    and tppat
+      = TPPATCONSTANT of Absyn.constant * Types.ty * Loc.loc
+      | TPPATDATACONSTRUCT of {argPatOpt:tppat option, conPat:Types.conInfo,
+                               instTyList:Types.ty list, loc:Loc.loc,
+                               patTy:Types.ty}
+      | TPPATERROR of Types.ty * Loc.loc
+      | TPPATEXNCONSTRUCT of {argPatOpt:tppat option, exnPat:exnCon,
+                              instTyList:Types.ty list, loc:Loc.loc,
+                              patTy:Types.ty}
+      | TPPATLAYERED of {asPat:tppat, loc:Loc.loc, varPat:tppat}
+      | TPPATRECORD of {fields:tppat LabelEnv.map, loc:Loc.loc, recordTy:Types.ty}
+      | TPPATVAR of Types.varInfo * Loc.loc
+      | TPPATWILD of Types.ty * Loc.loc 
+    val format_tpexp
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> tpexp -> SMLFormat.FormatExpression.expression list
+    val format_tpdecl
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> tpdecl SMLFormat.BasicFormatters.formatter
+    val format_tppat
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> tppat -> SMLFormat.FormatExpression.expression list
+    val format_fields
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> tpexp LabelEnv.map -> SMLFormat.FormatExpression.expression list
+    val format_patfields
+        : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} TermFormat.btvEnv' list
+          -> tppat LabelEnv.map -> SMLFormat.FormatExpression.expression list
+    val formatWithType_tpexp : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+                                 TermFormat.btvEnv' list
+                               -> tpexp
+                                  -> SMLFormat.FormatExpression.expression list
+    val formatWithType_tpdecl : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+                                  TermFormat.btvEnv' list
+                                -> tpdecl SMLFormat.BasicFormatters.formatter
+    val formatWithType_tppat : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+                                 TermFormat.btvEnv' list
+                               -> tppat
+                                  -> SMLFormat.FormatExpression.expression list
+    val formatWithType_fields : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+                                  TermFormat.btvEnv' list
+                                -> tpexp LabelEnv.map -> SMLFormat.FormatExpression.expression list
+    val formatWithType_patfields : {eqKind:Absyn.eq, tvarKind:Types.tvarKind} 
+                                     TermFormat.btvEnv' list
+                                   -> tppat LabelEnv.map -> SMLFormat.FormatExpression.expression list
+  end

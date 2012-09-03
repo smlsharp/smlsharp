@@ -1,0 +1,12 @@
+_require "../../../basis.smi"
+_require "../../control/main/Control.ppg.smi"
+_require "../../types/main/IDCalc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../util/main/Graph.smi"
+_require "VALREC_OPTIMIZER.sig"
+_require "utils.smi"
+
+structure VALREC_Optimizer =
+  struct
+    val optimize : IDCalc.icdecl list -> IDCalc.icdecl list
+  end

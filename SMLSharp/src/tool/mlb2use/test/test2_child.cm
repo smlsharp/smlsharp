@@ -1,9 +1,0 @@
-(**
- * test case for nesting.
- * @copyright (c) 2010, Tohoku University.
- * @author YAMATODANI Kiyoshi
- * @version $Id: MLB2Use.sml,v 1.5 2007/08/10 15:15:18 kiyoshiy Exp $
- *)
-Group is
-        source1_child.sml
-

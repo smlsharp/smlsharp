@@ -1,9 +1,0 @@
-Group
-	structure TypedLambda
-	structure TypedLambdaFormatter
-(*
-	structure TypedLambdaUtils
-	structure TypeCheckTypedLambda
-*)
-is
-	main/module.cm

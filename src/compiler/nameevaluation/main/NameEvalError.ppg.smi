@@ -1,0 +1,144 @@
+_require "../../../basis.smi"
+_require "../../../smlformat-lib.smi"
+
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+
+structure NameEvalError =
+  struct    
+    exception InvalidOverloadInst of string * {longid:string list}
+    exception FFIFunTyIsNotAllowedHere of string * PatternCalc.ffiTy
+    exception ProvideFunctorMismatch of string * {longid:string list}
+    exception ProvideFunparamMismatch of string * 
+                                         {longid:string list}
+    exception ProvideRedundantCon of string * {longid:string list}
+    exception ProvideUndefinedStr of string * {longid:string list}
+    exception ProvideStrRep of string * {longid: string list}
+    exception ProvideUndefinedFunctorName of string * {longid: string list}
+    exception ProvideUndefinedCon of string * {longid:string list}
+    exception ProvideConType of string * {longid:string list}
+    exception ProvideRuntimeType of string * {longid:string list}
+    exception ProvideEquality of string * {longid:string list}
+    exception ProvideArity of string * {longid:string list}
+    exception ProvideExceptionRepID of string * {longid:string list}
+    exception ProvideExceptionRep of string * {longid:string list}
+    exception ProvideExceptionDef of string * {longid:string list}
+    exception ProvideExceptionType of string * {longid:string list}
+    exception ProvideOpaqueExpected of string * {longid:string list}
+    exception ProvideDtyExpected of string * {longid:string list}
+    exception ProvideInequalTfun of string * {longid:string list}
+    exception ProvideUndefinedException of string * 
+                                           {longid:string list}
+    exception ProvideUndefinedTypeName of string * 
+                                          {longid:string list}
+    exception ProvideVariableAlias of string * {longid:string list}
+    exception ProvideVarIDExpected of string * {longid:string list}
+    exception ProvideUndefinedID of string * {longid:string list}
+    exception ProvideIDType of string * {longid:string list}
+    exception ProvideOverload of string * {longid:string list}
+    exception ProvideBuiltIn of string * {longid:string list}
+    exception InterfaceMisMatchNotFoundFunctor of string * {name:string}
+    exception SigMisMatchNotFoundStr of string * {name:string}
+    exception SigMisMatchNotFoundVar of string * {name:string}
+    exception SigMisMatchNotFoundExn of string * {name:string}
+    exception SigMisMatchNotFoundCon of string * {name:string}
+    exception SigMisMatchNotFoundDataTy of string * {name:string}
+    exception FunctorNotFound of string * {name:string}
+    exception SignatureNotFound of string * {name:string}
+    exception ExnNotFound of string * {name:string}
+    exception DtyUndefinedInSpec of string * {longid:string list}
+    exception StrUndefinedInSpec of string * {longid:string list}
+    exception TypUndefinedInSpec of string * {longid:string list}
+    exception ExceptionNameUndefined of string * {longid:string list}
+    exception ExceptionExpected of string * {longid:string list}
+    exception SpecTyExpected of string * {longid:string list}
+    exception FunIdUndefined of string * {name:string}
+    exception SigIdUndefined of string * {name:string}
+    exception SIGStrUndefined of string * {longid:string list}
+    exception SIGShare of string * {longidList:string list list}
+    exception SIGVarUndefined of string * {longid:string list}
+    exception SIGExnType of string * {longid:string list}
+    exception SIGExnExpected of string * {longid:string list}
+    exception SIGConExpected of string * {longid:string list}
+    exception SIGEqtype of string * {longid:string list}
+    exception SIGConUndefined of string * {longid:string list}
+    exception SIGConNotExported of string * 
+                                   {conName:string,
+                                    typName:string list}
+    exception SIGConNotFound of string * {longid:string list}
+    exception SIGConNotFoundInDty of string * {longid:string list}
+    exception SIGDtyrepUndefined of string * {longid:string list}
+    exception SIGDtyUndefined of string * {longid:string list}
+    exception SigErrorInSigShare of string * 
+                                    {longidList:string list list}
+    exception EqtypeInSigwhere of string * {longid:string list}
+    exception EqtypeInSigShare of string * 
+                                  {longidList:string list list}
+    exception ArityErrorInSigShare of string * 
+                                      {longidList:string list list}
+    exception ArityErrorInSigwhere of string * 
+                                      {longidList:string list list}
+    exception TypeErrorInSigwhere of string * {longid:string list}
+    exception TypUndefinedInSigshare of string * {longid:string list}
+    exception TypUndefinedInSigwhere of string * {longid:string list}
+    exception SIGTypUndefined of string * {longid:string list}
+    exception SIGDtyrepType of string * {longid:string list}
+    exception SIGDtyrepId of string * {longid:string list}
+    exception SIGDtyrepRequired of string * {longid:string list}
+    exception SIGDtyMismatch of string * {longid:string list}
+    exception SIGDtyRequired of string * {longid:string list}
+    exception SIGTyconArity of string * {longid:string list}
+    exception SIGDtyArity of string * {longid:string list}
+    exception SIGTypconMismatch of string * {longid:string list}
+    exception SIGTypDefExpected of string * {longid:string list}
+    exception SIGIlleagalShare of string * {longid:string list}
+    exception SIGIlleagalRealizer of string * {longid:string list}
+    exception SIGArity of string * {longid:string list}
+    exception SIGConNotInSig of string * {longid:string list}
+    exception TypArity of string * {longid:string list}
+    exception VarPatExpected of string * {longid:string list}
+    exception DataTypeNameExpected of string * {longid:string list}
+    exception ExnExpected of string * {longid:string list}
+    exception ExnUndefined of string * {longid:string list}
+    exception DataTypeNameUndefined of string * {longid:string list}
+    exception StructureNameUndefined of string * {longid : string list}
+    exception FunctorNameUndefined of string * {string : string}
+    exception DuplicateDtyInSpec of string * string
+    exception DuplicateConInSpec of string * string
+    exception DuplicateVarInSpec of string * string
+    exception DuplicateStrInStrbind of string * string
+    exception DuplicateConNameInDty of string * string
+    exception DuplicateVar of string * string
+    exception DuplicateConName of string * string
+    exception DuplicateStrInSpec of string * string
+    exception DuplicateIdInSpec of string * string
+    exception DuplicateExnName of string * string
+    exception DuplicateTypInSpec of string * string
+    exception DuplicateTypInDty of string * string
+    exception DuplicateTypInTypeDecl of string * string
+    exception DuplicateVarInRecDecl of string * string
+    exception DuplicateFunVarInFunDecl of string * string
+    exception DuplicateTypParms of string * string
+    exception DuplicateVarInPattern of string * string
+    exception DuplicateTypName of string * string
+    exception DuplicateFunctor of string * string
+    exception DuplicateStrName of string * string
+    exception DuplicateRecordLabelInKind of string * string
+    exception DuplicateRecordLabelInRawType of string * string
+    exception DuplicateSigname of string * string
+    exception ImproperSigshare of string * {longid:string list}
+    exception ImproperSigwhere of string * {longid:string list}
+    exception NonConstructor of string * {pat:PatternCalc.plpat}
+    exception IlleagalFunID of string * {pat:PatternCalc.plpat}
+    exception TvarNotFound of string * {name:string}
+    exception TypNotFound of string * {longid:string list}
+    exception VarNotFound of string * {longid:string list}
+    exception ConNotFound of string * {longid:string list}
+    exception VarOrConNotFound of string * {longid:string list}
+    exception BuiltinTyNotFound of string * {name:string}
+    exception RuntimeTyNotFound of string * {name:string}
+    exception PrimitiveNotFound of string * {name:string}
+    exception FunctorParamRestriction of string * 
+                                         {longid:string list}
+    exception StrNotFound of string * {longid:string list}
+  end

@@ -1,0 +1,10 @@
+_require "../../basis.smi"
+
+structure SMLSharp_SQL_KeyValuePair =
+struct
+  type pairs = (string * string) list
+  exception ParseError
+  val parse : string -> pairs
+  val find : pairs * string -> string option
+  val findExcept : string list -> pairs -> (string * string) option
+end

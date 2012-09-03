@@ -1,7 +1,0 @@
-(*
- * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
- *)
-Group 
-is
-        src/sources.cm

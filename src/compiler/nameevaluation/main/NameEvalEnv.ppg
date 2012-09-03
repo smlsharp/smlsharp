@@ -1,0 +1,876 @@
+(**
+ * @copyright (c) 2012- Tohoku University.
+ * @author Atsushi Ohori
+ *)
+(* the initial error code of this file : V-001
+  The printer prefix "printTy_" is used to print types and signature 
+  in the interactive mode.
+ *)
+structure NameEvalEnv : NAME_EVAL_ENV =
+struct
+local
+  structure I = IDCalc
+  structure E = NameEvalError
+  structure EU = UserErrorUtils
+  fun bug s = Control.Bug ("NameEvalEnv: " ^ s)
+
+  (*%
+      @formatter(I.tfun) I.print_tfun
+   *)
+  (*% @prefix printTy_
+      @params(mode,name)
+      @formatter(I.tfun) I.print_tfun
+   *)
+  type tfun
+    = 
+      (*%
+          @format(x)  x()(,)
+       *) 
+      (*% @prefix printTy_
+          @format(x)  x()(mode,name)
+       *) 
+      I.tfun
+
+  (*%
+      @formatter(I.path) I.print_path
+   *)
+  (*% @prefix printTy_
+      @formatter(I.path) I.print_path
+   *)
+  type path
+    = 
+      (*%
+          @format(x)  x
+       *) 
+      (*% @prefix printTy_
+          @format(x)  x
+       *) 
+      I.path
+
+  (*%
+      @formatter(I.conSpec) I.print_conSpec
+   *)
+  (*% @prefix printTy_
+      @formatter(I.conSpec) I.print_conSpec
+   *)
+  type conSpec
+    = 
+      (*%
+         @format(x)  x()(,)
+       *) 
+      (*% @prefix printTy_
+         @format(x)  x()(,)
+       *) 
+      I.conSpec
+
+  (*%
+      @formatter(I.formals) I.print_formals
+   *)
+  (*% @prefix printTy_
+      @formatter(I.formals) I.print_formals
+   *)
+  type formals
+    = 
+      (*%
+         @format(x)  x
+       *)
+      (*% @prefix printTy_
+         @format(x)  x
+       *)
+      I.formals
+
+  (*%
+      @formatter(I.varE) I.print_varE
+   *)
+  (*% @prefix printTy_
+      @formatter(I.varE) I.print_varE
+   *)
+  type varE
+    = 
+      (*%
+          @format(x)  x()(,)
+       *)
+      (*% @prefix printTy_
+          @format(x)
+            x()(,)
+       *)
+      I.varE
+
+  (*%
+      @formatter(I.typId) I.print_typId
+   *)
+  (*% @prefix printTy_
+      @formatter(I.typId) I.print_typId
+   *)
+  type typId
+     = 
+       (*%
+          @format(x)  x
+        *) 
+       (*% @prefix printTy_
+          @format(x)  x
+        *) 
+       I.typId
+
+  (*%
+      @formatter(I.exnId) I.print_exnId
+   *)
+  (*% @prefix printTy_
+      @formatter(I.exnId) I.print_exnId
+   *)
+  type exnId
+    = 
+      (*%
+          @format(x)  x
+       *) 
+      (*% @prefix printTy_
+          @format(x)  x
+       *) 
+      I.exnId
+
+  (*%
+      @formatter(StructureID.id) StructureID.format_id
+   *)
+  (*% @prefix printTy_
+      @formatter(StructureID.id) StructureID.format_id
+   *)
+  (* structure name *)
+  type structureId 
+    = 
+      (*%
+          @format(id) "s" id
+       *)
+      (*% @prefix printTy_
+          @format(id) "s" id
+       *)
+      StructureID.id
+
+  (*%
+     @formatter(FunctorID.id) FunctorID.format_id
+   *)
+  (*% @prefix printTy_
+     @formatter(FunctorID.id) FunctorID.format_id
+   *)
+  (* functor name *)
+  type functorId
+    = 
+      (*%
+         @format(id) "f" id
+       *)
+      (*% @prefix printTy_
+         @format(id) "f" id
+       *)
+      FunctorID.id
+
+  (*%
+      @formatter(I.tvar) I.print_tvar
+   *)
+  (*% @prefix printTy_
+      @formatter(I.tvar) I.print_tvar
+   *)
+  type tvar
+    = 
+      (*%
+          @format(x)  x
+       *)
+      (*% @prefix printTy_
+          @format(x)  x
+       *)
+      I.tvar
+  (*%
+     @formatter(I.ty) I.print_ty
+   *)
+  (*% @prefix printTy_
+     @formatter(I.ty) I.print_ty
+   *)
+  type ty
+    = 
+      (*%
+         @format(x)  x()(,)
+       *)
+      (*% @prefix printTy_
+         @format(x)  x()(,)
+       *)
+      I.ty
+
+  (*%
+      @formatter(I.varInfo) I.print_varInfo
+    *)
+  (*% @prefix printTy_
+      @formatter(I.varInfo) I.print_varInfo
+    *)
+  type varInfo
+    = 
+      (*%
+          @format(x)  x
+       *)
+      (*% @prefix printTy_
+          @format(x)  x
+       *)
+      I.varInfo
+
+  fun formatEnclosedSet listItems (format, lparen, comma, rparen) map =
+      TermFormat.formatOptionalList
+        (fn value => format value, lparen, comma, rparen)
+        (listItems map)
+
+  fun formatEnclosedTypidSet (lparen, comma, rparen)  map =
+      formatEnclosedSet
+        TypID.Set.listItems 
+        (format_typId, lparen, comma, rparen)
+        map
+  fun formatEnclosedExnIdSet (lparen, comma, rparen)  map =
+      formatEnclosedSet
+        ExnID.Set.listItems 
+        (format_exnId, lparen, comma, rparen)
+        map
+
+in
+  (*%
+     @formatter(bool) SmlppgUtil.formatBinaryChoice
+   *)
+  (*% @prefix printTy_
+     @formatter(bool) SmlppgUtil.formatBinaryChoice
+     @params(mode,name)
+   *)
+   (* type structure *)
+  datatype tstr 
+    = 
+      (*%
+        @format(tfun) 
+          1["tystr" +1 tfun]
+       *)
+      (*% @prefix printTy_
+        @format(tfun) {tfun()(,name)}
+       *)
+       TSTR of tfun
+    | 
+      (*%
+        @format({tfun, varE, formals, conSpec})
+          "dtystr"
+            +
+          "{" 
+             1[ 
+               +1
+                1["tfun:"+1 tfun]
+               +1             
+                1["varE:"+1 varE]
+               +1
+                1["formals:"+1 formals]
+               +1
+                1["conSpec:"+1 conSpec]
+              ]
+             1
+           "}"
+       *)
+      (*% @prefix printTy_
+        @format({tfun, varE, formals, conSpec})
+           {tfun()("dty",name)}
+       *)
+       TSTR_DTY of {tfun:tfun, varE:varE, formals:formals, conSpec:conSpec}
+
+  (*%
+     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+   *)
+  (*% @prefix printTy_
+     @formatter(SEnv.map) SmlppgUtil.formatGenericSmap
+   *)
+  (* type environment *)
+  type tyE
+    = 
+      (*%
+        @format(tstr senv) 
+          "{"
+           1[
+             senv(tstr)(1, ":"+)
+            ]
+           1
+          "}"
+       *)
+      (*% @prefix printTy_
+        @format(tstr senv) 
+           senv(tstr)(\n,+1,)
+       *)
+      tstr SEnv.map
+
+
+  (*%
+     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+   *)
+  (*% @prefix printTy_
+     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+   *)
+  (* structure environment *)
+  datatype strKind 
+    = 
+      (*%
+        @format "sig"
+       *)
+      (*% @prefix printTy_
+        @format "sig"
+       *)
+      SIGENV 
+    | 
+      (*%
+        @format(id) "structure(" id ")" 
+       *)
+      (*% @prefix printTy_
+        @format(id) "structure(" id ")" 
+       *)
+      STRENV of structureId
+    | 
+      (*%
+        @format({id,funId,argId}) "structure(" id "=" funId "(" argId")" ")" 
+       *)
+      (*% @prefix printTy_
+        @format({id,funId,argId}) "structure(" id "=" funId "(" argId")" ")" 
+       *)
+      FUNAPP of {id:structureId, funId:functorId, argId:structureId}
+
+  (*%
+     @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+   *)
+  (*% @prefix printTy_
+     @formatter(SEnv.map) SmlppgUtil.formatSmapWithEnclosure
+   *)
+  (* structure environment *)
+  datatype strE
+    = 
+      (*%
+         @format(strEntry senv)
+          "{"
+           1[
+             senv(strEntry)(1, ":"+1)
+            ]
+           1
+          "}"
+       *)
+      (*% @prefix printTy_
+         @format(strEntry senv)
+           senv(strEntry)(+":"+1, ~2[+1 "and" +], \n "structure" +,)
+       *)
+      STR of strEntry SEnv.map
+
+  and env
+    = 
+      (*%
+         @format({varE, tyE, strE}) 
+          "{"
+           1[
+             +1
+              1["tyE:"+1 tyE]
+             +1
+              1["strE:"+1 strE]
+             +1
+              1["varE:"+1 varE]
+            ]
+           +1
+           "}"
+       *)
+      (*% @prefix printTy_
+         @format({varE, tyE, strE}) 
+          "sig"
+           2[
+             tyE
+             varE
+             strE
+            ]
+          \n
+          "end"
+       *)
+      ENV of {varE: varE, tyE: tyE, strE: strE}
+
+  withtype strEntry 
+    = 
+      (*%
+        @format({env, strKind}) "("strKind")" + env
+       *)
+      (*% @prefix printTy_
+        @format({env, strKind}) 
+          env
+       *)
+      {env:env, strKind:strKind}
+
+  (*%
+     @formatter(I.icexp) I.print_icexp
+     @formatter(TypID.Set.set) formatEnclosedTypidSet
+     @formatter(ExnID.Set.set) formatEnclosedExnIdSet
+   *)
+  (*% @prefix printTy_
+     @formatter(I.icexp) I.print_icexp
+     @formatter(TypID.Set.set) formatEnclosedTypidSet
+     @formatter(ExnID.Set.set) formatEnclosedExnIdSet
+   *)
+  type funEEntry
+    = 
+      (*%
+        @format({id,
+                 version,
+                 used,
+                 argSig,
+                 argStrEntry,
+                 argStrName,
+                 dummyIdfunArgTy:dummyId opt,
+                 polyArgTys:argTy argTys,
+                 typidSet,
+                 exnIdSet,
+                 bodyEnv,
+                 bodyVarExp})
+           "(" id ") {"
+           1[+1
+             {1["argSig:"+1 argSig]}
+             +1
+             {1["argStrEntry:"+1 argStrEntry]}
+             +1 "argStrName:" argStrName
+             +1
+             {1["dummyIdfunArgTy:"+1 opt(dummyId)]}
+             +1
+             {1["polyArgTys:"+1 "[" argTys(argTy)(",") "]" ]}
+             +1 
+             {1["typidSet:"+1 typidSet()("(",",",") ") ]}
+             +1 
+             {1["exnIdSet:"+1 exnIdSet()("(",",",") ") ]}
+             +1
+             {1["bodyEnv:"+1 bodyEnv]}
+             +1
+             {1["bodyVarExp:"+1 bodyVarExp()(,)]}
+           ]
+           +1
+           "}"
+         *)
+      (*% @prefix printTy_
+        @format({id,
+                 version,
+                 used,
+                 argSig,
+                 argStrEntry,
+                 argStrName,
+                 dummyIdfunArgTy:dummyId opt,
+                 polyArgTys:argTy argTys,
+                 typidSet,
+                 exnIdSet,
+                 bodyEnv,
+                 bodyVarExp})
+         *)
+       {id: functorId,
+        version: int option,
+        used : bool ref,
+        argSig: env,
+        argStrEntry: strEntry,
+        argStrName: string,
+        dummyIdfunArgTy: ty option,
+        polyArgTys: ty list,
+        typidSet: TypID.Set.set,
+        exnIdSet: ExnID.Set.set,
+        bodyEnv: env,
+        bodyVarExp: I.icexp (* varInfo *)
+       }
+  (*%
+    @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+   *)
+  (*% @prefix printTy_
+    @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+   *)
+  type funE
+    = 
+      (*%
+         @format(funEEntry senv)
+          "{"
+           1[
+             senv(funEEntry)(1, +":"+1)
+            ]
+           1
+          "}"
+       *)
+      (*% @prefix printTy_
+         @format(funEEntry senv)
+          "{"
+           1[
+             senv(funEEntry)(1, +":"+1)
+            ]
+           1
+          "}"
+       *)
+      funEEntry SEnv.map
+         
+  (*%
+    @formatter(SEnv.map) TermFormat.formatEnclosedSEnvPlain
+   *)
+  (*% @prefix printTy_
+     @formatter(SEnv.map) SmlppgUtil.formatSmap
+   *)
+  type sigE
+    = 
+      (*%
+         @format(sigentry senv)  senv(sigentry)(+1"and"+, ":")
+       *)
+      (*% @prefix printTy_
+         @format(sigentry senv)
+          2[
+            senv(sigentry)("signature" + ,+"="+,~2[+1 "and"+],)
+          ]
+       *)
+      env SEnv.map
+
+  (*%
+   *)
+  (*% @prefix printTy_
+   *)
+  type sigEList 
+    = (*%
+         @format(sige siges)
+       *)
+      (*% @prefix printTy_
+         @format(sige siges)
+           siges(sige)(1)
+         @format:sige(name * env)
+          2[
+            "signature" + name + "="
+            \n
+            env
+           ]
+       *)
+    (string * env) list
+
+  (*%
+   *)
+  (*% @prefix printTy_
+   *)
+  type topEnv
+    = 
+      (*%
+        @format({Env, FunE, SigE})
+         Env
+         +1
+         FunE
+         +1
+         SigE
+       *)
+      (*% @prefix printTy_
+        @format({Env, FunE, SigE})
+          "*** topEnv printer is not used at runtime ***"
+       *)
+    {Env:env, FunE:funE, SigE: sigE}
+
+  fun tstrFormals tstr =
+      case tstr of 
+       TSTR tfun => I.tfunFormals tfun
+     | TSTR_DTY {tfun,...} => I.tfunFormals tfun
+
+  fun tstrLiftedTys tstr =
+      case tstr of 
+       TSTR tfun => I.tfunLiftedTys tfun
+     | TSTR_DTY {tfun,...} => I.tfunLiftedTys tfun
+
+  fun tstrArity tstr = List.length (tstrFormals tstr)
+
+  fun tstrToString tstr =
+      Control.prettyPrint (format_tstr tstr)
+  fun tyEToString tyE =
+      Control.prettyPrint (format_tyE tyE)
+  fun envToString env = 
+      Control.prettyPrint (format_env env)
+  fun topEnvToString (env:topEnv) = 
+      Control.prettyPrint (format_topEnv env)
+  fun funEToString funE = 
+      Control.prettyPrint (format_funE funE)
+
+  val emptyTyE = SEnv.empty : tyE
+  val emptyEnv = ENV{varE=SEnv.empty,tyE = emptyTyE,strE=STR SEnv.empty}
+  val emptyTopEnv = {Env=emptyEnv,FunE=SEnv.empty,SigE=SEnv.empty} : topEnv
+
+  fun findTstr (ENV {varE, tyE, strE = STR envSEnvMap}, path) =
+      case path of 
+      nil => raise bug "*** nil to lookupTy *** "
+    | name :: nil => SEnv.find(tyE, name) 
+    | strname :: path =>
+      (case SEnv.find(envSEnvMap, strname) of
+         NONE => NONE
+       | SOME {env,...} => findTstr (env, path)
+      )
+
+  exception LookupTstr
+  fun lookupTstr env path : tstr =
+      case findTstr (env, path) handle e => raise e
+       of 
+        NONE => raise LookupTstr
+      | SOME tstr => tstr
+
+  fun findId (ENV {varE, tyE, strE = STR envSEnvMap}, longid) =
+      case longid of 
+        nil => raise bug "nil to lookupId"
+      | name :: nil => SEnv.find(varE, name)
+      | strname :: path =>
+        (case SEnv.find(envSEnvMap, strname) of
+           NONE => NONE
+         | SOME {env,...} => findId (env, path)
+        )
+  exception LookupId
+  fun lookupId env longid : I.idstatus =
+      case findId(env, longid) of
+        NONE => raise LookupId
+      | SOME idstatus => idstatus
+
+  fun findStr (ENV {varE, tyE, strE = STR strMap}, stringList) = 
+      case stringList of 
+        nil => raise bug "nil to lookupStrId"
+      | name :: nil =>  SEnv.find(strMap, name) 
+      | strname :: path =>
+        (case SEnv.find(strMap, strname) of
+           NONE => NONE
+         | SOME {env,...} => findStr (env, path)
+        )
+  exception LookupStr
+  fun lookupStr env stringList : strEntry = 
+      case findStr (env, stringList) of
+        NONE => raise LookupStr
+      | SOME strEntry => strEntry
+
+  fun rebindIdLongid
+        (ENV{varE, tyE, strE = strE as STR envMap},
+         longid,
+         idstatus) : env =
+      case longid of
+        nil => raise bug "nil to rebindTypLongid"
+      | name::nil =>
+        ENV
+          {
+           varE = SEnv.insert(varE, name, idstatus),
+           tyE = tyE,
+           strE = strE
+          }
+      | strname::path =>
+        let
+          val {env, strKind} = 
+              case SEnv.find(envMap, strname) of
+                SOME strEntry => strEntry
+              | NONE => raise bug "env not found in rebindIdLongid"
+          val newEnv = rebindIdLongid(env, path, idstatus)
+        in
+          ENV
+            {
+             varE = varE,
+             tyE = tyE,
+             strE = STR (SEnv.insert(envMap, strname, {env=newEnv, strKind=strKind}))
+          }
+        end
+
+  fun bindStr loc (env, name, strEntry) =
+      let
+        val ENV{varE, tyE, strE = STR envMap} = env
+        val envMap =
+            case SEnv.find(envMap, name) of
+              NONE => SEnv.insert(envMap, name, strEntry)
+            | SOME _ => 
+              (EU.enqueueError (loc, E.DuplicateIdInSpec("050", name));
+               envMap
+              )
+      in
+        ENV {varE=varE, tyE=tyE, strE=STR envMap}
+      end
+
+  fun rebindTstr (ENV{varE,tyE,strE}, name, tstr) =
+      ENV
+        {
+         varE = varE,
+         tyE = SEnv.insert(tyE, name, tstr),
+         strE = strE
+        }
+
+  fun rebindTstrLongid
+        (ENV{varE, tyE, strE = strE as STR envMap},
+         longid,
+         tstr) : env =
+      case longid of
+        nil => raise bug "nil to rebindTypLongid"
+      | name::nil =>
+        ENV
+          {
+           varE = varE,
+           tyE = SEnv.insert(tyE, name, tstr),
+           strE = strE
+          }
+      | strname::path =>
+        let
+          val {env, strKind} = case SEnv.find(envMap, strname) of
+                      SOME strEntry =>strEntry
+                    | NONE => raise bug "strenv not found in rebindStrLongid"
+          val newEnv = rebindTstrLongid(env, path, tstr)
+        in
+          ENV
+            {
+             varE = varE,
+             tyE = tyE,
+             strE = STR (SEnv.insert(envMap, strname, {env=newEnv, strKind=strKind}))
+          }
+        end
+  fun rebindId (ENV{varE, tyE, strE}, name, idstatus) =
+      ENV
+        {varE = SEnv.insert(varE, name, idstatus),
+         tyE = tyE,
+         strE = strE
+        }
+
+  fun rebindStr (ENV{varE,tyE,strE=STR envMap}, name, strEntry) =
+      ENV {varE = varE,
+           tyE = tyE,
+           strE = STR (SEnv.insert(envMap, name, strEntry))
+          }
+
+  fun singletonStr (name, strEntry) = rebindStr(emptyEnv, name, strEntry)
+
+  fun varEWithVarE (varE1, varE2) = SEnv.unionWith #2 (varE1, varE2)
+
+  fun tyEWithTyE (tyE1, tyE2) = SEnv.unionWith #2 (tyE1, tyE2)
+
+  fun strEWithStrE (STR envMap1, STR envMap2) = 
+      STR (SEnv.unionWith #2 (envMap1, envMap2))
+
+  fun envWithVarE (ENV {varE, strE, tyE}, varE1 : I.varE) =
+      ENV {varE = varEWithVarE (varE, varE1),
+           strE = strE,
+           tyE = tyE}
+
+  (* this recursively merge two envs *)
+  fun envWithEnv (ENV {varE=varE1, strE=strE1, tyE=tyE1},
+                  ENV {varE=varE2, strE=strE2, tyE=tyE2}) =
+      ENV {varE = varEWithVarE (varE1, varE2),
+           strE = strEWithStrE (strE1, strE2),
+           tyE = tyEWithTyE (tyE1,tyE2)
+          }
+
+  fun updateStrE (STR envMap1, STR envMap2) = 
+      let
+        fun strEWithStrE ({env=env1,strKind}, {env=env2,strKind=_}) =
+            {env=updateEnv(env1,env2), strKind=strKind}
+      in
+        STR (SEnv.unionWith strEWithStrE  (envMap1, envMap2))
+      end
+
+  and updateEnv (ENV {varE=varE1, strE=strE1, tyE=tyE1},
+                  ENV {varE=varE2, strE=strE2, tyE=tyE2}) =
+      ENV {varE = varEWithVarE (varE1, varE2),
+           strE = updateStrE (strE1, strE2),
+           tyE = tyEWithTyE (tyE1,tyE2)
+          }
+
+  fun unionVarE code loc (varE1, varE2) =
+      SEnv.unionWithi
+        (fn (name,_,v)=>
+            (EU.enqueueError (loc, E.DuplicateVar(code ^ "v", name));v))
+        (varE1, varE2)
+
+  fun unionTyE code loc (tyE1, tyE2) =
+      SEnv.unionWithi 
+        (fn (name, _, v) =>
+            (EU.enqueueError (loc, E.DuplicateTypName(code ^ "v", name)); v)
+        )
+        (tyE1, tyE2)
+            
+  fun unionStrE code loc (STR map1, STR map2) =
+      STR
+        (
+         SEnv.unionWithi
+           (fn (name, _, v) => 
+               (EU.enqueueError (loc, E.DuplicateStrName(code ^ "v", name)); v)
+           )
+           (map1, map2)
+        )
+            
+  fun unionEnv code loc (ENV {varE=varE1, strE=strE1, tyE=tyE1},
+                         ENV {varE=varE2, strE=strE2, tyE=tyE2})
+      =
+      let
+        val varE = unionVarE code loc (varE1, varE2)
+        val tyE = unionTyE code loc (tyE1, tyE2)
+        val strE = unionStrE code loc (strE1, strE2)
+      in
+        ENV{varE=varE, strE=strE, tyE=tyE}
+      end
+
+  fun bindId loc (env, name, idstate) =
+      let
+        val ENV{varE, tyE, strE} = env
+        val varE =
+            SEnv.insertWith
+              (fn _ =>(EU.enqueueError (loc,E.DuplicateIdInSpec("054",name))))
+              (varE, name, idstate)
+      in
+        ENV {varE=varE, tyE=tyE, strE=strE}
+      end
+
+  fun bindTstr loc (env, name, tstr) =
+      let
+        val ENV{varE, tyE, strE} = env
+        val tyE =
+            SEnv.insertWith
+            (fn _ =>(EU.enqueueError (loc, E.DuplicateTypInSpec("055", name))))
+            (tyE, name, tstr)
+      in
+        ENV {tyE=tyE, varE=varE, strE=strE}
+      end
+
+  fun sigEWithSigE (sigE1, sigE2) =
+      SEnv.foldli
+      (fn (name, entry, sigE1) => SEnv.insert(sigE1, name, entry))
+      sigE1
+      sigE2
+
+  fun funEWithFunE (funE1, funE2) =
+      SEnv.foldli
+      (fn (name, entry, funE1) => SEnv.insert(funE1, name, entry))
+      funE1
+      funE2
+
+  fun unionSigE code loc (sigE1, sigE2) =
+      SEnv.unionWithi
+        (fn (name,_,v) =>
+            (EU.enqueueError
+               (loc, E.DuplicateSigname(code ^ "s", name));
+             v)
+        )
+        (sigE1, sigE2)
+
+  fun unionFunE code loc (funE1, funE2) =
+      SEnv.unionWithi
+        (fn (name,_,v) =>
+            (EU.enqueueError
+               (loc, E.DuplicateFunctor(code ^ "f", name));
+             v)
+        )
+      (funE1, funE2)
+
+  fun topEnvWithSigE ({Env, FunE, SigE}, sige) : topEnv =
+      {Env = Env,
+       FunE = FunE,
+       SigE = sigEWithSigE (SigE, sige)
+      }
+
+  fun topEnvWithFunE ({Env, FunE, SigE}, funE) : topEnv =
+      {Env = Env,
+       FunE = funEWithFunE (FunE, funE),
+       SigE = SigE
+      }
+
+  fun topEnvWithEnv ({Env, FunE, SigE}, env1) : topEnv =
+      {Env = envWithEnv (Env, env1), FunE = FunE, SigE = SigE}
+
+  fun topEnvWithTopEnv
+        ({Env=env1,FunE=funE1,SigE=sige1},{Env=env2,FunE=funE2,SigE=sige2})
+      : topEnv
+      =
+      {Env = envWithEnv (env1, env2),
+       FunE = funEWithFunE (funE1, funE2),
+       SigE = sigEWithSigE (sige1, sige2)
+      }
+
+  fun unionTopEnv code loc
+        ({Env=env1,FunE=funE1,SigE=sige1},{Env=env2,FunE=funE2,SigE=sige2})
+      : topEnv
+      =
+      {Env = unionEnv code loc (env1, env2),
+       FunE = unionFunE code loc (funE1, funE2),
+       SigE = unionSigE code loc (sige1, sige2)
+      }
+end
+end

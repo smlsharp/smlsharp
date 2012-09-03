@@ -1,0 +1,9 @@
+_require "basis.smi"
+_require "./objects.smi";
+_require "./ray.smi";
+_require "./interp.smi";
+_require "./interface.smi";
+structure Main =
+struct
+  val doit : unit -> unit
+end

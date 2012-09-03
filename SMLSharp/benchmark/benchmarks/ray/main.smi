@@ -1,5 +1,0 @@
-_require "basis.smi"
-structure Main =
-struct
-  val doit : unit -> unit
-end

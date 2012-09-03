@@ -1,0 +1,24 @@
+(* -*- sml -*- *)
+(**
+ * version information and default settings
+ *
+ * @copyright (c) 2012, Tohoku University.
+ * @author UENO Katsuhiro
+ *)
+
+structure SMLSharp_Version =
+struct
+
+  val Version = "%VERSION%"
+  val ReleaseDate = "%RELEASE_DATE%"
+  val DefaultSystemBaseDir = "%LIBDIR_SMLSHARP%"
+  val DefaultDLLEXT = "%DLLEXT%"
+  val DefaultLIBEXT = "%LIBEXT%"
+  val DefaultOBJEXT = "%OBJEXT%"
+  val DefaultASMEXT = "%ASMEXT%"
+  val DefaultNativeTarget = "%NATIVE_TARGET%"
+
+  datatype os = Windows | Unix
+  val HostOS = %HOST_OS%
+
+end

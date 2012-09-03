@@ -1,0 +1,107 @@
+_require "../../basis.smi"
+_require "utils.sig"
+
+functor ListOrdSet(
+  B : sig
+    type elem
+    val gt : elem * elem -> bool
+    val eq : elem * elem -> bool
+  end
+) =
+struct
+  type set = B.elem list
+  type elem = B.elem
+  exception Select_arb
+  val app : (elem -> unit) -> set -> unit
+  val card : set -> int
+  val closure : set * (elem -> set) -> set
+  val difference : set * set -> set
+  val elem_eq : elem * elem -> bool
+  val elem_gt : elem * elem -> bool
+  val empty : set
+  val exists : elem * set -> bool
+  val find : elem * set -> elem option
+  val fold : (elem * 'b -> 'b) -> set -> 'b -> 'b
+  val insert : elem * set -> set
+  val is_empty : set -> bool
+  val make_list : set -> elem list
+  val make_set : elem list -> set
+  val partition : (elem -> bool) -> set -> set * set
+  val remove : elem * set -> set
+  val revfold : (elem * 'b -> 'b) -> set -> 'b -> 'b
+  val select_arb : set -> elem
+  val set_eq : set * set -> bool
+  val set_gt : set * set -> bool
+  val singleton : elem -> set
+  val union : set * set -> set
+end
+
+functor RbOrdSet (
+  B : sig
+    type elem
+    val eq : elem * elem -> bool
+    val gt : elem * elem -> bool
+  end
+) =
+struct
+  type set (= boxed)
+  type elem = B.elem
+  exception Select_arb
+  val app : (elem -> unit) -> set -> unit
+  val card : set -> int
+  val closure : set * (elem -> set) -> set
+  val difference : set * set -> set
+  val elem_eq : elem * elem -> bool
+  val elem_gt : elem * elem -> bool
+  val empty : set
+  val exists : elem * set -> bool
+  val find : elem * set -> elem option
+  val fold : (elem * 'b -> 'b) -> set -> 'b -> 'b
+  val insert : elem * set -> set
+  val is_empty : set -> bool
+  val make_list : set -> elem list
+  val make_set : elem list -> set
+  val partition : (elem -> bool) -> set -> set * set
+  val remove : elem * set -> set
+  val revfold : (elem * 'b -> 'b) -> set -> 'b -> 'b
+  val select_arb : set -> elem
+  val set_eq : set * set -> bool
+  val set_gt : set * set -> bool
+  val singleton : elem -> set
+  val union : set * set -> set
+end
+
+functor Table (
+  B : sig
+    type key
+    val gt : key * key -> bool
+  end
+) =
+struct
+  type 'a table (= boxed)
+  type key = B.key
+  val size : 'a table -> int
+  val empty : 'a table
+  val exists : key * 'a table -> bool
+  val find : key * 'a table -> 'a option
+  val insert : (key * 'a) * 'a table -> 'a table
+  val make_table : (key * 'a) list -> 'a table
+  val make_list : 'a table -> (key * 'a) list
+  val fold : ((key * 'a) * 'b -> 'b) -> 'a table -> 'b -> 'b
+end
+
+functor Hash(
+  B : sig
+    type elem
+    val gt : elem * elem -> bool
+  end
+) =
+struct
+  type table (= boxed)
+  type elem = B.elem
+  val size : table -> int
+  val add : elem * table -> table
+  val find : elem * table -> int option
+  val exists : elem * table -> bool
+  val empty : table
+end

@@ -1,4 +1,0 @@
-Group
-	structure FFICompilation
-is
-	main/module.cm

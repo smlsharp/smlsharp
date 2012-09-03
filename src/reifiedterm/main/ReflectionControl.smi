@@ -1,0 +1,8 @@
+_require "../../smlformat-lib.smi"
+
+structure ReflectionControl =
+struct
+  val max : int
+  val ellipsis : SMLFormat.FormatExpression.expression list
+  val printWidth : int ref
+end

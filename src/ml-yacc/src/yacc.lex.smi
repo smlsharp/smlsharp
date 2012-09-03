@@ -1,0 +1,109 @@
+_require "../../basis.smi"
+_require "../lib/base.sig"
+_require "utils.sig"
+_require "sigs.sml"
+_require "hdr.smi"
+_require "yacc.grm.sig"
+
+functor LexMLYACC(
+  A : sig
+    structure Tokens : sig
+      type svalue
+      type ('a,'b) token
+      val BOGUS_VALUE : 'a * 'a -> (svalue,'a) token
+      val UNKNOWN : string * 'a * 'a -> (svalue,'a) token
+      val VALUE : 'a * 'a -> (svalue,'a) token
+      val VERBOSE : 'a * 'a -> (svalue,'a) token
+      val TYVAR : string * 'a * 'a -> (svalue,'a) token
+      val TERM : 'a * 'a -> (svalue,'a) token
+      val START : 'a * 'a -> (svalue,'a) token
+      val SUBST : 'a * 'a -> (svalue,'a) token
+      val RPAREN : 'a * 'a -> (svalue,'a) token
+      val RBRACE : 'a * 'a -> (svalue,'a) token
+      val PROG : string * 'a * 'a -> (svalue,'a) token
+      val PREFER : 'a * 'a -> (svalue,'a) token
+      val PREC_TAG : 'a * 'a -> (svalue,'a) token
+      val PREC : Header.prec * 'a * 'a -> (svalue,'a) token
+      val PERCENT_TOKEN_SIG_INFO : 'a * 'a -> (svalue,'a) token
+      val PERCENT_ARG : 'a * 'a -> (svalue,'a) token
+      val PERCENT_POS : 'a * 'a -> (svalue,'a) token
+      val PERCENT_PURE : 'a * 'a -> (svalue,'a) token
+      val PERCENT_EOP : 'a * 'a -> (svalue,'a) token
+      val OF : 'a * 'a -> (svalue,'a) token
+      val NOSHIFT : 'a * 'a -> (svalue,'a) token
+      val NONTERM : 'a * 'a -> (svalue,'a) token
+      val NODEFAULT : 'a * 'a -> (svalue,'a) token
+      val NAME : 'a * 'a -> (svalue,'a) token
+      val LPAREN : 'a * 'a -> (svalue,'a) token
+      val LBRACE : 'a * 'a -> (svalue,'a) token
+      val KEYWORD : 'a * 'a -> (svalue,'a) token
+      val INT : string * 'a * 'a -> (svalue,'a) token
+      val PERCENT_FOOTER : 'a * 'a -> (svalue,'a) token
+      val PERCENT_HEADER : 'a * 'a -> (svalue,'a) token
+      val IDDOT : string * 'a * 'a -> (svalue,'a) token
+      val ID : (string * int) * 'a * 'a -> (svalue,'a) token
+      val HEADER : string * 'a * 'a -> (svalue,'a) token
+      val FOR : 'a * 'a -> (svalue,'a) token
+      val EOF : 'a * 'a -> (svalue,'a) token
+      val DELIMITER : 'a * 'a -> (svalue,'a) token
+      val COMMA : 'a * 'a -> (svalue,'a) token
+      val COLON : 'a * 'a -> (svalue,'a) token
+      val CHANGE : 'a * 'a -> (svalue,'a) token
+      val BAR : 'a * 'a -> (svalue,'a) token
+      val BLOCK : 'a * 'a -> (svalue,'a) token
+      val ASTERISK : 'a * 'a -> (svalue,'a) token
+      val ARROW : 'a * 'a -> (svalue,'a) token
+    end
+    structure Hdr : sig
+      type pos = int
+      val lineno : pos ref
+      val text : string list ref
+      type inputSource
+      val newSource : string * TextIO.instream * TextIO.outstream -> inputSource
+      val error : inputSource -> pos -> string -> unit
+      val warn : inputSource -> pos -> string -> unit
+      val errorOccurred : inputSource -> unit -> bool
+      datatype symbol = SYMBOL of string * pos
+      val symbolName : symbol -> string
+      val symbolPos : symbol -> pos
+      val symbolMake : string * int -> symbol
+      type ty
+      val tyName : ty -> string
+      val tyMake : string -> ty
+      datatype prec = LEFT | RIGHT | NONASSOC
+      datatype control = NODEFAULT | VERBOSE | PARSER_NAME of symbol
+                       | FUNCTOR of string  | FOOTER of string
+                       | START_SYM of symbol
+                       | NSHIFT of symbol list | POS of string | PURE
+                       | PARSE_ARG of string * string
+                       | TOKEN_SIG_INFO of string
+      datatype rule = RULE of {lhs : symbol, rhs : symbol list,
+                               code : string, prec : symbol option}
+      datatype declData = DECL of {eop : symbol list,
+                                   keyword : symbol list,
+                                   nonterm : (symbol * ty option) list option,
+                                   prec : (prec * (symbol list)) list,
+                                   change: (symbol list * symbol list) list,
+                                   term : (symbol * ty option) list option,
+                                   control : control list,
+                                   value : (symbol * string) list}
+      val join_decls : declData * declData * inputSource * pos -> declData
+      type parseResult
+      val getResult : parseResult -> string * declData * rule list
+    end
+    where type prec = Header.prec
+    where type inputSource = Header.inputSource
+  end
+) =
+struct
+  structure UserDeclarations =
+  struct
+    type ('a,'b) token = ('a,'b) A.Tokens.token
+    type pos = int
+    type svalue = A.Tokens.svalue
+    type arg = A.Hdr.inputSource
+  end
+  val makeLexer
+      : (int -> string) -> UserDeclarations.arg -> unit -> 
+        (UserDeclarations.svalue, UserDeclarations.pos) UserDeclarations.token
+end

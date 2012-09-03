@@ -1,0 +1,82 @@
+_require "../../../basis/main/Char.smi"
+_require "../../../basis/main/Word.smi"
+_require "../../../basis/main/Array.smi"
+_require "../../../basis/main/Real.smi"
+_require "../../../basis/main/Vector.smi"
+_require "../../../basis/main/StringCvt.smi"
+_require "../../../basis/main/Option.smi"
+_require "../../../basis/main/General.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/Substring.smi"
+_require "../../../basis/main/TextIO.smi"
+_require "../../../basis/main/binary-op.smi"
+
+_require "FormatExpression.smi"
+_require "FORMAT_EXPRESSION.sig"
+_require "AssocResolver.smi"
+_require "PrettyPrinter.smi"
+_require "PrinterParameter.smi"
+_require "PRINTER_PARAMETER.sig"
+_require "Truncator.smi"
+_require "PreProcessor.smi"
+_require "BasicFormatters.smi"
+_require "BASIC_FORMATTERS.sig"
+_require "SMLFORMAT.sig"
+
+structure SMLFormat = 
+struct
+  structure FormatExpression =
+  struct  
+    datatype priority = datatype FormatExpression.priority
+    datatype assocDirection = datatype FormatExpression.assocDirection
+    type assoc = FormatExpression.assoc
+    datatype expression = datatype FormatExpression.expression
+    val isHigherThan : priority * priority -> bool
+    val assocToString : assoc -> string
+    val priorityToString : priority -> string
+    val toString : expression -> string
+    val parse
+	: (char, 'a) StringCvt.reader -> (expression list, 'a) StringCvt.reader
+  end
+  structure PrinterParameter =
+  struct
+    val defaultNewline : string
+    val defaultSpace : string
+    val defaultColumns : int
+    val defaultGuardLeft : string
+    val defaultGuardRight : string
+    val defaultMaxDepthOfGuards : int option
+    val defaultMaxWidthOfGuards : int option
+    val defaultCutOverTail : bool
+    datatype parameter = datatype PrinterParameter.parameter
+  end
+  structure BasicFormatters =
+  struct
+    datatype expression = datatype FormatExpression.expression
+    type 'a formatter = 'a BasicFormatters.formatter
+    val format_unit : General.unit formatter
+    val format_int : Int.int formatter
+    val format_word : Word.word formatter
+    val format_real : Real.real formatter
+    val format_char : Char.char formatter
+    val format_string : String.string formatter
+    val format_substring : Substring.substring formatter
+    val format_exn : General.exn formatter
+    val format_exn_Ref : General.exn formatter ref
+    val format_array :
+	('a formatter * expression list) -> 'a Array.array formatter
+    val format_vector :
+	('a formatter * expression list) -> 'a Vector.vector formatter
+    val format_ref : 'a formatter -> 'a ref formatter
+    val format_bool : bool formatter
+    val format_option : 'a formatter -> 'a Option.option formatter
+    val format_order : General.order formatter
+    val format_list : ('a formatter * expression list) -> 'a list formatter
+  end
+  datatype parameter = datatype PrinterParameter.parameter
+  exception Fail of string
+  val traceLevel : int ref
+  val prettyPrint : parameter list 
+		    -> FormatExpression.expression list -> string
+end

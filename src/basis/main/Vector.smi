@@ -1,0 +1,27 @@
+_require "General.smi"
+_require "List.smi"
+
+structure Vector =
+struct
+  type 'a vector = 'a vector
+  val maxLen : int
+  val fromList : 'a list -> 'a vector
+  val tabulate : int * (int -> 'a) -> 'a vector
+  val length = SMLSharp.PrimArray.length_vector
+  val sub = SMLSharp.PrimArray.sub_vector
+  val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a vector -> 'b
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a vector -> 'b
+  val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a vector -> 'b
+  val foldr : ('a * 'b -> 'b) -> 'b -> 'a vector -> 'b
+  val appi : (int * 'a -> unit) -> 'a vector -> unit
+  val app : ('a -> unit) -> 'a vector -> unit
+  val findi : (int * 'a -> bool) -> 'a vector -> (int * 'a) option
+  val find : ('a -> bool) -> 'a vector -> 'a option
+  val exists : ('a -> bool) -> 'a vector -> bool
+  val all : ('a -> bool) -> 'a vector -> bool
+  val collate : ('a * 'a -> order) -> 'a vector * 'a vector -> order
+  val update : 'a vector * int * 'a -> 'a vector
+  val concat : 'a vector list -> 'a vector
+  val mapi : (int * 'a -> 'b) -> 'a vector -> 'b vector
+  val map : ('a -> 'b) -> 'a vector -> 'b vector
+end

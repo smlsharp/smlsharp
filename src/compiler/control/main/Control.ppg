@@ -1,0 +1,478 @@
+(**
+ * switches to control compiler's behavior.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori
+ * @version $Id: Control.ppg,v 1.28 2008/03/11 08:53:54 katsu Exp $
+ *)
+structure Control =
+struct
+
+  (****************************************)
+  (* switches to control conpilation pahse *)
+  val Elab      = 2
+  val Name      = 3
+  val Module    = 4
+  val FunOpt    = 5
+  val TVar      = 6
+  val TyInf     = 7
+  val LayoutOpt = 8
+  val Print     = 9
+  val UniqueID  = 10
+  val MatchComp = 11
+  val SQLComp   = 12
+  val FFIComp   = 13
+  val OverloadComp = 14
+  val Lambda    = 15
+  val Static    = 16
+  val Unbox     = 17
+  val Inline    = 18
+  val RefElim   = 19
+  val DeadCode  = 20
+  val Localize  = 21
+  val Functor   = 22
+  val Cluster   = 23
+  val RBUComp   = 24
+  val Anormal   = 25
+  val SI        = 26
+  val SIOpt     = 27
+  val AI        = 28
+  val AIOpt     = 29
+  val Assem     = 30
+  val Code      = 31
+  val Run       = 32
+
+  val doUntil = ref Run
+
+  val doNameEval = ref false
+
+  fun doPhase current = current <=  !doUntil
+
+  (***************************************************************************)
+
+  datatype switch =
+           IntSwitch of int ref
+         | BoolSwitch of bool ref
+         | StringSwitch of string ref
+
+  type switchTable = (string * switch) list
+
+  (***************************************************************************)
+
+  (**
+   * indicates a bug of compiler implementation.
+   *)
+  exception Bug of string
+
+  (*%
+   * @formatter(Loc.loc) Loc.format_loc
+   *)
+  exception BugWithLoc of string * Loc.loc
+
+  (***************************************************************************)
+  (* switches *)
+
+  val printWidth = ref 80
+  fun prettyPrint expressions =
+      let
+        val ppgenParameter = [SMLFormat.Columns (!printWidth)]
+      in
+        SMLFormat.prettyPrint ppgenParameter expressions
+      end
+
+  (****************************************)
+  (* switches to control informations reported to user *)
+
+  val printCommand = ref true
+
+  (** true if binding informations are to be printed. *)
+  val debugPrint = ref false
+
+  (** true if binding informations are to be printed. *)
+  val debugTrace = ref false
+
+  (** true if binding informations are to be printed. *)
+  val printBinds = ref true
+
+  (** true if every warning should be printed. *)
+  val printWarning = ref true
+
+  (** true if no formatter is generated and no binding information is printed.
+   *)
+  val skipPrinter = ref false
+
+  (** If true, information which is required to implement the exnHistory is
+   * embedded in the output Executable. *)
+  val generateExnHistory = ref true
+
+  (** If true, information for debugger is embedded in the output Executable.
+   *)
+  val generateDebugInfo = ref false
+
+  (****************************************)
+  (* switches to control optimizations *)
+
+  (* list expression optimization *)
+  val doListExpressionOptimization = ref true
+
+  (*
+   * Ohori: Dec 17, 2006.
+     This trun on the large FFI switch in VirtualMachine.cc
+     THIS MUST BE ON TOGETHER WITH
+       #define LARGEFFISWITCH
+    in VirtualMachine.cc
+   *)
+  val LARGEFFISWITCH = ref true
+
+  val doUncurryOptimization = ref true
+
+  val enableUnboxedFloat = ref true
+  val alignRecord = ref true
+
+  val doSymbolicInstructionsOptimization = ref true
+  val doConstantFolding = ref true
+  val doFunctionCallSpecialization = ref true
+  val limitOfBlockFields = ref 15
+
+  val doTailCallOptimize = ref true
+
+  (** If true, recursive call is optimized
+   *)
+  val doRecursiveCallOptimize = ref true
+
+  (** If flase, self recursive call is compiled in the same way as non-self
+   * recursive call.
+   * If both of doRecursiveCallOptimize and this switch are true,
+   * self-recursive call is compiled into a more specialized instruction than
+   * an instruction for non-self recursive call. *)
+  val doSelfRecursiveCallOptimize = ref true
+
+  (** If true, the match compiler tries inlining case branch, rather than
+   * translates each case branch into a function.
+   *)
+  val doInlineCaseBranch = ref true
+
+  (**
+   * if a brach size exceed this limit then a closure will be created
+   * otherwise the expression is copied to every activation point.
+   *)
+  val limitOfInlineCaseBranch = ref 15
+
+  val doUncurryingOptimizeInMatchCompile = ref true
+
+  val doRecordUnboxing = ref true
+  val doInlining = ref false
+  val inlineThreshold = ref 20
+
+  (** If true, the compiler will try to optimizing multiple value terms
+   *)
+  val doMultipleValueOptimization = ref true
+
+  (** If true, the compiler will try to localize functions
+   *)
+  val doFunctionLocalize = ref false
+
+  val doCommonSubexpressionElimination = ref true
+
+  val doRepresentationAnalysis = ref true
+
+  (** If true, the compiler will try to remove all dead code
+   *  in MultipleValueCalc
+   *)
+  val doUselessCodeElimination = ref true
+
+  val doStackReallocation = ref true
+
+  val doStaticAllocation = ref true
+  val doRegisterCoalescing = ref true
+  val doFrameCompaction = ref true
+  val doBitmapANormalReorder = ref true
+  val insertCheckGC = ref false
+
+  val pageSizeOfGlobalArray = ref 1024
+
+  (* this switch is used in Main.main. *)
+  val doPreludeLazyUnpickling = ref true
+
+  (****************************************)
+  (* switches to runtime parameter *)
+
+  val VMHeapSize = ref 4096000
+
+  val VMStackSize = ref 4096000
+
+  (****************************************)
+  (* internal switches for development *)
+
+  (** true if trace of compilation should be printed. *)
+  val switchTrace = ref false
+
+  val traceFileLoad = ref false
+  val tracePrelude = ref false
+  val printSource = ref false
+ 
+  val printEL = ref false (* elabolation *)
+  val printNE = ref false (* name evaluation *)
+  val printMC = ref false (* module compile *)
+  val printVR = ref false (* valrec optimization *)
+
+  val printPL = ref false
+  val printUC = ref false
+  val printTP = ref false
+  val printTFP = ref false
+  val printRC = ref false
+  val printTL = ref false
+  val printAC = ref false
+  val printMV = ref false
+  val printCC = ref false
+  val printRBU = ref false
+  val printAN =  ref false
+  val printIL =  ref false
+  val printLS =  ref false
+  val printIS =  ref false
+  val printSR = ref false
+  val printRTL = ref false
+  val printCode = ref false
+  val checkType = ref false
+
+  (** true if detailed type information should b printed. *)
+  val printWithType = ref true
+
+  (** switch for abstract instruction generation. *)
+  val printAI =  ref false
+  val printML =  ref false
+  val printOBJ = ref false
+  val withoutLink = ref false
+  val keepAsm = ref false
+  val debugCodeGen = ref false
+  val targetPlatform = ref ""  (* cpu-manufacturer-ossys:options *)
+
+  local
+    structure S = Substring
+  in
+  fun targetInfo () =
+      let
+        val options =
+            S.fields (fn x => x = #":") (S.full (!targetPlatform))
+
+        val (target, options) =
+            case options of
+              target::options => (S.fields (fn x => x = #"-") target, options)
+            | nil => (nil, nil)
+
+        val (cpu, mfr, os) =
+            case target of
+              cpu::mfr::ossys::_ => (S.string cpu, S.string mfr, S.string ossys)
+            | cpu::ossys::nil => (S.string cpu, "", S.string ossys)
+            | cpu::nil => (S.string cpu, "", "")
+            | _ => ("", "", "")
+
+        val options =
+            foldr (fn (x, options) =>
+                      if S.isPrefix "no-" x
+                      then (false, S.string (S.slice (x, 3, NONE)))::options
+                      else (true, S.string x)::options)
+                  nil
+                  options
+      in
+        {
+          cpu = cpu,
+          manufacturer = mfr,
+          ossys = os,
+          options = options
+        }
+      end
+  end
+
+  fun nativeGen () = !targetPlatform <> ""
+
+  (** true if every diagnosis should be printed. *)
+  val printDiagnosis = ref true
+
+  val doProfile = ref false
+
+  val interactiveMode = ref false
+
+  (* 
+   * since SPECty is still alive after type inference in separate 
+   * and functor compilation, these switchs are used for error 
+   * detection after type inference phase.
+   *)
+  val doCompileObj = ref false
+  val doFunctorCompile = ref false
+  (* 
+   * used for error dectection for some special cases of type checking only 
+   * at linking time
+   *)
+  val doLinking = ref false
+
+  (* trace level of SMLFormat.
+   *)
+  val traceSMLFormat = SMLFormat.traceLevel
+
+  (****************************************)
+  (* other *)
+
+  val firstLinePrompt = ref "# "
+
+  val secondLinePrompt = ref "> "
+
+  (* true if the compiler should skip the shebang line of the argument source
+   * file. *)
+  val skipShebang = ref true
+
+  (****************************************)
+
+  (* MEMO: procedure to generate switches list.
+   * (1) get signature of Control structure.
+   *   - structure C = Control;
+   * (2) copy and paste specifications of switches.
+   *   ex.
+   *     val alignRecord : bool ref
+   *     val checkType : bool ref
+   *     val doConstantPropagation : bool ref
+   * (3) query-replace-regexp
+   *    from:
+   *       val \([^ ]*\) : \([^ ]*\) ref
+   *    to:
+   *       ("\1", \2Switch \1),
+   * (4) replace
+   *     boolSwitch ==> BoolSwitch
+   *     intSwitch ==> IntSwitch
+   *)
+  val newRBU = ref true
+  val switchTable : switchTable =
+      [
+    ("debugTrace", BoolSwitch debugTrace),
+    ("debugPrint", BoolSwitch debugPrint),
+    ("doNameEval", BoolSwitch doNameEval),
+    ("doBitmapANormalReorder", BoolSwitch doBitmapANormalReorder),
+    ("newRBU", BoolSwitch newRBU),
+    ("doUntil", IntSwitch doUntil),
+    ("alignRecord", BoolSwitch alignRecord),
+    ("checkType", BoolSwitch checkType),
+    ("debugCodeGen", BoolSwitch debugCodeGen),
+    ("doCommonSubexpressionElimination",
+       BoolSwitch doCommonSubexpressionElimination),
+    ("doConstantFolding", BoolSwitch doConstantFolding),
+    ("doFunctionCallSpecialization", BoolSwitch doFunctionCallSpecialization),
+    ("doFunctionLocalize", BoolSwitch doFunctionLocalize),
+    ("doInlineCaseBranch", BoolSwitch doInlineCaseBranch),
+    ("doListExpressionOptimization", BoolSwitch doListExpressionOptimization),
+    ("doMultipleValueOptimization", BoolSwitch doMultipleValueOptimization),
+    ("doPreludeLazyUnpickling", BoolSwitch doPreludeLazyUnpickling),
+    ("doProfile", BoolSwitch doProfile),
+    ("doRecordUnboxing", BoolSwitch doRecordUnboxing),
+    ("doInlining", BoolSwitch doInlining),
+    ("inlineThreshold", IntSwitch inlineThreshold),
+    ("doRecursiveCallOptimize", BoolSwitch doRecursiveCallOptimize),
+    ("doRepresentationAnalysis", BoolSwitch doRepresentationAnalysis),
+    ("doRegisterCoalescing", BoolSwitch doRegisterCoalescing),
+    ("doFrameCompaction", BoolSwitch doFrameCompaction),
+    ("doSelfRecursiveCallOptimize", BoolSwitch doSelfRecursiveCallOptimize),
+    ("doStackReallocation", BoolSwitch doStackReallocation),
+    ("doStaticAllocation", BoolSwitch doStaticAllocation),
+    ("doSymbolicInstructionsOptimization", BoolSwitch doSymbolicInstructionsOptimization),
+    ("doTailCallOptimize", BoolSwitch doTailCallOptimize),
+    ("doUncurryingOptimizeInMatchCompile",
+       BoolSwitch doUncurryingOptimizeInMatchCompile),
+    ("doUncurryOptimization", BoolSwitch doUncurryOptimization),
+    ("doUselessCodeElimination", BoolSwitch doUselessCodeElimination),
+    ("enableUnboxedFloat", BoolSwitch enableUnboxedFloat),
+    ("firstLinePrompt", StringSwitch firstLinePrompt),
+    ("generateDebugInfo", BoolSwitch generateDebugInfo),
+    ("generateExnHistory", BoolSwitch generateExnHistory),
+    ("keepAsm", BoolSwitch keepAsm),
+    ("limitOfBlockFields", IntSwitch limitOfBlockFields),
+    ("limitOfInlineCaseBranch", IntSwitch limitOfInlineCaseBranch),
+    ("pageSizeOfGlobalArray", IntSwitch pageSizeOfGlobalArray),
+    ("printAC", BoolSwitch printAC),
+    ("printAN", BoolSwitch printAN),
+    ("printMV", BoolSwitch printMV),
+    ("printBinds", BoolSwitch printBinds),
+    ("printCC", BoolSwitch printCC),
+    ("printDiagnosis", BoolSwitch printDiagnosis),
+    ("printIL", BoolSwitch printIL),
+    ("printAI", BoolSwitch printAI),
+    ("printML", BoolSwitch printML),
+    ("printOBJ", BoolSwitch printOBJ),
+    ("printIS", BoolSwitch printIS),
+    ("printLS", BoolSwitch printLS),
+    ("printPL", BoolSwitch printPL),
+    ("printEL", BoolSwitch printEL),
+    ("printNE", BoolSwitch printNE),
+    ("printMC", BoolSwitch printMC),
+    ("printVR", BoolSwitch printVR),
+
+    ("printRBU", BoolSwitch printRBU),
+    ("printRC", BoolSwitch printRC),
+    ("printRTL", BoolSwitch printRTL),
+    ("printCode", BoolSwitch printCode),
+    ("printSource", BoolSwitch printSource),
+    ("printSR", BoolSwitch printSR),
+    ("printTFP", BoolSwitch printTFP),
+    ("printTL", BoolSwitch printTL),
+    ("printTP", BoolSwitch printTP),
+    ("printUC", BoolSwitch printUC),
+    ("printWarning", BoolSwitch printWarning),
+    ("printWidth", IntSwitch printWidth),
+    ("printWithType", BoolSwitch printWithType),
+    ("printCommand", BoolSwitch printCommand),
+    ("secondLinePrompt", StringSwitch secondLinePrompt),
+    ("skipPrinter", BoolSwitch skipPrinter),
+    ("skipShebang", BoolSwitch skipShebang),
+    ("switchTrace", BoolSwitch switchTrace),
+    ("target", StringSwitch targetPlatform),
+    ("traceFileLoad", BoolSwitch traceFileLoad),
+    ("tracePrelude", BoolSwitch tracePrelude),
+    ("traceSMLFormat", IntSwitch traceSMLFormat),
+    ("VMHeapSize", IntSwitch VMHeapSize),
+    ("VMStackSize", IntSwitch VMStackSize),
+    ("withoutLink", BoolSwitch withoutLink),
+    ("insertCheckGC", BoolSwitch insertCheckGC)
+          ]
+
+  (****************************************)
+  (* utility *)
+
+  fun switchToString (IntSwitch intRef) = Int.toString (!intRef)
+    | switchToString (BoolSwitch boolRef) = if !boolRef then "yes" else "no"
+    | switchToString (StringSwitch stringRef) = !stringRef
+
+  fun interpretControlOption (name, switch, value) =
+      (
+        case switch of
+          IntSwitch intRef =>
+          (case Int.fromString value of
+             SOME int => intRef := int
+           | NONE => raise Fail (name ^ " should be number."))
+        | BoolSwitch boolRef =>
+          (case value of
+             "yes" => boolRef := true
+           | "no" => boolRef := false
+           | _ => raise Fail (name ^ " should be yes or no."))
+        | StringSwitch stringRef => stringRef := value;
+        print
+            ("set control option: "
+             ^ name ^ " = "
+             ^ switchToString switch ^ "\n")
+      )
+
+  (**
+   * usage:
+   * <pre>
+   *   setControlOptions "IML" OS.Process.getEnv
+   * </pre>
+   *)
+  fun setControlOptions prefix getValue =
+      app
+          (fn (name, switch) =>
+              case getValue (prefix ^ name) of
+                SOME value => interpretControlOption (name, switch, value)
+              | NONE => ())
+          switchTable
+
+  fun listSwitches () = switchTable
+
+  (***************************************************************************)
+
+end

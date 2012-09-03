@@ -1,5 +1,0 @@
-Group
-	structure RuntimeTypes
-	structure TypeLayout
-is
-	main/module.cm

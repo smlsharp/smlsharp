@@ -1,9 +1,0 @@
-use "./hash-cons-sig.sml";
-use "./hash-cons.sml";
-use "./hash-cons-set-sig.sml";
-use "./hash-cons-map-sig.sml";
-use "./hash-cons-set.sml";
-use "./hash-cons-map.sml";
-use "./hash-cons-ground-fn.sml";
-use "./hash-cons-string.sml";
-use "./hash-cons-atom.sml";

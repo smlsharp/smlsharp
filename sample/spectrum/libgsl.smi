@@ -1,0 +1,4 @@
+structure GSL =
+struct
+  val fft_real_radix2_transform : real array * int * int -> int
+end

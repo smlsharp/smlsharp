@@ -1,8 +1,0 @@
-(*
- * @author YAMATODANI Kiyoshi
- * @copyright 2010, Tohoku University.
- *)
-Group is
-        $/basis.cm
-        ../../main/sources.cm
-        Grep.sml

@@ -1,0 +1,27 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+_require "../../absyn/main/AbsynInterface.ppg.smi"
+_require "../../absyn/main/Absyn.ppg.smi"
+_require "../../absyn/main/Fixity.smi"
+_require "../../patterncalc/main/PatternCalcInterface.ppg.smi"
+_require "../../patterncalc/main/PatternCalc.ppg.smi"
+_require "../../usererror/main/UserError.ppg.smi"
+_require "ELABORATOR.sig"
+_require "ElaborateInterface.smi"
+_require "ElaborateModule.smi"
+_require "ElaboratorUtils.smi"
+_require "UserTvarScope.smi"
+
+structure Elaborator =
+struct
+  type fixEnv = Fixity.fixity SEnv.map
+  val extendFixEnv : fixEnv * fixEnv -> fixEnv
+  val elaborate :
+      fixEnv
+      -> AbsynInterface.compileUnit
+      -> fixEnv * PatternCalcInterface.compileUnit * UserError.errorInfo list
+  val elaborateRequire :
+      AbsynInterface.compileUnit
+      -> fixEnv * PatternCalcInterface.compileUnit * UserError.errorInfo list
+end

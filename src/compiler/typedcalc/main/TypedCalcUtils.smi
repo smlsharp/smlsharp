@@ -1,0 +1,24 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+_require "../../../compiler-utils/env/main/LabelEnv.smi"
+
+_require "../../control/main/Control.ppg.smi"
+_require "../../control/main/Loc.ppg.smi"
+_require "../../name/main/LocalID.smi"
+_require "../../util/main/gensym.smi"
+_require "../../types/main/Types.ppg.smi"
+_require "../../types/main/TypesUtils.smi"
+_require "TypedCalc.ppg.smi"
+
+structure TypedCalcUtils =
+  struct
+    val newTCVarName : unit -> string
+    val newTCVarInfo
+        : 'a -> {id: VarID.id, path: string list, ty: 'a}
+    val newTCVarInfoWithPath
+        : 'a * 'b -> {id: VarID.id, path: 'a, ty: 'b}
+    val getLocOfExp : TypedCalc.tpexp -> Loc.loc
+    val freshInst : Types.ty * TypedCalc.tpexp -> Types.ty * TypedCalc.tpexp
+    val freshToplevelInst
+        : Types.ty * TypedCalc.tpexp -> Types.ty * TypedCalc.tpexp
+  end

@@ -1,2 +1,0 @@
-use "./sources.use";
-use "./call-main.sml";

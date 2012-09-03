@@ -1,5 +1,0 @@
-Group
-	structure Loc
-	structure Control
-is
-	main/module.cm

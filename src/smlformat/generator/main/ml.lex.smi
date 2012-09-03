@@ -1,0 +1,143 @@
+_require "../../../basis.smi"
+_require "../../../ml-yacc-lib.smi"
+_require "FormatTemplate.smi"
+_require "TokenTable.smi"
+_require "ml.grm.sig"
+
+functor MLLexFun(
+  A : sig
+    structure Tokens : sig
+      type ('a,'b) token
+      type svalue
+      val ASSOCINDICATOR : {cut:bool, direction: FormatTemplate.assocDirection,
+                            strength:int} * 'a * 'a
+                           -> (svalue,'a) token
+      val FORMATINDICATOR : {newline:{priority: FormatTemplate.priority} option,
+                             space:bool} * 'a * 'a
+                            -> (svalue,'a) token
+      val STARTOFINDENT : int * 'a * 'a -> (svalue,'a) token
+      val NEWLINE : 'a * 'a -> (svalue,'a) token
+      val LOCALFORMATTAG : string * 'a * 'a -> (svalue,'a) token
+      val FORMATTAG : 'a * 'a -> (svalue,'a) token
+      val HEADERTAG : 'a * 'a -> (svalue,'a) token
+      val DESTINATIONTAG : 'a * 'a -> (svalue,'a) token
+      val FORMATPARAMSTAG : 'a * 'a -> (svalue,'a) token
+      val FORMATTERTAG : 'a * 'a -> (svalue,'a) token
+      val PREFIXTAG : 'a * 'a -> (svalue,'a) token
+      val DITTOTAG : 'a * 'a -> (svalue,'a) token
+      val FORMATCOMMENTEND : 'a * 'a -> (svalue,'a) token
+      val FORMATCOMMENTSTART : 'a * 'a -> (svalue,'a) token
+      val AQID : string * 'a * 'a -> (svalue,'a) token
+      val OBJL : string * 'a * 'a -> (svalue,'a) token
+      val ENDQ : string * 'a * 'a -> (svalue,'a) token
+      val BEGINQ : 'a * 'a -> (svalue,'a) token
+      val VECTORSTART : 'a * 'a -> (svalue,'a) token
+      val FUNSIG : 'a * 'a -> (svalue,'a) token
+      val ANDALSO : 'a * 'a -> (svalue,'a) token
+      val ORELSE : 'a * 'a -> (svalue,'a) token
+      val RPAREN : 'a * 'a -> (svalue,'a) token
+      val RBRACKET : 'a * 'a -> (svalue,'a) token
+      val RBRACE : 'a * 'a -> (svalue,'a) token
+      val LPAREN : 'a * 'a -> (svalue,'a) token
+      val LBRACKET : 'a * 'a -> (svalue,'a) token
+      val LBRACE : 'a * 'a -> (svalue,'a) token
+      val COMMA : 'a * 'a -> (svalue,'a) token
+      val COLONGT : 'a * 'a -> (svalue,'a) token
+      val COLON : 'a * 'a -> (svalue,'a) token
+      val ASTERISK : 'a * 'a -> (svalue,'a) token
+      val USEOBJ : 'a * 'a -> (svalue,'a) token
+      val STDCALL : 'a * 'a -> (svalue,'a) token
+      val SIZEOF : 'a * 'a -> (svalue,'a) token
+      val IMPORT : 'a * 'a -> (svalue,'a) token
+      val FFIAPPLY : 'a * 'a -> (svalue,'a) token
+      val EXTERNAL : 'a * 'a -> (svalue,'a) token
+      val EXPORT : 'a * 'a -> (svalue,'a) token
+      val DOUBLE : 'a * 'a -> (svalue,'a) token
+      val CDECL : 'a * 'a -> (svalue,'a) token
+      val CAST : 'a * 'a -> (svalue,'a) token
+      val BOXED : 'a * 'a -> (svalue,'a) token
+      val ATOM : 'a * 'a -> (svalue,'a) token
+      val WITHTYPE : 'a * 'a -> (svalue,'a) token
+      val WITH : 'a * 'a -> (svalue,'a) token
+      val WILD : 'a * 'a -> (svalue,'a) token
+      val WHILE : 'a * 'a -> (svalue,'a) token
+      val WHERE : 'a * 'a -> (svalue,'a) token
+      val VAL : 'a * 'a -> (svalue,'a) token
+      val TYPE : 'a * 'a -> (svalue,'a) token
+      val THEN : 'a * 'a -> (svalue,'a) token
+      val STRUCTURE : 'a * 'a -> (svalue,'a) token
+      val STRUCT : 'a * 'a -> (svalue,'a) token
+      val SIGNATURE : 'a * 'a -> (svalue,'a) token
+      val SIG : 'a * 'a -> (svalue,'a) token
+      val SHARING : 'a * 'a -> (svalue,'a) token
+      val REC : 'a * 'a -> (svalue,'a) token
+      val RAISE : 'a * 'a -> (svalue,'a) token
+      val OVERLOAD : 'a * 'a -> (svalue,'a) token
+      val OPEN : 'a * 'a -> (svalue,'a) token
+      val OP : 'a * 'a -> (svalue,'a) token
+      val OF : 'a * 'a -> (svalue,'a) token
+      val NONFIX : 'a * 'a -> (svalue,'a) token
+      val LOCAL : 'a * 'a -> (svalue,'a) token
+      val LET : 'a * 'a -> (svalue,'a) token
+      val LAZY : 'a * 'a -> (svalue,'a) token
+      val INFIXR : 'a * 'a -> (svalue,'a) token
+      val INFIX : 'a * 'a -> (svalue,'a) token
+      val INCLUDE : 'a * 'a -> (svalue,'a) token
+      val IN : 'a * 'a -> (svalue,'a) token
+      val IF : 'a * 'a -> (svalue,'a) token
+      val HASH : 'a * 'a -> (svalue,'a) token
+      val HANDLE : 'a * 'a -> (svalue,'a) token
+      val FUNCTOR : 'a * 'a -> (svalue,'a) token
+      val FUN : 'a * 'a -> (svalue,'a) token
+      val FN : 'a * 'a -> (svalue,'a) token
+      val DARROW : 'a * 'a -> (svalue,'a) token
+      val DOT : 'a * 'a -> (svalue,'a) token
+      val DO : 'a * 'a -> (svalue,'a) token
+      val EXCEPTION : 'a * 'a -> (svalue,'a) token
+      val EQTYPE : 'a * 'a -> (svalue,'a) token
+      val EQUALOP : 'a * 'a -> (svalue,'a) token
+      val END : 'a * 'a -> (svalue,'a) token
+      val ELSE : 'a * 'a -> (svalue,'a) token
+      val DOTDOTDOT : 'a * 'a -> (svalue,'a) token
+      val DATATYPE : 'a * 'a -> (svalue,'a) token
+      val CASE : 'a * 'a -> (svalue,'a) token
+      val BAR : 'a * 'a -> (svalue,'a) token
+      val AS : 'a * 'a -> (svalue,'a) token
+      val ARROW : 'a * 'a -> (svalue,'a) token
+      val AND : 'a * 'a -> (svalue,'a) token
+      val ABSTYPE : 'a * 'a -> (svalue,'a) token
+      val CHAR : string * 'a * 'a -> (svalue,'a) token
+      val STRING : string * 'a * 'a -> (svalue,'a) token
+      val REAL : string * 'a * 'a -> (svalue,'a) token
+      val WORD : int * 'a * 'a -> (svalue,'a) token
+      val INT0 : int * 'a * 'a -> (svalue,'a) token
+      val INT : int * 'a * 'a -> (svalue,'a) token
+      val TYVAR : string * 'a * 'a -> (svalue,'a) token
+      val ID : string * 'a * 'a -> (svalue,'a) token
+      val SEMICOLON : 'a * 'a -> (svalue,'a) token
+      val EOF : 'a * 'a -> (svalue,'a) token
+    end
+  end
+) =
+struct
+  structure UserDeclarations =
+  struct
+    type ('a,'b) token = ('a,'b) A.Tokens.token
+    type pos = int
+    type svalue = A.Tokens.svalue
+    type arg = {brack_stack : int ref list ref,
+                comLevel : int ref,
+                currentLineNumber : int ref,
+                error : string * int * int -> unit,
+                inFormatComment : bool ref,
+                lastNewLinePos : int ref,
+                lineMap : (int * (int * int)) list ref,
+                stream : TextIO.instream,
+                stringBuf : string list ref,
+                stringStart : int ref,
+                stringType : bool ref}
+  end
+  val makeLexer
+      : (int -> string) -> UserDeclarations.arg -> unit -> 
+        (UserDeclarations.svalue, UserDeclarations.pos) UserDeclarations.token
+end

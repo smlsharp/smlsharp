@@ -1,0 +1,50 @@
+_require "../../../basis/main/Option.smi"
+_require "../../../basis/main/String.smi"
+_require "../../../basis/main/Int.smi"
+_require "../../../basis/main/StringCvt.smi"
+_require "../../../basis/main/Char.smi"
+_require "../../../basis/main/List.smi"
+_require "../../../basis/main/binary-op.smi"
+_require "../../../smlnj-lib/Util/parser-comb.smi"
+_require "FORMAT_EXPRESSION.sig"
+_require "FormatExpressionTypes.smi"
+
+structure FormatExpression =
+struct
+
+  datatype priority =
+           Preferred of int
+	 | Deferred
+  datatype assocDirection =
+           Left
+         | Right
+         | Neutral
+  type assoc =
+       {
+        cut : bool,
+        strength : int,
+        direction : assocDirection
+       }
+  datatype expression =
+           Term of (int * string)
+         | Newline
+         | Guard of (assoc option) * (expression list)
+         | Indicator of
+           {
+            space : bool,
+	    newline :
+            {
+             priority : priority
+            }
+		option
+           }
+         | StartOfIndent of int
+         | EndOfIndent
+  val isHigherThan : priority * priority -> bool
+  val assocToString : assoc -> string
+  val priorityToString : priority -> string
+  val toString : expression -> string
+  val parse
+      : (char, 'a) StringCvt.reader -> (expression list, 'a) StringCvt.reader
+ 
+end

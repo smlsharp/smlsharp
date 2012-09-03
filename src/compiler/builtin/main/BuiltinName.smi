@@ -1,0 +1,65 @@
+_require "../../../basis.smi"
+_require "../../../compiler-utils/env/main/SEnv.smi"
+
+structure BuiltinName =
+struct
+  type path (= boxed)
+  datatype 'a env = ENV of {env: 'a, strEnv: 'a env SEnv.map}
+  val find : ('a -> 'b SEnv.map) -> 'a env * path -> 'b option
+  val toString : path -> string
+  val intTyName : path
+  val wordTyName : path
+  val word8TyName : path
+  val charTyName : path
+  val stringTyName : path
+  val realTyName : path
+  val real32TyName : path
+  val unitTyName : path
+  val ptrTyName : path
+  val arrayTyName : path
+  val listTyName : path
+  val vectorTyName : path
+  val refTyName : path
+  val exnTyName : path
+  val exntagTyName : path
+  val intInfTyName : path
+  val boxedTyName : path
+  val boolTyName : path
+  val optionTyName : path
+  val falseConName : path
+  val trueConName : path
+  val consConName : path
+  val nilConName : path
+  val someConName : path
+  val noneConName : path
+  val refConName : path
+  val matchExnName : path
+  val bindExnName : path
+  val subscriptExnName : path
+  val divExnName : path
+  val sqlServerTyName : path
+  val sqlServerConName : path
+  val sqlDBITyName : path
+  val sqlDBIConName : path
+  val sqlValueTyName : path
+  val sqlValueConName : path
+
+  val intTyPath : string list
+  val wordTyPath : string list
+  val word8TyPath : string list
+  val charTyPath : string list
+  val stringTyPath : string list
+  val realTyPath : string list
+  val real32TyPath : string list
+  val unitTyPath : string list
+  val ptrTyPath : string list
+  val arrayTyPath : string list
+  val listTyPath : string list
+  val vectorTyPath : string list
+  val refTyPath : string list
+  val exnTyPath : string list
+  val exntagTyPath : string list
+  val intInfTyPath : string list
+  val boxedTyPath : string list
+
+end
