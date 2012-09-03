@@ -376,6 +376,7 @@ struct
         (#toString (hd(listCounters rootSet ORDER_OF_ADDITION)) ORDER_OF_ADDITION "")
           ^
         (#toString (hd(listCounters rootSet ORDER_OF_ADDITION)) ORDER_BY_TIME "")
+    val reset = fn () => reset rootSet ()
   end
 
   val CounterSetInternal TopCounterSet =

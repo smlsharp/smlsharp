@@ -1,8 +1,24 @@
+SML# version 1.0.2 (released on 2012-05-14)
+
+Fixed bugs:
+* Some illegal SQL select queries were accepted due to lack of a type
+  unification.
+* Using capital letters in an SQL query caused runtime error when the
+  query is sent to a database server.
+* Real.fmt returned wrong results. This bug was also affected to the
+  value printer of the interactive mode.
+* Name evaluation passed duplicate link symbols in a case that those
+  symbols are declared in different interface files.
+* "make" was aborted due to no rule on .desc files if --enable-fast-build
+  is enabled.
+
+-----------------------------------------------------------------------------
 SML# version 1.0.1 (released on 2012-04-24)
 
 Fixed bugs:
 * Vector.update caused segentation fault.
 * Bound type variables in a record kind caused a BUG exception.
+* opeining a structure containing overloaded ids caused a BUG exception.
 
 Improvements:
 * builtin-primitives are now printed in the interactive session.

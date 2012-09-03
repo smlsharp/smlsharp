@@ -1934,6 +1934,14 @@ in (* local *)
             | dec::_ => (#1 (P.getLocTopDec dec),
                          #2 (P.getLocTopDec (List.last topdecs)))
         val interfaceEnv = EI.evalInterfaces topEnv decls
+        (* for error checking *)
+        val _ = 
+            InterfaceID.Map.foldl
+            (fn ({topEnv,...}, totalEnv) => 
+                V.unionTopEnv "204" loc (totalEnv, topEnv)
+            )
+            V.emptyTopEnv
+            interfaceEnv
         val evalTopEnv =
             foldl
             (fn ({id,loc}, evalTopEnv) =>

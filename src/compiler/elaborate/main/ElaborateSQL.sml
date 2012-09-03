@@ -118,7 +118,7 @@ struct
 
   fun rowCon (rowName, dbiVar, witnessVar, loc) =
       appExp (SQLRowConName,
-              pairCon (stringDBICon (rowName, dbiVar, loc),
+              pairCon (stringDBICon ("\"" ^ rowName ^ "\"", dbiVar, loc),
                        P.PLVAR ([witnessVar], loc), loc),
               loc)
   fun makeList (elemList, loc) = 
@@ -187,7 +187,7 @@ struct
 
   fun a_tableCon (rowName, witnessVar, dbiVar, loc) =
       a_appExp (SQLTableConName,
-                a_pairExp (a_StringDBICon (rowName, dbiVar, loc),
+                a_pairExp (a_StringDBICon ("\"" ^ rowName ^ "\"", dbiVar, loc),
                            A.EXPID ([witnessVar], loc), loc),
                 loc)
 
@@ -450,7 +450,7 @@ struct
         val selectReturnExp =
             P.PLRECORD (selectReturnFields, loc)
         val selectQuery =
-            stringCon ("SELECT ", loc) ::
+            stringDBICon ("SELECT ", dbiVar, loc) ::
             asList (map (fn {queryVar, label, ...} =>
                             (label, P.PLVAR ([queryVar], loc)))
                         selectList, loc)

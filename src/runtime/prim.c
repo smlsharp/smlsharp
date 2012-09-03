@@ -140,22 +140,6 @@ float nextafter(float x, float y)
 }
 #endif /* HAVE_NEXTAFTERF */
 
-#ifndef HAVE_FESETROUND
-int fesetround(int x)
-{
-	/* ToDo: stub */
-	sml_fatal(0, "fesetround is not implemented");
-}
-#endif /* HAVE_FESETROUND */
-
-#ifndef HAVE_FEGETROUND
-int fegetround()
-{
-	/* ToDo: stub */
-	sml_fatal(0, "fegetround is not implemented");
-}
-#endif /* HAVE_FEGETROUND */
-
 #if HAVE_DECL_FPCLASSIFY
 #define HAVE_FPCLASSIFY 1
 #endif
@@ -277,6 +261,30 @@ sleep(unsigned int seconds)
 	return seconds;
 }
 #endif /* HAVE_SLEEP */
+
+/* On some systems, fesetround and fegetround are provided as inline
+ * functions, not as library functions.  The Basis Library requires
+ * that they are library functions since it imports them to ML by the
+ * _import feature.  */
+int prim_fesetround(int x)
+{
+#if !defined(HAVE_FESETROUND) && !HAVE_DECL_FESETROUND
+	/* ToDo: stub */
+	sml_fatal(0, "fesetround is not implemented");
+#else
+	return fesetround(x);
+#endif /* !HAVE_FESETROUND */
+}
+
+int prim_fegetround()
+{
+#if !defined(HAVE_FEGETROUND) && !HAVE_DECL_FEGETROUND
+	/* ToDo: stub */
+	sml_fatal(0, "fegetround is not implemented");
+#else
+	return fegetround();
+#endif /* !HAVE_FEGETROUND */
+}
 
 int
 prim_String_size(const char *str)
@@ -1962,145 +1970,3 @@ prim_tmpName()
 	return sml_str_new(tmpnam(NULL));
 #endif /* MINGW32 || HAVE_MKSTEMP */
 }
-
-typedef void primfn();
-struct sml_prim_tabent {
-       const char *name;
-       primfn *func;
-};
-
-const struct sml_prim_tabent sml_runtime_primitives[] = {
-	/* supported by compiler itself */
-	{"sml_obj_dup", (primfn*)sml_obj_dup},
-	{"prim_String_cmp", (primfn*)prim_String_cmp},
-	{"prim_IntInf_cmp", (primfn*)prim_IntInf_cmp},
-	{"prim_IntInf_load", (primfn*)prim_IntInf_load},
-	{"prim_CopyMemory", (primfn*)prim_CopyMemory},
-	{"sml_obj_equal", (primfn*)sml_obj_equal},
-
-	{"prim_String_allocateMutable", (primfn*)prim_String_allocateMutable},
-	{"prim_String_allocateImmutable", (primfn*)prim_String_allocateImmutable},
-	{"prim_String_copy", (primfn*)prim_String_copy},
-	{"prim_String_size", (primfn*)prim_String_size},
-	{"prim_String_sub", (primfn*)prim_String_sub},
-	{"prim_String_update", (primfn*)prim_String_update},
-	{"prim_IntInf_abs", (primfn*)prim_IntInf_abs},
-	{"prim_IntInf_add", (primfn*)prim_IntInf_add},
-	{"prim_IntInf_div", (primfn*)prim_IntInf_div},
-	{"prim_IntInf_mod", (primfn*)prim_IntInf_mod},
-	{"prim_IntInf_mul", (primfn*)prim_IntInf_mul},
-	{"prim_IntInf_neg", (primfn*)prim_IntInf_neg},
-	{"prim_IntInf_sub", (primfn*)prim_IntInf_sub},
-	{"prim_UnmanagedMemory_subInt", (primfn*)prim_UnmanagedMemory_subInt},
-	{"prim_UnmanagedMemory_subReal", (primfn*)prim_UnmanagedMemory_subReal},
-	{"prim_UnmanagedMemory_subWord", (primfn*)prim_UnmanagedMemory_subWord},
-	{"prim_UnmanagedMemory_subByte", (primfn*)prim_UnmanagedMemory_subByte},
-
-	/* for basis library implementation */
-	{"prim_Int_toString", (primfn*)prim_Int_toString},
-	{"prim_IntInf_toString", (primfn*)prim_IntInf_toString},
-	{"prim_IntInf_toInt", (primfn*)prim_IntInf_toInt},
-	{"prim_IntInf_toWord", (primfn*)prim_IntInf_toWord},
-	{"prim_IntInf_fromInt", (primfn*)prim_IntInf_fromInt},
-	{"prim_IntInf_fromWord", (primfn*)prim_IntInf_fromWord},
-	{"prim_IntInf_quot", (primfn*)prim_IntInf_quot},
-	{"prim_IntInf_rem", (primfn*)prim_IntInf_rem},
-	{"prim_IntInf_pow", (primfn*)prim_IntInf_pow},
-	{"prim_IntInf_log2", (primfn*)prim_IntInf_log2},
-	{"prim_IntInf_orb", (primfn*)prim_IntInf_orb},
-	{"prim_IntInf_xorb", (primfn*)prim_IntInf_xorb},
-	{"prim_IntInf_andb", (primfn*)prim_IntInf_andb},
-	{"prim_IntInf_notb", (primfn*)prim_IntInf_notb},
-	{"prim_Word_toString", (primfn*)prim_Word_toString},
-	{"prim_Real_class", (primfn*)prim_Real_class},
-	{"prim_Float_class", (primfn*)prim_Float_class},
-	{"prim_String_allocateImmutableNoInit", (primfn*)prim_String_allocateImmutableNoInit},
-	{"prim_String_allocateMutableNoInit", (primfn*)prim_String_allocateMutableNoInit},
-	{"prim_String_substring", (primfn*)prim_String_substring},
-	{"prim_print", (primfn*)prim_print},
-	{"prim_GenericOS_exit", (primfn*)prim_GenericOS_exit},
-	{"prim_GenericOS_open", (primfn*)prim_GenericOS_open},
-	{"prim_GenericOS_read", (primfn*)prim_GenericOS_read},
-	{"prim_GenericOS_write", (primfn*)prim_GenericOS_write},
-	{"prim_GenericOS_fstat", (primfn*)prim_GenericOS_fstat},
-	{"prim_GenericOS_stat", (primfn*)prim_GenericOS_stat},
-	{"prim_GenericOS_lseek", (primfn*)prim_GenericOS_lseek},
-	{"prim_GenericOS_utime", (primfn*)prim_GenericOS_utime},
-	{"prim_GenericOS_readlink", (primfn*)prim_GenericOS_readlink},
-	{"prim_GenericOS_chdir", (primfn*)prim_GenericOS_chdir},
-	{"prim_GenericOS_mkdir", (primfn*)prim_GenericOS_mkdir},
-	{"prim_GenericOS_getcwd", (primfn*)prim_GenericOS_getcwd},
-	{"prim_GenericOS_opendir", (primfn*)prim_GenericOS_opendir},
-	{"prim_GenericOS_readdir", (primfn*)prim_GenericOS_readdir},
-	{"prim_GenericOS_rewinddir", (primfn*)prim_GenericOS_rewinddir},
-	{"prim_GenericOS_closedir", (primfn*)prim_GenericOS_closedir},
-	{"prim_GenericOS_poll", (primfn*)prim_GenericOS_poll},
-	{"prim_GenericOS_errorName", (primfn*)prim_GenericOS_errorName},
-	{"prim_GenericOS_syserror", (primfn*)prim_GenericOS_syserror},
-	{"prim_Time_gettimeofday", (primfn*)prim_Time_gettimeofday},
-	{"prim_Timer_getTimes", (primfn*)prim_Timer_getTimes},
-	{"prim_StandardC_errno", (primfn*)prim_StandardC_errno},
-	{"prim_Platform_isBigEndian", (primfn*)prim_Platform_isBigEndian},
-	{"prim_Platform_getPlatform", (primfn*)prim_Platform_getPlatform},
-	{"prim_CommandLine_argc", (primfn*)prim_CommandLine_argc},
-	{"prim_CommandLine_argv", (primfn*)prim_CommandLine_argv},
-	{"prim_xmalloc", (primfn*)prim_xmalloc},
-	{"prim_cconst_int", (primfn*)prim_cconst_int},
-	{"sml_str_new", (primfn*)sml_str_new},
-
-	/* Netlib dtoa */
-	{"sml_dtoa", (primfn*)sml_dtoa},
-	{"sml_freedtoa", (primfn*)sml_freedtoa},
-	{"sml_strtod", (primfn*)sml_strtod},
-
-	/* standard C library functions for basis library implementation */
-	/* ANSI */
-	{"ldexp", (primfn*)ldexp},
-	{"sqrt", (primfn*)sqrt},
-	{"sin", (primfn*)sin},
-	{"cos", (primfn*)cos},
-	{"tan", (primfn*)tan},
-	{"asin", (primfn*)asin},
-	{"acos", (primfn*)acos},
-	{"atan", (primfn*)atan},
-	{"atan2", (primfn*)atan2},
-	{"exp", (primfn*)exp},
-	{"pow", (primfn*)pow},
-	{"log", (primfn*)log},
-	{"log10", (primfn*)log10},
-	{"sinh", (primfn*)sinh},
-	{"cosh", (primfn*)cosh},
-	{"tanh", (primfn*)tanh},
-	{"floor", (primfn*)floor},
-	{"ceil", (primfn*)ceil},
-	{"round", (primfn*)round},
-	{"modf", (primfn*)modf},
-	{"frexp", (primfn*)frexp},
-	{"strerror", (primfn*)strerror},
-	{"getenv", (primfn*)getenv},
-	{"free", (primfn*)free},
-	{"system", (primfn*)system},
-	{"remove", (primfn*)remove},
-	{"rename", (primfn*)rename},
-
-	/* C99 */
-	{"copysign", (primfn*)copysign},
-	{"copysignf", (primfn*)copysignf},
-	{"ceilf", (primfn*)ceilf},
-	{"floorf", (primfn*)floorf},
-	{"roundf", (primfn*)roundf},
-	{"ldexpf", (primfn*)ldexpf},
-	{"frexpf", (primfn*)frexpf},
-	{"modff", (primfn*)modff},
-	{"fesetround", (primfn*)fesetround},
-	{"fegetround", (primfn*)fegetround},
-
-	/* POSIX */
-	{"sleep", (primfn*)sleep},
-	{"close", (primfn*)close},
-	{"rmdir", (primfn*)rmdir},
-	{"dlopen", (primfn*)dlopen},
-	{"dlerror", (primfn*)dlerror},
-	{"dlclose", (primfn*)dlclose},
-	{"dlsym", (primfn*)dlsym},
-};

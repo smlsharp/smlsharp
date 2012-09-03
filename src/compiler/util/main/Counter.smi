@@ -68,6 +68,7 @@ struct
        toString : counterSetOrder -> string -> string,
        reset : unit -> unit}
   val dump : unit -> string
+  val reset : unit -> unit
   val root : counterSet
 
   val TopCounterSet : counterSet

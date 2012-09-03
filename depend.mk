@@ -5249,21 +5249,22 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
   src/smlformat/formatlib/main/SMLFormat.smi src/smlformat-lib.smi \
   src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
   src/compiler/control/main/Control.ppg.smi \
+  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
+  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-set-sig.sml \
+  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/ENV.sig \
+  src/compiler-utils/env/main/IEnv.smi src/compiler-utils/env/main/SEnv.smi \
+  src/compiler/util/main/COUNTER.sig src/compiler/util/main/Counter.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi src/config/main/Version.smi \
   src/compiler/toolchain/main/Filename.smi \
-  src/compiler/toolchain/main/CoreUtils.smi \
-  src/smlnj-lib/Util/lib-base-sig.sml src/smlnj-lib/Util/lib-base.smi \
-  src/compiler-utils/env/main/ENV.sig src/compiler-utils/env/main/SEnv.smi \
-  src/config/main/Config.smi src/compiler/toolchain/main/TempFile.smi \
+  src/compiler/toolchain/main/CoreUtils.smi src/config/main/Config.smi \
+  src/compiler/toolchain/main/TempFile.smi \
   src/compiler/toolchain/main/BinUtils.smi src/ml-yacc/lib/base.sig \
   src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
   src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
-  src/smlnj-lib/Util/ord-key-sig.sml src/smlnj-lib/Util/ord-map-sig.sml \
-  src/smlnj-lib/Util/binary-map-fn.smi \
+  src/smlnj-lib/Util/ord-map-sig.sml src/smlnj-lib/Util/binary-map-fn.smi \
   src/compiler-utils/env/main/LabelOrd.smi \
-  src/compiler-utils/env/main/LabelEnv.smi src/smlnj-lib/Util/ord-set-sig.sml \
-  src/compiler-utils/env/main/IEnv.smi src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/LabelEnv.smi \
   src/compiler-utils/env/main/IOrd.smi src/compiler-utils/env/main/ISet.smi \
   src/compiler/name/main/LOCAL_ID.sig src/compiler/name/main/LocalID.smi \
   src/compiler/util/main/ListSorter.smi \
@@ -5282,7 +5283,6 @@ src/compiler/main/main/RunLoop.o: src/compiler/main/main/RunLoop.sml \
   src/compiler/builtin/main/BuiltinType.ppg.smi \
   src/compiler/types/main/tvarMap.smi src/compiler/types/main/OPrimInstMap.smi \
   src/compiler/types/main/Types.ppg.smi src/compiler/types/main/IDCalc.ppg.smi \
-  src/compiler/util/main/COUNTER.sig src/compiler/util/main/Counter.smi \
   src/compiler/builtin/main/BuiltinName.smi src/compiler/types/main/VarMap.smi \
   src/compiler/types/main/OPrimMap.smi src/compiler/types/main/EvalIty.smi \
   src/compiler/types/main/BuiltinEnv.smi \
@@ -8440,38 +8440,39 @@ src/compiler/parser/main/ParserError.ppg.o: \
   $(SMLSHARP_DEP)
 src/compiler/parser/main/iml.grm.sml src/compiler/parser/main/iml.grm.sig: src/compiler/parser/main/iml.grm $(MLYACC_DEP)
 src/compiler/parser/main/iml.grm.o: src/compiler/parser/main/iml.grm.sml \
+  src/basis/main/STRING_CVT.sig src/basis/main/StringCvt.smi \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
   src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
-  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
-  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
-  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/List.smi src/basis/main/SMLSharpScanChar.smi \
   src/basis/main/CHAR.sig src/basis/main/Char.smi \
   src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
   src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
   src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
-  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
-  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
-  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
   src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
   src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
-  src/basis/main/IntInf.smi src/basis/main/Int.smi \
-  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
-  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
-  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
-  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Array.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/Word.smi src/basis/main/Word8.smi \
+  src/basis/main/SMLSharpRuntime.smi src/basis/main/IEEE_REAL.sig \
+  src/basis/main/IEEEReal.smi src/basis/main/RealClass.smi \
+  src/basis/main/Substring.smi src/basis/main/MATH.sig src/basis/main/Real.smi \
+  src/basis/main/Real32.smi src/basis/main/binary-op.smi \
+  src/ml-yacc/lib/base.sig src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/Word8Vector.smi \
+  src/basis/main/Word8VectorSlice.smi src/basis/main/BOOL.sig \
+  src/basis/main/Bool.smi src/basis/main/IO.sig src/basis/main/IO.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi \
   src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
   src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
   src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
   src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
   src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
-  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
-  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/OS_IO.sig \
   src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
   src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
   src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
   src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
-  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
-  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/Posix/posix-io.smi \
   src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
   src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
   src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
@@ -8485,8 +8486,7 @@ src/compiler/parser/main/iml.grm.o: src/compiler/parser/main/iml.grm.sml \
   src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
   src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
-  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
-  src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig src/basis.smi \
   src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
   src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
@@ -8598,39 +8598,39 @@ src/compiler/parser/main/iml.lex.o: src/compiler/parser/main/iml.lex.sml \
   $(SMLSHARP_DEP)
 src/compiler/parser/main/interface.grm.sml src/compiler/parser/main/interface.grm.sig: src/compiler/parser/main/interface.grm $(MLYACC_DEP)
 src/compiler/parser/main/interface.grm.o: \
-  src/compiler/parser/main/interface.grm.sml src/basis/main/GENERAL.sig \
+  src/compiler/parser/main/interface.grm.sml src/basis/main/STRING_CVT.sig \
+  src/basis/main/StringCvt.smi src/basis/main/GENERAL.sig \
   src/basis/main/General.smi src/basis/main/OPTION.sig \
   src/basis/main/Option.smi src/basis/main/LIST.sig src/basis/main/List.smi \
-  src/basis/main/Array.smi src/basis/main/Vector.smi \
-  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
-  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
-  src/basis/main/CHAR.sig src/basis/main/Char.smi \
-  src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
-  src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
-  src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
-  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
-  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
-  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
-  src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
-  src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
-  src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/SMLSharpScanChar.smi src/basis/main/CHAR.sig \
+  src/basis/main/Char.smi src/basis/main/MONO_ARRAY.sig \
+  src/basis/main/MONO_VECTOR.sig src/basis/main/MONO_ARRAY_SLICE.sig \
+  src/basis/main/MONO_VECTOR_SLICE.sig src/basis/main/STRING.sig \
+  src/basis/main/SUBSTRING.sig src/basis/main/StringBase.smi \
+  src/basis/main/CharVector.smi src/basis/main/CharVectorSlice.smi \
+  src/basis/main/String.smi src/basis/main/Array.smi \
+  src/basis/main/LIST_PAIR.sig src/basis/main/ListPair.smi \
+  src/basis/main/IntInf.smi src/basis/main/Int.smi src/basis/main/Word.smi \
+  src/basis/main/Word8.smi src/basis/main/SMLSharpRuntime.smi \
   src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
   src/basis/main/RealClass.smi src/basis/main/Substring.smi \
   src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
-  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/binary-op.smi src/ml-yacc/lib/base.sig \
+  src/basis/main/Vector.smi src/basis/main/VectorSlice.smi \
+  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
+  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
+  src/basis/main/IO.smi src/basis/main/TIME.sig src/basis/main/Time.smi \
   src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
   src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
   src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
   src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
   src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
-  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
-  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/OS_IO.sig \
   src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
   src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
   src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
   src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
-  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
-  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/Posix/posix-io.smi \
   src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
   src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
   src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
@@ -8644,8 +8644,7 @@ src/compiler/parser/main/interface.grm.o: \
   src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
   src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
-  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
-  src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig src/basis.smi \
   src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
   src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlnj-lib/Util/parser-comb-sig.sml src/smlnj-lib/Util/parser-comb.smi \
@@ -11984,11 +11983,12 @@ src/compiler/smlsharp.o: src/compiler/smlsharp.sml src/basis/main/GENERAL.sig \
   src/compiler-utils/env/main/LabelOrd.smi \
   src/compiler-utils/env/main/LabelEnv.smi \
   src/reifiedterm/main/TermPrintUtils.ppg.smi \
-  src/reifiedterm/main/ReifiedTerm.ppg.smi src/prelude.smi \
-  src/compiler/control/main/LOC.sig src/compiler/control/main/Loc.ppg.smi \
-  src/compiler/control/main/Control.ppg.smi src/smlnj-lib/Util/ord-set-sig.sml \
-  src/smlnj-lib/Util/binary-set-fn.smi src/compiler-utils/env/main/IEnv.smi \
-  src/compiler/util/main/COUNTER.sig src/compiler/util/main/Counter.smi \
+  src/reifiedterm/main/ReifiedTerm.ppg.smi src/compiler/control/main/LOC.sig \
+  src/compiler/control/main/Loc.ppg.smi \
+  src/compiler/control/main/Control.ppg.smi src/prelude.smi \
+  src/smlnj-lib/Util/ord-set-sig.sml src/smlnj-lib/Util/binary-set-fn.smi \
+  src/compiler-utils/env/main/IEnv.smi src/compiler/util/main/COUNTER.sig \
+  src/compiler/util/main/Counter.smi \
   src/compiler/usererror/main/USER_ERROR.sig \
   src/compiler/usererror/main/UserError.ppg.smi \
   src/compiler/toolchain/main/CoreUtils.smi \
@@ -19681,38 +19681,39 @@ src/smlformat/generator/main/call-main.o: \
   $(SMLSHARP_DEP)
 src/smlformat/generator/main/ml.grm.sml src/smlformat/generator/main/ml.grm.sig: src/smlformat/generator/main/ml.grm $(MLYACC_DEP)
 src/smlformat/generator/main/ml.grm.o: src/smlformat/generator/main/ml.grm.sml \
+  src/basis/main/STRING_CVT.sig src/basis/main/StringCvt.smi \
   src/basis/main/GENERAL.sig src/basis/main/General.smi \
   src/basis/main/OPTION.sig src/basis/main/Option.smi src/basis/main/LIST.sig \
-  src/basis/main/List.smi src/basis/main/Array.smi src/basis/main/Vector.smi \
-  src/basis/main/VectorSlice.smi src/basis/main/STRING_CVT.sig \
-  src/basis/main/StringCvt.smi src/basis/main/SMLSharpScanChar.smi \
+  src/basis/main/List.smi src/basis/main/SMLSharpScanChar.smi \
   src/basis/main/CHAR.sig src/basis/main/Char.smi \
   src/basis/main/MONO_ARRAY.sig src/basis/main/MONO_VECTOR.sig \
   src/basis/main/MONO_ARRAY_SLICE.sig src/basis/main/MONO_VECTOR_SLICE.sig \
   src/basis/main/STRING.sig src/basis/main/SUBSTRING.sig \
-  src/basis/main/Word8Vector.smi src/basis/main/Word8VectorSlice.smi \
-  src/basis/main/BOOL.sig src/basis/main/Bool.smi src/basis/main/IO.sig \
-  src/basis/main/IO.smi src/basis/main/SMLSharpRuntime.smi \
   src/basis/main/StringBase.smi src/basis/main/CharVector.smi \
   src/basis/main/CharVectorSlice.smi src/basis/main/String.smi \
-  src/basis/main/IntInf.smi src/basis/main/Int.smi \
-  src/basis/main/IEEE_REAL.sig src/basis/main/IEEEReal.smi \
-  src/basis/main/RealClass.smi src/basis/main/Substring.smi \
-  src/basis/main/MATH.sig src/basis/main/Real.smi src/basis/main/Real32.smi \
-  src/basis/main/TIME.sig src/basis/main/Time.smi src/basis/main/Word.smi \
+  src/basis/main/Array.smi src/basis/main/LIST_PAIR.sig \
+  src/basis/main/ListPair.smi src/basis/main/IntInf.smi src/basis/main/Int.smi \
+  src/basis/main/Word.smi src/basis/main/Word8.smi \
+  src/basis/main/SMLSharpRuntime.smi src/basis/main/IEEE_REAL.sig \
+  src/basis/main/IEEEReal.smi src/basis/main/RealClass.smi \
+  src/basis/main/Substring.smi src/basis/main/MATH.sig src/basis/main/Real.smi \
+  src/basis/main/Real32.smi src/basis/main/binary-op.smi \
+  src/ml-yacc/lib/base.sig src/basis/main/Vector.smi \
+  src/basis/main/VectorSlice.smi src/basis/main/Word8Vector.smi \
+  src/basis/main/Word8VectorSlice.smi src/basis/main/BOOL.sig \
+  src/basis/main/Bool.smi src/basis/main/IO.sig src/basis/main/IO.smi \
+  src/basis/main/TIME.sig src/basis/main/Time.smi \
   src/basis/main/Word8Array.smi src/basis/main/Byte.smi \
   src/basis/main/SMLSharpOSFileSys.smi src/smlnj/Basis/NJ/cleanup.sig \
   src/smlnj/Basis/NJ/cleanup.smi src/basis/main/OS_PROCESS.sig \
   src/basis/main/SMLSharpOSProcess.smi src/basis/main/OS_PATH.sig \
   src/smlnj/Basis/OS/os-path-fn.smi src/smlnj/Basis/Unix/os-path.smi \
-  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/LIST_PAIR.sig \
-  src/basis/main/ListPair.smi src/basis/main/OS_IO.sig \
+  src/smlnj/Basis/Unix/os-filesys.smi src/basis/main/OS_IO.sig \
   src/smlnj/Basis/Unix/os-io.smi src/basis/main/OS_FILE_SYS.sig \
   src/basis/main/OS.sig src/basis/main/OS.smi src/basis/main/PRIM_IO.sig \
   src/basis/main/CharArray.smi src/smlnj/Basis/IO/prim-io-text.smi \
   src/smlnj/Basis/IO/clean-io.smi src/smlnj/Basis/IO/os-prim-io.sig \
-  src/basis/main/Word8.smi src/smlnj/Basis/IO/prim-io-bin.smi \
-  src/smlnj/Basis/Posix/posix-io.smi \
+  src/smlnj/Basis/IO/prim-io-bin.smi src/smlnj/Basis/Posix/posix-io.smi \
   src/smlnj/Basis/Unix/posix-text-prim-io.smi src/smlnj/Basis/IO/text-io.smi \
   src/basis/main/STREAM_IO.sig src/basis/main/TEXT_STREAM_IO.sig \
   src/basis/main/TEXT_IO.sig src/basis/main/TextIO.smi \
@@ -19726,8 +19727,7 @@ src/smlformat/generator/main/ml.grm.o: src/smlformat/generator/main/ml.grm.sml \
   src/basis/main/ARRAY_SLICE.sig src/basis/main/BYTE.sig \
   src/basis/main/INTEGER.sig src/basis/main/INT_INF.sig \
   src/basis/main/REAL.sig src/basis/main/VECTOR.sig \
-  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig \
-  src/basis/main/binary-op.smi src/basis.smi src/ml-yacc/lib/base.sig \
+  src/basis/main/VECTOR_SLICE.sig src/basis/main/WORD.sig src/basis.smi \
   src/ml-yacc/lib/join.smi src/ml-yacc/lib/lrtable.smi \
   src/ml-yacc/lib/stream.smi src/ml-yacc/lib/parser2.smi src/ml-yacc-lib.smi \
   src/smlformat/generator/main/FormatTemplate.smi \

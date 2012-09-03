@@ -269,49 +269,38 @@ struct
         in
           case frac of "" => ".0" | _ => String.^ (".", frac)
         end
+
+    val op + = SMLSharp.Int.add
+    val op - = SMLSharp.Int.sub
+    val op < = SMLSharp.Int.lt
+    val op > = SMLSharp.Int.gt
+    val op <= = SMLSharp.Int.lteq
+
     fun fmtFix fillZero prec x =
-    (* 2012-3-27 ohori
-        Fixed the bug #  Real.toString 10.0;
-        uncaught exception: Subscript
-      dtoa return the non-zero part of the digits.
-      dotoa 10.0 yields 1 for digits.
-      2012-3-1 ohori
-       Fixed the bug 
-        # 0.1 ;
-        val it = .1 : real
-     *)
         let
-          fun decompose(s,n) =
-              let
-                val length = String.size s
-              in
-                if SMLSharp.Int.gteq(length, n) then 
-                  case n of 
-                    0 => ("0", s)
-                  | _ => 
-                    let
-                      val (a,b) = Substring.splitAt(Substring.full s,n)
-                    in
-                      (Substring.string a, Substring.string b)
-                    end
-                else
-                  (StringCvt.padRight #"0" n s, "")
-              end
-          val _ = if SMLSharp.Int.lt (prec, 0) then raise Size else ()
+          val _ = if prec < 0 then raise Size else ()
           val {decpt, digits, sign} = realToDecimal (3, prec, x)
           val digits = implode digits
-          val (whole, frac) = decompose (digits, decpt)
+          val ndigits = String.size digits
+          val (whole, frac) =
+              if decpt <= 0
+              then ("0", StringCvt.padLeft #"0" (ndigits - decpt) digits)
+              else if ndigits <= decpt
+              then (StringCvt.padRight #"0" decpt digits, "")
+              else (String.substring (digits, 0, decpt),
+                    String.substring (digits, decpt, ndigits - decpt))
           val frac = fmtFrac fillZero prec frac
           val sign = if sign then "~" else "" 
         in
           String.concat [sign, whole, frac]
         end
+
     fun fmtSci fillZero prec x =
         let
-          val _ = if SMLSharp.Int.lt (prec, 0) then raise Size else ()
-          val ndigit = SMLSharp.Int.add (prec, 1)
+          val _ = if prec < 0 then raise Size else ()
+          val ndigit = prec + 1
           val {decpt, digits, sign} = realToDecimal (2, ndigit, x)
-          val exp = SMLSharp.Int.add (decpt, 1)
+          val exp = decpt - 1
           val (whole, frac) =
               case digits of
                 h::t => (String.str h, implode t)
@@ -324,11 +313,10 @@ struct
 
     fun fmtGen prec x =
         let
-          val _ = if SMLSharp.Int.lt (prec, 1) then raise Size else ()
+          val _ = if prec < 1 then raise Size else ()
           val {decpt, ...} = realToDecimal (2, 1, x)
         in
-          if SMLSharp.Int.lteq (decpt, ~4)
-             orelse SMLSharp.Int.gt (decpt, prec)
+          if decpt <= ~4 orelse decpt > prec
           then fmtSci false prec x
           else fmtFix false prec x
         end

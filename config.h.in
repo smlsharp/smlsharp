@@ -19,6 +19,14 @@
    to 0 if you don't. */
 #undef HAVE_DECL_CLOCK_PROCESS_CPUTIME_ID
 
+/* Define to 1 if you have the declaration of `fegetround', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FEGETROUND
+
+/* Define to 1 if you have the declaration of `fesetround', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FESETROUND
+
 /* Define to 1 if you have the declaration of `fpclassify', and to 0 if you
    don't. */
 #undef HAVE_DECL_FPCLASSIFY
@@ -68,9 +76,6 @@
 
 /* Define to 1 if you have the `frexpf' function. */
 #undef HAVE_FREXPF
-
-/* Define to 1 if you have the `ftime' function. */
-#undef HAVE_FTIME
 
 /* Define to 1 if you have the `getrusage' function. */
 #undef HAVE_GETRUSAGE
@@ -177,9 +182,6 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
-/* Define to 1 if you have the <sys/timeb.h> header file. */
-#undef HAVE_SYS_TIMEB_H
-
 /* Define to 1 if you have the <sys/times.h> header file. */
 #undef HAVE_SYS_TIMES_H
 
@@ -215,9 +217,6 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

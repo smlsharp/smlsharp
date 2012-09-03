@@ -91,6 +91,12 @@ if test "x$RDYNAMIC_LDFLAGS" = "x" && test "x$RUNLOOP_DLDFLAGS" = "x"; then
   RUNLOOP_DLDFLAGS=-shared
 fi
 
+case "$target_os" in
+  *mingw*) OS_TYPE=Windows ;;
+  *) OS_TYPE=Unix ;;
+esac
+AC_SUBST(OS_TYPE)
+
 # FIXME: check how to make a static library
 
 # -------- Checks for SML compiler --------
@@ -371,8 +377,6 @@ AC_CHECK_HEADERS(sys/resource.h)
 AC_CHECK_HEADERS(fenv.h)
 # for times
 AC_CHECK_HEADERS(sys/times.h)
-# for ftime
-AC_CHECK_HEADERS(sys/timeb.h)
 # for utime
 AC_CHECK_HEADERS(utime.h)
 
@@ -419,7 +423,6 @@ finite \
 floorf \
 fpclass \
 frexpf \
-ftime \
 getrusage \
 gettimeofday \
 ldexpf \
@@ -442,6 +445,15 @@ utimes \
 AC_CHECK_DECLS([CLOCK_PROCESS_CPUTIME_ID],,,[#include <time.h>])
 AC_CHECK_DECLS([fpclassify, isinf, isnan, isnormal, signbit],,,
                [#include <math.h>])
+
+# FreeBSD does not define fegetround/fesetround as library functions,
+# but as inline functions in fenv.h.
+if test "x$ac_cv_func_fegetround" = "xno"; then
+  AC_CHECK_DECLS([fegetround],,,[#include <fenv.h>])
+fi
+if test "x$ac_cv_func_fesetround" = "xno"; then
+  AC_CHECK_DECLS([fesetround],,,[#include <fenv.h>])
+fi
 
 # -------- Finale --------
 

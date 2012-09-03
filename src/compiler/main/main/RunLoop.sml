@@ -113,13 +113,13 @@ struct
         let
           val sofile = TempFile.create "so"
           val ldflags =
-              case SMLSharp_Version.HostOS of
+              case !SMLSharp_Version.HostOS of
                 SMLSharp_Version.Unix => nil
               | SMLSharp_Version.Windows =>
                 ["-Wl,--out-implib="
                  ^ Filename.toString (Filename.replaceSuffix "lib" sofile)]
           val libfiles =
-              case SMLSharp_Version.HostOS of
+              case !SMLSharp_Version.HostOS of
                 SMLSharp_Version.Unix => nil
               | SMLSharp_Version.Windows =>
                 map (fn x => Filename.toString (Filename.replaceSuffix "lib" x))
@@ -222,7 +222,7 @@ struct
       let
         val _ = Control.interactiveMode := true
         val _ =
-            case SMLSharp_Version.HostOS of
+            case !SMLSharp_Version.HostOS of
               SMLSharp_Version.Unix => ()
             | SMLSharp_Version.Windows =>
               loadedFiles
@@ -233,16 +233,21 @@ struct
         fun loop context input =
             if !(#eof state) then ()
             else
-              case run options context input of
-                (SUCCESS, newContext) =>
-                let
-                  val context = Top.extendContext (context, newContext)
-                  val context = incVersionContext context
-                in
-                  loop context input
-                end
-              | (FAILED, newContext) =>
-                loop (incVersionContext context) (interactiveInput state)
+              (Counter.reset();
+               case run options context input of
+                 (SUCCESS, newContext) =>
+                 let
+                   val context = Top.extendContext (context, newContext)
+                   val context = incVersionContext context
+                   val _ = 
+                       if !Control.doProfile
+                       then (print "Time Profile:\n"; print (Counter.dump ())) else ();
+                 in
+                   loop context input
+                 end
+               | (FAILED, newContext) =>
+                 loop (incVersionContext context) (interactiveInput state)
+              )
       in
         loop context (interactiveInput state)
       end
