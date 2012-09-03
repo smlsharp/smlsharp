@@ -182,9 +182,9 @@ structure ANormal = struct
       	    *)
 	   ANCONSTANT of {value :constant, loc : loc}
          | (*%
-            * @format({tagValue,loc}) tagValue
+            * @format({tagValue,displayName,loc}) tagValue
             *)
-           ANEXCEPTIONTAG of {tagValue : globalTag, loc : loc}
+           ANEXCEPTIONTAG of {tagValue : globalTag, displayName : string, loc : loc}
          | (*% 
             * @format({varInfo, loc}) varInfo 
 	    *)	 

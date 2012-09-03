@@ -104,7 +104,7 @@ float modff(float x, float *i)
 
 #if !HAVE_DECL_SIGNBIT
 #define signbit__(t, x) \
-	(((x) > 0.0##t) ? 1 : ((x) < 0.0##t) ? 0 : (1.0##t / x > 0.0##t))
+	(((x) > 0.0##t) ? 0 : ((x) < 0.0##t) ? 1 : (1.0##t / x < 0.0##t))
 #define signbit(x) \
 	((sizeof(x) == sizeof(float)) ? signbit__(f, x) : \
 	 (sizeof(x) == sizeof(double)) ? signbit__(, x) : signbit__(l, x))

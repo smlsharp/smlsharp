@@ -148,9 +148,9 @@ structure AnnotatedCalc = struct
            *)
           ACSIZEOF of {ty : ty, loc : loc}
         | (*%
-           * @format({tagValue,loc}) "EXNTAG(" tagValue ")"
+           * @format({tagValue,displayName,loc}) "EXNTAG(" tagValue ")"
            *)
-          ACEXCEPTIONTAG of {tagValue : globalTag, loc : loc}
+          ACEXCEPTIONTAG of {tagValue : globalTag, displayName : string, loc : loc}
         | (*%
            * @format({value:value:formatConst, loc}) value
            *)

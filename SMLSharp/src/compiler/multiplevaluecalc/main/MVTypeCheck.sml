@@ -327,7 +327,7 @@ local
           AT.foreignfunty
         end             
       | MVSIZEOF {ty, loc} => AT.wordty
-      | MVEXCEPTIONTAG {tagValue, loc} => AT.exntagty
+      | MVEXCEPTIONTAG {tagValue, displayName, loc} => AT.exntagty
       | MVCONSTANT {value,...} => ATU.constDefaultTy value
       | MVGLOBALSYMBOL {ty,...} => ty
       | MVVAR {varInfo, ...} => #ty varInfo

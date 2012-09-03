@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 use "./ASSERT.sig";
 use "./Assert.sml";
 use "./TEST.sig";

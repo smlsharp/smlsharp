@@ -203,13 +203,13 @@ structure MultipleValueCalc  = struct
            *)
           MVGLOBALSYMBOL of {name:string, kind:Absyn.globalSymbolKind, ty:ty, loc:loc}
         | (*%
-           * @format({tagValue, loc}) "EXNTAG(" tagValue ")"
+           * @format({tagValue, displayName, loc}) "EXNTAG(" tagValue ")"
            *)
           (*%
            * @prefix typed
-           * @format({tagValue, loc}) "EXNTAG(" tagValue ")"
+           * @format({tagValue, displayName, loc}) "EXNTAG(" tagValue ")"
            *)
-          MVEXCEPTIONTAG of {tagValue : globalTag, loc : loc}
+          MVEXCEPTIONTAG of {tagValue : globalTag, displayName : string, loc : loc}
         | (*%
            * @format({varInfo, loc}) varInfo
            *)

@@ -134,9 +134,9 @@ in
            )
           (
            P.conv
-           (fn (tagValue, loc) => {tagValue=tagValue, loc=loc},
-            fn {tagValue, loc} => (tagValue, loc))
-           (P.tuple2 (ExnTagID.pu_ID, loc))
+           (fn (tagValue, displayName, loc) => {tagValue=tagValue, displayName=displayName, loc=loc},
+            fn {tagValue, displayName, loc} => (tagValue, displayName, loc))
+           (P.tuple3 (ExnTagID.pu_ID, P.string, loc))
            )
 
         fun pu_MVVAR pu =

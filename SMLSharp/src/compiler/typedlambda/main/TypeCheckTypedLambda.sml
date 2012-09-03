@@ -323,7 +323,7 @@ local
        in
          PT.ptrty
        end             
-     | TLEXCEPTIONTAG {tagValue, loc} => PT.exntagty
+     | TLEXCEPTIONTAG {tagValue, displayName, loc} => PT.exntagty
 (*
        (case ExnTagID.getExportNameInID tagValue of
            SOME name =>  

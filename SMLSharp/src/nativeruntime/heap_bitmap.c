@@ -172,7 +172,8 @@ struct heap_bin {
 	char *free;
 	unsigned int slotsize_bytes;
 	struct heap_arena *arena, *filled;  /* zipped arena list */
-	unsigned int dummy[2];
+	unsigned int minor_count;
+	unsigned int dummy;
 };
 
 #define HEAP_SLOTSIZE_MIN_LOG2  3U   /* 2^3 = 8 */
@@ -262,8 +263,12 @@ static const heap_bitptr_t dummy_bitptr = { (unsigned int *)&dummy_bitmap, 1 };
 #define SEL2_(a,b,c)  b
 #define SEL3_(a,b,c)  c
 
+#ifndef ARENA_SIZE
 #define ARENA_SIZE  524288  /* 512k */
+#endif /* ARENA_SIZE */
+#ifndef ARENA_RANK
 #define ARENA_RANK  3
+#endif /* ARENA_RANK */
 
 struct heap_arena {
 #ifdef SWEEP_ARENA
@@ -369,6 +374,12 @@ static struct {
 	ARENA_SLOT_OFFSET_(ARENA_NUM_SLOTS(slotsize), slotsize)
 
 #ifdef MINOR_GC
+#ifndef MINOR_THRESHOLD_RATIO
+#define MINOR_THRESHOLD_RATIO  0.5
+#endif /* MINOR_THRESHOLD_RATIO */
+#ifndef MINOR_COUNT
+#define MINOR_COUNT  3
+#endif /* MINOR_COUNT */
 #define ARENA_LAYOUT(slotsize) \
 	{/*slotsize*/      slotsize, \
 	 /*bitmap_offset*/ ARRAY_(ARENA_RANK, ARENA_BITMAP_OFFSET, slotsize), \
@@ -379,7 +390,8 @@ static struct {
 	 /*stack_limit*/   ARENA_STACK_LIMIT(slotsize),	\
 	 /*slot_offset*/   ARENA_SLOT_OFFSET(slotsize),	\
 	 /*num_slots*/     ARENA_NUM_SLOTS(slotsize),	\
-	 /*minor_threshold*/ (size_t)(ARENA_NUM_SLOTS(slotsize) * 0.5)}
+	 /*minor_threshold*/ (size_t)(ARENA_NUM_SLOTS(slotsize) \
+				      * MINOR_THRESHOLD_RATIO)}
 
 #define ARENA_LAYOUT_DUMMY \
 	{/*slotsize*/      0, \
@@ -829,6 +841,10 @@ check_bin_consistent()
 			ASSERT(arena->slotsize_log2 == i);
 			check_arena_consistent(arena, 0);
 		}
+
+#ifdef MINOR_GC
+		ASSERT(bin->minor_count <= MINOR_COUNT);
+#endif /* MINOR_GC */
 	}
 }
 #endif /* DEBUG */
@@ -1237,6 +1253,9 @@ sml_heap_init(size_t size)
 		if (heap_bins[i].arena)
 			init_arena(heap_bins[i].arena, i);
 		clear_bin(&heap_bins[i]);
+#ifdef MINOR_GC
+		heap_bins[i].minor_count = MINOR_COUNT;
+#endif /* MINOR_GC */
 	}
 
 #ifdef GCSTAT
@@ -1773,6 +1792,9 @@ sweep_arena()
 		}
 #endif /* SWEEP_ARENA */
 		clear_bin(bin);
+#ifdef MINOR_GC
+		bin->minor_count = MINOR_COUNT;
+#endif /* MINOR_GC */
 	}
 #ifdef SWEEP_ARENA
 	*free_p = NULL;
@@ -1781,24 +1803,46 @@ sweep_arena()
 
 #ifdef MINOR_GC
 static void
-skip_filled_arena()
+rewind_arena_minor()
 {
-	unsigned int i;
+	unsigned int i, j;
 	struct heap_bin *bin;
-	struct heap_arena *arena, *next;
+	struct heap_arena *arena, **arena_p;
 
 	for (i = HEAP_SLOTSIZE_MIN_LOG2; i <= HEAP_SLOTSIZE_MAX_LOG2; i++) {
 		bin = &heap_bins[i];
-		arena = bin->arena;
-		while (arena && (arena->live_count
-				 >= arena->layout->minor_threshold)) {
-			next = arena->next;
+
+		/* move not-so-filled arenas from bin->filled to bin->arena. */
+		arena_p = &bin->filled;
+		for (j = 0; *arena_p && j < MINOR_COUNT - bin->minor_count;
+		     j++) {
+			arena = *arena_p;
+			if (arena->live_count == 0) {
+				*arena_p = arena->next;
+				arena->next = alloc_arena.freelist;
+				alloc_arena.freelist = arena;
+			}
+			else if (arena->live_count
+				 < arena->layout->minor_threshold) {
+				*arena_p = arena->next;
+				arena->next = bin->arena;
+				bin->arena = arena;
+			} else {
+				arena_p = &arena->next;
+			}
+		}
+
+		/* skip filled arenas */
+		while (bin->arena && (bin->arena->live_count
+				      == bin->arena->layout->num_slots)) {
+			arena = bin->arena;
+			bin->arena = bin->arena->next;
 			arena->next = bin->filled;
 			bin->filled = arena;
-			arena = next;
 		}
-		bin->arena = arena;
+
 		clear_bin(bin);
+		bin->minor_count = MINOR_COUNT;
 	}
 }
 #endif /* MINOR_GC */
@@ -2003,7 +2047,7 @@ do_gc(enum sml_gc_mode mode)
 
 #ifdef MINOR_GC
 	if (mode == MINOR)
-		skip_filled_arena();
+		rewind_arena_minor();
 	else
 #endif /* MINOR_GC */
 		sweep_arena();
@@ -2229,6 +2273,12 @@ find_arena(struct heap_bin *bin)
 			bin->arena = arena->next;
 			arena->next = bin->filled;
 			bin->filled = arena;
+#ifdef MINOR_GC
+			if (--bin->minor_count == 0) {
+				clear_bin(bin);
+				return NULL;
+			}
+#endif /* MINOR_GC */
 			arena = bin->arena;
 			if (arena == NULL)
 				break;
@@ -2298,25 +2348,6 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 		goto alloced;
 	}
 
-#ifdef MINOR_GC
-	if (bin->arena) {
-		obj = find_bitmap(bin);
-		if (obj) goto alloced;
-		sml_save_frame_pointer(frame_pointer);
-		GCSTAT_TRIGGER(slotsize_log2);
-		do_gc(MINOR);
-		if (bin->arena) {
-			obj = find_bitmap(bin);
-			goto alloced;
-		}
-		obj = find_arena(bin);
-		if (obj) goto alloced;
-	} else {
-		obj = find_arena(bin);
-		if (obj) goto alloced;
-		sml_save_frame_pointer(frame_pointer);
-	}
-#else
 	if (bin->arena) {
 		obj = find_bitmap(bin);
 		if (obj) goto alloced;
@@ -2324,7 +2355,17 @@ sml_alloc(unsigned int objsize, void *frame_pointer)
 	obj = find_arena(bin);
 	if (obj) goto alloced;
 	sml_save_frame_pointer(frame_pointer);
-#endif /* GCSTAT */
+
+#ifdef MINOR_GC
+	GCSTAT_TRIGGER(slotsize_log2);
+	do_gc(MINOR);
+	if (bin->arena) {
+		obj = find_bitmap(bin);
+		if (obj) goto alloced;
+	}
+	obj = find_arena(bin);
+	if (obj) goto alloced;
+#endif /* MINOR_GC */
 
 	GCSTAT_TRIGGER(slotsize_log2);
 	do_gc(MAJOR);

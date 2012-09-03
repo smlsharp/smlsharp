@@ -283,7 +283,7 @@ and inlineExp {globalEnv, localEnv, intRenameEnv, tyEnv, mvexp}
 	end
       | MV.MVGLOBALSYMBOL {ty, ...}
         => {mvexp=mvexp, size=1, ety=ty}
-      | MV.MVEXCEPTIONTAG {tagValue, loc}
+      | MV.MVEXCEPTIONTAG {tagValue, displayName, loc}
 	=> 
 	let val ety = AT.exntagty
 	in

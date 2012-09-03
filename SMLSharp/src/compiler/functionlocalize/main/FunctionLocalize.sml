@@ -253,12 +253,14 @@ in
     | MVEXCEPTIONTAG 
       {
        tagValue = tagValueInt, 
+       displayName,
        loc
        }
        =>
         MVEXCEPTIONTAG 
         {
          tagValue = tagValueInt, 
+         displayName = displayName,
          loc = loc
          }
     | MVVAR 

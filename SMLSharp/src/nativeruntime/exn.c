@@ -53,7 +53,6 @@ sml_check_handler(void *exn)
 {
 	struct sml_thread_env *env = SML_THREAD_ENV;
 	void *handler = env->current_handler;
-	void *prev;
 
 	if (handler != NULL)
 		return;

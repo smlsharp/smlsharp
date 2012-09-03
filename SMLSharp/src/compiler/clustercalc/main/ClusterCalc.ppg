@@ -205,13 +205,13 @@ structure ClusterCalc = struct
            *)
           CCGLOBALSYMBOL of {name:string, kind:Absyn.globalSymbolKind, ty:ty, loc:loc}
         | (*%
-           * @format({tagValue, loc}) "EXNTAG(" tagValue ")"
+           * @format({tagValue, displayName, loc}) "EXNTAG(" tagValue ")"
            *)
           (*%
            * @prefix typed
-           * @format({tagValue, loc}) "EXNTAG(" tagValue ")"
+           * @format({tagValue, displayName, loc}) "EXNTAG(" tagValue ")"
            *)
-          CCEXCEPTIONTAG of {tagValue : globalTag, loc : loc}
+          CCEXCEPTIONTAG of {tagValue : globalTag, displayName : string, loc : loc}
         | (*%
            * @format({varInfo, loc}) varInfo
            *)

@@ -22,10 +22,8 @@ struct
                    a map from abstract index to real index in the global array
   inlineEnv : inling phase
   functorEnv : functor linker phase
-  globalNameAliasEnv: aliases of global names beyond compilation units.
-   This is a workaround for sequential compilation by native backend.
-   In future compiler with true separate compilation, such kind of
-   aliases should be resolved by frontend.
+  globalSymbolEnv: a map from global IDs to globally unique symbol names.
+   This is an workaround for native backend and separate compilation.
 *)
   type context =
        {
@@ -33,7 +31,7 @@ struct
 	externalVarIDBasis : VarIDContext.topExternalVarIDBasis,
         topTypeContext : InitialTypeContext.topTypeContext,
         nameMap : NameMap.topNameMap,
-        globalNameAliasEnv: string SEnv.map,
+        globalSymbolEnv : DeclarationRecovery.globalSymbolEnv,
         globalIndexEnv : GlobalIndexEnv.globalIndexEnv,
 	inlineEnv : InlineEnv.globalInlineEnv,
         functorEnv : FunctorLinker.functorEnv
@@ -141,7 +139,7 @@ struct
          InitialTypeContext.emptyTopTypeContext
          : InitialTypeContext.topTypeContext,
        nameMap = NameMap.emptyTopNameMap :  NameMap.topNameMap,
-       globalNameAliasEnv = SEnv.empty,
+       globalSymbolEnv = DeclarationRecovery.emptyGlobalSymbolEnv,
        globalIndexEnv =
          GlobalIndexEnv.emptyGlobalIndexEnv : GlobalIndexEnv.globalIndexEnv,
        inlineEnv =
@@ -164,7 +162,7 @@ struct
        externalVarIDBasis =
          UniqueIdAllocationContext.initialTopExternalVarIDBasis,
        nameMap = InitialNameMap.initialTopNameMap,
-       globalNameAliasEnv = SEnv.empty,
+       globalSymbolEnv = DeclarationRecovery.initialGlobalSymbolEnv,
        globalIndexEnv =  GlobalIndexEnv.initialGlobalIndexEnv,
        functorEnv = FunctorLinker.initialFunctorEnv,
        inlineEnv = InlineEnv.initialInlineEnv
@@ -176,7 +174,7 @@ struct
        externalVarIDBasis = #externalVarIDBasis context,
        topTypeContext = #topTypeContext context,
        nameMap = #nameMap context,
-       globalNameAliasEnv = #globalNameAliasEnv context,
+       globalSymbolEnv = #globalSymbolEnv context,
        globalIndexEnv = #globalIndexEnv context,
        inlineEnv = #inlineEnv context,
        functorEnv = #functorEnv context
@@ -192,7 +190,7 @@ struct
                     currentNameMap = currentNameMap, 
                     topNameMap = #nameMap context
                    },
-       globalNameAliasEnv = #globalNameAliasEnv context,
+       globalSymbolEnv = #globalSymbolEnv context,
        globalIndexEnv = #globalIndexEnv context,
        inlineEnv = #inlineEnv context,
        functorEnv = #functorEnv context
@@ -207,7 +205,7 @@ struct
          InitialTypeContext.extendTopTypeContextWithContext
            (#topTypeContext context) current,
        nameMap = #nameMap context,
-       globalNameAliasEnv = #globalNameAliasEnv context,
+       globalSymbolEnv = #globalSymbolEnv context,
        globalIndexEnv = #globalIndexEnv context,
        inlineEnv = #inlineEnv context,
        functorEnv = #functorEnv context
@@ -222,7 +220,7 @@ struct
          {new = externalVarIDBasis, old = #externalVarIDBasis context},
        topTypeContext = #topTypeContext context,
        nameMap = #nameMap context,
-       globalNameAliasEnv = #globalNameAliasEnv context,
+       globalSymbolEnv = #globalSymbolEnv context,
        globalIndexEnv = #globalIndexEnv context,
        inlineEnv = #inlineEnv context,
        functorEnv = #functorEnv context
@@ -234,7 +232,7 @@ struct
        externalVarIDBasis = #externalVarIDBasis context,
        topTypeContext = #topTypeContext context,
        nameMap = #nameMap context,
-       globalNameAliasEnv = #globalNameAliasEnv context,
+       globalSymbolEnv = #globalSymbolEnv context,
        globalIndexEnv = #globalIndexEnv context,
        inlineEnv = #inlineEnv context,
        functorEnv = SEnv.unionWith #1 (newFunctorEnv, (#functorEnv context))
@@ -246,7 +244,7 @@ struct
        externalVarIDBasis = externalVarIDBasis,
        topTypeContext = #topTypeContext context,
        nameMap = #nameMap context,
-       globalNameAliasEnv = #globalNameAliasEnv context,
+       globalSymbolEnv = #globalSymbolEnv context,
        globalIndexEnv = #globalIndexEnv context,
        inlineEnv = #inlineEnv context,
        functorEnv = #functorEnv context
@@ -258,7 +256,7 @@ struct
        externalVarIDBasis = #externalVarIDBasis context,
        topTypeContext = #topTypeContext context,
        nameMap = #nameMap context,
-       globalNameAliasEnv = #globalNameAliasEnv context,
+       globalSymbolEnv = #globalSymbolEnv context,
        globalIndexEnv = #globalIndexEnv context,
        inlineEnv = inlineEnv,
        functorEnv = #functorEnv context
@@ -271,19 +269,21 @@ struct
        externalVarIDBasis = #externalVarIDBasis context,
        topTypeContext = #topTypeContext context,
        nameMap = #nameMap context,
-       globalNameAliasEnv = #globalNameAliasEnv context,
+       globalSymbolEnv = #globalSymbolEnv context,
        globalIndexEnv = globalIndexEnv,
        inlineEnv = #inlineEnv context,
        functorEnv = #functorEnv context
       }
 
-  fun setContextGlobalNameAliasEnv (context:context) globalNameAliasEnv =
+  fun extendContextGlobalSymbolEnv (context:context) globalSymbolEnv =
       {
        fixEnv = #fixEnv context,
        externalVarIDBasis = #externalVarIDBasis context,
        topTypeContext = #topTypeContext context,
        nameMap = #nameMap context,
-       globalNameAliasEnv = globalNameAliasEnv,
+       globalSymbolEnv =
+         DeclarationRecovery.extendGlobalSymbolEnv
+           (#globalSymbolEnv context, globalSymbolEnv),
        globalIndexEnv = #globalIndexEnv context,
        inlineEnv = #inlineEnv context,
        functorEnv = #functorEnv context

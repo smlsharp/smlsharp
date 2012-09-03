@@ -14,12 +14,13 @@
  * recover the lost necessary information from program and compile context.
  * The following information is needed:
  *
- * - globally unique name of each global variable and exception,
- * - set of global variables and exceptions to be exported, and
- * - definitions of exceptions (both global and local ones).
+ * - globally unique name of every global variable and exception,
+ * - set of global variables and exceptions to be exported,
+ * - definitions of exceptions (both global and local ones), and
+ * - explicit declarations of aliases across compilation units,
  *
- * In the sence of separate compilation, "globally unique name" is an
- * unique name derived from user-specified name. When we consider separate
+ * In the sence of separate compilation, a "globally unique name" is an
+ * unique string derived from user-specified name. When we consider separate
  * compilation, we don't allow that the same name variable is defined in
  * two different compile unit which are to be linked.
  *)
@@ -39,22 +40,77 @@
 
 structure DeclarationRecovery : sig
 
+  type globalSymbolEnv
+  val emptyGlobalSymbolEnv : globalSymbolEnv
+  val initialGlobalSymbolEnv : globalSymbolEnv
+  val extendGlobalSymbolEnv : globalSymbolEnv * globalSymbolEnv
+                              -> globalSymbolEnv
+  val pu_globalSymbolEnv : globalSymbolEnv Pickle.pu
+
   val recover :
       {
-        currentBasis: VarIDContext.topExternalVarIDBasis,
         newBasis: VarIDContext.topExternalVarIDBasis,
-        currentContext: InitialTypeContext.topTypeContext,
         newContext: TypeContext.context,
-        aliasEnv: string SEnv.map,
-        separateCompilation: bool
+        globalSymbolEnv: globalSymbolEnv,
+        compileUnitCount: int option  (* NONE = separate compilation mode *)
       }
       -> YAANormal.topdecl list
-      -> (string SEnv.map * YAANormal.topdecl list)
+      -> (globalSymbolEnv * YAANormal.topdecl list)
 
 end =
 struct
 
   structure AN = YAANormal
+
+  type globalSymbolEnv =
+      {
+        varEnv: string ExternalVarID.Map.map,
+        exnEnv: string ExnTagID.Map.map,
+        aliasEnv: string SEnv.map
+      }
+
+  val emptyGlobalSymbolEnv =
+      {
+        varEnv = ExternalVarID.Map.empty,
+        exnEnv = ExnTagID.Map.empty,
+        aliasEnv = SEnv.empty
+      } : globalSymbolEnv
+
+  val initialGlobalSymbolEnv =
+      {
+        varEnv = ExternalVarID.Map.empty,
+        exnEnv = #exceptionGlobalNameMap BuiltinContext.builtinContext,
+        aliasEnv = SEnv.empty
+      } : globalSymbolEnv
+
+  fun disjointUnion (s1, s2) =
+      if s1 = s2 then s1
+      else raise Control.Bug ("disjointUnion: " ^ s1 ^ " <> " ^ s2)
+
+  fun extendGlobalSymbolEnv (env1:globalSymbolEnv, env2:globalSymbolEnv) =
+      {
+        varEnv = ExternalVarID.Map.unionWith disjointUnion
+                                             (#varEnv env1, #varEnv env2),
+        exnEnv = ExnTagID.Map.unionWith disjointUnion
+                                        (#exnEnv env1, #exnEnv env2),
+        aliasEnv = SEnv.unionWith disjointUnion
+                                  (#aliasEnv env1, #aliasEnv env2)
+      } : globalSymbolEnv
+
+  local
+    structure VarEnvPickler = OrdMapPickler(ExternalVarID.Map)
+    structure ExnEnvPickler = OrdMapPickler(ExnTagID.Map)
+  in
+  val pu_globalSymbolEnv =
+      Pickle.conv
+        (fn (varEnv, exnEnv, aliasEnv) =>
+            {varEnv=varEnv, exnEnv=exnEnv, aliasEnv=aliasEnv},
+         fn {varEnv, exnEnv, aliasEnv} =>
+            (varEnv, exnEnv, aliasEnv))
+        (Pickle.tuple3 (VarEnvPickler.map (ExternalVarID.pu_ID, Pickle.string),
+                        ExnEnvPickler.map (ExnTagID.pu_ID, Pickle.string),
+                        EnvPickler.SEnv Pickle.string))
+  end (* local *)
 
   (* Make a map from ExternalVarID to global name.
    * Since topVarIDEnv holds a map from string to ExternalVarID,
@@ -63,8 +119,9 @@ struct
    * one-to-one; same ExternalVarID may be assigned to more than two
    * different global names due to structure A = B, open, and/or
    * val x = y.
-   * One of the global names corresponded to the same ExternalVarID
-   * is variable definition, and others are aliases of the definition.
+   * We regard that one of the global names corresponded to the same
+   * ExternalVarID is variable definition, and others are aliases of
+   * the definition.
    *)
   fun reverseExternalVarIDBasis
           ((_,topVarIDEnv):VarIDContext.topExternalVarIDBasis) =
@@ -74,33 +131,13 @@ struct
           | (k, VarIDContext.Dummy, z) => z
           | (k, VarIDContext.External i, z) =>
             case ExternalVarID.Map.find (z, i) of
-              SOME l => ExternalVarID.Map.insert (z, i, k::l)
-            | NONE => ExternalVarID.Map.insert (z, i, [k]))
+              SOME v => ExternalVarID.Map.insert (z, i, SSet.add (v, k))
+            | NONE => ExternalVarID.Map.insert (z, i, SSet.singleton k))
         ExternalVarID.Map.empty
         topVarIDEnv
 
-  (* Make a map from ExnTagID to global name.
-   * Since top type context holds a map from string to ExnTagID,
-   * the desired map can be obtained by reversing the top type context.
-   * Correspondence between ExnTagID and global name is not one-to-one;
-   * same ExnTagID may be assigned to more than two different global
-   * names due to exception replication.
-   * One of the global names corresponded to the same ExnTagID is
-   * exception definition, and others are aliases of the definition.
-   *)
-  fun reverseTopTypeContextFromExnTag
-          ({varEnv,...}:InitialTypeContext.topTypeContext) =
-      SEnv.foldri
-        (fn (k, Types.EXNID {tag, ...}, z) =>
-            (case ExnTagID.Map.find (z, tag) of
-               SOME l => ExnTagID.Map.insert (z, tag, k::l)
-             | NONE => ExnTagID.Map.insert (z, tag, [k]))
-          | (_, _, z) => z)
-        ExnTagID.Map.empty
-        varEnv
-
   (* Extract definitions of global exceptions defined in the
-   * current compile unit from type context of local context.
+   * current compile unit from the new type context.
    * The type context contains identifiers which is defined
    * in this compile unit and available in global.
    *)
@@ -111,8 +148,8 @@ struct
               val name = NameMap.usrNamePathToString namePath
             in
               case ExnTagID.Map.find (z, tag) of
-                SOME l => ExnTagID.Map.insert (z, tag, name::l)
-              | NONE => ExnTagID.Map.insert (z, tag, [name])
+                SOME v => ExnTagID.Map.insert (z, tag, SSet.add (v, name))
+              | NONE => ExnTagID.Map.insert (z, tag, SSet.singleton name)
             end
           | (_, _, z) => z)
         ExnTagID.Map.empty
@@ -138,189 +175,191 @@ struct
   fun sizeOf ty =
       BasicTypes.WordToUInt32 (valOf (RBUUtils.constSize (toRTTy ty)))
 
-
-  local
-    fun replace f x =
-        if Substring.isEmpty x then ""
-        else
-          let
-            val (s, t) = f (Substring.sub (x, 0), Substring.triml 1 x)
-          in
-            s ^ replace f t
-          end
-
-    fun hex n =
-        if n < 16 then "0" ^ Int.fmt StringCvt.HEX n
-        else if n < 256 then Int.fmt StringCvt.HEX n
-        else "u" ^ Int.fmt StringCvt.HEX n ^ "_"
-  in
-
-  fun mangle name =
-      "_SML" ^
-      replace (fn (#"_", t) =>
-                  if Substring.isPrefix "_" t
-                  then ("___", Substring.triml 1 t)
-                  else ("_", t)
-                | (#".", t) => (".", t)
-                | (c, t) =>
-                  if Char.isAlphaNum c
-                  then (str c, t)
-                  else ("__" ^ hex (ord c), t))
-              (Substring.full name) ^
-      "_"
-
-  end
-
+  datatype symbolDef =
+      DEFINED of AN.globalSymbolName
+    | REQUIRE of string * string list
 
   type context =
       {
-        exportVars: string list ExternalVarID.Map.map,
-        exportExceptions: string list ExnTagID.Map.map,
-        decls: AN.topdecl list list,
-        exceptionEnv: AN.globalSymbolName ExnTagID.Map.map,
-        globalVarEnv: AN.globalSymbolName ExternalVarID.Map.map
+        varEnv: AN.globalSymbolName ExternalVarID.Map.map,
+        exnEnv: AN.globalSymbolName ExnTagID.Map.map,
+        exportVars: SSet.set ExternalVarID.Map.map,
+        exportExns: SSet.set ExnTagID.Map.map,
+        newVarEnv: string ExternalVarID.Map.map,
+        newExnEnv: string ExnTagID.Map.map,
+        compileUnitCount: int option,
+        decls: AN.topdecl list list
       }
 
-  fun recoverExceptionDecl (context:context) tag =
-      case ExnTagID.Map.find (#exceptionEnv context, tag) of
-        SOME name => (context, name)
+  local
+    fun fmt n s =
+        if size s > n then s else StringCvt.padLeft #"0" n s
+
+    (* In separate compilation mode, every toplevel name must be unique.
+     * In sequential compilation mode, toplevel binding may be
+     * overriden by following bindings. To make sure that all
+     * global name are unique, we insert compilation unit count to
+     * the global names. *)
+    fun prefix NONE s = s
+      | prefix (SOME n) s = fmt 3 (Int.fmt StringCvt.DEC (n + 1)) ^ s
+
+    fun hex n =
+        (if n < 16 then "0x0" else "0x")
+        ^ String.map Char.toLower (Int.fmt StringCvt.HEX n)
+
+    fun isSymbolChar c =
+        Char.isAlphaNum c orelse c = #"." orelse c = #"_"
+
+    fun escape (#"0" :: #"x" :: t) = "0x30" :: escape t
+      | escape (h::t) =
+        (if isSymbolChar h then str h else hex (ord h)) :: escape t
+      | escape nil = nil
+
+    fun mangle prefix name =
+        "_SML" ^ prefix ^ "_" ^
+        (if CharVector.all isSymbolChar name
+            andalso not (String.isSubstring "0x" name)
+         then name
+         else String.concat (escape (String.explode name)))
+  in
+
+  fun varSymbol compileUnitCount name =
+      mangle (prefix compileUnitCount "v") name
+
+  fun exnSymbol compileUnitCount name =
+      mangle (prefix compileUnitCount "e") name
+
+  end (* local *)
+
+  (* we assume that ID.toString makes an unique string. *)
+  fun localVarSymbol count displayName vid =
+      varSymbol count ("_" ^ displayName ^ "." ^ ExternalVarID.toString vid)
+
+  fun localExnSymbol count displayName tag =
+      exnSymbol count ("_" ^ displayName ^ "." ^ ExnTagID.toString tag)
+
+  fun makeExceptionDecl symbol aliasSymbols =
+      let
+        val nameStringSymbol = symbol ^ "._name"
+      in
+        [
+          AN.ANTOPCONST  {globalName = nameStringSymbol,
+                          export = false,
+                          constant = ConstantTerm.STRING symbol},
+          AN.ANTOPRECORD {globalName = symbol,
+                          export = true,
+                          bitmaps = [tagOf AN.BOXED],
+                          totalSize = sizeOf AN.BOXED,
+                          fieldList = [AN.ANGLOBALSYMBOL
+                                         {name = (nameStringSymbol,
+                                                  AN.GLOBALSYMBOL),
+                                          ann = AN.GLOBALOTHER,
+                                          ty = AN.BOXED}],
+                          fieldTyList = [AN.BOXED],
+                          fieldSizeList = [sizeOf AN.BOXED]}
+        ] @
+        map (fn sym =>
+                AN.ANTOPALIAS {globalName = sym,
+                               export = true,
+                               originalGlobalName = (symbol, AN.GLOBALSYMBOL)})
+            aliasSymbols
+      end
+
+  fun makeGlobalVarDecl vid ty symbol aliasSymbols =
+      [
+        AN.ANTOPARRAY {globalName = symbol,
+                       export = true,
+                       externalVarID = SOME vid,
+                       bitmap = tagOf ty,
+                       totalSize = sizeOf ty,
+                       initialValues = nil,
+                       elementTy = ty,
+                       elementSize = sizeOf ty,
+                       isMutable = true}
+      ] @
+      map (fn name =>
+              AN.ANTOPALIAS {globalName = name,
+                             export = true,
+                             originalGlobalName = (symbol, AN.GLOBALSYMBOL)})
+          aliasSymbols
+
+  fun recoverExceptionDecl (context:context) displayName tag =
+      case ExnTagID.Map.find (#exnEnv context, tag) of
+        SOME gname => (context, gname)
       | NONE =>
         let
-          (* Probably this exception is defined in current compilation unit;
-           * here we try to recover its declaration. *)
-          val (export, names) =
-              case ExnTagID.Map.find (#exportExceptions context, tag) of
-                NONE => (false, ["Exn._" ^ ExnTagID.toString tag])
-              | SOME names => (true, names)
-
-          val (firstName, aliases) = (List.hd names, List.tl names)
-
-          (* firstName is the first name of names in alphabetical order *)
-          val nameStringName =
-              firstName ^ "." ^ ExnTagID.toString tag ^ "_Name"
-
-          val globalName = (firstName, AN.GLOBALSYMBOL)
-
-          val decls =
-              [
-                AN.ANTOPCONST  {globalName = nameStringName,
-                                export = false,
-                                constant = ConstantTerm.STRING firstName},
-                AN.ANTOPRECORD {globalName = firstName,
-                                export = export,
-                                bitmaps = [tagOf AN.BOXED],
-                                totalSize = sizeOf AN.BOXED,
-                                fieldList = [AN.ANGLOBALSYMBOL
-                                                 {name = (nameStringName,
-                                                          AN.GLOBALSYMBOL),
-                                                  ann = AN.GLOBALOTHER,
-                                                  ty = AN.BOXED}],
-                                fieldTyList = [AN.BOXED],
-                                fieldSizeList = [sizeOf AN.BOXED]}
-              ] @
-              map (fn name =>
-                      AN.ANTOPALIAS
-                        {globalName = name,
-                         export = export,
-                         originalGlobalName = globalName})
-                  aliases
-
-          val context =
-              {
-                exportVars = #exportVars context,
-                exportExceptions = #exportExceptions context,
-                decls = decls :: #decls context,
-                exceptionEnv = ExnTagID.Map.insert (#exceptionEnv context,
-                                                    tag, globalName),
-                globalVarEnv = #globalVarEnv context
-              } : context
+          val syms =
+              case ExnTagID.Map.find (#exportExns context, tag) of
+                SOME syms => SSet.listItems syms
+              | NONE =>
+                (* this exception is defined in current compilation unit
+                 * but not exported at top-level. Here we try to recover
+                 * its declaration. Note that this exception may refer
+                 * from subsequent compile units if there is a functor
+                 * declaration using this exception in this compile unit. *)
+                [localExnSymbol (#compileUnitCount context) displayName tag]
+          val (sym, aliases) = (hd syms, tl syms)
+              handle Empty => raise Control.Bug "recoverExceptionDecl"
+          val decls = makeExceptionDecl sym aliases
+          val gname = (sym, AN.GLOBALSYMBOL)
         in
-          (context, globalName)
+          ({
+             varEnv = #varEnv context,
+             exnEnv = ExnTagID.Map.insert (#exnEnv context, tag, gname),
+             exportVars = #exportVars context,
+             exportExns = #exportExns context,
+             newVarEnv = #newVarEnv context,
+             newExnEnv = ExnTagID.Map.insert (#newExnEnv context, tag, sym),
+             compileUnitCount = #compileUnitCount context,
+             decls = decls :: #decls context
+           } : context,
+           gname)
         end
 
-  fun recoverGlobalVarDecl (context:context) id ty =
-      case ExternalVarID.Map.find (#globalVarEnv context, id) of
-        SOME name => (context, name)
+  fun recoverGlobalVarDecl (context:context) displayName vid ty =
+      case ExternalVarID.Map.find (#varEnv context, vid) of
+        SOME gname => (context, gname)
       | NONE =>
         let
-          val (export, names) =
-              case ExternalVarID.Map.find (#exportVars context, id) of
-                NONE => (false, ["Var._" ^ ExternalVarID.toString id])
-              | SOME names => (true, names)
-
-          (* firstName is the first name of names in alphabetical order *)
-          val (firstName, aliases) = (List.hd names, List.tl names)
-
-          val globalName = (firstName, AN.GLOBALSYMBOL)
-
-          val decls =
-              [
-                AN.ANTOPARRAY {globalName = firstName,
-                               export = export,
-                               externalVarID = SOME id,
-                               bitmap = tagOf ty,
-                               totalSize = sizeOf ty,
-                               initialValues = nil,
-                               elementTy = ty,
-                               elementSize = sizeOf ty,
-                               isMutable = true}
-              ] @
-              map (fn name =>
-                      AN.ANTOPALIAS
-                        {globalName = name,
-                         export = export,
-                         originalGlobalName = globalName})
-                  aliases
-
-          val context =
-              {
-                exportVars = #exportVars context,
-                exportExceptions = #exportExceptions context,
-                decls = decls :: #decls context,
-                exceptionEnv = #exceptionEnv context,
-                globalVarEnv = ExternalVarID.Map.insert (#globalVarEnv context,
-                                                         id, globalName)
-              } : context
+          val syms =
+              case ExternalVarID.Map.find (#exportVars context, vid) of
+                SOME syms => SSet.listItems syms
+              | NONE =>
+                (* this variable is defined in current compilation unit
+                 * but not exported at top-level. Note that this variable
+                 * may refer from subsequent compile units if there is a
+                 * functor declaration using this variable. *)
+                [localVarSymbol (#compileUnitCount context) displayName vid]
+          val (sym, aliases) = (hd syms, tl syms)
+              handle Empty => raise Control.Bug "recoverGlobalVarDecl"
+          val decls = makeGlobalVarDecl vid ty sym aliases
+          val gname = (sym, AN.GLOBALSYMBOL)
         in
-          (context, globalName)
+          ({
+             varEnv = ExternalVarID.Map.insert (#varEnv context, vid, gname),
+             exnEnv = #exnEnv context,
+             exportVars = #exportVars context,
+             exportExns = #exportExns context,
+             newVarEnv = ExternalVarID.Map.insert (#newVarEnv context,vid,sym),
+             newExnEnv = #newExnEnv context,
+             compileUnitCount = #compileUnitCount context,
+             decls = decls :: #decls context
+           } : context,
+           gname)
         end
-
-(*
-  fun addAlias (context:context) newName origName =
-      {
-        exportVars = #exportVars context,
-        exportExceptions = #exportExceptions context,
-        decls =
-          [
-            AN.ANTOPALIAS {globalName = newName,
-                           export = true,
-                           originalGlobalName = origName}
-          ] :: #decls context,
-        exceptionEnv = #exceptionEnv context,
-        globalVarEnv = #globalVarEnv context
-      } : context
-
-  fun addExceptionAlias (context:context) tag name =
-      case ExnTagID.Map.find (#exceptionEnv context, tag) of
-        NONE => raise Control.Bug "addExceptionAlias"
-      | SOME originalName => addAlias context name originalName
-
-  fun addGlobalVarAlias (context:context) id name =
-      case ExternalVarID.Map.find (#globalVarEnv context, id) of
-        NONE => raise Control.Bug "addGlobalVarAlias"
-      | SOME originalName => addAlias context name originalName
-*)
 
   fun extractDecls (context:context) =
       ({
+         varEnv = #varEnv context,
+         exnEnv = #exnEnv context,
          exportVars = #exportVars context,
-         exportExceptions = #exportExceptions context,
-         decls = nil,
-         exceptionEnv = #exceptionEnv context,
-         globalVarEnv = #globalVarEnv context
+         exportExns = #exportExns context,
+         newVarEnv = #newVarEnv context,
+         newExnEnv = #newExnEnv context,
+         compileUnitCount = #compileUnitCount context,
+         decls = nil
        } : context,
        List.concat (rev (#decls context)))
-
 
   fun recoverList f z nil = (z, nil)
     | recoverList f z (h::t) =
@@ -345,8 +384,8 @@ struct
         let
           val (context, globalName) =
               case ann of
-                AN.GLOBALVAR id => recoverGlobalVarDecl context id ty
-              | AN.EXCEPTIONTAG tag => recoverExceptionDecl context tag
+                AN.GLOBALVAR id => recoverGlobalVarDecl context name id ty
+              | AN.EXCEPTIONTAG tag => recoverExceptionDecl context name tag
               | AN.GLOBALOTHER =>
                 raise Control.Bug "recoverValue: undecided other"
         in
@@ -826,27 +865,6 @@ struct
   and recoverBranches context branches =
       recoverList recoverBranch context branches
 
-(*
-  and recoverCodeDecl context ({codeId, argVarList, argSizeList, body,
-                                resultTyList, loc}:AN.codeDecl) =
-      let
-        val (context, body) = recoverDeclList context body
-      in
-        (context,
-         {
-           codeId = codeId,
-           argVarList = argVarList,
-           argSizeList = argSizeList,
-           body = body,
-           resultTyList = resultTyList,
-           loc = loc
-         } : AN.codeDecl)
-      end
-
-  and recoverCodeDeclList context codeDeclList =
-      recoverList recoverCodeDecl context codeDeclList
-*)
-
   and recoverFunDecl context ({codeId, argVarList, argSizeList, body,
                                resultTyList, ffiAttributes, loc}:AN.funDecl) =
       let
@@ -928,180 +946,134 @@ struct
     | recoverTopdeclList context nil = (context, nil)
 
 
-  fun makeGlobalName separateCompilationMode id name =
+  fun recover {newBasis, newContext, compileUnitCount, globalSymbolEnv}
+              topdecls =
       let
-        (* In separate compilation mode, every toplevel name must be unique.
-         * In sequential compilation mode, toplevel binding may be
-         * overriden by following bindings. To make sure that all
-         * global name are unique, we append globally unique ID suffix
-         * to global name.
-         *)
-        fun suffix f x =
-            if separateCompilationMode then "" else "." ^ f x
-      in
-        case id of
-          AN.EXCEPTIONTAG tag =>
-          (
-            case ExnTagID.Map.find (#exceptionGlobalNameMap
-                                        BuiltinContext.builtinContext, 
-                                    tag) of
-              SOME name => name (* predefined exception *)
-            | NONE => mangle (name ^ suffix ExnTagID.toString tag)
-          )
-        | AN.GLOBALVAR id => mangle (name ^ suffix ExternalVarID.toString id)
-        | AN.GLOBALOTHER => mangle name
-      end
+        val {varEnv, exnEnv, aliasEnv} = globalSymbolEnv
+        val exportVarNames = reverseExternalVarIDBasis newBasis
+        val exportExnNames = extractExceptionDefinitions newContext
 
-  fun resolveAliases aliasEnv names =
-      let
-        val set = foldl (fn (x,z) =>
-                            case SEnv.find (aliasEnv, x) of
-                              SOME x => SEnv.insert (z,x,())
-                            | NONE => SEnv.insert (z,x,()))
-                        SEnv.empty
-                        names
-      in
-        (* we take the first one in alphabetical order *)
-        case SEnv.firsti set of
-          SOME (k,v) => k
-        | NONE => raise Control.Bug "resolveAliases"
-      end
-
-  fun recover {currentBasis, newBasis, currentContext, newContext,
-               separateCompilation, aliasEnv} topdecls =
-      let
-        val importVars = reverseExternalVarIDBasis currentBasis
-        val importExceptions = reverseTopTypeContextFromExnTag currentContext
-        val exportVars = reverseExternalVarIDBasis newBasis
-        val exportExceptions = extractExceptionDefinitions newContext
+        val varEnv =
+            ExternalVarID.Map.map (fn x => (x, AN.EXTERNSYMBOL)) varEnv
+        val exnEnv =
+            ExnTagID.Map.map (fn x => (x, AN.EXTERNSYMBOL)) exnEnv
+        val exportVars =
+            ExternalVarID.Map.map (SSet.map (varSymbol compileUnitCount))
+                                  exportVarNames
+        val exportExns =
+            ExnTagID.Map.map (SSet.map (exnSymbol compileUnitCount))
+                             exportExnNames
 
 (*
         val _ =
-            (print "importVars:\n";
+            (print "varEnv:\n";
              ExternalVarID.Map.appi
-               (fn (k,v) =>
-                   (print (ExternalVarID.toString k ^ " : ");
-                    app (fn x => print (x^", ")) v;
-                    print "\n"))
-               importVars)
+               (fn (k,(v,_)) =>
+                   print (ExternalVarID.toString k ^ " : " ^ v ^ "\n"))
+               varEnv)
         val _ =
-            (print "importExceptions:\n";
+            (print "exnEnv:\n";
              ExnTagID.Map.appi
-               (fn (k,v) =>
-                   (print (ExnTagID.toString k ^ " : ");
-                    app (fn x => print (x^", ")) v;
-                    print "\n"))
-               importExceptions)
+               (fn (k,(v,_)) =>
+                   print (ExnTagID.toString k ^ " : " ^ v ^ "\n"))
+               exnEnv)
         val _ =
             (print "aliasEnv:\n";
-             SEnv.appi (fn (x,y) => print (x^" -> "^y^"\n")) aliasEnv)
-*)
-
-        fun toGlobalName con =
-            fn (id, names) =>
-               let
-                 val names =
-                     map (makeGlobalName separateCompilation (con id)) names
-               in
-                 (resolveAliases aliasEnv names, AN.EXTERNSYMBOL)
-               end
-
-        val globalVarEnv =
-            ExternalVarID.Map.mapi (toGlobalName AN.GLOBALVAR) importVars
-        val exceptionEnv =
-            ExnTagID.Map.mapi (toGlobalName AN.EXCEPTIONTAG) importExceptions
-        val exportVars =
-            ExternalVarID.Map.mapi
-              (fn (k,l) => map (makeGlobalName separateCompilation
-                                               (AN.GLOBALVAR k)) l)
-              exportVars
-        val exportExceptions =
-            ExnTagID.Map.mapi
-              (fn (k,l) => map (makeGlobalName separateCompilation
-                                               (AN.EXCEPTIONTAG k)) l)
-              exportExceptions
-
-(*
+             SEnv.appi
+               (fn (k,v) => print (k ^ " : " ^ v ^ "\n"))
+               aliasEnv)
         val _ =
             (print "exportVars:\n";
              ExternalVarID.Map.appi
-               (fn (k,v) =>
-                   (print (ExternalVarID.toString k ^ " : ");
-                    app (fn x => print (x^", ")) v;
-                    print "\n"))
+               (fn (k,v) => (print (ExternalVarID.toString k ^ " : ");
+                             SSet.app (fn x => print (x^", ")) v;
+                             print "\n"))
                exportVars)
         val _ =
-            (print "exportExceptions:\n";
+            (print "exportExns:\n";
              ExnTagID.Map.appi
-               (fn (k,v) =>
-                   (print (ExnTagID.toString k ^ " : ");
-                    app (fn x => print (x^", ")) v;
-                    print "\n"))
-               exportExceptions)
+               (fn (k,v) => (print (ExnTagID.toString k ^ " : ");
+                             SSet.app (fn x => print (x^", ")) v;
+                             print "\n"))
+               exportExns)
 *)
 
         val context =
             {
+              varEnv = varEnv,
+              exnEnv = exnEnv,
               exportVars = exportVars,
-              exportExceptions = exportExceptions,
-              decls = nil,
-              exceptionEnv = exceptionEnv,
-              globalVarEnv = globalVarEnv
+              exportExns = exportExns,
+              newVarEnv = ExternalVarID.Map.empty,
+              newExnEnv = ExnTagID.Map.empty,
+              compileUnitCount = compileUnitCount,
+              decls = nil
             } : context
 
         val (context, topdecls) = recoverTopdeclList context topdecls
 
-        fun insertKeys (map, keys, value) =
-            foldl (fn (k,z) => SEnv.insert (z, k, value)) map keys
+        fun addAliases (aliasEnv, origSym, aliasSyms) =
+            SSet.foldl (fn (sym, aliasEnv) =>
+                           SEnv.insert (aliasEnv, sym, origSym))
+                       aliasEnv
+                       aliasSyms
 
-        (* make sure that all exceptions to be exported are defined. *)
+        val aliasEnv =
+            ExternalVarID.Map.foldli
+              (fn (vid, syms, aliasEnv) =>
+                  case ExternalVarID.Map.find (#newVarEnv context, vid) of
+                    SOME _ => aliasEnv
+                  | NONE =>
+                    case ExternalVarID.Map.find (#varEnv context, vid) of
+                      SOME (sym, _) => addAliases (aliasEnv, sym, syms)
+                    | NONE => raise Control.Bug "recover: orphan global var")
+              SEnv.empty
+              exportVars
+
         val (context, aliasEnv) =
             ExnTagID.Map.foldli
-              (fn (tag, names, (context, aliasEnv)) =>
-                  case ExnTagID.Map.find (#exceptionEnv context, tag) of
-                    SOME (name, AN.GLOBALSYMBOL) =>
-                    (* exception declaration is already recovered. *)
-                    (context, aliasEnv)
-                  | SOME (name, AN.EXTERNSYMBOL) =>
-                    (* exception replication beyond compile unit. *)
-                    (context, insertKeys (aliasEnv, names, name))
-                  | SOME (_, AN.UNDECIDED) =>
-                    raise Control.Bug "recover: UNDECIDED exception"
+              (fn (tag, syms, (context, aliasEnv)) =>
+                  case ExnTagID.Map.find (#newExnEnv context, tag) of
+                    SOME _ => (context, aliasEnv)
                   | NONE =>
-                    (* exception declaration has not been recovered.
-                     * This means that this exception is not used in
-                     * current compile unit but exported. *)
-                    (#1 (recoverExceptionDecl context tag), aliasEnv))
+                    case ExnTagID.Map.find (#exnEnv context, tag) of
+                      SOME (sym, _) =>
+                      (* exception replication across compile unit. *)
+                      (context, addAliases (aliasEnv, sym, syms))
+                    | NONE =>
+                      (* exported but unrecovered exception.
+                       * This exception is defined for subsequent units. *)
+                      (#1 (recoverExceptionDecl context "" tag), aliasEnv))
               (context, aliasEnv)
-              (#exportExceptions context)
+              exportExns
 
-        val (context, aliasEnv) =
-            ExternalVarID.Map.foldli
-              (fn (id, names, (context, aliasEnv)) =>
-                  case ExternalVarID.Map.find (#globalVarEnv context, id) of
-                    SOME (name, AN.GLOBALSYMBOL) =>
-                    (* global variable definition is already recovered. *)
-                    (context, aliasEnv)
-                  | SOME (name, AN.EXTERNSYMBOL) =>
-                    (* aliases beyond compile unit. *)
-                    (context, insertKeys (aliasEnv, names, name))
-                  | SOME (name, AN.UNDECIDED) =>
-                    raise Control.Bug "recover: UNDECIDED variable"
-                  | NONE =>
-                    (* global variable definition has not been recovered. *)
-                    raise Control.Bug "recover: undefined exported variable")
-              (context, aliasEnv)
-              (#exportVars context)
+        val ({newVarEnv, newExnEnv, ...}, decls) = extractDecls context
+
+        val newSymbolEnv =
+            {varEnv = newVarEnv, exnEnv = newExnEnv, aliasEnv = aliasEnv}
+            : globalSymbolEnv
 
 (*
         val _ =
+            (print "newVarEnv:\n";
+             ExternalVarID.Map.appi
+               (fn (k,v) =>
+                   print (ExternalVarID.toString k ^ " : " ^ v ^ "\n"))
+               newVarEnv)
+        val _ =
+            (print "newExnEnv:\n";
+             ExnTagID.Map.appi
+               (fn (k,v) =>
+                   print (ExnTagID.toString k ^ " : " ^ v ^ "\n"))
+               newExnEnv)
+        val _ =
             (print "newAliasEnv:\n";
-             SEnv.appi (fn (x,y) => print (x^" -> "^y^"\n")) aliasEnv)
+             SEnv.appi
+               (fn (k,v) => print (k ^ " : " ^ v ^ "\n"))
+               aliasEnv)
 *)
-
-        val (context, decls) = extractDecls context
       in
-        (aliasEnv, topdecls @ decls)
+        (newSymbolEnv, topdecls @ decls)
       end
 
 end

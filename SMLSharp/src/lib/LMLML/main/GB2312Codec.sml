@@ -39,7 +39,7 @@ in
  * @author YAMATODANI Kiyoshi
  * @version $Id: GB2312Codec.sml,v 1.1.28.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
-structure GB2312Codec =
+structure GB2312Codec :> CODEC =
           Codec(VariableLengthCharPrimCodecBase(GB2312CodecPrimArg))
 
 end

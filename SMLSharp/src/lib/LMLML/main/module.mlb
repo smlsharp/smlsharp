@@ -1,6 +1,7 @@
 ann
   "nonexhaustiveMatch ignore"
 in
+$(SML_LIB)/basis/basis.mlb
 
 CODECS.sig
 Codecs.sml

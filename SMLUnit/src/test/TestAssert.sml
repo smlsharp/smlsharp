@@ -1,3 +1,7 @@
+(**
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
 structure TestAssert =
 struct
 
@@ -10,6 +14,31 @@ struct
   exception TestFail
 
   (***************************************************************************)
+
+  local
+    fun testSuccess value1 value2 =
+        if Assert.assertEqualAlternatives Assert.assertEqualInt value1 value2
+           = value2
+        then ()
+        else raise TestFail
+    fun testFailure value1 value2 =
+        (Assert.assertEqualAlternatives Assert.assertEqualInt value1 value2;
+        raise TestFail)
+        handle Assert.Fail _ => ()
+  in
+
+  fun testAssertEqualAlternatives0000 () = testFailure [] 1
+  fun testAssertEqualAlternatives0010 () = testFailure [2] 1
+  fun testAssertEqualAlternatives0011 () = testSuccess [1] 1
+  fun testAssertEqualAlternatives0020 () = testFailure [2, 3] 1
+  fun testAssertEqualAlternatives0021 () = testSuccess [1, 3] 1
+  fun testAssertEqualAlternatives0022 () = testSuccess [2, 1] 1
+  fun testAssertEqualAlternatives0030 () = testFailure [2, 3, 4] 1
+  fun testAssertEqualAlternatives0031 () = testSuccess [1, 3, 4] 1
+  fun testAssertEqualAlternatives0032 () = testSuccess [2, 1, 4] 1
+  fun testAssertEqualAlternatives0034 () = testSuccess [2, 3, 1] 1
+
+  end (* local *)
 
   fun testFail0001 () =
       let
@@ -602,7 +631,7 @@ struct
 
   (****************************************)
 
-  fun testAssertEqualOrder0001 () =
+  fun testAssertEqualOrderLL () =
       let
         val value1 = LESS
         val value2 = LESS
@@ -612,27 +641,7 @@ struct
         else raise TestFail
       end
 
-  fun testAssertEqualOrder0002 () =
-      let
-        val value1 = EQUAL
-        val value2 = EQUAL
-      in
-        if Assert.assertEqualOrder value1 value2 = value2
-        then ()
-        else raise TestFail
-      end
-
-  fun testAssertEqualOrder0003 () =
-      let
-        val value1 = GREATER
-        val value2 = GREATER
-      in
-        if Assert.assertEqualOrder value1 value2 = value2
-        then ()
-        else raise TestFail
-      end
-
-  fun testAssertEqualOrder0004 () =
+  fun testAssertEqualOrderLE () =
       let
         val value1 = LESS
         val value2 = EQUAL
@@ -642,7 +651,7 @@ struct
              | _ => raise TestFail
       end
 
-  fun testAssertEqualOrder0005 () =
+  fun testAssertEqualOrderLG () =
       let
         val value1 = LESS
         val value2 = GREATER
@@ -652,7 +661,7 @@ struct
              | _ => raise TestFail
       end
 
-  fun testAssertEqualOrder0006 () =
+  fun testAssertEqualOrderEL () =
       let
         val value1 = EQUAL
         val value2 = LESS
@@ -662,7 +671,17 @@ struct
              | _ => raise TestFail
       end
 
-  fun testAssertEqualOrder0007 () =
+  fun testAssertEqualOrderEE () =
+      let
+        val value1 = EQUAL
+        val value2 = EQUAL
+      in
+        if Assert.assertEqualOrder value1 value2 = value2
+        then ()
+        else raise TestFail
+      end
+
+  fun testAssertEqualOrderEG () =
       let
         val value1 = EQUAL
         val value2 = GREATER
@@ -672,7 +691,7 @@ struct
              | _ => raise TestFail
       end
 
-  fun testAssertEqualOrder0008 () =
+  fun testAssertEqualOrderGL () =
       let
         val value1 = GREATER
         val value2 = LESS
@@ -682,7 +701,7 @@ struct
              | _ => raise TestFail
       end
 
-  fun testAssertEqualOrder0009 () =
+  fun testAssertEqualOrderGE () =
       let
         val value1 = GREATER
         val value2 = EQUAL
@@ -690,6 +709,16 @@ struct
         (Assert.assertEqualOrder value1 value2; raise TestFail)
         handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
+      end
+
+  fun testAssertEqualOrderGG () =
+      let
+        val value1 = GREATER
+        val value2 = GREATER
+      in
+        if Assert.assertEqualOrder value1 value2 = value2
+        then ()
+        else raise TestFail
       end
 
   (****************************************)
@@ -729,20 +758,6 @@ struct
       let
         val value1 = (1, true)
         val value2 = (1, false)
-      in
-        (Assert.assertEqual2Tuple
-         (Assert.assertEqualInt, Assert.assertEqualBool)
-         value1
-         value2;
-         raise TestFail)
-        handle Assert.Fail (Assert.NotEqualFailure _) => ()
-             | _ => raise TestFail
-      end
-
-  fun testAssertEqual2Tuple0004 () =
-      let
-        val value1 = (1, true)
-        val value2 = (2, false)
       in
         (Assert.assertEqual2Tuple
          (Assert.assertEqualInt, Assert.assertEqualBool)
@@ -830,16 +845,223 @@ struct
              | _ => raise TestFail
       end
 
-  fun testAssertEqual3Tuple0005 () =
+  (****************************************)
+
+  fun testAssertEqual4Tuple0001 () =
       let
-        val value1 = (1, true, "foo")
-        val value2 = (2, false, "bar")
+        val value1 = (1, true, "foo", 0w1)
+        val value2 = (1, true, "foo", 0w1)
       in
-        (Assert.assertEqual3Tuple
+        if
+          Assert.assertEqual4Tuple
+          (
+            Assert.assertEqualInt,
+            Assert.assertEqualBool,
+            Assert.assertEqualString,
+            Assert.assertEqualWord
+          )
+          value1
+          value2 =
+          value2
+        then
+          ()
+        else
+          raise TestFail
+      end
+
+  fun testAssertEqual4Tuple0002 () =
+      let
+        val value1 = (1, true, "foo", 0w1)
+        val value2 = (2, true, "foo", 0w1)
+      in
+        (Assert.assertEqual4Tuple
          (
            Assert.assertEqualInt,
            Assert.assertEqualBool,
-           Assert.assertEqualString
+           Assert.assertEqualString,
+           Assert.assertEqualWord
+         )
+         value1
+         value2;
+         raise TestFail)
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
+             | _ => raise TestFail
+      end
+
+  fun testAssertEqual4Tuple0003 () =
+      let
+        val value1 = (1, true, "foo", 0w1)
+        val value2 = (1, false, "foo", 0w1)
+      in
+        (Assert.assertEqual4Tuple
+         (
+           Assert.assertEqualInt,
+           Assert.assertEqualBool,
+           Assert.assertEqualString,
+           Assert.assertEqualWord
+         )
+         value1
+         value2;
+         raise TestFail)
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
+             | _ => raise TestFail
+      end
+
+  fun testAssertEqual4Tuple0004 () =
+      let
+        val value1 = (1, true, "foo", 0w1)
+        val value2 = (1, true, "bar", 0w1)
+      in
+        (Assert.assertEqual4Tuple
+         (
+           Assert.assertEqualInt,
+           Assert.assertEqualBool,
+           Assert.assertEqualString,
+           Assert.assertEqualWord
+         )
+         value1
+         value2;
+         raise TestFail)
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
+             | _ => raise TestFail
+      end
+
+  fun testAssertEqual4Tuple0005 () =
+      let
+        val value1 = (1, true, "foo", 0w1)
+        val value2 = (1, true, "foo", 0w2)
+      in
+        (Assert.assertEqual4Tuple
+         (
+           Assert.assertEqualInt,
+           Assert.assertEqualBool,
+           Assert.assertEqualString,
+           Assert.assertEqualWord
+         )
+         value1
+         value2;
+         raise TestFail)
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
+             | _ => raise TestFail
+      end
+
+  (****************************************)
+
+  fun testAssertEqual5Tuple0001 () =
+      let
+        val value1 = (1, true, "foo", 0w1, #"a")
+        val value2 = (1, true, "foo", 0w1, #"a")
+      in
+        if
+          Assert.assertEqual5Tuple
+          (
+            Assert.assertEqualInt,
+            Assert.assertEqualBool,
+            Assert.assertEqualString,
+            Assert.assertEqualWord,
+            Assert.assertEqualChar
+          )
+          value1
+          value2 =
+          value2
+        then
+          ()
+        else
+          raise TestFail
+      end
+
+  fun testAssertEqual5Tuple0002 () =
+      let
+        val value1 = (1, true, "foo", 0w1, #"a")
+        val value2 = (2, true, "foo", 0w1, #"a")
+      in
+        (Assert.assertEqual5Tuple
+         (
+           Assert.assertEqualInt,
+           Assert.assertEqualBool,
+           Assert.assertEqualString,
+           Assert.assertEqualWord,
+           Assert.assertEqualChar
+         )
+         value1
+         value2;
+         raise TestFail)
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
+             | _ => raise TestFail
+      end
+
+  fun testAssertEqual5Tuple0003 () =
+      let
+        val value1 = (1, true, "foo", 0w1, #"a")
+        val value2 = (1, false, "foo", 0w1, #"a")
+      in
+        (Assert.assertEqual5Tuple
+         (
+           Assert.assertEqualInt,
+           Assert.assertEqualBool,
+           Assert.assertEqualString,
+           Assert.assertEqualWord,
+           Assert.assertEqualChar
+         )
+         value1
+         value2;
+         raise TestFail)
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
+             | _ => raise TestFail
+      end
+
+  fun testAssertEqual5Tuple0004 () =
+      let
+        val value1 = (1, true, "foo", 0w1, #"a")
+        val value2 = (1, true, "bar", 0w1, #"a")
+      in
+        (Assert.assertEqual5Tuple
+         (
+           Assert.assertEqualInt,
+           Assert.assertEqualBool,
+           Assert.assertEqualString,
+           Assert.assertEqualWord,
+           Assert.assertEqualChar
+         )
+         value1
+         value2;
+         raise TestFail)
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
+             | _ => raise TestFail
+      end
+
+  fun testAssertEqual5Tuple0005 () =
+      let
+        val value1 = (1, true, "foo", 0w1, #"a")
+        val value2 = (1, true, "foo", 0w2, #"a")
+      in
+        (Assert.assertEqual5Tuple
+         (
+           Assert.assertEqualInt,
+           Assert.assertEqualBool,
+           Assert.assertEqualString,
+           Assert.assertEqualWord,
+           Assert.assertEqualChar
+         )
+         value1
+         value2;
+         raise TestFail)
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
+             | _ => raise TestFail
+      end
+
+  fun testAssertEqual5Tuple0006 () =
+      let
+        val value1 = (1, true, "foo", 0w1, #"a")
+        val value2 = (1, true, "foo", 0w1, #"b")
+      in
+        (Assert.assertEqual5Tuple
+         (
+           Assert.assertEqualInt,
+           Assert.assertEqualBool,
+           Assert.assertEqualString,
+           Assert.assertEqualWord,
+           Assert.assertEqualChar
          )
          value1
          value2;
@@ -1508,6 +1730,17 @@ struct
       let
         val tests =
             [
+               ("testAssertEqualAlternatives0000", testAssertEqualAlternatives0000),
+               ("testAssertEqualAlternatives0010", testAssertEqualAlternatives0010),
+               ("testAssertEqualAlternatives0011", testAssertEqualAlternatives0011),
+               ("testAssertEqualAlternatives0020", testAssertEqualAlternatives0020),
+               ("testAssertEqualAlternatives0021", testAssertEqualAlternatives0021),
+               ("testAssertEqualAlternatives0022", testAssertEqualAlternatives0022),
+               ("testAssertEqualAlternatives0030", testAssertEqualAlternatives0030),
+               ("testAssertEqualAlternatives0031", testAssertEqualAlternatives0031),
+               ("testAssertEqualAlternatives0032", testAssertEqualAlternatives0032),
+               ("testAssertEqualAlternatives0034", testAssertEqualAlternatives0034),
+
                ("testFail0001", testFail0001),
                ("testAssertEqualUnit0001", testAssertEqualUnit0001),
                ("testAssertEqualInt0001", testAssertEqualInt0001),
@@ -1573,24 +1806,35 @@ struct
                ("testAssertSome0002", testAssertSome0002),
                ("testAssertNone0001", testAssertNone0001),
                ("testAssertNone0002", testAssertNone0002),
-               ("testAssertEqualOrder0001", testAssertEqualOrder0001),
-               ("testAssertEqualOrder0002", testAssertEqualOrder0002),
-               ("testAssertEqualOrder0003", testAssertEqualOrder0003),
-               ("testAssertEqualOrder0004", testAssertEqualOrder0004),
-               ("testAssertEqualOrder0005", testAssertEqualOrder0005),
-               ("testAssertEqualOrder0006", testAssertEqualOrder0006),
-               ("testAssertEqualOrder0007", testAssertEqualOrder0007),
-               ("testAssertEqualOrder0008", testAssertEqualOrder0008),
-               ("testAssertEqualOrder0009", testAssertEqualOrder0009),
+
+               ("testAssertEqualOrderLL", testAssertEqualOrderLL),
+               ("testAssertEqualOrderLE", testAssertEqualOrderLE),
+               ("testAssertEqualOrderLG", testAssertEqualOrderLG),
+               ("testAssertEqualOrderEL", testAssertEqualOrderEL),
+               ("testAssertEqualOrderEE", testAssertEqualOrderEE),
+               ("testAssertEqualOrderEG", testAssertEqualOrderEG),
+               ("testAssertEqualOrderGL", testAssertEqualOrderGL),
+               ("testAssertEqualOrderGE", testAssertEqualOrderGE),
+               ("testAssertEqualOrderGG", testAssertEqualOrderGG),
+
                ("testAssertEqual2Tuple0001", testAssertEqual2Tuple0001),
                ("testAssertEqual2Tuple0002", testAssertEqual2Tuple0002),
                ("testAssertEqual2Tuple0003", testAssertEqual2Tuple0003),
-               ("testAssertEqual2Tuple0004", testAssertEqual2Tuple0004),
                ("testAssertEqual3Tuple0001", testAssertEqual3Tuple0001),
                ("testAssertEqual3Tuple0002", testAssertEqual3Tuple0002),
                ("testAssertEqual3Tuple0003", testAssertEqual3Tuple0003),
                ("testAssertEqual3Tuple0004", testAssertEqual3Tuple0004),
-               ("testAssertEqual3Tuple0005", testAssertEqual3Tuple0005),
+               ("testAssertEqual4Tuple0001", testAssertEqual4Tuple0001),
+               ("testAssertEqual4Tuple0002", testAssertEqual4Tuple0002),
+               ("testAssertEqual4Tuple0003", testAssertEqual4Tuple0003),
+               ("testAssertEqual4Tuple0004", testAssertEqual4Tuple0004),
+               ("testAssertEqual4Tuple0005", testAssertEqual4Tuple0005),
+               ("testAssertEqual5Tuple0001", testAssertEqual5Tuple0001),
+               ("testAssertEqual5Tuple0002", testAssertEqual5Tuple0002),
+               ("testAssertEqual5Tuple0003", testAssertEqual5Tuple0003),
+               ("testAssertEqual5Tuple0004", testAssertEqual5Tuple0004),
+               ("testAssertEqual5Tuple0005", testAssertEqual5Tuple0005),
+               ("testAssertEqual5Tuple0006", testAssertEqual5Tuple0006),
                ("testAssertEqualVector0001", testAssertEqualVector0001),
                ("testAssertEqualVector0002", testAssertEqualVector0002),
                ("testAssertEqualVector0003", testAssertEqualVector0003),

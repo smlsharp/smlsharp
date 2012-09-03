@@ -2,6 +2,7 @@
  * Implementation of assert functions.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Assert.sml,v 1.4 2007/05/20 05:45:07 kiyoshiy Exp $
  *)
 structure Assert :> ASSERT =
@@ -49,6 +50,13 @@ struct
       expected
       actual
 
+  fun assertEqualAlternatives assert [expected] actual = assert expected actual
+    | assertEqualAlternatives assert (expected :: expecteds) actual =
+      (assert expected actual
+       handle Fail _ => assertEqualAlternatives assert expecteds actual)
+    | assertEqualAlternatives assert [] actual =
+      raise fail "assertEqualAlternatives expects non-empty list"
+
   (****************************************)
 
   (* assertions specialized for every Top-level types *)
@@ -67,8 +75,12 @@ struct
   fun assertEqualWord32 expected actual =
       assertEqualByCompare Word32.compare Word32.toString expected actual
 
-  fun assertEqualReal expected actual = 
-      assertEqualByCompare Real.compare Real.toString expected actual
+  fun assertEqualReal expected actual =
+      case (Real.isNan expected, Real.isNan actual)
+       of (true, true) => actual
+        | (false, false) =>
+          assertEqualByCompare Real.compare Real.toString expected actual
+        | _ => failByNotEqual (Real.toString expected, Real.toString actual)
 
   fun assertEqualChar expected actual = 
       assertEqualByCompare Char.compare Char.toString expected actual
@@ -213,6 +225,56 @@ struct
         handle Fail(NotEqualFailure (expected, actual)) =>
                failByNotEqual
                    ("(?, ?, " ^ expected ^ ")", "(?, ?, " ^ actual ^ ")")
+      )
+
+  fun assertEqual4Tuple
+      (assertEqual1, assertEqual2, assertEqual3, assertEqual4)
+      (expected1, expected2, expected3, expected4)
+      (actual1, actual2, actual3, actual4) =
+      (
+        assertEqual1 expected1 actual1
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(1=" ^ expected ^ ", ...)", "(1=" ^ actual ^ ", ...)"),
+        assertEqual2 expected2 actual2
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(2=" ^ expected ^ ", ...)", "(2=" ^ actual ^ ", ...)"),
+        assertEqual3 expected3 actual3
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(3=" ^ expected ^ ", ...)", "(3=" ^ actual ^ ", ...)"),
+        assertEqual4 expected4 actual4
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(4=" ^ expected ^ ", ...)", "(4=" ^ actual ^ ", ...)")
+      )
+
+  fun assertEqual5Tuple
+      (assertEqual1, assertEqual2, assertEqual3, assertEqual4, assertEqual5)
+      (expected1, expected2, expected3, expected4, expected5)
+      (actual1, actual2, actual3, actual4, actual5) =
+      (
+        assertEqual1 expected1 actual1
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(1=" ^ expected ^ ", ...)", "(1=" ^ actual ^ ", ...)"),
+        assertEqual2 expected2 actual2
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(2=" ^ expected ^ ", ...)", "(2=" ^ actual ^ ", ...)"),
+        assertEqual3 expected3 actual3
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(3=" ^ expected ^ ", ...)", "(3=" ^ actual ^ ", ...)"),
+        assertEqual4 expected4 actual4
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(4=" ^ expected ^ ", ...)", "(4=" ^ actual ^ ", ...)"),
+        assertEqual5 expected5 actual5
+        handle Fail(NotEqualFailure (expected, actual)) =>
+               failByNotEqual
+                   ("(5=" ^ expected ^ ", ...)", "(5=" ^ actual ^ ", ...)")
       )
 
   (****************************************)

@@ -43,8 +43,7 @@ static struct malloc_obj_header *malloc_barrier_list = &barrier_list_last;
 #define MALLOC_LIMIT  (1024 * 1024 * 4)
 
 #define UNMARKED      ((void*)0)
-#define MINOR_MARKED  ((void*)1)
-#define MAJOR_MARKED  ((void*)2)
+#define MARKED        ((void*)1)
 
 /* finalizer array */
 struct finalizer {
@@ -273,19 +272,13 @@ sml_trace_ptr(void *obj, enum sml_gc_mode mode)
 	/* assume HEAP_LOCK'ed */
 	void **node;
 
+	if (mode == MINOR)
+		return NULL;
+
 	node = sml_splay_find(&malloc_heap, obj);
-	if (node != NULL) {
-		if (mode == MINOR) {
-			if (*node == UNMARKED) {
-				*node = MINOR_MARKED;
-				return obj;
-			}
-		} else {
-			if (*node != MAJOR_MARKED) {
-				*node = MAJOR_MARKED;
-				return obj;
-			}
-		}
+	if (node != NULL && *node == UNMARKED) {
+		*node = MARKED;
+		return obj;
 	}
 	return NULL;
 }
@@ -294,7 +287,7 @@ static int
 malloc_heap_sweep(void *obj, void **mark)
 {
 	/* assume HEAP_LOCK'ed */
-	if (*mark != MAJOR_MARKED) {
+	if (*mark != MARKED) {
 		free(MALLOC_HEAD(obj));
 		return 1;
 	} else {
@@ -321,6 +314,19 @@ sml_malloc_sweep(enum sml_gc_mode mode)
 	malloc_barrier_list = &barrier_list_last;
 }
 
+static void
+visit_malloc_obj(void *key, void **value ATTR_UNUSED, void *data)
+{
+	sml_trace_cls *trace = data;
+	sml_obj_enum_ptr(key, trace);
+}
+
+void
+sml_malloc_enum_ptr(sml_trace_cls *trace)
+{
+	sml_tree_traverse(malloc_heap.root, visit_malloc_obj, (void*)trace);
+}
+
 /* global barrier */
 
 void *
@@ -333,8 +339,7 @@ sml_global_barrier(void **writeaddr, void *obj, enum sml_gc_mode trace_mode)
 	/* check whether obj is in malloc heap. */
 	node = sml_splay_find(&malloc_heap, obj);
 	if (node != NULL) {
-		if (trace_mode == MINOR && *node != UNMARKED
-		    && MALLOC_HEAD(obj)->barrier == NULL) {
+		if (trace_mode == MINOR && MALLOC_HEAD(obj)->barrier == NULL) {
 			ASSERT(malloc_barrier_list != NULL);
 			MALLOC_HEAD(obj)->barrier = malloc_barrier_list;
 			malloc_barrier_list = MALLOC_HEAD(obj);

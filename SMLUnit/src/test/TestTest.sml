@@ -3,6 +3,9 @@
  *
  *  These test cases assume that Unit-tests of the SMLUnit.Assert has been
  * completed.
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure TestTest =
 struct

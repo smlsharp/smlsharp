@@ -50,7 +50,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
       | CC.CCSIZEOF {ty, loc} => ccexp
       | CC.CCCONSTANT {value, loc} => ccexp
       | CC.CCGLOBALSYMBOL _ => ccexp
-      | CC.CCEXCEPTIONTAG {tagValue, loc} => ccexp
+      | CC.CCEXCEPTIONTAG {tagValue, displayName, loc} => ccexp
       | CC.CCVAR {varInfo as {displayName, ty, varId}, loc} =>
         if VarIdSet.member(vSet, varId) 
         then CC.CCVAR {varInfo = {displayName = displayName, ty = ty, varId = varId}, loc = loc}
@@ -1155,8 +1155,8 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
           (RBUGLOBALSYMBOL {name=name,kind=kind,ty=newTy,loc=loc}, context)
         end
 
-      | CC.CCEXCEPTIONTAG {tagValue, loc} => 
-        (RBUEXCEPTIONTAG {tagValue = tagValue, loc = loc}, context)
+      | CC.CCEXCEPTIONTAG {tagValue, displayName, loc} => 
+        (RBUEXCEPTIONTAG {tagValue = tagValue, displayName = displayName, loc = loc}, context)
 
       | CC.CCVAR {varInfo as {displayName, ty, varId}, loc} =>
         (

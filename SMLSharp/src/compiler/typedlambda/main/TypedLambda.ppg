@@ -194,9 +194,9 @@ structure TypedLambda = struct
        }
    | 
      (*%
-      * @format({tagValue,loc}) "EXNTAG(" tagValue ")"
+      * @format({tagValue,displayName,loc}) "EXNTAG(" tagValue ")"
       *)
-     TLEXCEPTIONTAG of {tagValue : globalTag, loc : loc}
+     TLEXCEPTIONTAG of {tagValue : globalTag, displayName: string, loc : loc}
    | 
      (*%
       * @prefix typed
