@@ -71,4 +71,4 @@ signature SUBSTRING =
 
     val app : (char -> unit) -> substring -> unit
 
-  end;
+  end

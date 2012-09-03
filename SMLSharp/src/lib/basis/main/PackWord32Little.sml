@@ -9,4 +9,4 @@ structure PackWord32Little =
                            val isBigEndian = false
                            val unpack = SMLSharp.Runtime.Pack_unpackWord32Little
                            val pack = SMLSharp.Runtime.Pack_packWord32Little
-                         end);
+                         end)

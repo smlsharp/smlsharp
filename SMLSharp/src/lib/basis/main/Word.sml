@@ -50,7 +50,7 @@ struct
         if 0w0 = andb (0wx80000000, word)
         then largeInt
         else largeInt - 0xFFFFFFFF - 1
-      end;
+      end
 
   fun fromLargeInt largeInt = SMLSharp.Runtime.LargeInt_toWord largeInt
 
@@ -235,9 +235,9 @@ struct
       case compare (left, right) of General.LESS => true | _ => false
   fun op <= (left : word, right : word) =
       case compare (left, right) of General.GREATER => false | _ => true
-  val op > = not o (op <=)
-  val op >= = not o (op <)
+  fun op > x = not (op <= x)
+  fun op >= x = not (op < x)
 
   (***************************************************************************)
 
-end;
+end

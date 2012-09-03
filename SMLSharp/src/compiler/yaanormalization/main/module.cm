@@ -24,3 +24,4 @@ Group is
 	ANORMALOPTIMIZATION.sig
 	ANormalOptimization.sml
 	DeclarationRecovery.sml
+	StaticAllocation.sml

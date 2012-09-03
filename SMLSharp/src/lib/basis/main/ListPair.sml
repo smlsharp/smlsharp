@@ -24,8 +24,8 @@ struct
             scan lefts rights ((left, right) :: accum)
       in scan lefts rights []
       end
-  val zip = zipImpl false
-  val zipEq = zipImpl true
+  fun zip x = zipImpl false x
+  fun zipEq x = zipImpl true x
 
   fun unzip pairs =
       let
@@ -85,4 +85,4 @@ struct
 
   (***************************************************************************)
 
-end;
+end

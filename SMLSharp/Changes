@@ -1,3 +1,39 @@
+SML# version 0.62 (released on 2010-12-17)
+
+1. Overview
+
+This is a patch release of SML# 0.60 series.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+- added static allocation optimization.
+  This optimization allocates constant records and closures to memory
+  at compile time. This optimization is available only for native code
+  and enabled by default. To disable this optimization, specify
+  --xdoStaticAllocation=no option to the command line.
+- restructured the prelude library to improve performance.
+  It also reduces time for compiling the native prelude library.
+- rewrote register allocation phase.
+  New register allocation phase is based on Appel-George's iterative
+  register allocator with register coalescing. The register coalescing
+  is enabled by default. To disable the coalescing, specify
+  --xdoRegisterCoalescing=no option to the command line.
+- enabled generational version of the non-moving bitmap marking
+  garbage collector by default.
+  This collector is available only for native code.
+- added support for SQL commands for transaction control.
+  You may write "begin", "commit" or "rollback" command in a _sql
+  expression as a SQL command.
+- added SQL.queryString and SQL.commandString primitive function.
+- fixed bug of handling real variables defined at toplevel in native
+  code generation.
+- fixed type errors of intermediate representations for native code
+  generation.
+- refactored native code backend.
+
+-----------------------------------------------------------------------------
 SML# version 0.61 (released on 2010-11-26)
 
 1. Overview

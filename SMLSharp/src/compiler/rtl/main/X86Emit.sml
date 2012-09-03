@@ -15,23 +15,33 @@ struct
   open X86Asm
   open RTL
 
-  type env =
+  type frameLayout =
       {
-        regAlloc: Target.reg VarID.Map.map,  (* var id -> reg *)
         slotIndex: int VarID.Map.map,        (* slot id -> offset *)
         preFrameOrigin: int,
         postFrameOrigin: int,
         frameAllocSize: int
       }
 
+  fun format_frameLayout ({slotIndex, preFrameOrigin, postFrameOrigin,
+                           frameAllocSize}:frameLayout) = 
+      let open TermFormat.FormatComb in
+        record [("slotIndex", assocList (VarID.format_id, int)
+                                        (VarID.Map.listItemsi slotIndex)),
+                ("preFrameOrigin", int preFrameOrigin),
+                ("postFrameOrigin", int postFrameOrigin),
+                ("frameAllocSize", int frameAllocSize)]
+      end
+
   type env' =
       {
         clusterId: RTL.clusterId option,
         totalPreFrameSize: int,
-        env: env
+        regAlloc: Target.reg VarID.Map.map,
+        env: frameLayout
       }
 
-  fun regAlloc ({env={regAlloc,...},...}:env') varId =
+  fun regAlloc ({regAlloc,...}:env') varId =
       case VarID.Map.find (regAlloc, varId) of
         NONE => raise Control.Bug ("regAlloc: " ^
                                    Control.prettyPrint (I.format_id varId))
@@ -363,21 +373,6 @@ struct
           end
       end
 
-(*
-  fun emitTest env insn =
-      case insn of
-        TEST_SUB (Int8 _, REF (Int8 _, op1), op2) =>
-        [CMPB (to8 (rm_rmi env (op1, op2)))]
-      | TEST_SUB (Int32 _, REF (Int32 _, op1), op2) =>
-        [CMPL (rm_rmi env (op1, op2))]
-      | TEST_SUB _ => raise Control.Bug "emitTest: TEST_SUB"
-      | TEST_AND (Int8 _, REF (Int8 _, op1), op2) =>
-        [TESTB (to8 (rm_rmi env (op1, op2)))]
-      | TEST_AND (Int32 _, REF (Int32 _, op1), op2) =>
-        [TESTL (rm_rmi env (op1, op2))]
-      | TEST_AND _ => raise Control.Bug "emitTest: TEST_AND"
-*)
-
   fun emitInsn env insn =
       let
         val emitMem = emitMem env
@@ -629,7 +624,7 @@ struct
         | LOADABSADDR {ty, dst, symbol, thunk=NONE} =>
           let
             val reg = r32 dst
-            val label = (clusterId env, NewLabel.newLabel ())
+            val label = (clusterId env, VarID.generate ())
             val off = emitImm env (SYMOFFSET {base=CURRENT_POSITION,
                                               label=symbol})
             val off2 = CONSTSUB (CURRENTPOS, X.LABEL (X.LOCAL label))
@@ -721,16 +716,6 @@ struct
         | X86 (X86FUCOM (X86ST st)) => [FUCOM (ST st)]
         | X86 (X86FUCOMP (X86ST st)) => [FUCOMP (ST st)]
         | X86 X86FUCOMPP => [FUCOMPP]
-(*
-        | X86 (X86FSTSW (dst, test)) =>
-          let
-            val testInsns = emitInsn env test
-          in
-            case rm32 dst of
-              M m => testInsns @ [FSTSW m]
-            | R r => (assert (r16 dst = X EAX); testInsns @ [FSTSW_AX])
-          end
-*)
           (*            C3:14 C2:10 C0:8
            * st0 > src    0     0     0
            * st0 < src    0     0     1
@@ -756,9 +741,6 @@ struct
         | X86 X86FWAIT => [FWAIT]
         | X86 X86FNCLEX => [FNCLEX]
       end
-handle e =>
-let open FormatByHand in puts "==ERROR=="; putf I.format_instruction insn;
-raise e end
 
   local
     fun Int n = INT (Int32.fromInt n)
@@ -1008,29 +990,12 @@ raise e end
   fun emitBlock env ((first, middle, last):I.block) =
       let
         val first = emitFirst env first
-handle e =>
-let open FormatByHand in puts "==ERROR=="; putf I.format_first first; raise e
-end
         val middle = map (emitInsn env) middle
         val {insn=last, continue, branches} = emitLast env last
-handle e =>
-let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
         val insn = List.concat (first :: middle @ [last])
       in
         {insn = insn, continue = continue, branches = branches}
       end
-
-(*
-  fun emitFrameBitmap env ({source, bits}:I.frameBitmap) =
-      let
-        val source =
-            case source of
-              F.REG var => F.REG (env var)
-            | F.MEM addr => F.MEM (emitAddr env addr)
-      in
-        {source = source, bits = bits} : X.frameBitmap
-      end
-*)
 
   fun linearize (clusterId, graph, entries) =
       let
@@ -1062,14 +1027,16 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
         loop (LabelSet.empty, entries)
       end
 
-  fun emitCluster env ({clusterId, frameBitmap, baseLabel, body,
-                        preFrameSize, postFrameSize, loc}
-                       :I.cluster) =
+  fun emitCluster {regAlloc, layoutMap}
+                  ({clusterId, frameBitmap, baseLabel, body,
+                    preFrameSize, postFrameSize, loc}
+                   :I.cluster) =
       let
         val env =
-            case ClusterID.Map.find (env, clusterId) of
+            case ClusterID.Map.find (layoutMap, clusterId) of
               SOME env => {clusterId = SOME clusterId,
                            totalPreFrameSize = preFrameSize,
+                           regAlloc = regAlloc,
                            env = env} : env'
             | NONE => raise Control.Bug "emit"
 
@@ -1092,21 +1059,12 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
         Align {align=4, filler=0wx90} ::
         insn
       end
-(*
-        {
-          frameBitmap = map (emitFrameBitmap env) frameBitmap,
-          body = insn,
-          preFrameAligned = preFrameAligned,
-          loc = loc
-        } : X.cluster
-      end
-*)
 
   val emptyEnv =
       {clusterId = NONE,
        totalPreFrameSize = 0,
-       env = {regAlloc = VarID.Map.empty,
-              slotIndex = VarID.Map.empty,
+       regAlloc = VarID.Map.empty,
+       env = {slotIndex = VarID.Map.empty,
               preFrameOrigin = 0,
               postFrameOrigin = 0,
               frameAllocSize = 0}} : env'
@@ -1164,7 +1122,7 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
       | SPACE_DATA {size} => [SpaceData size]
 
   fun emitData ({scope, symbol, aliases, ptrTy, section, prefix, align, data,
-                 prefixSize, dataSize}:I.data) =
+                 prefixSize}:I.data) =
       [case section of
          DATA_SECTION => Section DataSection
        | RODATA_SECTION => Section ConstDataSection
@@ -1184,9 +1142,9 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
         {code = emitCluster env cluster, nextDummy = nil}
       | DATA data =>
         {code = emitData data, nextDummy = nil}
-      | BSS {scope, symbol, align, size} =>
+      | BSS {scope, symbol, size} =>
         {code = (case scope of GLOBAL => [Global symbol] | LOCAL => nil) @
-                [Comm (symbol, {size=size, align=align})],
+                [Comm (symbol, {size=size})],
          nextDummy = nil}
       | X86GET_PC_THUNK_BX symbol =>
         {code = [GET_PC_THUNK_Decl symbol,
@@ -1271,31 +1229,5 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
            nextDummy = #nextDummy result}
         else result
       end
-
-(*
-  fun emitSymbolDef label symbolDef =
-      case symbolDef of
-        CLUTER_ENTRY {scope} => nil
-      | DATA {scope, ptrTy, section, prefix, align, data, prefixSize,
-              dataSize} =>
-
-
-      | BSS {scope, align, size} =>
-        [Comm (label, {size = size})]
-
-      | EXTERN {ptrTy, linkEntry, linkStub} =>
-        (if linkEntry then [X.LinkPtrEntry label] else nil) @
-        (if linkStub then [X.LinkStubEntry label] else nil)
-
-      | X86GET_PC_THUNK_BX =>
-        [
-          X.Label (X.GLOBAL "_get_pc_thunk.bx"),
-          X.MOVL (X.R X.EBX, X.BASE X.EBP),
-          X.RET NONE
-        ]
-      | NEXT_TOPLEVEL_STUB =>
-      | ALIAS labelRef =>
-        Equ (localLabel label, emitAbsLabel labelRef)
-*)
 
 end

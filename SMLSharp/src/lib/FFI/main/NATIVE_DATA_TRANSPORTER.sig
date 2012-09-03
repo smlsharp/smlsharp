@@ -555,4 +555,4 @@ sig
    *)
   val conv : ('a -> 'b) * ('b -> 'a) -> 'a transporter -> 'b transporter
 
-end;
+end

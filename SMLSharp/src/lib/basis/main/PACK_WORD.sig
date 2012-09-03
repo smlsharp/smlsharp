@@ -19,5 +19,5 @@ signature PACK_WORD =
 
     val update : (Word8Array.array * int * LargeWord.word) -> unit
 
-  end;
+  end
 

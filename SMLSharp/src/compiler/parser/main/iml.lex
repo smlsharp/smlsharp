@@ -256,6 +256,9 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>"update" => (T.UPDATE (left(yypos,arg),right(yypos,6,arg)));
 <INITIAL>"set" => (T.SET (left(yypos,arg),right(yypos,3,arg)));
 <INITIAL>"default" => (T.DEFAULT (left(yypos,arg),right(yypos,7,arg)));
+<INITIAL>"begin" => (T.BEGIN (left(yypos,arg),right(yypos,5,arg)));
+<INITIAL>"commit" => (T.COMMIT (left(yypos,arg),right(yypos,6,arg)));
+<INITIAL>"rollback" => (T.ROLLBACK (left(yypos,arg),right(yypos,8,arg)));
 
 <INITIAL>":>" => (T.OPAQUE (left(yypos,arg),right(yypos,2,arg)));
 <INITIAL>"*" => (T.ASTERISK(left(yypos,arg),right(yypos,1,arg)));

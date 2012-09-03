@@ -40,5 +40,5 @@ signature IMPERATIVE_IO =
     val getOutstream : outstream -> StreamIO.outstream
     val setOutstream : (outstream * StreamIO.outstream) -> unit
 
-  end;
+  end
 

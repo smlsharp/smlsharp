@@ -40,4 +40,4 @@ sig
    *)
   val app : ('a -> 'b) -> 'a mutable -> 'b
 
-end;
+end

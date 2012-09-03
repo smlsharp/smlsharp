@@ -48,6 +48,6 @@ signature INTEGER =
 	    -> (int, 'a) StringCvt.reader
     val fmt  : StringCvt.radix -> int -> string
 
-  end;
+  end
 
 

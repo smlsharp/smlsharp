@@ -16,7 +16,7 @@ struct
 
   (***************************************************************************)
 
-  val sysWordToWord = Word.fromLargeWord o SysWord.toLargeWord
+  fun sysWordToWord x = Word.fromLargeWord (SysWord.toLargeWord x)
 
   (********************)
 

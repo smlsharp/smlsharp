@@ -9,5 +9,5 @@ signature COMMAND_LINE =
     val name : unit -> string
     val arguments : unit -> string list
 
-  end;
+  end
 

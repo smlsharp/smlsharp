@@ -3219,9 +3219,9 @@ struct
       | AI.Init id => transformLabel context (I.LABEL (constLabel id))
       | AI.Entry {clusterId, entry} =>
         transformLabel context (I.LABEL (funLabel entry))
-      | AI.Global label =>
+      | AI.Global (label, ty) =>
         transformExtVarLabel context (I.GLOBALLABEL label)
-      | AI.Extern label =>
+      | AI.Extern (label, ty) =>
         transformExtVarLabel context (I.EXTERNLABEL label)
       | AI.Label label => transformLabel context (I.LABEL (localLabel label))
       | AI.ExtFunLabel label => (nil, I.I_ (I.EXTERNLABEL label))
@@ -3547,7 +3547,7 @@ struct
               (HEAD_TYPE_ARRAY, bitmap, nil, I.INT 0)
             | (AI.Vector, [bitmap]) =>
               (HEAD_TYPE_VECTOR, bitmap, nil, I.INT 0)
-            | (AI.Record, _) =>
+            | (AI.Record _, _) =>
               (HEAD_TYPE_RECORD, I.I_ (I.INT 0), bitmaps,
                I.INT (Int32.fromInt (length bitmaps) * 4))
             | (AI.Array, bitmaps) =>
@@ -7246,6 +7246,15 @@ struct
            [ I.WordData header ],
            makeData (0, fields))
         end
+
+      | AI.VarSlot {size, value} =>
+        transformData
+          (AI.ObjectData {objectType = AI.Array,
+                          bitmaps = [0w0],  (* dummy *)
+                          payloadSize = size,
+                          fields = case value of
+                                     NONE => nil
+                                   | SOME v => [{size=size, value=v}]})
 
   fun transformObjectData labels data =
       let

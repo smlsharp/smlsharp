@@ -57,7 +57,7 @@ functor BinIOFn (
 	    (* end case *)
 	  end
 **)
-    val vecExtract = VS.vector o VS.slice
+    fun vecExtract x = VS.vector (VS.slice x)
     val vecSub = V.sub
     val arrUpdate = A.update
     val empty = V.fromList[]

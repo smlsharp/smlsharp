@@ -1,6 +1,6 @@
 (**
  * x86 RTL
- * @copyright (c) 2009, Tohoku University.
+ * @copyright (c) 2009, 2010, Tohoku University.
  * @author UENO Katsuhiro
  * @version $Id: $
  *)
@@ -13,20 +13,13 @@ signature RTLEMIT = sig
     type nextDummy
   end
 
-  type env =
-      {
-        regAlloc: Target.reg VarID.Map.map,  (* var id -> reg *)
-        slotIndex: int VarID.Map.map,        (* slot id -> offset *)
-        preFrameOrigin: int,
-        postFrameOrigin: int,
-        frameAllocSize: int
-      }
+  type frameLayout
+  val format_frameLayout : frameLayout TermFormat.formatter
 
-  val emit : env ClusterID.Map.map -> RTL.program
+  val emit : {regAlloc: Target.reg VarID.Map.map,
+              layoutMap: frameLayout ClusterID.Map.map}
+             -> RTL.program
              -> {code: Target.program, nextDummy: Target.nextDummy}
-(*
-  val emitData : RTL.symbolDef -> Target.instruction list
-*)
 
   val formatOf : RTL.ty -> RTL.format
 

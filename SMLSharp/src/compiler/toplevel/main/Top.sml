@@ -1276,6 +1276,27 @@ val currentSourceFilename = ref ""
         (newAndecs, basis, fn context => context)
       end
 
+  fun doStaticAllocation (basis : TB.basis) andecs =
+      let
+        val _ = #start anormalizationTimeCounter ()
+        val newAndecs = 
+            if !C.doStaticAllocation
+            then StaticAllocation.optimize andecs
+            else andecs
+        val _ = #stop anormalizationTimeCounter ()
+        val _ =
+            if !C.printAN andalso !C.switchTrace andalso !C.doStaticAllocation
+            then
+              printIntermediateCodes
+                (#sysParam basis)
+                "Static Allocation"
+                (YAANormalFormatter.topdeclToString)
+                newAndecs
+            else ()
+      in
+        (newAndecs, basis, fn context => context)
+      end
+
   fun doYAANormalTypeCheck (basis : TB.basis) andecs =
       let
         val _ =
@@ -1503,7 +1524,7 @@ val currentSourceFilename = ref ""
       let
         val _ = #start vmcodeselectionTimeCounter ()
         val asm =
-            X86RTLBackend.codegen
+            X86Backend.codegen
               (SOME (#compileUnitStamp basis))
               aicode
         handle exn => raise exn
@@ -1689,6 +1710,7 @@ val currentSourceFilename = ref ""
                  (C.Anormal, doYAANormalization)
                    ==> (C.Anormal, doYAANormalOptimization)
                    ==> (C.Anormal, doDeclarationRecovery)
+                   ==> (C.Anormal, doStaticAllocation)
 (*
                    ==> (C.Anormal, doYAANormalTypeCheck)
 *)

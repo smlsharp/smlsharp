@@ -11,6 +11,6 @@ structure TextPrimIO = PrimIO (
     structure ArraySlice = CharArraySlice
     val someElem = #"\000"
     type pos = Position.int
-    val compare = Position.compare);
+    val compare = Position.compare)
 
 

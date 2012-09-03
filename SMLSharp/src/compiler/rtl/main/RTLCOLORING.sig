@@ -5,13 +5,13 @@
  * @version $Id: $
  *)
 
-signature RTLCOLORING = sig
+signature RTLCOLORING =
+sig
 
   structure Target : sig
     type reg
   end
 
-  val regalloc : RTLTypeCheck.symbolEnv ->
-RTL.cluster -> RTL.cluster * Target.reg VarID.Map.map
+  val regalloc : RTL.program -> RTL.program * Target.reg VarID.Map.map
 
 end

@@ -11,57 +11,57 @@
 (*****************************************************************************)
 
 (* infixes specified in the SML Definition are hard-coded in staticevn.sml *)
-infix 6 ^;
-infixr 5 @;
-infix 4 <>;
-infix 3 o;
-infix 0 before;
+infix 6 ^
+infixr 5 @
+infix 4 <>
+infix 3 o
+infix 0 before
 
 (*****************************************************************************)
 
 (* bindings used by basic formatters definition. *)
 
 fun not true = false
-  | not fasle = true;
+  | not fasle = true
 
-fun x <> y = not(x = y);
+fun x <> y = not(x = y)
 
 fun rev list =
     let
       fun accum [] result = result
         | accum (head :: tail) result = accum tail (head :: result)
-    in accum list [] end;
+    in accum list [] end
 
 fun map f list =
     let
       fun accum [] result = rev result
         | accum (hd :: tl) result = accum tl ((f hd) :: result)
     in accum list []
-    end;
+    end
 
 fun foldl f initial list =
     let
       fun accum [] result = result
         | accum (hd :: tl) result = accum tl (f (hd, result))
-    in accum list initial end;
+    in accum list initial end
 
 fun foldr f initial list =
     let
       fun accum [] result  = result
         | accum (hd :: tl) result = f (hd, accum tl result)
-    in accum list initial end;
+    in accum list initial end
 
-val sub = SMLSharp.PrimString.sub_unsafe;
+val sub = SMLSharp.PrimString.sub_unsafe
 
-val size = SMLSharp.PrimString.size;
+val size = SMLSharp.PrimString.size
 
-val op ^ = SMLSharp.Runtime.String_concat2;
+val op ^ = SMLSharp.Runtime.String_concat2
 
 fun explode string =
     let
       fun accum 0 chars = chars
         | accum n chars = accum (n - 1) (sub (string, n - 1) :: chars)
-    in accum (size string) [] end;
+    in accum (size string) [] end
 
 fun implode chars =
     let
@@ -73,11 +73,11 @@ fun implode chars =
 
 use "./BasicFormatters.sml";
 
-exception Unimplemented of string;
+exception Unimplemented of string
 
 (* for FFI *)
 
-type void = unit;
+type void = unit
 val NULL = _NULL;
 
 (*****************************************************************************)
@@ -87,31 +87,31 @@ use "./General.sml";
 (*
 type unit = General.unit;
 *)
-datatype order = datatype General.order;
+datatype order = datatype General.order
 (*
 type exn = General.exn;
 *)
-exception Bind = General.Bind;
-exception Chr = General.Chr;
-exception Div = General.Div;
-exception Domain = General.Domain;
-exception Fail = General.Fail;
-exception Match = General.Match;
-exception Overflow = General.Overflow;
-exception Size = General.Size;
-exception Span = General.Span;
-exception Subscript = General.Subscript;
-val ! = General.!;
-val op := = General.:=;
-val op before = General.before;
-val exnMessage = General.exnMessage;
-val exnName = General.exnName;
-val ignore = General.ignore;
+exception Bind = General.Bind
+exception Chr = General.Chr
+exception Div = General.Div
+exception Domain = General.Domain
+exception Fail = General.Fail
+exception Match = General.Match
+exception Overflow = General.Overflow
+exception Size = General.Size
+exception Span = General.Span
+exception Subscript = General.Subscript
+val ! = General.!
+val op := = General.:=
+val op before = General.before
+val exnMessage = General.exnMessage
+val exnName = General.exnName
+val ignore = General.ignore
 val op o = General.o;
 
 use "./OPTION.sig";
 use "./Option.sml";
-datatype option = datatype Option.option;
+datatype option = datatype Option.option
 exception Option = Option.Option
 local
   open Option
@@ -124,21 +124,21 @@ end;
 use "./LIST.sig";
 use "./List.sml";
 
-structure List = List : LIST;
+structure List = List : LIST
 local
   open List
 in
-  exception Empty = List.Empty;
-  val op @ = op @;
-  val app = app;
-  val foldl = foldl;
-  val foldr = foldr;
-  val hd = hd;
-  val length = length;
-  val map = map;
-  val null = null;
-  val rev = rev;
-  val tl = tl;
+  exception Empty = List.Empty
+  val op @ = op @
+  val app = app
+  val foldl = foldl
+  val foldr = foldr
+  val hd = hd
+  val length = length
+  val map = map
+  val null = null
+  val rev = rev
+  val tl = tl
 end;
 
 use "./LIST_PAIR.sig";
@@ -166,7 +166,7 @@ use "./IntInf.sml";
 structure IntInf = struct open IntInf
 fun '_format_int' arg =
     let val string = toString arg
-    in SMLSharp.SMLFormat.Term(size string, string) end;
+    in SMLSharp.SMLFormat.Term(size string, string) end
 end;
 
 use "./Word.sml";
@@ -184,8 +184,8 @@ use "./CHAR.sig";
 structure Char =
           Char :> CHAR
                       where type char = char
-                      where type string = String.string;
-val chr = Char.chr;
+                      where type string = String.string
+val chr = Char.chr
 val ord = Char.ord;
 
 use "./STRING.sig";
@@ -195,7 +195,7 @@ structure String =
 (*
               where type string = CharVector.vector
 *)
-              where type char = Char.char;
+              where type char = Char.char
 (*
 val op ^ = String.^;
 val concat = String.concat;
@@ -208,14 +208,14 @@ val substring = String.substring;
 local
   open String
 in
-  val op ^ = op ^;
-  val concat = concat;
-  val explode = explode;
-  val implode = implode;
-  val size = size;
-  val str = str;
-  val substring = substring;
-end;
+  val op ^ = op ^
+  val concat = concat
+  val explode = explode
+  val implode = implode
+  val size = size
+  val str = str
+  val substring = substring
+end
 
 structure Substring =
           Substring :> SUBSTRING
@@ -223,7 +223,7 @@ structure Substring =
                            where type substring = CharVectorSlice.slice
 *)
                            where type string = String.string
-                           where type char = Char.char;
+                           where type char = Char.char
 type substring = Substring.substring;
 
 use "./BOOL.sig";
@@ -296,16 +296,16 @@ local
     structure AS = IntArraySlice
   end
 in
-structure IntVector = S.V;
-structure IntArray = S.A;
-structure IntVectorSlice = S.VS;
-structure IntArraySlice = S.AS;
-end;
+structure IntVector = S.V
+structure IntArray = S.A
+structure IntVectorSlice = S.VS
+structure IntArraySlice = S.AS
+end
 
 (****************************************)
 
-structure Int32 = Int;
-structure Word32 = Word;
+structure Int32 = Int
+structure Word32 = Word
 
 structure LargeInt = IntInf;
 
@@ -315,21 +315,21 @@ struct
   open Int
   val fromLarge = IntInf.toInt
   val toLarge = IntInf.fromInt
-end;
-structure Int32 = Int :> INTEGER where type int = int;
-structure LargeInt = LargeInt :> INTEGER where type int = LargeInt.int;
-structure Int = Int :> INTEGER where type int = int;
-structure FixedInt = Int;
+end
+structure Int32 = Int :> INTEGER where type int = int
+structure LargeInt = LargeInt :> INTEGER where type int = LargeInt.int
+structure Int = Int :> INTEGER where type int = int
+structure FixedInt = Int
 structure Position = Int;
 
 use "./INT_INF.sig";
-structure IntInf = IntInf :> INT_INF where type int = IntInf.int;
+structure IntInf = IntInf :> INT_INF where type int = IntInf.int
 
 structure LargeWord = Word;
 use "./WORD.sig";
-structure Word32 = Word :> WORD where type word = word;
-structure LargeWord = Word :> WORD where type word = word;
-structure Word = Word :> WORD where type word = word;
+structure Word32 = Word :> WORD where type word = word
+structure LargeWord = Word :> WORD where type word = word
+structure Word = Word :> WORD where type word = word
 structure SysWord = Word;
 
 (********************)
@@ -347,7 +347,7 @@ structure Word8 :> WORD where type word = Word8.word =
 struct open Word8
 fun '_format_word' (arg : word) =
     let val string = "0wx" ^ (toString arg)
-    in SMLSharp.SMLFormat.Term(size string, string) end;
+    in SMLSharp.SMLFormat.Term(size string, string) end
 end;
 
 
@@ -370,11 +370,11 @@ local
     structure AS = CharArraySlice
   end
 in
-structure CharVector = S.V;
-structure CharArray = S.A;
-structure CharVectorSlice = S.VS;
-structure CharArraySlice = S.AS;
-end;
+structure CharVector = S.V
+structure CharArray = S.A
+structure CharVectorSlice = S.VS
+structure CharArraySlice = S.AS
+end
 
 local
   structure S :> MONO_VECTOR_ARRAY
@@ -390,10 +390,10 @@ local
     structure AS = Word8ArraySlice
   end
 in
-structure Word8Vector = S.V;
-structure Word8Array = S.A;
-structure Word8VectorSlice = S.VS;
-structure Word8ArraySlice = S.AS;
+structure Word8Vector = S.V
+structure Word8Array = S.A
+structure Word8VectorSlice = S.VS
+structure Word8ArraySlice = S.AS
 end;
 
 use "./TEXT.sig";
@@ -424,16 +424,16 @@ structure Real64 = Real64 :> REAL
           where type real = real;
 use "./Real.sml";
 structure Real = Real :> REAL 
-          where type real = real;
+          where type real = real
 
-val ceil = Real.ceil;
-val floor = Real.floor;
-val real = Real.fromInt;
-val round = Real.round;
-val trunc = Real.trunc;
+val ceil = Real.ceil
+val floor = Real.floor
+val real = Real.fromInt
+val round = Real.round
+val trunc = Real.trunc
 fun '_format_real' arg =
     let val string = Real.toString arg
-    in SMLSharp.SMLFormat.Term(size string, string) end;
+    in SMLSharp.SMLFormat.Term(size string, string) end
 
 structure Math = Math :> MATH where type real = Real.real;
 
@@ -441,8 +441,8 @@ use "./Real32.sml";
 structure Real32 = struct open Real32
 fun '_format_real' arg =
     let val string = toString arg
-    in SMLSharp.SMLFormat.Term(size string, string) end;
-end;
+    in SMLSharp.SMLFormat.Term(size string, string) end
+end
 structure Real32 = Real32 :> REAL where type real = Real32.real;
 
 (********************)
@@ -465,11 +465,11 @@ local
     structure AS = RealArraySlice
   end
 in
-structure RealVector = S.V;
-structure RealArray = S.A;
-structure RealVectorSlice = S.VS;
-structure RealArraySlice = S.AS;
-end;
+structure RealVector = S.V
+structure RealArray = S.A
+structure RealVectorSlice = S.VS
+structure RealArraySlice = S.AS
+end
 
 (****************************************)
 (* Because instances of MonoVectors and MonoArrays depends on functions in
@@ -488,7 +488,7 @@ sig
   sharing type Vector.vector = ArraySlice.vector
   sharing type VectorSlice.slice = ArraySlice.vector_slice
 end
-  where type 'a Array.array = 'a array;
+  where type 'a Array.array = 'a array
 local
   structure S :> S =
   struct
@@ -499,10 +499,10 @@ local
   end
 in
 open S
-end;
+end
 
-type 'a vector = 'a Vector.vector;
-type 'a array = 'a Array.array;
+type 'a vector = 'a Vector.vector
+type 'a array = 'a Array.array
 val vector = Vector.fromList;
 
 (****************************************)

@@ -234,7 +234,7 @@ struct
       if isNan left orelse isNan right
       then false
       else equal (left, right)
-  val != = not o op == 
+  fun != x = not (op == x)
 
   fun ?= (left, right) =
       if isNan left orelse isNan right
@@ -277,7 +277,7 @@ struct
       in {whole = whole, frac = frac}
       end
 
-  val realMod = #frac o split
+  fun realMod x = #frac (split x)
 
   fun nextAfter (left, right) =
       if isInf left then left
@@ -357,14 +357,14 @@ struct
           IR.NORMAL => f real
         | IR.SUBNORMAL => f real
         | _ => real
-    val whole = #whole o split
+    fun whole x = #whole (split x)
     val frac = realMod
   in
   (*
    * We cannot use floor to implement realFloor because, if the argument is
    * too big, the former may raise overflow but the latter should not raise.
    *)
-  val realFloor =
+  fun realFloor x =
       ifNonZeroFinite
       (fn real =>
           if B.zero < real
@@ -373,7 +373,8 @@ struct
             if isZero (frac real)
             then whole real (* -1.0 ==> -1.0 *)
             else (whole real) - B.one) (* -1.2 ==> -2.0 *)
-  val realCeil =
+      x
+  fun realCeil x =
       ifNonZeroFinite
       (fn real =>
           if real < B.zero
@@ -382,11 +383,13 @@ struct
             if isZero (frac real)
             then whole real (* 1.0 ==> 1.0 *)
             else (whole real) + B.one) (* 1.2 ==> 2.0 *)
-  val realTrunc = ifNonZeroFinite (fn real => whole real)
-  val realRound = 
+      x
+  fun realTrunc x = ifNonZeroFinite (fn real => whole real) x
+  fun realRound x = 
       ifNonZeroFinite
           (fn real =>
               whole (if real < B.zero then real - B.half else real + B.half))
+          x
 
   end (* local *)
 
@@ -718,10 +721,10 @@ struct
                  | NONE => PC.failure
           )
           reader stream
-  val fromString = StringCvt.scanString scan
+  fun fromString x = StringCvt.scanString scan x
 
   end
 
   (***************************************************************************)
 
-end;
+end

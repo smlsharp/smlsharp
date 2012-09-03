@@ -748,6 +748,13 @@ struct
              loc)
         end
 
+      | S.SQLBEGIN loc =>
+        commandCon ([stringDBICon ("BEGIN", dbiVar, loc)], loc)
+      | S.SQLCOMMIT loc =>
+        commandCon ([stringDBICon ("COMMIT", dbiVar, loc)], loc)
+      | S.SQLROLLBACK loc =>
+        commandCon ([stringDBICon ("ROLLBACK", dbiVar, loc)], loc)
+
   fun elaborateExp {elabExp, elabPat, elabTy}
                    (sqlexp : (A.exp,A.pat,A.ty) S.exp) =
       case sqlexp of

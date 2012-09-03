@@ -196,4 +196,4 @@ sig
   sharing type StringConverter.string = String.string
   sharing type StringConverter.char = String.char
 
-end;
+end

@@ -16,21 +16,21 @@ local
 
     val pi = fromReal64 Math.pi
     val e = fromReal64 Math.e
-    val sqrt = wrap1 Math.sqrt
-    val sin = wrap1 Math.sin
-    val cos = wrap1 Math.cos
-    val tan = wrap1 Math.tan
-    val asin = wrap1 Math.asin
-    val acos = wrap1 Math.acos
-    val atan = wrap1 Math.atan
-    val atan2 = wrap2 Math.atan2
-    val exp = wrap1 Math.exp
-    val pow = wrap2 Math.pow
-    val ln = wrap1 Math.ln
-    val log10 = wrap1 Math.log10
-    val sinh = wrap1 Math.sinh
-    val cosh = wrap1 Math.cosh
-    val tanh = wrap1 Math.tanh
+    fun sqrt x = wrap1 Math.sqrt x
+    fun sin x = wrap1 Math.sin x
+    fun cos x = wrap1 Math.cos x
+    fun tan x = wrap1 Math.tan x
+    fun asin x = wrap1 Math.asin x
+    fun acos x = wrap1 Math.acos x
+    fun atan x = wrap1 Math.atan x
+    fun atan2 x = wrap2 Math.atan2 x
+    fun exp x = wrap1 Math.exp x
+    fun pow x = wrap2 Math.pow x
+    fun ln x = wrap1 Math.ln x
+    fun log10 x = wrap1 Math.log10 x
+    fun sinh x = wrap1 Math.sinh x
+    fun cosh x = wrap1 Math.cosh x
+    fun tanh x = wrap1 Math.tanh x
   end
 
   structure Operations =
@@ -87,4 +87,4 @@ local
   end
 in
 structure Real32 = RealBase(Operations)
-end;
+end

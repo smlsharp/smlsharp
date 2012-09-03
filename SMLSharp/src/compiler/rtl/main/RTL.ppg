@@ -597,8 +597,9 @@ struct
     | (*% @format ".stabilize" *)
       STABILIZE   (* status must be stable here. *)
     | (*% @format({uses:u us, clobs:clob clobs})
-       * {".compute_frame" + clobs(clob)("," +)
-       * 8[ \n ";" + "uses" + "{" us:map(u)(," as ",","+) "}" ]}
+       * {".compute_frame"
+       * 8[ \n ";" + "clobbers" + clobs(clob)("," +)
+       *    \n ";" + "uses" + "{" us:map(u)(," as ",","+) "}" ]}
        *)
       (* "uses" field keeps track of applied substitution to variables
        * used for bitmap computation. *)
@@ -1035,9 +1036,9 @@ struct
       (*%
        * @format({scope, symbol, aliases: alias aliases, ptrTy, section,
        *          prefix: prefix prefixes:lines, align, data: data datas:lines,
-       *          prefixSize, dataSize})
+       *          prefixSize})
        * "# begin data" \n
-       * "# size = " prefixSize + " + " + dataSize \n
+       * "# prefixSize = " prefixSize \n
        * "        " section \n
        * prefixes(prefix)("        ",\n)
        * "        " scope \n
@@ -1055,8 +1056,7 @@ struct
         prefix: datum list,
         align: int,
         data: datum list,
-        prefixSize: int,
-        dataSize: int
+        prefixSize: int
       }
 
   (*%
@@ -1080,11 +1080,11 @@ struct
     | (*% @format(data) data *)
       DATA of data
     | (*%
-       * @format({scope, symbol, align, size})
+       * @format({scope, symbol, size})
        * "        " scope \n
-       * symbol ": .comm" + symbol "," + size + "," align
+       * symbol ": .comm" + symbol "," + size
        *)
-      BSS of {scope: symbolScope, symbol: symbol, align: int, size: int}
+      BSS of {scope: symbolScope, symbol: symbol, size: int}
     | (*%
        * @format(sym) sym ": ; X86GET_PC_THUNK_BX"
        *)

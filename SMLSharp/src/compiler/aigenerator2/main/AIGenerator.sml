@@ -21,13 +21,13 @@ struct
   val nestedBlockIndex = AI.UInt 0w0
 
   (* FIXME: platform dependent *)
-  fun sizeOfBoxed () = AI.UInt (if Control.nativeGen() then 0w4 else 0w1)
-  fun sizeOfEntry () = AI.UInt (if Control.nativeGen() then 0w4 else 0w1)
-  fun sizeOfFloat () = AI.UInt (if Control.nativeGen() then 0w4 else 0w1)
-  fun sizeOfDouble () = AI.UInt (if Control.nativeGen() then 0w8 else 0w2)
+  fun sizeOfBoxed () = if Control.nativeGen() then 0w4 else 0w1 : Target.uint
+  fun sizeOfEntry () = if Control.nativeGen() then 0w4 else 0w1 : Target.uint
+  fun sizeOfFloat () = if Control.nativeGen() then 0w4 else 0w1 : Target.uint
+  fun sizeOfDouble () = if Control.nativeGen() then 0w8 else 0w2 : Target.uint
 
-  val SubscriptExceptionTag = AI.Extern "sml_exn_Subscript"
-  val DivExceptionTag = AI.Extern "sml_exn_Div"
+  val SubscriptExceptionTag = AI.Extern ("sml_exn_Subscript", AI.BOXED)
+  val DivExceptionTag = AI.Extern ("sml_exn_Div", AI.BOXED)
 
   fun newArg (ty, argKind) =
       {id = newLocalId (), ty = ty, argKind = argKind} : AI.argInfo
@@ -377,9 +377,11 @@ struct
   fun transformGlobalRef ((name, kind), ty) =
         case (kind, ty) of
           (AN.EXTERNSYMBOL, AN.FOREIGNFUN) => AI.ExtFunLabel name
-        | (AN.EXTERNSYMBOL, _) => AI.Extern name
-        | (AN.GLOBALSYMBOL, _) => AI.Global name
-        | (AN.UNDECIDED, _) =>
+        | (AN.EXTERNSYMBOL, AN.POINTER) => AI.Extern (name, AI.CPOINTER)
+        | (AN.GLOBALSYMBOL, AN.POINTER) => AI.Global (name, AI.CPOINTER)
+        | (AN.EXTERNSYMBOL, _) => AI.Extern (name, AI.BOXED)
+        | (AN.GLOBALSYMBOL, _) => AI.Global (name, AI.BOXED)
+        | (AN.UNDECIDED _, _) =>
           raise Control.Bug "transformGlobalRef: UNDECIDED"
 
   fun getPassVars (context as {passVars, ...}:context) antyList =
@@ -398,7 +400,7 @@ struct
                                 ty = AI.BOXED,
                                 block = record,
                                 offset = nestedBlockIndex,
-                                size = sizeOfBoxed (),
+                                size = AI.UInt (sizeOfBoxed ()),
                                 loc = loc}
                      ]
       in
@@ -455,7 +457,7 @@ struct
                             ty = AI.BOXED,
                             block = AI.Var blockVar,
                             offset = nestedBlockIndex,
-                            size = sizeOfBoxed (),
+                            size = AI.UInt (sizeOfBoxed ()),
                             loc = loc},
                 (*   counter = counter - 1; *)
                 AI.PrimOp2 {dst = counterVar,
@@ -486,9 +488,9 @@ struct
               | _ =>
                 if List.all (fn AN.BOXED => true | _ => false) fieldTyList
                 then (AI.Vector, [AI.UInt 0w1])
-                else (AI.Record, bitmaps)
+                else (AI.Record {mutable=false}, bitmaps)
             (* workaround for YASIGenerator *)
-            else (AI.Record, bitmaps)
+            else (AI.Record {mutable=false}, bitmaps)
 
         val code = addInsn code
                      [
@@ -588,20 +590,24 @@ struct
         code
       end
 
+  fun closureLayout () =
+      {
+        closureBitmap = 0w1 : Target.uint,   (* |BOXED, ENTRY| *)
+        closureFieldTys = [AN.BOXED, AN.FUNENTRY],
+        closureFieldSizes = [sizeOfBoxed(), sizeOfEntry()],
+        closureSize = sizeOfBoxed() + sizeOfEntry()
+      }
+
   fun makeClosure context code dst funEntry closureEnv loc =
       let
-        val closureBitmap = AI.UInt 0w1        (* |BOXED, ENTRY| *)
-        val closureFieldTys = [AN.BOXED, AN.FUNENTRY]
-        val closureFieldSizes = [sizeOfBoxed(), sizeOfEntry()]
-        val closureSize =
-            case (sizeOfBoxed(), sizeOfEntry()) of
-              (AI.UInt x, AI.UInt y) => AI.UInt (x + y)
-            | _ => raise Control.Bug "makeClosure"
+        val {closureBitmap, closureFieldTys, closureFieldSizes, closureSize} =
+            closureLayout ()
+        val closureFieldSizes = map AI.UInt closureFieldSizes
       in
         makeRecord context code
                    {dst = dst,
-                    bitmaps = [closureBitmap],
-                    payloadSize = closureSize,
+                    bitmaps = [AI.UInt closureBitmap],
+                    payloadSize = AI.UInt closureSize,
                     fieldTyList = closureFieldTys,
                     fieldSizeList = closureFieldSizes,
                     loc = loc}
@@ -615,14 +621,14 @@ struct
           AI.Load {dst = entry,
                    ty = AI.ENTRY,
                    block = closure,
-                   offset = sizeOfBoxed (),
-                   size = sizeOfEntry (),
+                   offset = AI.UInt (sizeOfBoxed ()),
+                   size = AI.UInt (sizeOfEntry ()),
                    loc = loc},
           AI.Load {dst = env,
                    ty = AI.BOXED,
                    block = closure,
                    offset = AI.UInt 0w0,
-                   size = sizeOfBoxed (),
+                   size = AI.UInt (sizeOfBoxed ()),
                    loc = loc}
         ]
 
@@ -962,11 +968,11 @@ struct
                 AI.Alloc  {dst = exnValue,
                            objectType = AI.Vector,
                            bitmaps = [AI.UInt 0w0],
-                           payloadSize = sizeOfBoxed (),
+                           payloadSize = AI.UInt (sizeOfBoxed ()),
                            loc = loc},
                 AI.Update {block = AI.Var exnValue,
                            offset = AI.UInt 0w0,
-                           size = sizeOfBoxed (),
+                           size = AI.UInt (sizeOfBoxed ()),
                            ty = AI.BOXED,
                            value = exnTag,
                            barrier = AI.NoBarrier,
@@ -1135,7 +1141,7 @@ struct
                              ty = AI.DOUBLE,
                              block = AI.Init constId,
                              offset = AI.UInt 0w0,
-                             size = sizeOfDouble (),
+                             size = AI.UInt (sizeOfDouble ()),
                              loc = loc}
                   else
                     AI.Move {dst = dst,
@@ -1158,7 +1164,7 @@ struct
                            ty = AI.FLOAT,
                            block = AI.Init constId,
                            offset = AI.UInt 0w0,
-                           size = sizeOfFloat (),
+                           size = AI.UInt (sizeOfFloat ()),
                            loc = loc}
                 ]
         in
@@ -1173,7 +1179,7 @@ struct
       | NONE => raise Control.Bug ("transformCodePoint: no entry point of "^
                                    ID.toString label)
 
-  fun transformPrimData anvalue =
+  fun transformPrimData funIdMap anvalue =
       case anvalue of
         AN.ANINT n => AI.SIntData (Target.toSInt n)
       | AN.ANWORD n => AI.UIntData (Target.toUInt n)
@@ -1184,11 +1190,15 @@ struct
         AI.ExternLabelData name
       | AN.ANGLOBALSYMBOL {name=(name,AN.GLOBALSYMBOL), ...} =>
         AI.GlobalLabelData name
-      | AN.ANGLOBALSYMBOL {name=(name,AN.UNDECIDED), ...} =>
+      | AN.ANGLOBALSYMBOL {name=(name,AN.UNDECIDED _), ...} =>
         raise Control.Bug "transformPrimData: UNDECIDED"
       | AN.ANVAR _ => raise Control.Bug "transformPrimData: ANVAR"
       | AN.ANLABEL id =>
-        raise Control.Bug "transformPrimData: ANLABEL"
+        (
+          case ID.Map.find (funIdMap, id) of
+            SOME clusterId => AI.EntryData {clusterId=clusterId, entry=id}
+          | NONE => raise Control.Bug ("transformPrimData: " ^ ID.toString id)
+        )
       | AN.ANLOCALCODE _ =>
         raise Control.Bug "transformPrimData: ANLOCALCODE"
 
@@ -1703,7 +1713,7 @@ struct
                   AI.Load   {dst = nestedVar,
                              block = base,
                              offset = nestedBlockIndex,
-                             size = sizeOfBoxed (),
+                             size = AI.UInt (sizeOfBoxed ()),
                              ty = AI.BOXED,
                              loc = loc} ::
                   (* newcopy = CopyBlock(nested); *)
@@ -1714,7 +1724,7 @@ struct
                     (* base[NestedBlockIndex] = newcopy; *)
                     AI.Update {block = base,
                                offset = nestedBlockIndex,
-                               size = sizeOfBoxed (),
+                               size = AI.UInt (sizeOfBoxed ()),
                                ty = AI.BOXED,
                                value = AI.Var newcopyVar,
                                barrier = AI.WriteBarrier,
@@ -1854,7 +1864,7 @@ struct
 
       | AN.ANVAL {varList, sizeList,
                   exp = AN.ANRECORD {bitmap, totalSize, fieldList,
-                                     fieldSizeList, fieldTyList},
+                                     fieldSizeList, fieldTyList, isMutable},
                   loc} =>
         let
           val dst = transformVarInfo (onlyOne varList)
@@ -3248,16 +3258,17 @@ struct
         end
 
       | AN.ANTOPRECORD {globalName, export, bitmaps, totalSize, fieldList,
-                        fieldTyList, fieldSizeList} =>
+                        fieldTyList, fieldSizeList, isMutable} =>
         let
           fun makeFields (field::fields, size::sizes) =
-              {value = transformPrimData field, size = Target.toUInt size}
+              {value = transformPrimData funIdMap field,
+               size = Target.toUInt size}
               :: makeFields (fields, sizes)
             | makeFields (nil, nil) = nil
             | makeFields _ = raise Control.Bug "ANTOPRECORD"
 
           val data =
-              AI.ObjectData {objectType = AI.Record,
+              AI.ObjectData {objectType = AI.Record  {mutable=isMutable},
                              bitmaps = map Target.toUInt bitmaps,
                              payloadSize = Target.toUInt totalSize,
                              fields = makeFields (fieldList, fieldSizeList)}
@@ -3265,7 +3276,7 @@ struct
           programWithSingleGlobal (globalName, AI.GlobalData data)
         end
 
-      | AN.ANTOPARRAY {globalName, export, externalVarID,
+      | AN.ANTOPARRAY {globalName, export,
                        bitmap, totalSize,
                        initialValues, elementTy, elementSize,
                        isMutable} =>
@@ -3276,14 +3287,39 @@ struct
                 {objectType = if isMutable then AI.Array else AI.Vector,
                  bitmaps = [Target.toUInt bitmap],
                  payloadSize = Target.toUInt totalSize,
-                 fields = map (fn x => {value=transformPrimData x, size=size})
+                 fields = map (fn x => {value=transformPrimData funIdMap x,
+                                        size=size})
                               initialValues}
         in
           programWithSingleGlobal (globalName, AI.GlobalData data)
         end
 
-      | AN.ANTOPCLOSURE {globalName, export, funLabel} =>
-        raise Control.Bug "FIXME: ANTOPCLOSURE: not implemented"
+      | AN.ANTOPVAR {globalName, externalVarID, initialValue,
+                     elementTy, elementSize} =>
+        let
+          val data =
+              AI.VarSlot {size = Target.toUInt elementSize,
+                          value = Option.map (transformPrimData funIdMap)
+                                             initialValue}
+        in
+          programWithSingleGlobal (globalName, AI.GlobalData data)
+        end
+
+      | AN.ANTOPCLOSURE {globalName, export, funLabel, closureEnv} =>
+        let
+          val {closureBitmap, closureFieldTys, closureFieldSizes, closureSize} =
+              closureLayout ()
+        in
+          transformTopdecl funIdMap
+            (AN.ANTOPRECORD {globalName = globalName,
+                             export = export,
+                             bitmaps = [closureBitmap],
+                             totalSize = closureSize,
+                             fieldList = [closureEnv, AN.ANLABEL funLabel],
+                             fieldTyList = closureFieldTys,
+                             fieldSizeList = closureFieldSizes,
+                             isMutable = false})
+        end
 
       | AN.ANTOPALIAS {globalName, export, originalGlobalName} =>
         (
@@ -3291,7 +3327,7 @@ struct
             (origName, AN.GLOBALSYMBOL) =>
             programWithSingleGlobal (globalName, AI.GlobalAlias origName)
           | (_, AN.EXTERNSYMBOL) => raise Control.Bug "ANTOPALIAS: EXTERNNAME"
-          | (_, AN.UNDECIDED) => raise Control.Bug "ANTOPALIAS: UNDECIDED"
+          | (_, AN.UNDECIDED _) => raise Control.Bug "ANTOPALIAS: UNDECIDED"
         )
 
       | AN.ANENTERTOPLEVEL id =>

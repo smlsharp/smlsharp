@@ -116,6 +116,7 @@ structure TermFormat :> sig
     val text : ('r, string -> ('r,'n) comb -> 'n) comb
     val space : ('r, ('r,'n) comb -> 'n) comb
     val dspace : ('r, ('r,'n) comb -> 'n) comb
+    val newline : ('r, ('r,'n) comb -> 'n) comb
     val $ : ('r, format -> ('r,'n) comb -> 'n) comb
     val guard_ : ('r, SMLFormat.FormatExpression.assoc option
                       -> (('r,'c) comb -> 'c, 'n) comb -> 'n) comb
@@ -123,7 +124,17 @@ structure TermFormat :> sig
 
     val puts : (format, (unit, 'n) comb -> 'n) comb
     val int : int formatter
+    val word : word formatter
+    val string : string formatter
+    val term : string -> format
     val list : 'a formatter -> 'a list formatter
+    val assocList : 'k formatter * 'v formatter -> ('k * 'v) list formatter
+    val record : (string * format) list formatter
+    val tuple2 : 't1 formatter * 't2 formatter -> ('t1 * 't2) formatter
+    val tuple3 : 't1 formatter * 't2 formatter * 't3 formatter
+                 -> ('t1 * 't2 * 't3) formatter
+    val tuple4 : 't1 formatter * 't2 formatter * 't3 formatter * 't4 formatter
+                 -> ('t1 * 't2 * 't3 * 't4) formatter
   end
 
   (* for debug *)
@@ -197,6 +208,7 @@ struct
     fun text (A (fmt, last)) s k = k (A (fn t => fmt (term s :: t), last))
     fun space (A (fmt, last)) k = k (A (fn t => fmt (sp :: t), last))
     fun dspace (A (fmt, last)) k = k (A (fn t => fmt (dsp :: t), last))
+    fun newline (A (fmt, last)) k = k (A (fn t => fmt (Newline :: t), last))
     fun $ (A (fmt, last)) exp k = k (A (fn t => fmt (exp @ t), last))
     fun guardEnd (A (fmt, last)) assoc result k =
         k (A (fn t => fmt (Guard (assoc, result) :: t), last))
@@ -247,23 +259,39 @@ struct
     | formatOptionalOption (formatter, lparen, rparen) (SOME x) =
       lparen @ formatter x @ rparen
 
+  fun keyValuePair (key, mapsto, value) =
+      begin_
+        guard_ NONE
+          $key $mapsto nest_ 2 space $value end_
+        end_
+      end_
+
   fun formatEnclosedMap formatKey listItemsi
                         (format, lparen, comma, mapsto, rparen) map =
       formatEnclosedList
         (fn (key, value) =>
-            begin_
-              guard_ NONE
-                $(formatKey key)
-                $mapsto
-                nest_ 2 space $(format value) end_
-              end_
-            end_,
+            keyValuePair (formatKey key, mapsto, format value),
          lparen, comma, rparen)
         (listItemsi map)
 
   fun formatEnclosedSEnv args map =
       formatEnclosedMap (fn x => [term x]) SEnv.listItemsi args map
-      
+
+  structure FormatComb =
+  struct
+    open FormatComb
+    fun assocList (formatKey, formatValue) pairs =
+        formatEnclosedMap
+          formatKey (fn x => x)
+          (formatValue, [term "{"], [term ","], [dsp,term "=>"], [term "}"])
+          pairs
+    fun record fields =
+        formatEnclosedList
+          (fn (key, value) => keyValuePair ([term key], [dsp,term "="], value),
+           [term "{"], [term ","], [term "}"])
+          fields
+  end
+
   (**** formatter for records ****)
 
   fun isTuple smap =
@@ -466,9 +494,19 @@ struct
   struct
     open FormatComb
     val int = format_int_dec_ML
+    val word = format_word_hex_ML
+    val string = format_string_ML
     fun list f l = formatEnclosedList (f, [term "["], [term ","], [term "]"]) l
+    fun tuple f l = formatEnclosedList (f, [term "("], [term ","], [term ")"]) l
+    fun tuple2 (f1, f2) (x1, x2) =
+        tuple (fn x => x) [f1 x1, f2 x2]
+    fun tuple3 (f1, f2, f3) (x1, x2, x3) =
+        tuple (fn x => x) [f1 x1, f2 x2, f3 x3]
+    fun tuple4 (f1, f2, f3, f4) (x1, x2, x3, x4) =
+        tuple (fn x => x) [f1 x1, f2 x2, f3 x3, f4 x4]
     fun puts (A (fmt, last)) k =
         k (A (fmt, fn t => TextIO.print (Control.prettyPrint t ^ "\n")))
+    val term = fn x => [term x]
   end
 
   (* for debug *)

@@ -1,4 +1,4 @@
-structure RTLFrame : sig
+structure FrameLayout : sig
 
   val allocate :
       {
@@ -9,11 +9,14 @@ structure RTLFrame : sig
       } ->
       RTL.cluster ->
       {
-        cluster: RTL.cluster,
         (* size of the whole of frame *)
         frameSize: int,
         (* slotId -> offset from the beginning of frame*)
-        slotIndex: int VarID.Map.map
+        slotIndex: int VarID.Map.map,
+        (* frame initialization code to be inserted after CODEENTRY *)
+        initCode: RTL.instruction list,
+        (* frame bitmap code for COMPUTE_FRAME *)
+        frameCode: RTL.var list -> RTL.instruction list
       }
 
 end =
@@ -45,75 +48,55 @@ struct
       SAVEHEAD of int option
 
 
-  (* FIXME: target dependent *)
-  fun generateCode frameSize (subst, v1, v2) code =
+  (* FIXME: make target dependent more *)
+  fun generateCode frameSize clobRegs code =
       let
         val offsetBase = frameSize + 4
         fun frameOffset off = off - offsetBase
         fun addr off = R.FRAMEINFO (frameOffset off)
-        fun reg REG1 = valOf v1 | reg REG2 = valOf v2
-        fun single x = RTLEdit.unfocus (RTLEdit.singleton x)
+        fun reg r =
+            case (r, clobRegs) of
+              (REG1, r::_) => r
+            | (REG2, _::r::_) => r
+            | _ => raise Control.Bug "generateCode"
       in
         case code of
           LSHIFT (r1, w) =>
-          single (R.LSHIFT (#ty (reg r1), R.REG (reg r1),
-                            R.REF_ (R.REG (reg r1)),
-                            R.CONST (R.UINT32 (Word32.fromInt (Word.toInt w)))))
+          R.LSHIFT (#ty (reg r1), R.REG (reg r1),
+                    R.REF_ (R.REG (reg r1)),
+                    R.CONST (R.UINT32 (Word32.fromInt (Word.toInt w))))
         | ORBIT (r1, r2) =>
-          single (R.OR (#ty (reg r1), R.REG (reg r1),
-                        R.REF_ (R.REG (reg r1)), R.REF_ (R.REG (reg r2))))
+          R.OR (#ty (reg r1), R.REG (reg r1),
+                R.REF_ (R.REG (reg r1)), R.REF_ (R.REG (reg r2)))
         | ANDBIT (r1, w) =>
-          single (R.AND (#ty (reg r1), R.REG (reg r1),
-                         R.REF_ (R.REG (reg r1)), R.CONST (R.UINT32 w)))
+          R.AND (#ty (reg r1), R.REG (reg r1),
+                 R.REF_ (R.REG (reg r1)), R.CONST (R.UINT32 w))
         | MOVE (r1, op1) =>
-          let
-            val graph = RTLEdit.singleton
-                          (R.MOVE (#ty (reg r1), R.REG (reg r1), op1))
-          in
-            X86Subst.substitute
-              (fn {id,...} => case VarID.Map.find (subst, id) of
-                                SOME v => SOME (R.REG v)
-                              | NONE => NONE)
-              (RTLEdit.unfocus graph)
-          end
+          R.MOVE (#ty (reg r1), R.REG (reg r1), op1)
         | SAVEREG (offset, r1) =>
-          single (R.MOVE (#ty (reg r1),
-                          R.MEM (#ty (reg r1), R.ADDR (addr offset)),
-                          R.REF_ (R.REG (reg r1))))
+          R.MOVE (#ty (reg r1),
+                  R.MEM (#ty (reg r1), R.ADDR (addr offset)),
+                  R.REF_ (R.REG (reg r1)))
         | SAVEIMM (offset, w) =>
-          single (R.MOVE (R.Int32 R.U,
-                          R.MEM (R.Int32 R.U, R.ADDR (addr offset)),
-                          R.CONST (R.UINT32 w)))
+          R.MOVE (R.Int32 R.U,
+                  R.MEM (R.Int32 R.U, R.ADDR (addr offset)),
+                  R.CONST (R.UINT32 w))
         | SETNULL offset =>
-          single (R.MOVEADDR (R.Data,
-                              R.MEM (R.Ptr R.Data, R.ADDR (addr offset)),
-                              R.ABSADDR (R.NULL R.Data)))
+          R.MOVEADDR (R.Data,
+                      R.MEM (R.Ptr R.Data, R.ADDR (addr offset)),
+                      R.ABSADDR (R.NULL R.Data))
         | SAVEHEAD (SOME offset) =>
-          single (R.MOVE (R.Int32 R.U,
-                          R.MEM (R.Int32 R.U, R.ADDR (R.FRAMEINFO ~4)),
-                          R.CONST (R.INT32 (Int32.fromInt
-                                              (frameOffset offset)))))
+          R.MOVE (R.Int32 R.S,
+                  R.MEM (R.Int32 R.S, R.ADDR (R.FRAMEINFO ~4)),
+                  R.CONST (R.INT32 (Int32.fromInt (frameOffset offset))))
         | SAVEHEAD NONE =>
-          single (R.MOVE (R.Int32 R.U,
-                          R.MEM (R.Int32 R.U, R.ADDR (R.FRAMEINFO ~4)),
-                          R.CONST (R.INT32 0)))
+          R.MOVE (R.Int32 R.S,
+                  R.MEM (R.Int32 R.S, R.ADDR (R.FRAMEINFO ~4)),
+                  R.CONST (R.INT32 0))
       end
 
-  fun generateCodeList frameSize param codeList =
-      let
-        val focus =
-            foldl
-              (fn (i, focus) =>
-                  let
-                    val g = generateCode frameSize param i
-                  in
-                    RTLEdit.spliceBefore (focus, g)
-                  end)
-              (RTLEdit.singletonFirst R.ENTER)
-              codeList
-      in
-        RTLEdit.unfocus focus
-      end
+  fun generateCodeList frameSize clobRegs codeList =
+      map (generateCode frameSize clobRegs) codeList
 
   fun bitmapToWord32 bitList =
       foldl (fn (x,z) => Word32.orb (Word32.<< (z, 0w1), x)) 0w0 bitList
@@ -220,11 +203,8 @@ struct
                   val size = Word.fromInt size
                   val align = Word.fromInt align
                   val offset = ceil (offset, align)
-(*
-                  val _ = print ("alloc: "^Word.fmt StringCvt.DEC offset^" = v"^Control.prettyPrint (VarID.format_id id)^" (align="^Word.fmt StringCvt.DEC align^",size="^Word.fmt StringCvt.DEC size^")\n")
-*)
                   val alloc = VarID.Map.insert (alloc, id,
-                                                     Word.toInt offset)
+                                                Word.toInt offset)
                 in
                   (ceil (offset + size, minAlign), alloc)
                 end)
@@ -376,22 +356,6 @@ struct
               (nil, nil, IEnv.empty)
               slots
 
-(*
-        val _ = print "======= begin allocate frame =======\n"
-        fun f g x = Control.prettyPrint (g x)
-        fun pv (k,v) = "v"^f VarID.format_id k ^ ":"^f F.format_format v
-        fun pl g nil = ""
-          | pl g (h::t) = g h ^ "\n" ^ pl g t
-        fun pm g x = IEnv.foldli (fn (k,v,z) => "t"^Int.toString k^":\n"^g v^z) "" x
-        val _ = print "boxed:\n"
-        val _ = print (pl pv boxed)
-        val _ = print "unboxed:\n"
-        val _ = print (pl pv unboxed)
-        val _ = print "generic:\n"
-        val _ = print (pm (pl pv) generic)
-        val _ = print "- - - -\n"
-*)
-
         (* compose frame bitmap *)
         val bitmaps =
             map (fn {source,bits} =>
@@ -405,29 +369,13 @@ struct
                 frameBitmap
 
         val wordBits = wordSize * 0w8
-(*
-open FormatByHand
-val _ = putf (pl (pr [("source",R.format_operand o #source),
-                      ("bits",pi o length o #bits)])) bitmaps
-*)
         val bitmaps = bitmapPacking wordBits bitmaps
-(*
-val _ = putf (pl (pr [("filled",pw o #filled),
-                      ("sources",
-                       pl (p3 (pw, pw, R.format_operand)) o #sources),
-                      ("bits", pi o length o #bits)])) bitmaps
-*)
         val bitmaps = composeBitmap REG1 REG2 bitmaps
 
         val numBitmapBits =
             foldl (fn ({filled,...},z) => filled + z) 0w0 bitmaps
         val genericSlots =
             foldr (fn ({bits,...},z) => bits @ z) nil bitmaps
-
-(*
-        val _ = print ("numBitmapBits: "^Word.fmt StringCvt.DEC numBitmapBits^"\n")
-        val _ = print ("pre-offset: "^Word.fmt StringCvt.DEC preOffset^"\n")
-*)
 
         (* allocate pad for pre-offset *)
         val offset = ceil (preOffset, maxAlign)
@@ -495,14 +443,6 @@ val _ = putf (pl (pr [("filled",pw o #filled),
             case nullSlots of
               nil => nil
             | _::_ => map SETNULL (ListSorter.sort Int.compare nullSlots)
-
-(*
-        val _ = print "-------- alloc -------\n"
-        val _ = VarID.Map.appi (fn (k,v) => print ("v"^VarID.toString k^": "^Word.fmt StringCvt.DEC v^"\n")) alloc
-        val _ = print "----------------------\n"
-        val _ = print ("frameSize = "^Word.fmt StringCvt.DEC frameSize^"\n")
-        val _ = print ("headerOffset = "^(case headerOffset of NONE => "no" | SOME x => Word.fmt StringCvt.DEC x)^"\n")
-*)
       in
         {
           frameSize = Word.toInt frameSize,
@@ -512,9 +452,7 @@ val _ = putf (pl (pr [("filled",pw o #filled),
         }
       end
 
-  fun allocate frameInfo
-               ({clusterId, frameBitmap, baseLabel, body,
-                 preFrameSize, postFrameSize, loc}:R.cluster) =
+  fun allocate frameInfo ({body, frameBitmap, ...}:R.cluster) =
       let
         (* gather slot usage *)
         (* FIXME: liveness analysis *)
@@ -535,180 +473,18 @@ val _ = putf (pl (pr [("filled",pw o #filled),
               RTLUtils.Slot.emptySet
               (RTLEdit.annotate (body, ()))
 
-(*
-val _ = Control.ps "--alloc--"
-val _ = Control.p RTLUtils.Slot.format_set slots
-val _ = Control.ps "--"
-*)
-
         val {frameSize, slotIndex, initCode, bitmapCode} =
             constructFrame frameInfo frameBitmap slots
 
-        (* substitute COMPUTE_FRAME with frameCode *)
-        val body =
-            RTLEdit.extend
-              (fn (RTLEdit.MIDDLE (R.COMPUTE_FRAME {uses, clobs=[v1,v2]})) =>
-                  generateCodeList frameSize (uses, SOME v1, SOME v2) bitmapCode
-                | (RTLEdit.MIDDLE insn) =>
-                  RTLEdit.unfocus (RTLEdit.singleton insn)
-                | (RTLEdit.FIRST (first as R.CODEENTRY _)) =>
-                  let
-                    val focus = RTLEdit.singletonFirst first
-                    val g = generateCodeList frameSize
-                                             (VarID.Map.empty, NONE, NONE)
-                                             initCode
-                    val focus = RTLEdit.spliceBefore (focus, g)
-                  in
-                    RTLEdit.unfocus focus
-                  end
-                | (RTLEdit.FIRST first) =>
-                  RTLEdit.unfocus (RTLEdit.singletonFirst first)
-                | (RTLEdit.LAST last) =>
-                  RTLEdit.unfocus (RTLEdit.singletonLast last))
-              body
-
-        val cluster =
-            {clusterId = clusterId,
-             frameBitmap = nil,
-             baseLabel = baseLabel,
-             body = body,
-             preFrameSize = preFrameSize,
-             postFrameSize = postFrameSize,
-             loc = loc} : R.cluster
+        val initCode = generateCodeList frameSize nil initCode
+        val frameCode = fn clobs => generateCodeList frameSize clobs bitmapCode
       in
         {
-          cluster = cluster,
           frameSize = frameSize,
-          slotIndex = slotIndex
+          slotIndex = slotIndex,
+          initCode = initCode,
+          frameCode = frameCode
         }
       end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-(*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        source =
-
-
-          R.Int8 s => (R.Int32 s, R.REG {id=id, ty=R.Int32 s})
-
-
-
-  fun mlParams (argTys:R.ty list, retTys:R.ty list) =
-      #2 (preFrameOffset (length retTys * genericSize (), argTys))
-
- R.REF (transformArgInfo arg)
-          | AI.EnvBitmap (arg, offset) =>
-            R.MEM (R.ADDR (R.DISP
-                             (R.INT32 (Int32.fromInt (Word.toIntX offset)),
-                              R.BASE (#2 (transformArgInfo arg))))),
-        bits = bits
-      } : R.frameBitmap
-
-
-
-
-
-
-
-
-  fun allocate {preOffset, postOffset, maxAlign, wordSize}
-               {frameBitmap, preFrameAligned, graph} =
-
-
-
-
-
-
-               {graph, index, preFrameOrigin, postFrameOrigin}
-
-
-
-
-
-  val allocate
-      : {
-          preOffset: word,    (* pre-offset of a frame *)
-          postOffset: word,   (* post-offset of a frame *)
-          maxAlign: word,     (* maximum alignment *)
-          wordSize: word,     (* number of bytes in a word *)
-          tmpReg1: 'reg,      (* temporally register for bitmap calculuation *)
-          tmpReg2: 'reg,
-          frameBitmap: ('reg,'addr) FrameLayout.frameBitmap list,
-          variables: FrameLayout.format VarID.Map.map   (* varID->format *)
-        }
-        -> ('reg,'addr) FrameLayout.frameLayout
-
-
-
-  fun allocate {frameBitmap, preFrameAligned, graph}
-               {preOffset, postOffset, maxAlign, wordSize} =
-      let
-
-        (*
-         * addr
-         *  | :          :
-         *  | +----------+ [align 16]  -----------------------------
-         *  | :PostFrame : (need to allocate)                  ^
-         *  | |          |                                     |
-         *  | +==========+ [align 16]  preOffset = 0           |
-         *  | | Frame    | (need to allocate)                  | need to alloc
-         *  | |          |                                     |
-         *  | +==========+ [align 12/16] postOffset = 12       |
-         *  | | headaddr |                                     v
-         *  | +----------+ 8/16 <---- ebp --------------------------
-         *  | | push ebp |
-         *  | +----------+ 4/16
-         *  | | ret addr |
-         *  | +==========+ [align 16]
-         *  | | PreFrame | (allocated by caller)
-         *  | :          :
-         *  | +----------+ [align 16]
-         *  | :          :
-         *  v
-         *)
-        val {frameSize, variableOffsets, headerCode, headerOffset} =
-            FrameAllocation.allocate {preOffset = preOffset,
-                                      postOffset = postOffset,
-                                      maxAlign = maxAlign,
-                                      wordSize = wordSize,
-
-
-
-      {graph = graph,
-       index = index,
-       preFrameOrigin = preFrameOrigin,
-       postFrameOrigin = postFrameOrigin}
-end
-
-*)
 end

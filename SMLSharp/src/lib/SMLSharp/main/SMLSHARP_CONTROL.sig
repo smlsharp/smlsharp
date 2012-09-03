@@ -30,4 +30,4 @@ sig
                 val getMaxRefDepth : unit -> int
               end
 
-end;
+end

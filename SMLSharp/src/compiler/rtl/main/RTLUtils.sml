@@ -21,6 +21,7 @@ structure RTLUtils :> sig
     val find : set * RTL.id -> RTL.var option
     val isEmpty : set -> bool
     val fromList : RTL.var list -> set
+    val toVarIDSet : set -> VarID.Set.set
     val singleton : RTL.var -> set
     val defuseFirst : RTL.first -> defuseSet
     val defuseInsn : RTL.instruction -> defuseSet
@@ -46,6 +47,7 @@ structure RTLUtils :> sig
     val find : set * RTL.id -> RTL.slot option
     val isEmpty : set -> bool
     val fromList : RTL.slot list -> set
+    val toVarIDSet : set -> VarID.Set.set
     val singleton : RTL.slot -> set
     val defuseFirst : RTL.first -> defuseSet
     val defuseInsn : RTL.instruction -> defuseSet
@@ -96,28 +98,8 @@ structure RTLUtils :> sig
   val analyzeFlowForward :
       'a analysis -> RTL.graph -> 'a answer RTLEdit.annotatedGraph
 
-
-
-(*
-  val edges : RTL.graph
-              -> {edges: {succs: RTL.label list,
-                          preds: RTL.label list} RTL.LabelMap.map,
-                  exits: RTL.label list}
-
-  type 'a analysis =
-      {
-        init: 'a,
-        join: 'a * 'a -> 'a,
-        pass: RTLEdit.node * 'a -> 'a,
-        changed: {old:'a, new:'a} -> bool
-      }
-
-  type 'a answer =
-      {answerIn: 'a, answerOut: 'a} RTL.LabelMap.map
-
-  val analyzeFlowBackward : 'a analysis -> RTL.graph -> 'a answer
-  val analyzeFlowForward : 'a analysis -> RTL.graph -> 'a answer
-*)
+  val mapCluster : (RTL.graph -> RTL.graph)
+                   -> RTL.program -> RTL.program
 
 end =
 struct
@@ -154,15 +136,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       VarID.Map.filteri
         (fn (id, _) => not (VarID.Map.inDomain (set2, id)))
         set1
-(*
-      VarID.Map.foldli
-        (fn (id, v, set) =>
-            case VarID.Map.find (set2, id) of
-              NONE => VarID.Map.insert (set, id, v)
-            | SOME _ => set)
-        VarID.Map.empty
-        set1
-*)
 
   fun setIsSubset (set1:'a set, set2:'a set) =
       VarID.Map.foldli
@@ -182,6 +155,9 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       foldl (fn (slot as {id,...}:I.slot, set) =>
                 VarID.Map.insert (set, id, slot))
             emptySet slots
+
+  fun idSet set =
+      VarID.Map.foldli (fn (i,_,z) => VarID.Set.add (z, i)) VarID.Set.empty set
 
   fun ({defs=d1, uses=u1}:''a defuseSet) ++ ({defs=d2, uses=u2}:''a defuseSet) =
       {defs = setUnion (d1, d2), uses = setUnion (u1, u2)} : ''a defuseSet
@@ -222,14 +198,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
 
   fun duOp duDst (I.CONST _) = duEmpty
     | duOp duDst (I.REF (_, dst)) = useAll (duDst dst)
-
-(*
-  fun duTest duDst insn =
-      case insn of
-        I.TEST_SUB (_, op1, op2) => duOp duDst op1 ++ duOp duDst op2
-      | I.TEST_AND (_, op1, op2) => duOp duDst op1 ++ duOp duDst op2
-        val duTest = duTest duDst
-*)
 
   fun defuseInsn (func as {varSet, slotSet, duDst}) insn =
       let
@@ -479,6 +447,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
     val emptySet = emptySet : set
     val singleton = fn x => singleton #id x : set
     val fromList = varSet
+    val toVarIDSet = idSet
     fun slotSet (v:I.slot list) = emptySet
     val func = {varSet=varSet, slotSet=slotSet, duDst=duDstVar}
     val defuseFirst = fn x => defuseFirst varSet x
@@ -511,6 +480,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
     val emptySet = emptySet : set
     val singleton = fn x => singleton #id x : set
     val fromList = slotSet
+    val toVarIDSet = idSet
     fun varSet (v:I.var list) = emptySet
     val func = {varSet=varSet, slotSet=slotSet, duDst=duDstSlot}
     val defuseFirst = fn x => defuseFirst varSet x
@@ -619,32 +589,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       | I.TAILCALL_JUMP {preFrameSize, jumpTo, uses} => nil
       | I.RETURN {preFrameSize, stubOptions, uses} => nil
       | I.EXIT => nil
-
-(*
-  fun edges graph =
-      let
-        fun add updateFn (key, map) =
-            I.LabelMap.insert
-              (map, key, updateFn (case I.LabelMap.find (map, key) of
-                                     NONE => {succs=nil, preds=nil}
-                                   | SOME x => x))
-
-        fun addEdges (edgeMap, from, succs) =
-            foldl (add (fn {succs,preds} => {succs=succs,preds=from::preds}))
-                  (add (fn {succs=l,preds} => {succs=l@succs,preds=preds})
-                       (from, edgeMap))
-                  succs
-      in
-        I.LabelMap.foldli
-          (fn (label, (_,_,last):I.block, {edges, exits}) =>
-              case successors last of
-                nil => {edges = edges, exits = label::exits}
-              | succs => {edges = addEdges (edges, label, succs),
-                          exits = exits})
-          {edges = I.LabelMap.empty, exits = nil}
-          graph
-      end
-*)
 
   fun format_labelList labels =
       SMLFormat.BasicFormatters.format_list
@@ -773,12 +717,6 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
             case I.LabelSet.listItems set of
               nil => NONE
             | h::t => SOME (h, (t, I.LabelSet.delete (set, h)):set)
-(*
-    type set = I.label list
-    fun initSet l = l
-    fun enqueue (l1,l2) = l1 @ l2
-    fun dequeue (h::t) = SOME (h, t) | dequeue nil = NONE
-*)
   in
 
   fun analyzeFlowBackward ({init, join, pass, filterIn, filterOut,
@@ -793,18 +731,12 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
                                      answerIn = init,
                                      answerOut = init})
                                 graph
-(*
-        val count = ref 0
-*)
 
         fun loop (workSet, graph) =
             case dequeue workSet of
               NONE => graph
             | SOME (label, workSet) =>
               let
-(*
-val _ = count := !count + 1
-*)
               val focus = RTLEdit.focusBlock (graph, label)
               val {preds, succs, answerIn, answerOut} = RTLEdit.annotation focus
               val newOut =
@@ -826,9 +758,6 @@ val _ = count := !count + 1
             end
       in
         loop (workSet, graph)
-(*
-        before (let open FormatByHand in put (%`"analyzeFlowBackward: "%pi"/"%pi""` (!count) (I.LabelMap.numItems (RTLEdit.graph graph)));() end)
-*)
       end
         
   fun analyzeFlowForward ({init, join, pass, filterIn, filterOut,
@@ -843,18 +772,12 @@ val _ = count := !count + 1
                                      answerIn = init,
                                      answerOut = init})
                                 graph
-(*
-        val count = ref 0
-*)
 
         fun loop (workSet, graph) =
             case dequeue workSet of
               NONE => graph
             | SOME (label, workSet) =>
               let
-(*
-val _ = count := !count + 1
-*)
               val focus = RTLEdit.focusBlock (graph, label)
               val {preds, succs, answerIn, answerOut} = RTLEdit.annotation focus
               val newIn =
@@ -877,157 +800,25 @@ val _ = count := !count + 1
             end
       in
         loop (workSet, graph)
-(*
-        before (let open FormatByHand in put (%`"analyzeFlowForward: "%pi"/"%pi""` (!count) (I.LabelMap.numItems (RTLEdit.graph graph)));() end)
-*)
       end
 
   end (* local *)
 
-(*
-  fun analyzeFlowBackward ({init, join, pass, changed}:'a analysis) graph =
-      let
-        val {edges, exits} = edges graph
-
-val _ = puts "== edges"
-val _ = I.LabelMap.appi
-        (fn (id, {succs, preds}) =>
-            puts (VarID.toString id ^ ": succs=" ^
-                  foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" succs ^ " preds=" ^
-                  foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" preds))
-        edges
-val _ = puts "--"
-val _ = puts (foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" exits)
-val _ = puts "=="
-
-        val answer = I.LabelMap.empty
-
-        fun loop (nil, answer) = answer
-          | loop (label::workSet, answer) =
-            let
-val _ = puts ("workset: " ^
-              foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" (label::workSet))
-
-              val {preds, succs} = I.LabelMap.lookup (edges, label)
-              val {answerIn, answerOut} = answerOf (answer, label, init)
-              val newOut =
-                  foldl (fn (l, out) =>
-                            join (out, answerInOf (answer, l, init)))
-                        answerOut succs
-              val block = I.LabelMap.lookup (graph, label)
-              val newIn = RTLEdit.foldBlockBackward pass newOut block
-val _ = puts ("changed: " ^ (if changed {old=answerIn, new=newIn} then "true" else "false"))
-              val workSet =
-                  if changed {old=answerIn, new=newIn}
-                  then preds @ workSet
-                  else workSet
-              val answer = I.LabelMap.insert (answer, label,
-                                              {answerIn = newIn,
-                                               answerOut = newOut})
-            in
-              loop (workSet, answer)
-            end
-      in
-        loop (exits, I.LabelMap.empty)
-      end
-
-  type 'a answer =
-      {answerIn: 'a, answerOut: 'a} RTL.LabelMap.map
-
-  type 'a analysis =
-      {
-        init: 'a,
-        join: 'a * 'a -> 'a,
-        pass: RTLEdit.node * 'a -> 'a,
-        changed: {old:'a, new:'a} -> bool
-      }
-
-  local
-    fun answerOf (answer, label, init) =
-        case I.LabelMap.find (answer, label) of
-          NONE => {answerIn = init, answerOut = init}
-        | SOME x => x
-    fun answerInOf x = #answerIn (answerOf x)
-    fun answerOutOf x = #answerOut (answerOf x)
-  in
-
-  fun analyzeFlowBackward ({init, join, pass, changed}:'a analysis) graph =
-      let
-        val {edges, exits} = edges graph
-
-val _ = puts "== edges"
-val _ = I.LabelMap.appi
-        (fn (id, {succs, preds}) =>
-            puts (VarID.toString id ^ ": succs=" ^
-                  foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" succs ^ " preds=" ^
-                  foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" preds))
-        edges
-val _ = puts "--"
-val _ = puts (foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" exits)
-val _ = puts "=="
-
-        val answer = I.LabelMap.empty
-
-        fun loop (nil, answer) = answer
-          | loop (label::workSet, answer) =
-            let
-val _ = puts ("workset: " ^
-              foldl (fn (x,z) => z ^","^ Control.prettyPrint (I.format_label x)) "" (label::workSet))
-
-              val {preds, succs} = I.LabelMap.lookup (edges, label)
-              val {answerIn, answerOut} = answerOf (answer, label, init)
-              val newOut =
-                  foldl (fn (l, out) =>
-                            join (out, answerInOf (answer, l, init)))
-                        answerOut succs
-              val block = I.LabelMap.lookup (graph, label)
-              val newIn = RTLEdit.foldBlockBackward pass newOut block
-val _ = puts ("changed: " ^ (if changed {old=answerIn, new=newIn} then "true" else "false"))
-              val workSet =
-                  if changed {old=answerIn, new=newIn}
-                  then preds @ workSet
-                  else workSet
-              val answer = I.LabelMap.insert (answer, label,
-                                              {answerIn = newIn,
-                                               answerOut = newOut})
-            in
-              loop (workSet, answer)
-            end
-      in
-        loop (exits, I.LabelMap.empty)
-      end
-
-  fun analyzeFlowForward ({init, join, pass, changed}:'a analysis) graph =
-      let
-        val {edges, exits} = edges graph
-        val answer = I.LabelMap.empty
-
-        fun loop (nil, answer) = answer
-          | loop (label::workSet, answer) =
-            let
-              val {preds, succs} = I.LabelMap.lookup (edges, label)
-              val {answerIn, answerOut} = answerOf (answer, label, init)
-              val newIn =
-                  foldl (fn (l, newIn) =>
-                            join (newIn, answerOutOf (answer, l, init)))
-                        answerIn preds
-              val block = I.LabelMap.lookup (graph, label)
-              val newOut = RTLEdit.foldBlockForward pass newIn block
-              val workSet =
-                  if changed {old=answerOut, new=newOut}
-                  then preds @ workSet
-                  else workSet
-              val answer = I.LabelMap.insert (answer, label,
-                                              {answerIn = newIn,
-                                               answerOut = newOut})
-            in
-              loop (workSet, answer)
-            end
-      in
-        loop (exits, I.LabelMap.empty)
-      end
-
-  end (* local *)
-*)
-
+  fun mapCluster f topdecls =
+      map (fn I.CLUSTER {clusterId, frameBitmap, baseLabel, body,
+                         preFrameSize, postFrameSize, loc} =>
+              I.CLUSTER {clusterId = clusterId,
+                         frameBitmap = frameBitmap,
+                         baseLabel = baseLabel,
+                         body = f body,
+                         preFrameSize = preFrameSize,
+                         postFrameSize = postFrameSize,
+                         loc = loc}
+            | x as I.TOPLEVEL _ => x
+            | x as I.DATA _ => x
+            | x as I.BSS _ => x
+            | x as I.X86GET_PC_THUNK_BX _ => x
+            | x as I.EXTERN _ => x)
+      topdecls
+                                 
 end

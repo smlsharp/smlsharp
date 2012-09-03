@@ -30,4 +30,4 @@ local
   end
 in
 structure Word8Array = MonoArrayBase(Operations)
-end;
+end

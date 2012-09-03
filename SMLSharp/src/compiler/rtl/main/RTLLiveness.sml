@@ -35,25 +35,10 @@ struct
 
   fun pass (node, liveSet) =
       let
-(*
-val _ = Control.ps "--"
-val _ = Control.p RTLEdit.format_node node
-val _ = Control.p RTLUtils.Var.format_set liveSet
-*)
         val {defs, uses} = RTLUtils.Var.defuse node
-(*
-val _ = Control.p RTLUtils.Var.format_set defs
-val _ = Control.p RTLUtils.Var.format_set uses
-val s = let
-*)
       in
         RTLUtils.Var.setUnion (RTLUtils.Var.setMinus (liveSet, defs), uses)
       end
-(*
-val _ = Control.p RTLUtils.Var.format_set s
-val _ = Control.ps "--"
-in s end
-*)
 
   fun foldBackward f z graph =
       RTLEdit.fold
@@ -77,67 +62,6 @@ in s end
         z
         graph
 
-(*
-  fun defuseOfBlock (graph, label) =
-      RTLEdit.analyzeForward
-        (fn (node, {defSet, useSet}) =>
-            let
-              val {defs, uses} = RTLUtils.defuse node
-              val useSet =
-                  VarID.Map.foldli
-                    (fn (id, var, useSet) =>
-                        case VarID.Map.find (defSet, id) of
-                          SOME _ => useSet
-                        | NONE => VarID.Map.insert (useSet, id, var))
-                    useSet uses
-            in
-              {useSet = useSet, defSet = union (defSet, defs)}
-            end)
-        {defSet = empty, useSet = empty}
-        (RTLEdit.focusFirst (graph, label))
-
-  fun liveness graph =
-      let
-        val {edges, exits} = RTLUtils.edges graph
-        val blockInfo =
-            I.LabelMap.mapi
-              (fn (label, {preds, succs}) =>
-                  {preds = preds,
-                   succs = succs,
-                   defuse = defuseOfBlock (graph, label)})
-              edges
-
-        fun loop (nil, result) = result
-          | loop (label::workSet, result) =
-            let
-              val {preds, succs, defuse as {defSet, useSet}} =
-                  I.LabelMap.lookup (blockInfo, label)
-              val {liveIn, liveOut} =
-                  case I.LabelMap.find (result, label) of
-                    NONE => {liveIn = empty, liveOut = empty}
-                  | SOME x => x
-              fun liveInOf l = #liveIn (I.LabelMap.lookup (result, l))
-              val newLiveOut =
-                  foldl (fn (l, liveOut) => union (liveOut, liveInOf l))
-                        empty succs
-              val newLiveIn =
-                  union (minus (newLiveOut, defSet), useSet)
-              val workSet =
-                  if isSubset (newLiveIn, liveIn)
-                  then workSet
-                  else preds @ workSet
-              val result =
-                  I.LabelMap.insert (result, label,
-                                          {liveIn = newLiveIn,
-                                           liveOut = newLiveOut})
-            in
-              loop (workSet, result)
-            end
-      in
-        loop (exits, I.LabelMap.empty)
-      end
-*)
-
   fun liveness graph =
       let
         val graph = RTLUtils.analyzeFlowBackward
@@ -150,11 +74,6 @@ in s end
                                     not (RTLUtils.Var.setIsSubset (new,old))}
                       graph
       in
-(*
-        Control.ps "== liveness";
-        Control.p (RTLEdit.format_annotatedGraph (RTLUtils.format_answer RTLUtils.Var.format_set)) graph;
-        Control.ps "==";
-*)
         RTLEdit.map (fn {answerIn,answerOut,...} =>
                         {liveIn=answerIn, liveOut=answerOut}) graph
       end
@@ -162,31 +81,13 @@ in s end
 
   fun passSlot (node, liveSet) =
       let
-(*
-val _ = Control.ps "=="
-val _ = Control.p RTLEdit.format_node node
-val _ = Control.p RTLUtils.Slot.format_set liveSet
-*)
         val {defs, uses} = RTLUtils.Slot.defuse node
-(*
-val x =let
-*)
       in
         RTLUtils.Slot.setUnion (RTLUtils.Slot.setMinus (liveSet, defs), uses)
       end
-(*
-val _ = Control.p RTLUtils.Slot.format_set x
-val _ = Control.ps "=="
-in
-x
-end
-*)
 
   fun livenessSlot graph =
       let
-(*
-val _ = Control.ps "====liveness begin===="
-*)
         val graph = RTLUtils.analyzeFlowBackward
                       {init = RTLUtils.Slot.emptySet,
                        join = RTLUtils.Slot.setUnion,
@@ -196,9 +97,6 @@ val _ = Control.ps "====liveness begin===="
                        changed = fn {old,new} =>
                                     not (RTLUtils.Slot.setIsSubset (new,old))}
                       graph
-(*
-val _ = Control.ps "====liveness end===="
-*)
       in
         RTLEdit.map (fn {answerIn,answerOut,...} =>
                         {liveIn=answerIn, liveOut=answerOut}) graph

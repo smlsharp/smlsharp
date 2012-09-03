@@ -327,7 +327,7 @@ struct
         end
 
       | AN.ANRECORD {bitmap, totalSize, fieldList, fieldSizeList,
-                     fieldTyList} =>
+                     fieldTyList, isMutable} =>
         let
           val bitmapTy = typecheckValue context loc bitmap
           val totalSizeTy = typecheckValue context loc totalSize

@@ -256,7 +256,8 @@ struct
                                           ann = AN.GLOBALOTHER,
                                           ty = AN.BOXED}],
                           fieldTyList = [AN.BOXED],
-                          fieldSizeList = [sizeOf AN.BOXED]}
+                          fieldSizeList = [sizeOf AN.BOXED],
+                          isMutable = false}
         ] @
         map (fn sym =>
                 AN.ANTOPALIAS {globalName = sym,
@@ -267,15 +268,11 @@ struct
 
   fun makeGlobalVarDecl vid ty symbol aliasSymbols =
       [
-        AN.ANTOPARRAY {globalName = symbol,
-                       export = true,
-                       externalVarID = SOME vid,
-                       bitmap = tagOf ty,
-                       totalSize = sizeOf ty,
-                       initialValues = nil,
-                       elementTy = ty,
-                       elementSize = sizeOf ty,
-                       isMutable = true}
+        AN.ANTOPVAR {globalName = symbol,
+                     externalVarID = SOME vid,
+                     initialValue = NONE,
+                     elementTy = ty,
+                     elementSize = sizeOf ty}
       ] @
       map (fn name =>
               AN.ANTOPALIAS {globalName = name,
@@ -380,11 +377,11 @@ struct
       | AN.ANVAR _ => (context, anvalue)
       | AN.ANLABEL _ => (context, anvalue)
       | AN.ANLOCALCODE _ => (context, anvalue)
-      | AN.ANGLOBALSYMBOL {name=(name, AN.UNDECIDED), ann, ty} =>
+      | AN.ANGLOBALSYMBOL {name=(name, AN.UNDECIDED varTy), ann, ty} =>
         let
           val (context, globalName) =
               case ann of
-                AN.GLOBALVAR id => recoverGlobalVarDecl context name id ty
+                AN.GLOBALVAR id => recoverGlobalVarDecl context name id varTy
               | AN.EXCEPTIONTAG tag => recoverExceptionDecl context name tag
               | AN.GLOBALOTHER =>
                 raise Control.Bug "recoverValue: undecided other"
@@ -478,7 +475,7 @@ struct
         end
 
       | AN.ANRECORD {bitmap, totalSize, fieldList, fieldSizeList,
-                     fieldTyList} =>
+                     fieldTyList, isMutable} =>
         let
           val (context, bitmap) = recoverValue context bitmap
           val (context, totalSize) = recoverValue context totalSize
@@ -490,7 +487,8 @@ struct
                         totalSize = totalSize,
                         fieldList = fieldList,
                         fieldSizeList = fieldSizeList,
-                        fieldTyList = fieldTyList})
+                        fieldTyList = fieldTyList,
+                        isMutable = isMutable})
         end
 
       | AN.ANENVRECORD {bitmap, totalSize, fieldList, fieldSizeList,
@@ -932,6 +930,7 @@ struct
       | AN.ANTOPCONST _ => (context, [topdecl])
       | AN.ANTOPRECORD _ => (context, [topdecl])
       | AN.ANTOPARRAY _ => (context, [topdecl])
+      | AN.ANTOPVAR _ => (context, [topdecl])
       | AN.ANTOPCLOSURE _ => (context, [topdecl])
       | AN.ANTOPALIAS _ => (context, [topdecl])
       | AN.ANENTERTOPLEVEL id => (context, [topdecl])

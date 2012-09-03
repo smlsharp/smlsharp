@@ -14,4 +14,4 @@ struct
 
   fun isAddressOfBlock address = SMLSharp.Runtime.GC_isAddressOfBlock address
 
-end;
+end

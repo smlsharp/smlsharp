@@ -191,8 +191,8 @@ struct
           reader (StringCvt.skipWS reader stream)
   end
 
-  val toString = fmt 3
-  val fromString = StringCvt.scanString scan
+  fun toString x = fmt 3 x
+  fun fromString x = StringCvt.scanString scan x
 
   val op + = fn (TIME x, TIME y) => TIME (x + y)
   val op - = fn (TIME x, TIME y) => TIME (x - y)

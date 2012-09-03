@@ -58,4 +58,4 @@ local
   end
 in
 structure Real64 = RealBase(Operations)
-end;
+end

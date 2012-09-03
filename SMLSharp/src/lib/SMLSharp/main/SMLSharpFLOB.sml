@@ -15,4 +15,4 @@ struct
   fun app f x = f x
   fun isAddressOfFLOB address = SMLSharp.Runtime.GC_isAddressOfFLOB address
 
-end;
+end

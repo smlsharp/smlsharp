@@ -41,5 +41,5 @@ struct
         A.update (array, i + 3, b3)
       end
 
-end;
+end
 

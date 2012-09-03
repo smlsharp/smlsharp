@@ -431,7 +431,7 @@ struct
                AN.ANGLOBALSYMBOL {name=name2 as (_,kind2),ann=ann2,...}) =
       (
         case (kind1, kind2) of
-          (AN.UNDECIDED, AN.UNDECIDED) =>
+          (AN.UNDECIDED _, AN.UNDECIDED _) =>
           (case (ann1, ann2) of
              (AN.GLOBALVAR x, AN.GLOBALVAR y) => ExVarID.eq (x, y)
            | (AN.EXCEPTIONTAG x, AN.EXCEPTIONTAG y) => ExnTagID.eq (x, y)
@@ -610,12 +610,13 @@ struct
                         returnLabel = returnLabel,
                         knownDestinations = knownDestinations}
       | AN.ANRECORD {bitmap, totalSize, fieldList, fieldSizeList,
-                     fieldTyList} =>
+                     fieldTyList, isMutable} =>
         AN.ANRECORD {bitmap = propValue env subst bitmap,
                      totalSize = propValue env subst totalSize,
                      fieldList = map (propValue env subst) fieldList,
                      fieldSizeList = map (propValue env subst) fieldSizeList,
-                     fieldTyList = fieldTyList}
+                     fieldTyList = fieldTyList,
+                     isMutable = isMutable}
       | AN.ANENVRECORD {bitmap, totalSize, fieldList, fieldSizeList,
                         fieldTyList, fixedSizeList} =>
         AN.ANENVRECORD {bitmap = propValue env subst bitmap,

@@ -116,4 +116,4 @@ sig
    *)
   val dumpString : string -> String.string
 
-end;
+end

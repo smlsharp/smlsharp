@@ -16,15 +16,15 @@ struct
 
   val MBSToBytesSlice = P.encode
 
-  val MBSToBytes = BVS.vector o MBSToBytesSlice
+  fun MBSToBytes x = BVS.vector (MBSToBytesSlice x)
 
-  val MBSToString = Byte.bytesToString o MBSToBytes
+  fun MBSToString x = Byte.bytesToString (MBSToBytes x)
 
   val bytesSliceToMBS = P.decode
 
-  val bytesToMBS = bytesSliceToMBS o BVS.full
+  fun bytesToMBS x = bytesSliceToMBS (BVS.full x)
 
-  val stringToMBS = bytesToMBS o Byte.stringToBytes
+  fun stringToMBS x = bytesToMBS (Byte.stringToBytes x)
 
 (*
   fun convert toCodecName string =
@@ -37,7 +37,7 @@ struct
 *)
   val maxSize = P.maxSize
 
-  val emptyString = P.concat []
+  fun emptyString () = P.concat []
 
   val size = P.size (* NOTE: sizeString is a primitive operator. *)
 
@@ -64,7 +64,7 @@ struct
         then raise General.Subscript
         else
           if (begin = stringSize) andalso (length = 0)
-          then emptyString
+          then emptyString ()
           else P.substring (string, begin, length)
       end
 
@@ -72,7 +72,7 @@ struct
 
   fun concat strings = P.concat strings
 
-  fun concatWith separator [] = emptyString
+  fun concatWith separator [] = emptyString ()
     | concatWith separator [string] = string
     | concatWith separator (string :: strings) =
       let
@@ -140,12 +140,13 @@ struct
               else inToken (index + 1) (index, tokens)
       in List.rev (inToken 0 (0, [])) end
 
-  val fromAsciiString = implode o (List.map P.fromAsciiChar) o String.explode
+  fun fromAsciiString x =
+      implode (List.map P.fromAsciiChar (String.explode x))
 
-  val toAsciiString = 
+  fun toAsciiString x =
       String.implode
-      o List.map (fn c => Option.getOpt(P.toAsciiChar c, #"?"))
-      o explode
+        (List.map (fn c => Option.getOpt(P.toAsciiChar c, #"?"))
+                  (explode x))
 
   local
     fun fromStringBase converter cstring =
@@ -219,10 +220,10 @@ struct
               o explode
 
   in
-  val fromString = fromStringBase String.fromString
-  val toString = toStringBase Char.toString
-  val fromCString = fromStringBase String.fromCString
-  val toCString = toStringBase Char.toCString
+  fun fromString x = fromStringBase String.fromString x
+  fun toString x = toStringBase Char.toString x
+  fun fromCString x = fromStringBase String.fromCString x
+  fun toCString x = toStringBase Char.toCString x
   end
 
   local
@@ -257,7 +258,7 @@ struct
         collateImp charCollate ((left, 0, leftSize), (right, 0, rightSize))
       end
 
-  val compare = collate P.compareChar
+  fun compare x = collate P.compareChar x
 
   fun isPrefix left right =
       let
@@ -310,8 +311,8 @@ struct
       case compare (left, right) of General.LESS => true | _ => false
   fun op <= (left, right) =
       case compare (left, right) of General.GREATER => false | _ => true
-  val op > = not o (op <=)
-  val op >= = not o (op <)
+  fun op > x = not (op <= x)
+  fun op >= x = not (op < x)
 
   end (* end of local *)
 

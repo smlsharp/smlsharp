@@ -85,7 +85,7 @@ struct
 
   fun newDst ty =
       let
-        val id = NewLabel.newLabel ()
+        val id = VarID.generate ()
       in
         case ty of
           R.Int8 s => R.REG {id=id, ty=ty}
@@ -109,7 +109,7 @@ struct
       | _ => raise Control.Bug "newVar"
 
   fun newSlot fmt =
-      {id = NewLabel.newLabel (), format = fmt} : R.slot
+      {id = VarID.generate (), format = fmt} : R.slot
 
   datatype value =
       OPRD of R.operand
@@ -474,80 +474,6 @@ struct
       R.SYMBOL (R.Code, R.LOCAL, entrySymbolName ent)
   fun dataSymbol (ptrTy, scope, symbol) =
       R.SYMBOL (ptrTy, scope, symbol)
-(*
-  fun entrySymbol (code:code, ent as {clusterId, entry}) =
-      let
-        val symbol = entrySymbolName ent
-      in
-        case SEnv.find (#symbolEnv code, symbol) of
-          SOME (R.DEFINE_SYMBOL {scope, ptrTy=R.Code}) =>
-          (code, R.SYMBOL (R.Code, scope, symbol))
-        | SOME _ => raise Control.Bug "entrySymbol: symbol kind mismatch"
-        | NONE => raise Control.Bug "entrySymbol: not found"
-      end
-
-  fun dataSymbol (code:code, ptrTy', scope', symbol) =
-      case SEnv.find (#symbolEnv code, symbol) of
-        SOME (R.DEFINE_SYMBOL {scope, ptrTy}) =>
-        if (ptrTy, scope) = (ptrTy', scope')
-        then (code, R.SYMBOL (ptrTy, scope, symbol))
-        else raise Control.Bug "dataSymbol: type mismatch"
-      | SOME _ => raise Control.Bug "dataSymbol: symbol kind mismatch"
-      | NONE =>
-        let
-          val kind = R.DEFINE_SYMBOL {scope=scope', ptrTy=ptrTy'}
-          val code = updateSymbol (code, symbol, kind)
-        in
-          (code, R.SYMBOL (ptrTy', scope', symbol))
-        end
-*)
-(*
-  fun bssSymbol (code:code, scope', symbol) =
-      case SEnv.find (#symbols code, symbol) of
-        SOME (R.BSS {scope, ...}) =>
-        if scope = scope'
-        then (code, R.SYMBOL (R.Void, scope, symbol))
-        else raise Control.Bug "bssSymbol: type mismatch"
-      | SOME _ => raise Control.Bug "bssSymbol: symbol kind mismatch"
-      | NONE =>
-        let
-          val symdef = R.BSS {scope=scope', align=1, size=0}
-          val code = updateSymbol (code, symbol, symdef)
-        in
-          (code, R.SYMBOL (R.Void, scope', symbol))
-        end
-
-  fun externSymbol (code as {symbolEnv,...}, ptrTy', symbol) =
-      case SEnv.find (symbolEnv, symbol) of
-        SOME (R.EXTERN_SYMBOL {ptrTy, ...}) =>
-        if ptrTy = ptrTy'
-        then (code, R.SYMBOL (ptrTy, R.GLOBAL, symbol))
-        else raise Control.Bug "externSymbol: type mismatch"
-      | SOME _ => raise Control.Bug "externSymbol: symbol kind mismatch"
-      | NONE =>
-        let
-          val kind = R.EXTERN_SYMBOL {ptrTy=ptrTy',
-                                      linkEntry=false, linkStub=false}
-          val code = updateSymbol (code, symbol, kind)
-        in
-          (code, R.SYMBOL (ptrTy', R.GLOBAL, symbol))
-        end
-
-  fun linkEntrySymbol (code as {symbolEnv,...}, ptrTy', symbol) =
-      let
-        val {ptrTy, linkEntry, linkStub} =
-            case SEnv.find (symbolEnv, symbol) of
-              SOME (R.EXTERN_SYMBOL (x as {ptrTy,...})) =>
-              if ptrTy = ptrTy' then x
-              else raise Control.Bug "linkEntrySymbol: type mismatch"
-            | _ => raise Control.Bug "linkEntrySymbol: symbol kind mismatch"
-        val kind = R.EXTERN_SYMBOL {ptrTy=ptrTy,
-                                    linkEntry=true, linkStub=linkStub}
-        val code = updateSymbol (code, symbol, kind)
-      in
-        (code, R.LINK_ENTRY symbol)
-      end
-*)
 
   local
     fun find (externSymbols, ptrTy, symbol) =
@@ -591,21 +517,6 @@ struct
 
   end (* local *)
 
-(*
-  fun linkStubSymbol (code as {symbolEnv,...}, symbol) =
-      let
-        val {ptrTy, linkEntry, linkStub} =
-            case SEnv.find (symbolEnv, symbol) of
-              SOME (R.EXTERN_SYMBOL (x as {ptrTy=R.Code, ...})) => x
-            | _ => raise Control.Bug "linkStubSymbol: mismatch"
-        val kind = R.EXTERN_SYMBOL {ptrTy=ptrTy,
-                                    linkEntry=linkEntry, linkStub=true}
-        val code = updateSymbol (code, symbol, kind)
-      in
-        (code, R.LINK_STUB symbol)
-      end
-*)
-
   fun globalOffsetBase (context:context) code =
       case #globalOffsetBase code of
         SOME (baseLabel, baseReg) => (code, baseLabel, baseReg)
@@ -615,7 +526,7 @@ struct
               case #positionIndependent (#options context) of
                 NONE => raise Control.Bug "globalOffsetBase"
               | SOME ELF => R.ELF_GOT
-              | SOME MachO => R.LABEL (NewLabel.newLabel ())
+              | SOME MachO => R.LABEL (VarID.generate ())
               | SOME COFF => raise Control.Bug "globalOffsetBase: COFF"
           val baseReg = newVar (R.Ptr R.Code)
           val code = updateGlobalOffsetBase code (SOME (baseLabel, baseReg))
@@ -732,14 +643,24 @@ struct
                                                 constSymbolName id))
       | AI.Entry entry =>
         absoluteAddr context (code, entrySymbol entry)
-      | AI.Global label =>
-        absoluteAddr context (code, dataSymbol (R.Data, R.GLOBAL,
-                                                globalSymbolName
-                                                  (#options context) label))
-      | AI.Extern label =>
-        absoluteAddr context (externSymbolInCode (code, R.Data,
-                                                  globalSymbolName
-                                                    (#options context) label))
+      | AI.Global (label, ty) =>
+        (
+          case transformTy ty of
+            R.Ptr ptrTy =>
+            absoluteAddr context
+              (code, dataSymbol (ptrTy, R.GLOBAL,
+                                 globalSymbolName (#options context) label))
+          | _ => raise Control.Bug "transformAddr: AI.Global: not a ptrTy"
+        )
+      | AI.Extern (label, ty) =>
+        (
+          case transformTy ty of
+            R.Ptr ptrTy =>
+            absoluteAddr context
+              (externSymbolInCode
+                 (code, ptrTy, globalSymbolName (#options context) label))
+          | _ => raise Control.Bug "transformAddr: AI.Extern: not a ptrTy"
+        )
       | AI.Label label =>
         absoluteAddr context (code, R.LABEL label)
       | AI.ExtFunLabel label =>
@@ -769,8 +690,8 @@ struct
       | AI.Const id => raise NotJump
       | AI.Init id => raise NotJump
       | AI.Entry entry => (code, R.ABSADDR (entrySymbol entry))
-      | AI.Global label => raise NotJump
-      | AI.Extern label => raise NotJump
+      | AI.Global _ => raise NotJump
+      | AI.Extern _ => raise NotJump
       | AI.Label label => (code, R.ABSADDR (R.LABEL label))
       | AI.ExtFunLabel label =>
         let
@@ -842,18 +763,18 @@ struct
             *)
             | (R.Int16 _, R.Int16 _, OPRD op1, _) =>
               insert (code, [R.MOVE (dstTy, dst, to16 op1)])
-(*
+            (*
             | (R.Int16 _, R.Int32 s, OPRD op1, _) =>
               insert (code, [R.EXT16TO32
                                (s, dst, makeCastOperand (op1, R.Int16 s))])
-*)
+             *)
             | (R.Int16 _, _, _, _) => raise Control.Bug "selectMove: Int16"
-(*
+            (*
             | (R.Int32 _, R.Int8 s, OPRD op1, _) =>
               insert (code, [R.DOWN32TO8 (s, dst, op1)])
             | (R.Int32 _, R.Int16 s, OPRD op1, _) =>
               insert (code, [R.DOWN32TO16 (s, dst, op1)])
-*)
+             *)
             | (R.Int32 s1, R.Int32 s2, OPRD op1, _) =>
               insert (code, [R.MOVE (dstTy, dst, op1)])
             | (R.Int32 _, _, _, _) => raise Control.Bug "selectMove: Int32"
@@ -1112,20 +1033,11 @@ struct
               end
 
         val srcs = map (fn dst => OPRD (R.REF_ dst)) (mlParams (argTys, retTys))
-(*
-        val linkaddr = mlLink (argTys, retTys)
-*)
       in
         (fn code =>
             let
               val code = requirePreFrame (code, mlPreFrameSize (argTys, retTys))
               val code = selectMoveList code (dsts, srcs, nil)
-(*
-              val code = insert (code,
-                                 [R.MOVE (R.Ptr R.Code, link,
-                                          R.REF (R.Ptr R.Code,
-                                                 R.MEM (R.ADDR linkaddr)))])
-*)
             in
               set code
             end,
@@ -1582,7 +1494,7 @@ struct
                bitmaps = nil,
                bitmapSize = R.UINT32 0w0}
             | (AI.Vector, _) => raise Control.Bug "selectAlloc: Vector"
-            | (AI.Record, _) =>
+            | (AI.Record _, _) =>
               {objType = R.UINT32 HEAD_TYPE_RECORD,
                bittag = R.CONST (R.UINT32 0w0),
                bitmaps = bitmaps,
@@ -1712,11 +1624,6 @@ struct
 
   fun selectCompare code (operator, ty1, ty2, _) (arg1, arg2) =
       let
-(*
-val _ = Control.ps "==selectCompare=="
-val _ = Control.p (Control.f2 (format_value, format_value)) (arg1, arg2)
-val _ = Control.p (Control.f2 (R.format_ty, R.format_ty)) (transformTy ty1, transformTy ty2)
-*)
         (* comparison between Atoms may be generated due to PolyEqual.
          * Regard it as comparison between unsigned integer. *)
         val (ty1, ty2) =
@@ -1726,10 +1633,6 @@ val _ = Control.p (Control.f2 (R.format_ty, R.format_ty)) (transformTy ty1, tran
 
         val arg1 = recoverAtom (arg1, ty1)
         val arg2 = recoverAtom (arg2, ty2)
-(*
-val _ = Control.p (Control.f2 (format_value, format_value)) (arg1, arg2)
-val _ = Control.ps "=="
-*)
         val ty1 = valueTy arg1
         val ty2 = valueTy arg2
       in
@@ -1989,7 +1892,7 @@ val _ = Control.ps "=="
           val payloadSize = transformOperand payloadSize
         in
           if (case objectType of AI.Vector => true
-                               | AI.Record => true
+                               | AI.Record _ => true
                                | AI.Array => false)
              andalso payloadSize = R.CONST (R.UINT32 0w0)
           then
@@ -2469,7 +2372,7 @@ val _ = Control.ps "=="
           val (code, envVar) = coerceToVar code (ADDR env)
           val code = #code (selectAlloc (callAllocCallback entryVar envVar)
                                         context code
-                                        (dst, AI.Record,
+                                        (dst, AI.Record {mutable=false},
                                          [R.CONST (R.UINT32 0wx10)],
                                          R.CONST (R.UINT32 0w20)))
 
@@ -2546,10 +2449,6 @@ val _ = Control.ps "=="
           val argTys = map transformTy argTyList
           val retTys = map transformTy retTyList
           val rets = map argInfoToValue varList
-(*
-          val link = argInfoToValue link
-          val (code, uses) = setMLRets code (argTys, retTys) (link, rets)
-*)
           val (code, uses) = setMLRets code (argTys, retTys) rets
           val uses = #calleeSaves context @ uses
         in
@@ -2710,9 +2609,6 @@ val _ = Control.ps "=="
                     case env of
                       SOME v => SOME (transformArgInfo v)
                     | NONE => NONE
-(*
-                val (_, link) = transformArgInfo link
-*)
                 val dsts = map transformArgInfo argVarList
                 val (sets, defs) = getMLArgs (argTys, retTys) (env, dsts)
                 val defs = calleeSaves @ defs
@@ -2828,30 +2724,7 @@ val _ = Control.ps "=="
              postFrameSize = postFrameSize,
              focus = focus} : code
         val code = sets code
-(*
-val _ = Control.ps "--selectBlock--";
-val _ = Control.p AI.format_blockKind blockKind;
-val _ = Control.p RTLEdit.format_focus (#focus code);
-*)
-        val code = foldl (fn (insn, code) =>
-(*
-let
-val _ = Control.ps "--selectInsn--";
-val _ = Control.p AI.format_instruction insn;
-val code =
-*)
-                             selectInsn context code insn
-handle e =>
-let open FormatByHand in puts "==ERROR=="; putf AI.format_instruction insn;
-raise e end
-
-(*
-in
-Control.p RTLEdit.format_focus (#focus code);
-code
-end
-*)
-)
+        val code = foldl (fn (insn, code) => selectInsn context code insn)
                          code
                          instructionList
 
@@ -2918,18 +2791,9 @@ end
                                    clusterId = name,
                                    calleeSaves = calleeSaves}
                                   block
-handle e =>
-let open FormatByHand in puts "==ERROR=="; putf AI.format_basicBlock block;
-raise e end
 )
                   code
                   body
-
-(*
-val _ = puts "Select: --"
-val _ = putfs (R.format_graph graph)
-val _ = puts "--"
-*)
 
         (* insert computation of global offset base *)
         val (baseLabel, thunkSymbol, graph) =
@@ -2985,23 +2849,9 @@ val _ = puts "--"
                   | _ => block)
               graph
 
-(*
-val _ = Control.ps "Select: --"
-val _ = Control.p R.format_graph graph
-val _ = Control.ps "--"
-*)
-
         (* normalize RTL for X86 *)
         val graph =
             X86Subst.substitute (fn _ => NONE) graph
-handle e =>
-let open FormatByHand in puts "==ERROR=="; putf R.format_graph graph;raise e end
-
-(*
-val _ = puts "Subst: --"
-val _ = putfs (R.format_graph graph)
-val _ = puts "--"
-*)
 
         val topdecl =
             R.CLUSTER {clusterId = name,
@@ -3055,6 +2905,11 @@ val _ = puts "--"
           | _ => (align, size, R.RODATA_SECTION)
       end
 
+  fun makePad (filled, size) =
+      if filled = size then nil
+      else if size > filled then [R.SPACE_DATA {size = size - filled}]
+      else raise Control.Bug "makePad"
+
   fun selectData options externSymbols {scope, symbol, aliases} data =
       case data of
         AI.PrimData x =>
@@ -3066,7 +2921,7 @@ val _ = puts "--"
            R.DATA {scope = scope, symbol = symbol, aliases = aliases,
                    ptrTy = R.Void, section = section,
                    prefix = [], align = 1, data = [data],
-                   prefixSize = 0, dataSize = size})
+                   prefixSize = 0})
         end
 
       | AI.StringData string =>
@@ -3090,8 +2945,7 @@ val _ = puts "--"
                    prefix = [R.CONST_DATA (R.UINT32 header)],
                    align = align,
                    data = [R.ASCII_DATA (string ^ "\000")],
-                   prefixSize = sizeof (R.Int32 R.U),
-                   dataSize = size})
+                   prefixSize = sizeof (R.Int32 R.U)})
         end
 
       | AI.IntInfData n =>
@@ -3113,7 +2967,7 @@ val _ = puts "--"
                    ptrTy = R.Void, section = R.CSTRING_SECTION,
                    prefix = [], align = 1,
                    data = [R.ASCII_DATA (s ^ "\000")],
-                   prefixSize = 0, dataSize = size s + 1})
+                   prefixSize = 0})
         end
 
       | AI.ObjectData {objectType, bitmaps, payloadSize, fields} =>
@@ -3128,7 +2982,8 @@ val _ = puts "--"
               case objectType of
                 AI.Array => R.DATA_SECTION
               | AI.Vector => R.RODATA_SECTION
-              | AI.Record => R.RODATA_SECTION
+              | AI.Record {mutable=false} => R.RODATA_SECTION
+              | AI.Record {mutable=true} => R.DATA_SECTION
 
           val bitmaps =
               map (fn x => toConstWord (AI.Target.UIntToUInt32 x)) bitmaps
@@ -3146,7 +3001,7 @@ val _ = puts "--"
                       preFrameSize = 0,
                       postFrameSize = 0,
                       focus = RTLEdit.singletonFirst R.ENTER} : code
-          val dst = R.REG {id=NewLabel.newLabel (), ty=R.Ptr R.Data} (* dummy *)
+          val dst = R.REG {id=VarID.generate (), ty=R.Ptr R.Data} (* dummy *)
 
           val {header, bitmapOffset, bitmaps, allocSize, ...} =
               selectAlloc #2 context code
@@ -3157,21 +3012,17 @@ val _ = puts "--"
           val bitmaps = map constData bitmaps
           val allocSize = toInt allocSize
 
-          fun makePad (filled, size) =
-              if filled = size then nil
-              else if size > filled then [R.SPACE_DATA {size = size - filled}]
-              else raise Control.Bug "selectData: ObjectData: makePad"
-
           fun makeData (externSymbols, offset, {value, size}::fields) =
               let
                 val size = AI.Target.UIntToInt size
-                val (externSymbols, size, data) =
+                val (externSymbols, totalSize, data) =
                     makeData (externSymbols, offset + size, fields)
                 val (externSymbols, ty, field) =
                     selectPrimData options externSymbols value
                 val valueSize = sizeof ty
               in
-                (externSymbols, size, field :: makePad (valueSize, size) @ data)
+                (externSymbols, totalSize,
+                 field :: makePad (valueSize, size) @ data)
               end
             | makeData (externSymbols, offset, nil) =
               (externSymbols, offset, nil)
@@ -3193,8 +3044,38 @@ val _ = puts "--"
                    prefix = [header],
                    align = #align (X86Emit.formatOf (R.Generic 0)),
                    data = data,
-                   prefixSize = sizeof (R.Int32 R.U),
-                   dataSize = allocSize})
+                   prefixSize = sizeof (R.Int32 R.U)})
+        end
+
+      | AI.VarSlot {size, value} =>
+        let
+          val size = AI.Target.UIntToInt size
+        in
+          case (value, aliases) of
+            (NONE, nil) =>
+            (externSymbols,
+             R.BSS {scope = scope, symbol = symbol, size = size})
+          | _ =>
+            let
+              val (externSymbols, align, data) =
+                  case value of
+                    NONE => (externSymbols, size, [R.SPACE_DATA {size=size}])
+                  | SOME v =>
+                    let
+                      val (externSymbols, ty, field) =
+                          selectPrimData options externSymbols v
+                      val valueSize = sizeof ty
+                      val align = #align (X86Emit.formatOf ty)
+                    in
+                      (externSymbols, align, field :: makePad (valueSize, size))
+                    end
+            in
+              (externSymbols,
+               R.DATA {scope = scope, symbol = symbol, aliases = aliases,
+                       ptrTy = R.Void, section = R.DATA_SECTION,
+                       prefix = nil, align = align, data = data,
+                       prefixSize = 0})
+            end
         end
 
   fun selectConstants options externSymbols constants =
@@ -3249,9 +3130,6 @@ val _ = puts "--"
             foldr (fn (cluster, (env, topdecls)) =>
                       let
                         val (env, topdecl) = selectCluster options env cluster
-handle e =>
-let open FormatByHand in puts "==ERROR=="; putf AI.format_cluster cluster;
-raise e end
                       in
                         (env, topdecl :: topdecls)
                       end)
@@ -3348,12 +3226,6 @@ raise e end
         val (externSymbols, globalDecls) =
             selectGlobals options externSymbols globals
 
-(*
-val _ = Control.pl R.format_topdecl
-(map (fn (symbol, {linkStub, linkEntry, ptrTy}) =>
-     R.EXTERN {symbol=symbol, linkStub=linkStub, linkEntry=linkEntry, ptrTy=ptrTy}) (SEnv.listItemsi (#externSymbols code)))
-*)
-
         val externDecls =
             SEnv.foldri
               (fn (symbol, {linkStub, linkEntry, ptrTy}, z) =>
@@ -3367,221 +3239,5 @@ val _ = Control.pl R.format_topdecl
         toplevelDecls @ clusterDecls @ constDecls @ globalDecls
         @ externDecls @ thunkDecls
       end
-
-
-
-(*
-  fun selectConstants constants =
-      let
-        val
-  fun selectData code scope symbol data =
-
-
-
-
-      in
-
-
-
-
-      end
-
-
-
-
-  (*% *)
-  datatype global =
-      (*% @format(l) ".alias" + l *)
-      GlobalAlias of globalLabel
-    | (*% @format(x) x *)
-      GlobalData of data
-
-
-         constants: data VarID.Map.map,  (* constId -> data *)
-         globals: global SEnv.map             (* globalLabel -> global *)
-
-
-
-
-
-
-
-
-  fun selectDataDecl symbol data =
-      let
-        val
-
-
-
-
-
-
-
-
-
-
-
-  fun selectDataDecl code {scope, ptrTy} symbol data =
-      let
-        val (code, dec) = selectData code scope symbol data
-        val kind =
-            case SEnv.find (#symbolEnv code, symbol) of
-
-
-
-      in
-        case SEnv.find (#symbolEnv code, symbol) of
-          NONE => (code, topdecs)
-        | SOME (R.DEFINE_SYMBOL {scope, ...}) =>
-
-
-  fun selectDataDecl code symbol data =
-      let
-        val (code, dec) = selectData
-
-
-      case SEnv.find (#symbolEnv code, symbol) of
-
-
-
-                  let
-                    val symbol = constSymbolName id
-                  in
-                    case SEnv.find (#symbolEnv code, symbol) of
-                      NONE => (code, topdecs)
-                    | SOME (R.DEFINE_SYMBOL {scope, ...}) =>
-                      let
-                        val (code, dec) = selectData code scope symbol data
-                      in
-                        (code, dec :: topdecs)
-                      end
-                    | SOME _ => raise Control.Bug "selectConstants"
-                  end)
-
-
-
-  fun selectConstants symbolEnv constants =
-      let
-        (* dummy code; code is needed for accumulating symbolEnv *)
-        val code = {globalOffsetBase = NONE,
-                    symbolEnv = symbolEnv,
-                    focus = RTLEdit.newGraph R.ENTER} : code
-        val (code, topdecs) =
-            VarID.Map.foldri
-              (fn (id, data, (code, topdecs)) =>
-                  let
-                    val symbol = constSymbolName id
-                  in
-                    case SEnv.find (#symbolEnv code, symbol) of
-                      NONE => (code, topdecs)
-                    | SOME (R.DEFINE_SYMBOL {scope, ...}) =>
-                      let
-                        val (code, dec) = selectData code scope symbol data
-                      in
-                        (code, dec :: topdecs)
-                      end
-                    | SOME _ => raise Control.Bug "selectConstants"
-                  end)
-              (code, nil)
-              constants
-      in
-        if SEnv.numItems (#symbolEnv code) > SEnv.numItems symbolEnv
-        then selectConstants (#symbolEnv code) constants
-        else #symbolEnv code
-      end
-
-  fun selectGlobals symbolEnv globals =
-      let
-        (* dummy code; code is needed for accumulating symbolEnv *)
-        val code = {globalOffsetBase = NONE,
-                    symbolEnv = symbolEnv,
-                    focus = RTLEdit.newGraph R.ENTER} : code
-        val code =
-            SEnv.foldli
-              (fn (label, AI.GlobalData data, code) =>
-                  (
-                    case SEnv.find (#symbolEnv code, label) of
-                      NONE => code
-                    | SOME (R.DATA {scope, ...}) =>
-                      let
-                        val (code, data) = selectData code scope symbol data
-                      in
-                        updateSymbol (code, label, R.DATA data)
-                      end
-                    | SOME _ => raise Control.Bug "selectGlobals"
-                  )
-                | (label, AI.GlobalAlias alias, code) =>
-                  raise Control.Bug "FIXME: ALIAS")
-              code
-              globals
-      in
-        if SEnv.numItems (#symbolEnv code) > SEnv.numItems symbolEnv
-        then selectGlobals (#symbolEnv code) globals
-        else #symbolEnv code
-      end
-
-  fun select ({toplevel, clusters, constants, globals}:AI.program) =
-      let
-        val {cpu, manufacturer, ossys, options} = Control.targetInfo ()
-
-        (* FIXME: hard coded *)
-        val arch =
-            case ossys of
-              "darwin" => SOME MachO
-            | "linux" => SOME ELF
-            | _ => NONE
-        val defaultOptions =
-            case ossys of
-              "darwin" => SSet.singleton "PIC"
-            | _ => SSet.empty
-        val options =
-            foldl (fn ((positive, option), set) =>
-                      if positive then SSet.add (set, option)
-                      else SSet.delete (set, option) handle NotFound => set)
-                  defaultOptions
-                  options
-        val options =
-            {
-              positionIndependent =
-                if SSet.member (options, "PIC") then arch else NONE
-            } : options
-
-        (* initial symbol env with cluster entries *)
-        val symbolEnv =
-            foldl
-              (fn ({name, body, ...}, symbolEnv) =>
-                  foldl
-                    (fn ({label, blockKind = AI.FunEntry _, ...}, symbolEnv) =>
-                        let
-                          val symbol = entrySymbolName {clusterId=name,
-                                                        entry=label}
-                          val kind = R.DEFINE_SYMBOL {scope=R.LOCAL,
-                                                      ptrTy=R.Code}
-                        in
-                          SEnv.insert (symbolEnv, symbol, kind)
-                        end)
-                    symbolEnv
-                    body)
-              SEnv.empty
-              clusters
-
-        val (symbolEnv, topdec1) =
-            foldr
-              (fn (cluster, (symbolEnv, topdecls)) =>
-                  let
-                    val (symbolEnv, cluster) =
-                        selectCluster options symbolEnv cluster
-                  in
-                    (symbolEnv, R.CLUSTER cluster :: topdecls)
-                  end)
-              (symbolEnv, nil)
-              clusters
-
-        val (symbolEnv, topdec2) = selectConstants symbolEnv constants
-        val (symbolEnv, topdec3) = selectGlobals symbolEnv globals
-      in
-        (symbolEnv, topdec1 @ topdec2 @ topdec3) : R.program
-      end
-*)
 
 end

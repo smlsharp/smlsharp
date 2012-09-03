@@ -22,4 +22,4 @@ local
   end
 in
 structure IntVector = MonoVectorBase(Operations)
-end;
+end

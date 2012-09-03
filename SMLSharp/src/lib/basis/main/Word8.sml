@@ -19,71 +19,71 @@ struct
   (* ToDo : We should have toInt and toIntX both. *)
   fun Word8_toWord x = 
       Word.fromInt (let val n = toIntX x in if n < 0 then n + 256 else n end)
-  val Word8_toWordX = Word.fromInt o toIntX
+  fun Word8_toWordX x = Word.fromInt (toIntX x)
   fun Word8_fromWord x = fromInt (Word.toIntX x)
 
-  val toLarge = Word.toLargeWord o Word8_toWord
-  val toLargeX = Word.toLargeWordX o Word8_toWordX
-  val fromLarge = Word8_fromWord o Word.fromLargeWord
+  fun toLarge x = Word.toLargeWord (Word8_toWord x)
+  fun toLargeX x = Word.toLargeWordX (Word8_toWordX x)
+  fun fromLarge x = Word8_fromWord (Word.fromLargeWord x)
 
   val toLargeWord = toLarge
   val toLargeWordX = toLargeX
   val fromLargeWord = fromLarge
 
-  val toLargeInt = Word.toLargeInt o Word8_toWord
-  val toLargeIntX = Word.toLargeIntX o Word8_toWordX
-  val fromLargeInt = Word8_fromWord o Word.fromLargeInt
+  fun toLargeInt x = Word.toLargeInt (Word8_toWord x)
+  fun toLargeIntX x = Word.toLargeIntX (Word8_toWordX x)
+  fun fromLargeInt x = Word8_fromWord (Word.fromLargeInt x)
 
   fun toInt x = let val n = toIntX x in if n < 0 then 256 + n else n end
   val toIntX = toIntX
   val fromInt = fromInt
 
-  fun cast1_1 f word1 = Word8_fromWord(f (Word8_toWord word1));
-  fun cast2 f (word1, word2) = f (Word8_toWord word1, Word8_toWord word2);
+  fun cast1_1 f word1 = Word8_fromWord(f (Word8_toWord word1))
+  fun cast2 f (word1, word2) = f (Word8_toWord word1, Word8_toWord word2)
   fun cast2_1 f (word1, word2) =
-      Word8_fromWord(f (Word8_toWord word1, Word8_toWord word2));
+      Word8_fromWord(f (Word8_toWord word1, Word8_toWord word2))
   fun cast10_1 f (word1, word2) =
-      Word8_fromWord(f (Word8_toWord word1, word2));
+      Word8_fromWord(f (Word8_toWord word1, word2))
 
-  val orb = cast2_1 Word.orb
+  fun orb x = cast2_1 Word.orb x
 
-  val xorb = cast2_1 Word.xorb
+  fun xorb x = cast2_1 Word.xorb x
 
-  val andb = cast2_1 Word.andb
+  fun andb x = cast2_1 Word.andb x
 
-  val notb = cast1_1 Word.notb
+  fun notb x = cast1_1 Word.notb x
 
-  val << = cast10_1 Word.<<
+  fun << x = cast10_1 Word.<< x
 
-  val >> = cast10_1 Word.>>
+  fun >> x = cast10_1 Word.>> x
 
   val ~>> = fn (b, w) => Word8_fromWord (Word.~>> (Word8_toWordX b, w))
 
   val ~ = fn word => fromInt(Int.~(toInt word))
 
-  val op + = cast2_1 Word.+
+  fun op + x = cast2_1 Word.+ x
 
-  val op - = cast2_1 Word.-
+  fun op - x = cast2_1 Word.- x
 
-  val op * = cast2_1 Word.*
+  fun op * x = cast2_1 Word.* x
 
-  val op div = cast2_1 Word.div
+  fun op div x = cast2_1 Word.div x
 
-  val op mod = cast2_1 Word.mod
+  fun op mod x = cast2_1 Word.mod x
 
-  val compare = cast2 Word.compare
+  fun compare x = cast2 Word.compare x
 
-  val op > = cast2 Word.>
-  val op < = cast2 Word.<
-  val op >= = cast2 Word.>=
-  val op <=  = cast2 Word.<=
+  fun op > x = cast2 Word.> x
+  fun op < x = cast2 Word.< x
+  fun op >= x = cast2 Word.>= x
+  fun op <= x = cast2 Word.<= x
 
-  val min = cast2_1 Word.min
-  val max = cast2_1 Word.max
+  fun min x = cast2_1 Word.min x
+  fun max x = cast2_1 Word.max x
 
   fun fmt radix word8 = Word.fmt radix (Word8_toWord word8)
 
-  val toString = Word.toString o Word8_toWord
+  fun toString x = Word.toString (Word8_toWord x)
 
   fun fromString string = Option.map Word8_fromWord (Word.fromString string)
 
@@ -99,4 +99,4 @@ struct
 
   (***************************************************************************)
 
-end;
+end

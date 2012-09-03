@@ -23,7 +23,7 @@ struct
    * The first '1' means the cell to store string length.
    * The last '1' means a byte for append '\0' character.
    *)
-  val maxSize = (0xFFFFFFF - 1) * 4 - 1
+  val maxSize = 0x3FFFFFF7 (* (0xFFFFFFF - 1) * 4 - 1 *)
 
   val size = SMLSharp.PrimString.size
 
@@ -174,7 +174,7 @@ struct
         collateImp charCollate ((left, 0, leftSize), (right, 0, rightSize))
       end
 
-  val compare = collate Char.compare
+  fun compare x = collate Char.compare x
 
   fun isPrefix left right =
       let
@@ -226,8 +226,8 @@ struct
       case compare (left, right) of General.LESS => true | _ => false
   fun op <= (left, right) =
       case compare (left, right) of General.GREATER => false | _ => true
-  val op > = not o (op <=)
-  val op >= = not o (op <)
+  fun op > x = not (op <= x)
+  fun op >= x = not (op < x)
 
   end (* end of local *)
 
@@ -260,4 +260,4 @@ struct
   end  
   fun toCString string = translate Char.toCString string
 
-end;
+end

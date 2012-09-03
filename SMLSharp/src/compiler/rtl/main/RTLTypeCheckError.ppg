@@ -34,6 +34,7 @@ struct
     | SymbolScopeMismatch of
       string * {actual:RTL.symbolScope, require:RTL.symbolScope}
     | SymbolTypeMismatch of string * {actual:RTL.ptrTy, require:RTL.ptrTy}
+    | SymbolTypeMismatch2 of string * {actual:RTL.ptrTy, require:RTL.ptrTy}
     | SymbolLinkEntryNotFound of RTL.labelReference
     | SymbolLinkStubNotFound of RTL.labelReference
     | PointerTypeMismatch of RTL.const * RTL.ptrTy * RTL.ptrTy
@@ -46,7 +47,7 @@ struct
     | SlotFormatMismatch of RTL.slot * {actual:RTL.format, require:RTL.format}
     | UndefinedVariable of RTL.var
     | VariableTypeMismatch of RTL.var * {actual:RTL.ty, require:RTL.ty}
-    | ClobVariableUsed of RTL.var
+    | ClobVariableIsLive of RTL.var
     | PreFrameExceeded of {actual:int, limit:int}
     | PostFrameExceeded of {actual:int, limit:int}
     | TypeAnnotationMismatch of RTL.operand * {actual:RTL.ty, require:RTL.ty}
@@ -70,6 +71,8 @@ struct
     | InconsistLabel of RTL.label * {key:RTL.label}
     | VarNotFoundInLiveOut of RTL.var
     | SlotNotFoundInLiveOut of RTL.slot
+    | DuplicateVariable of RTL.var * RTL.var
+    | DuplicateSlot of RTL.slot * RTL.slot
     | TypeMismatchWithLiveOut of RTL.var * {actual:RTL.ty, liveOut:RTL.ty}
     | (*% @format(first * errs) "At `" first "':" 2[ +1 errs ] *)
       ErrorAtFirst of RTL.first * errlist
@@ -77,8 +80,8 @@ struct
       ErrorAtMiddle of RTL.instruction * errlist
     | (*% @format(last * errs) "At `" last "':" 2[ +1 errs ] *)
       ErrorAtLast of RTL.last * errlist
-    | (*% @format(label * errs) "In block " label ":" 2[ +1 errs ] *)
-      ErrorInBlock of RTL.label * errlist
+    | (*% @format(label opt * errs) "In block " opt(label) ":" 2[ +1 errs ] *)
+      ErrorInBlock of RTL.label option * errlist
     | (*% @format(clusterId * errs) "In cluster " clusterId ":" 2[ +1 errs ] *)
       ErrorInCluster of RTL.clusterId * errlist
     | (*% @format(symbol * errs) "In data " symbol ":" 2[ +1 errs ] *)

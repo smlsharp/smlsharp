@@ -9,4 +9,4 @@ structure PackReal64Little =
                            val isBigEndian = false
                            val unpack = SMLSharp.Runtime.Pack_unpackReal64Little
                            val pack = SMLSharp.Runtime.Pack_packReal64Little
-                         end);
+                         end)

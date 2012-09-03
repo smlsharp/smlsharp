@@ -19,4 +19,4 @@ struct
     fun setMaxRefDepth int = Control_maxRefDepth := int
     fun getMaxRefDepth () = !Control_maxRefDepth
   end
-end;
+end

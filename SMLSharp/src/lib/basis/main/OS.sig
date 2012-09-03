@@ -19,6 +19,6 @@ signature OS =
     structure Process : OS_PROCESS
     structure IO : OS_IO
 
-  end;
+  end
 
 

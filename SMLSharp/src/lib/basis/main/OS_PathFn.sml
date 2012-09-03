@@ -50,8 +50,6 @@ struct
 
   exception Path = P.Path
 
-  val arcSepStr = String.str P.arcSepChar
-
   val parentArc = P.parentArc
   val currentArc = P.currentArc
 
@@ -80,6 +78,7 @@ struct
   fun toString {isAbs=false, vol, arcs="" :: _} = raise Path
     | toString {isAbs, vol, arcs} =
       let
+        val arcSepStr = String.str P.arcSepChar
         fun f [] = [""]
           | f [a] = [a]
           | f (a :: al) = a :: arcSepStr :: (f al)
@@ -285,8 +284,8 @@ struct
         end
       | toUnixPath' _ = raise Path
   in
-  val fromUnixPath = toString o fromUnixPath'
-  val toUnixPath = toUnixPath' o fromString
+  fun fromUnixPath x = toString (fromUnixPath' x)
+  fun toUnixPath x = toUnixPath' (fromString x)
   end
 end
 

@@ -142,7 +142,7 @@ struct
     | (*% @format "G" *)
       GLOBALSYMBOL
     | (*% @format "_" *)
-      UNDECIDED              (* for backward compatibility *)
+      UNDECIDED of ty       (* for DeclarationRecovery *)
 
   (*% *)
   type globalSymbolName =
@@ -301,7 +301,8 @@ struct
        *          totalSize,
        *          fieldList: value values:enclosedList,
        *          fieldSizeList: size sizes:enclosedList,
-       *          fieldTyList: ty tys:enclosedList})
+       *          fieldTyList: ty tys:enclosedList,
+       *          isMutable})
        * "Record"
        * "(" { "bitmap" "=" bitmap "," +1
        *       "size" "=" totalSize "," +1
@@ -316,7 +317,8 @@ struct
         totalSize: anvalue,
         fieldList: anvalue list,
         fieldSizeList: anvalue list,
-        fieldTyList: ty list
+        fieldTyList: ty list,
+        isMutable: bool
       }
     | (*%
        * @format({bitmap,
@@ -1020,7 +1022,8 @@ struct
        *          totalSize,
        *          fieldList:value values:enclosedList,
        *          fieldTyList: ty tys:enclosedList,
-       *          fieldSizeList:size sizes:enclosedList})
+       *          fieldSizeList:size sizes:enclosedList,
+       *          isMutable})
        * { globalName ":" + export:choice()("global", "local") ","
        *   4[ +1 "Record" "("
        *      { "bitmaps" "=" { bms(bm)("," +1, "(", ")") } "," +1
@@ -1038,10 +1041,11 @@ struct
         totalSize: BasicTypes.UInt32,
         fieldList: anvalue list,         (* ANVAR never occur *)
         fieldTyList: ty list,
-        fieldSizeList: BasicTypes.UInt32 list
+        fieldSizeList: BasicTypes.UInt32 list,
+        isMutable: bool
       }
     | (*%
-       * @format({globalName, export, externalVarID,
+       * @format({globalName, export,
        *          bitmap,
        *          totalSize,
        *          initialValues:init inits:enclosedList,
@@ -1059,7 +1063,6 @@ struct
       {
         globalName: string,
         export: bool,
-        externalVarID: ExVarID.id option, (* for YASIGenerator *)
         bitmap: BasicTypes.UInt32,
         totalSize: BasicTypes.UInt32,
         initialValues: anvalue list,      (* ANVAR never occur *)
@@ -1068,17 +1071,34 @@ struct
         isMutable : bool
       }
     | (*%
-       * @format({globalName, export, funLabel})
+       * @format({globalName, externalVarID,
+       *          initialValue:init initopt,
+       *          elementTy, elementSize})
+       * { globalName ":" +
+       *   4[ +1 "GLOBALVAR" "("
+       *         { initopt(init) +2 ":" +d elementTy
+       *                         +3 ":" +d elementSize }
+       *         ")" ] }
+       *)
+      ANTOPVAR of (* write once, always exported, no header array *)
+      {
+        globalName: string,
+        externalVarID: ExVarID.id option, (* for YASIGenerator *)
+        initialValue: anvalue option,
+        elementTy: ty,
+        elementSize: BasicTypes.UInt32
+      }
+    | (*%
+       * @format({globalName, export, funLabel, closureEnv})
        * { globalName ":" + export:choice()("global", "local") ","
-       *   + "Closure" "(" funLabel ")" }
+       *   + "Closure" "(" funLabel "," + closureEnv ")" }
        *)
       ANTOPCLOSURE of
       {
         globalName: string,
         export: bool,
-        funLabel: id                  (* FUNENTRY *)
-        (* Toplevel function never have closure environment;
-         * every free variable in toplevel function is global variable. *)
+        funLabel: id,                 (* FUNENTRY *)
+        closureEnv: anvalue
       }
     | (*%
        * @format({globalName, export, originalGlobalName})

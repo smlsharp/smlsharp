@@ -16,4 +16,4 @@ sig
    *)
   val executableImageName : unit -> string option
 
-end;
+end

@@ -953,9 +953,9 @@ struct
        * sym ":"
        *)
       GET_PC_THUNK_Decl of symbol
-    | (*% @prefix att_ @format(l * {size,align})
-       * ".comm " size ", " l ", " align *)
-      Comm of symbol * {size: int, align: int}
+    | (*% @prefix att_ @format(l * {size})
+       * ".comm " l ", " size  *)
+      Comm of symbol * {size: int}
 
   (*% @prefix att_ @formatter(lines) formatLines *)
   (*% @prefix darwin_ @ditto att_ *)

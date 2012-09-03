@@ -11,14 +11,15 @@ signature RTLCONSTRAINT = sig
     type reg
   end
 
-  val allRegisters : Target.reg list
+  (* machine registers. This vector gives each register an unique ID number,
+   * which is the index in the vector + 1. *)
+  val registers : Target.reg vector
 
-  (* split live ranges to make live ranges of variables which has register
-   * constraint as short as possible. *)
+  (* split live ranges in order to make live range of each variable which
+   * has some register constraints as short as possible. *)
   val split : RTL.graph -> RTL.graph
 
-  (* add register constraint to coloring graph *)
-  val constrain : RTL.graph -> Target.reg Interference.graph
-                  -> Target.reg Interference.graph
+  (* add register constraint to interference graph. *)
+  val constrain : RTL.graph -> Interference.graph -> Interference.graph
 
 end

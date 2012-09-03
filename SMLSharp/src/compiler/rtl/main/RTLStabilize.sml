@@ -5,15 +5,11 @@
  * @version $Id: $
  *)
 
-structure RTLStabilize : sig
-
-  val stabilize : RTL.graph -> RTL.graph
-
-end
-=
+functor RTLStabilize (structure Emit : RTLEMIT) : RTLSTABILIZE =
 struct
 
   structure R = RTL
+  structure Target = Emit.Target
 
   (* request status of register value *)
   datatype request =
@@ -422,7 +418,7 @@ end
 
   local
     fun makeSlot ({id,ty}:R.var) =
-        R.MEM (ty, R.SLOT {id = id, format = X86Emit.formatOf ty})
+        R.MEM (ty, R.SLOT {id = id, format = Emit.formatOf ty})
 
     fun makeSave vars =
         RTLUtils.Var.fold
@@ -626,7 +622,7 @@ val _ = Control.ps "----"
                end))
         graph
 
-  fun stabilize graph =
+  fun stabilizeGraph graph =
       let
         val request = RTLUtils.analyzeFlowBackward
                         {init = VarID.Map.empty,
@@ -669,5 +665,9 @@ val _ = Control.ps "----"
       in
         graph
       end
+
+
+  fun stabilize program =
+      RTLUtils.mapCluster stabilizeGraph program
 
 end

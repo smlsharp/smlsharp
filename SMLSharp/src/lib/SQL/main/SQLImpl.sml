@@ -30,6 +30,11 @@ structure SMLSharp = struct open SMLSharp
     val exists : (('a,'b) '_SQL'.db -> 'c '_SQL'.query)
                  -> ('a,'b) '_SQL'.db -> (bool option, 'b) '_SQL'.value
 
+    val queryString : (('a,'b) '_SQL'.db -> 'c '_SQL'.query)
+                      -> 'a '_SQL'.server -> string
+    val commandString : (('a,'b) '_SQL'.db -> '_SQL'.command)
+                        -> 'a '_SQL'.server -> string
+
     val fromSQL_int : int * '_SQL'.result -> int
     val fromSQL_word : int * '_SQL'.result -> word
     val fromSQL_char : int * '_SQL'.result -> char
@@ -119,6 +124,22 @@ structure SMLSharp = struct open SMLSharp
           val '_SQL'.QUERY (query, queryWitness, fetchFn) = queryFn db
         in
           '_SQL'.VALUE (("(exists (" ^ query ^ "))", dbi), SOME true)
+        end
+
+    fun queryString queryFn ('_SQL'.SERVER (_, _, witness)) =
+        let
+          val '_SQL'.QUERY (query, witness, fetchFn) =
+              queryFn ('_SQL'.DB (witness, '_SQL'.DBI))
+        in
+          query
+        end
+
+    fun commandString commandFn ('_SQL'.SERVER (_, _, witness)) =
+        let
+          val '_SQL'.COMMAND query =
+              commandFn ('_SQL'.DB (witness, '_SQL'.DBI))
+        in
+          query
         end
 
     local

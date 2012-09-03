@@ -61,4 +61,4 @@ signature MULTI_BYTE_PARSER_COMBINATOR =
      *)
     val token : (char -> bool) -> (string, 'strm) parser
 
-  end;
+  end

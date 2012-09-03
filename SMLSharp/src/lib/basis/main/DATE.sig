@@ -83,5 +83,5 @@ signature DATE =
     val compare : (date * date) -> order
 	(* returns the relative order of two dates. *)
 
-  end;
+  end
 
