@@ -1,6 +1,8 @@
 Group is
+        $/basis.cm
+
         ../main/sources.cm
-        ../smlunitlib.cm
+        ../../../SMLUnit/smlunitlib.cm
 
         DependencyGraphTest0001.sml
         EasyHTMLParserTest0001.sml

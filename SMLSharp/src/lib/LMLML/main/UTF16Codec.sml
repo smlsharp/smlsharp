@@ -203,6 +203,7 @@ in
 (**
  * fundamental functions to access UTF-16BE encoded characters.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: UTF16Codec.sml,v 1.3 2007/02/25 12:42:48 kiyoshiy Exp $
  *)
 structure UTF16BECodec :> CODEC =
@@ -211,6 +212,7 @@ structure UTF16BECodec :> CODEC =
 (**
  * fundamental functions to access UTF-16LE encoded characters.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: UTF16Codec.sml,v 1.3 2007/02/25 12:42:48 kiyoshiy Exp $
  *)
 structure UTF16LECodec :> CODEC =
@@ -219,6 +221,7 @@ structure UTF16LECodec :> CODEC =
 (**
  * fundamental functions to access UTF16 encoded characters.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: UTF16Codec.sml,v 1.3 2007/02/25 12:42:48 kiyoshiy Exp $
  *)
 structure UTF16Codec :> CODEC =

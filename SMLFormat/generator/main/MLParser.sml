@@ -2,6 +2,7 @@
  * implementation of SML source code parser.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MLParser.sml,v 1.6 2008/08/10 12:54:32 kiyoshiy Exp $
  *)
 structure MLParser : MLPARSER =

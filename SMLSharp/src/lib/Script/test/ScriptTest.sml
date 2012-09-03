@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ScriptTest.sml,v 1.1 2006/02/26 13:28:37 kiyoshiy Exp $
  *)
 structure ScriptTest =

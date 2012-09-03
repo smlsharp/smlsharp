@@ -1,6 +1,7 @@
 (**
  * String converter structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CodecStringConverterBase.sml,v 1.1.2.1 2010/05/06 06:51:47 kiyoshiy Exp $
  *)
 functor CodecStringConverterBase

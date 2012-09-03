@@ -798,11 +798,11 @@ structure TypedCalc : TYPEDCALC = struct
 
  and tpexnbind =
      (*%
-      * @format(con) con
+      * @format(con) "exception" + con
       *)
      TPEXNBINDDEF of exnPathInfo
    | (*%
-      * @format(left * right) {left} +d "=" +2 {right} 
+      * @format(left * right) "exception" + {left} +d "=" +2 {right} 
       *)
      TPEXNBINDREP of namePath * namePath
 

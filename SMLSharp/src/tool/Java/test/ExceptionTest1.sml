@@ -3,6 +3,8 @@ use "./ExceptionTestee1Exception.sml";
 
 (**
  * TestCases for Java exception mechanism.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure ExceptionTest1 =
 struct

@@ -31,6 +31,6 @@ mlton:
 
 $(srcdir)/preludes.mlb: $(srcdir)/preludes.mlb.in Makefile \
                         $(top_builddir)/mksmlpath
-	sed -e "s,%SMLFORMAT_MLB%,`$(MKSMLPATH) -sh '$(SMLFORMATDIR)/smlformatlib.mlb'`," \
-	    -e "s,%BASIS_MLB%,`$(MKSMLPATH) -sh '$(BASISDIR)/basis_compat.mlb'`," \
+	sed -e "s|%SMLFORMAT_MLB%|`$(MKSMLPATH) -sh '$(SMLFORMATDIR)/smlformatlib.mlb'`|" \
+	    -e "s|%BASIS_MLB%|`$(MKSMLPATH) -sh '$(BASISDIR)/basis_compat.mlb'`|" \
 	    $(srcdir)/preludes.mlb.in > $@

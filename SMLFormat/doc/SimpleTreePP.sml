@@ -2,6 +2,7 @@
  *  a simple pretty printer of tree structure to describe
  * the algorithm used by the SMLPP pplib.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: SimpleTreePP.sml,v 1.1 2005/10/12 11:41:10 kiyoshiy Exp $
  *)
 structure SimpleTreePP

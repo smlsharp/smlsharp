@@ -170,6 +170,7 @@ in
 (**
  * fundamental functions to access ISO-2022-JP encoded characters.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ISO2022JPCodec.sml,v 1.3 2007/02/25 12:42:48 kiyoshiy Exp $
  *)
 structure ISO2022JPCodec :> CODEC =

@@ -1,6 +1,7 @@
 (**
  * Word8Array structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Word8Array.sml,v 1.5 2007/12/19 02:00:56 kiyoshiy Exp $
  *)
 local

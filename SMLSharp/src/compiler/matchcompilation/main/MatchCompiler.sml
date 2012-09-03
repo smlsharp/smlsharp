@@ -113,7 +113,8 @@ struct
              argTyList=tyList2,
              ...
             } => 
-            limitCheck (Exp tfpexp1 :: (map Exp tfpexpList2) @ itemList) (n + 1)
+            limitCheck (Exp tfpexp1 :: (map Exp tfpexpList2)
+                        @ itemList) (n + 1)
         | TFPEXPORTCALLBACK
             {
              funExp=tfpexp1,
@@ -138,42 +139,69 @@ struct
              loc
              } => 
             limitCheck (Exp tfpexp1:: Exp tfpexp2 :: itemList) (n + 1)
-        | TFPPRIMAPPLY {primOp=primInfo, instTyList=tyList, argExpOpt=NONE, loc} => limitCheck itemList (n + 1)
-        | TFPPRIMAPPLY {primOp=primInfo, instTyList=tyList, argExpOpt=SOME tfpexp1, loc} => 
+        | TFPPRIMAPPLY {primOp=primInfo,
+                        instTyList=tyList,
+                        argExpOpt=NONE, loc} =>
+          limitCheck itemList (n + 1)
+        | TFPPRIMAPPLY
+            {primOp=primInfo,
+             instTyList=tyList,
+             argExpOpt=SOME tfpexp1,
+             loc} => 
             limitCheck (Exp tfpexp1::itemList) (n + 1)
-        | TFPOPRIMAPPLY {oprimOp=oprimInfo,
-                         keyTyList=keyTyList,
-                         instances=tyList,
-                         argExpOpt=NONE, loc} => limitCheck itemList (n + 1)
-        | TFPOPRIMAPPLY {oprimOp=oprimInfo, 
-                         keyTyList=keyTyList,
-                         instances=tyList, 
-                         argExpOpt=SOME tfpexp1, 
-                         loc} => limitCheck (Exp tfpexp1::itemList) (n + 1)
-        | TFPDATACONSTRUCT {con=conIdInfo, instTyList=tyList, argExpOpt=NONE, loc} 
-            => limitCheck itemList (n + 1)
-        | TFPDATACONSTRUCT {con=conIdInfo, instTyList=tyList, argExpOpt=SOME tfpexp1,
-                        loc} => 
+        | TFPOPRIMAPPLY
+            {oprimOp=oprimInfo,
+             keyTyList=keyTyList,
+             instances=tyList,
+             argExpOpt=NONE, loc} => limitCheck itemList (n + 1)
+        | TFPOPRIMAPPLY
+            {oprimOp=oprimInfo, 
+             keyTyList=keyTyList,
+             instances=tyList, 
+             argExpOpt=SOME tfpexp1, 
+             loc} => limitCheck (Exp tfpexp1::itemList) (n + 1)
+        | TFPDATACONSTRUCT
+            {con=conIdInfo,
+             instTyList=tyList,
+             argExpOpt=NONE, loc} => limitCheck itemList (n + 1)
+        | TFPDATACONSTRUCT
+            {con=conIdInfo,
+             instTyList=tyList,
+             argExpOpt=SOME tfpexp1,
+             loc} => 
             limitCheck (Exp tfpexp1 :: itemList) (n + 1)
-        | TFPEXNCONSTRUCT {exn=conIdInfo, instTyList=tyList, argExpOpt=NONE, loc} 
-            => limitCheck itemList (n + 1)
-        | TFPEXNCONSTRUCT {exn=conIdInfo, instTyList=tyList, argExpOpt=SOME tfpexp1,
-                        loc} => 
+        | TFPEXNCONSTRUCT
+            {exn=conIdInfo, instTyList=tyList, argExpOpt=NONE, loc} =>
+          limitCheck itemList (n + 1)
+        | TFPEXNCONSTRUCT
+            {exn=conIdInfo,
+             instTyList=tyList,
+             argExpOpt=SOME tfpexp1,
+             loc} => 
             limitCheck (Exp tfpexp1 :: itemList) (n + 1)
         | TFPAPPM {funExp=tfpexp1, funTy=ty, argExpList=tfpexpList, loc} => 
-            limitCheck (Exp tfpexp1 :: (map Exp tfpexpList) @ itemList) (n + 1)
-        | TFPMONOLET {binds=nil, bodyExp=tfpexp1, loc} => limitCheck (Exp tfpexp1 :: itemList) (n + 1)
+          limitCheck (Exp tfpexp1 :: (map Exp tfpexpList) @ itemList) (n + 1)
+        | TFPMONOLET {binds=nil, bodyExp=tfpexp1, loc} =>
+          limitCheck (Exp tfpexp1 :: itemList) (n + 1)
         | TFPMONOLET {binds=(varIdInfo,tfpexp1)::varIdInfotfpexpList, 
                       bodyExp=tfpexp2, 
                       loc} =>
-            limitCheck (Exp tfpexp1 :: 
-                        Exp (TFPMONOLET {binds=varIdInfotfpexpList, bodyExp=tfpexp2, loc=loc}) ::
+          limitCheck (Exp tfpexp1 :: 
+                      Exp (TFPMONOLET
+                             {binds=varIdInfotfpexpList,
+                              bodyExp=tfpexp2,
+                              loc=loc}) ::
                         itemList)
             (n + 1)
         | TFPLET (tfpdeclList, tfpexpList, tyList, loc) =>
-            limitCheck ((map Decl tfpdeclList) @ (map Exp tfpexpList) @ itemList) (n + 1)
+          limitCheck ((map Decl tfpdeclList)
+                      @ (map Exp tfpexpList)
+                      @ itemList)
+                     (n + 1)
         | TFPRECORD {fields, recordTy=ty, loc} => 
-            limitCheck ((map (fn (l,tfpexp) => Exp tfpexp) (SEnv.listItemsi fields)) @ itemList) (n + 1)
+            limitCheck
+              ((map (fn (l,tfpexp) => Exp tfpexp) (SEnv.listItemsi fields))
+               @ itemList) (n + 1)
         | TFPSELECT {label=string, exp=tfpexp, expTy=ty, resultTy, loc} 
             => limitCheck (Exp tfpexp :: itemList) (n + 1)
         | TFPMODIFY {label=string, 
@@ -183,7 +211,8 @@ struct
                      elementTy=ty2,  
                      loc} =>
             limitCheck (Exp tfpexp1 :: Exp tfpexp2 :: itemList) (n + 1)
-        | TFPRAISE (tfpexp, ty, loc) => limitCheck (Exp tfpexp :: itemList) (n + 1)
+        | TFPRAISE (tfpexp, ty, loc) =>
+          limitCheck (Exp tfpexp :: itemList) (n + 1)
         | TFPHANDLE {exp=tfpexp1,  exnVar=varIdInfo, handler=tfpexp2, loc} =>
             limitCheck (Exp tfpexp1 :: Exp tfpexp2 :: itemList) (n + 1)
         | TFPCASEM {expList=tfpexpList, 
@@ -192,12 +221,14 @@ struct
                     ruleBodyTy=ty, 
                     caseKind=kind, 
                     loc} =>
-            limitCheck (map Exp tfpexpList
-                        @
-                        map (fn (tfppatList, tfpexp) => Exp tfpexp) tfpPatListTfpexpList 
-                        @ 
-                        itemList
-                        ) 
+            limitCheck
+              (map Exp tfpexpList
+               @
+               map (fn (tfppatList, tfpexp) => Exp tfpexp)
+                   tfpPatListTfpexpList 
+               @
+               itemList
+              ) 
             (n + 1)
         | TFPFNM {argVarList=varIdInfoList, bodyTy, bodyExp, loc} => 
             limitCheck (Exp tfpexp :: itemList) (n + 1)
@@ -207,7 +238,11 @@ struct
                       bodyExp=tfpexp, 
                       loc} =>
             limitCheck (Exp tfpexp :: itemList) (n + 1)
-        | TFPPOLY {btvEnv=btvKindIEnvMap, expTyWithoutTAbs=ty, exp=tfpexp, loc} =>
+        | TFPPOLY
+            {btvEnv=btvKindIEnvMap,
+             expTyWithoutTAbs=ty,
+             exp=tfpexp,
+             loc} =>
             limitCheck (Exp tfpexp :: itemList) (n + 1)
         | TFPTAPP {exp=tfpexp, expTy=ty1, instTyList=tylist, loc} => 
             limitCheck (Exp tfpexp :: itemList) (n + 1)
@@ -215,22 +250,36 @@ struct
             limitCheck (map Exp expList @ itemList) (n + 1)
         | TFPSEQ {expList, ...} =>
             limitCheck (map Exp expList @ itemList) (n + 1)
-        | TFPCAST (tfpexp, ty, loc) => limitCheck (Exp tfpexp :: itemList) (n + 1)
+        | TFPCAST (tfpexp, ty, loc) =>
+          limitCheck (Exp tfpexp :: itemList) (n + 1)
+
       and limitCheckDecl tfpdecl itemList n = 
         case tfpdecl of
           TFPVAL (valIdtfpexpList, loc) => 
-            limitCheck ((map (fn (varId, tfpexp) => Exp tfpexp) valIdtfpexpList) @ itemList) (n + 1)
+            limitCheck
+              ((map (fn (varId, tfpexp) => Exp tfpexp) valIdtfpexpList)
+               @ itemList) (n + 1)
         | TFPVALREC (varIdInfoTytfpexpList,loc) =>
-          limitCheck ((map (fn (varIdInfo, ty, tfpexp) => Exp tfpexp) varIdInfoTytfpexpList) @ itemList) (n + 1)
+          limitCheck
+            ((map (fn (varIdInfo, ty, tfpexp) => Exp tfpexp)
+                  varIdInfoTytfpexpList)
+             @ itemList) (n + 1)
         | TFPVALPOLYREC (btvKindIEnvMap, varIdInfoTyTfpexpList, loc) =>
-          limitCheck ((map (fn (varIdInfo, ty, tfpexp) => Exp tfpexp) varIdInfoTyTfpexpList) @ itemList) (n + 1)
+          limitCheck
+            ((map (fn (varIdInfo, ty, tfpexp) => Exp tfpexp)
+                  varIdInfoTyTfpexpList)
+             @ itemList) (n + 1)
         | TFPLOCALDEC (tfpdeclList1, tfpdeclList2, loc) =>
-          limitCheck (map Decl tfpdeclList1 @ map Decl tfpdeclList2 @ itemList) (n + 1)
+          limitCheck
+            (map Decl tfpdeclList1 @ map Decl tfpdeclList2 @ itemList)
+            (n + 1)
         | TFPSETFIELD (tfpexp1, tfpexp2, int, ty, loc) => 
           limitCheck (Exp tfpexp1 :: Exp tfpexp2 :: itemList) (n + 1)
         | TFPEXNBINDDEF _ => limitCheck itemList (n + 1)
-        | TFPFUNCTORDEC _ => raise Control.Bug "functor declaration should be on top"
-        | TFPLINKFUNCTORDEC _ => raise Control.Bug "functor declaration should be on top"
+        | TFPFUNCTORDEC _ =>
+          raise Control.Bug "functor declaration should be on top"
+        | TFPLINKFUNCTORDEC _ =>
+          raise Control.Bug "functor declaration should be on top"
     in
       limitCheck [(Exp tfpexp)] 0
     end
@@ -246,7 +295,9 @@ struct
 
 (*
   fun freshVar ty =
-      {id = Counters.newLocalId(), displayName = Counters.newVarName (),  ty = ty}
+      {id = Counters.newLocalId(),
+       displayName = Counters.newVarName (),
+       ty = ty}
       : T.varIdInfo
 *)
 
@@ -261,7 +312,8 @@ struct
       {displayName = name, ty = ty, varId = T.INTERNAL (newLocalId())}
       : T.varIdInfo
 
-  fun makeVar (id, name, ty) =  {displayName = name,  ty = ty, varId = T.INTERNAL id} : T.varIdInfo
+  fun makeVar (id, name, ty) =
+      {displayName = name,  ty = ty, varId = T.INTERNAL id} : T.varIdInfo
 
   fun unionBtvEnv(outerBtvEnv, innerBtvEnv) =
       IEnv.unionWith #1 (innerBtvEnv, outerBtvEnv)
@@ -335,7 +387,8 @@ struct
   fun incrementUseCount (branchEnv:branchEnv, branchId) =
       case IEnv.find(branchEnv, branchId) of
         SOME {useCount, ...} => useCount := !useCount + 1
-      | NONE => raise C.Bug "incrementUseCount in MatchCompiler: BranchId not found"
+      | NONE =>
+        raise C.Bug "incrementUseCount in MatchCompiler: BranchId not found"
 
   fun canInlineBranch ({isSmall, useCount, ...} : branchData) =
       (!C.doInlineCaseBranch)
@@ -343,26 +396,30 @@ struct
 
   fun makeNestedFun [] body bodyTy loc =
        (
-        RCFNM {
-               argVarList = [freshVarWithDisplayName (PT.unitty, "unitExp(" ^ newVarName () ^ ")")],
-               bodyTy=bodyTy, 
-               bodyExp=body, 
-               loc=loc
-               },
+        RCFNM
+          {
+           argVarList = [freshVarWithDisplayName
+                           (PT.unitty, "unitExp(" ^ newVarName () ^ ")")],
+           bodyTy=bodyTy, 
+           bodyExp=body, 
+           loc=loc
+          },
         T.FUNMty ([PT.unitty], bodyTy)
         )
     | makeNestedFun argList body bodyTy loc =
-       foldr 
-       (fn (arg, (body, bodyTy)) => 
-        (RCFNM {argVarList=[arg], bodyTy=bodyTy, bodyExp=body, loc=loc}, T.FUNMty ([#ty arg], bodyTy)))
-       (body, bodyTy)
-       argList 
+      foldr 
+        (fn (arg, (body, bodyTy)) => 
+        (RCFNM {argVarList=[arg], bodyTy=bodyTy, bodyExp=body, loc=loc},
+         T.FUNMty ([#ty arg], bodyTy)))
+        (body, bodyTy)
+        argList 
 
   fun makeUncurriedFun [] body bodyTy loc =
        (
         RCFNM 
         {
-         argVarList=[freshVarWithDisplayName (PT.unitty,"unitExp(" ^ newVarName () ^ ")")], 
+         argVarList=[freshVarWithDisplayName
+                       (PT.unitty,"unitExp(" ^ newVarName () ^ ")")], 
          bodyTy=bodyTy, 
          bodyExp=body, 
          loc=loc
@@ -439,14 +496,27 @@ struct
         if VarSet.member (FV, x) then VarPat x else WildPat (#ty x)
     | tfppatToPat btvEnv FV  (TFPPATCONSTANT (CT.UNIT, ty, _)) = WildPat ty
     | tfppatToPat btvEnv FV  (TFPPATCONSTANT (con, ty, _)) = ConPat (con, ty)
-    | tfppatToPat btvEnv FV (TFPPATDATACONSTRUCT {conPat, argPatOpt=NONE, patTy=ty, ...}) =
-        DataTagPat (conPat, false, WildPat PT.unitty, ty)
-    | tfppatToPat btvEnv FV (TFPPATDATACONSTRUCT {conPat, argPatOpt = SOME argPat, patTy=ty, ...}) =
-        DataTagPat (conPat, true, tfppatToPat btvEnv FV argPat, ty)
-    | tfppatToPat btvEnv FV (TFPPATEXNCONSTRUCT {exnPat, argPatOpt=NONE, patTy=ty, ...}) =
-        ExnTagPat (exnPat, false, WildPat PT.unitty, ty)
-    | tfppatToPat btvEnv FV (TFPPATEXNCONSTRUCT {exnPat, argPatOpt = SOME argPat, patTy=ty, ...}) =
-        ExnTagPat (exnPat, true, tfppatToPat btvEnv FV argPat, ty)
+    | tfppatToPat
+        btvEnv
+        FV
+        (TFPPATDATACONSTRUCT {conPat, argPatOpt=NONE, patTy=ty, ...}) =
+      DataTagPat (conPat, false, WildPat PT.unitty, ty)
+    | tfppatToPat
+        btvEnv
+        FV
+        (TFPPATDATACONSTRUCT
+           {conPat, argPatOpt = SOME argPat, patTy=ty, ...}) =
+      DataTagPat (conPat, true, tfppatToPat btvEnv FV argPat, ty)
+    | tfppatToPat
+        btvEnv
+        FV
+        (TFPPATEXNCONSTRUCT {exnPat, argPatOpt=NONE, patTy=ty, ...}) =
+      ExnTagPat (exnPat, false, WildPat PT.unitty, ty)
+    | tfppatToPat
+        btvEnv
+        FV
+        (TFPPATEXNCONSTRUCT {exnPat, argPatOpt = SOME argPat, patTy=ty, ...}) =
+      ExnTagPat (exnPat, true, tfppatToPat btvEnv FV argPat, ty)
     | tfppatToPat btvEnv FV (TFPPATRECORD {fields=patRows, recordTy=ty,...}) =
         let
           (*  The match compilation algorithm assumes that every record
@@ -496,7 +566,9 @@ struct
         (WildPat (#ty x) ++ rule, VarEnv.insert (env, x, path)) ::
         removeOtherPat path REs
       | removeOtherPat path ((LayerPat (VarPat x, pat) ++ rule, env) :: REs) =
-        removeOtherPat path ((pat ++ rule, VarEnv.insert (env, x, path)) :: REs)
+        removeOtherPat
+          path
+          ((pat ++ rule, VarEnv.insert (env, x, path)) :: REs)
       | removeOtherPat path ((OrPat (pat1, pat2) ++ rule, env) :: REs) =
         removeOtherPat path ((pat1 ++ rule, env) :: (pat2 ++ rule, env) :: REs)
       | removeOtherPat path (RE :: REs) = RE :: removeOtherPat path REs
@@ -536,111 +608,119 @@ struct
   
     and makeDataTagTree branchEnv spans (path :: paths) REs =
         let
-  	    val (branches, defBranch) = 
-                foldr 
-  	            (fn (
-  		         (DataTagPat (tag, hasArg, argPat, ty) ++ rule, env), 
-  		         (branches, defBranch)
-  		         ) =>
-  	                let
-  		            val key = (tag, hasArg)
-  		            val REs = 
-  			        case DataTagMap.find (branches, key)
-  			         of SOME REs => REs
-  			          | NONE =>
-  			            let
-  			                val wildPat = WildPat (getTyInPat argPat)
-  			            in
-  			                map 
-  			                    (fn (rule, env) => (wildPat ++ rule, env))
-  			                    defBranch
-  			            end
-  		        in
-  		            (
-  		             DataTagMap.insert
-  			         (branches, key, (argPat ++ rule, env) :: REs),
-  			         defBranch
-  		                 )
-  		        end
-  		      | ((WildPat _ ++ rule, env), (branches, defBranch)) =>
-  		        (
-  		         DataTagMap.map
-  		             (fn (REs as ((pat ++ _, _) :: _)) => 
-  		                 (WildPat (getTyInPat pat) ++ rule, env) :: REs
-  			       | _ => raise C.Bug "match comp, in makeTagTree")
-  		             branches,
-  		             (rule, env) :: defBranch
-  		             )
+  	  val (branches, defBranch) = 
+              foldr 
+  	        (fn
+                 (
+  		  (DataTagPat (tag, hasArg, argPat, ty) ++ rule, env), 
+  		  (branches, defBranch)
+  		 ) =>
+  	         let
+  		   val key = (tag, hasArg)
+  		   val REs = 
+  		       case DataTagMap.find (branches, key)
+  			of SOME REs => REs
+  			 | NONE =>
+  			   let
+  			     val wildPat = WildPat (getTyInPat argPat)
+  			   in
+  			     map 
+  			       (fn (rule, env) => (wildPat ++ rule, env))
+  			       defBranch
+  			   end
+  		 in
+  		   (
+  		    DataTagMap.insert
+  		      (branches, key, (argPat ++ rule, env) :: REs),
+  		    defBranch
+  		   )
+  		 end
+  	       | ((WildPat _ ++ rule, env), (branches, defBranch)) =>
+  		 (
+  		  DataTagMap.map
+  		    (fn (REs as ((pat ++ _, _) :: _)) => 
+  		        (WildPat (getTyInPat pat) ++ rule, env) :: REs
   		      | _ => raise C.Bug "match comp, in makeTagTree")
-  	            (DataTagMap.empty, [])
-  	            REs
+  		    branches,
+  		  (rule, env) :: defBranch
+  		 )
+  	       | _ => raise C.Bug "match comp, in makeTagTree")
+  	        (DataTagMap.empty, [])
+  	        REs
         in
-  	    DataTagNode (
-  		     path,
-  		     DataTagMap.mapi
-  		         (fn ((tag, _), REs as ((pat ++ _, _) :: _)) =>
-  		             matchToTree branchEnv
-  			                 (freshVarIdWithDisplayName (getTyInPat pat, getDisplayNameInPat pat) :: paths)
-  			                 REs
-  		           | _ => raise C.Bug "match comp, in makeTagTree")
-  		         branches,
-  		         if DataTagMap.numItems branches = spans
-  		         then EmptyNode
-  		         else matchToTree branchEnv paths defBranch
-  		              )
+  	  DataTagNode
+            (
+  	     path,
+  	     DataTagMap.mapi
+  	       (fn ((tag, _), REs as ((pat ++ _, _) :: _)) =>
+  		   matchToTree
+                     branchEnv
+  		     (freshVarIdWithDisplayName
+                        (getTyInPat pat, getDisplayNameInPat pat) :: paths)
+  		     REs
+  		 | _ => raise C.Bug "match comp, in makeTagTree")
+  	       branches,
+  	     if DataTagMap.numItems branches = spans
+  	     then EmptyNode
+  	     else matchToTree branchEnv paths defBranch
+  	    )
         end
       | makeDataTagTree _  _ _ _ = raise C.Bug "match comp, makeTagTree"
   
     and makeExnTagTree branchEnv (path :: paths) REs =
         let
-  	    val (branches, defBranch) = 
-                foldr 
-  	            (fn (
-  		         (ExnTagPat (tag, hasArg, argPat, ty) ++ rule, env), 
-  		         (branches, defBranch)
-  		         ) =>
-  	                let
-  		            val key = (tag, hasArg)
-  		            val REs = 
-  			        case ExnTagMap.find (branches, key)
-  			         of SOME REs => REs
-  			          | NONE =>
-  			            let
-  			                val wildPat = WildPat (getTyInPat argPat)
-  			            in
-  			                map 
-  			                    (fn (rule, env) => (wildPat ++ rule, env))
-  			                    defBranch
-  			            end
-  		        in
-  		            (
-  		             ExnTagMap.insert
-  			         (branches, key, (argPat ++ rule, env) :: REs),
-  			         defBranch
-  		                 )
-  		        end
-  		      | ((WildPat _ ++ rule, env), (branches, defBranch)) =>
-  		        (
-  		         ExnTagMap.map
-  		             (fn (REs as ((pat ++ _, _) :: _)) => 
-  		                 (WildPat (getTyInPat pat) ++ rule, env) :: REs
-  			       | _ => raise C.Bug "match comp, in makeTagTree")
-  		             branches,
-  		             (rule, env) :: defBranch
-  		             )
+  	  val (branches, defBranch) = 
+              foldr 
+  	        (fn
+                 (
+  		  (ExnTagPat (tag, hasArg, argPat, ty) ++ rule, env), 
+  		  (branches, defBranch)
+  		 ) =>
+  	         let
+  		   val key = (tag, hasArg)
+  		   val REs = 
+  		       case ExnTagMap.find (branches, key)
+  			of SOME REs => REs
+  			 | NONE =>
+  			   let
+  			     val wildPat = WildPat (getTyInPat argPat)
+  			   in
+  			     map 
+  			       (fn (rule, env) => (wildPat ++ rule, env))
+  			       defBranch
+  			   end
+  		 in
+  		   (
+  		    ExnTagMap.insert
+  		      (branches, key, (argPat ++ rule, env) :: REs),
+  		    defBranch
+  		   )
+  		 end
+  	       | ((WildPat _ ++ rule, env), (branches, defBranch)) =>
+  		 (
+  		  ExnTagMap.map
+  		    (fn (REs as ((pat ++ _, _) :: _)) => 
+  		        (WildPat (getTyInPat pat) ++ rule, env) :: REs
   		      | _ => raise C.Bug "match comp, in makeTagTree")
-  	            (ExnTagMap.empty, [])
-  	            REs
+  		    branches,
+  		  (rule, env) :: defBranch
+  		 )
+  	       | _ => raise C.Bug "match comp, in makeTagTree")
+  	        (ExnTagMap.empty, [])
+  	        REs
         in
-  	    ExnTagNode (
-  		        path,
-  		        ExnTagMap.mapi
-  		            (fn ((tag, _), REs as ((pat ++ _, _) :: _)) =>
-  		                matchToTree branchEnv
-  			                    (freshVarIdWithDisplayName (getTyInPat pat, getDisplayNameInPat pat) :: paths)
-  			                    REs
-  		              | _ => raise C.Bug "match comp, in makeTagTree")
-  		            branches,
+  	  ExnTagNode
+            (
+  	     path,
+  	     ExnTagMap.mapi
+  	       (fn ((tag, _), REs as ((pat ++ _, _) :: _)) =>
+  		   matchToTree
+                     branchEnv
+  		     (freshVarIdWithDisplayName
+                        (getTyInPat pat, getDisplayNameInPat pat) :: paths)
+  		     REs
+  		 | _ => raise C.Bug "match comp, in makeTagTree")
+  	       branches,
 (*
   The case of exn, spans is infinite, so if branch will never happen.
 
@@ -648,8 +728,8 @@ struct
   		            then EmptyNode
   		            else matchToTree branchEnv paths defBranch
 *)
-                            matchToTree branchEnv paths defBranch
-  		                 )
+              matchToTree branchEnv paths defBranch
+   	    )
         end
       | makeExnTagTree _ _ _ = raise C.Bug "match comp, makeTagTree"
 
@@ -659,51 +739,64 @@ struct
      *)
     and makeUnitTree branchEnv paths REs = makeUnivTree branchEnv paths REs
   
-    and makeNRecTree branchEnv (label, fieldTy, fieldDisplayName) (path :: paths) REs =
-          RecNode	
-  	(
-  	  path, 
-  	  label,
-  	  matchToTree branchEnv
-  	  (freshVarIdWithDisplayName (fieldTy,fieldDisplayName) :: paths)
-  	  (map
-  	   (fn (RecPat ([(_, pat)], _) ++ rule, env) => (pat ++ rule, env)
-  	     | (WildPat _ ++ rule, env) => (WildPat fieldTy ++ rule, env)
-  	     | _ => raise C.Bug "match comp, in makeNRecTree")
-  	   REs)
-  	)
+    and makeNRecTree
+          branchEnv
+          (label, fieldTy, fieldDisplayName) (path :: paths) REs =
+        RecNode	
+  	  (
+  	   path, 
+  	   label,
+  	   matchToTree
+             branchEnv
+  	     (freshVarIdWithDisplayName (fieldTy,fieldDisplayName) :: paths)
+  	     (map
+  	        (fn (RecPat ([(_, pat)], _) ++ rule, env) => (pat ++ rule, env)
+  	          | (WildPat _ ++ rule, env) => (WildPat fieldTy ++ rule, env)
+  	          | _ => raise C.Bug "match comp, in makeNRecTree")
+  	        REs)
+  	  )
       | makeNRecTree _ _ _ _ = raise C.Bug "match comp, makeNRecTree"
   
-    and makeIRecTree branchEnv (recordTy, label, fieldTy, fieldDisplayName) (paths as (path :: _)) REs =
-        RecNode (
-  	        path,
-  		label, 
-  		matchToTree branchEnv
-  		(freshVarIdWithDisplayName (fieldTy,fieldDisplayName) :: paths)
-  		(map
-  		 (fn (RecPat ((_, pat) :: fields, ty) ++ rule, env) =>
-  		     (pat ++ RecPat (fields, ty) ++ rule, env)
-  	           | (WildPat _ ++ rule, env) =>
-  		     (WildPat fieldTy ++ WildPat recordTy ++ rule, env)
-  		   | _ => raise C.Bug "match comp, in makeIRecTree")
-  		 REs)
-  	      )
+    and makeIRecTree
+          branchEnv
+          (recordTy, label, fieldTy, fieldDisplayName)
+          (paths as (path :: _))
+          REs =
+        RecNode
+          (
+  	   path,
+  	   label, 
+  	   matchToTree
+             branchEnv
+  	     (freshVarIdWithDisplayName (fieldTy,fieldDisplayName) :: paths)
+  	     (map
+  		(fn (RecPat ((_, pat) :: fields, ty) ++ rule, env) =>
+  		    (pat ++ RecPat (fields, ty) ++ rule, env)
+  	          | (WildPat _ ++ rule, env) =>
+  		    (WildPat fieldTy ++ WildPat recordTy ++ rule, env)
+  		  | _ => raise C.Bug "match comp, in makeIRecTree")
+  		REs)
+  	  )
       | makeIRecTree _ _ _ _ = raise C.Bug "match comp, makeIRecTree"
   	
     and makeUnivTree branchEnv (path :: paths) REs = 
-          UnivNode (
-  		   path,
-  		   matchToTree branchEnv 
-  		   paths 
-  		   (map (fn (pat ++ rule, env) => (rule, env) 
-  		          | _ => raise C.Bug "makeUnivTree") 
-  		    REs)
-  		 )
+        UnivNode
+          (
+  	   path,
+  	   matchToTree
+             branchEnv 
+  	     paths 
+  	     (map (fn (pat ++ rule, env) => (rule, env) 
+  		    | _ => raise C.Bug "makeUnivTree") 
+  		  REs)
+  	  )
       | makeUnivTree _  _ _ = raise C.Bug "match comp, makeUnivTree"
   
     and decideRootNode branchEnv [] = makeUnivTree branchEnv
-      | decideRootNode branchEnv ((WildPat _ ++ _, _) :: REs) = decideRootNode branchEnv REs
-      | decideRootNode branchEnv ((ConPat _ ++ _, _) :: _) = makeEqTree branchEnv
+      | decideRootNode branchEnv ((WildPat _ ++ _, _) :: REs) =
+        decideRootNode branchEnv REs
+      | decideRootNode branchEnv ((ConPat _ ++ _, _) :: _) =
+        makeEqTree branchEnv
       | decideRootNode branchEnv ((DataTagPat (tag, _, _, _) ++ _, _) :: _) = 
         makeDataTagTree branchEnv (getTagNums tag)
       | decideRootNode branchEnv ((ExnTagPat (tag, _, _, _) ++ _, _) :: _) = 
@@ -712,8 +805,12 @@ struct
         makeUnitTree branchEnv
       | decideRootNode branchEnv ((RecPat ([(label, pat)], _) ++ _, _) :: _) = 
         makeNRecTree branchEnv (label, getTyInPat pat, getDisplayNameInPat pat)
-      | decideRootNode branchEnv ((RecPat ((label, pat) :: _, recTy) ++ _, _) :: _) = 
-        makeIRecTree branchEnv (recTy, label, getTyInPat pat, getDisplayNameInPat pat)
+      | decideRootNode
+          branchEnv
+          ((RecPat ((label, pat) :: _, recTy) ++ _, _) :: _) = 
+        makeIRecTree
+          branchEnv
+          (recTy, label, getTyInPat pat, getDisplayNameInPat pat)
       | decideRootNode branchEnv _ = raise C.Bug "match comp, decideRootNode"
   
     and matchToTree branchEnv _ [] = (ME.setFlag ME.NotExhaustive; EmptyNode )
@@ -765,58 +862,79 @@ struct
             in
               (
 		VarEnv.foldl VarSet.add' VarSet.empty env,
-                if canInlineBranch branchData 
+                if canInlineBranch branchData
                 then tfpexpToRcexp (unionVarEnv(varEnv, env)) btvEnv tfpexp
                 else
                   case funArgs of 
-                    [] => RCAPPM 
+                    [] => RCAPPM
                            {
-                            funExp=RCVAR (makeVar(funVarId, funVarName, valOf (!funTy)), funLoc),
+                            funExp=
+                              RCVAR
+                              (makeVar(funVarId, funVarName, valOf (!funTy)),
+                               funLoc),
                             funTy=valOf (!funTy), 
                             argExpList=[unitExp], 
                             loc=loc
-                            }
+                           }
                   | _ => 
-                      if !C.doUncurryingOptimizeInMatchCompile
-                        then
-                          let
-                            val funArgs = 
-                                 map
-                                  (fn x => 
-                                   case VarEnv.find (env, x) of
-                                     SOME v => RCVAR (v, loc)
-                                   | _ => raise C.Bug "match comp, treeToExp, leaf node for fun")
-                                  funArgs
-                          in
-                            RCAPPM
-                             {
-                              funExp = RCVAR (makeVar(funVarId, funVarName, valOf (!funTy)), funLoc),
-                              funTy = valOf(!funTy), 
-                              argExpList = funArgs,
-                              loc=funLoc
-                              }
-                          end
-                      else
+                    if !C.doUncurryingOptimizeInMatchCompile
+                    then
+                      let
+                        val funArgs = 
+                            map
+                              (fn x => 
+                                  case VarEnv.find (env, x) of
+                                    SOME v => RCVAR (v, loc)
+                                  | _ =>
+                                    raise
+                                      C.Bug
+                                        "match comp, treeToExp, \
+                                        \leaf node for fun")
+                              funArgs
+                      in
+                        RCAPPM
+                          {
+                           funExp =
+                           RCVAR
+                             (makeVar(funVarId, funVarName, valOf (!funTy)),
+                              funLoc),
+                           funTy = valOf(!funTy), 
+                           argExpList = funArgs,
+                           loc=funLoc
+                          }
+                      end
+                    else
                       #2 
-                      (foldl 
-                        (fn (arg, (T.FUNMty([ty1],ty2), func)) => 
-                           (ty2,
-                            RCAPPM 
-                            { 
-                             funExp = func,
-                             funTy = T.FUNMty([ty1], ty2),
-                             argExpList = case VarEnv.find (env, arg) of
-                                               SOME v => [RCVAR (v, loc)]
-                                            | _ => raise C.Bug "match comp, treeToExp, leaf node for fun",
-                             loc=loc
-                             }
-                            )
-                      | _ => raise C.Bug "match comp, treeToExp, leaf node for fun"
+                       (foldl 
+                          (fn (arg, (T.FUNMty([ty1],ty2), func)) => 
+                              (ty2,
+                               RCAPPM 
+                                 { 
+                                  funExp = func,
+                                  funTy = T.FUNMty([ty1], ty2),
+                                  argExpList =
+                                  case VarEnv.find (env, arg) of
+                                    SOME v => [RCVAR (v, loc)]
+                                  | _ =>
+                                    raise
+                                      C.Bug
+                                        "match comp, treeToExp,\
+                                        \ leaf node for fun",
+                                  loc=loc
+                                 }
+                              )
+                            | _ =>
+                              raise
+                                C.Bug "match comp, treeToExp,\
+                                      \ leaf node for fun"
                            )
-                        (valOf (!funTy), RCVAR (makeVar(funVarId, funVarName, valOf (!funTy)), funLoc))
-                       funArgs
+                          (valOf (!funTy),
+                           RCVAR
+                             (makeVar(funVarId, funVarName, valOf (!funTy)),
+                              funLoc))
+                          funArgs
                        )
-               )
+              )
             end
 	  | toExp (EqNode (path as {ty= pty,...}, branches, defBranch)) = 
 	    let
@@ -844,7 +962,10 @@ struct
                   }
 	      )
 	    end
-	  | toExp (DataTagNode (path as {ty = pty, displayName,...}, branches, defBranch)) = 
+	  | toExp
+              (DataTagNode (path as {ty = pty, displayName,...},
+                            branches,
+                            defBranch)) = 
 	    let
 	      val tyCon = 
                 case (TU.derefTy (#ty path)) of 
@@ -852,7 +973,8 @@ struct
                 | _ => 
                   raise 
                     Control.Bug 
-                    "non tyCon in TagNode (matchcompilation/main/MatchCompiler.sml)"
+                    "non tyCon in TagNode\
+                    \ (matchcompilation/main/MatchCompiler.sml)"
 	      val branchNums = DataTagMap.numItems branches
 	      val (vars, branches) = 
 		    DataTagMap.foldri
@@ -896,7 +1018,10 @@ struct
                    }
 	      )
 	    end
-	  | toExp (ExnTagNode (path as {ty = pty, displayName,...}, branches, defBranch)) = 
+	  | toExp
+              (ExnTagNode (path as {ty = pty, displayName,...},
+                           branches,
+                           defBranch)) = 
 	    let
 	      val tyCon = 
                 case (TU.derefTy (#ty path)) of 
@@ -904,7 +1029,8 @@ struct
                 | _ => 
                   raise 
                     Control.Bug 
-                    "non tyCon in TagNode (matchcompilation/main/MatchCompiler.sml)"
+                    "non tyCon in TagNode\
+                    \ (matchcompilation/main/MatchCompiler.sml)"
 	      val branchNums = ExnTagMap.numItems branches
 	      val (vars, branches) = 
 		    ExnTagMap.foldri
@@ -979,7 +1105,14 @@ struct
 
   and tfpexpToRcexp varEnv btvEnv tfpexp = 
       case tfpexp
-      of TFPFOREIGNAPPLY {funExp=tfpexp1, funTy, instTyList, argExpList=tfpExpList, argTyList, attributes, loc} =>
+      of TFPFOREIGNAPPLY
+           {funExp=tfpexp1,
+            funTy,
+            instTyList,
+            argExpList=tfpExpList,
+            argTyList,
+            attributes,
+            loc} =>
          let
            val rcexp1 = tfpexpToRcexp varEnv btvEnv tfpexp1
            val rcExpList = map (tfpexpToRcexp varEnv btvEnv) tfpExpList
@@ -995,7 +1128,12 @@ struct
              loc=loc
              }
          end
-       | TFPEXPORTCALLBACK {funExp=tfpexp1, argTyList=argTyList, resultTy=resultTy, attributes=attributes, loc} =>
+       | TFPEXPORTCALLBACK
+           {funExp=tfpexp1,
+            argTyList=argTyList,
+            resultTy=resultTy,
+            attributes=attributes,
+            loc} =>
          let
            val rcexp1 = tfpexpToRcexp varEnv btvEnv tfpexp1
          in
@@ -1010,7 +1148,8 @@ struct
          end
        | TFPSIZEOF (ty, loc) => RCSIZEOF (ty, loc)
        | TFPCONSTANT (con, loc) => RCCONSTANT (con, loc)
-       | TFPGLOBALSYMBOL (name, kind, ty, loc) => RCGLOBALSYMBOL (name, kind, ty, loc)
+       | TFPGLOBALSYMBOL (name, kind, ty, loc) =>
+         RCGLOBALSYMBOL (name, kind, ty, loc)
        | TFPVAR (var, loc) => 
          (case (VarEnv.find (varEnv, var)) of
             SOME v => RCVAR(v, loc)
@@ -1028,16 +1167,18 @@ struct
            resultTy=ty2, 
            loc=loc
            }
-       | TFPPRIMAPPLY {primOp=prim, instTyList=tys, argExpOpt=tfpexpOpt, loc} =>
+       | TFPPRIMAPPLY
+           {primOp=prim, instTyList=tys, argExpOpt=tfpexpOpt, loc} =>
          RCPRIMAPPLY 
            {
             primOp=prim, 
             instTyList=tys, 
-            argExpOpt = case tfpexpOpt of
-                          NONE => NONE 
-                        | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
+            argExpOpt =
+            case tfpexpOpt of
+              NONE => NONE 
+            | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
             loc=loc
-            }
+           }
        | TFPOPRIMAPPLY {
                         oprimOp=oprim, 
                         instances=tys,
@@ -1050,9 +1191,10 @@ struct
             oprimOp=oprim, 
             instances=tys,
             keyTyList = keyTyList,
-            argExpOpt= case tfpexpOpt of
-                             NONE => NONE
-                           | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
+            argExpOpt=
+            case tfpexpOpt of
+              NONE => NONE
+            | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
             loc=loc
             }
        | TFPDATACONSTRUCT {con, instTyList=tys, argExpOpt=tfpexpOpt, loc} => 
@@ -1060,9 +1202,10 @@ struct
            {
             con=con, 
             instTyList=tys, 
-            argExpOpt = case tfpexpOpt of
-                             NONE => NONE 
-                           | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
+            argExpOpt =
+            case tfpexpOpt of
+              NONE => NONE 
+            | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
             loc=loc
             }
        | TFPEXNCONSTRUCT {exn, instTyList=tys, argExpOpt=tfpexpOpt, loc} => 
@@ -1070,9 +1213,10 @@ struct
            {
             exn=exn, 
             instTyList=tys, 
-            argExpOpt = case tfpexpOpt of
-                             NONE => NONE 
-                           | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
+            argExpOpt =
+            case tfpexpOpt of
+              NONE => NONE 
+            | SOME tfpexp => SOME (tfpexpToRcexp varEnv btvEnv tfpexp),
             loc=loc
             }
        | TFPAPPM {funExp=operator, funTy=ty, argExpList=operandList, loc} =>
@@ -1086,7 +1230,8 @@ struct
        | TFPMONOLET {binds, bodyExp=exp, loc} => 
 	 RCMONOLET
              {
-               binds=map (fn (v, e) =>(v, tfpexpToRcexp varEnv btvEnv e)) binds,
+               binds=
+                 map (fn (v, e) =>(v, tfpexpToRcexp varEnv btvEnv e)) binds,
 	       bodyExp=tfpexpToRcexp varEnv btvEnv exp,
                loc=loc
              }
@@ -1105,7 +1250,8 @@ struct
             recordTy=ty, 
             loc=loc
             }
-       | TFPRAISE (exp, ty, loc) => RCRAISE (tfpexpToRcexp varEnv btvEnv exp, ty, loc)
+       | TFPRAISE (exp, ty, loc) =>
+         RCRAISE (tfpexpToRcexp varEnv btvEnv exp, ty, loc)
        | TFPHANDLE {exp=exp1, exnVar=v, handler=exp2, loc} => 
 	 RCHANDLE
            {
@@ -1114,7 +1260,12 @@ struct
             handler=tfpexpToRcexp varEnv btvEnv exp2, 
             loc=loc
             }
-       | TFPCASEM {expList, expTyList, ruleList=tfprules, ruleBodyTy=ty2, caseKind=kind, loc} =>
+       | TFPCASEM
+           {expList, expTyList,
+            ruleList=tfprules,
+            ruleBodyTy=ty2,
+            caseKind=kind,
+            loc} =>
 	 let
 	   val (topVarList, topBinds) = 
              foldr
@@ -1142,24 +1293,31 @@ struct
 	        | PC.BIND => Bind
 	        | PC.HANDLE => 
                     (case topVarList of
-                          [v] => (Handle v)
-                        | _ => raise Control.Bug "non single var in casem for handler"
+                       [v] => (Handle v)
+                     | _ =>
+                       raise
+                         Control.Bug "non single var in casem for handler"
                      )
 	   val tfpPatListTfpexpUseCountList = 
                 map (fn tfpRule  => (tfpRule, ref 0)) tfprules
 	   val patListTfpexpUseCountList = 
                map (fn ((tfppatList, tfpexp), useCount)  => 
-                    ((map (tfppatToPat btvEnv (TypedFlatCalcUtils.getFV tfpexp)) tfppatList, 
+                    ((map
+                        (tfppatToPat btvEnv (TypedFlatCalcUtils.getFV tfpexp))
+                        tfppatList, 
                       tfpexp), 
                      useCount)) 
                tfpPatListTfpexpUseCountList
-	   val (branchEnv, rules) = makeRules ty2 patListTfpexpUseCountList loc
+	   val (branchEnv, rules) =
+               makeRules ty2 patListTfpexpUseCountList loc
 	   val _ = ME.clearFlag ME.NotExhaustive
 	   val tree = matchToTree branchEnv topVarList rules
 	   val redundantFlag = haveRedundantRules branchEnv
 	   val _ = if redundantFlag then ME.setFlag ME.Redundant else ()
 	   val _ = ME.checkError 
-             (kind, redundantFlag, ME.isNotExhaustive (), tfpPatListTfpexpUseCountList, loc)
+             (kind,
+              redundantFlag, ME.isNotExhaustive (),
+              tfpPatListTfpexpUseCountList, loc)
            val funDecs = 
                IEnv.foldl 
                (fn (branchData
@@ -1181,10 +1339,18 @@ struct
                      let
                        val (funTerm, funTy) = 
                          if !C.doUncurryingOptimizeInMatchCompile
-                           then
-                             makeUncurriedFun funArgs (tfpexpToRcexp varEnv btvEnv tfpexp) funBodyTy funLoc
+                         then
+                           makeUncurriedFun
+                             funArgs
+                             (tfpexpToRcexp varEnv btvEnv tfpexp)
+                             funBodyTy
+                             funLoc
                          else
-                           makeNestedFun funArgs (tfpexpToRcexp varEnv btvEnv tfpexp) funBodyTy funLoc
+                           makeNestedFun
+                             funArgs
+                             (tfpexpToRcexp varEnv btvEnv tfpexp)
+                             funBodyTy
+                             funLoc
                        val _ = funTyRef := (SOME funTy)
                      in
                        (makeVar(funVarId, funVarName, funTy), funTerm)::funDecs
@@ -1197,13 +1363,17 @@ struct
 	   then expDummy
 	   else
              case (topBinds,funDecs) of
-                   (nil, nil) => treeToRcexp varEnv btvEnv branchEnv kind tree ty2 loc
-                 | _ => 
-                     RCMONOLET {
-                                binds= topBinds @ funDecs, 
-                                bodyExp=treeToRcexp varEnv btvEnv branchEnv kind tree ty2 loc,
-                                loc=loc
-                                }
+               (nil, nil) =>
+               treeToRcexp
+                 varEnv btvEnv branchEnv kind tree ty2 loc
+             | _ => 
+               RCMONOLET
+                 {
+                  binds= topBinds @ funDecs, 
+                  bodyExp=
+                    treeToRcexp varEnv btvEnv branchEnv kind tree ty2 loc,
+                  loc=loc
+                 }
          end
        | TFPFNM {argVarList=varIdInfoList, bodyTy, bodyExp, loc} =>
          RCFNM 
@@ -1213,13 +1383,19 @@ struct
             bodyExp=tfpexpToRcexp varEnv btvEnv bodyExp, 
             loc=loc
             }
-       | TFPPOLYFNM {btvEnv=localBtvEnv, argVarList=varList, bodyTy=ty, bodyExp=exp, loc} =>
+       | TFPPOLYFNM
+           {btvEnv=localBtvEnv,
+            argVarList=varList,
+            bodyTy=ty,
+            bodyExp=exp,
+            loc} =>
          RCPOLYFNM
            {
             btvEnv=localBtvEnv, 
             argVarList= varList, 
             bodyTy=ty, 
-            bodyExp=tfpexpToRcexp varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp, 
+            bodyExp=
+              tfpexpToRcexp varEnv (unionBtvEnv(btvEnv, localBtvEnv)) exp, 
             loc=loc
             }
        | TFPPOLY {btvEnv=localBtvEnv, expTyWithoutTAbs=ty, exp=exp, loc} =>
@@ -1247,7 +1423,13 @@ struct
             resultTy = resultTy,
             loc=loc
             }
-       | TFPMODIFY {label, recordExp=exp1, recordTy=ty1, elementExp=exp2, elementTy=ty2, loc} =>
+       | TFPMODIFY
+           {label,
+            recordExp=exp1,
+            recordTy=ty1,
+            elementExp=exp2,
+            elementTy=ty2,
+            loc} =>
 	 RCMODIFY
              {
               label=label,
@@ -1257,7 +1439,8 @@ struct
               elementTy=ty2,
               loc=loc
              }
-       | TFPCAST (exp, ty, loc) => RCCAST(tfpexpToRcexp varEnv btvEnv exp, ty, loc)
+       | TFPCAST (exp, ty, loc) =>
+         RCCAST(tfpexpToRcexp varEnv btvEnv exp, ty, loc)
        | TFPLIST {expList, listTy, loc} =>
          RCLIST {
                  expList=map (tfpexpToRcexp varEnv btvEnv) expList, 
@@ -1320,7 +1503,10 @@ struct
   fun compileBasicBlock varEnv btvEnv basicBlock =
       case basicBlock of
           TFPVALBLOCK {code, exnIDSet} =>
-          RCVALBLOCK {code = List.concat (map (tfpdecToRcdecs varEnv btvEnv) code), exnIDSet = exnIDSet} 
+          RCVALBLOCK
+            {code =
+             List.concat (map (tfpdecToRcdecs varEnv btvEnv) code),
+             exnIDSet = exnIDSet} 
         | TFPLINKFUNCTORBLOCK x => RCLINKFUNCTORBLOCK x
       
   fun compileTopBlock varEnv btvEnv topBlock =
@@ -1340,7 +1526,8 @@ struct
                           formalExnIDSet = formalExnIDSet,                  
                           generativeExnIDSet = generativeExnIDSet,
                           generativeVarIDSet = generativeVarIDSet,
-                          bodyCode = map (compileBasicBlock varEnv btvEnv) bodyCode}
+                          bodyCode =
+                          map (compileBasicBlock varEnv btvEnv) bodyCode}
           
   fun compile topBlockList =
       let

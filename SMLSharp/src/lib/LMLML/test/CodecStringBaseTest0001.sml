@@ -2,6 +2,7 @@
  * Test cases for multibyte string.
  * Test cases in this module are codec independent.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CodecStringBaseTest0001.sml,v 1.1.2.1 2010/05/11 07:08:04 kiyoshiy Exp $
  *)
 functor CodecStringBaseTest0001(Codec : CODEC) =

@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CODEC.sig,v 1.1.28.2 2010/05/06 06:51:47 kiyoshiy Exp $
  *)
 signature CODEC =

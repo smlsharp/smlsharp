@@ -12,6 +12,7 @@
  * </dl>
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ELABORATOR.sig,v 1.3 2004/11/06 16:15:02 kiyoshiy Exp $
  *)
 signature ELABORATOR =

@@ -1,8 +1,5 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define if building universal (internal helper macro) */
-#undef AC_APPLE_UNIVERSAL_BUILD
-
 /* BSD_SIGNAL */
 #undef BSD_SIGNAL
 
@@ -63,6 +60,15 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `fegetround' function. */
+#undef HAVE_FEGETROUND
+
+/* Define to 1 if you have the <fenv.h> header file. */
+#undef HAVE_FENV_H
+
+/* Define to 1 if you have the `fesetround' function. */
+#undef HAVE_FESETROUND
 
 /* Define to 1 if you have the `finite' function. */
 #undef HAVE_FINITE

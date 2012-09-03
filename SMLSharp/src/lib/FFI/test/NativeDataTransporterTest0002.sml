@@ -1,6 +1,7 @@
 (**
  * test of <code>attach</code> function.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: NativeDataTransporterTest0002.sml,v 1.1 2007/05/20 03:54:33 kiyoshiy Exp $
  *)
 structure NativeDataTransporterTest0002 =

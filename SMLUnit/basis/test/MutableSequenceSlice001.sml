@@ -60,13 +60,13 @@ struct
   in
   fun update0001 () =
       let
-        val update_0_0_0_0 = testFail (0, 0, 0, 0, n9)
-        val update_1_0_1_0 = test (1, 0, 1, 0, n9) [n9]
-        val update_1_0_1_1 = testFail (1, 0, 1, 1, n9) 
-        val update_5_1_3_m1 = testFail (5, 1, 3, ~1, n9)
-        val update_5_1_3_0 = test (5, 1, 3, 0, n9) [n0, n9, n2, n3, n4]
-        val update_5_1_3_2 = test (5, 1, 3, 2, n9) [n0, n1, n2, n9, n4]
-        val update_5_1_3_3 = testFail (5, 1, 3, 3, n9)
+        val case_0_0_0_0 as () = testFail (0, 0, 0, 0, n9)
+        val case_1_0_1_0 as () = test (1, 0, 1, 0, n9) [n9]
+        val case_1_0_1_1 as () = testFail (1, 0, 1, 1, n9) 
+        val case_5_1_3_m1 as () = testFail (5, 1, 3, ~1, n9)
+        val case_5_1_3_0 as () = test (5, 1, 3, 0, n9) [n0, n9, n2, n3, n4]
+        val case_5_1_3_2 as () = test (5, 1, 3, 2, n9) [n0, n1, n2, n9, n4]
+        val case_5_1_3_3 as () = testFail (5, 1, 3, 3, n9)
       in () end
   end (* local *)
 
@@ -96,25 +96,25 @@ struct
   fun copy0001 () =
       let
         (* variation of length of src array *)
-        val copy_0_3_0 = test ([], 3, 0) ([], [n0, n1, n2])
-        val copy_1_3_0 = test ([n9], 3, 0) ([n9], [n9, n1, n2])
-        val copy_2_3_0 = test ([n9, n8], 3, 0) ([n9, n8], [n9, n8, n2])
+        val case_0_3_0 as () = test ([], 3, 0) ([], [n0, n1, n2])
+        val case_1_3_0 as () = test ([n9], 3, 0) ([n9], [n9, n1, n2])
+        val case_2_3_0 as () = test ([n9, n8], 3, 0) ([n9, n8], [n9, n8, n2])
 
         (* variation of length of dst array *)
-        val copy_3_0_0 = testFail ([n9, n8, n7], 0, 0)
-        val copy_3_1_0 = testFail ([n9, n8, n7], 1, 0)
-        val copy_3_2_0 = testFail ([n9, n8, n7], 2, 0)
-        val copy_3_3_0 = test ([n9, n8, n7], 3, 0) ([n9, n8, n7], [n9, n8, n7])
-        val copy_3_4_0 =
+        val case_3_0_0 as () = testFail ([n9, n8, n7], 0, 0)
+        val case_3_1_0 as () = testFail ([n9, n8, n7], 1, 0)
+        val case_3_2_0 as () = testFail ([n9, n8, n7], 2, 0)
+        val case_3_3_0 as () = test ([n9, n8, n7], 3, 0) ([n9, n8, n7], [n9, n8, n7])
+        val case_3_4_0 as () =
             test ([n9, n8, n7], 4, 0) ([n9, n8, n7], [n9, n8, n7, n3])
 
         (* variation of di *)
-        val copy_3_4_m1 = testFail ([n9, n8, n7], 4, ~1)
-        val copy_3_4_0 =
+        val case_3_4_m1 as () = testFail ([n9, n8, n7], 4, ~1)
+        val case_3_4_0 as () =
             test ([n9, n8, n7], 4, 0) ([n9, n8, n7], [n9, n8, n7, n3])
-        val copy_3_4_1 =
+        val case_3_4_1 as () =
             test ([n9, n8, n7], 4, 1) ([n9, n8, n7], [n0, n9, n8, n7])
-        val copy_3_4_2 = testFail ([n9, n8, n7], 4, 2)
+        val case_3_4_2 as () = testFail ([n9, n8, n7], 4, 2)
       in () end
   end (* local *)
 
@@ -144,22 +144,22 @@ struct
   fun copyVec0001 () =
       let
         (* variation of length of src array *)
-        val copyVec_0_3_0 = test ([], 3, 0) [n0, n1, n2]
-        val copyVec_1_3_0 = test ([n9], 3, 0) [n9, n1, n2]
-        val copyVec_2_3_0 = test ([n9, n8], 3, 0) [n9, n8, n2]
+        val case_0_3_0 as () = test ([], 3, 0) [n0, n1, n2]
+        val case_1_3_0 as () = test ([n9], 3, 0) [n9, n1, n2]
+        val case_2_3_0 as () = test ([n9, n8], 3, 0) [n9, n8, n2]
 
         (* variation of length of dst array *)
-        val copyVec_3_0_0 = testFail ([n9, n8, n7], 0, 0)
-        val copyVec_3_1_0 = testFail ([n9, n8, n7], 1, 0)
-        val copyVec_3_2_0 = testFail ([n9, n8, n7], 2, 0)
-        val copyVec_3_3_0 = test ([n9, n8, n7], 3, 0) [n9, n8, n7]
-        val copyVec_3_4_0 = test ([n9, n8, n7], 4, 0) [n9, n8, n7, n3]
+        val case_3_0_0 as () = testFail ([n9, n8, n7], 0, 0)
+        val case_3_1_0 as () = testFail ([n9, n8, n7], 1, 0)
+        val case_3_2_0 as () = testFail ([n9, n8, n7], 2, 0)
+        val case_3_3_0 as () = test ([n9, n8, n7], 3, 0) [n9, n8, n7]
+        val case_3_4_0 as () = test ([n9, n8, n7], 4, 0) [n9, n8, n7, n3]
 
         (* variation of di *)
-        val copyVec_3_4_m1 = testFail ([n9, n8, n7], 4, ~1)
-        val copyVec_3_4_0 = test ([n9, n8, n7], 4, 0) [n9, n8, n7, n3]
-        val copyVec_3_4_1 = test ([n9, n8, n7], 4, 1) [n0, n9, n8, n7]
-        val copyVec_3_4_2 = testFail ([n9, n8, n7], 4, 2)
+        val case_3_4_m1 as () = testFail ([n9, n8, n7], 4, ~1)
+        val case_3_4_0 as () = test ([n9, n8, n7], 4, 0) [n9, n8, n7, n3]
+        val case_3_4_1 as () = test ([n9, n8, n7], 4, 1) [n0, n9, n8, n7]
+        val case_3_4_2 as () = testFail ([n9, n8, n7], 4, 2)
       in () end
   end (* local *)
 
@@ -179,23 +179,23 @@ struct
           val array = makeSequence arrayLength
           val slice = A.slice (array, start, SOME length)
           val () = A.modifyi f slice
-          val _ = assertEqualElemList expected (A2L array)
-          val _ = assertEqualIntElemList visited (!s)
+          val () = assertEqualElemList expected (A2L array)
+          val () = assertEqualIntElemList visited (!s)
         in
           ()
         end
   in
   fun modifyi0001 () =
       let
-        val modifyi_0_0_0 = test (0, 0, 0) [] []
-        val modifyi_1_0_1 = test (1, 0, 1) [n1] [(0, n0)]
-        val modifyi_1_1_0 = test (1, 1, 0) [n0] []
-        val modifyi_2_0_0 = test (2, 0, 0) [n0, n1] []
-        val modifyi_2_0_1 = test (2, 0, 1) [n1, n1] [(0, n0)]
-        val modifyi_2_0_2 = test (2, 0, 2) [n1, n2] [(0, n0), (1, n1)]
-        val modifyi_2_1_0 = test (2, 1, 0) [n0, n1] []
-        val modifyi_2_1_1 = test (2, 1, 1) [n0, n2] [(0, n1)]
-        val modifyi_2_2_0 = test (2, 2, 0) [n0, n1] []
+        val case_0_0_0 as () = test (0, 0, 0) [] []
+        val case_1_0_1 as () = test (1, 0, 1) [n1] [(0, n0)]
+        val case_1_1_0 as () = test (1, 1, 0) [n0] []
+        val case_2_0_0 as () = test (2, 0, 0) [n0, n1] []
+        val case_2_0_1 as () = test (2, 0, 1) [n1, n1] [(0, n0)]
+        val case_2_0_2 as () = test (2, 0, 2) [n1, n2] [(0, n0), (1, n1)]
+        val case_2_1_0 as () = test (2, 1, 0) [n0, n1] []
+        val case_2_1_1 as () = test (2, 1, 1) [n0, n2] [(0, n1)]
+        val case_2_2_0 as () = test (2, 2, 0) [n0, n1] []
       in
         ()
       end
@@ -217,23 +217,23 @@ struct
           val array = makeSequence arrayLength
           val slice = A.slice (array, start, SOME length)
           val () = A.modify f slice
-          val _ = assertEqualElemList expected (A2L array)
-          val _ = assertEqualElemList visited (!s)
+          val () = assertEqualElemList expected (A2L array)
+          val () = assertEqualElemList visited (!s)
         in
           ()
         end
   in
   fun modify0001 () =
       let
-        val modify_0_0_0 = test (0, 0, 0) [] []
-        val modify_1_0_1 = test (1, 0, 1) [n1] [n0]
-        val modify_1_1_0 = test (1, 1, 0) [n0] []
-        val modify_2_0_0 = test (2, 0, 0) [n0, n1] []
-        val modify_2_0_1 = test (2, 0, 1) [n1, n1] [n0]
-        val modify_2_0_2 = test (2, 0, 2) [n1, n2] [n0, n1]
-        val modify_2_1_0 = test (2, 1, 0) [n0, n1] []
-        val modify_2_1_1 = test (2, 1, 1) [n0, n2] [n1]
-        val modify_2_2_0 = test (2, 2, 0) [n0, n1] []
+        val case_0_0_0 as () = test (0, 0, 0) [] []
+        val case_1_0_1 as () = test (1, 0, 1) [n1] [n0]
+        val case_1_1_0 as () = test (1, 1, 0) [n0] []
+        val case_2_0_0 as () = test (2, 0, 0) [n0, n1] []
+        val case_2_0_1 as () = test (2, 0, 1) [n1, n1] [n0]
+        val case_2_0_2 as () = test (2, 0, 2) [n1, n2] [n0, n1]
+        val case_2_1_0 as () = test (2, 1, 0) [n0, n1] []
+        val case_2_1_1 as () = test (2, 1, 1) [n0, n2] [n1]
+        val case_2_2_0 as () = test (2, 2, 0) [n0, n1] []
       in
         ()
       end

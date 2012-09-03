@@ -1,6 +1,7 @@
 (**
  * List structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: List.sml,v 1.5 2005/05/03 09:25:13 kiyoshiy Exp $
  *)
 structure List =

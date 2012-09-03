@@ -10,6 +10,7 @@
  * </p>
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: EXTERNALREF_LINKER.sig,v 1.3 2004/11/07 13:16:19 kiyoshiy Exp $
  *)
 signature EXTERNALREF_LINKER =

@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: FFITest.sml,v 1.1 2007/05/20 03:53:25 kiyoshiy Exp $
  *)
 structure FFITest =

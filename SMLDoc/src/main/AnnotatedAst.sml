@@ -1,6 +1,7 @@
 (**
  * abstract syntax tree annotated with doc comment.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: AnnotatedAst.sml,v 1.5 2006/05/23 05:23:59 kiyoshiy Exp $
  *)
 structure AnnotatedAst =

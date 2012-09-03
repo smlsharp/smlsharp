@@ -1,6 +1,7 @@
 (**
  * packing real value in little-endian byte order.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: PackReal32Base.sml,v 1.1 2007/11/01 01:53:04 kiyoshiy Exp $
  *)
 functor PackReal32Base

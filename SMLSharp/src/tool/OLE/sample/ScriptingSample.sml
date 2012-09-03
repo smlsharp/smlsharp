@@ -1,6 +1,9 @@
 (* This sample requires Scripting.sml generated as follows.
  * 
- *   $ OLE2SML Scripting.FileSystemObject 
+ *   $ OLE2SML Scripting.FileSystemObject
+ * 
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 
 use "OLE.sml";

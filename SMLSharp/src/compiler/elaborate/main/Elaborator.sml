@@ -244,7 +244,8 @@ in
     let
       fun subst ty =
         case ty of
-          A.TYID (tyVar, loc) => substFun (tyVar, loc)
+          A.TYWILD _ => ty
+        | A.TYID (tyVar, loc) => substFun (tyVar, loc)
         | A.TYRECORD (labelTys, loc) =>
             let
               val newLabelTys =
@@ -302,7 +303,8 @@ in
             withTypeBinds
         fun expandInTy ty =
             case ty of
-              A.TYID _ => ty
+              A.TYWILD _ => ty
+            | A.TYID _ => ty
             | A.TYRECORD (labelTys, loc) =>
               let
                 val newLabelTys =
@@ -504,7 +506,8 @@ in
 
   fun elabTy env ty =
       case ty of
-        A.TYID _ => ty
+        A.TYWILD _ => ty
+      | A.TYID _ => ty
       | A.TYRECORD (labelTys, loc) =>
         let val newLabelTys = elabLabeledSequence elabTy env labelTys
         in

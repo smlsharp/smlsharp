@@ -8,6 +8,9 @@
  * <tr><td>Term0002</td><td>sequence of terms</td></tr>
  * <tr><td>Term0003</td><td>including spaces as terms</td></tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0001 =
 struct

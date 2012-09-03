@@ -503,6 +503,23 @@ class PrimitiveSupport
     static
     INLINE_FUN
     Cell
+    constructExnOverflow()
+    {
+        // we will construct Overflow
+
+        Bitmap bitmap = 0; // (tag) = (0)
+        Cell tag;
+        tag.sint32 = TAG_exn_Overflow;
+        Cell exception;
+        exception.blockRef = Heap::allocRecordBlock(bitmap, 1);
+        Heap::initializeField(exception.blockRef, 0, tag);
+        
+        return exception;
+    }
+
+    static
+    INLINE_FUN
+    Cell
     constructExnSysErr(int errorNumber, const char* message)
     {
         // we will construct SysErr(message, SOME errorNumber)

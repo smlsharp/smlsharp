@@ -1,7 +1,7 @@
 (**
  * Word8Vector structure, defunctorized.
- * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori
+ * @copyright 2010, Tohoku University.
  * @version $Id: Word8Vector.sml,v 1.6 2007/12/19 02:00:56 kiyoshiy Exp $
  *)
 local

@@ -1,6 +1,7 @@
 (**
  * an implementation of full text search by using suffix array.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: SuffixArray.sml,v 1.1.28.2 2010/05/09 03:58:28 kiyoshiy Exp $
  *)
 structure SuffixArray

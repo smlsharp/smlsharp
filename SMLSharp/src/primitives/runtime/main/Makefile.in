@@ -15,6 +15,7 @@ SOURCES = CharPrimitives.cc \
           DynamicBindPrimitives.cc \
           GCPrimitives.cc \
           GenericOSPrimitives.cc \
+          IEEERealPrimitives.cc \
           IntPrimitives.cc \
           InternalPrimitives.cc \
           JNIPrimitives.cc \

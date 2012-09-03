@@ -55,8 +55,7 @@ struct
       in
         A.assertEqualWord32
             (UM.addressToWord addressX)
-            (UM.addressToWord addressY);
-        x
+            (UM.addressToWord addressY)
       end
 
   val assertEqualERROR = assertEqualInt32
@@ -70,8 +69,7 @@ struct
       in
         A.assertEqualWord32
             (UM.addressToWord addressX)
-            (UM.addressToWord addressY);
-        x
+            (UM.addressToWord addressY)
       end
 
   val assertEqualDECIMAL =
@@ -125,31 +123,31 @@ struct
 
   and assertEqualVariant expected actual =
       case (expected, actual) of
-        (OLE.EMPTY, OLE.EMPTY) => actual
-      | (OLE.I2 x, OLE.I2 y) => (assertEqualI2 x y; actual)
-      | (OLE.I4 x, OLE.I4 y) => (assertEqualI4 x y; actual)
-      | (OLE.R4 x, OLE.R4 y) => (assertEqualR4 x y; actual)
-      | (OLE.R8 x, OLE.R8 y) => (assertEqualR8 x y; actual)
-      | (OLE.BSTR x, OLE.BSTR y) => (assertEqualBSTR x y; actual)
-      | (OLE.DISPATCH x, OLE.DISPATCH y) => (assertEqualDISPATCH x y; actual)
-      | (OLE.ERROR x, OLE.ERROR y) => (assertEqualERROR x y; actual)
-      | (OLE.BOOL x, OLE.BOOL y) => (assertEqualBOOL x y; actual)
-      | (OLE.VARIANT x, OLE.VARIANT y) => (assertEqualVARIANT x y; actual)
-      | (OLE.UNKNOWN x, OLE.UNKNOWN y) => (assertEqualUNKNOWN x y; actual)
-      | (OLE.DECIMAL x, OLE.DECIMAL y) => (assertEqualDECIMAL x y; actual)
-      | (OLE.I1 x, OLE.I1 y) => (assertEqualI1 x y; actual)
-      | (OLE.UI1 x, OLE.UI1 y) => (assertEqualUI1 x y; actual)
-      | (OLE.UI2 x, OLE.UI2 y) => (assertEqualUI2 x y; actual)
-      | (OLE.UI4 x, OLE.UI4 y) => (assertEqualUI4 x y; actual)
-      | (OLE.I8 x, OLE.I8 y) => (assertEqualI8 x y; actual)
-      | (OLE.UI8 x, OLE.UI8 y) => (assertEqualUI8 x y; actual)
-      | (OLE.INT x, OLE.INT y) => (assertEqualINT x y; actual)
-      | (OLE.UINT x, OLE.UINT y) => (assertEqualUINT x y; actual)
-      | (OLE.BYREF x, OLE.BYREF y) => (assertEqualBYREF x y; actual)
-      | (OLE.BYREFOUT x, OLE.BYREFOUT y) => (assertEqualBYREFOUT x y; actual)
-      | (OLE.I4ARRAY x, OLE.I4ARRAY y) => (assertEqualI4ARRAY x y; actual)
+        (OLE.EMPTY, OLE.EMPTY) => ()
+      | (OLE.I2 x, OLE.I2 y) => assertEqualI2 x y
+      | (OLE.I4 x, OLE.I4 y) => assertEqualI4 x y
+      | (OLE.R4 x, OLE.R4 y) => assertEqualR4 x y
+      | (OLE.R8 x, OLE.R8 y) => assertEqualR8 x y
+      | (OLE.BSTR x, OLE.BSTR y) => assertEqualBSTR x y
+      | (OLE.DISPATCH x, OLE.DISPATCH y) => assertEqualDISPATCH x y
+      | (OLE.ERROR x, OLE.ERROR y) => assertEqualERROR x y
+      | (OLE.BOOL x, OLE.BOOL y) => assertEqualBOOL x y
+      | (OLE.VARIANT x, OLE.VARIANT y) => assertEqualVARIANT x y
+      | (OLE.UNKNOWN x, OLE.UNKNOWN y) => assertEqualUNKNOWN x y
+      | (OLE.DECIMAL x, OLE.DECIMAL y) => assertEqualDECIMAL x y
+      | (OLE.I1 x, OLE.I1 y) => assertEqualI1 x y
+      | (OLE.UI1 x, OLE.UI1 y) => assertEqualUI1 x y
+      | (OLE.UI2 x, OLE.UI2 y) => assertEqualUI2 x y
+      | (OLE.UI4 x, OLE.UI4 y) => assertEqualUI4 x y
+      | (OLE.I8 x, OLE.I8 y) => assertEqualI8 x y
+      | (OLE.UI8 x, OLE.UI8 y) => assertEqualUI8 x y
+      | (OLE.INT x, OLE.INT y) => assertEqualINT x y
+      | (OLE.UINT x, OLE.UINT y) => assertEqualUINT x y
+      | (OLE.BYREF x, OLE.BYREF y) => assertEqualBYREF x y
+      | (OLE.BYREFOUT x, OLE.BYREFOUT y) => assertEqualBYREFOUT x y
+      | (OLE.I4ARRAY x, OLE.I4ARRAY y) => assertEqualI4ARRAY x y
       | (OLE.VARIANTARRAY x, OLE.VARIANTARRAY y) =>
-        (assertEqualVARIANTARRAY x y; actual)
+        assertEqualVARIANTARRAY x y
       | _ =>
         A.fail
             ("Variant type mismatch:expected = ["

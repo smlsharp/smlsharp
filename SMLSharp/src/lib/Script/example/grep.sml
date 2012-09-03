@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 val pattern = hd argv;
 val file = case tl argv of [] => stdIn | name :: _ => fopen name "r";
 app

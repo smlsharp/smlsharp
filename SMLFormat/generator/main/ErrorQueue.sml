@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ErrorQueue.sml,v 1.1 2006/12/31 07:44:52 kiyoshiy Exp $
  *)
 structure ErrorQueue =

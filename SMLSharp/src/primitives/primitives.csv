@@ -320,3 +320,6 @@ SMLSharpCommandLine_executableImageName,,"unit -> (string) option",1,,IMLPrim_SM
 
 DynamicBind_importSymbol,,"string -> (unit) ptr",1,,IMLPrim_DynamicBind_importSymbol,effective
 DynamicBind_exportSymbol,,"string * (unit) ptr -> unit",2,,IMLPrim_DynamicBind_exportSymbol,effective
+
+IEEEReal_setRoundingMode,,"int -> unit",1,,IMLPrim_IEEEReal_setRoundingMode,effective
+IEEEReal_getRoundingMode,,"unit -> int",1,,IMLPrim_IEEEReal_getRoundingMode,effective

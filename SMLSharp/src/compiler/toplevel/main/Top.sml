@@ -540,7 +540,7 @@ val currentSourceFilename = ref ""
                  "\nGenerated static bindings:\n";
                printError
                  (#sysParam basis)
-                 (TypeContext.contextToString exportContext)
+                 (TypeContext.contextToString exportContext ^ "\n")
               )
             else ()
       in
@@ -641,7 +641,7 @@ val currentSourceFilename = ref ""
                  "\nGenerated static bindings:\n";
                printError
                  (#sysParam basis)
-                 (TypeContext.contextToString newContext)
+                 (TypeContext.contextToString newContext ^ "\n")
               )
             else ()
       in

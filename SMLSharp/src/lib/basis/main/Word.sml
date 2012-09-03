@@ -1,6 +1,7 @@
 (**
  * Word structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Word.sml,v 1.6.14.1 2010/05/05 05:39:17 kiyoshiy Exp $
  *)
 structure Word =

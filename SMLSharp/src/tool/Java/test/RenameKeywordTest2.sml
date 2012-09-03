@@ -2,6 +2,8 @@ use "./abstype/RenameKeywordTestee2.sml";
 
 (**
  * TestCases for renaming SML keywords used in Java package name.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure RenameKeywordTest2 =
 struct

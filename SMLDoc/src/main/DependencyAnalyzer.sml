@@ -3,6 +3,7 @@
  * the parser generated.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: DependencyAnalyzer.sml,v 1.5 2006/05/23 05:23:59 kiyoshiy Exp $
  *)
 structure DependencyAnalyzer : DEPENDENCY_ANALYZER =

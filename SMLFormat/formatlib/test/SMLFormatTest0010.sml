@@ -54,6 +54,9 @@
  * <tr><td>0107</td><td>7</td></tr>
  * <tr><td>0108</td><td>8</td></tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0010 =
 struct

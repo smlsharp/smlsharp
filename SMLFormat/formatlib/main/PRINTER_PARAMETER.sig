@@ -1,6 +1,7 @@
 (**
  * parameter for pretty-printer.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: PRINTER_PARAMETER.sig,v 1.4 2007/06/18 13:30:43 kiyoshiy Exp $
  *)
 signature PRINTER_PARAMETER =

@@ -558,7 +558,7 @@ in
                             ((tfpdec ::  code, ExnTagID.Set.union (exnIDSet,  collectDefExnIDTfpdec tfpdec)),
                              tailBlocks)
                           | (TFPEXNBINDDEF _, code) => 
-                            ((code, ExnTagID.Set.union (exnIDSet,  collectDefExnIDTfpdec tfpdec)),
+                            ((tfpdec :: code, ExnTagID.Set.union (exnIDSet,  collectDefExnIDTfpdec tfpdec)),
                              tailBlocks)
                           | (TFPFUNCTORDEC _, _) => raise Control.Bug "TFPFUNCTORDEC oppear inside functor body!"
                     )
@@ -617,7 +617,7 @@ in
                             ((tfpdec ::  code, ExnTagID.Set.union (exnIDSet,  collectDefExnIDTfpdec tfpdec)),
                              tailBlocks)
                           | (TFPEXNBINDDEF _, code) => 
-                            ((code, ExnTagID.Set.union (exnIDSet,  collectDefExnIDTfpdec tfpdec)),
+                            ((tfpdec :: code, ExnTagID.Set.union (exnIDSet,  collectDefExnIDTfpdec tfpdec)),
                              tailBlocks)
                     )
                     ((nil, ExnTagID.Set.empty), nil)

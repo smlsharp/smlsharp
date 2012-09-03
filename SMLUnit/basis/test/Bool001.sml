@@ -25,9 +25,9 @@ struct
   fun not001 () =
       let
         val not_true = Bool.not Bool.true
-        val _ = assertFalse not_true
+        val () = assertFalse not_true
         val not_false = Bool.not Bool.false
-        val _ = assertTrue not_false
+        val () = assertTrue not_false
       in () end
 
   (********************)
@@ -38,13 +38,13 @@ struct
   in
   fun fromString001 () =
       let
-        val fromString_empty = test "" NONE
-        val fromString_true = test "true" (SOME true)
-        val fromString_false = test "false" (SOME false)
-        val fromString_space_true = test " \t\ntrue" (SOME true)
-        val fromString_TruE = test "TruE" (SOME true)
-        val fromString_FalsE = test "FalsE" (SOME false)
-        val fromString_true_trailer = test "truefalse" (SOME true)
+        val case_empty as () = test "" NONE
+        val case_true as () = test "true" (SOME true)
+        val case_false as () = test "false" (SOME false)
+        val case_space_true as () = test " \t\ntrue" (SOME true)
+        val case_TruE as () = test "TruE" (SOME true)
+        val case_FalsE as () = test "FalsE" (SOME false)
+        val case_true_trailer as () = test "truefalse" (SOME true)
       in () end
   end (* local *)
 
@@ -57,13 +57,13 @@ struct
   in
   fun scan001 () =
       let
-        val scan_empty = test "" NONE
-        val scan_true = test "true" (SOME(true, []))
-        val scan_false = test "false" (SOME(false, []))
-        val scan_space_true = test " \t\ntrue" (SOME(true, []))
-        val scan_TRUE = test "TruE" (SOME(true, []))
-        val scan_FALSE = test "FalsE" (SOME(false, []))
-        val scan_true_trailer = test "truefalse" (SOME(true, explode "false"))
+        val case_empty as () = test "" NONE
+        val case_true as () = test "true" (SOME(true, []))
+        val case_false as () = test "false" (SOME(false, []))
+        val case_space_true as () = test " \t\ntrue" (SOME(true, []))
+        val case_TRUE as () = test "TruE" (SOME(true, []))
+        val case_FALSE as () = test "FalsE" (SOME(false, []))
+        val case_true_trailer as () = test "truefalse" (SOME(true, explode "false"))
       in () end
   end (* local *)
 
@@ -72,10 +72,10 @@ struct
   fun toString001 () =
       let
         val toString_true = Bool.toString Bool.true
-        val _ = assertEqualString "true" toString_true
+        val () = assertEqualString "true" toString_true
 
         val toString_false = Bool.toString Bool.false
-        val _ = assertEqualString "false" toString_false
+        val () = assertEqualString "false" toString_false
       in () end
 
   (****************************************)

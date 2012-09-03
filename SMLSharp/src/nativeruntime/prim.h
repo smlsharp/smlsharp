@@ -12,9 +12,12 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
-#ifdef HAVE_DLFCN_H
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_DLFCN_H)
 #include <dlfcn.h>
 #endif /* HAVE_DLFCN_H */
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_FENV_H)
+#include <fenv.h>
+#endif /* HAVE_FENV_H */
 
 /*
  * Correspondence between ML types and C types:
@@ -108,8 +111,8 @@ unsigned int prim_Date_strfTime(char *, unsigned int, const char *,
 				int, int, int, int, int, int, int, int, int);
 char *prim_Date_ascTime(int, int, int, int, int, int, int, int, int);
 int prim_Date_mkTime(int, int, int, int, int, int, int, int, int);
-void prim_Date_localTime(int, int[]);
-void prim_Date_gmTime(int, int[]);
+int prim_Date_localTime(int, int[]);
+int prim_Date_gmTime(int, int[]);
 double Pack_packReal64Little(unsigned char, unsigned char, unsigned char,
 			     unsigned char, unsigned char, unsigned char,
 			     unsigned char, unsigned char);
@@ -194,6 +197,10 @@ float frexpf(float, int *);
 float modff(float, float *);
 double nextafter(double, double);
 float nextafterf(float, float);
+
+/* fenv.h */
+int fesetround(int x);
+int fegetround(void);
 
 /* POSIX */
 /* unistd.h */

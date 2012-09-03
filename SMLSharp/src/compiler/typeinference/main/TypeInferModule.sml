@@ -41,7 +41,9 @@ in
           let
             fun tvarsInRawTy rawTy tvarSEnv =
               case rawTy of
-                A.TYID (tvar as {name, eq}, loc) => 
+                A.TYWILD loc => 
+                  raise Control.Bug "A.TYWILD in type infernceModule"
+              | A.TYID (tvar as {name, eq}, loc) => 
                   (case SEnv.find (tvarSEnv,name) of
                      NONE => SEnv.insert(tvarSEnv, name, tvar)
                    | _ => tvarSEnv)

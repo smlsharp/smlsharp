@@ -1,6 +1,7 @@
 (**
  * a functor to generate a codec-specific Substring structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CodecSubstringBase.sml,v 1.1.2.2 2010/05/09 03:58:28 kiyoshiy Exp $
  *)
 functor CodecSubstringBase

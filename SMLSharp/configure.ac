@@ -535,7 +535,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netinet/in.h stdlib.h \
                   string.h strings.h sys/socket.h time.h unistd.h \
                   poll.h utime.h ieeefp.h floatingpoint.h inttypes.h gmp.h \
-                  dlfcn.h sys/mman.h sys/times.h])
+                  dlfcn.h sys/mman.h sys/times.h fenv.h])
 
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -581,7 +581,7 @@ AC_CHECK_FUNCS([bzero floor getcwd gettimeofday localtime_r memmove \
                 sigaction sigprocmask sleep dlopen finite fpclass copysign \
                 copysignf ldexpf frexpf modff nextafter nextafterf \
                 clock_gettime getrusage times utimes readlink poll select \
-                mmap])
+                mmap fesetround fegetround])
 AC_CHECK_DECLS([CLOCK_PROCESS_CPUTIME_ID],,,[#include <time.h>])
 AC_CHECK_DECLS([fpclassify, isinf, isnan, isnormal, signbit],,,
                [#include <math.h>])

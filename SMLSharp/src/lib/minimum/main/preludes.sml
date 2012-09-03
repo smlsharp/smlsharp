@@ -2,6 +2,7 @@
  * Minimum preludes.
  * Only top level bindings specified by SML Basis Manual are defined.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: preludes.sml,v 1.22 2008/03/11 08:53:57 katsu Exp $
  *)
 (*****************************************************************************)

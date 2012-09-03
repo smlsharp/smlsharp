@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 structure P = OS.Path;
 structure F = OS.FileSys;
 exception Found of string

@@ -1,6 +1,7 @@
 (**
  * test of <code>import</code>, <code>export</code> functions and transporters.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: NativeDataTransporterTest0001.sml,v 1.1 2007/05/20 03:53:26 kiyoshiy Exp $
  *)
 structure NativeDataTransporterTest0001 =
@@ -19,7 +20,7 @@ struct
   fun testByte0001() =
       let
         val tr = Testee.boxed Testee.byte
-        val v = 0w1 : byte
+        val v = 0w1
         val e = Testee.export tr v
         val adr = Testee.addressOf e
         val _ = A.assertEqualWord8 0w1 (UM.sub adr)

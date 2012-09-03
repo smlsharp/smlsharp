@@ -98,9 +98,9 @@ struct
   in
   fun toLarge0001 () =
       let
-        val toLarge_0 = test w0 (0w0, 0w0)
-        val toLarge_123 = test w123 (0w123, 0w123)
-        val toLarge_maxWord = test maxWord (maxWordLarge, maxLargeWord)
+        val case_0 as () = test w0 (0w0, 0w0)
+        val case_123 as () = test w123 (0w123, 0w123)
+        val case_maxWord as () = test maxWord (maxWordLarge, maxLargeWord)
       in () end
   end (* local *)
 
@@ -111,9 +111,9 @@ struct
   in
   fun fromLarge0001 () =
       let
-        val fromLarge_0 = test 0w0 w0
-        val fromLarge_123 = test 0w123 w123
-        val fromLarge_maxWord = test maxWordLarge maxWord
+        val case_0 as () = test 0w0 w0
+        val case_123 as () = test 0w123 w123
+        val case_maxWord as () = test maxWordLarge maxWord
       in () end
   end (* local *)
 
@@ -126,9 +126,9 @@ struct
   in
   fun toLargeInt0001 () =
       let
-        val toLargeInt_0 = test w0 (0, 0)
-        val toLargeInt_123 = test w123 (123, 123)
-        val toLargeInt_maxWord = test maxWord (maxWordLargeInt, ~1)
+        val case_0 as () = test w0 (0, 0)
+        val case_123 as () = test w123 (123, 123)
+        val case_maxWord as () = test maxWord (maxWordLargeInt, ~1)
       in () end
   end (* local *)
 
@@ -139,9 +139,9 @@ struct
   in
   fun fromLargeInt0001 () =
       let
-        val fromLargeInt_0 = test 0 w0
-        val fromLargeInt_123 = test 123 w123
-        val fromLargeInt_FFFFFFFF = test ~1 maxWord
+        val case_0 as () = test 0 w0
+        val case_123 as () = test 123 w123
+        val case_FFFFFFFF as () = test ~1 maxWord
       in () end
   end (* local *)
 
@@ -160,8 +160,8 @@ struct
   in
   fun toInt0001 () =
       let
-        val toInt_0 = test w0 (0, 0)
-        val toInt_123 = test w123 (123, 123)
+        val case_0 as () = test w0 (0, 0)
+        val case_123 as () = test w123 (123, 123)
       in () end
   (* all bits of the argument, except for the most significant bit, are 1.
    *)
@@ -173,7 +173,7 @@ struct
               | 31 => I2w 0x3FFFFFFF
               | 32 => I2w 0x7FFFFFFF
               | 64 => I2w 0x7FFFFFFFFFFFFFFF
-        val toInt_maxInt =
+        val case_maxInt as () =
             if W.wordSize <= Option.getOpt (Int.precision, W.wordSize)
             then
               test
@@ -195,7 +195,7 @@ struct
               | 31 => I2w 0x7FFFFFFF
               | 32 => I2w 0xFFFFFFFF
               | 64 => I2w 0xFFFFFFFFFFFFFFFF
-        val toInt_m1 =
+        val case_m1 as () =
             if W.wordSize < Option.getOpt (Int.precision, W.wordSize + 1)
             then
               (
@@ -211,7 +211,7 @@ struct
             else
               ((W.toInt arg; fail "toInt: expect Overflow")
                handle General.Overflow => ())
-        val toIntX_m1 = assertEqualInt ~1 (W.toIntX arg)
+        val case_m1 as () = assertEqualInt ~1 (W.toIntX arg)
       in () end
   (* all bits of the argument, except for the most significant bit, are 0.
    *)
@@ -224,7 +224,7 @@ struct
               | 32 => I2w 0x80000000
               | 64 => I2w 0x8000000000000000
         (* To toInt succeeds, int must be wider than word at least 1 bit. *)
-        val toInt_minInt =
+        val case_minInt as () =
             if W.wordSize < Option.getOpt (Int.precision, W.wordSize + 1)
             then
               (
@@ -241,7 +241,7 @@ struct
               ((W.toInt arg; fail "toInt: expect Overflow")
                handle General.Overflow => ())
         (* If word and int are same bit width, toIntX succeeds. *)
-        val toIntX_minInt =
+        val case_minInt as () =
             if W.wordSize <= Option.getOpt (Int.precision, W.wordSize)
             then
               (
@@ -266,9 +266,9 @@ struct
   in
   fun fromInt0001 () =
       let
-        val fromInt_0 = test 0 w0
-        val fromInt_123 = test 123 w123
-        val fromInt_7FFFFFFF =
+        val case_0 as () = test 0 w0
+        val case_123 as () = test 123 w123
+        val case_7FFFFFFF as () =
             test
                 (case Int.precision
                   of SOME 31 => I2i 0x3FFFFFFF
@@ -278,7 +278,7 @@ struct
                   of SOME 31 => I2w 0x3FFFFFFF
                    | SOME 32 => I2w 0x7FFFFFFF
                    | SOME 64 => I2w 0x7FFFFFFFFFFFFFFF)
-        val fromInt_FFFFFFFF = test ~1 maxWord
+        val case_FFFFFFFF as () = test ~1 maxWord
       in () end
   end (* local *)
 
@@ -290,9 +290,9 @@ struct
   in
   fun binBit0001 () =
       let
-        val binBit_0_0 = test (w0, w0) (w0, w0, w0)
-        val binBit_F0_0F = test (I2w 0xF0, I2w 0x0F) (w0, I2w 0xFF, I2w 0xFF)
-        val binBit_0F_0F = test (I2w 0x0F, I2w 0x0F) (I2w 0x0F, I2w 0x0F, w0)
+        val case_0_0 as () = test (w0, w0) (w0, w0, w0)
+        val case_F0_0F as () = test (I2w 0xF0, I2w 0x0F) (w0, I2w 0xFF, I2w 0xFF)
+        val case_0F_0F as () = test (I2w 0x0F, I2w 0x0F) (I2w 0x0F, I2w 0x0F, w0)
       in () end
   end (* local *)
 
@@ -300,8 +300,8 @@ struct
 
   fun notb0001 () =
       let
-        val notb_0 = assertEqualWord maxWord (W.notb w0)
-        val notb_F0 =
+        val case_0 as () = assertEqualWord maxWord (W.notb w0)
+        val case_F0 as () =
             assertEqualWord
                 (case W.wordSize
                   of 8 => I2w 0x0F
@@ -319,11 +319,11 @@ struct
   in
   fun shift0001 () =
       let
-        val shift_0_0 = test (w0, 0w0) (w0, w0, w0)
-        val shift_1_0 = test (w1, 0w0) (w1, w1, w1)
-        val shift_1_1 = test (w1, 0w1) (w2, w0, w0)
-        val shift_1_2 = test (w1, 0w2) (w4, w0, w0)
-        val shift_1_max_m1 =
+        val case_0_0 as () = test (w0, 0w0) (w0, w0, w0)
+        val case_1_0 as () = test (w1, 0w0) (w1, w1, w1)
+        val case_1_1 as () = test (w1, 0w1) (w2, w0, w0)
+        val case_1_2 as () = test (w1, 0w2) (w4, w0, w0)
+        val case_1_max_m1 as () =
             test
                 (w1, Word.fromInt(W.wordSize - 1))
                 (
@@ -335,10 +335,10 @@ struct
                   w0,
                   w0
                 )
-        val shift_1_max = test (w1, Word.fromInt W.wordSize) (w0, w0, w0)
-        val shift_1F_1 = test (wx1F, 0w1) (I2w 0x3E, I2w 0xF, I2w 0xF)
-        val shift_1F_2 = test (wx1F, 0w2) (I2w 0x7C, w7, w7)
-        val shift_1F_max_m1 =
+        val case_1_max as () = test (w1, Word.fromInt W.wordSize) (w0, w0, w0)
+        val case_1F_1 as () = test (wx1F, 0w1) (I2w 0x3E, I2w 0xF, I2w 0xF)
+        val case_1F_2 as () = test (wx1F, 0w2) (I2w 0x7C, w7, w7)
+        val case_1F_max_m1 as () =
             test
                 (wx1F, Word.fromInt(W.wordSize - 1))
                 (
@@ -350,13 +350,13 @@ struct
                   w0,
                   w0
                 )
-        val shift_1F_max =
+        val case_1F_max as () =
             test (wx1F, Word.fromInt W.wordSize) (w0, w0, w0)
 
-        val shift_max_1 =
+        val case_max_1 as () =
             test
                 (maxWord, 0w1) (W.-(maxWord, w1), W.div (maxWord, w2), maxWord)
-        val shift_max_max_m1 =
+        val case_max_max_m1 as () =
             test
                 (maxWord, Word.fromInt(W.wordSize - 1))
                 (
@@ -368,7 +368,7 @@ struct
                   w1,
                   maxWord
                 )
-        val shift_max_max =
+        val case_max_max as () =
             test (maxWord, Word.fromInt W.wordSize) (w0, w0, maxWord)
       in () end
 
@@ -386,14 +386,14 @@ struct
   in
   fun add0001 () =
       let
-        val add_pp = test (w7, w3) w10
-        val add_zp = test (w0, w3) w3
-        val add_pz = test (w7, w0) w7
-        val add_zz = test (w0, w0) w0
+        val case_pp as () = test (w7, w3) w10
+        val case_zp as () = test (w0, w3) w3
+        val case_pz as () = test (w7, w0) w7
+        val case_zz as () = test (w0, w0) w0
 
-        val add_max_0 = test (maxWord, w0) maxWord
-        val add_max_1 = test (maxWord, w1) w0
-        val sub_max_max =
+        val case_max_0 as () = test (maxWord, w0) maxWord
+        val case_max_1 as () = test (maxWord, w1) w0
+        val case_max_max as () =
             test
                 (maxWord, maxWord)
                 (case W.wordSize
@@ -408,9 +408,9 @@ struct
   in
   fun sub0001 () =
       let
-        val sub_pp_gt = test (w7, w3) w4
-        val sub_pp_eq = test (w7, w7) w0
-        val sub_pp_lt =
+        val case_pp_gt as () = test (w7, w3) w4
+        val case_pp_eq as () = test (w7, w7) w0
+        val case_pp_lt as () =
             test
                 (w3, w7)
                 (case W.wordSize
@@ -418,7 +418,7 @@ struct
                    | 31 => I2w 0x7FFFFFFC
                    | 32 => I2w 0xFFFFFFFC
                    | 64 => I2w 0xFFFFFFFFFFFFFFFC)
-        val sub_zp =
+        val case_zp as () =
             test
                 (w0, w3)
                 (case W.wordSize
@@ -426,10 +426,10 @@ struct
                    | 31 => I2w 0x7FFFFFFD
                    | 32 => I2w 0xFFFFFFFD
                    | 64 => I2w 0xFFFFFFFFFFFFFFFD)
-        val sub_pz = test (w7, w0) w7
-        val sub_zz = test (w0, w0) w0
-        val sub_max_0 = test (maxWord, w0) maxWord
-        val sub_max_max = test (maxWord, maxWord) w0
+        val case_pz as () = test (w7, w0) w7
+        val case_zz as () = test (w0, w0) w0
+        val case_max_0 as () = test (maxWord, w0) maxWord
+        val case_max_max as () = test (maxWord, maxWord) w0
       in () end
   end (* inner local *)
 
@@ -437,13 +437,13 @@ struct
   in
   fun mul0001 () =
       let
-        val mul_pp = test (w7, w3) (I2w 21)
-        val mul_zp = test (w0, w3) w0
-        val mul_pz = test (w7, w0) w0
-        val mul_zz = test (w0, w0) w0
-        val mul_max_0 = test (maxWord, w0) w0
-        val mul_max_1 = test (maxWord, w1) maxWord
-        val mul_max_max = test (maxWord, maxWord) w1
+        val case_pp as () = test (w7, w3) (I2w 21)
+        val case_zp as () = test (w0, w3) w0
+        val case_pz as () = test (w7, w0) w0
+        val case_zz as () = test (w0, w0) w0
+        val case_max_0 as () = test (maxWord, w0) w0
+        val case_max_1 as () = test (maxWord, w1) maxWord
+        val case_max_max as () = test (maxWord, maxWord) w1
       in () end
   end (* inner local *)
 
@@ -453,13 +453,13 @@ struct
   in
   fun div0001 () =
       let
-        val div_pp = test (w7, w3) w2
-        val div_zp = test (w0, w3) w0
-        val div_pz = testFailDiv (w7, w0)
-        val div_zz = testFailDiv (w0, w0)
-        val div_max_0 = testFailDiv (maxWord, w0)
-        val div_max_1 = test (maxWord, w1) maxWord
-        val div_max_max = test (maxWord, maxWord) w1
+        val case_pp as () = test (w7, w3) w2
+        val case_zp as () = test (w0, w3) w0
+        val case_pz as () = testFailDiv (w7, w0)
+        val case_zz as () = testFailDiv (w0, w0)
+        val case_max_0 as () = testFailDiv (maxWord, w0)
+        val case_max_1 as () = test (maxWord, w1) maxWord
+        val case_max_max as () = test (maxWord, maxWord) w1
       in () end
   end (* inner local *)
 
@@ -469,13 +469,13 @@ struct
   in
   fun mod0001 () =
       let
-        val mod_pp = test (w7, w3) w1
-        val mod_zp = test (w0, w3) w0
-        val mod_pz = testFailDiv (w7, w0)
-        val mod_zz = testFailDiv (w0, w0)
-        val mod_max_0 = testFailDiv (maxWord, w0)
-        val mod_max_1 = test (maxWord, w1) w0
-        val mod_max_max = test (maxWord, maxWord) w0
+        val case_pp as () = test (w7, w3) w1
+        val case_zp as () = test (w0, w3) w0
+        val case_pz as () = testFailDiv (w7, w0)
+        val case_zz as () = testFailDiv (w0, w0)
+        val case_max_0 as () = testFailDiv (maxWord, w0)
+        val case_max_1 as () = test (maxWord, w1) w0
+        val case_max_max as () = test (maxWord, maxWord) w0
       in () end
   end (* inner local *)
 
@@ -487,16 +487,16 @@ struct
   in
   fun compare0001 () =
       let
-        val compare_ppL = test (w3, w7) LESS
-        val compare_ppE = test (w7, w7) EQUAL
-        val compare_ppG = test (w7, w3) GREATER
-        val compare_zp = test (w0, w3) LESS
-        val compare_pz = test (w7, w0) GREATER
-        val compare_zz = test (w0, w0) EQUAL
+        val case_ppL as () = test (w3, w7) LESS
+        val case_ppE as () = test (w7, w7) EQUAL
+        val case_ppG as () = test (w7, w3) GREATER
+        val case_zp as () = test (w0, w3) LESS
+        val case_pz as () = test (w7, w0) GREATER
+        val case_zz as () = test (w0, w0) EQUAL
 
-        val compare_maxWord_0 = test (maxWord, w0) GREATER
-        val compare_maxWord_1 = test (maxWord, w1) GREATER
-        val compare_maxWord_maxWord = test (maxWord, maxWord) EQUAL
+        val case_maxWord_0 as () = test (maxWord, w0) GREATER
+        val case_maxWord_1 as () = test (maxWord, w1) GREATER
+        val case_maxWord_maxWord as () = test (maxWord, maxWord) EQUAL
       in () end
   end (* local *)
 
@@ -516,18 +516,18 @@ struct
   in
   fun binComp0001 () =
       let
-        val binComp_ppL = test (w3, w7) TTFF
-        val binComp_ppE = test (w7, w7) FTTF
-        val binComp_ppG = test (w7, w3) FFTT
-        val binComp_zp = test (w0, w3) TTFF
-        val binComp_pz = test (w7, w0) FFTT
-        val binComp_zz = test (w0, w0) FTTF
+        val case_ppL as () = test (w3, w7) TTFF
+        val case_ppE as () = test (w7, w7) FTTF
+        val case_ppG as () = test (w7, w3) FFTT
+        val case_zp as () = test (w0, w3) TTFF
+        val case_pz as () = test (w7, w0) FFTT
+        val case_zz as () = test (w0, w0) FTTF
 
-        val binComp_maxWord_z = test (maxWord, w0) FFTT
-        val binComp_maxWord_1 = test (maxWord, w1) FFTT
-        val binComp_z_maxWord = test (w0, maxWord) TTFF
-        val binComp_1_maxWord = test (w1, maxWord) TTFF
-        val binComp_maxWord_maxWord = test (maxWord, maxWord) FTTF
+        val case_maxWord_z as () = test (maxWord, w0) FFTT
+        val case_maxWord_1 as () = test (maxWord, w1) FFTT
+        val case_z_maxWord as () = test (w0, maxWord) TTFF
+        val case_1_maxWord as () = test (w1, maxWord) TTFF
+        val case_maxWord_maxWord as () = test (maxWord, maxWord) FTTF
       in () end
 
   end (* local *)
@@ -536,9 +536,9 @@ struct
 
   fun tilda0001 () =
       let
-        val tilda_0 = assertEqualWord w0 (W.~ w0)
-        val tilda_1 = assertEqualWord maxWord (W.~ w1)
-        val tilda_maxWord = assertEqualWord w1 (W.~ maxWord)
+        val case_0 as () = assertEqualWord w0 (W.~ w0)
+        val case_1 as () = assertEqualWord maxWord (W.~ w1)
+        val case_maxWord as () = assertEqualWord w1 (W.~ maxWord)
       in () end
 
   (********************)
@@ -548,18 +548,18 @@ struct
   in
   fun minMax0001 () =
       let
-        val minMax_ppL = test (w3, w7) (w3, w7)
-        val minMax_ppE = test (w7, w7) (w7, w7)
-        val minMax_ppG = test (w7, w3) (w3, w7)
-        val minMax_zp = test (w0, w3) (w0, w3)
-        val minMax_pz = test (w7, w0) (w0, w7)
-        val minMax_zz = test (w0, w0) (w0, w0)
+        val case_ppL as () = test (w3, w7) (w3, w7)
+        val case_ppE as () = test (w7, w7) (w7, w7)
+        val case_ppG as () = test (w7, w3) (w3, w7)
+        val case_zp as () = test (w0, w3) (w0, w3)
+        val case_pz as () = test (w7, w0) (w0, w7)
+        val case_zz as () = test (w0, w0) (w0, w0)
 
-        val minMax_maxWord_z = test (maxWord, w0) (w0, maxWord)
-        val minMax_z_maxWord = test (w0, maxWord) (w0, maxWord)
-        val minMax_maxWord_1 = test (maxWord, w1) (w1, maxWord)
-        val minMax_1_maxWord = test (w1, maxWord) (w1, maxWord)
-        val minMax_maxWord_maxWord = test (maxWord, maxWord) (maxWord, maxWord)
+        val case_maxWord_z as () = test (maxWord, w0) (w0, maxWord)
+        val case_z_maxWord as () = test (w0, maxWord) (w0, maxWord)
+        val case_maxWord_1 as () = test (maxWord, w1) (w1, maxWord)
+        val case_1_maxWord as () = test (w1, maxWord) (w1, maxWord)
+        val case_maxWord_maxWord as () = test (maxWord, maxWord) (maxWord, maxWord)
       in () end
   end (* local *)
 
@@ -570,10 +570,10 @@ struct
   in
   fun fmt_bin0001 () =
       let
-        val fmt_bin_z = test StringCvt.BIN w0 "0"
-        val fmt_bin_p1 = test StringCvt.BIN w1 "1"
-        val fmt_bin_p2 = test StringCvt.BIN w123 "1111011"
-        val fmt_bin_maxWord =
+        val case_bin_z as () = test StringCvt.BIN w0 "0"
+        val case_bin_p1 as () = test StringCvt.BIN w1 "1"
+        val case_bin_p2 as () = test StringCvt.BIN w123 "1111011"
+        val case_bin_maxWord as () =
             test
                 StringCvt.BIN
                 maxWord
@@ -581,10 +581,10 @@ struct
       in () end
   fun fmt_oct0001 () =
       let
-        val fmt_oct_z = test StringCvt.OCT w0 "0"
-        val fmt_oct_p1 = test StringCvt.OCT w1 "1"
-        val fmt_oct_p2 = test StringCvt.OCT w123 "173"
-        val fmt_oct_maxWord =
+        val case_oct_z as () = test StringCvt.OCT w0 "0"
+        val case_oct_p1 as () = test StringCvt.OCT w1 "1"
+        val case_oct_p2 as () = test StringCvt.OCT w123 "173"
+        val case_oct_maxWord as () =
             test
                 StringCvt.OCT
                 maxWord
@@ -596,10 +596,10 @@ struct
       in () end
   fun fmt_dec0001 () =
       let
-        val fmt_dec_z = test StringCvt.DEC w0 "0"
-        val fmt_dec_p1 = test StringCvt.DEC w1 "1"
-        val fmt_dec_p2 = test StringCvt.DEC w123 "123"
-        val fmt_dec_maxWord =
+        val case_dec_z as () = test StringCvt.DEC w0 "0"
+        val case_dec_p1 as () = test StringCvt.DEC w1 "1"
+        val case_dec_p2 as () = test StringCvt.DEC w123 "123"
+        val case_dec_maxWord as () =
             test
                 StringCvt.DEC
                 maxWord
@@ -611,10 +611,10 @@ struct
       in () end
   fun fmt_hex0001 () =
       let
-        val fmt_hex_z = test StringCvt.HEX w0 "0"
-        val fmt_hex_p1 = test StringCvt.HEX w1 "1"
-        val fmt_hex_p2 = test StringCvt.HEX w123 "7B"
-        val fmt_hex_maxWord =
+        val case_hex_z as () = test StringCvt.HEX w0 "0"
+        val case_hex_p1 as () = test StringCvt.HEX w1 "1"
+        val case_hex_p2 as () = test StringCvt.HEX w123 "7B"
+        val case_hex_maxWord as () =
             test
                 StringCvt.HEX
                 maxWord
@@ -633,9 +633,9 @@ struct
   in
   fun toString0001 () =
       let
-        val toString_z = test w0 "0"
-        val toString_p1 = test w1 "1"
-        val toString_p2 = test w123 "7B"
+        val case_z as () = test w0 "0"
+        val case_p1 as () = test w1 "1"
+        val case_p2 as () = test w123 "7B"
       in () end
   end (* local *)
 
@@ -646,16 +646,16 @@ struct
   in
   fun fromString0001 () =
       let
-        val fromString_null = test "" NONE
-        val fromString_nonum = test "ghi123def" NONE
-        val fromString_z1 = test "0" (SOME w0)
-        val fromString_z2 = test "0w00" (SOME w0)
-        val fromString_z12 = test "0ghi" (SOME w0)
-        val fromString_p1 = test "1f" (SOME wx1F)
-        val fromString_p12 = test "0wx1fghi" (SOME wx1F)
+        val case_null as () = test "" NONE
+        val case_nonum as () = test "ghi123def" NONE
+        val case_z1 as () = test "0" (SOME w0)
+        val case_z2 as () = test "0w00" (SOME w0)
+        val case_z12 as () = test "0ghi" (SOME w0)
+        val case_p1 as () = test "1f" (SOME wx1F)
+        val case_p12 as () = test "0wx1fghi" (SOME wx1F)
 
-        val fromString_skipWS = test " \f\n\r\t\v1" (SOME w1)
-        val fromString_trailer = test "0wx1Fghi" (SOME wx1F)
+        val case_skipWS as () = test " \f\n\r\t\v1" (SOME w1)
+        val case_trailer as () = test "0wx1Fghi" (SOME wx1F)
       in () end
   end (* local *)
 
@@ -669,40 +669,46 @@ struct
         (W.scan arg1 List.getItem (explode arg2); fail "scan:expect Overflow.")
         handle General.Overflow => ()
   in
+
+  local val test = test StringCvt.BIN
+  in
   fun scan_bin0001 () =
       let
-        val test = test StringCvt.BIN
-        val scan_bin_null = test "" NONE
-        val scan_bin_0 = test "0" (SOME(w0, []))
-        val scan_bin_0w00 = test "0w00" (SOME(w0, []))
-        val scan_bin_1 = test "1" (SOME(w1, []))
-        val scan_bin_0w12 = test "0w12" (SOME(w1, [#"2"]))
-        val scan_bin_0w1a = test "0w1a" (SOME(w1, [#"a"]))
-        val scan_bin_01 = test "01" (SOME(w1, []))
-        val scan_bin_11 = test "11" (SOME(w3, []))
-        val scan_bin_maxWord =
+        val case_bin_null as () = test "" NONE
+        val case_bin_0 as () = test "0" (SOME(w0, []))
+        val case_bin_0w00 as () = test "0w00" (SOME(w0, []))
+        val case_bin_1 as () = test "1" (SOME(w1, []))
+        val case_bin_0w12 as () = test "0w12" (SOME(w1, [#"2"]))
+        val case_bin_0w1a as () = test "0w1a" (SOME(w1, [#"a"]))
+        val case_bin_01 as () = test "01" (SOME(w1, []))
+        val case_bin_11 as () = test "11" (SOME(w3, []))
+        val case_bin_maxWord as () =
             test
                 (String.implode (List.tabulate (W.wordSize, fn _ => #"1")))
                 (SOME(maxWord, []))
-
-        val scan_bin_2 = test "2" NONE
-
-        val scan_bin_maxWordPlus1 =
+      in () end
+  fun scan_bin1001 () =
+      let
+        val case_bin_2 as () = test "2" NONE
+        val case_bin_maxWordPlus1 as () =
             testOverflow
                 StringCvt.BIN
                 (String.implode
                      (List.tabulate (W.wordSize + 1, fn _ => #"1")))
       in () end
+  end (* inner local *)
+
+  local val test = test StringCvt.OCT
+  in
   fun scan_oct0001 () =
       let
-        val test = test StringCvt.OCT
-        val scan_oct_null = test "" NONE
-        val scan_oct_0 = test "0" (SOME(w0, []))
-        val scan_oct_0w00 = test "0w00" (SOME(w0, []))
-        val scan_oct_173 = test "173" (SOME(w123, []))
-        val scan_oct_0w1738 = test "0w1738" (SOME(w123, [#"8"]))
-        val scan_oct_0173 = test "0173" (SOME(w123, []))
-        val scan_oct_maxWord = 
+        val case_oct_null as () = test "" NONE
+        val case_oct_0 as () = test "0" (SOME(w0, []))
+        val case_oct_0w00 as () = test "0w00" (SOME(w0, []))
+        val case_oct_173 as () = test "173" (SOME(w123, []))
+        val case_oct_0w1738 as () = test "0w1738" (SOME(w123, [#"8"]))
+        val case_oct_0173 as () = test "0173" (SOME(w123, []))
+        val case_oct_maxWord as () = 
             test
                 (case W.wordSize
                   of 8 => "377"
@@ -710,9 +716,11 @@ struct
                    | 32 => "37777777777"
                    | 64 => "1777777777777777777777")
                 (SOME(maxWord, []))
-
-        val scan_oct_9 = test "9" NONE
-        val scan_oct_maxWordPlus1 =
+      in () end
+  fun scan_oct1001 () =
+      let
+        val case_oct_9 as () = test "9" NONE
+        val case_oct_maxWordPlus1 as () =
             testOverflow
                 StringCvt.OCT
                 (case W.wordSize
@@ -721,16 +729,19 @@ struct
                    | 32 => "40000000000"
                    | 64 => "2000000000000000000000")
       in () end
+  end (* inner local *)
+
+  local val test = test StringCvt.DEC
+  in
   fun scan_dec0001 () =
       let
-        val test = test StringCvt.DEC
-        val scan_dec_null = test "" NONE
-        val scan_dec_0 = test "0" (SOME(w0, []))
-        val scan_dec_0w00 = test "0w00" (SOME(w0, []))
-        val scan_dec_123 = test "123" (SOME(w123, []))
-        val scan_dec_0w123a = test "0w123a" (SOME(w123, [#"a"]))
-        val scan_dec_0123 = test "0123" (SOME(w123, []))
-        val scan_dec_maxWord =
+        val case_dec_null as () = test "" NONE
+        val case_dec_0 as () = test "0" (SOME(w0, []))
+        val case_dec_0w00 as () = test "0w00" (SOME(w0, []))
+        val case_dec_123 as () = test "123" (SOME(w123, []))
+        val case_dec_0w123a as () = test "0w123a" (SOME(w123, [#"a"]))
+        val case_dec_0123 as () = test "0123" (SOME(w123, []))
+        val case_dec_maxWord as () =
             test
                 (case W.wordSize
                   of 8 => "255"
@@ -738,9 +749,11 @@ struct
                    | 32 => "4294967295"
                    | 64 => "18446744073709551615")
                 (SOME(maxWord, []))
-
-        val scan_dec_a = test "a" NONE
-        val scan_dec_maxWordPlus1 =
+      in () end
+  fun scan_dec1001 () =
+      let
+        val case_dec_a as () = test "a" NONE
+        val case_dec_maxWordPlus1 as () =
             testOverflow
                 StringCvt.DEC
                 (case W.wordSize
@@ -749,29 +762,31 @@ struct
                    | 32 => "4294967296"
                    | 64 => "18446744073709551616")
       in () end
+  end (* inner local *)
+
+  local val test = test StringCvt.HEX
+  in
   fun scan_hex0001 () =
       let
-        val test = test StringCvt.HEX
-
-        val scan_hex_null = test "" NONE
-        val scan_hex_0wx = test "0wx " (SOME(w0, [#"w", #"x", #" "]))
-        val scan_hex_0wX = test "0wX " (SOME(w0, [#"w", #"X", #" "]))
-        val scan_hex_0x = test "0x " (SOME(w0, [ #"x", #" "]))
-        val scan_hex_0X = test "0X " (SOME(w0, [ #"X", #" "]))
-        val scan_hex_0 = test "0" (SOME(w0, []))
-        val scan_hex_00 = test "00" (SOME(w0, []))
-        val scan_hex_0wx0 = test "0wx0" (SOME(w0, []))
-        val scan_hex_0wX0 = test "0wX0" (SOME(w0, []))
-        val scan_hex_0x0 = test "0x0" (SOME(w0, []))
-        val scan_hex_0X0 = test "0X0" (SOME(w0, []))
-        val scan_hex_7B = test "7B" (SOME(w123, []))
-        val scan_hex_1FGg = test "1FGg" (SOME(wx1F, [#"G", #"g"]))
-        val scan_hex_0wx1FGg = test "0wx1FGg" (SOME(wx1F, [#"G", #"g"]))
-        val scan_hex_0wX1FGg = test "0wX1FGg" (SOME(wx1F, [#"G", #"g"]))
-        val scan_hex_0x1FGg = test "0x1FGg" (SOME(wx1F, [#"G", #"g"]))
-        val scan_hex_0X1FGg = test "0X1FGg" (SOME(wx1F, [#"G", #"g"]))
-        val scan_hex_07B = test "07B" (SOME(w123, []))
-        val scan_hex_maxWord =
+        val case_hex_null as () = test "" NONE
+        val case_hex_0wx as () = test "0wx " (SOME(w0, [#"w", #"x", #" "]))
+        val case_hex_0wX as () = test "0wX " (SOME(w0, [#"w", #"X", #" "]))
+        val case_hex_0x as () = test "0x " (SOME(w0, [ #"x", #" "]))
+        val case_hex_0X as () = test "0X " (SOME(w0, [ #"X", #" "]))
+        val case_hex_0 as () = test "0" (SOME(w0, []))
+        val case_hex_00 as () = test "00" (SOME(w0, []))
+        val case_hex_0wx0 as () = test "0wx0" (SOME(w0, []))
+        val case_hex_0wX0 as () = test "0wX0" (SOME(w0, []))
+        val case_hex_0x0 as () = test "0x0" (SOME(w0, []))
+        val case_hex_0X0 as () = test "0X0" (SOME(w0, []))
+        val case_hex_7B as () = test "7B" (SOME(w123, []))
+        val case_hex_1FGg as () = test "1FGg" (SOME(wx1F, [#"G", #"g"]))
+        val case_hex_0wx1FGg as () = test "0wx1FGg" (SOME(wx1F, [#"G", #"g"]))
+        val case_hex_0wX1FGg as () = test "0wX1FGg" (SOME(wx1F, [#"G", #"g"]))
+        val case_hex_0x1FGg as () = test "0x1FGg" (SOME(wx1F, [#"G", #"g"]))
+        val case_hex_0X1FGg as () = test "0X1FGg" (SOME(wx1F, [#"G", #"g"]))
+        val case_hex_07B as () = test "07B" (SOME(w123, []))
+        val case_hex_maxWord as () =
             test
                 (case W.wordSize
                   of 8 => "FF"
@@ -779,9 +794,11 @@ struct
                    | 32 => "FFFFFFFF"
                    | 64 => "FFFFFFFFFFFFFFFF")
                 (SOME(maxWord, []))
-
-        val scan_hex_g = test "g" NONE
-        val scan_hex_maxWordPlus1 =
+      in () end
+  fun scan_hex1001 () =
+      let
+        val case_hex_g as () = test "g" NONE
+        val case_hex_maxWordPlus1 as () =
             testOverflow
                 StringCvt.HEX
                 (case W.wordSize
@@ -790,10 +807,12 @@ struct
                    | 32 => "100000000"
                    | 64 => "10000000000000000")
       in () end
+  end (* inner local *)
+
   fun scan_skipWS0001 () =
       let
-        val scan_skipWS1 = test StringCvt.DEC "  123" (SOME(w123, []))
-        val scan_skipWS2 = test StringCvt.DEC "\t\n\v\f\r123" (SOME(w123, []))
+        val case_skipWS1 as () = test StringCvt.DEC "  123" (SOME(w123, []))
+        val case_skipWS2 as () = test StringCvt.DEC "\t\n\v\f\r123" (SOME(w123, []))
       in () end
 
   end (* local *)
@@ -842,9 +861,13 @@ struct
         ("toString0001", toString0001),
         ("fromString0001", fromString0001),
         ("scan_bin0001", scan_bin0001),
+        ("scan_bin1001", scan_bin1001),
         ("scan_oct0001", scan_oct0001),
+        ("scan_oct1001", scan_oct1001),
         ("scan_dec0001", scan_dec0001),
+        ("scan_dec1001", scan_dec1001),
         ("scan_hex0001", scan_hex0001),
+        ("scan_hex1001", scan_hex1001),
         ("scan_skipWS0001", scan_skipWS0001)
       ]
 

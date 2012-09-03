@@ -191,6 +191,7 @@
  * </p>
  * 
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: NATIVE_DATA_TRANSPORTER.sig,v 1.2 2007/05/20 05:32:56 kiyoshiy Exp $
  *)
 signature NATIVE_DATA_TRANSPORTER =

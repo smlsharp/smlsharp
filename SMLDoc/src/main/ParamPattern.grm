@@ -1,6 +1,7 @@
 (**
  * grammar of parameter pattern in @params tag of doc comment.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: ParamPattern.grm,v 1.2 2007/04/02 09:42:28 katsu Exp $
  *)
 

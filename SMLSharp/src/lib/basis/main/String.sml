@@ -1,6 +1,7 @@
 (**
  * String structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: String.sml,v 1.11.12.2 2010/05/09 03:53:48 kiyoshiy Exp $
  *)
 (*

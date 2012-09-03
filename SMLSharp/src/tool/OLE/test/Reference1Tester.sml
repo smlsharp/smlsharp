@@ -1,7 +1,9 @@
 use "./Reference1Testee.sml";
 
-(*
+(**
  * test cases for handling reference parameter and return.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure Reference1Tester =
 struct

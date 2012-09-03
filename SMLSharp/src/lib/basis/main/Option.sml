@@ -1,6 +1,7 @@
 (**
  * Option structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Option.sml,v 1.4 2005/08/18 09:06:30 kiyoshiy Exp $
  *)
 structure Option : OPTION =

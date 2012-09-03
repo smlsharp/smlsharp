@@ -1,6 +1,7 @@
 (**
  * The entry point to smlformat for invocation as a standalone command.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Main.sml,v 1.8 2008/08/10 13:44:01 kiyoshiy Exp $
  *)
 structure Main =

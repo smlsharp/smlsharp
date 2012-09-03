@@ -38,6 +38,9 @@
  * <tr><td>00R4</td><td>StartOfIndent</td><td>EndOfIndent</td></tr>
  *
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0009 =
 struct

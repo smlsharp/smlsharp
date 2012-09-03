@@ -1,6 +1,7 @@
 (**
  * Array structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Array.sml,v 1.12 2008/03/11 08:53:57 katsu Exp $
  *)
 structure Array =

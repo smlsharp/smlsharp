@@ -1,6 +1,7 @@
 (**
  * Pretty-printer library for Standard ML.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: SMLFORMAT.sig,v 1.3 2008/03/01 00:51:27 kiyoshiy Exp $
  *)
 signature SMLFORMAT =

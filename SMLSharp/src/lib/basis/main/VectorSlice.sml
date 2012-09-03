@@ -1,6 +1,7 @@
 (**
  * VectorSlice structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: VectorSlice.sml,v 1.5 2007/09/01 03:21:16 kiyoshiy Exp $
  *)
 structure VectorSlice =

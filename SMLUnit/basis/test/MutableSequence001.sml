@@ -36,24 +36,42 @@ struct
 
   (****************************************)
 
+  fun equality001 () =
+      let
+        val a_0_1 = A.fromList []
+        val a_0_2 = A.fromList []
+        val case_0_T as () = assertTrue (a_0_1 = a_0_1)
+        val case_0_F as () = assertFalse (a_0_1 = a_0_2)
+
+        val a_1_1 = A.fromList [n1]
+        val a_1_2 = A.fromList [n1]
+        val case_1_T as () = assertTrue (a_1_1 = a_1_1)
+        val case_1_F as () = assertFalse (a_1_1 = a_1_2)
+      in () end
+
+  (********************)
+
   local
     fun testi arg expected = assertEqualElemList expected (A2L(A.array arg))
   in
   fun array001 () =
       let
-        val array_0i = testi (0, n1) []
-        val array_1i = testi (1, n1) [n1]
-        val array_2i = testi (2, n1) [n1, n1]
+        val case_0i as () = testi (0, n1) []
+        val case_1i as () = testi (1, n1) [n1]
+        val case_2i as () = testi (2, n1) [n1, n1]
       in
         ()
       end
   fun array101 () =
       let
-        val array_m1i =
+        val case_m1i as () =
             (A.array (~1, n1); fail "array(~1)") handle General.Size => ()
-        val array_maxLenPlus1 =
-            (A.array (A.maxLen + 1, n1); fail "array(maxLen+1)")
-            handle General.Size => ()
+        val case_maxLenPlus1 as () =
+            if isSome Int.maxInt andalso A.maxLen < valOf(Int.maxInt)
+            then
+              (A.array (A.maxLen + 1, n1); fail "array(maxLen+1)")
+              handle General.Size => ()
+            else ()
       in
         ()
       end
@@ -69,15 +87,15 @@ struct
   in
   fun update001 () =
       let
-        val update00 = testError (L2A[], 0, n9)
-        val update0m1 = testError (L2A[], ~1, n9)
-        val update01 = testError (L2A[], 1, n9)
-        val update10 = test (L2A[n1], 0, n9) [n9]
-        val update11 = testError (L2A[n2], 1, n9)
-        val update1m1 = testError (L2A[n2], ~1, n9)
-        val update20 = test (L2A[n1, n2], 0, n9) [n9, n2]
-        val update21 = test (L2A[n1, n2], 1, n9) [n1, n9]
-        val update22 = testError (L2A[n1, n2], 2, n9)
+        val case00 as () = testError (L2A[], 0, n9)
+        val case0m1 as () = testError (L2A[], ~1, n9)
+        val case01 as () = testError (L2A[], 1, n9)
+        val case10 as () = test (L2A[n1], 0, n9) [n9]
+        val case11 as () = testError (L2A[n2], 1, n9)
+        val case1m1 as () = testError (L2A[n2], ~1, n9)
+        val case20 as () = test (L2A[n1, n2], 0, n9) [n9, n2]
+        val case21 as () = test (L2A[n1, n2], 1, n9) [n1, n9]
+        val case22 as () = testError (L2A[n1, n2], 2, n9)
       in
         ()
       end
@@ -88,11 +106,11 @@ struct
   fun vector001 () =
       let
         val vector_0 = V2L(A.vector (L2A[]))
-        val _ = assertEqualElemList [] vector_0
+        val () = assertEqualElemList [] vector_0
         val vector_1 = V2L(A.vector (L2A[n1]))
-        val _ = assertEqualElemList [n1] vector_1
+        val () = assertEqualElemList [n1] vector_1
         val vector_2 = V2L(A.vector (L2A[n1, n2]))
-        val _ = assertEqualElemList [n1, n2] vector_2
+        val () = assertEqualElemList [n1, n2] vector_2
       in
         ()
       end
@@ -105,8 +123,8 @@ struct
           val src = L2A src
           val dst = L2A dst
           val () = A.copy {src = src, dst = dst, di = di}
-          val _ = assertEqualElemList expected1 (A2L src)
-          val _ = assertEqualElemList expected2 (A2L dst)
+          val () = assertEqualElemList expected1 (A2L src)
+          val () = assertEqualElemList expected2 (A2L dst)
         in
           ()
         end
@@ -117,22 +135,22 @@ struct
   fun copy001 () =
       let
         (* variation of length of src array *)
-        val copy_0_3_0 = test ([], [n9, n8, n7], 0) ([], [n9, n8, n7])
-        val copy_1_3_0 = test ([n1], [n9, n8, n7], 0) ([n1], [n1, n8, n7])
-        val copy_2_3_0 = test ([n1, n2], [n9, n8, n7], 0) ([n1, n2], [n1, n2, n7])
+        val case_0_3_0 as () = test ([], [n9, n8, n7], 0) ([], [n9, n8, n7])
+        val case_1_3_0 as () = test ([n1], [n9, n8, n7], 0) ([n1], [n1, n8, n7])
+        val case_2_3_0 as () = test ([n1, n2], [n9, n8, n7], 0) ([n1, n2], [n1, n2, n7])
 
         (* variation of length of dst array *)
-        val copy_3_0_0 = testError ([n1, n2, n3], [], 0)
-        val copy_3_1_0 = testError ([n1, n2, n3], [n9], 0)
-        val copy_3_2_0 = testError ([n1, n2, n3], [n9, n8], 0)
-        val copy_3_3_0 = test ([n1, n2, n3], [n9, n8, n7], 0) ([n1, n2, n3], [n1, n2, n3])
-        val copy_3_4_0 = test ([n1, n2, n3], [n9, n8, n7, n6], 0) ([n1, n2, n3], [n1, n2, n3, n6])
+        val case_3_0_0 as () = testError ([n1, n2, n3], [], 0)
+        val case_3_1_0 as () = testError ([n1, n2, n3], [n9], 0)
+        val case_3_2_0 as () = testError ([n1, n2, n3], [n9, n8], 0)
+        val case_3_3_0 as () = test ([n1, n2, n3], [n9, n8, n7], 0) ([n1, n2, n3], [n1, n2, n3])
+        val case_3_4_0 as () = test ([n1, n2, n3], [n9, n8, n7, n6], 0) ([n1, n2, n3], [n1, n2, n3, n6])
 
         (* variation of di *)
-        val copy_3_4_m1 = testError ([n1, n2, n3], [n9, n8, n7, n6], ~1)
-        val copy_3_4_0 = test ([n1, n2, n3], [n9, n8, n7, n6], 0) ([n1, n2, n3], [n1, n2, n3, n6])
-        val copy_3_4_1 = test ([n1, n2, n3], [n9, n8, n7, n6], 1) ([n1, n2, n3], [n9, n1, n2, n3])
-        val copy_3_4_2 = testError ([n1, n2, n3], [n9, n8, n7, n6], 2)
+        val case_3_4_m1 as () = testError ([n1, n2, n3], [n9, n8, n7, n6], ~1)
+        val case_3_4_0 as () = test ([n1, n2, n3], [n9, n8, n7, n6], 0) ([n1, n2, n3], [n1, n2, n3, n6])
+        val case_3_4_1 as () = test ([n1, n2, n3], [n9, n8, n7, n6], 1) ([n1, n2, n3], [n9, n1, n2, n3])
+        val case_3_4_2 as () = testError ([n1, n2, n3], [n9, n8, n7, n6], 2)
       in
         ()
       end
@@ -146,8 +164,8 @@ struct
           val src = L2V src
           val dst = L2A dst
           val () = A.copyVec {src = src, dst = dst, di = di}
-          val _ = assertEqualElemList expected1 (V2L src)
-          val _ = assertEqualElemList expected2 (A2L dst)
+          val () = assertEqualElemList expected1 (V2L src)
+          val () = assertEqualElemList expected2 (A2L dst)
         in
           ()
         end
@@ -158,22 +176,22 @@ struct
   fun copyVec001 () =
       let
         (* variation of length of src array *)
-        val copyVec_0_3_0 = test ([], [n9, n8, n7], 0) ([], [n9, n8, n7])
-        val copyVec_1_3_0 = test ([n1], [n9, n8, n7], 0) ([n1], [n1, n8, n7])
-        val copyVec_2_3_0 = test ([n1, n2], [n9, n8, n7], 0) ([n1, n2], [n1, n2, n7])
+        val case_0_3_0 as () = test ([], [n9, n8, n7], 0) ([], [n9, n8, n7])
+        val case_1_3_0 as () = test ([n1], [n9, n8, n7], 0) ([n1], [n1, n8, n7])
+        val case_2_3_0 as () = test ([n1, n2], [n9, n8, n7], 0) ([n1, n2], [n1, n2, n7])
 
         (* variation of length of dst array *)
-        val copyVec_3_0_0 = testError ([n1, n2, n3], [], 0)
-        val copyVec_3_1_0 = testError ([n1, n2, n3], [n9], 0)
-        val copyVec_3_2_0 = testError ([n1, n2, n3], [n9, n8], 0)
-        val copyVec_3_3_0 = test ([n1, n2, n3], [n9, n8, n7], 0) ([n1, n2, n3], [n1, n2, n3])
-        val copyVec_3_4_0 = test ([n1, n2, n3], [n9, n8, n7, n6], 0) ([n1, n2, n3], [n1, n2, n3, n6])
+        val case_3_0_0 as () = testError ([n1, n2, n3], [], 0)
+        val case_3_1_0 as () = testError ([n1, n2, n3], [n9], 0)
+        val case_3_2_0 as () = testError ([n1, n2, n3], [n9, n8], 0)
+        val case_3_3_0 as () = test ([n1, n2, n3], [n9, n8, n7], 0) ([n1, n2, n3], [n1, n2, n3])
+        val case_3_4_0 as () = test ([n1, n2, n3], [n9, n8, n7, n6], 0) ([n1, n2, n3], [n1, n2, n3, n6])
 
         (* variation of di *)
-        val copyVec_3_4_m1 = testError ([n1, n2, n3], [n9, n8, n7, n6], ~1)
-        val copyVec_3_4_0 = test ([n1, n2, n3], [n9, n8, n7, n6], 0) ([n1, n2, n3], [n1, n2, n3, n6])
-        val copyVec_3_4_1 = test ([n1, n2, n3], [n9, n8, n7, n6], 1) ([n1, n2, n3], [n9, n1, n2, n3])
-        val copyVec_3_4_2 = testError ([n1, n2, n3], [n9, n8, n7, n6], 2)
+        val case_3_4_m1 as () = testError ([n1, n2, n3], [n9, n8, n7, n6], ~1)
+        val case_3_4_0 as () = test ([n1, n2, n3], [n9, n8, n7, n6], 0) ([n1, n2, n3], [n1, n2, n3, n6])
+        val case_3_4_1 as () = test ([n1, n2, n3], [n9, n8, n7, n6], 1) ([n1, n2, n3], [n9, n1, n2, n3])
+        val case_3_4_2 as () = testError ([n1, n2, n3], [n9, n8, n7, n6], 2)
       in
         ()
       end
@@ -194,17 +212,17 @@ struct
           val (s, f) = makeStatei ()
           val array = L2A arg
           val () = A.modifyi f array
-          val _ = assertEqualElemList expected (A2L array)
-          val _ = assertEqualIntElemList visited (!s)
+          val () = assertEqualElemList expected (A2L array)
+          val () = assertEqualIntElemList visited (!s)
         in
           ()
         end
   in
   fun modifyi001 () =
       let
-        val modifyi_0 = test [] [] []
-        val modifyi_1 = test [n1] [n2] [(0, n1)]
-        val modifyi_2 = test [n1, n2] [n2, n3] [(0, n1), (1, n2)]
+        val case_0 as () = test [] [] []
+        val case_1 as () = test [n1] [n2] [(0, n1)]
+        val case_2 as () = test [n1, n2] [n2, n3] [(0, n1), (1, n2)]
       in
         ()
       end
@@ -225,18 +243,18 @@ struct
           val (s, f) = makeState ()
           val array = L2A arg
           val () = A.modify f array
-          val _ = assertEqualElemList expected (A2L array)
-          val _ = assertEqualElemList visited (!s)
+          val () = assertEqualElemList expected (A2L array)
+          val () = assertEqualElemList visited (!s)
         in
           ()
         end
   in
   fun modify001 () =
       let
-        val modify0 = test [] [] []
-        val modify1 = test [n1] [n2] [n1]
-        val modify2 = test [n1, n2] [n2, n3] [n1, n2]
-        val modify3 = test [n1, n2, n3] [n2, n3, n4] [n1, n2, n3]
+        val case0 as () = test [] [] []
+        val case1 as () = test [n1] [n2] [n1]
+        val case2 as () = test [n1, n2] [n2, n3] [n1, n2]
+        val case3 as () = test [n1, n2, n3] [n2, n3, n4] [n1, n2, n3]
       in
         ()
       end
@@ -247,6 +265,7 @@ struct
   fun suite () =
       T.labelTests
       [
+        ("equality001", equality001),
         ("array001", array001),
         ("array101", array101),
 (*

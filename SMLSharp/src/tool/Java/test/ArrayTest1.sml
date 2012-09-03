@@ -2,6 +2,8 @@ use "./ArrayTestee1.sml";
 
 (**
  * TestCases for JavaArray structure.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure ArrayTest1 =
 struct

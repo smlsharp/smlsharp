@@ -166,9 +166,35 @@ struct
      funEnv = funEnv
      }
 
+  fun overrideCurrentContextWithUtvarEnv
+          (
+           {
+            utvarEnv, 
+            tyConEnv,
+            varEnv,
+            sigEnv,
+            funEnv
+            } : currentContext,
+           newUtvarEnv
+           )
+    =
+    {
+     utvarEnv = newUtvarEnv,
+     tyConEnv = tyConEnv,
+     varEnv = varEnv,
+     sigEnv = sigEnv,
+     funEnv = funEnv
+     }
+
   fun extendBasisWithUtvarEnv (basis:basis, newUtvarEnv) =
       {global = #global basis,
        current = extendCurrentContextWithUtvarEnv (#current basis, newUtvarEnv)
+      }: basis
+      
+  fun overrideBasisWithUtvarEnv (basis:basis, newUtvarEnv) =
+      {global = #global basis,
+       current = overrideCurrentContextWithUtvarEnv
+                   (#current basis, newUtvarEnv)
       }: basis
       
   fun extendCurrentContextWithBasicEnv 

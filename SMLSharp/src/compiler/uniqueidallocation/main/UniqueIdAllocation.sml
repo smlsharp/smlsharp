@@ -18,28 +18,29 @@ local
   open TypedCalc TypedFlatCalc 
 in
   fun allocateID 
-          topVarExternalVarIDBasis varNamePathEnv tptopdecs
+        topVarExternalVarIDBasis varNamePathEnv tptopdecs
     =
-      let
-          val tptopGroups = UIAM.tptopdecsToTpTopGroups tptopdecs
-          val (deltaCurrentVarIDBasis, deltaIDMap, tfpdecs) = 
-              UIAM.tptopGroupsToTfpdecs topVarExternalVarIDBasis tptopGroups
-          val liftedBasis = 
-              (* internal id to external id *)
-              VIC.liftUpVarIDBasis deltaCurrentVarIDBasis deltaIDMap
-          val topBasis = 
-              (* reconstruct topBasis according to flattened namePathEnv *)
-              VarIDContext.varIDBasisToTopVarIDBasis varNamePathEnv liftedBasis
-          val externalIDAnnotatedTfpdecs = 
-              map (UIAU.annotateExternalIdTfpdec UIAU.externalizeVarIdInfo deltaIDMap)
-                  tfpdecs
-          val externalIDAnnotatedTfpGroups = UIAU.tfpdecsToTfpTopBlock externalIDAnnotatedTfpdecs
+    let
+      val tptopGroups = UIAM.tptopdecsToTpTopGroups tptopdecs
+      val (deltaCurrentVarIDBasis, deltaIDMap, tfpdecs) = 
+          UIAM.tptopGroupsToTfpdecs topVarExternalVarIDBasis tptopGroups
+      val liftedBasis = 
+          (* internal id to external id *)
+            VIC.liftUpVarIDBasis deltaCurrentVarIDBasis deltaIDMap
+      val topBasis = 
+          (* reconstruct topBasis according to flattened namePathEnv *)
+            VarIDContext.varIDBasisToTopVarIDBasis varNamePathEnv liftedBasis
+      val externalIDAnnotatedTfpdecs = 
+          map (UIAU.annotateExternalIdTfpdec UIAU.externalizeVarIdInfo deltaIDMap)
+              tfpdecs
+      val externalIDAnnotatedTfpGroups =
+          UIAU.tfpdecsToTfpTopBlock externalIDAnnotatedTfpdecs
       in
-          (
-           topBasis,
-           externalIDAnnotatedTfpGroups
-          )
-      end
+      (
+       topBasis,
+       externalIDAnnotatedTfpGroups
+      )
+    end
       handle exn => raise exn
 end
 end

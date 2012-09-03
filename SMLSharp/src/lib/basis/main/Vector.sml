@@ -1,6 +1,7 @@
 (**
  * Vector structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Vector.sml,v 1.19 2008/03/11 08:53:57 katsu Exp $
  *)
 structure Vector =

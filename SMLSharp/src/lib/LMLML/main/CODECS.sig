@@ -2,6 +2,7 @@
  * This signature spacifies the interface of the <code>Codecs</code> structure.
  * 
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CODECS.sig,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
  *)
 signature CODECS =

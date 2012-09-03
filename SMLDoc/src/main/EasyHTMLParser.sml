@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: EasyHTMLParser.sml,v 1.2 2004/10/20 03:18:39 kiyoshiy Exp $
  *)
 structure EasyHTMLParser : EASY_HTML_PARSER =

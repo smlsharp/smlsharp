@@ -2,6 +2,7 @@
  *  The top level module of the SMLDoc.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: SMLDOC.sig,v 1.2 2004/10/20 03:18:40 kiyoshiy Exp $
  *)
 signature SMLDOC =

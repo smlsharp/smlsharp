@@ -2,6 +2,9 @@
  * This code creates a new object which runs on Microsoft CLR.
  * Because OLE2SML cannot retrieve type information about most .Net
  * components from type library, we use IDispatch methods directly.
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 
 use "OLE.sml";

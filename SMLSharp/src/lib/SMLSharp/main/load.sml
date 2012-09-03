@@ -1,3 +1,8 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
 use "./SMLSHARP_COMMAND_LINE.sig";
 use "./SMLSharpCommandLine.sml";
 

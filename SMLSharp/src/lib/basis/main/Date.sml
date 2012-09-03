@@ -1,12 +1,10 @@
 (**
  * Date structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Date.sml,v 1.3 2006/02/21 16:04:20 kiyoshiy Exp $
  *)
-(* The runtime aborts if Date is constrained by DATE here. 
 structure Date :> DATE =
-*)
-structure Date =
 struct
 
   (***************************************************************************)

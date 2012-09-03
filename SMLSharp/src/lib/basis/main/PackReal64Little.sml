@@ -1,6 +1,7 @@
 (**
  * packing real value in little-endian byte order.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: PackReal64Little.sml,v 1.1 2007/03/08 08:07:00 kiyoshiy Exp $
  *)
 structure PackReal64Little =

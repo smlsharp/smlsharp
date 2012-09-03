@@ -26,25 +26,25 @@ $(srcdir)/Configuration.sml: Configuration.sml.in Makefile \
 	if grep '%SNAPSHOT_DATE%' $(srcdir)/Configuration.sml.in > /dev/null 2>&1; then \
 	  snapdate=`$(SHELL) $(srcdir)/snapdate.sh $(top_srcdir)/..`; \
 	fi; \
-	sed -e "s,%BUILD_ROOT%,`$(MKSMLPATH) -sh '$(BUILD_ROOT)'`," \
-	    -e "s,%SRC_ROOT%,`$(MKSMLPATH) -sh '$(SRC_ROOT)'`," \
-	    -e "s,%EXEEXT%,$(EXTEXT)," \
-	    -e "s,%DLEXT%,$(DLEXT)," \
-	    -e "s,%BINDIR%,`$(MKSMLPATH) -sh '$(bindir)'`," \
-	    -e "s,%LIBDIR%,`$(MKSMLPATH) -sh '$(libdir)'`," \
-	    -e "s,%SMLLIBDIR%,`$(MKSMLPATH) -sh '$(libdir_smlsharp)'`," \
-	    -e "s,%SNAPSHOT_DATE%,$$snapdate," \
-	    -e "s,%SMLSHARP_PLATFORM%,$(SMLSHARP_PLATFORM)," \
-	    -e "s,%NATIVE_TARGET%,$(NATIVE_TARGET)," \
-	    -e "s,%CC%,$(CC)," \
-	    -e "s,%LD%,$(LD)," \
-	    -e "s,%AR%,$(AR)," \
-	    -e "s,%RANLIB%,$(RANLIB)," \
-	    -e "s,%LDFLAGS%,$(LDFLAGS)," \
-	    -e "s,%LIBS%,$(LIBS)," \
-	    -e "s,%VERSION%,`cat '$(top_srcdir)/VERSION'`," \
-	    -e "s,%VERSION_MAJOR%,`cat '$(top_srcdir)/VERSION' | cut -d. -f1`,"\
-	    -e "s,%VERSION_MINOR%,`cat '$(top_srcdir)/VERSION' | cut -d. -f2`,"\
+	sed -e "s|%BUILD_ROOT%|`$(MKSMLPATH) -sh '$(BUILD_ROOT)'`|" \
+	    -e "s|%SRC_ROOT%|`$(MKSMLPATH) -sh '$(SRC_ROOT)'`|" \
+	    -e "s|%EXEEXT%|$(EXTEXT)|" \
+	    -e "s|%DLEXT%|$(DLEXT)|" \
+	    -e "s|%BINDIR%|`$(MKSMLPATH) -sh '$(bindir)'`|" \
+	    -e "s|%LIBDIR%|`$(MKSMLPATH) -sh '$(libdir)'`|" \
+	    -e "s|%SMLLIBDIR%|`$(MKSMLPATH) -sh '$(libdir_smlsharp)'`|" \
+	    -e "s|%SNAPSHOT_DATE%|$$snapdate|" \
+	    -e "s|%SMLSHARP_PLATFORM%|$(SMLSHARP_PLATFORM)|" \
+	    -e "s|%NATIVE_TARGET%|$(NATIVE_TARGET)|" \
+	    -e "s|%CC%|$(CC)|" \
+	    -e "s|%LD%|$(LD)|" \
+	    -e "s|%AR%|$(AR)|" \
+	    -e "s|%RANLIB%|$(RANLIB)|" \
+	    -e "s|%LDFLAGS%|$(LDFLAGS)|" \
+	    -e "s|%LIBS%|$(LIBS)|" \
+	    -e "s|%VERSION%|`cat '$(top_srcdir)/VERSION'`|" \
+	    -e "s|%VERSION_MAJOR%|`cat '$(top_srcdir)/VERSION' | cut -d. -f1`|"\
+	    -e "s|%VERSION_MINOR%|`cat '$(top_srcdir)/VERSION' | cut -d. -f2`|"\
 	    $(srcdir)/Configuration.sml.in > $@
 
 $(srcdir)/Configuration.hh: Configuration.hh.in Makefile $(top_srcdir)/VERSION

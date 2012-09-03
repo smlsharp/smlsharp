@@ -1,6 +1,7 @@
 (**
  * base implementation of MONO_VECTOR_SLICE.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MonoVectorSliceBase.sml,v 1.1 2006/12/11 10:57:03 kiyoshiy Exp $
  *)
 functor MonoVectorSliceBase(V : MONO_VECTOR) =

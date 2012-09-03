@@ -1,6 +1,7 @@
 (**
  * CharVector structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: CharVector.sml,v 1.6 2007/12/19 02:00:56 kiyoshiy Exp $
  *)
 structure CharVector =

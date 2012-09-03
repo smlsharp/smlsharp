@@ -8,6 +8,9 @@ is
 
         smlunitlib_compat.cm
 
+        (****************************************)
+        (* Tests for required modules. *)
+
         (* sequence modules *)
         SEQUENCE.sig
         Sequence101.sml
@@ -80,3 +83,21 @@ is
         StringCvt001.sml
         Substring001.sml
         Time001.sml
+
+        TestRequiredModules.sml
+
+        (****************************************)
+        (* Tests for optional modules. *)
+
+        IntInf001.sml
+        IntInf101.sml
+        RealArray001.sml
+        RealArray101.sml
+        RealVector001.sml
+        RealVector101.sml
+
+        MUTABLE_2D_SEQUENCE.sig
+        Mutable2DSequence001.sml
+        Array2001.sml
+
+        TestOptionalModules_SMLNJ.sml

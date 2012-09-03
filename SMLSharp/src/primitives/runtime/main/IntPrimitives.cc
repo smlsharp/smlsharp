@@ -1,5 +1,6 @@
 #include "Primitives.hh"
 #include "PrimitiveSupport.hh"
+#include "LargeInt.hh"
 #include "Log.hh"
 #include "Debug.hh"
 

@@ -6,6 +6,7 @@
  * required to parse Overview file or Help file the user specifies.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: EASY_HTML_PARSER.sig,v 1.2 2004/10/20 03:18:39 kiyoshiy Exp $
  *)
 signature EASY_HTML_PARSER =

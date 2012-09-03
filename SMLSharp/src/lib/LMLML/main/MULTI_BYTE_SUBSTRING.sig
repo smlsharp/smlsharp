@@ -6,6 +6,7 @@
  * signature.
  * </p>
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MULTI_BYTE_SUBSTRING.sig,v 1.1.2.2 2010/05/09 03:58:29 kiyoshiy Exp $
  *)
 signature MULTI_BYTE_SUBSTRING =

@@ -135,91 +135,91 @@ struct
   in
   fun binArith_pos () =
       let
-        val binArith_p_p = test (1.23, 2.46) (3.69, ~1.23, 3.0258, 0.5, 1.23)
-        val binArith_p_n = test (1.23, ~2.46) (~1.23, 3.69, ~3.0258, ~0.5, 1.23)
-        val binArith_p_p0 = test (1.23, pos0) (1.23, 1.23, pos0, posInf, posNan)
-        val binArith_p_n0 = test (1.23, neg0) (1.23, 1.23, neg0, negInf, negNan)
-        val binArith_p_pinf = test (1.23, posInf) (posInf, negInf, posInf, pos0, 1.23)
-        val binArith_p_ninf = test (1.23, negInf) (negInf, posInf, negInf, neg0, 1.23)
-        val binArith_p_pnan = test (1.23, posNan) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_p_nnan = test (1.23, negNan) (negNan, negNan, negNan, negNan, negNan)
+        val case_p_p as () = test (1.23, 2.46) (3.69, ~1.23, 3.0258, 0.5, 1.23)
+        val case_p_n as () = test (1.23, ~2.46) (~1.23, 3.69, ~3.0258, ~0.5, 1.23)
+        val case_p_p0 as () = test (1.23, pos0) (1.23, 1.23, pos0, posInf, posNan)
+        val case_p_n0 as () = test (1.23, neg0) (1.23, 1.23, neg0, negInf, negNan)
+        val case_p_pinf as () = test (1.23, posInf) (posInf, negInf, posInf, pos0, 1.23)
+        val case_p_ninf as () = test (1.23, negInf) (negInf, posInf, negInf, neg0, 1.23)
+        val case_p_pnan as () = test (1.23, posNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_p_nnan as () = test (1.23, negNan) (negNan, negNan, negNan, negNan, negNan)
       in () end
   fun binArith_neg () =
       let
-        val binArith_n_p = test (~1.23, 2.46) (1.23, ~3.69, ~3.0258, ~0.5, ~1.23)
-        val binArith_n_n = test (~1.23, ~2.46) (~3.69, 1.23, 3.0258, 0.5, ~1.23)
-        val binArith_n_p0 = test (~1.23, pos0) (~1.23, ~1.23, neg0, negInf, negNan)
-        val binArith_n_n0 = test (~1.23, neg0) (~1.23, ~1.23, pos0, posInf, posNan)
-        val binArith_n_pinf = test (~1.23, posInf) (posInf, negInf, negInf, neg0, ~1.23)
-        val binArith_n_ninf = test (~1.23, negInf) (negInf, posInf, posInf, pos0, ~1.23)
-        val binArith_n_pnan = test (~1.23, posNan) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_n_nnan = test (~1.23, negNan) (negNan, negNan, negNan, negNan, negNan)
+        val case_n_p as () = test (~1.23, 2.46) (1.23, ~3.69, ~3.0258, ~0.5, ~1.23)
+        val case_n_n as () = test (~1.23, ~2.46) (~3.69, 1.23, 3.0258, 0.5, ~1.23)
+        val case_n_p0 as () = test (~1.23, pos0) (~1.23, ~1.23, neg0, negInf, negNan)
+        val case_n_n0 as () = test (~1.23, neg0) (~1.23, ~1.23, pos0, posInf, posNan)
+        val case_n_pinf as () = test (~1.23, posInf) (posInf, negInf, negInf, neg0, ~1.23)
+        val case_n_ninf as () = test (~1.23, negInf) (negInf, posInf, posInf, pos0, ~1.23)
+        val case_n_pnan as () = test (~1.23, posNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_n_nnan as () = test (~1.23, negNan) (negNan, negNan, negNan, negNan, negNan)
       in () end
   fun binArith_p0 () =
       let
-        val binArith_p0_p = test (pos0, 2.46) (2.46, ~2.46, pos0, pos0, pos0)
-        val binArith_p0_n = test (pos0, ~2.46) (~2.46, 2.46, neg0, neg0, pos0)
-        val binArith_p0_p0 = test (pos0, pos0) (pos0, pos0, pos0, posNan, posNan)
-        val binArith_p0_n0 = test (pos0, neg0) (pos0, pos0, neg0, negNan, negNan)
-        val binArith_p0_pinf = test (pos0, posInf) (posInf, negInf, posNan, pos0, pos0)
-        val binArith_p0_ninf = test (pos0, negInf) (negInf, posInf, negNan, neg0, pos0)
-        val binArith_p0_pnan = test (pos0, posNan) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_p0_nnan = test (pos0, negNan) (negNan, negNan, negNan, negNan, negNan)
+        val case_p0_p as () = test (pos0, 2.46) (2.46, ~2.46, pos0, pos0, pos0)
+        val case_p0_n as () = test (pos0, ~2.46) (~2.46, 2.46, neg0, neg0, pos0)
+        val case_p0_p0 as () = test (pos0, pos0) (pos0, pos0, pos0, posNan, posNan)
+        val case_p0_n0 as () = test (pos0, neg0) (pos0, pos0, neg0, negNan, negNan)
+        val case_p0_pinf as () = test (pos0, posInf) (posInf, negInf, posNan, pos0, pos0)
+        val case_p0_ninf as () = test (pos0, negInf) (negInf, posInf, negNan, neg0, pos0)
+        val case_p0_pnan as () = test (pos0, posNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_p0_nnan as () = test (pos0, negNan) (negNan, negNan, negNan, negNan, negNan)
       in () end
   fun binArith_n0 () =
       let
-        val binArith_n0_p = test (neg0, 2.46) (2.46, ~2.46, pos0, pos0, pos0)
-        val binArith_n0_n = test (neg0, ~2.46) (~2.46, 2.46, neg0, neg0, pos0)
-        val binArith_n0_p0 = test (neg0, pos0) (neg0, neg0, neg0, negNan, negNan)
-        val binArith_n0_n0 = test (neg0, neg0) (neg0, neg0, pos0, posNan, negNan)
-        val binArith_n0_pinf = test (neg0, posInf) (posInf, negInf, negNan, neg0, neg0)
-        val binArith_n0_ninf = test (neg0, negInf) (negInf, posInf, posNan, pos0, neg0)
-        val binArith_n0_pnan = test (neg0, posNan) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_n0_nnan = test (neg0, negNan) (negNan, negNan, negNan, negNan, negNan)
+        val case_n0_p as () = test (neg0, 2.46) (2.46, ~2.46, pos0, pos0, pos0)
+        val case_n0_n as () = test (neg0, ~2.46) (~2.46, 2.46, neg0, neg0, pos0)
+        val case_n0_p0 as () = test (neg0, pos0) (neg0, neg0, neg0, negNan, negNan)
+        val case_n0_n0 as () = test (neg0, neg0) (neg0, neg0, pos0, posNan, negNan)
+        val case_n0_pinf as () = test (neg0, posInf) (posInf, negInf, negNan, neg0, neg0)
+        val case_n0_ninf as () = test (neg0, negInf) (negInf, posInf, posNan, pos0, neg0)
+        val case_n0_pnan as () = test (neg0, posNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_n0_nnan as () = test (neg0, negNan) (negNan, negNan, negNan, negNan, negNan)
       in () end
   fun binArith_pinf () =
       let
-        val binArith_pinf_p = test (posInf, 2.46) (posInf, posInf, posInf, posInf, posNan)
-        val binArith_pinf_n = test (posInf, ~2.46) (posInf, posInf, negInf, negInf, posNan)
-        val binArith_pinf_p0 = test (posInf, pos0) (posInf, posInf, posNan, posInf, posNan)
-        val binArith_pinf_n0 = test (posInf, neg0) (posInf, posInf, negNan, negInf, negNan)
-        val binArith_pinf_pinf = test (posInf, posInf) (posInf, posNan, posInf, posNan, posNan)
-        val binArith_pinf_ninf = test (posInf, negInf) (posNan, posInf, negInf, negNan, posNan)
-        val binArith_pinf_pnan = test (posInf, posNan) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_pinf_nnan = test (posInf, negNan) (negNan, negNan, negNan, negNan, negNan)
+        val case_pinf_p as () = test (posInf, 2.46) (posInf, posInf, posInf, posInf, posNan)
+        val case_pinf_n as () = test (posInf, ~2.46) (posInf, posInf, negInf, negInf, posNan)
+        val case_pinf_p0 as () = test (posInf, pos0) (posInf, posInf, posNan, posInf, posNan)
+        val case_pinf_n0 as () = test (posInf, neg0) (posInf, posInf, negNan, negInf, negNan)
+        val case_pinf_pinf as () = test (posInf, posInf) (posInf, posNan, posInf, posNan, posNan)
+        val case_pinf_ninf as () = test (posInf, negInf) (posNan, posInf, negInf, negNan, posNan)
+        val case_pinf_pnan as () = test (posInf, posNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_pinf_nnan as () = test (posInf, negNan) (negNan, negNan, negNan, negNan, negNan)
       in () end
   fun binArith_ninf () =
       let
-        val binArith_ninf_p = test (negInf, 2.46) (negInf, negInf, negInf, negInf, negNan)
-        val binArith_ninf_n = test (negInf, ~2.46) (negInf, negInf, posInf, posInf, negNan)
-        val binArith_ninf_p0 = test (negInf, pos0) (negInf, negInf, negNan, negInf, negNan)
-        val binArith_ninf_n0 = test (negInf, neg0) (negInf, negInf, posNan, posInf, posNan)
-        val binArith_ninf_pinf = test (negInf, posInf) (negNan, negInf, negInf, negNan, negNan)
-        val binArith_ninf_ninf = test (negInf, negInf) (negInf, negNan, posInf, posNan, posNan)
-        val binArith_ninf_pnan = test (negInf, posNan) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_ninf_nnan = test (negInf, negNan) (negNan, negNan, negNan, negNan, negNan)
+        val case_ninf_p as () = test (negInf, 2.46) (negInf, negInf, negInf, negInf, negNan)
+        val case_ninf_n as () = test (negInf, ~2.46) (negInf, negInf, posInf, posInf, negNan)
+        val case_ninf_p0 as () = test (negInf, pos0) (negInf, negInf, negNan, negInf, negNan)
+        val case_ninf_n0 as () = test (negInf, neg0) (negInf, negInf, posNan, posInf, posNan)
+        val case_ninf_pinf as () = test (negInf, posInf) (negNan, negInf, negInf, negNan, negNan)
+        val case_ninf_ninf as () = test (negInf, negInf) (negInf, negNan, posInf, posNan, posNan)
+        val case_ninf_pnan as () = test (negInf, posNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_ninf_nnan as () = test (negInf, negNan) (negNan, negNan, negNan, negNan, negNan)
       in () end
   fun binArith_pnan () =
       let
-        val binArith_pnan_p = test (posNan, 2.46) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_pnan_n = test (posNan, ~2.46) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_pnan_p0 = test (posNan, pos0) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_pnan_n0 = test (posNan, neg0) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_pnan_pinf = test (posNan, posInf) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_pnan_ninf = test (posNan, negInf) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_pnan_pnan = test (posNan, posNan) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_pnan_nnan = test (posNan, negNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_pnan_p as () = test (posNan, 2.46) (posNan, posNan, posNan, posNan, posNan)
+        val case_pnan_n as () = test (posNan, ~2.46) (posNan, posNan, posNan, posNan, posNan)
+        val case_pnan_p0 as () = test (posNan, pos0) (posNan, posNan, posNan, posNan, posNan)
+        val case_pnan_n0 as () = test (posNan, neg0) (posNan, posNan, posNan, posNan, posNan)
+        val case_pnan_pinf as () = test (posNan, posInf) (posNan, posNan, posNan, posNan, posNan)
+        val case_pnan_ninf as () = test (posNan, negInf) (posNan, posNan, posNan, posNan, posNan)
+        val case_pnan_pnan as () = test (posNan, posNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_pnan_nnan as () = test (posNan, negNan) (posNan, posNan, posNan, posNan, posNan)
       in () end
   fun binArith_nnan () =
       let
-        val binArith_nnan_p = test (negNan, 2.46) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_nnan_n = test (negNan, ~2.46) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_nnan_p0 = test (negNan, pos0) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_nnan_n0 = test (negNan, neg0) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_nnan_pinf = test (negNan, posInf) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_nnan_ninf = test (negNan, negInf) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_nnan_pnan = test (negNan, posNan) (posNan, posNan, posNan, posNan, posNan)
-        val binArith_nnan_nnan = test (negNan, negNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_nnan_p as () = test (negNan, 2.46) (posNan, posNan, posNan, posNan, posNan)
+        val case_nnan_n as () = test (negNan, ~2.46) (posNan, posNan, posNan, posNan, posNan)
+        val case_nnan_p0 as () = test (negNan, pos0) (posNan, posNan, posNan, posNan, posNan)
+        val case_nnan_n0 as () = test (negNan, neg0) (posNan, posNan, posNan, posNan, posNan)
+        val case_nnan_pinf as () = test (negNan, posInf) (posNan, posNan, posNan, posNan, posNan)
+        val case_nnan_ninf as () = test (negNan, negInf) (posNan, posNan, posNan, posNan, posNan)
+        val case_nnan_pnan as () = test (negNan, posNan) (posNan, posNan, posNan, posNan, posNan)
+        val case_nnan_nnan as () = test (negNan, negNan) (posNan, posNan, posNan, posNan, posNan)
       in () end
   end (* local *)
 
@@ -233,11 +233,11 @@ struct
       let
         (* multiply-addition *)
         val triArith_p_p_p_ma = R.*+(1.23, 2.46, 3.69)
-        val _ = assertEqualReal (1.23 * 2.46 + 3.69) triArith_p_p_p_ma
+        val () = assertEqualReal (1.23 * 2.46 + 3.69) triArith_p_p_p_ma
 
         (* multiply-subtract *)
         val triArith_p_p_p_ms = R.*-(1.23, 2.46, 3.69)
-        val _ = assertEqualReal (1.23 * 2.46 - 3.69) triArith_p_p_p_ms
+        val () = assertEqualReal (1.23 * 2.46 - 3.69) triArith_p_p_p_ms
       in () end
 
   (**********)
@@ -246,14 +246,14 @@ struct
   in
   fun negation0001 () =
       let
-        val negation_p = test 1.23 ~1.23
-        val negation_n = test ~1.23 1.23
-        val negation_p0 = test pos0 neg0
-        val negation_n0 = test neg0 pos0
-        val negation_pinf = test posInf negInf
-        val negation_ninf = test negInf posInf
-        val negation_pnan = test posNan negNan
-        val negation_nnan = test negNan posNan
+        val case_p as () = test 1.23 ~1.23
+        val case_n as () = test ~1.23 1.23
+        val case_p0 as () = test pos0 neg0
+        val case_n0 as () = test neg0 pos0
+        val case_pinf as () = test posInf negInf
+        val case_ninf as () = test negInf posInf
+        val case_pnan as () = test posNan negNan
+        val case_nnan as () = test negNan posNan
       in () end
   end (* local *)
 
@@ -263,23 +263,23 @@ struct
   in
   fun abs_normal () =
       let
-        val abs_p = test 1.23 1.23
-        val abs_m = test ~1.23 1.23
+        val case_p as () = test 1.23 1.23
+        val case_m as () = test ~1.23 1.23
       in () end
   fun abs_zero () =
       let
-        val abs_p0 = test pos0 pos0
-        val abs_n0 = test neg0 pos0
+        val case_p0 as () = test pos0 pos0
+        val case_n0 as () = test neg0 pos0
       in () end
   fun abs_inf () =
       let
-        val abs_pinf = test posInf posInf
-        val abs_ninf = test negInf posInf
+        val case_pinf as () = test posInf posInf
+        val case_ninf as () = test negInf posInf
       in () end
   fun abs_nan () =
       let
-        val abs_pnan = test posNan posNan
-        val abs_nnan = test negNan posNan
+        val case_pnan as () = test posNan posNan
+        val case_nnan as () = test negNan posNan
       in () end
   end (* local *)
 
@@ -289,93 +289,93 @@ struct
   in
   fun min_pos () =
       let
-        val min_p_p_l = test (1.23, 2.34) 1.23
-        val min_p_p_g = test (2.34, 1.23) 1.23
-        val min_p_n = test (1.23, ~2.34) ~2.34
-        val min_p_p0 = test (1.23, pos0) pos0
-        val min_p_n0 = test (1.23, neg0) neg0
-        val min_p_pinf = test (1.23, posInf) 1.23
-        val min_p_ninf = test (1.23, negInf) negInf
-        val min_p_pnan = test (1.23, posNan) 1.23
-        val min_p_nnan = test (1.23, negNan) 1.23
+        val case_p_p_l as () = test (1.23, 2.34) 1.23
+        val case_p_p_g as () = test (2.34, 1.23) 1.23
+        val case_p_n as () = test (1.23, ~2.34) ~2.34
+        val case_p_p0 as () = test (1.23, pos0) pos0
+        val case_p_n0 as () = test (1.23, neg0) neg0
+        val case_p_pinf as () = test (1.23, posInf) 1.23
+        val case_p_ninf as () = test (1.23, negInf) negInf
+        val case_p_pnan as () = test (1.23, posNan) 1.23
+        val case_p_nnan as () = test (1.23, negNan) 1.23
       in () end
   fun min_neg () =
       let
-        val min_n_n_l = test (~2.34, ~1.23) ~2.34
-        val min_n_n_g = test (~1.23, ~2.34) ~2.34
-        val min_n_p = test (~2.34, 1.23) ~2.34
-        val min_n_p0 = test (~1.23, pos0) ~1.23
-        val min_n_n0 = test (~1.23, neg0) ~1.23
-        val min_n_pinf = test (~1.23, posInf) ~1.23
-        val min_n_ninf = test (~1.23, negInf) negInf
-        val min_n_pnan = test (~1.23, posNan) ~1.23
-        val min_n_nnan = test (~1.23, negNan) ~1.23
+        val case_n_n_l as () = test (~2.34, ~1.23) ~2.34
+        val case_n_n_g as () = test (~1.23, ~2.34) ~2.34
+        val case_n_p as () = test (~2.34, 1.23) ~2.34
+        val case_n_p0 as () = test (~1.23, pos0) ~1.23
+        val case_n_n0 as () = test (~1.23, neg0) ~1.23
+        val case_n_pinf as () = test (~1.23, posInf) ~1.23
+        val case_n_ninf as () = test (~1.23, negInf) negInf
+        val case_n_pnan as () = test (~1.23, posNan) ~1.23
+        val case_n_nnan as () = test (~1.23, negNan) ~1.23
       in () end
   fun min_p0 () =
       let
-        val min_p0_p = test (pos0, 1.23) pos0
-        val min_p0_n = test (pos0, ~1.23) ~1.23
-        val min_p0_p0 = test (pos0, pos0) pos0
-        val min_p0_n0 = test (pos0, neg0) neg0
-        val min_p0_pinf = test (pos0, posInf) pos0
-        val min_p0_ninf = test (pos0, negInf) negInf
-        val min_p0_pnan = test (pos0, posNan) pos0
-        val min_p0_nnan = test (pos0, negNan) pos0
+        val case_p0_p as () = test (pos0, 1.23) pos0
+        val case_p0_n as () = test (pos0, ~1.23) ~1.23
+        val case_p0_p0 as () = test (pos0, pos0) pos0
+        val case_p0_n0 as () = test (pos0, neg0) neg0
+        val case_p0_pinf as () = test (pos0, posInf) pos0
+        val case_p0_ninf as () = test (pos0, negInf) negInf
+        val case_p0_pnan as () = test (pos0, posNan) pos0
+        val case_p0_nnan as () = test (pos0, negNan) pos0
       in () end
   fun min_n0 () =
       let
-        val min_n0_p = test (neg0, 1.23) neg0
-        val min_n0_n = test (neg0, ~1.23) ~1.23
-        val min_n0_p0 = test (neg0, pos0) neg0
-        val min_n0_n0 = test (neg0, neg0) neg0
-        val min_n0_pinf = test (neg0, posInf) neg0
-        val min_n0_ninf = test (neg0, negInf) negInf
-        val min_n0_pnan = test (neg0, posNan) neg0
-        val min_n0_nnan = test (neg0, negNan) neg0
+        val case_n0_p as () = test (neg0, 1.23) neg0
+        val case_n0_n as () = test (neg0, ~1.23) ~1.23
+        val case_n0_p0 as () = test (neg0, pos0) neg0
+        val case_n0_n0 as () = test (neg0, neg0) neg0
+        val case_n0_pinf as () = test (neg0, posInf) neg0
+        val case_n0_ninf as () = test (neg0, negInf) negInf
+        val case_n0_pnan as () = test (neg0, posNan) neg0
+        val case_n0_nnan as () = test (neg0, negNan) neg0
       in () end
   fun min_pinf () =
       let
-        val min_pinf_p = test (posInf, 1.23) 1.23
-        val min_pinf_n = test (posInf, ~1.23) ~1.23
-        val min_pinf_p0 = test (posInf, pos0) pos0
-        val min_pinf_n0 = test (posInf, neg0) neg0
-        val min_pinf_pinf = test (posInf, posInf) posInf
-        val min_pinf_ninf = test (posInf, negInf) negInf 
-        val min_pinf_pnan = test (posInf, posNan) posInf
-        val min_pinf_nnan = test (posInf, negNan) posInf
+        val case_pinf_p as () = test (posInf, 1.23) 1.23
+        val case_pinf_n as () = test (posInf, ~1.23) ~1.23
+        val case_pinf_p0 as () = test (posInf, pos0) pos0
+        val case_pinf_n0 as () = test (posInf, neg0) neg0
+        val case_pinf_pinf as () = test (posInf, posInf) posInf
+        val case_pinf_ninf as () = test (posInf, negInf) negInf 
+        val case_pinf_pnan as () = test (posInf, posNan) posInf
+        val case_pinf_nnan as () = test (posInf, negNan) posInf
       in () end
   fun min_ninf () =
       let
-        val min_ninf_p = test (negInf, 1.23) negInf
-        val min_ninf_n = test (negInf, ~1.23) negInf
-        val min_ninf_p0 = test (negInf, pos0) negInf
-        val min_ninf_n0 = test (negInf, neg0) negInf
-        val min_ninf_pinf = test (negInf, posInf) negInf
-        val min_ninf_ninf = test (negInf, negInf) negInf 
-        val min_ninf_pnan = test (negInf, posNan) negInf
-        val min_ninf_nnan = test (negInf, negNan) negInf
+        val case_ninf_p as () = test (negInf, 1.23) negInf
+        val case_ninf_n as () = test (negInf, ~1.23) negInf
+        val case_ninf_p0 as () = test (negInf, pos0) negInf
+        val case_ninf_n0 as () = test (negInf, neg0) negInf
+        val case_ninf_pinf as () = test (negInf, posInf) negInf
+        val case_ninf_ninf as () = test (negInf, negInf) negInf 
+        val case_ninf_pnan as () = test (negInf, posNan) negInf
+        val case_ninf_nnan as () = test (negInf, negNan) negInf
       in () end
   fun min_pnan () =
       let
-        val min_pnan_p = test (posNan, 1.23) 1.23
-        val min_pnan_n = test (posNan, ~1.23) ~1.23
-        val min_pnan_p0 = test (posNan, pos0) pos0
-        val min_pnan_n0 = test (posNan, neg0) neg0
-        val min_pnan_pinf = test (posNan, posInf) posInf
-        val min_pnan_ninf = test (posNan, negInf) negInf 
-        val min_pnan_pnan = test (posNan, posNan) posNan
-        val min_pnan_nnan = test (posNan, negNan) posNan
+        val case_pnan_p as () = test (posNan, 1.23) 1.23
+        val case_pnan_n as () = test (posNan, ~1.23) ~1.23
+        val case_pnan_p0 as () = test (posNan, pos0) pos0
+        val case_pnan_n0 as () = test (posNan, neg0) neg0
+        val case_pnan_pinf as () = test (posNan, posInf) posInf
+        val case_pnan_ninf as () = test (posNan, negInf) negInf 
+        val case_pnan_pnan as () = test (posNan, posNan) posNan
+        val case_pnan_nnan as () = test (posNan, negNan) posNan
       in () end
   fun min_nnan () =
       let
-        val min_nnan_p = test (negNan, 1.23) 1.23
-        val min_nnan_n = test (negNan, ~1.23) ~1.23
-        val min_nnan_p0 = test (negNan, pos0) pos0
-        val min_nnan_n0 = test (negNan, neg0) neg0
-        val min_nnan_pinf = test (negNan, posInf) posInf
-        val min_nnan_ninf = test (negNan, negInf) negInf 
-        val min_nnan_pnan = test (negNan, posNan) negNan
-        val min_nnan_nnan = test (negNan, negNan) negNan
+        val case_nnan_p as () = test (negNan, 1.23) 1.23
+        val case_nnan_n as () = test (negNan, ~1.23) ~1.23
+        val case_nnan_p0 as () = test (negNan, pos0) pos0
+        val case_nnan_n0 as () = test (negNan, neg0) neg0
+        val case_nnan_pinf as () = test (negNan, posInf) posInf
+        val case_nnan_ninf as () = test (negNan, negInf) negInf 
+        val case_nnan_pnan as () = test (negNan, posNan) negNan
+        val case_nnan_nnan as () = test (negNan, negNan) negNan
       in () end
 
   end (* local min *)
@@ -386,93 +386,93 @@ struct
   in
   fun max_pos () =
       let
-        val max_p_p_l = test (1.23, 2.34) 2.34
-        val max_p_p_g = test (2.34, 1.23) 2.34
-        val max_p_n = test (1.23, ~2.34) 1.23
-        val max_p_p0 = test (1.23, pos0) 1.23
-        val max_p_n0 = test (1.23, neg0) 1.23
-        val max_p_pinf = test (1.23, posInf) posInf
-        val max_p_ninf = test (1.23, negInf) 1.23
-        val max_p_pnan = test (1.23, posNan) 1.23
-        val max_p_nnan = test (1.23, negNan) 1.23
+        val case_p_p_l as () = test (1.23, 2.34) 2.34
+        val case_p_p_g as () = test (2.34, 1.23) 2.34
+        val case_p_n as () = test (1.23, ~2.34) 1.23
+        val case_p_p0 as () = test (1.23, pos0) 1.23
+        val case_p_n0 as () = test (1.23, neg0) 1.23
+        val case_p_pinf as () = test (1.23, posInf) posInf
+        val case_p_ninf as () = test (1.23, negInf) 1.23
+        val case_p_pnan as () = test (1.23, posNan) 1.23
+        val case_p_nnan as () = test (1.23, negNan) 1.23
       in () end
   fun max_neg () =
       let
-        val max_n_n_l = test (~2.34, ~1.23) ~1.23
-        val max_n_n_g = test (~1.23, ~2.34) ~1.23
-        val max_n_p = test (~2.34, 1.23) 1.23
-        val max_n_p0 = test (~1.23, pos0) pos0
-        val max_n_n0 = test (~1.23, neg0) neg0
-        val max_n_pinf = test (~1.23, posInf) posInf
-        val max_n_ninf = test (~1.23, negInf) ~1.23
-        val max_n_pnan = test (~1.23, posNan) ~1.23
-        val max_n_nnan = test (~1.23, negNan) ~1.23
+        val case_n_n_l as () = test (~2.34, ~1.23) ~1.23
+        val case_n_n_g as () = test (~1.23, ~2.34) ~1.23
+        val case_n_p as () = test (~2.34, 1.23) 1.23
+        val case_n_p0 as () = test (~1.23, pos0) pos0
+        val case_n_n0 as () = test (~1.23, neg0) neg0
+        val case_n_pinf as () = test (~1.23, posInf) posInf
+        val case_n_ninf as () = test (~1.23, negInf) ~1.23
+        val case_n_pnan as () = test (~1.23, posNan) ~1.23
+        val case_n_nnan as () = test (~1.23, negNan) ~1.23
       in () end
   fun max_p0 () =
       let
-        val max_p0_p = test (pos0, 1.23) 1.23
-        val max_p0_n = test (pos0, ~1.23) pos0
-        val max_p0_p0 = test (pos0, pos0) pos0
-        val max_p0_n0 = test (pos0, neg0) pos0
-        val max_p0_pinf = test (pos0, posInf) posInf
-        val max_p0_ninf = test (pos0, negInf) pos0
-        val max_p0_pnan = test (pos0, posNan) pos0
-        val max_p0_nnan = test (pos0, negNan) pos0
+        val case_p0_p as () = test (pos0, 1.23) 1.23
+        val case_p0_n as () = test (pos0, ~1.23) pos0
+        val case_p0_p0 as () = test (pos0, pos0) pos0
+        val case_p0_n0 as () = test (pos0, neg0) pos0
+        val case_p0_pinf as () = test (pos0, posInf) posInf
+        val case_p0_ninf as () = test (pos0, negInf) pos0
+        val case_p0_pnan as () = test (pos0, posNan) pos0
+        val case_p0_nnan as () = test (pos0, negNan) pos0
       in () end
   fun max_n0 () =
       let
-        val max_n0_p = test (neg0, 1.23) 1.23
-        val max_n0_n = test (neg0, ~1.23) neg0
-        val max_n0_p0 = test (neg0, pos0) pos0
-        val max_n0_n0 = test (neg0, neg0) neg0
-        val max_n0_pinf = test (neg0, posInf) posInf
-        val max_n0_ninf = test (neg0, negInf) neg0
-        val max_n0_pnan = test (neg0, posNan) neg0
-        val max_n0_nnan = test (neg0, negNan) neg0
+        val case_n0_p as () = test (neg0, 1.23) 1.23
+        val case_n0_n as () = test (neg0, ~1.23) neg0
+        val case_n0_p0 as () = test (neg0, pos0) pos0
+        val case_n0_n0 as () = test (neg0, neg0) neg0
+        val case_n0_pinf as () = test (neg0, posInf) posInf
+        val case_n0_ninf as () = test (neg0, negInf) neg0
+        val case_n0_pnan as () = test (neg0, posNan) neg0
+        val case_n0_nnan as () = test (neg0, negNan) neg0
       in () end
   fun max_pinf () =
       let
-        val max_pinf_p = test (posInf, 1.23) posInf
-        val max_pinf_n = test (posInf, ~1.23) posInf
-        val max_pinf_p0 = test (posInf, pos0) posInf
-        val max_pinf_n0 = test (posInf, neg0) posInf
-        val max_pinf_pinf = test (posInf, posInf) posInf
-        val max_pinf_ninf = test (posInf, negInf) posInf 
-        val max_pinf_pnan = test (posInf, posNan) posInf
-        val max_pinf_nnan = test (posInf, negNan) posInf
+        val case_pinf_p as () = test (posInf, 1.23) posInf
+        val case_pinf_n as () = test (posInf, ~1.23) posInf
+        val case_pinf_p0 as () = test (posInf, pos0) posInf
+        val case_pinf_n0 as () = test (posInf, neg0) posInf
+        val case_pinf_pinf as () = test (posInf, posInf) posInf
+        val case_pinf_ninf as () = test (posInf, negInf) posInf 
+        val case_pinf_pnan as () = test (posInf, posNan) posInf
+        val case_pinf_nnan as () = test (posInf, negNan) posInf
       in () end
   fun max_ninf () =
       let
-        val max_ninf_p = test (negInf, 1.23) 1.23
-        val max_ninf_n = test (negInf, ~1.23) ~1.23
-        val max_ninf_p0 = test (negInf, pos0) pos0
-        val max_ninf_n0 = test (negInf, neg0) neg0
-        val max_ninf_pinf = test (negInf, posInf) posInf
-        val max_ninf_ninf = test (negInf, negInf) negInf 
-        val max_ninf_pnan = test (negInf, posNan) negInf
-        val max_ninf_nnan = test (negInf, negNan) negInf
+        val case_ninf_p as () = test (negInf, 1.23) 1.23
+        val case_ninf_n as () = test (negInf, ~1.23) ~1.23
+        val case_ninf_p0 as () = test (negInf, pos0) pos0
+        val case_ninf_n0 as () = test (negInf, neg0) neg0
+        val case_ninf_pinf as () = test (negInf, posInf) posInf
+        val case_ninf_ninf as () = test (negInf, negInf) negInf 
+        val case_ninf_pnan as () = test (negInf, posNan) negInf
+        val case_ninf_nnan as () = test (negInf, negNan) negInf
       in () end
   fun max_pnan () =
       let
-        val max_pnan_p = test (posNan, 1.23) 1.23
-        val max_pnan_n = test (posNan, ~1.23) ~1.23
-        val max_pnan_p0 = test (posNan, pos0) pos0
-        val max_pnan_n0 = test (posNan, neg0) neg0
-        val max_pnan_pinf = test (posNan, posInf) posInf
-        val max_pnan_ninf = test (posNan, negInf) negInf 
-        val max_pnan_pnan = test (posNan, posNan) posNan
-        val max_pnan_nnan = test (posNan, negNan) posNan
+        val case_pnan_p as () = test (posNan, 1.23) 1.23
+        val case_pnan_n as () = test (posNan, ~1.23) ~1.23
+        val case_pnan_p0 as () = test (posNan, pos0) pos0
+        val case_pnan_n0 as () = test (posNan, neg0) neg0
+        val case_pnan_pinf as () = test (posNan, posInf) posInf
+        val case_pnan_ninf as () = test (posNan, negInf) negInf 
+        val case_pnan_pnan as () = test (posNan, posNan) posNan
+        val case_pnan_nnan as () = test (posNan, negNan) posNan
       in () end
   fun max_nnan () =
       let
-        val max_nnan_p = test (negNan, 1.23) 1.23
-        val max_nnan_n = test (negNan, ~1.23) ~1.23
-        val max_nnan_p0 = test (negNan, pos0) pos0
-        val max_nnan_n0 = test (negNan, neg0) neg0
-        val max_nnan_pinf = test (negNan, posInf) posInf
-        val max_nnan_ninf = test (negNan, negInf) negInf 
-        val max_nnan_pnan = test (negNan, posNan) negNan
-        val max_nnan_nnan = test (negNan, negNan) negNan
+        val case_nnan_p as () = test (negNan, 1.23) 1.23
+        val case_nnan_n as () = test (negNan, ~1.23) ~1.23
+        val case_nnan_p0 as () = test (negNan, pos0) pos0
+        val case_nnan_n0 as () = test (negNan, neg0) neg0
+        val case_nnan_pinf as () = test (negNan, posInf) posInf
+        val case_nnan_ninf as () = test (negNan, negInf) negInf 
+        val case_nnan_pnan as () = test (negNan, posNan) negNan
+        val case_nnan_nnan as () = test (negNan, negNan) negNan
       in () end
   end (* local max *)
 
@@ -482,24 +482,24 @@ struct
   in
   fun sign_normal () =
       let
-        val sign_p = test 1.23 1
-        val sign_n = test ~1.23 ~1
+        val case_p as () = test 1.23 1
+        val case_n as () = test ~1.23 ~1
       in () end
   fun sign_zero () =
       let
-        val sign_p0 = test pos0 0
-        val sign_n0 = test neg0 0
+        val case_p0 as () = test pos0 0
+        val case_n0 as () = test neg0 0
       in () end
   fun sign_inf () =
       let
-        val sign_pinf = test posInf 1
-        val sign_ninf = test negInf ~1
+        val case_pinf as () = test posInf 1
+        val case_ninf as () = test negInf ~1
       in () end
   fun sign_nan () =
       let
-        val sign_pnan =
+        val case_pnan as () =
             (R.sign posNan; fail "sign posnan") handle General.Domain => ()
-        val sign_nnan =
+        val case_nnan as () =
             (R.sign negNan; fail "sign negnan") handle General.Domain => ()
       in () end
   end (* local *)
@@ -510,23 +510,23 @@ struct
   in
   fun signBit_normal () =
       let
-        val signBit_p = test 1.23 false
-        val signBit_n = test ~1.23 true
+        val case_p as () = test 1.23 false
+        val case_n as () = test ~1.23 true
       in () end
   fun signBit_zero () =
       let
-        val signBit_p0 = test pos0 false
-        val signBit_n0 = test neg0 true
+        val case_p0 as () = test pos0 false
+        val case_n0 as () = test neg0 true
       in () end
   fun signBit_inf () =
       let
-        val signBit_pinf = test posInf false
-        val signBit_ninf = test negInf true
+        val case_pinf as () = test posInf false
+        val case_ninf as () = test negInf true
       in () end
   fun signBit_nan () =
       let
-        val signBit_pnan = test posNan false
-        val signBit_nnan = test negNan true
+        val case_pnan as () = test posNan false
+        val case_nnan as () = test negNan true
       in () end
   end (* local *)
 
@@ -536,83 +536,83 @@ struct
   in
   fun sameSign_normal () =
       let
-        val sameSign_p_p = test (1.23, 2.34) true 
-        val sameSign_p_n = test (1.23, ~2.34) false 
-        val sameSign_p_p0 = test (1.23, pos0) true 
-        val sameSign_p_n0 = test (1.23, neg0) false
-        val sameSign_p_pinf = test (1.23, posInf) true 
-        val sameSign_p_ninf = test (1.23, negInf) false
-        val sameSign_p_pnan = test (1.23, posNan) true 
-        val sameSign_p_nnan = test (1.23, negNan) false
+        val case_p_p as () = test (1.23, 2.34) true 
+        val case_p_n as () = test (1.23, ~2.34) false 
+        val case_p_p0 as () = test (1.23, pos0) true 
+        val case_p_n0 as () = test (1.23, neg0) false
+        val case_p_pinf as () = test (1.23, posInf) true 
+        val case_p_ninf as () = test (1.23, negInf) false
+        val case_p_pnan as () = test (1.23, posNan) true 
+        val case_p_nnan as () = test (1.23, negNan) false
 
-        val sameSign_n_p = test (~1.23, 2.34) false 
-        val sameSign_n_n = test (~1.23, ~2.34) true 
-        val sameSign_n_p0 = test (~1.23, pos0) false 
-        val sameSign_n_n0 = test (~1.23, neg0) true
-        val sameSign_n_pinf = test (~1.23, posInf) false 
-        val sameSign_n_ninf = test (~1.23, negInf) true
-        val sameSign_n_pnan = test (~1.23, posNan) false 
-        val sameSign_n_nnan = test (~1.23, negNan) true
+        val case_n_p as () = test (~1.23, 2.34) false 
+        val case_n_n as () = test (~1.23, ~2.34) true 
+        val case_n_p0 as () = test (~1.23, pos0) false 
+        val case_n_n0 as () = test (~1.23, neg0) true
+        val case_n_pinf as () = test (~1.23, posInf) false 
+        val case_n_ninf as () = test (~1.23, negInf) true
+        val case_n_pnan as () = test (~1.23, posNan) false 
+        val case_n_nnan as () = test (~1.23, negNan) true
       in () end
   fun sameSign_zero () =
       let
-        val sameSign_p0_p = test (pos0, 2.34) true 
-        val sameSign_p0_n = test (pos0, ~2.34) false 
-        val sameSign_p0_p0 = test (pos0, pos0) true 
-        val sameSign_p0_n0 = test (pos0, neg0) false
-        val sameSign_p0_pinf = test (pos0, posInf) true 
-        val sameSign_p0_ninf = test (pos0, negInf) false
-        val sameSign_p0_pnan = test (pos0, posNan) true 
-        val sameSign_p0_nnan = test (pos0, negNan) false
+        val case_p0_p as () = test (pos0, 2.34) true 
+        val case_p0_n as () = test (pos0, ~2.34) false 
+        val case_p0_p0 as () = test (pos0, pos0) true 
+        val case_p0_n0 as () = test (pos0, neg0) false
+        val case_p0_pinf as () = test (pos0, posInf) true 
+        val case_p0_ninf as () = test (pos0, negInf) false
+        val case_p0_pnan as () = test (pos0, posNan) true 
+        val case_p0_nnan as () = test (pos0, negNan) false
 
-        val sameSign_n0_p = test (neg0, 2.34) false
-        val sameSign_n0_n = test (neg0, ~2.34) true
-        val sameSign_n0_p0 = test (neg0, pos0) false
-        val sameSign_n0_n0 = test (neg0, neg0) true
-        val sameSign_n0_pinf = test (neg0, posInf) false
-        val sameSign_n0_ninf = test (neg0, negInf) true
-        val sameSign_n0_pnan = test (neg0, posNan) false
-        val sameSign_n0_nnan = test (neg0, negNan) true
+        val case_n0_p as () = test (neg0, 2.34) false
+        val case_n0_n as () = test (neg0, ~2.34) true
+        val case_n0_p0 as () = test (neg0, pos0) false
+        val case_n0_n0 as () = test (neg0, neg0) true
+        val case_n0_pinf as () = test (neg0, posInf) false
+        val case_n0_ninf as () = test (neg0, negInf) true
+        val case_n0_pnan as () = test (neg0, posNan) false
+        val case_n0_nnan as () = test (neg0, negNan) true
       in () end
   fun sameSign_inf () =
       let
-        val sameSign_pinf_p = test (posInf, 1.0) true
-        val sameSign_pinf_n = test (posInf, ~1.0) false
-        val sameSign_pinf_p0 = test (posInf, pos0) true
-        val sameSign_pinf_n0 = test (posInf, neg0) false
-        val sameSign_pinf_pinf = test (posInf, posInf) true
-        val sameSign_pinf_ninf = test (posInf, negInf) false
-        val sameSign_pinf_pnan = test (posInf, posNan) true
-        val sameSign_pinf_nnan = test (posInf, negNan) false
+        val case_pinf_p as () = test (posInf, 1.0) true
+        val case_pinf_n as () = test (posInf, ~1.0) false
+        val case_pinf_p0 as () = test (posInf, pos0) true
+        val case_pinf_n0 as () = test (posInf, neg0) false
+        val case_pinf_pinf as () = test (posInf, posInf) true
+        val case_pinf_ninf as () = test (posInf, negInf) false
+        val case_pinf_pnan as () = test (posInf, posNan) true
+        val case_pinf_nnan as () = test (posInf, negNan) false
 
-        val sameSign_ninf_p = test (negInf, 1.0) false
-        val sameSign_ninf_n = test (negInf, ~1.0) true
-        val sameSign_ninf_p0 = test (negInf, pos0) false
-        val sameSign_ninf_n0 = test (negInf, neg0) true
-        val sameSign_ninf_pinf = test (negInf, posInf) false
-        val sameSign_ninf_ninf = test (negInf, negInf) true
-        val sameSign_ninf_pnan = test (negInf, posNan) false
-        val sameSign_ninf_nnan = test (negInf, negNan) true
+        val case_ninf_p as () = test (negInf, 1.0) false
+        val case_ninf_n as () = test (negInf, ~1.0) true
+        val case_ninf_p0 as () = test (negInf, pos0) false
+        val case_ninf_n0 as () = test (negInf, neg0) true
+        val case_ninf_pinf as () = test (negInf, posInf) false
+        val case_ninf_ninf as () = test (negInf, negInf) true
+        val case_ninf_pnan as () = test (negInf, posNan) false
+        val case_ninf_nnan as () = test (negInf, negNan) true
       in () end
   fun sameSign_nan () =
       let
-        val sameSign_pnan_p = test (posNan, 1.0) true
-        val sameSign_pnan_n = test (posNan, ~1.0) false
-        val sameSign_pnan_p0 = test (posNan, pos0) true
-        val sameSign_pnan_n0 = test (posNan, neg0) false
-        val sameSign_pnan_pinf = test (posNan, posInf) true
-        val sameSign_pnan_ninf = test (posNan, negInf) false
-        val sameSign_pnan_pnan = test (posNan, posNan) true
-        val sameSign_pnan_nnan = test (posNan, negNan) false
+        val case_pnan_p as () = test (posNan, 1.0) true
+        val case_pnan_n as () = test (posNan, ~1.0) false
+        val case_pnan_p0 as () = test (posNan, pos0) true
+        val case_pnan_n0 as () = test (posNan, neg0) false
+        val case_pnan_pinf as () = test (posNan, posInf) true
+        val case_pnan_ninf as () = test (posNan, negInf) false
+        val case_pnan_pnan as () = test (posNan, posNan) true
+        val case_pnan_nnan as () = test (posNan, negNan) false
 
-        val sameSign_nnan_p = test (negNan, 1.0) false
-        val sameSign_nnan_n = test (negNan, ~1.0) true
-        val sameSign_nnan_p0 = test (negNan, pos0) false
-        val sameSign_nnan_n0 = test (negNan, neg0) true
-        val sameSign_nnan_pinf = test (negNan, posInf) false
-        val sameSign_nnan_ninf = test (negNan, negInf) true
-        val sameSign_nnan_pnan = test (negNan, posNan) false
-        val sameSign_nnan_nnan = test (negNan, negNan) true
+        val case_nnan_p as () = test (negNan, 1.0) false
+        val case_nnan_n as () = test (negNan, ~1.0) true
+        val case_nnan_p0 as () = test (negNan, pos0) false
+        val case_nnan_n0 as () = test (negNan, neg0) true
+        val case_nnan_pinf as () = test (negNan, posInf) false
+        val case_nnan_ninf as () = test (negNan, negInf) true
+        val case_nnan_pnan as () = test (negNan, posNan) false
+        val case_nnan_nnan as () = test (negNan, negNan) true
       in () end
 
   end (* local *)
@@ -623,91 +623,91 @@ struct
   in
   fun copySign_pos () =
       let
-        val copySign_p_p = test (1.23, 2.34) 1.23
-        val copySign_p_n = test (1.23, ~2.34) ~1.23
-        val copySign_p_p0 = test (1.23, pos0) 1.23
-        val copySign_p_n0 = test (1.23, neg0) ~1.23
-        val copySign_p_pinf = test (1.23, posInf) 1.23
-        val copySign_p_ninf = test (1.23, negInf) ~1.23
-        val copySign_p_pnan = test (1.23, posNan) 1.23
-        val copySign_p_nnan = test (1.23, negNan) ~1.23
+        val case_p_p as () = test (1.23, 2.34) 1.23
+        val case_p_n as () = test (1.23, ~2.34) ~1.23
+        val case_p_p0 as () = test (1.23, pos0) 1.23
+        val case_p_n0 as () = test (1.23, neg0) ~1.23
+        val case_p_pinf as () = test (1.23, posInf) 1.23
+        val case_p_ninf as () = test (1.23, negInf) ~1.23
+        val case_p_pnan as () = test (1.23, posNan) 1.23
+        val case_p_nnan as () = test (1.23, negNan) ~1.23
       in () end
   fun copySign_neg () =
       let
-        val copySign_n_p = test (~1.23, 2.34) 1.23
-        val copySign_n_n = test (~1.23, ~2.34) ~1.23
-        val copySign_n_p0 = test (~1.23, pos0) 1.23
-        val copySign_n_n0 = test (~1.23, neg0) ~1.23
-        val copySign_n_pinf = test (~1.23, posInf) 1.23
-        val copySign_n_ninf = test (~1.23, negInf) ~1.23
-        val copySign_n_pnan = test (~1.23, posNan) 1.23
-        val copySign_n_nnan = test (~1.23, negNan) ~1.23
+        val case_n_p as () = test (~1.23, 2.34) 1.23
+        val case_n_n as () = test (~1.23, ~2.34) ~1.23
+        val case_n_p0 as () = test (~1.23, pos0) 1.23
+        val case_n_n0 as () = test (~1.23, neg0) ~1.23
+        val case_n_pinf as () = test (~1.23, posInf) 1.23
+        val case_n_ninf as () = test (~1.23, negInf) ~1.23
+        val case_n_pnan as () = test (~1.23, posNan) 1.23
+        val case_n_nnan as () = test (~1.23, negNan) ~1.23
       in () end
   fun copySign_p0 () =
       let
-        val copySign_p0_p = test (pos0, 1.23) pos0
-        val copySign_p0_n = test (pos0, ~1.23) neg0
-        val copySign_p0_p0 = test (pos0, pos0) pos0
-        val copySign_p0_n0 = test (pos0, neg0) neg0
-        val copySign_p0_pinf = test (pos0, posInf) pos0
-        val copySign_p0_ninf = test (pos0, negInf) neg0
-        val copySign_p0_pnan = test (pos0, posNan) pos0
-        val copySign_p0_nnan = test (pos0, negNan) neg0
+        val case_p0_p as () = test (pos0, 1.23) pos0
+        val case_p0_n as () = test (pos0, ~1.23) neg0
+        val case_p0_p0 as () = test (pos0, pos0) pos0
+        val case_p0_n0 as () = test (pos0, neg0) neg0
+        val case_p0_pinf as () = test (pos0, posInf) pos0
+        val case_p0_ninf as () = test (pos0, negInf) neg0
+        val case_p0_pnan as () = test (pos0, posNan) pos0
+        val case_p0_nnan as () = test (pos0, negNan) neg0
       in () end
   fun copySign_n0 () =
       let
-        val copySign_n0_p = test (neg0, 1.23) pos0
-        val copySign_n0_n = test (neg0, ~1.23) neg0
-        val copySign_n0_p0 = test (neg0, pos0) pos0
-        val copySign_n0_n0 = test (neg0, neg0) neg0
-        val copySign_n0_pinf = test (neg0, posInf) pos0
-        val copySign_n0_ninf = test (neg0, negInf) neg0
-        val copySign_n0_pnan = test (neg0, posNan) pos0
-        val copySign_n0_nnan = test (neg0, negNan) neg0
+        val case_n0_p as () = test (neg0, 1.23) pos0
+        val case_n0_n as () = test (neg0, ~1.23) neg0
+        val case_n0_p0 as () = test (neg0, pos0) pos0
+        val case_n0_n0 as () = test (neg0, neg0) neg0
+        val case_n0_pinf as () = test (neg0, posInf) pos0
+        val case_n0_ninf as () = test (neg0, negInf) neg0
+        val case_n0_pnan as () = test (neg0, posNan) pos0
+        val case_n0_nnan as () = test (neg0, negNan) neg0
       in () end
   fun copySign_pinf () =
       let
-        val copySign_pinf_p = test (posInf, 1.23) posInf
-        val copySign_pinf_n = test (posInf, ~1.23) negInf
-        val copySign_pinf_p0 = test (posInf, pos0) posInf
-        val copySign_pinf_n0 = test (posInf, neg0) negInf
-        val copySign_pinf_pinf = test (posInf, posInf) posInf
-        val copySign_pinf_ninf = test (posInf, negInf) negInf
-        val copySign_pinf_pnan = test (posInf, posNan) posInf
-        val copySign_pinf_nnan = test (posInf, negNan) negInf
+        val case_pinf_p as () = test (posInf, 1.23) posInf
+        val case_pinf_n as () = test (posInf, ~1.23) negInf
+        val case_pinf_p0 as () = test (posInf, pos0) posInf
+        val case_pinf_n0 as () = test (posInf, neg0) negInf
+        val case_pinf_pinf as () = test (posInf, posInf) posInf
+        val case_pinf_ninf as () = test (posInf, negInf) negInf
+        val case_pinf_pnan as () = test (posInf, posNan) posInf
+        val case_pinf_nnan as () = test (posInf, negNan) negInf
       in () end
   fun copySign_ninf () =
       let
-        val copySign_ninf_p = test (negInf, 1.23) posInf
-        val copySign_ninf_n = test (negInf, ~1.23) negInf
-        val copySign_ninf_p0 = test (negInf, pos0) posInf
-        val copySign_ninf_n0 = test (negInf, neg0) negInf
-        val copySign_ninf_pinf = test (negInf, posInf) posInf
-        val copySign_ninf_ninf = test (negInf, negInf) negInf
-        val copySign_ninf_pnan = test (negInf, posNan) posInf
-        val copySign_ninf_nnan = test (negInf, negNan) negInf
+        val case_ninf_p as () = test (negInf, 1.23) posInf
+        val case_ninf_n as () = test (negInf, ~1.23) negInf
+        val case_ninf_p0 as () = test (negInf, pos0) posInf
+        val case_ninf_n0 as () = test (negInf, neg0) negInf
+        val case_ninf_pinf as () = test (negInf, posInf) posInf
+        val case_ninf_ninf as () = test (negInf, negInf) negInf
+        val case_ninf_pnan as () = test (negInf, posNan) posInf
+        val case_ninf_nnan as () = test (negInf, negNan) negInf
       in () end
   fun copySign_pnan () =
       let
-        val copySign_pnan_p = test (posNan, 1.23) posNan
-        val copySign_pnan_n = test (posNan, ~1.23) negNan
-        val copySign_pnan_p0 = test (posNan, pos0) posNan
-        val copySign_pnan_n0 = test (posNan, neg0) negNan
-        val copySign_pnan_pinf = test (posNan, posInf) posNan
-        val copySign_pnan_ninf = test (posNan, negInf) negNan
-        val copySign_pnan_pnan = test (posNan, posNan) posNan
-        val copySign_pnan_nnan = test (posNan, negNan) negNan
+        val case_pnan_p as () = test (posNan, 1.23) posNan
+        val case_pnan_n as () = test (posNan, ~1.23) negNan
+        val case_pnan_p0 as () = test (posNan, pos0) posNan
+        val case_pnan_n0 as () = test (posNan, neg0) negNan
+        val case_pnan_pinf as () = test (posNan, posInf) posNan
+        val case_pnan_ninf as () = test (posNan, negInf) negNan
+        val case_pnan_pnan as () = test (posNan, posNan) posNan
+        val case_pnan_nnan as () = test (posNan, negNan) negNan
       in () end
   fun copySign_nnan () =
       let
-        val copySign_nnan_p = test (negNan, 1.23) posNan
-        val copySign_nnan_n = test (negNan, ~1.23) negNan
-        val copySign_nnan_p0 = test (negNan, pos0) posNan
-        val copySign_nnan_n0 = test (negNan, neg0) negNan
-        val copySign_nnan_pinf = test (negNan, posInf) posNan
-        val copySign_nnan_ninf = test (negNan, negInf) negNan
-        val copySign_nnan_pnan = test (negNan, posNan) posNan
-        val copySign_nnan_nnan = test (negNan, negNan) negNan
+        val case_nnan_p as () = test (negNan, 1.23) posNan
+        val case_nnan_n as () = test (negNan, ~1.23) negNan
+        val case_nnan_p0 as () = test (negNan, pos0) posNan
+        val case_nnan_n0 as () = test (negNan, neg0) negNan
+        val case_nnan_pinf as () = test (negNan, posInf) posNan
+        val case_nnan_ninf as () = test (negNan, negInf) negNan
+        val case_nnan_pnan as () = test (negNan, posNan) posNan
+        val case_nnan_nnan as () = test (negNan, negNan) negNan
       in () end
 
   end (* test *)
@@ -721,95 +721,95 @@ struct
   in
   fun compare_pos () =
       let
-        val compare_p_p_l = test (1.23, 2.34) LESS
-        val compare_p_p_e = test (1.23, 1.23) EQUAL
-        val compare_p_p_g = test (2.34, 1.23) GREATER
-        val compare_p_n = test (1.23, ~2.34) GREATER
-        val compare_p_p0 = test (1.23, pos0) GREATER
-        val compare_p_n0 = test (1.23, neg0) GREATER
-        val compare_p_pinf = test (1.23, posInf) LESS
-        val compare_p_ninf = test (1.23, negInf) GREATER
-        val compare_p_pnan = testFail (1.23, posNan)
-        val compare_p_nnan = testFail (1.23, negNan)
+        val case_p_p_l as () = test (1.23, 2.34) LESS
+        val case_p_p_e as () = test (1.23, 1.23) EQUAL
+        val case_p_p_g as () = test (2.34, 1.23) GREATER
+        val case_p_n as () = test (1.23, ~2.34) GREATER
+        val case_p_p0 as () = test (1.23, pos0) GREATER
+        val case_p_n0 as () = test (1.23, neg0) GREATER
+        val case_p_pinf as () = test (1.23, posInf) LESS
+        val case_p_ninf as () = test (1.23, negInf) GREATER
+        val case_p_pnan as () = testFail (1.23, posNan)
+        val case_p_nnan as () = testFail (1.23, negNan)
       in () end
   fun compare_neg () =
       let
-        val compare_n_n_l = test (~2.34, ~1.23) LESS
-        val compare_n_n_e = test (~2.34, ~2.34) EQUAL
-        val compare_n_n_g = test (~1.23, ~2.34) GREATER
-        val compare_n_p = test (~2.34, 1.23) LESS
-        val compare_n_p0 = test (~1.23, pos0) LESS
-        val compare_n_n0 = test (~1.23, neg0) LESS
-        val compare_n_pinf = test (~1.23, posInf) LESS
-        val compare_n_ninf = test (~1.23, negInf) GREATER
-        val compare_n_pnan = testFail (~1.23, posNan) 
-        val compare_n_nnan = testFail (~1.23, negNan)
+        val case_n_n_l as () = test (~2.34, ~1.23) LESS
+        val case_n_n_e as () = test (~2.34, ~2.34) EQUAL
+        val case_n_n_g as () = test (~1.23, ~2.34) GREATER
+        val case_n_p as () = test (~2.34, 1.23) LESS
+        val case_n_p0 as () = test (~1.23, pos0) LESS
+        val case_n_n0 as () = test (~1.23, neg0) LESS
+        val case_n_pinf as () = test (~1.23, posInf) LESS
+        val case_n_ninf as () = test (~1.23, negInf) GREATER
+        val case_n_pnan as () = testFail (~1.23, posNan) 
+        val case_n_nnan as () = testFail (~1.23, negNan)
       in () end
   fun compare_p0 () =
       let
-        val compare_p0_p = test (pos0, 1.23) LESS
-        val compare_p0_n = test (pos0, ~1.23) GREATER
-        val compare_p0_p0 = test (pos0, pos0) EQUAL
-        val compare_p0_n0 = test (pos0, neg0) EQUAL
-        val compare_p0_pinf = test (pos0, posInf) LESS
-        val compare_p0_ninf = test (pos0, negInf) GREATER
-        val compare_p0_pnan = testFail (pos0, posNan) 
-        val compare_p0_nnan = testFail (pos0, negNan)
+        val case_p0_p as () = test (pos0, 1.23) LESS
+        val case_p0_n as () = test (pos0, ~1.23) GREATER
+        val case_p0_p0 as () = test (pos0, pos0) EQUAL
+        val case_p0_n0 as () = test (pos0, neg0) EQUAL
+        val case_p0_pinf as () = test (pos0, posInf) LESS
+        val case_p0_ninf as () = test (pos0, negInf) GREATER
+        val case_p0_pnan as () = testFail (pos0, posNan) 
+        val case_p0_nnan as () = testFail (pos0, negNan)
       in () end
   fun compare_n0 () =
       let
-        val compare_n0_p = test (neg0, 1.23) LESS
-        val compare_n0_n = test (neg0, ~1.23) GREATER
-        val compare_n0_p0 = test (neg0, pos0) EQUAL
-        val compare_n0_n0 = test (neg0, neg0) EQUAL
-        val compare_n0_pinf = test (neg0, posInf) LESS
-        val compare_n0_ninf = test (neg0, negInf) GREATER
-        val compare_n0_pnan = testFail (neg0, posNan)
-        val compare_n0_nnan = testFail (neg0, negNan)
+        val case_n0_p as () = test (neg0, 1.23) LESS
+        val case_n0_n as () = test (neg0, ~1.23) GREATER
+        val case_n0_p0 as () = test (neg0, pos0) EQUAL
+        val case_n0_n0 as () = test (neg0, neg0) EQUAL
+        val case_n0_pinf as () = test (neg0, posInf) LESS
+        val case_n0_ninf as () = test (neg0, negInf) GREATER
+        val case_n0_pnan as () = testFail (neg0, posNan)
+        val case_n0_nnan as () = testFail (neg0, negNan)
       in () end
   fun compare_pinf () =
       let
-        val compare_pinf_p = test (posInf, 1.23) GREATER
-        val compare_pinf_n = test (posInf, ~1.23) GREATER
-        val compare_pinf_p0 = test (posInf, pos0) GREATER
-        val compare_pinf_n0 = test (posInf, neg0) GREATER
-        val compare_pinf_pinf = test (posInf, posInf) EQUAL
-        val compare_pinf_ninf = test (posInf, negInf) GREATER
-        val compare_pinf_pnan = testFail (posInf, posNan)
-        val compare_pinf_nnan = testFail (posInf, negNan)
+        val case_pinf_p as () = test (posInf, 1.23) GREATER
+        val case_pinf_n as () = test (posInf, ~1.23) GREATER
+        val case_pinf_p0 as () = test (posInf, pos0) GREATER
+        val case_pinf_n0 as () = test (posInf, neg0) GREATER
+        val case_pinf_pinf as () = test (posInf, posInf) EQUAL
+        val case_pinf_ninf as () = test (posInf, negInf) GREATER
+        val case_pinf_pnan as () = testFail (posInf, posNan)
+        val case_pinf_nnan as () = testFail (posInf, negNan)
       in () end
   fun compare_ninf () =
       let
-        val compare_ninf_p = test (negInf, 1.23) LESS
-        val compare_ninf_n = test (negInf, ~1.23) LESS
-        val compare_ninf_p0 = test (negInf, pos0) LESS
-        val compare_ninf_n0 = test (negInf, neg0) LESS
-        val compare_ninf_pinf = test (negInf, posInf) LESS
-        val compare_ninf_ninf = test (negInf, negInf) EQUAL
-        val compare_ninf_pnan = testFail (negInf, posNan)
-        val compare_ninf_nnan = testFail (negInf, negNan)
+        val case_ninf_p as () = test (negInf, 1.23) LESS
+        val case_ninf_n as () = test (negInf, ~1.23) LESS
+        val case_ninf_p0 as () = test (negInf, pos0) LESS
+        val case_ninf_n0 as () = test (negInf, neg0) LESS
+        val case_ninf_pinf as () = test (negInf, posInf) LESS
+        val case_ninf_ninf as () = test (negInf, negInf) EQUAL
+        val case_ninf_pnan as () = testFail (negInf, posNan)
+        val case_ninf_nnan as () = testFail (negInf, negNan)
       in () end
   fun compare_pnan () =
       let
-        val compare_pnan_p = testFail (posNan, 1.23)
-        val compare_pnan_n = testFail (posNan, ~1.23)
-        val compare_pnan_p0 = testFail (posNan, pos0)
-        val compare_pnan_n0 = testFail (posNan, neg0)
-        val compare_pnan_pinf = testFail (posNan, posInf)
-        val compare_pnan_ninf = testFail (posNan, negInf)
-        val compare_pnan_pnan = testFail (posNan, posNan)
-        val compare_pnan_nnan = testFail (posNan, negNan)
+        val case_pnan_p as () = testFail (posNan, 1.23)
+        val case_pnan_n as () = testFail (posNan, ~1.23)
+        val case_pnan_p0 as () = testFail (posNan, pos0)
+        val case_pnan_n0 as () = testFail (posNan, neg0)
+        val case_pnan_pinf as () = testFail (posNan, posInf)
+        val case_pnan_ninf as () = testFail (posNan, negInf)
+        val case_pnan_pnan as () = testFail (posNan, posNan)
+        val case_pnan_nnan as () = testFail (posNan, negNan)
       in () end
   fun compare_nnan () =
       let
-        val compare_nnan_p = testFail (negNan, 1.23)
-        val compare_nnan_n = testFail (negNan, ~1.23)
-        val compare_nnan_p0 = testFail (negNan, pos0)
-        val compare_nnan_n0 = testFail (negNan, neg0)
-        val compare_nnan_pinf = testFail (negNan, posInf)
-        val compare_nnan_ninf = testFail (negNan, negInf)
-        val compare_nnan_pnan = testFail (negNan, posNan)
-        val compare_nnan_nnan = testFail (negNan, negNan)
+        val case_nnan_p as () = testFail (negNan, 1.23)
+        val case_nnan_n as () = testFail (negNan, ~1.23)
+        val case_nnan_p0 as () = testFail (negNan, pos0)
+        val case_nnan_n0 as () = testFail (negNan, neg0)
+        val case_nnan_pinf as () = testFail (negNan, posInf)
+        val case_nnan_ninf as () = testFail (negNan, negInf)
+        val case_nnan_pnan as () = testFail (negNan, posNan)
+        val case_nnan_nnan as () = testFail (negNan, negNan)
       in () end
   end (* local *)
 
@@ -820,95 +820,95 @@ struct
   in
   fun compareReal_pos () =
       let
-        val compareReal_p_p_l = test (1.23, 2.34) IR.LESS
-        val compareReal_p_p_e = test (1.23, 1.23) IR.EQUAL
-        val compareReal_p_p_g = test (2.34, 1.23) IR.GREATER
-        val compareReal_p_n = test (1.23, ~2.34) IR.GREATER
-        val compareReal_p_p0 = test (1.23, pos0) IR.GREATER
-        val compareReal_p_n0 = test (1.23, neg0) IR.GREATER
-        val compareReal_p_pinf = test (1.23, posInf) IR.LESS
-        val compareReal_p_ninf = test (1.23, negInf) IR.GREATER
-        val compareReal_p_pnan = test (1.23, posNan) IR.UNORDERED
-        val compareReal_p_nnan = test (1.23, negNan) IR.UNORDERED
+        val case_p_p_l as () = test (1.23, 2.34) IR.LESS
+        val case_p_p_e as () = test (1.23, 1.23) IR.EQUAL
+        val case_p_p_g as () = test (2.34, 1.23) IR.GREATER
+        val case_p_n as () = test (1.23, ~2.34) IR.GREATER
+        val case_p_p0 as () = test (1.23, pos0) IR.GREATER
+        val case_p_n0 as () = test (1.23, neg0) IR.GREATER
+        val case_p_pinf as () = test (1.23, posInf) IR.LESS
+        val case_p_ninf as () = test (1.23, negInf) IR.GREATER
+        val case_p_pnan as () = test (1.23, posNan) IR.UNORDERED
+        val case_p_nnan as () = test (1.23, negNan) IR.UNORDERED
       in () end
   fun compareReal_neg () =
       let
-        val compareReal_n_n_l = test (~2.34, ~1.23) IR.LESS
-        val compareReal_n_n_e = test (~2.34, ~2.34) IR.EQUAL
-        val compareReal_n_n_g = test (~1.23, ~2.34) IR.GREATER
-        val compareReal_n_p = test (~2.34, 1.23) IR.LESS
-        val compareReal_n_p0 = test (~1.23, pos0) IR.LESS
-        val compareReal_n_n0 = test (~1.23, neg0) IR.LESS
-        val compareReal_n_pinf = test (~1.23, posInf) IR.LESS
-        val compareReal_n_ninf = test (~1.23, negInf) IR.GREATER
-        val compareReal_n_pnan = test (~1.23, posNan)  IR.UNORDERED
-        val compareReal_n_nnan = test (~1.23, negNan) IR.UNORDERED
+        val case_n_n_l as () = test (~2.34, ~1.23) IR.LESS
+        val case_n_n_e as () = test (~2.34, ~2.34) IR.EQUAL
+        val case_n_n_g as () = test (~1.23, ~2.34) IR.GREATER
+        val case_n_p as () = test (~2.34, 1.23) IR.LESS
+        val case_n_p0 as () = test (~1.23, pos0) IR.LESS
+        val case_n_n0 as () = test (~1.23, neg0) IR.LESS
+        val case_n_pinf as () = test (~1.23, posInf) IR.LESS
+        val case_n_ninf as () = test (~1.23, negInf) IR.GREATER
+        val case_n_pnan as () = test (~1.23, posNan)  IR.UNORDERED
+        val case_n_nnan as () = test (~1.23, negNan) IR.UNORDERED
       in () end
   fun compareReal_p0 () =
       let
-        val compareReal_p0_p = test (pos0, 1.23) IR.LESS
-        val compareReal_p0_n = test (pos0, ~1.23) IR.GREATER
-        val compareReal_p0_p0 = test (pos0, pos0) IR.EQUAL
-        val compareReal_p0_n0 = test (pos0, neg0) IR.EQUAL
-        val compareReal_p0_pinf = test (pos0, posInf) IR.LESS
-        val compareReal_p0_ninf = test (pos0, negInf) IR.GREATER
-        val compareReal_p0_pnan = test (pos0, posNan)  IR.UNORDERED
-        val compareReal_p0_nnan = test (pos0, negNan) IR.UNORDERED
+        val case_p0_p as () = test (pos0, 1.23) IR.LESS
+        val case_p0_n as () = test (pos0, ~1.23) IR.GREATER
+        val case_p0_p0 as () = test (pos0, pos0) IR.EQUAL
+        val case_p0_n0 as () = test (pos0, neg0) IR.EQUAL
+        val case_p0_pinf as () = test (pos0, posInf) IR.LESS
+        val case_p0_ninf as () = test (pos0, negInf) IR.GREATER
+        val case_p0_pnan as () = test (pos0, posNan)  IR.UNORDERED
+        val case_p0_nnan as () = test (pos0, negNan) IR.UNORDERED
       in () end
   fun compareReal_n0 () =
       let
-        val compareReal_n0_p = test (neg0, 1.23) IR.LESS
-        val compareReal_n0_n = test (neg0, ~1.23) IR.GREATER
-        val compareReal_n0_p0 = test (neg0, pos0) IR.EQUAL
-        val compareReal_n0_n0 = test (neg0, neg0) IR.EQUAL
-        val compareReal_n0_pinf = test (neg0, posInf) IR.LESS
-        val compareReal_n0_ninf = test (neg0, negInf) IR.GREATER
-        val compareReal_n0_pnan = test (neg0, posNan) IR.UNORDERED
-        val compareReal_n0_nnan = test (neg0, negNan) IR.UNORDERED
+        val case_n0_p as () = test (neg0, 1.23) IR.LESS
+        val case_n0_n as () = test (neg0, ~1.23) IR.GREATER
+        val case_n0_p0 as () = test (neg0, pos0) IR.EQUAL
+        val case_n0_n0 as () = test (neg0, neg0) IR.EQUAL
+        val case_n0_pinf as () = test (neg0, posInf) IR.LESS
+        val case_n0_ninf as () = test (neg0, negInf) IR.GREATER
+        val case_n0_pnan as () = test (neg0, posNan) IR.UNORDERED
+        val case_n0_nnan as () = test (neg0, negNan) IR.UNORDERED
       in () end
   fun compareReal_pinf () =
       let
-        val compareReal_pinf_p = test (posInf, 1.23) IR.GREATER
-        val compareReal_pinf_n = test (posInf, ~1.23) IR.GREATER
-        val compareReal_pinf_p0 = test (posInf, pos0) IR.GREATER
-        val compareReal_pinf_n0 = test (posInf, neg0) IR.GREATER
-        val compareReal_pinf_pinf = test (posInf, posInf) IR.EQUAL
-        val compareReal_pinf_ninf = test (posInf, negInf) IR.GREATER
-        val compareReal_pinf_pnan = test (posInf, posNan) IR.UNORDERED
-        val compareReal_pinf_nnan = test (posInf, negNan) IR.UNORDERED
+        val case_pinf_p as () = test (posInf, 1.23) IR.GREATER
+        val case_pinf_n as () = test (posInf, ~1.23) IR.GREATER
+        val case_pinf_p0 as () = test (posInf, pos0) IR.GREATER
+        val case_pinf_n0 as () = test (posInf, neg0) IR.GREATER
+        val case_pinf_pinf as () = test (posInf, posInf) IR.EQUAL
+        val case_pinf_ninf as () = test (posInf, negInf) IR.GREATER
+        val case_pinf_pnan as () = test (posInf, posNan) IR.UNORDERED
+        val case_pinf_nnan as () = test (posInf, negNan) IR.UNORDERED
       in () end
   fun compareReal_ninf () =
       let
-        val compareReal_ninf_p = test (negInf, 1.23) IR.LESS
-        val compareReal_ninf_n = test (negInf, ~1.23) IR.LESS
-        val compareReal_ninf_p0 = test (negInf, pos0) IR.LESS
-        val compareReal_ninf_n0 = test (negInf, neg0) IR.LESS
-        val compareReal_ninf_pinf = test (negInf, posInf) IR.LESS
-        val compareReal_ninf_ninf = test (negInf, negInf) IR.EQUAL
-        val compareReal_ninf_pnan = test (negInf, posNan) IR.UNORDERED
-        val compareReal_ninf_nnan = test (negInf, negNan) IR.UNORDERED
+        val case_ninf_p as () = test (negInf, 1.23) IR.LESS
+        val case_ninf_n as () = test (negInf, ~1.23) IR.LESS
+        val case_ninf_p0 as () = test (negInf, pos0) IR.LESS
+        val case_ninf_n0 as () = test (negInf, neg0) IR.LESS
+        val case_ninf_pinf as () = test (negInf, posInf) IR.LESS
+        val case_ninf_ninf as () = test (negInf, negInf) IR.EQUAL
+        val case_ninf_pnan as () = test (negInf, posNan) IR.UNORDERED
+        val case_ninf_nnan as () = test (negInf, negNan) IR.UNORDERED
       in () end
   fun compareReal_pnan () =
       let
-        val compareReal_pnan_p = test (posNan, 1.23) IR.UNORDERED
-        val compareReal_pnan_n = test (posNan, ~1.23) IR.UNORDERED
-        val compareReal_pnan_p0 = test (posNan, pos0) IR.UNORDERED
-        val compareReal_pnan_n0 = test (posNan, neg0) IR.UNORDERED
-        val compareReal_pnan_pinf = test (posNan, posInf) IR.UNORDERED
-        val compareReal_pnan_ninf = test (posNan, negInf) IR.UNORDERED
-        val compareReal_pnan_pnan = test (posNan, posNan) IR.UNORDERED
-        val compareReal_pnan_nnan = test (posNan, negNan) IR.UNORDERED
+        val case_pnan_p as () = test (posNan, 1.23) IR.UNORDERED
+        val case_pnan_n as () = test (posNan, ~1.23) IR.UNORDERED
+        val case_pnan_p0 as () = test (posNan, pos0) IR.UNORDERED
+        val case_pnan_n0 as () = test (posNan, neg0) IR.UNORDERED
+        val case_pnan_pinf as () = test (posNan, posInf) IR.UNORDERED
+        val case_pnan_ninf as () = test (posNan, negInf) IR.UNORDERED
+        val case_pnan_pnan as () = test (posNan, posNan) IR.UNORDERED
+        val case_pnan_nnan as () = test (posNan, negNan) IR.UNORDERED
       in () end
   fun compareReal_nnan () =
       let
-        val compareReal_nnan_p = test (negNan, 1.23) IR.UNORDERED
-        val compareReal_nnan_n = test (negNan, ~1.23) IR.UNORDERED
-        val compareReal_nnan_p0 = test (negNan, pos0) IR.UNORDERED
-        val compareReal_nnan_n0 = test (negNan, neg0) IR.UNORDERED
-        val compareReal_nnan_pinf = test (negNan, posInf) IR.UNORDERED
-        val compareReal_nnan_ninf = test (negNan, negInf) IR.UNORDERED
-        val compareReal_nnan_pnan = test (negNan, posNan) IR.UNORDERED
-        val compareReal_nnan_nnan = test (negNan, negNan) IR.UNORDERED
+        val case_nnan_p as () = test (negNan, 1.23) IR.UNORDERED
+        val case_nnan_n as () = test (negNan, ~1.23) IR.UNORDERED
+        val case_nnan_p0 as () = test (negNan, pos0) IR.UNORDERED
+        val case_nnan_n0 as () = test (negNan, neg0) IR.UNORDERED
+        val case_nnan_pinf as () = test (negNan, posInf) IR.UNORDERED
+        val case_nnan_ninf as () = test (negNan, negInf) IR.UNORDERED
+        val case_nnan_pnan as () = test (negNan, posNan) IR.UNORDERED
+        val case_nnan_nnan as () = test (negNan, negNan) IR.UNORDERED
       in () end
 
   end (* local *)
@@ -931,95 +931,95 @@ struct
   in
   fun binComp_pos () =
       let
-        val binComp_p_p_l = test (1.23, 2.34) TTFF
-        val binComp_p_p_g = test (2.34, 1.23) FFTT
-        val binComp_p_p_e = test (1.23, 1.23) FTTF
-        val binComp_p_n = test (1.23, ~2.34) FFTT
-        val binComp_p_p0 = test (1.23, pos0) FFTT
-        val binComp_p_n0 = test (1.23, neg0) FFTT
-        val binComp_p_pinf = test (1.23, posInf) TTFF
-        val binComp_p_ninf = test (1.23, negInf) FFTT
-        val binComp_p_pnan = test (1.23, posNan) FFFF
-        val binComp_p_nnan = test (1.23, negNan) FFFF
+        val case_p_p_l as () = test (1.23, 2.34) TTFF
+        val case_p_p_g as () = test (2.34, 1.23) FFTT
+        val case_p_p_e as () = test (1.23, 1.23) FTTF
+        val case_p_n as () = test (1.23, ~2.34) FFTT
+        val case_p_p0 as () = test (1.23, pos0) FFTT
+        val case_p_n0 as () = test (1.23, neg0) FFTT
+        val case_p_pinf as () = test (1.23, posInf) TTFF
+        val case_p_ninf as () = test (1.23, negInf) FFTT
+        val case_p_pnan as () = test (1.23, posNan) FFFF
+        val case_p_nnan as () = test (1.23, negNan) FFFF
       in () end
   fun binComp_neg () =
       let
-        val binComp_n_n_l = test (~2.34, ~1.23) TTFF
-        val binComp_n_n_g = test (~1.23, ~2.34) FFTT
-        val binComp_n_n_e = test (~2.34, ~2.34) FTTF
-        val binComp_n_p = test (~2.34, 1.23) TTFF
-        val binComp_n_p0 = test (~1.23, pos0) TTFF
-        val binComp_n_n0 = test (~1.23, neg0) TTFF
-        val binComp_n_pinf = test (~1.23, posInf) TTFF
-        val binComp_n_ninf = test (~1.23, negInf) FFTT
-        val binComp_n_pnan = test (~1.23, posNan) FFFF
-        val binComp_n_nnan = test (~1.23, negNan) FFFF
+        val case_n_n_l as () = test (~2.34, ~1.23) TTFF
+        val case_n_n_g as () = test (~1.23, ~2.34) FFTT
+        val case_n_n_e as () = test (~2.34, ~2.34) FTTF
+        val case_n_p as () = test (~2.34, 1.23) TTFF
+        val case_n_p0 as () = test (~1.23, pos0) TTFF
+        val case_n_n0 as () = test (~1.23, neg0) TTFF
+        val case_n_pinf as () = test (~1.23, posInf) TTFF
+        val case_n_ninf as () = test (~1.23, negInf) FFTT
+        val case_n_pnan as () = test (~1.23, posNan) FFFF
+        val case_n_nnan as () = test (~1.23, negNan) FFFF
       in () end
   fun binComp_p0 () =
       let
-        val binComp_p0_n = test (pos0, ~1.23) FFTT
-        val binComp_p0_p = test (pos0, 1.23) TTFF
-        val binComp_p0_p0 = test (pos0, pos0) FTTF
-        val binComp_p0_n0 = test (pos0, neg0) FTTF
-        val binComp_p0_pinf = test (pos0, posInf) TTFF
-        val binComp_p0_ninf = test (pos0, negInf) FFTT
-        val binComp_p0_pnan = test (pos0, posNan) FFFF
-        val binComp_p0_nnan = test (pos0, negNan) FFFF
+        val case_p0_n as () = test (pos0, ~1.23) FFTT
+        val case_p0_p as () = test (pos0, 1.23) TTFF
+        val case_p0_p0 as () = test (pos0, pos0) FTTF
+        val case_p0_n0 as () = test (pos0, neg0) FTTF
+        val case_p0_pinf as () = test (pos0, posInf) TTFF
+        val case_p0_ninf as () = test (pos0, negInf) FFTT
+        val case_p0_pnan as () = test (pos0, posNan) FFFF
+        val case_p0_nnan as () = test (pos0, negNan) FFFF
       in () end
   fun binComp_n0 () =
       let
-        val binComp_n0_n = test (neg0, ~1.23) FFTT
-        val binComp_n0_p = test (neg0, 1.23) TTFF
-        val binComp_n0_p0 = test (neg0, pos0) FTTF
-        val binComp_n0_n0 = test (neg0, neg0) FTTF
-        val binComp_n0_pinf = test (neg0, posInf) TTFF
-        val binComp_n0_ninf = test (neg0, negInf) FFTT
-        val binComp_n0_pnan = test (neg0, posNan) FFFF
-        val binComp_n0_nnan = test (neg0, negNan) FFFF
+        val case_n0_n as () = test (neg0, ~1.23) FFTT
+        val case_n0_p as () = test (neg0, 1.23) TTFF
+        val case_n0_p0 as () = test (neg0, pos0) FTTF
+        val case_n0_n0 as () = test (neg0, neg0) FTTF
+        val case_n0_pinf as () = test (neg0, posInf) TTFF
+        val case_n0_ninf as () = test (neg0, negInf) FFTT
+        val case_n0_pnan as () = test (neg0, posNan) FFFF
+        val case_n0_nnan as () = test (neg0, negNan) FFFF
       in () end
   fun binComp_pinf () =
       let
-        val binComp_pinf_n = test (posInf, ~1.23) FFTT
-        val binComp_pinf_p = test (posInf, 1.23) FFTT
-        val binComp_pinf_p0 = test (posInf, pos0) FFTT
-        val binComp_pinf_n0 = test (posInf, neg0) FFTT
-        val binComp_pinf_pinf = test (posInf, posInf) FTTF
-        val binComp_pinf_ninf = test (posInf, negInf) FFTT
-        val binComp_pinf_pnan = test (posInf, posNan) FFFF
-        val binComp_pinf_nnan = test (posInf, negNan) FFFF
+        val case_pinf_n as () = test (posInf, ~1.23) FFTT
+        val case_pinf_p as () = test (posInf, 1.23) FFTT
+        val case_pinf_p0 as () = test (posInf, pos0) FFTT
+        val case_pinf_n0 as () = test (posInf, neg0) FFTT
+        val case_pinf_pinf as () = test (posInf, posInf) FTTF
+        val case_pinf_ninf as () = test (posInf, negInf) FFTT
+        val case_pinf_pnan as () = test (posInf, posNan) FFFF
+        val case_pinf_nnan as () = test (posInf, negNan) FFFF
       in () end
   fun binComp_ninf () =
       let
-        val binComp_ninf_n = test (negInf, ~1.23) TTFF
-        val binComp_ninf_p = test (negInf, 1.23) TTFF
-        val binComp_ninf_p0 = test (negInf, pos0) TTFF
-        val binComp_ninf_n0 = test (negInf, neg0) TTFF
-        val binComp_ninf_pinf = test (negInf, posInf) TTFF
-        val binComp_ninf_ninf = test (negInf, negInf) FTTF
-        val binComp_ninf_pnan = test (negInf, posNan) FFFF
-        val binComp_ninf_nnan = test (negInf, negNan) FFFF
+        val case_ninf_n as () = test (negInf, ~1.23) TTFF
+        val case_ninf_p as () = test (negInf, 1.23) TTFF
+        val case_ninf_p0 as () = test (negInf, pos0) TTFF
+        val case_ninf_n0 as () = test (negInf, neg0) TTFF
+        val case_ninf_pinf as () = test (negInf, posInf) TTFF
+        val case_ninf_ninf as () = test (negInf, negInf) FTTF
+        val case_ninf_pnan as () = test (negInf, posNan) FFFF
+        val case_ninf_nnan as () = test (negInf, negNan) FFFF
       in () end
   fun binComp_pnan () =
       let
-        val binComp_pnan_n = test (posNan, ~1.23) FFFF
-        val binComp_pnan_p = test (posNan, 1.23) FFFF
-        val binComp_pnan_pnan = test (posNan, posNan) FFFF
-        val binComp_pnan_nnan = test (posNan, negNan) FFFF
-        val binComp_pnan_pinf = test (posNan, posInf) FFFF
-        val binComp_pnan_ninf = test (posNan, negInf) FFFF
-        val binComp_pnan_pnan = test (posNan, posNan) FFFF
-        val binComp_pnan_nnan = test (posNan, negNan) FFFF
+        val case_pnan_n as () = test (posNan, ~1.23) FFFF
+        val case_pnan_p as () = test (posNan, 1.23) FFFF
+        val case_pnan_pnan as () = test (posNan, posNan) FFFF
+        val case_pnan_nnan as () = test (posNan, negNan) FFFF
+        val case_pnan_pinf as () = test (posNan, posInf) FFFF
+        val case_pnan_ninf as () = test (posNan, negInf) FFFF
+        val case_pnan_pnan as () = test (posNan, posNan) FFFF
+        val case_pnan_nnan as () = test (posNan, negNan) FFFF
       in () end
   fun binComp_nnan () =
       let
-        val binComp_nnan_n = test (negNan, ~1.23) FFFF
-        val binComp_nnan_p = test (negNan, 1.23) FFFF
-        val binComp_nnan_pnan = test (negNan, posNan) FFFF
-        val binComp_nnan_nnan = test (negNan, negNan) FFFF
-        val binComp_nnan_pinf = test (negNan, posInf) FFFF
-        val binComp_nnan_ninf = test (negNan, negInf) FFFF
-        val binComp_nnan_pnan = test (negNan, posNan) FFFF
-        val binComp_nnan_nnan = test (negNan, negNan) FFFF
+        val case_nnan_n as () = test (negNan, ~1.23) FFFF
+        val case_nnan_p as () = test (negNan, 1.23) FFFF
+        val case_nnan_pnan as () = test (negNan, posNan) FFFF
+        val case_nnan_nnan as () = test (negNan, negNan) FFFF
+        val case_nnan_pinf as () = test (negNan, posInf) FFFF
+        val case_nnan_ninf as () = test (negNan, negInf) FFFF
+        val case_nnan_pnan as () = test (negNan, posNan) FFFF
+        val case_nnan_nnan as () = test (negNan, negNan) FFFF
       in () end
   end (* inner local *)
 
@@ -1032,95 +1032,95 @@ struct
   in
   fun IEEEEq_pos () =
       let
-        val IEEEEq_p_p_l = test (1.23, 2.34) FTFF
-        val IEEEEq_p_p_g = test (2.34, 1.23) FTFF
-        val IEEEEq_p_p_e = test (1.23, 1.23) TFTF
-        val IEEEEq_p_n = test (1.23, ~2.34) FTFF
-        val IEEEEq_p_p0 = test (1.23, pos0) FTFF
-        val IEEEEq_p_n0 = test (1.23, neg0) FTFF
-        val IEEEEq_p_pinf = test (1.23, posInf) FTFF
-        val IEEEEq_p_ninf = test (1.23, negInf) FTFF
-        val IEEEEq_p_pnan = test (1.23, posNan) FTTT
-        val IEEEEq_p_nnan = test (1.23, negNan) FTTT
+        val case_p_p_l as () = test (1.23, 2.34) FTFF
+        val case_p_p_g as () = test (2.34, 1.23) FTFF
+        val case_p_p_e as () = test (1.23, 1.23) TFTF
+        val case_p_n as () = test (1.23, ~2.34) FTFF
+        val case_p_p0 as () = test (1.23, pos0) FTFF
+        val case_p_n0 as () = test (1.23, neg0) FTFF
+        val case_p_pinf as () = test (1.23, posInf) FTFF
+        val case_p_ninf as () = test (1.23, negInf) FTFF
+        val case_p_pnan as () = test (1.23, posNan) FTTT
+        val case_p_nnan as () = test (1.23, negNan) FTTT
       in () end
   fun IEEEEq_neg () =
       let
-        val IEEEEq_n_n_l = test (~2.34, ~1.23) FTFF
-        val IEEEEq_n_n_g = test (~1.23, ~2.34) FTFF
-        val IEEEEq_n_n_e = test (~2.34, ~2.34) TFTF
-        val IEEEEq_n_p = test (~2.34, 1.23) FTFF
-        val IEEEEq_n_p0 = test (~1.23, pos0) FTFF
-        val IEEEEq_n_n0 = test (~1.23, neg0) FTFF
-        val IEEEEq_n_pinf = test (~1.23, posInf) FTFF
-        val IEEEEq_n_ninf = test (~1.23, negInf) FTFF
-        val IEEEEq_n_pnan = test (~1.23, posNan) FTTT
-        val IEEEEq_n_nnan = test (~1.23, negNan) FTTT
+        val case_n_n_l as () = test (~2.34, ~1.23) FTFF
+        val case_n_n_g as () = test (~1.23, ~2.34) FTFF
+        val case_n_n_e as () = test (~2.34, ~2.34) TFTF
+        val case_n_p as () = test (~2.34, 1.23) FTFF
+        val case_n_p0 as () = test (~1.23, pos0) FTFF
+        val case_n_n0 as () = test (~1.23, neg0) FTFF
+        val case_n_pinf as () = test (~1.23, posInf) FTFF
+        val case_n_ninf as () = test (~1.23, negInf) FTFF
+        val case_n_pnan as () = test (~1.23, posNan) FTTT
+        val case_n_nnan as () = test (~1.23, negNan) FTTT
       in () end
   fun IEEEEq_p0 () =
       let
-        val IEEEEq_p0_n = test (pos0, ~1.23) FTFF
-        val IEEEEq_p0_p = test (pos0, 1.23) FTFF
-        val IEEEEq_p0_p0 = test (pos0, pos0) TFTF
-        val IEEEEq_p0_n0 = test (pos0, neg0) TFTF
-        val IEEEEq_p0_pinf = test (pos0, posInf) FTFF
-        val IEEEEq_p0_ninf = test (pos0, negInf) FTFF
-        val IEEEEq_p0_pnan = test (pos0, posNan) FTTT
-        val IEEEEq_p0_nnan = test (pos0, negNan) FTTT
+        val case_p0_n as () = test (pos0, ~1.23) FTFF
+        val case_p0_p as () = test (pos0, 1.23) FTFF
+        val case_p0_p0 as () = test (pos0, pos0) TFTF
+        val case_p0_n0 as () = test (pos0, neg0) TFTF
+        val case_p0_pinf as () = test (pos0, posInf) FTFF
+        val case_p0_ninf as () = test (pos0, negInf) FTFF
+        val case_p0_pnan as () = test (pos0, posNan) FTTT
+        val case_p0_nnan as () = test (pos0, negNan) FTTT
       in () end
   fun IEEEEq_n0 () =
       let
-        val IEEEEq_n0_n = test (neg0, ~1.23) FTFF
-        val IEEEEq_n0_p = test (neg0, 1.23) FTFF
-        val IEEEEq_n0_p0 = test (neg0, pos0) TFTF
-        val IEEEEq_n0_n0 = test (neg0, neg0) TFTF
-        val IEEEEq_n0_pinf = test (neg0, posInf) FTFF
-        val IEEEEq_n0_ninf = test (neg0, negInf) FTFF
-        val IEEEEq_n0_pnan = test (neg0, posNan) FTTT
-        val IEEEEq_n0_nnan = test (neg0, negNan) FTTT
+        val case_n0_n as () = test (neg0, ~1.23) FTFF
+        val case_n0_p as () = test (neg0, 1.23) FTFF
+        val case_n0_p0 as () = test (neg0, pos0) TFTF
+        val case_n0_n0 as () = test (neg0, neg0) TFTF
+        val case_n0_pinf as () = test (neg0, posInf) FTFF
+        val case_n0_ninf as () = test (neg0, negInf) FTFF
+        val case_n0_pnan as () = test (neg0, posNan) FTTT
+        val case_n0_nnan as () = test (neg0, negNan) FTTT
       in () end
   fun IEEEEq_pinf () =
       let
-        val IEEEEq_pinf_n = test (posInf, ~1.23) FTFF
-        val IEEEEq_pinf_p = test (posInf, 1.23) FTFF
-        val IEEEEq_pinf_p0 = test (posInf, pos0) FTFF
-        val IEEEEq_pinf_n0 = test (posInf, neg0) FTFF
-        val IEEEEq_pinf_pinf = test (posInf, posInf) TFTF
-        val IEEEEq_pinf_ninf = test (posInf, negInf) FTFF
-        val IEEEEq_pinf_pnan = test (posInf, posNan) FTTT
-        val IEEEEq_pinf_nnan = test (posInf, negNan) FTTT
+        val case_pinf_n as () = test (posInf, ~1.23) FTFF
+        val case_pinf_p as () = test (posInf, 1.23) FTFF
+        val case_pinf_p0 as () = test (posInf, pos0) FTFF
+        val case_pinf_n0 as () = test (posInf, neg0) FTFF
+        val case_pinf_pinf as () = test (posInf, posInf) TFTF
+        val case_pinf_ninf as () = test (posInf, negInf) FTFF
+        val case_pinf_pnan as () = test (posInf, posNan) FTTT
+        val case_pinf_nnan as () = test (posInf, negNan) FTTT
       in () end
   fun IEEEEq_ninf () =
       let
-        val IEEEEq_ninf_n = test (negInf, ~1.23) FTFF
-        val IEEEEq_ninf_p = test (negInf, 1.23) FTFF
-        val IEEEEq_ninf_p0 = test (negInf, pos0) FTFF
-        val IEEEEq_ninf_n0 = test (negInf, neg0) FTFF
-        val IEEEEq_ninf_pinf = test (negInf, posInf) FTFF
-        val IEEEEq_ninf_ninf = test (negInf, negInf) TFTF
-        val IEEEEq_ninf_pnan = test (negInf, posNan) FTTT
-        val IEEEEq_ninf_nnan = test (negInf, negNan) FTTT
+        val case_ninf_n as () = test (negInf, ~1.23) FTFF
+        val case_ninf_p as () = test (negInf, 1.23) FTFF
+        val case_ninf_p0 as () = test (negInf, pos0) FTFF
+        val case_ninf_n0 as () = test (negInf, neg0) FTFF
+        val case_ninf_pinf as () = test (negInf, posInf) FTFF
+        val case_ninf_ninf as () = test (negInf, negInf) TFTF
+        val case_ninf_pnan as () = test (negInf, posNan) FTTT
+        val case_ninf_nnan as () = test (negInf, negNan) FTTT
       in () end
   fun IEEEEq_pnan () =
       let
-        val IEEEEq_pnan_n = test (posNan, ~1.23) FTTT
-        val IEEEEq_pnan_p = test (posNan, 1.23) FTTT
-        val IEEEEq_pnan_pnan = test (posNan, posNan) FTTT
-        val IEEEEq_pnan_nnan = test (posNan, negNan) FTTT
-        val IEEEEq_pnan_pinf = test (posNan, posInf) FTTT
-        val IEEEEq_pnan_ninf = test (posNan, negInf) FTTT
-        val IEEEEq_pnan_pnan = test (posNan, posNan) FTTT
-        val IEEEEq_pnan_nnan = test (posNan, negNan) FTTT
+        val case_pnan_n as () = test (posNan, ~1.23) FTTT
+        val case_pnan_p as () = test (posNan, 1.23) FTTT
+        val case_pnan_pnan as () = test (posNan, posNan) FTTT
+        val case_pnan_nnan as () = test (posNan, negNan) FTTT
+        val case_pnan_pinf as () = test (posNan, posInf) FTTT
+        val case_pnan_ninf as () = test (posNan, negInf) FTTT
+        val case_pnan_pnan as () = test (posNan, posNan) FTTT
+        val case_pnan_nnan as () = test (posNan, negNan) FTTT
       in () end
   fun IEEEEq_nnan () =
       let
-        val IEEEEq_nnan_n = test (negNan, ~1.23) FTTT
-        val IEEEEq_nnan_p = test (negNan, 1.23) FTTT
-        val IEEEEq_nnan_pnan = test (negNan, posNan) FTTT
-        val IEEEEq_nnan_nnan = test (negNan, negNan) FTTT
-        val IEEEEq_nnan_pinf = test (negNan, posInf) FTTT
-        val IEEEEq_nnan_ninf = test (negNan, negInf) FTTT
-        val IEEEEq_nnan_pnan = test (negNan, posNan) FTTT
-        val IEEEEq_nnan_nnan = test (negNan, negNan) FTTT
+        val case_nnan_n as () = test (negNan, ~1.23) FTTT
+        val case_nnan_p as () = test (negNan, 1.23) FTTT
+        val case_nnan_pnan as () = test (negNan, posNan) FTTT
+        val case_nnan_nnan as () = test (negNan, negNan) FTTT
+        val case_nnan_pinf as () = test (negNan, posInf) FTTT
+        val case_nnan_ninf as () = test (negNan, negInf) FTTT
+        val case_nnan_pnan as () = test (negNan, posNan) FTTT
+        val case_nnan_nnan as () = test (negNan, negNan) FTTT
       in () end
   end (* inner local *)
 
@@ -1132,14 +1132,14 @@ struct
   in
   fun isFinite001 () =
       let
-        val isFinite_p = test 1.23 true
-        val isFinite_n = test ~2.34 true
-        val isFinite_p0 = test pos0 true
-        val isFinite_n0 = test neg0 true
-        val isFinite_pinf = test posInf false
-        val isFinite_ninf = test negInf false
-        val isFinite_pnan = test posNan false
-        val isFinite_nnan = test negNan false
+        val case_p as () = test 1.23 true
+        val case_n as () = test ~2.34 true
+        val case_p0 as () = test pos0 true
+        val case_n0 as () = test neg0 true
+        val case_pinf as () = test posInf false
+        val case_ninf as () = test negInf false
+        val case_pnan as () = test posNan false
+        val case_nnan as () = test negNan false
       in () end
   end
 
@@ -1149,14 +1149,14 @@ struct
   in
   fun isNan001 () =
       let
-        val isNan_p = test 1.23 false
-        val isNan_n = test ~2.34 false
-        val isNan_p0 = test pos0 false
-        val isNan_n0 = test neg0 false
-        val isNan_pinf = test posInf false
-        val isNan_ninf = test negInf false
-        val isNan_pnan = test posNan true
-        val isNan_nnan = test negNan true
+        val case_p as () = test 1.23 false
+        val case_n as () = test ~2.34 false
+        val case_p0 as () = test pos0 false
+        val case_n0 as () = test neg0 false
+        val case_pinf as () = test posInf false
+        val case_ninf as () = test negInf false
+        val case_pnan as () = test posNan true
+        val case_nnan as () = test negNan true
       in () end
   end
 
@@ -1166,14 +1166,14 @@ struct
   in
   fun isNormal001 () =
       let
-        val isNormal_p = test 1.23 true
-        val isNormal_n = test ~2.34 true
-        val isNormal_p0 = test pos0 false
-        val isNormal_n0 = test neg0 false
-        val isNormal_pinf = test posInf false
-        val isNormal_ninf = test negInf false
-        val isNormal_pnan = test posNan false
-        val isNormal_nnan = test negNan false
+        val case_p as () = test 1.23 true
+        val case_n as () = test ~2.34 true
+        val case_p0 as () = test pos0 false
+        val case_n0 as () = test neg0 false
+        val case_pinf as () = test posInf false
+        val case_ninf as () = test negInf false
+        val case_pnan as () = test posNan false
+        val case_nnan as () = test negNan false
       in () end
   end
 
@@ -1184,14 +1184,14 @@ struct
   fun class001 () =
       let
         (* ToDo : how to test SUBNORMAL ? *)
-        val class_p = test 1.23 IR.NORMAL
-        val class_n = test ~2.34 IR.NORMAL
-        val class_p0 = test pos0 IR.ZERO
-        val class_n0 = test neg0 IR.ZERO
-        val class_pinf = test posInf IR.INF
-        val class_ninf = test negInf IR.INF
-        val class_pnan = test posNan IR.NAN
-        val class_nnan = test negNan IR.NAN
+        val case_p as () = test 1.23 IR.NORMAL
+        val case_n as () = test ~2.34 IR.NORMAL
+        val case_p0 as () = test pos0 IR.ZERO
+        val case_n0 as () = test neg0 IR.ZERO
+        val case_pinf as () = test posInf IR.INF
+        val case_ninf as () = test negInf IR.INF
+        val case_pnan as () = test posNan IR.NAN
+        val case_nnan as () = test negNan IR.NAN
       in () end
   end
 
@@ -1209,17 +1209,17 @@ struct
          *   1.0/radix <= abs(man) < 1.0
          * If radix = 2, the absolute of 'man' is in [0.5, 1.0), for example.
          *)
-        val toManExp_p =
+        val case_p as () =
             test (0.567 * R.fromInt R.radix) {man = 0.567, exp = 1}
-        val toManExp_n =
+        val case_n as () =
             test (~0.567 * R.fromInt R.radix) {man = ~0.567, exp = 1}
-        val toManExp_p0 = test pos0 {man = pos0, exp = 0}
-        val toManExp_n0 = test neg0 {man = neg0, exp = 0}
+        val case_p0 as () = test pos0 {man = pos0, exp = 0}
+        val case_n0 as () = test neg0 {man = neg0, exp = 0}
 
-        val toManExp_pinf = testAbnormal posInf posInf
-        val toManExp_ninf = testAbnormal negInf negInf
-        val toManExp_pnan = testAbnormal posNan posNan
-        val toManExp_nnan = testAbnormal negNan negNan
+        val case_pinf as () = testAbnormal posInf posInf
+        val case_ninf as () = testAbnormal negInf negInf
+        val case_pnan as () = testAbnormal posNan posNan
+        val case_nnan as () = testAbnormal negNan negNan
       in () end
   end (* local *)
 
@@ -1229,47 +1229,47 @@ struct
   in
   fun fromManExp001 () =
       let
-        val fromManExp_p0_0 = test {man = pos0, exp = 0} pos0
-        val fromManExp_p0_p = test {man = pos0, exp = 4} pos0
-        val fromManExp_p0_n = test {man = pos0, exp = ~4} pos0
+        val case_p0_0 as () = test {man = pos0, exp = 0} pos0
+        val case_p0_p as () = test {man = pos0, exp = 4} pos0
+        val case_p0_n as () = test {man = pos0, exp = ~4} pos0
 
-        val fromManExp_n0_0 = test {man = neg0, exp = 0} neg0
-        val fromManExp_n0_p = test {man = neg0, exp = 4} neg0
-        val fromManExp_n0_n = test {man = neg0, exp = ~4} neg0
+        val case_n0_0 as () = test {man = neg0, exp = 0} neg0
+        val case_n0_p as () = test {man = neg0, exp = 4} neg0
+        val case_n0_n as () = test {man = neg0, exp = ~4} neg0
 
-        val fromManExp_p_0 = test {man = 12.3, exp = 0} 12.3
-        val fromManExp_p_p =
+        val case_p_0 as () = test {man = 12.3, exp = 0} 12.3
+        val case_p_p as () =
             test
                 {man = 12.3, exp = 4}
                 (12.3 * Math.pow(R.fromInt R.radix, 4.0))
-        val fromManExp_p_n =
+        val case_p_n as () =
             test
                 {man = 12.3, exp = ~4}
                 (12.3 * Math.pow(R.fromInt R.radix, ~4.0))
-        val fromManExp_n_0 = test {man = ~12.3, exp = 0} ~12.3
-        val fromManExp_n_p =
+        val case_n_0 as () = test {man = ~12.3, exp = 0} ~12.3
+        val case_n_p as () =
             test
                 {man = ~12.3, exp = 4}
                 (~12.3 * Math.pow(R.fromInt R.radix, 4.0))
-        val fromManExp_n_n =
+        val case_n_n as () =
             test
                 {man = ~12.3, exp = ~4}
                 (~12.3 * Math.pow(R.fromInt R.radix, ~4.0))
-        val fromManExp_pinf_0 = test {man = posInf, exp = 0} posInf
-        val fromManExp_pinf_p = test {man = posInf, exp = 4} posInf
-        val fromManExp_pinf_n = test {man = posInf, exp = ~4} posInf
+        val case_pinf_0 as () = test {man = posInf, exp = 0} posInf
+        val case_pinf_p as () = test {man = posInf, exp = 4} posInf
+        val case_pinf_n as () = test {man = posInf, exp = ~4} posInf
 
-        val fromManExp_ninf_0 = test {man = negInf, exp = 0} negInf
-        val fromManExp_ninf_p = test {man = negInf, exp = 4} negInf
-        val fromManExp_ninf_n = test {man = negInf, exp = ~4} negInf
+        val case_ninf_0 as () = test {man = negInf, exp = 0} negInf
+        val case_ninf_p as () = test {man = negInf, exp = 4} negInf
+        val case_ninf_n as () = test {man = negInf, exp = ~4} negInf
 
-        val fromManExp_pnan_0 = test {man = posNan, exp = 0} posNan
-        val fromManExp_pnan_p = test {man = posNan, exp = 4} posNan
-        val fromManExp_pnan_n = test {man = posNan, exp = ~4} posNan
+        val case_pnan_0 as () = test {man = posNan, exp = 0} posNan
+        val case_pnan_p as () = test {man = posNan, exp = 4} posNan
+        val case_pnan_n as () = test {man = posNan, exp = ~4} posNan
 
-        val fromManExp_nnan_0 = test {man = negNan, exp = 0} negNan
-        val fromManExp_nnan_p = test {man = negNan, exp = 4} negNan
-        val fromManExp_nnan_n = test {man = negNan, exp = ~4} negNan
+        val case_nnan_0 as () = test {man = negNan, exp = 0} negNan
+        val case_nnan_p as () = test {man = negNan, exp = 4} negNan
+        val case_nnan_n as () = test {man = negNan, exp = ~4} negNan
       in () end
   end (* local *)
 
@@ -1279,16 +1279,16 @@ struct
   in
   fun split001 () =
       let
-        val split_p = test 123.456 {whole = 123.0, frac = 0.456}
-        val split_n = test ~123.456 {whole = ~123.0, frac = ~0.456}
-        val split_p0 = test pos0 {whole = pos0, frac = pos0}
-        val split_n0 = test neg0 {whole = neg0, frac = neg0}
+        val case_p as () = test 123.456 {whole = 123.0, frac = 0.456}
+        val case_n as () = test ~123.456 {whole = ~123.0, frac = ~0.456}
+        val case_p0 as () = test pos0 {whole = pos0, frac = pos0}
+        val case_n0 as () = test neg0 {whole = neg0, frac = neg0}
         (* If r is +-infinity, whole is +-infinity and frac is +-0. *)
-        val split_pinf = test posInf {whole = posInf, frac = pos0}
-        val split_ninf = test negInf {whole = negInf, frac = neg0}
+        val case_pinf as () = test posInf {whole = posInf, frac = pos0}
+        val case_ninf as () = test negInf {whole = negInf, frac = neg0}
         (* If r is NaN, both whole and frac are NaN. *)
-        val split_pnan = test posNan {whole = posNan, frac = posNan}
-        val split_nnan = test negNan {whole = negNan, frac = negNan}
+        val case_pnan as () = test posNan {whole = posNan, frac = posNan}
+        val case_nnan as () = test negNan {whole = negNan, frac = negNan}
       in () end
   end (* local *)
 
@@ -1298,14 +1298,14 @@ struct
   in
   fun realMod001 () =
       let
-        val realMod_p = test 123.456 0.456
-        val realMod_n = test ~123.456 ~0.456
-        val realMod_p0 = test pos0 pos0
-        val realMod_n0 = test neg0 neg0
-        val realMod_pinf = test posInf pos0
-        val realMod_ninf = test negInf neg0
-        val realMod_pnan = test posNan posNan
-        val realMod_nnan = test negNan negNan
+        val case_p as () = test 123.456 0.456
+        val case_n as () = test ~123.456 ~0.456
+        val case_p0 as () = test pos0 pos0
+        val case_n0 as () = test neg0 neg0
+        val case_pinf as () = test posInf pos0
+        val case_ninf as () = test negInf neg0
+        val case_pnan as () = test posNan posNan
+        val case_nnan as () = test negNan negNan
       in () end
   end (* local *)
 
@@ -1315,30 +1315,30 @@ struct
     fun testNormal (arg1, arg2) expected =
         let
           val r = R.nextAfter (arg1, arg2)
-          val _ = assertEqualOrder expected (Real.compare(r, arg1))
+          val () = assertEqualOrder expected (Real.compare(r, arg1))
         in () end
     fun testAbnormal (arg1, arg2) expected =
         assertEqualReal expected (R.nextAfter (arg1, arg2))
   in
   fun nextAfter001 () =
       let
-        val nextAfter_p_l = testNormal (1.23, 1.0) LESS
-        val nextAfter_p_e = testNormal (1.23, 1.23) EQUAL
-        val nextAfter_p_g = testNormal (1.23, 2.0) GREATER
-        val nextAfter_n_l = testNormal (~1.23, ~2.0) LESS
-        val nextAfter_n_e = testNormal (~1.23, ~1.23) EQUAL
-        val nextAfter_n_g = testNormal (~1.23, ~1.0) GREATER
-        val nextAfter_p0_l = testNormal (pos0, ~1.0) LESS
-        val nextAfter_p0_e = testNormal (pos0, pos0) EQUAL
-        val nextAfter_p0_g = testNormal (pos0, 1.0) GREATER
-        val nextAfter_n0_l = testNormal (neg0, ~1.0) LESS
-        val nextAfter_n0_e = testNormal (neg0, neg0) EQUAL
-        val nextAfter_n0_g = testNormal (neg0, 1.0) GREATER
+        val case_p_l as () = testNormal (1.23, 1.0) LESS
+        val case_p_e as () = testNormal (1.23, 1.23) EQUAL
+        val case_p_g as () = testNormal (1.23, 2.0) GREATER
+        val case_n_l as () = testNormal (~1.23, ~2.0) LESS
+        val case_n_e as () = testNormal (~1.23, ~1.23) EQUAL
+        val case_n_g as () = testNormal (~1.23, ~1.0) GREATER
+        val case_p0_l as () = testNormal (pos0, ~1.0) LESS
+        val case_p0_e as () = testNormal (pos0, pos0) EQUAL
+        val case_p0_g as () = testNormal (pos0, 1.0) GREATER
+        val case_n0_l as () = testNormal (neg0, ~1.0) LESS
+        val case_n0_e as () = testNormal (neg0, neg0) EQUAL
+        val case_n0_g as () = testNormal (neg0, 1.0) GREATER
 
-        val nextAfter_pinf = testAbnormal (posInf, 0.0) posInf
-        val nextAfter_ninf = testAbnormal (negInf, 0.0) negInf
-        val nextAfter_pnan = testAbnormal (posNan, 0.0) posNan
-        val nextAfter_nnan = testAbnormal (negNan, 0.0) negNan
+        val case_pinf as () = testAbnormal (posInf, 0.0) posInf
+        val case_ninf as () = testAbnormal (negInf, 0.0) negInf
+        val case_pnan as () = testAbnormal (posNan, 0.0) posNan
+        val case_nnan as () = testAbnormal (negNan, 0.0) negNan
       in () end
   end
 
@@ -1355,17 +1355,16 @@ struct
   in
   fun checkFloat001 () =
       let
-        val checkFloat_p = test 1.23 1.23
-        val checkFloat_n = test ~2.34 ~2.34
-        val checkFloat_p0 = test pos0 pos0
-        val checkFloat_n0 = test neg0 neg0
+        val case_p as () = test 1.23 1.23
+        val case_n as () = test ~2.34 ~2.34
+        val case_p0 as () = test pos0 pos0
+        val case_n0 as () = test neg0 neg0
 
-        val checkFloat_pinf = testFailByOverflow posInf
-        val checkFloat_ninf = testFailByOverflow negInf
+        val case_pinf as () = testFailByOverflow posInf
+        val case_ninf as () = testFailByOverflow negInf
 
-        val checkFloat_pnan = testFailByDiv posNan
-        val checkFloat_nnan = testFailByDiv negNan
-            handle General.Div => ()
+        val case_pnan as () = testFailByDiv posNan
+        val case_nnan as () = testFailByDiv negNan
       in () end
   end (* local *)
 
@@ -1384,17 +1383,17 @@ struct
   in
   fun toRealIntConversions0001 () =
       let
-        val conv_p_14 = test 1.4 (1.0, 2.0, 1.0, 1.0)
-        val conv_p_15 = test 1.5 (1.0, 2.0, 1.0, 2.0)
-        val conv_n_14 = test ~1.4 (~2.0, ~1.0, ~1.0, ~1.0)
-        val conv_n_15 = test ~1.5 (~2.0, ~1.0, ~1.0, ~2.0)
+        val case_p_14 as () = test 1.4 (1.0, 2.0, 1.0, 1.0)
+        val case_p_15 as () = test 1.5 (1.0, 2.0, 1.0, 2.0)
+        val case_n_14 as () = test ~1.4 (~2.0, ~1.0, ~1.0, ~1.0)
+        val case_n_15 as () = test ~1.5 (~2.0, ~1.0, ~1.0, ~2.0)
 
-        val conv_p0 = test pos0 (pos0, pos0, pos0, pos0)
-        val conv_n0 = test neg0 (neg0, neg0, neg0, neg0)
-        val conv_pInf = test posInf (posInf, posInf, posInf, posInf)
-        val conv_nInf = test negInf (negInf, negInf, negInf, negInf)
-        val conv_pNan = test posNan (posNan, posNan, posNan, posNan)
-        val conv_nNan = test negNan (negNan, negNan, negNan, negNan)
+        val case_p0 as () = test pos0 (pos0, pos0, pos0, pos0)
+        val case_n0 as () = test neg0 (neg0, neg0, neg0, neg0)
+        val case_pInf as () = test posInf (posInf, posInf, posInf, posInf)
+        val case_nInf as () = test negInf (negInf, negInf, negInf, negInf)
+        val case_pNan as () = test posNan (posNan, posNan, posNan, posNan)
+        val case_nNan as () = test negNan (negNan, negNan, negNan, negNan)
       in () end
   end (* local *)
 
@@ -1407,13 +1406,13 @@ struct
   in
   fun toIntConversions_normal_0001 () =
       let
-        val conv_p_14 = test 1.4 (1, 2, 1, 1)
-        val conv_p_15 = test 1.5 (1, 2, 1, 2)
-        val conv_n_14 = test ~1.4 (~2, ~1, ~1, ~1)
-        val conv_n_15 = test ~1.5 (~2, ~1, ~1, ~2)
+        val case_p_14 as () = test 1.4 (1, 2, 1, 1)
+        val case_p_15 as () = test 1.5 (1, 2, 1, 2)
+        val case_n_14 as () = test ~1.4 (~2, ~1, ~1, ~1)
+        val case_n_15 as () = test ~1.5 (~2, ~1, ~1, ~2)
 
-        val conv_p0 = test pos0 (0, 0, 0, 0)
-        val conv_n0 = test neg0 (0, 0, 0, 0)
+        val case_p0 as () = test pos0 (0, 0, 0, 0)
+        val case_n0 as () = test neg0 (0, 0, 0, 0)
       in () end
   end (* local *)
 
@@ -1428,15 +1427,15 @@ struct
         val maxIntPlus1_r = maxInt_r + 1.0
         val minIntMinus1_r = minInt_r - 1.0
 
-        val conv_pinf_floor = testFail R.floor maxIntPlus1_r
-        val conv_pinf_ceil = testFail R.ceil maxIntPlus1_r
-        val conv_pinf_trunc = testFail R.trunc maxIntPlus1_r
-        val conv_pinf_round = testFail R.round maxIntPlus1_r
+        val case_pinf_floor as () = testFail R.floor maxIntPlus1_r
+        val case_pinf_ceil as () = testFail R.ceil maxIntPlus1_r
+        val case_pinf_trunc as () = testFail R.trunc maxIntPlus1_r
+        val case_pinf_round as () = testFail R.round maxIntPlus1_r
 
-        val conv_ninf_floor = testFail R.floor minIntMinus1_r
-        val conv_ninf_ceil = testFail R.ceil minIntMinus1_r
-        val conv_ninf_trunc = testFail R.trunc minIntMinus1_r
-        val conv_ninf_round = testFail R.round minIntMinus1_r
+        val case_ninf_floor as () = testFail R.floor minIntMinus1_r
+        val case_ninf_ceil as () = testFail R.ceil minIntMinus1_r
+        val case_ninf_trunc as () = testFail R.trunc minIntMinus1_r
+        val case_ninf_round as () = testFail R.round minIntMinus1_r
       in () end
   fun toIntConversions_normal_1002 () =
       let
@@ -1444,15 +1443,15 @@ struct
         val maxIntPlus04_r = maxInt_r + 0.4
         val minIntMinus04_r = minInt_r - 0.4
 
-        val conv_pinf_floor = test R.floor maxIntPlus04_r maxInt
-        val conv_pinf_ceil = testFail R.ceil maxIntPlus04_r
-        val conv_pinf_trunc = test R.trunc maxIntPlus04_r maxInt
-        val conv_pinf_round = test R.round maxIntPlus04_r maxInt
+        val case_pinf_floor as () = test R.floor maxIntPlus04_r maxInt
+        val case_pinf_ceil as () = testFail R.ceil maxIntPlus04_r
+        val case_pinf_trunc as () = test R.trunc maxIntPlus04_r maxInt
+        val case_pinf_round as () = test R.round maxIntPlus04_r maxInt
 
-        val conv_ninf_floor = testFail R.floor minIntMinus04_r
-        val conv_ninf_ceil = test R.ceil minIntMinus04_r minInt
-        val conv_ninf_trunc = test R.trunc minIntMinus04_r minInt
-        val conv_ninf_round = test R.round minIntMinus04_r minInt
+        val case_ninf_floor as () = testFail R.floor minIntMinus04_r
+        val case_ninf_ceil as () = test R.ceil minIntMinus04_r minInt
+        val case_ninf_trunc as () = test R.trunc minIntMinus04_r minInt
+        val case_ninf_round as () = test R.round minIntMinus04_r minInt
       in () end
   fun toIntConversions_normal_1003 () =
       let
@@ -1460,15 +1459,15 @@ struct
         val maxIntPlus06_r = maxInt_r + 0.6
         val minIntMinus06_r = minInt_r - 0.6
 
-        val conv_pinf_floor = test R.floor maxIntPlus06_r maxInt
-        val conv_pinf_ceil = testFail R.ceil maxIntPlus06_r
-        val conv_pinf_trunc = test R.trunc maxIntPlus06_r maxInt
-        val conv_pinf_round = testFail R.round maxIntPlus06_r
+        val case_pinf_floor as () = test R.floor maxIntPlus06_r maxInt
+        val case_pinf_ceil as () = testFail R.ceil maxIntPlus06_r
+        val case_pinf_trunc as () = test R.trunc maxIntPlus06_r maxInt
+        val case_pinf_round as () = testFail R.round maxIntPlus06_r
 
-        val conv_ninf_floor = testFail R.floor minIntMinus06_r
-        val conv_ninf_ceil = test R.ceil minIntMinus06_r minInt
-        val conv_ninf_trunc = test R.trunc minIntMinus06_r minInt
-        val conv_ninf_round = testFail R.round minIntMinus06_r
+        val case_ninf_floor as () = testFail R.floor minIntMinus06_r
+        val case_ninf_ceil as () = test R.ceil minIntMinus06_r minInt
+        val case_ninf_trunc as () = test R.trunc minIntMinus06_r minInt
+        val case_ninf_round as () = testFail R.round minIntMinus06_r
       in () end
   end (* local *)
 
@@ -1478,15 +1477,15 @@ struct
   in
   fun toIntConversions_inf () =
       let
-        val conv_pinf_floor = testFail R.floor posInf
-        val conv_pinf_ceil = testFail R.ceil posInf
-        val conv_pinf_trunc = testFail R.trunc posInf
-        val conv_pinf_round = testFail R.round posInf
+        val case_pinf_floor as () = testFail R.floor posInf
+        val case_pinf_ceil as () = testFail R.ceil posInf
+        val case_pinf_trunc as () = testFail R.trunc posInf
+        val case_pinf_round as () = testFail R.round posInf
 
-        val conv_ninf_floor = testFail R.floor negInf
-        val conv_ninf_ceil = testFail R.ceil negInf
-        val conv_ninf_trunc = testFail R.trunc negInf
-        val conv_ninf_round = testFail R.round negInf
+        val case_ninf_floor as () = testFail R.floor negInf
+        val case_ninf_ceil as () = testFail R.ceil negInf
+        val case_ninf_trunc as () = testFail R.trunc negInf
+        val case_ninf_round as () = testFail R.round negInf
       in () end
   end (* local *)
 
@@ -1496,15 +1495,15 @@ struct
   in
   fun toIntConversions_nan () =
       let
-        val conv_pnan_floor = testFail R.floor posNan
-        val conv_pnan_ceil = testFail R.ceil posNan
-        val conv_pnan_trunc = testFail R.trunc posNan
-        val conv_pnan_round = testFail R.round posNan
+        val case_pnan_floor as () = testFail R.floor posNan
+        val case_pnan_ceil as () = testFail R.ceil posNan
+        val case_pnan_trunc as () = testFail R.trunc posNan
+        val case_pnan_round as () = testFail R.round posNan
 
-        val conv_nnan_floor = testFail R.floor negNan
-        val conv_nnan_ceil = testFail R.ceil negNan
-        val conv_nnan_trunc = testFail R.trunc negNan
-        val conv_nnan_round = testFail R.round negNan
+        val case_nnan_floor as () = testFail R.floor negNan
+        val case_nnan_ceil as () = testFail R.ceil negNan
+        val case_nnan_trunc as () = testFail R.trunc negNan
+        val case_nnan_round as () = testFail R.round negNan
       in () end
   end (* local *)
 
@@ -1523,17 +1522,17 @@ struct
   in
   fun toInt_normal_0001 () =
       let
-        val normal_p14 = test 1.4 (1, 1, 2, 1)
-        val normal_p15 = test 1.5 (2, 1, 2, 1)
-        val normal_n14 = test ~1.4 (~1, ~2, ~1, ~1)
-        val normal_n15 = test ~1.5 (~2, ~2, ~1, ~1)
-        val normal_p0 = test pos0 (0, 0, 0, 0)
-        val normal_n0 = test neg0 (0, 0, 0, 0)
+        val case_p14 as () = test 1.4 (1, 1, 2, 1)
+        val case_p15 as () = test 1.5 (2, 1, 2, 1)
+        val case_n14 as () = test ~1.4 (~1, ~2, ~1, ~1)
+        val case_n15 as () = test ~1.5 (~2, ~2, ~1, ~1)
+        val case_p0 as () = test pos0 (0, 0, 0, 0)
+        val case_n0 as () = test neg0 (0, 0, 0, 0)
       in () end
   fun toInt_normal_0002 () =
       let
-        val normal_maxInt = test maxInt_r (maxInt, maxInt, maxInt, maxInt)
-        val normal_minInt = test minInt_r (minInt, minInt, minInt, minInt)
+        val case_maxInt as () = test maxInt_r (maxInt, maxInt, maxInt, maxInt)
+        val case_minInt as () = test minInt_r (minInt, minInt, minInt, minInt)
       in () end
   end (* local *)
   local
@@ -1548,15 +1547,15 @@ struct
         val maxIntPlus1_r = maxInt_r + 1.0
         val minIntMinus1_r = minInt_r - 1.0
 
-        val toInt_pinf_NEAREST = testFail IR.TO_NEAREST maxIntPlus1_r
-        val toInt_pinf_NEGINF = testFail IR.TO_NEGINF maxIntPlus1_r
-        val toInt_pinf_POSINF = testFail IR.TO_POSINF maxIntPlus1_r
-        val toInt_pinf_ZERO = testFail IR.TO_ZERO maxIntPlus1_r
+        val case_pinf_NEAREST as () = testFail IR.TO_NEAREST maxIntPlus1_r
+        val case_pinf_NEGINF as () = testFail IR.TO_NEGINF maxIntPlus1_r
+        val case_pinf_POSINF as () = testFail IR.TO_POSINF maxIntPlus1_r
+        val case_pinf_ZERO as () = testFail IR.TO_ZERO maxIntPlus1_r
 
-        val toInt_ninf_NEAREST = testFail IR.TO_NEAREST minIntMinus1_r
-        val toInt_ninf_NEGINF = testFail IR.TO_NEGINF minIntMinus1_r
-        val toInt_ninf_POSINF = testFail IR.TO_POSINF minIntMinus1_r
-        val toInt_ninf_ZERO = testFail IR.TO_ZERO minIntMinus1_r
+        val case_ninf_NEAREST as () = testFail IR.TO_NEAREST minIntMinus1_r
+        val case_ninf_NEGINF as () = testFail IR.TO_NEGINF minIntMinus1_r
+        val case_ninf_POSINF as () = testFail IR.TO_POSINF minIntMinus1_r
+        val case_ninf_ZERO as () = testFail IR.TO_ZERO minIntMinus1_r
       in () end
   fun toInt_normal_1002 () =
       let
@@ -1564,15 +1563,15 @@ struct
         val maxIntPlus04_r = maxInt_r + 0.4
         val minIntMinus04_r = minInt_r - 0.4
 
-        val toInt_pinf_NEAREST = test IR.TO_NEAREST maxIntPlus04_r maxInt
-        val toInt_pinf_NEGINF = test IR.TO_NEGINF maxIntPlus04_r maxInt
-        val toInt_pinf_POSINF = testFail IR.TO_POSINF maxIntPlus04_r
-        val toInt_pinf_ZERO = test IR.TO_ZERO maxIntPlus04_r maxInt
+        val case_pinf_NEAREST as () = test IR.TO_NEAREST maxIntPlus04_r maxInt
+        val case_pinf_NEGINF as () = test IR.TO_NEGINF maxIntPlus04_r maxInt
+        val case_pinf_POSINF as () = testFail IR.TO_POSINF maxIntPlus04_r
+        val case_pinf_ZERO as () = test IR.TO_ZERO maxIntPlus04_r maxInt
 
-        val toInt_ninf_NEAREST = test IR.TO_NEAREST minIntMinus04_r minInt
-        val toInt_ninf_NEGINF = testFail IR.TO_NEGINF minIntMinus04_r
-        val toInt_ninf_POSINF = test IR.TO_POSINF minIntMinus04_r minInt
-        val toInt_ninf_ZERO = test IR.TO_ZERO minIntMinus04_r minInt
+        val case_ninf_NEAREST as () = test IR.TO_NEAREST minIntMinus04_r minInt
+        val case_ninf_NEGINF as () = testFail IR.TO_NEGINF minIntMinus04_r
+        val case_ninf_POSINF as () = test IR.TO_POSINF minIntMinus04_r minInt
+        val case_ninf_ZERO as () = test IR.TO_ZERO minIntMinus04_r minInt
       in () end
   fun toInt_normal_1003 () =
       let
@@ -1580,15 +1579,15 @@ struct
         val maxIntPlus06_r = maxInt_r + 0.6
         val minIntMinus06_r = minInt_r - 0.6
 
-        val toInt_pinf_NEAREST = testFail IR.TO_NEAREST maxIntPlus06_r
-        val toInt_pinf_NEGINF = test IR.TO_NEGINF maxIntPlus06_r maxInt
-        val toInt_pinf_POSINF = testFail IR.TO_POSINF maxIntPlus06_r
-        val toInt_pinf_ZERO = test IR.TO_ZERO maxIntPlus06_r maxInt
+        val case_pinf_NEAREST as () = testFail IR.TO_NEAREST maxIntPlus06_r
+        val case_pinf_NEGINF as () = test IR.TO_NEGINF maxIntPlus06_r maxInt
+        val case_pinf_POSINF as () = testFail IR.TO_POSINF maxIntPlus06_r
+        val case_pinf_ZERO as () = test IR.TO_ZERO maxIntPlus06_r maxInt
 
-        val toInt_ninf_NEAREST = testFail IR.TO_NEAREST minIntMinus06_r
-        val toInt_ninf_NEGINF = testFail IR.TO_NEGINF minIntMinus06_r
-        val toInt_ninf_POSINF = test IR.TO_POSINF minIntMinus06_r minInt
-        val toInt_ninf_ZERO = test IR.TO_ZERO minIntMinus06_r minInt
+        val case_ninf_NEAREST as () = testFail IR.TO_NEAREST minIntMinus06_r
+        val case_ninf_NEGINF as () = testFail IR.TO_NEGINF minIntMinus06_r
+        val case_ninf_POSINF as () = test IR.TO_POSINF minIntMinus06_r minInt
+        val case_ninf_ZERO as () = test IR.TO_ZERO minIntMinus06_r minInt
       in () end
   end (* local *)
 
@@ -1599,15 +1598,15 @@ struct
   in
   fun toInt_inf_0001 () =
       let
-        val toInt_pinf_NEAREST = test IR.TO_NEAREST posInf
-        val toInt_pinf_NEGINF = test IR.TO_NEGINF posInf
-        val toInt_pinf_POSINF = test IR.TO_POSINF posInf
-        val toInt_pinf_ZERO = test IR.TO_ZERO posInf
+        val case_pinf_NEAREST as () = test IR.TO_NEAREST posInf
+        val case_pinf_NEGINF as () = test IR.TO_NEGINF posInf
+        val case_pinf_POSINF as () = test IR.TO_POSINF posInf
+        val case_pinf_ZERO as () = test IR.TO_ZERO posInf
 
-        val toInt_ninf_NEAREST = test IR.TO_NEAREST negInf
-        val toInt_ninf_NEGINF = test IR.TO_NEGINF negInf
-        val toInt_ninf_POSINF = test IR.TO_POSINF negInf
-        val toInt_ninf_ZERO = test IR.TO_ZERO negInf
+        val case_ninf_NEAREST as () = test IR.TO_NEAREST negInf
+        val case_ninf_NEGINF as () = test IR.TO_NEGINF negInf
+        val case_ninf_POSINF as () = test IR.TO_POSINF negInf
+        val case_ninf_ZERO as () = test IR.TO_ZERO negInf
       in () end
   end (* local *)
 
@@ -1617,15 +1616,15 @@ struct
   in
   fun toInt_nan_0001 () =
       let
-        val toInt_pnan_NEAREST = test IR.TO_NEAREST posNan
-        val toInt_pnan_NEGINF = test IR.TO_NEGINF posNan
-        val toInt_pnan_POSINF = test IR.TO_POSINF posNan
-        val toInt_pnan_ZERO = test IR.TO_ZERO posNan
+        val case_pnan_NEAREST as () = test IR.TO_NEAREST posNan
+        val case_pnan_NEGINF as () = test IR.TO_NEGINF posNan
+        val case_pnan_POSINF as () = test IR.TO_POSINF posNan
+        val case_pnan_ZERO as () = test IR.TO_ZERO posNan
 
-        val toInt_nnan_NEAREST = test IR.TO_NEAREST negNan
-        val toInt_nnan_NEGINF = test IR.TO_NEGINF negNan
-        val toInt_nnan_POSINF = test IR.TO_POSINF negNan
-        val toInt_nnan_ZERO = test IR.TO_ZERO negNan
+        val case_nnan_NEAREST as () = test IR.TO_NEAREST negNan
+        val case_nnan_NEGINF as () = test IR.TO_NEGINF negNan
+        val case_nnan_POSINF as () = test IR.TO_POSINF negNan
+        val case_nnan_ZERO as () = test IR.TO_ZERO negNan
       in () end
   end (* local *)
 
@@ -1644,20 +1643,20 @@ struct
   in
   fun toLargeInt_normal_0001 () =
       let
-        val normal_p14 = test 1.4 (1, 1, 2, 1)
-        val normal_p15 = test 1.5 (2, 1, 2, 1)
-        val normal_n14 = test ~1.4 (~1, ~2, ~1, ~1)
-        val normal_n15 = test ~1.5 (~2, ~2, ~1, ~1)
-        val normal_p0 = test pos0 (0, 0, 0, 0)
-        val normal_n0 = test neg0 (0, 0, 0, 0)
+        val case_p14 as () = test 1.4 (1, 1, 2, 1)
+        val case_p15 as () = test 1.5 (2, 1, 2, 1)
+        val case_n14 as () = test ~1.4 (~1, ~2, ~1, ~1)
+        val case_n15 as () = test ~1.5 (~2, ~2, ~1, ~1)
+        val case_p0 as () = test pos0 (0, 0, 0, 0)
+        val case_n0 as () = test neg0 (0, 0, 0, 0)
       in () end
   fun toLargeInt_normal_0002 () =
       (* test Int.maxInt. *)
       let
         val maxInt = maxInt_L
         val minInt = minInt_L
-        val normal_maxInt = test maxInt_r (maxInt, maxInt, maxInt, maxInt)
-        val normal_minInt = test minInt_r (minInt, minInt, minInt, minInt)
+        val case_maxInt as () = test maxInt_r (maxInt, maxInt, maxInt, maxInt)
+        val case_minInt as () = test minInt_r (minInt, minInt, minInt, minInt)
       in () end
   fun toLargeInt_normal_0003 () =
       (* test greater than Int.maxInt and less than Int.minInt *)
@@ -1671,9 +1670,9 @@ struct
           val maxIntP1 = maxInt_L + 1
           val minIntM1_r = minInt_r - 1.0
           val minIntM1 = minInt_L - 1
-          val normal_maxInt =
+          val case_maxInt as () =
               test maxIntP1_r (maxIntP1, maxIntP1, maxIntP1, maxIntP1)
-          val normal_minInt =
+          val case_minInt as () =
               test minIntM1_r (minIntM1, minIntM1, minIntM1, minIntM1)
         in () end
   end (* local *)
@@ -1685,15 +1684,15 @@ struct
   in
   fun toLargeInt_inf_0001 () =
       let
-        val toLargeInt_pinf_NEAREST = test IR.TO_NEAREST posInf
-        val toLargeInt_pinf_NEGINF = test IR.TO_NEGINF posInf
-        val toLargeInt_pinf_POSINF = test IR.TO_POSINF posInf
-        val toLargeInt_pinf_ZERO = test IR.TO_ZERO posInf
+        val case_pinf_NEAREST as () = test IR.TO_NEAREST posInf
+        val case_pinf_NEGINF as () = test IR.TO_NEGINF posInf
+        val case_pinf_POSINF as () = test IR.TO_POSINF posInf
+        val case_pinf_ZERO as () = test IR.TO_ZERO posInf
 
-        val toLargeInt_ninf_NEAREST = test IR.TO_NEAREST negInf
-        val toLargeInt_ninf_NEGINF = test IR.TO_NEGINF negInf
-        val toLargeInt_ninf_POSINF = test IR.TO_POSINF negInf
-        val toLargeInt_ninf_ZERO = test IR.TO_ZERO negInf
+        val case_ninf_NEAREST as () = test IR.TO_NEAREST negInf
+        val case_ninf_NEGINF as () = test IR.TO_NEGINF negInf
+        val case_ninf_POSINF as () = test IR.TO_POSINF negInf
+        val case_ninf_ZERO as () = test IR.TO_ZERO negInf
       in () end
   end (* local *)
 
@@ -1704,15 +1703,15 @@ struct
   in
   fun toLargeInt_nan_0001 () =
       let
-        val toLargeInt_pnan_NEAREST = test IR.TO_NEAREST posNan
-        val toLargeInt_pnan_NEGINF = test IR.TO_NEGINF posNan
-        val toLargeInt_pnan_POSINF = test IR.TO_POSINF posNan
-        val toLargeInt_pnan_ZERO = test IR.TO_ZERO posNan
+        val case_pnan_NEAREST as () = test IR.TO_NEAREST posNan
+        val case_pnan_NEGINF as () = test IR.TO_NEGINF posNan
+        val case_pnan_POSINF as () = test IR.TO_POSINF posNan
+        val case_pnan_ZERO as () = test IR.TO_ZERO posNan
 
-        val toLargeInt_nnan_NEAREST = test IR.TO_NEAREST negNan
-        val toLargeInt_nnan_NEGINF = test IR.TO_NEGINF negNan
-        val toLargeInt_nnan_POSINF = test IR.TO_POSINF negNan
-        val toLargeInt_nnan_ZERO = test IR.TO_ZERO negNan
+        val case_nnan_NEAREST as () = test IR.TO_NEAREST negNan
+        val case_nnan_NEGINF as () = test IR.TO_NEGINF negNan
+        val case_nnan_POSINF as () = test IR.TO_POSINF negNan
+        val case_nnan_ZERO as () = test IR.TO_ZERO negNan
       in () end
   end (* local *)
 
@@ -1721,13 +1720,13 @@ struct
   fun fromInt0001 () =
       let
         val fromInt_p = R.fromInt 123
-        val _ = assertEqualReal 123.0 fromInt_p
+        val () = assertEqualReal 123.0 fromInt_p
 
         val fromInt_n = R.fromInt ~123
-        val _ = assertEqualReal ~123.0 fromInt_n
+        val () = assertEqualReal ~123.0 fromInt_n
 
         val fromInt_0 = R.fromInt 0
-        val _ = assertEqualReal pos0 fromInt_0
+        val () = assertEqualReal pos0 fromInt_0
       in () end
 
   (**********)
@@ -1735,13 +1734,13 @@ struct
   fun fromLargeInt0001 () =
       let
         val fromLargeInt_p = R.fromLargeInt 123
-        val _ = assertEqualReal 123.0 fromLargeInt_p
+        val () = assertEqualReal 123.0 fromLargeInt_p
 
         val fromLargeInt_n = R.fromLargeInt ~123
-        val _ = assertEqualReal ~123.0 fromLargeInt_n
+        val () = assertEqualReal ~123.0 fromLargeInt_n
 
         val fromLargeInt_0 = R.fromLargeInt 0
-        val _ = assertEqualReal pos0 fromLargeInt_0
+        val () = assertEqualReal pos0 fromLargeInt_0
       in () end
 
   (**********)
@@ -1755,14 +1754,14 @@ struct
   in
   fun toLarge0001 () =
       let
-        val toLarge_p = test 1.23 1.23
-        val toLarge_n = test ~1.23 ~1.23
-        val toLarge_p0 = test pos0 0.0
-        val toLarge_n0 = test pos0 ~0.0
-        val toLarge_pinf = test posInf LR.posInf
-        val toLarge_ninf = test negInf LR.negInf
-        val toLarge_pnan = test posNan largePosNan
-        val toLarge_nnan = test negNan largeNegNan
+        val case_p as () = test 1.23 1.23
+        val case_n as () = test ~1.23 ~1.23
+        val case_p0 as () = test pos0 0.0
+        val case_n0 as () = test pos0 ~0.0
+        val case_pinf as () = test posInf LR.posInf
+        val case_ninf as () = test negInf LR.negInf
+        val case_pnan as () = test posNan largePosNan
+        val case_nnan as () = test negNan largeNegNan
       in () end
   end (* inner local *)
 
@@ -1779,16 +1778,16 @@ struct
   in
   fun fromLarge0001 () =
       let
-        val normal_p14 = test 1.4 (1.4, 1.4, 1.4, 1.4)
-        val normal_p15 = test 1.5 (1.5, 1.5, 1.5, 1.5)
-        val normal_n14 = test ~1.4 (~1.4, ~1.4, ~1.4, ~1.4)
-        val normal_n15 = test ~1.5 (~1.5, ~1.5, ~1.5, ~1.5)
-        val normal_p0 = test 0.0 (pos0, pos0, pos0, pos0)
-        val normal_n0 = test ~0.0 (neg0, neg0, neg0, neg0)
-        val normal_pinf = test LR.posInf (posInf, posInf, posInf, posInf)
-        val normal_ninf = test LR.negInf (negInf, negInf, negInf, negInf)
-        val normal_pnan = test largePosNan (posNan, posNan, posNan, posNan)
-        val normal_nnan = test largeNegNan (negNan, negNan, negNan, negNan)
+        val case_p14 as () = test 1.4 (1.4, 1.4, 1.4, 1.4)
+        val case_p15 as () = test 1.5 (1.5, 1.5, 1.5, 1.5)
+        val case_n14 as () = test ~1.4 (~1.4, ~1.4, ~1.4, ~1.4)
+        val case_n15 as () = test ~1.5 (~1.5, ~1.5, ~1.5, ~1.5)
+        val case_p0 as () = test 0.0 (pos0, pos0, pos0, pos0)
+        val case_n0 as () = test ~0.0 (neg0, neg0, neg0, neg0)
+        val case_pinf as () = test LR.posInf (posInf, posInf, posInf, posInf)
+        val case_ninf as () = test LR.negInf (negInf, negInf, negInf, negInf)
+        val case_pnan as () = test largePosNan (posNan, posNan, posNan, posNan)
+        val case_nnan as () = test largeNegNan (negNan, negNan, negNan, negNan)
       in () end
   end (* inner local *)
 
@@ -1807,211 +1806,211 @@ struct
   in
   fun fmt_SCI_normal_0001 () =
       let
-        val fmt_SCI_1875_N_1 = test (SCI NONE) 18.75 "1.875000E1"
-        val fmt_SCI_1875_0_1 = test (SCI (SOME 0)) 18.75 "1E1"
-        val fmt_SCI_1875_1_1 = test (SCI (SOME 1)) 18.75 "1.8E1"
-        val fmt_SCI_1875_2_1 = test (SCI (SOME 2)) 18.75 "1.87E1"
-        val fmt_SCI_1875_3_1 = test (SCI (SOME 3)) 18.75 "1.875E1"
-        val fmt_SCI_1875_4_1 = test (SCI (SOME 4)) 18.75 "1.8750E1"
+        val case_SCI_1875_N_1 as () = test (SCI NONE) 18.75 "1.875000E1"
+        val case_SCI_1875_0_1 as () = test (SCI (SOME 0)) 18.75 "1E1"
+        val case_SCI_1875_1_1 as () = test (SCI (SOME 1)) 18.75 "1.8E1"
+        val case_SCI_1875_2_1 as () = test (SCI (SOME 2)) 18.75 "1.87E1"
+        val case_SCI_1875_3_1 as () = test (SCI (SOME 3)) 18.75 "1.875E1"
+        val case_SCI_1875_4_1 as () = test (SCI (SOME 4)) 18.75 "1.8750E1"
 
-        val fmt_SCI_1875_N_0 = test (SCI NONE) 1.875 "1.875000E0"
-        val fmt_SCI_1875_N_n1 = test (SCI NONE) 0.1875 "1.875000E~1"
+        val case_SCI_1875_N_0 as () = test (SCI NONE) 1.875 "1.875000E0"
+        val case_SCI_1875_N_n1 as () = test (SCI NONE) 0.1875 "1.875000E~1"
 
-        val fmt_SCI_n1875_N_1 = test (SCI NONE) ~18.75 "~1.875000E1"
+        val case_SCI_n1875_N_1 as () = test (SCI NONE) ~18.75 "~1.875000E1"
       in () end
   (* check exponential. The real is just on power of 10. *)
   fun fmt_SCI_normal_0010 () =
       let
-        val fmt_SCI_100_N_1 = test (SCI NONE) 10.0 "1.000000E1"
-        val fmt_SCI_100_0_1 = test (SCI (SOME 0)) 10.0 "1E1"
-        val fmt_SCI_100_1_1 = test (SCI (SOME 1)) 10.0 "1.0E1"
-        val fmt_SCI_100_2_1 = test (SCI (SOME 2)) 10.0 "1.00E1"
-        val fmt_SCI_100_3_1 = test (SCI (SOME 3)) 10.0 "1.000E1"
+        val case_SCI_100_N_1 as () = test (SCI NONE) 10.0 "1.000000E1"
+        val case_SCI_100_0_1 as () = test (SCI (SOME 0)) 10.0 "1E1"
+        val case_SCI_100_1_1 as () = test (SCI (SOME 1)) 10.0 "1.0E1"
+        val case_SCI_100_2_1 as () = test (SCI (SOME 2)) 10.0 "1.00E1"
+        val case_SCI_100_3_1 as () = test (SCI (SOME 3)) 10.0 "1.000E1"
       in () end
   (* check rounding. The most significant digit is under 5 *)
   fun fmt_SCI_normal_0011 () =
       let
-        val fmt_SCI_400_N_1 = test (SCI NONE) 40.0 "4.000000E1"
-        val fmt_SCI_400_0_1 = test (SCI (SOME 0)) 40.0 "4E1"
-        val fmt_SCI_400_1_1 = test (SCI (SOME 1)) 40.0 "4.0E1"
-        val fmt_SCI_400_2_1 = test (SCI (SOME 2)) 40.0 "4.00E1"
-        val fmt_SCI_400_3_1 = test (SCI (SOME 3)) 40.0 "4.000E1"
+        val case_SCI_400_N_1 as () = test (SCI NONE) 40.0 "4.000000E1"
+        val case_SCI_400_0_1 as () = test (SCI (SOME 0)) 40.0 "4E1"
+        val case_SCI_400_1_1 as () = test (SCI (SOME 1)) 40.0 "4.0E1"
+        val case_SCI_400_2_1 as () = test (SCI (SOME 2)) 40.0 "4.00E1"
+        val case_SCI_400_3_1 as () = test (SCI (SOME 3)) 40.0 "4.000E1"
       in () end
   (* check rounding. The most significant digit is over 5 *)
   fun fmt_SCI_normal_0012 () =
       let
-        val fmt_SCI_600_N_1 = test (SCI NONE) 60.0 "6.000000E1"
-        val fmt_SCI_600_0_1 = test (SCI (SOME 0)) 60.0 "6E1"
-        val fmt_SCI_600_1_1 = test (SCI (SOME 1)) 60.0 "6.0E1"
-        val fmt_SCI_600_2_1 = test (SCI (SOME 2)) 60.0 "6.00E1"
-        val fmt_SCI_600_3_1 = test (SCI (SOME 3)) 60.0 "6.000E1"
+        val case_SCI_600_N_1 as () = test (SCI NONE) 60.0 "6.000000E1"
+        val case_SCI_600_0_1 as () = test (SCI (SOME 0)) 60.0 "6E1"
+        val case_SCI_600_1_1 as () = test (SCI (SOME 1)) 60.0 "6.0E1"
+        val case_SCI_600_2_1 as () = test (SCI (SOME 2)) 60.0 "6.00E1"
+        val case_SCI_600_3_1 as () = test (SCI (SOME 3)) 60.0 "6.000E1"
       in () end
   (* check sign *)
   fun fmt_SCI_normal_0013 () =
       let
-        val fmt_SCI_n100_N_1 = test (SCI NONE) ~10.0 "~1.000000E1"
-        val fmt_SCI_n100_0_1 = test (SCI (SOME 0)) ~10.0 "~1E1"
-        val fmt_SCI_n100_1_1 = test (SCI (SOME 1)) ~10.0 "~1.0E1"
-        val fmt_SCI_n100_2_1 = test (SCI (SOME 2)) ~10.0 "~1.00E1"
-        val fmt_SCI_n100_3_1 = test (SCI (SOME 3)) ~10.0 "~1.000E1"
+        val case_SCI_n100_N_1 as () = test (SCI NONE) ~10.0 "~1.000000E1"
+        val case_SCI_n100_0_1 as () = test (SCI (SOME 0)) ~10.0 "~1E1"
+        val case_SCI_n100_1_1 as () = test (SCI (SOME 1)) ~10.0 "~1.0E1"
+        val case_SCI_n100_2_1 as () = test (SCI (SOME 2)) ~10.0 "~1.00E1"
+        val case_SCI_n100_3_1 as () = test (SCI (SOME 3)) ~10.0 "~1.000E1"
       in () end
   (* check exponential. The real is just on power of 10. *)
   fun fmt_SCI_normal_0020 () =
       let
-        val fmt_SCI_0001_N_n3 = test (SCI NONE) 0.001 "1.000000E~3"
-        val fmt_SCI_0001_0_n3 = test (SCI (SOME 0)) 0.001 "1E~3"
-        val fmt_SCI_0001_1_n3 = test (SCI (SOME 1)) 0.001 "1.0E~3"
-        val fmt_SCI_0001_2_n3 = test (SCI (SOME 2)) 0.001 "1.00E~3"
-        val fmt_SCI_0001_3_n3 = test (SCI (SOME 3)) 0.001 "1.000E~3"
-        val fmt_SCI_0001_4_n3 = test (SCI (SOME 4)) 0.001 "1.0000E~3"
+        val case_SCI_0001_N_n3 as () = test (SCI NONE) 0.001 "1.000000E~3"
+        val case_SCI_0001_0_n3 as () = test (SCI (SOME 0)) 0.001 "1E~3"
+        val case_SCI_0001_1_n3 as () = test (SCI (SOME 1)) 0.001 "1.0E~3"
+        val case_SCI_0001_2_n3 as () = test (SCI (SOME 2)) 0.001 "1.00E~3"
+        val case_SCI_0001_3_n3 as () = test (SCI (SOME 3)) 0.001 "1.000E~3"
+        val case_SCI_0001_4_n3 as () = test (SCI (SOME 4)) 0.001 "1.0000E~3"
       in () end
   (* check rounding. The most significant digit is under 5 *)
   fun fmt_SCI_normal_0021 () =
       let
-        val fmt_SCI_0004_N_n3 = test (SCI NONE) 0.004 "4.000000E~3"
-        val fmt_SCI_0004_0_n3 = test (SCI (SOME 0)) 0.004 "4E~3"
-        val fmt_SCI_0004_1_n3 = test (SCI (SOME 1)) 0.004 "4.0E~3"
-        val fmt_SCI_0004_2_n3 = test (SCI (SOME 2)) 0.004 "4.00E~3"
-        val fmt_SCI_0004_3_n3 = test (SCI (SOME 3)) 0.004 "4.000E~3"
-        val fmt_SCI_0004_4_n3 = test (SCI (SOME 4)) 0.004 "4.0000E~3"
+        val case_SCI_0004_N_n3 as () = test (SCI NONE) 0.004 "4.000000E~3"
+        val case_SCI_0004_0_n3 as () = test (SCI (SOME 0)) 0.004 "4E~3"
+        val case_SCI_0004_1_n3 as () = test (SCI (SOME 1)) 0.004 "4.0E~3"
+        val case_SCI_0004_2_n3 as () = test (SCI (SOME 2)) 0.004 "4.00E~3"
+        val case_SCI_0004_3_n3 as () = test (SCI (SOME 3)) 0.004 "4.000E~3"
+        val case_SCI_0004_4_n3 as () = test (SCI (SOME 4)) 0.004 "4.0000E~3"
       in () end
   (* check rounding. The most significant digit is over 5 *)
   fun fmt_SCI_normal_0022 () =
       let
-        val fmt_SCI_0006_N_n3 = test (SCI NONE) 0.006 "6.000000E~3"
-        val fmt_SCI_0006_0_n3 = test (SCI (SOME 0)) 0.006 "6E~3"
-        val fmt_SCI_0006_1_n3 = test (SCI (SOME 1)) 0.006 "6.0E~3"
-        val fmt_SCI_0006_2_n3 = test (SCI (SOME 2)) 0.006 "6.00E~3"
-        val fmt_SCI_0006_3_n3 = test (SCI (SOME 3)) 0.006 "6.000E~3"
-        val fmt_SCI_0006_4_n3 = test (SCI (SOME 4)) 0.006 "6.0000E~3"
+        val case_SCI_0006_N_n3 as () = test (SCI NONE) 0.006 "6.000000E~3"
+        val case_SCI_0006_0_n3 as () = test (SCI (SOME 0)) 0.006 "6E~3"
+        val case_SCI_0006_1_n3 as () = test (SCI (SOME 1)) 0.006 "6.0E~3"
+        val case_SCI_0006_2_n3 as () = test (SCI (SOME 2)) 0.006 "6.00E~3"
+        val case_SCI_0006_3_n3 as () = test (SCI (SOME 3)) 0.006 "6.000E~3"
+        val case_SCI_0006_4_n3 as () = test (SCI (SOME 4)) 0.006 "6.0000E~3"
       in () end
   (* check sign *)
   fun fmt_SCI_normal_0023 () =
       let
-        val fmt_SCI_n0001_N_n3 = test (SCI NONE) ~0.001 "~1.000000E~3"
-        val fmt_SCI_n0001_0_n3 = test (SCI (SOME 0)) ~0.001 "~1E~3"
-        val fmt_SCI_n0001_1_n3 = test (SCI (SOME 1)) ~0.001 "~1.0E~3"
-        val fmt_SCI_n0001_2_n3 = test (SCI (SOME 2)) ~0.001 "~1.00E~3"
-        val fmt_SCI_n0001_3_n3 = test (SCI (SOME 3)) ~0.001 "~1.000E~3"
-        val fmt_SCI_n0001_4_n3 = test (SCI (SOME 4)) ~0.001 "~1.0000E~3"
+        val case_SCI_n0001_N_n3 as () = test (SCI NONE) ~0.001 "~1.000000E~3"
+        val case_SCI_n0001_0_n3 as () = test (SCI (SOME 0)) ~0.001 "~1E~3"
+        val case_SCI_n0001_1_n3 as () = test (SCI (SOME 1)) ~0.001 "~1.0E~3"
+        val case_SCI_n0001_2_n3 as () = test (SCI (SOME 2)) ~0.001 "~1.00E~3"
+        val case_SCI_n0001_3_n3 as () = test (SCI (SOME 3)) ~0.001 "~1.000E~3"
+        val case_SCI_n0001_4_n3 as () = test (SCI (SOME 4)) ~0.001 "~1.0000E~3"
       in () end
   fun fmt_SCI_abnormal () =
       let
-        val fmt_SCI_p0_N = test (SCI NONE) pos0 "0.000000E0"
-        val fmt_SCI_p0_0 = test (SCI (SOME 0)) pos0 "0E0"
-        val fmt_SCI_p0_1 = test (SCI (SOME 1)) pos0 "0.0E0"
-        val fmt_SCI_n0_N = test (SCI NONE) neg0 "~0.000000E0"
-        val fmt_SCI_n0_0 = test (SCI (SOME 0)) neg0 "~0E0"
-        val fmt_SCI_n0_1 = test (SCI (SOME 1)) neg0 "~0.0E0"
-        val fmt_SCI_pinf_N = test (SCI NONE) posInf "inf"
-        val fmt_SCI_ninf_N = test (SCI NONE) negInf "~inf"
+        val case_SCI_p0_N as () = test (SCI NONE) pos0 "0.000000E0"
+        val case_SCI_p0_0 as () = test (SCI (SOME 0)) pos0 "0E0"
+        val case_SCI_p0_1 as () = test (SCI (SOME 1)) pos0 "0.0E0"
+        val case_SCI_n0_N as () = test (SCI NONE) neg0 "~0.000000E0"
+        val case_SCI_n0_0 as () = test (SCI (SOME 0)) neg0 "~0E0"
+        val case_SCI_n0_1 as () = test (SCI (SOME 1)) neg0 "~0.0E0"
+        val case_SCI_pinf_N as () = test (SCI NONE) posInf "inf"
+        val case_SCI_ninf_N as () = test (SCI NONE) negInf "~inf"
         (* sign of nan is ignored. *)
-        val fmt_SCI_pnan_N = test (SCI NONE) posNan "nan"
-        val fmt_SCI_nnan_N = test (SCI NONE) negNan "nan"
+        val case_SCI_pnan_N as () = test (SCI NONE) posNan "nan"
+        val case_SCI_nnan_N as () = test (SCI NONE) negNan "nan"
       in () end
 
   fun fmt_FIX_normal_0001 () =
       let
-        val fmt_FIX_1875_N_1 = test (FIX NONE) 18.75 "18.750000"
-        val fmt_FIX_1875_0_1 = test (FIX (SOME 0)) 18.75 "18"
-        val fmt_FIX_1875_1_1 = test (FIX (SOME 1)) 18.75 "18.7"
-        val fmt_FIX_1875_2_1 = test (FIX (SOME 2)) 18.75 "18.75"
-        val fmt_FIX_1875_3_1 = test (FIX (SOME 3)) 18.75 "18.750"
-        val fmt_FIX_1875_4_1 = test (FIX (SOME 4)) 18.75 "18.7500"
+        val case_FIX_1875_N_1 as () = test (FIX NONE) 18.75 "18.750000"
+        val case_FIX_1875_0_1 as () = test (FIX (SOME 0)) 18.75 "18"
+        val case_FIX_1875_1_1 as () = test (FIX (SOME 1)) 18.75 "18.7"
+        val case_FIX_1875_2_1 as () = test (FIX (SOME 2)) 18.75 "18.75"
+        val case_FIX_1875_3_1 as () = test (FIX (SOME 3)) 18.75 "18.750"
+        val case_FIX_1875_4_1 as () = test (FIX (SOME 4)) 18.75 "18.7500"
 
-        val fmt_FIX_1875_N_0 = test (FIX NONE) 1.875 "1.875000"
-        val fmt_FIX_1875_N_n1 = test (FIX NONE) 0.1875 "0.187500"
+        val case_FIX_1875_N_0 as () = test (FIX NONE) 1.875 "1.875000"
+        val case_FIX_1875_N_n1 as () = test (FIX NONE) 0.1875 "0.187500"
 
-        val fmt_FIX_n1875_N_1 = test (FIX NONE) ~18.75 "~18.750000"
+        val case_FIX_n1875_N_1 as () = test (FIX NONE) ~18.75 "~18.750000"
       in () end
   (* check exponential. The real is just on power of 10. *)
   fun fmt_FIX_normal_0010 () =
       let
-        val fmt_FIX_100_N_1 = test (FIX NONE) 10.0 "10.000000"
-        val fmt_FIX_100_0_1 = test (FIX (SOME 0)) 10.0 "10"
-        val fmt_FIX_100_1_1 = test (FIX (SOME 1)) 10.0 "10.0"
-        val fmt_FIX_100_2_1 = test (FIX (SOME 2)) 10.0 "10.00"
-        val fmt_FIX_100_3_1 = test (FIX (SOME 3)) 10.0 "10.000"
+        val case_FIX_100_N_1 as () = test (FIX NONE) 10.0 "10.000000"
+        val case_FIX_100_0_1 as () = test (FIX (SOME 0)) 10.0 "10"
+        val case_FIX_100_1_1 as () = test (FIX (SOME 1)) 10.0 "10.0"
+        val case_FIX_100_2_1 as () = test (FIX (SOME 2)) 10.0 "10.00"
+        val case_FIX_100_3_1 as () = test (FIX (SOME 3)) 10.0 "10.000"
       in () end
   (* check rounding. The most significant digit is under 5 *)
   fun fmt_FIX_normal_0011 () =
       let
-        val fmt_FIX_400_N_1 = test (FIX NONE) 40.0 "40.000000"
-        val fmt_FIX_400_0_1 = test (FIX (SOME 0)) 40.0 "40"
-        val fmt_FIX_400_1_1 = test (FIX (SOME 1)) 40.0 "40.0"
-        val fmt_FIX_400_2_1 = test (FIX (SOME 2)) 40.0 "40.00"
-        val fmt_FIX_400_3_1 = test (FIX (SOME 3)) 40.0 "40.000"
+        val case_FIX_400_N_1 as () = test (FIX NONE) 40.0 "40.000000"
+        val case_FIX_400_0_1 as () = test (FIX (SOME 0)) 40.0 "40"
+        val case_FIX_400_1_1 as () = test (FIX (SOME 1)) 40.0 "40.0"
+        val case_FIX_400_2_1 as () = test (FIX (SOME 2)) 40.0 "40.00"
+        val case_FIX_400_3_1 as () = test (FIX (SOME 3)) 40.0 "40.000"
       in () end
   (* check rounding. The most significant digit is over 5 *)
   fun fmt_FIX_normal_0012 () =
       let
-        val fmt_FIX_600_N_1 = test (FIX NONE) 60.0 "60.000000"
-        val fmt_FIX_600_0_1 = test (FIX (SOME 0)) 60.0 "60"
-        val fmt_FIX_600_1_1 = test (FIX (SOME 1)) 60.0 "60.0"
-        val fmt_FIX_600_2_1 = test (FIX (SOME 2)) 60.0 "60.00"
-        val fmt_FIX_600_3_1 = test (FIX (SOME 3)) 60.0 "60.000"
+        val case_FIX_600_N_1 as () = test (FIX NONE) 60.0 "60.000000"
+        val case_FIX_600_0_1 as () = test (FIX (SOME 0)) 60.0 "60"
+        val case_FIX_600_1_1 as () = test (FIX (SOME 1)) 60.0 "60.0"
+        val case_FIX_600_2_1 as () = test (FIX (SOME 2)) 60.0 "60.00"
+        val case_FIX_600_3_1 as () = test (FIX (SOME 3)) 60.0 "60.000"
       in () end
   (* check sign. *)
   fun fmt_FIX_normal_0013 () =
       let
-        val fmt_FIX_n100_N_1 = test (FIX NONE) ~10.0 "~10.000000"
-        val fmt_FIX_n100_0_1 = test (FIX (SOME 0)) ~10.0 "~10"
-        val fmt_FIX_n100_1_1 = test (FIX (SOME 1)) ~10.0 "~10.0"
-        val fmt_FIX_n100_2_1 = test (FIX (SOME 2)) ~10.0 "~10.00"
-        val fmt_FIX_n100_3_1 = test (FIX (SOME 3)) ~10.0 "~10.000"
+        val case_FIX_n100_N_1 as () = test (FIX NONE) ~10.0 "~10.000000"
+        val case_FIX_n100_0_1 as () = test (FIX (SOME 0)) ~10.0 "~10"
+        val case_FIX_n100_1_1 as () = test (FIX (SOME 1)) ~10.0 "~10.0"
+        val case_FIX_n100_2_1 as () = test (FIX (SOME 2)) ~10.0 "~10.00"
+        val case_FIX_n100_3_1 as () = test (FIX (SOME 3)) ~10.0 "~10.000"
       in () end
   (* check exponential. The real is just on power of 10. *)
   fun fmt_FIX_normal_0020 () =
       let
-        val fmt_FIX_0001_N_n3 = test (FIX NONE) 0.001 "0.001000"
-        val fmt_FIX_0001_0_n3 = test (FIX (SOME 0)) 0.001 "0"
-        val fmt_FIX_0001_1_n3 = test (FIX (SOME 1)) 0.001 "0.0"
-        val fmt_FIX_0001_2_n3 = test (FIX (SOME 2)) 0.001 "0.00"
-        val fmt_FIX_0001_3_n3 = test (FIX (SOME 3)) 0.001 "0.001"
-        val fmt_FIX_0001_4_n3 = test (FIX (SOME 4)) 0.001 "0.0010"
+        val case_FIX_0001_N_n3 as () = test (FIX NONE) 0.001 "0.001000"
+        val case_FIX_0001_0_n3 as () = test (FIX (SOME 0)) 0.001 "0"
+        val case_FIX_0001_1_n3 as () = test (FIX (SOME 1)) 0.001 "0.0"
+        val case_FIX_0001_2_n3 as () = test (FIX (SOME 2)) 0.001 "0.00"
+        val case_FIX_0001_3_n3 as () = test (FIX (SOME 3)) 0.001 "0.001"
+        val case_FIX_0001_4_n3 as () = test (FIX (SOME 4)) 0.001 "0.0010"
       in () end
   (* check exponential. The most significant digit is under 5 *)
   fun fmt_FIX_normal_0021 () =
       let
-        val fmt_FIX_0004_N_n3 = test (FIX NONE) 0.004 "0.004000"
-        val fmt_FIX_0004_0_n3 = test (FIX (SOME 0)) 0.004 "0"
-        val fmt_FIX_0004_1_n3 = test (FIX (SOME 1)) 0.004 "0.0"
-        val fmt_FIX_0004_2_n3 = test (FIX (SOME 2)) 0.004 "0.00"
-        val fmt_FIX_0004_3_n3 = test (FIX (SOME 3)) 0.004 "0.004"
-        val fmt_FIX_0004_4_n3 = test (FIX (SOME 4)) 0.004 "0.0040"
+        val case_FIX_0004_N_n3 as () = test (FIX NONE) 0.004 "0.004000"
+        val case_FIX_0004_0_n3 as () = test (FIX (SOME 0)) 0.004 "0"
+        val case_FIX_0004_1_n3 as () = test (FIX (SOME 1)) 0.004 "0.0"
+        val case_FIX_0004_2_n3 as () = test (FIX (SOME 2)) 0.004 "0.00"
+        val case_FIX_0004_3_n3 as () = test (FIX (SOME 3)) 0.004 "0.004"
+        val case_FIX_0004_4_n3 as () = test (FIX (SOME 4)) 0.004 "0.0040"
       in () end
   (* check exponential. The most significant digit is over 5 *)
   fun fmt_FIX_normal_0022 () =
       let
-        val fmt_FIX_0006_N_n3 = test (FIX NONE) 0.006 "0.006000"
-        val fmt_FIX_0006_0_n3 = test (FIX (SOME 0)) 0.006 "0"
-        val fmt_FIX_0006_1_n3 = test (FIX (SOME 1)) 0.006 "0.0"
-        val fmt_FIX_0006_2_n3 = test (FIX (SOME 2)) 0.006 "0.00"
-        val fmt_FIX_0006_3_n3 = test (FIX (SOME 3)) 0.006 "0.006"
-        val fmt_FIX_0006_4_n3 = test (FIX (SOME 4)) 0.006 "0.0060"
+        val case_FIX_0006_N_n3 as () = test (FIX NONE) 0.006 "0.006000"
+        val case_FIX_0006_0_n3 as () = test (FIX (SOME 0)) 0.006 "0"
+        val case_FIX_0006_1_n3 as () = test (FIX (SOME 1)) 0.006 "0.0"
+        val case_FIX_0006_2_n3 as () = test (FIX (SOME 2)) 0.006 "0.00"
+        val case_FIX_0006_3_n3 as () = test (FIX (SOME 3)) 0.006 "0.006"
+        val case_FIX_0006_4_n3 as () = test (FIX (SOME 4)) 0.006 "0.0060"
       in () end
   (* check sign. *)
   fun fmt_FIX_normal_0023 () =
       let
-        val fmt_FIX_n0001_N_n3 = test (FIX NONE) ~0.001 "~0.001000"
-        val fmt_FIX_n0001_0_n3 = test (FIX (SOME 0)) ~0.001 "~0"
-        val fmt_FIX_n0001_1_n3 = test (FIX (SOME 1)) ~0.001 "~0.0"
-        val fmt_FIX_n0001_2_n3 = test (FIX (SOME 2)) ~0.001 "~0.00"
-        val fmt_FIX_n0001_3_n3 = test (FIX (SOME 3)) ~0.001 "~0.001"
-        val fmt_FIX_n0001_4_n3 = test (FIX (SOME 4)) ~0.001 "~0.0010"
+        val case_FIX_n0001_N_n3 as () = test (FIX NONE) ~0.001 "~0.001000"
+        val case_FIX_n0001_0_n3 as () = test (FIX (SOME 0)) ~0.001 "~0"
+        val case_FIX_n0001_1_n3 as () = test (FIX (SOME 1)) ~0.001 "~0.0"
+        val case_FIX_n0001_2_n3 as () = test (FIX (SOME 2)) ~0.001 "~0.00"
+        val case_FIX_n0001_3_n3 as () = test (FIX (SOME 3)) ~0.001 "~0.001"
+        val case_FIX_n0001_4_n3 as () = test (FIX (SOME 4)) ~0.001 "~0.0010"
       in () end
   fun fmt_FIX_abnormal () =
       let
-        val fmt_FIX_p0_N = test (FIX NONE) pos0 "0.000000"
-        val fmt_FIX_p0_0 = test (FIX (SOME 0)) pos0 "0"
-        val fmt_FIX_p0_1 = test (FIX (SOME 1)) pos0 "0.0"
-        val fmt_FIX_n0_N = test (FIX NONE) neg0 "~0.000000"
-        val fmt_FIX_n0_0 = test (FIX (SOME 0)) neg0 "~0"
-        val fmt_FIX_n0_1 = test (FIX (SOME 1)) neg0 "~0.0"
-        val fmt_FIX_pinf_N = test (FIX NONE) posInf "inf"
-        val fmt_FIX_ninf_N = test (FIX NONE) negInf "~inf"
-        val fmt_FIX_pnan_N = test (FIX NONE) posNan "nan"
-        val fmt_FIX_nnan_N = test (FIX NONE) negNan "nan"
+        val case_FIX_p0_N as () = test (FIX NONE) pos0 "0.000000"
+        val case_FIX_p0_0 as () = test (FIX (SOME 0)) pos0 "0"
+        val case_FIX_p0_1 as () = test (FIX (SOME 1)) pos0 "0.0"
+        val case_FIX_n0_N as () = test (FIX NONE) neg0 "~0.000000"
+        val case_FIX_n0_0 as () = test (FIX (SOME 0)) neg0 "~0"
+        val case_FIX_n0_1 as () = test (FIX (SOME 1)) neg0 "~0.0"
+        val case_FIX_pinf_N as () = test (FIX NONE) posInf "inf"
+        val case_FIX_ninf_N as () = test (FIX NONE) negInf "~inf"
+        val case_FIX_pnan_N as () = test (FIX NONE) posNan "nan"
+        val case_FIX_nnan_N as () = test (FIX NONE) negNan "nan"
       in () end
 
   fun fmt_GEN_normal_NONE_posExp () =
@@ -2024,16 +2023,16 @@ struct
          * Because trailing 0 is truncated, only 11 digits is printed in SCI
          * format.
          *)
-        val fmt_GEN_p_N_11 =
+        val case_GEN_p_N_11 as () =
             test (GEN NONE) 1234567890100000.0 "1.2345678901E15" (* SCI *)
         (*
          * FIX: 1234567890120000
          * SCI: 1.23456789012E15
          * Both are the same length. FIX should be selected.
          *)
-        val fmt_GEN_p_N_12 =
+        val case_GEN_p_N_12 as () =
             test (GEN NONE) 1234567890120000.0 "1234567890120000" (* FIX *)
-        val fmt_GEN_p_N_13 =
+        val case_GEN_p_N_13 as () =
             test (GEN NONE) 1234567890123000.0 "1234567890120000" (* FIX *)
       in () end
   fun fmt_GEN_normal_NONE_negExp () =
@@ -2045,21 +2044,21 @@ struct
          * SCI: 1.2345678901E~3
          * Both are the same length. FIX should be selected.
          *)
-        val fmt_GEN_p_N_n3_11 =
+        val case_GEN_p_N_n3_11 as () =
             test (GEN NONE) 0.0012345678901 "0.0012345678901" (* FIX *)
         (*
          * FIX: 0.00012345678901
          * SCI: 1.2345678901E~4
          *)
-        val fmt_GEN_p_N_n4_11 =
+        val case_GEN_p_N_n4_11 as () =
             test (GEN NONE) 0.00012345678901 "1.2345678901E~4" (* SCI *)
         (*
          * FIX: 0.000123456789012
          * SCI: 1.23456789012E~4
          *)
-        val fmt_GEN_p_N__n4_12 =
+        val case_GEN_p_N__n4_12 as () =
             test (GEN NONE) 0.000123456789012 "1.23456789012E~4" (* SCI *)
-        val fmt_GEN_p_N__n4_13 =
+        val case_GEN_p_N__n4_13 as () =
             test (GEN NONE) 0.0001234567890123 "1.23456789012E~4" (* SCI *)
       in () end
   fun fmt_GEN_normal_SOME_posExp () =
@@ -2070,13 +2069,13 @@ struct
 
         (* SCI: 1E4
          * FIX: 10000 *)
-        val fmt_GEN_p_1_4 = test (GEN (SOME 1)) 13500.13 "1E4" (* SCI *)
+        val case_GEN_p_1_4 as () = test (GEN (SOME 1)) 13500.13 "1E4" (* SCI *)
         (* SCI: 1.3E4
          * FIX: 13000 *)
-        val fmt_GEN_p_2_4 = test (GEN (SOME 2)) 13500.13 "13000" (* FIX *)
+        val case_GEN_p_2_4 as () = test (GEN (SOME 2)) 13500.13 "13000" (* FIX *)
         (* SCI: 1.35E4
          * FIX: 13500 *)
-        val fmt_GEN_p_3_4 = test (GEN (SOME 3)) 13500.13 "13500" (* FIX *)
+        val case_GEN_p_3_4 as () = test (GEN (SOME 3)) 13500.13 "13500" (* FIX *)
       in () end
   fun fmt_GEN_normal_SOME_negExp () =
       let
@@ -2084,35 +2083,35 @@ struct
 
         (* SCI: 1.23E~2
          * FIX: 0.0123 *)
-        val fmt_GEN_n_n2_3 = test (GEN (SOME 3)) 0.01234 "0.0123"
+        val case_GEN_n_n2_3 as () = test (GEN (SOME 3)) 0.01234 "0.0123"
         (* SCI: 1.23E~3
          * FIX: 0.00123 *)
-        val fmt_GEN_p_n3_3 = test (GEN (SOME 3)) 0.001234 "0.00123"
+        val case_GEN_p_n3_3 as () = test (GEN (SOME 3)) 0.001234 "0.00123"
         (* SCI: 1.23E~4
          * FIX: 0.000123 *)
-        val fmt_GEN_p_n4_3 = test (GEN (SOME 3)) 0.0001234 "1.23E~4"
+        val case_GEN_p_n4_3 as () = test (GEN (SOME 3)) 0.0001234 "1.23E~4"
       in () end
   fun fmt_GEN_abnormal () =
       let
-        val fmt_GEN_p0_N = test (GEN NONE) pos0 "0"
-        val fmt_GEN_p0_1 = test (GEN (SOME 1)) pos0 "0"
-        val fmt_GEN_n0_N = test (GEN NONE) neg0 "~0"
-        val fmt_GEN_n0_1 = test (GEN (SOME 1)) neg0 "~0"
-        val fmt_GEN_pinf_N = test (GEN NONE) posInf "inf"
-        val fmt_GEN_ninf_N = test (GEN NONE) negInf "~inf"
-        val fmt_GEN_pnan_N = test (GEN NONE) posNan "nan"
-        val fmt_GEN_nnan_N = test (GEN NONE) negNan "nan"
+        val case_GEN_p0_N as () = test (GEN NONE) pos0 "0"
+        val case_GEN_p0_1 as () = test (GEN (SOME 1)) pos0 "0"
+        val case_GEN_n0_N as () = test (GEN NONE) neg0 "~0"
+        val case_GEN_n0_1 as () = test (GEN (SOME 1)) neg0 "~0"
+        val case_GEN_pinf_N as () = test (GEN NONE) posInf "inf"
+        val case_GEN_ninf_N as () = test (GEN NONE) negInf "~inf"
+        val case_GEN_pnan_N as () = test (GEN NONE) posNan "nan"
+        val case_GEN_nnan_N as () = test (GEN NONE) negNan "nan"
       in () end
 
   fun fmt_error () =
       let
-        val fmt_SCI =
+        val case_SCI as () =
             (R.fmt (SCI (SOME ~1)); fail "frm SCI(~1) should raise Size.")
             handle General.Size => ()
-        val fmt_FIX =
+        val case_FIX as () =
             (R.fmt (FIX (SOME ~1)); fail "frm FIX(~1) should raise Size.")
             handle General.Size => ()
-        val fmt_GEN =
+        val case_GEN as () =
             (R.fmt (GEN (SOME 0)); fail "frm GEN(0) should raise Size.")
             handle General.Size => ()
       in () end
@@ -2126,13 +2125,13 @@ struct
   fun toString001 () =
       let
         (* Real.toString is equivalent to Real.fmt (StringCvt.GEN NONE) *)
-        val toString_n2 = test 0.01234567890123 "0.0123456789012"
-        val toString_n3 = test 0.001234567890123 "0.00123456789012"
-        val toString_n4 = test 0.0001234567890123 "1.23456789012E~4"
+        val case_n2 as () = test 0.01234567890123 "0.0123456789012"
+        val case_n3 as () = test 0.001234567890123 "0.00123456789012"
+        val case_n4 as () = test 0.0001234567890123 "1.23456789012E~4"
 
-        val toString_14 = test 123456789012300.0 "123456789012000"
-        val toString_15 = test 1234567890123000.0 "1234567890120000"
-        val toString_16 = test 12345678901230000.0 "1.23456789012E16"
+        val case_14 as () = test 123456789012300.0 "123456789012000"
+        val case_15 as () = test 1234567890123000.0 "1234567890120000"
+        val case_16 as () = test 12345678901230000.0 "1.23456789012E16"
       in () end
   end (* local *)
 
@@ -2163,65 +2162,65 @@ struct
   fun scan_normal_0001 () =
       let
         (* test case for numbers with whole part *)
-        val normal_N_123_N_N_N = test "123" (SOME(123.0, ""))
-        val normal_N_123_456_N_N = test "123.456" (SOME(123.456, ""))
-        val normal_N_123_456_N_1 = test "123.456E1" (SOME(1234.56, ""))
+        val case_N_123_N_N_N as () = test "123" (SOME(123.0, ""))
+        val case_N_123_456_N_N as () = test "123.456" (SOME(123.456, ""))
+        val case_N_123_456_N_1 as () = test "123.456E1" (SOME(1234.56, ""))
 
-        val normal_p_123_N_N_N = test "+123" (SOME(123.0, ""))
-        val normal_t_123_N_N_N = test "~123" (SOME(~123.0, ""))
-        val normal_m_123_N_N_N = test "-123" (SOME(~123.0, ""))
-        val normal_m_123_456_N_1 = test "-123.456E1" (SOME(~1234.56, ""))
-        val normal_m_123_456_m_1 = test "-123.456E-1" (SOME(~12.3456, ""))
+        val case_p_123_N_N_N as () = test "+123" (SOME(123.0, ""))
+        val case_t_123_N_N_N as () = test "~123" (SOME(~123.0, ""))
+        val case_m_123_N_N_N as () = test "-123" (SOME(~123.0, ""))
+        val case_m_123_456_N_1 as () = test "-123.456E1" (SOME(~1234.56, ""))
+        val case_m_123_456_m_1 as () = test "-123.456E-1" (SOME(~12.3456, ""))
       in () end
   fun scan_normal_0002 () =
       let
         (* test case for numbers with no whole part *)
-        val normal_N_N_123_N_1 = test ".123E1" (SOME(1.23, ""))
-        val normal_N_N_123_N_10 = test ".123E10" (SOME(1230000000.0, ""))
-        val normal_N_N_123_p_1 = test ".123E+1" (SOME(1.23, ""))
-        val normal_N_N_123_t_1 = test ".123E~1" (SOME(0.0123, ""))
-        val normal_N_N_123_m_1 = test ".123E-1" (SOME(0.0123, ""))
-        val normal_N_N_123_m_10 = test ".123E-10" (SOME(0.0000000000123, ""))
+        val case_N_N_123_N_1 as () = test ".123E1" (SOME(1.23, ""))
+        val case_N_N_123_N_10 as () = test ".123E10" (SOME(1230000000.0, ""))
+        val case_N_N_123_p_1 as () = test ".123E+1" (SOME(1.23, ""))
+        val case_N_N_123_t_1 as () = test ".123E~1" (SOME(0.0123, ""))
+        val case_N_N_123_m_1 as () = test ".123E-1" (SOME(0.0123, ""))
+        val case_N_N_123_m_10 as () = test ".123E-10" (SOME(0.0000000000123, ""))
       in () end
   fun scan_normal_0003 () =
       let
         (* test case for zero. *)
-        val normal_N_N_0_N_N = test ".0E1" (SOME(0.0, ""))
-        val normal_N_0_N_N_N = test "0E1" (SOME(0.0, ""))
-        val normal_N_0_0_N_N = test "0.0E1" (SOME(0.0, ""))
-        val normal_p_0_0_N_N = test "0.0E1" (SOME(pos0, ""))
-        val normal_t_0_0_N_N = test "~0.0E1" (SOME(neg0, ""))
-        val normal_m_0_0_N_N = test "-0.0E1" (SOME(neg0, ""))
+        val case_N_N_0_N_N as () = test ".0E1" (SOME(0.0, ""))
+        val case_N_0_N_N_N as () = test "0E1" (SOME(0.0, ""))
+        val case_N_0_0_N_N as () = test "0.0E1" (SOME(0.0, ""))
+        val case_p_0_0_N_N as () = test "0.0E1" (SOME(pos0, ""))
+        val case_t_0_0_N_N as () = test "~0.0E1" (SOME(neg0, ""))
+        val case_m_0_0_N_N as () = test "-0.0E1" (SOME(neg0, ""))
       in () end
   fun scan_normal_0010 () =
       let
         (* test case for initial whitespaces and trailer *)
-        val normal_initws = test " \n\r\t\v\f123.456" (SOME(123.456, ""))
-        val normal_trail_1 = test "123.456ABC" (SOME(123.456, "ABC"))
-        val normal_trail_2 = test "123.456.123" (SOME(123.456, ".123"))
+        val case_initws as () = test " \n\r\t\v\f123.456" (SOME(123.456, ""))
+        val case_trail_1 as () = test "123.456ABC" (SOME(123.456, "ABC"))
+        val case_trail_2 as () = test "123.456.123" (SOME(123.456, ".123"))
       in () end
   fun scan_normal_0011 () =
       let
         (* test case for case insensitive *)
-        val normal_smallE = test "123.456e1" (SOME(1234.56, ""))
-        val normal_largeE = test "123.456E1" (SOME(1234.56, ""))
+        val case_smallE as () = test "123.456e1" (SOME(1234.56, ""))
+        val case_largeE as () = test "123.456E1" (SOME(1234.56, ""))
       in () end
   fun scan_normal_0012 () =
       let
         (* test case for extremes. *)
-        val normal_error_Ebig = test "1E1000" (SOME(posInf, ""))
+        val case_error_Ebig as () = test "1E1000" (SOME(posInf, ""))
       in () end
   fun scan_normal_1001 () =
       let
         (* test cases for bugs? in the format specified in Basis spec. *)
         (* With whole part and 'E', but no exponential part. *)
-        val normal_error_E1 = test "1EA" (SOME(1.0, "A"))
+        val case_error_E1 as () = test "1EA" (SOME(1.0, "A"))
         (* With 'E' and exponential, but no whole part. *)
-        val normal_error_E2 = test "E1" NONE
+        val case_error_E2 as () = test "E1" NONE
         (* Only 'E' *)
-        val normal_error_E3 = test "E" NONE
+        val case_error_E3 as () = test "E" NONE
         (* With decimal point, but no fractional part. *)
-        val normal_error_dot = test "1..1" (SOME(1.0, ".1"))
+        val case_error_dot as () = test "1..1" (SOME(1.0, ".1"))
       in () end
 
   (* The valid format of Real.scan for abnormal floats is:
@@ -2229,36 +2228,36 @@ struct
    *)
   fun scan_abnormal_0001 () =
       let
-        val abnormal_N_inf = test "inf" (SOME(posInf, ""))
-        val abnormal_N_infinity = test "infinity" (SOME(posInf, ""))
-        val abnormal_N_nan = test "nan" (SOME(posNan, ""))
+        val case_N_inf as () = test "inf" (SOME(posInf, ""))
+        val case_N_infinity as () = test "infinity" (SOME(posInf, ""))
+        val case_N_nan as () = test "nan" (SOME(posNan, ""))
 
-        val abnormal_p_inf = test "+inf" (SOME(posInf, ""))
-        val abnormal_p_infinity = test "+infinity" (SOME(posInf, ""))
-        val abnormal_p_nan = test "+nan" (SOME(posNan, ""))
+        val case_p_inf as () = test "+inf" (SOME(posInf, ""))
+        val case_p_infinity as () = test "+infinity" (SOME(posInf, ""))
+        val case_p_nan as () = test "+nan" (SOME(posNan, ""))
 
-        val abnormal_t_inf = test "~inf" (SOME(negInf, ""))
-        val abnormal_t_infinity = test "~infinity" (SOME(negInf, ""))
-        val abnormal_t_nan = test "~nan" (SOME(negNan, ""))
+        val case_t_inf as () = test "~inf" (SOME(negInf, ""))
+        val case_t_infinity as () = test "~infinity" (SOME(negInf, ""))
+        val case_t_nan as () = test "~nan" (SOME(negNan, ""))
       in () end
   fun scan_abnormal_0002 () =
       let
         (* test case for case insensitive *)
-        val abnormal_INF = test "INF" (SOME(posInf, ""))
-        val abnormal_INFINITY = test "INFINITY" (SOME(posInf, ""))
-        val abnormal_NAN = test "NAN" (SOME(posNan, ""))
+        val case_INF as () = test "INF" (SOME(posInf, ""))
+        val case_INFINITY as () = test "INFINITY" (SOME(posInf, ""))
+        val case_NAN as () = test "NAN" (SOME(posNan, ""))
       in () end
   fun scan_abnormal_0010 () =
       let
         (* test case for initial whitespace and trailer *)
-        val abnormal_initws_inf = test " \n\r\t\v\finf" (SOME(posInf, ""))
-        val abnormal_initws_infinity = test " \n\r\t\v\finfinity" (SOME(posInf, ""))
-        val abnormal_initws_nan = test " \n\r\t\v\fnan" (SOME(posNan, ""))
+        val case_initws_inf as () = test " \n\r\t\v\finf" (SOME(posInf, ""))
+        val case_initws_infinity as () = test " \n\r\t\v\finfinity" (SOME(posInf, ""))
+        val case_initws_nan as () = test " \n\r\t\v\fnan" (SOME(posNan, ""))
 
-        val abnormal_trail_inf_1 = test "infABC" (SOME(posInf, "ABC"))
-        val abnormal_trail_inf_2 = test "infinit" (SOME(posInf, "init"))
-        val abnormal_trail_infinity = test "infinityABC" (SOME(posInf, "ABC"))
-        val abnormal_trail_nan = test "nanABC" (SOME(posNan, "ABC"))
+        val case_trail_inf_1 as () = test "infABC" (SOME(posInf, "ABC"))
+        val case_trail_inf_2 as () = test "infinit" (SOME(posInf, "init"))
+        val case_trail_infinity as () = test "infinityABC" (SOME(posInf, "ABC"))
+        val case_trail_nan as () = test "nanABC" (SOME(posNan, "ABC"))
       in () end
   end (* local *)
 
@@ -2267,10 +2266,10 @@ struct
   fun fromString0001 () =
       let
         val fromString_1 = R.fromString "123.456E10"
-        val _ = assertEqualRealOption (SOME(1234560000000.0))
+        val () = assertEqualRealOption (SOME(1234560000000.0)) fromString_1
 
         val fromString_2 = R.fromString "ABC"
-        val _ = assertEqualRealOption NONE
+        val () = assertEqualRealOption NONE fromString_2
       in () end
 
   (**********)
@@ -2286,24 +2285,24 @@ struct
   in
   fun toDecimal_normal_0001 () =
       let
-        val normal_p_p = test 12.5 (IR.NORMAL, false, [1, 2, 5], 2)
-        val normal_p_0 = test 0.125 (IR.NORMAL, false, [1, 2, 5], 0)
-        val normal_p_n = test 0.015625 (IR.NORMAL, false, [1, 5, 6, 2, 5], ~1)
+        val case_p_p as () = test 12.5 (IR.NORMAL, false, [1, 2, 5], 2)
+        val case_p_0 as () = test 0.125 (IR.NORMAL, false, [1, 2, 5], 0)
+        val case_p_n as () = test 0.015625 (IR.NORMAL, false, [1, 5, 6, 2, 5], ~1)
 
-        val normal_n_p = test ~12.5 (IR.NORMAL, true, [1, 2, 5], 2)
-        val normal_n_0 = test ~0.125 (IR.NORMAL, true, [1, 2, 5], 0)
-        val normal_n_n = test ~0.015625 (IR.NORMAL, true, [1, 5, 6, 2, 5], ~1)
+        val case_n_p as () = test ~12.5 (IR.NORMAL, true, [1, 2, 5], 2)
+        val case_n_0 as () = test ~0.125 (IR.NORMAL, true, [1, 2, 5], 0)
+        val case_n_n as () = test ~0.015625 (IR.NORMAL, true, [1, 5, 6, 2, 5], ~1)
       in () end
   fun toDecimal_abnormal_0001 () =
       let
-        val normal_p0 = test pos0 (IR.ZERO, false, [], 0)
-        val normal_n0 = test neg0 (IR.ZERO, true, [], 0)
+        val case_p0 as () = test pos0 (IR.ZERO, false, [], 0)
+        val case_n0 as () = test neg0 (IR.ZERO, true, [], 0)
 
-        val normal_pinf = test posInf (IR.INF, false, [], 0)
-        val normal_ninf = test negInf (IR.INF, true, [], 0)
+        val case_pinf as () = test posInf (IR.INF, false, [], 0)
+        val case_ninf as () = test negInf (IR.INF, true, [], 0)
 
-        val normal_pnan = test posNan (IR.NAN, false, [], 0)
-        val normal_nnan = test negNan (IR.NAN, true, [], 0)
+        val case_pnan as () = test posNan (IR.NAN, false, [], 0)
+        val case_nnan as () = test negNan (IR.NAN, true, [], 0)
       in () end
 
   end (* inner local *)
@@ -2318,49 +2317,49 @@ struct
   (* safe case *)
   fun fromDecimal_normal_0001 () =
       let
-        val normal_p_p = test (IR.NORMAL, false, [1, 2, 5], 2) (SOME 12.5)
-        val normal_p_0 = test (IR.NORMAL, false, [1, 2, 5], 0) (SOME 0.125)
-        val normal_p_n = test (IR.NORMAL, false, [1, 2, 5], ~2) (SOME 0.00125)
+        val case_p_p as () = test (IR.NORMAL, false, [1, 2, 5], 2) (SOME 12.5)
+        val case_p_0 as () = test (IR.NORMAL, false, [1, 2, 5], 0) (SOME 0.125)
+        val case_p_n as () = test (IR.NORMAL, false, [1, 2, 5], ~2) (SOME 0.00125)
 
-        val normal_n_p = test (IR.NORMAL, true, [1, 2, 5], 2) (SOME ~12.5)
-        val normal_n_0 = test (IR.NORMAL, true, [1, 2, 5], 0) (SOME ~0.125)
-        val normal_n_n = test (IR.NORMAL, true, [1, 2, 5], ~2) (SOME ~0.00125)
+        val case_n_p as () = test (IR.NORMAL, true, [1, 2, 5], 2) (SOME ~12.5)
+        val case_n_0 as () = test (IR.NORMAL, true, [1, 2, 5], 0) (SOME ~0.125)
+        val case_n_n as () = test (IR.NORMAL, true, [1, 2, 5], ~2) (SOME ~0.00125)
       in () end
   (* fromDecimal should ignore class field for IR.NORMAL. *)
   fun fromDecimal_normal_0002 () =
       let
         (* empty digits *)
-        val abnormal_NORMAL_p0 = test (IR.NORMAL, false, [], 2) (SOME pos0)
+        val case_NORMAL_p0 as () = test (IR.NORMAL, false, [], 2) (SOME pos0)
         (* very large magnitude *)
-        val abnormal_NORMAL_pinf = test (IR.NORMAL, false, [1], 1000) (SOME posInf)
-        val abnormal_NORMAL_ninf = test (IR.NORMAL, true, [1], 1000) (SOME negInf)
+        val case_NORMAL_pinf as () = test (IR.NORMAL, false, [1], 1000) (SOME posInf)
+        val case_NORMAL_ninf as () = test (IR.NORMAL, true, [1], 1000) (SOME negInf)
         (* very small magnitude *)
-        val abnormal_NORMAL_p0 = test (IR.NORMAL, false, [1], ~1000) (SOME pos0)
-        val abnormal_NORMAL_n0 = test (IR.NORMAL, true, [1], ~1000) (SOME neg0)
+        val case_NORMAL_p0 as () = test (IR.NORMAL, false, [1], ~1000) (SOME pos0)
+        val case_NORMAL_n0 as () = test (IR.NORMAL, true, [1], ~1000) (SOME neg0)
       in () end
   (* error case *)
   fun fromDecimal_normal_1001 () =
       let
-        val normal_invalid_digits = test (IR.NORMAL, false, [10], 0) NONE
+        val case_invalid_digits as () = test (IR.NORMAL, false, [10], 0) NONE
       in () end
 
   (* safe case *)
   fun fromDecimal_abnormal_0001 () =
       let
-        val normal_p0 = test (IR.ZERO, false, [], 0) (SOME pos0)
-        val normal_n0 = test (IR.ZERO, true, [], 0) (SOME neg0)
+        val case_p0 as () = test (IR.ZERO, false, [], 0) (SOME pos0)
+        val case_n0 as () = test (IR.ZERO, true, [], 0) (SOME neg0)
 
-        val normal_pinf = test (IR.INF, false, [], 0) (SOME posInf)
-        val normal_ninf = test (IR.INF, true, [], 0) (SOME negInf)
+        val case_pinf as () = test (IR.INF, false, [], 0) (SOME posInf)
+        val case_ninf as () = test (IR.INF, true, [], 0) (SOME negInf)
 
-        val normal_pnan = test (IR.NAN, false, [], 0) (SOME posNan)
-        val normal_nnan = test (IR.NAN, true, [], 0) (SOME negNan)
+        val case_pnan as () = test (IR.NAN, false, [], 0) (SOME posNan)
+        val case_nnan as () = test (IR.NAN, true, [], 0) (SOME negNan)
       in () end
   fun fromDecimal_abnormal_0002 () =
       let
         (* digits and exp are ignored *)
-        val abnormal_INF_p = test (IR.INF, false, [1, 2, 3], 2) (SOME posInf)
-        val abnormal_NAN_p = test (IR.NAN, false, [1, 2, 3], 2) (SOME posNan)
+        val case_INF_p as () = test (IR.INF, false, [1, 2, 3], 2) (SOME posInf)
+        val case_NAN_p as () = test (IR.NAN, false, [1, 2, 3], 2) (SOME posNan)
       in () end
 
   end (* inner local *)

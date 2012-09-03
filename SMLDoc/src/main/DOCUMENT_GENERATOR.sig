@@ -3,6 +3,7 @@
  * program.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: DOCUMENT_GENERATOR.sig,v 1.3 2004/11/06 16:15:02 kiyoshiy Exp $
  *)
 signature DOCUMENT_GENERATOR =

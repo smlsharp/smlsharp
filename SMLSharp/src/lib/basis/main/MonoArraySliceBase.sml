@@ -1,6 +1,7 @@
 (**
  * base implementation of MONO_ARRAY_SLICE.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MonoArraySliceBase.sml,v 1.4 2007/09/01 03:21:16 kiyoshiy Exp $
  *)
 functor MonoArraySliceBase

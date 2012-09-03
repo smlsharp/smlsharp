@@ -6,6 +6,9 @@
  * <tr><th>case</th><th>description</th></tr>
  * <tr><td>SpaceIndicator0001</td><td>including space indicator</td></tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure SMLFormatTest0002 =
 struct

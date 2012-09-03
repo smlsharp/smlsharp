@@ -1,3 +1,7 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
 
 use "./OSPrimIOBase.sml";
 use "./BinOSPrimIO.sml";

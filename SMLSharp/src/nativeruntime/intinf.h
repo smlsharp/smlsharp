@@ -37,7 +37,7 @@ struct sml_intinf {
 #define sml_intinf_and(z,x,y)    mpz_and((z)->value, (x)->value, (y)->value)
 #define sml_intinf_com(z,x)      mpz_com((z)->value, (x)->value)
 #define sml_intinf_pow(z,x,y)    mpz_pow_ui((z)->value, (x)->value, (y))
-#define sml_intinf_log2(z)       mpz_sizeinbase((z)->value, 2)
+#define sml_intinf_log2(z)       (mpz_sizeinbase((z)->value, 2) - 1)
 #define sml_intinf_cmp(x,y)      mpz_cmp((x)->value, (y)->value)
 #define sml_intinf_sign(x)       mpz_sgn((x)->value)
 

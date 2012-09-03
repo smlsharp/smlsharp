@@ -29,20 +29,20 @@ struct
 
   fun roundingMode001 () =
       let
-        val _ = R.setRoundingMode R.TO_NEAREST
-        val _ = assertEqualRoundingMode
+        val () = R.setRoundingMode R.TO_NEAREST
+        val () = assertEqualRoundingMode
                     R.TO_NEAREST (R.getRoundingMode())
 
-        val _ = R.setRoundingMode R.TO_NEGINF
-        val _ = assertEqualRoundingMode
+        val () = R.setRoundingMode R.TO_NEGINF
+        val () = assertEqualRoundingMode
                     R.TO_NEGINF (R.getRoundingMode ())
 
-        val _ = R.setRoundingMode R.TO_POSINF
-        val _ = assertEqualRoundingMode
+        val () = R.setRoundingMode R.TO_POSINF
+        val () = assertEqualRoundingMode
                     R.TO_POSINF (R.getRoundingMode ())
 
-        val _ = R.setRoundingMode R.TO_ZERO
-        val _ = assertEqualRoundingMode
+        val () = R.setRoundingMode R.TO_ZERO
+        val () = assertEqualRoundingMode
                     R.TO_ZERO (R.getRoundingMode ())
       in () end
 
@@ -55,40 +55,40 @@ struct
   fun toString001 () =
       let
 (*
-        val toString_NAN = test (R.NAN, false, [], 0) "nan" 
+        val case_NAN as () = test (R.NAN, false, [], 0) "nan" 
 *)
-        val toString_POS_INF = test (R.INF, false, [], 0) "inf" 
-        val toString_NEG_INF = test (R.INF, true, [], 0) "~inf" 
-        val toString_POS_ZERO = test (R.ZERO, false, [], 0) "0.0" 
-        val toString_NEG_ZERO = test (R.ZERO, true, [], 0) "~0.0" 
+        val case_POS_INF as () = test (R.INF, false, [], 0) "inf" 
+        val case_NEG_INF as () = test (R.INF, true, [], 0) "~inf" 
+        val case_POS_ZERO as () = test (R.ZERO, false, [], 0) "0.0" 
+        val case_NEG_ZERO as () = test (R.ZERO, true, [], 0) "~0.0" 
         (**********)
-        val toString_NORMAL_P_0_0 = test (R.NORMAL, false, [0], 0) "0.0" 
-        val toString_NORMAL_P_1_0 = test (R.NORMAL, false, [1], 0) "0.1" 
-        val toString_NORMAL_P_1_1 = test (R.NORMAL, false, [1], 1) "0.1E1" 
-        val toString_NORMAL_P_1_2 = test (R.NORMAL, false, [1], 2) "0.1E2" 
-        val toString_NORMAL_P_1_m1 = test (R.NORMAL, false, [1], ~1) "0.1E~1" 
-        val toString_NORMAL_P_1_m2 = test (R.NORMAL, false, [1], ~2) "0.1E~2" 
-        val toString_NORMAL_P_2_0 = test (R.NORMAL, false, [1, 2], 0) "0.12" 
-        val toString_NORMAL_P_2_1 = test (R.NORMAL, false, [1, 2], 1) "0.12E1" 
-        val toString_NORMAL_P_2_2 = test (R.NORMAL, false, [1, 2], 2) "0.12E2" 
-        val toString_NORMAL_P_2_3 = test (R.NORMAL, false, [1, 2], 3) "0.12E3" 
-        val toString_NORMAL_P_2_m1 = test (R.NORMAL, false, [1, 2], ~1) "0.12E~1" 
-        val toString_NORMAL_P_2_m2 = test (R.NORMAL, false, [1, 2], ~2) "0.12E~2" 
-        val toString_NORMAL_P_2_m3 = test (R.NORMAL, false, [1, 2], ~3) "0.12E~3" 
+        val case_NORMAL_P_0_0 as () = test (R.NORMAL, false, [0], 0) "0.0" 
+        val case_NORMAL_P_1_0 as () = test (R.NORMAL, false, [1], 0) "0.1" 
+        val case_NORMAL_P_1_1 as () = test (R.NORMAL, false, [1], 1) "0.1E1" 
+        val case_NORMAL_P_1_2 as () = test (R.NORMAL, false, [1], 2) "0.1E2" 
+        val case_NORMAL_P_1_m1 as () = test (R.NORMAL, false, [1], ~1) "0.1E~1" 
+        val case_NORMAL_P_1_m2 as () = test (R.NORMAL, false, [1], ~2) "0.1E~2" 
+        val case_NORMAL_P_2_0 as () = test (R.NORMAL, false, [1, 2], 0) "0.12" 
+        val case_NORMAL_P_2_1 as () = test (R.NORMAL, false, [1, 2], 1) "0.12E1" 
+        val case_NORMAL_P_2_2 as () = test (R.NORMAL, false, [1, 2], 2) "0.12E2" 
+        val case_NORMAL_P_2_3 as () = test (R.NORMAL, false, [1, 2], 3) "0.12E3" 
+        val case_NORMAL_P_2_m1 as () = test (R.NORMAL, false, [1, 2], ~1) "0.12E~1" 
+        val case_NORMAL_P_2_m2 as () = test (R.NORMAL, false, [1, 2], ~2) "0.12E~2" 
+        val case_NORMAL_P_2_m3 as () = test (R.NORMAL, false, [1, 2], ~3) "0.12E~3" 
         (**********)
-        val toString_NORMAL_N_0_0 = test (R.NORMAL, true, [0], 0) "~0.0" 
-        val toString_NORMAL_N_1_0 = test (R.NORMAL, true, [1], 0) "~0.1" 
-        val toString_NORMAL_N_1_1 = test (R.NORMAL, true, [1], 1) "~0.1E1" 
-        val toString_NORMAL_N_1_2 = test (R.NORMAL, true, [1], 2) "~0.1E2" 
-        val toString_NORMAL_N_1_m1 = test (R.NORMAL, true, [1], ~1) "~0.1E~1" 
-        val toString_NORMAL_N_1_m2 = test (R.NORMAL, true, [1], ~2) "~0.1E~2" 
-        val toString_NORMAL_N_2_0 = test (R.NORMAL, true, [1, 2], 0) "~0.12" 
-        val toString_NORMAL_N_2_1 = test (R.NORMAL, true, [1, 2], 1) "~0.12E1" 
-        val toString_NORMAL_N_2_2 = test (R.NORMAL, true, [1, 2], 2) "~0.12E2" 
-        val toString_NORMAL_N_2_3 = test (R.NORMAL, true, [1, 2], 3) "~0.12E3" 
-        val toString_NORMAL_N_2_m1 = test (R.NORMAL, true, [1, 2], ~1) "~0.12E~1" 
-        val toString_NORMAL_N_2_m2 = test (R.NORMAL, true, [1, 2], ~2) "~0.12E~2" 
-        val toString_NORMAL_N_2_m3 = test (R.NORMAL, true, [1, 2], ~3) "~0.12E~3" 
+        val case_NORMAL_N_0_0 as () = test (R.NORMAL, true, [0], 0) "~0.0" 
+        val case_NORMAL_N_1_0 as () = test (R.NORMAL, true, [1], 0) "~0.1" 
+        val case_NORMAL_N_1_1 as () = test (R.NORMAL, true, [1], 1) "~0.1E1" 
+        val case_NORMAL_N_1_2 as () = test (R.NORMAL, true, [1], 2) "~0.1E2" 
+        val case_NORMAL_N_1_m1 as () = test (R.NORMAL, true, [1], ~1) "~0.1E~1" 
+        val case_NORMAL_N_1_m2 as () = test (R.NORMAL, true, [1], ~2) "~0.1E~2" 
+        val case_NORMAL_N_2_0 as () = test (R.NORMAL, true, [1, 2], 0) "~0.12" 
+        val case_NORMAL_N_2_1 as () = test (R.NORMAL, true, [1, 2], 1) "~0.12E1" 
+        val case_NORMAL_N_2_2 as () = test (R.NORMAL, true, [1, 2], 2) "~0.12E2" 
+        val case_NORMAL_N_2_3 as () = test (R.NORMAL, true, [1, 2], 3) "~0.12E3" 
+        val case_NORMAL_N_2_m1 as () = test (R.NORMAL, true, [1, 2], ~1) "~0.12E~1" 
+        val case_NORMAL_N_2_m2 as () = test (R.NORMAL, true, [1, 2], ~2) "~0.12E~2" 
+        val case_NORMAL_N_2_m3 as () = test (R.NORMAL, true, [1, 2], ~3) "~0.12E~3" 
       in () end
   end (* local *)
 
@@ -101,30 +101,30 @@ struct
 
   fun fromString_inf () =
       let
-        val fromString_n_inf = test "inf" (R.INF, false, [], 0)
-        val fromString_p_inf = test "+inf" (R.INF, false, [], 0)
-        val fromString_m_inf = test "-inf" (R.INF, true, [], 0)
-        val fromString_t_inf = test "~inf" (R.INF, true, [], 0)
-        val fromString_upper_inf = test "INF" (R.INF, false, [], 0)
+        val case_n_inf as () = test "inf" (R.INF, false, [], 0)
+        val case_p_inf as () = test "+inf" (R.INF, false, [], 0)
+        val case_m_inf as () = test "-inf" (R.INF, true, [], 0)
+        val case_t_inf as () = test "~inf" (R.INF, true, [], 0)
+        val case_upper_inf as () = test "INF" (R.INF, false, [], 0)
       in () end
 
   fun fromString_infinity () =
       let
-        val fromString_n_infinity = test "infinity" (R.INF, false, [], 0)
-        val fromString_p_infinity = test "+infinity" (R.INF, false, [], 0)
-        val fromString_m_infinity = test "-infinity" (R.INF, true, [], 0)
-        val fromString_t_infinity = test "~infinity" (R.INF, true, [], 0)
-        val fromString_upper_infinity = test "INFINITY" (R.INF, false, [], 0)
+        val case_n_infinity as () = test "infinity" (R.INF, false, [], 0)
+        val case_p_infinity as () = test "+infinity" (R.INF, false, [], 0)
+        val case_m_infinity as () = test "-infinity" (R.INF, true, [], 0)
+        val case_t_infinity as () = test "~infinity" (R.INF, true, [], 0)
+        val case_upper_infinity as () = test "INFINITY" (R.INF, false, [], 0)
       in () end
 
   fun fromString_nan () =
       let
 (*
-        val fromString_n_nan = test "nan" (R.NAN, false, [], 0)
-        val fromString_p_nan = test "+nan" (R.NAN, false, [], 0)
-        val fromString_m_nan = test "-nan" (R.NAN, true, [], 0)
-        val fromString_t_nan = test "~nan" (R.NAN, true, [], 0)
-        val fromString_upper_nan = test "NAN" (R.NAN, false, [], 0)
+        val case_n_nan as () = test "nan" (R.NAN, false, [], 0)
+        val case_p_nan as () = test "+nan" (R.NAN, false, [], 0)
+        val case_m_nan as () = test "-nan" (R.NAN, true, [], 0)
+        val case_t_nan as () = test "~nan" (R.NAN, true, [], 0)
+        val case_upper_nan as () = test "NAN" (R.NAN, false, [], 0)
 *)
       in () end
 
@@ -137,10 +137,10 @@ struct
         (* test of integer part
          * [+~-]?[0-9]+.(e|E) 
          *)
-        val fromString_n_0e = test "0.e" (R.ZERO, false, [], 0)
-        val fromString_n_0E = test "0.E" (R.ZERO, false, [], 0)
-        val fromString_01 = test "01." (R.NORMAL, false, [1], 1)
-        val fromString_012 = test "012." (R.NORMAL, false, [1, 2], 2)
+        val case_n_0e as () = test "0.e" (R.ZERO, false, [], 0)
+        val case_n_0E as () = test "0.E" (R.ZERO, false, [], 0)
+        val case_01 as () = test "01." (R.NORMAL, false, [1], 1)
+        val case_012 as () = test "012." (R.NORMAL, false, [1, 2], 2)
       in () end
 
   fun fromString_fraction () =
@@ -148,9 +148,9 @@ struct
         (* test of fraction part
          * [+~-]?.[0-9]+(e|E)
          *)
-        val fromString_0 = test ".0e0" (R.ZERO, false, [], 0)
-        val fromString_1 = test ".1e" (R.NORMAL, false, [1], 0)
-        val fromString_0120 = test ".0120e" (R.NORMAL, false, [1, 2], ~1)
+        val case_0 as () = test ".0e0" (R.ZERO, false, [], 0)
+        val case_1 as () = test ".1e" (R.NORMAL, false, [1], 0)
+        val case_0120 as () = test ".0120e" (R.NORMAL, false, [1, 2], ~1)
       in () end
 
   fun fromString_integer_fraction () =
@@ -158,12 +158,12 @@ struct
         (* test of integer+fraction part
          * [+~-]?[0-9]+.[0-9]+(e|E) 
          *)
-        val fromString_0_0 = test "0.0e" (R.ZERO, false, [], 0)
-        val fromString_0_1 = test "0.1e" (R.NORMAL, false, [1], 0)
-        val fromString_1_0 = test "1.0e" (R.NORMAL, false, [1], 1)
-        val fromString_0_0120 = test "0.0120e" (R.NORMAL, false, [1, 2], ~1)
-        val fromString_0120_0 = test "0120.0e" (R.NORMAL, false, [1, 2], 3)
-        val fromString_0120_0120 = test "0120.0120e" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 3)
+        val case_0_0 as () = test "0.0e" (R.ZERO, false, [], 0)
+        val case_0_1 as () = test "0.1e" (R.NORMAL, false, [1], 0)
+        val case_1_0 as () = test "1.0e" (R.NORMAL, false, [1], 1)
+        val case_0_0120 as () = test "0.0120e" (R.NORMAL, false, [1, 2], ~1)
+        val case_0120_0 as () = test "0120.0e" (R.NORMAL, false, [1, 2], 3)
+        val case_0120_0120 as () = test "0120.0120e" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 3)
       in () end
 
   fun fromString_exp () =
@@ -171,42 +171,42 @@ struct
         (* test of exp part
          * [+~-]?[0-9]+.[0-9]+(e|E)[+~-]?[0-9]+ 
          *)
-        val fromString_0_0_0 = test "0.0e0" (R.ZERO, false, [], 0)
-        val fromString_0120_0120_1 = test "0120.0120e1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 4)
-        val fromString_0120_0120_p1 = test "0120.0120e+1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 4)
-        val fromString_0120_0120_m1 = test "0120.0120e-1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 2)
-        val fromString_0120_0120_t1 = test "0120.0120e~1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 2)
+        val case_0_0_0 as () = test "0.0e0" (R.ZERO, false, [], 0)
+        val case_0120_0120_1 as () = test "0120.0120e1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 4)
+        val case_0120_0120_p1 as () = test "0120.0120e+1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 4)
+        val case_0120_0120_m1 as () = test "0120.0120e-1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 2)
+        val case_0120_0120_t1 as () = test "0120.0120e~1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 2)
       in () end
 
   fun fromString_sign () =
       let
         (* test of sign part
          *)
-        val fromString_p_0 = test "+0.E" (R.ZERO, false, [], 0)
-        val fromString_m_0 = test "-0.E" (R.ZERO, true, [], 0)
-        val fromString_t_0 = test "~0.E" (R.ZERO, true, [], 0)
-        val fromString_p_0120_0120_t1 = test "+0120.0120e~1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 2)
-        val fromString_m_0120_0120_t1 = test "-0120.0120e~1" (R.NORMAL, true, [1, 2, 0, 0, 1, 2], 2)
-        val fromString_t_0120_0120_t1 = test "~0120.0120e~1" (R.NORMAL, true, [1, 2, 0, 0, 1, 2], 2)
+        val case_p_0 as () = test "+0.E" (R.ZERO, false, [], 0)
+        val case_m_0 as () = test "-0.E" (R.ZERO, true, [], 0)
+        val case_t_0 as () = test "~0.E" (R.ZERO, true, [], 0)
+        val case_p_0120_0120_t1 as () = test "+0120.0120e~1" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 2)
+        val case_m_0120_0120_t1 as () = test "-0120.0120e~1" (R.NORMAL, true, [1, 2, 0, 0, 1, 2], 2)
+        val case_t_0120_0120_t1 as () = test "~0120.0120e~1" (R.NORMAL, true, [1, 2, 0, 0, 1, 2], 2)
       in () end
 
   fun fromString_header_trailer () =
       let
         (* test of leading white spaces and trailers
          *)
-        val fromString_ws_p_0120_0120_t1 = test "  +0120.0120e~1abc" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 2)
+        val case_ws_p_0120_0120_t1 as () = test "  +0120.0120e~1abc" (R.NORMAL, false, [1, 2, 0, 0, 1, 2], 2)
       in () end
 
   fun fromString_invalid1 () =
       let
         val fromString_nodot = R.fromString "123"
-        val _ = assertNone fromString_nodot
+        val () = assertNone fromString_nodot
 
         val fromString_alpha = R.fromString "A"
-        val _ = assertNone fromString_alpha
+        val () = assertNone fromString_alpha
 
         val fromString_onlyE = R.fromString "E"
-        val _ = assertNone fromString_onlyE
+        val () = assertNone fromString_onlyE
       in () end
 
   end (* local *)

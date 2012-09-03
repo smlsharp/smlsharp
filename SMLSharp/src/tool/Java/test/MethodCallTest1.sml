@@ -3,6 +3,8 @@ use "./MethodCallTestee1_Child.sml";
 
 (**
  * TestCases for basic operations about Java class hierarchy.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure MethodCallTest1 =
 struct

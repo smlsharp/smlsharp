@@ -105,7 +105,17 @@ IMLPrim_Real_splitImpl(UInt32Value argsCount,
 {
     Real64Value realValue = PrimitiveSupport::cellRefToReal64(argumentRefs[0]);
     Real64Value integral;
-    Real64Value fractional = ::modf(realValue, &integral);
+    Real64Value fractional;
+    if(isnan(realValue)){
+        /* NOTE: We set integral and fractional here manually, because, on some
+         * platform (e.g., cygwin), modf(nan) returns 0.0, which should be
+         * nan. */
+        integral = realValue;
+        fractional = realValue;
+    }
+    else{
+        fractional = ::modf(realValue, &integral);
+    }
     Cell elements[4]; // ToDo : use macro instead of 4
     PrimitiveSupport::real64ToCellRef(integral, &elements[0]);
     PrimitiveSupport::real64ToCellRef(fractional, &elements[2]);

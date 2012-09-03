@@ -1,6 +1,7 @@
 (**
  * String converter structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: StringCvt.sml,v 1.7 2005/04/28 16:35:32 kiyoshiy Exp $
  *)
 structure StringCvt =

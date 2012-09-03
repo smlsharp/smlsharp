@@ -1,5 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: FORMAT_EXPRESSION_TYPES.sig,v 1.1 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 structure PreProcessedExpression =

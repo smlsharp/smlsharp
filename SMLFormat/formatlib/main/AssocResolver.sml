@@ -2,6 +2,7 @@
  *  This module eliminates assoc indicators or replaces them with parentheses
  * if necessary.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: PreProcessor.sml,v 1.7 2010/02/09 07:53:18 katsu Exp $
  *)
 structure AssocResolver =

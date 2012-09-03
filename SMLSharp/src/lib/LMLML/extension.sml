@@ -1,6 +1,9 @@
 (*
  * loader of functors 
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
+
 use "./basis/StringBase.sml";
 use "./basis/SubstringBase.sml";
 use "./basis/StringConverterBase.sml";

@@ -1,7 +1,9 @@
 use "./Property1Testee.sml";
 
-(*
+(**
  * test cases for property accessor methods of .NET object.
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure Property1Tester =
 struct

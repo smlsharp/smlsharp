@@ -2,6 +2,7 @@
  * base implementation of MONO_VECTOR_SLICE, defunctorized version.
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori
+ * @copyright 2010, Tohoku University.
  * @version $Id: MonoVectorSliceBase.sml,v 1.3 2007/09/01 03:21:16 kiyoshiy Exp $
  *)
 structure MonoVectorSliceUtils =

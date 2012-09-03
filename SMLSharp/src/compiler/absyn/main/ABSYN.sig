@@ -48,7 +48,8 @@ sig
    datatype eq = EQ | NONEQ
 
   datatype ty = 
-    TYID of tvar * Loc.loc
+     TYWILD of Loc.loc
+  |  TYID of tvar * Loc.loc
   | TYRECORD of (string * ty) list * Loc.loc
   | TYCONSTRUCT of ty list * string list * Loc.loc
   | TYCONSTRUCT_WITH_NAMEPATH of ty list * NameMap.namePath * Loc.loc

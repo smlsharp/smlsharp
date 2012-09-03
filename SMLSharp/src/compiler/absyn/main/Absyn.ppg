@@ -149,6 +149,10 @@ struct
    *)
   datatype ty
     = (*%
+       * @format(loc) "_"
+       *)
+       TYWILD of loc
+    | (*%
        * @format(tvar * loc) tvar
        *)
       TYID of tvar * loc
@@ -781,7 +785,8 @@ struct
 
   fun getLocTy ty =
       case ty of
-        TYID(_, loc) => loc
+        TYWILD loc => loc
+      | TYID(_, loc) => loc
       | TYRECORD (_, loc) => loc
       | TYCONSTRUCT (_, _, loc) => loc
       | TYCONSTRUCT_WITH_NAMEPATH (_, _, loc) => loc

@@ -1,4 +1,9 @@
 (*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+
+(*
 (* ToDo : SML/NJ 110.0.7 does not provide Word8VectorSlice,
  * we use inefficient way to extract a part of vector.
  *)

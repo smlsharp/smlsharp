@@ -1,6 +1,7 @@
 (**
  * base functor of PackWord32XXX structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: PackWord32Base.sml,v 1.1 2007/03/08 08:07:00 kiyoshiy Exp $
  *)
 functor PackWord32Base

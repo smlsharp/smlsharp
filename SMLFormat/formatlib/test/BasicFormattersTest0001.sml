@@ -39,6 +39,9 @@
  * <tr><td>FormatList0002</td><td>[]</td></tr>
  * <tr><td>FormatList0003</td><td>["a"]</td></tr>
  * </table>
+ *
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 structure BasicFormattersTest0001 =
 struct

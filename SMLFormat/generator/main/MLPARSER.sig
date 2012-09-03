@@ -3,6 +3,7 @@
  *
  * @author 2001 Lucent Technologies, Bell Labs
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MLPARSER.sig,v 1.3 2004/10/20 02:50:56 kiyoshiy Exp $
  *)
 signature MLPARSER =

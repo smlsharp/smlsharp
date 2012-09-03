@@ -2,6 +2,7 @@
  * Parser of ML program which may contain documentation comments.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: PARSER.sig,v 1.3 2004/11/07 13:16:19 kiyoshiy Exp $
  *)
 signature PARSER =

@@ -1,6 +1,7 @@
 (**
  * IO structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: IO.sml,v 1.1 2005/07/15 07:25:43 kiyoshiy Exp $
  *)
 structure IO :> IO =

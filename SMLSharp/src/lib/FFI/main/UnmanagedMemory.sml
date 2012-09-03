@@ -2,6 +2,7 @@
  * functions to manipulate memory blocks which are allocated outside of the
  * managed heap.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: UnmanagedMemory.sml,v 1.11 2007/04/02 09:42:29 katsu Exp $
  *)
 structure UnmanagedMemory : UNMANAGED_MEMORY =

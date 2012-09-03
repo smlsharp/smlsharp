@@ -1,3 +1,7 @@
+(*
+ * @author Atsushi Ohori
+ * @copyright 2010, Tohoku University.
+ *)
 structure IntVector =
 struct
 local

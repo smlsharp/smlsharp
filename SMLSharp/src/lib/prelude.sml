@@ -1,6 +1,7 @@
 (**
  * prelude definitions.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: prelude.sml,v 1.16 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
 
@@ -37,10 +38,6 @@ fun printFormat exp =
 end;
 
 use "./basis.sml";
-
-(*
-use "./smlnj-lib.sml";
-*)
 
 use "./RegExp.sml";
 use "./script.sml";

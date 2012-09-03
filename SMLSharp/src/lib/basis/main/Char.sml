@@ -1,6 +1,7 @@
 (**
  * Char structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Char.sml,v 1.6 2005/05/27 12:26:57 kiyoshiy Exp $
  *)
 structure Char =

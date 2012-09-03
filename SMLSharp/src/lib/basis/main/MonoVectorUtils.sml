@@ -1,6 +1,8 @@
 (**
  * base of implementations of the MONO_VECTOR signature.
+ * @author Atsushi Ohori
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: MonoVectorBase.sml,v 1.9 2007/12/19 02:00:56 kiyoshiy Exp $
  *)
 structure MonoVectorUtils =

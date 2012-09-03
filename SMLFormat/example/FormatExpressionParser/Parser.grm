@@ -1,6 +1,6 @@
-(* ml.grm
- *
- * Copyright 1989,1992 by AT&T Bell Laboratories
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  *)
 
 open SMLFormat.FormatExpression

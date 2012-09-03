@@ -2,6 +2,7 @@
  *  This module provides functions independent of the specific applications.
  *
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Utility.sml,v 1.5 2007/02/18 03:06:46 kiyoshiy Exp $
  *)
 structure Utility =

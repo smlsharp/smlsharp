@@ -1,3 +1,38 @@
+SML# version 0.54 (released on 2010-08-20)
+
+1. Overview
+
+This is a patch release of SML# 0.50 series.
+This version is still experimental.
+
+2. the Basis test suite
+
+This version includes the first public version of our test suites for
+Basis Library.
+
+One of advantages of Standard ML is that implementations share the
+specification of the language and Basis library.  It encourages
+portability and stable long life of softwares written in Standard ML.
+
+We present a test suite for Standard ML Basis library.  Compiler
+implementors can use it to check the conformance of their implementation
+to the Basis specification.  We hope that this test suite helps to
+eliminate differences remaining among implementations of Basis library.
+
+This test suite is at smlsharp/SMLUnit/basis/ in the SML# source package.
+
+3. Other changes and improvements
+
+[SML#]
+- rewrote Array2 from scratch to fix problems.
+- added Word8Array2.
+- added CharArray2.
+- implemented overflow check in Int.{scan, fromLarge, div, mod, quot, rem}.
+- implemented overflow check in IntInf.toInt.
+- fixed bugs of IntInf.log2.
+- fixed a bug of Real.split on cygwin.
+- added error checks to Date functions.
+
 -----------------------------------------------------------------------------
 SML# version 0.53 (released on 2010-08-06)
 

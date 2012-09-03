@@ -1,6 +1,7 @@
 (**
  * Time structure.
  * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
  * @version $Id: Time.sml,v 1.8 2007/07/25 13:28:07 kiyoshiy Exp $
  *)
 structure Time
