@@ -9,6 +9,10 @@ structure SAConstraint : SACONSTRAINT = struct
   structure AT = AnnotatedTypes
   structure ATU = AnnotatedTypesUtils
 
+  fun printTy ty = print (Control.prettyPrint (AT.format_ty ty) ^ "\n")
+  fun printBtvEnv env =
+      print (Control.prettyPrint (AT.format_btvEnv env) ^ "\n")
+
   exception Unify
 
   datatype constraint =
@@ -44,10 +48,12 @@ structure SAConstraint : SACONSTRAINT = struct
   fun genericTyVar tid = genericTyVars := ISet.add(!genericTyVars, tid)
 
   fun recordEquivalence (annotationRef1,annotationRef2) = 
-      constraintsRef := (RECORD_EQUIV(annotationRef1, annotationRef2)) :: (!constraintsRef)
+      constraintsRef := (RECORD_EQUIV(annotationRef1, annotationRef2))
+                        :: (!constraintsRef)
 
   fun functionEquivalence (annotationRef1,annotationRef2) = 
-      constraintsRef := (FUNCTION_EQUIV(annotationRef1, annotationRef2)) :: (!constraintsRef)
+      constraintsRef := (FUNCTION_EQUIV(annotationRef1, annotationRef2))
+                        :: (!constraintsRef)
 
   fun globalType ty =
       case ty of
@@ -67,11 +73,29 @@ structure SAConstraint : SACONSTRAINT = struct
       | AT.POLYty {boundtvars, body} => 
         (
          IEnv.appi 
-             (fn (tid,{recordKind, ...}) => genericTyVar tid)
+             (fn (tid,{recordKind, ...}) =>
+                 (
+                  genericTyVar tid;
+                  globalKind recordKind
+                 )
+             )
              boundtvars;
          globalType body
         )
       | _ => ()
+
+  and globalKind kind = 
+      case kind of
+        AT.UNIV => ()
+      | AT.OPRIMkind {instances, operators} =>
+        (app globalType instances;
+         app (fn {oprimPolyTy, keyTyList, instTyList,...} =>
+                 (globalType oprimPolyTy;
+                  app globalType keyTyList;
+                  app globalType instTyList))
+         operators)
+      | AT.REC tySEnvMap => SEnv.app globalType tySEnvMap
+
 
   fun singleValueType ty =
       case ty of 
@@ -112,7 +136,8 @@ structure SAConstraint : SACONSTRAINT = struct
         AT.RECORDty 
             {
              fieldTypes = SEnv.map convertGlobalType flty,
-             annotation = ref {labels = AT.LE_GENERIC, boxed = true, align = true}
+             annotation =
+               ref {labels = AT.LE_GENERIC, boxed = true, align = true}
             }
       | T.RAWty {tyCon, args} =>
         AT.RAWty
@@ -147,7 +172,8 @@ structure SAConstraint : SACONSTRAINT = struct
         end
 *)
 
-  and convertGlobalBtvKind (id, btvKind as {recordKind, eqKind} : Types.btvKind) =
+  and convertGlobalBtvKind
+        (id, btvKind as {recordKind, eqKind} : Types.btvKind) =
       let
         val _ = genericTyVar id
         val newRecordKind = convertGlobalRecKind recordKind
@@ -219,7 +245,9 @@ structure SAConstraint : SACONSTRAINT = struct
         AT.RECORDty 
             {
              fieldTypes = SEnv.map convertLocalType flty,
-             annotation = ref {labels = AT.LE_UNKNOWN, boxed = false, align = false}
+             annotation = ref {labels = AT.LE_UNKNOWN,
+                               boxed = false,
+                               align = false}
             }
       | T.RAWty {tyCon, args} =>
         AT.RAWty
@@ -263,7 +291,8 @@ structure SAConstraint : SACONSTRAINT = struct
         newTy
       end
 
-  and convertLocalBtvKind (id, btvKind as {recordKind, eqKind} : Types.btvKind) =
+  and convertLocalBtvKind
+        (id, btvKind as {recordKind, eqKind} : Types.btvKind) =
       (
        case IEnv.find(!btvInfo, id) of
          SOME newBtvKind => newBtvKind
@@ -383,7 +412,8 @@ structure SAConstraint : SACONSTRAINT = struct
                val x : s 
                val y : t
          * end
-         * Here "s" for "x" is represented as "SPECty(s)", while "t" for "y" as "CONty(t)" 
+         * Here "s" for "x" is represented as "SPECty(s)",
+           while "t" for "y" as "CONty(t)" 
          * with the same tyConId of "s".
          *)
         ListPair.app unify (args1,args2)
@@ -439,7 +469,9 @@ structure SAConstraint : SACONSTRAINT = struct
                  (
                   case IEnv.find(!instanceMap, tid1) of 
                     SOME ty => unify(ty,instanceTy)
-                  | _ => instanceMap := IEnv.insert(!instanceMap, tid1, instanceTy);
+                  | _ => instanceMap := IEnv.insert(!instanceMap,
+                                                    tid1,
+                                                    instanceTy);
                   case recordKind of
                     AT.REC flty1 =>
                     let
@@ -449,15 +481,30 @@ structure SAConstraint : SACONSTRAINT = struct
                           | AT.BOUNDVARty tid2 =>
                             (
                              case IEnv.find(!btvInfo, tid2) of
-                               SOME {recordKind = AT.REC fieldTypes,...} => fieldTypes
-                             | _ => raise Control.Bug "invalid instance"
+                               SOME {recordKind = AT.REC fieldTypes,...} =>
+                               fieldTypes
+                             | _ =>
+                               (print "outr btvenv\n";
+                                printBtvEnv (!btvInfo);
+                                print "instTylist\n";
+                                map printTy tyList;
+                                print "btvEnv\n";
+                                printBtvEnv btvEnv;
+                                print "instTy\n";
+                                printTy instanceTy;
+                                raise Control.Bug "invalid instance"
+                               )
                             )
                           | _ => 
                             let
-                              val s1 = Control.prettyPrint (AT.format_ty generalTy)
-                              val s2 = Control.prettyPrint (AT.format_ty instanceTy)
+                              val s1 = Control.prettyPrint
+                                         (AT.format_ty generalTy)
+                              val s2 = Control.prettyPrint
+                                         (AT.format_ty instanceTy)
                             in
-                              raise Control.Bug ("invalid instance:" ^ s1 ^ "," ^ s2)
+                              raise
+                                Control.Bug
+                                  ("invalid instance:" ^ s1 ^ "," ^ s2)
                             end
                     in
                       instanceUnifyFieldTypes (flty1,flty2)
@@ -467,8 +514,10 @@ structure SAConstraint : SACONSTRAINT = struct
                | _ => ()
               )
               
-            | (AT.FUNMty {argTyList=argTyList1, bodyTy=bodyTy1, annotation = annotation1,...},
-               AT.FUNMty {argTyList=argTyList2, bodyTy=bodyTy2, annotation = annotation2,...}
+            | (AT.FUNMty {argTyList=argTyList1,
+                          bodyTy=bodyTy1, annotation = annotation1,...},
+               AT.FUNMty {argTyList=argTyList2,
+                          bodyTy=bodyTy2, annotation = annotation2,...}
               ) =>
               (
                ListPair.app instanceUnify (argTyList1,argTyList2);
@@ -479,7 +528,9 @@ structure SAConstraint : SACONSTRAINT = struct
                AT.RECORDty {fieldTypes = fieldTypes2, annotation = annotation2}
               ) =>
               (
-               ListPair.app instanceUnify (SEnv.listItems fieldTypes1, SEnv.listItems fieldTypes2);
+               ListPair.app
+                 instanceUnify
+                 (SEnv.listItems fieldTypes1, SEnv.listItems fieldTypes2);
                recordEquivalence (annotation1,annotation2)
               )
             | (AT.RAWty {args = args1,...},AT.RAWty {args = args2,...}) =>
@@ -509,7 +560,8 @@ structure SAConstraint : SACONSTRAINT = struct
              instanceUnify (AT.BOUNDVARty tid, ty);
              case IEnv.find(!btvInfo, tid) of
                SOME {instancesRef,...} => instancesRef := ty::(!instancesRef)
-             | _ => () (*global type variables always have generic representation*)
+             | _ => () (*global type variables always have generic
+                                               representation *)
             )        
       in
         ListPair.app addInstance (IEnv.listKeys btvEnv, tyList)
@@ -520,7 +572,8 @@ structure SAConstraint : SACONSTRAINT = struct
         val flag = ref true
         fun labelsDiff (AT.LE_GENERIC, AT.LE_GENERIC) = false
           | labelsDiff (AT.LE_UNKNOWN, AT.LE_UNKNOWN) = false
-          | labelsDiff (AT.LE_LABELS S1, AT.LE_LABELS S2) = not (ISet.equal(S1,S2))
+          | labelsDiff (AT.LE_LABELS S1, AT.LE_LABELS S2) =
+            not (ISet.equal(S1,S2))
           | labelsDiff _ = true
 
         fun unifyLabels (labels1,labels2) =
@@ -539,9 +592,14 @@ structure SAConstraint : SACONSTRAINT = struct
 (*               print "aaaaa\n"; *)
                flag := false;
                List.app
-                   (fn (RECORD_EQUIV
-                            (ann1 as ref {labels=labels1, boxed=boxed1, align=align1},
-                             ann2 as ref {labels=labels2, boxed=boxed2, align=align2})) =>
+                 (fn (RECORD_EQUIV
+                        (ann1
+                           as
+                           ref {labels=labels1, boxed=boxed1, align=align1},
+                         ann2
+                           as
+                           ref {labels=labels2, boxed=boxed2, align=align2}))
+                     =>
                        let
                          val ann = 
                              {
@@ -550,7 +608,9 @@ structure SAConstraint : SACONSTRAINT = struct
                               align = align1 orelse align2
                              }
                          val _ = 
-                             if labelsDiff(labels1,labels2) orelse (boxed1 <> boxed2) orelse (align1 <> align2) 
+                             if labelsDiff(labels1,labels2)
+                                orelse (boxed1 <> boxed2)
+                                orelse (align1 <> align2) 
                              then flag := true 
                              else ()
                        in
@@ -566,7 +626,8 @@ structure SAConstraint : SACONSTRAINT = struct
                               boxed = boxed1 orelse boxed2
                              }
                          val _ = 
-                             if labelsDiff(labels1,labels2) orelse (boxed1 <> boxed2)
+                             if labelsDiff(labels1,labels2)
+                                orelse (boxed1 <> boxed2)
                              then flag := true
                              else ()
                        in

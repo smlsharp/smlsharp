@@ -47,7 +47,7 @@ IMLPrim_String_subImpl(UInt32Value argsCount,
         // ToDo : ML exception "Sub" should be thrown.
         throw UserException();
     }
-    resultRef->uint32 = arg1[arg2];
+    resultRef->uint32 = (unsigned char)arg1[arg2];
     return;
 };
 

@@ -775,19 +775,19 @@ structure StaticAnalysis : STATICANALYSIS = struct
   and inferBasicBlockList context ([]) = ([], context)
     | inferBasicBlockList context (basicBlock::rest) =
       let
-          val (newBasicBlock, newContext) = inferBasicBlock context basicBlock
-          val (newRest, newContext) = inferBasicBlockList newContext rest
+        val (newBasicBlock, newContext) = inferBasicBlock context basicBlock
+        val (newRest, newContext) = inferBasicBlockList newContext rest
       in
-          (newBasicBlock :: newRest, newContext)
+        (newBasicBlock :: newRest, newContext)
       end
 
   fun inferTopBlockList context ([]) = ([], context)
     | inferTopBlockList context (topBlock::rest) =
       let
-          val (newTopBlock, newContext) = inferTopBlock context topBlock
-          val (newRest, newContext) = inferTopBlockList newContext rest
+        val (newTopBlock, newContext) = inferTopBlock context topBlock
+        val (newRest, newContext) = inferTopBlockList newContext rest
       in
-          (newTopBlock :: newRest, newContext)
+        (newTopBlock :: newRest, newContext)
       end
 
   fun analyse groupList =

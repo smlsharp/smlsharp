@@ -5,11 +5,13 @@
  * @author UENO Katsuhiro
  * @version $Id: qsort.sml,v 1.9 2007/09/20 09:02:53 matsu Exp $
  *)
-(*
-val libc = "/lib/libc.so.6"
-*)
 
+val libc = "/lib/libc.so.6"
+
+
+(*
 val libc = "/usr/lib/libc.dylib"  (* Mac OS X *)
+*)
 
 (*
 use "cconfig.sml";
