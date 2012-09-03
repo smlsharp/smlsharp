@@ -2,7 +2,7 @@
  * functions to manipulate strings which are allocated outside of the managed
  * heap.
  * @author YAMATODANI Kiyoshi
- * @version $Id: UNMANAGED_STRING.sig,v 1.1 2006/03/01 15:56:08 kiyoshiy Exp $
+ * @version $Id: UNMANAGED_STRING.sig,v 1.3 2006/11/04 13:16:37 kiyoshiy Exp $
  *)
 signature UNMANAGED_STRING =
 sig
@@ -18,23 +18,45 @@ sig
 
   (**
    * the number of characters followed by a null character.
+   * @params address
+   * @param address an unmanaged string
+   * @return return value is equal to 'strlen(address)'.
    *)
   val size : unmanagedString -> int
 
   (**
    * copy an unmanaged string into the heap.
+   * @params address
+   * @param address an unmanaged string
+   * @return a string in the managed heap whose contents is the same with
+   *       those of 'address'.
    *)
   val import :  unmanagedString -> string
 
   (**
    * copy a string to unmanaged memory.
-   * The retured unmanagedString must be released by releaseUnmanagedBlock
-   * after use.
+   * The retured unmanagedString must be released by 'release' after use.
+   * @params string
+   * @param string a string in the managed heap.
+   * @return a string in unmanaged memory whose contents is the same with
+   *       those of 'string'.
    *)
   val export : string -> unmanagedString
 
   (**
-   * release the memory allocated by exportBlock.
+   * copy a string to unmanaged memory.
+   * The retured unmanagedString must be released by 'release' after use.
+   * @params substring
+   * @param substring a substring in the managed heap.
+   * @return a string in unmanaged memory whose contents is the same with
+   *       those of 'substring'.
+   *)
+  val exportSubstring : substring -> unmanagedString
+
+  (**
+   * release the memory allocated by export.
+   * @params address
+   * @param address an unmanaged string
    *)
   val release : unmanagedString -> unit
 

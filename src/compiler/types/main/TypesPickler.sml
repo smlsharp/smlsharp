@@ -2,12 +2,11 @@
  * pickler for data types declared in types module.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypesPickler.sml,v 1.10 2006/03/02 12:54:08 bochao Exp $
+ * @version $Id: TypesPickler.sml,v 1.21 2007/02/28 15:31:26 katsu Exp $
  *)
 structure TypesPickler 
   : sig
       val eqKind : Types.eqKind Pickle.pu
-      val constant : Types.constant Pickle.pu
       val path : Types.path Pickle.pu
       val id : Types.id Pickle.pu
       val tid : Types.tid Pickle.pu
@@ -29,8 +28,9 @@ structure TypesPickler
       val varPathInfo : Types.varPathInfo Pickle.pu
       val primInfo : Types.primInfo Pickle.pu
       val oprimInfo : Types.oprimInfo Pickle.pu
-      val foreignFunPathInfo : Types.foreignFunPathInfo Pickle.pu
+(*
       val strBindInfo : Types.strBindInfo Pickle.pu               
+*)
       val strPathInfo : Types.strPathInfo Pickle.pu               
 
       val tyConIdSet : Types.tyConIdSet Pickle.pu
@@ -44,8 +44,6 @@ structure TypesPickler
       val Env : Types.Env Pickle.pu
       val funBindInfo : Types.funBindInfo Pickle.pu
 
-      val tyConSizeTagEnv : Types.tyConSizeTagEnv Pickle.pu
-      val strSizeTagEnv : Types.strSizeTagEnv Pickle.pu
       val strInfo : Types.strInfo Pickle.pu
       val funEnv : Types.funEnv Pickle.pu
       val sigEnv : Types.sigEnv Pickle.pu
@@ -55,7 +53,7 @@ structure TypesPickler
       val valId : Types.valId Pickle.pu
       val valIdent : Types.valIdent Pickle.pu
 
-      val fixity : StaticEnv.fixity Pickle.pu
+      val fixity : Fixity.fixity Pickle.pu
 
     end =
 struct
@@ -64,25 +62,8 @@ struct
 
   structure P = Pickle
   structure T = Types
-  structure SE = StaticEnv
 
   (***************************************************************************)
-
-  val constant =
-      let
-        fun toInt (T.INT _) = 0
-          | toInt (T.WORD _) = 1
-          | toInt (T.STRING _) = 2
-          | toInt (T.REAL _) = 3
-          | toInt (T.CHAR _) = 4
-        fun pu_INT pu = P.con1 T.INT (fn (T.INT x) => x) P.int32
-        fun pu_WORD pu = P.con1 T.WORD (fn (T.WORD x) => x) P.word32
-        fun pu_STRING pu = P.con1 T.STRING (fn (T.STRING x) => x) P.string
-        fun pu_REAL pu = P.con1 T.REAL (fn (T.REAL x) => x) P.string
-        fun pu_CHAR pu = P.con1 T.CHAR (fn (T.CHAR x) => x) P.char
-      in
-        P.data (toInt, [pu_INT, pu_WORD, pu_STRING, pu_REAL, pu_CHAR])
-      end
 
   val path = NamePickler.path
 
@@ -92,14 +73,28 @@ struct
 
   val eqKind = P.enum (fn T.EQ => 0 | T.NONEQ => 1, [T.EQ, T.NONEQ])
 
+  val callingConvention = AbsynPickler.callingConvention
+
   (****************************************)
+
+  val dummyTyCon =
+      {
+        name = "",
+        strpath = Path.NilPath,
+        tyvars = [],
+        id = T.nextTyConId (),
+        abstract = false,
+        eqKind = ref T.EQ,
+        boxedKind = ref T.ERRORty,
+        datacon = ref SEnv.empty
+      } : T.tyCon
 
   val (recKindFunctions, recKind) = P.makeNullPu T.UNIV
   val (tvStateFunctions, tvState) = P.makeNullPu (T.SUBSTITUTED T.ATOMty)
   val (tyFunctions, ty) = P.makeNullPu T.ATOMty
   val (idStateFunctions, idState) =
       P.makeNullPu (T.PRIM {name = "foo", ty = T.ATOMty})
-  val (tyBindInfoFunctions, tyBindInfo) = P.makeNullPu (T.TYCON SE.intTyCon)
+  val (tyBindInfoFunctions, tyBindInfo) = P.makeNullPu (T.TYCON dummyTyCon)
   val (sizeTagExpFunctions, sizeTagExp) = P.makeNullPu (T.ST_CONST 0)
 
   (********************)
@@ -138,10 +133,9 @@ struct
 
   val tyOption = P.option ty
   val tyBindInfoOption = P.option tyBindInfo
-
-  val tvStateRef = P.refCyc (T.SUBSTITUTED T.ATOMty) tvState
-  val tyOptionRef = P.refCyc NONE tyOption
-  val eqKindRef = P.refCyc T.EQ eqKind
+  val tvStateRef = P.refNonCycle tvState
+  val boxedKindTyRef = P.refNonCycle ty
+  val eqKindRef = P.refNonCycle eqKind
 
   (* picklers for tuple types.
    * Tuple elements are sorted in alphabetic order of their type names.
@@ -161,17 +155,18 @@ struct
   val tvKind : T.tvKind P.pu =
       P.conv
           (
-            fn (id, recKind, eqKind, tyvarName) =>
+            fn (lambdaDepth, id, recKind, eqKind, tyvarName) =>
                {
+                 lambdaDepth = lambdaDepth,
                  id = id,
                  recKind = recKind,
                  eqKind = eqKind,
                  tyvarName = tyvarName
                },
-            fn {id, recKind, eqKind, tyvarName} =>
-               (id, recKind, eqKind, tyvarName)
+            fn {lambdaDepth, id, recKind, eqKind, tyvarName} =>
+               (lambdaDepth, id, recKind, eqKind, tyvarName)
           )
-          (P.tuple4(tid, recKind, eqKind, stringOption))
+          (P.tuple5(P.int, tid, recKind, eqKind, stringOption))
 
   val varIdInfo : T.varIdInfo P.pu =
       P.conv
@@ -196,7 +191,7 @@ struct
   val btvKindIEnv_string_ty = P.tuple3(btvKindIEnv, P.string, ty)
 
   val varEnv : T.varEnv P.pu = idStateSEnv
-  val varEnvRef = P.refCyc SEnv.empty varEnv
+  val varEnvRef = P.refCycle SEnv.empty varEnv
 
   val tyConEnv : T.tyConEnv P.pu = tyBindInfoSEnv
   val tyFun : T.tyFun P.pu =
@@ -260,7 +255,7 @@ struct
                  id,
                  P.bool,
                  eqKindRef,
-                 tyOptionRef,
+                 boxedKindTyRef,
                  varEnvRef
                ))
   val tyCon_tyList = P.tuple2(tyCon, tyList)
@@ -281,7 +276,7 @@ struct
             fn {name, id, strpath, eqKind, tyvars, boxedKind} =>
                (name, id, strpath, eqKind, tyvars, boxedKind)
           )
-          (P.tuple6 (P.string, id, path, eqKind, boolList, tyOption))
+          (P.tuple6 (P.string, id, path, eqKind, boolList, ty))
 
   val conPathInfo : T.conPathInfo P.pu =
       P.conv
@@ -329,14 +324,6 @@ struct
           )
           (P.tuple2(ty_string, primInfoSEnv)) (* use ty_string for share *)
 
-  val foreignFunPathInfo : T.foreignFunPathInfo P.pu =
-      P.conv
-          (
-            fn ((strpath, name, ty), argTys) =>
-               {strpath = strpath, name = name, ty = ty, argTys = argTys},
-            fn {strpath, name, ty, argTys} => ((strpath, name, ty), argTys)
-          )
-          (P.tuple2(path_string_ty, tyList)) (* use string_path_ty for share *)
 
   (********************)
 
@@ -381,17 +368,18 @@ struct
             | toInt (T.DUMMYty _) = 13
             | toInt (T.ERRORty) = 14
             | toInt (T.FUNMty _) = 15
-            | toInt (T.INDEXty _) = 16
-            | toInt (T.OFFSETty _) = 17
-            | toInt (T.PADCONDty _) = 18
-            | toInt (T.PADty _) = 19
-            | toInt (T.POLYty _) = 20
-            | toInt (T.RECORDty _) = 21
-            | toInt (T.SIZEty _) = 22
-            | toInt (T.SPECty _) = 23
-            | toInt (T.TAGty _) = 24
-            | toInt (T.TYVARty _) = 25
-            | toInt (T.UNBOXEDty) = 26
+            | toInt (T.GENERICty ) = 16
+            | toInt (T.INDEXty _) = 17
+            | toInt (T.OFFSETty _) = 18
+            | toInt (T.PADCONDty _) = 19
+            | toInt (T.PADty _) = 20
+            | toInt (T.POLYty _) = 21
+            | toInt (T.RECORDty _) = 22
+            | toInt (T.SIZEty _) = 23
+            | toInt (T.SPECty _) = 24
+            | toInt (T.TAGty _) = 25
+            | toInt (T.TYVARty _) = 26
+            | toInt (T.UNBOXEDty) = 27
 
 (*
             | toInt ty =
@@ -431,6 +419,7 @@ struct
           fun pu_DUMMYty pu = P.con1 T.DUMMYty (fn T.DUMMYty arg => arg) P.int
           fun pu_ERRORty pu = P.con0 T.ERRORty pu
           fun pu_FUNMty pu = P.con1 T.FUNMty (fn T.FUNMty arg => arg) tyList_ty
+          fun pu_GENERICty pu = P.con0 T.GENERICty pu 
           fun pu_INDEXty pu =
               P.con1 T.INDEXty (fn T.INDEXty arg => arg) ty_string
           fun pu_OFFSETty pu =
@@ -452,7 +441,8 @@ struct
           fun pu_RECORDty pu =
               P.con1 T.RECORDty (fn T.RECORDty arg => arg) tySEnv
           fun pu_SIZEty pu = P.con1 T.SIZEty (fn T.SIZEty arg => arg) P.int
-          fun pu_SPECty pu = P.con1 T.SPECty (fn T.SPECty arg => arg) ty
+          fun pu_SPECty pu = 
+              P.con1 T.SPECty (fn T.SPECty arg => arg) ty
           fun pu_TAGty pu = P.con1 T.TAGty (fn T.TAGty arg => arg) P.int
           fun pu_TYVARty pu =
               P.con1 T.TYVARty (fn T.TYVARty arg => arg) tvStateRef
@@ -479,17 +469,18 @@ struct
                   pu_DUMMYty, (* 13 *)
                   pu_ERRORty, (* 14 *)
                   pu_FUNMty, (* 15 *)
-                  pu_INDEXty, (* 16 *)
-                  pu_OFFSETty, (* 17 *)
-                  pu_PADCONDty, (* 18 *)
-                  pu_PADty, (* 19 *)
-                  pu_POLYty, (* 20 *)
-                  pu_RECORDty, (* 21 *)
-                  pu_SIZEty, (* 22 *)
-                  pu_SPECty, (* 23 *)
-                  pu_TAGty, (* 24 *)
-                  pu_TYVARty, (* 25 *)
-                  pu_UNBOXEDty (* 26 *)
+                  pu_GENERICty, (* 16 *)
+                  pu_INDEXty,  (* 17 *)
+                  pu_OFFSETty,(* 18 *)
+                  pu_PADCONDty, (* 19 *)
+                  pu_PADty, (* 20 *)
+                  pu_POLYty, (* 21 *)
+                  pu_RECORDty, (* 22 *)
+                  pu_SIZEty, (* 23 *)
+                  pu_SPECty, (* 24 *)
+                  pu_TAGty, (* 25 *)
+                  pu_TYVARty, (* 26 *)
+                  pu_UNBOXEDty (* 27 *)
                 ]
               )
         end
@@ -499,16 +490,13 @@ struct
           fun toInt (T.CONID _) = 0
             | toInt (T.OPRIM _) = 1
             | toInt (T.PRIM _) = 2
-            | toInt (T.FFID _) = 3
-            | toInt (T.VARID _) = 4
+            | toInt (T.VARID _) = 3
           fun pu_CONID pu = P.con1 T.CONID (fn T.CONID arg => arg) conPathInfo
           fun pu_OPRIM pu = P.con1 T.OPRIM (fn T.OPRIM arg => arg) oprimInfo
           fun pu_PRIM pu = P.con1 T.PRIM (fn T.PRIM arg => arg) primInfo
-          fun pu_FFID pu =
-              P.con1 T.FFID (fn T.FFID arg => arg) foreignFunPathInfo
           fun pu_VARID pu = P.con1 T.VARID (fn T.VARID arg => arg) varPathInfo
         in
-          P.data (toInt, [pu_CONID, pu_OPRIM, pu_PRIM, pu_FFID, pu_VARID])
+          P.data (toInt, [pu_CONID, pu_OPRIM, pu_PRIM, pu_VARID])
         end
 
     val newTyBindInfo : T.tyBindInfo P.pu =
@@ -574,6 +562,7 @@ struct
 
   (********************)
 
+(*
   local
     val strPathInfo =
         {
@@ -588,8 +577,13 @@ struct
   end
 
   val strBindInfoSEnv = EnvPickler.SEnv strBindInfo
+
   val tyConEnv_VarEnv_StrBindInfoSEnv =
       P.tuple3 (tyConEnv, varEnv, strBindInfoSEnv)
+*)
+  val (strEnvFunctions, strEnv) = P.makeNullPu (T.STRUCTURE SEnv.empty)
+  val tyConEnv_VarEnv_StrEnv =
+      P.tuple3 (tyConEnv, varEnv, strEnv)
 
   val strPathInfo : T.strPathInfo P.pu =
       P.conv
@@ -598,8 +592,11 @@ struct
                {id = id, name = name, strpath = strpath, env = env},
             fn {id, name, strpath, env} => (id, name, strpath, env)
           )
-          (P.tuple4(id, P.string, path, tyConEnv_VarEnv_StrBindInfoSEnv))
+          (P.tuple4(id, P.string, path, tyConEnv_VarEnv_StrEnv))
 
+  val strPathInfoSEnv = EnvPickler.SEnv strPathInfo
+
+(*
   local
     val newStrBindInfo : T.strBindInfo P.pu =
         let
@@ -612,61 +609,29 @@ struct
   in
   val _ = P.updateNullPu strBindInfoFunctions newStrBindInfo
   end
-  (****************************************)
-  val tyConSizeTagEnv = 
-      EnvPickler.SEnv 
-        (P.conv
-           ((fn (tyBindInfo, sizeInfo, tagInfo) =>
-                {tyBindInfo = tyBindInfo, sizeInfo = sizeInfo, tagInfo = tagInfo}),
-            (fn {tyBindInfo, sizeInfo, tagInfo} => (tyBindInfo, sizeInfo, tagInfo)))
-           (P.tuple3(tyBindInfo, sizeTagExp, sizeTagExp)))
-  local
-    val strPathSizeTagInfo =
-        {
-          id = ID.generate (),
-          name = "bar",
-          strpath = Path.NilPath,
-          env = (SEnv.empty, SEnv.empty, SEnv.empty)
-        }
-  in
-  val (strSizeTagBindInfoFunctions, strSizeTagBindInfo) =
-      P.makeNullPu (T.STRSIZETAG strPathSizeTagInfo)
-  end
-
-
-  val strSizeTagBindInfoSEnv = EnvPickler.SEnv strSizeTagBindInfo
-  val tyConSizeTagEnv_VarEnv_StrSizeTagBindInfoSEnv =
-      P.tuple3 (tyConSizeTagEnv, varEnv, strSizeTagBindInfoSEnv)
-  val SizeTagExpEnv = tyConSizeTagEnv_VarEnv_StrSizeTagBindInfoSEnv
-  val strPathSizeTagInfo : T.strPathSizeTagInfo P.pu =
-      P.conv
-          (
-            fn (id, name, strpath, env) =>
-               {id = id, name = name, strpath = strpath, env = env},
-            fn {id, name, strpath, env} => (id, name, strpath, env)
-          )
-          (P.tuple4(id, P.string, path, tyConSizeTagEnv_VarEnv_StrSizeTagBindInfoSEnv))
+*)
 
   local
-    val newStrSizeTagExpBindInfo : T.strSizeTagBindInfo P.pu =
+    val newStrEnv : T.strEnv P.pu =
         let
-          fun toInt (T.STRSIZETAG _) = 0
-          fun pu_STRSIZETAG pu =
-              P.con1 T.STRSIZETAG (fn T.STRSIZETAG x => x) strPathSizeTagInfo
+          fun toInt (T.STRUCTURE _) = 0
+          fun pu_STRUCTURE pu =
+              P.con1 T.STRUCTURE (fn T.STRUCTURE x => x) strPathInfoSEnv
         in
-          P.data (toInt, [pu_STRSIZETAG])
+          P.data (toInt, [pu_STRUCTURE])
         end
   in
-  val _ = P.updateNullPu strSizeTagBindInfoFunctions newStrSizeTagExpBindInfo
+  val _ = P.updateNullPu strEnvFunctions newStrEnv
   end
 
-  val strSizeTagEnv = strSizeTagBindInfoSEnv
   (****************************************)
 
   val tyConIdSet = NamePickler.IDSet
   val exnTagSet = EnvPickler.ISet
 
+(*
   val strEnv = strBindInfoSEnv
+*)
   val tyConIdSet_strPathInfo = P.tuple2(tyConIdSet, strPathInfo)
 
   val sigBindInfo =
@@ -814,12 +779,14 @@ struct
 
   val fixity =
       let
-        fun toInt (SE.INFIX _) = 0
-          | toInt (SE.INFIXR _) = 1
-          | toInt SE.NONFIX = 2
-        fun pu_INFIX pu = P.con1 SE.INFIX (fn (SE.INFIX x) => x) P.int
-        fun pu_INFIXR pu = P.con1 SE.INFIXR (fn (SE.INFIXR x) => x) P.int
-        fun pu_NONFIX pu = P.con0 SE.NONFIX pu
+        fun toInt (Fixity.INFIX _) = 0
+          | toInt (Fixity.INFIXR _) = 1
+          | toInt Fixity.NONFIX = 2
+        fun pu_INFIX pu =
+            P.con1 Fixity.INFIX (fn (Fixity.INFIX x) => x) P.int
+        fun pu_INFIXR pu =
+            P.con1 Fixity.INFIXR (fn (Fixity.INFIXR x) => x) P.int
+        fun pu_NONFIX pu = P.con0 Fixity.NONFIX pu
       in
         P.data (toInt, [pu_INFIX, pu_INFIXR, pu_NONFIX])
       end

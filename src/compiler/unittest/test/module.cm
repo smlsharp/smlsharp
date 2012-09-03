@@ -1,4 +1,7 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
         ../../session/test/module.cm
         ../../assemble/test/module.cm
         ../../util/test/module.cm

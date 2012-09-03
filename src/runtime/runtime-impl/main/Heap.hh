@@ -1,22 +1,16 @@
 #ifndef Heap_hh_
 #define Heap_hh_
 
+#include <list>
+#include <map>
+
 #include "RuntimeTypes.hh"
-#include "VariableLengthArray.hh"
 #include "NoEnoughHeapException.hh"
+#include "IllegalArgumentException.hh"
 #include "Log.hh"
 #include "Debug.hh"
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
-
-/** type of the block header */
-typedef UInt32Value BlockHeader;
-
-/** type of the block type field in block header */
-typedef UInt32Value BlockType;
-
-/** type of the block size field in block header */
-typedef UInt32Value BlockSize;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -167,9 +161,27 @@ class Heap
       public RootTracer
 */
 {
+
     ///////////////////////////////////////////////////////////////////////////
 
-  private:
+  public:
+
+    ///////////////////////////////////////////////////////////////////////////
+    // types and inner classes
+
+    /** type of the block header */
+    typedef UInt32Value BlockHeader;
+
+    /** type of the block type field in block header */
+    typedef UInt32Value BlockType;
+
+    /** type of the block size field in block header */
+    typedef UInt32Value BlockSize;
+
+    typedef std::list<Cell*> BlockPointerList;
+    typedef std::list<Cell**> BlockPointerRefList;
+
+    typedef std::list<HeapMonitor*> HeapMonitorList;
 
     /**
      * Constants indicating which GC is running.
@@ -185,6 +197,13 @@ class Heap
         /** major GC is running. */
         GC_MAJOR
     };
+
+    ///////////////////////////////////////////////////////////////////////////
+
+  private:
+
+    ///////////////////////////////////////////////////////////////////////////
+    // types and inner classes
 
     /**
      * Datatype which represents a region in heap.
@@ -256,54 +275,81 @@ class Heap
         virtual
         void trace(Cell** roots, int count)
             throw(IMLRuntimeException);
+
+        virtual
+        Cell* trace(Cell* root)
+            throw(IMLRuntimeException);
+
     };
     friend class Tracer;
 
-    ///////////////////////////////////////////////////////////////////////////
+    struct FLOBInfo
+    {
+        /**
+         * a pointer to memory allocated by ALLOCATE_MEMORY.
+         */
+        void* memory_;
 
+        /**
+         * true if user calls releaseFLOB on this FLOB.
+         */
+        bool isReleased_;
+
+        FLOBInfo():memory_(NULL), isReleased_(false)
+        {
+        }
+
+        FLOBInfo(void* memory)
+            :isReleased_(false)
+        {
+            memory_ = memory;
+        }
+
+    };
+
+    typedef std::map<Cell*, FLOBInfo*> FLOBInfoMap;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // fields
+    
   private:
 
     /**
      * 
      */
-    static
-    Tracer tracer_;
+    static Tracer tracer_;
 
     /**
      * Rootset holder
      */
-    static
-    RootSet* rootset_;
+    static RootSet* rootset_;
+
+    static FinalizerExecutor* finalizeExecutor_;
 
     /**
      * current GC
      */
-    static
-    GCMode currentGC_;
+    static GCMode currentGC_;
 
     /**
      * heap area
      */
-    static
-    UInt32Value* heap_;
+    static UInt32Value* heap_;
 
     /**
      * pointer to a block of zero field.
      */
-    static
-    Cell* unitBlock_;
+    static Cell* unitBlock_;
 
     /**
      * Heap segment which contains blocks belonging to the younger generation.
      */
-    static
-    HeapRegion youngerRegion_;
+    static HeapRegion youngerRegion_;
 
     /**
      * Heap segment which contains block belonging to the elder generation.
      */
-    static
-    HeapRegion elderFromRegion_;
+    static HeapRegion elderFromRegion_;
 
     /**
      * Heap segment which is reserved for major GC.
@@ -314,8 +360,7 @@ class Heap
      * elder-from region and previous elder-from region, elder-to region.
      * </p>
      */
-    static
-    HeapRegion elderToRegion_;
+    static HeapRegion elderToRegion_;
 
     /**
      * The region into which live blocks are copied when GC.
@@ -325,8 +370,7 @@ class Heap
      * and the elder-to region at major GC.
      * </p>
      */
-    static
-    HeapRegion copyToRegion_;
+    static HeapRegion copyToRegion_;
 
     /**
      * An array of addresses of inter-generational pointers which point to
@@ -337,8 +381,22 @@ class Heap
      * The type of elements of this array is Cell**.
      * </p>
      */
-    static
-    VariableLengthArray assignments_;
+    static BlockPointerRefList assignments_;
+
+    /**
+     * a list of finalizable blocks which are in reachable state.
+     */
+    static BlockPointerList reachableFinalizables_;
+
+    /**
+     * a list of finalizable blocks which are in unreachable state.
+     */
+    static BlockPointerList unreachableFinalizables_;
+
+    /**
+     * an associated array from block pointer to FLOBInfo.
+     */
+    static FLOBInfoMap FLOBInfoMap_;
 
     /**
      * log writer
@@ -347,7 +405,7 @@ class Heap
 
 #ifdef IML_ENABLE_HEAP_MONITORING
     static
-    VariableLengthArray monitors_;
+    HeapMonitorList monitors_;
 #endif
 
     ///////////////////////////////////////////////////////////////////////////
@@ -382,8 +440,11 @@ class Heap
      *
      * @param size size of each segment in heap area (by words).
      * @param rootset rootset holder
+     * @param finalizeExecutor executor of finalizer functions
      */
-    Heap(int size, RootSet* rootset = 0);
+    Heap(int size,
+         RootSet* rootset = 0,
+         FinalizerExecutor* finalizeExecutor = 0);
 
     /**
      * destructor
@@ -400,9 +461,12 @@ class Heap
      *
      * @param size size of each segment in heap area (by words).
      * @param rootset rootset holder
+     * @param finalizeExecutor executor of finalizer functions
      */
     static
-    void initialize(int size, RootSet* rootset = 0);
+    void initialize(int size,
+                    RootSet* rootset = 0,
+                    FinalizerExecutor* finalizeExecutor = 0);
 
     /**
      * release all resources used by the heap.
@@ -419,14 +483,17 @@ class Heap
     void setRootSet(RootSet* rootset);
 
     static
-    int addMonitor(HeapMonitor* monitor);
+    void setFinalizerExecutor(FinalizerExecutor* finalizeExecutor);
 
     static
-    HeapMonitor* removeMonitor(int index);
+    void addMonitor(HeapMonitor* monitor);
 
     static
-    void forceGC()
+    void invokeGC(GCMode mode)
       throw(IMLRuntimeException);
+
+    static
+    void addFinalizable(Cell* block);
 
     /**
      * Check whether the pointer points at a valid location in heap area.
@@ -435,7 +502,10 @@ class Heap
      * @return true if block points a valid location in heap area.
      */
     static
-    BoolValue isValidBlockPointer(Cell* block);
+    bool isValidBlockPointer(Cell* block);
+
+    static
+    bool isFLOB(Cell* block);
 
     /**
      * Indicates whether the specified field of the RECORD block holds a block
@@ -447,7 +517,7 @@ class Heap
      *        a block pointer.
      */
     static
-    BoolValue isPointerField(Cell* block, int index);
+    bool isPointerField(Cell* block, int index);
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -490,6 +560,11 @@ class Heap
     static const UInt32Value WORDS_OF_CELL =
     (sizeof(Cell) / sizeof(UInt32Value));
     static const int BLOCK_ALIGNMENT = sizeof(Real64Value);
+
+    /** size of finalizable object
+     * Its first field is a finalized value, second field is a closure.
+     */
+    static const int SIZE_OF_FINALIZABLE = 2;
 
     ///////////////////////////////////////////////////////////////////////////
     // Macros for walking on the heap
@@ -578,12 +653,10 @@ class Heap
 #ifdef IML_ENABLE_HEAP_MONITORING
 #define INVOKE_ON_HEAP_MONITORS(methodCall) \
     { \
-        int numberOfMonitors = monitors_.getCount(); \
-        VariableLengthArray::Element* monitors = \
-        monitors_.getContents(); \
-        for(int index = 0 ; index < numberOfMonitors ; index += 1){ \
-            HeapMonitor* monitor = \
-            ((HeapMonitor*)(monitors[index])); \
+        for(HeapMonitorList::iterator i = monitors_.begin(); \
+            i != monitors_.end(); \
+            i += 1){ \
+            HeapMonitor* monitor = *i \
             if(0 != monitor){ \
                 monitor->methodCall; \
             } \
@@ -665,7 +738,7 @@ class Heap
      * @return true if the block has been forwarded
      */ 
     static
-    BoolValue isForwarded(BlockHeader* header);
+    bool isForwarded(BlockHeader* header);
 
     /**
      * Updates the bit indicating whether the block has been forwarded.
@@ -674,7 +747,7 @@ class Heap
      * @param forwarded true if the block has been forwarded
      */
     static
-    void setForwarded(BlockHeader* header, BoolValue forwarded);
+    void setForwarded(BlockHeader* header, bool forwarded);
 
     /**
      * Returns the bitmap information of the block
@@ -711,7 +784,7 @@ class Heap
      * @return true if 'index' specifies a field of the block.
      */
     static
-    BoolValue isValidBlockField(BlockHeader* header, int index);
+    bool isValidBlockField(BlockHeader* header, int index);
 
     /**
      * Indicates whether the specified field of the RECORD block holds a block
@@ -723,7 +796,7 @@ class Heap
      *        a block pointer.
      */
     static
-    BoolValue isPointerField(BlockHeader* header, int index);
+    bool isPointerField(BlockHeader* header, int index);
 
     /**
      * Indicates whether the block is in the younger region.
@@ -733,7 +806,7 @@ class Heap
      */
     INLINE_FUN 
     static
-    BoolValue
+    bool
     isInYoungerRegion(BlockHeader* header)
     {
         return ((youngerRegion_.begin_ <= ((UInt32Value*)header)) &&
@@ -748,7 +821,7 @@ class Heap
      */
     INLINE_FUN 
     static
-    BoolValue
+    bool
     isInElderFromRegion(BlockHeader* header)
     {
         return ((elderFromRegion_.begin_ <= ((UInt32Value*)header)) &&
@@ -763,7 +836,7 @@ class Heap
      */
     INLINE_FUN 
     static
-    BoolValue
+    bool
     isInElderToRegion(BlockHeader* header)
     {
         return ((elderToRegion_.begin_ <= ((UInt32Value*)header)) &&
@@ -788,7 +861,7 @@ class Heap
      */
     INLINE_FUN 
     static
-    BoolValue
+    bool
     isInFromRegion(BlockHeader* header)
     {
         return ((isInYoungerRegion(header)) || 
@@ -808,11 +881,32 @@ class Heap
      */
     INLINE_FUN 
     static
-    BoolValue
+    bool
     isInToRegion(BlockHeader* header)
     {
         return ((copyToRegion_.begin_ <= ((UInt32Value*)header)) &&
                 (((UInt32Value*)header) < copyToRegion_.end_));
+    }
+
+    /**
+     * indicates whether the block is a FLOB.
+     */
+    INLINE_FUN
+    static
+    bool
+    isFLOBPointer(BlockHeader* header)
+    {
+        return
+            (FLOBInfoMap_.end() != FLOBInfoMap_.find(HEADER_TO_BLOCK(header)));
+    }
+
+    INLINE_FUN
+    static
+    bool
+    isVisited(BlockHeader* header)
+    {
+        return (isInToRegion(header)
+                || (isFLOBPointer(header) && isForwarded(header)));
     }
 
     /**
@@ -822,7 +916,7 @@ class Heap
      * @return true if block points a valid location in heap area.
      */
     static
-    BoolValue isValidHeaderPointer(BlockHeader* header);
+    bool isValidHeaderPointer(BlockHeader* header);
 
     /**
      * Allocates a block in the younger region.
@@ -854,7 +948,7 @@ class Heap
 
         if(youngerRegion_.end_ - nextHeaderAddress < requiredWords)
         {
-            invokeMinorGC();
+            invokeGC(GC_MINOR);
         }
         // NOTE: youngerRegion_ can be updated in GC.
 
@@ -881,9 +975,10 @@ class Heap
      * When it is found that the elder-from region does not have sufficient
      * free room to hold all live blocks, major GC is kicked off.
      * </p>
+     * @param forceMajorGC if true, do MajorGC in the MinorGC.
      */
     static
-    void invokeMinorGC();
+    void invokeMinorGC(bool forceMajorGC);
 
     /**
      * Starts major GC.
@@ -929,6 +1024,18 @@ class Heap
     static
     Cell* update(Cell* block);
 
+    static
+    void updateBlockContents(Cell* block);
+
+    static
+    void updatePointerOfBlockPointerList(BlockPointerRefList* ppblocks);
+
+    static
+    void updateBlockPointerList(BlockPointerList* ppblocks);
+
+    static
+    Cell* followForwardedPointer(Cell* block);
+
     /**
      * Copies a block beloinging to 'from' regions into the 'to' region.
      *
@@ -938,6 +1045,21 @@ class Heap
      */
     static
     Cell* copyToToRegion(Cell* block);
+
+    static
+    void updateFLOBs();
+
+    static
+    void checkReachabilityOfFLOBs();
+
+    static
+    void checkReachabilityOfFinalizables();
+
+    /**
+     * @return true if any finalizer has been executed.
+     */
+    static
+    bool runFinalizer();
 
     ///////////////////////////////////////////////////////////////////////////
     // Concretization of class Heap
@@ -1007,13 +1129,18 @@ class Heap
          *  If all conditions below are satisfied, the 'value' is an IGP.
          *   1, 'block' points to the elder-from region.
          *   2, the field specified by 'index' holds block pointer
-         *   3, 'value' points to the younger region.
+         *   3, 'value' points to blocks in the younger region.
+         * Note: It is not necessary to add references from elder object to
+         *     FLOB to assignements, because all FLOBs are traced as rootset
+         *     at minor GC.
          */
         if(isInElderFromRegion(header) &&
            isPointerField(header, index) &&
            isInYoungerRegion(BLOCK_TO_HEADER(value.blockRef)))
         {
-            assignments_.add(fieldAddress);
+            DBGWRAP(LOG.debug("add an assignment from %x to %x",
+                              block, value.blockRef));
+            assignments_.push_front((Cell**)fieldAddress);
         }
         *fieldAddress = value;
         INVOKE_ON_HEAP_MONITORS(afterUpdateField(block, index, value));
@@ -1023,7 +1150,8 @@ class Heap
     void updateField_D(Cell* block, int index, const double& value)
         throw(IMLRuntimeException)
     {
-        INVOKE_ON_HEAP_MONITORS(beforeUpdateField(block, index, value));
+// ToDo : add beforeUpdateField_D
+//        INVOKE_ON_HEAP_MONITORS(beforeUpdateField(block, index, value));
         ASSERT(isValidBlockPointer(block));
         ASSERT(isValidBlockField(BLOCK_TO_HEADER(block), index));
         ASSERT(isValidBlockField(BLOCK_TO_HEADER(block), index + 1));
@@ -1034,7 +1162,7 @@ class Heap
         Cell* fieldAddress = block + index;
 
         *(double*)fieldAddress = value;
-        INVOKE_ON_HEAP_MONITORS(afterUpdateField(block, index, value));
+//        INVOKE_ON_HEAP_MONITORS(afterUpdateField(block, index, value));
     }
 
     INLINE_FUN static
@@ -1127,6 +1255,36 @@ class Heap
         throw(IMLRuntimeException)
     {
         return unitBlock_;
+    }
+
+    INLINE_FUN static
+    Cell* fixedCopy(Cell* block)
+    {
+        BlockHeader* header = BLOCK_TO_HEADER(block);
+        BlockSize numBytes = sizeof(UInt32Value) * getTotalWords(header);
+
+        void* memory = ALLOCATE_MEMORY(numBytes + BLOCK_ALIGNMENT);
+        ASSERT(NULL != memory);
+        BlockHeader* newHeader = alignHeaderAddress((BlockHeader*)memory);
+        Cell* newBlock = HEADER_TO_BLOCK(newHeader);
+        COPY_MEMORY(newHeader, header, numBytes);
+
+        FLOBInfo* info = new FLOBInfo(memory);
+        FLOBInfoMap_[newBlock] = info;
+
+        DBGWRAP(LOG.debug("fixedCopy: %x", newBlock));
+        return newBlock;
+    }
+
+    INLINE_FUN static
+    void releaseFLOB(Cell* block)
+    {
+        FLOBInfoMap::iterator i = FLOBInfoMap_.find(block);
+        if(i == FLOBInfoMap_.end()){
+            throw IllegalArgumentException();
+        }
+        i->second->isReleased_ = true;
+        DBGWRAP(LOG.debug("releaseFLOB: %x", block));
     }
 
     static

@@ -1,7 +1,9 @@
 signature T = sig end
-../tests/bugs/tests/issue194.1.sml:5.3-5.14 Warning: match nonexhaustive
-                                                              S1.D  => ...
+../tests/bugs/tests/issue194.1.sml:5.3-5.14 Warning:
+  match nonexhaustive
+           D  => ...
 structure S1 : T
-../tests/bugs/tests/issue194.1.sml:11.3-11.14 Warning: match nonexhaustive
-                                                                S2.D  => ...
+../tests/bugs/tests/issue194.1.sml:11.3-11.14 Warning:
+  match nonexhaustive
+           D  => ...
 structure S2 : sig datatype dt con D : dt con E : dt val f : dt -> unit end

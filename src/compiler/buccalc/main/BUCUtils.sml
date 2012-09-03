@@ -1,16 +1,18 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version  $Id: BUCUtils.sml,v 1.6 2006/02/28 16:11:00 kiyoshiy Exp $
+ * @version  $Id: BUCUtils.sml,v 1.13 2007/02/25 03:36:57 ducnh Exp $
  *)
 
 structure BUCUtils :> BUCUTILS  = struct
 
+  structure BT = BasicTypes
   structure BC = BUCCalc
+  structure CT = ConstantTerm
+  structure PT = PredefinedTypes
   structure TL = TypedLambda
   structure TU = TypesUtils
   structure T = Types
-  structure SE = StaticEnv
 
   val BLOCK_HEADER_SIZE = 2
   val MAX_BLOCK_SIZE = 30 
@@ -51,7 +53,7 @@ structure BUCUtils :> BUCUTILS  = struct
           }
 
   fun word_constant (w, loc) = 
-      BC.BUCCONSTANT {value = T.WORD w, loc = loc}
+      BC.BUCCONSTANT {value = CT.WORD w, loc = loc}
       
   fun word_fromInt (intExp, loc) = 
       makePrimApply ("Word_fromInt",[intExp],[T.ATOMty],loc)
@@ -73,14 +75,14 @@ structure BUCUtils :> BUCUTILS  = struct
 
   fun newVar (ty,varKind) = 
       let
-        val id = SE.newVarId()
+        val id = T.newVarId()
       in
         {id = id,displayName = "$" ^ (ID.toString id),ty=ty,varKind=varKind}
       end
 
   fun newTLVar ty = 
       let
-        val id = SE.newVarId()
+        val id = T.newVarId()
       in
         {id = id, displayName = "$" ^ (ID.toString id),ty=ty}
       end
@@ -100,6 +102,7 @@ structure BUCUtils :> BUCUTILS  = struct
       | BC.BUCCAST {loc,...} => loc
       | BC.BUCPRIMAPPLY {loc,...} =>  loc
       | BC.BUCFOREIGNAPPLY {loc,...} => loc
+      | BC.BUCEXPORTCALLBACK {loc,...} => loc
       | BC.BUCAPPLY {loc,...} => loc
       | BC.BUCRECCALL {loc,...} => loc
       | BC.BUCLET {loc,...} => loc
@@ -117,15 +120,21 @@ structure BUCUtils :> BUCUTILS  = struct
       | BC.BUCSEQ {loc,...} => loc
       | BC.BUCGETFIELD {loc,...} => loc
       | BC.BUCSETFIELD {loc,...} => loc
-      | BC.BUCFFIVAL {loc,...} => loc
-
 
   (*************************************************************************)
   (* converting utilities *)
 
+
+  fun rootTy ty =
+      case ty of
+        T.TYVARty (ref (T.SUBSTITUTED realTy)) => rootTy realTy
+      | T.ABSSPECty (_,realTy) => rootTy realTy
+      | T.ALIASty (_,realTy) => rootTy realTy
+      | _ => ty
+
   fun convertTy ty =
       let
-        val ty = TU.derefTy ty
+        val ty = rootTy ty
       in
         case ty of
           T.TYVARty (ref (T.TVAR tvKind)) =>
@@ -159,8 +168,9 @@ structure BUCUtils :> BUCUTILS  = struct
         | _ => ty
       end
 
-  and convertTvKind {id,recKind,eqKind,tyvarName} =
+  and convertTvKind {lambdaDepth, id,recKind,eqKind,tyvarName} =
       {
+       lambdaDepth = lambdaDepth,
        id = id,
        recKind = convertRecKind recKind,
        eqKind = eqKind,
@@ -216,7 +226,7 @@ structure BUCUtils :> BUCUTILS  = struct
       (
        case (constantBitmap tyList,sizeOf ty,tagOf ty) of
          (SOME w,SOME size,SOME tag) =>
-         SOME (Word32.orb(Word32.<< (w,Word.fromLargeWord size),tag))
+         SOME (Word32.orb(Word32.<< (w,BT.UInt32ToWord size),tag))
        | _ => NONE
       )
 
@@ -232,20 +242,20 @@ structure BUCUtils :> BUCUTILS  = struct
   (* type utilities*)
 
   fun arrayElementTy ty =
-      case TU.derefTy ty of
+      case rootTy ty of
         T.CONty {tyCon,args as [ty']} => 
-        if SE.isSameTyCon(tyCon,SE.arrayTyCon)
+        if T.eqTyCon(tyCon,PT.arrayTyCon)
         then ty'
         else raise Control.Bug "invalid array type"
       | _ => raise Control.Bug "invalid array type"
 
   fun argTys ty =
-      case TU.derefTy ty of
+      case rootTy ty of
         T.FUNMty (args, body) => args
       | _ => raise Control.Bug "invalid function type 2"
 
   fun primArgTys ty =
-      case TU.derefTy ty of
+      case rootTy ty of
         T.FUNMty (tys,_) => tys
       | _ => []
 
@@ -282,6 +292,8 @@ structure BUCUtils :> BUCUTILS  = struct
         tvsExpList(argExpList,argTyList)
       | BC.BUCFOREIGNAPPLY {argExpList,argTyList,...} =>
         tvsExpList(argExpList,argTyList)
+      | BC.BUCEXPORTCALLBACK {argTyList,resultTy,...} =>
+        tvsTyList argTyList ++ tvsTy resultTy
       | BC.BUCAPPLY {funExp,argExpList,argTyList,...} =>
         (tvsExp funExp) ++ (tvsExpList (argExpList,argTyList))
       | BC.BUCRECCALL {funExp,argExpList,argTyList,...} => 
@@ -326,8 +338,6 @@ structure BUCUtils :> BUCUTILS  = struct
         tvsExp blockExp
       | BC.BUCSETFIELD {blockExp,valueExp,expTy,...} =>
         (tvsExp blockExp) ++ (tvsTypedExp(valueExp,expTy))
-      | BC.BUCFFIVAL {funExp,libExp,resultTy,...} =>
-        (tvsExp funExp) ++ (tvsExp libExp) ++ (tvsTy resultTy)
 
   and tvsExpList (L1,L2) = tvsList tvsTypedExp (ListPair.zip(L1,L2)) 
 

@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: Executable.sml,v 1.4 2005/11/16 07:35:02 kiyoshiy Exp $
+ * @version $Id: Executable.sml,v 1.5 2007/01/13 03:35:00 kiyoshiy Exp $
  *)
 structure Executable : EXECUTABLE =
 struct
@@ -52,6 +52,7 @@ struct
 
   type executable =
        {
+         byteOrder : SystemDefTypes.byteOrder,
          instructionsSize : BT.UInt32,
          instructions : Instructions.instruction list,
          locationTable : locationTable,

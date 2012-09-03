@@ -1,6 +1,6 @@
 structure VS : MONO_VECTOR_SLICE
 structure V : MONO_VECTOR
-val Words2VS = fn : byte List.list -> VS.slice
+val Words2VS = fn : byte list -> VS.slice
 val VS2L = fn : VS.slice -> byte list
 val V2L = fn : V.vector -> byte list
 val makeVector = fn : int -> V.vector

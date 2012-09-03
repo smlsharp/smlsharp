@@ -6,7 +6,7 @@
  * </p>
  * @author Atushi Ohori
  * @author Satoshi Osaka
- * @version $Id: RecordCalcUtils.sml,v 1.3 2006/02/09 10:24:30 ohori Exp $
+ * @version $Id: RecordCalcUtils.sml,v 1.6 2007/02/28 15:31:25 katsu Exp $
  *)
 structure RecordCalcUtils = struct
 local 
@@ -59,8 +59,10 @@ in
       env
       vars
 
-  fun getFV (RCFOREIGNAPPLY {argExp,...}) =
-      getFV argExp
+  fun getFV (RCFOREIGNAPPLY {funExp,argExpList,...}) =
+      getFV funExp ++ foldlUnion getFV argExpList
+    | getFV (RCEXPORTCALLBACK {funExp,...}) = getFV funExp
+    | getFV (RCSIZEOF _) = VSet.empty
     | getFV (RCCONSTANT _) = VSet.empty
     | getFV (RCVAR (var, loc)) = VSet.singleton var
     | getFV (RCGETGLOBAL _) = VSet.empty
@@ -116,7 +118,6 @@ in
     | getFV (RCPOLY {exp,...}) =  getFV exp
     | getFV (RCTAPP {exp, ...}) = getFV exp
     | getFV (RCSEQ {expList, ...}) = foldlUnion getFV expList
-    | getFV (RCFFIVAL {funExp, libExp, ...}) = (getFV funExp) ++ (getFV libExp)
     | getFV (RCCAST (exp, ty, loc)) =  getFV exp
 
   and getDecFVBV (RCVAL (binds, loc)) =

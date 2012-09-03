@@ -23,14 +23,14 @@
  * </p>
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ID.sig,v 1.9 2006/02/28 13:38:40 kiyoshiy Exp $
+ * @version $Id: ID.sig,v 1.10 2006/04/15 08:40:44 ohori Exp $
  *)
 signature ID =
 sig
 
   (***************************************************************************)
 
-  eqtype id
+  type id
 
   (***************************************************************************)
 
@@ -59,6 +59,12 @@ sig
    * If id1 < id2, it means that id1 has been allocated before id2.
    *)
   val compare : id * id -> order
+
+  (**
+   * equality test
+   *)
+  val eq : id * id -> bool
+
 
   (**
    * allocate a new static unique ID.

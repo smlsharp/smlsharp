@@ -1,0 +1,503 @@
+<HTML>
+<HEAD>
+<TITLE>POSIX_TTY</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>POSIX_TTY</H2>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_TTY.html">POSIX_TTY</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="SigPOSIX_TTY-StrI.html">I</A>&nbsp;:<br>
+&nbsp;&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;<A HREF="SigPOSIX_FLAGS.html">POSIX_FLAGS</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valbrkint">brkint</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valicrnl">icrnl</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valignbrk">ignbrk</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valigncr">igncr</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valignpar">ignpar</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valinlcr">inlcr</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valinpck">inpck</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valistrip">istrip</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valixoff">ixoff</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valixon">ixon</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrI.html#Valparmrk">parmrk</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="SigPOSIX_TTY-StrO.html">O</A>&nbsp;:&nbsp;sig&nbsp;include&nbsp;<A HREF="SigPOSIX_FLAGS.html">POSIX_FLAGS</A>&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrO.html#Valopost">opost</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A>&nbsp;end<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="SigPOSIX_TTY-StrC.html">C</A>&nbsp;:<br>
+&nbsp;&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;<A HREF="SigPOSIX_FLAGS.html">POSIX_FLAGS</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valclocal">clocal</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valcread">cread</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valcsize">csize</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valcs5">cs5</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valcs6">cs6</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valcs7">cs7</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valcs8">cs8</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valcstopb">cstopb</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valhupcl">hupcl</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valparenb">parenb</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrC.html#Valparodd">parodd</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="SigPOSIX_TTY-StrL.html">L</A>&nbsp;:<br>
+&nbsp;&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;<A HREF="SigPOSIX_FLAGS.html">POSIX_FLAGS</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valecho">echo</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valechoe">echoe</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valechok">echok</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valechonl">echonl</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valicanon">icanon</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valiexten">iexten</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valisig">isig</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valnoflsh">noflsh</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrL.html#Valtostop">tostop</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">flags</A><br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="SigPOSIX_TTY-StrV.html">V</A>&nbsp;:<br>
+&nbsp;&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;type&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">cc</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valeof">eof</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valeol">eol</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valerase">erase</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valintr">intr</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valkill">kill</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valmin">min</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valquit">quit</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valsusp">susp</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valtime">time</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valstart">start</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valstop">stop</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valnccs">nccs</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valcc">cc</A>&nbsp;:&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrChar.html#Typechar">char</A>)&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">cc</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valupdate">update</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">cc</A>&nbsp;*&nbsp;(<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrChar.html#Typechar">char</A>)&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">cc</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Valsub">sub</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">cc</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html">TC</A>&nbsp;:<br>
+&nbsp;&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeset_action">set_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeflow_action">flow_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typequeue_sel">queue_sel</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valsanow">sanow</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeset_action">set_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valsadrain">sadrain</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeset_action">set_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valsaflush">saflush</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeset_action">set_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valooff">ooff</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeflow_action">flow_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valoon">oon</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeflow_action">flow_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valioff">ioff</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeflow_action">flow_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valion">ion</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeflow_action">flow_action</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valiflush">iflush</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typequeue_sel">queue_sel</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valoflush">oflush</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typequeue_sel">queue_sel</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Valioflush">ioflush</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typequeue_sel">queue_sel</A><br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_TTY.html#Typepid">pid</A><br>
+&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A><br>
+&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#ValcompareSpeed">compareSpeed</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">General.order</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#ValspeedToWord">speedToWord</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#ValwordToSpeed">wordToSpeed</A>&nbsp;:&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb0">b0</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb50">b50</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb75">b75</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb110">b110</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb134">b134</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb150">b150</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb200">b200</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb300">b300</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb600">b600</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb1200">b1200</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb1800">b1800</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb2400">b2400</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb4800">b4800</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb9600">b9600</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb19200">b19200</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valb38400">b38400</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valtermios">termios</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">I.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">O.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">C.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">L.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cc&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">V.cc</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ispeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ospeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#ValfieldsOf">fieldsOf</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">I.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">O.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">C.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">L.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cc&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">V.cc</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ispeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ospeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetiflag">getiflag</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">I.flags</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetoflag">getoflag</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">O.flags</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetcflag">getcflag</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">C.flags</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetlflag">getlflag</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">L.flags</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetcc">getcc</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">V.cc</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetospeed">getospeed</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valsetospeed">setospeed</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetispeed">getispeed</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valsetispeed">setispeed</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetattr">getattr</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valsetattr">setattr</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeset_action">TC.set_action</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valsendbreak">sendbreak</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valdrain">drain</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valflush">flush</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typequeue_sel">TC.queue_sel</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valflow">flow</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeflow_action">TC.flow_action</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valgetpgrp">getpgrp</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typepid">pid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_TTY.html#Valsetpgrp">setpgrp</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typepid">pid</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typepid"><!-- --></A>
+<H3>pid</H3>
+<P>
+<CODE>eqtype&nbsp;pid</CODE>
+
+<HR>
+<A NAME="Typefile_desc"><!-- --></A>
+<H3>file_desc</H3>
+<P>
+<CODE>eqtype&nbsp;file_desc</CODE>
+
+<HR>
+<A NAME="Typespeed"><!-- --></A>
+<H3>speed</H3>
+<P>
+<CODE>eqtype&nbsp;speed</CODE>
+
+<HR>
+<A NAME="Typetermios"><!-- --></A>
+<H3>termios</H3>
+<P>
+<CODE>type&nbsp;termios</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValcompareSpeed"><!-- --></A>
+<H3>compareSpeed</H3>
+<P>
+<CODE>val&nbsp;compareSpeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">General.order</A></CODE>
+
+<HR>
+<A NAME="ValspeedToWord"><!-- --></A>
+<H3>speedToWord</H3>
+<P>
+<CODE>val&nbsp;speedToWord&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A></CODE>
+
+<HR>
+<A NAME="ValwordToSpeed"><!-- --></A>
+<H3>wordToSpeed</H3>
+<P>
+<CODE>val&nbsp;wordToSpeed&nbsp;:&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb0"><!-- --></A>
+<H3>b0</H3>
+<P>
+<CODE>val&nbsp;b0&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb50"><!-- --></A>
+<H3>b50</H3>
+<P>
+<CODE>val&nbsp;b50&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb75"><!-- --></A>
+<H3>b75</H3>
+<P>
+<CODE>val&nbsp;b75&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb110"><!-- --></A>
+<H3>b110</H3>
+<P>
+<CODE>val&nbsp;b110&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb134"><!-- --></A>
+<H3>b134</H3>
+<P>
+<CODE>val&nbsp;b134&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb150"><!-- --></A>
+<H3>b150</H3>
+<P>
+<CODE>val&nbsp;b150&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb200"><!-- --></A>
+<H3>b200</H3>
+<P>
+<CODE>val&nbsp;b200&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb300"><!-- --></A>
+<H3>b300</H3>
+<P>
+<CODE>val&nbsp;b300&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb600"><!-- --></A>
+<H3>b600</H3>
+<P>
+<CODE>val&nbsp;b600&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb1200"><!-- --></A>
+<H3>b1200</H3>
+<P>
+<CODE>val&nbsp;b1200&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb1800"><!-- --></A>
+<H3>b1800</H3>
+<P>
+<CODE>val&nbsp;b1800&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb2400"><!-- --></A>
+<H3>b2400</H3>
+<P>
+<CODE>val&nbsp;b2400&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb4800"><!-- --></A>
+<H3>b4800</H3>
+<P>
+<CODE>val&nbsp;b4800&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb9600"><!-- --></A>
+<H3>b9600</H3>
+<P>
+<CODE>val&nbsp;b9600&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb19200"><!-- --></A>
+<H3>b19200</H3>
+<P>
+<CODE>val&nbsp;b19200&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valb38400"><!-- --></A>
+<H3>b38400</H3>
+<P>
+<CODE>val&nbsp;b38400&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valtermios"><!-- --></A>
+<H3>termios</H3>
+<P>
+<CODE>val&nbsp;termios<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">I.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">O.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">C.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">L.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cc&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">V.cc</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ispeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ospeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A></CODE>
+
+<HR>
+<A NAME="ValfieldsOf"><!-- --></A>
+<H3>fieldsOf</H3>
+<P>
+<CODE>val&nbsp;fieldsOf<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">I.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">O.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">C.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lflag&nbsp;:&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">L.flags</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cc&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">V.cc</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ispeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ospeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</CODE>
+
+<HR>
+<A NAME="Valgetiflag"><!-- --></A>
+<H3>getiflag</H3>
+<P>
+<CODE>val&nbsp;getiflag&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">I.flags</A></CODE>
+
+<HR>
+<A NAME="Valgetoflag"><!-- --></A>
+<H3>getoflag</H3>
+<P>
+<CODE>val&nbsp;getoflag&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">O.flags</A></CODE>
+
+<HR>
+<A NAME="Valgetcflag"><!-- --></A>
+<H3>getcflag</H3>
+<P>
+<CODE>val&nbsp;getcflag&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">C.flags</A></CODE>
+
+<HR>
+<A NAME="Valgetlflag"><!-- --></A>
+<H3>getlflag</H3>
+<P>
+<CODE>val&nbsp;getlflag&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_FLAGS.html#Typeflags">L.flags</A></CODE>
+
+<HR>
+<A NAME="Valgetcc"><!-- --></A>
+<H3>getcc</H3>
+<P>
+<CODE>val&nbsp;getcc&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY-StrV.html#Typecc">V.cc</A></CODE>
+
+<HR>
+<A NAME="Valgetospeed"><!-- --></A>
+<H3>getospeed</H3>
+<P>
+<CODE>val&nbsp;getospeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valsetospeed"><!-- --></A>
+<H3>setospeed</H3>
+<P>
+<CODE>val&nbsp;setospeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A></CODE>
+
+<HR>
+<A NAME="Valgetispeed"><!-- --></A>
+<H3>getispeed</H3>
+<P>
+<CODE>val&nbsp;getispeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A></CODE>
+
+<HR>
+<A NAME="Valsetispeed"><!-- --></A>
+<H3>setispeed</H3>
+<P>
+<CODE>val&nbsp;setispeed&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typespeed">speed</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A></CODE>
+
+<HR>
+<A NAME="Valgetattr"><!-- --></A>
+<H3>getattr</H3>
+<P>
+<CODE>val&nbsp;getattr&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A></CODE>
+
+<HR>
+<A NAME="Valsetattr"><!-- --></A>
+<H3>setattr</H3>
+<P>
+<CODE>val&nbsp;setattr&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeset_action">TC.set_action</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typetermios">termios</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valsendbreak"><!-- --></A>
+<H3>sendbreak</H3>
+<P>
+<CODE>val&nbsp;sendbreak&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valdrain"><!-- --></A>
+<H3>drain</H3>
+<P>
+<CODE>val&nbsp;drain&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valflush"><!-- --></A>
+<H3>flush</H3>
+<P>
+<CODE>val&nbsp;flush&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typequeue_sel">TC.queue_sel</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valflow"><!-- --></A>
+<H3>flow</H3>
+<P>
+<CODE>val&nbsp;flow&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY-StrTC.html#Typeflow_action">TC.flow_action</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valgetpgrp"><!-- --></A>
+<H3>getpgrp</H3>
+<P>
+<CODE>val&nbsp;getpgrp&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_TTY.html#Typepid">pid</A></CODE>
+
+<HR>
+<A NAME="Valsetpgrp"><!-- --></A>
+<H3>setpgrp</H3>
+<P>
+<CODE>val&nbsp;setpgrp&nbsp;:&nbsp;<A HREF="SigPOSIX_TTY.html#Typefile_desc">file_desc</A>&nbsp;*&nbsp;<A HREF="SigPOSIX_TTY.html#Typepid">pid</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

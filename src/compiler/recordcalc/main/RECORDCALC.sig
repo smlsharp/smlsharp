@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: RECORDCALC.sig,v 1.5 2006/02/28 16:11:03 kiyoshiy Exp $
+ * @version $Id: RECORDCALC.sig,v 1.10 2007/02/28 15:31:25 katsu Exp $
  *)
 signature RECORDCALC = sig
 
@@ -9,6 +9,7 @@ signature RECORDCALC = sig
  type ty
  type tvar
  type tyCon 
+ type callingConvention
  type conInfo
  type valIdent
  type id
@@ -25,10 +26,19 @@ signature RECORDCALC = sig
         {
           funExp : rcexp, 
 	  instTyList:ty list,
-	  argExp:rcexp, 
+	  argExpList:rcexp list, 
 	  argTyList : ty list, 
 	  loc: loc
         }
+   | RCEXPORTCALLBACK of 
+       {
+         funExp : rcexp,
+         instTyList:ty list,
+	 argTyList : ty list,
+	 resultTy : ty,
+         loc: loc
+       }
+   | RCSIZEOF of ty * loc
    | RCCONSTANT of constant * loc
    | RCVAR of varIdInfoWithType * loc
    | RCGETGLOBAL of string * ty * loc
@@ -88,7 +98,6 @@ signature RECORDCALC = sig
    | RCPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:rcexp, loc:loc}
    | RCTAPP of {exp:rcexp, expTy:ty, instTyList:ty list, loc:loc}
    | RCSEQ of {expList:rcexp list, expTyList:ty list, loc:loc}
-   | RCFFIVAL of {funExp:rcexp, libExp:rcexp, argTyList:ty list, resultTy:ty, funTy:ty, loc: loc}
    | RCCAST of rcexp * ty * loc
 
  and rcdecl 
@@ -100,8 +109,6 @@ signature RECORDCALC = sig
    | RCSETGLOBAL of string * rcexp * loc
    | RCEMPTY of loc
 
-
- 
   val format_rcdecl : (int * Types.btvEnv) list  -> rcdecl SMLFormat.BasicFormatters.formatter
 
 end

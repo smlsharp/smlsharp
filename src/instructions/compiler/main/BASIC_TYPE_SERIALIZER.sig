@@ -1,7 +1,7 @@
 (**
  * declaration of serialize and deserialize functions for basic types.
  * @author YAMATODANI Kiyoshi
- * @version $Id: BASIC_TYPE_SERIALIZER.sig,v 1.1 2005/12/31 12:33:59 kiyoshiy Exp $
+ * @version $Id: BASIC_TYPE_SERIALIZER.sig,v 1.2 2007/01/10 09:43:44 katsu Exp $
  *)
 signature BASIC_TYPE_SERIALIZER =
 sig
@@ -27,6 +27,7 @@ sig
   val serializeSInt24 : BasicTypes.SInt24 serializer
   val serializeUInt32 : BasicTypes.UInt32 serializer
   val serializeSInt32 : BasicTypes.SInt32 serializer
+  val serializeReal32 : BasicTypes.Real32 serializer
   val serializeReal64 : BasicTypes.Real64 serializer
 
   val deserializeUInt8 : BasicTypes.UInt8 deserializer
@@ -37,6 +38,7 @@ sig
   val deserializeSInt24 : BasicTypes.SInt24 deserializer
   val deserializeUInt32 : BasicTypes.UInt32 deserializer
   val deserializeSInt32 : BasicTypes.SInt32 deserializer
+  val deserializeReal32 : BasicTypes.Real32 deserializer
   val deserializeReal64 : BasicTypes.Real64 deserializer
 
   (***************************************************************************)

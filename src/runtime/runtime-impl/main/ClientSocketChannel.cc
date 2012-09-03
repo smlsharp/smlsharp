@@ -1,9 +1,5 @@
 #include "ClientSocketChannel.hh"
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -29,3 +25,4 @@ ClientSocketChannel::isEOF()
 ///////////////////////////////////////////////////////////////////////////////
 
 END_NAMESPACE
+

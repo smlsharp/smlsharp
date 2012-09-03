@@ -1,0 +1,58 @@
+(**
+ * grammar of parameter pattern in @params tag of doc comment.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: ParamPattern.grm,v 1.1.1.1.2.1 2007/03/25 15:23:50 kiyoshiy Exp $
+ *)
+
+open DocComment
+
+  %%
+  %term
+      EOF
+    | ID of string
+    | DOT | EQUALOP
+    | ASTERISK | COLON | COMMA | LBRACE | LPAREN | RBRACE 
+    | RPAREN
+
+%nonterm id of string
+
+       | apat of paramPattern
+       | plabel of  (string * paramPattern)
+       | plabels of  ((string * paramPattern) list)
+       | pat_list of  paramPattern list
+       | apats of paramPattern list
+
+%verbose
+%pos int
+%start apats
+%eop EOF
+%noshift EOF
+
+%name ParamPattern
+
+%value ID ("BOGUS")
+
+%%
+
+id	: ID		(ID)
+
+apat	: LPAREN apat RPAREN	(apat)
+	| id			(IDParamPat id)
+	| LPAREN RPAREN		(TupleParamPat([]))
+	| LPAREN apat COMMA  pat_list RPAREN	
+  				(TupleParamPat(apat :: pat_list))
+	| LBRACE RBRACE		(RecordParamPat([]))
+	| LBRACE plabels RBRACE	(RecordParamPat plabels)
+
+plabel	: ID EQUALOP apat	((ID,apat))
+	| ID			(ID, IDParamPat ID)
+
+plabels : plabel COMMA plabels	(plabel :: plabels)
+	| plabel		([plabel])
+
+pat_list: apat			([apat])
+	| apat COMMA pat_list	(apat :: pat_list)
+
+apats	: apat			([apat])
+	| apat apats		(apat :: apats) 
+

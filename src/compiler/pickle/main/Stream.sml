@@ -3,14 +3,15 @@
  * "Type-Specialized Serialization with Sharing", Martin Elsman
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Stream.sml,v 1.3 2006/02/28 16:11:03 kiyoshiy Exp $
+ * @version $Id: Stream.sml,v 1.5 2007/02/21 02:12:32 kiyoshiy Exp $
  *)
 structure Stream =
 struct
 
   (***************************************************************************)
 
-  structure BTS = BasicTypeSerializer
+  (** word is pickled in portable format. *)
+  structure BTS = BasicTypeSerializerForNetworkByteOrder
 
   (***************************************************************************)
 
@@ -81,8 +82,6 @@ struct
         locRef := !locRef + 0w1;
         byte
       end
-  val outcw = outw
-  val getcw = getw
 
   (***************************************************************************)
 

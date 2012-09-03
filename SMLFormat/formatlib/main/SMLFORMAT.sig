@@ -1,7 +1,7 @@
 (**
  * Pretty-printer library for Standard ML.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SMLFORMAT.sig,v 1.1 2006/02/07 12:51:53 kiyoshiy Exp $
+ * @version $Id: SMLFORMAT.sig,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
  *)
 signature SMLFORMAT =
 sig
@@ -15,6 +15,10 @@ sig
   structure BasicFormatters : BASIC_FORMATTERS
 
   sharing type FormatExpression.expression = BasicFormatters.expression
+
+  (***************************************************************************)
+
+  datatype parameter = datatype PrinterParameter.parameter
 
   (***************************************************************************)
 
@@ -41,9 +45,7 @@ sig
    * @return the text representation of the expressions
    *)
   val prettyPrint :
-      PrinterParameter.printerParameter ->
-      FormatExpression.expression list ->
-      string
+      parameter list -> FormatExpression.expression list -> string
 
   (***************************************************************************)
 

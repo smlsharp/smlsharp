@@ -72,7 +72,7 @@ val unpackString_1 = Byte.unpackString (L2AS [0w97]);
 fun testPackString (arraySize, start, string) =
     let val array = makeArray arraySize
     in
-      Byte.packString (array, start, Substring.all string);
+      Byte.packString (array, start, Substring.full string);
       A2L array
     end
       handle Subscript => [0w9];

@@ -9,7 +9,7 @@
  * </ul>
  * </p>
  * @author YAMATODANI Kiyoshi
- * @version $Id: PPGMain.sml,v 1.8 2006/02/07 12:49:33 kiyoshiy Exp $
+ * @version $Id: PPGMain.sml,v 1.11 2007/02/12 04:33:20 kiyoshiy Exp $
  *)
 structure PPGMain :
   sig
@@ -25,6 +25,7 @@ struct
 
   (***************************************************************************)
 
+  structure EQ = ErrorQueue
   structure FG = FormatterGenerator
   structure U = Utility
 
@@ -51,17 +52,9 @@ struct
    * start of source code plus 2. (This is a bug of ML-lex ?)
    * </p>
    *)
-  fun adjustLexPos lexpos = lexpos - 2
+  fun adjustLexPos lexpos = lexpos - Constants.INITIAL_POS_OF_LEXER
 
   (****************************************)
-
-  structure ErrorQueue =
-  struct
-    val queue = ref ([] : exn list)
-    fun initialize _ = queue := []
-    fun add exn = queue := (exn :: !queue)
-    fun getAll _ = rev (!queue)
-  end
 
   (**
    * generates formatter codes for a declaration.
@@ -148,6 +141,24 @@ struct
                structureBinds
          end
 
+       | Ast.FctDec functorBinds =>
+         let
+           fun getFunctorBind (regionOpt, Ast.Fctb bind) = (regionOpt, bind)
+             | getFunctorBind (_, Ast.MarkFctb (bind, region)) =
+               getFunctorBind (SOME region, bind)
+         in
+           foldl
+               (fn (bind, (F, codes)) =>
+                   let
+                     val (regionOpt, {def, ...}) =
+                         getFunctorBind (NONE, bind)
+                     val (F', codes') = generateForFunctor F (regionOpt, def)
+                   in (F', codes @ codes')
+                   end)
+               (F, [])
+               functorBinds
+         end
+
        | Ast.MarkDec (dec, region) => generateForDec F (SOME region, dec)
 
        | Ast.ExceptionDec {formatComments = _::_, ...} =>
@@ -155,8 +166,7 @@ struct
          in (F', [(regionToEndPos regionOpt, codes)]) end
 
        | _ => (F, []))
-      handle exn as FG.GenerationError _ =>
-             (ErrorQueue.add exn; (F, []))
+      handle exn as FG.GenerationError _ => (EQ.add (EQ.Error exn); (F, []))
 
   (**
    * generates formatter codes for a structure.
@@ -190,6 +200,20 @@ struct
       generateForStructure F (SOME region, strexp)
 
     | generateForStructure F _ = (F, [])
+
+  and generateForFunctor F (regionOpt, Ast.BaseFct {body,...}) =
+      generateForStructure F (regionOpt, body)
+
+    | generateForFunctor F (regionOpt, Ast.LetFct(dec, str)) =
+      let
+        val (F', codesForDec) = generateForDec F (NONE, dec)
+        val (F'', codesForFct) = generateForFunctor F' (NONE, str)
+      in (F'', codesForDec @ codesForFct) end
+
+    | generateForFunctor F (_, Ast.MarkFct(fctexp, region)) =
+      generateForFunctor F (SOME region, fctexp)
+
+    | generateForFunctor F _ = (F, [])
 
   (****************************************)
 
@@ -231,12 +255,13 @@ struct
                   [] => ()
                 | errors =>
                   let
-                    fun toString (FG.GenerationError(message, region)) =
+                    fun toString
+                        (EQ.Error(FG.GenerationError(message, region))) =
                         MLParser.getErrorMessage
                             sourceFileName
                             posToLocation
                             (message, region)
-                      | toString exn =
+                      | toString (EQ.Error exn) =
                         raise Fail ("BUG: unknown exception:" ^ exnMessage exn)
                     val messages = map toString errors
                   in raise Error messages end

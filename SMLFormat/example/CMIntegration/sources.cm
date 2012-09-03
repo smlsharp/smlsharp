@@ -1,6 +1,10 @@
 Group
 is
-        ../../smlpplib.cm
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+
+        ../../smlformatlib.cm
 
 #if (defined(structure PPGSourceTool))
         Tree.ppg:ppg

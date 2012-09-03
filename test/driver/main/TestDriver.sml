@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: TestDriver.sml,v 1.16 2005/09/29 05:58:08 kiyoshiy Exp $
+ * @version $Id: TestDriver.sml,v 1.18 2007/02/19 14:11:56 kiyoshiy Exp $
  *)
 functor TestDriver(
                     structure TestCaseRunner : TEST_CASE_RUNNER
@@ -63,14 +63,14 @@ struct
 
   (****************************************)
 
-  fun runOneCase (preludesPath, sourcePath, expectedPath) =
+  fun runOneCase (preludePath, isCompiledPrelude, sourcePath, expectedPath) =
       let
-        val sourceArray =
+        val sourceVector =
             finally
                 (FileChannel.openIn {fileName = sourcePath})
                 CU.getAll
                 closeInputChannel
-        val expectedArray =
+        val expectedVector =
             finally
                 (FileChannel.openIn {fileName = expectedPath})
                 CU.getAll
@@ -86,12 +86,13 @@ struct
                  (ByteArrayChannel.openOut {buffer = resultArrayOptRef})
                  (fn resultChannel =>
                      finally
-                     (FileChannel.openIn {fileName = preludesPath})
-                     (fn preludesChannel =>
+                     (FileChannel.openIn {fileName = preludePath})
+                     (fn preludeChannel =>
                          TestCaseRunner.runCase
                          {
-                           preludesFileName = preludesPath,
-                           preludesChannel = preludesChannel,
+                           preludeFileName = preludePath,
+                           preludeChannel = preludeChannel,
+                           isCompiledPrelude = isCompiledPrelude,
                            sourceFileName = sourcePath,
                            sourceChannel = sourceChannel,
                            resultChannel = resultChannel
@@ -109,7 +110,7 @@ struct
             (ByteArrayChannel.openIn {buffer = resultArray})
             (fn resultChannel =>
                 finally
-                (ByteArrayChannel.openIn {buffer = expectedArray})
+                (ByteVectorChannel.openIn {buffer = expectedVector})
                 (fn expectedChannel =>
                     compareChannelContents (resultChannel, expectedChannel))
                 closeInputChannel)
@@ -118,9 +119,9 @@ struct
         {
           sourcePath = sourcePath,
           isSameContents = isSameContents,
-          source = sourceArray,
-          output = resultArray,
-          expected = expectedArray,
+          source = sourceVector,
+          output = Word8Array.extract (resultArray, 0, NONE),
+          expected = expectedVector,
           exceptions = ! exceptionsRef
         } : TT.caseResult
       end
@@ -158,8 +159,17 @@ struct
             sourceNames
       end
 
-  fun runTests {prelude, sourcePaths, expectedDirectory, resultDirectory} =
+  fun runTests
+          {
+            prelude,
+            isCompiledPrelude,
+            sourcePaths,
+            expectedDirectory,
+            resultDirectory
+          } =
       let
+val _ = print ("prelude = [" ^ prelude ^ "]\n")
+val _ = print ("isCompildePrelude = [" ^ Bool.toString isCompiledPrelude ^ "]\n")
         val printerContext = Printer.initialize {directory = resultDirectory}
         val messagesRef = ref ([] : string list)
         fun replaceExt ext fileName =
@@ -175,7 +185,9 @@ struct
                   val expectedPath = 
                       PU.joinDirFile
                       {dir = expectedDirectory, file = replaceExt "out" file}
-                  val result = runOneCase(prelude, sourcePath, expectedPath)
+                  val result =
+                      runOneCase
+                        (prelude, isCompiledPrelude, sourcePath, expectedPath)
                   val printerContext = Printer.printCase printerContext result
                 in
                   (printerContext, SOME result :: resultOpts)

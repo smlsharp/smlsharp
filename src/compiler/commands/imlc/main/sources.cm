@@ -1,4 +1,8 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+
         ../../../../configuration/sources.cm
         ../../../../lib/sources.cm
         ../../../toplevel/sources.cm

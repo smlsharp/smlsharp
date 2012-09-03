@@ -10,11 +10,10 @@
  * A Typed-Directed Polymorohic Record Compiler.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: RecordCompiler.sml,v 1.83 2006/03/02 12:49:56 bochao Exp $
+ * @version $Id: RecordCompiler.sml,v 1.96 2007/02/28 15:31:26 katsu Exp $
  *)
 structure RecordCompiler : RECORD_COMPILER =
 struct
-    structure SE = StaticEnv
     val tyToString = TypeFormatter.tyToString
     fun printTy ty = print (tyToString ty ^ "\n")
     fun terpri () = print "\n"
@@ -27,11 +26,15 @@ struct
     type primInfo = Types.primInfo
     type idState = Types.idState
     type btvEnv = Types.btvEnv
-    datatype constant = datatype Types.constant
+    datatype constant = datatype ConstantTerm.constant
     structure TU = TypesUtils
+    structure T = Types
+    structure PT = PredefinedTypes
     open RecordCalc
     open TypedLambda
     open Types
+
+    val tagty = PT.intty (* constructor tag is integer *)
 
     structure IXord:ordsig =
     struct
@@ -50,7 +53,7 @@ struct
 
     fun isVar (TLVAR _) = true
       | isVar _ = false
-    fun newVar ty = Vars.newTLVar(SE.newVarId(),ty)
+    fun newVar ty = Vars.newTLVar(T.newVarId(),ty)
 
     fun fieldTypes ty =
         case TU.derefTy ty of
@@ -89,7 +92,7 @@ struct
   fun rcompTy ty =
       case ty of
         SPECty specTy => 
-        if !Control.doSeparateCompilation then ty 
+        if !Control.doCompileObj then ty 
         else raise Control.Bug "SPECty is not instantiated to other types"
       | ABSSPECty(ty1,ty2) => ABSSPECty(ty1,rcompTy ty2)
       | ALIASty(ty1, ty2) => ALIASty(ty1, rcompTy ty2)
@@ -122,14 +125,14 @@ struct
       case TU.derefTy ty of
         RECORDty tyfl => RECORDty (SEnv.insert(SEnv.map rcompTy tyfl, 
                                                "0", 
-                                               StaticEnv.tagty))
+                                               tagty))
       | _ => raise Control.Bug "non record to makeFlatRecordTy"
 
   fun makeRecordTy ty =
   (*
    ty is an old type.
    *)
-    RECORDty(SEnv.insert(SEnv.singleton("0", StaticEnv.tagty), 
+    RECORDty(SEnv.insert(SEnv.singleton("0", tagty), 
                          "1", 
                          rcompTy ty))
 
@@ -139,7 +142,7 @@ struct
     case TU.pruneTy ty of
       FUNMty([RECORDty tyFields], ranty) => 
         (case SEnv.listItems tyFields of
-           nil => FUNMty([SE.unitty], ranty)
+           nil => FUNMty([PT.unitty], ranty)
          | tyList => FUNMty(tyList, ranty))
     | POLYty{boundtvars, body} => POLYty{boundtvars = boundtvars, body = inlineRecordArgTy body}
     | _ =>(printTy ty;raise Control.Bug "non function primi")
@@ -250,7 +253,10 @@ struct
                                         recordTy=ty, 
                                         loc=loc} ]) loc
 
-  fun mkUnitval loc = TLRECORD{expList=nil, internalTy=SE.unitty, externalTy=NONE, loc=loc}
+(*
+  fun mkUnitval loc = TLRECORD{expList=nil, internalTy=PT.unitty, externalTy=NONE, loc=loc}
+*)
+  fun mkUnitval loc = TLCONSTANT{value=INT(Int32.fromInt 0), loc=loc}
 
   fun rcompPrim {name, ty} =
     let
@@ -261,7 +267,7 @@ struct
                RECORDty tySEnvMap =>
                  FUNMty(
                         if SEnv.isEmpty tySEnvMap then
-                          [SE.unitty]
+                          [PT.unitty]
                         else
                           SEnv.listItems tySEnvMap,
                           ty2)
@@ -274,7 +280,7 @@ struct
                         body =  FUNMty(case TU.derefTy ty1 of
                                             RECORDty tySEnvMap =>
                                               if SEnv.isEmpty tySEnvMap then
-                                                [SE.unitty]
+                                                [PT.unitty]
                                               else
                                                 SEnv.listItems tySEnvMap
                                           | ty1 => [ty1],
@@ -301,7 +307,7 @@ struct
                     }
 
       | ("Array_array", [valueTy], [sizeExp, valueExp]) =>
-        let val resultType = CONty{tyCon = SE.arrayTyCon, args = [valueTy]}
+        let val resultType = CONty{tyCon = PT.arrayTyCon, args = [valueTy]}
         in TLARRAY {
                     sizeExp = sizeExp, 
                     initialValue = valueExp, 
@@ -326,8 +332,17 @@ struct
                           argExpList = argExps, 
                           loc = loc}
 
-  fun mkForeignApply {funExp, argExpList, argTyList, loc} =
-      TLFOREIGNAPPLY {funExp=funExp, instTyList=nil, argExpList=argExpList, argTyList=argTyList, loc= loc}
+  fun mkForeignApply {funExp, funTy, argExpList, argTyList, convention, loc} =
+      TLFOREIGNAPPLY
+          {
+            funExp=funExp,
+            funTy=funTy,
+            instTyList=nil,
+            argExpList=argExpList,
+            argTyList=argTyList,
+            convention=convention,
+            loc=loc
+          }
 
   fun rcompOprim ({name, ty, instances}, instty) =
       case TU.derefTy instty of
@@ -349,7 +364,7 @@ struct
   fun isRefTy ty = 
     case TU.derefTy ty of
       CONty{tyCon, ...} =>
-        StaticEnv.isSameTyCon (StaticEnv.refTyCon, tyCon)
+        T.eqTyCon (PT.refTyCon, tyCon)
     | _ => false
 
   fun isSingleConTy ty = 
@@ -383,6 +398,13 @@ struct
     | (POLYty {body, ...}) => argTyInConTy body
     | _ => raise Control.Bug "non function type to argTyInTyconTy"
 
+  fun genNewTagTerm (conIdInfo : Types.conInfo) loc =
+      if T.eqTyCon (PT.exnTyCon, #tyCon conIdInfo) andalso
+         !Control.doCompileObj then
+          TLEXCEPTIONTAG{tagValue = #tag conIdInfo, loc = loc}
+      else
+          TLCONSTANT{value=INT(Int32.fromInt(#tag conIdInfo)), loc=loc}
+
   fun rcomp vEnv iEnv rexp =
       case rexp of
           (* RCFOREIGNAPPLY
@@ -392,97 +414,60 @@ struct
            * restricted to mono type, i.e. instTyList = nil. Here we assume these.
            * I will rewrite this representation.
            *)
-        RCFOREIGNAPPLY {funExp, instTyList=nil, argExp, argTyList=nil, loc=loc} => 
+        RCFOREIGNAPPLY {funExp, funTy, instTyList=nil, argExpList=nil, argTyList=nil, convention, loc} => 
           mkForeignApply 
             {
              funExp = rcomp vEnv iEnv funExp, 
+             funTy = funTy,
              argExpList = nil, 
              argTyList = nil, 
+             convention = convention,
              loc = loc
-             }                  
-      | RCFOREIGNAPPLY {funExp, instTyList=nil, argExp, argTyList=[argTy], loc=loc} => 
+            }                  
+      | RCFOREIGNAPPLY {funExp, funTy, instTyList=nil, argExpList=[argExp], argTyList=[argTy], convention, loc} => 
           mkForeignApply 
           {
            funExp = rcomp vEnv iEnv funExp, 
+           funTy = funTy,
            argExpList = [rcomp vEnv iEnv argExp], 
-           argTyList = [argTy], 
+           argTyList = [argTy],
+           convention = convention,
            loc = loc
-           }
+          }
       | RCFOREIGNAPPLY {
-                        funExp = RCVAR({ty=FUNMty([domTy],ranTy),
-                                         id=funId, 
-                                         displayName=funDisplayName},
-                                        funLoc),
-                        instTyList=nil, 
-                        argExp, 
-                        argTyList, 
-                        loc=loc
-                        } => 
+                        funExp,
+                        funTy=funTy as FUNMty(domTyList,ranTy),
+                        instTyList=nil,
+                        argExpList,
+                        argTyList,
+                        convention, 
+                        loc
+                        } =>
           let
-            val newArgExp = rcomp vEnv iEnv argExp
-            val (localBinds, newArgExp) =
-              case newArgExp of
-                TLVAR _ => (nil, newArgExp)
-              | _ => 
-                  let val newId = newVar domTy
-                  in
-                    ([(newId, newArgExp)], TLVAR {varInfo = newId, loc= loc})
-                  end
-            val args =
-              List.rev
-              (#2 
-              (foldl
-              (fn (ty, (i, args)) =>
-               (i + 1,
-                TLSELECT {
-                          recordExp = newArgExp,
-                          indexExp = TLOFFSET{recordTy = domTy,label = Int.toString i,loc=loc}, 
-                          recordTy = domTy, 
-                          loc=loc
-                          }
-                :: args)
-               )
-               (1,nil)
-               argTyList
-               )
-               )
-              val newFunExp = RCVAR({ty=FUNMty(argTyList,ranTy),
-                                                     id=funId, 
-                                                     displayName=funDisplayName},
-                                     funLoc)
+            val newArgExpList = map (rcomp vEnv iEnv) argExpList
           in
-            case localBinds of
-                 nil => 
-                   mkForeignApply 
-                   {
-(*
-                    funExp = rcomp vEnv iEnv funExp, 
-*)
-                    funExp = rcomp vEnv iEnv newFunExp, 
-                    argExpList = args, 
-                    argTyList = argTyList, 
-                    loc = loc
-                    }
-
-               | _ => 
-               TLMONOLET
-                 {
-                  binds = localBinds,
-                  bodyExp = 
-                   mkForeignApply 
-                   {
-(*
-                    funExp = rcomp vEnv iEnv funExp, 
-*)
-                    funExp = rcomp vEnv iEnv newFunExp, 
-                    argExpList = args, 
-                    argTyList = argTyList, 
-                    loc = loc
-                    },
-                   loc = loc
-                   }
+            mkForeignApply 
+            {
+             funExp = rcomp vEnv iEnv funExp, 
+             funTy = funTy,
+             argExpList = newArgExpList, 
+             argTyList = argTyList, 
+             convention = convention,
+             loc = loc
+            }
           end
       | RCFOREIGNAPPLY _ => raise Control.Bug "ill formed foreign fun"
+      | RCEXPORTCALLBACK {funExp, instTyList, argTyList, resultTy, loc} =>
+        TLEXPORTCALLBACK
+        {
+          funExp=rcomp vEnv iEnv funExp,
+          instTyList=instTyList,
+          argTyList=argTyList,
+          resultTy=resultTy,
+          loc=loc
+        }
+      | RCSIZEOF (ty, loc) => TLSIZEOF {ty = ty, loc = loc}
+      | RCCONSTANT (UNIT, loc) => TLCONSTANT {value=INT 0, loc=loc}
       | RCCONSTANT (constant, loc) => TLCONSTANT {value=constant, loc=loc}
       | RCVAR (varIdInfo as {ty, ...}, loc) =>
           (
@@ -650,29 +635,34 @@ struct
                 btvEnv = boundtvars,
                 expTyWithoutTAbs = body,
                 exp = TLRECORD {
-                                    expList = [TLCONSTANT{value=INT(Int32.fromInt(#tag con)), loc=loc}], 
-                                    internalTy = RECORDty(SEnv.singleton("0", StaticEnv.tagty)),
-                                    externalTy = SOME body,
-                                    loc=loc
-                                    },
+                                expList = [TLCONSTANT{value=INT(Int32.fromInt(#tag con)), loc=loc}], 
+                                internalTy = RECORDty(SEnv.singleton("0", tagty)),
+                                externalTy = SOME body,
+                                loc=loc
+                                },
                 loc = loc
                }
           else 
             TLCONSTANT{value=INT(Int32.fromInt(#tag con)), loc=loc}
-      | RCCONSTRUCT {con = con as {ty,...}, instTyList = tys, argExpOpt = NONE, loc} =>
-          if TU.isBoxedType ty then
-            TLRECORD
-            {
-             expList = [TLCONSTANT{value=INT(Int32.fromInt(#tag con)), loc=loc}], 
-             internalTy = RECORDty(SEnv.singleton("0", StaticEnv.tagty)),
-             externalTy = SOME ty,
-             loc=loc
-             }
-          else TLCONSTANT{value=INT(Int32.fromInt(#tag con)), loc=loc}
+      | RCCONSTRUCT {con = con as {ty, tyCon,...}, instTyList = tys, argExpOpt = NONE, loc} =>
+        let
+            val newTagTerm = genNewTagTerm con loc
+            val newExternalTy =TU.tpappTy (ty, tys) 
+        in                   
+            if TU.isBoxedType ty then
+                TLRECORD
+                    {
+                     expList = [newTagTerm], 
+                     internalTy = RECORDty(SEnv.singleton("0", tagty)),
+                     externalTy = SOME newExternalTy,
+                     loc=loc
+                     }
+            else newTagTerm
+        end
       | RCCONSTRUCT {con = con as {funtyCon = false, ...}, argExpOpt=SOME _,...} =>
           raise Control.Bug "nonfuntycon with args"
       | RCCONSTRUCT {con = con as {ty, tyCon, ...}, instTyList = tys, argExpOpt = SOME argExp, loc} =>
-          if StaticEnv.isSameTyCon (StaticEnv.refTyCon, tyCon) then
+          if T.eqTyCon (PT.refTyCon, tyCon) then
             case tys of
               [elemTy] =>
                 let
@@ -699,10 +689,11 @@ struct
             else
            *)
             let
-              val (oldArgTy, oldExternalTy) =
-                  case TU.tpappTy (ty, tys) of
-                    FUNMty([ty1], ty2) => (ty1, ty2)
-                  | _ => raise Control.Bug "non well formed type in CONSTRUCT" 
+                val newTagTerm = genNewTagTerm con loc
+                val (oldArgTy, oldExternalTy) =
+                    case TU.tpappTy (ty, tys) of
+                        FUNMty([ty1], ty2) => (ty1, ty2)
+                      | _ => raise Control.Bug "non well formed type in CONSTRUCT" 
             in 
               if isFlattened ty
               then
@@ -716,8 +707,7 @@ struct
                    *)
                   TLRECORD
                       {
-                       expList = TLCONSTANT{value=INT(Int32.fromInt(#tag con)), loc=loc}
-                                  :: (map (rcomp vEnv iEnv) (SEnv.listItems fl)), 
+                       expList = newTagTerm :: (map (rcomp vEnv iEnv) (SEnv.listItems fl)), 
                        internalTy=makeFlatRecordTy oldArgTy,
                        externalTy = SOME oldExternalTy,
                        loc=loc
@@ -764,8 +754,7 @@ struct
                     makeTerm
                         (TLRECORD
                              {
-                              expList = (TLCONSTANT{value=INT(Int32.fromInt(#tag con)), loc=loc})
-                                         :: args, 
+                              expList = newTagTerm :: args, 
                               internalTy = makeFlatRecordTy oldArgTy,
                               externalTy = SOME oldExternalTy,
                               loc=loc
@@ -775,10 +764,7 @@ struct
               else
                 TLRECORD
                     {
-                     expList = [
-                                TLCONSTANT{value=INT(Int32.fromInt(#tag con)), loc=loc},
-                                rcomp vEnv iEnv argExp
-                                ],
+                     expList = [newTagTerm, rcomp vEnv iEnv argExp],
                      internalTy = makeRecordTy oldArgTy,
                      externalTy = SOME oldExternalTy,
                      loc=loc
@@ -817,9 +803,13 @@ struct
                                   }
             val newInstFunTy = TU.tpappTy (newPolyFunTy, newTyArgs)
             val argstys = 
-              case newInstFunTy  of
+              case TU.derefTy newInstFunTy  of
                 FUNMty(argstys, _) => argstys
-              | _ => raise Control.Bug "non function type in RCAPP"
+              | _ => 
+                  (
+                   printTy newInstFunTy;
+                   raise Control.Bug "non function type in RCAPP"
+                    )
             val extras =
               foldr 
               (fn (ty as INDEXty _ , extras) => (evalIndexTy loc1 iEnv ty)  :: extras
@@ -1038,9 +1028,9 @@ struct
               val switchTerm = 
                   if TU.isBoxedType oldArgTy then 
                     TLSELECT {
-                              recordExp = TLCAST{exp=argTerm, targetTy=makeArrayTy SE.tagty, loc=loc},
-                              indexExp = TLOFFSET{recordTy = makeArrayTy SE.tagty,label = "0",loc= loc}, 
-                              recordTy = makeArrayTy SE.tagty, 
+                              recordExp = TLCAST{exp=argTerm, targetTy=makeArrayTy tagty, loc=loc},
+                              indexExp = TLOFFSET{recordTy = makeArrayTy tagty,label = "0",loc= loc}, 
+                              recordTy = makeArrayTy tagty, 
                               loc=loc
                               }
                   else argTerm
@@ -1048,9 +1038,10 @@ struct
                   case TU.derefTy oldArgTy of
                     CONty {args,...} => args
                   | _ => raise Control.Bug "CONty is expected"
+
               fun processRule
                     (
-                     conIdInfo:conIdInfo as {ty=conTy, ...}, 
+                     conIdInfo:conIdInfo as {ty=conTy, tyCon, ...}, 
                      SOME (varIdInfo as {ty, ...}), 
                      rcexp
                      ) =
@@ -1101,19 +1092,16 @@ struct
                                )
                           end
                   in
-                    (
-                      INT(Int32.fromInt(#tag conIdInfo)), 
-                      mkRuleTerm (rcomp vEnv iEnv rcexp)
-                    )
+                      {constant = genNewTagTerm conIdInfo loc, exp = mkRuleTerm (rcomp vEnv iEnv rcexp)}
                   end
                 | processRule (c, NONE, rcexp) =
-                    (INT(Int32.fromInt(#tag c)), rcomp vEnv iEnv rcexp)
+                  {constant = genNewTagTerm c loc, exp = rcomp vEnv iEnv rcexp}
               val tlRules = map processRule conIdInfoVarIdInfoOptRcexpList
               val tlexp2 = rcomp vEnv iEnv rcexp2
             in
               mkTerm (TLSWITCH {
                                 switchExp= switchTerm, 
-                                expTy = SE.tagty, 
+                                expTy = tagty, 
                                 branches = tlRules, 
                                 defaultExp = tlexp2, 
                                 loc =loc
@@ -1125,7 +1113,9 @@ struct
           {
            switchExp = rcomp vEnv iEnv switchExp,
            expTy = expTy,
-           branches = map (fn (c, e) => (c, rcomp vEnv iEnv e)) branches,
+           branches = map (fn (c, e) => ({constant = TLCONSTANT{value = c ,loc = loc},
+                                          exp = rcomp vEnv iEnv e}))
+                          branches,
            defaultExp = rcomp vEnv iEnv defaultExp,
            loc = loc
            }
@@ -1263,20 +1253,6 @@ struct
          TLSEQ {expList=map (rcomp vEnv iEnv) expList, 
                 expTyList=expTyList, 
                 loc=loc}
-     | RCFFIVAL {funExp, libExp, argTyList, resultTy, funTy, loc} =>
-       let
-         val newFunExp = rcomp vEnv iEnv funExp
-         val newLibExp = rcomp vEnv iEnv libExp
-       in
-         TLFFIVAL {
-                   funExp = newFunExp, 
-                   libExp = newLibExp, 
-                   argTyList= argTyList, 
-                   resultTy = resultTy, 
-                   funTy = funTy, 
-                   loc = loc
-                   }
-       end
      | RCCAST (rcexp, oldTy, loc) =>
        (* rcompTy not necessary *)
          TLCAST {exp = rcomp vEnv iEnv rcexp, targetTy = rcompTy oldTy, loc = loc} 
@@ -1342,7 +1318,7 @@ struct
             {
              bindList =
                [{
-                 boundValIdent = VALIDENTWILD StaticEnv.unitty,
+                 boundValIdent = VALIDENTWILD PT.unitty,
                  boundExp = 
                    TLSETFIELD 
                        {
@@ -1367,7 +1343,7 @@ struct
             {
              bindList =
                [{
-                  boundValIdent = VALIDENTWILD StaticEnv.unitty,
+                  boundValIdent = VALIDENTWILD PT.unitty,
                   boundExp = 
                      TLSETGLOBALVALUE 
                          { 
@@ -1389,7 +1365,7 @@ struct
             {
              bindList =
                [{
-                  boundValIdent = VALIDENTWILD StaticEnv.unitty,
+                  boundValIdent = VALIDENTWILD PT.unitty,
                   boundExp = 
                     TLINITARRAY
                         { 

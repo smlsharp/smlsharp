@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PARSER.sig,v 1.7 2006/02/28 16:11:02 kiyoshiy Exp $
+ * @version $Id: PARSER.sig,v 1.10 2006/12/22 10:21:06 katsu Exp $
  *)
 signature PARSER =
 sig
@@ -33,7 +33,9 @@ sig
         (** called when lex/parse error found. *)
         onError : string * Loc.pos * Loc.pos -> unit,
         (** this should return one line from source. *)
-        getLine : int -> string
+        getLine : int -> string,
+        (** enables special syntax for prelude *)
+        isPrelude : bool
       }
       -> context
 

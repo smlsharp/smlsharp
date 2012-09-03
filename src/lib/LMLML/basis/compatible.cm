@@ -1,0 +1,11 @@
+Library
+        structure List
+        structure VectorSlice
+        structure Word8VectorSlice
+is
+        basis.sml
+
+        VectorSlice.sml
+
+        MonoVectorSliceBase.sml
+        Word8VectorSlice.sml

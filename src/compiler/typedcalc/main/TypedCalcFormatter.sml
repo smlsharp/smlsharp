@@ -3,13 +3,15 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypedCalcFormatter.sml,v 1.11 2006/02/28 16:11:07 kiyoshiy Exp $
+ * @version $Id: TypedCalcFormatter.sml,v 1.12 2006/03/14 01:38:11 bochao Exp $
  *)
 structure TypedCalcFormatter : TYPEDCALC_FORMATTER =
 struct
 
     fun tptopdecToString btvEnv dec =
         Control.prettyPrint (TypedCalc.format_tptopdecl nil dec)
+    fun tptpmstrdeclToString btvEnv dec =
+        Control.prettyPrint (TypedCalc.format_tpmstrdecl nil dec)
     fun tpdecToString btvEnv dec =
         Control.prettyPrint (TypedCalc.format_tpdecl nil dec)
     fun tpexpToString btvEnv exp =

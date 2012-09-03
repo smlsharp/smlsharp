@@ -160,44 +160,9 @@
  * function.
  * </p>
  *
- * <h4>function prologue code</h4>
- * <p>
- * The compiler compiles the function body into a code sequence which
- * assumes that the variables are available in place. That is:
- * <ul>
- * <li>Arguments are stored in the stack frame.</li>
- * <li>The ENV register points to the environment block.</li>
- * </ul>
- * Therefore, before entering into the function body, the stack frame
- * and the ENV register must be coordinated. This coordination is
- * called 'prologue' of function. The needed work in prologue depends
- * on whether the invocation is static or non-static.
- * </p>
- * <p>
- * When invoked by CallStatic, arguments except the last one are
- * stored in the frame already. 
- * The following work must be performed in the function prologue.
- * <ul>
- * <li>copy the last argument on the AC register to the slot in the frame.</li>
- * <li>copy the first argument stored in the frame to the ENV register.</li>
- * <li>jump to the function body.</li>
- * </ul>
- * </p>
- * <p>
- * When invoked by Apply, the closure is stored in the last slot of the frame.
- * The following work must be performed in the function prologue.
- * <ul>
- * <li>copy the last argument on the AC register to the slot in the frame.</li>
- * <li>copy the arguments except the last one from the closure to the frame.
- * </li>
- * <li>copy the first argument stored in the closure to the ENV register.</li>
- * <li>jump to the function body.</li>
- * </ul>
- * </p>
- *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: LINEARIZER.sig,v 1.10 2006/02/28 16:11:02 kiyoshiy Exp $
+ * @version $Id: LINEARIZER.sig,v 1.11 2007/01/09 15:07:21 kiyoshiy Exp $
  *)
 signature LINEARIZER =
 sig

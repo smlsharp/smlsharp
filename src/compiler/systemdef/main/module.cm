@@ -1,15 +1,40 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
 
+#if defined(NEW_CM)
+        BasicTypes.cm
+#else
         BasicTypes.sml
+#endif
         SystemDefTypes.sml
         SYSTEMDEF.sig
+(*
 #if defined(ARCH_X86)
         SystemDef_x86.sml
 #elif defined(ARCH_SPARC)
-        SystemDef_SparcSolaris.sml
+        SystemDef_Sparc.sml
 #else
 #error unsupported architecture
 #endif
+*)
+(* NOTE: SML/NJ 110.52 (or earlier working versions) tells a lie
+ *       that PowerPC is LITTLE_ENDIAN.
+ *       Anyway, we should obey SML/NJ about endian here as
+ *       instructions/compiler/main/sources.cm do.
+ *)
+#if defined(LITTLE_ENDIAN)
+        SystemDef_x86.sml
+#elif defined(BIG_ENDIAN)
+        SystemDef_Sparc.sml
+#else
+#error neither 'LITTLE_ENDIAN' nor 'BIG_ENDIAN' is defined.
+#endif
 
+#if defined(NEW_CM)
+        $/smlformatlib.cm
+#else
         ../../../smlformatlib.cm
+#endif
         BasicTypeFormatters.sml

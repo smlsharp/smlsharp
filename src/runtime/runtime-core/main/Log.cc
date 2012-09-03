@@ -1,6 +1,9 @@
 #include "SystemDef.hh"
 #include "Log.hh"
 
+#include <stdio.h>
+#include <stdarg.h>
+
 BEGIN_NAMESPACE(jp_ac_jaist_iml)
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,7 +30,7 @@ ErrorLogType::~ErrorLogType()
 {
 }
 
-const ByteValue*
+const char*
 ErrorLogType::getTypeLabel() const
 {
     return "ERROR";
@@ -47,7 +50,7 @@ WarningLogType::~WarningLogType()
 {
 }
 
-const ByteValue*
+const char*
 WarningLogType::getTypeLabel() const
 {
     return "WARNING";
@@ -67,7 +70,7 @@ InfoLogType::~InfoLogType()
 {
 }
 
-const ByteValue*
+const char*
 InfoLogType::getTypeLabel() const
 {
     return "INFO";
@@ -87,7 +90,7 @@ TraceLogType::~TraceLogType()
 {
 }
 
-const ByteValue*
+const char*
 TraceLogType::getTypeLabel() const
 {
     return "TRACE";
@@ -107,7 +110,7 @@ DebugLogType::~DebugLogType()
 {
 }
 
-const ByteValue*
+const char*
 DebugLogType::getTypeLabel() const
 {
     return "DEBUG";
@@ -127,7 +130,7 @@ TestLogType::~TestLogType()
 {
 }
 
-const ByteValue*
+const char*
 TestLogType::getTypeLabel() const
 {
     return "TEST";
@@ -147,8 +150,8 @@ LogFacade::~LogFacade()
 
 void
 LogFacade::log(const LogType& type,
-               const ByteValue* who,
-               const ByteValue* message)
+               const char* who,
+               const char* message)
 {
     facade_->log_(type, who, message);
 }
@@ -167,7 +170,7 @@ LogFacade::setInstance(LogFacade* facade)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-LogAdaptor::LogAdaptor(const ByteValue* who)
+LogAdaptor::LogAdaptor(const char* who)
     : who_(who)
 {
 }
@@ -176,48 +179,65 @@ LogAdaptor::~LogAdaptor()
 {
 }
 
-void
-LogAdaptor::error(const ByteValue* message)
-{
-    LogFacade::log(ErrorLogType::TYPE, who_, message);
+static char messageBuffer[1024];
+
+#define FORMAT_MESSAGE(format, formatBuffer) \
+{ \
+    va_list arg; \
+    va_start(arg, (format)); \
+    vsnprintf((formatBuffer), sizeof (formatBuffer), (format), arg); \
+    va_end(arg); \
 }
 
 void
-LogAdaptor::warn(const ByteValue* message)
+LogAdaptor::error(const char* format, ...)
 {
-    LogFacade::log(WarningLogType::TYPE, who_, message);
+    FORMAT_MESSAGE(format, messageBuffer);
+    LogFacade::log(ErrorLogType::TYPE, who_, messageBuffer);
 }
 
 void
-LogAdaptor::info(const ByteValue* message)
+LogAdaptor::warn(const char* format, ...)
 {
-    LogFacade::log(InfoLogType::TYPE, who_, message);
+    FORMAT_MESSAGE(format, messageBuffer);
+    LogFacade::log(WarningLogType::TYPE, who_, messageBuffer);
 }
 
 void
-LogAdaptor::enter(const ByteValue* message)
+LogAdaptor::info(const char* format, ...)
+{
+    FORMAT_MESSAGE(format, messageBuffer);
+    LogFacade::log(InfoLogType::TYPE, who_, messageBuffer);
+}
+
+void
+LogAdaptor::enter(const char* format, ...)
 {
     // ToDo : make a string that is "ENTER:" + message.
-    LogFacade::log(TraceLogType::TYPE, who_, message);
+    FORMAT_MESSAGE(format, messageBuffer);
+    LogFacade::log(TraceLogType::TYPE, who_, messageBuffer);
 }
 
 void
-LogAdaptor::exit(const ByteValue* message)
+LogAdaptor::exit(const char* format, ...)
 {
     // ToDo : make a string that is "EXIT:" + message.
-    LogFacade::log(TraceLogType::TYPE, who_, message);
+    FORMAT_MESSAGE(format, messageBuffer);
+    LogFacade::log(TraceLogType::TYPE, who_, messageBuffer);
 }
 
 void
-LogAdaptor::debug(const ByteValue* message)
+LogAdaptor::debug(const char* format, ...)
 {
-    LogFacade::log(DebugLogType::TYPE, who_, message);
+    FORMAT_MESSAGE(format, messageBuffer);
+    LogFacade::log(DebugLogType::TYPE, who_, messageBuffer);
 }
 
 void
-LogAdaptor::test(const ByteValue* message)
+LogAdaptor::test(const char* format, ...)
 {
-    LogFacade::log(TestLogType::TYPE, who_, message);
+    FORMAT_MESSAGE(format, messageBuffer);
+    LogFacade::log(TestLogType::TYPE, who_, messageBuffer);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

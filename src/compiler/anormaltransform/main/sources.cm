@@ -1,7 +1,15 @@
 Group is
+#if defined(NEW_CM)
+        $/smlformatlib.cm
+#else
         ../../../smlformatlib.cm
+#endif
         ml-yacc-lib.cm
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
 
         ../../types/sources.cm
         ../../format/sources.cm

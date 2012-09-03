@@ -13,4 +13,4 @@ clean:
 	-rm -f $(TARGETS)
 
 libjvm.$(DLSTUBEXT): libjvm.def
-	$(DLLTOOL) --input-def $^ --kill-at --dllname jvm.dll --output-lib $@ --add-stdcall-alias
+	$(DLLTOOL) --input-def $(srcdir)/libjvm.def --kill-at --dllname jvm.dll --output-lib $@ --add-stdcall-alias

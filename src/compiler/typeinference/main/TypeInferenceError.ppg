@@ -1,7 +1,7 @@
 (**
  * user errors detected in type inference phase.
  * @author OHORI Atsushi
- * @version $Id: TypeInferenceError.ppg,v 1.55 2006/03/02 12:53:26 bochao Exp $
+ * @version $Id: TypeInferenceError.ppg,v 1.64 2007/02/28 17:57:20 katsu Exp $
  *)
 structure TypeInferenceError =
 struct
@@ -123,6 +123,30 @@ struct
    * @format({tyvar}) "duplicate" +d "type" +d "parameter" +d "name" +d "in" +d "datatype" +d "declaration:" +d {tyvar}
    *)
   DuplicateTvarNameInDatatypeArgs of {tyvar : string}
+
+  and
+  (*%
+   * @format({vars : var vars})
+   *   "variable(s)" +d vars(var)(","+d) + "do" +d "not" +d "occur" +d "in" +d "all" +d "branches" 
+      +d "of" +d "or-pattern" 
+   *)
+  DIfferentOrPatternVars of {vars : string list}
+
+  and
+  (*%
+   * @format({var : var, tys: ty tys})
+   *   "variable" +d var +d "in" +d "an" +d "or-pattern" + "has" +d "inconsistent" +d "types:" +d tys(ty)(","+d)
+   *)
+  InconsistentOrVarTypes of {var : string, tys : Types.ty list}
+
+  and
+  (*%
+   * @format({ty1 : ty1, ty2: ty2})
+   *   "types" +d "of" +d "or-pattern" + "do" +d "not" +d "agree:"
+         +1 "left" +d "pattern" + "type:" + ty1 
+         +1 "right" +d "pattern" + "type:" + ty2
+   *)
+   DifferentOrPatternTypes of {ty1:Types.ty, ty2:Types.ty}
 
   and
   (**
@@ -807,7 +831,7 @@ struct
    *)
   (*%
    * @format({tyConName})
-   * "Signature" +d  "mismatch" +d  "(tycon" +d "sharing):" + tyConName
+   * "Signature" +d  "mismatch" +d  "(tycon):" + tyConName
    *)
    TyConMisMatchInSigMatch of {tyConName:string}
   and
@@ -938,14 +962,16 @@ struct
 
   and
   (**
-   * 
+   * <pre>
+   * </pre>
    *)
   (*%
-   * @format
-   * "function" +d "and" +d "library" +d "in" +d "FFI"+d "declaration" +d
-   * "must" +d "be" +d "string."
+   * @format({tyConName, kind})
+   * "kind" +d  "constraint" +d "on" +d "definitional" +d "type" +d "specification:"
+   * + tyConName +d ":" +d kind  
+   *
    *)
-  FFIFunctionLibraryName
+  KindConstranintOnAbstractTypeSpecification of {tyConName:string, kind:Types.ty}
   
   and
   (**
@@ -953,10 +979,11 @@ struct
    * </pre>
    *)
   (*%
-   * @format({name})
-   * "unbound" +d  "import" +d "value" +d "identifier:" + name
+   * @format({tyConName, requiredKind, objectKind})
+   * tyConName +d "kind" +d  "mismatch:" +d {"import:" + requiredKind +d "export:" + objectKind}
+   *
    *)
-  UnboundImportValueIdentifier of {name:string}
+  KindCheckFailure of {tyConName:string, requiredKind:Types.ty, objectKind:Types.ty}
 
   and
   (**
@@ -964,21 +991,41 @@ struct
    * </pre>
    *)
   (*%
-   * @format({name})
-   * "unbound" +d  "import" +d "type" +d "constructor:" + name
+   * @format({fileName})
+   * fileName +d "specifies" +d "no" +d "export" + "interface"
+   *
    *)
-  UnboundImportTypeContructor of {name:string}
+  EmptyExportInterface of {fileName:string}
+  
+  and
+  (**
+   *)
+  (*%
+   * @format(ty) 
+   * "not" +d "an" +d "interoperable" +d "type:" +d ty
+   *)
+  NonInteroperableType of Absyn.ty
 
   and
   (**
-   * <pre>
-   * </pre>
    *)
   (*%
-   * @format({name})
-   * "unbound" +d  "import" +d "structure:" + name
+   * @format(specTy * expTy)
+   * "FFI" +d "type" +d "mismatch"
+   *    +1 "expression:" + {expTy}
+   *    +1 "spec:"  + {specTy}
    *)
-  UnboundImportStructure of {name:string}
+  FFIStubMismatch of Types.ty * Types.ty
+
+  and
+  (**
+   *)
+  (*%
+   * @format(ty)
+   * "invalid" +d "occurence" +d "of" +d "type" +d "variable"
+   * +d "for" +d "FFI:" +d ty
+   *)
+  FFIInvalidTyvar of Types.ty
 
   val isAnyError = ref false
 

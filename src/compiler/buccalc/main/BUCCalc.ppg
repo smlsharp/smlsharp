@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: BUCCalc.ppg,v 1.4 2006/02/28 16:11:00 kiyoshiy Exp $ 
+ * @version $Id: BUCCalc.ppg,v 1.9 2007/02/22 08:13:41 katsu Exp $ 
  *)
 
 
@@ -18,6 +18,11 @@ structure BUCCalc = struct
         * @format(ty:tyFormat) ty()(btvEnv)
         *)
        Types.ty
+
+  (*%
+   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+   *)
+  type callingConvention = Absyn.callingConvention
 
   (*%
    * @formatter(idFormat) ID.format_id
@@ -90,12 +95,12 @@ structure BUCCalc = struct
         *)
        Types.btvKind
 
-  datatype constant =  datatype Types.constant
+  datatype constant =  datatype ConstantTerm.constant
 
   (*%
    * @params(btvEnv)
    *
-   * @formatter(formatConst) Types.format_constant
+   * @formatter(formatConst) ConstantTerm.format_constant
    * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
    * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
    * @formatter(imap) SmlppgUtil.formatImap
@@ -201,14 +206,15 @@ structure BUCCalc = struct
 
          | (*%
             * @format({
-            *          funExp : funExp,
+            *          funExp,
             *          argTyList : ty tys:formatListWithEnclosure,
             *          argExpList : exp exps:formatListWithEnclosure,
-            *          loc : loc
+            *          convention,
+            *          loc
             *         })
             * R1{d
             *     {
-            *       funExp()(btvEnv)
+            *       convention + funExp()(btvEnv)
             *       !N0{tys(ty()(btvEnv))(",","{","}")} 1
             *       {exps(exp()(btvEnv))(","1,"(",")")}
             *     }
@@ -219,9 +225,25 @@ structure BUCCalc = struct
                funExp : bucexp,
                argExpList : bucexp list,
                argTyList : ty list,
+               convention : callingConvention,
                loc : loc
              }
-
+         | (*%
+            * @format({funExp,
+            *          argTyList: argTy argTys:formatListWithEnclosure, resultTy,
+            *          loc})
+            * L10{ "CALLBACK(" funExp()(btvEnv) 
+            *       +1 ":" + {argTys(argTy()(btvEnv))(","+2,"{","}") +2
+            *         "->" +2 resultTy()(btvEnv)}
+            * ")" }
+            *)
+           BUCEXPORTCALLBACK of 
+             {
+               funExp : bucexp,
+	       argTyList : ty list,
+	       resultTy : ty,
+               loc: loc
+             }
          | (*%
             * @format({
             *           funExp : funExp,
@@ -521,29 +543,6 @@ structure BUCCalc = struct
             * "cast(" exp()(btvEnv) ":" expTy()(btvEnv) ")"
             *)
            BUCCAST of {exp : bucexp, expTy : ty, loc : loc}
-
-         | (*%
-            * @format({
-            *          funExp : funExp,
-            *          libExp : libExp,
-            *          argTyList : argty argtys,
-            *          resultTy : resultty,
-            *          funTy : infty,
-            *          loc : loc
-            *         })
-            * "import" + funExp()(btvEnv) +d "of" +d libExp()(btvEnv) +2
-            * ":" + "{" {argtys(argty()(btvEnv))("," +)} "}"
-            *       "->" {resultty()(btvEnv)}
-            *)
-           BUCFFIVAL of 
-             {
-              funExp : bucexp,
-              libExp : bucexp,
-              argTyList : ty list,
-              resultTy : ty,
-              funTy : ty,
-              loc : loc
-             }
 
        and bucdecl =
            (*%

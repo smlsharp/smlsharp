@@ -1,15 +1,17 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: PrimApplyOptimizer.sml,v 1.5 2006/02/28 16:10:59 kiyoshiy Exp $
+ * @version $Id: PrimApplyOptimizer.sml,v 1.8 2007/02/11 16:39:50 kiyoshiy Exp $
  *)
 structure PrimApplyOptimizer = struct
 
   open ANormal
-  structure T = Types
   structure AE = AtomEnv
+  structure BT = BasicTypes
+  structure CT = ConstantTerm
+  structure T = Types
 
-  datatype primArg = ARGCONST of T.constant | ARGVAR of anexp
+  datatype primArg = ARGCONST of ConstantTerm.constant | ARGVAR of anexp
 
 
   (************************************************************)
@@ -51,8 +53,8 @@ structure PrimApplyOptimizer = struct
         SOME r => r
       | _ => raise Control.Bug "a real value is expected"
 
-  val trueValue = T.INT 1
-  val falseValue = T.INT 0
+  val trueValue = CT.INT 1
+  val falseValue = CT.INT 0
 
 
   (************************************************************)
@@ -101,69 +103,69 @@ structure PrimApplyOptimizer = struct
 
   fun genericOp_ii_i constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.INT v1,T.INT v2) => T.INT (constOp(v1,v2)))
+          (fn (CT.INT v1,CT.INT v2) => CT.INT (constOp(v1,v2)))
           atomEnv
           primApplyInfo
 
   fun genericOp_ww_w constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.WORD v1,T.WORD v2) => T.WORD (constOp(v1,v2)))
+          (fn (CT.WORD v1,CT.WORD v2) => CT.WORD (constOp(v1,v2)))
           atomEnv
           primApplyInfo
 
   fun genericOp_rr_r constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.REAL v1,T.REAL v2) => 
-              T.REAL (realToString(constOp(stringToReal v1,stringToReal v2))))
+          (fn (CT.REAL v1,CT.REAL v2) => 
+              CT.REAL (realToString(constOp(stringToReal v1,stringToReal v2))))
           atomEnv
           primApplyInfo
 
   fun genericOp_cc_c constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.CHAR v1,T.CHAR v2) => T.CHAR (constOp(v1,v2)))
+          (fn (CT.CHAR v1,CT.CHAR v2) => CT.CHAR (constOp(v1,v2)))
           atomEnv
           primApplyInfo
 
   fun genericOp_bb_b constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.WORD v1,T.WORD v2) => 
-              T.WORD (Word8.toLargeWord(constOp(Word8.fromLargeWord v1,Word8.fromLargeWord v2))))
+          (fn (CT.WORD v1,CT.WORD v2) => 
+              CT.WORD (BT.UInt8ToUInt32(constOp(BT.UInt32ToUInt8 v1,BT.UInt32ToUInt8 v2))))
           atomEnv
           primApplyInfo
 
 
   fun genericOp_ii_l constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.INT v1,T.INT v2) => 
+          (fn (CT.INT v1,CT.INT v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp_ww_l constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.WORD v1,T.WORD v2) => 
+          (fn (CT.WORD v1,CT.WORD v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp_rr_l constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.REAL v1,T.REAL v2) => 
+          (fn (CT.REAL v1,CT.REAL v2) => 
               if constOp(stringToReal v1,stringToReal v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp_cc_l constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.CHAR v1,T.CHAR v2) => 
+          (fn (CT.CHAR v1,CT.CHAR v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp_bb_l constOp atomEnv primApplyInfo =
       genericOp_2
-          (fn (T.WORD v1,T.WORD v2) => 
-              if constOp(Word8.fromLargeWord v1,Word8.fromLargeWord v2) 
+          (fn (CT.WORD v1,CT.WORD v2) => 
+              if constOp(BT.UInt32ToUInt8 v1,BT.UInt32ToUInt8 v2) 
               then trueValue 
               else falseValue)
           atomEnv
@@ -171,80 +173,80 @@ structure PrimApplyOptimizer = struct
 
   fun genericOp2_ii_i constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.INT v1,T.INT v2) => T.INT (constOp(v1,v2)))
+          (fn (CT.INT v1,CT.INT v2) => CT.INT (constOp(v1,v2)))
           atomEnv
           primApplyInfo
 
   fun genericOp2_ww_w constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.WORD v1,T.WORD v2) => T.WORD (constOp(v1,v2)))
+          (fn (CT.WORD v1,CT.WORD v2) => CT.WORD (constOp(v1,v2)))
           atomEnv
           primApplyInfo
 
   fun genericOp2_rr_r constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.REAL v1,T.REAL v2) => 
-              T.REAL (realToString(constOp(stringToReal v1,stringToReal v2))))
+          (fn (CT.REAL v1,CT.REAL v2) => 
+              CT.REAL (realToString(constOp(stringToReal v1,stringToReal v2))))
           atomEnv
           primApplyInfo
 
   fun genericOp2_cc_c constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.CHAR v1,T.CHAR v2) => T.CHAR (constOp(v1,v2)))
+          (fn (CT.CHAR v1,CT.CHAR v2) => CT.CHAR (constOp(v1,v2)))
           atomEnv
           primApplyInfo
 
   fun genericOp2_bb_b constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.WORD v1,T.WORD v2) => 
-              T.WORD (Word8.toLargeWord(constOp(Word8.fromLargeWord v1, Word8.fromLargeWord v2))))
+          (fn (CT.WORD v1,CT.WORD v2) => 
+              CT.WORD (BT.UInt8ToUInt32(constOp(BT.UInt32ToUInt8 v1, BT.UInt32ToUInt8 v2))))
           atomEnv
           primApplyInfo
 
   fun genericOp2_ss_s constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.STRING v1,T.STRING v2) => T.STRING (constOp(v1,v2)))
+          (fn (CT.STRING v1,CT.STRING v2) => CT.STRING (constOp(v1,v2)))
           atomEnv
           primApplyInfo
 
   fun genericOp2_si_c constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.STRING v1,T.INT v2) => T.CHAR (constOp(v1,v2)))
+          (fn (CT.STRING v1,CT.INT v2) => CT.CHAR (constOp(v1,v2)))
           atomEnv
           primApplyInfo
 
   fun genericOp2_ii_l constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.INT v1,T.INT v2) => 
+          (fn (CT.INT v1,CT.INT v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp2_ww_l constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.WORD v1,T.WORD v2) => 
+          (fn (CT.WORD v1,CT.WORD v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp2_rr_l constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.REAL v1,T.REAL v2) => 
+          (fn (CT.REAL v1,CT.REAL v2) => 
               if constOp(stringToReal v1,stringToReal v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp2_cc_l constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.CHAR v1,T.CHAR v2) => 
+          (fn (CT.CHAR v1,CT.CHAR v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp2_bb_l constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.WORD v1,T.WORD v2) => 
-              if constOp(Word8.fromLargeWord v1,Word8.fromLargeWord v2) 
+          (fn (CT.WORD v1,CT.WORD v2) => 
+              if constOp(BT.UInt32ToUInt8 v1,BT.UInt32ToUInt8 v2) 
               then trueValue 
               else falseValue)
           atomEnv
@@ -252,96 +254,96 @@ structure PrimApplyOptimizer = struct
 
   fun genericOp2_ss_l constOp atomEnv primApplyInfo =
       genericOp2_2
-          (fn (T.STRING v1,T.STRING v2) => 
+          (fn (CT.STRING v1,CT.STRING v2) => 
               if constOp(v1,v2) then trueValue else falseValue)
           atomEnv
           primApplyInfo
 
   fun genericOp_sii_s constOp atomEnv primApplyInfo =
       genericOp_3
-          (fn (T.STRING v1,T.INT v2,T.INT v3) => 
-              T.STRING (constOp(v1,v2,v3)))
+          (fn (CT.STRING v1,CT.INT v2,CT.INT v3) => 
+              CT.STRING (constOp(v1,v2,v3)))
           atomEnv
           primApplyInfo
 
   fun genericOp_r_r constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.REAL v) => 
-              T.REAL (realToString (constOp (stringToReal v))))
+          (fn (CT.REAL v) => 
+              CT.REAL (realToString (constOp (stringToReal v))))
           atomEnv
           primApplyInfo
 
   fun genericOp_c_i constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.CHAR v) => T.INT (constOp  v))
+          (fn (CT.CHAR v) => CT.INT (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_i_c constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.INT v) => T.CHAR (constOp  v))
+          (fn (CT.INT v) => CT.CHAR (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_c_s constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.CHAR v) => T.STRING (constOp  v))
+          (fn (CT.CHAR v) => CT.STRING (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_r_i constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.REAL v) => 
-              T.INT (constOp (stringToReal v)))
+          (fn (CT.REAL v) => 
+              CT.INT (constOp (stringToReal v)))
           atomEnv
           primApplyInfo
 
   fun genericOp_i_r constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.INT v) => 
-              T.REAL (realToString (constOp  v)))
+          (fn (CT.INT v) => 
+              CT.REAL (realToString (constOp  v)))
           atomEnv
           primApplyInfo
 
   fun genericOp_w_s constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.WORD v) => T.STRING (constOp  v))
+          (fn (CT.WORD v) => CT.STRING (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_i_s constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.INT v) => T.STRING (constOp  v))
+          (fn (CT.INT v) => CT.STRING (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_s_i constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.STRING v) => T.INT (constOp  v))
+          (fn (CT.STRING v) => CT.INT (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_w_w constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.WORD v) => T.WORD (constOp  v))
+          (fn (CT.WORD v) => CT.WORD (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_i_w constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.INT v) => T.WORD (constOp  v))
+          (fn (CT.INT v) => CT.WORD (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_w_i constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.WORD v) => T.INT (constOp  v))
+          (fn (CT.WORD v) => CT.INT (constOp  v))
           atomEnv
           primApplyInfo
 
   fun genericOp_i_i constOp atomEnv primApplyInfo =
       genericOp_1
-          (fn (T.INT v) => T.INT (constOp  v))
+          (fn (CT.INT v) => CT.INT (constOp  v))
           atomEnv
           primApplyInfo
 
@@ -353,13 +355,13 @@ structure PrimApplyOptimizer = struct
         val arg2 = anexpToPrimArg atomEnv argExp2
       in
         case (arg1,arg2) of
-          (ARGCONST (T.REAL r1),ARGCONST (T.REAL r2)) => 
+          (ARGCONST (CT.REAL r1),ARGCONST (CT.REAL r2)) => 
           (
           case realToString((stringToReal r1)/(stringToReal r2)) of
             "nan" => makePrimApply(primOp,[argExp1,argExp2],loc)
           | "inf" => makePrimApply(primOp,[argExp1,argExp2],loc)
           | "~inf" => makePrimApply(primOp,[argExp1,argExp2],loc)
-          | s => ANCONSTANT {value=T.REAL s,loc=loc}
+          | s => ANCONSTANT {value=CT.REAL s,loc=loc}
           ) 
         | (ARGCONST c1,ARGVAR v2) => makePrimApply1(primOp,c1,v2,loc)
         | (ARGVAR v1,ARGCONST c2) => makePrimApply2(primOp,v1,c2,loc)
@@ -439,9 +441,9 @@ structure PrimApplyOptimizer = struct
        ("Word_orb",genericOp_ww_w (Word32.orb)),
        ("Word_xorb",genericOp_ww_w (Word32.xorb)),
        ("Word_notb",genericOp_w_w (Word32.notb)),
-       ("Word_leftShift",genericOp_ww_w (fn (w1,w2) => Word32.<<(w1,Word.fromLargeWord w2))),
-       ("Word_logicalRightShift",genericOp_ww_w (fn (w1,w2) => Word32.>>(w1,Word.fromLargeWord w2))),
-       ("Word_arithmeticRightShift",genericOp_ww_w (fn (w1,w2) => Word32.~>>(w1,Word.fromLargeWord w2))),
+       ("Word_leftShift",genericOp_ww_w (fn (w1,w2) => Word32.<<(w1,BT.UInt32ToWord w2))),
+       ("Word_logicalRightShift",genericOp_ww_w (fn (w1,w2) => Word32.>>(w1,BT.UInt32ToWord w2))),
+       ("Word_arithmeticRightShift",genericOp_ww_w (fn (w1,w2) => Word32.~>>(w1,BT.UInt32ToWord w2))),
 
        ("Int_toString",genericOp_i_s (Int32.toString)),
        ("Word_toString",genericOp_w_s (Word32.toString)),
@@ -481,7 +483,11 @@ structure PrimApplyOptimizer = struct
       if !Control.doConstantFolding 
       then 
         case SEnv.find(optimizers,name) of
-          SOME operator => operator atomEnv (primOp,argExpList,loc)
+          SOME operator => 
+          (
+           (operator atomEnv (primOp,argExpList,loc))
+           handle _ => exp
+          )
         | NOME => exp
       else exp
     | optimizePrimApply atomEnv _ =

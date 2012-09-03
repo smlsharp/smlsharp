@@ -1,7 +1,7 @@
 (**
  * CharVector structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: CharVector.sml,v 1.3 2005/07/27 14:10:26 kiyoshiy Exp $
+ * @version $Id: CharVector.sml,v 1.4 2006/03/06 08:09:10 kiyoshiy Exp $
  *)
 structure CharVector =
 struct
@@ -17,6 +17,8 @@ struct
 
   val fromList = String.implode
 
+  (* ToDo : instead of fromList, it is more efficient to allocate a buffer
+   * by 'String_allocate' first, then, fill it by 'String_update'. *)
   val tabulate = fromList o List.tabulate
 
   val length = String.size
@@ -30,6 +32,7 @@ struct
       in tabulate (length vector, valueOfIndex)
       end
 
+  (* ToDo : As tabulate, mapi should be rewritten to efficient one. *)
   fun mapi mapFun vector =
       let val length = size vector
       in

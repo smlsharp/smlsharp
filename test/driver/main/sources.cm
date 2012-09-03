@@ -1,5 +1,12 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
         ../../../src/configuration/sources.cm
         ../../../src/compiler/toplevel/sources.cm
         ../../../src/compiler/session/sources.cm

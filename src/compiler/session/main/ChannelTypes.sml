@@ -7,7 +7,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ChannelTypes.sml,v 1.4 2006/02/28 16:11:04 kiyoshiy Exp $
+ * @version $Id: ChannelTypes.sml,v 1.5 2007/02/19 04:06:09 kiyoshiy Exp $
  *)
 structure ChannelTypes =
 struct
@@ -23,6 +23,9 @@ struct
 
          (** output bytes to the channel. *)
          sendArray : Word8Array.array -> unit,
+
+         (** output bytes to the channel. *)
+         sendVector : Word8Vector.vector -> unit,
 
          (** flushes bytes remaining in buffer into the stream. *)
          flush : unit -> unit,
@@ -45,6 +48,13 @@ struct
           * @return array of bytes obtained from the channel.
           *)
          receiveArray : int -> Word8Array.array,
+
+         (** get bytes from the channel.
+          * @params maxBytes
+          * @param maxBytes the maximum number of bytes to be read.
+          * @return array of bytes obtained from the channel.
+          *)
+         receiveVector : int -> Word8Vector.vector,
 
          (** close the channel. *)
          close : unit -> unit,

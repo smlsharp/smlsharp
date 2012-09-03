@@ -22,5 +22,7 @@ libimlinstructions.$(LIBEXT): $(OBJECTS)
 	$(AR) rcu $@ $(OBJECTS)
 	-$(RANLIB) $@
 
-# FIXME: dependency
-Instructions.$(OBJEXT): Instructions.cc Instructions.hh
+##---- dependency (automatically generated) ----
+Instructions.$(OBJEXT): Instructions.cc Instructions.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h

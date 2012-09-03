@@ -97,6 +97,6 @@ structure Atom :> ATOM =
     val atom' = atom0 (
 	  Substring.string,
 	  HashString.hashSubstring,
-	  fn (ss, s) => (Substring.compare(ss, Substring.all s) = EQUAL))
+	  fn (ss, s) => (Substring.compare(ss, Substring.full s) = EQUAL))
 
   end (* structure Atom *)

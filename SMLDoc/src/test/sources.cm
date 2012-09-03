@@ -1,0 +1,9 @@
+Group is
+        ../main/sources.cm
+        ../smlunitlib.cm
+
+        DependencyGraphTest0001.sml
+        EasyHTMLParserTest0001.sml
+
+        SMLDocTest.sml
+        TestMain.sml

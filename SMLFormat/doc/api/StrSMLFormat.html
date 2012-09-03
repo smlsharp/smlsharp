@@ -26,10 +26,9 @@ struct<br>
 &nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLFormat-StrFormatExpression.html">FormatExpression</A>&nbsp;=&nbsp;<A HREF="StrFormatExpression.html">FormatExpression</A><br>
 &nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLFormat-StrPrinterParameter.html">PrinterParameter</A>&nbsp;=&nbsp;<A HREF="StrPrinterParameter.html">PrinterParameter</A><br>
 &nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLFormat-StrBasicFormatters.html">BasicFormatters</A>&nbsp;=&nbsp;<A HREF="StrBasicFormatters.html">BasicFormatters</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrSMLFormat.html#Typeparameter">parameter</A>&nbsp;=&nbsp;datatype&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A><br>
 &nbsp;&nbsp;exception&nbsp;<A HREF="StrSMLFormat.html#ExceptionFail">Fail</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLFormat.html#ValprettyPrint">prettyPrint</A><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;-><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">FormatExpression.expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLFormat.html#ValprettyPrint">prettyPrint</A>&nbsp;:&nbsp;<A HREF="StrSMLFormat.html#Typeparameter">parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">FormatExpression.expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 end</CODE>
 <P>
 
@@ -47,7 +46,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: StrSMLFormat.html,v 1.1 2006/02/23 10:10:23 kiyoshiy Exp $
+$Id: StrSMLFormat.html,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
  
 
 </DL>
@@ -57,6 +56,18 @@ $Id: StrSMLFormat.html,v 1.1 2006/02/23 10:10:23 kiyoshiy Exp $
 <P>
 &nbsp;
 &nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeparameter"><!-- --></A>
+<H3>parameter</H3>
+<P>
+<CODE>datatype&nbsp;parameter&nbsp;=&nbsp;datatype&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A></CODE>
+
+<P>
+
 &nbsp;
 &nbsp;
 <TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
@@ -67,9 +78,7 @@ $Id: StrSMLFormat.html,v 1.1 2006/02/23 10:10:23 kiyoshiy Exp $
 <A NAME="ValprettyPrint"><!-- --></A>
 <H3>prettyPrint</H3>
 <P>
-<CODE>val&nbsp;prettyPrint<br>
-&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;-><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">FormatExpression.expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<CODE>val&nbsp;prettyPrint&nbsp;:&nbsp;<A HREF="StrSMLFormat.html#Typeparameter">parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">FormatExpression.expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 
 <P>
 

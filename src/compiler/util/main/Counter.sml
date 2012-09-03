@@ -2,9 +2,9 @@
  * counter module.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Counter.sml,v 1.11 2006/02/28 16:11:11 kiyoshiy Exp $
+ * @version $Id: Counter.sml,v 1.12 2006/11/03 11:02:50 kiyoshiy Exp $
  *)
-structure Counter :> COUNTER =
+structure Counter : COUNTER =
 struct
 
   (***************************************************************************)

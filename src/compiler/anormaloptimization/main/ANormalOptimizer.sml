@@ -2,16 +2,17 @@
  * optimizer on A-Normal form.
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: ANormalOptimizer.sml,v 1.4 2006/02/28 16:10:59 kiyoshiy Exp $
+ * @version $Id: ANormalOptimizer.sml,v 1.8 2007/02/11 16:39:50 kiyoshiy Exp $
  *)
 
 structure ANormalOptimizer = struct
 
   open ANormal
-  structure T = Types
-  structure ANU = ANormalUtils
   structure AE = AtomEnv
+  structure ANU = ANormalUtils
+  structure CT = ConstantTerm
   structure PAO = PrimApplyOptimizer
+  structure T = Types
 
   exception Test of string
 
@@ -62,12 +63,21 @@ structure ANormalOptimizer = struct
                   loc = loc
                  }
             )
-      | ANFOREIGNAPPLY {funExp,argExpList,argTyList,loc} =>
+      | ANFOREIGNAPPLY {funExp,argExpList,argTyList,convention,loc} =>
         ANFOREIGNAPPLY
             {
              funExp = optimizeArg atomEnv funExp,
              argExpList = map (optimizeArg atomEnv) argExpList,
              argTyList = argTyList,
+             convention = convention,
+             loc = loc
+            }
+      | ANEXPORTCALLBACK {funExp,argTyList,resultTy,loc} =>
+        ANEXPORTCALLBACK
+            {
+             funExp = optimizeArg atomEnv funExp,
+             argTyList = argTyList,
+             resultTy = resultTy,
              loc = loc
             }
       | ANAPPLY{funExp,argExpList,argSizeList,loc} =>
@@ -149,7 +159,7 @@ structure ANormalOptimizer = struct
           fun find ([],_) = defaultExp
             | find ((c,e)::rest,value) =
               (
-               case AE.constantCompare(c,value) of
+               case CT.compare(c,value) of
                  EQUAL => e
                | _ => find(rest,value)
               ) 
@@ -245,17 +255,6 @@ structure ANormalOptimizer = struct
              valueExp = optimizeArg atomEnv valueExp,
              loc = loc
             }
-      | ANFFIVAL{funExp,libExp,argTyList,resultTy,funTy,loc} =>
-        ANFFIVAL
-            {
-             funExp = optimizeArg atomEnv funExp,
-             libExp = optimizeArg atomEnv libExp,
-             argTyList = argTyList,
-             resultTy = resultTy,
-             funTy = funTy,
-             loc = loc
-            }
-
 
   (************************************************************************)
 

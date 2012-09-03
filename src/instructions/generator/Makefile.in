@@ -11,15 +11,21 @@ TEMPLATES = $(srcdir)/../compiler/main/INSTRUCTION_SERIALIZER.sig.in \
             $(srcdir)/../runtime/main/Instructions.cc.in \
             $(srcdir)/../runtime/main/Instructions.hh.in \
 
+
 TARGETS = $(TEMPLATES:.in=)
+
+DEFINITIONS = $(srcdir)/../Instructions.sml \
+              $(srcdir)/../../primitives/primitives.csv \
+              $(srcdir)/../../primitives/constants.csv \
+
 
 all: $(TARGETS)
 
-$(TARGETS): $(TEMPLATES)
-	cd $(srcdir) && (echo 'CM.make(); main();' | $(SMLCM))
+$(TARGETS): $(TEMPLATES) $(DEFINITIONS)
+	cd $(srcdir) && $(SHELL) $(BUILD_ROOT)/mksmlheap --exec 'Main.main();'
 
 clean:
-	-rm -rf $(srcdir)/CM
+	-rm -rf $(srcdir)/CM $(srcdir)/.cm
 	-rm -f $(TEMPLATES:.in=)
 	-rm -f $(srcdir)/Parser.grm.sig
 	-rm -f $(srcdir)/Parser.grm.sml

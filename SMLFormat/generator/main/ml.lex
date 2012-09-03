@@ -91,6 +91,18 @@ hexnum=[0-9a-fA-F]+;
 <INITIAL>{ws}	=> (continue());
 <INITIAL>{eol}	=> (newline arg yypos; continue());
 <INITIAL>"_overload" => (REJECT());
+<INITIAL>"_atom"   => (Tokens.ATOM(yypos,yypos+5));
+<INITIAL>"_boxed"   => (Tokens.BOXED(yypos,yypos+6));
+<INITIAL>"_cast"   => (Tokens.CAST(yypos,yypos+5));
+<INITIAL>"_cdecl"   => (Tokens.CDECL(yypos,yypos+6));
+<INITIAL>"_double"   => (Tokens.DOUBLE(yypos,yypos+7));
+<INITIAL>"_export"   => (Tokens.EXPORT(yypos,yypos+7));
+<INITIAL>"_external"   => (Tokens.EXTERNAL(yypos,yypos+9));
+<INITIAL>"_ffiapply"   => (Tokens.FFIAPPLY(yypos,yypos+9));
+<INITIAL>"_import"   => (Tokens.IMPORT(yypos,yypos+7));
+<INITIAL>"_sizeof"   => (Tokens.SIZEOF(yypos,yypos+7));
+<INITIAL>"_stdcall"   => (Tokens.STDCALL(yypos,yypos+8));
+<INITIAL>"_useobj"   => (Tokens.USEOBJ(yypos,yypos+7));
 <INITIAL>"_"	=> (Tokens.WILD(yypos,yypos+1));
 <INITIAL>","	=> (Tokens.COMMA(yypos,yypos+1));
 <INITIAL>"{"	=> (Tokens.LBRACE(yypos,yypos+1));
@@ -144,6 +156,7 @@ hexnum=[0-9a-fA-F]+;
 <FC>"(*"	=> (YYBEGIN FCC; inc comLevel; continue());
 <A,FCC>"(*"	=> (inc comLevel; continue());
 <A,FC>{eol}	=> (newline arg yypos; continue());
+<A,FCC>{eol}	=> (newline arg yypos; continue());
 <A>"*)" =>
     (dec comLevel;
      if !comLevel=0 then (inFormatComment := false; YYBEGIN INITIAL) else ();
@@ -217,6 +230,10 @@ hexnum=[0-9a-fA-F]+;
           yypos+size yytext)
        end);
 <FC>{id}        => (Tokens.ID(yytext,yypos,yypos+size yytext));
+<FC>"'"({id}|{num})"'"  =>
+        (Tokens.ID(String.substring(yytext,1,(size yytext)-2),
+                   yypos,
+                   yypos+size yytext));
 <FC>"*"         => (Tokens.ASTERISK(yypos,yypos+size yytext));
 <FC>":"         => (Tokens.COLON(yypos,yypos+size yytext));
 <FC>","	        => (Tokens.COMMA(yypos,yypos+1));
@@ -227,6 +244,7 @@ hexnum=[0-9a-fA-F]+;
 <FC>"]"	        => (Tokens.RBRACKET(yypos,yypos+1));
 <FC>"("	        => (Tokens.LPAREN(yypos,yypos+1));
 <FC>")"	        => (Tokens.RPAREN(yypos,yypos+1));
+<FC>"_"         => (Tokens.WILD(yypos,yypos+size yytext));
 <FC>{ws}	=> (continue());
 <FC>{eol}	=> (newline arg yypos; continue());
 <FC>.           =>

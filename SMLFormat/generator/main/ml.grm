@@ -38,7 +38,9 @@ fun qidToString [id] = id
     | LET | LOCAL | NONFIX | OF | OP | OPEN | OVERLOAD | RAISE | REC
     | SHARING | SIG | SIGNATURE | STRUCT | STRUCTURE | THEN | TYPE | VAL
     | WHERE | WHILE | WILD | WITH | WITHTYPE 
-    | EXTERNAL
+    (* SML# extensions *)
+    | ATOM | BOXED | CAST | CDECL | DOUBLE | EXPORT | EXTERNAL | FFIAPPLY
+    | IMPORT | SIZEOF | STDCALL | USEOBJ
 
     | ASTERISK | COLON | COLONGT | COMMA | LBRACE | LBRACKET | LPAREN | RBRACE 
     | RBRACKET | RPAREN | ORELSE | ANDALSO | FUNSIG | VECTORSTART | BEGINQ 
@@ -69,7 +71,6 @@ fun qidToString [id] = id
        | tuple_ty of ty list
        | ty of ty
        | ty0_pc of ty list
-       | ty_list of ty list
        | match of  rule list
        | rule of  rule
        | elabel of  (string * exp)
@@ -153,6 +154,25 @@ fun qidToString [id] = id
        | fctb of  fctb list
        | fct_exp of fsigexp sigConst -> fctexp
        | interdec of  dec
+
+       (* SML# extensions *)
+       | cconv of unit
+       | ffiApplyArg of unit
+       | ffiApplyArgs of unit
+       | ffiApplyArgSeq of unit
+       | ffityrow of unit
+       | ffityseq of unit
+       | ffiArgs of unit
+       | ffiContyArg of unit
+       | ffiAtty of unit
+       | ffitupleseq of unit
+       | ffiTupleTy of unit
+       | ffiFunArg of unit
+       | ffiFunty of unit
+       | fficconv of unit
+       | ffity of unit
+
+       (* SMLFormat extension *)
        | header_format_comment_list of headerFormatComment list
        | header_format_specs of headerFormatComment
        | inner_header_format_comment_list of innerHeaderFormatComment list
@@ -278,10 +298,6 @@ ty : tuple_ty (TupleTy(tuple_ty))
 ty0_pc : ty COMMA ty ([ty1, ty2])
        | ty COMMA ty0_pc (ty :: ty0_pc)
 
-ty_list :                       ([])
-        | ty                    ([ty])
-        | ty0_pc                (ty0_pc)
-
 match : rule ([rule])
       | rule BAR match (rule :: match)
 
@@ -307,14 +323,15 @@ exp : exp HANDLE match ()
     | WHILE exp DO exp ()
     | IF exp THEN exp ELSE exp ()
     | RAISE exp ()
-    | EXTERNAL app_exp OF app_exp COLON LBRACE ty_list RBRACE ARROW ty ()
+    (* SML# extension *)
+    | exp COLON IMPORT ffity ()
+    | FFIAPPLY cconv aexp LPAREN ffiApplyArgs RPAREN COLON ffity ()
 
 app_exp : aexp ([])
-        | ident ([])
         | aexp app_exp ([])
-        | ident app_exp ([])
 
-aexp : OP ident ()
+aexp : ident ()
+        |OP ident ()
         | ID DOT qid ()
         | int ()
         | WORD ()
@@ -830,6 +847,66 @@ interdec : sdecs' (markdec(sdecs', sdecs'left, sdecs'right))
               expright
             ))
 
+(*****************************************************************************)
+(* SML# specific rules. *)
+
+cconv : ()
+      | fficconv ()
+
+(*********** foreign function interface *************)
+
+ffiApplyArg : app_exp COLON ffity ()
+            | SIZEOF LPAREN ty RPAREN ()
+            | SIZEOF LPAREN ty RPAREN ASTERISK aexp ()
+
+ffiApplyArgSeq : ffiApplyArg ()
+               | ffiApplyArg COMMA ffiApplyArgSeq ()
+
+ffiApplyArgs : ()
+             | ffiApplyArgSeq ()
+
+(* FFI type representation *)
+
+ffityrow : ID COLON ffity ()
+         | ID COLON ffity COMMA ffityrow ()
+
+ffityseq : ffity COMMA ffity ()
+         | ffity COMMA ffityseq ()
+
+ffiArgs : ffiAtty ()
+        | LPAREN ffityseq RPAREN ()
+
+ffiContyArg : ()
+            | ffiArgs ()
+
+ffiAtty : LPAREN ffity RPAREN ()
+        | TYVAR ()
+        | ffiContyArg tycon ()
+        | LBRACE ffityrow RBRACE ()
+        | LBRACE RBRACE ()
+
+ffitupleseq : ffiAtty ASTERISK ffiAtty ()
+            | ffiAtty ASTERISK ffitupleseq ()
+
+ffiTupleTy : ffitupleseq ()
+
+ffiFunArg : LPAREN RPAREN ()
+          | ffiArgs ()
+          | ffiTupleTy ()
+
+ffiFunty : ffiFunArg ARROW ffity ()
+         | fficconv ffiFunArg ARROW ffity ()
+
+fficconv : CDECL      ()
+         | STDCALL    ()
+
+ffity : ffiAtty ()
+      | ffiFunty ()
+      | ffiTupleTy ()
+
+(*****************************************************************************)
+(* SMLFormat specific rules. *)
+
 header_format_comment_list
 : ([])
 | FORMATCOMMENTSTART
@@ -1001,7 +1078,7 @@ defining_format_comment_list_with_inners
 formattag : FORMATTAG LPAREN typepat RPAREN templates
             ({id = NONE, typepat = typepat, templates = templates})
           | FORMATTAG templates (* typepat is dummy *)
-            ({id = NONE, typepat = VarTyPat "_Dummy_", templates = templates})
+            ({id = NONE, typepat = VarTyPat "_", templates = templates})
 
 localformattags : ([])
                 | localformattag localformattags
@@ -1037,6 +1114,7 @@ atypepat : LPAREN atypepat_list RPAREN ID (TyConTyPat(ID, atypepat_list))
          | atypepat ID COLON ID (TypedTyConTyPat(ID1, [atypepat], ID2))
          | ID (VarTyPat ID)
          | ID COLON ID (TypedVarTyPat (ID1, ID2))
+         | WILD (WildTyPat)
 
 atypepat_list : atypepat COMMA atypepat_list (atypepat :: atypepat_list)
               | atypepat COMMA atypepat ([atypepat1, atypepat2])
@@ -1046,8 +1124,8 @@ typepat_rows : typepat_field COMMA typepat_rows
              | typepat_field ([typepat_field], false)
              | DOTDOTDOT ([], true)
 
-typepat_field : ID (ID, (VarTyPat ID))
-              | ID COLON typepat (ID, typepat)
+typepat_field : selector (selector, (VarTyPat selector))
+              | selector COLON typepat (selector, typepat)
 
 templates : template templates (template :: templates)
           | ([])

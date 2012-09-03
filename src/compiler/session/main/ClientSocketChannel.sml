@@ -2,7 +2,7 @@
  * implementation of channel using a client socket.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ClientSocketChannel.sml,v 1.5 2006/02/28 16:11:04 kiyoshiy Exp $
+ * @version $Id: ClientSocketChannel.sml,v 1.7 2007/03/15 12:13:06 katsu Exp $
  *)
 structure ClientSocketChannel =
 struct
@@ -38,7 +38,15 @@ struct
             let
               val sendBuffer = {buf = array, i = 0, sz = NONE}
             in
+              (* Assume streaming socket; send(2) sends all data in array *)
               Socket.sendArr (socket, sendBuffer);
+              ()
+            end
+        fun sendVector socket vector =
+            let
+              val sendBuffer = {buf = vector, i = 0, sz = NONE}
+            in
+              Socket.sendVec (socket, sendBuffer);
               ()
             end
         fun receive socket () =
@@ -52,28 +60,31 @@ struct
         fun receiveArray socket bytes =
             let
               val array = Word8Array.array (bytes, 0w0)
-              val readBytes =
-                  Socket.recvArr
-                      (socket, {buf = array,i = 0, sz = SOME bytes})
+              fun recv (array, i) =
+                  if i >= Word8Array.length array then array
+                  else
+                    let
+                      val buf = {buf = array, i = i, sz = NONE}
+                      val n = Socket.recvArr (socket, buf)
+                    in
+                      if n = 0 then
+                        let
+                          val newArray = Word8Array.array (i, 0w0)
+                        in
+                          Word8Array.copy {src = array,
+                                           si = 0,
+                                           dst = newArray,
+                                           di = 0,
+                                           len = SOME i};
+                          newArray
+                        end
+                      else recv (array, i + n)
+                    end
             in
-              if readBytes = bytes
-              then array
-              else
-                let val newArray = Word8Array.array (readBytes, 0w0)
-                in
-                  (
-                    Word8Array.copy
-                        {
-                          src = array,
-                          si = 0,
-                          dst = newArray,
-                          di = 0,
-                          len = SOME(readBytes)
-                        };
-                    newArray
-                  )
-                end
+              recv (array, 0)
             end
+        fun receiveVector socket bytes =
+            Word8Array.extract (receiveArray socket bytes, 0, NONE)
         fun isEOF socket () = false
         fun flush () = ()
         fun close closed socket () =
@@ -93,12 +104,14 @@ struct
           {
             receive = receive socket,
             receiveArray = receiveArray socket,
+            receiveVector = receiveVector socket,
             close = close closed socket,
             isEOF = isEOF socket
           } : ChannelTypes.InputChannel,
           {
             send = send socket,
             sendArray = sendArray socket,
+            sendVector = sendVector socket,
             flush = flush,
             close = close closed socket
           } : ChannelTypes.OutputChannel

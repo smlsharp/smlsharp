@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+<TITLE>Unix</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>Unix</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrUnix.html">Unix</A>&nbsp;:&nbsp;<A HREF="SigUNIX.html">UNIX</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrUnix-StrP.html">P</A>&nbsp;=&nbsp;<A HREF="StrPosix-StrProcess.html">Posix.Process</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrUnix-StrPE.html">PE</A>&nbsp;=&nbsp;<A HREF="StrPosix-StrProcEnv.html">Posix.ProcEnv</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrUnix-StrPF.html">PF</A>&nbsp;=&nbsp;<A HREF="StrPosix-StrFileSys.html">Posix.FileSys</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrUnix-StrPIO.html">PIO</A>&nbsp;=&nbsp;<A HREF="StrPosix-StrIO.html">Posix.IO</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrUnix-StrSS.html">SS</A>&nbsp;=&nbsp;<A HREF="StrSubstring.html">Substring</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrUnix.html#ConstrPROC">PROC</A>&nbsp;of&nbsp;{pid&nbsp;:&nbsp;<A HREF="StrPOSIX_Process.html#Typepid">P.pid</A>,&nbsp;ins&nbsp;:&nbsp;<A HREF="FctTextIOFn.html#Typeinstream">TextIO.instream</A>,&nbsp;outs&nbsp;:&nbsp;<A HREF="FctTextIOFn.html#Typeoutstream">TextIO.outstream</A>}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#Valprotect">protect</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#ValfdReader">fdReader</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#ValfdWriter">fdWriter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#ValopenOutFD">openOutFD</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#ValopenInFD">openInFD</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#ValexecuteInEnv">executeInEnv</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#Valexecute">execute</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#ValstreamsOf">streamsOf</A>&nbsp;:&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A>&nbsp;->&nbsp;<A HREF="FctTextIOFn.html#Typeinstream">TextIO.instream</A>&nbsp;*&nbsp;<A HREF="FctTextIOFn.html#Typeoutstream">TextIO.outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#Valkill">kill</A>&nbsp;:&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A>&nbsp;*&nbsp;<A HREF="StrPOSIX_Signal.html#Typesignal">Posix.Signal.signal</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrUnix.html#Valreap">reap</A>&nbsp;:&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A>&nbsp;->&nbsp;<A HREF="StrPOSIX_Process.html#Typeexit_status">Posix.Process.exit_status</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeproc"><!-- --></A>
+<H3>proc</H3>
+<P>
+<CODE>datatype&nbsp;proc&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrUnix.html#ConstrPROC">PROC</A>&nbsp;of&nbsp;{pid&nbsp;:&nbsp;<A HREF="StrPOSIX_Process.html#Typepid">P.pid</A>,&nbsp;ins&nbsp;:&nbsp;<A HREF="FctTextIOFn.html#Typeinstream">TextIO.instream</A>,&nbsp;outs&nbsp;:&nbsp;<A HREF="FctTextIOFn.html#Typeoutstream">TextIO.outstream</A>}</CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrPROC"><!-- --></A>
+<H3>PROC</H3>
+<P>
+<CODE>constructor&nbsp;PROC<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{pid&nbsp;:&nbsp;<A HREF="StrPOSIX_Process.html#Typepid">P.pid</A>,&nbsp;ins&nbsp;:&nbsp;<A HREF="FctTextIOFn.html#Typeinstream">TextIO.instream</A>,&nbsp;outs&nbsp;:&nbsp;<A HREF="FctTextIOFn.html#Typeoutstream">TextIO.outstream</A>}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valprotect"><!-- --></A>
+<H3>protect</H3>
+<P>
+<CODE>val&nbsp;protect</CODE>
+
+<HR>
+<A NAME="ValfdReader"><!-- --></A>
+<H3>fdReader</H3>
+<P>
+<CODE>val&nbsp;fdReader</CODE>
+
+<HR>
+<A NAME="ValfdWriter"><!-- --></A>
+<H3>fdWriter</H3>
+<P>
+<CODE>val&nbsp;fdWriter</CODE>
+
+<HR>
+<A NAME="ValopenOutFD"><!-- --></A>
+<H3>openOutFD</H3>
+<P>
+<CODE>val&nbsp;openOutFD</CODE>
+
+<HR>
+<A NAME="ValopenInFD"><!-- --></A>
+<H3>openInFD</H3>
+<P>
+<CODE>val&nbsp;openInFD</CODE>
+
+<HR>
+<A NAME="ValexecuteInEnv"><!-- --></A>
+<H3>executeInEnv</H3>
+<P>
+<CODE>val&nbsp;executeInEnv&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A></CODE>
+
+<HR>
+<A NAME="Valexecute"><!-- --></A>
+<H3>execute</H3>
+<P>
+<CODE>val&nbsp;execute&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A></CODE>
+
+<HR>
+<A NAME="ValstreamsOf"><!-- --></A>
+<H3>streamsOf</H3>
+<P>
+<CODE>val&nbsp;streamsOf&nbsp;:&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A>&nbsp;->&nbsp;<A HREF="FctTextIOFn.html#Typeinstream">TextIO.instream</A>&nbsp;*&nbsp;<A HREF="FctTextIOFn.html#Typeoutstream">TextIO.outstream</A></CODE>
+
+<HR>
+<A NAME="Valkill"><!-- --></A>
+<H3>kill</H3>
+<P>
+<CODE>val&nbsp;kill&nbsp;:&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A>&nbsp;*&nbsp;<A HREF="StrPOSIX_Signal.html#Typesignal">Posix.Signal.signal</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valreap"><!-- --></A>
+<H3>reap</H3>
+<P>
+<CODE>val&nbsp;reap&nbsp;:&nbsp;<A HREF="StrUnix.html#Typeproc">proc</A>&nbsp;->&nbsp;<A HREF="StrPOSIX_Process.html#Typeexit_status">Posix.Process.exit_status</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

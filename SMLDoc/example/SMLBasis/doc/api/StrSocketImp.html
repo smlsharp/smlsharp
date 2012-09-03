@@ -1,0 +1,528 @@
+<HTML>
+<HEAD>
+<TITLE>SocketImp</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>SocketImp</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSocketImp.html">SocketImp</A>&nbsp;:&nbsp;<A HREF="SigSOCKET.html">SOCKET</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;open&nbsp;<A HREF="StrPreSock.html">PreSock</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSocketImp-StrCI.html">CI</A>&nbsp;=&nbsp;<A HREF="StrCInterface.html">CInterface</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSocketImp-StrW8A.html">W8A</A>&nbsp;=&nbsp;<A HREF="StrWord8Array.html">Word8Array</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSocketImp-StrW8V.html">W8V</A>&nbsp;=&nbsp;<A HREF="StrWord8Vector.html">Word8Vector</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSocketImp-StrAF.html">AF</A>&nbsp;=<br>
+&nbsp;&nbsp;struct<br>
+&nbsp;&nbsp;&nbsp;&nbsp;type&nbsp;<A HREF="StrSocketImp-StrAF.html#Typeaddr_family">addr_family</A>&nbsp;=&nbsp;<A HREF="StrPreSock.html#Typeaddr_family">PreSock.addr_family</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrAF.html#VallistAddrFamilies">listAddrFamilies</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrAF.html#Vallist">list</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;(<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrSocketImp-StrAF.html#Typeaddr_family">addr_family</A>)&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrAF.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="StrSocketImp-StrAF.html#Typeaddr_family">addr_family</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrAF.html#ValfromString">fromString</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrSocketImp-StrAF.html#Typeaddr_family">addr_family</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSocketImp-StrSOCK.html">SOCK</A>&nbsp;=<br>
+&nbsp;&nbsp;struct<br>
+&nbsp;&nbsp;&nbsp;&nbsp;type&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Typesock_type">sock_type</A>&nbsp;=&nbsp;<A HREF="StrPreSock.html#Typesock_type">PreSock.sock_type</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrSOCK.html#VallistSockTypes">listSockTypes</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Valstream">stream</A>&nbsp;:&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Typesock_type">sock_type</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Valdgram">dgram</A>&nbsp;:&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Typesock_type">sock_type</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Vallist">list</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;(<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Typesock_type">sock_type</A>)&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrSOCK.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Typesock_type">sock_type</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrSOCK.html#ValfromString">fromString</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Typesock_type">sock_type</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSocketImp-StrCtl.html">Ctl</A>&nbsp;=<br>
+&nbsp;&nbsp;struct<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetDEBUG">getDEBUG</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetDEBUG">setDEBUG</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;bool&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetREUSEADDR">getREUSEADDR</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetREUSEADDR">setREUSEADDR</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;bool&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetKEEPALIVE">getKEEPALIVE</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetKEEPALIVE">setKEEPALIVE</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;bool&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetDONTROUTE">getDONTROUTE</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetDONTROUTE">setDONTROUTE</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;bool&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetLINGER">getLINGER</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;Time.time&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetLINGER">setLINGER</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;Time.time&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetBROADCAST">getBROADCAST</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetBROADCAST">setBROADCAST</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;bool&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetOOBINLINE">getOOBINLINE</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetOOBINLINE">setOOBINLINE</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;bool&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetSNDBUF">getSNDBUF</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetSNDBUF">setSNDBUF</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetRCVBUF">getRCVBUF</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetRCVBUF">setRCVBUF</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetTYPE">getTYPE</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;<A HREF="StrSocketImp-StrSOCK.html#Typesock_type">SOCK.sock_type</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetERROR">getERROR</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetPeerName">getPeerName</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetSockName">getSockName</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValsetNBIO">setNBIO</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;bool&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetNREAD">getNREAD</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp-StrCtl.html#ValgetATMARK">getATMARK</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrSocketImp.html#Typew8vector">w8vector</A>&nbsp;=&nbsp;<A HREF="StrWord8Vector.html#Typevector">W8V.vector</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrSocketImp.html#Typew8array">w8array</A>&nbsp;=&nbsp;<A HREF="StrWord8Array.html#Typearray">W8A.array</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrSocketImp.html#TypesockFD">sockFD</A>&nbsp;=&nbsp;<A HREF="StrPreSock.html#Typesocket">PreSock.socket</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;=&nbsp;{don't_route&nbsp;:&nbsp;bool,&nbsp;oob&nbsp;:&nbsp;bool}<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;=&nbsp;{peek&nbsp;:&nbsp;bool,&nbsp;oob&nbsp;:&nbsp;bool}<br>
+&nbsp;&nbsp;type&nbsp;'a&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;=&nbsp;{buf&nbsp;:&nbsp;'a,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;sz&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrDGRAM">DGRAM</A><br>
+&nbsp;&nbsp;datatype&nbsp;'a&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrSTREAM">STREAM</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrSocketImp.html#Typepassive">passive</A>&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrPASSIVE">PASSIVE</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrACTIVE">ACTIVE</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrSocketImp.html#Typeshutdown_mode">shutdown_mode</A>&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrNO_RECVS">NO_RECVS</A>&nbsp;|&nbsp;<A HREF="StrSocketImp.html#ConstrNO_SENDS">NO_SENDS</A>&nbsp;|&nbsp;<A HREF="StrSocketImp.html#ConstrNO_RECVS_OR_SENDS">NO_RECVS_OR_SENDS</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsockFn">sockFn</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValnetdbFun">netdbFun</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsameAddr">sameAddr</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValfamilyOfAddr">familyOfAddr</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;<A HREF="StrSocketImp-StrAF.html#Typeaddr_family">AF.addr_family</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#Valaccept">accept</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typepassive">passive</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#Valbind">bind</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#Valconnect">connect</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#Vallisten">listen</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typepassive">passive</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#Valclose">close</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#Valshutdown">shutdown</A>&nbsp;:&nbsp;('a,&nbsp;'b&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeshutdown_mode">shutdown_mode</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValpollDesc">pollDesc</A>&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;<A HREF="StrOS_IO.html#Typepoll_desc">OS.IO.poll_desc</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#Valvbuf">vbuf</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#Valabuf">abuf</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValdfltDon'tRoute">dfltDon'tRoute</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValdfltOOB">dfltOOB</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValdfltPeek">dfltPeek</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsendVec">sendVec</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsendArr">sendArr</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsendVec'">sendVec'</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsendArr'">sendArr'</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsendVecTo">sendVecTo</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsendArrTo">sendArrTo</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsendVecTo'">sendVecTo'</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValsendArrTo'">sendArrTo'</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValrecvVec">recvVec</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValrecvArr">recvArr</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValrecvVec'">recvVec'</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValrecvArr'">recvArr'</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValrecvVecFrom">recvVecFrom</A>&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;*&nbsp;'b&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValrecvArrFrom">recvArrFrom</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValrecvVecFrom'">recvVecFrom'</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;*&nbsp;'b&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSocketImp.html#ValrecvArrFrom'">recvArrFrom'</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>}&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typew8vector"><!-- --></A>
+<H3>w8vector</H3>
+<P>
+<CODE>type&nbsp;w8vector&nbsp;=&nbsp;<A HREF="StrWord8Vector.html#Typevector">W8V.vector</A></CODE>
+
+<HR>
+<A NAME="Typew8array"><!-- --></A>
+<H3>w8array</H3>
+<P>
+<CODE>type&nbsp;w8array&nbsp;=&nbsp;<A HREF="StrWord8Array.html#Typearray">W8A.array</A></CODE>
+
+<HR>
+<A NAME="TypesockFD"><!-- --></A>
+<H3>sockFD</H3>
+<P>
+<CODE>type&nbsp;sockFD&nbsp;=&nbsp;<A HREF="StrPreSock.html#Typesocket">PreSock.socket</A></CODE>
+
+<HR>
+<A NAME="Typeout_flags"><!-- --></A>
+<H3>out_flags</H3>
+<P>
+<CODE>type&nbsp;out_flags&nbsp;=&nbsp;{don't_route&nbsp;:&nbsp;bool,&nbsp;oob&nbsp;:&nbsp;bool}</CODE>
+
+<HR>
+<A NAME="Typein_flags"><!-- --></A>
+<H3>in_flags</H3>
+<P>
+<CODE>type&nbsp;in_flags&nbsp;=&nbsp;{peek&nbsp;:&nbsp;bool,&nbsp;oob&nbsp;:&nbsp;bool}</CODE>
+
+<HR>
+<A NAME="Typebuf"><!-- --></A>
+<H3>buf</H3>
+<P>
+<CODE>type&nbsp;'a&nbsp;buf&nbsp;=&nbsp;{buf&nbsp;:&nbsp;'a,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;sz&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}</CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typedgram"><!-- --></A>
+<H3>dgram</H3>
+<P>
+<CODE>datatype&nbsp;dgram&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrDGRAM">DGRAM</A></CODE>
+
+<HR>
+<A NAME="Typestream"><!-- --></A>
+<H3>stream</H3>
+<P>
+<CODE>datatype&nbsp;'a&nbsp;stream&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrSTREAM">STREAM</A></CODE>
+
+<HR>
+<A NAME="Typepassive"><!-- --></A>
+<H3>passive</H3>
+<P>
+<CODE>datatype&nbsp;passive&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrPASSIVE">PASSIVE</A></CODE>
+
+<HR>
+<A NAME="Typeactive"><!-- --></A>
+<H3>active</H3>
+<P>
+<CODE>datatype&nbsp;active&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrACTIVE">ACTIVE</A></CODE>
+
+<HR>
+<A NAME="Typeshutdown_mode"><!-- --></A>
+<H3>shutdown_mode</H3>
+<P>
+<CODE>datatype&nbsp;shutdown_mode&nbsp;=&nbsp;<A HREF="StrSocketImp.html#ConstrNO_RECVS">NO_RECVS</A>&nbsp;|&nbsp;<A HREF="StrSocketImp.html#ConstrNO_SENDS">NO_SENDS</A>&nbsp;|&nbsp;<A HREF="StrSocketImp.html#ConstrNO_RECVS_OR_SENDS">NO_RECVS_OR_SENDS</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrDGRAM"><!-- --></A>
+<H3>DGRAM</H3>
+<P>
+<CODE>constructor&nbsp;DGRAM&nbsp;:&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A></CODE>
+
+<HR>
+<A NAME="ConstrSTREAM"><!-- --></A>
+<H3>STREAM</H3>
+<P>
+<CODE>constructor&nbsp;STREAM&nbsp;:&nbsp;'a&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A></CODE>
+
+<HR>
+<A NAME="ConstrPASSIVE"><!-- --></A>
+<H3>PASSIVE</H3>
+<P>
+<CODE>constructor&nbsp;PASSIVE&nbsp;:&nbsp;<A HREF="StrSocketImp.html#Typepassive">passive</A></CODE>
+
+<HR>
+<A NAME="ConstrACTIVE"><!-- --></A>
+<H3>ACTIVE</H3>
+<P>
+<CODE>constructor&nbsp;ACTIVE&nbsp;:&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A></CODE>
+
+<HR>
+<A NAME="ConstrNO_RECVS"><!-- --></A>
+<H3>NO_RECVS</H3>
+<P>
+<CODE>constructor&nbsp;NO_RECVS&nbsp;:&nbsp;<A HREF="StrSocketImp.html#Typeshutdown_mode">shutdown_mode</A></CODE>
+
+<HR>
+<A NAME="ConstrNO_SENDS"><!-- --></A>
+<H3>NO_SENDS</H3>
+<P>
+<CODE>constructor&nbsp;NO_SENDS&nbsp;:&nbsp;<A HREF="StrSocketImp.html#Typeshutdown_mode">shutdown_mode</A></CODE>
+
+<HR>
+<A NAME="ConstrNO_RECVS_OR_SENDS"><!-- --></A>
+<H3>NO_RECVS_OR_SENDS</H3>
+<P>
+<CODE>constructor&nbsp;NO_RECVS_OR_SENDS&nbsp;:&nbsp;<A HREF="StrSocketImp.html#Typeshutdown_mode">shutdown_mode</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValsockFn"><!-- --></A>
+<H3>sockFn</H3>
+<P>
+<CODE>val&nbsp;sockFn</CODE>
+
+<HR>
+<A NAME="ValnetdbFun"><!-- --></A>
+<H3>netdbFun</H3>
+<P>
+<CODE>val&nbsp;netdbFun</CODE>
+
+<HR>
+<A NAME="ValsameAddr"><!-- --></A>
+<H3>sameAddr</H3>
+<P>
+<CODE>val&nbsp;sameAddr&nbsp;:&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValfamilyOfAddr"><!-- --></A>
+<H3>familyOfAddr</H3>
+<P>
+<CODE>val&nbsp;familyOfAddr&nbsp;:&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;<A HREF="StrSocketImp-StrAF.html#Typeaddr_family">AF.addr_family</A></CODE>
+
+<HR>
+<A NAME="Valaccept"><!-- --></A>
+<H3>accept</H3>
+<P>
+<CODE>val&nbsp;accept<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typepassive">passive</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A></CODE>
+
+<HR>
+<A NAME="Valbind"><!-- --></A>
+<H3>bind</H3>
+<P>
+<CODE>val&nbsp;bind&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valconnect"><!-- --></A>
+<H3>connect</H3>
+<P>
+<CODE>val&nbsp;connect&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Vallisten"><!-- --></A>
+<H3>listen</H3>
+<P>
+<CODE>val&nbsp;listen&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typepassive">passive</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+<DL>
+<DD>
+Should do some range checking on backLog 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="Valclose"><!-- --></A>
+<H3>close</H3>
+<P>
+<CODE>val&nbsp;close&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valshutdown"><!-- --></A>
+<H3>shutdown</H3>
+<P>
+<CODE>val&nbsp;shutdown&nbsp;:&nbsp;('a,&nbsp;'b&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeshutdown_mode">shutdown_mode</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValpollDesc"><!-- --></A>
+<H3>pollDesc</H3>
+<P>
+<CODE>val&nbsp;pollDesc&nbsp;:&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;->&nbsp;<A HREF="StrOS_IO.html#Typepoll_desc">OS.IO.poll_desc</A></CODE>
+
+<HR>
+<A NAME="Valvbuf"><!-- --></A>
+<H3>vbuf</H3>
+<P>
+<CODE>val&nbsp;vbuf</CODE>
+
+<HR>
+<A NAME="Valabuf"><!-- --></A>
+<H3>abuf</H3>
+<P>
+<CODE>val&nbsp;abuf</CODE>
+
+<HR>
+<A NAME="ValdfltDon'tRoute"><!-- --></A>
+<H3>dfltDon'tRoute</H3>
+<P>
+<CODE>val&nbsp;dfltDon'tRoute</CODE>
+
+<HR>
+<A NAME="ValdfltOOB"><!-- --></A>
+<H3>dfltOOB</H3>
+<P>
+<CODE>val&nbsp;dfltOOB</CODE>
+
+<HR>
+<A NAME="ValdfltPeek"><!-- --></A>
+<H3>dfltPeek</H3>
+<P>
+<CODE>val&nbsp;dfltPeek</CODE>
+
+<HR>
+<A NAME="ValsendVec"><!-- --></A>
+<H3>sendVec</H3>
+<P>
+<CODE>val&nbsp;sendVec&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValsendArr"><!-- --></A>
+<H3>sendArr</H3>
+<P>
+<CODE>val&nbsp;sendArr&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValsendVec'"><!-- --></A>
+<H3>sendVec'</H3>
+<P>
+<CODE>val&nbsp;sendVec'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValsendArr'"><!-- --></A>
+<H3>sendArr'</H3>
+<P>
+<CODE>val&nbsp;sendArr'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValsendVecTo"><!-- --></A>
+<H3>sendVecTo</H3>
+<P>
+<CODE>val&nbsp;sendVecTo&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValsendArrTo"><!-- --></A>
+<H3>sendArrTo</H3>
+<P>
+<CODE>val&nbsp;sendArrTo&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValsendVecTo'"><!-- --></A>
+<H3>sendVecTo'</H3>
+<P>
+<CODE>val&nbsp;sendVecTo'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValsendArrTo'"><!-- --></A>
+<H3>sendArrTo'</H3>
+<P>
+<CODE>val&nbsp;sendArrTo'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typeout_flags">out_flags</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValrecvVec"><!-- --></A>
+<H3>recvVec</H3>
+<P>
+<CODE>val&nbsp;recvVec&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A></CODE>
+
+<HR>
+<A NAME="ValrecvArr"><!-- --></A>
+<H3>recvArr</H3>
+<P>
+<CODE>val&nbsp;recvArr&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValrecvVec'"><!-- --></A>
+<H3>recvVec'</H3>
+<P>
+<CODE>val&nbsp;recvVec'&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A></CODE>
+
+<HR>
+<A NAME="ValrecvArr'"><!-- --></A>
+<H3>recvArr'</H3>
+<P>
+<CODE>val&nbsp;recvArr'&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typeactive">active</A>&nbsp;<A HREF="StrSocketImp.html#Typestream">stream</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>&nbsp;<A HREF="StrSocketImp.html#Typebuf">buf</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValrecvVecFrom"><!-- --></A>
+<H3>recvVecFrom</H3>
+<P>
+<CODE>val&nbsp;recvVecFrom&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;*&nbsp;'b&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A></CODE>
+
+<HR>
+<A NAME="ValrecvArrFrom"><!-- --></A>
+<H3>recvArrFrom</H3>
+<P>
+<CODE>val&nbsp;recvArrFrom<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>}&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A></CODE>
+
+<HR>
+<A NAME="ValrecvVecFrom'"><!-- --></A>
+<H3>recvVecFrom'</H3>
+<P>
+<CODE>val&nbsp;recvVecFrom'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A>&nbsp;*&nbsp;'b&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A></CODE>
+
+<HR>
+<A NAME="ValrecvArrFrom'"><!-- --></A>
+<H3>recvArrFrom'</H3>
+<P>
+<CODE>val&nbsp;recvArrFrom'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;('a,&nbsp;<A HREF="StrSocketImp.html#Typedgram">dgram</A>)&nbsp;<A HREF="StrPreSock.html#Typesock">sock</A>&nbsp;*&nbsp;{buf&nbsp;:&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A>,&nbsp;i&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>}&nbsp;*&nbsp;<A HREF="StrSocketImp.html#Typein_flags">in_flags</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;'a&nbsp;<A HREF="StrPreSock.html#Typesock_addr">sock_addr</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

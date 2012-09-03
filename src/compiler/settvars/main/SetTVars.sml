@@ -2,7 +2,7 @@
  * resolve the scope of user declaraed type variables.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: SetTVars.sml,v 1.6 2006/03/02 12:50:13 bochao Exp $
+ * @version $Id: SetTVars.sml,v 1.13 2007/02/28 17:57:20 katsu Exp $
  *)
 structure SetTVars : SETTVARS = struct
 local
@@ -57,7 +57,12 @@ in
                tvarNameSetUnion(tvarNameSet, tvarsInTy ty))
         SEnv.empty tyList
     | A.TYFUN (ty1, ty2, loc) =>
-         tvarNameSetUnion(tvarsInTy ty1, tvarsInTy ty2))
+         tvarNameSetUnion(tvarsInTy ty1, tvarsInTy ty2)
+    | A.TYFFI (cconv, domTys, ranTy, loc) =>
+        foldr (fn (ty, tvarNameSet)=>
+               tvarNameSetUnion(tvarNameSet, tvarsInTy ty))
+              (tvarsInTy ranTy)
+              (domTys))
       handle exn as UE.UserErrors _ => raise exn
            | exn as C.Bug _ => raise exn
            | exn => raise UE.UserErrors([(A.getLocTy ty, UE.Error, exn)])
@@ -178,7 +183,10 @@ in
            plpatListPlexpList
          val ungardedTvars = tvarNameSetDifference(tvarset, env)
        in
+(*
          (PTFNM  (ungardedTvars, ptrules, loc), SEnv.empty)
+*)
+         (PTFNM  (ungardedTvars, ptrules, loc), ungardedTvars)
        end
    | PLCASEM (plexpList ,  plpatListPlexpList , caseKind , loc) => 
        let 
@@ -220,10 +228,60 @@ in
          val (ptexp, tvarset) = setExp env plexp
        in
          (PTCAST (ptexp , loc), tvarset)
+       end
+   | PLFFIIMPORT (plexp , ty , loc) =>
+       let 
+         val tvars1 = tvarsInTy ty
+         val (ptexp, tvars2) = setExp env plexp
+       in
+         (PTFFIIMPORT (ptexp , ty , loc), tvarNameSetUnion (tvars1, tvars2))
+       end
+   | PLFFIEXPORT (plexp , ty , loc) =>
+       let 
+         val tvars1 = tvarsInTy ty
+         val (ptexp, tvars2) = setExp env plexp
+       in
+         (PTFFIEXPORT (ptexp , ty , loc), tvarNameSetUnion (tvars1, tvars2))
+       end
+   | PLFFIAPPLY (cconv , funExp , args , retTy , loc) =>
+       let
+         val tvars1 = tvarsInTy retTy
+         val (ptfunExp, tvars2) = setExp env funExp
+         val (ptargs, tvars) =
+             foldr (fn (arg, (ptargs, tvars)) =>
+                       let
+                         val (ptarg, tvars3) = setFFIArg env arg
+                         val tvars = tvarNameSetUnion (tvars, tvars3)
+                       in
+                         (ptarg::ptargs, tvars)
+                       end)
+                   (nil, tvarNameSetUnion (tvars1, tvars2))
+                   args
+       in
+         (PTFFIAPPLY (cconv , ptfunExp, ptargs, retTy, loc), tvars)
        end)
       handle exn as UE.UserErrors _ => raise exn
            | exn as C.Bug _ => raise exn
            | exn => raise UE.UserErrors([(PL.getLocExp exp, UE.Error, exn)])
+
+ and setFFIArg env arg =
+     case arg of
+       PLFFIARG (exp, ty) =>
+       let
+         val (ptexp, tvars1) = setExp env exp
+         val tvars2 = tvarNameSetUnion (tvars1, tvarsInTy ty)
+       in
+         (PTFFIARG (ptexp, ty), tvars2)
+       end
+     | PLFFIARGSIZEOF (ty, SOME exp) =>
+       let
+         val (ptexp, tvars1) = setExp env exp
+         val tvars2 = tvarNameSetUnion (tvars1, tvarsInTy ty)
+       in
+         (PTFFIARGSIZEOF (ty, SOME ptexp), tvars2)
+       end
+     | PLFFIARGSIZEOF (ty, NONE) =>
+       (PTFFIARGSIZEOF (ty, NONE), tvarsInTy ty)
 
  and setDecl env pdecl = 
    (case pdecl of
@@ -368,22 +426,6 @@ in
    | PDINFIXDEC(n,idlist,loc) => PTINFIXDEC(n,idlist,loc)
    | PDINFIXRDEC(n,idlist,loc) => PTINFIXRDEC(n,idlist,loc)
    | PDNONFIXDEC(idlist,loc) => PTNONFIXDEC(idlist,loc)
-   | PDFFIVAL{name, funExp, libExp, argTyList, resultTy, loc} =>
-     let
-       val (ptFunExp, tvarset1) = setExp env funExp
-       val (ptLibExp, tvarset2) = setExp env libExp
-       val tvarset = tvarNameSetUnion(tvarset1, tvarset2)
-     (* ToDo : raise an compile error if tvarset is non-empty ? *)
-     in
-       PTFFIVAL {
-                 name = name, 
-                 funExp = ptFunExp, 
-                 libExp = ptLibExp, 
-                 argTyList = argTyList, 
-                 resultTy = resultTy, 
-                 loc= loc
-                 }
-     end
    | PDEMPTY => PTEMPTY)
       handle exn as UE.UserErrors _ => raise exn
            | exn as C.Bug _ => raise exn
@@ -440,6 +482,13 @@ in
          val tvarset2 = tvarsInTy ty
        in
          (PTPATTYPED (ptpat , ty , loc), tvarNameSetUnion(tvarset1, tvarset2))
+       end
+   | PLPATORPAT (plpat1 , plpat2 , loc) => 
+       let
+         val (ptpat1, tvarset1) = setPat env plpat1
+         val (ptpat2, tvarset2) = setPat env plpat2
+       in
+         (PTPATORPAT (ptpat1 , ptpat2 , loc), tvarNameSetUnion(tvarset1, tvarset2))
        end)
    handle exn as UE.UserErrors _ => raise exn
         | exn as C.Bug _ => raise exn
@@ -553,6 +602,7 @@ in
                          loc
                          )
        | PLTOPDECIMPORT(import,loc) => PTTOPDECIMPORT(setspec env import,loc)
+       | PLTOPDECEXPORT(export,loc) => PTTOPDECEXPORT(setspec env export,loc)
 
 end
 end

@@ -2,7 +2,7 @@
  * implementation of channel on a sub process.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: UnixProcessChannel.sml,v 1.15 2006/03/03 06:54:00 kiyoshiy Exp $
+ * @version $Id: UnixProcessChannel.sml,v 1.17 2007/03/15 12:13:06 katsu Exp $
  *)
 structure UnixProcessChannel =
 struct
@@ -105,25 +105,50 @@ val _ = print ("PID = " ^ pidToString pid ^ "\n")
             let
               val _ = assertProcessAlive ()
               val array = Word8Array.array (required, 0w0)
-              val read = P.IO.readArr (inFD, {buf = array, i = 0, sz = NONE})
-            in array end
+              fun read (array, i) =
+                  if i >= Word8Array.length array then array
+                  else
+                    let val buf = {buf = array, i = i, sz = NONE}
+                        val n = P.IO.readArr (inFD, buf)
+                    in read (array, i + n)
+                    end
+            in
+              read (array, 0)
+            end
+        fun receiveVector required =
+            Word8Array.extract (receiveArray required, 0, NONE)
         fun receive () =
             let
               val array = receiveArray 1
             in SOME(Word8Array.sub(array, 0)) end
+        fun sendArray array =
+            let
+              val _ = assertProcessAlive ()
+              fun write (array, i) =
+                  if i >= Word8Array.length array then ()
+                  else
+                    let val buf = {buf = array, i = i, sz = NONE}
+                        val n = P.IO.writeArr (outFD, buf)
+                    in write (array, i + n)
+                    end
+            in
+              write (array, 0)
+            end
+        fun sendVector vector =
+            let
+              val _ = assertProcessAlive ()
+              fun write (vector, i) =
+                  if i >= Word8Vector.length vector then ()
+                  else
+                    let val buf = {buf = vector, i = i, sz = NONE}
+                        val n = P.IO.writeVec (outFD, buf)
+                    in write (vector, i + n)
+                    end
+            in
+              write (vector, 0)
+            end
         fun send word =
-            (
-              assertProcessAlive ();
-              P.IO.writeArr
-                  (outFD, {buf = Word8Array.array(1, word), i = 0, sz = NONE});
-              ()
-            )
-	fun sendArray array =
-            (
-              assertProcessAlive ();
-              P.IO.writeArr (outFD, {buf = array, i = 0, sz = NONE});
-              ()
-            )
+            sendArray (Word8Array.array (1, word))
 
         fun flush () = ()
         fun isEOF () = false
@@ -134,12 +159,14 @@ val _ = print ("PID = " ^ pidToString pid ^ "\n")
           {
             receive = receive,
             receiveArray = receiveArray,
+            receiveVector = receiveVector,
             close = closeIn,
             isEOF = isEOF
           } : ChannelTypes.InputChannel,
           {
             send = send,
             sendArray = sendArray,
+            sendVector = sendVector,
             flush = flush,
             close = closeOut
           } : ChannelTypes.OutputChannel

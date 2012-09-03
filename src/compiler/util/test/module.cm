@@ -1,4 +1,7 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
         ../main/sources.cm
         ../../../smlunitlib.cm
 

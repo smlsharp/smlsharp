@@ -2,7 +2,7 @@
  * serialize combinator based on
  * "Type-Specialized Serialization with Sharing", Martin Elsman
  * @author YAMATODANI Kiyoshi
- * @version $Id: PICKLE.sig,v 1.5 2006/02/18 09:10:49 kiyoshiy Exp $
+ * @version $Id: PICKLE.sig,v 1.6 2007/02/21 02:12:32 kiyoshiy Exp $
  *)
 signature PICKLE = 
 sig
@@ -101,11 +101,9 @@ sig
 *)
 
   (* reference picklers *)
-  val refCyc : 'a -> 'a pu -> 'a ref pu
-(*
-  val ref0 : 'a pu -> 'a ref pu
-  val refLin : 'a pu -> 'a ref pu
-*)
+  val refCycle : 'a -> 'a pu -> 'a ref pu
+  val refNonCycle : 'a pu -> 'a ref pu
+  val refNonShared : 'a pu -> 'a ref pu
 
   (* datatype picklers *)
   val enum : ('a -> int) * 'a list -> 'a pu

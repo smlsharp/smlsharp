@@ -1,12 +1,19 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
 
         ../../env/sources.cm
 
         basics.sml
         gensym.sml
         PATH_UTILITY.sig
-        PathUtility.sml
+        PathUtility_SMLNJ.sml
         COUNTER.sig
         Counter.sml
         ListSorter.sml

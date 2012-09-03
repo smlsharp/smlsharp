@@ -37,11 +37,14 @@ in
  fun generalizeRigidTyvarBoundEnv ty = 
      let
        val tyvarIEnv = computeRigidTyvarEnv ty
-       val _ = TEnv.map (fn (tvstate as ref (T.TVAR ({tyvarName = SOME "RIGID", 
+       val _ = TEnv.map (fn (tvstate as ref (T.TVAR ({
+                                                      lambdaDepth,
+                                                      tyvarName = SOME "RIGID", 
                                                       id,
                                                       recKind,
                                                       eqKind}))) =>
                             tvstate := T.TVAR {
+                                               lambdaDepth = lambdaDepth,
                                                tyvarName = NONE,
                                                id = id,
                                                recKind = recKind,
@@ -50,18 +53,17 @@ in
                           | _ => raise Control.Bug "should be RIGID TYVAR"
                             )
                         tyvarIEnv
-       val {boundEnv,...} = TU.generalizer (ty,SEnv.empty,SEnv.empty)
+       val {boundEnv,...} = TU.generalizer (ty, T.toplevelDepth)
      in
        boundEnv
      end
 
-  (* strId, strName, strPath is a relative path
-   * representing the long structure identifier 
-   * appearing in "open" declaration
-   *)
-  fun generateInstantiatedStructure (strId, strName, strPath, loc) (strEnv, sigEnv) =
+ (* strId, strName, strPath is a relative path
+  * representing the long structure identifier 
+  * appearing in "open" declaration
+  *)
+ fun generateInstantiatedStructure (pathPrefix, loc) (strEnv, sigEnv) =
       let
-        val pathPrefix = Path.appendPath (strPath, strId, strName)
         fun genInstExp (tpexp, strTy, sigTy) =
             let
               val instSigTy =
@@ -70,8 +72,13 @@ in
               val (newSigTy, exp) = 
                   let
                     val (instStrTy,tpexp) = TCU.freshInst(strTy, tpexp)
-                    (* unify error captured by signature check *)
                     val _ = U.patternUnify [(instStrTy,instSigTy)]
+                        (* To avoid duplication report : 
+                         * Unify error should be already captured by
+                         * 1.core language checking
+                         * 2.signature checking
+                         *)
+                        handle U.Unify => ()
                     val boundEnv = 
                         generalizeRigidTyvarBoundEnv instStrTy
                   in 
@@ -116,13 +123,6 @@ in
                                      TIU.etaExpandCon (P.NilPath, name)
                                                       loc
                                                       idState
-                                   | SOME (T.FFID {ty,...}) =>
-                                     (ty,
-                                      TC.TPVAR ({ name = name,
-                                                  strpath = P.NilPath,
-                                                  ty = ty},
-                                                loc)
-                                      )
                                    | _ =>  
                                      raise Control.Bug
                                              ("genInstValDecs:"^name^" is declared as PRIM/OPRIM")
@@ -140,18 +140,15 @@ in
                        nil
                        sigVE
 
-        fun genInstStrDecs pathPrefix loc (strSE:T.strEnv, sigSE:T.strEnv) =
-            SEnv.foldl ( fn (T.STRUCTURE {id, name, strpath, env}, strdecs) =>
+        fun genInstStrDecs pathPrefix loc (T.STRUCTURE strSECont, T.STRUCTURE sigSECont) =
+            SEnv.foldl ( fn ({id, name, strpath, env}, strdecs) =>
                             let
                               val (subSigTE, subSigVE, subSigSE) = env
                               val strdec = 
-                                  case SEnv.find(strSE,name) of
+                                  case SEnv.find(strSECont,name) of
                                     NONE => (* should be captured by typeinference *)
                                     nil
-                                  | SOME 
-                                      (T.STRUCTURE 
-                                         {id, name, env = (subStrTE, subStrVE, subStrSE),...}
-                                         ) 
+                                  | SOME {id, name, env = (subStrTE, subStrVE, subStrSE),...}
                                       =>
                                       let
                                         val openDec =
@@ -195,7 +192,7 @@ in
                             end
                        )
                        nil
-                       sigSE
+                       sigSECont
             
         fun genInstTopStrDecs pathPrefix loc (strEnv,sigEnv) =
             let

@@ -1,10 +1,15 @@
 val ss_0 = - : Substring.substring
 val ss_1 = - : Substring.substring
 val ss_2 = - : Substring.substring
-val checkSS = fn : Substring.substring -> ((Substring.string * int * int) * Substring.string) option
+val checkSS = fn : Substring.substring  ->
+  ((Substring.string * int * int) * Substring.string) option
 val check2SS = fn : Substring.substring * Substring.substring ->
-  ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val checkSSs = fn : Substring.substring List.list -> ((Substring.string * int * int) * Substring.string) List.list
+  ((Substring.string * int * int) *
+   Substring.string *
+   (Substring.string * int * int) *
+   Substring.string) option
+val checkSSs = fn : Substring.substring list  ->
+  ((Substring.string * int * int) * Substring.string) list
 val extract_0_0_N = SOME (("",0,0),"") : ((Substring.string * int * int) * Substring.string) option
 val extract_0_0_0 = SOME (("",0,0),"") : ((Substring.string * int * int) * Substring.string) option
 val extract_1_0_N = SOME (("a",0,1),"a") : ((Substring.string * int * int) * Substring.string) option
@@ -39,10 +44,10 @@ val substring_2_2_0 = SOME (("ab",2,0),"") : ((Substring.string * int * int) * S
 val substring_2_m1_0 = NONE : ((Substring.string * int * int) * Substring.string) option
 val substring_2_0_m1 = NONE : ((Substring.string * int * int) * Substring.string) option
 val substring_2_1_2 = NONE : ((Substring.string * int * int) * Substring.string) option
-val all_empty = SOME (("",0,0),"") : ((Substring.string * int * int) * Substring.string) option
-val all_1 = SOME (("a",0,1),"a") : ((Substring.string * int * int) * Substring.string) option
-val all_2 = SOME (("ab",0,2),"ab") : ((Substring.string * int * int) * Substring.string) option
-val all_10 = SOME (("abcdefghij",0,10),"abcdefghij") : ((Substring.string * int * int) * Substring.string) option
+val full_empty = SOME (("",0,0),"") : ((Substring.string * int * int) * Substring.string) option
+val full_1 = SOME (("a",0,1),"a") : ((Substring.string * int * int) * Substring.string) option
+val full_2 = SOME (("ab",0,2),"ab") : ((Substring.string * int * int) * Substring.string) option
+val full_10 = SOME (("abcdefghij",0,10),"abcdefghij") : ((Substring.string * int * int) * Substring.string) option
 val isEmpty_0 = true : bool
 val isEmpty_1_0_N = false : bool
 val isEmpty_1_0_0 = true : bool
@@ -169,44 +174,158 @@ val collate_2_2_lt = GREATER : order
 val collate_2_2_eq = EQUAL : order
 val collate_2_2_gt = LESS : order
 val splitFun = fn : char -> bool
-val splitl_0 = SOME (("",0,0),"",("",0,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_1_f = SOME (("abc",1,0),"",("abc",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_1_t = SOME (("aAc",1,1),"A",("aAc",2,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_2_f = SOME (("abcd",1,0),"",("abcd",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_2_0 = SOME (("aAcd",1,1),"A",("aAcd",2,1),"c") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_2_1 = SOME (("aaAd",1,0),"",("aaAd",1,2),"aA") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_3_f = SOME (("abcde",1,0),"",("abcde",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_3_0 = SOME (("aAcAe",1,1),"A",("aAcAe",2,2),"cA") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_3_1 = SOME (("abAAe",1,0),"",("abAAe",1,3),"bAA") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitl_3_2 = SOME (("abcAe",1,0),"",("abcAe",1,3),"bcA") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_0 = SOME (("",0,0),"",("",0,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_1_f = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_1_t = SOME (("aAc",1,0),"",("aAc",1,1),"A") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_2_f = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_2_0 = SOME (("aAcd",1,2),"Ac",("aAcd",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_2_1 = SOME (("aaAd",1,1),"a",("aaAd",2,1),"A") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_3_f = SOME (("abcde",1,3),"bcd",("abcde",4,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_3_0 = SOME (("aAcAe",1,2),"Ac",("aAcAe",3,1),"A") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_3_1 = SOME (("abAAe",1,1),"b",("abAAe",2,2),"AA") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitr_3_2 = SOME (("abcAe",1,2),"bc",("abcAe",3,1),"A") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_0_0 = SOME (("",0,0),"",("",0,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_0_m1 = NONE : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_0_1 = NONE : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_1_0 = SOME (("abc",1,0),"",("abc",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_1_1 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_1_2 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_1_m1 = NONE : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_2_0 = SOME (("abcd",1,0),"",("abcd",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_2_1 = SOME (("abcd",1,1),"b",("abcd",2,1),"c") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_2_2 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_2_3 = NONE : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_2_m1 = NONE : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_3_0 = SOME (("abcde",1,0),"",("abcde",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_3_1 = SOME (("abcde",1,1),"b",("abcde",2,2),"cd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_3_2 = SOME (("abcde",1,2),"bc",("abcde",3,1),"d") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_3_3 = SOME (("abcde",1,3),"bcd",("abcde",4,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_3_4 = NONE : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val splitAt_3_m1 = NONE : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
+val splitl_0 = SOME (("",0,0),"",("",0,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_1_f = SOME (("abc",1,0),"",("abc",1,1),"b") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_1_t = SOME (("aAc",1,1),"A",("aAc",2,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_2_f = SOME (("abcd",1,0),"",("abcd",1,2),"bc") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_2_0 = SOME (("aAcd",1,1),"A",("aAcd",2,1),"c") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_2_1 = SOME (("aaAd",1,0),"",("aaAd",1,2),"aA") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_3_f = SOME (("abcde",1,0),"",("abcde",1,3),"bcd") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_3_0 = SOME (("aAcAe",1,1),"A",("aAcAe",2,2),"cA") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_3_1 = SOME (("abAAe",1,0),"",("abAAe",1,3),"bAA") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitl_3_2 = SOME (("abcAe",1,0),"",("abcAe",1,3),"bcA") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_0 = SOME (("",0,0),"",("",0,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_1_f = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_1_t = SOME (("aAc",1,0),"",("aAc",1,1),"A") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_2_f = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_2_0 = SOME (("aAcd",1,2),"Ac",("aAcd",3,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_2_1 = SOME (("aaAd",1,1),"a",("aaAd",2,1),"A") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_3_f = SOME (("abcde",1,3),"bcd",("abcde",4,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_3_0 = SOME (("aAcAe",1,2),"Ac",("aAcAe",3,1),"A") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_3_1 = SOME (("abAAe",1,1),"b",("abAAe",2,2),"AA") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitr_3_2 = SOME (("abcAe",1,2),"bc",("abcAe",3,1),"A") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_0_0 = SOME (("",0,0),"",("",0,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_0_m1 = NONE : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_0_1 = NONE : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_1_0 = SOME (("abc",1,0),"",("abc",1,1),"b") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_1_1 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_1_2 = NONE : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_1_m1 = NONE : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_2_0 = SOME (("abcd",1,0),"",("abcd",1,2),"bc") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_2_1 = SOME (("abcd",1,1),"b",("abcd",2,1),"c") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_2_2 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_2_3 = NONE : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_2_m1 = NONE : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_3_0 = SOME (("abcde",1,0),"",("abcde",1,3),"bcd") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_3_1 = SOME (("abcde",1,1),"b",("abcde",2,2),"cd") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_3_2 = SOME (("abcde",1,2),"bc",("abcde",3,1),"d") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_3_3 = SOME (("abcde",1,3),"bcd",("abcde",4,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_3_4 = NONE : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val splitAt_3_m1 = NONE : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
 val dropFun = fn : char -> bool
 val dropl_0 = SOME (("",0,0),"") : ((Substring.string * int * int) * Substring.string) option
 val dropl_1_f = SOME (("abc",1,1),"b") : ((Substring.string * int * int) * Substring.string) option
@@ -249,109 +368,169 @@ val taker_3_f = SOME (("abcde",4,0),"") : ((Substring.string * int * int) * Subs
 val taker_3_0 = SOME (("aAcAe",3,1),"A") : ((Substring.string * int * int) * Substring.string) option
 val taker_3_1 = SOME (("abAAe",2,2),"AA") : ((Substring.string * int * int) * Substring.string) option
 val taker_3_2 = SOME (("abcAe",3,1),"A") : ((Substring.string * int * int) * Substring.string) option
-val position_0_0 = SOME (("abc",1,0),"",("abc",1,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_0_1 = SOME (("abc",1,0),"",("abc",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_1_1_m1 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_1_1_1 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_1_1_0t = SOME (("abc",1,0),"",("abc",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_1_2_m1 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_1_2_0 = SOME (("abcd",1,0),"",("abcd",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_1_2_1 = SOME (("abcd",1,1),"b",("abcd",2,1),"c") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_1_2_2 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_1_f1 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_1_f2 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_2_m1 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_2_0 = SOME (("abcd",1,0),"",("abcd",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_2_1 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_2_2 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_3_m1 = SOME (("abcdef",1,3),"bcd",("abcdef",4,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_3_0 = SOME (("abcdef",1,0),"",("abcdef",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_3_1 = SOME (("abcdef",1,1),"b",("abcdef",2,2),"cd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_3_2 = SOME (("abcdef",1,3),"bcd",("abcdef",4,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_2_3_3 = SOME (("abcdef",1,3),"bcd",("abcdef",4,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val position_longest = SOME (("abcdbcf",1,0),"",("abcdbcf",1,5),"bcdbc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val makeSpanSS = fn
-  : string
-    -> int * int
-       -> int * int
-          -> ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) 
-               option
-val span_0_0_A_A = SOME (("abcde",1,0),"",("abcde",3,0),"") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_1_1_A_A = SOME (("abcde",1,1),"b",("abcde",3,1),"d") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_1_1_B_B = SOME (("abcde",1,1),"b",("abcde",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_1_1_E_E = SOME (("abcde",3,1),"d",("abcde",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_1_2_A_A = SOME (("abcde",1,1),"b",("abcde",3,2),"de") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_1_2_B_B = SOME (("abcde",1,1),"b",("abcde",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_1_2_D_D = SOME (("abcde",2,1),"c",("abcde",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_1_2_E_E = SOME (("abcde",3,1),"d",("abcde",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_1_A_A = SOME (("abcde",1,2),"bc",("abcde",3,1),"d") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_1_A_B = SOME (("abcde",1,2),"bc",("abcde",2,1),"c") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_1_B_E = SOME (("abcde",1,2),"bc",("abcde",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_1_E_E = SOME (("abcde",2,2),"cd",("abcde",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_2_A_A = SOME (("abcdef",1,2),"bc",("abcdef",3,2),"de") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_2_A_B = SOME (("abcdef",1,2),"bc",("abcdef",2,2),"cd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_2_B_D = SOME (("abcdef",1,2),"bc",("abcdef",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_2_D_E = SOME (("abcdef",2,2),"cd",("abcdef",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_2_E_E = SOME (("abcdef",3,2),"de",("abcdef",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_1_A_A = SOME (("abcdef",1,3),"bcd",("abcdef",4,1),"e") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_1_A_B = SOME (("abcdef",1,3),"bcd",("abcdef",3,1),"d") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_1_A_E = SOME (("abcdef",1,3),"bcd",("abcdef",2,1),"c") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_1_B_E = SOME (("abcdef",1,3),"bcd",("abcdef",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_1_E_E = SOME (("abcdef",2,3),"cde",("abcdef",1,1),"b") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_2_A_A = SOME (("abcdefg",1,3),"bcd",("abcdefg",4,2),"ef") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_2_A_B = SOME (("abcdefg",1,3),"bcd",("abcdefg",3,2),"de") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_2_A_D = SOME (("abcdefg",1,3),"bcd",("abcdefg",2,2),"cd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_2_B_E = SOME (("abcdefg",1,3),"bcd",("abcdefg",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_2_D_E = SOME (("abcdefg",2,3),"cde",("abcdefg",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_2_E_E = SOME (("abcdefg",2,3),"cde",("abcdefg",1,2),"bc") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_3_A_A = SOME (("abcdefgh",1,3),"bcd",("abcdefgh",4,3),"efg") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_3_A_B = SOME (("abcdefgh",1,3),"bcd",("abcdefgh",3,3),"def") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_3_A_C = SOME (("abcdefgh",1,3),"bcd",("abcdefgh",2,3),"cde") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_3_B_D = SOME (("abcdefgh",1,3),"bcd",("abcdefgh",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_3_C_E = SOME (("abcdefgh",2,3),"cde",("abcdefgh",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_3_D_E = SOME (("abcdefgh",3,3),"def",("abcdefgh",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_3_E_E = SOME (("abcdefgh",4,3),"efg",("abcdefgh",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_3_A_A = SOME (("abcdefg",1,2),"bc",("abcdefg",3,3),"def") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_3_A_B = SOME (("abcdefg",1,2),"bc",("abcdefg",2,3),"cde") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_3_B_C = SOME (("abcdefg",1,2),"bc",("abcdefg",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_3_C_D = SOME (("abcdefg",2,2),"cd",("abcdefg",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_3_D_E = SOME (("abcdefg",3,2),"de",("abcdefg",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_2_3_E_E = SOME (("abcdefg",4,2),"ef",("abcdefg",1,3),"bcd") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val span_3_3_A_A_2 = SOME (("abcdefghi",1,3),"bcd",("abcdefghi",5,3),"fgh") : ((Substring.string * int * int) * Substring.string * (Substring.string * int * int) * Substring.string) option
-val translateFun = fn : char -> String.string
+val position_0_0 = SOME (("abc",1,0),"",("abc",1,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_0_1 = SOME (("abc",1,0),"",("abc",1,1),"b") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_1_1_m1 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_1_1_1 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_1_1_0t = SOME (("abc",1,0),"",("abc",1,1),"b") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_1_2_m1 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_1_2_0 = SOME (("abcd",1,0),"",("abcd",1,2),"bc") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_1_2_1 = SOME (("abcd",1,1),"b",("abcd",2,1),"c") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_1_2_2 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_1_f1 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_1_f2 = SOME (("abc",1,1),"b",("abc",2,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_2_m1 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_2_0 = SOME (("abcd",1,0),"",("abcd",1,2),"bc") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_2_1 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_2_2 = SOME (("abcd",1,2),"bc",("abcd",3,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_3_m1 = SOME (("abcdef",1,3),"bcd",("abcdef",4,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_3_0 = SOME (("abcdef",1,0),"",("abcdef",1,3),"bcd") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_3_1 = SOME (("abcdef",1,1),"b",("abcdef",2,2),"cd") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_3_2 = SOME (("abcdef",1,3),"bcd",("abcdef",4,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_2_3_3 = SOME (("abcdef",1,3),"bcd",("abcdef",4,0),"") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val position_longest = SOME (("abcdbcf",1,0),"",("abcdbcf",1,5),"bcdbc") : ((Substring.string * int * int) *
+ Substring.string *
+ (Substring.string * int * int) *
+ Substring.string) option
+val makeSpanSS = fn : string  ->
+  int * int  ->
+    int * int  -> ((Substring.string * int * int) * Substring.string) option
+val span_0_0_A_A = SOME (("abcde",1,2),"bc") : ((Substring.string * int * int) * Substring.string) option
+val span_1_1_A_A = SOME (("abcde",1,3),"bcd") : ((Substring.string * int * int) * Substring.string) option
+val span_1_1_B_B = SOME (("abcde",1,1),"b") : ((Substring.string * int * int) * Substring.string) option
+val span_1_1_E_E = NONE : ((Substring.string * int * int) * Substring.string) option
+val span_1_2_A_A = SOME (("abcde",1,4),"bcde") : ((Substring.string * int * int) * Substring.string) option
+val span_1_2_B_B = SOME (("abcde",1,2),"bc") : ((Substring.string * int * int) * Substring.string) option
+val span_1_2_D_D = SOME (("abcde",2,1),"c") : ((Substring.string * int * int) * Substring.string) option
+val span_1_2_E_E = SOME (("abcde",3,0),"") : ((Substring.string * int * int) * Substring.string) option
+val span_2_1_A_A = SOME (("abcde",1,3),"bcd") : ((Substring.string * int * int) * Substring.string) option
+val span_2_1_A_B = SOME (("abcde",1,2),"bc") : ((Substring.string * int * int) * Substring.string) option
+val span_2_1_B_E = SOME (("abcde",1,1),"b") : ((Substring.string * int * int) * Substring.string) option
+val span_2_1_E_E = SOME (("abcde",2,0),"") : ((Substring.string * int * int) * Substring.string) option
+val span_2_2_A_A = SOME (("abcdef",1,4),"bcde") : ((Substring.string * int * int) * Substring.string) option
+val span_2_2_A_B = SOME (("abcdef",1,3),"bcd") : ((Substring.string * int * int) * Substring.string) option
+val span_2_2_B_D = SOME (("abcdef",1,2),"bc") : ((Substring.string * int * int) * Substring.string) option
+val span_2_2_D_E = SOME (("abcdef",2,1),"c") : ((Substring.string * int * int) * Substring.string) option
+val span_2_2_E_E = SOME (("abcdef",3,0),"") : ((Substring.string * int * int) * Substring.string) option
+val span_3_1_A_A = SOME (("abcdef",1,4),"bcde") : ((Substring.string * int * int) * Substring.string) option
+val span_3_1_A_B = SOME (("abcdef",1,3),"bcd") : ((Substring.string * int * int) * Substring.string) option
+val span_3_1_A_E = SOME (("abcdef",1,2),"bc") : ((Substring.string * int * int) * Substring.string) option
+val span_3_1_B_E = SOME (("abcdef",1,1),"b") : ((Substring.string * int * int) * Substring.string) option
+val span_3_1_E_E = SOME (("abcdef",2,0),"") : ((Substring.string * int * int) * Substring.string) option
+val span_3_2_A_A = SOME (("abcdefg",1,5),"bcdef") : ((Substring.string * int * int) * Substring.string) option
+val span_3_2_A_B = SOME (("abcdefg",1,4),"bcde") : ((Substring.string * int * int) * Substring.string) option
+val span_3_2_A_D = SOME (("abcdefg",1,3),"bcd") : ((Substring.string * int * int) * Substring.string) option
+val span_3_2_B_E = SOME (("abcdefg",1,2),"bc") : ((Substring.string * int * int) * Substring.string) option
+val span_3_2_D_E = SOME (("abcdefg",2,1),"c") : ((Substring.string * int * int) * Substring.string) option
+val span_3_2_E_E = SOME (("abcdefg",2,1),"c") : ((Substring.string * int * int) * Substring.string) option
+val span_3_3_A_A = SOME (("abcdefgh",1,6),"bcdefg") : ((Substring.string * int * int) * Substring.string) option
+val span_3_3_A_B = SOME (("abcdefgh",1,5),"bcdef") : ((Substring.string * int * int) * Substring.string) option
+val span_3_3_A_C = SOME (("abcdefgh",1,4),"bcde") : ((Substring.string * int * int) * Substring.string) option
+val span_3_3_B_D = SOME (("abcdefgh",1,3),"bcd") : ((Substring.string * int * int) * Substring.string) option
+val span_3_3_C_E = SOME (("abcdefgh",2,2),"cd") : ((Substring.string * int * int) * Substring.string) option
+val span_3_3_D_E = SOME (("abcdefgh",3,1),"d") : ((Substring.string * int * int) * Substring.string) option
+val span_3_3_E_E = SOME (("abcdefgh",4,0),"") : ((Substring.string * int * int) * Substring.string) option
+val span_2_3_A_A = SOME (("abcdefg",1,5),"bcdef") : ((Substring.string * int * int) * Substring.string) option
+val span_2_3_A_B = SOME (("abcdefg",1,4),"bcde") : ((Substring.string * int * int) * Substring.string) option
+val span_2_3_B_C = SOME (("abcdefg",1,3),"bcd") : ((Substring.string * int * int) * Substring.string) option
+val span_2_3_C_D = SOME (("abcdefg",2,2),"cd") : ((Substring.string * int * int) * Substring.string) option
+val span_2_3_D_E = SOME (("abcdefg",3,1),"d") : ((Substring.string * int * int) * Substring.string) option
+val span_2_3_E_E = SOME (("abcdefg",4,0),"") : ((Substring.string * int * int) * Substring.string) option
+val span_3_3_A_A_2 = SOME (("abcdefghi",1,7),"bcdefgh") : ((Substring.string * int * int) * Substring.string) option
+val translateFun = fn : char -> string
 val translate0 = "" : Substring.string
 bbval translate1 = "bb" : Substring.string
 bbccval translate2 = "bbcc" : Substring.string
 val tokensFun = fn : char -> bool
-val tokens_empty = [] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_00 = [] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_01 = [(("a|bc",2,1),"b")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_10 = [(("ab|c",1,1),"b")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_11 = [(("ab|cd",1,1),"b"),(("ab|cd",3,1),"c")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_000 = [] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_001 = [(("a||bc",3,1),"b")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_010 = [(("a|b|c",2,1),"b")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_011 = [(("a|b|cd",2,1),"b"),(("a|b|cd",4,1),"c")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_100 = [(("ab||c",1,1),"b")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_101 = [(("ab||cd",1,1),"b"),(("ab||cd",4,1),"c")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_110 = [(("ab|c|d",1,1),"b"),(("ab|c|d",3,1),"c")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_111 = [(("ab|c|de",1,1),"b"),(("ab|c|de",3,1),"c"),(("ab|c|de",5,1),"d")] : ((Substring.string * int * int) * Substring.string) List.list
-val tokens_222 = [(("abc|de|fgh",1,2),"bc"),(("abc|de|fgh",4,2),"de"), (("abc|de|fgh",7,2),"fg")] : ((Substring.string * int * int) * Substring.string) List.list
+val tokens_empty = [] : ((Substring.string * int * int) * Substring.string) list
+val tokens_00 = [] : ((Substring.string * int * int) * Substring.string) list
+val tokens_01 = [(("a|bc",2,1),"b")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_10 = [(("ab|c",1,1),"b")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_11 = [(("ab|cd",1,1),"b"),(("ab|cd",3,1),"c")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_000 = [] : ((Substring.string * int * int) * Substring.string) list
+val tokens_001 = [(("a||bc",3,1),"b")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_010 = [(("a|b|c",2,1),"b")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_011 = [(("a|b|cd",2,1),"b"),(("a|b|cd",4,1),"c")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_100 = [(("ab||c",1,1),"b")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_101 = [(("ab||cd",1,1),"b"),(("ab||cd",4,1),"c")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_110 = [(("ab|c|d",1,1),"b"),(("ab|c|d",3,1),"c")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_111 = [(("ab|c|de",1,1),"b"),(("ab|c|de",3,1),"c"),(("ab|c|de",5,1),"d")] : ((Substring.string * int * int) * Substring.string) list
+val tokens_222 = [(("abc|de|fgh",1,2),"bc"),(("abc|de|fgh",4,2),"de"), (("abc|de|fgh",7,2),"fg")] : ((Substring.string * int * int) * Substring.string) list
 val fieldsFun = fn : char -> bool
-val fields_empty = [(("abc",1,0),"")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_00 = [(("a|b",1,0),""),(("a|b",2,0),"")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_01 = [(("a|bc",1,0),""),(("a|bc",2,1),"b")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_10 = [(("ab|c",1,1),"b"),(("ab|c",3,0),"")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_11 = [(("ab|cd",1,1),"b"),(("ab|cd",3,1),"c")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_000 = [(("a||b",1,0),""),(("a||b",2,0),""),(("a||b",3,0),"")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_001 = [(("a||bc",1,0),""),(("a||bc",2,0),""),(("a||bc",3,1),"b")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_010 = [(("a|b|c",1,0),""),(("a|b|c",2,1),"b"),(("a|b|c",4,0),"")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_011 = [(("a|b|cd",1,0),""),(("a|b|cd",2,1),"b"),(("a|b|cd",4,1),"c")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_100 = [(("ab||c",1,1),"b"),(("ab||c",3,0),""),(("ab||c",4,0),"")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_101 = [(("ab||cd",1,1),"b"),(("ab||cd",3,0),""),(("ab||cd",4,1),"c")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_110 = [(("ab|c|d",1,1),"b"),(("ab|c|d",3,1),"c"),(("ab|c|d",5,0),"")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_111 = [(("ab|c|de",1,1),"b"),(("ab|c|de",3,1),"c"),(("ab|c|de",5,1),"d")] : ((Substring.string * int * int) * Substring.string) List.list
-val fields_222 = [(("abc|de|fgh",1,2),"bc"),(("abc|de|fgh",4,2),"de"), (("abc|de|fgh",7,2),"fg")] : ((Substring.string * int * int) * Substring.string) List.list
+val fields_empty = [(("abc",1,0),"")] : ((Substring.string * int * int) * Substring.string) list
+val fields_00 = [(("a|b",1,0),""),(("a|b",2,0),"")] : ((Substring.string * int * int) * Substring.string) list
+val fields_01 = [(("a|bc",1,0),""),(("a|bc",2,1),"b")] : ((Substring.string * int * int) * Substring.string) list
+val fields_10 = [(("ab|c",1,1),"b"),(("ab|c",3,0),"")] : ((Substring.string * int * int) * Substring.string) list
+val fields_11 = [(("ab|cd",1,1),"b"),(("ab|cd",3,1),"c")] : ((Substring.string * int * int) * Substring.string) list
+val fields_000 = [(("a||b",1,0),""),(("a||b",2,0),""),(("a||b",3,0),"")] : ((Substring.string * int * int) * Substring.string) list
+val fields_001 = [(("a||bc",1,0),""),(("a||bc",2,0),""),(("a||bc",3,1),"b")] : ((Substring.string * int * int) * Substring.string) list
+val fields_010 = [(("a|b|c",1,0),""),(("a|b|c",2,1),"b"),(("a|b|c",4,0),"")] : ((Substring.string * int * int) * Substring.string) list
+val fields_011 = [(("a|b|cd",1,0),""),(("a|b|cd",2,1),"b"),(("a|b|cd",4,1),"c")] : ((Substring.string * int * int) * Substring.string) list
+val fields_100 = [(("ab||c",1,1),"b"),(("ab||c",3,0),""),(("ab||c",4,0),"")] : ((Substring.string * int * int) * Substring.string) list
+val fields_101 = [(("ab||cd",1,1),"b"),(("ab||cd",3,0),""),(("ab||cd",4,1),"c")] : ((Substring.string * int * int) * Substring.string) list
+val fields_110 = [(("ab|c|d",1,1),"b"),(("ab|c|d",3,1),"c"),(("ab|c|d",5,0),"")] : ((Substring.string * int * int) * Substring.string) list
+val fields_111 = [(("ab|c|de",1,1),"b"),(("ab|c|de",3,1),"c"),(("ab|c|de",5,1),"d")] : ((Substring.string * int * int) * Substring.string) list
+val fields_222 = [(("abc|de|fgh",1,2),"bc"),(("abc|de|fgh",4,2),"de"), (("abc|de|fgh",7,2),"fg")] : ((Substring.string * int * int) * Substring.string) list
 val foldlFun = fn : char * char list -> char list
 val foldl_0 = [] : char list
 bval foldl_1 = [#"b"] : char list

@@ -1,0 +1,25 @@
+ann 
+  "nonexhaustiveMatch ignore"
+  "allowFFI true"
+in
+        ../../../../preludes.mlb
+        $(SML_LIB)/basis/mlton.mlb
+
+        $(CONFIGDIR)/Configuration.sml
+        ../../../toplevel/main/module.mlb
+        ../../../control/main/module.mlb
+        ../../../env/main/module.mlb
+        ../../../session/main/module.mlb
+        ../../../util/main/module.mlb
+        ../../../pickle/main/module.mlb
+
+        GET_OPT.sig
+        GetOpt.sml
+
+        FileSysUtil_MLton.sml
+        InteractiveSessionFactory_MLton.sml
+
+        Main.sml
+
+	mlton_main.sml
+end

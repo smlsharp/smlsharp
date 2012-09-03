@@ -1,12 +1,24 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
 	../../../smlformatlib.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
 
         ../../control/sources.cm
         ../../format/sources.cm
         ../../util/sources.cm
         ../../env/sources.cm
         ../../types/sources.cm
+        ../../../primitives/compiler/sources.cm
         ../../typedcalc/sources.cm
         ../../recordcalc/sources.cm
         ../../typedlambda/sources.cm

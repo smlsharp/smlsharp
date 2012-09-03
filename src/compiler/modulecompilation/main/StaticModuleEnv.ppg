@@ -1,13 +1,14 @@
 (**
  * @copyright (c) 2006, Tohoku University. 
  * @author Liu Bochao
- * @version $Id: StaticModuleEnv.ppg,v 1.1 2006/03/02 12:47:29 bochao Exp $
+ * @version $Id: StaticModuleEnv.ppg,v 1.5 2006/07/12 06:30:11 bochao Exp $
  *)
 structure StaticModuleEnv =
 struct
    
    structure TO = TopObject
    structure PE = PathEnv
+   structure TCU = TypeContextUtils
 
    (******************** interactive mode ********************** *)
    (*%
@@ -74,6 +75,8 @@ struct
    val emptyImportModuleEnv = PathEnv.emptyPathBasis
    val emptyExportModuleEnv = PathEnv.emptyPathBasis
 
+   val emptyStaticModuleEnv = {importModuleEnv = emptyImportModuleEnv,
+                               exportModuleEnv = emptyExportModuleEnv}
 
    fun extendImportModuleEnv 
          {newImportModuleEnv, oldImportModuleEnv} =
@@ -82,9 +85,141 @@ struct
             oldPathBasis = oldImportModuleEnv}
 
    fun extendExportModuleEnv 
-         {newExportModuleEnv, oldExportModuleEnv} =
-         PE.extendPathBasisWithPathBasis
-           {newPathBasis = newExportModuleEnv,
-            oldPathBasis = oldExportModuleEnv}
+           {newExportModuleEnv, oldExportModuleEnv} 
+     =
+     PE.extendPathBasisWithPathBasis
+         {newPathBasis = newExportModuleEnv,
+          oldPathBasis = oldExportModuleEnv}
+               
+   fun projectTopModuleEnvToCurrentModuleEnv (moduleEnv:moduleEnv)  =
+       let
+           val pathEnv =
+               case SEnv.find(#2(#topPathBasis moduleEnv),Path.topStrName) of
+                   NONE => raise Control.Bug "no topstructure in topPathbasis"
+                 | SOME (PE.PATHAUX pathEnv) => pathEnv
+       in
+           {freeGlobalArrayIndex = #freeGlobalArrayIndex moduleEnv,
+            freeEntryPointer = #freeEntryPointer moduleEnv,
+            pathBasis = (#1 (#topPathBasis moduleEnv), pathEnv)}:deltaModuleEnv
+       end
 
+   fun injectExportModuleEnvInStaticModuleEnv 
+           (exportModuleEnv, staticModuleEnv : staticModuleEnv)
+     =
+     {
+      importModuleEnv = #importModuleEnv staticModuleEnv,
+      exportModuleEnv = exportModuleEnv
+      }
+
+   (**********************************************************************************
+    * substTyConIdXXX utilities
+    *)
+    fun substTyConIdPathVarEnv substTyConIdEnv pathVarEnv =
+        SEnv.map (fn item => 
+                     case item of
+                         PE.TopItem (pathVar, index, ty) =>
+                         let
+                             val (ty, visited) = 
+                                 TCU.substTyConIdInTy ID.Set.empty substTyConIdEnv ty
+                         in
+                             PE.TopItem (pathVar, index, ty)
+                         end
+                       | PE.CurItem (pathVar, id, ty, loc) =>
+                         let
+                             val (ty, visited) = 
+                                 TCU.substTyConIdInTy ID.Set.empty substTyConIdEnv ty
+                         in
+                             PE.CurItem (pathVar, id, ty, loc)
+                         end)
+                 pathVarEnv
+
+    fun substTyConIdPathStrEnv substTyConIdEnv pathStrEnv =
+        SEnv.map (fn (PE.PATHAUX Env) =>
+                     PE.PATHAUX (substTyConIdPathEnv substTyConIdEnv Env))
+                 pathStrEnv
+
+    and substTyConIdPathEnv substTyConIdEnv (pathEnv:PathEnv.pathEnv) =
+        let
+            val pathVarEnv = substTyConIdPathVarEnv substTyConIdEnv (#1 pathEnv)
+            val pathStrEnv = substTyConIdPathStrEnv substTyConIdEnv (#2 pathEnv)
+        in
+            (pathVarEnv, pathStrEnv)
+        end
+
+    fun substTyConIdPathBasis substTyConIdEnv (pathBasis:PathEnv.pathBasis) = 
+        let
+            (* tobe : how to deal with functor ???*)
+            val pathFunEnv = #1 pathBasis
+            val pathEnv = substTyConIdPathEnv substTyConIdEnv (#2 pathBasis)
+        in
+            (pathFunEnv, pathEnv)
+        end
+
+    fun substTyConIdStaticModuleEnv 
+            substTyConIdEnv (staticModuleEnv:staticModuleEnv) =
+        let
+            val importModuleEnv = 
+                substTyConIdPathBasis substTyConIdEnv (#importModuleEnv staticModuleEnv)
+            val exportModuleEnv =
+                substTyConIdPathBasis substTyConIdEnv (#exportModuleEnv staticModuleEnv)
+        in
+            {importModuleEnv = importModuleEnv,
+             exportModuleEnv = exportModuleEnv}
+        end
+
+   (**********************************************************************************
+    * substTyConXXX utilities
+    *)
+    fun substTyConPathVarEnv substTyConEnv pathVarEnv =
+        SEnv.map (fn item => 
+                     case item of
+                         PE.TopItem (pathVar, index, ty) =>
+                         let
+                             val (ty, visited) = 
+                                 TCU.substTyConInTy ID.Set.empty substTyConEnv ty
+                         in
+                             PE.TopItem (pathVar, index, ty)
+                         end
+                       | PE.CurItem (pathVar, id, ty, loc) =>
+                         let
+                             val (ty, visited) = 
+                                 TCU.substTyConInTy ID.Set.empty substTyConEnv ty
+                         in
+                             PE.CurItem (pathVar, id, ty, loc)
+                         end)
+                 pathVarEnv
+
+    fun substTyConPathStrEnv substTyConEnv pathStrEnv =
+        SEnv.map (fn (PE.PATHAUX Env) =>
+                     PE.PATHAUX (substTyConPathEnv substTyConEnv Env))
+                 pathStrEnv
+
+    and substTyConPathEnv substTyConEnv (pathEnv:PathEnv.pathEnv) =
+        let
+            val pathVarEnv = substTyConPathVarEnv substTyConEnv (#1 pathEnv)
+            val pathStrEnv = substTyConPathStrEnv substTyConEnv (#2 pathEnv)
+        in
+            (pathVarEnv, pathStrEnv)
+        end
+
+    fun substTyConPathBasis substTyConEnv (pathBasis:PathEnv.pathBasis) = 
+        let
+            (* tobe : how to deal with functor ???*)
+            val pathFunEnv = #1 pathBasis
+            val pathEnv = substTyConPathEnv substTyConEnv (#2 pathBasis)
+        in
+            (pathFunEnv, pathEnv)
+        end
+
+    fun substTyConStaticModuleEnv 
+            substTyConEnv (staticModuleEnv:staticModuleEnv) =
+        let
+            val importModuleEnv = 
+                substTyConPathBasis substTyConEnv (#importModuleEnv staticModuleEnv)
+            val exportModuleEnv =
+                substTyConPathBasis substTyConEnv (#exportModuleEnv staticModuleEnv)
+        in
+            {importModuleEnv = importModuleEnv,
+             exportModuleEnv = exportModuleEnv}
+        end
 end

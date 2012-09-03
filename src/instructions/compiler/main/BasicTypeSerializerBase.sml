@@ -2,7 +2,7 @@
 (**
  * base implementation of operand serializer.
  * @author YAMATODANI Kiyoshi
- * @version $Id: BasicTypeSerializerBase.sml,v 1.1 2005/12/31 12:34:00 kiyoshiy Exp $
+ * @version $Id: BasicTypeSerializerBase.sml,v 1.4 2007/02/19 14:11:56 kiyoshiy Exp $
  *)
 functor BasicTypeSerializerBase(PrimitiveSerializer : PRIMITIVE_SERIALIZER)
         :> BASIC_TYPE_SERIALIZER =
@@ -10,8 +10,8 @@ struct
 
   (***************************************************************************)
 
-  open BasicTypes
-  open PrimitiveSerializer
+  structure BT = BasicTypes
+  structure PS = PrimitiveSerializer
 
   (***************************************************************************)
 
@@ -23,42 +23,38 @@ struct
 
   (***************************************************************************)
 
-  val byteOrder = PrimitiveSerializer.byteOrder
+  val byteOrder = PS.byteOrder
 
   fun serializeUInt8 value writer = writer value
   fun serializeSInt8 value writer =
-      serializeUInt8 (UInt32ToUInt8(SInt8ToUInt32(value))) writer
+      serializeUInt8 (BT.UInt32ToUInt8(BT.SInt8ToUInt32(value))) writer
   fun serializeUInt16 value writer =
-      writeLowBytes (UInt16ToUInt32 value, 2) writer
+      PS.writeLowBytes (BT.UInt16ToUInt32 value, 2) writer
   fun serializeSInt16 value writer =
-      writeLowBytes (SInt16ToUInt32 value, 2) writer
+      PS.writeLowBytes (BT.SInt16ToUInt32 value, 2) writer
   fun serializeUInt24 value writer = 
-      writeLowBytes (UInt24ToUInt32 value, 3) writer
+      PS.writeLowBytes (BT.UInt24ToUInt32 value, 3) writer
   fun serializeSInt24 value writer =
-      writeLowBytes (SInt24ToUInt32 value, 3) writer
-  fun serializeUInt32 value writer = writeLowBytes (value, 4) writer
+      PS.writeLowBytes (BT.SInt24ToUInt32 value, 3) writer
+  fun serializeUInt32 value writer = PS.writeLowBytes (value, 4) writer
   fun serializeSInt32 value writer =
-      serializeUInt32 (SInt32ToUInt32 value) writer
-  fun serializeReal64 (value : Real64) writer =
+      serializeUInt32 (BT.SInt32ToUInt32 value) writer
+  fun serializeReal64 (value : BT.Real64) writer =
       let
-        val unsafeArray = (Unsafe.cast value) : Unsafe.Word8Array.array
-        val _ =
-            List.tabulate
-            (
-              8,
-              fn index =>
-                 let val byte = Unsafe.Word8Array.sub (unsafeArray, index)
-                 in writer byte end
-            )
+        val (n0, n1) = PS.fromWord64 (IEEE754.dump64 value)
       in
-        ()
+        serializeUInt32 n0 writer;
+        serializeUInt32 n1 writer
       end
+
+  fun serializeReal32 (value : BT.Real32) writer =
+      serializeUInt32 (IEEE754.dump32 value) writer
 
   (***************************************************************************)
 
   (** if the most significant bit of lower usedBytes bytes in UInt32 is set,
    * extends sign. *)
-  fun extendsSign 4 (word : UInt32) = word
+  fun extendsSign 4 (word : BT.UInt32) = word
     | extendsSign usedBytes word =
       let
         val (checkWord, maskWord) =
@@ -74,37 +70,25 @@ struct
       end
 
   fun deserializeUInt8 reader =
-      (UInt32ToUInt8 o (readBytes 1)) reader
+      (BT.UInt32ToUInt8 o PS.readBytes 1) reader
   fun deserializeSInt8 reader =
-      (SInt32ToSInt8 o UInt32ToSInt32 o (extendsSign 1) o (readBytes 1))
+      (BT.SInt32ToSInt8 o BT.UInt32ToSInt32 o extendsSign 1 o PS.readBytes 1)
           reader
-  fun deserializeUInt16 reader =
-      (UInt32ToUInt16 o (readBytes 2)) reader
+  fun deserializeUInt16 reader = (BT.UInt32ToUInt16 o PS.readBytes 2) reader
   fun deserializeSInt16 reader =
-      (SInt32ToSInt16 o UInt32ToSInt32 o (extendsSign 2) o (readBytes 2))
+      (BT.SInt32ToSInt16 o BT.UInt32ToSInt32 o extendsSign 2 o PS.readBytes 2)
           reader
-  fun deserializeUInt24 reader =
-      (UInt32ToUInt24 o (readBytes 3)) reader
+  fun deserializeUInt24 reader = (BT.UInt32ToUInt24 o PS.readBytes 3) reader
   fun deserializeSInt24 reader =
-      (SInt32ToSInt24 o UInt32ToSInt32 o (extendsSign 3) o (readBytes 3))
+      (BT.SInt32ToSInt24 o BT.UInt32ToSInt32 o extendsSign 3 o PS.readBytes 3)
           reader
-  fun deserializeUInt32 reader = readBytes 4 reader
-  fun deserializeSInt32 reader = (UInt32ToSInt32 o (readBytes 4)) reader
+  fun deserializeUInt32 reader = PS.readBytes 4 reader
+  fun deserializeSInt32 reader = (BT.UInt32ToSInt32 o PS.readBytes 4) reader
   fun deserializeReal64 reader = 
-      let
-        val unsafeArray = Unsafe.Word8Array.create 8
-        val _ =
-            List.tabulate
-            (
-              8,
-              fn index =>
-                 case reader () of
-                   byte => Unsafe.Word8Array.update (unsafeArray, index, byte)
-            )
-        val value = (Unsafe.cast unsafeArray) : Real64
-      in
-        value
-      end
+      IEEE754.load64
+          (PS.toWord64 (PS.readBytes 4 reader, PS.readBytes 4 reader))
+
+  fun deserializeReal32 reader = IEEE754.load32 (PS.readBytes 4 reader)
 
   (***************************************************************************)
 

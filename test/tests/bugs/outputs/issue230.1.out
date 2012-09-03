@@ -1,0 +1,2 @@
+../tests/bugs/tests/issue230.1.sml:1.7-1.9 Error:
+  duplicate variables in pattern(s): x

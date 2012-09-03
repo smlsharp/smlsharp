@@ -242,13 +242,21 @@ val scan_hex_t0 = SOME (0,[]) : (Int.int * char list) option
 val scan_hex_m0 = SOME (0,[]) : (Int.int * char list) option
 val scan_hex_t1 = SOME (~291,[]) : (Int.int * char list) option
 val scan_hex_t1b = SOME (~1223423,[#"G",#"g"]) : (Int.int * char list) option
-val scan_hex_t1b_h1 = SOME (~1223423,[#"G",#"g"]) : (Int.int * char list) option
-val scan_hex_t1b_h2 = SOME (~1223423,[#"G",#"g"]) : (Int.int * char list) option
+val scan_hex_t1b_h1 =
+    SOME (~1223423, [#"G",#"g"])
+    : (Int.int * char list) option
+val scan_hex_t1b_h2 =
+    SOME (~1223423, [#"G",#"g"])
+    : (Int.int * char list) option
 val scan_hex_t1c = SOME (~291,[]) : (Int.int * char list) option
 val scan_hex_m1 = SOME (~291,[]) : (Int.int * char list) option
 val scan_hex_m1b = SOME (~1223423,[#"G",#"g"]) : (Int.int * char list) option
-val scan_hex_m1b_h1 = SOME (~1223423,[#"G",#"g"]) : (Int.int * char list) option
-val scan_hex_m1b_h2 = SOME (~1223423,[#"G",#"g"]) : (Int.int * char list) option
+val scan_hex_m1b_h1 =
+    SOME (~1223423, [#"G",#"g"])
+    : (Int.int * char list) option
+val scan_hex_m1b_h2 =
+    SOME (~1223423, [#"G",#"g"])
+    : (Int.int * char list) option
 val scan_hex_m1c = SOME (~291,[]) : (Int.int * char list) option
 val scan_hex_p1 = SOME (291,[]) : (Int.int * char list) option
 val scan_hex_p1b = SOME (1223423,[#"G",#"g"]) : (Int.int * char list) option

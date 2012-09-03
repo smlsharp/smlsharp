@@ -25,6 +25,8 @@ class FileWriter
 
     FileWriter(const char* fileName, int descriptor, BoolValue DontClose);
 
+    FileWriter(const char* fileName, FILE* stream, BoolValue DontClose);
+
     virtual
     ~FileWriter();
 

@@ -1,4 +1,8 @@
 Group is
+#if defined(NEW_CM)
+	$/basis_compat.cm
+#endif
+
         ../../../../configuration/sources.cm
         ../../../toplevel/sources.cm
         ../../../control/sources.cm
@@ -12,10 +16,10 @@ Group is
 
 #if defined(structure Posix)
         FileSysUtil_Posix.sml
-        RuntimeProxyFactory_Unix.sml
+        InteractiveSessionFactory_Unix.sml
 #else
-        RuntimeProxyFactory_General.sml
-        FileSysUtil_General.sml
+        FileSysUtil_Windows.sml
+        InteractiveSessionFactory_General.sml
 #endif
 
         Main.sml

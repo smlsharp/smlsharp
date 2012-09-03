@@ -1,0 +1,238 @@
+(primitive)
+Library
+	(* Basis *)
+	signature ARRAY
+	signature ARRAY_SLICE
+	signature ARRAY2
+	signature VECTOR
+	signature VECTOR_SLICE
+	signature GENERAL
+	signature INTEGER
+	signature INT_INF
+	signature BOOL
+	signature CHAR
+	signature STRING
+	signature SUBSTRING
+	signature STRING_CVT
+	signature LIST
+	signature MONO_ARRAY
+	signature MONO_ARRAY_SLICE
+	signature MONO_ARRAY2
+	signature MONO_VECTOR
+	signature MONO_VECTOR_SLICE
+	signature BYTE
+	signature COMMAND_LINE
+	signature DATE
+	signature IEEE_REAL
+	signature OPTION
+	signature LIST_PAIR
+	signature REAL
+	signature TIME
+	signature TIMER
+	signature WORD
+	signature MATH
+	signature OS
+	signature OS_FILE_SYS
+	signature OS_IO
+	signature OS_PATH
+	signature OS_PROCESS
+	signature BIN_IO
+	signature IMPERATIVE_IO
+	signature IO
+	signature PRIM_IO
+	signature STREAM_IO
+	signature TEXT_IO
+	signature TEXT_STREAM_IO
+	signature PACK_WORD
+	signature TEXT
+	signature SML90
+
+	(* SML/NJ specific *)
+	signature SIGNALS
+
+	signature CLEAN_UP
+	signature CONT
+	signature INTERVAL_TIMER
+	signature INTERNALS
+	signature GC
+	signature SYS_INFO
+	signature WEAK
+	signature SML_OF_NJ
+
+	signature UNSAFE_OBJECT
+	signature POLL
+	signature UNSAFE_ARRAY
+	signature UNSAFE_VECTOR
+	signature UNSAFE_MONO_ARRAY
+	signature UNSAFE_MONO_VECTOR
+	signature UNSAFE
+
+	(* Basis *)
+	structure Vector
+	structure VectorSlice
+	structure General
+	structure StringCvt
+	structure Substring
+	structure String
+	structure Char
+	structure Byte
+	structure List
+	structure ListPair
+	structure CharArray
+	structure CharArraySlice
+	structure CharVector
+	structure CharVectorSlice
+	structure Array
+	structure ArraySlice
+	structure Array2
+	structure IEEEReal
+	structure Int
+	structure Int31
+	structure Int32
+	structure IntInf
+	structure LargeInt
+	structure FixedInt
+	structure LargeReal
+	structure LargeWord
+	structure Math
+	structure Position
+	structure Real
+	structure Real64
+	structure Word
+	structure Word31
+	structure Word32
+	structure SysWord
+	structure Bool
+	structure Word8
+	structure Word8Array
+	structure Word8ArraySlice
+	structure Word8Vector
+	structure Word8VectorSlice
+	structure CommandLine
+	structure Time
+	structure Timer
+	structure OS
+	structure BinIO
+	structure BinPrimIO
+	structure IO
+	structure Option
+	structure Pack16Big
+	structure Pack16Little
+	structure Pack32Big
+	structure Pack32Little
+	structure TextIO
+	structure TextPrimIO
+	structure Date
+	structure RealArray
+	structure RealArraySlice
+	structure RealVector
+	structure RealVectorSlice
+	structure Real64Array
+	structure Real64ArraySlice
+	structure Real64Vector
+	structure Real64VectorSlice
+	structure Text
+	structure SML90
+
+	(* SML/NJ specific *)
+	structure Signals
+	structure Unsafe
+	structure SMLofNJ
+	structure Lazy
+
+#if defined(OPSYS_UNIX) orelse defined(OPSYS_WIN32)
+	(* Sockets (common part) *)
+	signature NET_HOST_DB
+	signature NET_PROT_DB
+	signature NET_SERV_DB
+
+	signature SOCKET
+	signature INET_SOCK
+	signature GENERIC_SOCK
+
+	structure GenericSock
+	structure NetHostDB
+	structure NetProtDB
+	structure NetServDB
+	structure Socket
+	structure INetSock
+#endif
+
+#if defined(OPSYS_UNIX)
+	(* Posix *)
+	signature POSIX_FLAGS
+	signature POSIX_ERROR
+	signature POSIX_SIGNAL
+	signature POSIX_PROCESS
+	signature POSIX_PROC_ENV
+	signature POSIX_FILE_SYS
+	signature POSIX_IO
+	signature POSIX_SYS_DB
+	signature POSIX_TTY
+	signature POSIX
+	structure Posix
+
+	(* Unix *)
+	signature UNIX_SIGNALS
+	structure UnixSignals
+	signature UNIX
+	structure Unix
+
+	(* Sockets *)
+	signature NET_DB
+	signature UNIX_SOCK
+
+	structure NetDB
+	structure UnixSock
+
+#elif defined (OPSYS_WIN32)
+
+	signature WIN32_GENERAL
+	signature WIN32_PROCESS
+	signature WIN32_FILESYS
+	signature WIN32_IO
+	signature WIN32
+
+	structure Win32
+#endif
+
+is
+	Implementation/sources.cm
+
+	Exports/string.sml
+	Exports/char.sml
+	Exports/substring.sml
+	Exports/char-array.sml
+	Exports/char-vector.sml
+
+	Exports/int.sml
+	Exports/int31.sml
+	Exports/int32.sml
+	Exports/int-inf.sml
+	Exports/largeint.sml
+	Exports/fixedint.sml
+	Exports/largereal.sml
+	Exports/largeword.sml
+	Exports/position.sml
+	Exports/real.sml
+	Exports/real64.sml
+	Exports/sysword.sml
+	Exports/word.sml
+	Exports/word8.sml
+	Exports/word31.sml
+	Exports/word32.sml
+	Exports/time.sml
+	Exports/general.sml
+
+	Exports/os.sml
+
+	Exports/real-array.sml
+	Exports/real-array-slice.sml
+	Exports/real-vector.sml
+	Exports/real-vector-slice.sml
+
+	Exports/smlnj.sml
+
+#if defined(OPSYS_UNIX) orelse defined(OPSYS_WIN32)
+	Exports/socket.sml
+#endif

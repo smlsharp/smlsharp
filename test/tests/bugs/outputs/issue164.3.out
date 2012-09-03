@@ -12,7 +12,9 @@ signature ARRAY =
 sig type 'a array eqtype 'a vector val fromList : ['a .'a list -> 'a array] end
 structure S
 : sig
-    structure V : VECTOR structure A : ARRAY sharing type V.vector = A.vector
+    structure V : VECTOR
+    structure A : ARRAY
+    sharing type V.vector = A.vector
   end
 structure Vector
 : sig type 'a vector val fromList : ['a .'a list -> 'a vector] end

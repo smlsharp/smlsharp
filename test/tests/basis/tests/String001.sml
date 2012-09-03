@@ -110,7 +110,8 @@ val map2 = String.map mapFun "bc";
 
 (********************)
 fun translateFun ch =
-    let val string = implode [ch, ch] in print string; string end;
+    let val string = implode [ch, ch]
+    in print string; string : String.string end;
 val translate0 = String.translate translateFun ""
 val translate1 = String.translate translateFun "b";
 val translate2 = String.translate translateFun "bc";
@@ -163,6 +164,38 @@ val isPrefix_2_3t = String.isPrefix "bc" "bcd";
 val isPrefix_2_3f = String.isPrefix "bd" "bcd";
 val isPrefix_3_3t = String.isPrefix "bcd" "bcd";
 val isPrefix_3_3f = String.isPrefix "ccd" "bcd";
+
+(********************)
+val isSuffix_0_0 = String.isSuffix "" "";
+val isSuffix_1_0 = String.isSuffix "a" "";
+val isSuffix_0_1 = String.isSuffix "" "b";
+val isSuffix_1_1t = String.isSuffix "b" "b";
+val isSuffix_1_1f = String.isSuffix "a" "b";
+val isSuffix_1_2t = String.isSuffix "c" "bc";
+val isSuffix_1_2f = String.isSuffix "a" "bc";
+val isSuffix_2_2t = String.isSuffix "bc" "bc";
+val isSuffix_2_2f = String.isSuffix "bd" "bc";
+val isSuffix_2_3t = String.isSuffix "cd" "bcd";
+val isSuffix_2_3f = String.isSuffix "bd" "bcd";
+val isSuffix_3_3t = String.isSuffix "bcd" "bcd";
+val isSuffix_3_3f = String.isSuffix "ccd" "bcd";
+
+(********************)
+val isSubstring_0_0 = String.isSubstring "" "";
+val isSubstring_1_0 = String.isSubstring "a" "";
+val isSubstring_0_1 = String.isSubstring "" "b";
+val isSubstring_1_1t = String.isSubstring "b" "b";
+val isSubstring_1_1f = String.isSubstring "a" "b";
+val isSubstring_1_2t1 = String.isSubstring "c" "bc";
+val isSubstring_1_2t2 = String.isSubstring "b" "bc";
+val isSubstring_1_2f = String.isSubstring "a" "bc";
+val isSubstring_2_2t = String.isSubstring "bc" "bc";
+val isSubstring_2_2f = String.isSubstring "bd" "bc";
+val isSubstring_2_3t1 = String.isSubstring "bc" "bcd";
+val isSubstring_2_3t2 = String.isSubstring "cd" "bcd";
+val isSubstring_2_3f = String.isSubstring "bd" "bcd";
+val isSubstring_3_3t = String.isSubstring "bcd" "bcd";
+val isSubstring_3_3f = String.isSubstring "ccd" "bcd";
 
 (********************)
 val compare_0_0 = String.compare ("", "");

@@ -2,7 +2,7 @@
  * Module compiler flattens structure.
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: utils.sml,v 1.5 2006/02/28 16:11:11 kiyoshiy Exp $
+ * @version $Id: utils.sml,v 1.11 2007/02/28 17:57:20 katsu Exp $
  *)
 structure VALREC_Utils =
 struct
@@ -80,35 +80,35 @@ in
                  SSet.empty
                  varEnv
                  
-  fun strEnvToStrMap strEnv =
-      SEnv.map (fn (T.STRUCTURE {env = (subTE,subVE,subSE),...}) =>
+  fun strEnvToStrMap (T.STRUCTURE strEnvCont) =
+    SEnv.map (fn ({env = (subTE,subVE,subSE),...}) =>
                    let
                      val varSet = varEnvToVarSet subVE
                    in
                      STRSSET (varSet, strEnvToStrMap subSE)
                    end
                )
-               strEnv
+      strEnvCont
 
-  fun lookupStructureInGlobalContext (globalContext as {strEnv,...} :globalContext, longid) =
+  fun lookupStructureInGlobalContext (globalContext as {strEnv = T.STRUCTURE strEnvCont,...} :globalContext, longid) =
       let
-        fun lookup strEnv nil = raise Control.Bug "lookupStructureInGlobalContext"
-          | lookup strEnv [strName] =
+        fun lookup strEnvCont nil = raise Control.Bug "lookupStructureInGlobalContext"
+          | lookup strEnvCont [strName] =
             (
-             case (SEnv.find(strEnv,strName)) of
+             case (SEnv.find(strEnvCont,strName)) of
                NONE => NONE
-             | SOME(T.STRUCTURE (strPathInfo as {env = (_, varEnv, strEnv),...})) =>
+             | SOME {env = (_, varEnv, strEnv),...} =>
                SOME (varEnvToVarSet varEnv, strEnvToStrMap strEnv)
             )
-          | lookup strEnv (strName :: path) = 
+          | lookup strEnvCont (strName :: path) = 
             (
-             case SEnv.find(strEnv, strName) of
+             case SEnv.find(strEnvCont, strName) of
                NONE => NONE
-             | SOME(T.STRUCTURE {env = (_,_,strEnv), ...}) => 
-               lookup strEnv path
+             | SOME {env = (_,_,T.STRUCTURE strEnvCont), ...} => 
+               lookup strEnvCont path
             )
       in
-        lookup strEnv longid
+        lookup strEnvCont longid
       end
 
   fun lookupStructure (globalContext,context:context,longid) =
@@ -175,8 +175,8 @@ in
                   SSet.empty
                   varEnv
 
-  fun getFreeIdsFromStrEnv depthPath strEnv =
-      SEnv.foldli (fn (strName, T.STRUCTURE{env= (_ ,subVarEnv, subStrEnv),...}, sumSet) =>
+  fun getFreeIdsFromStrEnv depthPath (T.STRUCTURE strEnvCont) =
+      SEnv.foldli (fn (strName, {env= (_ ,subVarEnv, subStrEnv),...}, sumSet) =>
                       let
                         val crtDepthPath = addIdAsSuffix depthPath strName
                         val subSumSet1 = 
@@ -187,7 +187,7 @@ in
                         SSet.union (SSet.union (sumSet,subSumSet1), subSumSet2)
                       end)
                   SSet.empty
-                  strEnv
+                  strEnvCont
                   
   fun getFreeIdsFromGlobalContextStrItem (varEnv, strEnv) =
       let
@@ -269,6 +269,16 @@ in
       | PLSELECT (label,exp, loc) => getFreeIdsInExp globalContext context exp
       | PLSEQ (expList,loc) => getFreeIdsInExpList globalContext context expList
       | PLCAST (exp,loc) => getFreeIdsInExp globalContext context exp
+      | PLFFIIMPORT (exp,ty,loc) => getFreeIdsInExp globalContext context exp
+      | PLFFIEXPORT (exp,ty,loc) => getFreeIdsInExp globalContext context exp
+      | PLFFIAPPLY (cconv,funExp,args,retTy,loc) =>
+        foldl (fn (PLFFIARG (exp, ty), z) =>
+                  SSet.union (z, getFreeIdsInExp globalContext context exp)
+                | (PLFFIARGSIZEOF (ty, SOME exp), z) =>
+                  SSet.union (z, getFreeIdsInExp globalContext context exp)
+                | (PLFFIARGSIZEOF (ty, NONE), z) => z)
+              (getFreeIdsInExp globalContext context funExp)
+              args
 
   and getFreeIdsInExpList globalContext context plexpList =
       foldl 
@@ -319,13 +329,13 @@ in
       | PLPATRECORD (_,patList,_) =>
         foldl 
             (fn ((label,pat),S) =>
-                SSet.union(S,SSet.union(SSet.singleton(label),
-                                        getFreeIdsInPat pat)))
+                SSet.union(S,getFreeIdsInPat pat))
             SSet.empty
             patList
       | PLPATLAYERED (id,_,pat,_) => 
         SSet.union(SSet.singleton(id),getFreeIdsInPat pat)
       | PLPATTYPED (pat,ty,loc) => getFreeIdsInPat pat
+      | PLPATORPAT (pat1,pat2,loc) => SSet.union(getFreeIdsInPat pat1,getFreeIdsInPat pat2)
 
   and getFreeIdsInExBind (PLEXBINDDEF _) = SSet.empty
     | getFreeIdsInExBind (PLEXBINDREP(_,left,_,right,_)) =
@@ -355,12 +365,6 @@ in
       | PDINFIXRDEC _ => SSet.empty
       | PDNONFIXDEC _ => SSet.empty
       | PDEMPTY => SSet.empty
-      | PDFFIVAL {name, funExp, libExp, loc,...} => 
-        SSet.union
-            (
-              getFreeIdsInExp globalContext context funExp,
-              getFreeIdsInExp globalContext context libExp
-            )
       | PDOPEN _ => SSet.empty
       | _ => raise Control.Bug "invalid declaration"
 
@@ -408,8 +412,6 @@ in
       | PDINFIXRDEC _ => SSet.empty
       | PDNONFIXDEC _ => SSet.empty
       | PDEMPTY => SSet.empty
-      | PDFFIVAL{name, funExp, libExp, argTyList, resultTy, loc} =>
-        SSet.singleton(name)
       | PDOPEN (longvids,loc) => 
         foldl (
                fn (longvid,S) =>

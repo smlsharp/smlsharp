@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: BenchmarkDriver.sml,v 1.6 2005/09/15 09:05:19 kiyoshiy Exp $
+ * @version $Id: BenchmarkDriver.sml,v 1.7 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
 functor BenchmarkDriver(
                          structure BenchmarkRunner : BENCHMARK_RUNNER
@@ -18,7 +18,7 @@ struct
 
   (***************************************************************************)
 
-  fun runOneCase (preludesPath, sourcePath) = 
+  fun runOneCase (preludePath, isCompiledPrelude, sourcePath) = 
       let
         val compileOutputArrayOptRef = ref (SOME (Word8Array.fromList []))
         val executeOutputArrayOptRef = ref (SOME (Word8Array.fromList []))
@@ -33,12 +33,13 @@ struct
                  (FileChannel.openIn {fileName = sourcePath})
                  (fn sourceChannel =>
                      U.finally
-                         (FileChannel.openIn {fileName = preludesPath})
-                         (fn preludesChannel =>
+                         (FileChannel.openIn {fileName = preludePath})
+                         (fn preludeChannel =>
                              BenchmarkRunner.runBenchmark
                              {
-                               preludesFileName = preludesPath,
-                               preludesChannel = preludesChannel,
+                               preludeFileName = preludePath,
+                               preludeChannel = preludeChannel,
+                               isCompiledPrelude = isCompiledPrelude,
                                sourceFileName = sourcePath,
                                sourceChannel = sourceChannel,
                                compileOutputChannel = compileOutputChannel,
@@ -94,7 +95,8 @@ struct
             sourceNames
       end
 
-  fun runBenchmarks {prelude, sourcePaths, resultDirectory} =
+  fun runBenchmarks
+          {prelude, isCompiledPrelude, sourcePaths, resultDirectory} =
       let
         val printerContext = Printer.initialize {directory = resultDirectory}
         val messagesRef = ref ([] : string list)
@@ -105,7 +107,8 @@ struct
             (fn (sourceDirFile as {file, ...}, (printerContext, resultOpts)) =>
                 let
                   val sourcePath = PU.joinDirFile sourceDirFile
-                  val result = runOneCase(prelude, sourcePath)
+                  val result =
+                      runOneCase(prelude, isCompiledPrelude, sourcePath)
                   val printerContext = Printer.printCase printerContext result
                 in
                   (printerContext, SOME result :: resultOpts)

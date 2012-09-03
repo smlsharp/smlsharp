@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompileUtils.sml,v 1.24 2006/03/02 12:46:47 bochao Exp $
+ * @version $Id: ModuleCompileUtils.sml,v 1.29 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure ModuleCompileUtils =
 struct
@@ -11,11 +11,11 @@ local
   structure T  = Types
   structure P = Path
   structure TO = TopObject
-  structure TU = TypesUtils
-  structure SE = StaticEnv
   structure PE = PathEnv
   structure MC = ModuleContext
   structure IA = IndexAllocator
+  structure STE = StaticTypeEnv
+  structure SME = StaticModuleEnv
   open TypedCalc TypedFlatCalc 
 in
   fun debug_sigVarEnvToString sigVE indent =
@@ -24,8 +24,8 @@ in
                       )
                   ""
                   sigVE
-  and debug_sigStrEnvToString sigSE indent =
-      SEnv.foldli (fn (k, T.STRUCTURE {env = (_, subSigVE, subSigSE),...}, string) =>
+  and debug_sigStrEnvToString (T.STRUCTURE sigSECont) indent =
+      SEnv.foldli (fn (k, {env = (_, subSigVE, subSigSE),...}, string) =>
                       let
                         val strName = (indent^ k ^ ":" ^"\n") 
                         val indent = indent ^ "   "
@@ -36,7 +36,7 @@ in
                       end
                         )
                   ""
-                  sigSE
+                  sigSECont
 
   fun sigEnvToString (sigEnv as (sigTE, sigVE, sigSE)) =
       let
@@ -51,20 +51,18 @@ in
   fun filterPathVE pathVE sigVE =
       SEnv.filteri (fn (k,v) => SEnv.inDomain(sigVE,k)) pathVE
 
-  fun filterPathSE pathSE sigSE =
+  fun filterPathSE pathSE (T.STRUCTURE sigSECont) =
       SEnv.foldli
       ( fn (k, PE.PATHAUX (subPathVE,subPathSE), newPathSE) => 
-           case SEnv.find(sigSE,k) of
-             SOME (T.STRUCTURE {env=(_, subSigVE, subSigSE),...}) =>
+           case SEnv.find(sigSECont,k) of
+             SOME {env=(_, subSigVE, subSigSE),...} =>
              let
                val newSubPathVE = filterPathVE subPathVE subSigVE
                val newSubPathSE = filterPathSE subPathSE subSigSE
              in
-               SEnv.insert(
-                           newPathSE,
+               SEnv.insert(newPathSE,
                            k,
-                           PE.PATHAUX (newSubPathVE, newSubPathSE)
-                           )
+                           PE.PATHAUX (newSubPathVE, newSubPathSE))
              end
            | NONE => newPathSE)
       SEnv.empty
@@ -79,67 +77,72 @@ in
       end
 
 
-  fun genImportPathVarEnv varEnv freeGlobalArrayIndex freeEntryPointer  =
-      SEnv.foldli (fn (varName, idState, (freeGlobalArrayIndex, freeEntryPointer, pathVarEnv)) =>
+  fun filterStaticModuleEnv (staticModuleEnv : SME.staticModuleEnv,
+                             staticTypeEnv : STE.staticTypeEnv)
+                             
+    =
+    let
+        val exportTypeEnv = #exportTypeEnv staticTypeEnv
+        val (exportPathFunEnv, exportPathEnv) = #exportModuleEnv staticModuleEnv
+        val newExportPathEnv = filterPathEnv(exportPathEnv, STE.typeEnvToEnv exportTypeEnv)
+    in
+        SME.injectExportModuleEnvInStaticModuleEnv ((exportPathFunEnv, newExportPathEnv),
+                                                    staticModuleEnv)
+    end
+        
+  fun genImportPathVarEnv varEnv freeEntryPointer  =
+      SEnv.foldli (fn (varName, idState, (freeEntryPointer, pathVarEnv)) =>
                       case idState of
                         T.VARID {name, strpath, ty} =>
                         let
-                          val (newFreeGlobalArrayIndex,
-                               newFreeEntryPointer,
+                          val (newFreeEntryPointer,
                                allocatedIndex) =
-                              IA.allocateAbstractIndex freeGlobalArrayIndex freeEntryPointer
+                              IA.allocateAbstractIndex freeEntryPointer
                           val newPathVarEnv =
                               SEnv.insert(pathVarEnv,
                                           varName,
                                           PE.TopItem ((strpath, name), allocatedIndex, ty)
                                           )
                         in
-                          (newFreeGlobalArrayIndex, newFreeEntryPointer, newPathVarEnv)
+                            (newFreeEntryPointer, newPathVarEnv)
                         end
-                      | _ => (freeGlobalArrayIndex, freeEntryPointer, pathVarEnv)
+                      | _ => (freeEntryPointer, pathVarEnv)
                   )
-                  (freeGlobalArrayIndex, freeEntryPointer, SEnv.empty)
+                  (freeEntryPointer, SEnv.empty)
                   varEnv
 
-  fun genImportPathStrEnv strEnv freeGlobalArrayIndex freeEntryPointer =
+  fun genImportPathStrEnv (T.STRUCTURE strEnvCont) freeEntryPointer =
       SEnv.foldli (fn (strName, 
-                       T.STRUCTURE {env = (tyConEnv, varEnv, strEnv),...}, 
-                       (freeGlobalArrayIndex, freeEntryPointer,pathStrEnv)) =>
+                       {env = (tyConEnv, varEnv, strEnv),...}, 
+                       (freeEntryPointer,incPathStrEnv)) =>
                       let
-                        val (newFreeGlobalArrayIndex1, newFreeEntryPointer1, pathVarEnv) =
-                            genImportPathVarEnv varEnv freeGlobalArrayIndex freeEntryPointer
-                        val (newFreeGlobalArrayIndex2, newFreeEntryPointer2, pathStrEnv) =
-                            genImportPathStrEnv strEnv newFreeGlobalArrayIndex1 newFreeEntryPointer1
-                        val pathStrEnv =
-                            SEnv.insert (pathStrEnv,
-                                         strName,
-                                         PE.PATHAUX (pathVarEnv, pathStrEnv))
+                          val (newFreeEntryPointer1, pathVarEnv) =
+                              genImportPathVarEnv varEnv freeEntryPointer
+                          val (newFreeEntryPointer2, pathStrEnv) =
+                              genImportPathStrEnv strEnv newFreeEntryPointer1
                       in
-                        (
-                         newFreeGlobalArrayIndex2,
-                         newFreeEntryPointer2, 
-                         pathStrEnv)
+                          (newFreeEntryPointer2, 
+                           SEnv.insert (incPathStrEnv,
+                                        strName,
+                                        PE.PATHAUX (pathVarEnv, pathStrEnv)))
                       end
                   )
-                  (freeGlobalArrayIndex, freeEntryPointer,SEnv.empty)
-                  strEnv
+                  (freeEntryPointer,SEnv.empty)
+                  strEnvCont
 
   fun genImportPathBasisFromEnv (Env as (tyConEnv, varEnv, strEnv) : T.Env)
-                                freeGlobalArrayIndex
                                 freeEntryPointer
     =
     let
         val pathFunEnv = SEnv.empty
-        val (newFreeGlobalArrayIndex1, newFreeEntryPointer1, pathVarEnv) = 
-            genImportPathVarEnv varEnv freeGlobalArrayIndex freeEntryPointer 
-        val (newFreeGlobalArrayIndex2, newFreeEntryPointer2, pathStrEnv) =
-            genImportPathStrEnv strEnv newFreeGlobalArrayIndex1 newFreeEntryPointer1
+        val (newFreeEntryPointer1, pathVarEnv) = 
+            genImportPathVarEnv varEnv freeEntryPointer 
+        val (newFreeEntryPointer2, pathStrEnv) =
+            genImportPathStrEnv strEnv newFreeEntryPointer1
         val pathEnv = (pathVarEnv, pathStrEnv)
     in
-        (
-         newFreeGlobalArrayIndex2,
-         newFreeEntryPointer2,
-         (pathFunEnv, pathEnv))
+        (newFreeEntryPointer2, (pathFunEnv, pathEnv))
     end
 end
 end
+ 

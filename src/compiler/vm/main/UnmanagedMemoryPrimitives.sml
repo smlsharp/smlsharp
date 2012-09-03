@@ -1,7 +1,7 @@
 (**
  * implementation of primitives on unmanaged memory.
  * @author YAMATODANI Kiyoshi
- * @version $Id: UnmanagedMemoryPrimitives.sml,v 1.2 2005/12/05 12:51:08 kiyoshiy Exp $
+ * @version $Id: UnmanagedMemoryPrimitives.sml,v 1.4.4.1 2007/03/22 16:57:42 katsu Exp $
  *)
 structure UnmanagedMemoryPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct
@@ -36,16 +36,38 @@ struct
     | UnmanagedMemory_update _ _ _ = 
       raise RE.UnexpectedPrimitiveArguments "UnmanagedMemory_update"
 
+  (* updateInt : ptr * int -> unit *)
+  fun UnmanagedMemory_updateInt VM heap [Word rawAddress, Int bytes] =
+      [SLD.unitToValue heap ()]
+    | UnmanagedMemory_updateInt _ _ _ = 
+      raise RE.UnexpectedPrimitiveArguments "UnmanagedMemory_updateInt"
+
+  (* updateInt : ptr -> int *)
+  fun UnmanagedMemory_subInt VM heap [Word rawAddress] =
+      [Int 0]
+    | UnmanagedMemory_subInt _ _ _ = 
+      raise RE.UnexpectedPrimitiveArguments "UnmanagedMemory_subInt"
+
   fun UnmanagedMemory_subWord VM heap [Word rawAddress] =
       [Word 0w0]
     | UnmanagedMemory_subWord _ _ _ = 
       raise RE.UnexpectedPrimitiveArguments "UnmanagedMemory_subWord"
 
-  fun UnmanagedMemory_updateWord
-          VM heap [Word rawAddress, Word value] =
+  fun UnmanagedMemory_updateWord VM heap [Word rawAddress, Word value] =
       [SLD.unitToValue heap ()]
     | UnmanagedMemory_updateWord _ _ _ = 
       raise RE.UnexpectedPrimitiveArguments "UnmanagedMemory_updateWord"
+
+  fun UnmanagedMemory_subReal VM heap [Word rawAddress] =
+      [Real 0.0]
+    | UnmanagedMemory_subReal _ _ _ = 
+      raise RE.UnexpectedPrimitiveArguments "UnmanagedMemory_subReal"
+
+  fun UnmanagedMemory_updateReal
+          VM heap [Word rawAddress, Real value, Word 0w0] =
+      [SLD.unitToValue heap ()]
+    | UnmanagedMemory_updateReal _ _ _ = 
+      raise RE.UnexpectedPrimitiveArguments "UnmanagedMemory_updateReal"
 
   fun UnmanagedMemory_import VM heap [Word rawAddress, Int bytes] =
       [SLD.stringToValue heap "abc"]
@@ -73,8 +95,15 @@ struct
           name = "UnmanagedMemory_updateWord",
           function = UnmanagedMemory_updateWord
         },
+        {name = "UnmanagedMemory_subReal", function = UnmanagedMemory_subReal},
+        {
+          name = "UnmanagedMemory_updateReal",
+          function = UnmanagedMemory_updateReal
+        },
         {name = "UnmanagedMemory_import", function = UnmanagedMemory_import},
-        {name = "UnmanagedMemory_export", function = UnmanagedMemory_export}
+        {name = "UnmanagedMemory_export", function = UnmanagedMemory_export},
+        {name = "UnmanagedMemory_updateInt", function = UnmanagedMemory_updateInt},
+        {name = "UnmanagedMemory_subInt", function = UnmanagedMemory_subInt}
       ]
 
   (***************************************************************************)

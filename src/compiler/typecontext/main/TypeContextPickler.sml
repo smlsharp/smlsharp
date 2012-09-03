@@ -4,8 +4,6 @@
 structure TypeContextPickler
           : sig
               val topTypeContext : InitialTypeContext.topTypeContext Pickle.pu
-              val typeEnv : TypeContext.typeEnv Pickle.pu
-              val staticTypeEnv : TypeContext.staticTypeEnv Pickle.pu
             end =
 struct
 
@@ -23,14 +21,14 @@ struct
 
   val typeEnv =
       P.conv
-      ((fn (tyConSizeTagEnv, varEnv, strSizeTagEnv) =>
-           {tyConSizeTagEnv = tyConSizeTagEnv, 
+      ((fn (tyConEnv, varEnv, strEnv) =>
+           {tyConEnv = tyConEnv, 
             varEnv = varEnv,
-            strSizeTagEnv = strSizeTagEnv}),
-       (fn {tyConSizeTagEnv, varEnv, strSizeTagEnv} =>
-           (tyConSizeTagEnv, varEnv, strSizeTagEnv)))
+            strEnv = strEnv}),
+       (fn {tyConEnv, varEnv, strEnv} =>
+           (tyConEnv, varEnv, strEnv)))
       (P.tuple3
-         (TypesPickler.tyConSizeTagEnv, TypesPickler.varEnv, TypesPickler.strSizeTagEnv))
+         (TypesPickler.tyConEnv, TypesPickler.varEnv, TypesPickler.strEnv))
 
   val staticTypeEnv = 
       P.conv

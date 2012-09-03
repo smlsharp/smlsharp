@@ -3,7 +3,7 @@
  * 
  * @copyright (c) 2006, Tohoku University. 
  * @author Liu Bochao
- * @version $Id: LinkageUnitPickler.sml,v 1.1 2006/03/02 12:46:18 bochao Exp $
+ * @version $Id: LinkageUnitPickler.sml,v 1.5 2006/03/25 11:34:41 bochao Exp $
  *)
 structure LinkageUnitPickler =
 struct
@@ -11,16 +11,30 @@ struct
    structure P = Pickle
    val linkageUnit : LinkageUnit.linkageUnit P.pu =
        P.conv
-           ((fn (fileName, staticTypeEnv, staticModuleEnv, code) =>
+           ((fn (fileName, 
+                 staticTypeEnv, 
+                 staticModuleEnv, 
+                 hiddenValIndexList, 
+                 code) =>
                 {fileName = fileName,
                  staticTypeEnv = staticTypeEnv, 
                  staticModuleEnv = staticModuleEnv, 
+                 hiddenValIndexList = hiddenValIndexList,
                  code = code}),
-            (fn {fileName, staticTypeEnv, staticModuleEnv, code} =>
-                (fileName, staticTypeEnv, staticModuleEnv,code)))
-           (P.tuple4(P.string, 
-                     TypeContextPickler.staticTypeEnv, 
-                     ModuleCompilationPickler.staticModuleEnv, 
-                     (P.list TypedLambdaPickler.tldecl)))
+            (fn {fileName, 
+                 staticTypeEnv, 
+                 staticModuleEnv, 
+                 hiddenValIndexList, 
+                 code} =>
+                (fileName, 
+                 staticTypeEnv, 
+                 staticModuleEnv, 
+                 hiddenValIndexList, 
+                 code)))
+           (P.tuple5 (P.string, 
+                      StaticTypeEnvPickler.staticTypeEnv, 
+                      ModuleCompilationPickler.staticModuleEnv, 
+                      (P.list (ModuleCompilationPickler.pathVar_globalIndex_ty)),
+                      (P.list TypedLambdaPickler.tldecl)))
 end
            

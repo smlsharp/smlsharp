@@ -1,0 +1,145 @@
+<HTML>
+<HEAD>
+<TITLE>NET_SERV_DB</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>NET_SERV_DB</H2>
+<DL>
+<DT> <B>All Known Implementing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="StrNetServDB.html">NetServDB</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigNET_SERV_DB.html">NET_SERV_DB</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigNET_SERV_DB.html#Valname">name</A>&nbsp;:&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigNET_SERV_DB.html#Valaliases">aliases</A>&nbsp;:&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigNET_SERV_DB.html#Valport">port</A>&nbsp;:&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigNET_SERV_DB.html#Valprotocol">protocol</A>&nbsp;:&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigNET_SERV_DB.html#ValgetByName">getByName</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigNET_SERV_DB.html#ValgetByPort">getByPort</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeentry"><!-- --></A>
+<H3>entry</H3>
+<P>
+<CODE>type&nbsp;entry</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valname"><!-- --></A>
+<H3>name</H3>
+<P>
+<CODE>val&nbsp;name&nbsp;:&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valaliases"><!-- --></A>
+<H3>aliases</H3>
+<P>
+<CODE>val&nbsp;aliases&nbsp;:&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Valport"><!-- --></A>
+<H3>port</H3>
+<P>
+<CODE>val&nbsp;port&nbsp;:&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valprotocol"><!-- --></A>
+<H3>protocol</H3>
+<P>
+<CODE>val&nbsp;protocol&nbsp;:&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValgetByName"><!-- --></A>
+<H3>getByName</H3>
+<P>
+<CODE>val&nbsp;getByName&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValgetByPort"><!-- --></A>
+<H3>getByPort</H3>
+<P>
+<CODE>val&nbsp;getByPort&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="SigNET_SERV_DB.html#Typeentry">entry</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

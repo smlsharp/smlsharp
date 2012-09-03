@@ -2,7 +2,7 @@
  *
  * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
- * @version $Id: HTMLResultPrinter.sml,v 1.10 2005/12/12 18:53:05 katsuu Exp $
+ * @version $Id: HTMLResultPrinter.sml,v 1.11 2007/02/19 14:11:56 kiyoshiy Exp $
  *)
 structure HTMLResultPrinter : RESULT_PRINTER =
 struct
@@ -34,17 +34,15 @@ struct
       end
 
   local
-    fun arrayToString a =
-        implode (Word8Array.foldr (fn (x,R) => chr (Word8.toInt x) :: R) nil a)
-    fun stringToArray s =
-        Word8Array.fromList (map (Word8.fromInt o ord) (explode s))
+    fun vectorToString v = Byte.bytesToString v
+    fun stringToVector s = Byte.stringToBytes s
     fun splitLine s =
         map Substring.string
             (Substring.fields (fn x => x = #"\n") (Substring.all s))
     fun deleteSpace s =
         implode (List.filter (fn c => not (Char.isSpace c)) (explode s))
     fun prepare str =
-        map (fn x => (deleteSpace x, x)) (splitLine (arrayToString str))
+        map (fn x => (deleteSpace x, x)) (splitLine (vectorToString str))
     fun compare ((x,_),(y,_)) = x = y
     fun del x = "<STRONG><FONT COLOR=RED>" ^ x ^ "</FONT></STRONG>\n"
     fun ins x = "<STRONG><FONT COLOR=RED>" ^ x ^ "</FONT></STRONG>\n"
@@ -59,7 +57,7 @@ struct
                   (nil, nil)
                   (Diff.diff compare (prepare expected, prepare output))
       in
-        (stringToArray (concat expected), stringToArray (concat output))
+        (stringToVector (concat expected), stringToVector (concat output))
       end
   end
 
@@ -70,7 +68,7 @@ struct
     =
     let
       val print = printTo resultChannel
-      val printBin = #sendArray resultChannel
+      val printBin = #sendVector resultChannel
       fun printException exn =
           (
             print "<p>\n";
@@ -91,11 +89,11 @@ struct
               print "</PRE>\n";
               print "<HR>\n"
             )
-      fun printPart (title, array) =
+      fun printPart (title, vector) =
           (
             print ("<H2>" ^ title ^ "</H2>\n");
             print "<PRE>\n";
-            #sendArray resultChannel array;
+            #sendVector resultChannel vector;
             print "</PRE>\n";
             print "<HR>\n"
           )

@@ -2,18 +2,20 @@
  * Utility functions to manipulate the typed pattern calculus.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypedCalcUtils.sml,v 1.4 2006/02/28 16:11:07 kiyoshiy Exp $
+ * @version $Id: TypedCalcUtils.sml,v 1.9 2007/02/28 15:31:26 katsu Exp $
  *)
 structure TypedCalcUtils : TYPEDCALCUTILS = struct
 local 
-    open Types StaticEnv TypedCalc TypesUtils
+    open Types TypedCalc TypesUtils
 in
 
   fun getLocOfExp exp =
       case exp of
         TPFOREIGNAPPLY {loc,...} => loc
+      | TPEXPORTCALLBACK {loc,...} => loc
+      | TPSIZEOF (_, loc) => loc
       | TPERROR => Loc.noloc
-      | TPCONSTANT (_, loc) => loc
+      | TPCONSTANT (_, _, loc) => loc
       | TPVAR (_, loc) => loc
       | TPRECFUNVAR {loc,...} => loc
       | TPPRIMAPPLY {loc,...} => loc
@@ -33,7 +35,6 @@ in
       | TPPOLY {loc,...} => loc
       | TPTAPP {loc,...} => loc
       | TPSEQ {loc,...} => loc
-      | TPFFIVAL {loc,...} => loc
       | TPCAST (toexo, ty, loc) => loc
 
   (**
@@ -49,12 +50,20 @@ in
 	      let 
 		  val subst = freshSubst boundtvars
 		  val bty = substBTvar subst body
-		  val (bodyty,ex) = freshInst (bty,
-					       TPTAPP{exp=ex,
-						      expTy=ty,
-						      instTyList=IEnv.listItems subst,
-                                                      loc=exLoc})
-	      in  (bodyty, ex)
+                  val newEx = 
+                    case ex of
+                      TPCONSTRUCT {con, instTyList=nil, argExpOpt=NONE, loc}
+                       => TPCONSTRUCT {con=con, 
+                                       instTyList=IEnv.listItems subst,
+                                       argExpOpt=NONE, 
+                                       loc=loc}
+                     | _ => TPTAPP{exp=ex,
+                                   expTy=ty,
+                                   instTyList=IEnv.listItems subst,
+                                   loc=exLoc}
+
+	      in  
+                freshInst (bty,newEx)
 	      end
 	   | FUNMty (tyList, bodyTy) =>
 	      (* 

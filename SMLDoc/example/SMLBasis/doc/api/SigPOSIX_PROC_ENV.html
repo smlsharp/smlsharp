@@ -1,0 +1,316 @@
+<HTML>
+<HEAD>
+<TITLE>POSIX_PROC_ENV</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>POSIX_PROC_ENV</H2>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_PROC_ENV.html">POSIX_PROC_ENV</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A><br>
+&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typefile_desc">file_desc</A><br>
+&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A><br>
+&nbsp;&nbsp;eqtype&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#ValuidToWord">uidToWord</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#ValwordToUid">wordToUid</A>&nbsp;:&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#ValgidToWord">gidToWord</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#ValwordToGid">wordToGid</A>&nbsp;:&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetpid">getpid</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetppid">getppid</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetuid">getuid</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgeteuid">geteuid</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetgid">getgid</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetegid">getegid</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valsetuid">setuid</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valsetgid">setgid</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetgroups">getgroups</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetlogin">getlogin</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetpgrp">getpgrp</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valsetsid">setsid</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valsetpgid">setpgid</A>&nbsp;:&nbsp;{pid&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,&nbsp;pgid&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valuname">uname</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;(<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>)&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valtime">time</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;Time.time<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valtimes">times</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elapsed&nbsp;:&nbsp;Time.time,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;utime&nbsp;:&nbsp;Time.time,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stime&nbsp;:&nbsp;Time.time,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cutime&nbsp;:&nbsp;Time.time,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cstime&nbsp;:&nbsp;Time.time<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valgetenv">getenv</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valenviron">environ</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valctermid">ctermid</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valttyname">ttyname</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valisatty">isatty</A>&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Valsysconf">sysconf</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typepid"><!-- --></A>
+<H3>pid</H3>
+<P>
+<CODE>eqtype&nbsp;pid</CODE>
+
+<HR>
+<A NAME="Typefile_desc"><!-- --></A>
+<H3>file_desc</H3>
+<P>
+<CODE>eqtype&nbsp;file_desc</CODE>
+
+<HR>
+<A NAME="Typeuid"><!-- --></A>
+<H3>uid</H3>
+<P>
+<CODE>eqtype&nbsp;uid</CODE>
+
+<HR>
+<A NAME="Typegid"><!-- --></A>
+<H3>gid</H3>
+<P>
+<CODE>eqtype&nbsp;gid</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValuidToWord"><!-- --></A>
+<H3>uidToWord</H3>
+<P>
+<CODE>val&nbsp;uidToWord&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A></CODE>
+
+<HR>
+<A NAME="ValwordToUid"><!-- --></A>
+<H3>wordToUid</H3>
+<P>
+<CODE>val&nbsp;wordToUid&nbsp;:&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A></CODE>
+
+<HR>
+<A NAME="ValgidToWord"><!-- --></A>
+<H3>gidToWord</H3>
+<P>
+<CODE>val&nbsp;gidToWord&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A></CODE>
+
+<HR>
+<A NAME="ValwordToGid"><!-- --></A>
+<H3>wordToGid</H3>
+<P>
+<CODE>val&nbsp;wordToGid&nbsp;:&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A></CODE>
+
+<HR>
+<A NAME="Valgetpid"><!-- --></A>
+<H3>getpid</H3>
+<P>
+<CODE>val&nbsp;getpid&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A></CODE>
+
+<HR>
+<A NAME="Valgetppid"><!-- --></A>
+<H3>getppid</H3>
+<P>
+<CODE>val&nbsp;getppid&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A></CODE>
+
+<HR>
+<A NAME="Valgetuid"><!-- --></A>
+<H3>getuid</H3>
+<P>
+<CODE>val&nbsp;getuid&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A></CODE>
+
+<HR>
+<A NAME="Valgeteuid"><!-- --></A>
+<H3>geteuid</H3>
+<P>
+<CODE>val&nbsp;geteuid&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A></CODE>
+
+<HR>
+<A NAME="Valgetgid"><!-- --></A>
+<H3>getgid</H3>
+<P>
+<CODE>val&nbsp;getgid&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A></CODE>
+
+<HR>
+<A NAME="Valgetegid"><!-- --></A>
+<H3>getegid</H3>
+<P>
+<CODE>val&nbsp;getegid&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A></CODE>
+
+<HR>
+<A NAME="Valsetuid"><!-- --></A>
+<H3>setuid</H3>
+<P>
+<CODE>val&nbsp;setuid&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typeuid">uid</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valsetgid"><!-- --></A>
+<H3>setgid</H3>
+<P>
+<CODE>val&nbsp;setgid&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valgetgroups"><!-- --></A>
+<H3>getgroups</H3>
+<P>
+<CODE>val&nbsp;getgroups&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typegid">gid</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Valgetlogin"><!-- --></A>
+<H3>getlogin</H3>
+<P>
+<CODE>val&nbsp;getlogin&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valgetpgrp"><!-- --></A>
+<H3>getpgrp</H3>
+<P>
+<CODE>val&nbsp;getpgrp&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A></CODE>
+
+<HR>
+<A NAME="Valsetsid"><!-- --></A>
+<H3>setsid</H3>
+<P>
+<CODE>val&nbsp;setsid&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A></CODE>
+
+<HR>
+<A NAME="Valsetpgid"><!-- --></A>
+<H3>setpgid</H3>
+<P>
+<CODE>val&nbsp;setpgid&nbsp;:&nbsp;{pid&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>,&nbsp;pgid&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typepid">pid</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valuname"><!-- --></A>
+<H3>uname</H3>
+<P>
+<CODE>val&nbsp;uname&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;(<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>)&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Valtime"><!-- --></A>
+<H3>time</H3>
+<P>
+<CODE>val&nbsp;time&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;Time.time</CODE>
+
+<HR>
+<A NAME="Valtimes"><!-- --></A>
+<H3>times</H3>
+<P>
+<CODE>val&nbsp;times<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elapsed&nbsp;:&nbsp;Time.time,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;utime&nbsp;:&nbsp;Time.time,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stime&nbsp;:&nbsp;Time.time,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cutime&nbsp;:&nbsp;Time.time,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cstime&nbsp;:&nbsp;Time.time<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</CODE>
+
+<HR>
+<A NAME="Valgetenv"><!-- --></A>
+<H3>getenv</H3>
+<P>
+<CODE>val&nbsp;getenv&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Valenviron"><!-- --></A>
+<H3>environ</H3>
+<P>
+<CODE>val&nbsp;environ&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Valctermid"><!-- --></A>
+<H3>ctermid</H3>
+<P>
+<CODE>val&nbsp;ctermid&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valttyname"><!-- --></A>
+<H3>ttyname</H3>
+<P>
+<CODE>val&nbsp;ttyname&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valisatty"><!-- --></A>
+<H3>isatty</H3>
+<P>
+<CODE>val&nbsp;isatty&nbsp;:&nbsp;<A HREF="SigPOSIX_PROC_ENV.html#Typefile_desc">file_desc</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valsysconf"><!-- --></A>
+<H3>sysconf</H3>
+<P>
+<CODE>val&nbsp;sysconf&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">SysWord.word</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

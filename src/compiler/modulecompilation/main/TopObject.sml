@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TopObject.sml,v 1.37 2006/02/28 01:22:50 bochao Exp $
+ * @version $Id: TopObject.sml,v 1.38 2007/01/21 13:41:33 kiyoshiy Exp $
  *)
 structure TopObject =
 struct
@@ -11,7 +11,6 @@ struct
         structure TFC = TypedFlatCalc
         structure T = Types 
         structure ITC = InitialTypeContext
-        structure SE = StaticEnv
         structure BT = BasicTypes
    in
         type  pageType = int

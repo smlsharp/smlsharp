@@ -20,7 +20,7 @@ IMLPrim_Int_toStringImpl(UInt32Value argsCount,
       sprintf(buffer, "%ld", num);
     }
     else{// use "~" instead of "-" as a minus sign character.
-      sprintf(buffer, "~%ld", -num);
+      sprintf(buffer, "~%lu", 0 - (UInt32Value)num);
     }
     *resultRef = PrimitiveSupport::stringToCell(buffer);
     return;

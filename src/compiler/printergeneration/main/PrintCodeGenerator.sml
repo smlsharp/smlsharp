@@ -2,7 +2,7 @@
  * This structure generates codes which print binding informations.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrintCodeGenerator.sml,v 1.25 2006/02/28 16:11:03 kiyoshiy Exp $
+ * @version $Id: PrintCodeGenerator.sml,v 1.36.2.1 2007/03/27 03:33:41 kiyoshiy Exp $
  *)
 structure PrintCodeGenerator =
 struct
@@ -10,9 +10,10 @@ struct
   (***************************************************************************)
 
   structure BF = SMLFormat.BasicFormatters
+  structure CT = ConstantTerm
   structure FE = SMLFormat.FormatExpression
   structure P = Path
-  structure SE = StaticEnv
+  structure PT = PredefinedTypes
   structure TP = TypedCalc
   structure TPU = TypedCalcUtils
   structure TY = Types
@@ -25,7 +26,7 @@ struct
 
   fun makeSeqExp codes loc = 
       TP.TPSEQ
-      {expList = codes, expTyList = map (fn _ => OC.unitTy) codes, loc = loc}
+      {expList = codes, expTyList = map (fn _ => PT.unitty) codes, loc = loc}
 
   local
     fun encloseList formatList =
@@ -54,6 +55,11 @@ struct
   fun formatTy path ty =
       let
         val newTy = U.makePathOfTyRelative path ty
+        val expressions = TY.format_ty [] newTy
+      in
+        expressions
+      end
+(*
         (* ToDo : this is temporary code until smlpplib can be compiled. *)
         val tyString = TypeFormatter.tyToString newTy
 (*
@@ -62,7 +68,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
       in
         [FE.Term(size tyString, tyString)]
       end
-
+*)
   fun formatTyUnderBTV path BTVs ty =
       let
         val newTy = U.makePathOfTyRelative path ty
@@ -147,7 +153,6 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
                   loc = loc
                 }
 
-        val stringOfName = "val " ^ name ^ " ="
         val printExp =
             TP.TPSEQ
             {
@@ -155,22 +160,31 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
               [
                 OC.printFormat
                     (OC.concatFormatExpressions
-                         ((OC.translateFormatExpressions
-                               [
-                                 FE.Term(size stringOfName, stringOfName),
-                                 U.s_1_Indicator
-                               ])
-                          @ [formatValueExp]
-                          @ (OC.translateFormatExpressions
-                                 [U.s_1_Indicator, FE.Term(2, ": ")])
-                          @ [formatTypeExp])),
-                OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+                         (OC.translateFormatExpressions
+                               [FE.Term(3, "val"), U.s_Indicator]
+                          @ [OC.makeGuard
+                                 (
+                                   NONE,
+                                   (OC.translateFormatExpressions
+                                        [
+                                          FE.Term(size name, name),
+                                          U.s_Indicator,
+                                          FE.Term(1, "="),
+                                          U.s_1_Indicator
+                                        ])
+                                   @ [formatValueExp]
+                                   @ OC.translateFormatExpressions
+                                         [U.s_1_Indicator, FE.Term(2, ": ")]
+                                   @ [formatTypeExp]
+                                 )])),
+                OC.printString
+                    (TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
               ],
-              expTyList = [OC.unitTy, OC.unitTy],
+              expTyList = [PT.unitty, PT.unitty],
               loc = loc
             }
       in
-        TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+        TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
       end
 
   fun formatConstructor path (TY.CONID{name, ty, ...}) = 
@@ -249,10 +263,9 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
             (map
                 (fn formatted =>
                     [
-                      OC.printFormat
-                          (OC.concatFormatExpressions
-                               (OC.translateFormatExpressions formatted)),
-                      OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+                      OC.printFormatStatic formatted,
+                      OC.printString
+                          (TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
                     ])
                 formattedTyCon)
       in
@@ -265,7 +278,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
             map (generatePrintCodeForDatatype context path loc) tyCons
         val printExp = makeSeqExp printCodes loc
       in
-        TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+        TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
       end
 
   fun formatDatatypeReplication
@@ -300,26 +313,22 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         val rightName = U.pathNameToString (relativeStrPath, tyConName)
         val codes = 
             [
-              OC.printFormat
-              (OC.concatFormatExpressions
-               (OC.translateFormatExpressions
-                (formatDatatypeReplication
-                     path (leftTyCon, relativePath, rightTyCon)))),
-              OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+              OC.printFormatStatic
+                  (formatDatatypeReplication
+                       path (leftTyCon, relativePath, rightTyCon)),
+              OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
             ]
         val printExp = makeSeqExp codes loc
       in
-        TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+        TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
       end
 
   fun generatePrintCodeForAbstype context path loc (tyCon : TY.tyCon) =
       let
         val codes = 
             [
-              OC.printFormat
-              (OC.concatFormatExpressions
-               (OC.translateFormatExpressions(formatAbstype path tyCon))),
-              OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+              OC.printFormatStatic (formatAbstype path tyCon),
+              OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
             ]
       in
         makeSeqExp codes loc
@@ -331,7 +340,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
             map (generatePrintCodeForAbstype context path loc) tyCons
         val printExp = makeSeqExp printCodes loc
       in
-        TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+        TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
       end
 
   (***************************************************************************)
@@ -350,19 +359,18 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
                   U.pathToString (Path.appendPath(relativePath, id, name))
               val codes = 
                   [
-                    OC.printFormat
-                    (OC.concatFormatExpressions
-                     (OC.translateFormatExpressions
-                          ([
-                             FE.Term(4, "open"),
-                             U.s_d_Indicator,
-                             FE.Term(size name, name)
-                           ]))),
-                    OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+                    OC.printFormatStatic 
+                        [
+                          FE.Term(4, "open"),
+                          U.s_d_Indicator,
+                          FE.Term(size name, name)
+                        ],
+                    OC.printString
+                        (TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
                   ]
               val printExp = makeSeqExp codes loc
             in
-              TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+              TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
             end
       in
         TP.TPLOCALDEC(map generatePrintCodeForOpenOne strPathInfos, [], loc)
@@ -374,19 +382,17 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         val conTy = #ty conInfo
         val codes =
             [
-              OC.printFormat
-              (OC.concatFormatExpressions
-               (OC.translateFormatExpressions
-                ([
-                   FE.Term(9, "exception"),
-                   U.s_d_Indicator,
-                   FE.Term(size conName, conName),
-                   U.s_d_Indicator,
-                   FE.Term(1, ":"),
-                   U.s_1_Indicator
-                 ] @
-                 (formatTy path conTy)))),
-              OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+              OC.printFormatStatic 
+                  ([
+                     FE.Term(9, "exception"),
+                     U.s_d_Indicator,
+                     FE.Term(size conName, conName),
+                     U.s_d_Indicator,
+                     FE.Term(1, ":"),
+                     U.s_1_Indicator
+                   ] @
+                   (formatTy path conTy)),
+              OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
             ]
       in
         makeSeqExp codes loc
@@ -401,19 +407,17 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         val rightName = U.pathNameToString (rightStrPath, rightName)
         val codes = 
             [
-              OC.printFormat
-              (OC.concatFormatExpressions
-               (OC.translateFormatExpressions
-                ([
-                   FE.Term(9, "exception"),
-                   U.s_d_Indicator,
-                   FE.Term(size leftName, leftName),
-                   U.s_d_Indicator,
-                   FE.Term(1, "="),
-                   U.s_d_Indicator,
-                   FE.Term(size rightName, rightName)
-                 ]))),
-              OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+              OC.printFormatStatic 
+                  [
+                    FE.Term(9, "exception"),
+                    U.s_d_Indicator,
+                    FE.Term(size leftName, leftName),
+                    U.s_d_Indicator,
+                    FE.Term(1, "="),
+                    U.s_d_Indicator,
+                    FE.Term(size rightName, rightName)
+                  ],
+              OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
             ]
         val printExp = makeSeqExp codes loc
       in
@@ -426,7 +430,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
             map (generatePrintCodeForExnBind context path loc) exnBinds
         val printExp = makeSeqExp printCodes loc
       in
-        TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+        TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
       end
 
   fun formatTyFun path ({tyargs, name, body} : TY.tyFun) =
@@ -439,7 +443,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
                (OC.translateFormatExpressions
                 ([FE.Term(4, "type"), U.s_d_Indicator] @
                  TY.format_tyBindInfo [] tyBind))),
-              OC.printString(TP.TPCONSTANT(TY.STRING("\n")))
+              OC.printString(TP.TPCONSTANT(CT.STRING("\n")))
             ]
 *)
         (* If the tyFun is generated from a declaration "type t = ty", the
@@ -479,10 +483,8 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
       let
         val codes = 
             [
-              OC.printFormat
-              (OC.concatFormatExpressions
-               (OC.translateFormatExpressions (formatTyFun path tyFun))),
-              OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+              OC.printFormatStatic (formatTyFun path tyFun),
+              OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
             ]
 
         val printExp = makeSeqExp codes loc
@@ -495,7 +497,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         val printCodes = map (generatePrintCodeForType context path loc) binds
         val printExp = makeSeqExp printCodes loc
       in
-        TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+        TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
       end
 
   (***************************************************************************)
@@ -504,28 +506,26 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
       let
         val header =
             case fixity of
-              SE.INFIX n =>
+              Fixity.INFIX n =>
               let val s = Int.toString n
               in [FE.Term(5, "infix"), U.s_d_Indicator, FE.Term(size s, s)]
               end
-            | SE.INFIXR n =>
+            | Fixity.INFIXR n =>
               let val s = Int.toString n
               in [FE.Term(6, "infixr"), U.s_d_Indicator, FE.Term(size s, s)]
               end
-            | SE.NONFIX => [FE.Term(6, "nonfix")]
+            | Fixity.NONFIX => [FE.Term(6, "nonfix")]
         val formattedNames =
             BF.format_list (BF.format_string, [U.s_d_Indicator]) names
         val codes = 
             [
-              OC.printFormat
-              (OC.concatFormatExpressions
-               (OC.translateFormatExpressions
-                (header @ [U.s_d_Indicator] @ formattedNames))),
-              OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+              OC.printFormatStatic 
+                (header @ [U.s_d_Indicator] @ formattedNames),
+              OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
             ]
         val printExp = makeSeqExp codes loc
       in
-        TP.TPVAL([(TY.VALIDWILD OC.unitTy, printExp)], loc)
+        TP.TPVAL([(TY.VALIDWILD PT.unitty, printExp)], loc)
       end
 
   local
@@ -563,7 +563,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
           (* exclude constructor bindings, because they are printed with
            * tyCon. *)
           fun isExnCon (conPathInfo : TY.conPathInfo) =
-              #tyCon conPathInfo = SE.exnTyCon
+              ID.eq(#id (#tyCon conPathInfo), #id PT.exnTyCon)
           val idStates =
               List.filter
                   (fn TY.CONID conPathInfo => isExnCon conPathInfo
@@ -572,7 +572,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         in
           concatFormatsList(map (formatIDState path) idStates)
         end
-    and formatStrEnv path strEnv =
+    and formatStrEnv path (TY.STRUCTURE strEnv) =
         (* NOTE: pass keys with items, because strEnvEntry does not contain
          * bound name. *)
         concatFormatsList
@@ -591,8 +591,6 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
               | (TY.PRIM primInfo) => (#name primInfo, #ty primInfo)
               | (TY.OPRIM oprimInfo) => (#name oprimInfo, #ty oprimInfo)
               | (TY.CONID conPathInfo) => (#name conPathInfo, #ty conPathInfo)
-              | (TY.FFID foreignFunPathInfo) =>
-                (#name foreignFunPathInfo, #ty foreignFunPathInfo)
           val header = case idState of (TY.CONID _) => "exception" | _ => "val"
         in
           [
@@ -608,7 +606,7 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
                 )
           ]
         end
-    and formatStrEnvEntry path (name, TY.STRUCTURE{id, env, ...}) =
+    and formatStrEnvEntry path (name, {id, env, ...}) =
         let
           val innerPath = Path.appendPath(path, id, name)
         in
@@ -618,8 +616,8 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
               NONE,
               [
                 FE.Term(9, "structure"), U.s_d_Indicator,
-                FE.Term(size name, name), U.s_d_Indicator,
-                FE.Term(1, ":"), U.s_1_Indicator
+                FE.Term(size name, name), U.s_1_Indicator,
+                FE.Term(1, ":"), U.s_d_Indicator
               ]
               @ (formatEnv innerPath env)
             )
@@ -789,18 +787,17 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         val body =
             case getConstraintOfStrExp strExp of
               NONE => formatEnv innerPath env
-            | SOME sigExp => formatSigExp path sigExp
+            | SOME sigExp => formatSigExp innerPath sigExp
         val formatted = [FE.Guard(NONE, header @ body)]
       in
         TP.TPSEQ
         {
-          expList = [
-                     OC.printFormat
-                     (OC.concatFormatExpressions
-                      (OC.translateFormatExpressions formatted)),
-                     OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
-                     ],
-          expTyList = [OC.unitTy, OC.unitTy],
+          expList =
+          [
+            OC.printFormatStatic formatted,
+            OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
+          ],
+          expTyList = [PT.unitty, PT.unitty],
           loc = loc
         }
       end
@@ -830,12 +827,10 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         {
           expList =
           [
-            OC.printFormat
-                (OC.concatFormatExpressions
-                     (OC.translateFormatExpressions (header @ body))),
-            OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+            OC.printFormatStatic (header @ body),
+            OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
           ],
-          expTyList = [OC.unitTy, OC.unitTy],
+          expTyList = [PT.unitty, PT.unitty],
           loc = loc
         }
       end
@@ -892,12 +887,10 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
         {
           expList =
           [
-            OC.printFormat
-                (OC.concatFormatExpressions
-                     (OC.translateFormatExpressions formatted)),
-            OC.printString(TP.TPCONSTANT(TY.STRING("\n"), loc))
+            OC.printFormatStatic formatted,
+            OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
           ],
-          expTyList = [OC.unitTy, OC.unitTy],
+          expTyList = [PT.unitty, PT.unitty],
           loc = loc
         }
       end
@@ -908,6 +901,37 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
             map (generatePrintCodeForFunDecl context path loc) funDecls
       in
         makeSeqExp printCodes loc
+      end
+
+  fun generatePrintCodeForImport context path loc spec =
+      let
+        val currentPath = path (* ToDo : ? *)
+(*
+        val body = formatEnv innerPath env
+*)
+        val formatted =
+            [
+              FE.Guard
+              (
+                NONE,
+                [FE.Term(7, "_import"), FE.StartOfIndent 2]
+                @ (case (formatSpec currentPath) spec of
+                     [] => []
+                   | formattedSpecs => (U.s_1_Indicator :: formattedSpecs))
+                @ [FE.EndOfIndent, U.s_1_Indicator, FE.Term(3, "end")]
+              )
+            ]
+      in
+        TP.TPSEQ
+        {
+          expList =
+          [
+            OC.printFormatStatic formatted,
+            OC.printString(TP.TPCONSTANT(CT.STRING("\n"), PT.stringty, loc))
+          ],
+          expTyList = [PT.unitty, PT.unitty],
+          loc = loc
+        }
       end
 
   end

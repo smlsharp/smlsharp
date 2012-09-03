@@ -2,7 +2,7 @@
  *  This module translates FormatExpression.expression into
  * PrettyPrinter.symbol.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PreProcessor.sml,v 1.1 2006/02/07 12:51:52 kiyoshiy Exp $
+ * @version $Id: PreProcessor.sml,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
  *)
 structure PreProcessor :> PREPROCESSOR =
 struct
@@ -11,6 +11,7 @@ struct
 
   structure FE = FormatExpression
   structure PP = PrettyPrinter
+  structure Param = PrinterParameter
 
   (***************************************************************************)
 
@@ -31,6 +32,9 @@ struct
   exception UnMatchEndOfIndent of string
 
   (***************************************************************************)
+
+  type parameter =
+       {spaceString : string, guardLeft : string, guardRight : string}
 
   (**
    * global shared information.
@@ -245,7 +249,7 @@ struct
    *       </ul>
    *)
   fun calculate
-      (parameter : PrinterParameter.printerParameter)
+      (parameter : parameter)
       ENV
       (context : context)
       (FE.Term (columns, text)) =
@@ -494,7 +498,7 @@ struct
 
   (***************************************************************************)
 
-  fun removeAssoc symbol =
+  fun removeAssoc (parameter : parameter) symbol =
       let
         (**
          * compare two assocs.
@@ -532,7 +536,7 @@ struct
          *)
         fun encloseSymbols symbols =
             [
-              FE.Term (1, "("),
+              FE.Term (1, #guardLeft parameter),
               FE.StartOfIndent 1
 (*
               FE.Indicator
@@ -554,7 +558,7 @@ struct
                 SOME {priority = FE.Preferred 1}
               },
 *)
-              FE.Term (1, ")"),
+              FE.Term (1, #guardRight parameter),
               FE.EndOfIndent
             ]
 
@@ -650,8 +654,30 @@ struct
    * @param symbol a format expression
    * @return a PrettyPrinter.symbol translated from the symbol.
    *)
-  fun preProcess parameter symbol =
+  fun preProcess parameterList symbol =
       let
+        val (spaceString, guardLeft, guardRight) =
+            List.foldl
+                (fn (param, (space, left, right)) =>
+                  case param
+                   of Param.Space s => (s, left, right)
+                    | Param.GuardLeft s => (space, s, right)
+                    | Param.GuardRight s => (space, left, s)
+                    | _ => (space, left, right))
+                (
+                  Param.defaultSpace,
+                  Param.defaultGuardLeft,
+                  Param.defaultGuardRight
+                )
+                parameterList
+
+        val parameter =
+            {
+              spaceString = spaceString,
+              guardLeft = guardLeft,
+              guardRight = guardRight
+            } : parameter
+
         val initialENV = Environment.create ()
         val initialContext =
             {
@@ -660,7 +686,7 @@ struct
               countOfEndOfIndent = 0,
               charsAfterNewline = ref 0
             }
-        val assocRemoved = removeAssoc symbol
+        val assocRemoved = removeAssoc parameter symbol
         val (ENV, context, result) =
             calculate parameter initialENV initialContext assocRemoved
             handle UnMatchEndOfIndent message =>

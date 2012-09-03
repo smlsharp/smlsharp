@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: BenchmarkRunner.sml,v 1.13 2006/02/02 12:59:18 kiyoshiy Exp $
+ * @version $Id: BenchmarkRunner.sml,v 1.16 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
 functor BenchmarkRunner(RuntimeRunner : RUNTIME_RUNNER) : BENCHMARK_RUNNER =
 struct
@@ -15,10 +15,71 @@ struct
 
   (***************************************************************************)
 
+  fun compilePrelude
+          (parameter : Top.contextParameter) preludePath preludeChannel = 
+      let
+        val context = Top.initialize parameter
+
+        val preludeDir = U.getDirectory preludePath
+
+        val currentSwitchTrace = !Control.switchTrace
+        val currentPrintBinds = !Control.printBinds
+      in
+        Control.switchTrace := false;
+        Control.printBinds := false;
+        Top.run
+            context
+            {
+              interactionMode = Top.Prelude,
+              initialSource = preludeChannel,
+              initialSourceName = preludePath,
+              getBaseDirectory = fn () => preludeDir
+            }
+            handle e =>
+                   (
+                     #close preludeChannel ();
+                     Control.switchTrace := currentSwitchTrace;
+                     Control.printBinds := currentPrintBinds;
+                     raise e
+                   );
+
+        Control.switchTrace := currentSwitchTrace;
+        Control.printBinds := currentPrintBinds;
+
+        context
+      end
+
+  fun resumePrelude
+          (parameter : Top.contextParameter) preludePath preludeChannel = 
+      let
+        fun reader () =
+            case #receive preludeChannel () of
+              SOME byte => byte
+            | NONE => raise Fail "unexpected EOF of library"
+        val _ = print "restoring static environment..."
+        val context =
+            Top.unpickle parameter (Pickle.makeInstream reader)
+            handle exn =>
+                   raise Fail ("malformed compiled code:" ^ exnMessage exn)
+        val _ = print "done\n"
+
+        val session = #session parameter
+        fun execute () =
+            case StandAloneSession.loadExecutable preludeChannel of
+              SOME executable => (#execute session executable; execute ())
+            | NONE => ()
+        val _ = print "restoring dynamic environment..."
+        val _ = execute ()
+        val _ = print "done\n"
+      in
+        context
+      end
+
   fun compile
       {
-        preludesFileName,
-        preludesChannel,
+        preludeFileName,
+        isCompiledPrelude,
+        preludeChannel,
         sourceFileName,
         sourceChannel,
         outputChannel,
@@ -30,12 +91,7 @@ struct
       in
         let
           val _ = print ("begin compile: " ^ sourceFileName ^ "\n")
-          val _ = Control.printBinds := false
-          val _ = Control.printWarning := false
-          val _ = Control.checkType := false
-          val _ = Control.generateExnHistory := true
-          val context =
-              Top.initialize
+          val initializeParameter = 
               {
                 session = session,
                 standardOutput = outputChannel, (* no output expected. *)
@@ -43,18 +99,9 @@ struct
                 loadPathList = ["."],
                 getVariable = OS.Process.getEnv
               }
-          val _ =
-              if
-                Top.run
-                  context
-                  {
-                    interactionMode = Top.NonInteractive {stopOnError = true},
-                    initialSource = preludesChannel,
-                    initialSourceName = preludesFileName,
-                    getBaseDirectory = fn () => U.getDirectory preludesFileName
-                  }
-              then ()
-              else raise Fail "cannot compile prelude."
+          val context = 
+              (if isCompiledPrelude then resumePrelude else compilePrelude)
+                  initializeParameter preludeFileName preludeChannel
           val compileTimer = ProcessTimer.createTimer ()
           val _ = 
               if
@@ -95,8 +142,9 @@ struct
 
   fun runBenchmark
       {
-        preludesFileName,
-        preludesChannel,
+        preludeFileName,
+        preludeChannel,
+        isCompiledPrelude,
         sourceFileName,
         sourceChannel,
         compileOutputChannel,
@@ -110,8 +158,9 @@ struct
                 (fn executableChannel =>
                     compile
                         {
-                          preludesFileName = preludesFileName,
-                          preludesChannel = preludesChannel,
+                          preludeFileName = preludeFileName,
+                          preludeChannel = preludeChannel,
+                          isCompiledPrelude = isCompiledPrelude,
                           sourceFileName = sourceFileName,
                           sourceChannel = sourceChannel,
                           outputChannel = compileOutputChannel,

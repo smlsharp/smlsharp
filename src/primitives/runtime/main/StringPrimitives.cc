@@ -87,7 +87,10 @@ IMLPrim_String_updateImpl(UInt32Value argsCount,
     SInt32Value index = argumentRefs[1]->sint32;
     UInt32Value ch = argumentRefs[2]->uint32;
     arg1[index] = ch;
-    *resultRef = PrimitiveSupport::constructUnit();
+    resultRef->uint32 = 0;
+/*
+*    *resultRef = PrimitiveSupport::constructUnit();
+*/	
     return;
 }
 
@@ -114,7 +117,10 @@ IMLPrim_printImpl(UInt32Value argsCount, Cell* argumentRefs[], Cell* resultRef)
     char* arg = PrimitiveSupport::cellToString(*argumentRefs[0]);
     int argLength = PrimitiveSupport::cellToStringLength(*argumentRefs[0]);
     PrimitiveSupport::writeToSTDOUT(argLength, arg);
-    *resultRef = PrimitiveSupport::constructUnit();
+    resultRef->uint32 = 0;
+/*
+*    *resultRef = PrimitiveSupport::constructUnit();
+*/
     return;
 };
 

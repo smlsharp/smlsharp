@@ -2,7 +2,7 @@
  * a simple interpreter of file path string.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PathResolver.sml,v 1.7 2006/02/28 16:11:06 kiyoshiy Exp $
+ * @version $Id: PathResolver.sml,v 1.9 2006/11/20 06:39:30 kiyoshiy Exp $
  *)
 structure PathResolver : PATH_RESOLVER =
 struct
@@ -60,8 +60,12 @@ struct
     fun findFileInPathList baseDir path [] = NONE
       | findFileInPathList baseDir path (loadPath :: loadPaths) =
         case 
-          PU.makeAbsolute
-              baseDir (PU.joinDirFile {dir = loadPath, file = path})
+          (PU.makeAbsolute
+               {
+                 dir = baseDir,
+                 path = (PU.joinDirFile {dir = loadPath, file = path})
+               })
+          handle OS.Path.Path => NONE
          of
           SOME absPath => SOME absPath
         | NONE => findFileInPathList baseDir path loadPaths
@@ -141,9 +145,9 @@ struct
                   else
                     if isRelativePath parsedPath
                     then (* 2nd form *)
-                      case PU.makeAbsolute baseDir parsedPath of
-                        SOME absPath => absPath
-                      | NONE =>
+                      case PU.makeAbsolute {dir = baseDir, path = parsedPath}
+                      of SOME absPath => absPath
+                       | NONE =>
                         raise
                           TE.InvalidPath
                               ("file not found:" ^ parsedPath

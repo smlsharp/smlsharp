@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: ExecutableLinker.cc,v 1.44 2006/02/25 02:39:50 kiyoshiy Exp $
+ * @version $Id: ExecutableLinker.cc,v 1.50.4.1 2007/03/22 08:41:57 katsu Exp $
  */
 #include "ExecutableLinker.hh"
 #include "Instructions.hh"
@@ -12,6 +12,22 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+//FIXME: Who use this?
+static
+UInt32Value tagToSize(UInt32Value tag){
+  UInt32Value k = 0;
+  UInt32Value allOne = 1;  
+  while (tag != 0) {
+    if (tag % 2 == 0){
+	allOne = 0;
+	}
+  tag = tag / 2;
+  k = k + 1; 
+  }
+  if (allOne == 1) {return k - 1;}
+  else {return k - 2;}
+}
+
 INLINE_FUN
 void
 ExecutableLinker::convertOffsetToAddress(UInt32Value* base, UInt32Value* PC)
@@ -21,6 +37,12 @@ ExecutableLinker::convertOffsetToAddress(UInt32Value* base, UInt32Value* PC)
 
 #define ASSERT_INSTRUCTION(opcode, address) \
 ASSERT((opcode) == *((UInt32Value*)address))
+
+#undef ASSERT_INSTRUCTION
+#define ASSERT_INSTRUCTION(opcode, address) \
+do { UInt32Value op__ = *((UInt32Value*)address); \
+     toNativeOrderQuad(&op__); \
+     ASSERT((opcode) == op__) } while (0)
 
 static const UInt32Value SIZE_OF_LOCATION_TABLE_ENTRY = 6;
 static const UInt32Value SIZE_OF_NAMESLOT_TABLE_ENTRY = 4;
@@ -32,7 +54,13 @@ ExecutableLinker::process(Executable* executable)
     throw(IMLRuntimeException,
           SystemError)
 {
-    switch(executable->byteOrder_){
+#if defined(BYTE_ORDER_LITTLE_ENDIAN)
+    // convert to network byte order.
+    WordOperations::reverseQuadByte(executable->buffer_);
+#endif
+    UInt32Value byteOrder = *(executable->buffer_);
+
+    switch(byteOrder){
       case Executable::LittleEndian:
         {
 #if defined(BYTE_ORDER_LITTLE_ENDIAN)
@@ -86,15 +114,20 @@ ExecutableLinker::link(Executable *executable)
     throw(IMLRuntimeException,
           SystemError)
 {
-    toNativeOrderQuad(executable->buffer_);
-    executable->codeWordLength_ = *(executable->buffer_);
-    executable->code_ = executable->buffer_ + 1;
+    // executable->buffer_[0] = byteOrder
+
+    // executable->buffer_[1] = codeWordLength
+    toNativeOrderQuad(executable->buffer_ + 1);
+    executable->codeWordLength_ = *(executable->buffer_ + 1);
+    // executable->buffer_[2] = start of code
+    executable->code_ = executable->buffer_ + 2;
 
     UInt32Value* code = executable->code_;
     UInt32Value* PC = code;
 
     while(PC - code < executable->codeWordLength_)
     {
+        toNativeOrderQuad(PC);
 /*
         DBGWRAP(fprintf(stderr,
                         "%d %s\n",
@@ -107,6 +140,7 @@ ExecutableLinker::link(Executable *executable)
           case LoadInt:
           case LoadWord:
           case LoadChar:
+          case LoadFloat:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // value
@@ -416,6 +450,8 @@ ExecutableLinker::link(Executable *executable)
             }
           case CopyBlock:
             {
+                PC += 1;
+                toNativeOrderQuad(PC); // nestLevel
                 PC += 1;
                 toNativeOrderQuad(PC); // blockOffset
                 PC += 1;
@@ -1065,6 +1101,17 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 break;
             }
+	  case RegisterCallback:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // sizeTag
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
           case SwitchInt:
           case SwitchWord:
           case SwitchChar:
@@ -1199,17 +1246,6 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 break;
             }
-          case FFIVal:
-            {
-                PC += 1;
-                toNativeOrderQuad(PC); // funNameOffset
-                PC += 1;
-                toNativeOrderQuad(PC); // libNameOffset
-                PC += 1;
-                toNativeOrderQuad(PC); // destination
-                PC += 1;
-                break;
-            }
           case ForeignApply:
             {
                 PC += 1;
@@ -1217,6 +1253,10 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // switchTag
+                PC += 1;
+                toNativeOrderQuad(PC); // convention
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
                     toNativeOrderQuad(PC); // argOffsets
@@ -1481,6 +1521,11 @@ fprintf(stderr, "executable->fileNamesCount_ = %d\n", executable->fileNamesCount
         const char* string = (const char*)(fileNameStrings + offset + 1);
         fprintf(stderr, "length = %d, string = \"%s\"\n", length, string);
 */
+    }
+
+    for (int index = 0; index < locationsWordLength; index += 1)
+    {
+        toNativeOrderQuad(&executable->locations_[index]);
     }
 
     PC = locationTable + locationTableWordLength;

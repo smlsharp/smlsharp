@@ -1,0 +1,302 @@
+<HTML>
+<HEAD>
+<TITLE>OS_PathFn</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>OS_PathFn</H2>
+<HR>
+<P>
+<CODE>functor&nbsp;<A HREF="FctOS_PathFn.html">OS_PathFn</A>(OSPathBase&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;datatype&nbsp;arc_kind&nbsp;=&nbsp;Null&nbsp;|&nbsp;Parent&nbsp;|&nbsp;Current&nbsp;|&nbsp;Arc&nbsp;of&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exception&nbsp;Path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;classify&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;arc_kind<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;parentArc&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;currentArc&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;validVolume&nbsp;:&nbsp;bool&nbsp;*&nbsp;Substring.substring&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;splitVolPath<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bool&nbsp;*&nbsp;Substring.substring&nbsp;*&nbsp;Substring.substring<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;joinVolPath&nbsp;:&nbsp;bool&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;arcSepChar&nbsp;:&nbsp;<A HREF=".//StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;sameVol&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end)&nbsp;:&nbsp;<A HREF="SigOS_PATH.html">OS_PATH</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="FctOS_PathFn-StrP.html">P</A>&nbsp;=&nbsp;OSPathBase<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="FctOS_PathFn-StrSS.html">SS</A>&nbsp;=&nbsp;<A HREF="StrSubstring.html">Substring</A><br>
+&nbsp;&nbsp;exception&nbsp;<A HREF="FctOS_PathFn.html#ExceptionPath">Path</A>&nbsp;=&nbsp;P.Path<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValarcSepStr">arcSepStr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValparentArc">parentArc</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValcurrentArc">currentArc</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValconcatArcs">concatArcs</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValvalidVolume">validVolume</A>&nbsp;:&nbsp;{isAbs&nbsp;:&nbsp;bool,&nbsp;vol&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValfromString">fromString</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;{isAbs&nbsp;:&nbsp;bool,&nbsp;vol&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValtoString">toString</A>&nbsp;:&nbsp;{isAbs&nbsp;:&nbsp;bool,&nbsp;vol&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValgetVolume">getVolume</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValgetParent">getParent</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValsplitDirFile">splitDirFile</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;{dir&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;file&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValjoinDirFile">joinDirFile</A>&nbsp;:&nbsp;{dir&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;file&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#Valdir">dir</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#Valfile">file</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValsplitBaseExt">splitBaseExt</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;{base&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;ext&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValjoinBaseExt">joinBaseExt</A>&nbsp;:&nbsp;{base&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;ext&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#Valbase">base</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#Valext">ext</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValmkCanonical">mkCanonical</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValisCanonical">isCanonical</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValisAbsolute">isAbsolute</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValisRelative">isRelative</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValmkAbsolute">mkAbsolute</A>&nbsp;:&nbsp;{path&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;relativeTo&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValmkRelative">mkRelative</A>&nbsp;:&nbsp;{path&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;relativeTo&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValisRoot">isRoot</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#Valconcat">concat</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValfromUnixPath">fromUnixPath</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctOS_PathFn.html#ValtoUnixPath">toUnixPath</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValarcSepStr"><!-- --></A>
+<H3>arcSepStr</H3>
+<P>
+<CODE>val&nbsp;arcSepStr</CODE>
+
+<HR>
+<A NAME="ValparentArc"><!-- --></A>
+<H3>parentArc</H3>
+<P>
+<CODE>val&nbsp;parentArc&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValcurrentArc"><!-- --></A>
+<H3>currentArc</H3>
+<P>
+<CODE>val&nbsp;currentArc&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValconcatArcs"><!-- --></A>
+<H3>concatArcs</H3>
+<P>
+<CODE>val&nbsp;concatArcs</CODE>
+
+<HR>
+<A NAME="ValvalidVolume"><!-- --></A>
+<H3>validVolume</H3>
+<P>
+<CODE>val&nbsp;validVolume&nbsp;:&nbsp;{isAbs&nbsp;:&nbsp;bool,&nbsp;vol&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValfromString"><!-- --></A>
+<H3>fromString</H3>
+<P>
+<CODE>val&nbsp;fromString&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;{isAbs&nbsp;:&nbsp;bool,&nbsp;vol&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>}</CODE>
+
+<HR>
+<A NAME="ValtoString"><!-- --></A>
+<H3>toString</H3>
+<P>
+<CODE>val&nbsp;toString&nbsp;:&nbsp;{isAbs&nbsp;:&nbsp;bool,&nbsp;vol&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValgetVolume"><!-- --></A>
+<H3>getVolume</H3>
+<P>
+<CODE>val&nbsp;getVolume&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValgetParent"><!-- --></A>
+<H3>getParent</H3>
+<P>
+<CODE>val&nbsp;getParent&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValsplitDirFile"><!-- --></A>
+<H3>splitDirFile</H3>
+<P>
+<CODE>val&nbsp;splitDirFile&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;{dir&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;file&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}</CODE>
+
+<HR>
+<A NAME="ValjoinDirFile"><!-- --></A>
+<H3>joinDirFile</H3>
+<P>
+<CODE>val&nbsp;joinDirFile&nbsp;:&nbsp;{dir&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;file&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valdir"><!-- --></A>
+<H3>dir</H3>
+<P>
+<CODE>val&nbsp;dir&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valfile"><!-- --></A>
+<H3>file</H3>
+<P>
+<CODE>val&nbsp;file&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValsplitBaseExt"><!-- --></A>
+<H3>splitBaseExt</H3>
+<P>
+<CODE>val&nbsp;splitBaseExt&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;{base&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;ext&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}</CODE>
+
+<HR>
+<A NAME="ValjoinBaseExt"><!-- --></A>
+<H3>joinBaseExt</H3>
+<P>
+<CODE>val&nbsp;joinBaseExt&nbsp;:&nbsp;{base&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;ext&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valbase"><!-- --></A>
+<H3>base</H3>
+<P>
+<CODE>val&nbsp;base&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valext"><!-- --></A>
+<H3>ext</H3>
+<P>
+<CODE>val&nbsp;ext&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValmkCanonical"><!-- --></A>
+<H3>mkCanonical</H3>
+<P>
+<CODE>val&nbsp;mkCanonical&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValisCanonical"><!-- --></A>
+<H3>isCanonical</H3>
+<P>
+<CODE>val&nbsp;isCanonical&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisAbsolute"><!-- --></A>
+<H3>isAbsolute</H3>
+<P>
+<CODE>val&nbsp;isAbsolute&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisRelative"><!-- --></A>
+<H3>isRelative</H3>
+<P>
+<CODE>val&nbsp;isRelative&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValmkAbsolute"><!-- --></A>
+<H3>mkAbsolute</H3>
+<P>
+<CODE>val&nbsp;mkAbsolute&nbsp;:&nbsp;{path&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;relativeTo&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValmkRelative"><!-- --></A>
+<H3>mkRelative</H3>
+<P>
+<CODE>val&nbsp;mkRelative&nbsp;:&nbsp;{path&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>,&nbsp;relativeTo&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValisRoot"><!-- --></A>
+<H3>isRoot</H3>
+<P>
+<CODE>val&nbsp;isRoot&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valconcat"><!-- --></A>
+<H3>concat</H3>
+<P>
+<CODE>val&nbsp;concat&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValfromUnixPath"><!-- --></A>
+<H3>fromUnixPath</H3>
+<P>
+<CODE>val&nbsp;fromUnixPath&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValtoUnixPath"><!-- --></A>
+<H3>toUnixPath</H3>
+<P>
+<CODE>val&nbsp;toUnixPath&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Exception detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ExceptionPath"><!-- --></A>
+<H3>Path</H3>
+<P>
+<CODE>exception&nbsp;Path&nbsp;=&nbsp;P.Path</CODE>
+
+<P>
+
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

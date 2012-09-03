@@ -2,7 +2,7 @@
  *  This module translates the symbols into a text representation which fits
  * within the specified column width.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PRETTYPRINTER.sig,v 1.1 2006/02/07 12:51:52 kiyoshiy Exp $
+ * @version $Id: PRETTYPRINTER.sig,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
  *)
 signature PRETTYPRINTER =
 sig
@@ -105,7 +105,7 @@ sig
    * @param symbol the symbol to be translated.
    * @return the text representation of the symbol.
    *)
-  val format : PrinterParameter.printerParameter -> symbol -> string
+  val format : PrinterParameter.parameter list -> symbol -> string
 
   (***************************************************************************)
 

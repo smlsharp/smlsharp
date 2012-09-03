@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: BUCCompileContext.sml,v 1.5 2006/02/28 17:05:50 duchuu Exp $
+ * @version $Id: BUCCompileContext.sml,v 1.6 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 
 
@@ -10,7 +10,6 @@ structure BUCCompileContext :> BUCCOMPILECONTEXT = struct
   structure BC = BUCCalc
   structure BU = BUCUtils
   structure T = Types
-  structure TU = TypesUtils
   structure VEnv = ID.Map
 
   datatype bookmark = SIZE of int | TAG of int | FRAMEBITMAP of BC.id

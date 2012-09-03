@@ -4,7 +4,7 @@
  * @author Atsushi Ohori 
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: PatternCalc.ppg,v 1.2 2006/03/02 12:48:03 bochao Exp $
+ * @version $Id: PatternCalc.ppg,v 1.10 2007/02/28 17:57:20 katsu Exp $
  *)
 structure PatternCalc : PATTERNCALC = struct
 
@@ -43,7 +43,7 @@ structure PatternCalc : PATTERNCALC = struct
       * @format(value:caseKindFormat) value
       *)
      Types.caseKind
-        
+
  datatype constant = datatype Absyn.constant
   local 
       fun formatRecord ([elementFormatter]) =
@@ -81,7 +81,14 @@ structure PatternCalc : PATTERNCALC = struct
         * @format(longid:longidFormat) longid
         *)
        Absyn.longid
-       
+
+  datatype specKind = datatype Absyn.specKind  
+     
+  (*%
+   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+   *)
+  type callingConvention = Absyn.callingConvention
+
  (*%
   * @params(expFormatter,patFormatter)
   * @formatter(formatConst) Absyn.format_constant
@@ -92,6 +99,7 @@ structure PatternCalc : PATTERNCALC = struct
   * @formatter(binaryChoice) SmlppgUtil.formatBinaryChoice
   * @formatter(enclosedList) SmlppgUtil.formatListWithEnclosure
   * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+  * @formatter(specKind) Absyn.format_specKind
   *)
  datatype plexp = 
      (*%
@@ -196,7 +204,37 @@ structure PatternCalc : PATTERNCALC = struct
      * @format(exp * loc) "_cast" "(" exp()(expFormatter,patFormatter) ")"
      *)
      PLCAST of plexp * loc
+  | (*%
+     * @format(exp * ty * loc)
+     *     N0{ {exp()(expFormatter,patFormatter)}
+     *         + ":" +1 "_import" +2 {ty} }
+     *)
+    PLFFIIMPORT of plexp * ty * loc
+  | (*%
+     * @format(exp * ty * loc)
+     *     N0{ {exp()(expFormatter,patFormatter)}
+     *         + ":" +1 "_export" +2 {ty} }
+     *)
+    PLFFIEXPORT of plexp * ty * loc
+  | (*%
+     * @format(cconv * exp * arg args * ty * loc)
+     *     N0{ "_ffiapply" + cconv + exp()(expFormatter,patFormatter)
+     *         + "(" args(arg()(expFormatter,patFormatter))("," +) ")"
+     *         + ":" + ty}
+     *)
+    PLFFIAPPLY of callingConvention * plexp * ffiArg list * ty * loc
 
+ and ffiArg =
+    (*%
+     * @format(exp * ty)  exp()(expFormatter,patFormatter) + ":" + ty	
+     *)    
+     PLFFIARG of plexp * ty
+   | (*%
+      * @format(ty * exp opt:prependedOpt)
+      *   "_sizeof(" ty ")" {opt(exp()(expFormatter,patFormatter))(+d "*" +)}
+      *)
+     PLFFIARGSIZEOF of ty * plexp option
+  
  and pdecl = 
      (*%
       * @format(var:tvar vars:enclosedList * bind binds * loc)
@@ -304,22 +342,6 @@ structure PatternCalc : PATTERNCALC = struct
       *)
      PDNONFIXDEC of string list * loc
    | (*%
-      * @format({name:name,funExp:funExp, libExp:libExp, argTyList:argty argtys, resultTy:resultty,loc:loc})
-      *       "val" + "import" + name + "=" +1
-      *       funExp()(expFormatter,patFormatter) +d "of" +d
-      *       libExp()(expFormatter,patFormatter) +2
-      *       ":" + "{" {argtys(argty)("," +)} "}" "->" {resultty}
-      *)
-     PDFFIVAL of 
-     {
-       name:string, 
-       funExp:plexp, 
-       libExp:plexp,
-       argTyList:ty list, 
-       resultTy:ty, 
-       loc:loc
-      }
-   | (*%
       * @format ""
       *)
      PDEMPTY 
@@ -359,6 +381,12 @@ structure PatternCalc : PATTERNCALC = struct
       * {pat()(expFormatter,patFormatter)} + ":" +d {ty}
       *)
      PLPATTYPED of plpat * ty * loc
+   | (*%
+      * @format(pat1 * pat2 * loc)
+      * "(" pat1()(expFormatter,patFormatter) + "|" + pat2()(expFormatter,patFormatter) ")"
+      *)
+     PLPATORPAT of plpat * plpat * loc
+ 
 
  and plexbind =
      (*%
@@ -462,10 +490,10 @@ structure PatternCalc : PATTERNCALC = struct
    (*%
     * @format(typdesc typdescs * loc)
     * "type" + {typdescs(typdesc)(~4[ +1 "and"] +)}
-    * @format:typdesc(tyvar tyvars:enclosedList * tyCon) 
-    * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+    * @format:typdesc(tyvar tyvars:enclosedList * tyCon * kind) 
+    * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} "::" kind}
     *)
-     PLSPECTYPE of (tvar list * string) list * loc (* type *)
+     PLSPECTYPE of (tvar list * string * specKind) list * loc (* type *)
    |
    (*%
     * @format(derivedtyp * loc)  derivedtyp
@@ -477,10 +505,10 @@ structure PatternCalc : PATTERNCALC = struct
    (*%
     * @format(typdesc typdescs * loc)
     * "eqtype" + {typdescs(typdesc)(~4[ +1 "and"] +)}
-    * @format:typdesc(tyvar tyvars:enclosedList * tyCon) 
-    * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} }
+    * @format:typdesc(tyvar tyvars:enclosedList * tyCon * kind) 
+    * {tyvars(tyvar) ("," +, "(", ")" +) {tyCon} "::" kind}
     *)
-     PLSPECEQTYPE of (tvar list * string) list * loc (* eqtype *)
+     PLSPECEQTYPE of (tvar list * string * specKind) list * loc (* eqtype *)
    |
    (*%
     * @format(datdesc datdescs * loc)
@@ -561,9 +589,14 @@ and pltopdec =
     PLTOPDECFUN of  (string * string * plsigexp  * plstrexp * loc) list * loc 
   | (*%
      * @format (spec * loc)
-     * !N0{ "import" + spec()(expFormatter,patFormatter) }
+     * !N0{ "import" + spec()(expFormatter,patFormatter) + "end"}
      *) 
     PLTOPDECIMPORT of plspec * loc 
+  | (*%
+     * @format (spec * loc)
+     * !N0{ "export" + spec()(expFormatter,patFormatter) + "end"}
+     *) 
+    PLTOPDECEXPORT of plspec * loc 
 
 
   end
@@ -586,6 +619,9 @@ and pltopdec =
    | PLSELECT x => #1 (#3 x)
    | PLSEQ x => #1 (#2 x)
    | PLCAST x => #1 (#2 x)
+   | PLFFIIMPORT x => #1 (#3 x)
+   | PLFFIEXPORT x => #1 (#3 x)
+   | PLFFIAPPLY x => #1 (#5 x)
 
   fun getRightPosExp plexp =
       case plexp of
@@ -605,6 +641,9 @@ and pltopdec =
    | PLSELECT x => #2 (#3 x)
    | PLSEQ x => #2 (#2 x)
    | PLCAST x => #2 (#2 x)
+   | PLFFIIMPORT x => #2 (#3 x)
+   | PLFFIEXPORT x => #2 (#3 x)
+   | PLFFIAPPLY x => #2 (#5 x)
 
   fun getLocExp exp = (getLeftPosExp exp, getRightPosExp exp)
 
@@ -617,6 +656,7 @@ and pltopdec =
    | PLPATRECORD x => #1 (#3 x)
    | PLPATLAYERED x => #1 (#4 x)
    | PLPATTYPED x => #1 (#3 x)
+   | PLPATORPAT x => #1 (#3 x)
         
   fun getRightPosPat pat =
       case pat of
@@ -627,6 +667,7 @@ and pltopdec =
    | PLPATRECORD x => #2 (#3 x)
    | PLPATLAYERED x => #2 (#4 x)
    | PLPATTYPED x => #2 (#3 x)
+   | PLPATORPAT x => #2 (#3 x)
         
  fun getLocPat pat = (getLeftPosPat pat, getRightPosPat pat)
 
@@ -647,7 +688,6 @@ and pltopdec =
    | PDINFIXDEC (_, _, loc) => loc
    | PDINFIXRDEC (_, _, loc) => loc
    | PDNONFIXDEC (_, loc) => loc
-   | PDFFIVAL {name, funExp, libExp,argTyList, resultTy, loc} => loc
    | PDEMPTY => Loc.noloc
 
 end

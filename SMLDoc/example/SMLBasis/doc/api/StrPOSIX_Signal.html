@@ -1,0 +1,270 @@
+<HTML>
+<HEAD>
+<TITLE>POSIX_Signal</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>POSIX_Signal</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_Signal.html">POSIX_Signal</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrPOSIX_Signal.html#Typesignal">signal</A>&nbsp;=&nbsp;<A HREF="StrPOSIX_Signal.html#ConstrSIG">SIG</A>&nbsp;of&nbsp;<A HREF="StrInt31Imp.html#Typeint">SysInt.int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#ValtoWord">toWord</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#ValfromWord">fromWord</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valosval">osval</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valabrt">abrt</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valalrm">alrm</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valfpe">fpe</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valhup">hup</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valill">ill</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valkill">kill</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valpipe">pipe</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valquit">quit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valsegv">segv</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valterm">term</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valusr1">usr1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valusr2">usr2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valchld">chld</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valcont">cont</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valstop">stop</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valtstp">tstp</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valttin">ttin</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valttou">ttou</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPOSIX_Signal.html#Valbus">bus</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typesignal"><!-- --></A>
+<H3>signal</H3>
+<P>
+<CODE>datatype&nbsp;signal&nbsp;=&nbsp;<A HREF="StrPOSIX_Signal.html#ConstrSIG">SIG</A>&nbsp;of&nbsp;<A HREF="StrInt31Imp.html#Typeint">SysInt.int</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrSIG"><!-- --></A>
+<H3>SIG</H3>
+<P>
+<CODE>constructor&nbsp;SIG&nbsp;:&nbsp;<A HREF="StrInt31Imp.html#Typeint">SysInt.int</A>&nbsp;->&nbsp;<A HREF="StrPOSIX_Signal.html#Typesignal">signal</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValtoWord"><!-- --></A>
+<H3>toWord</H3>
+<P>
+<CODE>val&nbsp;toWord</CODE>
+
+<HR>
+<A NAME="ValfromWord"><!-- --></A>
+<H3>fromWord</H3>
+<P>
+<CODE>val&nbsp;fromWord</CODE>
+
+<HR>
+<A NAME="Valosval"><!-- --></A>
+<H3>osval</H3>
+<P>
+<CODE>val&nbsp;osval</CODE>
+
+<HR>
+<A NAME="Valabrt"><!-- --></A>
+<H3>abrt</H3>
+<P>
+<CODE>val&nbsp;abrt</CODE>
+
+<HR>
+<A NAME="Valalrm"><!-- --></A>
+<H3>alrm</H3>
+<P>
+<CODE>val&nbsp;alrm</CODE>
+
+<HR>
+<A NAME="Valfpe"><!-- --></A>
+<H3>fpe</H3>
+<P>
+<CODE>val&nbsp;fpe</CODE>
+
+<HR>
+<A NAME="Valhup"><!-- --></A>
+<H3>hup</H3>
+<P>
+<CODE>val&nbsp;hup</CODE>
+
+<HR>
+<A NAME="Valill"><!-- --></A>
+<H3>ill</H3>
+<P>
+<CODE>val&nbsp;ill</CODE>
+
+<HR>
+<A NAME="Valint"><!-- --></A>
+<H3>int</H3>
+<P>
+<CODE>val&nbsp;int</CODE>
+
+<HR>
+<A NAME="Valkill"><!-- --></A>
+<H3>kill</H3>
+<P>
+<CODE>val&nbsp;kill</CODE>
+
+<HR>
+<A NAME="Valpipe"><!-- --></A>
+<H3>pipe</H3>
+<P>
+<CODE>val&nbsp;pipe</CODE>
+
+<HR>
+<A NAME="Valquit"><!-- --></A>
+<H3>quit</H3>
+<P>
+<CODE>val&nbsp;quit</CODE>
+
+<HR>
+<A NAME="Valsegv"><!-- --></A>
+<H3>segv</H3>
+<P>
+<CODE>val&nbsp;segv</CODE>
+
+<HR>
+<A NAME="Valterm"><!-- --></A>
+<H3>term</H3>
+<P>
+<CODE>val&nbsp;term</CODE>
+
+<HR>
+<A NAME="Valusr1"><!-- --></A>
+<H3>usr1</H3>
+<P>
+<CODE>val&nbsp;usr1</CODE>
+
+<HR>
+<A NAME="Valusr2"><!-- --></A>
+<H3>usr2</H3>
+<P>
+<CODE>val&nbsp;usr2</CODE>
+
+<HR>
+<A NAME="Valchld"><!-- --></A>
+<H3>chld</H3>
+<P>
+<CODE>val&nbsp;chld</CODE>
+
+<HR>
+<A NAME="Valcont"><!-- --></A>
+<H3>cont</H3>
+<P>
+<CODE>val&nbsp;cont</CODE>
+
+<HR>
+<A NAME="Valstop"><!-- --></A>
+<H3>stop</H3>
+<P>
+<CODE>val&nbsp;stop</CODE>
+
+<HR>
+<A NAME="Valtstp"><!-- --></A>
+<H3>tstp</H3>
+<P>
+<CODE>val&nbsp;tstp</CODE>
+
+<HR>
+<A NAME="Valttin"><!-- --></A>
+<H3>ttin</H3>
+<P>
+<CODE>val&nbsp;ttin</CODE>
+
+<HR>
+<A NAME="Valttou"><!-- --></A>
+<H3>ttou</H3>
+<P>
+<CODE>val&nbsp;ttou</CODE>
+
+<HR>
+<A NAME="Valbus"><!-- --></A>
+<H3>bus</H3>
+<P>
+<CODE>val&nbsp;bus</CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

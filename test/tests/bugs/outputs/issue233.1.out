@@ -1,8 +1,8 @@
-val it = "0.000000000000" : string
-val it = "0.000000000000" : string
-val it = "0.100000000000" : string
-val it = "~0.100000000000" : string
-val it = "10.00000000000" : string
-val it = "~10.00000000000" : string
-val it = "10.01000000000" : string
-val it = "~10.01000000000" : string
+val it = "0" : string
+val it = "0" : string
+val it = "0.1" : string
+val it = "~0.1" : string
+val it = "10" : string
+val it = "~10" : string
+val it = "10.01" : string
+val it = "~10.01" : string

@@ -41,7 +41,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Satoshi Osaka 
  * @author Atsushi Ohori
- * @version $Id: MatchCompiler.sml,v 1.40 2006/02/28 16:11:02 kiyoshiy Exp $
+ * @version $Id: MatchCompiler.sml,v 1.51 2007/02/28 15:31:25 katsu Exp $
  *)
 
 structure MatchCompiler : MATCH_COMPILER = 
@@ -58,13 +58,14 @@ struct
     end
   open TypedFlatCalc RecordCalc MatchData
   structure C = Control
-  structure UE = UserError
+  structure CT = ConstantTerm
+  structure ME = MatchError
+  structure PT = PredefinedTypes
+  structure RCU = RecordCalcUtils
   structure T = Types
   structure TU = TypesUtils
-  structure RCU = RecordCalcUtils
   structure TFCU = TypedFlatCalcUtils
-  structure SE = StaticEnv
-  structure ME = MatchError
+  structure UE = UserError
   structure VIdMap = TFCU.VIdEnv
   structure VIdSet = TFCU.VIdSet
 
@@ -103,12 +104,23 @@ struct
           TFPFOREIGNAPPLY 
             {
              funExp=tfpexp1, 
+             funTy=funTy,
              instTyList=tyList1, 
-             argExp=tfpexp2, 
-             argTyList=tyList2, 
+             argExpList=tfpexpList2, 
+             argTyList=tyList2,
+             ...
+            } => 
+            limitCheck (Exp tfpexp1 :: (map Exp tfpexpList2) @ itemList) (n + 1)
+        | TFPEXPORTCALLBACK
+            {
+             funExp=tfpexp1,
+             instTyList=tyList1,
+             argTyList=argTyList,
+             resultTy=resultTy,
              loc
              } => 
-            limitCheck (Exp tfpexp1 :: Exp tfpexp2 :: itemList) (n + 1)
+            limitCheck (Exp tfpexp1 :: itemList) (n + 1)
+        | TFPSIZEOF _ => limitCheck itemList (n + 1)
         | TFPCONSTANT (constant,loc) => limitCheck itemList (n + 1)
         | TFPVAR (varIdInfo,loc) => limitCheck itemList (n + 1)
         | TFPGETGLOBAL (string,ty,loc) => limitCheck itemList (n + 1)
@@ -190,8 +202,6 @@ struct
         | TFPSEQ {expList, ...} =>
             limitCheck (map Exp expList @ itemList) (n + 1)
         | TFPCAST (tfpexp, ty, loc) => limitCheck (Exp tfpexp :: itemList) (n + 1)
-        | TFPFFIVAL {funExp, libExp, ...} =>
-            limitCheck (Exp funExp :: Exp libExp :: itemList) (n + 1)
       and limitCheckDecl tfpdecl itemList n = 
         case tfpdecl of
           TFPVAL (valIdtfpexpList, loc) => 
@@ -219,24 +229,24 @@ struct
   fun nil +++ x = x 
     | (h::t) +++ x= h ++ (t +++ x)
 
-  type con = T.constant
+  type con = ConstantTerm.constant
   type tag = T.conInfo
 
 (*
   fun freshVar ty =
-      {id = SE.newVarId(), displayName = Vars.newRCVarName (),  ty = ty}
+      {id = T.newVarId(), displayName = Vars.newRCVarName (),  ty = ty}
       : T.varIdInfo
 *)
 
   fun freshVarIdWithDisplayName (ty, name) =
       let
-        val id = SE.newVarId()
+        val id = T.newVarId()
       in
         {id = id, displayName = name, ty = ty} : TFC.varIdInfo
       end
 
   fun freshVarWithDisplayName (ty, name) =
-      {id = SE.newVarId(), displayName = name, ty = ty}
+      {id = T.newVarId(), displayName = name, ty = ty}
       : T.varIdInfo
 
   fun makeVar (id,name, ty) =  {id = id, displayName = name,  ty = ty} : T.varIdInfo
@@ -313,12 +323,12 @@ struct
   fun makeNestedFun [] body bodyTy loc =
        (
         RCFNM {
-               argVarList = [freshVarWithDisplayName (SE.unitty, "unitExp(" ^ Vars.newRCVarName () ^ ")")],
+               argVarList = [freshVarWithDisplayName (PT.unitty, "unitExp(" ^ Vars.newRCVarName () ^ ")")],
                bodyTy=bodyTy, 
                bodyExp=body, 
                loc=loc
                },
-        T.FUNMty ([SE.unitty], bodyTy)
+        T.FUNMty ([PT.unitty], bodyTy)
         )
     | makeNestedFun argList body bodyTy loc =
        foldr 
@@ -331,12 +341,12 @@ struct
        (
         RCFNM 
         {
-         argVarList=[freshVarWithDisplayName (SE.unitty,"unitExp(" ^ Vars.newRCVarName () ^ ")")], 
+         argVarList=[freshVarWithDisplayName (PT.unitty,"unitExp(" ^ Vars.newRCVarName () ^ ")")], 
          bodyTy=bodyTy, 
          bodyExp=body, 
          loc=loc
          },
-        T.FUNMty ([SE.unitty], bodyTy)
+        T.FUNMty ([PT.unitty], bodyTy)
         )
     | makeUncurriedFun argList body bodyTy loc =
        (
@@ -362,7 +372,9 @@ struct
               (fn (field, vars) => VIdSet.union (getVars (#2 field), vars))
               VIdSet.empty
               fields
-          | getVars (LayerPat (pat1, pat2) | OrPat (pat1, pat2)) =
+          | getVars (LayerPat (pat1, pat2)) =
+              VIdSet.union (getVars pat1, getVars pat2)
+          | getVars (OrPat (pat1, pat2)) =
               VIdSet.union (getVars pat1, getVars pat2)
           | getVars _ = VIdSet.empty
         fun getVarsInPatList patList = 
@@ -381,7 +393,7 @@ struct
                   isSmall = isSmall tfpexp,
                   useCount = useCounter,
                   funVarName = Vars.newRCVarName (),
-                  funVarId = SE.newVarId(),
+                  funVarId = T.newVarId(),
                   funBodyTy = branchTy,
                   funTy = ref NONE,
                   funLoc = loc,
@@ -403,9 +415,10 @@ struct
   fun tfppatToPat btvEnv FV (TFPPATWILD (ty, _)) = WildPat ty
     | tfppatToPat btvEnv  FV (TFPPATVAR (x, _)) = 
         if VIdSet.member (FV, x) then VarPat x else WildPat (#ty x)
+    | tfppatToPat btvEnv FV  (TFPPATCONSTANT (CT.UNIT, ty, _)) = WildPat ty
     | tfppatToPat btvEnv FV  (TFPPATCONSTANT (con, ty, _)) = ConPat (con, ty)
     | tfppatToPat btvEnv FV (TFPPATCONSTRUCT {conPat, argPatOpt=NONE, patTy=ty, ...}) =
-        TagPat (conPat, false, WildPat SE.unitty, ty)
+        TagPat (conPat, false, WildPat PT.unitty, ty)
     | tfppatToPat btvEnv FV (TFPPATCONSTRUCT {conPat, argPatOpt = SOME argPat, patTy=ty, ...}) =
         TagPat (conPat, true, tfppatToPat btvEnv FV argPat, ty)
     | tfppatToPat btvEnv FV (TFPPATRECORD {fields=patRows, recordTy=ty,...}) =
@@ -447,6 +460,8 @@ struct
         (case tfppatToPat btvEnv FV pat1
           of x as (VarPat _) => LayerPat (x, tfppatToPat btvEnv FV pat2)
            | _ => tfppatToPat btvEnv FV pat2)
+    | tfppatToPat btvEnv FV  (TFPPATORPAT (pat1, pat2, _)) = 
+        OrPat (tfppatToPat btvEnv FV pat1, tfppatToPat btvEnv FV pat2)
 
 
     fun removeOtherPat _ [] = []
@@ -813,20 +828,36 @@ struct
 
   and tfpexpToRcexp varEnv btvEnv tfpexp = 
       case tfpexp
-      of TFPFOREIGNAPPLY {funExp=tfpexp1, instTyList=tyList, argExp=tfpexp2, argTyList=argTyList, loc} =>
+      of TFPFOREIGNAPPLY {funExp=tfpexp1, funTy, instTyList, argExpList=tfpExpList, argTyList, convention, loc} =>
          let
            val rcexp1 = tfpexpToRcexp varEnv btvEnv tfpexp1
-           val rcexp2 = tfpexpToRcexp varEnv btvEnv tfpexp2
+           val rcExpList = map (tfpexpToRcexp varEnv btvEnv) tfpExpList
          in
            RCFOREIGNAPPLY
             {
              funExp=rcexp1, 
-             instTyList=tyList, 
-             argExp=rcexp2, 
-             argTyList=argTyList, 
+             funTy=funTy,
+             instTyList=instTyList, 
+             argExpList=rcExpList,
+             argTyList=argTyList,
+             convention=convention,
              loc=loc
              }
          end
+       | TFPEXPORTCALLBACK {funExp=tfpexp1, instTyList=tyList, argTyList=argTyList, resultTy=resultTy, loc} =>
+         let
+           val rcexp1 = tfpexpToRcexp varEnv btvEnv tfpexp1
+         in
+           RCEXPORTCALLBACK
+            {
+             funExp=rcexp1, 
+             instTyList=tyList, 
+             argTyList=argTyList,
+             resultTy=resultTy,
+             loc=loc
+             }
+         end
+       | TFPSIZEOF (ty, loc) => RCSIZEOF (ty, loc)
        | TFPCONSTANT (con, loc) => RCCONSTANT (con, loc)
        | TFPVAR (var, loc) => 
          (case (VIdMap.find (varEnv, var)) of
@@ -1063,21 +1094,6 @@ struct
               loc=loc
              }
        | TFPCAST (exp, ty, loc) => RCCAST(tfpexpToRcexp varEnv btvEnv exp, ty, loc)
-       | TFPFFIVAL {funExp, libExp, argTyList, resultTy, funTy, loc} =>
-         let
-           val newFunExp = tfpexpToRcexp varEnv btvEnv funExp
-           val newLibExp = tfpexpToRcexp varEnv btvEnv libExp
-         in
-           RCFFIVAL 
-             {
-              funExp=newFunExp, 
-              libExp=newLibExp, 
-              argTyList=argTyList, 
-              resultTy=resultTy, 
-              funTy=funTy, 
-              loc=loc
-              }
-         end
        | TFPSEQ {expList, expTyList, loc} =>
          RCSEQ {
                 expList=map (tfpexpToRcexp varEnv btvEnv) expList, 
@@ -1090,15 +1106,7 @@ struct
       of TFPVAL (binds, loc) =>
          let
            fun toRcbind (var, exp) = 
-               let
-                 val newvar =
-                     case var of
-                       TFC.VALDECIDENT varIdentInfo => 
-                       T.VALIDENT varIdentInfo
-                     | TFC.VALDECIDENTWILD ty => T.VALIDENTWILD ty 
-               in
-                 (newvar, tfpexpToRcexp varEnv btvEnv exp)
-               end
+                 (var, tfpexpToRcexp varEnv btvEnv exp)
          in
 	   RCVAL (map toRcbind binds, loc)
          end

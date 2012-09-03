@@ -1,7 +1,7 @@
 (**
  * Vector structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Vector.sml,v 1.11 2005/12/19 03:44:07 kiyoshiy Exp $
+ * @version $Id: Vector.sml,v 1.12 2006/12/04 04:21:03 kiyoshiy Exp $
  *)
 structure Vector =
 struct
@@ -12,7 +12,10 @@ struct
 
   (***************************************************************************)
 
-  val maxLen = 0xFFFFFF
+  (* This must be equal to the max size of heap block.
+   * It is obtained from SIZE_MASK defined in Heap.hh.
+   *)
+  val maxLen = 0xFFFFFFF
 
   fun makeArray (intSize, initial) =
       if maxLen < intSize

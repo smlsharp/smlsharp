@@ -1,0 +1,1805 @@
+<HTML>
+<HEAD>
+<TITLE>Overview</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+Overview&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H1 align=CENTER>StandardML Basis Library</H1>
+
+<P>
+These web pages contain the interface specifications for the modules of
+the <B>SML Basis Library</B>, which is a standard library for the 1997
+Revision of SML<B>[CITE]</B>. The SML Basis Library provides interfaces and
+operations for basic types, such as integers and strings, support for
+input and output (I/O), interfaces to basic operating system interfaces, 
+and support for standard datatypes, such as options and lists. 
+The Library does <EM>not</EM> attempt to define higher-level APIs, 
+such as collection types or graphical user-interface components. 
+These APIs are left for other libraries.
+<P>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy. The SML Basis Library is also published as 
+a book by <EM><A HREF="http://www.cup.org">Cambridge University Press</A></EM>.
+ In addition to the manual pages, the book also contains tutorial descriptions
+ of programming techniques and idioms for effective use of the Library's
+ interfaces.
+<P>
+The design philosophy of the SML Basis Library is to use the SML module system
+ as an organizing tool. All type, exception, and value identifiers are bound
+ in some module. A small number of these, which are called <EM>pervasive
+ identifiers</EM>, are also bound at top-level (<I>i.e.</I>, without
+ qualification). In addition, the top-level environment defines overloading
+ of some identifiers.
+<P>
+The components (<I>i.e.</I>, signatures, structures, and functors) of the SML
+ Basis Library are divided into <EM>required</EM> and <EM>optional</EM>
+ components. Required components must be provided by all SML implementations, 
+while optional components are just that. In some cases, support for one
+ optional component entails providing support for others.
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Inner Signature summary</FONT>
+</TH></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigARRAY.html">ARRAY</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigARRAY2.html">ARRAY2</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigARRAY_SLICE.html">ARRAY_SLICE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigBIN_IO.html">BIN_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigBOOL.html">BOOL</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigBYTE.html">BYTE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigCHAR.html">CHAR</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigCINTERFACE.html">CINTERFACE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigCLEAN_UP.html">CLEAN_UP</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigCOMMAND_LINE.html">COMMAND_LINE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigCONT.html">CONT</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigDATE.html">DATE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigEXPORT.html">EXPORT</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigGC.html">GC</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigGENERAL.html">GENERAL</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigGENERIC_SOCK.html">GENERIC_SOCK</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigIEEE_REAL.html">IEEE_REAL</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigIMPERATIVE_IO.html">IMPERATIVE_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigINET_SOCK.html">INET_SOCK</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigINTEGER.html">INTEGER</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigINTERNALS.html">INTERNALS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigINTERVAL_TIMER.html">INTERVAL_TIMER</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigINT_INF.html">INT_INF</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigIO.html">IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigLIST.html">LIST</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigLIST_PAIR.html">LIST_PAIR</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigMATH.html">MATH</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigMONO_ARRAY.html">MONO_ARRAY</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigMONO_ARRAY2.html">MONO_ARRAY2</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigMONO_ARRAY_SLICE.html">MONO_ARRAY_SLICE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigMONO_VECTOR.html">MONO_VECTOR</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigMONO_VECTOR_SLICE.html">MONO_VECTOR_SLICE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigNET_DB.html">NET_DB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigNET_HOST_DB.html">NET_HOST_DB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigNET_PROT_DB.html">NET_PROT_DB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigNET_SERV_DB.html">NET_SERV_DB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigOPTION.html">OPTION</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigOS.html">OS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigOS_FILE_SYS.html">OS_FILE_SYS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigOS_IO.html">OS_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigOS_PATH.html">OS_PATH</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigOS_PRIM_IO.html">OS_PRIM_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigOS_PROCESS.html">OS_PROCESS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPACK_WORD.html">PACK_WORD</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOLL.html">POLL</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX.html">POSIX</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_ERROR.html">POSIX_ERROR</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_FILE_SYS.html">POSIX_FILE_SYS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_FLAGS.html">POSIX_FLAGS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_IO.html">POSIX_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_PROCESS.html">POSIX_PROCESS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_PROC_ENV.html">POSIX_PROC_ENV</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_SIGNAL.html">POSIX_SIGNAL</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_SYS_DB.html">POSIX_SYS_DB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPOSIX_TTY.html">POSIX_TTY</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPRE_GENERAL.html">PRE_GENERAL</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPRIM_IO.html">PRIM_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigPROF_CONTROL.html">PROF_CONTROL</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigREAL.html">REAL</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSIGNALS.html">SIGNALS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSML90.html">SML90</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSML_OF_NJ.html">SML_OF_NJ</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSOCKET.html">SOCKET</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSTREAM_IO.html">STREAM_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSTRING.html">STRING</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSTRING_CVT.html">STRING_CVT</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSUBSTRING.html">SUBSTRING</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigSYS_INFO.html">SYS_INFO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigTEXT.html">TEXT</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigTEXT_IO.html">TEXT_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigTEXT_STREAM_IO.html">TEXT_STREAM_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigTIME.html">TIME</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigTIMER.html">TIMER</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNIX.html">UNIX</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNIX_SIGNALS.html">UNIX_SIGNALS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNIX_SOCK.html">UNIX_SOCK</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNSAFE.html">UNSAFE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNSAFE_ARRAY.html">UNSAFE_ARRAY</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNSAFE_MONO_ARRAY.html">UNSAFE_MONO_ARRAY</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNSAFE_MONO_VECTOR.html">UNSAFE_MONO_VECTOR</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNSAFE_OBJECT.html">UNSAFE_OBJECT</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigUNSAFE_VECTOR.html">UNSAFE_VECTOR</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigVECTOR.html">VECTOR</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigVECTOR_SLICE.html">VECTOR_SLICE</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigWEAK.html">WEAK</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>signature&nbsp;<A HREF="SigWORD.html">WORD</A></CODE>
+<BR>
+
+
+</TD></TR></TABLE>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Inner Structure summary</FONT>
+</TH></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrArray.html">Array</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrArray2.html">Array2</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrArraySlice.html">ArraySlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrAtExit.html">AtExit</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrBinIO.html">BinIO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrBinPrimIO.html">BinPrimIO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrBool.html">Bool</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrByte.html">Byte</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrChar.html">Char</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrChar.html">Char</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCharArray.html">CharArray</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCharArray.html">CharArray</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCharArraySlice.html">CharArraySlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCharVector.html">CharVector</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCharVector.html">CharVector</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCharVectorSlice.html">CharVectorSlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCInterface.html">CInterface</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCleanIO.html">CleanIO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCleanUp.html">CleanUp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCommandLine.html">CommandLine</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCont.html">Cont</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrDate.html">Date</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrExnName.html">ExnName</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrExport.html">Export</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrFixedInt.html">FixedInt</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrFixedIntImp.html">FixedIntImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrGC.html">GC</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrGeneral.html">General</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrGeneral.html">General</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrGenericSock.html">GenericSock</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrIEEEReal.html">IEEEReal</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrINetSock.html">INetSock</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInt.html">Int</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInt31.html">Int31</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInt31Imp.html">Int31Imp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInt32.html">Int32</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInt32Imp.html">Int32Imp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInternals.html">Internals</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInternalSignals.html">InternalSignals</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInternalTimer.html">InternalTimer</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrIntervalTimer.html">IntervalTimer</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrIntImp.html">IntImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrIntInf.html">IntInf</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrIntInfImp.html">IntInfImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrIO.html">IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrLargeInt.html">LargeInt</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrLargeIntImp.html">LargeIntImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrLargeReal.html">LargeReal</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrLargeRealImp.html">LargeRealImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrLargeWord.html">LargeWord</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrLargeWordImp.html">LargeWordImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrLazy.html">Lazy</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrList.html">List</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrListPair.html">ListPair</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrMath.html">Math</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrMath64.html">Math64</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrNetDB.html">NetDB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrNetHostDB.html">NetHostDB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrNetProtDB.html">NetProtDB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrNetServDB.html">NetServDB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrNumFormat.html">NumFormat</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrNumScan.html">NumScan</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrObject.html">Object</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrOption.html">Option</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrOS.html">OS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrOS.html">OS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrOSImp.html">OSImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrOS_FileSys.html">OS_FileSys</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrOS_IO.html">OS_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrOS_Path.html">OS_Path</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrOS_Process.html">OS_Process</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPack16Big.html">Pack16Big</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPack16Little.html">Pack16Little</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPack32Big.html">Pack32Big</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPack32Little.html">Pack32Little</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPoll.html">Poll</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPosition.html">Position</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPositionImp.html">PositionImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPosix.html">Posix</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPosixBinPrimIO.html">PosixBinPrimIO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPosixTextPrimIO.html">PosixTextPrimIO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_Error.html">POSIX_Error</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_FileSys.html">POSIX_FileSys</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_IO.html">POSIX_IO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_ProcEnv.html">POSIX_ProcEnv</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_Process.html">POSIX_Process</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_Signal.html">POSIX_Signal</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_Sys_DB.html">POSIX_Sys_DB</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPOSIX_TTY.html">POSIX_TTY</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPreBasis.html">PreBasis</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPreOS.html">PreOS</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPreSock.html">PreSock</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPreString.html">PreString</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPrintHook.html">PrintHook</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrProfControl.html">ProfControl</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrReal.html">Real</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrReal64.html">Real64</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrReal64Array.html">Real64Array</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrReal64ArraySlice.html">Real64ArraySlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrReal64Imp.html">Real64Imp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrReal64Vector.html">Real64Vector</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrReal64VectorSlice.html">Real64VectorSlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrRealArray.html">RealArray</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrRealArraySlice.html">RealArraySlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrRealFormat.html">RealFormat</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrRealImp.html">RealImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrRealVector.html">RealVector</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrRealVectorSlice.html">RealVectorSlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSignals.html">Signals</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSML90.html">SML90</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSMLofNJ.html">SMLofNJ</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSMLofNJ.html">SMLofNJ</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSocket.html">Socket</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSocket.html">Socket</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSocketImp.html">SocketImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrString.html">String</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrStringCvt.html">StringCvt</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrStringImp.html">StringImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSubstring.html">Substring</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSubstring.html">Substring</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSysInfo.html">SysInfo</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSysInt.html">SysInt</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSysWord.html">SysWord</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSysWordImp.html">SysWordImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrText.html">Text</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrTextIO.html">TextIO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrTextPrimIO.html">TextPrimIO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrTime.html">Time</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrTimeImp.html">TimeImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrTimer.html">Timer</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrUnix.html">Unix</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrUnixSignals.html">UnixSignals</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrUnixSock.html">UnixSock</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrUnsafe.html">Unsafe</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrVector.html">Vector</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrVectorSlice.html">VectorSlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWeak.html">Weak</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord.html">Word</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord31.html">Word31</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord31Imp.html">Word31Imp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord32.html">Word32</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord32Imp.html">Word32Imp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord8.html">Word8</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord8Array.html">Word8Array</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord8ArraySlice.html">Word8ArraySlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord8Imp.html">Word8Imp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord8Vector.html">Word8Vector</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWord8VectorSlice.html">Word8VectorSlice</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWordImp.html">WordImp</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>structure&nbsp;<A HREF="StrWrapExport.html">WrapExport</A></CODE>
+<BR>
+
+
+</TD></TR></TABLE>
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="0" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Inner Functor summary</FONT>
+</TH></TR><TR>
+<TD>
+<P>
+<CODE>functor&nbsp;<A HREF="FctBinIOFn.html">BinIOFn</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>functor&nbsp;<A HREF="FctOS_PathFn.html">OS_PathFn</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>functor&nbsp;<A HREF="FctPrimIO.html">PrimIO</A></CODE>
+<BR>
+
+
+</TD></TR><TR>
+<TD>
+<P>
+<CODE>functor&nbsp;<A HREF="FctTextIOFn.html">TextIOFn</A></CODE>
+<BR>
+
+
+</TD></TR></TABLE>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+Overview&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

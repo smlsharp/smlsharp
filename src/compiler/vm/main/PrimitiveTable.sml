@@ -2,7 +2,7 @@
  * table of implemetation of primitive operators.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrimitiveTable.sml,v 1.14 2006/02/28 16:11:13 kiyoshiy Exp $
+ * @version $Id: PrimitiveTable.sml,v 1.19.4.1 2007/03/22 16:57:42 katsu Exp $
  *)
 structure PrimitiveTable
           : sig
@@ -13,6 +13,7 @@ struct
   (***************************************************************************)
 
   structure P = Primitives
+  structure PT = PredefinedTypes
   structure RE = RuntimeErrors
   structure TY = Types
 
@@ -23,6 +24,7 @@ struct
         IntPrimitives.primitives,
         WordPrimitives.primitives,
         CharPrimitives.primitives,
+        DynamicLinkPrimitives.primitives,
         StringPrimitives.primitives,
         RealPrimitives.primitives,
         IOPrimitives.primitives,
@@ -32,9 +34,12 @@ struct
         CommandLinePrimitives.primitives,
         DatePrimitives.primitives,
         MathPrimitives.primitives,
+        PlatformPrimitives.primitives,
+        StandardCPrimitives.primitives,
         InternalPrimitives.primitives,
         UnmanagedMemoryPrimitives.primitives,
-        UnmanagedStringPrimitives.primitives
+        UnmanagedStringPrimitives.primitives,
+        GCPrimitives.primitives
       ]
 
   (********************)
@@ -67,7 +72,7 @@ struct
       end
     | argTys ty = [ty]
   fun argSizeOfTy (TY.CONty{tyCon, ...}) =
-      if #id tyCon = StaticEnv.realTyConid then 0w2 else 0w1
+      if ID.eq(#id tyCon, PT.realTyConid) then 0w2 else 0w1
     | argSizeOfTy _ = 0w1 : BasicTypes.UInt32
   fun argSizesOfTy (TY.POLYty{body, ...}) = argSizesOfTy body
     | argSizesOfTy (TY.FUNMty([argty], _)) = map argSizeOfTy (argTys argty)

@@ -18,7 +18,7 @@ Group is
         ../../recordcomp/sources.cm
 	../../atrans/sources.cm
 *)
-        bitmapcompilation.cm
+        module.cm
 (*
         main.sml       
 *)

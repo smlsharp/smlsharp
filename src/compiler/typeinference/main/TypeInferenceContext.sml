@@ -3,12 +3,15 @@
  * @author Atsushi Ohori
  * @author Liu Bochao
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypeInferenceContext.sml,v 1.20 2006/02/28 16:11:08 kiyoshiy Exp $
+ * @version $Id: TypeInferenceContext.sml,v 1.24 2007/01/21 13:41:33 kiyoshiy Exp $
  *)
 structure TypeInferenceContext =
 struct
   local
     open Types Path TypeContext
+    structure STE = StaticTypeEnv
+    structure T = Types
+    structure TU = TypesUtils
   in
 
   type currentContext = 
@@ -25,19 +28,19 @@ struct
    val emptyCurrentContext = 
       {
         utvarEnv = SEnv.empty,
-        tyConEnv = SEnv.empty,
-        varEnv = SEnv.empty,
-        strEnv = SEnv.empty,
-        sigEnv = SEnv.empty,
-        funEnv = SEnv.empty,
+        tyConEnv = T.emptyTyConEnv,
+        varEnv = T.emptyVarEnv,
+        strEnv = T.emptyStrEnv,
+        sigEnv = T.emptySigEnv,
+        funEnv = T.emptyFunEnv,
         strLevel = NilPath
       } : currentContext
 
    fun makeInitialCurrentContext {strEnv, sigEnv, funEnv} =
       {
        utvarEnv = SEnv.empty,
-       tyConEnv = SEnv.empty,
-       varEnv = SEnv.empty,
+       tyConEnv = T.emptyTyConEnv,
+       varEnv = T.emptyVarEnv,
        strEnv = strEnv,
        sigEnv = sigEnv,
        funEnv = funEnv,
@@ -68,7 +71,8 @@ struct
         }
 
    fun bindVarInCurrentContext 
-       ({
+       (lambdaDepth,
+        {
          strLevel,
          utvarEnv,
          tyConEnv, 
@@ -80,15 +84,18 @@ struct
          string, 
          idstate)
         = 
+       (
+        TU.adjustDepthInIdstate lambdaDepth idstate;
         {
           strLevel = strLevel,
           utvarEnv = utvarEnv,
           tyConEnv = tyConEnv,
-          varEnv = SEnv.insert(varEnv,string, idstate),
+          varEnv = SEnv.insert(varEnv, string, idstate),
           strEnv = strEnv,
           sigEnv = sigEnv,
           funEnv = funEnv
         }
+        )
 
    fun bindStrInCurrentContext 
        ({
@@ -96,7 +103,7 @@ struct
          utvarEnv,
          tyConEnv, 
          varEnv, 
-         strEnv, 
+         strEnv = STRUCTURE strEnvCont, 
          sigEnv,
          funEnv
          } : currentContext,
@@ -108,7 +115,7 @@ struct
           utvarEnv = utvarEnv,
           tyConEnv = tyConEnv,
           varEnv = varEnv,
-          strEnv = SEnv.insert(strEnv, string, env),
+          strEnv = STRUCTURE (SEnv.insert(strEnvCont, string, env)),
           sigEnv = sigEnv,
           funEnv = funEnv
         }
@@ -212,7 +219,7 @@ struct
        utvarEnv, 
        tyConEnv, 
        varEnv, 
-       strEnv, 
+       strEnv = STRUCTURE strEnvCont, 
        sigEnv, 
        funEnv, 
        strLevel
@@ -221,7 +228,7 @@ struct
       {
        tyConEnv = newTyConEnv, 
        varEnv = newVarEnv,
-       strEnv = newStrEnv, 
+       strEnv = STRUCTURE newStrEnvCont, 
        sigEnv = newSigEnv, 
        funEnv = newFunEnv
        }
@@ -232,7 +239,7 @@ struct
       utvarEnv = utvarEnv, 
       tyConEnv = SEnv.unionWith #1 (newTyConEnv, tyConEnv),
       varEnv =  SEnv.unionWith #1 (newVarEnv, varEnv),
-      strEnv = SEnv.unionWith #1 (newStrEnv, strEnv),
+      strEnv = STRUCTURE (SEnv.unionWith #1 (newStrEnvCont, strEnvCont)),
       sigEnv = SEnv.unionWith #1 (newSigEnv, sigEnv),
       funEnv = SEnv.unionWith #1 (newFunEnv, funEnv),
       strLevel = strLevel
@@ -259,84 +266,96 @@ struct
       strLevel = NilPath : path
       }
 
-  fun lookupLongTyCon ({tyConEnv, strEnv,...} : currentContext, path) = 
+   fun extendCurrentContextWithTypeEnv (cc as {strEnv = STRUCTURE ccStrEnvCont,...} : currentContext, 
+                                        typeEnv as {strEnv = STRUCTURE typeEnvStrEnvCont, ...} : STE.typeEnv) = 
+       {
+        utvarEnv = #utvarEnv cc,
+        tyConEnv = SEnv.unionWith #1 (#tyConEnv typeEnv, #tyConEnv cc) : tyConEnv,
+        varEnv =  SEnv.unionWith #1 (#varEnv typeEnv, #varEnv cc) : varEnv,
+        strEnv = STRUCTURE  (SEnv.unionWith #1 (typeEnvStrEnvCont, ccStrEnvCont)) : strEnv,
+        sigEnv = #sigEnv cc : sigEnv,
+        funEnv = #funEnv cc : funEnv,
+        strLevel = #strLevel cc : path
+       }
+
+  fun lookupLongTyCon ({tyConEnv, strEnv = STRUCTURE strEnvCont,...} : currentContext, path) = 
       let
-        fun lookUp (tyConEnv, strEnv) nil _ =
+        fun lookUp (tyConEnv, strEnvCont) nil _ =
             raise Control.Bug "lookupLongTyCon:Nil path"
-          | lookUp (tyConEnv, strEnv) ([tyCon]) absStrPath =
+          | lookUp (tyConEnv, strEnvCont) ([tyCon]) absStrPath =
             ((absStrPath,tyCon),SEnv.find(tyConEnv, tyCon))
-          | lookUp (tyConEnv, strEnv)  (strid :: strids) absStrPath =
-            (case SEnv.find(strEnv, strid) of 
+          | lookUp (tyConEnv, strEnvCont)  (strid :: strids) absStrPath =
+            (case SEnv.find(strEnvCont, strid) of 
                NONE => ((absStrPath,""),NONE)
-             | SOME (STRUCTURE {id,name,env = (tyConEnv, _, strEnv), ...}) =>
-               lookUp (tyConEnv, strEnv) 
+             | SOME {id,name,env = (tyConEnv, _, STRUCTURE strEnvCont ), ...} =>
+               lookUp (tyConEnv, strEnvCont) 
                       strids
                       (appendPath(absStrPath,id,name))
             )
       in
-        case lookUp (tyConEnv, strEnv) path NilPath of
-          (_, NONE) => lookUp (tyConEnv, strEnv) 
+        case lookUp (tyConEnv, strEnvCont) path NilPath of
+          (_, NONE) => lookUp (tyConEnv, strEnvCont) 
                               (topStrName :: path) 
                               NilPath
         | tyConOpt => tyConOpt
       end
 
-  fun lookupVar ({varEnv, strEnv,...} : currentContext, string) =
+  fun lookupVar ({varEnv, strEnv = STRUCTURE strEnvCont,...} : currentContext, string) =
       case SEnv.find(varEnv, string) of 
         SOME idState => SOME idState
       | _ =>
-        (case SEnv.find(strEnv, Path.topStrName) of
-           SOME (STRUCTURE {env = (_, varEnv, _), ...}) =>
+        (case SEnv.find(strEnvCont, Path.topStrName) of
+           SOME {env = (_, varEnv, _), ...} =>
            SEnv.find (varEnv, string)
          | NONE => raise Control.Bug "TOP structure not found")
 
-  fun lookupLongVar ({strEnv, varEnv,...} : currentContext, longid) =
+  fun lookupLongVar ({strEnv = STRUCTURE strEnvCont, varEnv,...} : currentContext, longid) =
       let
-        fun lookUp (varEnv, strEnv) nil _ = 
+        fun lookUp (varEnv, strEnvCont) nil _ = 
             raise Control.Bug "lookupLongVar:Null path"
-          | lookUp (varEnv, strEnv) ([vName]) absStrPath= 
+          | lookUp (varEnv, strEnvCont) ([vName]) absStrPath= 
                ((absStrPath,vName),SEnv.find(varEnv, vName))
-          | lookUp (varEnv, strEnv) (strName :: path) absStrPath=
-               (case SEnv.find(strEnv, strName) of 
+          | lookUp (varEnv, strEnvCont) (strName :: path) absStrPath=
+               (case SEnv.find(strEnvCont, strName) of 
                   NONE => ((absStrPath,""),NONE)
-                | SOME(STRUCTURE {id,name,env = (_, varEnv, strEnv), ...}) =>
-                    lookUp (varEnv, strEnv) path (appendPath(absStrPath,id,name)))
+                | SOME {id,name,env = (_, varEnv, STRUCTURE strEnvCont), ...} =>
+                    lookUp (varEnv, strEnvCont) path (appendPath(absStrPath,id,name)))
       in
-        case lookUp (varEnv, strEnv) longid NilPath of
+        case lookUp (varEnv, strEnvCont) longid NilPath of
           (_,NONE) => 
           let
             val newpath = topStrName :: longid
           in
-            lookUp (varEnv, strEnv) newpath NilPath
+            lookUp (varEnv, strEnvCont) newpath NilPath
           end
         | Varoption => Varoption
       end
 
-  fun lookupLongStructureEnv ({strEnv,...}:currentContext, longid) =
+  fun lookupLongStructureEnv ({strEnv = STRUCTURE strEnvCont,...}:currentContext, longid) =
       let 
         fun lookUp _ nil _ = 
             raise Control.Bug "lookupLongStructure: NullPath"
-          | lookUp strEnv ([strName]) absStrPath=
+          | lookUp strEnvCont ([strName]) absStrPath=
             (
-             case (SEnv.find(strEnv,strName)) of
+             case (SEnv.find(strEnvCont,strName)) of
                NONE => (absStrPath,NONE)
-             | SOME(STRUCTURE (strPathInfo as {id,name,...})) =>
+             | SOME(strPathInfo as {id,name,...}) =>
                (appendPath(absStrPath,id,name), SOME strPathInfo)
             )
-          | lookUp strEnv (strName :: path) absStrPath = 
+          | lookUp strEnvCont (strName :: path) absStrPath = 
             (
-             case SEnv.find(strEnv, strName) of
+             case SEnv.find(strEnvCont, strName) of
                NONE => (absStrPath,NONE)
-             | SOME(STRUCTURE {id,name,env = (_,_,strEnv), ...}) => 
-               lookUp strEnv path (appendPath(absStrPath,id,name))
+             | SOME({id,name,env = (_,_,STRUCTURE strEnvCont), ...}) => 
+               lookUp strEnvCont path (appendPath(absStrPath,id,name))
             )
       in
-        case lookUp strEnv longid NilPath of
+        case lookUp strEnvCont longid NilPath of
           (_, NONE) => 
           let 
             val newpath = topStrName :: longid
           in
-            lookUp strEnv newpath NilPath
+            lookUp strEnvCont newpath NilPath
           end
         | x => x
       end
@@ -364,7 +383,8 @@ struct
       } : currentContext
     
   (* ToDo : this function and addUtvarIfNotThere should be refactored to share codes. *)
-  fun addUtvarOverride ({utvarEnv, 
+  fun addUtvarOverride (lambdaDepth,
+                        {utvarEnv, 
                          tyConEnv, 
                          varEnv, 
                          strEnv, 
@@ -378,7 +398,9 @@ struct
               (fn (string, ifeq, (newUtvarEnv, addedUtvars)) =>
                   let 
                     val newTvStateRef =
-                        newUtvar(if ifeq then EQ else NONEQ, string)
+                        newUtvar(lambdaDepth, 
+                                 if ifeq then EQ else NONEQ, 
+                                   string)
                   in 
                     (
                       SEnv.insert(newUtvarEnv, string, newTvStateRef),
@@ -400,7 +422,8 @@ struct
        addedUtvars)
     end
 
-  fun addUtvarIfNotthere ({utvarEnv, 
+  fun addUtvarIfNotthere (lambdaDepth,
+                          {utvarEnv, 
                            tyConEnv, 
                            varEnv, 
                            strEnv, 
@@ -417,7 +440,9 @@ struct
                     else
                       let
                         val newTvStateRef =
-                            newUtvar(if ifeq then EQ else NONEQ, string)
+                            newUtvar(lambdaDepth,
+                                     if ifeq then EQ else NONEQ, 
+                                       string)
                       in 
                         (
                           SEnv.insert(newUtvarEnv, string, newTvStateRef),

@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TopLevelError.ppg,v 1.3 2006/02/28 16:11:07 kiyoshiy Exp $
+ * @version $Id: TopLevelError.ppg,v 1.4 2006/07/12 06:30:12 bochao Exp $
  *)
 structure TopLevelError =
 struct
@@ -19,6 +19,14 @@ struct
    * @format(message) message
    *)
   InvalidPath of string
+
+  and
+  (**
+   *)
+  (*%
+   * @format {"_useobj" +d "is" +d "not" +d "allowed" +d "in" +d "linkage" +d "unit"}
+   *)
+  UseObjOccurInLinkageUnit
 
   (***************************************************************************)
 

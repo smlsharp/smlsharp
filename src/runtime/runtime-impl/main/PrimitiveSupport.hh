@@ -225,6 +225,20 @@ class PrimitiveSupport
         return result;
     }
 
+    static
+    INLINE_FUN
+    UInt32Value writeToSTDERR(UInt32Value length, const ByteValue* buffer)
+    {
+        ASSERT(buffer);
+        Writer* writer = 
+        VirtualMachine::getInstance()
+        ->getSession()
+        ->getStandardErrorWriter();
+        ASSERT(writer);
+        UInt32Value result = writer->write(length, buffer);
+        return result;
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // unit
 
@@ -233,10 +247,21 @@ class PrimitiveSupport
     Cell constructUnit()
     {
         Cell result;
-        result.blockRef = Heap::allocAtomBlock(0);
+        result.uint32 = 0;
         return result;
     }
 
+  /*
+   *  The representation of Unit type has been changed from the empty record to 0.
+   *     static
+   *     INLINE_FUN
+   *     Cell constructUnit()
+   *     {
+   *        Cell result;
+   *        result.blockRef = Heap::allocAtomBlock(0);
+   *         return result;
+   *     }
+   */
     ///////////////////////////////////////////////////////////////////////////
     // Option
 
@@ -353,16 +378,24 @@ class PrimitiveSupport
 
     static
     INLINE_FUN
-    void cellToTupleElements(Cell tuple, Cell* elementsRef, int numElements)
+    void blockToTupleElements(Cell* tuple, Cell* elementsRef, int numElements)
     {
-        ASSERT(Heap::isValidBlockPointer(tuple.blockRef));
+        ASSERT(Heap::isValidBlockPointer(tuple));
 
-        int blockSize = Heap::getPayloadSize(tuple.blockRef);
+        int blockSize = Heap::getPayloadSize(tuple);
         assert(numElements <= blockSize);// ToDo : raise an error.
         
         for(int index = 0; index < numElements; index += 1){
-            elementsRef[index] = tuple.blockRef[index];
+            elementsRef[index] = tuple[index];
         }
+        return;
+    }
+
+    static
+    INLINE_FUN
+    void cellToTupleElements(Cell tuple, Cell* elementsRef, int numElements)
+    {
+        blockToTupleElements(tuple.blockRef, elementsRef, numElements);
         return;
     }
 
@@ -381,11 +414,12 @@ class PrimitiveSupport
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // exception
 
     static
     INLINE_FUN
     Cell
-    constructExnSysErr(int errorNumber, char* message)
+    constructExnSysErr(int errorNumber, const char* message)
     {
         // we will construct SysErr(message, SOME errorNumber)
         ASSERT(message);
@@ -399,7 +433,7 @@ class PrimitiveSupport
         constructOptionSOME(&errorNumberValue, false);
         TemporaryRoot(&errorNumberOptValue, true);
 
-        Bitmap bitmap = 6;
+        Bitmap bitmap = 6; // (tag, messageValue, errorNumOpt) = (0, 1, 1)
         Cell tag;
         tag.sint32 = TAG_exn_SysErr;
         Cell exception;
@@ -407,6 +441,28 @@ class PrimitiveSupport
         Heap::initializeField(exception.blockRef, 0, tag);
         Heap::initializeField(exception.blockRef, 1, messageValue);
         Heap::initializeField(exception.blockRef, 2, errorNumberOptValue);
+        
+        return exception;
+    }
+
+    static
+    INLINE_FUN
+    Cell
+    constructExnFail(const char* message)
+    {
+        // we will construct Fail(message)
+        ASSERT(message);
+
+        Cell messageValue = stringToCell(message);
+        TemporaryRoot(&messageValue, true);
+
+        Bitmap bitmap = 2; // (tag, messageValue) = (0, 1)
+        Cell tag;
+        tag.sint32 = TAG_exn_Fail;
+        Cell exception;
+        exception.blockRef = Heap::allocRecordBlock(bitmap, 2);
+        Heap::initializeField(exception.blockRef, 0, tag);
+        Heap::initializeField(exception.blockRef, 1, messageValue);
         
         return exception;
     }

@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: SymbolicInstructionsOptimizer.sml,v 1.2 2006/02/28 16:11:06 kiyoshiy Exp $
+ * @version $Id: SymbolicInstructionsOptimizer.sml,v 1.8 2007/02/08 03:08:49 katsu Exp $
  *)
 
 structure SymbolicInstructionsOptimizer : SYMBOLIC_INSTRUCTIONS_OPTIMIZER = struct
@@ -77,6 +77,13 @@ structure SymbolicInstructionsOptimizer : SYMBOLIC_INSTRUCTIONS_OPTIMIZER = stru
       | LoadString{string,destination} => 
         instruction::(optimizeInstructions codeEnv rest)
       | LoadReal{value,destination} => 
+        (
+         case Real64.fromString value of
+           SOME real =>
+           instruction::(optimizeInstructions (CE.addConstant(codeEnv,destination,CE.Real real)) rest)
+         | _ => raise Control.Bug "real value is expected"
+        )
+      | LoadFloat{value,destination} => 
         (
          case Real64.fromString value of
            SOME real =>
@@ -342,16 +349,30 @@ structure SymbolicInstructionsOptimizer : SYMBOLIC_INSTRUCTIONS_OPTIMIZER = stru
         in
           instruction::(optimizeInstructions codeEnv rest)
         end
-      | ForeignApply{closureEntry,argsCount,argEntries,argSizes,resultSize,destination} =>
+      | ForeignApply{argsCount,switchTag,convention,closureEntry,argEntries,argSizes,resultSize,destination} =>
         let
           val instruction =
               ForeignApply
                   {
-                   closureEntry = closureEntry,
                    argsCount = argsCount,
+                   switchTag = switchTag,
+                   convention = convention,
+                   closureEntry = closureEntry,
                    argEntries = argEntries,
                    argSizes = map (optimizeSize codeEnv) argSizes,
                    resultSize = optimizeSize codeEnv resultSize,
+                   destination = destination
+                  }
+        in
+          instruction::(optimizeInstructions codeEnv rest)
+        end
+      | RegisterCallback{closureEntry,sizeTag,destination} =>
+        let
+          val instruction =
+              RegisterCallback
+                  {
+                   closureEntry = closureEntry,
+                   sizeTag = sizeTag,
                    destination = destination
                   }
         in
@@ -579,6 +600,7 @@ structure SymbolicInstructionsOptimizer : SYMBOLIC_INSTRUCTIONS_OPTIMIZER = stru
         LoadInt {destination,...} => ([],[destination])
       | LoadWord {destination,...} => ([],[destination])
       | LoadReal {destination,...} => ([],[destination])
+      | LoadFloat {destination,...} => ([],[destination])
       | LoadString {destination,...} => ([],[destination])
       | LoadChar {destination,...} => ([],[destination])
       | LoadEmptyBlock {destination} => ([],[destination])
@@ -600,7 +622,7 @@ structure SymbolicInstructionsOptimizer : SYMBOLIC_INSTRUCTIONS_OPTIMIZER = stru
         (fieldEntry::blockEntry::newValueEntry::(entryOfSize fieldSize),ALWAYS)
       | SetNestedFieldIndirect{nestLevelEntry,offsetEntry,fieldSize,blockEntry,newValueEntry} =>
         (nestLevelEntry::offsetEntry::blockEntry::newValueEntry::(entryOfSize fieldSize),ALWAYS)
-      | CopyBlock{blockEntry,destination} => ([blockEntry],[destination])
+      | CopyBlock{nestLevelEntry,blockEntry,destination} => ([nestLevelEntry,blockEntry],[destination])
       | GetGlobal{variableSize,destination,...} => (entryOfSize variableSize,[destination])
       | SetGlobal{newValueEntry,variableSize,...} =>  (newValueEntry::(entryOfSize variableSize),ALWAYS)
       | InitGlobalArrayUnboxed _ => ([],ALWAYS)
@@ -609,6 +631,7 @@ structure SymbolicInstructionsOptimizer : SYMBOLIC_INSTRUCTIONS_OPTIMIZER = stru
       | GetEnv{destination} => ([],[destination])
       | CallPrim{argEntries,destination,...} => (argEntries,ALWAYS)
       | ForeignApply{closureEntry,argEntries,destination,...} => (closureEntry::argEntries,ALWAYS)
+      | RegisterCallback{closureEntry,destination,...} => ([closureEntry],ALWAYS)
       | Apply_S{closureEntry,argEntry,argSize,...} =>
         (closureEntry::argEntry::(entryOfSize argSize),ALWAYS)
       | Apply_ML{closureEntry,argEntries,lastArgSize,...} =>
@@ -657,8 +680,8 @@ structure SymbolicInstructionsOptimizer : SYMBOLIC_INSTRUCTIONS_OPTIMIZER = stru
         (bitmapEntry::sizeEntry::initialValueEntry::(entryOfSize initialValueSize),[destination])
       | MakeClosure{ENVEntry,destination,...} => ([ENVEntry],[destination])
       | Raise{exceptionEntry} => ([exceptionEntry],ALWAYS)
-      | PushHandler{handler,exceptionEntry} => ([exceptionEntry],ALWAYS)
-      | PopHandler => ([],ALWAYS)
+      | PushHandler{exceptionEntry, ...} => ([exceptionEntry],ALWAYS)
+      | PopHandler _ => ([],ALWAYS)
       | Label _ => ([],ALWAYS)
       | Location _ => ([],ALWAYS)
       | SwitchInt {targetEntry,...} => ([targetEntry],ALWAYS)
@@ -667,9 +690,9 @@ structure SymbolicInstructionsOptimizer : SYMBOLIC_INSTRUCTIONS_OPTIMIZER = stru
       | SwitchChar {targetEntry,...} => ([targetEntry],ALWAYS)
       | Jump _ => ([],ALWAYS)
       | Exit => ([],ALWAYS)
-      | Return{variableEntry,variableSize} => (variableEntry::(entryOfSize variableSize),ALWAYS)
+      | Return{variableEntry,variableSize} =>
+        (variableEntry::(entryOfSize variableSize),ALWAYS)
       | ConstString _ => ([],ALWAYS)
-      | FFIVal{funNameEntry,libNameEntry,destination} => ([funNameEntry,libNameEntry],ALWAYS)
 
       | AddInt_Const_1{argValue1,argEntry2,destination} => ([argEntry2],[destination])
       | AddInt_Const_2{argEntry1,argValue2,destination} => ([argEntry1],[destination])

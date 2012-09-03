@@ -2,7 +2,7 @@
  * implementation of channel on a file.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FileChannel.sml,v 1.4 2006/02/28 16:11:04 kiyoshiy Exp $
+ * @version $Id: FileChannel.sml,v 1.5 2007/02/19 04:06:09 kiyoshiy Exp $
  *)
 structure FileChannel =
 struct
@@ -27,12 +27,14 @@ struct
           fun send word = BinIO.output1 (outStream, word)
           fun sendArray array = 
               BinIO.output (outStream, Word8Array.extract (array, 0, NONE))
+          fun sendVector vector = BinIO.output (outStream, vector)
           fun flush () = BinIO.flushOut outStream
           fun close () = BinIO.closeOut outStream
       in
           {
             send = send,
             sendArray = sendArray,
+            sendVector = sendVector,
             flush = flush,
             close = close
           }
@@ -44,19 +46,21 @@ struct
           fun receive () = BinIO.input1 inStream
           fun receiveArray required =
               let
-                  val vector = BinIO.inputN (inStream, required)
-                  val array = Word8Array.array (Word8Vector.length vector, 0w0)
+                val vector = BinIO.inputN (inStream, required)
+                val array = Word8Array.array (Word8Vector.length vector, 0w0)
               in
-                  Word8Array.copyVec
-                  {src = vector, dst = array, si = 0, di = 0, len = NONE};
-                  array
+                Word8Array.copyVec
+                    {src = vector, dst = array, si = 0, di = 0, len = NONE};
+                array
               end
+          fun receiveVector required = BinIO.inputN (inStream, required)
           fun close () = BinIO.closeIn inStream
           fun isEOF () = BinIO.endOfStream inStream
       in
           {
             receive = receive,
             receiveArray = receiveArray,
+            receiveVector = receiveVector,
             close = close,
             isEOF = isEOF
           }

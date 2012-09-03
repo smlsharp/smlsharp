@@ -1,7 +1,7 @@
 SMLFormat: Pretty Printer for Standard ML
 
 @author YAMATODANI Kiyoshi
-@version $Id: OVERVIEW_en.txt,v 1.6 2006/02/23 10:06:36 kiyoshiy Exp $
+@version $Id: OVERVIEW_en.txt,v 1.7 2006/12/07 13:43:12 kiyoshiy Exp $
 
 ========================================
 1. SMLFormat
@@ -1012,7 +1012,43 @@ In the above example, the identifier 'tycon' is applied to the identifier 'str' 
 
 
 ==========
-4.4.5. additional argument
+4.4.5. wildcard type pattern
+
+ A underscore '_' can be used as wildcard.
+
+  (*% *)
+  type wildCard =
+                  (*% @format(_ * n) n *)
+                  (bool * int) 
+
+A wildcard type pattern '_' is translated into wildcard term pattern.
+
+  fun format_wildCard  x = 
+      case x of
+          (_, n) => 
+          << format_int(n) >>
+
+==========
+4.4.6. quoted identifier and label
+
+Identifier and field labels of 'd' and numeral characters have to be quoted by
+single-quotation, or they are interpreted newline indicators.
+
+  (*% *)
+  type quotedFields =
+                    (*% @format({'d' : fd, '1' : f1}) fd f1 *)
+                    {d : int, 1 : bool}
+
+The smlformat generates the following formatter.
+
+  fun format_quotedFields  x = 
+      case x of
+           {d = fd, 1 = f1} => 
+               << format_int(fd) format_bool(f1) >>
+
+
+==========
+4.4.7. additional argument
 
  Formatter can require additional arguments besides the value to be formatted and formatter arguments.
 
@@ -1428,7 +1464,7 @@ each IDi (1 <= i <= k) must occur somewhere in typepat0 ... typepat(i-1).
 
  For example, assume that a hand-coded formatter which formats word value in binary notation is defined in 'MyFormatters' structure, we want to use this instead of 'BasicFormatters.format_word'.
 
-  fun format_binary x = << "0b" (Word.fmt StringCvt.BIN x) >>
+  fun myformat_binary x = << "0b" (Word.fmt StringCvt.BIN x) >>
 
  To use this formatter in a format comment of a type/datatype declaration, following tag should be used in declaration header comment.
 
@@ -1445,7 +1481,7 @@ The syntax of 'qid' is as follows.
 Example.
 
   (*%
-   * @formatter(binary) MyFormatters.format_binary
+   * @formatter(binary) MyFormatters.myformat_binary
    *)
   type file =
              (*%
@@ -1457,7 +1493,7 @@ Example.
 Or
 
   (*%
-   * @formatter(binary) MyFormatters.format_binary
+   * @formatter(binary) MyFormatters.myformat_binary
    *)
   type file =
              (*%
@@ -1473,7 +1509,7 @@ The formatter for this 'file' type is generated as follows.
         {name, flags} =>
           <<
             "{name=" (format_string name) "," +
-            "flags=" (MyFormatters.format_binary flags) "}"
+            "flags=" (MyFormatters.myformat_binary flags) "}"
           >>
 
 

@@ -2,7 +2,11 @@ Group is
 (*
   to build this example, see ../../README.txt
 *)
-        ../../smlpplib.cm
+#if defined(NEW_CM)
+	$/basis_compat.cm
+#endif
+
+        ../../smlformatlib.cm
 
         Examples.ppg.sml
 	Types.ppg.sml

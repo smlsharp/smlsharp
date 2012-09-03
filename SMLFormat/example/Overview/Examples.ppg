@@ -65,6 +65,7 @@ struct
     type range =
                  (*% @format({min : minimum, max}) minimum + "<->" + max *)
                  {min : int, max : int}
+
   end
 
   structure Sec4_4_4 =
@@ -88,6 +89,28 @@ struct
   struct
   (* 4.4.5. *)
 
+    (*% *)
+    type wildCard =
+                    (*% @format(_ * n) n *)
+                    (bool * int) 
+
+  end
+
+  structure Sec4_4_6 =
+  struct
+  (* 4.4.6. *)
+
+    (*% *)
+    type quotedFields =
+                      (*% @format({'d' : fd, '1' : f1}) fd f1 *)
+                      {d : int, 1 : bool}
+
+  end
+
+  structure Sec4_4_7 =
+  struct
+  (* 4.4.7. *)
+
     (*%
      * @params (label)
      *)
@@ -105,7 +128,7 @@ struct
   struct
   (* 4.6.1. *)
     open Sec4_4_4
-    open Sec4_4_5
+    open Sec4_4_7
 
     (*% *)
     type maybeLabeledInt =
@@ -127,7 +150,7 @@ struct
   struct
   (* 4.6.3. *)
     open Sec4_4_4
-    open Sec4_4_5
+    open Sec4_4_7
 
     (*% *)
     type labeledRange =
@@ -153,7 +176,7 @@ struct
 
     structure MyFormatters =
     struct
-      local structure FE = SMLPP.FormatExpression
+      local structure FE = SMLFormat.FormatExpression
       in
         fun format_binary x =
             let val text = Word.fmt StringCvt.BIN x
@@ -321,7 +344,7 @@ struct
          | (*% @format(polyTy:polyTy) polyTy()(env) *)
            PolyTy of {tyvars : string list, body : ty}
 
-  local structure FE = SMLPP.FormatExpression
+  local structure FE = SMLFormat.FormatExpression
   in
   fun format_polyTy [env] {tyvars, body} =
       let

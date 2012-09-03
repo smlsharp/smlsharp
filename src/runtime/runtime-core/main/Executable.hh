@@ -104,25 +104,6 @@ struct Executable
           boundNames_(0)
     {}
 
-    /**
-     * constructor
-     */
-    Executable(ByteOrder b, UInt32Value l, UInt32Value* c)
-        : byteOrder_(b),
-          totalWordLength_(l),
-          buffer_(c),
-          codeWordLength_(0),
-          code_(0),
-          locationsCount_(0),
-          locations_(0),
-          fileNamesCount_(0),
-          fileNames_(0),
-          nameSlotsCount_(0),
-          nameSlots_(0),
-          boundNamesCount_(0),
-          boundNames_(0)
-    {}
-
 };
 
 ///////////////////////////////////////////////////////////////////////////////

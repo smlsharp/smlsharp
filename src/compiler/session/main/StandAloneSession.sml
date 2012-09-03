@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: StandAloneSession.sml,v 1.9 2006/02/28 16:11:05 kiyoshiy Exp $
+ * @version $Id: StandAloneSession.sml,v 1.13 2007/02/19 14:11:55 kiyoshiy Exp $
  *)
 structure StandAloneSession
           : sig
@@ -11,14 +11,13 @@ structure StandAloneSession
               include SESSION
 
               val loadExecutable
-                  : ChannelTypes.InputChannel -> Word8Array.array option
+                  : ChannelTypes.InputChannel -> Word8Vector.vector option
 
             end  = 
 struct
 
   (***************************************************************************)
 
-  open BasicTypes
   structure BT = BasicTypes
   structure CT = ChannelTypes
   structure BTS = BasicTypeSerializer
@@ -45,7 +44,7 @@ struct
    * @param outChannel the destination
    * @param uint32 the 32bit word to send
    *)
-  fun sendUInt32 (outChannel : CT.OutputChannel) (uint32 : UInt32) =
+  fun sendUInt32 (outChannel : CT.OutputChannel) uint32 =
       BTSN.serializeUInt32 uint32 (#send outChannel)
 (*
       let
@@ -56,19 +55,29 @@ struct
       end
 *)
 
+  local
+    exception EOF
+  in
+  fun receiveUInt32 (inChannel : CT.InputChannel) =
+      (SOME
+           (BTSN.deserializeUInt32
+                (fn _ =>
+                    case #receive inChannel () of
+                      SOME byte => byte
+                    | NONE => raise EOF)))
+      handle EOF => NONE
+  end           
+
   (****************************************)
 
   fun openSession ({outputChannel} : InitialParameter) =
       let
           fun execute codeBlock =
               (
-                #send 
-                outputChannel
-                ((WordToUInt8 o SDT.byteOrderToWord) SD.NativeByteOrder);
                 sendUInt32
                 outputChannel
-                (IntToUInt32 (Word8Array.length codeBlock));
-                #sendArray outputChannel codeBlock
+                (BT.IntToUInt32 (Word8Vector.length codeBlock));
+                #sendVector outputChannel codeBlock
               )
           fun close () = () (* #close outputChannel *)
       in
@@ -89,30 +98,18 @@ struct
    *        NONE if the channel reaches EOF.
    *)
   fun loadExecutable (channel : CT.InputChannel) =
-      case #receive channel () of
-        NONE => NONE
-      | SOME byteOrder =>
-        if
-          (Word8.toInt byteOrder)
-          <> Word.toInt(SDT.byteOrderToWord SD.NativeByteOrder)
-        then raise Fail "unexpected non-native byteorder."
-        else
+      case receiveUInt32 channel
+       of SOME totalBytes =>
           let
-            (* Total number of bytes is seriarized in network byte order. *)
-            val totalBytes =
-                BTSN.deserializeUInt32
-                    (fn _ =>
-                        case #receive channel () of
-                          SOME byte => byte
-                        | NONE => raise Fail "unexpected EOF")
 (*
 val _ = print (SDT.byteOrderToString BTSN.byteOrder ^ "\n")
 val _ = print ("totalBytes = " ^ UInt32.toString totalBytes ^ "\n")
 *)
-            val array = #receiveArray channel (BT.UInt32ToInt totalBytes)
+            val vector = #receiveVector channel (BT.UInt32ToInt totalBytes)
           in
-            SOME array
+            SOME vector
           end
+        | NONE => NONE
 
   (***************************************************************************)
 

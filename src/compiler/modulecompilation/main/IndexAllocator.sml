@@ -3,13 +3,12 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: IndexAllocator.sml,v 1.14 2006/03/02 12:46:47 bochao Exp $
+ * @version $Id: IndexAllocator.sml,v 1.17 2007/01/21 13:41:32 kiyoshiy Exp $
  *)
 structure IndexAllocator =
 struct
 local
     structure T = Types
-    structure SE = StaticEnv
     structure TO = TopObject
     structure TFCU = TypedFlatCalcUtils
     structure PE = PathEnv
@@ -21,7 +20,11 @@ in
                       varIdInfo as {id,displayName,ty}:varIdInfo,
                       loc) =
        let
-         val pageTy = TO.convertTyToPageKind ty
+         val pageTy = 
+             (* Here if Control.doCompileObj = true then pageTy always get 
+              * TO.ABSTRACT_PAGE_KIND 
+              *)
+             TO.convertTyToPageKind ty
          val (allocatedPageArrayIndex, allocatedOffset) = 
              case IEnv.find(freeEntryPointer, pageTy) of
                SOME x => x
@@ -57,27 +60,21 @@ in
           )
        end
 
-   fun allocateAbstractIndex freeGlobalArrayIndex freeEntryPointer =
+   fun allocateAbstractIndex freeEntryPointer =
        let
          val (allocatedPageArrayIndex, allocatedOffset) = 
              case IEnv.find(freeEntryPointer, TO.ABSTRACT_PAGE_KIND) of
                SOME x => x
-             | NONE => raise Control. Bug("abstract page non exist")
-         val newPageFlag = allocatedOffset = 0
+             | NONE => raise Control.Bug("abstract page non-exists")
          val freeOffset = allocatedOffset + 1
-         val (freePageArrayIndex, newFreeGlobalArrayIndex, freeOffset) =
-             if freeOffset = TO.getPageSize() then
-                 (freeGlobalArrayIndex, freeGlobalArrayIndex + 0w1:BT.UInt32, 0)
-             else (allocatedPageArrayIndex, freeGlobalArrayIndex, freeOffset)
          val newFreeEntryPointer = 
              IEnv.insert(
                          freeEntryPointer,
                          TO.ABSTRACT_PAGE_KIND,
-                         (freePageArrayIndex, freeOffset)
+                         (allocatedPageArrayIndex, freeOffset)
                          )
        in
          (
-          newFreeGlobalArrayIndex,
           newFreeEntryPointer,
           (TO.ABSTRACT_PAGE_KIND, allocatedPageArrayIndex, allocatedOffset))
        end
@@ -107,7 +104,7 @@ in
                 Loc.noloc
                 )
          val initializedPageDecs =
-             if !Control.doSeparateCompilation then
+             if !Control.doCompileObj then
                nil
              else
                if newPageFlag then

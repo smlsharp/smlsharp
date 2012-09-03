@@ -3,5 +3,8 @@ Group
         structure InitialTypeContext
  	structure TypeContextUtils
         structure TypeContextPickler
+	structure StaticTypeEnv
+	structure StaticTypeEnvPickler
+	structure StaticTypeEnvUtils
 is
 	main/module.cm

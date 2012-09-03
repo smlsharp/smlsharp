@@ -2,7 +2,18 @@ Group is
 (*
   to build this example, see ../../README.txt
 *)
-        ../../smlpplib.cm
+
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+
+#if defined(NEW_CM)
+        $/ml-yacc-lib.cm
+#else
+        ml-yacc-lib.cm
+#endif
+
+        ../../smlformatlib.cm
 (*
 	Absyn.ppg:ppg
 *)
@@ -10,7 +21,7 @@ Group is
 (*
 	AbsynUseDefault.ppg:ppg
 *)
+
 	ml.lex
 	ml.grm
-	ml-yacc-lib.cm
 	Main.sml

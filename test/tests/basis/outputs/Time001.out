@@ -1,8 +1,8 @@
-val toInt = fn : Time.time -> LargeInt.int
+val toInt = fn : time  -> LargeInt.int
 val fromReal_0 = 0 : LargeInt.int
 val fromReal_p = 12339999 : LargeInt.int
 val fromReal_m = ~12339999 : LargeInt.int
-val toReal_0 = 0.0 : real
+val toReal_0 = 0 : real
 val toReal_p = 12.339999 : real
 val toReal_m = ~12.339999 : real
 val fromSeconds_0 = 0 : LargeInt.int
@@ -27,7 +27,9 @@ val toMicroseconds_0 = 0 : LargeInt.int
 val toMicroseconds_p1 = 123 : LargeInt.int
 val toMicroseconds_p2 = 123456 : LargeInt.int
 val toMicroseconds_p3 = 123456789 : LargeInt.int
-val testBinArithOp = fn : (Time.time * Time.time -> Time.time) -> int * int * int * int -> LargeInt.int
+val testBinArithOp =
+    fn
+    : (time * time  -> time)  -> int * int * int * int  -> LargeInt.int
 val testAdd = fn : int * int * int * int -> LargeInt.int
 val add_00_00 = 0 : LargeInt.int
 val add_11_22 = 3000003 : LargeInt.int
@@ -39,7 +41,9 @@ val sub_11_22 = 1000001 : LargeInt.int
 val sub_NroundDown = 1000001 : LargeInt.int
 val sub_NroundDown = 1000000 : LargeInt.int
 val sub_roundDown = 999999 : LargeInt.int
-val testBinCompare = fn : ['a .(Time.time * Time.time -> 'a) -> int * int * int * int -> 'a option]
+val testBinCompare =
+    fn
+    : ['a .(time * time  -> 'a)  -> int * int * int * int  -> 'a option]
 val testCompare = fn : int * int * int * int -> order option
 val compare_E_0 = SOME EQUAL : order option
 val compare_E_p = SOME EQUAL : order option

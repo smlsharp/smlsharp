@@ -1,6 +1,6 @@
 structure VS : VECTOR_SLICE
 structure V : VECTOR
-val Ints2VS = fn : int List.list -> int VS.slice
+val Ints2VS = fn : int list  -> int VS.slice
 val S2VS = fn : string -> char VS.slice
 val VS2L = fn : ['a .'a VS.slice -> 'a list]
 val V2L = fn : ['a .'a V.vector -> 'a list]

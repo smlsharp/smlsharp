@@ -3,7 +3,7 @@
 (**
  * IML instruction set.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Instructions.sml.in,v 1.38 2006/02/09 16:55:09 duchuu Exp $
+ * @version $Id: Instructions.sml.in,v 1.43 2007/02/08 03:08:49 katsu Exp $
  *)
 structure Instructions =
 struct
@@ -25,6 +25,7 @@ struct
              string : UInt32,
              destination : UInt32
            }
+         | LoadFloat of {value : Real32, destination : UInt32}
          | LoadReal of {value : Real64, destination : UInt32}
          | (* this instruction is now not used. *)
            LoadBoxedReal of {value : Real64, destination : UInt32}
@@ -309,6 +310,7 @@ struct
            {
              (* the offset of a frame slot which holds a pointer to a block
               * whose contents are copied into a new block. *)
+             nestLevel : UInt32,
              blockOffset : UInt32,
              destination : UInt32
            }
@@ -829,17 +831,6 @@ struct
              string : UInt8 list
            }
          | Nop
-         | (* imports a function which is exported from a external library. *)
-           FFIVal of
-           {
-             (* the offset of a frame slot which holds a pointer to a string
-              * block for the function name. *)
-             funNameOffset : UInt32, 
-             (* the offset of a frame slot which holds a pointer to a string
-              * block for the library name. *)
-             libNameOffset : UInt32, 
-             destination : UInt32
-           }
          | (* invoke an external function which is imported by the FFIVal
             * instruction.
             *)
@@ -849,7 +840,17 @@ struct
               * containing a pointer to the external function. *)
              closureOffset : UInt32,
              argsCount : UInt32,
+             (* largeSwitchTag is used to dispatch C FFI function in VirtualMachine.cc
+              * if Control.LARGEFFISWITCH = ref true. *)
+             switchTag : UInt32,
+             convention : UInt32,
              argIndexes : UInt32 list,
+             destination : UInt32
+           }
+         | RegisterCallback of
+           {
+             closureOffset : UInt32,
+             sizeTag : UInt32,
              destination : UInt32
            }
          | DebuggerBreak

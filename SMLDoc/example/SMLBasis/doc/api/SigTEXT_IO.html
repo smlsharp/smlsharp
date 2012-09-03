@@ -1,0 +1,349 @@
+<HTML>
+<HEAD>
+<TITLE>TEXT_IO</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>TEXT_IO</H2>
+<DL>
+<DT> <B>All Known Implementing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="FctTextIOFn.html">TextIOFn</A>,&nbsp;<A HREF="StrTextIO.html">TextIO</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigTEXT_IO.html">TEXT_IO</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="SigTEXT_IO-StrStreamIO.html">StreamIO</A>&nbsp;:<br>
+&nbsp;&nbsp;<A HREF="SigTEXT_STREAM_IO.html">TEXT_STREAM_IO</A>&nbsp;where&nbsp;type&nbsp;vector&nbsp;=&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;and&nbsp;type&nbsp;elem&nbsp;=&nbsp;<A HREF=".//StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A>&nbsp;=&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigTEXT_IO.html#Typeelem">elem</A>&nbsp;=&nbsp;<A HREF=".//StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#Valinput">input</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#Valinput1">input1</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeelem">elem</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValinputN">inputN</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValinputAll">inputAll</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValcanInput">canInput</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#Vallookahead">lookahead</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeelem">elem</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValcloseIn">closeIn</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValendOfStream">endOfStream</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#Valoutput">output</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#Valoutput1">output1</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigTEXT_IO.html#Typeelem">elem</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValflushOut">flushOut</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValcloseOut">closeOut</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValmkInstream">mkInstream</A>&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValgetInstream">getInstream</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValsetInstream">setInstream</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValgetPosOut">getPosOut</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeout_pos">StreamIO.out_pos</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValsetPosOut">setPosOut</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeout_pos">StreamIO.out_pos</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValmkOutstream">mkOutstream</A>&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValgetOutstream">getOutstream</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValsetOutstream">setOutstream</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValinputLine">inputLine</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValoutputSubstr">outputSubstr</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF=".//StrSubstring.html#Typesubstring">substring</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValopenIn">openIn</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValopenString">openString</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValopenOut">openOut</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValopenAppend">openAppend</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValstdIn">stdIn</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValstdOut">stdOut</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValstdErr">stdErr</A>&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#Valprint">print</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigTEXT_IO.html#ValscanStream">scanStream</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;((<A HREF="SigTEXT_IO.html#Typeelem">elem</A>,&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;('a,&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>)&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;'a&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typevector"><!-- --></A>
+<H3>vector</H3>
+<P>
+<CODE>type&nbsp;vector&nbsp;=&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Typeelem"><!-- --></A>
+<H3>elem</H3>
+<P>
+<CODE>type&nbsp;elem&nbsp;=&nbsp;<A HREF=".//StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="Typeinstream"><!-- --></A>
+<H3>instream</H3>
+<P>
+<CODE>type&nbsp;instream</CODE>
+
+<HR>
+<A NAME="Typeoutstream"><!-- --></A>
+<H3>outstream</H3>
+<P>
+<CODE>type&nbsp;outstream</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valinput"><!-- --></A>
+<H3>input</H3>
+<P>
+<CODE>val&nbsp;input&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A></CODE>
+
+<HR>
+<A NAME="Valinput1"><!-- --></A>
+<H3>input1</H3>
+<P>
+<CODE>val&nbsp;input1&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeelem">elem</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValinputN"><!-- --></A>
+<H3>inputN</H3>
+<P>
+<CODE>val&nbsp;inputN&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A></CODE>
+
+<HR>
+<A NAME="ValinputAll"><!-- --></A>
+<H3>inputAll</H3>
+<P>
+<CODE>val&nbsp;inputAll&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A></CODE>
+
+<HR>
+<A NAME="ValcanInput"><!-- --></A>
+<H3>canInput</H3>
+<P>
+<CODE>val&nbsp;canInput&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Vallookahead"><!-- --></A>
+<H3>lookahead</H3>
+<P>
+<CODE>val&nbsp;lookahead&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeelem">elem</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValcloseIn"><!-- --></A>
+<H3>closeIn</H3>
+<P>
+<CODE>val&nbsp;closeIn&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValendOfStream"><!-- --></A>
+<H3>endOfStream</H3>
+<P>
+<CODE>val&nbsp;endOfStream&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valoutput"><!-- --></A>
+<H3>output</H3>
+<P>
+<CODE>val&nbsp;output&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigTEXT_IO.html#Typevector">vector</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valoutput1"><!-- --></A>
+<H3>output1</H3>
+<P>
+<CODE>val&nbsp;output1&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigTEXT_IO.html#Typeelem">elem</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValflushOut"><!-- --></A>
+<H3>flushOut</H3>
+<P>
+<CODE>val&nbsp;flushOut&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValcloseOut"><!-- --></A>
+<H3>closeOut</H3>
+<P>
+<CODE>val&nbsp;closeOut&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValmkInstream"><!-- --></A>
+<H3>mkInstream</H3>
+<P>
+<CODE>val&nbsp;mkInstream&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ValgetInstream"><!-- --></A>
+<H3>getInstream</H3>
+<P>
+<CODE>val&nbsp;getInstream&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A></CODE>
+
+<HR>
+<A NAME="ValsetInstream"><!-- --></A>
+<H3>setInstream</H3>
+<P>
+<CODE>val&nbsp;setInstream&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValgetPosOut"><!-- --></A>
+<H3>getPosOut</H3>
+<P>
+<CODE>val&nbsp;getPosOut&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeout_pos">StreamIO.out_pos</A></CODE>
+
+<HR>
+<A NAME="ValsetPosOut"><!-- --></A>
+<H3>setPosOut</H3>
+<P>
+<CODE>val&nbsp;setPosOut&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeout_pos">StreamIO.out_pos</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValmkOutstream"><!-- --></A>
+<H3>mkOutstream</H3>
+<P>
+<CODE>val&nbsp;mkOutstream&nbsp;:&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A></CODE>
+
+<HR>
+<A NAME="ValgetOutstream"><!-- --></A>
+<H3>getOutstream</H3>
+<P>
+<CODE>val&nbsp;getOutstream&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;->&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A></CODE>
+
+<HR>
+<A NAME="ValsetOutstream"><!-- --></A>
+<H3>setOutstream</H3>
+<P>
+<CODE>val&nbsp;setOutstream&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF="SigSTREAM_IO.html#Typeoutstream">StreamIO.outstream</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValinputLine"><!-- --></A>
+<H3>inputLine</H3>
+<P>
+<CODE>val&nbsp;inputLine&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValoutputSubstr"><!-- --></A>
+<H3>outputSubstr</H3>
+<P>
+<CODE>val&nbsp;outputSubstr&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A>&nbsp;*&nbsp;<A HREF=".//StrSubstring.html#Typesubstring">substring</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValopenIn"><!-- --></A>
+<H3>openIn</H3>
+<P>
+<CODE>val&nbsp;openIn&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ValopenString"><!-- --></A>
+<H3>openString</H3>
+<P>
+<CODE>val&nbsp;openString&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ValopenOut"><!-- --></A>
+<H3>openOut</H3>
+<P>
+<CODE>val&nbsp;openOut&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A></CODE>
+
+<HR>
+<A NAME="ValopenAppend"><!-- --></A>
+<H3>openAppend</H3>
+<P>
+<CODE>val&nbsp;openAppend&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A></CODE>
+
+<HR>
+<A NAME="ValstdIn"><!-- --></A>
+<H3>stdIn</H3>
+<P>
+<CODE>val&nbsp;stdIn&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A></CODE>
+
+<HR>
+<A NAME="ValstdOut"><!-- --></A>
+<H3>stdOut</H3>
+<P>
+<CODE>val&nbsp;stdOut&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A></CODE>
+
+<HR>
+<A NAME="ValstdErr"><!-- --></A>
+<H3>stdErr</H3>
+<P>
+<CODE>val&nbsp;stdErr&nbsp;:&nbsp;<A HREF="SigTEXT_IO.html#Typeoutstream">outstream</A></CODE>
+
+<HR>
+<A NAME="Valprint"><!-- --></A>
+<H3>print</H3>
+<P>
+<CODE>val&nbsp;print&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValscanStream"><!-- --></A>
+<H3>scanStream</H3>
+<P>
+<CODE>val&nbsp;scanStream<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;((<A HREF="SigTEXT_IO.html#Typeelem">elem</A>,&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;('a,&nbsp;<A HREF="SigSTREAM_IO.html#Typeinstream">StreamIO.instream</A>)&nbsp;<A HREF="StrStringCvt.html#Typereader">StringCvt.reader</A>)&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigTEXT_IO.html#Typeinstream">instream</A>&nbsp;->&nbsp;'a&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

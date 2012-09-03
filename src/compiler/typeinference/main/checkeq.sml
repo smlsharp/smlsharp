@@ -1,13 +1,14 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: checkeq.sml,v 1.17 2006/02/28 16:11:09 kiyoshiy Exp $
+ * @version $Id: checkeq.sml,v 1.21 2007/01/28 12:39:56 ohori Exp $
  *)
 structure CheckEq =
 struct
 
   local
     open Types TypesUtils Basics
+    structure PT = PredefinedTypes
   in
 
   (***************************************************************************)
@@ -28,12 +29,37 @@ struct
       case ty of
         ERRORty  => raise Eqcheck
       | DUMMYty _  => raise Eqcheck
-      | TYVARty (r as ref(TVAR {id,recKind,eqKind,tyvarName = NONE})) => 
+      | TYVARty (r as ref(TVAR {lambdaDepth, id,recKind,eqKind,tyvarName = NONE})) => 
         (case eqKind  of
            NONEQ =>
-           r :=
-           TVAR{id = id, recKind = recKind, eqKind = EQ, tyvarName = NONE}
-         | EQ => ())
+             r :=
+             TVAR{
+                  lambdaDepth = lambdaDepth, 
+                  id = id, 
+                  recKind = recKind, 
+                  eqKind = EQ, 
+                  tyvarName = NONE
+                  }
+           | EQ => ();
+          case recKind of 
+            OVERLOADED L =>
+              let
+                val newL = List.filter admitEqTy L 
+              in
+                case newL of
+                  nil => raise Eqcheck
+                | _ =>
+                    r :=
+                    TVAR{
+                         lambdaDepth = lambdaDepth, 
+                         id = id, 
+                         recKind = OVERLOADED newL,
+                         eqKind = EQ, 
+                         tyvarName = NONE
+                         }
+              end
+           | _ => ()
+             )
       | TYVARty (ref(TVAR {eqKind = EQ, tyvarName = SOME _, ...})) => ()
       | TYVARty (ref(TVAR {eqKind = NONEQ, tyvarName = SOME _, ...})) =>
         (*
@@ -45,8 +71,8 @@ struct
       | FUNMty _ => raise Eqcheck
       | RECORDty fl => SEnv.foldr (fn (ty,()) => checkEq ty) () fl
       | CONty {tyCon = tyCon, args} =>
-         if #id tyCon = StaticEnv.refTyConid then ()
-         else if #id tyCon = StaticEnv.arrayTyConid then ()
+         if ID.eq(#id tyCon, PT.refTyConid) then ()
+         else if ID.eq(#id tyCon, PT.arrayTyConid) then ()
          else
            (
             case #eqKind tyCon of ref NONEQ => raise Eqcheck | _ => ();
@@ -62,6 +88,7 @@ struct
         )
       | BOXEDty => raise Eqcheck
       | ATOMty => raise Eqcheck
+      | GENERICty => raise Eqcheck
       | INDEXty (ty, l) => raise Eqcheck
       | BMABSty _ => raise Eqcheck
       | BITMAPty _ => raise Eqcheck
@@ -78,6 +105,7 @@ struct
       | FRAMEBITMAPty intList => raise Eqcheck
       | ABSSPECty(ty,_) => checkEq ty
       | SPECty ty => checkEq ty
+      | ABSTRACTty => raise Eqcheck
   (***************************************************************************)
 
   end

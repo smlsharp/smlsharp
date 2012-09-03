@@ -1,7 +1,7 @@
 (**
  *
  * @author UENO Katsuhiro
- * @version $Id: PrimitiveTable.sml,v 1.9 2006/02/03 13:47:25 kiyoshiy Exp $
+ * @version $Id: PrimitiveTable.sml,v 1.12 2007/01/23 03:25:16 kiyoshiy Exp $
  *)
 structure PrimitiveTable :> PRIMITIVE_TABLE =
 struct
@@ -17,6 +17,7 @@ struct
   type spec =
        {
          bindName : string,
+         alias : string,
          typeSpec : string,
          arity : int,
          primitive : primitive
@@ -44,37 +45,40 @@ struct
 
         fun parse (line, {lineno, index, dst}) =
             case line : CSVParser.field list of
-              [SOME func, SOME ty, SOME arity, SOME prim, NONE] =>
+              [SOME func, aliasOpt, SOME ty, SOME arity, SOME prim, NONE] =>
               {
                 lineno = lineno + 1,
                 index = index,
                 dst =
                 {
                   bindName = #1 func,
+                  alias = #1(Option.getOpt(aliasOpt, func)),
                   typeSpec = #1 ty,
                   arity = valOf (Int.fromString (#1 arity)),
                   primitive = Internal (#1 prim)
                 } :: dst
               }
-            | [SOME func, SOME ty, SOME arity, NONE, SOME vmFunc] =>
+            | [SOME func, aliasOpt, SOME ty, SOME arity, NONE, SOME vmFunc] =>
               {
                 lineno = lineno + 1,
                 index = index + 1,
                 dst =
                 {
                   bindName = #1 func,
+                  alias = #1(Option.getOpt(aliasOpt, func)),
                   typeSpec = #1 ty,
                   arity = valOf (Int.fromString (#1 arity)),
                   primitive = External (index, (#1 vmFunc))
                 } :: dst
               }
-            | [SOME func, SOME ty, SOME arity, NONE, NONE] =>
+            | [SOME func, aliasOpt, SOME ty, SOME arity, NONE, NONE] =>
               {
                 lineno = lineno + 1,
                 index = index,
                 dst =
                 {
                   bindName = #1 func,
+                  alias = #1(Option.getOpt(aliasOpt, func)),
                   typeSpec = #1 ty,
                   arity = valOf (Int.fromString (#1 arity)),
                   primitive = None
@@ -89,20 +93,52 @@ struct
             | _ => raise (ParseError lineno)
       in
         rev
-        (#dst
-         (foldl
-          parse
-          {lineno = 1, index = initialPrimitiveIndex, dst = nil}
-          CSV))
+            (#dst
+                 (foldl
+                      parse
+                      {lineno = 1, index = initialPrimitiveIndex, dst = nil}
+                      CSV))
       end
 
   fun join s ("", s2) = s2
     | join s (s1, s2) = s1 ^ s ^ s2
 
+  fun primitiveTypesSML spec =
+      let
+        fun format (dst, nil) = dst
+          | format (dst, ({alias, typeSpec, ...} : spec) :: t) =
+            let
+              val code =
+                  "val " ^ alias ^ "Ty = "
+                  ^ "TypeParser.readTy PredefinedTypes.initialTyConEnv "
+                  ^ "\"" ^ typeSpec ^ "\" "
+            in
+              format (join "\n" (dst, code), t)
+            end
+      in
+        format ("", spec)
+      end
+
+  fun primitiveInfosSML spec =
+      let
+        fun format (dst, nil) = dst
+          | format (dst, ({bindName, alias, ...} : spec) :: t) =
+            let
+              val code =
+                  "val " ^ alias ^ "PrimInfo = "
+                  ^ "{name = \"" ^ bindName ^ "\", "
+                  ^ "ty = " ^ alias ^ "Ty}"
+            in
+              format (join "\n" (dst, code), t)
+            end
+      in
+        format ("", spec)
+      end
+
   fun primitivesSML spec =
       let
         fun format (dst, nil) = dst
-          | format (dst, {bindName, typeSpec, arity, primitive}::t) =
+          | format (dst, {bindName, alias, typeSpec, arity, primitive}::t) =
             let
               val instruction =
                   case (arity, primitive) of
@@ -114,9 +150,9 @@ struct
                     "External " ^ Int.toString index
                   | (_, None) => "None"
               val code =
-                  "{bindName = \"" ^ bindName ^ "\", " ^
-                  "ty = TypeParser.readTy \"" ^ typeSpec ^ "\", " ^
-                  "instruction = " ^ instruction ^ "}"
+                  "{bindName = \"" ^ bindName ^ "\", "
+                  ^ "ty = " ^ alias ^ "Ty, "
+                  ^ "instruction = " ^ instruction ^ "}"
             in
               format (join ",\n" (dst, code), t)
             end
@@ -191,6 +227,8 @@ struct
         fun replaceLabel x =
             case Substring.string x of
               "SMLPrimitives" => SOME (primitivesSML spec)
+            | "SMLPrimitiveTypes" => SOME (primitiveTypesSML spec)
+            | "SMLPrimitiveInfos" => SOME (primitiveInfosSML spec)
             | "SMLPrimitiveInstructions" => SOME (instructionsSML spec)
             | "CPrimitivesList"  => SOME (primitivesListC spec)
             | "CPrimitiveDeclarations"  => SOME (primitiveDeclarationsC spec)

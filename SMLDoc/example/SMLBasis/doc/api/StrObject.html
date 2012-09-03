@@ -1,0 +1,387 @@
+<HTML>
+<HEAD>
+<TITLE>Object</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>Object</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrObject.html">Object</A>&nbsp;:>&nbsp;<A HREF="SigUNSAFE_OBJECT.html">UNSAFE_OBJECT</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;=&nbsp;Core.Assembly.object<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrObject.html#ConstrUnboxed">Unboxed</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrWord32">Word32</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrReal">Real</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrPair">Pair</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrRecord">Record</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrRef">Ref</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrPolyVector">PolyVector</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrPolyArray">PolyArray</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrByteVector">ByteVector</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrByteArray">ByteArray</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrRealArray">RealArray</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrSusp">Susp</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrWeakPtr">WeakPtr</A><br>
+&nbsp;&nbsp;exception&nbsp;<A HREF="StrObject.html#ExceptionRepresentation">Representation</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoObject">toObject</A>&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValmkTuple">mkTuple</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#Valboxed">boxed</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#Valunboxed">unboxed</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#Valrep">rep</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#Vallength">length</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#Valnth">nth</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoTuple">toTuple</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoRef">toRef</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;ref<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoArray">toArray</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;<A HREF=".//StrArray.html#Typearray">array</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoRealArray">toRealArray</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrReal64Array.html#Typearray">Real64Array.array</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoByteArray">toByteArray</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoVector">toVector</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;<A HREF=".//StrVector.html#Typevector">vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoByteVector">toByteVector</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoExn">toExn</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeexn">exn</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoReal">toReal</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrReal.html#Typereal">real</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoInt">toInt</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoInt32">toInt32</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrInt32Imp.html#Typeint">Int32.int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoWord">toWord</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord31Imp.html#Typeword">Word.word</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoWord8">toWord8</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord8Imp.html#Typeword">Word8.word</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrObject.html#ValtoWord32">toWord32</A>&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">Word32.word</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeobject"><!-- --></A>
+<H3>object</H3>
+<P>
+<CODE>type&nbsp;object&nbsp;=&nbsp;Core.Assembly.object</CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typerepresentation"><!-- --></A>
+<H3>representation</H3>
+<P>
+<CODE>datatype&nbsp;representation&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrObject.html#ConstrUnboxed">Unboxed</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrWord32">Word32</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrReal">Real</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrPair">Pair</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrRecord">Record</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrRef">Ref</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrPolyVector">PolyVector</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrPolyArray">PolyArray</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrByteVector">ByteVector</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrByteArray">ByteArray</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrRealArray">RealArray</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrSusp">Susp</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrObject.html#ConstrWeakPtr">WeakPtr</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrUnboxed"><!-- --></A>
+<H3>Unboxed</H3>
+<P>
+<CODE>constructor&nbsp;Unboxed&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrWord32"><!-- --></A>
+<H3>Word32</H3>
+<P>
+<CODE>constructor&nbsp;Word32&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrReal"><!-- --></A>
+<H3>Real</H3>
+<P>
+<CODE>constructor&nbsp;Real&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrPair"><!-- --></A>
+<H3>Pair</H3>
+<P>
+<CODE>constructor&nbsp;Pair&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrRecord"><!-- --></A>
+<H3>Record</H3>
+<P>
+<CODE>constructor&nbsp;Record&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrRef"><!-- --></A>
+<H3>Ref</H3>
+<P>
+<CODE>constructor&nbsp;Ref&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrPolyVector"><!-- --></A>
+<H3>PolyVector</H3>
+<P>
+<CODE>constructor&nbsp;PolyVector&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrPolyArray"><!-- --></A>
+<H3>PolyArray</H3>
+<P>
+<CODE>constructor&nbsp;PolyArray&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrByteVector"><!-- --></A>
+<H3>ByteVector</H3>
+<P>
+<CODE>constructor&nbsp;ByteVector&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrByteArray"><!-- --></A>
+<H3>ByteArray</H3>
+<P>
+<CODE>constructor&nbsp;ByteArray&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrRealArray"><!-- --></A>
+<H3>RealArray</H3>
+<P>
+<CODE>constructor&nbsp;RealArray&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrSusp"><!-- --></A>
+<H3>Susp</H3>
+<P>
+<CODE>constructor&nbsp;Susp&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="ConstrWeakPtr"><!-- --></A>
+<H3>WeakPtr</H3>
+<P>
+<CODE>constructor&nbsp;WeakPtr&nbsp;:&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValtoObject"><!-- --></A>
+<H3>toObject</H3>
+<P>
+<CODE>val&nbsp;toObject&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A></CODE>
+
+<HR>
+<A NAME="ValmkTuple"><!-- --></A>
+<H3>mkTuple</H3>
+<P>
+<CODE>val&nbsp;mkTuple&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A></CODE>
+
+<HR>
+<A NAME="Valboxed"><!-- --></A>
+<H3>boxed</H3>
+<P>
+<CODE>val&nbsp;boxed&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valunboxed"><!-- --></A>
+<H3>unboxed</H3>
+<P>
+<CODE>val&nbsp;unboxed&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valrep"><!-- --></A>
+<H3>rep</H3>
+<P>
+<CODE>val&nbsp;rep&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typerepresentation">representation</A></CODE>
+
+<HR>
+<A NAME="Vallength"><!-- --></A>
+<H3>length</H3>
+<P>
+<CODE>val&nbsp;length&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valnth"><!-- --></A>
+<H3>nth</H3>
+<P>
+<CODE>val&nbsp;nth&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A></CODE>
+
+<HR>
+<A NAME="ValtoTuple"><!-- --></A>
+<H3>toTuple</H3>
+<P>
+<CODE>val&nbsp;toTuple&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="ValtoString"><!-- --></A>
+<H3>toString</H3>
+<P>
+<CODE>val&nbsp;toString&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValtoRef"><!-- --></A>
+<H3>toRef</H3>
+<P>
+<CODE>val&nbsp;toRef&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;ref</CODE>
+
+<HR>
+<A NAME="ValtoArray"><!-- --></A>
+<H3>toArray</H3>
+<P>
+<CODE>val&nbsp;toArray&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;<A HREF=".//StrArray.html#Typearray">array</A></CODE>
+
+<HR>
+<A NAME="ValtoRealArray"><!-- --></A>
+<H3>toRealArray</H3>
+<P>
+<CODE>val&nbsp;toRealArray&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrReal64Array.html#Typearray">Real64Array.array</A></CODE>
+
+<HR>
+<A NAME="ValtoByteArray"><!-- --></A>
+<H3>toByteArray</H3>
+<P>
+<CODE>val&nbsp;toByteArray&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord8Array.html#Typearray">Word8Array.array</A></CODE>
+
+<HR>
+<A NAME="ValtoVector"><!-- --></A>
+<H3>toVector</H3>
+<P>
+<CODE>val&nbsp;toVector&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;<A HREF=".//StrVector.html#Typevector">vector</A></CODE>
+
+<HR>
+<A NAME="ValtoByteVector"><!-- --></A>
+<H3>toByteVector</H3>
+<P>
+<CODE>val&nbsp;toByteVector&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord8Vector.html#Typevector">Word8Vector.vector</A></CODE>
+
+<HR>
+<A NAME="ValtoExn"><!-- --></A>
+<H3>toExn</H3>
+<P>
+<CODE>val&nbsp;toExn&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeexn">exn</A></CODE>
+
+<HR>
+<A NAME="ValtoReal"><!-- --></A>
+<H3>toReal</H3>
+<P>
+<CODE>val&nbsp;toReal&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrReal.html#Typereal">real</A></CODE>
+
+<HR>
+<A NAME="ValtoInt"><!-- --></A>
+<H3>toInt</H3>
+<P>
+<CODE>val&nbsp;toInt&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValtoInt32"><!-- --></A>
+<H3>toInt32</H3>
+<P>
+<CODE>val&nbsp;toInt32&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrInt32Imp.html#Typeint">Int32.int</A></CODE>
+
+<HR>
+<A NAME="ValtoWord"><!-- --></A>
+<H3>toWord</H3>
+<P>
+<CODE>val&nbsp;toWord&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord31Imp.html#Typeword">Word.word</A></CODE>
+
+<HR>
+<A NAME="ValtoWord8"><!-- --></A>
+<H3>toWord8</H3>
+<P>
+<CODE>val&nbsp;toWord8&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord8Imp.html#Typeword">Word8.word</A></CODE>
+
+<HR>
+<A NAME="ValtoWord32"><!-- --></A>
+<H3>toWord32</H3>
+<P>
+<CODE>val&nbsp;toWord32&nbsp;:&nbsp;<A HREF="StrObject.html#Typeobject">object</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">Word32.word</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Exception detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ExceptionRepresentation"><!-- --></A>
+<H3>Representation</H3>
+<P>
+<CODE>exception&nbsp;Representation</CODE>
+
+<P>
+
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

@@ -1,0 +1,47 @@
+local
+
+  structure PU = PrimCodecUtil
+
+  structure GBKCodecPrimArg = 
+  struct
+
+    val names = ["GBK", "CP936", "MS936", "windows-936"]
+
+    datatype tag = ASCII | GBK
+
+    fun tagToBytes tag =
+        case tag
+         of ASCII => 1
+          | GBK => 2
+
+    val minOrdw = 0w0 : Word32.word
+    val maxOrdw = 0wxFFFF : Word32.word
+    fun getOrd (bytes, _) = PU.bytesToWord32 bytes
+    fun encodeChar charCode = PU.dropPrefixZeros (PU.word32ToBytes charCode)
+    fun convert targetCodec chars = raise Codecs.ConverterNotFound
+
+    val table =
+        [
+          (PU.Byte(0w33, 0w126), ASCII),
+          (
+            PU.Seq
+                [
+                  PU.Byte(0w129, 0w254),
+                  PU.Or[PU.Byte(0w64, 0w126), PU.Byte(0w128, 0w254)]
+                ],
+            GBK
+          )
+        ]
+
+  end
+
+in
+
+(**
+ * fundamental functions to access GBK encoded characters.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: GBKCodec.sml,v 1.1 2006/12/11 10:57:04 kiyoshiy Exp $
+ *)
+structure GBKCodec = Codec(VariableLengthCharPrimCodecBase(GBKCodecPrimArg))
+
+end

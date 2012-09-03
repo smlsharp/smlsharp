@@ -1,0 +1,207 @@
+<HTML>
+<HEAD>
+<TITLE>CleanIO</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>CleanIO</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrCleanIO.html">CleanIO</A>&nbsp;:>&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type&nbsp;<A HREF="#Typetag">tag</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValosInitHook">osInitHook</A>&nbsp;:&nbsp;(<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;ref<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValstdStrmHook">stdStrmHook</A>&nbsp;:&nbsp;(<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;ref<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValaddCleaner">addCleaner</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;init&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flush&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="#Typetag">tag</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValrebindCleaner">rebindCleaner</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="#Typetag">tag</A>&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;init&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flush&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValremoveCleaner">removeCleaner</A>&nbsp;:&nbsp;<A HREF="#Typetag">tag</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrCleanIO-StrC.html">C</A>&nbsp;=&nbsp;<A HREF="StrCleanUp.html">CleanUp</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A>&nbsp;=&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;ref<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrCleanIO.html#Typecleaner">cleaner</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tag&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;init&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flush&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#ValosInitHook">osInitHook</A>&nbsp;:&nbsp;(<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;ref<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#ValstdStrmHook">stdStrmHook</A>&nbsp;:&nbsp;(<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;ref<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#Valcleaners">cleaners</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#ValaddCleaner">addCleaner</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{init&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,&nbsp;flush&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,&nbsp;close&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>}&nbsp;->&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#ValgetTag">getTag</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#ValrebindCleaner">rebindCleaner</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A>&nbsp;*&nbsp;{init&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,&nbsp;flush&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,&nbsp;close&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#ValremoveCleaner">removeCleaner</A>&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#ValdoClean">doClean</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrCleanIO.html#ValcleanUp">cleanUp</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typetag"><!-- --></A>
+<H3>tag</H3>
+<P>
+<CODE>type&nbsp;tag&nbsp;=&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;ref</CODE>
+
+<HR>
+<A NAME="Typecleaner"><!-- --></A>
+<H3>cleaner</H3>
+<P>
+<CODE>type&nbsp;cleaner&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tag&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;init&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flush&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValosInitHook"><!-- --></A>
+<H3>osInitHook</H3>
+<P>
+<CODE>val&nbsp;osInitHook&nbsp;:&nbsp;(<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;ref</CODE>
+
+<HR>
+<A NAME="ValstdStrmHook"><!-- --></A>
+<H3>stdStrmHook</H3>
+<P>
+<CODE>val&nbsp;stdStrmHook&nbsp;:&nbsp;(<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>)&nbsp;ref</CODE>
+
+<HR>
+<A NAME="Valcleaners"><!-- --></A>
+<H3>cleaners</H3>
+<P>
+<CODE>val&nbsp;cleaners</CODE>
+
+<HR>
+<A NAME="ValaddCleaner"><!-- --></A>
+<H3>addCleaner</H3>
+<P>
+<CODE>val&nbsp;addCleaner<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{init&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,&nbsp;flush&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,&nbsp;close&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>}&nbsp;->&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A></CODE>
+
+<HR>
+<A NAME="ValgetTag"><!-- --></A>
+<H3>getTag</H3>
+<P>
+<CODE>val&nbsp;getTag</CODE>
+
+<HR>
+<A NAME="ValrebindCleaner"><!-- --></A>
+<H3>rebindCleaner</H3>
+<P>
+<CODE>val&nbsp;rebindCleaner<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A>&nbsp;*&nbsp;{init&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,&nbsp;flush&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>,&nbsp;close&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValremoveCleaner"><!-- --></A>
+<H3>removeCleaner</H3>
+<P>
+<CODE>val&nbsp;removeCleaner&nbsp;:&nbsp;<A HREF="StrCleanIO.html#Typetag">tag</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValdoClean"><!-- --></A>
+<H3>doClean</H3>
+<P>
+<CODE>val&nbsp;doClean</CODE>
+
+<HR>
+<A NAME="ValcleanUp"><!-- --></A>
+<H3>cleanUp</H3>
+<P>
+<CODE>val&nbsp;cleanUp</CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

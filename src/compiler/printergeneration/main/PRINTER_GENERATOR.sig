@@ -2,7 +2,7 @@
  * generates printer code and formatter definition.
  *
  * @author YAMATODANI Kiyoshi
- * @version $Id: PRINTER_GENERATOR.sig,v 1.10 2005/12/07 02:04:55 kiyoshiy Exp $
+ * @version $Id: PRINTER_GENERATOR.sig,v 1.11 2006/03/24 13:57:54 kiyoshiy Exp $
  *)
 signature PRINTER_GENERATOR =
 sig
@@ -33,6 +33,14 @@ sig
         declarations : TypedCalc.tptopdecl list
       }
       -> TypeContext.context * TypedCalc.tptopdecl list
+
+  val generateForSeparateCompile :
+      {
+        newTypeEnv : StaticTypeEnv.staticTypeEnv,
+        printBinds : bool,
+        declarations : TypedCalc.tptopdecl list
+      }
+      -> StaticTypeEnv.staticTypeEnv * TypedCalc.tptopdecl list
 
   (***************************************************************************)
 

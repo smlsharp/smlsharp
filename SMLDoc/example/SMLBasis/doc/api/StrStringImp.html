@@ -1,0 +1,391 @@
+<HTML>
+<HEAD>
+<TITLE>StringImp</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>StringImp</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrStringImp.html">StringImp</A>&nbsp;:&nbsp;<A HREF="SigSTRING.html">STRING</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;=&nbsp;<A HREF=".//StrChar.html#Typechar">char</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;=&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val+">+</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val-">-</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val<"><</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val<="><=</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val>">></A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val>=">>=</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValunsafeSub">unsafeSub</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValunsafeUpdate">unsafeUpdate</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valrev">rev</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValmaxSize">maxSize</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valsize">size</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValunsafeCreate">unsafeCreate</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valcreate">create</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valstr">str</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valsub">sub</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typechar">char</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valsubstring">substring</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valextract">extract</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val^">^</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valconcat">concat</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValconcatWith">concatWith</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valimplode">implode</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valexplode">explode</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valmap">map</A>&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valtranslate">translate</A>&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valtokens">tokens</A>&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valfields">fields</A>&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValisPrefix">isPrefix</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValisSuffix">isSuffix</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValisSubstring">isSubstring</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valcompare">compare</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valcollate">collate</A>&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A>)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Valsgtr">sgtr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val<="><=</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val<"><</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val>=">>=</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#Val>">></A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValfromString'">fromString'</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValfromString">fromString</A>&nbsp;:&nbsp;<A HREF=".//StrStringImp.html#Typestring">String.string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrStringImp.html#Typestring">String.string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValfromCString">fromCString</A>&nbsp;:&nbsp;<A HREF=".//StrStringImp.html#Typestring">String.string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringImp.html#ValtoCString">toCString</A>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrStringImp.html#Typestring">String.string</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typechar"><!-- --></A>
+<H3>char</H3>
+<P>
+<CODE>type&nbsp;char&nbsp;=&nbsp;<A HREF=".//StrChar.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="Typestring"><!-- --></A>
+<H3>string</H3>
+<P>
+<CODE>type&nbsp;string&nbsp;=&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Val+"><!-- --></A>
+<H3>+</H3>
+<P>
+<CODE>val&nbsp;+</CODE>
+
+<HR>
+<A NAME="Val-"><!-- --></A>
+<H3>-</H3>
+<P>
+<CODE>val&nbsp;-</CODE>
+
+<HR>
+<A NAME="Val<"><!-- --></A>
+<H3><</H3>
+<P>
+<CODE>val&nbsp;<&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val<="><!-- --></A>
+<H3><=</H3>
+<P>
+<CODE>val&nbsp;<=&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val>"><!-- --></A>
+<H3>></H3>
+<P>
+<CODE>val&nbsp;>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val>="><!-- --></A>
+<H3>>=</H3>
+<P>
+<CODE>val&nbsp;>=&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValunsafeSub"><!-- --></A>
+<H3>unsafeSub</H3>
+<P>
+<CODE>val&nbsp;unsafeSub</CODE>
+
+<HR>
+<A NAME="ValunsafeUpdate"><!-- --></A>
+<H3>unsafeUpdate</H3>
+<P>
+<CODE>val&nbsp;unsafeUpdate</CODE>
+
+<HR>
+<A NAME="Valrev"><!-- --></A>
+<H3>rev</H3>
+<P>
+<CODE>val&nbsp;rev</CODE>
+
+<HR>
+<A NAME="ValmaxSize"><!-- --></A>
+<H3>maxSize</H3>
+<P>
+<CODE>val&nbsp;maxSize&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valsize"><!-- --></A>
+<H3>size</H3>
+<P>
+<CODE>val&nbsp;size&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="ValunsafeCreate"><!-- --></A>
+<H3>unsafeCreate</H3>
+<P>
+<CODE>val&nbsp;unsafeCreate</CODE>
+
+<HR>
+<A NAME="Valcreate"><!-- --></A>
+<H3>create</H3>
+<P>
+<CODE>val&nbsp;create</CODE>
+
+<HR>
+<A NAME="Valstr"><!-- --></A>
+<H3>str</H3>
+<P>
+<CODE>val&nbsp;str&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valsub"><!-- --></A>
+<H3>sub</H3>
+<P>
+<CODE>val&nbsp;sub&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typechar">char</A></CODE>
+
+<HR>
+<A NAME="Valsubstring"><!-- --></A>
+<H3>substring</H3>
+<P>
+<CODE>val&nbsp;substring&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valextract"><!-- --></A>
+<H3>extract</H3>
+<P>
+<CODE>val&nbsp;extract&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Val^"><!-- --></A>
+<H3>^</H3>
+<P>
+<CODE>val&nbsp;^&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valconcat"><!-- --></A>
+<H3>concat</H3>
+<P>
+<CODE>val&nbsp;concat&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValconcatWith"><!-- --></A>
+<H3>concatWith</H3>
+<P>
+<CODE>val&nbsp;concatWith&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valimplode"><!-- --></A>
+<H3>implode</H3>
+<P>
+<CODE>val&nbsp;implode&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valexplode"><!-- --></A>
+<H3>explode</H3>
+<P>
+<CODE>val&nbsp;explode&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Valmap"><!-- --></A>
+<H3>map</H3>
+<P>
+<CODE>val&nbsp;map&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valtranslate"><!-- --></A>
+<H3>translate</H3>
+<P>
+<CODE>val&nbsp;translate&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valtokens"><!-- --></A>
+<H3>tokens</H3>
+<P>
+<CODE>val&nbsp;tokens&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Valfields"><!-- --></A>
+<H3>fields</H3>
+<P>
+<CODE>val&nbsp;fields&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="ValisPrefix"><!-- --></A>
+<H3>isPrefix</H3>
+<P>
+<CODE>val&nbsp;isPrefix&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisSuffix"><!-- --></A>
+<H3>isSuffix</H3>
+<P>
+<CODE>val&nbsp;isSuffix&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValisSubstring"><!-- --></A>
+<H3>isSubstring</H3>
+<P>
+<CODE>val&nbsp;isSubstring&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Valcompare"><!-- --></A>
+<H3>compare</H3>
+<P>
+<CODE>val&nbsp;compare&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A></CODE>
+
+<HR>
+<A NAME="Valcollate"><!-- --></A>
+<H3>collate</H3>
+<P>
+<CODE>val&nbsp;collate&nbsp;:&nbsp;(<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A>)&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeorder">order</A></CODE>
+
+<HR>
+<A NAME="Valsgtr"><!-- --></A>
+<H3>sgtr</H3>
+<P>
+<CODE>val&nbsp;sgtr</CODE>
+
+<HR>
+<A NAME="Val<="><!-- --></A>
+<H3><=</H3>
+<P>
+<CODE>val&nbsp;<=&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val<"><!-- --></A>
+<H3><</H3>
+<P>
+<CODE>val&nbsp;<&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val>="><!-- --></A>
+<H3>>=</H3>
+<P>
+<CODE>val&nbsp;>=&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="Val>"><!-- --></A>
+<H3>></H3>
+<P>
+<CODE>val&nbsp;>&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;bool</CODE>
+
+<HR>
+<A NAME="ValfromString'"><!-- --></A>
+<H3>fromString'</H3>
+<P>
+<CODE>val&nbsp;fromString'</CODE>
+
+<HR>
+<A NAME="ValfromString"><!-- --></A>
+<H3>fromString</H3>
+<P>
+<CODE>val&nbsp;fromString&nbsp;:&nbsp;<A HREF=".//StrStringImp.html#Typestring">String.string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValtoString"><!-- --></A>
+<H3>toString</H3>
+<P>
+<CODE>val&nbsp;toString&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrStringImp.html#Typestring">String.string</A></CODE>
+
+<HR>
+<A NAME="ValfromCString"><!-- --></A>
+<H3>fromCString</H3>
+<P>
+<CODE>val&nbsp;fromCString&nbsp;:&nbsp;<A HREF=".//StrStringImp.html#Typestring">String.string</A>&nbsp;->&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValtoCString"><!-- --></A>
+<H3>toCString</H3>
+<P>
+<CODE>val&nbsp;toCString&nbsp;:&nbsp;<A HREF="StrStringImp.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrStringImp.html#Typestring">String.string</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

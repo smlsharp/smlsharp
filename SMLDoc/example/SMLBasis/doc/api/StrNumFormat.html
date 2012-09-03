@@ -1,0 +1,181 @@
+<HTML>
+<HEAD>
+<TITLE>NumFormat</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>NumFormat</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrNumFormat.html">NumFormat</A>&nbsp;:&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValfmtWord">fmtWord</A>&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">Word32.word</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValfmtInt">fmtInt</A>&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;->&nbsp;<A HREF="StrInt32Imp.html#Typeint">Int32.int</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrNumFormat-StrW.html">W</A>&nbsp;=&nbsp;InlineT.Word32<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrNumFormat-StrI.html">I</A>&nbsp;=&nbsp;InlineT.Int31<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrNumFormat-StrI32.html">I32</A>&nbsp;=&nbsp;InlineT.Int32<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#Val<"><</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#Val-">-</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#Val*">*</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#Valdiv">div</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#ValmkDigit">mkDigit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#ValwordToBin">wordToBin</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#ValwordToOct">wordToOct</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#ValwordToDec">wordToDec</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#ValwordToHex">wordToHex</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#ValfmtW">fmtW</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#ValfmtWord">fmtWord</A>&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">Word32.word</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#Vali2w">i2w</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrNumFormat.html#ValfmtInt">fmtInt</A>&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;->&nbsp;<A HREF="StrInt32Imp.html#Typeint">Int32.int</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Val<"><!-- --></A>
+<H3><</H3>
+<P>
+<CODE>val&nbsp;<</CODE>
+
+<HR>
+<A NAME="Val-"><!-- --></A>
+<H3>-</H3>
+<P>
+<CODE>val&nbsp;-</CODE>
+
+<HR>
+<A NAME="Val*"><!-- --></A>
+<H3>*</H3>
+<P>
+<CODE>val&nbsp;*</CODE>
+
+<HR>
+<A NAME="Valdiv"><!-- --></A>
+<H3>div</H3>
+<P>
+<CODE>val&nbsp;div</CODE>
+
+<HR>
+<A NAME="ValmkDigit"><!-- --></A>
+<H3>mkDigit</H3>
+<P>
+<CODE>val&nbsp;mkDigit</CODE>
+
+<HR>
+<A NAME="ValwordToBin"><!-- --></A>
+<H3>wordToBin</H3>
+<P>
+<CODE>val&nbsp;wordToBin</CODE>
+
+<HR>
+<A NAME="ValwordToOct"><!-- --></A>
+<H3>wordToOct</H3>
+<P>
+<CODE>val&nbsp;wordToOct</CODE>
+
+<HR>
+<A NAME="ValwordToDec"><!-- --></A>
+<H3>wordToDec</H3>
+<P>
+<CODE>val&nbsp;wordToDec</CODE>
+
+<HR>
+<A NAME="ValwordToHex"><!-- --></A>
+<H3>wordToHex</H3>
+<P>
+<CODE>val&nbsp;wordToHex</CODE>
+
+<HR>
+<A NAME="ValfmtW"><!-- --></A>
+<H3>fmtW</H3>
+<P>
+<CODE>val&nbsp;fmtW</CODE>
+
+<HR>
+<A NAME="ValfmtWord"><!-- --></A>
+<H3>fmtWord</H3>
+<P>
+<CODE>val&nbsp;fmtWord&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;->&nbsp;<A HREF="StrWord32Imp.html#Typeword">Word32.word</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Vali2w"><!-- --></A>
+<H3>i2w</H3>
+<P>
+<CODE>val&nbsp;i2w</CODE>
+
+<HR>
+<A NAME="ValfmtInt"><!-- --></A>
+<H3>fmtInt</H3>
+<P>
+<CODE>val&nbsp;fmtInt&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">StringCvt.radix</A>&nbsp;->&nbsp;<A HREF="StrInt32Imp.html#Typeint">Int32.int</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

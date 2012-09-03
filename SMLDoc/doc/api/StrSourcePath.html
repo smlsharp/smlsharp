@@ -1,0 +1,223 @@
+<HTML>
+<HEAD>
+<TITLE>SourcePath</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLDoc</em>
+</TD></TR></TABLE>
+<HR>
+<H2>SourcePath</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSourcePath.html">SourcePath</A>&nbsp;:>&nbsp;<A HREF="SigSOURCE_PATH.html">SOURCE_PATH</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;=&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;err&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrSourcePath.html#ConstrCWD">CWD</A>&nbsp;of&nbsp;{name&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;pp&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprepath">prepath</A>}&nbsp;|&nbsp;<A HREF="StrSourcePath.html#ConstrROOT">ROOT</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;|&nbsp;<A HREF="StrSourcePath.html#ConstrDIR">DIR</A>&nbsp;of&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A>&nbsp;=&nbsp;<A HREF="StrSourcePath.html#ConstrPATH">PATH</A>&nbsp;of&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valcwd">cwd</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valpre">pre</A>&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valdir">dir</A>&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valosstring">osstring</A>&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valosstring_prefile">osstring_prefile</A>&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valosstring_dir">osstring_dir</A>&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valfile">file</A>&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valnative">native</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{err&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>}&nbsp;->&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;spec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valstandard">standard</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{err&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>}&nbsp;->&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;spec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valextend">extend</A>&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSourcePath.html#Valosstring_prefile_relative">osstring_prefile_relative</A>&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Author:</B>
+<DD>
+(c) 2000 by Lucent Technologies, Bell Laboratories
+, Matthias Blume
+
+<DT> <B>Version:</B>
+<DD>
+$Id: StrSourcePath.html,v 1.9 2007/02/17 07:01:58 kiyoshiy Exp $
+ 
+
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeprefile"><!-- --></A>
+<H3>prefile</H3>
+<P>
+<CODE>type&nbsp;prefile&nbsp;=&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;err&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>}</CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typedir"><!-- --></A>
+<H3>dir</H3>
+<P>
+<CODE>datatype&nbsp;dir&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrSourcePath.html#ConstrCWD">CWD</A>&nbsp;of&nbsp;{name&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;pp&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprepath">prepath</A>}&nbsp;|&nbsp;<A HREF="StrSourcePath.html#ConstrROOT">ROOT</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;|&nbsp;<A HREF="StrSourcePath.html#ConstrDIR">DIR</A>&nbsp;of&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A></CODE>
+
+<HR>
+<A NAME="Typefile"><!-- --></A>
+<H3>file</H3>
+<P>
+<CODE>datatype&nbsp;file&nbsp;=&nbsp;<A HREF="StrSourcePath.html#ConstrPATH">PATH</A>&nbsp;of&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}</CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrCWD"><!-- --></A>
+<H3>CWD</H3>
+<P>
+<CODE>constructor&nbsp;CWD&nbsp;:&nbsp;{name&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;pp&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprepath">prepath</A>}&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A></CODE>
+
+<HR>
+<A NAME="ConstrROOT"><!-- --></A>
+<H3>ROOT</H3>
+<P>
+<CODE>constructor&nbsp;ROOT&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A></CODE>
+
+<HR>
+<A NAME="ConstrDIR"><!-- --></A>
+<H3>DIR</H3>
+<P>
+<CODE>constructor&nbsp;DIR&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A></CODE>
+
+<HR>
+<A NAME="ConstrPATH"><!-- --></A>
+<H3>PATH</H3>
+<P>
+<CODE>constructor&nbsp;PATH&nbsp;:&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;arcs&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valcwd"><!-- --></A>
+<H3>cwd</H3>
+<P>
+<CODE>val&nbsp;cwd&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A></CODE>
+
+<HR>
+<A NAME="Valpre"><!-- --></A>
+<H3>pre</H3>
+<P>
+<CODE>val&nbsp;pre&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A></CODE>
+
+<HR>
+<A NAME="Valdir"><!-- --></A>
+<H3>dir</H3>
+<P>
+<CODE>val&nbsp;dir&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A></CODE>
+
+<HR>
+<A NAME="Valosstring"><!-- --></A>
+<H3>osstring</H3>
+<P>
+<CODE>val&nbsp;osstring&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valosstring_prefile"><!-- --></A>
+<H3>osstring_prefile</H3>
+<P>
+<CODE>val&nbsp;osstring_prefile&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valosstring_dir"><!-- --></A>
+<H3>osstring_dir</H3>
+<P>
+<CODE>val&nbsp;osstring_dir&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valfile"><!-- --></A>
+<H3>file</H3>
+<P>
+<CODE>val&nbsp;file&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typefile">file</A></CODE>
+
+<HR>
+<A NAME="Valnative"><!-- --></A>
+<H3>native</H3>
+<P>
+<CODE>val&nbsp;native&nbsp;:&nbsp;{err&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>}&nbsp;->&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;spec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A></CODE>
+
+<HR>
+<A NAME="Valstandard"><!-- --></A>
+<H3>standard</H3>
+<P>
+<CODE>val&nbsp;standard<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{err&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>}&nbsp;->&nbsp;{context&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typedir">dir</A>,&nbsp;spec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>}&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A></CODE>
+
+<HR>
+<A NAME="Valextend"><!-- --></A>
+<H3>extend</H3>
+<P>
+<CODE>val&nbsp;extend&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A></CODE>
+
+<HR>
+<A NAME="Valosstring_prefile_relative"><!-- --></A>
+<H3>osstring_prefile_relative</H3>
+<P>
+<CODE>val&nbsp;osstring_prefile_relative&nbsp;:&nbsp;<A HREF="StrSourcePath.html#Typeprefile">prefile</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLDoc: Documentation generator for SML</em>
+</TD></TR></TABLE>
+</BODY></HTML>

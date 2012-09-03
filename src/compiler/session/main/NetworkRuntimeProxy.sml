@@ -1,3 +1,8 @@
+(**
+ * @copyright (c) 2006, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: NetworkRuntimeProxy.sml,v 1.5 2007/02/24 09:22:23 kiyoshiy Exp $
+ *)
 structure NetworkRuntimeProxy : RUNTIME_PROXY =
 struct
 

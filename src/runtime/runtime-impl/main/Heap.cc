@@ -1,9 +1,10 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: Heap.cc,v 1.6 2006/02/27 09:12:59 kiyoshiy Exp $
+ * @version $Id: Heap.cc,v 1.12 2007/03/11 07:05:09 kiyoshiy Exp $
  */
 #include "Heap.hh"
 #include "IllegalStateException.hh"
+#include "OutOfMemoryException.hh"
 #include "Debug.hh"
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
@@ -14,6 +15,8 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 Heap::Tracer Heap::tracer_;
 
 RootSet* Heap::rootset_ = 0;
+
+FinalizerExecutor* Heap::finalizeExecutor_ = 0;
 
 Heap::GCMode
 Heap::currentGC_ = Heap::GC_NONE;
@@ -33,16 +36,22 @@ Heap::elderToRegion_;
 Heap::HeapRegion
 Heap::copyToRegion_;
 
-VariableLengthArray Heap::assignments_;
+Heap::BlockPointerRefList Heap::assignments_;
+
+Heap::BlockPointerList Heap::reachableFinalizables_;
+
+Heap::BlockPointerList Heap::unreachableFinalizables_;
+
+Heap::FLOBInfoMap Heap::FLOBInfoMap_;
 
 #ifdef IML_ENABLE_HEAP_MONITORING
-VariableLengthArray Heap::monitors_;
+Heap::HeapMonitorList Heap::monitors_;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constructor
 
-Heap::Heap(int size, RootSet* rootset)
+Heap::Heap(int size, RootSet* rootset, FinalizerExecutor* finalizeExecutor)
 {
     initialize(size, rootset);
 }
@@ -53,22 +62,43 @@ Heap::~Heap()
 }
 
 void
-Heap::initialize(int size, RootSet* rootset)
+Heap::initialize(int size,
+                 RootSet* rootset,
+                 FinalizerExecutor* finalizeExecutor)
 {
     rootset_ = rootset;
+
+    finalizeExecutor_ = finalizeExecutor;
+
     currentGC_ = GC_NONE;
+
     heap_ =
     (UInt32Value*)
     (ALLOCATE_MEMORY(sizeof(UInt32Value) * (size * 3) + WORDS_OF_HEADER));
     if(NULL == heap_){throw OutOfMemoryException();}
+
     youngerRegion_ = HeapRegion(heap_, size);
     elderFromRegion_ = HeapRegion(heap_ + size, size);
     elderToRegion_ = HeapRegion(heap_ + size + size, size);
+
     BlockHeader* unitBlockHeader = (BlockHeader*)(heap_ + size + size + size);
     unitBlock_ = HEADER_TO_BLOCK(unitBlockHeader);
     setHeader(unitBlockHeader, 0, BLOCKTYPE_ATOM, false);
+
     copyToRegion_ = HeapRegion(0, 0);
+
     assignments_.clear();
+
+    reachableFinalizables_.clear();
+    unreachableFinalizables_.clear();
+
+    for(FLOBInfoMap::iterator i = FLOBInfoMap_.begin();
+        i != FLOBInfoMap_.end();
+        i++)
+    {
+        delete i->second;
+    }
+    FLOBInfoMap_.clear();
 }
 
 void
@@ -86,38 +116,34 @@ Heap::setRootSet(RootSet* rootset)
     rootset_ = rootset;
 }
 
-int
+void
+Heap::setFinalizerExecutor(FinalizerExecutor* finalizeExecutor)
+{
+    finalizeExecutor_ = finalizeExecutor;
+}
+
+void
 Heap::addMonitor(HeapMonitor* monitor)
 {
 #ifdef IML_ENABLE_HEAP_MONITORING
-    int index = monitors_.getCount();
-    monitors_.add(monitor); // ToDo : search empty slot and store in that slot.
-    return index;
-#else
-    return -1;
+    monitors_.push_front(monitor);
 #endif
 }
 
-HeapMonitor*
-Heap::removeMonitor(int index)
+void
+Heap::addFinalizable(Cell* block)
 {
-#ifdef IML_ENABLE_HEAP_MONITORING
-    if((index < 0) || (monitors_.getCount() <= index)){
-        throw IllegalArgumentException();
-    }
-    HeapMonitor* monitor =
-    (HeapMonitor*)
-    monitors_.getContents()[index];
-    monitors_.getContents()[index] = 0;
-    return monitor;
-#else
-    return 0;
-#endif
+    ASSERT(BLOCKTYPE_RECORD == getType(BLOCK_TO_HEADER(block)));
+    DBGWRAP(LOG.debug("add finalizable %x", block));
+    DBGWRAP(LOG.debug("reachables = %d, unreachables = %d",
+                   reachableFinalizables_.size(),
+                   unreachableFinalizables_.size()));
+    reachableFinalizables_.push_front(block);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BlockSize
+Heap::BlockSize
 Heap::getTotalWords(BlockHeader* header)
 {
     BlockSize payloadSize = getPayloadCells(header) * WORDS_OF_CELL;
@@ -133,7 +159,7 @@ Heap::getTotalWords(BlockHeader* header)
 }
 
 INLINE_FUN 
-BoolValue
+bool
 Heap::isForwarded(BlockHeader* header)
 {
     return (0 != (*header & FORWARDED_MASK));
@@ -141,12 +167,16 @@ Heap::isForwarded(BlockHeader* header)
 
 INLINE_FUN 
 void
-Heap::setForwarded(BlockHeader* header, BoolValue forwarded)
+Heap::setForwarded(BlockHeader* header, bool forwarded)
 {
     ASSERT(isValidHeaderPointer(header));
 
-    BlockHeader forwardedBit = forwarded ? 1 : 0;
-    *header |=  (forwardedBit << FORWARDED_SHIFT) & FORWARDED_MASK;
+    if(forwarded){
+        *header |= FORWARDED_MASK;
+    }
+    else{
+        *header &= ~FORWARDED_MASK;
+    }
 }
 
 Bitmap
@@ -168,20 +198,26 @@ Heap::setBitmapTag(BlockHeader* header, Bitmap bitmap)
     *((Bitmap*)(&block[getPayloadCells(header)])) = bitmap; // the last cell
 }
 
-BoolValue
+bool
 Heap::isValidBlockField(BlockHeader* header, int index)
 {
     return ((0 <= index) && (index < getPayloadCells(header)));
 }
 
-BoolValue
+bool
+Heap::isFLOB(Cell* block)
+{
+    return isFLOBPointer(BLOCK_TO_HEADER(block));
+}
+
+bool
 Heap::isPointerField(Cell* block, int index)
 {
     // delegate to the isPointerField(BlockHeader*, int)
     return (isPointerField(BLOCK_TO_HEADER(block), index));
 }
 
-BoolValue
+bool
 Heap::isPointerField(BlockHeader* header, int index)
 {
     BlockType type = getType(header);
@@ -209,10 +245,11 @@ Heap::isPointerField(BlockHeader* header, int index)
 }
 
 INLINE_FUN 
-BoolValue
+bool
 Heap::isValidHeaderPointer(BlockHeader* header)
 {
     if(BLOCK_TO_HEADER(unitBlock_) == header){ return true; }
+    if(isFLOBPointer(header)){ return true; }
 
     switch(currentGC_)
     {
@@ -236,7 +273,7 @@ Heap::isValidHeaderPointer(BlockHeader* header)
 }
 
 INLINE_FUN 
-BoolValue
+bool
 Heap::isValidBlockPointer(Cell* block)
 {
     if(NULL == block){
@@ -248,7 +285,7 @@ Heap::isValidBlockPointer(Cell* block)
 }
 
 void
-Heap::invokeMinorGC()
+Heap::invokeMinorGC(bool forceMajorGC)
 {
     INVOKE_ON_HEAP_MONITORS(beforeMinorGC());
 
@@ -262,28 +299,28 @@ Heap::invokeMinorGC()
     // live blocks in the younger region.
     BlockHeader* copiedBegin = (BlockHeader*)(copyToRegion_.free_);
 
+    bool minorGCSucceeded = false;
     try
     {
-        // scans assignments
-        Cell*** pblocks = (Cell***)(assignments_.getContents());
-        int size = assignments_.getCount();
-        for(int index = 0 ; index < size ; index += 1)
-        {
-            ASSERT(isValidBlockPointer(**pblocks));
-            **pblocks = update(**pblocks);
-            pblocks += 1;
-        }
+        // update internal rootset
+        updatePointerOfBlockPointerList(&assignments_);
+        updateFLOBs();
 
         // scans roots the client holds
         rootset_->trace(&tracer_);
 
         // scans copied blocks and copies reachable blocks recursively.
         scanToRegion(copiedBegin);
+
+        checkReachabilityOfFLOBs();
+        checkReachabilityOfFinalizables();
+        minorGCSucceeded = true;
     }
     catch(NoEnoughHeapException&)
     {
         invokeMajorGC();
     }
+    if(minorGCSucceeded && forceMajorGC){invokeMajorGC();}
 
 #ifdef IML_DEBUG    
     FILL_MEMORY(youngerRegion_.begin_,
@@ -314,12 +351,18 @@ Heap::invokeMajorGC()
 
     BlockHeader* copiedBegin = (BlockHeader*)(copyToRegion_.free_);
 
-    // scans roots
+    // trace internal roots
+    updateFLOBs();
+
+    // scans client roots
     rootset_->trace(&tracer_);
 
     scanToRegion(copiedBegin);
 
-#ifdef IML_DEBUG    
+    checkReachabilityOfFLOBs();
+    checkReachabilityOfFinalizables();
+
+#ifdef IML_DEBUG
     FILL_MEMORY(elderFromRegion_.begin_,
                 0xFF,
                 sizeof(*(elderFromRegion_.end_)) *
@@ -340,55 +383,306 @@ Heap::invokeMajorGC()
 }
 
 void
+Heap::updateFLOBs()
+{
+    switch(currentGC_)
+    {
+      case GC_MINOR:
+        /* trace all FLOBs, because at MinorGC we cannot determine whether
+         * a FLOB is reachable from user code.
+         * A FLOB may be reachable from some heap block in elder region.
+         */
+        for (FLOBInfoMap::iterator i = FLOBInfoMap_.begin();
+             i != FLOBInfoMap_.end();
+             i++)
+        {
+            DBGWRAP(LOG.debug("FLOB is updated: %x", i->first));
+            Cell* block = update(i->first);
+            ASSERT(i->first == block);
+        }
+        break;
+
+      case GC_MAJOR:
+        /* trace FLOBs which are not released yet only.
+         */
+        for (FLOBInfoMap::iterator i = FLOBInfoMap_.begin();
+             i != FLOBInfoMap_.end();
+             i++)
+        {
+            if(i->second->isReleased_){
+                DBGWRAP(LOG.debug("FLOB is skipped update: %x", i->first));
+            }
+            else{
+                DBGWRAP(LOG.debug("FLOB is updated: %x", i->first));
+                Cell* block = update(i->first);
+                ASSERT(i->first == block);
+            }
+        }
+        break;
+
+      default:
+        ASSERT(false);
+    }
+}
+
+void
+Heap::checkReachabilityOfFLOBs()
+{
+    switch(currentGC_)
+    {
+      case GC_MINOR:
+        /* Because we cannot determine reachablity of FLOBs from user code
+         * in MinorGC, all FLOBs are kept.
+         */
+        for (FLOBInfoMap::iterator i = FLOBInfoMap_.begin();
+             i != FLOBInfoMap_.end();
+             i++)
+        {
+            setForwarded(BLOCK_TO_HEADER(i->first), false);
+        }
+        break;
+
+      case GC_MAJOR:
+        for (FLOBInfoMap::iterator i = FLOBInfoMap_.begin();
+             i != FLOBInfoMap_.end();
+             i++)
+        {
+            if(i->second->isReleased_
+               && !isForwarded(BLOCK_TO_HEADER(i->first)))
+            {
+                DBGWRAP(LOG.debug("FLOB is freed: %x", i->first));
+
+                // this FLOB is in 'canfree' status.
+                RELEASE_MEMORY(i->second->memory_);
+                delete i->second;
+                FLOBInfoMap_.erase(i);
+            }
+            else{
+                DBGWRAP(LOG.debug("FLOB is not canfree: %x", i->first));
+                setForwarded(BLOCK_TO_HEADER(i->first), false);
+            }
+        }
+        break;
+
+      default:
+        ASSERT(false);
+    }
+}
+
+void
+Heap::checkReachabilityOfFinalizables()
+{
+    DBGWRAP(LOG.debug("checkReachabilityOfFinalizables:"));
+    DBGWRAP(LOG.debug("reachables = %d, unreachables = %d",
+                   reachableFinalizables_.size(),
+                   unreachableFinalizables_.size()));
+
+    BlockPointerList::iterator i;
+
+    /*
+     *  This function copies blocks into the new heap area, which may cause
+     * NoEnoughHeapException raised.
+     * In order to keep consistency of status even if aborted by an exception,
+     * the following conditions have be satisfied.
+     *  - No finalizable is contained in both reachables and unreachables at
+     *   the same time.
+     *  - Every finalizable is contained in either reachables or unreachables,
+     *   unless it is found to be in cyclic dependency.
+     */
+
+    /* 1st phase.
+     * copy all unreachables into the new heap area.
+     */
+    for(i = unreachableFinalizables_.begin();
+        i != unreachableFinalizables_.end();
+        i++)
+    {
+        DBGWRAP(LOG.debug("update unreachable %x", *i));
+        *i = update(*i);
+    }
+
+    /* 2nd phase.
+     *  - copy all blocks which are reachable from each finalizable to new
+     *   heap area.
+     *  - remove finalizables which is in cyclic dependency from reachables.
+     */
+    i = reachableFinalizables_.begin();
+    while(i != reachableFinalizables_.end())
+    {
+        DBGWRAP(LOG.debug("update contents of reachable of %x", *i));
+        *i = followForwardedPointer(*i);
+        Cell* finalizable = *i;
+        if(isVisited(BLOCK_TO_HEADER(finalizable)))
+        {
+            /* This finalizable block is reachable from other block.
+             * And its contens has been already updated.
+             */
+            i++;
+        }
+        else{
+            /* This finalizable block MAYBE unreachable.
+             * Its contents is not updated yet.
+             */
+
+            UInt32Value* copiedStart = copyToRegion_.free_;
+
+            // update contents only. The finalizable itself is not updated.
+            updateBlockContents(finalizable);
+
+            /* Now, direct children of the finalizable have just been copied
+             * into the new heap area.
+             * Then, scan those blocks to copy their descendents into new heap
+             * area.
+             */
+            scanToRegion(copiedStart);
+
+            /*
+             * If the finalizable has been moved to new area by the last
+             * scanToRegion, it means that it is in cyclic dependency.
+             * Then, remove it from reachables.
+             */
+            if(isVisited(BLOCK_TO_HEADER(followForwardedPointer(finalizable))))
+            {
+                DBGWRAP(LOG.debug("cycle of finalizable is found for %x",
+                                  finalizable));
+                i = reachableFinalizables_.erase(i);
+            }
+            else{
+                i++;
+            }
+        }
+    }
+
+    /*
+     *  Now, every blocks reachable from the contents of finalizables in
+     * reachableFinalizables_ are in new area.
+     *
+     * 3rd phase.
+     *  Check whether each finalizable in reachables is in new area.
+     * If it is in new area, this means that it is reachable from other block.
+     * So, keep it in reachables.
+     * Otherwise, remove it from reachables, and add to unreachables.
+     */
+    i = reachableFinalizables_.begin();
+    while(i != reachableFinalizables_.end())
+    {
+        DBGWRAP(LOG.debug("check reachability of reachable finalizables"));
+        Cell* finalizable = followForwardedPointer(*i);
+        if(isVisited(BLOCK_TO_HEADER(finalizable)))
+        {
+            // keep it in reachables.
+            *i = finalizable;
+            i++;
+        }
+        else{
+            /* This finalizable is not reachable from any other.
+             */
+            i = reachableFinalizables_.erase(i);
+            unreachableFinalizables_.push_front(update(finalizable));
+        }
+    }
+}
+
+bool
+Heap::runFinalizer()
+{
+    static bool inFinalizer = false;
+
+    DBGWRAP(LOG.debug("Heap::runFinalizer: reachables = %d, unreachables = %d",
+                   reachableFinalizables_.size(),
+                   unreachableFinalizables_.size()));
+    DBGWRAP(fflush(stdout));
+
+    /*
+     * An execution of a finalizer may cause GC, which calls this runFinalizer.
+     * In such case, nested invocation of funFinalizer does nothing.
+     */
+    if(inFinalizer){return false;}
+
+    inFinalizer = true;
+    bool anyFinalized = false;
+    try{
+        BlockPointerList::iterator i = unreachableFinalizables_.begin();
+        while(i != unreachableFinalizables_.end())
+        {
+            try{
+                finalizeExecutor_->executeFinalizer(*i);
+            }
+            catch(...){
+                i = unreachableFinalizables_.erase(i);
+                throw;
+            }
+            i = unreachableFinalizables_.erase(i);
+            anyFinalized = true;
+        }
+        inFinalizer = false;
+        return anyFinalized;
+    }
+    catch(...){
+        inFinalizer = false;
+        throw;
+    }
+}
+
+void
+Heap::updateBlockContents(Cell* block)
+{
+    BlockHeader* header = BLOCK_TO_HEADER(block);
+
+    BlockType type = getType(header);
+    switch(type)
+    {
+      case BLOCKTYPE_POINTER:
+      case BLOCKTYPE_POINTER_ARRAY:
+        {
+            int fields = getPayloadCells(header);
+            for(int index = 0; index < fields; index += 1)
+            {
+                Cell updated;
+                Cell* childBlock = block[index].blockRef;
+                updated.blockRef = update(childBlock);
+                initializeField(block, index, updated);
+            }
+        }
+        break;
+
+      case BLOCKTYPE_RECORD:
+        {
+            int fields = getPayloadCells(header);
+            Bitmap bitmap = getBitmapTag(header);
+            for(int index = 0; index < fields; index += 1)
+            {
+                if(0 != (bitmap & 0x01)){
+                    Cell updated;
+                    Cell* childBlock = block[index].blockRef;
+                    updated.blockRef = update(childBlock);
+                    initializeField(block, index, updated);
+                }
+                bitmap >>= 1;
+            }
+        }
+        break;
+
+      case BLOCKTYPE_ATOM:
+      case BLOCKTYPE_SINGLE_ATOM_ARRAY:
+      case BLOCKTYPE_DOUBLE_ATOM_ARRAY:
+        break;
+
+      default:
+        DBGWRAP(LOG.error("updateBlockContents::IllegalStateException"));
+        throw IllegalStateException();
+    }
+}
+
+void
 Heap::scanToRegion(BlockHeader* copiedBegin)
 {
     // 'scan' points to the first cell of the payload, not to the header.
     BlockHeader* scanHeader = alignHeaderAddress(copiedBegin);
     while(((UInt32Value*)scanHeader) < copyToRegion_.free_)
     {
-        Cell* scan = HEADER_TO_BLOCK(scanHeader);
+        updateBlockContents(HEADER_TO_BLOCK(scanHeader));
 
-        BlockType type = getType(scanHeader);
-        switch(type)
-        {
-          case BLOCKTYPE_POINTER:
-          case BLOCKTYPE_POINTER_ARRAY:
-            {
-                int fields = getPayloadCells(scanHeader);
-                for(int index = 0; index < fields; index += 1)
-                {
-                    Cell updated;
-                    updated.blockRef = update(scan[index].blockRef);
-                    initializeField(scan, index, updated);
-                }
-            }
-            break;
-
-          case BLOCKTYPE_RECORD:
-            {
-                int fields = getPayloadCells(scanHeader);
-                Bitmap bitmap = getBitmapTag(scanHeader);
-                for(int index = 0; index < fields; index += 1)
-                {
-                    if(0 != (bitmap & 0x01)){
-                        Cell updated;
-                        updated.blockRef = update(scan[index].blockRef);
-                        initializeField(scan, index, updated);
-                    }
-                    bitmap >>= 1;
-                }
-            }
-            break;
-
-          case BLOCKTYPE_ATOM:
-          case BLOCKTYPE_SINGLE_ATOM_ARRAY:
-          case BLOCKTYPE_DOUBLE_ATOM_ARRAY:
-            break;
-
-          default:
-            DBGWRAP(LOG.error("scanToRegion::IllegalStateException"));
-            throw IllegalStateException();
-        }
         scanHeader = NEXT_HEADER(scanHeader);
     }
 }
@@ -417,30 +711,18 @@ Heap::copyToToRegion(Cell* block)
 
     // embeds forward pointer
     block[0].blockRef = copied;
-    setForwarded(header, BOOLVALUE_TRUE);
+    setForwarded(header, true);
 
     return copied;
 };
 
-INLINE_FUN 
-Cell*
-Heap::update(Cell* block)
+Cell* 
+Heap::followForwardedPointer(Cell* block)
 {
-    if(NULL == block){// block pointer may be null.
-        return block;
-    }
-    if(unitBlock_ == block){// unit block
-        return block;
-    }
     BlockHeader* header = BLOCK_TO_HEADER(block);
 
-    if(isInToRegion(header))
+    if(isInFromRegion(header))
     {
-        return block;
-    }
-    else
-    {
-        ASSERT(isInFromRegion(header));
         if(isForwarded(header))
         {
             Cell* forwardPointer = block[0].blockRef;
@@ -465,14 +747,83 @@ Heap::update(Cell* block)
                 }
                 else
                 {
-                    return copyToToRegion(forwardPointer);
+                    return forwardPointer;
                 }
             }
         }
         else // not forwarded
         {
-            return copyToToRegion(block);
+            return block;
         }
+    }
+    else
+    {
+        ASSERT(isInToRegion(header) || isFLOBPointer(header));
+        return block;
+    }
+}
+
+INLINE_FUN 
+Cell*
+Heap::update(Cell* block)
+{
+    if(NULL == block){// block pointer may be null.
+        return block;
+    }
+    if(unitBlock_ == block){// unit block
+        return block;
+    }
+    Cell* currentBlock = followForwardedPointer(block);
+    BlockHeader* currentHeader = BLOCK_TO_HEADER(currentBlock);
+    if(isVisited(currentHeader))
+    {
+        return currentBlock;
+    }
+    else if(isFLOBPointer(currentHeader))
+    {
+        ASSERT(!isForwarded(currentHeader));
+        // set forwarded bit to avoid cyclic recursive trace.
+        setForwarded(currentHeader, true);
+        try{
+            DBGWRAP(LOG.debug("scanning FLOB: %x", currentBlock));
+            // trace recursively from this FLOB.
+            updateBlockContents(currentBlock);
+        }
+        catch(NoEnoughHeapException&){
+            // reset forwarded bit if minor GC aborts.
+            setForwarded(currentHeader, false); throw;
+        }
+        return currentBlock;
+    }
+    else
+    {
+        return copyToToRegion(currentBlock);
+    }
+}
+
+void
+Heap::updatePointerOfBlockPointerList(BlockPointerRefList* ppblocks)
+{
+    // scans list of bointer to pointer to block
+    for(BlockPointerRefList::iterator i = ppblocks->begin() ;
+        i != ppblocks->end() ;
+        i++)
+    {
+        ASSERT(isValidBlockPointer(**i));
+        **i = update(**i);
+    }
+}
+
+void
+Heap::updateBlockPointerList(BlockPointerList* pblocks)
+{
+    // scans list of bointer to block
+    for(BlockPointerList::iterator i = pblocks->begin() ;
+        i != pblocks->end() ;
+        i++)
+    {
+        ASSERT(isValidBlockPointer(*i));
+        *i = update(*i);
     }
 }
 
@@ -526,10 +877,22 @@ Heap::isSimilarBlockGraph(Cell* block1, Cell* block2)
 }
 
 void
-Heap::forceGC()
+Heap::invokeGC(GCMode mode)
     throw(IMLRuntimeException)
 {
-    invokeMinorGC();
+    switch(mode){
+      case GC_MINOR:
+        invokeMinorGC(false);
+        break;
+      case GC_MAJOR:
+        invokeMinorGC(true);
+        break;
+      default:
+        ASSERT(false);
+    }
+    if(runFinalizer()){
+        // ToDo : 
+    }
 }
 
 
@@ -540,10 +903,24 @@ Heap::clear()
     throw(IMLRuntimeException)
 {
     currentGC_ = GC_NONE;
+
     youngerRegion_.free_ = youngerRegion_.begin_;
     elderFromRegion_.free_ = elderFromRegion_.begin_;
     elderToRegion_.free_ = elderToRegion_.begin_;
+
     assignments_.clear();
+
+    reachableFinalizables_.clear();
+    unreachableFinalizables_.clear();
+
+    for(FLOBInfoMap::iterator i = FLOBInfoMap_.begin();
+        i != FLOBInfoMap_.end();
+        i++)
+    {
+        delete i->second;
+    }
+    FLOBInfoMap_.clear();
+
 #ifdef IML_ENABLE_HEAP_MONITORING
     monitors_.clear();
 #endif
@@ -573,6 +950,13 @@ Heap::Tracer::trace(Cell** roots, int count)
         *blockPointers = update(*blockPointers);
         blockPointers += 1;
     }
+}
+
+Cell*
+Heap::Tracer::trace(Cell* root)
+    throw(IMLRuntimeException)
+{
+    return update(root);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

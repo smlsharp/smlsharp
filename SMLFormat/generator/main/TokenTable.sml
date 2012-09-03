@@ -2,7 +2,7 @@
  * hash table for token recognition
  * @author COPYRIGHT (c) 1996 Bell Laboratories.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TokenTable.sml,v 1.3 2005/12/06 06:55:30 kiyoshiy Exp $
+ * @version $Id: TokenTable.sml,v 1.4 2006/12/31 07:44:27 kiyoshiy Exp $
  *)
 functor TokenTable (Tokens:ML_TOKENS) : sig
 
@@ -71,8 +71,7 @@ functor TokenTable (Tokens:ML_TOKENS) : sig
 	  ("with"	, fn yypos => Tokens.WITH(yypos,yypos+4)),
 	  ("withtype"	, fn yypos => Tokens.WITHTYPE(yypos,yypos+8)),
 	  ("orelse"	, fn yypos => Tokens.ORELSE(yypos,yypos+6)),
-	  ("andalso"	, fn yypos => Tokens.ANDALSO(yypos,yypos+7)),
-          ("_external"  , fn yypos => Tokens.EXTERNAL (yypos,yypos+9))
+	  ("andalso"	, fn yypos => Tokens.ANDALSO(yypos,yypos+7))
         ]
 
   (* look-up an identifier.  If the symbol is found, the corresponding token is

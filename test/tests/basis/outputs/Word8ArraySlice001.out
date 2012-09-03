@@ -2,8 +2,8 @@ structure AS : MONO_ARRAY_SLICE
 structure A : MONO_ARRAY
 structure VS : MONO_VECTOR_SLICE
 structure V : MONO_VECTOR
-val Words2AS = fn : byte List.list -> AS.slice
-val Words2VS = fn : byte List.list -> VS.slice
+val Words2AS = fn : byte list -> AS.slice
+val Words2VS = fn : byte list -> VS.slice
 val AS2L = fn : AS.slice -> byte list
 val VS2L = fn : VS.slice -> byte list
 val V2L = fn : A.array -> byte list

@@ -1,0 +1,25 @@
+Rolling Cube
+
+To run this demo, you need to configure and compile SML# with
+specifying --with-ffi-max-args more than 9.
+
+Then, set some environment variables along with your platfrom,
+and then run cube.sml.
+
+Example:
+
+General Unix:
+env CPPFLAGS=-I/usr/X11R6/include LDFLAGS=-L/usr/X11R6/lib smlsharp cube.sml
+
+Mac OS X:
+env LDD='otool -L' smlsharp cube.sml
+
+Cygwin:
+env CPPFLAGS=-I/usr/X11R6/include LDFLAGS=-L/usr/X11R6/lib LIBNAME_SUFFIX=.dll LDD=cygcheck ARCSEP='\' smlsharp cube.sml
+
+
+Enjoy!
+
+
+--
+UENO, Katsuhiro

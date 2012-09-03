@@ -1,3 +1,4 @@
+structure Main = struct
 fun main () =
     (
       PrimitiveTable.generateFiles
@@ -16,3 +17,8 @@ fun main () =
 	    "../../runtime/main/Constants.hh"
           ]
     )
+    handle PrimitiveTable.ParseError line =>
+           raise Fail ("error in primitives.csv at " ^ Int.toString line)
+         | ConstantTable.ParseError line =>
+           raise Fail ("error in constants.csv at " ^ Int.toString line)
+end

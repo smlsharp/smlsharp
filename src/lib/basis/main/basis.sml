@@ -1,7 +1,7 @@
 (*
  * loads modules of Basis library.
  * @author YAMATODANI Kiyoshi
- * @version $Id: basis.sml,v 1.69 2006/03/03 14:18:40 kiyoshiy Exp $
+ * @version $Id: basis.sml,v 1.78 2007/03/17 11:39:26 kiyoshiy Exp $
  *)
 
 (* NOTE : Prefix "../main/" is specified in order to enable SML/NJ to load
@@ -50,11 +50,11 @@ fun foldr f initial list =
         | accum (hd :: tl) result = f (hd, accum tl result)
     in accum list initial end;
 
-val sub = String_sub
+val sub = String_sub;
 
-val size = String_size
+val size = String_size;
 
-val op ^ = String_concat2
+val op ^ = String_concat2;
 
 fun explode string =
     let
@@ -76,13 +76,16 @@ exception Unimplemented of string;
 
 (* for FFI *)
 
-type void = int;
+type void = unit;
+val NULL = '_NULL';
 
 (*****************************************************************************)
 
 use "./GENERAL.sig";
 use "./General.sml";
+(*
 type unit = General.unit;
+*)
 datatype order = datatype General.order;
 (*
 type exn = General.exn;
@@ -109,15 +112,22 @@ use "./OPTION.sig";
 use "./Option.sml";
 datatype option = datatype Option.option;
 exception Option = Option.Option
+local
+  open Option
+in
+val getOpt = getOpt
+val isSome = isSome
+val valOf = valOf
+end;
+(*
 val getOpt = Option.getOpt;
 val isSome = Option.isSome;
 val valOf = Option.valOf;
-
+*)
 use "./LIST.sig";
 use "./List.sml";
 (*
 structure List = List : LIST;
-*)
 exception Empty = List.Empty;
 datatype list = datatype List.list;
 val op @ = List.@;
@@ -130,11 +140,27 @@ val map = List.map;
 val null = List.null;
 val rev = List.rev;
 val tl = List.tl;
+*)
+local
+  open List
+in
+  val op @ = op @;
+  val app = app;
+  val foldl = foldl;
+  val foldr = foldr;
+  val hd = hd;
+  val length = length;
+  val map = map;
+  val null = null;
+  val rev = rev;
+  val tl = tl;
+end;
 
 use "./LIST_PAIR.sig";
 use "./ListPair.sml";
 structure ListPair = ListPair : LIST_PAIR;
 
+use "./SubstringBase.sml";
 use "./SUBSTRING.sig";
 use "./Substring.sml";
 
@@ -177,6 +203,7 @@ structure String =
               where type string = CharVector.vector
 *)
               where type char = Char.char;
+(*
 val op ^ = String.^;
 val concat = String.concat;
 val explode = String.explode;
@@ -184,6 +211,18 @@ val implode = String.implode;
 val size = String.size;
 val str = String.str;
 val substring = String.substring;
+*)
+local
+  open String
+in
+  val op ^ = op ^;
+  val concat = concat;
+  val explode = explode;
+  val implode = implode;
+  val size = size;
+  val str = str;
+  val substring = substring;
+end;
 
 structure Substring =
           Substring :> SUBSTRING
@@ -271,6 +310,12 @@ val floor = Real.floor;
 val real = Real.fromInt;
 val round = Real.round;
 val trunc = Real.trunc;
+fun '_format_real' arg =
+    let val string = Real.toString arg in Term(size string, string) end;
+fun '_format_float' arg =
+    let val string = Real.toString (Real_fromFloat arg)
+    in Term(size string, string) end;
+use "./Real64.sml";
 
 structure Math = Math :> MATH where type real = Real.real;
 
@@ -293,24 +338,25 @@ use "./CharVector.sml";
 use "./CharArray.sml";
 use "./CharVectorSlice.sml";
 use "./CharArraySlice.sml";
+signature CHAR_VECTOR_ARRAY =
+sig
+  structure V : MONO_VECTOR
+                    where type vector = String.string
+                    where type elem = char
+  structure A : MONO_ARRAY
+                    where type vector = String.string
+                    where type elem = char
+  structure VS : MONO_VECTOR_SLICE
+                    where type vector = String.string
+                    where type elem = char
+  structure AS : MONO_ARRAY_SLICE
+                    where type vector = String.string
+                    where type elem = char
+  sharing type AS.array = A.array
+  sharing type AS.vector_slice = VS.slice
+end;
 local
-  structure S :>
-  sig
-    structure V : MONO_VECTOR
-                      where type vector = String.string
-                      where type elem = char
-    structure A : MONO_ARRAY
-                      where type vector = String.string
-                      where type elem = char
-    structure VS : MONO_VECTOR_SLICE
-                      where type vector = String.string
-                      where type elem = char
-    structure AS : MONO_ARRAY_SLICE
-                      where type vector = String.string
-                      where type elem = char
-    sharing type AS.array = A.array
-    sharing type AS.vector_slice = VS.slice
-  end =
+  structure S :> CHAR_VECTOR_ARRAY =
   struct
     structure V = CharVector
     structure A = CharArray
@@ -330,19 +376,20 @@ use "./IntVector.sml";
 use "./IntArray.sml";
 use "./IntVectorSlice.sml";
 use "./IntArraySlice.sml";
+signature INT_VECTOR_ARRAY = 
+sig
+  structure V : MONO_VECTOR where type elem = int
+  structure A : MONO_ARRAY where type elem = int
+  structure VS : MONO_VECTOR_SLICE where type elem = int
+  structure AS : MONO_ARRAY_SLICE where type elem = int
+  sharing type V.vector = A.vector;
+  sharing type V.vector = VS.vector;
+  sharing type AS.vector = V.vector;
+  sharing type AS.array = A.array;
+  sharing type AS.vector_slice = VS.slice
+end;
 local
-  structure S :>
-  sig
-    structure V : MONO_VECTOR where type elem = int
-    structure A : MONO_ARRAY where type elem = int
-    structure VS : MONO_VECTOR_SLICE where type elem = int
-    structure AS : MONO_ARRAY_SLICE where type elem = int
-    sharing type V.vector = A.vector;
-    sharing type V.vector = VS.vector;
-    sharing type AS.vector = V.vector;
-    sharing type AS.array = A.array;
-    sharing type AS.vector_slice = VS.slice
-  end =
+  structure S :> INT_VECTOR_ARRAY =
   struct
     structure V = IntVector
     structure A = IntArray
@@ -362,19 +409,20 @@ use "./Word8Vector.sml";
 use "./Word8Array.sml";
 use "./Word8VectorSlice.sml";
 use "./Word8ArraySlice.sml";
+signature WORD8_VECTOR_ARRAY =
+sig
+  structure V : MONO_VECTOR where type elem = Word8.word
+  structure A : MONO_ARRAY where type elem = Word8.word
+  structure VS : MONO_VECTOR_SLICE where type elem = Word8.word
+  structure AS : MONO_ARRAY_SLICE where type elem = Word8.word
+  sharing type V.vector = A.vector
+  sharing type VS.vector = V.vector
+  sharing type AS.vector = V.vector
+  sharing type AS.array = A.array
+  sharing type AS.vector_slice = VS.slice
+end;
 local
-  structure S :>
-  sig
-    structure V : MONO_VECTOR where type elem = Word8.word
-    structure A : MONO_ARRAY where type elem = Word8.word
-    structure VS : MONO_VECTOR_SLICE where type elem = Word8.word
-    structure AS : MONO_ARRAY_SLICE where type elem = Word8.word
-    sharing type V.vector = A.vector
-    sharing type VS.vector = V.vector
-    sharing type AS.vector = V.vector
-    sharing type AS.array = A.array
-    sharing type AS.vector_slice = VS.slice
-  end =
+  structure S :> WORD8_VECTOR_ARRAY =
   struct
     structure V = Word8Vector
     structure A = Word8Array
@@ -394,19 +442,20 @@ use "./RealVector.sml";
 use "./RealArray.sml";
 use "./RealVectorSlice.sml";
 use "./RealArraySlice.sml";
+signature REAL_VECTOR_ARRAY =
+sig
+  structure V : MONO_VECTOR where type elem = real
+  structure A : MONO_ARRAY where type elem = real
+  structure VS : MONO_VECTOR_SLICE where type elem = real
+  structure AS : MONO_ARRAY_SLICE where type elem = real
+  sharing type V.vector = A.vector;
+  sharing type V.vector = VS.vector;
+  sharing type AS.vector = V.vector;
+  sharing type AS.array = A.array;
+  sharing type AS.vector_slice = VS.slice
+end;
 local
-  structure S :>
-  sig
-    structure V : MONO_VECTOR where type elem = real
-    structure A : MONO_ARRAY where type elem = real
-    structure VS : MONO_VECTOR_SLICE where type elem = real
-    structure AS : MONO_ARRAY_SLICE where type elem = real
-    sharing type V.vector = A.vector;
-    sharing type V.vector = VS.vector;
-    sharing type AS.vector = V.vector;
-    sharing type AS.array = A.array;
-    sharing type AS.vector_slice = VS.slice
-  end =
+  structure S :> REAL_VECTOR_ARRAY =
   struct
     structure V = RealVector
     structure A = RealArray
@@ -432,9 +481,20 @@ use "./Byte.sml";
 use "./ARRAY2.sig";
 use "./MONO_ARRAY2.sig";
 use "./MULTIBYTE.sig";
-use "./PACK_REAL.sig";
-use "./PACK_WORD.sig";
 *)
+use "./PACK_WORD.sig";
+use "./PackWord32Base.sml";
+use "./PackWord32Big.sml";
+use "./PackWord32Little.sml";
+use "./PackWordBig.sml";
+use "./PackWordLittle.sml";
+
+use "./PACK_REAL.sig";
+use "./PackReal64Base.sml";
+use "./PackReal64Big.sml";
+use "./PackReal64Little.sml";
+use "./PackRealBig.sml";
+use "./PackRealLittle.sml";
 
 use "./TIME.sig";
 use "./Time.sml";

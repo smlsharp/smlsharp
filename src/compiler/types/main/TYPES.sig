@@ -7,30 +7,51 @@
  *)
 signature TYPES  = 
   sig
+
+    type lambdaDepth
+    val infiniteDepth : lambdaDepth
+    val toplevelDepth : lambdaDepth
+    val youngerDepth : {contextDepth:lambdaDepth, tyvarDepth:lambdaDepth} -> bool
+    val strictlyYoungerDepth : lambdaDepth * lambdaDepth -> bool
+
     datatype eqKind = EQ | NONEQ
 
     datatype caseKind = BIND | MATCH | HANDLE
 
-    datatype constant
-      = CHAR of char
-      | INT of Int32.int
-      | REAL of string
-      | STRING of string
-      | WORD of Word32.word
     datatype path = datatype Path.path
+
+    type varIdInfo
     type id = ID.id
+
     datatype sizeTagExp =
              ST_CONST of int
            | ST_VAR of id
            | ST_BDVAR of int
            | ST_APP of {stfun: sizeTagExp, args: sizeTagExp list}
            | ST_FUN of {args : int list, body : sizeTagExp}
+
     eqtype tid
     val initialTid : tid
     val tidToString : tid -> string
     val tidToInt : tid -> int
     val intToTid : int -> tid
     val tidCompare : tid * tid -> order
+
+    type tvKind
+    type btvKind
+    type varEnv
+    type tyConEnv
+    type tyFun
+    type tyCon
+    type tySpec
+    type conPathInfo
+    type conPathInfoNameType
+    type varPathInfo
+    type primInfo
+    type oprimInfo
+    type tyConIdSet
+    type exnTagSet
+
     datatype recKind = OVERLOADED of ty list | REC of ty SEnv.map | UNIV
     and tvState = SUBSTITUTED of ty | TVAR of tvKind
     and ty =
@@ -44,6 +65,7 @@ signature TYPES  =
       | POLYty of {boundtvars : btvKind IEnv.map, body : ty}
       | BOXEDty (* generic boxed type *)
       | ATOMty (* generic unboxed type *)
+      | GENERICty (* generic type *)
       | INDEXty of ty * string
       | BMABSty of ty list * ty
       | BITMAPty of ty list 
@@ -65,68 +87,22 @@ signature TYPES  =
       = CONID of conPathInfo
       | OPRIM of oprimInfo
       | PRIM of primInfo
-      | FFID of foreignFunPathInfo
       | VARID of varPathInfo
       | RECFUNID of varPathInfo * int
     and tyBindInfo
       = TYCON of tyCon
       | TYFUN of tyFun
       | TYSPEC of {impl:tyBindInfo option, spec:tySpec}
-    and strSizeTagBindInfo = STRSIZETAG of strPathSizeTagInfo
-    withtype tvKind = {id : tid, recKind : recKind, eqKind : eqKind, tyvarName : string option}
-    and varIdInfo = {id : id, displayName : string, ty : ty}
-    and btvKind = {index : int, recKind : recKind, eqKind : eqKind}
-    and varEnv = idState SEnv.map
-    and tyConEnv = tyBindInfo SEnv.map
-    and tyConSizeTagEnv =
-        {tyBindInfo : tyBindInfo, sizeInfo : sizeTagExp, tagInfo : sizeTagExp} SEnv.map
-    and strSizeTagEnv = strSizeTagBindInfo SEnv.map
-    and SizeTagEnv = tyConSizeTagEnv * varEnv * strSizeTagEnv
-    and strPathSizeTagInfo =
-        {id : id, name : string, strpath : path, env : SizeTagEnv}
-    and tyFun = {name : string, tyargs : btvKind IEnv.map, body : ty}
-    and tyCon = {
-                 name : string,
-                 strpath : path,
-                 tyvars : bool list,
-                 id : id,
-                 abstract : bool,
-                 eqKind : eqKind ref,
-                 boxedKind : (ty option) ref,
-                 datacon : varEnv ref
-                 }
-    and tySpec = {name : string, id : ID.id, strpath : path, eqKind : eqKind, 
-                  tyvars : bool list, boxedKind : ty option}
-    and conPathInfo = {name : string, strpath : path, funtyCon : bool, ty : ty, tag: int, tyCon : tyCon}
-    and conPathInfoNameType = 
-      {
-        name : string,
-        strpath : path,
-        funtyCon : bool,
-        ty : ty,
-        tag: int,
-        tyCon : tyCon
-      }
-    and varPathInfo = {name :string, strpath : path, ty : ty}
-    and primInfo =  {name : string, ty : ty}
-    and oprimInfo = {name : string, ty : ty, instances : primInfo SEnv.map}
-    and foreignFunPathInfo =
-        {name : string, strpath : path, ty : ty, argTys : ty list}
 
-    datatype strBindInfo = STRUCTURE of strPathInfo
-    withtype strPathInfo 
-      = {id : id, name : string, strpath : path, env : tyConEnv * varEnv * strBindInfo SEnv.map}
-
-    type tyConIdSet = ID.Set.set
-    type exnTagSet = ISet.set
-
-    type strEnv = strBindInfo SEnv.map
+    type Env
+    type strPathInfo 
+    datatype strEnv = 
+      STRUCTURE of {id : id, name : string, strpath : path, env : Env} SEnv.map
     datatype sigBindInfo = SIGNATURE of tyConIdSet * strPathInfo
 
     type utvEnv = (tvState ref) SEnv.map
     type conInfo =  {displayName : string, funtyCon : bool, ty : ty, tag: int, tyCon : tyCon}
     type subst = ty IEnv.map
-    type Env = tyConEnv * varEnv * strEnv
     type funBindInfo = {func : {name:string, id : id},
                         argument : {name:string,id :id},
                         functorSig: {
@@ -209,7 +185,6 @@ signature TYPES  =
                                          tag:'c, ty:ty, tyCon:'d}
                                         -> SMLFormat.FormatExpression.expression 
                                              list
-    val format_constant : constant -> SMLFormat.FormatExpression.expression list
     val format_dummyTyId : int -> SMLFormat.FormatExpression.expression list
     val format_eqKind : eqKind -> SMLFormat.FormatExpression.expression list
     val format_caseKind : caseKind -> SMLFormat.FormatExpression.expression list
@@ -249,20 +224,10 @@ signature TYPES  =
                              IEnv.map) list
                         -> sigBindInfo SEnv.map
                            -> SMLFormat.FormatExpression.expression list
-    val format_strBindInfo : (int
-                              * {eqKind:eqKind, index:int, recKind:recKind} 
-                                  IEnv.map) list
-                             -> strBindInfo
-                                -> SMLFormat.FormatExpression.expression list
     val format_strEnv : (int
                          * {eqKind:eqKind, index:int, recKind:recKind} 
                              IEnv.map) list
-                        -> strBindInfo SEnv.map
-                           -> SMLFormat.FormatExpression.expression list
-    val format_strSizeTagEnv : (int
-                         * {eqKind:eqKind, index:int, recKind:recKind} 
-                             IEnv.map) list
-                        -> strSizeTagEnv
+                        -> strEnv
                            -> SMLFormat.FormatExpression.expression list
     val format_strInfo : 'a
                          -> {env:'b, id:'c, name:string}
@@ -271,11 +236,6 @@ signature TYPES  =
                               * {eqKind:eqKind, index:int, recKind:recKind} 
                                   IEnv.map) list
                              -> strPathInfo
-                                -> SMLFormat.FormatExpression.expression list
-    val format_foreignFunPathInfo : (int
-                              * {eqKind:eqKind, index:int, recKind:recKind} 
-                                  IEnv.map) list
-                             -> foreignFunPathInfo
                                 -> SMLFormat.FormatExpression.expression list
    val format_tvKind : (int
                          * {eqKind:eqKind, index:int, recKind:recKind} 
@@ -305,11 +265,6 @@ signature TYPES  =
                                IEnv.map) list
                           -> tyConEnv
                              -> SMLFormat.FormatExpression.expression list
-    val format_tyConSizeTagEnv : (int
-                                  * {eqKind:eqKind, index:int, recKind:recKind} 
-                                        IEnv.map) list
-                                 -> tyConSizeTagEnv
-                                 -> SMLFormat.FormatExpression.expression list
     val format_tyFun : (int
                         * {eqKind:eqKind, index:int, recKind:recKind} IEnv.map)
                          list
@@ -348,12 +303,37 @@ signature TYPES  =
                              -> varPathInfo
                                 -> SMLFormat.FormatExpression.expression list
     val format_tyConIdSet : tyConIdSet -> SMLFormat.FormatExpression.expression list
+    val format_exnTagSet : exnTagSet -> SMLFormat.FormatExpression.expression list
+    val emptyVarEnv : varEnv
+    val emptyTyfield : ty SEnv.map
+    val emptyTyConEnv : tyConEnv 
+    val emptyStrEnv : strEnv
+    val emptySigEnv :sigEnv
+    val emptyFunEnv :funEnv
+    val emptyE : Env
+    val emptySubst : subst
+
+    val emptyExnTagSet : exnTagSet
     val freeTyIdName : int -> string
     val freeTyIdToDoc : {eqKind:eqKind, id:int, recKind:'a} -> string
     val init : unit -> unit
+    val newVarId : unit -> id
+    val nextVarId : unit -> id
+    val newTyConId : unit -> id
+    val nextTyConId : unit -> id
+    val newExnTag : unit -> int
+    val nextExnTag : unit -> int
+    val maxSystemExnTag : int
+    val exnConIdSequenceRef : SequentialNumber.sequence ref
+    val dummyStructureId : id
+    val newStructureId : unit -> id
+    val eqTyCon : tyCon * tyCon -> bool
+    val conPathInfoToConInfo : conPathInfo -> conInfo
     val kindedTyvarList : tvState ref list ref
-    val newUtvar : eqKind * string -> tvState ref
+    val newUtvar : lambdaDepth * eqKind * string -> tvState ref
     val newty : {eqKind:eqKind, recKind:recKind, tyvarName:string option} -> ty
+    val newtyWithLambdaDepth : lambdaDepth * {eqKind:eqKind, recKind:recKind, tyvarName:string option} -> ty
+    val newtyRaw : {lambdaDepth:lambdaDepth, eqKind:eqKind, recKind:recKind, tyvarName:string option} -> ty
     val nextBTid : unit -> int
     val peekBTid : unit -> int
     val advanceBTid : int -> unit

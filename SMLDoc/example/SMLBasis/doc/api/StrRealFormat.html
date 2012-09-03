@@ -1,0 +1,324 @@
+<HTML>
+<HEAD>
+<TITLE>RealFormat</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>RealFormat</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrRealFormat.html">RealFormat</A>&nbsp;:&nbsp;sig&nbsp;val&nbsp;<A HREF="#ValfmtReal">fmtReal</A>&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typerealfmt">StringCvt.realfmt</A>&nbsp;->&nbsp;<A HREF=".//StrReal.html#Typereal">real</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;end&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrRealFormat-StrString.html">String</A>&nbsp;=&nbsp;<A HREF="StrStringImp.html">StringImp</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrRealFormat-StrI.html">I</A>&nbsp;=&nbsp;InlineT.DfltInt<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val+">+</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val-">-</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val*">*</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val/">/</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val~">~</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val<"><</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val>">></A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val>=">>=</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val==">==</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valfloor">floor</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valreal">real</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Val^">^</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valimplode">implode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valconcat">concat</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valsize">size</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valinc">inc</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valdec">dec</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valmin">min</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valmax">max</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valatoi">atoi</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValzeroLPad">zeroLPad</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValzeroRPad">zeroRPad</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValmkDigit">mkDigit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValmaxPrec">maxPrec</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valdecompose">decompose</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValrealFFormat">realFFormat</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValrealEFormat">realEFormat</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValrealGFormat">realGFormat</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#Valinfinity">infinity</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValfmtInfNan">fmtInfNan</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValrealToSciStr">realToSciStr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValrealToFixStr">realToFixStr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValrealToGenStr">realToGenStr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrRealFormat.html#ValfmtReal">fmtReal</A>&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typerealfmt">StringCvt.realfmt</A>&nbsp;->&nbsp;<A HREF=".//StrReal.html#Typereal">real</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Val+"><!-- --></A>
+<H3>+</H3>
+<P>
+<CODE>val&nbsp;+</CODE>
+
+<HR>
+<A NAME="Val-"><!-- --></A>
+<H3>-</H3>
+<P>
+<CODE>val&nbsp;-</CODE>
+
+<HR>
+<A NAME="Val*"><!-- --></A>
+<H3>*</H3>
+<P>
+<CODE>val&nbsp;*</CODE>
+
+<HR>
+<A NAME="Val/"><!-- --></A>
+<H3>/</H3>
+<P>
+<CODE>val&nbsp;/</CODE>
+
+<HR>
+<A NAME="Val~"><!-- --></A>
+<H3>~</H3>
+<P>
+<CODE>val&nbsp;~</CODE>
+
+<HR>
+<A NAME="Val<"><!-- --></A>
+<H3><</H3>
+<P>
+<CODE>val&nbsp;<</CODE>
+
+<HR>
+<A NAME="Val>"><!-- --></A>
+<H3>></H3>
+<P>
+<CODE>val&nbsp;></CODE>
+
+<HR>
+<A NAME="Val>="><!-- --></A>
+<H3>>=</H3>
+<P>
+<CODE>val&nbsp;>=</CODE>
+
+<HR>
+<A NAME="Val=="><!-- --></A>
+<H3>==</H3>
+<P>
+<CODE>val&nbsp;==</CODE>
+
+<HR>
+<A NAME="Valfloor"><!-- --></A>
+<H3>floor</H3>
+<P>
+<CODE>val&nbsp;floor</CODE>
+
+<HR>
+<A NAME="Valreal"><!-- --></A>
+<H3>real</H3>
+<P>
+<CODE>val&nbsp;real</CODE>
+
+<HR>
+<A NAME="Val^"><!-- --></A>
+<H3>^</H3>
+<P>
+<CODE>val&nbsp;^</CODE>
+
+<HR>
+<A NAME="Valimplode"><!-- --></A>
+<H3>implode</H3>
+<P>
+<CODE>val&nbsp;implode</CODE>
+
+<HR>
+<A NAME="Valconcat"><!-- --></A>
+<H3>concat</H3>
+<P>
+<CODE>val&nbsp;concat</CODE>
+
+<HR>
+<A NAME="Valsize"><!-- --></A>
+<H3>size</H3>
+<P>
+<CODE>val&nbsp;size</CODE>
+
+<HR>
+<A NAME="Valinc"><!-- --></A>
+<H3>inc</H3>
+<P>
+<CODE>val&nbsp;inc</CODE>
+
+<HR>
+<A NAME="Valdec"><!-- --></A>
+<H3>dec</H3>
+<P>
+<CODE>val&nbsp;dec</CODE>
+
+<HR>
+<A NAME="Valmin"><!-- --></A>
+<H3>min</H3>
+<P>
+<CODE>val&nbsp;min</CODE>
+
+<HR>
+<A NAME="Valmax"><!-- --></A>
+<H3>max</H3>
+<P>
+<CODE>val&nbsp;max</CODE>
+
+<HR>
+<A NAME="Valatoi"><!-- --></A>
+<H3>atoi</H3>
+<P>
+<CODE>val&nbsp;atoi</CODE>
+
+<HR>
+<A NAME="ValzeroLPad"><!-- --></A>
+<H3>zeroLPad</H3>
+<P>
+<CODE>val&nbsp;zeroLPad</CODE>
+
+<HR>
+<A NAME="ValzeroRPad"><!-- --></A>
+<H3>zeroRPad</H3>
+<P>
+<CODE>val&nbsp;zeroRPad</CODE>
+
+<HR>
+<A NAME="ValmkDigit"><!-- --></A>
+<H3>mkDigit</H3>
+<P>
+<CODE>val&nbsp;mkDigit</CODE>
+
+<HR>
+<A NAME="ValmaxPrec"><!-- --></A>
+<H3>maxPrec</H3>
+<P>
+<CODE>val&nbsp;maxPrec</CODE>
+
+<HR>
+<A NAME="Valdecompose"><!-- --></A>
+<H3>decompose</H3>
+<P>
+<CODE>val&nbsp;decompose</CODE>
+
+<HR>
+<A NAME="ValrealFFormat"><!-- --></A>
+<H3>realFFormat</H3>
+<P>
+<CODE>val&nbsp;realFFormat</CODE>
+
+<HR>
+<A NAME="ValrealEFormat"><!-- --></A>
+<H3>realEFormat</H3>
+<P>
+<CODE>val&nbsp;realEFormat</CODE>
+
+<HR>
+<A NAME="ValrealGFormat"><!-- --></A>
+<H3>realGFormat</H3>
+<P>
+<CODE>val&nbsp;realGFormat</CODE>
+
+<HR>
+<A NAME="Valinfinity"><!-- --></A>
+<H3>infinity</H3>
+<P>
+<CODE>val&nbsp;infinity</CODE>
+
+<HR>
+<A NAME="ValfmtInfNan"><!-- --></A>
+<H3>fmtInfNan</H3>
+<P>
+<CODE>val&nbsp;fmtInfNan</CODE>
+
+<HR>
+<A NAME="ValrealToSciStr"><!-- --></A>
+<H3>realToSciStr</H3>
+<P>
+<CODE>val&nbsp;realToSciStr</CODE>
+
+<HR>
+<A NAME="ValrealToFixStr"><!-- --></A>
+<H3>realToFixStr</H3>
+<P>
+<CODE>val&nbsp;realToFixStr</CODE>
+
+<HR>
+<A NAME="ValrealToGenStr"><!-- --></A>
+<H3>realToGenStr</H3>
+<P>
+<CODE>val&nbsp;realToGenStr</CODE>
+
+<HR>
+<A NAME="ValfmtReal"><!-- --></A>
+<H3>fmtReal</H3>
+<P>
+<CODE>val&nbsp;fmtReal&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typerealfmt">StringCvt.realfmt</A>&nbsp;->&nbsp;<A HREF=".//StrReal.html#Typereal">real</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

@@ -8,7 +8,7 @@
 #
 # @author UENO Katsuhiro
 # @author YAMATODANI Kiyoshi
-# @version $Id: configure,v 1.4 2006/02/23 05:28:15 kiyoshiy Exp $
+# @version $Id: configure,v 1.16.2.4 2007/03/26 09:45:46 katsu Exp $
 
 ###############################################################################
 
@@ -16,6 +16,11 @@ pwd=`pwd`
 host_os=`uname -s|sed y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/`
 prefix=/usr/local
 smlunitdir="$pwd/../SMLUnit"
+basisdir="$pwd/../basis_compat"
+
+compiler=mlton
+MLTON=mlton
+SMLSHARP=smlsharp
 
 ###############################################################################
 
@@ -26,6 +31,10 @@ Options:
   --prefix=DIR          install files to DIR [default=$prefix]
   --exec-prefix=DIR     isntall executables to DIR [default=$prefix]
   --with-smlunit=DIR    use SMLUnit [default=$smlunitdir]
+  --with-basis=DIR      use basis [default=$basisdir]
+  --with-smlnj          use SML/NJ [default=no]
+  --with-mlton          use MLton [default=yes]
+  --with-smlsharp       use SML# [default=no]
 "
 
 for opt in "$@"
@@ -48,6 +57,18 @@ do
     --without-smlunit)
       smlunitdir=
       ;;
+    --with-basis=*)
+      basisdir="$optarg"
+      ;;
+    --with-smlnj)
+      compiler=smlnj
+      ;;
+    --with-mlton)
+      compiler=mlton
+      ;;
+    --with-smlsharp)
+      compiler=smlsharp
+      ;;
     *)
       echo "$0: error: unrecognized option: $opt" 1>&2
       echo "Try \`$0 --help' for more information." 1>&2
@@ -56,14 +77,34 @@ do
   esac
 done
 
+echo "SML compiler for building smlformat... $compiler"
+
 ###############################################################################
+
+msyspath () {
+  case "$1" in
+    /[a-zA-Z]/*) echo "$1" | sed 's,/\(.\)/,\1:/,' ;;
+    /[a-zA-Z]) echo "$1" | sed 's,/\(.\),\1:/,' ;;
+    /*) root=`cd / && pwd -W`; echo "$root$1" ;;
+    [a-zA-Z]:*) echo "$1" ;;
+    *) echo "$1" ;;
+  esac
+}
 
 cmpath () {
   case "$host_os" in
     *cygwin*)
-      # SML/NJ CM requires '\' as separator on Windows.
-      # On cygwin, the path must be converted to Windows style.
-      cygpath -aw "$1"
+      if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
+        # Win32 SML/NJ CM requires '\' as separator.
+        # On cygwin, the path must be converted to Windows style.
+        cygpath -aw "$1"
+      else
+        # Cygwin SML/NJ CM requires UNIX form path.
+        cygpath -au "$1"
+      fi
+      ;;
+    *mingw*)
+      msyspath "$1" | sed 's,/,\\\\,g'
       ;;
     *)
       echo "$1"
@@ -87,34 +128,115 @@ fi
 
 ###############################################################################
 
-HEAPNAME="$pwd/bin/smlformat-heap"
+SMLFORMATDIR="$pwd"
+BASISDIR="$basisdir/main"
+EXEEXT=
 
 case "$host_os" in
+*cygwin*)
+  SMLFORMATDIR=`cygpath -am "$SMLFORMATDIR"`
+  BASISDIR=`cygpath -am "$BASISDIR"`
+  EXEEXT=.exe
+  ;;
+*mingw*)
+  SMLFORMATDIR=`msyspath "$SMLFORMATDIR"`
+  BASISDIR=`msyspath "$BASISDIR"`
+  EXEEXT=.exe
+  ;;
+*)
+  ;;
+esac
+
+case "$compiler" in
+mlton)
+  ;;
+
+smlnj)
+  HEAPNAME="$pwd/bin/smlformat-heap"
+  MAINFUNC=Main.main
+
+  case "$host_os" in
   *cygwin*)
-    SML=sml.bat
+    if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
+      SML=sml.bat
+      HEAPNAME="$HEAPNAME.x86-win32"
+      MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
+    else
+      SML=sml
+      HEAPNAME="$HEAPNAME.x86-cygwin"
+    fi
     SMLCM=sml-cm.bat
-    MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
-    HEAPNAME="$HEAPNAME.x86-win32"
     HEAPNAME=`cygpath -am "$HEAPNAME"`
+    ;;
+  *mingw*)
+    # we don't support the combination of mingw and cygwin runtime.
+    if test "x$SMLNJ_CYGWIN_RUNTIME" = "x"; then
+      HEAPNAME="$HEAPNAME.x86-win32"
+      MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
+      SML='cmd /c sml.bat'
+      SMLCM='cmd /c sml-cm.bat'
+      HEAPNAME=`msyspath "$HEAPNAME"`
+    else
+      echo 'cygwin runtime on mingw is not supported.' 1>&2
+      exit 1
+    fi
     ;;
   *)
     SML=sml
     SMLCM=sml-cm
-    MAINFUNC=Main.main
     ;;
+  esac
+  ;;
+
+smlsharp)
+  ;;
+
+*)
+  echo "*** BUG ***" 1>&2
+  exit 127
 esac
 
 ###############################################################################
 
-echo 'creating Makefile'
-sed "
+case "$compiler" in
+smlnj)
+  echo 'checking for new CM... '
+  if echo 'CM.make;' | $SML | grep 'string ->' > /dev/null; then
+    echo 'new CM detected.'
+    CM_MAKE_ARG='"newcm.cm"'
+    SMLCM="$SML"
+  else
+    echo 'old CM detected.'
+    CM_MAKE_ARG='()'
+  fi
+  ;;
+esac
+
+###############################################################################
+
+for i in \
+  generator/main/newcm.cm \
+  generator/mlton/preludes.mlb \
+  generator/main/sources.sml \
+  Makefile
+do
+  echo "creating $i"
+  sed "
 s,@host_os@,$host_os,
 s,@prefix@,$prefix,
 s,@exec_prefix@,$exec_prefix,
 s,@SML@,$SML,
 s,@SMLCM@,$SMLCM,
 s!@MAINFUNC@!$MAINFUNC!
+s,@CM_MAKE_ARG@,$CM_MAKE_ARG,
 s,@HEAPNAME@,$HEAPNAME,
-" Makefile.in > Makefile
+s,@BASISDIR@,$BASISDIR,
+s,@SMLFORMATDIR@,$SMLFORMATDIR,
+s,@EXEEXT@,$EXEEXT,
+s,@MLTON@,$MLTON,
+s,@COMPILER@,$compiler,
+s,@SMLSHARP@,$SMLSHARP,
+  " "$i.in" > "$i"
+done
 
 # configure ends here.

@@ -7,16 +7,7 @@ include @top_builddir@commonrule
 
 VPATH = $(srcdir)
 
-# FIXME: genration of smlformatlib.cm should not be here.
-
-TARGETS = $(srcdir)/Configuration.sml \
-          $(srcdir)/../smlformatlib.cm \
-          $(srcdir)/../smlunitlib.cm \
-          $(srcdir)/../lib/smlformatlib.sml \
-          $(srcdir)/../lib/smlunitlib.sml \
-
-
-MKSMLPATH = $(SHELL) $(top_builddir)mksmlpath
+TARGETS = $(srcdir)/Configuration.sml
 
 all: $(TARGETS)
 
@@ -25,37 +16,19 @@ install: $(TARGETS)
 	$(INSTALL_DATA) $(srcdir)/Configuration.sml '$(DESTDIR)$(libdir_smlsharp)'
 
 clean:
-	-rm -rf $(srcdir)/CM
+	-rm -rf $(srcdir)/CM $(srcdir)/.cm
 	-rm -f $(TARGETS)
 
 $(srcdir)/Configuration.sml: Configuration.sml.in Makefile \
+                             $(srcdir)/cvsid.sh \
                              $(top_builddir)mksmlpath
+	if grep '%SNAPSHOT_DATE%' $(srcdir)/Configuration.sml.in > /dev/null 2>&1; then \
+	  cvsid=`$(SHELL) $(srcdir)/cvsid.sh $(top_srcdir)/src`; \
+	fi; \
 	sed -e "s,%BUILD_ROOT%,`$(MKSMLPATH) -sh '$(BUILD_ROOT)'`," \
 	    -e "s,%SRC_ROOT%,`$(MKSMLPATH) -sh '$(SRC_ROOT)'`," \
 	    -e "s,%EXEEXT%,$(EXTEXT)," \
 	    -e "s,%BINDIR%,`$(MKSMLPATH) -sh '$(bindir)'`," \
 	    -e "s,%LIBDIR%,`$(MKSMLPATH) -sh '$(libdir_smlsharp)'`," \
+	    -e "s,%SNAPSHOT_DATE%,$$cvsid," \
 	    $(srcdir)/Configuration.sml.in > $@
-
-$(srcdir)/../smlformatlib.cm: $(srcdir)/../smlformatlib.cm.in Makefile \
-                              $(top_builddir)mksmlpath
-	sed -e "s,%SMLFORMAT_CM%,`$(MKSMLPATH) -cm '$(SMLFORMATDIR)/smlformatlib.cm'`," \
-	    $(srcdir)/../smlformatlib.cm.in > $@
-
-$(srcdir)/../smlunitlib.cm: $(srcdir)/../smlunitlib.cm.in Makefile \
-                              $(top_builddir)mksmlpath
-	sed -e "s,%SMLUNIT_CM%,`$(MKSMLPATH) -cm '$(SMLUNITDIR)/smlunitlib.cm'`," \
-	    $(srcdir)/../smlunitlib.cm.in > $@
-
-$(srcdir)/../lib/smlformatlib.sml: $(srcdir)/../lib/smlformatlib.sml.in \
-				Makefile \
-				$(top_builddir)mksmlpath
-	sed -e "s,%SMLFORMAT_SML%,`$(MKSMLPATH) -sh '$(SMLFORMATDIR)/smlformatlib.sml'`," \
-	    $(srcdir)/../lib/smlformatlib.sml.in > $@
-
-$(srcdir)/../lib/smlunitlib.sml: $(srcdir)/../lib/smlunitlib.sml.in \
-				Makefile \
-				$(top_builddir)mksmlpath
-	sed -e "s,%SMLUNIT_SML%,`$(MKSMLPATH) -sh '$(SMLUNITDIR)/smlunitlib.sml'`," \
-	    $(srcdir)/../lib/smlunitlib.sml.in > $@
-

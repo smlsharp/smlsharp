@@ -1,0 +1,4 @@
+val f = fn : ['a,'b#{a:'a, b:int  -> int}.'b  -> unit]
+val f = fn : ['a#{b:int  -> int} .'a  -> unit]
+val f = fn : ['a,'b#{a:'a, b:int  -> int}.'b  -> unit]
+val f = fn : ['a,'b#{a:'a, b:int  -> 'c},'c.'b  -> unit]

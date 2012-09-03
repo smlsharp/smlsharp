@@ -10,7 +10,7 @@
  * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
  * @author Nguyen Huu Duc
- * @version $Id: Assembler.sml,v 1.54 2006/02/28 16:10:59 kiyoshiy Exp $
+ * @version $Id: Assembler.sml,v 1.63 2007/02/08 03:08:49 katsu Exp $
  *)
 structure Assembler :> ASSEMBLER =
 struct
@@ -25,6 +25,7 @@ struct
   structure LocMap = SourceLocationMap
   structure NameSlotMap = SourceNameSlotMap
   structure P = Primitives
+  structure SD = SystemDef
   structure SF = StackFrame
   structure SI = SymbolicInstructions
   structure SIF = SymbolicInstructionsFormatter
@@ -292,6 +293,19 @@ struct
             if !Control.enableUnboxedFloat
             then I.LoadReal operand
             else I.LoadBoxedReal operand
+          end
+        | SI.LoadFloat {value, destination} =>
+          let
+            val realValue =
+                case Real.fromString value of
+                  NONE => raise Control.Bug("invalid real format:" ^ value)
+                | SOME real => real
+          in
+            I.LoadFloat
+               {
+                 value = BT.RealToReal64 realValue,
+                 destination = VI destination
+               }
           end
         | SI.LoadChar {value, destination} =>
           I.LoadChar {value = value, destination = VI destination}
@@ -569,9 +583,10 @@ struct
                    blockOffset = VI blockEntry,
                    newValueOffset = VI newValueEntry
                  })
-        | SI.CopyBlock {blockEntry, destination} =>
+        | SI.CopyBlock {nestLevelEntry, blockEntry, destination} =>
           I.CopyBlock
           {
+            nestLevel = VI nestLevelEntry,
             blockOffset = VI blockEntry,
             destination = VI destination
           }
@@ -682,17 +697,41 @@ struct
         | SI.ForeignApply
               {
                 argsCount,
+                switchTag,
+                convention,
                 closureEntry,
                 argEntries,
                 argSizes,
                 resultSize,
                 destination
               } =>
-          I.ForeignApply
+          let
+            val conventionCode =
+                case convention
+                 of Absyn.CC_DEFAULT => Constants.FFI_CC_DEFAULT
+                  | Absyn.CC_CDECL => Constants.FFI_CC_CDECL
+                  | Absyn.CC_STDCALL => Constants.FFI_CC_STDCALL
+          in
+            I.ForeignApply
               {
                 argsCount = argsCount,
+                switchTag = switchTag,
+                convention = UInt32.fromInt conventionCode,
                 closureOffset = VI closureEntry,
                 argIndexes = map VI argEntries,
+                destination = VI destination
+              }
+          end
+        | SI.RegisterCallback
+              {
+                closureEntry,
+                sizeTag,
+                destination
+              } =>
+          I.RegisterCallback
+              {
+                closureOffset = VI closureEntry,
+                sizeTag = sizeTag,
                 destination = VI destination
               }
         | SI.Apply_S
@@ -1156,13 +1195,13 @@ struct
           }
         | SI.Raise {exceptionEntry} =>
           I.Raise {exceptionOffset = VI exceptionEntry}
-        | SI.PushHandler{handler, exceptionEntry} =>
+        | SI.PushHandler{handlerStart, exceptionEntry, ...} =>
           I.PushHandler
           {
-            handler = LO handler,
+            handler = LO handlerStart,
             exceptionOffset = VI exceptionEntry
           }
-        | SI.PopHandler => I.PopHandler
+        | SI.PopHandler _ => I.PopHandler
         | SI.Label _ => raise Control.Bug "Label is not expected."
         | SI.Location _ => raise Control.Bug "Label is not expected."
         | SI.SwitchInt{targetEntry, casesCount, cases, default} =>
@@ -1228,13 +1267,6 @@ struct
             length = UInt32.fromInt (String.size string),
             string = BT.StringToPaddedUInt8List string
           }
-        | SI.FFIVal {funNameEntry, libNameEntry, destination} =>
-          I.FFIVal
-              {
-                funNameOffset = VI funNameEntry,
-                libNameOffset = VI libNameEntry,
-                destination = VI destination
-              }
 
         | SI.AddInt_Const_1{argValue1, argEntry2, destination} =>
           I.AddInt_Const_1
@@ -2055,7 +2087,7 @@ struct
             raise
               Control.Bug (ID.toString (#id arg) ^ " is not found in args.")
           | findi index ((hdArg : SI.varInfo) :: tlArgs) =
-            if #id hdArg = #id arg
+            if ID.eq(#id hdArg, #id arg)
             then index
             else findi (index + 0w1) tlArgs
       in findi (0w0 : BT.UInt32) (#args funInfo) end
@@ -2314,6 +2346,7 @@ val _ = print "end\n\n"
         case getErrors () of
           [] => 
           {
+            byteOrder = SD.NativeByteOrder,
             instructionsSize = lastOffset,
             instructions = rawInstructions,
             locationTable = locationTable,

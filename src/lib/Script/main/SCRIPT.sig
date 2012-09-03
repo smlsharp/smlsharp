@@ -1,7 +1,7 @@
 (**
  * @author YAMATODANI Kiyoshi
  * @copyright (c) 2006, Tohoku University.
- * @version $Id: SCRIPT.sig,v 1.8 2006/03/02 16:20:35 kiyoshiy Exp $
+ * @version $Id: SCRIPT.sig,v 1.11 2006/03/14 06:01:25 kiyoshiy Exp $
  *)
 signature SCRIPT =
 sig
@@ -46,9 +46,9 @@ sig
   (**
    * get the value for environment name.
    * <pre>
-   * -&gt;env "OS";
+   * # env "OS";
    * val it = "Windows_NT" : string
-   * -&gt;env "FOO";
+   * # env "FOO";
    * val it = "" : string
    * </pre>
    * @params name
@@ -66,9 +66,9 @@ sig
   (**
    * change working directory.
    * <pre>
-   * -&gt;cd "D:/home";
+   * # cd "D:/home";
    * val it = () : unit
-   * -&gt;cd "/usr/";
+   * # cd "/usr/";
    * val it = () : unit
    * </pre>
    * @params path
@@ -80,12 +80,60 @@ sig
   (**
    * get the current working directory.
    * <pre>
-   * -&gt;pwd ();
+   * # pwd ();
    * val it = "/usr" : string
    * </pre>
    * @return the current working directory
    *)
   val pwd : unit -> string
+
+  (****************************************)
+  (* File system *)
+
+  (**
+   * indicates whether the path points to an existing entity of file system.
+   * @params path
+   * @param path path
+   * @return true if the path points to an existing entity.
+   *)
+  val exists : string -> bool
+
+  (**
+   * indicates whether the path points to an existing symbolic link.
+   * @params path
+   * @param path path
+   * @return true if the path points to an existing symbolic link.
+   *)
+  val isLink : string -> bool
+
+  (**
+   * indicates whether the path points to an existing directory.
+   * @params path
+   * @param path path
+   * @return true if the path points to an existing directory.
+   *)
+  val isDir : string -> bool
+
+  (**
+   * get entries in the directory.
+   * Result does not include "." and ".." .
+   * @params dir
+   * @param dir path of directory
+   * @return the names of the entries in the directory.
+   *)
+  val listDir : string -> string list
+
+  (**
+   * a string which may contain glob meta characters.
+   * Supported meta characters are '?', '*', '['.
+   *)
+  type glob_pattern = string
+
+  (**
+   * finds all the pathnames matching the specified pattern according to the
+   * rule of Unix glob command.
+   *)
+  val glob : glob_pattern -> string list
 
   (****************************************)
   (* IO *)
@@ -110,6 +158,8 @@ sig
    * @param fileName name of the file to open
    * @param mode "r" for read mode, "w" for write mode, "a" for append mode.
    * @return a stream of the opened file.
+   * @throws Fail if the mode is neither "r", "w", nor "a".
+   * @throws SysErr if the file cannot be opened.
    *)
   val fopen : string -> string -> file
 
@@ -195,6 +245,21 @@ sig
    *)
   val fputs : file -> string -> unit
 
+  (**
+   * print strings sequentially.
+   * <pre>
+   * # prints ["a", "b", "c"];
+   * abc
+   * </pre>
+   *)
+  val prints : string list -> unit
+
+  (**
+   * print a string with a following newline character.
+   * This is equivalent to <code>fn s => (print s; print "\n")</code>.
+   *)
+  val println : string -> unit
+
   (****************************************)
   (* Text *)
 
@@ -207,17 +272,17 @@ sig
    * If the string ends with a two characters sequence "\r\n", these two
    * characters are stripped.
    * <pre>
-   * -&gt;chop "abc\r\n";
+   * # chop "abc\r\n";
    * val it = "abc" : string
-   * -&gt;chop "abc\n\r";
+   * # chop "abc\n\r";
    * val it = "abc\n" : string
-   * -&gt;chop "abc\n";
+   * # chop "abc\n";
    * val it = "abc" : string
-   * -&gt;chop "abc\r";
+   * # chop "abc\r";
    * val it = "abc" : string
-   * -&gt;chop "abc";
+   * # chop "abc";
    * val it = "ab" : string
-   * -&gt;chop "";
+   * # chop "";
    * val it = "" : string
    * </pre>
    *)
@@ -226,7 +291,7 @@ sig
   (**
    * converts the integer to its string representation.
    * <pre>
-   * -&gt;itoa 123;
+   * # itoa 123;
    * val it = "123" : string
    * </pre>
    * @params num
@@ -239,7 +304,7 @@ sig
    * converts the initial portion of the string to its int representation.
    * If the string does not begin with a numeral text, it returns 0.
    * <pre>
-   * -&gt;atoi "123xyz";
+   * # atoi "123xyz";
    * val it = 123 : int
    * </pre>
    * @params string
@@ -251,7 +316,7 @@ sig
   (**
    * if the pattern matches with a substring of the string, returns true.
    * <pre>
-   * -&gt;"xyzabcxyz" =~ "ab*c";
+   * # "xyzabcxyz" =~ "ab*c";
    * val it = true : bool
    * </pre>
    * @params (string, pattern)
@@ -264,9 +329,9 @@ sig
    * get location of the left most occurrence of a sub string which
    * matches with the pattern.
    * <pre>
-   * -&gt;find "ab*c" "xyzacxyz";
+   * # find "ab*c" "xyzacxyz";
    * val it = SOME (3, 2) : (int * int) option
-   * -&gt;find "ab+c" "xyzacxyz";
+   * # find "ab+c" "xyzacxyz";
    * val it = NONE : (int * int) option
    * </pre>
    * @params pattern string
@@ -297,7 +362,7 @@ sig
    * get the left most substring of the string which matches with the pattern.
    * If any matched substring is not found, a zero-length string is returned.
    * <pre>
-   * -&gt; slice "ab*c" "xyzabbcxyzabcxyz"
+   * #  slice "ab*c" "xyzabbcxyzabcxyz"
    * val it = "abbc" : string
    * </pre>
    * @params pattern string
@@ -323,7 +388,7 @@ sig
   (**
    * substitute patterns in the string with replace.
    * <pre>
-   * -&gt;subst "ab*c" "ABC" "xyzabbcxyzabcxyz"
+   * # subst "ab*c" "ABC" "xyzabbcxyzabcxyz"
    * val it = "xyzABCxyzabcxyz" : string
    * </pre>
    * @params pattern replace string
@@ -335,7 +400,7 @@ sig
 
   (**
    * <pre>
-   * -&gt;global_subst "ab*c" "ABC" "xyzabbcxyzabcxyz"
+   * # global_subst "ab*c" "ABC" "xyzabbcxyzabcxyz"
    * val it = "xyzABCxyzABCxyz" : string
    * </pre>
    *)
@@ -358,7 +423,7 @@ sig
    *  get a list of substrings which are delimited by a substring which matches
    * with the pattern.
    * <pre>
-   * -&gt;fields "ab*c" "abcacxyzabcabbcXYZac"
+   * # fields "ab*c" "abcacxyzabcabbcXYZac"
    * val it = ["","","xyz","","XYZ",""] : string list
    * </pre>
    *)
@@ -368,7 +433,7 @@ sig
    *  get a list of substrings which are delimited by consecutive substrings
    * which match with the pattern.
    * <pre>
-   * -&gt;tokens "ab*c" "abcacxyzabcabbcXYZac"
+   * # tokens "ab*c" "abcacxyzabcabbcXYZac"
    * val it = ["xyz","XYZ"] : string list
    * </pre>
    * <code>tokens p s</code> is equivalent with
@@ -377,6 +442,43 @@ sig
    * </pre>
    *)
   val tokens : pattern -> string -> string list
+
+  (****************************************)
+  (* (imperative) association list *)
+
+  (** imperative association list
+   *)
+  type ('key, 'value) assoc_list = ('key * 'value) list ref
+
+  (**
+   * find an element of the specified key.
+   *)
+  val assoc : (''key, 'value) assoc_list -> ''key -> (''key * 'value) option
+
+  (**
+   * add a pair of key and value to the assoc list.
+   * The assoc list is updated imperatively.
+   *)
+  val add_assoc : (''key, 'value) assoc_list -> (''key * 'value) -> unit
+
+  (**
+   * remove an element of the specified key from the assoc list.
+   * The assoc list is updated imperatively.
+   *)
+  val del_assoc : (''key, 'value) assoc_list -> ''key -> unit
+
+  (****************************************)
+  (* list manipulation *)
+
+  (**
+   * sort a list.
+   * @params compare list
+   * @param compare a function which indicates which of two elements is
+   *               less than or equal to or more than the other.
+   * @param list unsorted list
+   * @return sorted list
+   *)
+  val sort : ('a * 'a -> order) -> 'a list -> 'a list
 
   (***************************************************************************)
 

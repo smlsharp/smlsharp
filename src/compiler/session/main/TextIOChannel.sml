@@ -2,7 +2,7 @@
  * implementation of channel on a text IO stream.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TextIOChannel.sml,v 1.4 2006/02/28 16:11:05 kiyoshiy Exp $
+ * @version $Id: TextIOChannel.sml,v 1.5 2007/02/19 04:06:09 kiyoshiy Exp $
  *)
 structure TextIOChannel =
 struct
@@ -34,6 +34,12 @@ struct
                   (Word8Array.fromList o (List.map (Word8.fromInt o Char.ord)))
                   (String.explode string)
               end
+          fun receiveVector required =
+              let
+                  val string = TextIO.inputN (inStream, required)
+              in
+                Byte.stringToBytes string
+              end
 
           (* we do not close, because the steram is not opened by this module*)
           fun close () = ()
@@ -43,6 +49,7 @@ struct
           {
             receive = receive,
             receiveArray = receiveArray,
+            receiveVector = receiveVector,
             close = close,
             isEOF = isEOF
           } : ChannelTypes.InputChannel
@@ -56,6 +63,8 @@ struct
                 TextIO.output1 (outStream, char)
               end
           fun sendArray array = Word8Array.app send array
+          fun sendVector vector =
+              TextIO.output (outStream, Byte.bytesToString vector)
           fun flush () = TextIO.flushOut outStream
           (* we do not close, because the steram is not opened by this module*)
           fun close () = ()
@@ -63,6 +72,7 @@ struct
           {
             send = send,
             sendArray = sendArray,
+            sendVector = sendVector,
             flush = flush,
             close = close
           } : ChannelTypes.OutputChannel

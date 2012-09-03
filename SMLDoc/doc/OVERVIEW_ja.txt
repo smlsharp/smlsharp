@@ -1,0 +1,408 @@
+SMLDoc -- Document Generator for Standard ML
+
+@author YAMATODANI Kiyoshi
+@version $Id: OVERVIEW_ja.txt,v 1.4 2007/02/18 03:06:46 kiyoshiy Exp $
+
+========================================
+1. SMLDoc
+
+SMLDocは、Standard MLソースファイルを解析し、モジュール、変数、型などのエンティティについて説明したドキュメントをHTML形式で生成する。
+
+
+========================================
+2. doc comment
+
+エンティティに関する説明は、その宣言あるいは定義の直前または直後に位置する (** と *) で囲まれたコメントに記述する。このコメントをdoccommentと呼ぶ。
+
+
+====================
+2.1. sections
+
+doccommentは、summaryセクション、detailセクション、tagセクションから構成される。
+summaryセクションにはエンティティの要約を一文で記述する。
+detailセクションにはエンティティの詳細を記述する。
+tagセクションにはエンティティの属性を記述する。
+
+summaryセクションは必須。
+detailセクションは省略可能。
+先頭の文字が@である行以降がtagセクションとなる。tagセクションは省略可能。
+
+  (**
+   * summary of the entity.
+   * detail of the entity
+   *    :
+   * @tag desciption
+   *    :
+   *)
+
+
+====================
+2.2. tag
+
+以下のタグが使用可能である。
+各タグの仕様はJavaDocにならう。
+
+@author  作者名。
+@copyright コピーライト
+@contributor 貢献者
+{@docRoot} トップディレクトリへのリンク。（現時点では未実装）
+@exception 関数が浮揚しうる例外を挙げる。
+{@link}  ハイパーリンク。（現時点では未実装）
+@params  仮引数に名前を与える。
+@param   仮引数を説明する。
+@return  関数の返り値を説明する。
+@see     関連項目を挙げる。（文字列の解析処理は未実装。）
+@throws  @exceptionと同じ。
+@version エンティティのバージョン。
+
+注意：
+@paramsタグはSMLDoc独自のタグである。
+このタグは、引数をとる値構成子や関数値の引数に説明用の名前を与える。
+使用方法については、下のサンプルを参照。
+
+
+====================
+2.2.1. paramsタグ
+
+paramsタグは関数型およびその値の引数に説明用の名前を与える。
+paramsタグは、パターンの列をパラメータに取る。
+
+  @params pat ... pat
+
+パターンpatの構文規則をつぎに示す。
+
+  pat ::= ID
+        | "(" pat "," ... "," pat ")"
+        | "{" patrow "," ... "," patrow "}"
+
+  patrow ::= ID "=" pat
+           | ID
+
+paramsタグのパターンに現れるIDはつづくparamタグで使用できる。
+
+paramタグは、paramsタグのパターンに現れるIDに対応する引数に説明を与える。
+
+  @param ID description
+
+
+====================
+2.3. インラインコメント
+
+tupleおよびレコードの要素に対するdocコメントを型式中に記述することができる。
+
+  (**
+   * a range between two integer value.
+   *)
+  type range =
+       {
+         (** minimum value *) 
+         min : int,
+         (** maximum value *)
+         max : int
+       }
+
+  (**
+   * opens a file.
+   * @return file stream
+   *)
+  val openFile :
+      {
+        (** file name *)
+        fileName : string,
+        (** mode flag *)
+        mode : openMode
+      } -> stream
+
+二番目の例は以下のようにparamsタグで同様に記述することができる。
+
+  (**
+   * opens a file.
+   * @params {fileName, mode}
+   * @param fileName file name
+   * @param mode mode flag
+   * @return file stream
+   *)
+  val openFile : {fileName : string, mode : openMode} -> stream
+
+インラインコメントを使用することにより、型構成子への引数型式に対してコメントを与えることができる。
+
+
+====================
+2.3. sample
+
+  ------------------------------------------------------------
+  sample1: doccomments for specification
+  ------------------------------------------------------------
+
+  (**
+   *  The HTML documentation generator.
+   *
+   *  The documentation generator generates HTML documents about
+   * ML entities such as module declarations, value binding, type
+   * declarations, etc.
+   *  The descriptions of the document is extracted from the
+   * doccomments in the source file.
+   *
+   * @see <a href="http://java.sun.com/j2se/javadoc/index.html">
+   *       JavaDoc</a>
+   * @see <a href="http://caml.inria.fr/ocaml/htmlman/manual029.html">
+   *       OCamlDoc</a>
+   * @author YAMATODANI Kiyoshi <kiyoshiy@jaist.ac.jp>
+   * @version 1.0
+   *)
+  signature DOCGENERATOR = 
+  sig
+
+    (** CSS rule *)
+    type CSSrule = 
+    {
+      (** selector *)
+      selector : string,
+      (** name of property *)
+      property : string,
+      (** value of the property *)
+      value : string 
+    }
+
+    (**
+     * the style of HTML document
+     *)
+    datatype HTMLstyle =
+             Plain (** simple style *)
+           | (** rich style *) Rich
+           | (**
+              * style sheet file specified
+              * @params filename
+              * @param filename name of the style sheet file to use
+              *)
+             CustomCSSFile of string
+           | (**
+              * style sheet
+              * @params styles
+              * @param styles style rules
+              *)
+             Custom of CSSrule list
+
+    (**
+     *  generates a HTML document about a declaration of ML entity.
+     *
+     * @params styleSheet sourceFile (declaration, location)
+     * @param styleSheet the style sheet to use
+     * @param sourceFile the path of the source file which contains
+     *                 the declaration.
+     * @param declaration the declaration
+     * @param location the location of the declaration in the source
+     *                 file
+     * @return the HTML code
+     *)
+    val generateDeclarationDoc
+        : HTMLstyle -> string -> (decl * (int * int)) -> string
+
+  end
+  ------------------------------------------------------------
+ レコードおよび型構成子の要素については、各要素の直後の一行コメントも認める。
+ そのほかのエンティティについては直前のコメントのみが関連付けられる。
+
+  ------------------------------------------------------------
+  sample2: doccomments for declarations
+  ------------------------------------------------------------
+  (**
+   * The HTML documentation generator implementation.
+   *
+   * @author YAMATODANI Kiyoshi <kiyoshiy@jaist.ac.jp>
+   * @version 1.0
+   *)
+  structure DocGenerator : DOCGENERATOR = 
+  struct
+
+           :
+
+    (*
+     *  This is a normal comment,  not a doccomment. 
+     *)
+    fun generateDeclarationDoc style sourceFile (declaration, location) =
+        ...
+
+    (**
+     *  generates a HTML document about a value binding.
+     *
+     * @params styleSheet sourceFile (binding, location)
+     * @param styleSheet the style sheet to use
+     * @param sourceFile the path of the source file which contains
+     *                 the declaration.
+     * @param binding the value binding
+     * @param location the location of the binding in the source file
+     * @return the HTML code
+     * @throws InvalidDocCommentException if the doccomment is not
+     *                                   valid format.
+     * @see Absyn.binding
+     *)
+    fun generateValBindDoc style sourceFile =
+        fn (ValBind(name, type, _), (line, col)) => ...
+         | (FunBind(name, type, _), (line, col)) => ...
+         | (RecFunBind bindings, loc) => ...
+
+            :
+
+  end
+  ------------------------------------------------------------
+
+
+========================================
+3. 起動
+
+====================
+3.1. 起動
+
+SMLDocは、smldocコマンドを以下のコマンドライン引数を指定して実行する。
+
+  smldoc [OPTION ...] [files...]
+
+====================
+3.2. 入力ファイル
+
+ドキュメント生成への入力ファイルは
+・SMLソースファイル
+・SML/NJのCMファイル
+の二種類である。
+
+"cm"以外の拡張子をもつファイル名はSMLソースファイルとみなされる。
+
+拡張子が"cm"であるファイル名はCMファイルとみなされる。CMファイルが指定された場合、そのCMファイル中にリストされているファイル名のうち、拡張子が"sml", "sig", "fun"のいずれかであるファイルのみをSMLソースファイルと見なし、ドキュメント生成への入力ファイルとする。その他の拡張子を持つファイルは無視する。とくに、他のCMファイル名が含まれていてもそれを再帰的に読み込むことはしないので注意。
+
+
+====================
+3.3. 引数ファイル
+
+コマンドライン引数の個数、長さに関するシェルの制限を回避するため、SMLDocは、コマンドラインオプションがあらかじめ記述されたファイルを読み込む機能を提供している。
+このファイルを引数ファイルと呼ぶ。
+引数ファイルは、-a, --argfileオプションでそのファイル名を指定する。
+
+引数ファイルには、ソースファイル名を含め、コマンドライン上と同様の引数を記述できる。
+引数ファイル中に-a,--argfileオプションによってさらに他の引数ファイルが指定されている場合、再帰的にその引数ファイルも読み込まれる。
+ソースファイル名や他の引数ファイル名など、引数ファイル中にファイル名が相対パスで指定されている場合、その引数ファイルを含むディレクトリからの相対パスとして扱われる。
+
+====================
+3.4. 環境変数置換
+
+コマンドライン引数および引数ファイル中に現れる文字列${NAME}は、環境変数NAMEの値に置き換えられる。
+たとえば
+
+  --directory=${PWD}/doc/api
+
+は、PWD=/home/yamatoであると仮定すると
+
+  --directory=/home/yamato/doc/api
+
+に置換される。
+
+====================
+3.5. その他のSMLDoc固有のオプション
+
+そのほかに、SMLDoc独自仕様のオプションとして以下がサポートされている。
+
+--hidebysig
+        あるstructureがsignatureによって制約されている場合、
+        そのstructureの要素のうち、signatureで仕様が規定されている
+        要素に関する記述のみをドキュメントに含める。
+
+--listsubmodule
+        モジュールリストに、トップレベルモジュール以外のモジュールも含める。
+
+--stdin
+        ソースファイル名を標準入力からも読み込む。
+        使用例：
+
+           $ find . -name '*.sml' | smldoc --stdin
+
+--showsummary
+        JavaDocと同様に、detailセクションの前に、summaryセクションを出力する。
+
+
+====================
+3.6. その他のオプション
+
+ そのほかのコマンドラインオプションは、おおむねJavaDocのそれのサブセットである。
+
+--author
+        @author パラグラフを含める。
+
+--bottom=<HTML>
+        各ページに下部テキストを含める。
+
+-c <charset>, --charset=<charset>
+        生成されるドキュメントの文字エンコーディングを指定する。
+
+-d <dir>, --directory=<dir>
+        出力ファイルの転送先ディレクトリを指定する。
+
+--footer=<HTML>
+        各ページにフッタを含める。
+
+--header=<HTML>
+        各ページにヘッダを含める。
+
+-h, --help
+        コマンド行オプションを表示して終了する。
+
+--helpfile=<file>
+        ヘルプリンクのリンク先ファイルを含める。
+
+--link=<url>
+        指定された位置に配置されているSMLDoc出力へのリンクを作成する。
+
+--linkoffline=<url>@<file>
+        ローカルのパッケージリストを使用して、指定されたURLのdocsにリンクする。
+        JavaDocとは異なり、リンク先URLと、パッケージリストファイルパス名は
+        '@'で連結する。
+        例：
+
+          --linkoffline=../../../SMLPP/doc/api@../../SMLPP/doc/api/module-list
+
+--nohelp
+        ヘルプリンクを生成しない。
+
+--nonavbar
+        ナビゲーションバーを生成しない。
+
+--noindex
+        索引を生成しない。
+
+--overview=<file>
+        指定されたHTMLファイルから概要ドキュメントを読み込む。
+
+--splitindex
+        1字ごとに1ファイルに索引を分割する。
+
+-t <text>, --doctitle=<text>
+        概要ページにタイトルを含める。
+
+-v, --verbose
+        SMLDocの動作についてメッセージを出力する。
+
+--version
+        @versionパラグラフを含める。
+
+-w <text>, --windowtitle=<text>
+        ドキュメント用のブラウザウィンドウタイトルを指定する。
+
+
+========================================
+参考
+
+Javadoc
+http://java.sun.com/j2se/javadoc/
+
+OCamlDoc
+http://caml.inria.fr/ocaml/htmlman/manual029.html
+
+Haddoc
+http://www.haskell.org/haddock/
+
+HDoc
+http://www.fmi.uni-passau.de/~groessli/hdoc/
+
+ML-Doc
+http://people.cs.uchicago.edu/~jhr/tools/ml-doc.html
+
+============================================================

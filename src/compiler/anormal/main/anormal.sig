@@ -2,12 +2,13 @@
  * A-Normal form.
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc 
- * @version $Id: anormal.sig,v 1.16 2006/02/28 16:10:58 kiyoshiy Exp $
+ * @version $Id: anormal.sig,v 1.21 2007/02/11 16:39:50 kiyoshiy Exp $
  *)
 
 signature ANormal = sig
 
   type loc
+  type callingConvention
   type id 
   type tyvarId
   datatype ty =
@@ -23,7 +24,9 @@ signature ANormal = sig
   type varInfoWithType
   type varInfoWithoutKind
   type primInfo 
-  datatype constant = datatype Types.constant
+  datatype constant = datatype ConstantTerm.constant
+
+  type funInfo
 
   datatype anexp =
 	   ANCONSTANT of {value :constant, loc : loc}
@@ -96,6 +99,7 @@ signature ANormal = sig
               funExp : anexp,
               argExpList : anexp list,
               argTyList : ty list,
+              convention : callingConvention,
               loc : loc
              }
          | ANAPPLY of 
@@ -193,24 +197,5 @@ signature ANormal = sig
               valueExp : anexp,
               loc : loc
              }
-         | ANFFIVAL of 
-             {
-              funExp : anexp,
-              libExp : anexp,
-              argTyList : ty list,
-              resultTy : ty,
-              funTy : ty,
-              loc : loc
-             }
-
-  withtype funInfo =
-           {
-            tyvars:tyvarId list,
-            bitmapFree: anexp,
-	    tagArgs: anexp list,
-            sizevals: anexp list,
-	    args:varInfo list,
-	    resultTy: ty
-	   } 
 
 end

@@ -2,7 +2,7 @@
  * implementation of primitives for GenericOS structures.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: GenericOSPrimitives.sml,v 1.11 2006/02/28 16:11:12 kiyoshiy Exp $
+ * @version $Id: GenericOSPrimitives.sml,v 1.12 2006/03/07 05:02:29 kiyoshiy Exp $
  *)
 structure GenericOSPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct
@@ -232,17 +232,33 @@ GenericOS_fileSize,"word -> int"
             Byte.unpackString
                 (byteArray, SInt32ToInt start, SOME(SInt32ToInt bytes))
       in
-(*
-        print ("fileWrite: start = " ^ SInt32.toString start ^ ", bytes = " ^ SInt32.toString bytes ^ "\n");
-*)
-        case getStreamOfFileNo fileNo of
-          SOME(TextOutStream stream) => TextIO.output (stream, string)
-        | SOME(BinOutStream stream) =>
-          BinIO.output (stream, Byte.stringToBytes string)
-        | _ =>
-          raise
-            RE.UnexpectedPrimitiveArguments
-                "GenericOS_fileWrite: invalid stream";
+
+        print ("fileWrite: "
+                   ^ "fileNo = " ^ UInt32.toString fileNo
+                   ^ ",start = " ^ SInt32.toString start
+                   ^ ", bytes = " ^ SInt32.toString bytes
+                   ^ "\n");
+
+        if STDOUT_FILENO = fileNo
+        then
+          #print
+              (CharacterStreamWrapper.wrapOut (VM.getStandardOutput VM))
+              string
+        else
+          if STDERR_FILENO = fileNo
+          then
+            #print
+                (CharacterStreamWrapper.wrapOut (VM.getStandardError VM))
+                string
+          else
+            case getStreamOfFileNo fileNo of
+              SOME(TextOutStream stream) => TextIO.output (stream, string)
+            | SOME(BinOutStream stream) =>
+              BinIO.output (stream, Byte.stringToBytes string)
+            | _ =>
+              raise
+                RE.UnexpectedPrimitiveArguments
+                    "GenericOS_fileWrite: invalid stream";
         [Int bytes]
       end
     | GenericOS_fileWrite VM heap _ = 

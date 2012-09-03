@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA FIND RANLIB ac_ct_RANLIB AR ac_ct_AR DOXYGEN DLLTOOL ac_ct_DLLTOOL CYGPATH DLEXT DLSTUBEXT LIBEXT SML SMLNJ_VERSION SMLCM SML_HEAP_SUFFIX SMLFORMATDIR SMLDOCDIR SMLUNITDIR SMLFORMAT SMLDOC CXXCPP EGREP LIBOBJS JDKLIBPATH STUBLIBS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os SMLSHARP_PLATFORM CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CC CFLAGS ac_ct_CC SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA FIND RANLIB ac_ct_RANLIB LD ac_ct_LD AR ac_ct_AR WINDRES ac_ct_WINDRES DOXYGEN DLLTOOL ac_ct_DLLTOOL CYGPATH RESOURCE_TYPE DLEXT DLSTUBEXT LIBEXT SML SML_BAT SMLCM SMLCM_BAT SMLNJ_VERSION NEW_CM SML_HEAP_SUFFIX MLTON MLTON_LEX MLTON_YACC USE_MLTON MLTON_FLAGS SMLFORMATDIR SMLDOCDIR SMLUNITDIR BASISDIR SMLFORMAT SMLDOC FFI_MAX_ARGS LIBFFI_BUILD FFI_STUB CXXCPP EGREP BYTE_ORDER LIBOBJS JDKLIBPATH STUBLIBS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -859,6 +859,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-libffi         use libffi [default=yes]
   --enable-jni            enable JNI support [default=no]
   --enable-unboxed-float  unboxed float [default=yes]
   --enable-debug          enable debug (for developer only) [default=no]
@@ -870,9 +871,13 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-smlnj=DIR        specify SML/NJ directory
+  --with-mlton=DIR        use MLton for compiling frontend
   --with-smlformat=DIR    specify SMLFormat directory
   --with-smldoc=DIR       specify SMLDoc directory
   --with-smlunit=DIR      specify SMLUnit directory
+  --with-basis=DIR        specify basis_copmat directory
+  --with-ffi-max-args=NUM specify the maximum number of arguments of foreign
+                          function [default=10:5]
   --with-java-home=DIR    JDK directory
   --with-java-include=DIR directory for JDK header files
   --with-java-lib=DIR     directory for JDK library files
@@ -1449,6 +1454,13 @@ s/[\\$]/&&/g;s/;s,x,x,$//
 _ACEOF
 program_transform_name=`echo $program_transform_name | sed -f conftest.sed`
 rm conftest.sed
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SMLSHARP_PLATFORM "${target_cpu}-${target_os}"
+_ACEOF
+
 
 
 # Checks for programs.
@@ -2974,6 +2986,85 @@ else
 fi
 
 if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ld", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ld; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_LD+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$LD"; then
+  ac_cv_prog_LD="$LD" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_LD="${ac_tool_prefix}ld"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+LD=$ac_cv_prog_LD
+if test -n "$LD"; then
+  echo "$as_me:$LINENO: result: $LD" >&5
+echo "${ECHO_T}$LD" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_LD"; then
+  ac_ct_LD=$LD
+  # Extract the first word of "ld", so it can be a program name with args.
+set dummy ld; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_LD+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_LD"; then
+  ac_cv_prog_ac_ct_LD="$ac_ct_LD" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_LD="ld"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+ac_ct_LD=$ac_cv_prog_ac_ct_LD
+if test -n "$ac_ct_LD"; then
+  echo "$as_me:$LINENO: result: $ac_ct_LD" >&5
+echo "${ECHO_T}$ac_ct_LD" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  LD=$ac_ct_LD
+else
+  LD="$ac_cv_prog_LD"
+fi
+
+if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ar; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3052,15 +3143,16 @@ else
   AR="$ac_cv_prog_AR"
 fi
 
-# Extract the first word of "doxygen", so it can be a program name with args.
-set dummy doxygen; ac_word=$2
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}windres", so it can be a program name with args.
+set dummy ${ac_tool_prefix}windres; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_DOXYGEN+set}" = set; then
+if test "${ac_cv_prog_WINDRES+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$DOXYGEN"; then
-  ac_cv_prog_DOXYGEN="$DOXYGEN" # Let the user override the test.
+  if test -n "$WINDRES"; then
+  ac_cv_prog_WINDRES="$WINDRES" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -3069,7 +3161,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_DOXYGEN=":"
+    ac_cv_prog_WINDRES="${ac_tool_prefix}windres"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -3078,7 +3170,89 @@ done
 
 fi
 fi
-DOXYGEN=$ac_cv_prog_DOXYGEN
+WINDRES=$ac_cv_prog_WINDRES
+if test -n "$WINDRES"; then
+  echo "$as_me:$LINENO: result: $WINDRES" >&5
+echo "${ECHO_T}$WINDRES" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_WINDRES"; then
+  ac_ct_WINDRES=$WINDRES
+  # Extract the first word of "windres", so it can be a program name with args.
+set dummy windres; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_WINDRES+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_WINDRES"; then
+  ac_cv_prog_ac_ct_WINDRES="$ac_ct_WINDRES" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_WINDRES="windres"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+ac_ct_WINDRES=$ac_cv_prog_ac_ct_WINDRES
+if test -n "$ac_ct_WINDRES"; then
+  echo "$as_me:$LINENO: result: $ac_ct_WINDRES" >&5
+echo "${ECHO_T}$ac_ct_WINDRES" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  WINDRES=$ac_ct_WINDRES
+else
+  WINDRES="$ac_cv_prog_WINDRES"
+fi
+
+# Extract the first word of "doxygen", so it can be a program name with args.
+set dummy doxygen; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_DOXYGEN+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $DOXYGEN in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_DOXYGEN="$DOXYGEN" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_DOXYGEN="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+DOXYGEN=$ac_cv_path_DOXYGEN
+
 if test -n "$DOXYGEN"; then
   echo "$as_me:$LINENO: result: $DOXYGEN" >&5
 echo "${ECHO_T}$DOXYGEN" >&6
@@ -3215,9 +3389,17 @@ echo "${ECHO_T}no" >&6
 fi
 
     if test "x$CYGPATH" = "x"; then
-      { { echo "$as_me:$LINENO: error: cygpath is not found." >&5
+      case "$host_os" in
+        *cygwin*)
+          { { echo "$as_me:$LINENO: error: cygpath is not found." >&5
 echo "$as_me: error: cygpath is not found." >&2;}
    { (exit 1); exit 1; }; }
+          ;;
+      esac
+    fi
+
+    if test "x$WINDRES" != "x"; then
+      RESOURCE_TYPE=rc
     fi
 
     ;;
@@ -3227,6 +3409,7 @@ echo "$as_me: error: cygpath is not found." >&2;}
     LIBEXT='a'
     ;;
 esac
+
 
 
 
@@ -3280,7 +3463,7 @@ fi
 
 if test "x$SML" = "x"; then
   case "$host_os" in
-    *cygwin*|*mingw*)
+    *cygwin*)
       # Extract the first word of "sml.bat", so it can be a program name with args.
 set dummy sml.bat; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3320,8 +3503,61 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+      SML_BAT="$SML"
+      ;;
+    *mingw*)
+      # Extract the first word of "sml.bat", so it can be a program name with args.
+set dummy sml.bat; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_SML+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $SML in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_SML="$SML" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_SML="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+SML=$ac_cv_path_SML
+
+if test -n "$SML"; then
+  echo "$as_me:$LINENO: result: $SML" >&5
+echo "${ECHO_T}$SML" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+      if test "x$SML" != "x"; then
+        SML_BAT=`echo "$SML" | sed 's,^/\\([a-zA-Z]\\)/,\\1:/,;s,//*,/,g'`
+        if test -f "$SML_BAT"; then
+          SML="cmd /c $SML_BAT"
+        else
+          { { echo "$as_me:$LINENO: error: $SML is found, but $sml_bat is not found." >&5
+echo "$as_me: error: $SML is found, but $sml_bat is not found." >&2;}
+   { (exit 1); exit 1; }; }
+        fi
+      fi
       ;;
   esac
+
 fi
 if test "x$SML" = "x"; then
   { { echo "$as_me:$LINENO: error: sml command is not found." >&5
@@ -3332,22 +3568,24 @@ fi
 
 echo "$as_me:$LINENO: checking for version of SML/NJ" >&5
 echo $ECHO_N "checking for version of SML/NJ... $ECHO_C" >&6
-SMLNJ_VERSION=`echo | $SML | \
-    sed -n -e 's/^Standard ML of New Jersey, Version \([0-9\.]*\).*/\1/' \
-           -e 's/^Standard ML of New Jersey v\([0-9\.]*\).*/\1/' \
+SMLNJ_VERSION=`echo | $SML 2>&1`
+if test "x$?" = "x0"; then
+  SMLNJ_VERSION=`echo "$SMLNJ_VERSION" | \
+    sed -n -e 's/^Standard ML of New Jersey, Version \\([0-9\.]*\\).*/\1/' \
+           -e 's/^Standard ML of New Jersey v\\([0-9\.]*\\).*/\\1/' \
            -e '/^[0-9.]*$/p'`
-echo "$as_me:$LINENO: result: $SMLNJ_VERSION" >&5
+  echo "$as_me:$LINENO: result: $SMLNJ_VERSION" >&5
 echo "${ECHO_T}$SMLNJ_VERSION" >&6
+else
+  { { echo "$as_me:$LINENO: error: $SML failed." >&5
+echo "$as_me: error: $SML failed." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
 case "$SMLNJ_VERSION" in
-110.0.[789]) ;;
-*)
-  { echo "$as_me:$LINENO: WARNING: This version of SML/NJ is not supported." >&5
-echo "$as_me: WARNING: This version of SML/NJ is not supported." >&2;}
-  ;;
-esac
-
-
-# Extract the first word of "sml-cm", so it can be a program name with args.
+  110.0.[789])
+    NEW_CM=no
+    # Extract the first word of "sml-cm", so it can be a program name with args.
 set dummy sml-cm; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -3386,10 +3624,10 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-if test "x$SMLCM" = "x"; then
-  case "$host_os" in
-    *cygwin*|*mingw*)
-      # Extract the first word of "sml-cm.bat", so it can be a program name with args.
+    if test "x$SMLCM" = "x"; then
+      case "$host_os" in
+        *cygwin*)
+          # Extract the first word of "sml-cm.bat", so it can be a program name with args.
 set dummy sml-cm.bat; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -3428,46 +3666,285 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-      ;;
-  esac
+          SMLCM_BAT="$SMLCM"
+          ;;
+        *mingw*)
+          # Extract the first word of "sml-cm.bat", so it can be a program name with args.
+set dummy sml-cm.bat; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_SMLCM+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $SMLCM in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_SMLCM="$SMLCM" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_SMLCM="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
 fi
-if test "x$SMLCM" = "x"; then
-  { { echo "$as_me:$LINENO: error: sml-cm command is not found." >&5
+SMLCM=$ac_cv_path_SMLCM
+
+if test -n "$SMLCM"; then
+  echo "$as_me:$LINENO: result: $SMLCM" >&5
+echo "${ECHO_T}$SMLCM" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+          if test "x$SMLCM" != "x"; then
+            SMLCM_BAT=`echo "$SMLCM" | \
+                       sed 's,^/\\([a-zA-Z]\\)/,\\1:/,;s,//*,/,g'`
+            if test -f "$SMLCM_BAT"; then
+              SMLCM="cmd /c $SMLCM_BAT"
+            else
+              { { echo "$as_me:$LINENO: error: $SML is found, but $sml_bat is not found." >&5
+echo "$as_me: error: $SML is found, but $sml_bat is not found." >&2;}
+   { (exit 1); exit 1; }; }
+            fi
+          fi
+          ;;
+      esac
+
+    fi
+    if test "x$SMLCM" = "x"; then
+      { { echo "$as_me:$LINENO: error: sml-cm command is not found." >&5
 echo "$as_me: error: sml-cm command is not found." >&2;}
    { (exit 1); exit 1; }; }
-fi
+    fi
 
-
-echo "$as_me:$LINENO: checking for version of sml and sml-cm" >&5
+    echo "$as_me:$LINENO: checking for version of sml and sml-cm" >&5
 echo $ECHO_N "checking for version of sml and sml-cm... $ECHO_C" >&6
-smlver=`echo | "$SML"`
-smlcmver=`echo | "$SMLCM"`
-if test "x$smlver" = "x$smlcmver"; then
-  echo "$as_me:$LINENO: result: matched" >&5
+    smlver=`echo | $SML`
+    smlcmver=`echo | $SMLCM`
+    if test "x$smlver" = "x$smlcmver"; then
+      echo "$as_me:$LINENO: result: matched" >&5
 echo "${ECHO_T}matched" >&6
-else
-  echo "$as_me:$LINENO: result: mismatched" >&5
+    else
+      echo "$as_me:$LINENO: result: mismatched" >&5
 echo "${ECHO_T}mismatched" >&6
-  { { echo "$as_me:$LINENO: error: both sml and sml-cm must be the same version." >&5
+      { { echo "$as_me:$LINENO: error: both sml and sml-cm must be the same version." >&5
 echo "$as_me: error: both sml and sml-cm must be the same version." >&2;}
    { (exit 1); exit 1; }; }
-fi
+    fi
+    ;;
+
+  110.5[3-9]|110.[6-9][0-9])
+    # NOTE: SML/NJ 110.52 or earlier unstable version tells a lie
+    #       that PowerPC is LITTLE_ENDIAN.
+    NEW_CM=yes
+    SMLCM="$SML"
+    ;;
+
+  *)
+    if expr "$SMLNJ_VERSION" : '.*[^0-9.]' > /dev/null 2>&1; then
+      { { echo "$as_me:$LINENO: error: cannot detect SML/NJ version number. $SML does not seem to work." >&5
+echo "$as_me: error: cannot detect SML/NJ version number. $SML does not seem to work." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+    { echo "$as_me:$LINENO: WARNING: This version of SML/NJ is not supported." >&5
+echo "$as_me: WARNING: This version of SML/NJ is not supported." >&2;}
+    ;;
+esac
+
+
+
+
 
 echo "$as_me:$LINENO: checking for suffix of heap image" >&5
 echo $ECHO_N "checking for suffix of heap image... $ECHO_C" >&6
 (mkdir conftest && cd conftest \
  && echo 'SMLofNJ.exportFn("conftest",fn _=>OS.Process.success);' \
-    | "$SMLCM" > /dev/null 2>&1)
-SML_HEAP_SUFFIX=`(cd conftest && echo *) | sed 's,^conftest\.,,'`
+    | $SMLCM > /dev/null 2>&1)
+SML_HEAP_SUFFIX=`(cd conftest && echo *) | sed 's,^conftest\\.,,'`
 echo "$as_me:$LINENO: result: $SML_HEAP_SUFFIX" >&5
 echo "${ECHO_T}$SML_HEAP_SUFFIX" >&6
-if test "x$SML_HEAP_SUFFIX" = "x"; then
+if test "x$SML_HEAP_SUFFIX" = "x" || test "x$SML_HEAP_SUFFIX" = "x*"; then
   { { echo "$as_me:$LINENO: error: \"failed.\"" >&5
 echo "$as_me: error: \"failed.\"" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 rm -rf conftest
+
+
+USE_MLTON=no
+MLTON=mlton
+MLTON_LEX=mllex
+MLTON_YACC=mlyacc
+
+
+# Check whether --with-mlton or --without-mlton was given.
+if test "${with_mlton+set}" = set; then
+  withval="$with_mlton"
+
+  USE_MLTON=yes
+
+  if test "x$with_mlton" = "x"; then
+    mlton_path=$PATH
+  else
+    mlton_path=${with_mlton}/bin:$PATH
+  fi
+
+  # Extract the first word of "mlton", so it can be a program name with args.
+set dummy mlton; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_MLTON+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $MLTON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_MLTON="$MLTON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $mlton_path
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_MLTON="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+MLTON=$ac_cv_path_MLTON
+
+if test -n "$MLTON"; then
+  echo "$as_me:$LINENO: result: $MLTON" >&5
+echo "${ECHO_T}$MLTON" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  if test "x$MLTON" = "x"; then
+    { { echo "$as_me:$LINENO: error: mlton command is not found." >&5
+echo "$as_me: error: mlton command is not found." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  # Extract the first word of "mllex", so it can be a program name with args.
+set dummy mllex; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_MLTON_LEX+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $MLTON_LEX in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_MLTON_LEX="$MLTON_LEX" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $mlton_path
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_MLTON_LEX="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+MLTON_LEX=$ac_cv_path_MLTON_LEX
+
+if test -n "$MLTON_LEX"; then
+  echo "$as_me:$LINENO: result: $MLTON_LEX" >&5
+echo "${ECHO_T}$MLTON_LEX" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  if test "x$MLTON_LEX" = "x"; then
+    { { echo "$as_me:$LINENO: error: ml-lex command is not found." >&5
+echo "$as_me: error: ml-lex command is not found." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  # Extract the first word of "mlyacc", so it can be a program name with args.
+set dummy mlyacc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_MLTON_YACC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $MLTON_YACC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_MLTON_YACC="$MLTON_YACC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $mlton_path
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_MLTON_YACC="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+MLTON_YACC=$ac_cv_path_MLTON_YACC
+
+if test -n "$MLTON_YACC"; then
+  echo "$as_me:$LINENO: result: $MLTON_YACC" >&5
+echo "${ECHO_T}$MLTON_YACC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  if test "x$MLTON_YACC" = "x"; then
+    { { echo "$as_me:$LINENO: error: ml-yacc command is not found." >&5
+echo "$as_me: error: ml-yacc command is not found." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+fi;
+
+
+
+
+
+
+
 
 echo "$as_me:$LINENO: checking for SMLFormat" >&5
 echo $ECHO_N "checking for SMLFormat... $ECHO_C" >&6
@@ -3536,20 +4013,62 @@ echo "$as_me:$LINENO: result: $SMLUNITDIR" >&5
 echo "${ECHO_T}$SMLUNITDIR" >&6
 
 
+if test "x$NEW_CM" = "xyes" || test "x$MLTON" != "x"; then
+  echo "$as_me:$LINENO: checking for basis_compat" >&5
+echo $ECHO_N "checking for basis_compat... $ECHO_C" >&6
+
+# Check whether --with-basis or --without-basis was given.
+if test "${with_basis+set}" = set; then
+  withval="$with_basis"
+   BASISDIR="$with_basis/main"
+else
+   if test -d "$srcdir/basis_compat"; then
+        BASISDIR=$PWD/$srcdir/basis_compat/main
+      else
+        BASISDIR=
+      fi
+
+fi;
+  if test "x$BASISDIR" = "x" || test \! -f "$BASISDIR/basis_compat.cm"; then
+    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+    { { echo "$as_me:$LINENO: error: --with-basis option is required for this SML compiler." >&5
+echo "$as_me: error: --with-basis option is required for this SML compiler." >&2;}
+   { (exit 1); exit 1; }; }
+  else
+    echo "$as_me:$LINENO: result: $BASISDIR" >&5
+echo "${ECHO_T}$BASISDIR" >&6
+  fi
+
+fi
 
 # FIXME: There should be a more adequate place for config & make submodules.
+
+config_params=
+if test "x$USE_MLTON" != "xyes"; then
+  config_params="$config_params --with-smlnj"
+fi
+if test "x$BASISDIR" != "x"; then
+  config_params="$config_params --with-basis="`echo "$BASISDIR" | sed 's,main$,,'`
+fi
 
 if test "x$SMLFORMATDIR" = "x$PWD/$srcdir/SMLFormat"; then
   if test \! -f "$SMLFORMATDIR/bin/smlformat"; then
     echo "*** SMLFormat is not configured ***"
-    (cd "$SMLFORMATDIR" && ./configure && make SML_CMD="$SML")
+    (cd "$SMLFORMATDIR" && \
+     ./configure $config_params && \
+     make SML="$SMLCM" SML_CMD="$SML" \
+          MLTON="$MLTON" MLLEX="$MLTON_LEX" MLYACC="$MLTON_YACC")
   fi
 fi
 
 if test "x$SMLDOCDIR" = "x$PWD/$srcdir/SMLDoc"; then
   if test \! -f "$SMLDOCDIR/bin/smldoc"; then
     echo "*** SMLDoc is not configured ***"
-    (cd "$SMLDOCDIR" && ./configure && make SML_CMD="$SML")
+    (cd "$SMLDOCDIR" && \
+     ./configure $config_params && \
+     make SML="$SMLCM" SML_CMD="$SML" \
+          MLTON="$MLTON" MLLEX="$MLTON_LEX" MLYACC="$MLTON_YACC")
   fi
 fi
 
@@ -3650,6 +4169,150 @@ echo "$as_me: error: smldoc is not found. please specify --with-smldoc." >&2;}
 fi
 
 
+
+# FFI
+
+#FFI_STUB=libffi
+#LIBFFI_BUILD=libffi_build
+FFI_STUB=default
+LIBFFI_BUILD=
+FFI_MAX_ARGS=10:5
+
+
+# Check whether --with-ffi-max-args or --without-ffi-max-args was given.
+if test "${with_ffi_max_args+set}" = set; then
+  withval="$with_ffi_max_args"
+   FFI_MAX_ARGS=$with_ffi_max_args
+fi;
+
+echo "$as_me:$LINENO: checking for the max number of arguments" >&5
+echo $ECHO_N "checking for the max number of arguments... $ECHO_C" >&6
+if expr "x$FFI_MAX_ARGS" : 'x[0-9][0-9]*:[0-9][0-9]*$' > /dev/null 2>&1; then
+  FFI_MAX_ARGS=`echo "$FFI_MAX_ARGS" | sed 's/:/ /'`
+elif expr "x$FFI_MAX_ARGS" : 'x[0-9][0-9]*$' > /dev/null 2>&1; then
+  FFI_MAX_ARGS="$FFI_MAX_ARGS $FFI_MAX_ARGS"
+else
+  echo "$as_me:$LINENO: result: $FFI_MAX_ARGS" >&5
+echo "${ECHO_T}$FFI_MAX_ARGS" >&6
+  { { echo "$as_me:$LINENO: error: invalid --with-ffi-max-args option" >&5
+echo "$as_me: error: invalid --with-ffi-max-args option" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+echo "$as_me:$LINENO: result: $FFI_MAX_ARGS" >&5
+echo "${ECHO_T}$FFI_MAX_ARGS" >&6
+
+
+
+# Check whether --enable-libffi or --disable-libffi was given.
+if test "${enable_libffi+set}" = set; then
+  enableval="$enable_libffi"
+   if test "x$enable_libffi" != "xyes"; then
+    LDFLAGS="$LDFLAGS -L$enable_libffi"
+
+echo "$as_me:$LINENO: checking for ffi_call in -lffi" >&5
+echo $ECHO_N "checking for ffi_call in -lffi... $ECHO_C" >&6
+if test "${ac_cv_lib_ffi_ffi_call+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lffi  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char ffi_call ();
+int
+main ()
+{
+ffi_call ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_ffi_ffi_call=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_ffi_ffi_call=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_ffi_ffi_call" >&5
+echo "${ECHO_T}$ac_cv_lib_ffi_ffi_call" >&6
+if test $ac_cv_lib_ffi_ffi_call = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBFFI 1
+_ACEOF
+
+  LIBS="-lffi $LIBS"
+
+fi
+
+    FFI_STUB=libffi
+    LIBFFI_BUILD=
+  fi
+else
+   if test "x$enable_libffi" = "xno"; then
+    FFI_STUB=default
+    LIBFFI_BUILD=
+  fi
+fi;
+
+
+echo "$as_me:$LINENO: checking for ffi" >&5
+echo $ECHO_N "checking for ffi... $ECHO_C" >&6
+if test "x$FFI_STUB" = "libffi" && test "x$LIBFFI_BUILD" = "x"; then
+  echo "$as_me:$LINENO: result: libffi (external)" >&5
+echo "${ECHO_T}libffi (external)" >&6
+else
+  echo "$as_me:$LINENO: result: $FFI_STUB" >&5
+echo "${ECHO_T}$FFI_STUB" >&6
+fi
+
+
+
+if test "x$LIBFFI_BUILD" != "x"; then
+  { echo "$as_me:$LINENO: starting configure for libffi" >&5
+echo "$as_me: starting configure for libffi" >&6;}
+  (mkdir -p "src/runtime/$LIBFFI_BUILD" && \
+   cd "src/runtime/$LIBFFI_BUILD" && \
+   "../../../$srcdir/src/runtime/libffi/configure" \
+   --disable-shared --enable-static)
+fi
 
 
 # Checks for libraries.
@@ -4993,9 +5656,10 @@ done
 
 
 
+
 for ac_header in arpa/inet.h fcntl.h limits.h netinet/in.h stdlib.h \
-                  string.h strings.h sys/socket.h sys/time.h unistd.h \
-                  utime.h ieeefp.h floatingpoint.h
+                  string.h strings.h sys/socket.h time.h unistd.h \
+                  poll.h utime.h ieeefp.h floatingpoint.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -5741,75 +6405,6 @@ _ACEOF
 fi
 
 
-echo "$as_me:$LINENO: checking return type of signal handlers" >&5
-echo $ECHO_N "checking return type of signal handlers... $ECHO_C" >&6
-if test "${ac_cv_type_signal+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <signal.h>
-#ifdef signal
-# undef signal
-#endif
-#ifdef __cplusplus
-extern "C" void (*signal (int, void (*)(int)))(int);
-#else
-void (*signal ()) ();
-#endif
-
-int
-main ()
-{
-int i;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_cxx_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_type_signal=void
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_type_signal=int
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_type_signal" >&5
-echo "${ECHO_T}$ac_cv_type_signal" >&6
-
-cat >>confdefs.h <<_ACEOF
-#define RETSIGTYPE $ac_cv_type_signal
-_ACEOF
-
-
 echo "$as_me:$LINENO: checking whether byte ordering is bigendian" >&5
 echo $ECHO_N "checking whether byte ordering is bigendian... $ECHO_C" >&6
 if test "${ac_cv_c_bigendian+set}" = set; then
@@ -6026,12 +6621,17 @@ echo "${ECHO_T}$ac_cv_c_bigendian" >&6
 case $ac_cv_c_bigendian in
   yes)
 
+
 cat >>confdefs.h <<\_ACEOF
 #define WORDS_BIGENDIAN 1
 _ACEOF
+
+  BYTE_ORDER=Big
  ;;
   no)
-     ;;
+
+  BYTE_ORDER=Little
+ ;;
   *)
     { { echo "$as_me:$LINENO: error: unknown endianness
 presetting ac_cv_c_bigendian=no (or yes) will help" >&5
@@ -6039,6 +6639,77 @@ echo "$as_me: error: unknown endianness
 presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
+
+
+
+echo "$as_me:$LINENO: checking return type of signal handlers" >&5
+echo $ECHO_N "checking return type of signal handlers... $ECHO_C" >&6
+if test "${ac_cv_type_signal+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <signal.h>
+#ifdef signal
+# undef signal
+#endif
+#ifdef __cplusplus
+extern "C" void (*signal (int, void (*)(int)))(int);
+#else
+void (*signal ()) ();
+#endif
+
+int
+main ()
+{
+int i;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_type_signal=void
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_type_signal=int
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_type_signal" >&5
+echo "${ECHO_T}$ac_cv_type_signal" >&6
+
+cat >>confdefs.h <<_ACEOF
+#define RETSIGTYPE $ac_cv_type_signal
+_ACEOF
+
 
 echo "$as_me:$LINENO: checking for int" >&5
 echo $ECHO_N "checking for int... $ECHO_C" >&6
@@ -11099,9 +11770,10 @@ rm -f conftest.data
 
 
 
+
 for ac_func in bzero floor getcwd gettimeofday localtime_r memmove \
                 memset mkdir modf pow rmdir socket sqrt strerror utime \
-                sigaction sigprocmask \
+                sigaction sigprocmask sleep \
                 fpclass
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -12002,7 +12674,7 @@ fi
 
 # finish.
 
-                                                                                                                                                                                                                                                ac_config_files="$ac_config_files commonrule mksmlheap mksmlrun mksmlpath Makefile stublibs/Makefile src/Makefile src/configuration/Makefile src/primitives/Makefile src/primitives/generator/main/Makefile src/primitives/runtime/main/Makefile src/primitives/compiler/main/Makefile src/instructions/Makefile src/instructions/generator/Makefile src/instructions/runtime/main/Makefile src/instructions/compiler/main/Makefile src/compiler/Makefile src/lib/Makefile src/lib/Script/Makefile src/runtime/Makefile src/runtime/runtime-core/main/Makefile src/runtime/runtime-impl/main/Makefile src/runtime/byterun/main/Makefile doc/Makefile"
+                                                                                                                                                                                                                                                                                                                                                    ac_config_files="$ac_config_files commonrule mksmlheap mksmlrun mksmlpath newcm.cm Makefile stublibs/Makefile src/Makefile src/configuration/Makefile src/primitives/Makefile src/primitives/generator/main/Makefile src/primitives/runtime/main/Makefile src/primitives/compiler/main/Makefile src/instructions/Makefile src/instructions/generator/Makefile src/instructions/runtime/main/Makefile src/instructions/compiler/main/Makefile src/compiler/Makefile src/lib/Makefile src/lib/basis/Makefile src/lib/CConfig/Makefile src/lib/FFI/Makefile src/lib/LMLML/Makefile src/lib/Script/Makefile src/lib/SMLSharp/Makefile src/runtime/Makefile src/runtime/runtime-core/main/Makefile src/runtime/runtime-impl/main/Makefile src/runtime/icons/Makefile src/runtime/byterun/main/Makefile src/tool/Makefile src/tool/OLE/Makefile src/tool/smlsharp2exe/Makefile doc/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -12533,6 +13205,7 @@ do
   "mksmlheap" ) CONFIG_FILES="$CONFIG_FILES mksmlheap" ;;
   "mksmlrun" ) CONFIG_FILES="$CONFIG_FILES mksmlrun" ;;
   "mksmlpath" ) CONFIG_FILES="$CONFIG_FILES mksmlpath" ;;
+  "newcm.cm" ) CONFIG_FILES="$CONFIG_FILES newcm.cm" ;;
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "stublibs/Makefile" ) CONFIG_FILES="$CONFIG_FILES stublibs/Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
@@ -12547,11 +13220,20 @@ do
   "src/instructions/compiler/main/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/instructions/compiler/main/Makefile" ;;
   "src/compiler/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/compiler/Makefile" ;;
   "src/lib/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/Makefile" ;;
+  "src/lib/basis/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/basis/Makefile" ;;
+  "src/lib/CConfig/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/CConfig/Makefile" ;;
+  "src/lib/FFI/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/FFI/Makefile" ;;
+  "src/lib/LMLML/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/LMLML/Makefile" ;;
   "src/lib/Script/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/Script/Makefile" ;;
+  "src/lib/SMLSharp/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/lib/SMLSharp/Makefile" ;;
   "src/runtime/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/runtime/Makefile" ;;
   "src/runtime/runtime-core/main/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-core/main/Makefile" ;;
   "src/runtime/runtime-impl/main/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/runtime/runtime-impl/main/Makefile" ;;
+  "src/runtime/icons/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/runtime/icons/Makefile" ;;
   "src/runtime/byterun/main/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/runtime/byterun/main/Makefile" ;;
+  "src/tool/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/tool/Makefile" ;;
+  "src/tool/OLE/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/tool/OLE/Makefile" ;;
+  "src/tool/smlsharp2exe/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/tool/smlsharp2exe/Makefile" ;;
   "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -12650,6 +13332,7 @@ s,@target@,$target,;t t
 s,@target_cpu@,$target_cpu,;t t
 s,@target_vendor@,$target_vendor,;t t
 s,@target_os@,$target_os,;t t
+s,@SMLSHARP_PLATFORM@,$SMLSHARP_PLATFORM,;t t
 s,@CXX@,$CXX,;t t
 s,@CXXFLAGS@,$CXXFLAGS,;t t
 s,@LDFLAGS@,$LDFLAGS,;t t
@@ -12667,26 +13350,44 @@ s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@FIND@,$FIND,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
+s,@LD@,$LD,;t t
+s,@ac_ct_LD@,$ac_ct_LD,;t t
 s,@AR@,$AR,;t t
 s,@ac_ct_AR@,$ac_ct_AR,;t t
+s,@WINDRES@,$WINDRES,;t t
+s,@ac_ct_WINDRES@,$ac_ct_WINDRES,;t t
 s,@DOXYGEN@,$DOXYGEN,;t t
 s,@DLLTOOL@,$DLLTOOL,;t t
 s,@ac_ct_DLLTOOL@,$ac_ct_DLLTOOL,;t t
 s,@CYGPATH@,$CYGPATH,;t t
+s,@RESOURCE_TYPE@,$RESOURCE_TYPE,;t t
 s,@DLEXT@,$DLEXT,;t t
 s,@DLSTUBEXT@,$DLSTUBEXT,;t t
 s,@LIBEXT@,$LIBEXT,;t t
 s,@SML@,$SML,;t t
-s,@SMLNJ_VERSION@,$SMLNJ_VERSION,;t t
+s,@SML_BAT@,$SML_BAT,;t t
 s,@SMLCM@,$SMLCM,;t t
+s,@SMLCM_BAT@,$SMLCM_BAT,;t t
+s,@SMLNJ_VERSION@,$SMLNJ_VERSION,;t t
+s,@NEW_CM@,$NEW_CM,;t t
 s,@SML_HEAP_SUFFIX@,$SML_HEAP_SUFFIX,;t t
+s,@MLTON@,$MLTON,;t t
+s,@MLTON_LEX@,$MLTON_LEX,;t t
+s,@MLTON_YACC@,$MLTON_YACC,;t t
+s,@USE_MLTON@,$USE_MLTON,;t t
+s,@MLTON_FLAGS@,$MLTON_FLAGS,;t t
 s,@SMLFORMATDIR@,$SMLFORMATDIR,;t t
 s,@SMLDOCDIR@,$SMLDOCDIR,;t t
 s,@SMLUNITDIR@,$SMLUNITDIR,;t t
+s,@BASISDIR@,$BASISDIR,;t t
 s,@SMLFORMAT@,$SMLFORMAT,;t t
 s,@SMLDOC@,$SMLDOC,;t t
+s,@FFI_MAX_ARGS@,$FFI_MAX_ARGS,;t t
+s,@LIBFFI_BUILD@,$LIBFFI_BUILD,;t t
+s,@FFI_STUB@,$FFI_STUB,;t t
 s,@CXXCPP@,$CXXCPP,;t t
 s,@EGREP@,$EGREP,;t t
+s,@BYTE_ORDER@,$BYTE_ORDER,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@JDKLIBPATH@,$JDKLIBPATH,;t t
 s,@STUBLIBS@,$STUBLIBS,;t t

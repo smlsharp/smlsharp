@@ -3,7 +3,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Unify.sml,v 1.4 2006/03/02 20:25:59 ohori Exp $
+ * @version $Id: Unify.sml,v 1.11 2007/03/10 15:27:04 ohori Exp $
  *)
 structure Unify : UNIFY =
 struct
@@ -12,24 +12,23 @@ struct
     open Types 
     open TypesUtils 
     open TypeinfBase 
-    open StaticEnv
-    structure SE = StaticEnv
+    structure PT = PredefinedTypes
 
     exception Unify
     exception KindCheck
 
     fun eqBaseTy (CONty{tyCon = tyCon1, ...}, CONty{tyCon = tyCon2, ...}) =
-             #id tyCon1 = #id tyCon2
+          ID.eq(#id tyCon1, #id tyCon2)
       | eqBaseTy _ = false
     fun isMember (ty,nil) = false
       | isMember (ty1, ty2 :: tail) =
         eqBaseTy(ty1, ty2) orelse isMember(ty1, tail)
     fun isEqtype (CONty{tyCon = {id, ...}, ...}) =
-        (id = SE.boolTyConid)
-        orelse (id = SE.intTyConid)
-        orelse (id = SE.wordTyConid)
-        orelse (id = charTyConid)
-        orelse (id = stringTyConid)
+        ID.eq(id, PT.boolTyConid)
+        orelse ID.eq(id, PT.intTyConid)
+        orelse ID.eq(id, PT.wordTyConid)
+        orelse ID.eq(id, PT.charTyConid)
+        orelse ID.eq(id, PT.stringTyConid)
     fun intersection (l1,l2) =
       foldr
       (fn (ty,l) => if List.exists (fn x => eqBaseTy (ty,x)) l2 then
@@ -48,6 +47,12 @@ struct
      *)
     fun lubKind (tvKind1 : tvKind, tvKind2 : tvKind) =
         let 
+          val lambdaDepth = Int.min(#lambdaDepth tvKind1, #lambdaDepth tvKind2)
+          val eqKind = 
+              case (#eqKind tvKind1, #eqKind tvKind2) of
+                (NONEQ, x) => x
+              | (x, NONEQ) => x
+              | _ => EQ
           val (newRecKind, newTyEquations) = 
               case (#recKind tvKind1, #recKind tvKind2) of
                 (UNIV, x) => (x, nil)
@@ -62,16 +67,14 @@ struct
                 end
               | (OVERLOADED L1, OVERLOADED L2) => 
                 let val L = intersection(L1, L2)
+                    val L = case eqKind of 
+                              EQ => List.filter admitEqTy L
+                            | _ => L          
                 in
                   case L of nil => raise Unify
                     | _ => (OVERLOADED L, nil)
                 end
               | _ => raise Control.Bug "lubKind: incompatible kind"
-          val eqKind = 
-              case (#eqKind tvKind1, #eqKind tvKind2) of
-                (NONEQ, x) => x
-              | (x, NONEQ) => x
-              | _ => EQ
           val tyvarName = 
               case (#tyvarName tvKind1, #tyvarName tvKind2) of
                 (NONE, x) => x
@@ -79,7 +82,12 @@ struct
               | (SOME v1, SOME v2) => SOME v1
         in 
           (
-            {recKind = newRecKind, eqKind = eqKind, tyvarName = tyvarName},
+            {
+             lambdaDepth = lambdaDepth,
+             recKind = newRecKind, 
+             eqKind = eqKind, 
+             tyvarName = tyvarName
+             },
             newTyEquations
           )
         end
@@ -100,6 +108,7 @@ struct
           val _ =
               (case #eqKind kind of EQ => CheckEq.checkEq ty | _ => ())
               handle CheckEq.Eqcheck => raise KindCheck
+          val _ = adjustDepthInTy (#lambdaDepth kind) ty
           val newTyEquations = 
               case #recKind kind of
                 REC kindFields =>
@@ -164,7 +173,11 @@ struct
           | (DUMMYty _, _) => raise Unify
           | (_, DUMMYty _) => raise Unify
           | (
-             TYVARty(tvState1 as ref(TVAR {tyvarName = NONE, eqKind = NONEQ, recKind= UNIV, id = id1,...})),
+             TYVARty(tvState1 as ref(TVAR {lambdaDepth, 
+                                           tyvarName = NONE, 
+                                           eqKind = NONEQ, 
+                                           recKind= UNIV, 
+                                           id = id1,...})),
              _
              ) =>
               (case ty2 of
@@ -172,13 +185,25 @@ struct
                   if id1 = id2 then unifyTy tail
                   else if occurres tvState1 ty2 
                          then raise Unify
-                  else (performSubst(ty1, ty2); unifyTy tail)
+                  else (
+                        adjustDepthInTy lambdaDepth ty2;
+                        performSubst(ty1, ty2); 
+                        unifyTy tail
+                        )
               | _ => if occurres tvState1 ty2 
                        then raise Unify
-                     else (performSubst(ty1, ty2); unifyTy tail)
+                     else (
+                           adjustDepthInTy lambdaDepth ty2;
+                           performSubst(ty1, ty2); 
+                           unifyTy tail
+                           )
              )
           | (
-             TYVARty(tvState1 as ref(TVAR {tyvarName = NONE, eqKind = EQ, recKind= UNIV, id = id1,...})),
+             TYVARty(tvState1 as ref(TVAR {lambdaDepth, 
+                                           tyvarName = NONE, 
+                                           eqKind = EQ, 
+                                           recKind= UNIV, 
+                                           id = id1,...})),
              _
              ) =>
              let 
@@ -189,28 +214,51 @@ struct
                   if id1 = id2 then unifyTy tail
                   else if occurres tvState1 ty2 
                          then raise Unify
-                       else (performSubst(ty1, ty2); unifyTy tail)
+                       else (
+                             adjustDepthInTy lambdaDepth ty2;
+                             performSubst(ty1, ty2); 
+                             unifyTy tail
+                             )
               | _ => if occurres tvState1 ty2
                        then raise Unify
-                     else (performSubst(ty1, ty2); unifyTy tail)
+                     else (
+                           adjustDepthInTy lambdaDepth ty2;
+                           performSubst(ty1, ty2); 
+                           unifyTy tail)
              end
           | (
              _,
-             TYVARty(tvState2 as ref(TVAR {tyvarName = NONE, eqKind = NONEQ, recKind= UNIV, id = id2,...}))
+             TYVARty(tvState2 as ref(TVAR {lambdaDepth, 
+                                           tyvarName = NONE, 
+                                           eqKind = NONEQ, 
+                                           recKind= UNIV, 
+                                           id = id2,...}))
              ) =>
               (case ty1 of
                 TYVARty(ref(TVAR{id=id1,...})) =>
                   if id1 = id2 then unifyTy tail
                   else if occurres tvState2 ty1 
                          then raise Unify
-                       else (performSubst(ty2, ty1); unifyTy tail)
+                       else (
+                             adjustDepthInTy lambdaDepth ty1;
+                             performSubst(ty2, ty1); 
+                             unifyTy tail
+                             )
               | _ => if occurres tvState2 ty1 
                        then raise Unify
-                     else (performSubst(ty2, ty1); unifyTy tail)
+                     else (
+                           adjustDepthInTy lambdaDepth ty1;
+                           performSubst(ty2, ty1); 
+                           unifyTy tail
+                           )
              )
           | (
              _,
-             TYVARty(tvState2 as ref(TVAR {tyvarName = NONE, eqKind = EQ, recKind= UNIV, id = id2,...}))
+             TYVARty(tvState2 as ref(TVAR {lambdaDepth, 
+                                           tyvarName = NONE, 
+                                           eqKind = EQ, 
+                                           recKind= UNIV, 
+                                           id = id2,...}))
              ) =>
              let 
                val _ = CheckEq.checkEq ty1 handle CheckEq.Eqcheck => raise Unify
@@ -220,13 +268,21 @@ struct
                   if id1 = id2 then unifyTy tail
                   else if occurres tvState2 ty1 
                          then raise Unify
-                       else (performSubst(ty2, ty1); unifyTy tail)
+                       else (
+                             adjustDepthInTy lambdaDepth ty1;
+                             performSubst(ty2, ty1); 
+                             unifyTy tail
+                             )
               | _ => if occurres tvState2 ty1 
                        then raise Unify
-                     else (performSubst(ty2, ty1); unifyTy tail)
+                     else (
+                           adjustDepthInTy lambdaDepth ty1;
+                           performSubst(ty2, ty1); 
+                           unifyTy tail
+                           )
              end
-          | (ABSSPECty(ty11, ty12),  ABSSPECty(ty21, ty22)) => 
-            unifyTy ((ty11,ty21) :: tail)
+          | (ABSSPECty(ty11, ty12),  ty2) => unifyTy ((ty11,ty2) :: tail)
+          | (ty1, ABSSPECty(ty21, ty22)) => unifyTy ((ty1,ty21) :: tail)
           | (ty1, SPECty ty2) => unifyTy ((ty1,ty2) :: tail)
           | (SPECty ty1, ty2) => unifyTy ((ty1,ty2) :: tail)
           | (
@@ -246,25 +302,34 @@ struct
                else
                  let 
                    val (newTvarInfo, newTyEquations) = lubKind (tvKind1, tvKind2)
-                   val newty = newty newTvarInfo
+                   val newty = newtyRaw newTvarInfo
                  in
+                   unifyTy newTyEquations;
                    performSubst(ty1, newty);
                    performSubst(ty2, newty);
-                   unifyTy (newTyEquations@tail)
+                   unifyTy tail
                  end
           | (
-             TYVARty (ref(TVAR {recKind = OVERLOADED L1, ...})), 
+             TYVARty (ref(TVAR {lambdaDepth, recKind = OVERLOADED L1, ...})), 
              CONty _
              ) =>
                if isMember (ty2, L1)
-                 then (performSubst(ty1, ty2); unifyTy tail)
+                 then (
+                       adjustDepthInTy lambdaDepth ty2;
+                       performSubst(ty1, ty2); 
+                       unifyTy tail
+                       )
                else raise Unify
           | (
              CONty _,
-             TYVARty (ref(TVAR {recKind = OVERLOADED L1, ...}))
+             TYVARty (ref(TVAR {lambdaDepth, recKind = OVERLOADED L1, ...}))
             ) =>
               if isMember (ty1,L1)
-                then (performSubst(ty2, ty1); unifyTy tail)
+                then (
+                      adjustDepthInTy lambdaDepth ty1;
+                      performSubst(ty2, ty1); 
+                      unifyTy tail
+                      )
               else raise Unify
           | (
               TYVARty (ref(TVAR {recKind = OVERLOADED L1, ...})), 
@@ -286,11 +351,12 @@ struct
                 else 
                   let 
                     val (newTvarInfo, newTyEquations) = lubKind (tvKind1, tvKind2)
-                    val newty = newty newTvarInfo
+                    val newty = newtyRaw newTvarInfo
                   in
+                    unifyTy newTyEquations;
                     performSubst(ty1, newty);
                     performSubst(ty2, newty);
-                    unifyTy (newTyEquations@tail)
+                    unifyTy tail
                   end
           | (TYVARty (tvState1 as ref(TVAR tvKind1)), ty2) => 
              if occurres tvState1 ty2 
@@ -327,7 +393,7 @@ struct
               let
                 val {name=name1,id=id1,...} = tyCon1
                 val {name=name2,id=id2,...} = tyCon2
-                val omit= calledFromPatternUnify orelse id1 = id2
+                val omit= calledFromPatternUnify orelse ID.eq(id1, id2)
               in
                 if omit andalso length tyList1 = length tyList2
                   then unifyTy  (ListPair.zip (tyList1, tyList2) @ tail)
@@ -350,7 +416,7 @@ struct
               end
            | (ty1, ty2) => raise Unify
     in
-      unifyTy L
+       unifyTy L
     end
   (**
    *  Perform imperative unification, When it succeeds, the unifier had

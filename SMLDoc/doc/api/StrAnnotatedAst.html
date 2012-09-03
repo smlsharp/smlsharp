@@ -1,0 +1,672 @@
+<HTML>
+<HEAD>
+<TITLE>AnnotatedAst</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLDoc</em>
+</TD></TR></TABLE>
+<HR>
+<H2>AnnotatedAst</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrAnnotatedAst.html">AnnotatedAst</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;=&nbsp;{fileName&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;line&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>,&nbsp;column&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>}<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;=&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;=&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;=&nbsp;<A HREF="StrDocComment.html#TypedocComment">DocComment.docComment</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;datatype&nbsp;'a&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A>&nbsp;=&nbsp;<A HREF="StrAnnotatedAst.html#ConstrNoSig">NoSig</A>&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTransparent">Transparent</A>&nbsp;of&nbsp;'a&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrOpaque">Opaque</A>&nbsp;of&nbsp;'a<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarStr">VarStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrBaseStr">BaseStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrConstrainedStr">ConstrainedStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrAppStr">AppStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;(<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;bool)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrLetStr">LetStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarFct">VarFct</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrBaseFct">BaseFct</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;params&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;constraint&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrAppFct">AppFct</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;(<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;bool)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrLetFct">LetFct</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typewherespec">wherespec</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrWhType">WhType</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrWhStruct">WhStruct</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarSig">VarSig</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrAugSig">AugSig</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typewherespec">wherespec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrBaseSig">BaseSig</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarFsig">VarFsig</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrBaseFsig">BaseFsig</A>&nbsp;of&nbsp;{params&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;result&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrStrSpec">StrSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTycSpec">TycSpec</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;bool&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrFctSpec">FctSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrValSpec">ValSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrDataSpec">DataSpec</A>&nbsp;of&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrExceSpec">ExceSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrShareStrSpec">ShareStrSpec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrShareTycSpec">ShareTycSpec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrIncludeSpec">IncludeSpec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrValDec">ValDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrFunDec">FunDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTypeDec">TypeDec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrDatatypeDec">DatatypeDec</A>&nbsp;of&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrAbstypeDec">AbstypeDec</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;body&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrExceptionDec">ExceptionDec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typeeb">eb</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrStrDec">StrDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrFctDec">FctDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrSigDec">SigDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrFsigDec">FsigDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrLocalDec">LocalDec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrOpenDec">OpenDec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;=&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTb">Tb</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrDb">Db</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{tyc&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;loc&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>,&nbsp;tyvars&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;rhs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedbrhs">dbrhs</A>}&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typedbrhs">dbrhs</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrConstrs">Constrs</A>&nbsp;of&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrRepl">Repl</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typeeb">eb</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrEbGen">EbGen</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrEbDef">EbDef</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarTy">VarTy</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrConTy">ConTy</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrRecordTy">RecordTy</A>&nbsp;of&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTupleTy">TupleTy</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrCommentedTy">CommentedTy</A>&nbsp;of&nbsp;<A HREF="StrDocComment.html#TypedocComment">DocComment.docComment</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrAnnotatedAst.html#TypecompileUnit">compileUnit</A>&nbsp;=&nbsp;<A HREF="StrAnnotatedAst.html#ConstrCompileUnit">CompileUnit</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+ abstract syntax tree annotated with doc comment.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Author:</B>
+<DD>
+YAMATODANI Kiyoshi
+
+<DT> <B>Version:</B>
+<DD>
+$Id: StrAnnotatedAst.html,v 1.9 2007/02/17 07:01:57 kiyoshiy Exp $
+ 
+
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeloc"><!-- --></A>
+<H3>loc</H3>
+<P>
+<CODE>type&nbsp;loc&nbsp;=&nbsp;{fileName&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;line&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>,&nbsp;column&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>}</CODE>
+
+<HR>
+<A NAME="Typepath"><!-- --></A>
+<H3>path</H3>
+<P>
+<CODE>type&nbsp;path&nbsp;=&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
+<DL>
+<DD>
+symbolic path (Modules.spath) 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="Typetyvar"><!-- --></A>
+<H3>tyvar</H3>
+<P>
+<CODE>type&nbsp;tyvar&nbsp;=&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="TypeoptDocComment"><!-- --></A>
+<H3>optDocComment</H3>
+<P>
+<CODE>type&nbsp;optDocComment&nbsp;=&nbsp;<A HREF="StrDocComment.html#TypedocComment">DocComment.docComment</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="TypesigConst"><!-- --></A>
+<H3>sigConst</H3>
+<P>
+<CODE>datatype&nbsp;'a&nbsp;sigConst&nbsp;=&nbsp;<A HREF="StrAnnotatedAst.html#ConstrNoSig">NoSig</A>&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTransparent">Transparent</A>&nbsp;of&nbsp;'a&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrOpaque">Opaque</A>&nbsp;of&nbsp;'a</CODE>
+
+<HR>
+<A NAME="Typestrexp"><!-- --></A>
+<H3>strexp</H3>
+<P>
+<CODE>datatype&nbsp;strexp&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarStr">VarStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrBaseStr">BaseStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrConstrainedStr">ConstrainedStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrAppStr">AppStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;(<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;bool)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrLetStr">LetStr</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A></CODE>
+
+<HR>
+<A NAME="Typefctexp"><!-- --></A>
+<H3>fctexp</H3>
+<P>
+<CODE>datatype&nbsp;fctexp&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarFct">VarFct</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrBaseFct">BaseFct</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;params&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;constraint&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrAppFct">AppFct</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;(<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;bool)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrLetFct">LetFct</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A></CODE>
+
+<HR>
+<A NAME="Typewherespec"><!-- --></A>
+<H3>wherespec</H3>
+<P>
+<CODE>datatype&nbsp;wherespec&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrWhType">WhType</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrWhStruct">WhStruct</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Typesigexp"><!-- --></A>
+<H3>sigexp</H3>
+<P>
+<CODE>datatype&nbsp;sigexp&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarSig">VarSig</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrAugSig">AugSig</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typewherespec">wherespec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrBaseSig">BaseSig</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Typefsigexp"><!-- --></A>
+<H3>fsigexp</H3>
+<P>
+<CODE>datatype&nbsp;fsigexp&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarFsig">VarFsig</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrBaseFsig">BaseFsig</A>&nbsp;of&nbsp;{params&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;result&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>}</CODE>
+
+<HR>
+<A NAME="Typespec"><!-- --></A>
+<H3>spec</H3>
+<P>
+<CODE>datatype&nbsp;spec&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrStrSpec">StrSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTycSpec">TycSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;bool&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrFctSpec">FctSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrValSpec">ValSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrDataSpec">DataSpec</A>&nbsp;of&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrExceSpec">ExceSpec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrShareStrSpec">ShareStrSpec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrShareTycSpec">ShareTycSpec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrIncludeSpec">IncludeSpec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A></CODE>
+
+<HR>
+<A NAME="Typedec"><!-- --></A>
+<H3>dec</H3>
+<P>
+<CODE>datatype&nbsp;dec&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrValDec">ValDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrFunDec">FunDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTypeDec">TypeDec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrDatatypeDec">DatatypeDec</A>&nbsp;of&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrAbstypeDec">AbstypeDec</A>&nbsp;of&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;body&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrExceptionDec">ExceptionDec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typeeb">eb</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrStrDec">StrDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrFctDec">FctDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrSigDec">SigDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrFsigDec">FsigDec</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrLocalDec">LocalDec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrOpenDec">OpenDec</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A></CODE>
+
+<HR>
+<A NAME="Typetb"><!-- --></A>
+<H3>tb</H3>
+<P>
+<CODE>datatype&nbsp;tb&nbsp;=&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTb">Tb</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A></CODE>
+
+<HR>
+<A NAME="Typedb"><!-- --></A>
+<H3>db</H3>
+<P>
+<CODE>datatype&nbsp;db&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrDb">Db</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{tyc&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;loc&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>,&nbsp;tyvars&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;rhs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedbrhs">dbrhs</A>}&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A></CODE>
+
+<HR>
+<A NAME="Typedbrhs"><!-- --></A>
+<H3>dbrhs</H3>
+<P>
+<CODE>datatype&nbsp;dbrhs&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrConstrs">Constrs</A>&nbsp;of&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrRepl">Repl</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="Typeeb"><!-- --></A>
+<H3>eb</H3>
+<P>
+<CODE>datatype&nbsp;eb&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrEbGen">EbGen</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrEbDef">EbDef</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A></CODE>
+
+<HR>
+<A NAME="Typety"><!-- --></A>
+<H3>ty</H3>
+<P>
+<CODE>datatype&nbsp;ty&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#ConstrVarTy">VarTy</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrConTy">ConTy</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrRecordTy">RecordTy</A>&nbsp;of&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrTupleTy">TupleTy</A>&nbsp;of&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrAnnotatedAst.html#ConstrCommentedTy">CommentedTy</A>&nbsp;of&nbsp;<A HREF="StrDocComment.html#TypedocComment">DocComment.docComment</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A></CODE>
+
+<HR>
+<A NAME="TypecompileUnit"><!-- --></A>
+<H3>compileUnit</H3>
+<P>
+<CODE>datatype&nbsp;compileUnit&nbsp;=&nbsp;<A HREF="StrAnnotatedAst.html#ConstrCompileUnit">CompileUnit</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
+<DL>
+<DD>
+source file name and set of all declarations in the file. 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrNoSig"><!-- --></A>
+<H3>NoSig</H3>
+<P>
+<CODE>constructor&nbsp;NoSig&nbsp;:&nbsp;'a&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A></CODE>
+
+<HR>
+<A NAME="ConstrTransparent"><!-- --></A>
+<H3>Transparent</H3>
+<P>
+<CODE>constructor&nbsp;Transparent&nbsp;:&nbsp;'a&nbsp;->&nbsp;'a&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A></CODE>
+
+<HR>
+<A NAME="ConstrOpaque"><!-- --></A>
+<H3>Opaque</H3>
+<P>
+<CODE>constructor&nbsp;Opaque&nbsp;:&nbsp;'a&nbsp;->&nbsp;'a&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A></CODE>
+
+<HR>
+<A NAME="ConstrVarStr"><!-- --></A>
+<H3>VarStr</H3>
+<P>
+<CODE>constructor&nbsp;VarStr&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A></CODE>
+
+<HR>
+<A NAME="ConstrBaseStr"><!-- --></A>
+<H3>BaseStr</H3>
+<P>
+<CODE>constructor&nbsp;BaseStr&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A></CODE>
+
+<HR>
+<A NAME="ConstrConstrainedStr"><!-- --></A>
+<H3>ConstrainedStr</H3>
+<P>
+<CODE>constructor&nbsp;ConstrainedStr&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A></CODE>
+
+<HR>
+<A NAME="ConstrAppStr"><!-- --></A>
+<H3>AppStr</H3>
+<P>
+<CODE>constructor&nbsp;AppStr&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;(<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;bool)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A></CODE>
+
+<HR>
+<A NAME="ConstrLetStr"><!-- --></A>
+<H3>LetStr</H3>
+<P>
+<CODE>constructor&nbsp;LetStr&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A></CODE>
+
+<HR>
+<A NAME="ConstrVarFct"><!-- --></A>
+<H3>VarFct</H3>
+<P>
+<CODE>constructor&nbsp;VarFct&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A></CODE>
+
+<HR>
+<A NAME="ConstrBaseFct"><!-- --></A>
+<H3>BaseFct</H3>
+<P>
+<CODE>constructor&nbsp;BaseFct<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;params&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;constraint&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A></CODE>
+
+<HR>
+<A NAME="ConstrAppFct"><!-- --></A>
+<H3>AppFct</H3>
+<P>
+<CODE>constructor&nbsp;AppFct&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;(<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;bool)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A></CODE>
+
+<HR>
+<A NAME="ConstrLetFct"><!-- --></A>
+<H3>LetFct</H3>
+<P>
+<CODE>constructor&nbsp;LetFct&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A></CODE>
+
+<HR>
+<A NAME="ConstrWhType"><!-- --></A>
+<H3>WhType</H3>
+<P>
+<CODE>constructor&nbsp;WhType&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typewherespec">wherespec</A></CODE>
+
+<HR>
+<A NAME="ConstrWhStruct"><!-- --></A>
+<H3>WhStruct</H3>
+<P>
+<CODE>constructor&nbsp;WhStruct&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typewherespec">wherespec</A></CODE>
+
+<HR>
+<A NAME="ConstrVarSig"><!-- --></A>
+<H3>VarSig</H3>
+<P>
+<CODE>constructor&nbsp;VarSig&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A></CODE>
+
+<HR>
+<A NAME="ConstrAugSig"><!-- --></A>
+<H3>AugSig</H3>
+<P>
+<CODE>constructor&nbsp;AugSig&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typewherespec">wherespec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A></CODE>
+
+<HR>
+<A NAME="ConstrBaseSig"><!-- --></A>
+<H3>BaseSig</H3>
+<P>
+<CODE>constructor&nbsp;BaseSig&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A></CODE>
+
+<HR>
+<A NAME="ConstrVarFsig"><!-- --></A>
+<H3>VarFsig</H3>
+<P>
+<CODE>constructor&nbsp;VarFsig&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A></CODE>
+
+<HR>
+<A NAME="ConstrBaseFsig"><!-- --></A>
+<H3>BaseFsig</H3>
+<P>
+<CODE>constructor&nbsp;BaseFsig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{params&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;result&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A></CODE>
+
+<HR>
+<A NAME="ConstrStrSpec"><!-- --></A>
+<H3>StrSpec</H3>
+<P>
+<CODE>constructor&nbsp;StrSpec<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrTycSpec"><!-- --></A>
+<H3>TycSpec</H3>
+<P>
+<CODE>constructor&nbsp;TycSpec<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;bool&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrFctSpec"><!-- --></A>
+<H3>FctSpec</H3>
+<P>
+<CODE>constructor&nbsp;FctSpec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrValSpec"><!-- --></A>
+<H3>ValSpec</H3>
+<P>
+<CODE>constructor&nbsp;ValSpec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrDataSpec"><!-- --></A>
+<H3>DataSpec</H3>
+<P>
+<CODE>constructor&nbsp;DataSpec&nbsp;:&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrExceSpec"><!-- --></A>
+<H3>ExceSpec</H3>
+<P>
+<CODE>constructor&nbsp;ExceSpec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrShareStrSpec"><!-- --></A>
+<H3>ShareStrSpec</H3>
+<P>
+<CODE>constructor&nbsp;ShareStrSpec&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrShareTycSpec"><!-- --></A>
+<H3>ShareTycSpec</H3>
+<P>
+<CODE>constructor&nbsp;ShareTycSpec&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrIncludeSpec"><!-- --></A>
+<H3>IncludeSpec</H3>
+<P>
+<CODE>constructor&nbsp;IncludeSpec&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typespec">spec</A></CODE>
+
+<HR>
+<A NAME="ConstrValDec"><!-- --></A>
+<H3>ValDec</H3>
+<P>
+<CODE>constructor&nbsp;ValDec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrFunDec"><!-- --></A>
+<H3>FunDec</H3>
+<P>
+<CODE>constructor&nbsp;FunDec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrTypeDec"><!-- --></A>
+<H3>TypeDec</H3>
+<P>
+<CODE>constructor&nbsp;TypeDec&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrDatatypeDec"><!-- --></A>
+<H3>DatatypeDec</H3>
+<P>
+<CODE>constructor&nbsp;DatatypeDec&nbsp;:&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrAbstypeDec"><!-- --></A>
+<H3>AbstypeDec</H3>
+<P>
+<CODE>constructor&nbsp;AbstypeDec<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{datatycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;withtycs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;body&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>}&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrExceptionDec"><!-- --></A>
+<H3>ExceptionDec</H3>
+<P>
+<CODE>constructor&nbsp;ExceptionDec&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typeeb">eb</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrStrDec"><!-- --></A>
+<H3>StrDec</H3>
+<P>
+<CODE>constructor&nbsp;StrDec<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typestrexp">strexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;<A HREF="StrAnnotatedAst.html#TypesigConst">sigConst</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrFctDec"><!-- --></A>
+<H3>FctDec</H3>
+<P>
+<CODE>constructor&nbsp;FctDec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefctexp">fctexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrSigDec"><!-- --></A>
+<H3>SigDec</H3>
+<P>
+<CODE>constructor&nbsp;SigDec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typesigexp">sigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrFsigDec"><!-- --></A>
+<H3>FsigDec</H3>
+<P>
+<CODE>constructor&nbsp;FsigDec&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typefsigexp">fsigexp</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrLocalDec"><!-- --></A>
+<H3>LocalDec</H3>
+<P>
+<CODE>constructor&nbsp;LocalDec&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrOpenDec"><!-- --></A>
+<H3>OpenDec</H3>
+<P>
+<CODE>constructor&nbsp;OpenDec&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A></CODE>
+
+<HR>
+<A NAME="ConstrTb"><!-- --></A>
+<H3>Tb</H3>
+<P>
+<CODE>constructor&nbsp;Tb&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typetb">tb</A></CODE>
+
+<HR>
+<A NAME="ConstrDb"><!-- --></A>
+<H3>Db</H3>
+<P>
+<CODE>constructor&nbsp;Db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{tyc&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>,&nbsp;loc&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>,&nbsp;tyvars&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;rhs&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typedbrhs">dbrhs</A>}&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrAnnotatedAst.html#Typedb">db</A></CODE>
+
+<HR>
+<A NAME="ConstrConstrs"><!-- --></A>
+<H3>Constrs</H3>
+<P>
+<CODE>constructor&nbsp;Constrs&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedbrhs">dbrhs</A></CODE>
+
+<HR>
+<A NAME="ConstrRepl"><!-- --></A>
+<H3>Repl</H3>
+<P>
+<CODE>constructor&nbsp;Repl&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typedbrhs">dbrhs</A></CODE>
+
+<HR>
+<A NAME="ConstrEbGen"><!-- --></A>
+<H3>EbGen</H3>
+<P>
+<CODE>constructor&nbsp;EbGen&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typeeb">eb</A></CODE>
+
+<HR>
+<A NAME="ConstrEbDef"><!-- --></A>
+<H3>EbDef</H3>
+<P>
+<CODE>constructor&nbsp;EbDef&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typeloc">loc</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typepath">path</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typeeb">eb</A></CODE>
+
+<HR>
+<A NAME="ConstrVarTy"><!-- --></A>
+<H3>VarTy</H3>
+<P>
+<CODE>constructor&nbsp;VarTy&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typetyvar">tyvar</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A></CODE>
+
+<HR>
+<A NAME="ConstrConTy"><!-- --></A>
+<H3>ConTy</H3>
+<P>
+<CODE>constructor&nbsp;ConTy&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A></CODE>
+
+<HR>
+<A NAME="ConstrRecordTy"><!-- --></A>
+<H3>RecordTy</H3>
+<P>
+<CODE>constructor&nbsp;RecordTy&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#TypeoptDocComment">optDocComment</A>)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A></CODE>
+
+<HR>
+<A NAME="ConstrTupleTy"><!-- --></A>
+<H3>TupleTy</H3>
+<P>
+<CODE>constructor&nbsp;TupleTy&nbsp;:&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A></CODE>
+
+<HR>
+<A NAME="ConstrCommentedTy"><!-- --></A>
+<H3>CommentedTy</H3>
+<P>
+<CODE>constructor&nbsp;CommentedTy&nbsp;:&nbsp;<A HREF="StrDocComment.html#TypedocComment">DocComment.docComment</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#Typety">ty</A></CODE>
+
+<HR>
+<A NAME="ConstrCompileUnit"><!-- --></A>
+<H3>CompileUnit</H3>
+<P>
+<CODE>constructor&nbsp;CompileUnit&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="StrAnnotatedAst.html#Typedec">dec</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrAnnotatedAst.html#TypecompileUnit">compileUnit</A></CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLDoc: Documentation generator for SML</em>
+</TD></TR></TABLE>
+</BODY></HTML>

@@ -2,7 +2,7 @@
  * signature check for module.
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: signatureCheck.sml,v 1.107 2006/03/02 12:53:26 bochao Exp $
+ * @version $Id: signatureCheck.sml,v 1.117 2007/02/28 15:31:26 katsu Exp $
  *)
 structure SigCheck =
 struct 
@@ -13,9 +13,8 @@ local
   structure TCU = TypeContextUtils
   structure E = TypeInferenceError
   structure TU = TypesUtils
-  structure SE = StaticEnv
   structure T = Types
-  
+  fun printTy ty = print (TypeFormatter.tyToString ty ^ "\n")  
 in
 
   fun freshTyConIdSetInSig (tyConIdSet, Env)  =
@@ -25,7 +24,7 @@ in
           ID.Set.foldr 
              (fn (i,(tyConIdSubst,newTyConIdSet)) => 
                 let
-                  val newTyConId = SE.newTyConId()
+                  val newTyConId = T.newTyConId()
                 in
                   (
                    ID.Map.insert(tyConIdSubst, i, newTyConId),
@@ -64,12 +63,12 @@ in
       let
         val exnTagSubst = 
             ISet.foldr 
-              (fn (i, exnTagSubst) => IEnv.insert(exnTagSubst, i, SE.newExnTag()))
+              (fn (i, exnTagSubst) => IEnv.insert(exnTagSubst, i, T.newExnTag()))
               IEnv.empty
               exnT
         val tyConIdSubst =
             ID.Set.foldr 
-              (fn (i,tyConIdSubst) => ID.Map.insert(tyConIdSubst, i, SE.newTyConId()))
+              (fn (i,tyConIdSubst) => ID.Map.insert(tyConIdSubst, i, T.newTyConId()))
               ID.Map.empty
               T1
         val E = SU.freshRefAddressOfTyConInEnv E
@@ -87,9 +86,8 @@ in
                             case tyBindInfo of
                               T.TYCON (tycon as {id, datacon,...}) =>
                               let
-                                val newBoxedKind = TU.calcTyConBoxedKindOpt (!datacon)
-                                val _ = 
-                                    #boxedKind tycon:= newBoxedKind
+                                val newBoxedKind = TU.calcTyConBoxedKind (!datacon)
+                                val _ = #boxedKind tycon:= newBoxedKind
                               in
                                 (
                                  ID.Map.insert(tyConSubst,id,T.TYCON tycon),
@@ -103,12 +101,12 @@ in
                                )
                             | T.TYFUN({name, tyargs, body = T.ALIASty(aliasTy,actTy)}) =>
                               let
-                                val boxedKindopt = TU.boxedKindOptOfType actTy
+                                val boxedKindValue = TU.boxedKindOfType actTy
                                 val (id,tyCon) = 
                                     case aliasTy of
                                       T.CONty{tyCon= tyCon as {id,boxedKind,...},...} => 
                                       let
-                                        val _ = boxedKind := boxedKindopt
+                                        val _ = boxedKind := boxedKindValue
                                       in
                                         (id,tyCon)
                                       end
@@ -117,14 +115,14 @@ in
                               in
                                 (
                                  ID.Map.insert(tyConSubst,id,T.TYCON tyCon),
-                                 ID.Map.insert(boxedKindSubst,id,boxedKindopt)
+                                 ID.Map.insert(boxedKindSubst,id,boxedKindValue)
                                  )
                               end
                              | _ => (tyConSubst,boxedKindSubst))
                         (ID.Map.empty,ID.Map.empty)
                         TE
-        fun computeBoxedKindInSE SE =
-            SEnv.foldli (fn (str,T.STRUCTURE {env = (TE,VE,SE),...},(tyConSubst,boxedKindSubst)) =>
+        fun computeBoxedKindInSE (T.STRUCTURE  SECont) =
+            SEnv.foldli (fn (str,{env = (TE,VE,SE),...},(tyConSubst,boxedKindSubst)) =>
                             let
                               val (tyConSubst1,boxedKindSubst1) = computeBoxedKindInTE TE
                               val (tyConSubst2,boxedKindSubst2) = computeBoxedKindInSE SE
@@ -141,7 +139,7 @@ in
                             end
                         )
                         (ID.Map.empty, ID.Map.empty)
-                        SE 
+                        SECont 
         val (tyConSubst1,boxedKindSubst1) = computeBoxedKindInTE TE
         val (tyConSubst2,boxedKindSubst2) = computeBoxedKindInSE SE
       in
@@ -156,7 +154,7 @@ in
                             case tyBindInfo of
                               T.TYCON (tycon as {name,strpath,abstract,
                                                  tyvars,id,eqKind,
-                                                 boxedKind = ref NONE,
+                                                 boxedKind = ref T.GENERICty,
                                                  datacon = ref data})
                               =>
                               (
@@ -164,8 +162,8 @@ in
                                  NONE => (tyConSubst, boxedKindSubst) 
                                | SOME tyBindInfo1 =>
                                  let
-                                   val boxedKind = TU.boxedKindOptOfTyBindInfo tyBindInfo1
-                                   val _ = #boxedKind tycon:= boxedKind
+                                     val boxedKind = TU.boxedKindOfTyBindInfo tyBindInfo1
+                                     val _ = #boxedKind tycon:= boxedKind
                                  in
                                    (
                                     ID.Map.insert(tyConSubst, id, T.TYCON tycon),
@@ -173,13 +171,13 @@ in
                                     )
                                  end
                               )
-                            | T.TYSPEC({spec = {name, id, boxedKind = NONE,...},impl}) =>
+                            | T.TYSPEC({spec = {name, id, boxedKind = T.GENERICty, ...},impl}) =>
                               (
                                case SEnv.find(TE1,tyCon) of
                                  NONE => (tyConSubst, boxedKindSubst)
                                | SOME tyBindInfo1 =>
                                  let
-                                   val boxedKind = TU.boxedKindOptOfTyBindInfo tyBindInfo1
+                                   val boxedKind = TU.boxedKindOfTyBindInfo tyBindInfo1
                                  in
                                    (
                                     tyConSubst,
@@ -190,7 +188,9 @@ in
                             | T.TYFUN({name, tyargs, 
                                        body = 
                                        T.ALIASty(
-                                           T.CONty{tyCon= tyCon as{id,boxedKind = ref NONE,...},...},actTy)
+                                           T.CONty{tyCon= tyCon as{id,
+                                                                   boxedKind = ref T.GENERICty,...},...},
+                                           actTy)
                                        }
                                     ) 
                               =>
@@ -198,25 +198,26 @@ in
                                  NONE => (tyConSubst, boxedKindSubst)
                                | SOME tyBindInfo1 =>
                                  let
-                                   val boxedKind = TU.boxedKindOptOfTyBindInfo tyBindInfo1
+                                   val boxedKind = TU.boxedKindOfTyBindInfo tyBindInfo1
                                    val _ = #boxedKind tyCon := boxedKind
                                  in
                                    (
                                     ID.Map.insert(tyConSubst, id, T.TYCON tyCon),
                                     ID.Map.insert(boxedKindSubst, id, boxedKind)
                                     )
-                                 end
-                                   )
+                                 end)
                             | _ => (tyConSubst,boxedKindSubst))
                         (ID.Map.empty, ID.Map.empty)
                         sigTE
-        fun computeBoxedKindSE (SE,SE1) =
-            SEnv.foldli (fn (strid,
-                             T.STRUCTURE {env = (subTE,subVE,subSE),...}, 
-                             (tyConSubst,boxedKindSubst)) =>
-                            case SEnv.find(SE1,strid) of
+        fun computeBoxedKindSE (T.STRUCTURE SECont, T.STRUCTURE SECont1) =
+            SEnv.foldli (fn (
+                             strid,
+                             {env = (subTE,subVE,subSE),...}, 
+                             (tyConSubst,boxedKindSubst)
+                             ) =>
+                            case SEnv.find(SECont1,strid) of
                               NONE => (tyConSubst,boxedKindSubst)
-                            | SOME (T.STRUCTURE {env = (subTE1,subVE1,subSE1),...}) =>
+                            | SOME {env = (subTE1,subVE1,subSE1),...} =>
                               let
                                 val (tyConSubst1,boxedKindSubst1) = computeBoxedKindTE (subTE,subTE1)
                                 val (tyConSubst2,boxedKindSubst2) = computeBoxedKindSE (subSE,subSE1)
@@ -234,7 +235,7 @@ in
                               end
                                 )
                         (ID.Map.empty,ID.Map.empty)
-                        SE 
+                        SECont 
         val (tyConSubst1, boxedKindSubst1) = computeBoxedKindTE (TE,TE1)
         val (tyConSubst2, boxedKindSubst2) = computeBoxedKindSE (SE,SE1)
       in
@@ -253,14 +254,16 @@ in
                 tyBindInfoEquations
                 sigTyConEnv
 
-  fun computeTyBindInfoEquationsSE (strEnv1, sigStrEnv1) tyBindInfoEquations =
+  fun computeTyBindInfoEquationsSE 
+      (T.STRUCTURE strEnvCont1, T.STRUCTURE sigStrEnvCont1) 
+      tyBindInfoEquations =
     SEnv.foldli (fn (
                      strName,
-                     T.STRUCTURE{env = (sigTyConEnv, _, sigStrEnv), ...},
+                     {env = (sigTyConEnv, _, sigStrEnv), ...},
                      tyBindInfoEquations
                      ) =>
-                    case SEnv.find(strEnv1, strName) of
-                      SOME (T.STRUCTURE{env = (tyConEnv2, _, strEnv2), ...}) =>
+                    case SEnv.find(strEnvCont1, strName) of
+                      SOME {env = (tyConEnv2, _, strEnv2), ...} =>
                       computeTyBindInfoEquationsSE
                         (strEnv2, sigStrEnv)
                         (
@@ -271,7 +274,7 @@ in
                     | _ => raise E.unboundStructureInSigMatch {strName = strName }
                                  )
                 tyBindInfoEquations
-                sigStrEnv1
+                sigStrEnvCont1
                 
   fun computeTyBindInfoEquationsEnv ((tyConEnv, varEnv, strEnv), 
                                     (sigTyConEnv, sigVarEnv, sigStrEnv)) =
@@ -329,7 +332,7 @@ in
               true
               tyFields2)
         | (T.CONty {tyCon ={id=id1,...}, args = args1}, T.CONty {tyCon={id=id2,...}, args = args2}) =>
-             id1 = id2 
+             ID.eq(id1, id2)
              andalso
              List.length args1 = List.length args2
              andalso
@@ -366,15 +369,19 @@ in
   (* according to section 4.4, type function equality does not 
    * invlove the equality attribute of type variable
    *)
-  fun equivTyFcn (tyargs1, body1) (tyargs2,body2) =
+  fun equivTyFcn (tyargs1, body1) (tyargs2, body2) =
       let
         val tyargsList1 = IEnv.listItemsi tyargs1
         val tyargsList2 = IEnv.listItemsi tyargs2
         val (substEnv1, substEnv2) =
             ListPair.foldl
               (fn ((x,_),(y,_),(substEnv1,substEnv2)) =>
-                  let
+                 let
+                   val tyvarTy = T.newty {recKind = T.UNIV, eqKind = T.NONEQ,tyvarName = NONE}
+(*
+ Ohroi: Dec 5, 2006.
                     val tyvarTy = T.TYVARty (ref (T.TVAR {
+                                                          lambdaDepth = T.infiniteDepth,
                                                           id = T.nextTid(),
                                                           recKind = T.UNIV,
                                                           eqKind = T.NONEQ,
@@ -382,6 +389,7 @@ in
                                                           }
                                                 )
                                            )
+*)
                   in 
                     (
                      IEnv.insert(substEnv1, x, tyvarTy),
@@ -409,7 +417,7 @@ in
       andalso 
       name1 = name2 
       andalso 
-      id1 = id2
+      ID.eq(id1, id2)
       andalso
       equivTy (ty1, ty2)
     | (_,_) => raise Control.Bug "equivIdstate: not CONID occurring in datacon"
@@ -485,7 +493,7 @@ in
            else unifyTyConId tyConIdSet rest (ID.Map.insert(tyConIdSubst, id1, id2))
          else
            (* non-flexible tyConId *)
-           if id1 = id2 andalso List.length tyvars2 = List.length tyvars1 
+           if ID.eq(id1, id2) andalso List.length tyvars2 = List.length tyvars1 
                         andalso eqKind1 = eqKind2 
            then
              unifyTyConId tyConIdSet rest tyConIdSubst
@@ -499,6 +507,19 @@ in
            raise E.EqErrorInSigMatch {tyConName=name}
          else
            unifyTyConId tyConIdSet rest (ID.Map.insert(tyConIdSubst, id1, id2))
+       | (T.TYCON {id=id1, eqKind = ref eqKind1, tyvars = tyvars1, ...},
+          T.TYSPEC {spec = {id=id2, name, eqKind = eqKind2, 
+                            tyvars = tyvars2,...},...}
+          ) => 
+         if !Control.doLinking then
+             if List.length tyvars1 <> List.length tyvars2 then
+                 raise E.ArityMismatchInSigMatch {tyConName = name}
+             else
+                 if eqKind2 = T.EQ andalso eqKind1 = T.NONEQ then
+                     raise E.EqErrorInSigMatch {tyConName=name}
+                 else
+                     unifyTyConId tyConIdSet rest (ID.Map.insert(tyConIdSubst, id1, id2))
+         else raise Control.Bug "only occurs at unclosed objects linking"
        | _ => unifyTyConId tyConIdSet rest tyConIdSubst)
       
   fun substTyConIdInTyBindInfoEqsDomain tyConIdSubst tyBindInfoEqs =
@@ -516,42 +537,72 @@ in
   fun unifyTySpec nil tyConSubst = tyConSubst
     | unifyTySpec ((tyBindInfo1, tyBindInfo2)::rest) (tyConSubst:T.tyBindInfo ID.Map.map) =
       case (tyBindInfo1, tyBindInfo2) of
-        (T.TYSPEC {spec = {id=id1, name = name1, eqKind = eqKind1, 
-                         tyvars = tyvars1,strpath = strpath,...},...}, 
-         T.TYCON {id=id2, name = name2, eqKind = ref eqKind2, tyvars = tyvars2, ...}) => 
-        if List.length tyvars1 <> List.length tyvars2 then
-          raise E.ArityMismatchInSigMatch {tyConName = name2}
-        else
-          if eqKind1 = T.EQ andalso eqKind2 = T.NONEQ then
-            raise E.EqErrorInSigMatch {tyConName=name2}
-          else
-            if id1 = id2 then
-              unifyTySpec rest
-                          (ID.Map.insert(tyConSubst, id1, tyBindInfo2))
-            else 
-              raise E.TyConMisMatchInSigMatch {tyConName=name2}
-      | (T.TYSPEC {spec = {name = name1, id = id1, tyvars = tyvars1, eqKind = eqKind,...},...} ,
-         T.TYFUN  (tyFun as {name = name2, tyargs = tyargs2 , body = body2}) ) => 
-        if eqKind = T.EQ andalso not (TU.admitEqTyFun tyFun) then
-          raise E.EqErrorInSigMatch {tyConName=name2}
-        else if List.length tyvars1 <> IEnv.numItems(tyargs2) then
-          raise E.ArityMismatchInSigMatch {tyConName=name1}
-        else unifyTySpec rest (ID.Map.insert(tyConSubst, id1, tyBindInfo2))
-      | (T.TYSPEC {spec = {name = name1, id = id1, 
-                           tyvars = tyvars1, eqKind = eqKind1, ...} ,
-                 ...},
-         T.TYSPEC {spec = {name = name2, id = id2, 
-                         tyvars = tyvars2, eqKind = eqKind2, ...},
-                 ...}) 
-        =>
-        if List.length tyvars1 <> List.length tyvars2 then
-          raise E.ArityMismatchInSigMatch {tyConName=name2}
-        else if eqKind1 = T.EQ  andalso eqKind2 = T.NONEQ then
-          raise E.EqErrorInSigMatch {tyConName=name2}
-        else if id1 <> id2 then
-          raise E.TyConMisMatchInSigMatch {tyConName = name1}
-        else unifyTySpec rest (ID.Map.insert(tyConSubst, id1, tyBindInfo2))
-      | _ => unifyTySpec rest tyConSubst
+          (T.TYSPEC {spec = {id=id1, name = name1, eqKind = eqKind1, 
+                             tyvars = tyvars1, boxedKind = requiredBoxedKind, ...},...}, 
+           T.TYCON {id=id2, name = name2, eqKind = ref eqKind2, 
+                    tyvars = tyvars2, boxedKind = objectBoxedKind, ...}) => 
+          (
+           TCU.kindCheckAtLinking {tyConName = name1,
+                                   requiredKind = requiredBoxedKind,
+                                   objectKind = !objectBoxedKind};
+           if List.length tyvars1 <> List.length tyvars2 then
+               raise E.ArityMismatchInSigMatch {tyConName = name2}
+           else if eqKind1 = T.EQ andalso eqKind2 = T.NONEQ then
+               raise E.EqErrorInSigMatch {tyConName=name2}
+           else if ID.eq(id1, id2) then
+               unifyTySpec rest
+                           (ID.Map.insert(tyConSubst, id1, tyBindInfo2))
+           else raise E.TyConMisMatchInSigMatch {tyConName=name2}
+          )
+        | (T.TYSPEC {spec = {name = name1, id = id1, tyvars = tyvars1, 
+                             eqKind = eqKind, boxedKind = requiredBoxedKind,...},...} ,
+           T.TYFUN  (tyFun as {name = name2, tyargs = tyargs2 , body = body2}) ) => 
+          (
+           TCU.kindCheckAtLinking {tyConName = name1,
+                                   requiredKind = requiredBoxedKind,
+                                   objectKind = TU.boxedKindOfType body2};
+           if eqKind = T.EQ andalso not (TU.admitEqTyFun tyFun) then
+               raise E.EqErrorInSigMatch {tyConName=name2}
+           else if List.length tyvars1 <> IEnv.numItems(tyargs2) then
+               raise E.ArityMismatchInSigMatch {tyConName=name1}
+           else unifyTySpec rest (ID.Map.insert(tyConSubst, id1, tyBindInfo2))
+          )
+        | (T.TYSPEC {spec = {name = name1, id = id1, 
+                             tyvars = tyvars1, eqKind = eqKind1,
+                             boxedKind = requiredBoxedKind,...} ,
+                     ...},
+           T.TYSPEC {spec = {name = name2, 
+                             id = id2, 
+                             tyvars = tyvars2, 
+                             eqKind = eqKind2,
+                             boxedKind = objectBoxedKind,
+                             strpath = strpath2},
+                     impl = impl2}) 
+          =>
+          if List.length tyvars1 <> List.length tyvars2 then
+              raise E.ArityMismatchInSigMatch {tyConName=name2}
+          else if eqKind1 = T.EQ  andalso eqKind2 = T.NONEQ then
+              raise E.EqErrorInSigMatch {tyConName=name2}
+          else if not (ID.eq(id1, id2)) then
+              raise E.TyConMisMatchInSigMatch {tyConName = name1}
+          else let
+                  val tyBindInfo2 = 
+                      if !Control.doLinking = true then
+                          T.TYSPEC {spec = {name = name2, 
+                                            id = id2, 
+                                            tyvars = tyvars2, 
+                                            eqKind = eqKind2,
+                                            boxedKind = 
+                                            TCU.unifyBoxedKind {tyConName = name2,
+                                                                requiredKind = requiredBoxedKind,
+                                                                objectKind = objectBoxedKind},
+                                            strpath = strpath2},
+                                    impl = impl2}
+                      else tyBindInfo2
+              in
+                  unifyTySpec rest (ID.Map.insert(tyConSubst, id1, tyBindInfo2))
+              end
+        | _ => unifyTySpec rest tyConSubst
       
   fun unifyTyConAndTyFun nil tyConSubst = tyConSubst
     | unifyTyConAndTyFun ((tyBindInfo1, tyBindInfo2)::rest) tyConSubst =
@@ -564,7 +615,7 @@ in
           raise E.ArityMismatchInSigMatch {tyConName=name}
         else if eqKind1 = T.EQ andalso eqKind2 = T.NONEQ then
           raise E.EqErrorInSigMatch {tyConName=name}
-        else if id1 <> id2 then
+        else if not (ID.eq(id1, id2)) then
           raise E.TyConMisMatchInSigMatch {tyConName=name}
         else if not (equivVarEnv (varEnv1, varEnv2)) then
           raise E.TyConMisMatchInSigMatch {tyConName=name}
@@ -586,7 +637,7 @@ in
               raise E.ArityMismatchInSigMatch {tyConName=name2}
             else if eqKind1 = T.EQ andalso eqKind3 = T.NONEQ then
               raise E.EqErrorInSigMatch {tyConName=name2}
-            else if id1 <> id3 then
+            else if not (ID.eq(id1, id3)) then
               raise E.TyConMisMatchInSigMatch {tyConName=name2}
             else if not (equivVarEnv (varEnv1, varEnv3)) then
               raise E.TyConMisMatchInSigMatch {tyConName=name2}
@@ -621,7 +672,7 @@ in
              raise E.ArityMismatchInSigMatch {tyConName=name2}
            else if eqKind2 = T.EQ andalso eqKind3 = T.NONEQ then
              raise E.EqErrorInSigMatch {tyConName=name2}
-           else if id2 <> id3 then
+           else if not (ID.eq(id2, id3)) then
              raise E.TyConMisMatchInSigMatch {tyConName=name2}
            else if not (equivVarEnv (varEnv2, varEnv3)) then
              raise E.TyConMisMatchInSigMatch {tyConName=name2}
@@ -646,7 +697,7 @@ in
         val strTy = TU.freshInstTy strTy
         val sigTy = TU.freshRigidInstTy sigTy
       in
-        Unify.unify [(strTy, sigTy)]
+           Unify.unify [(strTy, sigTy)]
       end
         handle Unify.Unify => 
                (raise E.InstanceCheckInSigMatch
@@ -663,8 +714,6 @@ in
                  checkInstTy name (ty1,ty2)
                | SOME (strIdState as T.CONID{ ty = ty1, ...}) =>
                  checkInstTy name (ty1,ty2)
-               | SOME (strIdState as T.FFID { ty = ty1, ...}) =>
-                 checkInstTy name (ty1,ty2)
                | NONE => raise E.unboundVarInSigMatch {varName = name}
                | _    => raise Control.Bug "checkInstVarEnv:Not variable or constructor(1)"
                                )
@@ -680,20 +729,20 @@ in
         )
         sigVE
         
-  fun checkInstStrEnv (strSE,sigSE) =
+  fun checkInstStrEnv (T.STRUCTURE strSECont, T.STRUCTURE sigSECont) =
       SEnv.mapi
-      (fn (name,T.STRUCTURE{env = (subSigTE, subSigVE, subSigSE), 
-                            id = strId,
-                            name = strName,
-                            strpath = strpath}) => 
-          case SEnv.find(strSE,name) of
-            SOME (T.STRUCTURE{env = (_, subStrVE, subStrSE), ...}) =>
+      (fn (name, {env = (subSigTE, subSigVE, subSigSE), 
+                  id = strId,
+                  name = strName,
+                  strpath = strpath}) => 
+          case SEnv.find(strSECont,name) of
+            SOME {env = (_, subStrVE, subStrSE), ...} =>
             (checkInstVarEnv(subStrVE, subSigVE);
              checkInstStrEnv(subStrSE, subSigSE);
              ())
           | NONE => raise E.unboundStructureInSigMatch {strName = name}
        )
-      sigSE
+      sigSECont
 
   fun checkInstEnv ((strTE, strVE, strSE), (sigTE, sigVE, sigSE)) =
       (checkInstVarEnv(strVE, sigVE);
@@ -740,7 +789,20 @@ in
        * 2. strPath
        * 3. tySpec implemantation field
        *)
+(*        val _ = print "\n opaque sig 3 \n"
+        val _ = print (Control.prettyPrint (Types.format_Env nil absSigEnv))
+        val _ = print "\n ******************* \n"
+*)
+
       val absSigEnv = SU.instTopSigEnv (Env, absSigEnv)
+(*        val _ = print "\n inner sig 4 \n"
+        val _ = print (Control.prettyPrint (Types.format_Env nil Env))
+        val _ = print "\n ******************* \n"
+
+        val _ = print "\n opaque sig 4 \n"
+        val _ = print (Control.prettyPrint (Types.format_Env nil absSigEnv))
+        val _ = print "\n ******************* \n"
+*)
     in
       (absSigEnv, sigEnv)
     end
@@ -811,20 +873,54 @@ in
          )
       end
 
+  
+  (**************************************************************************)
+  fun kindCheckTyFun requiredBoxedKind {name,tyargs,body} =
+      case (TU.boxedKindOfType body) of
+          T.BOUNDVARty _ => ()
+        | objectBoxedKind => TCU.kindCheckAtLinking {tyConName = name,
+                                                     requiredKind = requiredBoxedKind,
+                                                     objectKind = objectBoxedKind}
+                                       
+  fun kindCheckTySpecTyBindInfoPair (sigTyBindInfo, strTyBindInfo) =
+      case (sigTyBindInfo, strTyBindInfo) of
+          (T.TYSPEC {spec = {name, boxedKind = requiredBoxedKind,...}, impl = NONE}, 
+           T.TYCON {boxedKind = objectBoxedKind, ...})
+          => TCU.kindCheckAtLinking {tyConName = name,
+                                     requiredKind = requiredBoxedKind,
+                                     objectKind = !objectBoxedKind}
+        | (T.TYSPEC {spec = {boxedKind = requiredBoxedKind,...},...} ,
+           T.TYFUN  tyFun) 
+          => kindCheckTyFun requiredBoxedKind tyFun
+        | (T.TYSPEC {spec = {name, boxedKind = requiredBoxedKind,...} ,
+                     ...},
+           T.TYSPEC {spec = {boxedKind = objectBoxedKind,...},
+                     ...})
+          => TCU.kindCheckAtLinking {tyConName = name,
+                                     requiredKind = requiredBoxedKind,
+                                     objectKind = objectBoxedKind}
+        | _ => raise Control.Bug "the first component should be tyspec"
+             
+  fun kindCheckTyBindInfoList nil = ()
+    | kindCheckTyBindInfoList ((sigTyBindInfo, strTyBindInfo) :: rest) =
+      case (sigTyBindInfo, strTyBindInfo) of
+          (T.TYSPEC _ , _) => kindCheckTySpecTyBindInfoPair (sigTyBindInfo, strTyBindInfo)
+        | _ => kindCheckTyBindInfoList rest
+
   fun checkEnvAndSigma (Env, sigma) =
       let
-        val (tyConIdSet, sigEnv) = freshTyConIdSetInSig sigma
-        val tyConEqs = computeTyBindInfoEquationsEnv (Env, sigEnv)
-        val tyConIdSubst = unifyTyConId tyConIdSet tyConEqs ID.Map.empty
-        val tyConEqs = substTyConIdInTyBindInfoEqsDomain tyConIdSubst tyConEqs
-        val tyConSubst = unifyTyBindInfo tyConEqs ID.Map.empty
-        val (_, sigEnv) = TCU.substTyConIdInEnv ID.Set.empty tyConIdSubst sigEnv
-        val (_, sigEnv) = TCU.substTyConInEnv ID.Set.empty tyConSubst sigEnv
-        val _ = checkInstEnv (Env, sigEnv)         
+          val (tyConIdSet, sigEnv) = freshTyConIdSetInSig sigma
+          val tyConEqs = computeTyBindInfoEquationsEnv (Env, sigEnv)
+          val tyConIdSubst = unifyTyConId tyConIdSet tyConEqs ID.Map.empty
+          val tyConEqs = substTyConIdInTyBindInfoEqsDomain tyConIdSubst tyConEqs
+          val _ = kindCheckTyBindInfoList tyConEqs 
+          val tyConSubst = unifyTyBindInfo tyConEqs ID.Map.empty
+          val (_, sigEnv) = TCU.substTyConIdInEnv ID.Set.empty tyConIdSubst sigEnv
+          val (_, sigEnv) = TCU.substTyConInEnv ID.Set.empty tyConSubst sigEnv
+          val _ = checkInstEnv (Env, sigEnv)
       in 
-        sigEnv
+          sigEnv
       end
-
-
+  (********************************************************************************)
 end
 end

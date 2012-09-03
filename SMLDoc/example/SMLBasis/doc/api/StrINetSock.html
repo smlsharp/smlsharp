@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+<TITLE>INetSock</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>INetSock</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrINetSock.html">INetSock</A>&nbsp;:&nbsp;<A HREF="SigINET_SOCK.html">INET_SOCK</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrINetSock-StrSOCK.html">SOCK</A>&nbsp;=&nbsp;<A HREF="StrSocketImp-StrSOCK.html">Socket.SOCK</A><br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrINetSock-StrUDP.html">UDP</A>&nbsp;=<br>
+&nbsp;&nbsp;struct&nbsp;val&nbsp;<A HREF="StrINetSock-StrUDP.html#Valsocket">socket</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="StrINetSock.html#Typedgram_sock">dgram_sock</A>&nbsp;val&nbsp;<A HREF="StrINetSock-StrUDP.html#Valsocket'">socket'</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrINetSock.html#Typedgram_sock">dgram_sock</A>&nbsp;end<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrINetSock-StrTCP.html">TCP</A>&nbsp;=<br>
+&nbsp;&nbsp;struct<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock-StrTCP.html#Valsocket">socket</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrINetSock.html#Typestream_sock">stream_sock</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock-StrTCP.html#Valsocket'">socket'</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="StrINetSock.html#Typestream_sock">stream_sock</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock-StrTCP.html#ValgetNODELAY">getNODELAY</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrINetSock.html#Typestream_sock">stream_sock</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock-StrTCP.html#ValsetNODELAY">setNODELAY</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrINetSock.html#Typestream_sock">stream_sock</A>&nbsp;*&nbsp;bool&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;type&nbsp;'a&nbsp;<A HREF="StrINetSock.html#Typesock">sock</A>&nbsp;=&nbsp;(<A HREF="StrINetSock.html#Typeinet">inet</A>,&nbsp;'a)&nbsp;<A HREF="StrPreSock.html#Typesock">Socket.sock</A><br>
+&nbsp;&nbsp;type&nbsp;'a&nbsp;<A HREF="StrINetSock.html#Typestream_sock">stream_sock</A>&nbsp;=&nbsp;'a&nbsp;<A HREF="StrSocketImp.html#Typestream">Socket.stream</A>&nbsp;<A HREF="StrINetSock.html#Typesock">sock</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrINetSock.html#Typedgram_sock">dgram_sock</A>&nbsp;=&nbsp;<A HREF="StrSocketImp.html#Typedgram">Socket.dgram</A>&nbsp;<A HREF="StrINetSock.html#Typesock">sock</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrINetSock.html#Typesock_addr">sock_addr</A>&nbsp;=&nbsp;<A HREF="StrINetSock.html#Typeinet">inet</A>&nbsp;<A HREF="StrPreSock.html#Typesock_addr">Socket.sock_addr</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrINetSock.html#Typeinet">inet</A>&nbsp;=&nbsp;<A HREF="StrINetSock.html#ConstrINET">INET</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock.html#ValsockFn">sockFn</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock.html#ValinetAF">inetAF</A>&nbsp;:&nbsp;<A HREF="StrSocketImp-StrAF.html#Typeaddr_family">Socket.AF.addr_family</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock.html#ValtoAddr">toAddr</A>&nbsp;:&nbsp;<A HREF="StrNetHostDB.html#Typein_addr">NetHostDB.in_addr</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrINetSock.html#Typesock_addr">sock_addr</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock.html#ValfromAddr">fromAddr</A>&nbsp;:&nbsp;<A HREF="StrINetSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;<A HREF="StrNetHostDB.html#Typein_addr">NetHostDB.in_addr</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrINetSock.html#Valany">any</A>&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrINetSock.html#Typesock_addr">sock_addr</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typesock"><!-- --></A>
+<H3>sock</H3>
+<P>
+<CODE>type&nbsp;'a&nbsp;sock&nbsp;=&nbsp;(<A HREF="StrINetSock.html#Typeinet">inet</A>,&nbsp;'a)&nbsp;<A HREF="StrPreSock.html#Typesock">Socket.sock</A></CODE>
+
+<HR>
+<A NAME="Typestream_sock"><!-- --></A>
+<H3>stream_sock</H3>
+<P>
+<CODE>type&nbsp;'a&nbsp;stream_sock&nbsp;=&nbsp;'a&nbsp;<A HREF="StrSocketImp.html#Typestream">Socket.stream</A>&nbsp;<A HREF="StrINetSock.html#Typesock">sock</A></CODE>
+
+<HR>
+<A NAME="Typedgram_sock"><!-- --></A>
+<H3>dgram_sock</H3>
+<P>
+<CODE>type&nbsp;dgram_sock&nbsp;=&nbsp;<A HREF="StrSocketImp.html#Typedgram">Socket.dgram</A>&nbsp;<A HREF="StrINetSock.html#Typesock">sock</A></CODE>
+
+<HR>
+<A NAME="Typesock_addr"><!-- --></A>
+<H3>sock_addr</H3>
+<P>
+<CODE>type&nbsp;sock_addr&nbsp;=&nbsp;<A HREF="StrINetSock.html#Typeinet">inet</A>&nbsp;<A HREF="StrPreSock.html#Typesock_addr">Socket.sock_addr</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeinet"><!-- --></A>
+<H3>inet</H3>
+<P>
+<CODE>datatype&nbsp;inet&nbsp;=&nbsp;<A HREF="StrINetSock.html#ConstrINET">INET</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrINET"><!-- --></A>
+<H3>INET</H3>
+<P>
+<CODE>constructor&nbsp;INET&nbsp;:&nbsp;<A HREF="StrINetSock.html#Typeinet">inet</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValsockFn"><!-- --></A>
+<H3>sockFn</H3>
+<P>
+<CODE>val&nbsp;sockFn</CODE>
+
+<HR>
+<A NAME="ValinetAF"><!-- --></A>
+<H3>inetAF</H3>
+<P>
+<CODE>val&nbsp;inetAF&nbsp;:&nbsp;<A HREF="StrSocketImp-StrAF.html#Typeaddr_family">Socket.AF.addr_family</A></CODE>
+
+<HR>
+<A NAME="ValtoAddr"><!-- --></A>
+<H3>toAddr</H3>
+<P>
+<CODE>val&nbsp;toAddr&nbsp;:&nbsp;<A HREF="StrNetHostDB.html#Typein_addr">NetHostDB.in_addr</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrINetSock.html#Typesock_addr">sock_addr</A></CODE>
+
+<HR>
+<A NAME="ValfromAddr"><!-- --></A>
+<H3>fromAddr</H3>
+<P>
+<CODE>val&nbsp;fromAddr&nbsp;:&nbsp;<A HREF="StrINetSock.html#Typesock_addr">sock_addr</A>&nbsp;->&nbsp;<A HREF="StrNetHostDB.html#Typein_addr">NetHostDB.in_addr</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Valany"><!-- --></A>
+<H3>any</H3>
+<P>
+<CODE>val&nbsp;any&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrINetSock.html#Typesock_addr">sock_addr</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

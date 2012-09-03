@@ -4,12 +4,13 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TYPEDCALC.sig,v 1.6 2006/03/02 12:52:25 bochao Exp $
+ * @version $Id: TYPEDCALC.sig,v 1.12 2007/02/28 15:31:26 katsu Exp $
  *)
 
 signature TYPEDCALC = sig
 
   type btvKind
+  type callingConvention
   type caseKind
   type conPathInfo
   type fields
@@ -35,13 +36,24 @@ signature TYPEDCALC = sig
       TPFOREIGNAPPLY of 
         {
           funExp : tpexp, 
+          funTy: ty,
 	  instTyList:ty list,
-	  argExp:tpexp, 
-	  argTyList : ty list, 
+	  argExpList:tpexp list, 
+	  argTyList : ty list,
+          convention : callingConvention,
 	  loc: loc
         }
+   | TPEXPORTCALLBACK of 
+       {
+         funExp : tpexp,
+         instTyList:ty list,
+	 argTyList : ty list,
+	 resultTy : ty,
+         loc: loc
+       }
+   | TPSIZEOF of ty * loc
    | TPERROR
-   | TPCONSTANT of constant * loc
+   | TPCONSTANT of constant * ty * loc
    | TPVAR of varPathInfo * loc
    | TPRECFUNVAR of {var:varPathInfo, arity:int, loc:loc}
    | TPPRIMAPPLY of 
@@ -102,7 +114,6 @@ signature TYPEDCALC = sig
    | TPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tpexp, loc:loc}
    | TPTAPP of {exp:tpexp, expTy:ty, instTyList:ty list, loc:loc}
    | TPSEQ of {expList:tpexp list, expTyList:ty list, loc:loc}
-   | TPFFIVAL of {funExp:tpexp, libExp:tpexp, argTyList:ty list, resultTy:ty, funTy:ty, loc:loc}
    | TPCAST of tpexp * ty * loc
 
  and tpdecl 
@@ -158,6 +169,7 @@ signature TYPEDCALC = sig
         }
    | TPPATRECORD of {fields:patfields, recordTy:ty, loc:loc}
    | TPPATLAYERED of {varPat:tppat, asPat:tppat, loc:loc}
+   |  TPPATORPAT of tppat * tppat * loc
 
  and tpexnbind =
      TPEXNBINDDEF of conPathInfo

@@ -2,7 +2,7 @@
  * type context manipulation utilities
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TypeContextUtils.sml,v 1.47 2006/03/02 12:51:54 bochao Exp $
+ * @version $Id: TypeContextUtils.sml,v 1.53 2007/02/28 15:31:26 katsu Exp $
  *)
 structure TypeContextUtils =
 struct
@@ -17,6 +17,9 @@ struct
  in
   type tyConSubst = tyBindInfo ID.Map.map
   exception ExTySpecInstantiatedWithNonEqTyBindInfo of string
+  exception ExBoxedKindCheckFailure of {tyConName : string,
+                                        requiredKind : Types.ty, 
+                                        objectKind : Types.ty}
 
   fun substTyConIdInId tyConIdSubst id = 
       case ID.Map.find(tyConIdSubst,id) of
@@ -62,7 +65,7 @@ struct
       visited
       ty
 
-  and substTyConIdInTvKind visited tyConIdSubst {id, recKind, eqKind, tyvarName} = 
+  and substTyConIdInTvKind visited tyConIdSubst {lambdaDepth, id, recKind, eqKind, tyvarName} = 
     let
       val (visited, recKind) =
         case recKind of 
@@ -80,7 +83,7 @@ struct
                        (visited, SEnv.empty)
                        tySEnvMap)
           in 
-              (visited,REC tySEnvMap)
+              (visited, REC tySEnvMap)
           end
         | OVERLOADED tys => 
           let
@@ -95,12 +98,14 @@ struct
                        (visited, nil)
                        tys)
           in 
-              (visited,OVERLOADED tys)
+              (visited, OVERLOADED tys)
           end
     in
       (
        visited,
-       {id=id, 
+       {
+        lambdaDepth = lambdaDepth,
+        id=id, 
         recKind = recKind,
         eqKind = eqKind,
         tyvarName = tyvarName}
@@ -300,34 +305,56 @@ struct
       (visited, SEnv.empty)
       varEnv
 
-  and substTyConIdInEnv visited tyConIdSubst (tyConEnv, varEnv, strEnv) =
+  and substTyConIdInEnv visited tyConIdSubst (tyConEnv, varEnv, STRUCTURE strEnvCont) =
     let
       val (visited, tyConEnv) = substTyConIdInTyConEnv visited tyConIdSubst tyConEnv
       val (visited, varEnv) = substTyConIdInVarEnv visited tyConIdSubst varEnv
-      val (visited, strEnv) = substTyConIdInStrEnv visited tyConIdSubst strEnv
+      val (visited, strEnvCont) = substTyConIdInStrEnvCont visited tyConIdSubst strEnvCont
     in
       (
        visited,
        (tyConEnv, 
         varEnv,
-        strEnv)
+        STRUCTURE strEnvCont)
        )
     end
 
-  and substTyConIdInStrEnv visited tyConIdSubst strEnv =
+  and substTyConIdInStrEnvCont visited tyConIdSubst strEnvCont =
     SEnv.foldri
     (fn
-     (label, STRUCTURE {id, name, strpath, env = Env, ...}, (visited, strEnv))
+     (label, {id, name, strpath, env = Env, ...}, (visited, strEnvCont))
      =>
      let
        val (visited, Env) = substTyConIdInEnv visited tyConIdSubst Env
        val strPathInfo = {id = id, name = name, strpath = strpath, env = Env}
      in
-       (visited, SEnv.insert(strEnv, label, STRUCTURE strPathInfo))
+       (visited, SEnv.insert(strEnvCont, label, strPathInfo))
      end)
     (visited, SEnv.empty)
-    strEnv
+    strEnvCont
 
+
+  fun unifyBoxedKind {tyConName, requiredKind = localRequiredKind, objectKind} =
+      case (localRequiredKind, objectKind) of
+          (GENERICty, _) => objectKind
+        | (ATOMty, ATOMty) => ATOMty
+        | (BOXEDty, BOXEDty) => BOXEDty
+        | (DOUBLEty, DOUBLEty) => DOUBLEty
+        | (BOUNDVARty _, _) => raise Control.Bug "local required kind must not be BOUNDVARty"
+        | _ => raise ExBoxedKindCheckFailure {tyConName = tyConName,
+                                              requiredKind = localRequiredKind,
+                                              objectKind = objectKind}
+
+  fun kindCheckAtLinking {tyConName, requiredKind, objectKind} =
+      if !Control.doLinking = true then
+          (unifyBoxedKind {tyConName = tyConName,
+                           requiredKind = requiredKind,
+                           objectKind = objectKind}; ())
+      else ()
+  (**********************************************************************
+   * anyone at linking phase calling this function needs to catch the
+   * exception "BoxedKindCheckFailure" raised by checkBoxedKind
+   *)
   fun substTyConInTy (visited:ID.Set.set) (tyConSubst : tyConSubst) ty =
       TypeTransducer.transTyPreOrder
         (fn (ty,visited) =>
@@ -386,8 +413,8 @@ struct
                               args
                   in
                     case ID.Map.find(tyConSubst, #id tyCon) of
-                      SOME (TYSPEC {spec = {name, id, strpath, eqKind, tyvars, boxedKind},
-                                    impl = implOpt}) 
+                        SOME (TYSPEC {spec = {name, id, strpath, eqKind, tyvars, boxedKind},
+                                      impl = implOpt}) 
                       => 
                       let
                         val newSpecTy = CONty {tyCon = {
@@ -402,26 +429,26 @@ struct
                                                         },
                                                args = newArgs}
                       in 
-                        case implOpt of
-                          NONE => (SPECty(newSpecTy), visited, false)
-                        | SOME impl =>
-                          case (peelTySpec impl) of
-                            TYFUN tyFun =>
-                            (
-                             ABSSPECty(newSpecTy, (betaReduceTy (tyFun,newArgs))), 
-                             visited, 
-                             false
-                             )
-                          | TYCON tyCon =>
-                            (
-                             ABSSPECty(
-                                       newSpecTy,
-                                       (CONty {tyCon = tyCon,args = newArgs})
-                                       ), 
-                             visited, 
-                             false
-                             )
-                          | TYSPEC _ => raise Control.Bug "TYSPEC should disappear"
+                          case implOpt of
+                              NONE => (SPECty newSpecTy, visited, false)
+                            | SOME impl =>
+                              case (peelTySpec impl) of
+                                  TYFUN tyFun =>
+                                  (
+                                   ABSSPECty(newSpecTy, (betaReduceTy (tyFun,newArgs))), 
+                                   visited, 
+                                   false
+                                   )
+                                | TYCON tyCon =>
+                                  (
+                                   ABSSPECty(
+                                             newSpecTy,
+                                             (CONty {tyCon = tyCon,args = newArgs})
+                                             ), 
+                                   visited, 
+                                   false
+                                   )
+                                | TYSPEC _ => raise Control.Bug "TYSPEC should disappear"
                       end
                     | SOME (TYFUN tyFun) => (* type function, type con : instantiate to real type*)
                       let
@@ -447,77 +474,75 @@ struct
                )
             | SPECty ty =>
               (case ty of
-                 CONty {tyCon as {name, strpath, id, ...}, args} =>
-                 let
-                   val (newArgs, visited) =
-                       foldl (fn (arg,(newArgs,visited)) =>
-                                 let
-                                   val (newTy,visited) =
-                                       substTyConInTy visited tyConSubst arg
-                                 in
-                                   (newArgs @ [newTy],visited)
-                                 end)
-                             (nil,visited)
-                             args
-                 in
-                   case ID.Map.find(tyConSubst, id) of
-                     SOME (TYSPEC {spec = {name, id, strpath, eqKind, tyvars, boxedKind},
-                                   impl = implOpt}) 
-                     => 
-                     let
-                       val newSpecTy = CONty {tyCon = {
-                                                       name = name,
-                                                       strpath = strpath,
-                                                       abstract = false, 
-                                                       tyvars = tyvars,
-                                                       id = id,
-                                                       eqKind = ref eqKind,
-                                                       boxedKind = ref boxedKind,
-                                                       datacon = ref SEnv.empty
-                                                       },
-                                              args = newArgs}
-                     in 
-                       case implOpt of
-                         NONE => (SPECty(newSpecTy), visited, false)
-                       | SOME impl =>
-                         case (peelTySpec impl) of
-                           TYFUN tyFun =>
-                           (
-                            ABSSPECty(newSpecTy, (betaReduceTy (tyFun,newArgs))), 
-                            visited, 
-                            false
-                            )
-                         | TYCON tyCon =>
-                           (
-                            ABSSPECty(
-                                      newSpecTy,
-                                      (CONty {tyCon = tyCon,args = newArgs})
-                                      ), 
-                            visited, 
-                            false
-                            )
-                         | TYSPEC _ => raise Control.Bug "TYSPEC should disappear"
-                     end
-                   | SOME (TYFUN tyFun) => 
-                     let
-                       val newTy = betaReduceTy (tyFun,newArgs)
-                     in
-                       (newTy, visited, false)
-                     end
-                   | SOME (TYCON tyCon) =>
-                     let
-                       val newTy = CONty{tyCon = tyCon, args = newArgs}
-                     in
-                       (newTy, visited, false)
-                     end
-                   | NONE => 
-                     (SPECty(CONty{tyCon = tyCon, args = newArgs}), visited, false)
-                 end
-               | _ => 
-                 raise 
-                   Control.Bug 
-                     "illegal SPECty: should be SPECty(CONty..)"
-            )
+                   CONty {tyCon as {name, strpath, id, boxedKind = localKind, ...}, args} =>
+                   let
+                       val (newArgs, visited) =
+                           foldl (fn (arg,(newArgs,visited)) =>
+                                     let
+                                         val (newTy,visited) =
+                                             substTyConInTy visited tyConSubst arg
+                                     in
+                                         (newArgs @ [newTy],visited)
+                                     end)
+                                 (nil,visited)
+                                 args
+                       val result =
+                           case ID.Map.find(tyConSubst, id) of
+                               SOME (TYSPEC {spec = {name, id, strpath, eqKind, tyvars, boxedKind},
+                                             impl = implOpt}) 
+                               => 
+                               let
+                                   val newSpecTy = CONty {tyCon = {
+                                                                   name = name,
+                                                                   strpath = strpath,
+                                                                   abstract = false, 
+                                                                   tyvars = tyvars,
+                                                                   id = id,
+                                                                   eqKind = ref eqKind,
+                                                                   boxedKind = ref boxedKind,
+                                                                   datacon = ref SEnv.empty
+                                                                   },
+                                                          args = newArgs}
+                               in 
+                                   case implOpt of
+                                       NONE => (SPECty (newSpecTy), visited, false)
+                                     | SOME impl =>
+                                       case (peelTySpec impl) of
+                                           TYFUN tyFun =>
+                                           (
+                                            ABSSPECty(newSpecTy, (betaReduceTy (tyFun,newArgs))), 
+                                            visited, 
+                                            false
+                                            )
+                                         | TYCON tyCon =>
+                                           (
+                                            ABSSPECty(
+                                                      newSpecTy,
+                                                      (CONty {tyCon = tyCon,args = newArgs})
+                                                      ), 
+                                            visited, 
+                                            false
+                                            )
+                                         | TYSPEC _ => raise Control.Bug "TYSPEC should disappear"
+                               end
+                             | SOME (TYFUN tyFun) => 
+                               let
+                                   val newTy = betaReduceTy (tyFun,newArgs)
+                               in
+                                   (newTy, visited, false)
+                               end
+                             | SOME (TYCON (tyCon as {boxedKind,...})) =>
+                               let
+                                   val newTy = CONty{tyCon = tyCon, args = newArgs}
+                               in
+                                   (newTy, visited, false)
+                               end
+                             | NONE => 
+                               (SPECty(CONty{tyCon = tyCon, args = newArgs}), visited, false)
+                   in
+                       result
+                   end
+                 | _ => raise Control.Bug "illegal SPECty: should be SPECty(CONty..)")
             | POLYty {boundtvars, body} =>
               let
                 val (visited, boundtvars) = 
@@ -540,7 +565,7 @@ struct
         visited
         ty
         
-  and substTyConInTvKind visited (tyConSubst : tyConSubst) {id, recKind, eqKind, tyvarName} = 
+  and substTyConInTvKind visited (tyConSubst : tyConSubst) {lambdaDepth, id, recKind, eqKind, tyvarName} = 
     let
       val (visited, recKind) =
         case recKind of 
@@ -578,10 +603,13 @@ struct
     in
       (
        visited,
-       {id=id, 
+       {
+        lambdaDepth = lambdaDepth,
+        id=id, 
         recKind = recKind,
         eqKind = eqKind,
-        tyvarName = tyvarName}
+        tyvarName = tyvarName
+        }
        )
     end
   and substTyConInBtvKind visited (tyConSubst:tyConSubst) {index, recKind, eqKind} = 
@@ -716,7 +744,7 @@ struct
             val tyName as {name,tyvars,id,eqKind,...} = tyFunToTyName tyFun
             val newTyCon : tyCon = 
                 {name = name, strpath = strpath, abstract = abstract, tyvars = tyvars,
-                 id = id, eqKind = eqKind, boxedKind = ref (boxedKindOptOfType body), 
+                 id = id, eqKind = eqKind, boxedKind = ref (boxedKindOfType body), 
                  datacon = ref SEnv.empty}
             val tyConSubst = ID.Map.insert(tyConSubst,originId,TYCON newTyCon)
             val (visited,data) = substTyConInVarEnv visited tyConSubst (!datacon)
@@ -808,103 +836,46 @@ struct
       varEnv
 
                   
-  and substTyConInStrEnv  visited (tyConSubst:tyConSubst) strEnv =
+  and substTyConInStrEnvCont  visited (tyConSubst:tyConSubst) strEnvCont =
         SEnv.foldri
           (fn
-           (label, STRUCTURE {id, name, strpath, env = Env, ...}, (visited, strEnv))
+           (label, {id, name, strpath, env = Env, ...}, (visited, strEnvCont))
            =>
            let
              val (visited, Env) = substTyConInEnv visited tyConSubst Env
              val strPathInfo = {id = id, name = name, strpath = strpath, env = Env}
            in
-             (visited, SEnv.insert(strEnv, label, STRUCTURE strPathInfo))
+             (visited, SEnv.insert(strEnvCont, label, strPathInfo))
            end)
           (visited, SEnv.empty)
-          strEnv
+          strEnvCont
       
-  and substTyConInEnv  visited (tyConSubst:tyConSubst) (tyConEnv, varEnv, strEnv) =
+  and substTyConInEnv  visited (tyConSubst:tyConSubst) (tyConEnv, varEnv, STRUCTURE strEnvCont) =
       let
         val (visited,tyConEnv) = substTyConInTyConEnv visited tyConSubst tyConEnv
         val (visited,varEnv) = substTyConInVarEnv visited tyConSubst varEnv
-        val (visited,strEnv) = substTyConInStrEnv  visited tyConSubst strEnv
+        val (visited,strEnvCont) = substTyConInStrEnvCont  visited tyConSubst strEnvCont
       in
-        (visited,(tyConEnv,varEnv,strEnv))
+        (visited,(tyConEnv, varEnv, STRUCTURE strEnvCont))
       end
 
   (* this utility function makes sense only when applied to Env *)
   and substTyConInContext 
         (tyConSubst : tyConSubst)
-        ({tyConEnv, varEnv, strEnv, sigEnv, funEnv} : TC.context) = 
+        ({tyConEnv, varEnv, strEnv = STRUCTURE strEnvCont, sigEnv, funEnv} : TC.context) = 
         let
           val (visited,tyConEnv) = substTyConInTyConEnv ID.Set.empty tyConSubst tyConEnv
           val (visited,varEnv) = substTyConInVarEnv visited tyConSubst varEnv
-          val (visited,strEnv) = substTyConInStrEnv visited tyConSubst strEnv
+          val (visited,strEnvCont) = substTyConInStrEnvCont visited tyConSubst strEnvCont
         in
           {
            tyConEnv =  tyConEnv,
            varEnv =  varEnv,
-           strEnv =  strEnv,
+           strEnv =  STRUCTURE strEnvCont,
            sigEnv =  sigEnv,
            funEnv =  funEnv
            } : TC.context
         end
-
-  fun substTyConInSizeTagEnv visited tyConSubst (Env as (tyConSizeTagEnv, varEnv, strSizeTagEnv)) = 
-      let
-        val (visited,tyConSizeTagEnv) = 
-            substTyConInTyConSizeTagEnv visited tyConSubst tyConSizeTagEnv
-        val (visited,varEnv) = 
-            substTyConInVarEnv visited tyConSubst varEnv
-        val (visited,strSizeTagEnv) = 
-            substTyConInStrSizeTagEnv  visited tyConSubst strSizeTagEnv
-      in
-        (visited,(tyConSizeTagEnv, varEnv, strSizeTagEnv))
-      end
-
-  and substTyConInTyConSizeTagEnv visited tyConSubst tyConSizeTagEnv =
-      SEnv.foldli (fn (tyConName,{tyBindInfo, sizeInfo, tagInfo}, (visited, newTyConSizeTagEnv)) =>
-                      let
-                        val (visited,tyBindInfo) = 
-                            substTyConInTyBindInfo  visited tyConSubst tyBindInfo
-                      in
-                        (visited,
-                         SEnv.insert(newTyConSizeTagEnv,
-                                     tyConName,
-                                     {tyBindInfo = tyBindInfo,
-                                      sizeInfo = sizeInfo,
-                                      tagInfo = tagInfo})
-                         )
-                      end
-                  )
-                  (visited,SEnv.empty)
-                  tyConSizeTagEnv
-
-  and substTyConInStrSizeTagEnv visited tyConSubst strSizeTagEnv = 
-        SEnv.foldri
-          (fn
-           (label, STRSIZETAG {id, name, strpath, env = Env, ...}, (visited, strEnv))
-           =>
-           let
-             val (visited, Env) = substTyConInSizeTagEnv visited tyConSubst Env
-             val strPathInfo = {id = id, name = name, strpath = strpath, env = Env}
-           in
-             (visited, SEnv.insert(strEnv, label, STRSIZETAG strPathInfo))
-           end)
-          (visited, SEnv.empty)
-          strSizeTagEnv
-
-  fun substTyConInTypeEnv tyConSubst (typeEnv as {tyConSizeTagEnv, varEnv, strSizeTagEnv}) =
-      let
-        val (visited,tyConSizeTagEnv) = 
-            substTyConInTyConSizeTagEnv ID.Set.empty tyConSubst tyConSizeTagEnv
-        val (visited,varEnv) = substTyConInVarEnv visited tyConSubst varEnv
-        val (visited,strSizeTagEnv) = 
-            substTyConInStrSizeTagEnv visited tyConSubst strSizeTagEnv
-      in
-        {tyConSizeTagEnv = tyConSizeTagEnv, 
-         varEnv = varEnv,
-         strSizeTagEnv = strSizeTagEnv}
-      end
 
   (*********** update strpath field ***********************************************************)
   local
@@ -953,11 +924,11 @@ struct
                             )
                             ID.Set.empty
                             tyConEnv
-             fun computeContextForStrEnv ({newStrpath,currentStrpath}) strEnv =
+             fun computeContextForStrEnvCont ({newStrpath,currentStrpath}) strEnvCont =
                  SEnv.foldl (
-                             fn ((STRUCTURE {id,name,strpath,env}),(tyConIdSet,strPathMap)) =>
+                             fn (({id,name,strpath,env}),(tyConIdSet,strPathMap)) =>
                                 let
-                                  val (tyConEnv,varEnv,strEnv) = env
+                                  val (tyConEnv, varEnv, STRUCTURE strEnvCont) = env
                                   val tyConIdSet1 = computeTyConIdSetForTyConEnv tyConEnv
                                   val newStrpathPair =
                                       { 
@@ -968,7 +939,7 @@ struct
                                                       (#currentStrpath newStrpathPair,
                                                        #newStrpath  newStrpathPair)
                                   val (tyConIdSet2,strPathMap2) =
-                                      computeContextForStrEnv newStrpathPair strEnv
+                                      computeContextForStrEnvCont newStrpathPair strEnvCont
                                   val newTyConIdSet = ID.Set.union (tyConIdSet1,tyConIdSet2)
                                   val newStrPathMap = PathMap.unionWith #1 (strPathMap1,
                                                                             strPathMap2)
@@ -980,11 +951,11 @@ struct
                                 end
                                   )
                             (ID.Set.empty,PathMap.empty)
-                            strEnv
-             val (tyConEnv,varEnv,strEnv) = E
+                            strEnvCont
+             val (tyConEnv,varEnv, STRUCTURE strEnvCont) = E
              val strPathMap1 = PathMap.singleton(currentStrpath,newStrpath)
              val tyConIdSet1 = computeTyConIdSetForTyConEnv tyConEnv
-             val (tyConIdSet2,strPathMap2) = computeContextForStrEnv strPathPair strEnv
+             val (tyConIdSet2,strPathMap2) = computeContextForStrEnvCont strPathPair strEnvCont
            in
              {
               tyConIdSet = ID.Set.union (tyConIdSet1,tyConIdSet2),
@@ -1001,11 +972,11 @@ struct
         * currentStrpath : represents the structure path of the introduced 
         *                  structure or signature by above phrases.
         *) 
-       fun updateStrpathInTopEnv 
-             (strPathPair as {newStrpath,currentStrpath}) (E as (tyConEnv,varEnv,strEnv)) 
+       fun updateStrpathInTopEnv strPathPair E
          =
          let
-(*           val _ = print "\n **** newStrpath :***\n"
+(*           
+           val _ = print "\n **** newStrpath :***\n"
            val _ = print (Path.pathToString(newStrpath))
            val _ = print "\n **** currentStrpath :***\n"
            val _ = print (Path.pathToString(currentStrpath))
@@ -1020,16 +991,16 @@ struct
          end
            
        and updateStrpathInEnv 
-             updateCandidateSet tyConSubst (E as (tyConEnv,varEnv,strEnv)) =
+             updateCandidateSet tyConSubst (tyConEnv,varEnv, STRUCTURE strEnvCont) =
            let
              val (tyConSubst,newTyConEnv) =
                  updateStrpathInTyConEnv updateCandidateSet ID.Map.empty tyConEnv
              val (tyConSubst,newVarEnv) = 
                  updateStrpathInVarEnv updateCandidateSet ID.Map.empty varEnv
-             val (tyConSubst,newStrEnv) =
-                 updateStrpathInStrEnv updateCandidateSet ID.Map.empty strEnv
+             val (tyConSubst,newStrEnvCont) =
+                 updateStrpathInStrEnvCont updateCandidateSet ID.Map.empty strEnvCont
            in
-             (tyConSubst,(newTyConEnv,newVarEnv,newStrEnv))
+             (tyConSubst, (newTyConEnv,newVarEnv,STRUCTURE newStrEnvCont))
            end
              
        and updateStrpathInTyConEnv 
@@ -1063,14 +1034,15 @@ struct
                                 val updatable = 
                                     isUpdatableTyCon 
                                       updateCandidateSet
+                                      (* dummy tyCon to check updatable*)
                                       {
                                        name = name,
                                        strpath = strpath,
-                                       abstract = false,(* dummy tyCon to check updatable*)
+                                       abstract = false,
                                        tyvars = tyvars,
                                        id = id,
                                        eqKind = ref eqKind,
-                                       boxedKind = ref NONE,
+                                       boxedKind = ref GENERICty,
                                        datacon = ref SEnv.empty
                                        } 
                                 val newStrpath = 
@@ -1221,7 +1193,7 @@ struct
              tyConSubst
              ty
              
-       and updateStrpathInTvKind updateCandidateSet tyConSubst {id, recKind, eqKind, tyvarName} = 
+       and updateStrpathInTvKind updateCandidateSet tyConSubst {lambdaDepth, id, recKind, eqKind, tyvarName} = 
            let
              val (tyConSubst, recKind) =
                  case recKind of 
@@ -1262,10 +1234,13 @@ struct
            in
              (
               tyConSubst,
-              {id=id, 
+              {
+               lambdaDepth = lambdaDepth,
+               id=id, 
                recKind = recKind,
                eqKind = eqKind,
-               tyvarName = tyvarName}
+               tyvarName = tyvarName
+               }
               )
            end
              
@@ -1411,12 +1386,12 @@ struct
            (tyConSubst, SEnv.empty)
            varEnv
            
-       and updateStrpathInStrEnv 
-             (updateCandidateSet as {tyConIdSet,strPathMap}) tyConSubst strEnv
+       and updateStrpathInStrEnvCont 
+             (updateCandidateSet as {tyConIdSet,strPathMap}) tyConSubst strEnvCont
          =
          SEnv.foldri
            (fn
-            (label, STRUCTURE {id, name, strpath, env = Env}, (tyConSubst, strEnv))
+            (label, {id, name, strpath, env = Env}, (tyConSubst, strEnvCont))
             =>
             let
               val (tyConSubst, Env) = 
@@ -1432,10 +1407,10 @@ struct
                                  env = Env
                                  }
             in
-              (tyConSubst, SEnv.insert(strEnv, label, STRUCTURE strPathInfo))
+              (tyConSubst, SEnv.insert(strEnvCont, label, strPathInfo))
             end)
            (tyConSubst, SEnv.empty)
-           strEnv
+           strEnvCont
   end (* end local *)
 
   fun getTyConTyvar tyCon = 
@@ -1453,7 +1428,6 @@ struct
         | CONID({ty,...}) => EFTV ty
         | PRIM({ty,...}) => EFTV ty
         | OPRIM({ty,...}) => EFTV ty
-        | FFID({ty,...}) => EFTV ty
         | RECFUNID({ty,...},_) => EFTV ty
 
   and tyvarsTE tyConEnv =
@@ -1473,12 +1447,12 @@ struct
           OTSet.empty
           varEnv
 
-  and tyvarsSE strEnv =
+  and tyvarsSE (STRUCTURE strEnvCont) =
       SEnv.foldl
-          (fn(STRUCTURE{env = E, ...}, T) => OTSet.union (T, tyvarsE E))
-          OTSet.empty strEnv
+          (fn({env = E, ...}, T) => OTSet.union (T, tyvarsE E))
+          OTSet.empty strEnvCont
 
-  and tyvarsE (tyConEnv,varEnv,strEnv) =
+  and tyvarsE (tyConEnv, varEnv, strEnv) =
       OTSet.union (tyvarsTE tyConEnv,OTSet.union(tyvarsVE varEnv,tyvarsSE strEnv))
 
   and tyvarsG sigEnv =
@@ -1493,187 +1467,5 @@ struct
                             #varEnv   cc,
                             #strEnv   cc))
 
-  fun substTyConIdInSizeTagExp tyConIdSubst sizeTagExp =
-      case sizeTagExp of
-          ST_CONST _ => sizeTagExp
-        | ST_VAR id => ST_VAR (substTyConIdInId tyConIdSubst id)
-        | ST_BDVAR _ => sizeTagExp
-        | ST_APP {stfun = sizeTagExp, args = sizeTagExps} =>
-          ST_APP {stfun = substTyConIdInSizeTagExp tyConIdSubst sizeTagExp, 
-                  args = map (substTyConIdInSizeTagExp tyConIdSubst) sizeTagExps}
-        | ST_FUN {args, body} => ST_FUN {args = args, body = substTyConIdInSizeTagExp tyConIdSubst body}
-          
-          
-  fun substTyConIdInTyConSizeTagEnv visited tyConIdSubst tyConSizeTagEnv =
-      let
-          val (visited, tyConSizeTagEnv) =
-              SEnv.foldli
-                  (fn (label, {tyBindInfo, sizeInfo, tagInfo}, (visited, tyConSizeTagEnv)) =>
-                      let
-                          val (visited, tyBindInfo) = 
-                              substTyConIdInTyBindInfo visited tyConIdSubst tyBindInfo
-                          val sizeInfo =
-                              substTyConIdInSizeTagExp tyConIdSubst sizeInfo
-                          val tagInfo =
-                              substTyConIdInSizeTagExp tyConIdSubst tagInfo
-                      in
-                          (visited, SEnv.insert(tyConSizeTagEnv, 
-                                                label,
-                                                {tyBindInfo = tyBindInfo,
-                                                 sizeInfo = sizeInfo,
-                                                 tagInfo = tagInfo}))
-                      end)
-                  (visited, SEnv.empty)
-                  tyConSizeTagEnv
-      in
-          (visited, tyConSizeTagEnv)
-      end
-
-  fun substTyConIdInStrSizeTagEnv visited tyConIdSubst strSizeTagEnv =
-      SEnv.foldri
-          (fn
-           (label, STRSIZETAG {id, name, strpath, env = Env}, (visited, strSizeTagEnv))
-           =>
-           let
-               val (visited, Env) = substTyConIdInSizeTagEnv visited tyConIdSubst Env
-               val strPathSizeTagInfo = {id = id, name = name, strpath = strpath, env = Env}
-           in
-               (visited, SEnv.insert(strSizeTagEnv, label, STRSIZETAG strPathSizeTagInfo))
-           end)
-          (visited, SEnv.empty)
-          strSizeTagEnv
-
-  and substTyConIdInSizeTagEnv visited tyConIdSubst (tyConSizeTagEnv, varEnv, strSizeTagEnv) =
-      let
-          val (visited, tyConSizeTagEnv) = 
-              substTyConIdInTyConSizeTagEnv ID.Set.empty tyConIdSubst tyConSizeTagEnv
-          val (visited, varEnv) = 
-              substTyConIdInVarEnv visited tyConIdSubst varEnv 
-          val (visited, strSizeTagEnv) = 
-              substTyConIdInStrSizeTagEnv visited tyConIdSubst strSizeTagEnv
-      in
-          (visited, (tyConSizeTagEnv, varEnv, strSizeTagEnv))
-      end
-          
-  fun substTyConIdInTypeEnv tyConIdSubst (typeEnv:TC.typeEnv) =
-      let
-          val (visited, tyConSizeTagEnv) = 
-              substTyConIdInTyConSizeTagEnv ID.Set.empty tyConIdSubst (#tyConSizeTagEnv typeEnv)
-          val (visited, varEnv) = 
-              substTyConIdInVarEnv visited tyConIdSubst (#varEnv typeEnv)
-          val (visited, strSizeTagEnv) = 
-              substTyConIdInStrSizeTagEnv visited tyConIdSubst (#strSizeTagEnv typeEnv)
-      in
-          {tyConSizeTagEnv = tyConSizeTagEnv,
-           varEnv = varEnv,
-           strSizeTagEnv =  strSizeTagEnv}
-      end
-
-  (**********************************************************************)         
-
-  fun sizeTagSubstFromTyConSizeTagEnv (importTyConSizeTagEnv, implTyConSizeTagEnv) =
-      SEnv.foldli 
-          (fn (tyConName, {tyBindInfo, sizeInfo, tagInfo}, sizeTagSubst) =>
-              case tyBindInfo of
-                  TYSPEC {spec = {id,...}, impl = NONE} =>
-                  (case SEnv.find (implTyConSizeTagEnv, tyConName) of
-                       NONE => sizeTagSubst
-                     | SOME {tyBindInfo, sizeInfo, tagInfo} =>
-                       ID.Map.insert(sizeTagSubst, id, (sizeInfo, tagInfo)))
-                | _ => sizeTagSubst)
-          ID.Map.empty
-          importTyConSizeTagEnv
-
-  fun sizeTagSubstFromStrSizeTagEnv (importStrSizeTagEnv, implStrSizeTagEnv) =
-      SEnv.foldli
-      (fn (strName, 
-           STRSIZETAG {env = (subTyConSizeTagEnv1, subVarEnv1, subStrSizeTagEnv1),...}, 
-           sizeTagSubst) =>
-          case SEnv.find(implStrSizeTagEnv, strName) of
-              SOME (STRSIZETAG {env = (subTyConSizeTagEnv2, subVarEnv2, subStrSizeTagEnv2),...}) =>
-                   let
-                       val sizeTagSubst1 = 
-                           sizeTagSubstFromTyConSizeTagEnv (subTyConSizeTagEnv1, subTyConSizeTagEnv2)
-                       val sizeTagSubst2 =
-                           sizeTagSubstFromStrSizeTagEnv (subStrSizeTagEnv1, subStrSizeTagEnv2)
-                   in
-                       ID.Map.unionWithi (fn _ => raise Control.Bug "duplicate tyConId")
-                                         (sizeTagSubst,
-                                          ID.Map.unionWithi (fn _ => raise Control.Bug "duplicate tyConId")
-                                                            (sizeTagSubst1,sizeTagSubst2))
-                   end
-            | NONE => sizeTagSubst)
-      ID.Map.empty
-      importStrSizeTagEnv
-                  
-
-  fun sizeTagSubstFromEnv (importTypeEnv:TC.typeEnv, implTypeEnv:TC.typeEnv) =
-      let
-          val sizeTagSubst1 = 
-              sizeTagSubstFromTyConSizeTagEnv (#tyConSizeTagEnv importTypeEnv,
-                                               #tyConSizeTagEnv implTypeEnv)
-          val sizeTagSubst2 =
-              sizeTagSubstFromStrSizeTagEnv (#strSizeTagEnv importTypeEnv,
-                                             #strSizeTagEnv implTypeEnv)
-      in
-          ID.Map.unionWithi (fn _ => raise Control.Bug "duplicate tyConId") 
-                            (sizeTagSubst1, sizeTagSubst2)
-      end
-
-  (***********************************************************************************)
-  local
-      fun substSizeTagExp sizeFlag sizeTagSubst sizeTagExp =
-          case sizeTagExp of
-              ST_CONST _ => sizeTagExp
-            | ST_VAR id => 
-              (case ID.Map.find(sizeTagSubst, id) of
-                   NONE => sizeTagExp
-                 | SOME (sizeInfo, TagInfo) => 
-                   if sizeFlag then sizeInfo else TagInfo)
-            | ST_BDVAR _ => sizeTagExp
-            | ST_APP {stfun, args} => ST_APP {stfun = substSizeTagExp sizeFlag sizeTagSubst stfun,
-                                              args = map (substSizeTagExp sizeFlag sizeTagSubst) args}
-            | ST_FUN {args, body} => ST_FUN {args = args,
-                                             body = substSizeTagExp sizeFlag sizeTagSubst body}
-  in
-      fun substSizeInfo sizeTagSubst sizeExp =
-          substSizeTagExp true sizeTagSubst sizeExp
-      fun substTagInfo sizeTagSubst tagExp =
-          substSizeTagExp false sizeTagSubst tagExp
-  end
-          
-  fun substSizeTagTyConSizeTagEnv sizeTagSubst tyConSizeTagEnv =
-      SEnv.map (fn {tyBindInfo, sizeInfo, tagInfo} =>
-                   {tyBindInfo = tyBindInfo,
-                    sizeInfo = substSizeInfo sizeTagSubst sizeInfo,
-                    tagInfo = substSizeInfo sizeTagSubst tagInfo})
-               tyConSizeTagEnv
-
-  fun substSizeTagStrSizeTagEnv sizeTagSubst strSizeTagEnv =
-      SEnv.map (fn STRSIZETAG {id, 
-                               name, 
-                               strpath, 
-                               env = (subTyConSizeTagEnv, subVarEnv, subStrSizeTagEnv)} =>
-                   let
-                       val subTyConSizeTagEnv =
-                           substSizeTagTyConSizeTagEnv sizeTagSubst subTyConSizeTagEnv
-                       val subStrSizeTagEnv =
-                           substSizeTagStrSizeTagEnv sizeTagSubst subStrSizeTagEnv
-                   in
-                       STRSIZETAG{id = id,
-                                  name = name,
-                                  strpath = strpath,
-                                  env = (subTyConSizeTagEnv, subVarEnv, subStrSizeTagEnv)}
-                   end)
-               strSizeTagEnv
-
-  fun substSizeTagTypeEnv sizeTagSubst (typeEnv:TC.typeEnv) =
-      {
-       tyConSizeTagEnv = 
-       substSizeTagTyConSizeTagEnv sizeTagSubst (#tyConSizeTagEnv typeEnv),
-       varEnv = #varEnv typeEnv,
-       strSizeTagEnv =
-       substSizeTagStrSizeTagEnv sizeTagSubst (#strSizeTagEnv typeEnv)
-       }
  end
 end

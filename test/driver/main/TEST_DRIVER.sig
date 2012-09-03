@@ -1,7 +1,7 @@
 (**
  * 
  * @author YAMATODANI Kiyoshi
- * @version $Id: TEST_DRIVER.sig,v 1.1 2005/03/24 14:58:35 kiyoshiy Exp $
+ * @version $Id: TEST_DRIVER.sig,v 1.2 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
 signature TEST_DRIVER =
 sig
@@ -23,6 +23,7 @@ sig
   val runTests :
       {
         prelude : string,
+        isCompiledPrelude : bool,
         sourcePaths : string list,
         expectedDirectory : string,
         resultDirectory : string

@@ -1,5 +1,5 @@
 (**
- * SMLPP example: core ML parser
+ * SMLFormat example: core ML parser
  *
  * YAMATODANI Kiyoshi
  *
@@ -54,14 +54,9 @@ struct
 
   fun printFormat columns formatExpressions =
       let
-        val parameter =
-            {
-              spaceString = " ",
-              newlineString = "\n",
-              columns = columns
-            }
+        val parameter = [SMLFormat.PrinterParameter.Columns columns]
       in
-        print (SMLPP.prettyPrint parameter formatExpressions)
+        print (SMLFormat.prettyPrint parameter formatExpressions)
       end
 
   fun makeScale length =
@@ -193,7 +188,9 @@ struct
                     (
                       print "FormatExpression:\n";
                       app
-                      (fn e=>print ((SMLPP.FormatExpression.toString e) ^ " "))
+                      (fn e =>
+                          print
+                              ((SMLFormat.FormatExpression.toString e) ^ " "))
                       formatExpressions;
                       print "\n";
                       print "Formatted Code:\n"
@@ -234,7 +231,8 @@ struct
         handle (exn as Absyn.ParseError _) =>
                (
                  printFormat
-                     (!(#columns arg)) (SMLPP.BasicFormatters.format_exn exn);
+                     (!(#columns arg))
+                     (SMLFormat.BasicFormatters.format_exn exn);
                  print "\n";
                  flush arg;
                  processInput arg
@@ -242,7 +240,8 @@ struct
              | exn =>
                (
                  printFormat
-                     (!(#columns arg)) (SMLPP.BasicFormatters.format_exn exn);
+                     (!(#columns arg))
+                     (SMLFormat.BasicFormatters.format_exn exn);
                  print "\n";
                  raise exn
                )

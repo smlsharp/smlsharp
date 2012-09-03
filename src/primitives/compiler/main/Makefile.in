@@ -7,14 +7,18 @@ include @top_builddir@commonrule
 
 VPATH = $(srcdir)
 
-SOURCES = Primitives.ppg
+SOURCES = Primitives.ppg \
+	  ConstantTerm.ppg
 
-TARGETS = $(srcdir)/Primitives.ppg.sml
+DERIVED_FILES = $(srcdir)/Primitives.ppg $(srcdir)/Constants.sml
+TARGETS = $(srcdir)/Primitives.ppg.sml $(srcdir)/ConstantTerm.ppg.sml
 
 all: $(TARGETS)
 
 clean:
-	-rm -rf $(srcdir)/CM
+	-rm -rf $(srcdir)/CM $(srcdir)/.cm
 	-rm -f $(TARGETS)
+	-rm -f $(DERIVED_FILES)
 
 $(srcdir)/Primitives.ppg.sml: Primitives.ppg
+$(srcdir)/ConstantTerm.ppg.sml: ConstantTerm.ppg

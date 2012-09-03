@@ -2,7 +2,7 @@
  * An implementation of serialize combinator based on
  * "Type-Specialized Serialization with Sharing", Martin Elsman
  * @author YAMATODANI Kiyoshi
- * @version $Id: Pickle.sml,v 1.5 2006/02/18 09:10:50 kiyoshiy Exp $
+ * @version $Id: Pickle.sml,v 1.7 2007/02/21 02:12:32 kiyoshiy Exp $
  *)
 structure Pickle :> PICKLE =
 struct
@@ -50,7 +50,7 @@ struct
         val hashTable : upe =
             H.mkTable
                 (
-                  fn x => Word.fromLargeWord x,
+                  fn x => (Word.fromLargeWord o Word32.toLargeWord) x,
                   fn (v1, v2) => v1 = (v2 : Word32.word)
                 )
                 (sizeHint, Fail "not found")
@@ -139,9 +139,11 @@ struct
         eq = op =
       }
 
-  fun pickleWord word (stream, pe) = S.outw(Word.toLargeWord word, stream)
+  fun pickleWord word (stream, pe) =
+      S.outw((Word32.fromLargeWord o Word.toLargeWord) word, stream)
   fun unpickleWord (stream, upe) =
-      let val word = S.getw stream in Word.fromLargeWord word end
+      let val word = S.getw stream
+      in (Word.fromLargeWord o Word32.toLargeWord) word end
   fun hashWord word = hashAdd word
   val word : Word.word pu =
       {
@@ -153,7 +155,7 @@ struct
 
   fun pickleWord32 word (stream, pe) = S.outw(word, stream)
   fun unpickleWord32 (stream, upe) = let val word = S.getw stream in word end
-  fun hashWord32 word = hashAdd (Word.fromLargeWord word)
+  fun hashWord32 word = hashAdd (Word.fromLargeWord(Word32.toLargeWord word))
   val word32 : Word32.word pu =
       {
         pickler= pickleWord32,
@@ -189,8 +191,7 @@ struct
   fun conv (convPickle : 'a -> 'b, convUnpickle : 'b -> 'a) (pu : 'a pu) =
       {
         pickler = fn v => fn stream => #pickler pu (convUnpickle v) stream,
-        unpickler =
-        fn stream => let val v = #unpickler pu stream in convPickle v end,
+        unpickler = fn stream => convPickle (#unpickler pu stream),
         hasher = fn v => #hasher pu (convUnpickle v),
         eq = fn (v1, v2) => #eq pu (convUnpickle v1, convUnpickle v2)
       } : 'b pu
@@ -275,8 +276,8 @@ struct
 
   fun share (pu : 'a pu) : 'a pu =
       let
-        val REF = 0w0
-        and DEF = 0w1
+        val REF = 0w0 : Word8.word
+        and DEF = 0w1 : Word8.word
         val (toDyn, fromDyn) =
             Dyn.new
                 (#eq pu)
@@ -293,10 +294,10 @@ struct
                   val d = toDyn v
                 in
                   case H.find pe d of
-                    SOME loc => (S.outcw(REF, s); S.outw(loc, s))
+                    SOME loc => (S.outb(REF, s); S.outw(loc, s))
                   | NONE =>
                     let
-                      val () = S.outcw(DEF, s)
+                      val () = S.outb(DEF, s)
                       val loc = S.getLoc s
                       val () = #pickler pu v (s, pe)
                     in
@@ -307,7 +308,7 @@ struct
                 end,
           unpickler =
           fn (s, upe) =>
-             let val tag = S.getcw s
+             let val tag = S.getb s
              in
                if tag = REF
                then
@@ -328,11 +329,11 @@ struct
         }
       end
 
-  fun refCyc (dummy : 'a) (pu : 'a pu) : 'a ref pu =
+  fun refCycle (dummy : 'a) (pu : 'a pu) : 'a ref pu =
       let
         val hashTag = newHashTag ()
-        val REF = 0w0
-        and DEF = 0w1
+        val REF = 0w0 : Word8.word
+        and DEF = 0w1 : Word8.word
         fun hasher (ref v) =
             maybestop (fn p => (#hasher pu v (hashAddSmall hashTag p)))
         val (toDyn, fromDyn) =
@@ -351,15 +352,14 @@ struct
                   val d = toDyn r
                 in
                   case H.find pe d of
-                    SOME loc =>
-                    (S.outcw(REF, s); S.outw(loc, s))
+                    SOME loc => (S.outb(REF, s); S.outw(loc, s))
                   | NONE =>
-                    let val _ = S.outcw(DEF, s) val loc = S.getLoc s
+                    let val _ = S.outb(DEF, s) val loc = S.getLoc s
                     in H.insert pe (d, loc); #pickler pu v (s, pe) end
                 end,
           unpickler =
           fn (s, upe) =>
-             let val tag = S.getcw s
+             let val tag = S.getb s
              in
                if tag = REF
                then
@@ -380,21 +380,42 @@ struct
           hasher = hasher,
           eq = op =
         }
-
       end
+
+  fun refNonCycle (pu : 'a pu) : 'a ref pu =
+      share (conv (fn v => ref v, fn ref v => v) pu)
+
+  fun refNonShared (pu : 'a pu) : 'a ref pu =
+      conv (fn v => ref v, fn ref v => v) pu
 
   fun data (toInt: 'a -> int, fs : ('a pu -> 'a pu) list) : 'a pu =
       let
+        val (outConTag, getConTag) =
+            let val numCons = length fs
+            in
+              if numCons < 256
+              then
+                (
+                  fn (n, s) =>
+                     (* range-check only at pickling. *)
+                     if 256 <= n
+                     then raise Fail "Bug:tag should be less than 256."
+                     else S.outb(Word8.fromInt n, s),
+                  Word8.toInt o S.getb
+                )
+              else
+                (
+                  fn (n, s) => S.outw(Word32.fromInt n, s),
+                  Word32.toInt o S.getw
+                )
+            end
         val hashTag = newHashTag()
         val res : 'a pu option ref = ref NONE
         val ps : 'a pu vector option ref = ref NONE
         fun p v (s, pe) =
-            let val i = toInt v val _ = S.outcw (Word32.fromInt i, s)
+            let val i = toInt v val _ = outConTag (i, s)
             in #pickler(getPUPI i) v (s, pe) end
-        and up (s, upe) =
-            let val w = S.getcw s
-            in #unpickler(getPUPI (Word32.toInt w)) (s, upe)
-            end
+        and up (s, upe) = #unpickler(getPUPI (getConTag s)) (s, upe)
         and eq(a1 : 'a, a2 : 'a) : bool =
             let val n = toInt a1
             in n = toInt a2 andalso #eq (getPUPI n) (a1, a2)

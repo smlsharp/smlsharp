@@ -12,7 +12,7 @@ else
 fi
 
 case "@target_os@" in
-*cygwin*)
+*cygwin*|*mingw*)
   HEAPIMAGE=`$SHELL @abs_top_builddir@/mksmlpath -sh "$HEAPDIR/$NAME"`
   ;;
 *)
@@ -20,8 +20,16 @@ case "@target_os@" in
   ;;
 esac
 
-cat <<END > "$DSTFILE"
+if expr "@SML@" : "cmd /c " > /dev/null 2>&1; then
+  cat <<END > "$DSTFILE"
+#!/bin/sh
+cmd /c "@SML_BAT@ @SMLload=$HEAPIMAGE \$*"
+END
+else
+  cat <<END > "$DSTFILE"
 #!/bin/sh
 exec @SML@ @SMLload="$HEAPIMAGE" "\$@"
 END
+fi
+
 chmod +x "$DSTFILE"

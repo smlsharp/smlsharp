@@ -1,5 +1,7 @@
 (**
- * Copyright (c) 2006, Tohoku University.
+ * @copyright (c) 2006, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: FileSysUtil_Posix.sml,v 1.4 2007/02/23 12:32:37 kiyoshiy Exp $
  *)
 structure FileSysUtil =
 struct
@@ -13,6 +15,6 @@ struct
       in
        PF.chmod (fileName, PF.S.flags [mode, PF.S.ixusr])
       end
-  val PathSeprator = #":"
+  val PathSeparator = #":"
 
 end;

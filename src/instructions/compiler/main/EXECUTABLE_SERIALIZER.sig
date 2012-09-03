@@ -4,7 +4,7 @@
  * array.
  *
  * @author YAMATODANI Kiyoshi
- * @version $Id: EXECUTABLE_SERIALIZER.sig,v 1.3 2005/10/22 14:46:33 kiyoshiy Exp $
+ * @version $Id: EXECUTABLE_SERIALIZER.sig,v 1.5 2007/02/19 04:06:09 kiyoshiy Exp $
  *)
 signature EXECUTABLE_SERIALIZER =
 sig
@@ -19,14 +19,15 @@ sig
    * @return a byte array whose contents is the executable in the binary
    *                     form.
    *)
-  val serialize : Executable.executable -> Word8Array.array
+  val serialize : Executable.executable -> Word8Vector.vector
 
   (**
    * This function is provided for VM emulator.
    *)
   val deserialize :
-      Word8Array.array
+      Word8Vector.vector
       -> {
+           byteOrder : SystemDefTypes.byteOrder,
            instructionsSize: BasicTypes.UInt32,
            instructionsArray : Word8Array.array,
            locationTable : Executable.locationTable,

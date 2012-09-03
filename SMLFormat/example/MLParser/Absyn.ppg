@@ -79,7 +79,7 @@ struct
   local
 
     fun formatPrependedOpt (formatter, prefixIfSome) =
-        fn NONE => [SMLPP.FormatExpression.Term (0, "")]
+        fn NONE => [SMLFormat.FormatExpression.Term (0, "")]
          | SOME value => prefixIfSome @ (formatter value)
 
     fun formatBinaryChoice (ifTrue, ifFalse) value =
@@ -87,10 +87,10 @@ struct
 
     fun formatListWithEnclosure
         (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
-        fn [] => [SMLPP.FormatExpression.Term (0, "")]
+        fn [] => [SMLFormat.FormatExpression.Term (0, "")]
          | list =>
            prefixIfNotNull @
-           (SMLPP.BasicFormatters.format_list
+           (SMLFormat.BasicFormatters.format_list
                 (elementFormatter, separator) list) @
            suffixIfNotNull
 

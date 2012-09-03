@@ -1,6 +1,17 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
+#if defined(NEW_CM)
+        $/smlformatlib.cm
+#else
         ../../../smlformatlib.cm
+#endif
         ../../util/sources.cm
         ../../env/sources.cm
         ../../absyn/sources.cm
@@ -19,4 +30,6 @@ Group is
 	TypeContext.ppg.sml
 	TypeContextUtils.sml	
 	TypeContextPickler.sml
-	
+	StaticTypeEnvPickler.sml		
+	StaticTypeEnv.ppg.sml
+	StaticTypeEnvUtils.sml

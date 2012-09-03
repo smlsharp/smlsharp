@@ -4,7 +4,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TypedFlatCalc.ppg,v 1.5 2006/02/27 06:31:09 bochao Exp $
+ * @version $Id: TypedFlatCalc.ppg,v 1.14 2007/02/28 15:31:26 katsu Exp $
  *)
 structure TypedFlatCalc : TYPEDFLATCALC = struct
 
@@ -21,6 +21,11 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
 
  type loc = Loc.loc
 
+ (*%
+  * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+  *)
+ type callingConvention = Absyn.callingConvention
+        
  (*%
   * @params(btvEnv)
   * @formatter(tyformat) Types.format_ty
@@ -64,37 +69,39 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
        *)
       {displayName : string, funtyCon : bool, ty : ty, tag: int, tyCon : tyCon}
 
- (*%
+ (*% 
   * @params(btvEnv)
+  * @formatter(typesValdInfo) Types.format_varIdInfo
   *)
  type varIdInfo = 
      (*%
-      * @format({id,displayName,ty}) displayName "[" id "]"
+      * @format(id:typesValdInfo) id()(btvEnv)
       *)
-     {id:id, displayName:string, ty:ty}
+      Types.varIdInfo
 
- (*%
+
+ (*% 
   * @params(btvEnv)
-  *)
- datatype valIdent = 
+  * @formatter(typesValIdent) Types.format_valIdent
+ *)
+ type valIdent = 
      (*%
-      * @format(var) var()(btvEnv)
+      * @format(id:typesValIdent) id()(btvEnv)
       *)
-     VALDECIDENT of varIdInfo
-   | (*%
-      * @format(ty) "_"
-      *)
-     VALDECIDENTWILD of ty
+     Types.valIdent
+
 
  (*%
   * @params(btvEnv)
+  * @formatter(id) ID.format_id
   *)
  (*%
+  * @formatter(id) ID.format_id
   * @prefix untypedformat_
   *)
  type varInfoWithType = 
      (*%
-      * @format({id,displayName,ty:ty}) R0{displayName}
+      * @format({id,displayName,ty:ty}) displayName
       *)
       (*%
        * @prefix untypedformat_
@@ -137,14 +144,14 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
       *)
      Types.caseKind
 
- datatype constant =  datatype Types.constant
+ datatype constant = datatype ConstantTerm.constant
 
 (*%
  * @params(btvEnv)
  *
  * @formatter(formatConInfoNameType) Types.format_conInfoNameType
  * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
- * @formatter(formatConst) Types.format_constant
+ * @formatter(formatConst) ConstantTerm.format_constant
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
@@ -154,7 +161,7 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
  *)
 (*%
  * @prefix untypedformat_
- * @formatter(constant) Types.format_constant
+ * @formatter(constant) ConstantTerm.format_constant
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
  *)
  datatype tfppat
@@ -222,6 +229,14 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
       * @format({varPat:pat1, asPat:pat2, loc: loc}) pat1 + "as" + pat2
       *)
      TFPPATLAYERED of {varPat:tfppat, asPat:tfppat, loc:loc}
+   | (*%
+      * @format(pat1 * pat2 * loc) "(" pat1()(btvEnv) + "|" + pat2()(btvEnv) ")"
+      *)
+     (*%
+      * @prefix untypedformat_
+      * @format(pat1 * pat2 *  loc) "(" pat1 + "|" + pat2 ")"
+      *)
+     TFPPATORPAT of tfppat * tfppat * loc
 
  withtype patfields = 
      (*%
@@ -238,7 +253,7 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
  *
  * @formatter(formatConInfoNameType) Types.format_conInfoNameType
  * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
- * @formatter(formatConst) Types.format_constant
+ * @formatter(formatConst) ConstantTerm.format_constant
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
@@ -251,27 +266,54 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
      (*%
       * @format
       *   ({funExp:exp1, 
+      *     funTy,
       *     instTyList:ty tys:formatListWithEnclosure, 
-      *     argExp:exp2, 
-      *     argTyList:argTy argTys, 
-      *     loc:loc
+      *     argExpList:exp2 exps2:formatListWithEnclosure, 
+      *     argTyList:argTy argTys,
+      *     convention,
+      *     loc
       *     })
       * L10{
       *      "("
-      *          exp1()(btvEnv)
+      *          convention + exp1()(btvEnv)
       *          2[ +2 ":" +d !N0{tys(ty()(btvEnv))(",","{","}")} ]
       *      ")" +1
-      *      exp2()(btvEnv)
+      *      {exps2(exp2()(btvEnv))(","1,"(",")")}
       *    }
       *)
       TFPFOREIGNAPPLY of 
         {
           funExp : tfpexp, 
+          funTy: ty,
 	  instTyList:ty list,
-	  argExp:tfpexp, 
+	  argExpList:tfpexp list, 
 	  argTyList : ty list, 
+          convention : callingConvention,
 	  loc: loc
         }
+   | (*%
+      * @format({funExp, instTyList: ty tys:formatListWithEnclosure,
+      *          argTyList: argTy argTys:formatListWithEnclosure, resultTy,
+      *          loc})
+      * L10{ "CALLBACK(" funExp()(btvEnv) 
+      *          2[ +2 ":" +d !N0{tys(ty()(btvEnv))(",","{","}")} ]
+      *       +1 ":" + {argTys(argTy()(btvEnv))(","+2,"{","}") +2
+      *         "->" +2 resultTy()(btvEnv)}
+      * ")" }
+      *)
+     TFPEXPORTCALLBACK of 
+       {
+         funExp : tfpexp,
+         instTyList:ty list,
+	 argTyList : ty list,
+	 resultTy : ty,
+         loc: loc
+       }
+   | (*%
+      * @format(ty * loc)
+      * "_sizeof(" ty()(btvEnv) ")"
+      *)
+     TFPSIZEOF of ty * loc
    | (*%
       * @format(const:formatConst * loc) const
       *)
@@ -487,19 +529,6 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
      * }
      *)
      TFPSEQ of {expList:tfpexp list, expTyList:ty list, loc:loc}      (* this must be primitive *)
-  | (*%
-     * @format
-     *   ({funExp:funExp, 
-           libExp:libExp, 
-	   argTyList:argty argtys,
-           resultTy:resultty, 
-	   funTy:infty, 
-	   loc:loc})
-     * "import" + funExp()(btvEnv) +d "of" +d libExp()(btvEnv) +2
-     * ":" + "{" {argtys(argty()(btvEnv))("," +)} "}"
-     *       "->" {resultty()(btvEnv)}
-     *)
-    TFPFFIVAL of {funExp:tfpexp, libExp:tfpexp, argTyList:ty list, resultTy:ty, funTy:ty, loc:loc}
   | (*%
      * @format(exp * ty * loc) "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
      *)

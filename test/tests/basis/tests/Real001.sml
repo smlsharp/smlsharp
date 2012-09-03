@@ -159,3 +159,21 @@ val realRound_1_5 = Real.realRound 1.5;
 val realRound_m1_4 = Real.realRound ~1.4;
 val realRound_m1_5 = Real.realRound ~1.5;
 
+val toString_m11 = Real.toString 0.00123456789;
+val toString_m12 = Real.toString 0.000123456789;
+val toString_m13 = Real.toString 0.0000123456789;
+val toString_11 = Real.toString 12345678900.0;
+val toString_12 = Real.toString 123456789000.0;
+val toString_13 = Real.toString 1234567890000.0;
+
+val fmt_FIX_1239_2 = Real.fmt (StringCvt.FIX (SOME 2)) 1.239;
+val fmt_FIX_1239_3 = Real.fmt (StringCvt.FIX (SOME 3)) 1.239;
+val fmt_FIX_1239_4 = Real.fmt (StringCvt.FIX (SOME 4)) 1.239;
+
+val fmt_FIX_1299_1 = Real.fmt (StringCvt.FIX (SOME 1)) 1.299;
+val fmt_FIX_1299_2 = Real.fmt (StringCvt.FIX (SOME 2)) 1.299;
+val fmt_FIX_1299_3 = Real.fmt (StringCvt.FIX (SOME 3)) 1.299;
+
+val fmt_FIX_19_0 = Real.fmt (StringCvt.FIX (SOME 0)) 1.9;
+val fmt_FIX_19_1 = Real.fmt (StringCvt.FIX (SOME 1)) 1.9;
+

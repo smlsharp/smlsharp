@@ -2,7 +2,7 @@
  * Path represents a long identifier.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Path.sml,v 1.8 2006/02/27 06:26:14 bochao Exp $
+ * @version $Id: Path.sml,v 1.9 2006/04/15 08:40:44 ohori Exp $
  *)
 structure Path : PATH = 
 struct
@@ -57,7 +57,7 @@ struct
     | comparePathByName (NilPath,PStructure _ ) = false
 
   fun comparePathById (PStructure(id1,name1,p1),PStructure(id2,name2,p2)) =
-      if id1 = id2 then comparePathByName (p1,p2) else false
+      if ID.eq(id1,id2) then comparePathByName (p1,p2) else false
     | comparePathById (NilPath,NilPath) = true
     | comparePathById (PStructure _, NilPath) = false
     | comparePathById (NilPath,PStructure _ ) = false
@@ -68,17 +68,17 @@ struct
           PStructure(leftID, leftName, leftTail),
           PStructure(rightID, rightName, rightTail)
         ) =>
-        if leftID = rightID
+        if ID.eq(leftID, rightID)
         then removeCommonPrefix (leftTail, rightTail)
         else (leftPath, rightPath)
       | _ => (leftPath, rightPath)
 
   fun hideTopStructure (path as PStructure(strID, strName, tail)) =
-      if strID = topStrID then tail else path
+      if ID.eq (strID, topStrID) then tail else path
     | hideTopStructure path = path
 
   fun hideLocalizedConstrainedStructure (path as PStructure(strID, strName, tail)) =
-      if strID = localizedConstrainedStrID then 
+      if ID.eq(strID, localizedConstrainedStrID) then 
 	hideLocalizedConstrainedStructure(tail) 
       else
 	PStructure(strID, strName, hideLocalizedConstrainedStructure(tail))

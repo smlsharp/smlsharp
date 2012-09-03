@@ -2,7 +2,7 @@
  * declartions of types which represent elements operated in the runtime.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RuntimeTypes.sml,v 1.20 2006/02/28 16:11:13 kiyoshiy Exp $
+ * @version $Id: RuntimeTypes.sml,v 1.21 2007/01/13 03:35:00 kiyoshiy Exp $
  *)
 structure RuntimeTypes =
 struct
@@ -12,6 +12,7 @@ struct
   local
     open BasicTypes
     structure E = Executable
+    structure SD = SystemDef
   in
 
   (***************************************************************************)
@@ -23,8 +24,13 @@ struct
          | StringBlock
          | RealBlock
 
+  (**
+   * This is not equal to Executable.executable in that instructions are in
+   * serialized format.
+   *)
   type executable =
        {
+         byteOrder : SystemDefTypes.byteOrder,
          instructionsSize: UInt32,
          instructionsArray : Word8Array.array,
          locationTable : E.locationTable,
@@ -51,6 +57,7 @@ struct
 
   val emptyExecutable =
       {
+        byteOrder = SD.NativeByteOrder,
         instructionsSize = 0w0,
         instructionsArray = Word8Array.array (0, 0w0),
         locationTable = emptyLocationTable,

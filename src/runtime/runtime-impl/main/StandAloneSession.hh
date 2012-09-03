@@ -6,7 +6,6 @@
 #include "VirtualMachine.hh"
 #include "InputChannel.hh"
 #include "ExecutablePreProcessor.hh"
-#include "VariableLengthArray.hh"
 #include "WordOperations.hh"
 #include "Log.hh"
 #include "Debug.hh"
@@ -39,6 +38,11 @@ class StandAloneSession
 
     /**
      * constructor
+     */
+    StandAloneSession();
+
+    /**
+     * constructor
      *
      * @param executableInputChannel the session reads executables from this
      *                        input channel.
@@ -56,6 +60,17 @@ class StandAloneSession
 
     virtual
     SInt32Value start()
+        throw(IMLRuntimeException,
+              UserException,
+              SystemError);
+
+    /**
+     * buffer contains serialized form of a sequence of ExecutionRequest
+     * messages (= a pair of the byte length of an executable and the
+     * executable).
+     */
+    virtual
+    SInt32Value run(UInt32Value bufferByteLength, UInt32Value* buffer)
         throw(IMLRuntimeException,
               UserException,
               SystemError);

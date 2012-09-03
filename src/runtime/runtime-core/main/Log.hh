@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: Log.hh,v 1.3 2005/02/07 10:34:10 kiyoshiy Exp $
+ * @version $Id: Log.hh,v 1.4 2007/01/08 08:53:31 kiyoshiy Exp $
  */
 #ifndef Log_hh_
 #define Log_hh_
@@ -27,7 +27,7 @@ class LogType
   public:
 
     virtual
-    const ByteValue* getTypeLabel() const = 0;
+    const char* getTypeLabel() const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -56,7 +56,7 @@ class ErrorLogType
   public:
 
     virtual
-    const ByteValue* getTypeLabel() const;
+    const char* getTypeLabel() const;
 };
 
 class WarningLogType
@@ -84,7 +84,7 @@ class WarningLogType
   public:
 
     virtual
-    const ByteValue* getTypeLabel() const;
+    const char* getTypeLabel() const;
 };
 
 class InfoLogType
@@ -112,7 +112,7 @@ class InfoLogType
   public:
 
     virtual
-    const ByteValue* getTypeLabel() const;
+    const char* getTypeLabel() const;
 };
 
 class TraceLogType
@@ -140,7 +140,7 @@ class TraceLogType
   public:
 
     virtual
-    const ByteValue* getTypeLabel() const;
+    const char* getTypeLabel() const;
 };
 
 class DebugLogType
@@ -168,7 +168,7 @@ class DebugLogType
   public:
 
     virtual
-    const ByteValue* getTypeLabel() const;
+    const char* getTypeLabel() const;
 };
 
 class TestLogType
@@ -196,7 +196,7 @@ class TestLogType
   public:
 
     virtual
-    const ByteValue* getTypeLabel() const;
+    const char* getTypeLabel() const;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -208,8 +208,8 @@ class LogFacade
   public:
 
     static void log(const LogType& type,
-                    const ByteValue* who,
-                    const ByteValue* message);
+                    const char* who,
+                    const char* message);
 
     static void close();
 
@@ -228,8 +228,8 @@ class LogFacade
 
     virtual
     void log_(const LogType& type,
-              const ByteValue* who,
-              const ByteValue* message) const
+              const char* who,
+              const char* message) const
         = 0;
 
     virtual
@@ -254,7 +254,7 @@ class LogAdaptor
 
   public:
 
-    LogAdaptor(const ByteValue* who);
+    LogAdaptor(const char* who);
 
     ~LogAdaptor();
 
@@ -262,19 +262,19 @@ class LogAdaptor
 
   public:
 
-    void error(const ByteValue* message);
-    void warn(const ByteValue* message);
-    void info(const ByteValue* message);
-    void enter(const ByteValue* message);
-    void exit(const ByteValue* message);
-    void debug(const ByteValue* message);
-    void test(const ByteValue* message);
+    void error(const char* format, ...);
+    void warn(const char* format, ...);
+    void info(const char* format, ...);
+    void enter(const char* format, ...);
+    void exit(const char* format, ...);
+    void debug(const char* format, ...);
+    void test(const char* format, ...);
 
     ////////////////////////////////////////
 
   private:
 
-    const ByteValue* const who_;
+    const char* const who_;
 
 };
 

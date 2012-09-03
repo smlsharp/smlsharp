@@ -8,6 +8,7 @@ signature GENERAL =
   sig
 
     type unit = unit
+
     type exn = exn
 
     exception Bind

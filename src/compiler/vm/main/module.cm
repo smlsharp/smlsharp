@@ -1,5 +1,12 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+        $/smlnj-lib.cm
+#else
         smlnj-lib.cm
+#endif
 
         ../../../configuration/sources.cm
 
@@ -35,6 +42,7 @@ Group is
         IntPrimitives.sml
         WordPrimitives.sml
         CharPrimitives.sml
+        DynamicLinkPrimitives.sml
         StringPrimitives.sml
         RealPrimitives.sml
         IOPrimitives.sml
@@ -44,9 +52,12 @@ Group is
         CommandLinePrimitives.sml
         DatePrimitives.sml
         MathPrimitives.sml
+        PlatformPrimitives.sml
+        StandardCPrimitives.sml
         InternalPrimitives.sml
         UnmanagedMemoryPrimitives.sml
         UnmanagedStringPrimitives.sml
+        GCPrimitives.sml
         PrimitiveTable.sml
 
         VMSession.sml

@@ -1,8 +1,19 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
         ../../control/sources.cm
         ../../format/sources.cm
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
 	../../../smlformatlib.cm
+#endif
+#if defined(NEW_CM)
+        $/ml-yacc-lib.cm
+#else
         ml-yacc-lib.cm
+#endif
 
         ../../session/sources.cm
         ../../absyn/sources.cm
@@ -10,5 +21,6 @@ Group is
 	iml.lex
 	iml.grm
 
+        ParserConstants_SMLNJ.sml
         PARSER.sig
         Parser.sml

@@ -1,0 +1,210 @@
+(* -*- sml-yacc -*-
+ *
+ * cm.grm
+ *
+ * ML-Yacc grammar for CM description files
+ *
+ * (C) 1999,2001 Lucent Technologies, Bell Laboratories
+ *
+ * Author: Matthias Blume (blume@research.bell-labs.com)
+ *)
+
+%%
+
+%term EOF
+    | FILE_STANDARD of string
+    | FILE_NATIVE of string
+    | CM_ID of string
+    | ML_ID of string
+    | NUMBER of int
+    | GROUP | LIBRARY | ALIAS | IS
+    | LPAREN | RPAREN | COLON
+    | IF | ELIF | ELSE | ENDIF
+    | ERROR of string
+    | STRUCTURE | SIGNATURE | FUNCTOR | FUNSIG
+    | DEFINED
+    | ADDSYM of CMSemantic.addsym
+    | MULSYM of CMSemantic.mulsym
+    | EQSYM of CMSemantic.eqsym
+    | INEQSYM of CMSemantic.ineqsym
+    | TILDE
+    | ANDALSO | ORELSE | NOT
+    | STAR | DASH | SOURCE
+
+%nonterm description of CMSemantic.description
+       | group of (CMSemantic.pathName * string option) list
+       | gprivspec of unit
+       | lprivspec of unit
+       | version of unit
+       | wrapspec of unit
+       | mand_exports of unit
+       | opt_exports of unit
+       | exports of unit
+       | export of unit
+       | guarded_exports of unit
+       | else_exports of unit
+       | members of (CMSemantic.pathName * string option) list
+       | member of (CMSemantic.pathName * string option) list
+       | guarded_members of (CMSemantic.pathName * string option) list
+       | else_members of unit
+       | aexp of unit
+       | boolexp of unit
+       | exp of unit
+       | ml_symbol of unit
+       | ml_symbolset of unit
+       | pathname of CMSemantic.pathName
+       | sym of unit
+       | word of string
+       | class of string
+       | optclass of string option
+       | toolopts of unit
+       | ptoolopts of unit
+       | opttoolopts of unit
+       | srcfile of unit
+       | srcfiles of unit
+       | filecat of unit
+
+%pos int
+%verbose
+%arg ({}) : {}
+%start description
+%eop EOF
+%noshift EOF
+
+%name CM
+
+%keyword GROUP LIBRARY IS IF ELIF ELSE ENDIF DEFINED
+  STRUCTURE SIGNATURE FUNCTOR FUNSIG
+
+%prefer LPAREN
+
+%left ORELSE
+%left ANDALSO
+%nonassoc INEQSYM
+%nonassoc EQSYM
+%left ADDSYM
+%left MULSYM
+%left NOT TILDE
+
+%left DASH
+%left STAR
+
+%%
+
+description : group				(CMSemantic.Group group)
+            | ALIAS pathname                    (CMSemantic.Alias pathname)
+
+group : gprivspec LPAREN srcfile RPAREN opt_exports IS members
+                                                (members)
+      | gprivspec opt_exports IS members        (members)
+      | lprivspec LPAREN version RPAREN mand_exports IS members
+                                                (members)
+      | lprivspec mand_exports IS members
+                                                (members)
+
+version : FILE_STANDARD                        ()
+
+wrapspec : (* empty *)                         ()
+          | wrapspec word                      ()
+
+gprivspec : GROUP                               ()
+          | word gprivspec                      ()
+
+lprivspec : LIBRARY                             ()
+          | word lprivspec                      ()
+          | LPAREN wrapspec RPAREN lprivspec    ()
+
+mand_exports : export				()
+	     | mand_exports export	        ()
+
+opt_exports : (* empty *)                       ()
+            | mand_exports                      ()
+
+exports : (* empty *)                           ()
+        | exports export                        ()
+
+export : ml_symbolset				()
+       | IF exp guarded_exports			()
+       | ERROR                                  ()
+
+filecat : GROUP                                 ()
+        | SOURCE                                ()
+
+
+ml_symbolset : ml_symbol                        ()
+             | LPAREN exports RPAREN            ()
+             | ml_symbolset STAR ml_symbolset   ()
+             | ml_symbolset DASH ml_symbolset   ()
+	     | filecat LPAREN srcfiles RPAREN   ()
+             | LIBRARY LPAREN pathname opttoolopts RPAREN ()
+
+guarded_exports : exports else_exports	        ()
+
+else_exports : ENDIF				()
+	     | ELSE exports ENDIF		()
+             | ELIF exp guarded_exports		()
+
+members : (* empty *)				([])
+	| member members			(member @ members)
+
+toolopts : (* empty *)                          ()
+         | pathname toolopts                    ()
+	 | pathname COLON ptoolopts toolopts    ()
+	 | pathname COLON pathname toolopts     ()
+
+ptoolopts : LPAREN toolopts RPAREN              ()
+
+opttoolopts : (* empty *)                       ()
+            | ptoolopts                         ()
+
+optclass : (* empty *)                          (NONE)
+         | COLON class                          (SOME class)
+
+member : pathname optclass opttoolopts
+                ([(pathname, optclass)])
+       | IF exp guarded_members			(guarded_members)
+       | ERROR                                  ([])
+
+class : word                                    (word)
+
+guarded_members : members else_members	        (members)
+
+else_members : ENDIF				()
+	     | ELSE members ENDIF		()
+	     | ELIF exp guarded_members		()
+
+word : FILE_STANDARD                            (FILE_STANDARD)
+
+sym : CM_ID                                     ()
+
+exp : boolexp					()
+
+aexp : NUMBER				        ()
+     | sym					()
+     | LPAREN aexp RPAREN		        ()
+     | aexp ADDSYM aexp                         ()
+     | aexp MULSYM aexp                         ()
+     | TILDE aexp		                ()
+     | ADDSYM aexp %prec TILDE                  ()
+
+boolexp : DEFINED LPAREN ml_symbol RPAREN	()
+	| DEFINED LPAREN sym RPAREN		()
+	| LPAREN boolexp RPAREN			()
+	| boolexp ANDALSO boolexp		()
+	| boolexp ORELSE boolexp		()
+	| boolexp EQSYM boolexp                 ()
+	| NOT boolexp				()
+	| aexp INEQSYM aexp                     ()
+	| aexp EQSYM aexp                       ()
+
+ml_symbol : STRUCTURE ML_ID			()
+	  | SIGNATURE ML_ID			()
+	  | FUNCTOR ML_ID			()
+	  | FUNSIG ML_ID			()
+
+pathname : FILE_STANDARD	(CMSemantic.StandardPathName FILE_STANDARD)
+	 | FILE_NATIVE		(CMSemantic.NativePathName FILE_NATIVE)
+
+srcfile : pathname                              ()
+srcfiles : srcfile                              ()
+         | DASH                                 ()

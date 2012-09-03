@@ -1,8 +1,12 @@
 /**
  * Implementation of IML Virtual Machine.
  * @author YAMATODANI Kiyoshi
- * @version $Id: VirtualMachine.cc,v 1.51 2006/03/03 11:39:09 kiyoshiy Exp $
+ * @version $Id: VirtualMachine.cc,v 1.72 2007/03/09 06:39:57 kiyoshiy Exp $
  */
+#include <stdio.h>
+#include <string>
+#include <signal.h>
+
 #include "Heap.hh"
 #include "Primitives.hh"
 #include "Constants.hh"
@@ -12,13 +16,11 @@
 #include "VirtualMachine.hh"
 #include "IllegalArgumentException.hh"
 #include "IllegalStateException.hh"
+#include "FFIException.hh"
 #include "InterruptedException.hh"
 #include "Log.hh"
 #include "Debug.hh"
-
-#include <stdio.h>
-#include <string>
-#include <signal.h>
+#include "FFI.hh"
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
@@ -31,6 +33,8 @@ const int CLOSURE_ENV_INDEX = 1;
 const int CLOSURE_BITMAP = 2;
 const int CLOSURE_FIELDS_COUNT = 2;
 
+const int FINALIZABLE_BITMAP = 3;
+
 const int INDEX_OF_NEST_POINTER = 0;
 
 // Use non-NULL as dummy, to avoid assertion failure
@@ -41,25 +45,11 @@ UInt32Value * const RETURN_ADDRESS_OF_INITIAL_FRAME = (UInt32Value*)-1;
 #define HEAP_GETFIELD(block, index) \
 (block)[(index)]
 
-#define ASSERT_VALID_FRAME_VAR(SP, index) \
-ASSERT((!FrameStack::isPointerSlot((SP), (index))) \
-       || Heap::isValidBlockPointer(FRAME_ENTRY((SP), (index)).blockRef))
-
-#define ASSERT_SAME_TYPE_SLOTS(SP1, index1, SP2, index2) \
-ASSERT(FrameStack::isPointerSlot((SP1), (index1)) \
-       == FrameStack::isPointerSlot((SP2), (index2)))
-
-#define ASSERT_SAME_TYPE_SLOT_FIELD(SP, index1, block, index2) \
-ASSERT(FrameStack::isPointerSlot((SP), (index1)) \
-       == Heap::isPointerField((block), (index2)))
-
-#define ASSERT_REAL64_ALIGNED(address) \
-ASSERT(0 == ((UInt32Value)(address)) % sizeof(Real64Value))
-
 ///////////////////////////////////////////////////////////////////////////////
 
-Cell* VirtualMachine::savedENV_ = 0;
-UInt32Value* VirtualMachine::savedSP_ = 0;
+Cell* VirtualMachine::ENV_ = 0;
+UInt32Value* VirtualMachine::SP_ = 0;
+UInt32Value* VirtualMachine::PC_ = 0;
 
 UInt32Value* VirtualMachine::FrameStack::frameStack_ = 0;
 UInt32Value* VirtualMachine::FrameStack::frameStackBottom_ = 0;
@@ -78,22 +68,70 @@ UInt32Value* VirtualMachine::HandlerStack::stack_ = 0;
 UInt32Value* VirtualMachine::HandlerStack::stackTop_ = 0;
 UInt32Value* VirtualMachine::HandlerStack::currentTop_ = 0;
 
-VariableLengthArray VirtualMachine::globalArrays_;
+VirtualMachine::BlockPointerVector VirtualMachine::globalArrays_;
 
-VariableLengthArray VirtualMachine::temporaryPointers_;
+VirtualMachine::BlockPointerRefList VirtualMachine::temporaryPointers_;
 
 bool VirtualMachine::interrupted_ = false;
 void (*VirtualMachine::prevSIGINTHandler_)(int) = NULL;
-jmp_buf VirtualMachine::onSignal_jmp_buf;
+jmp_buf VirtualMachine::onSIGFPE_jmp_buf;
 void (*VirtualMachine::prevSIGFPEHandler_)(int) = NULL;
 void (*VirtualMachine::prevSIGPIPEHandler_)(int) = NULL;
-void (*VirtualMachine::prevSIGSEGVHandler_)(int) = NULL;
 
 #ifdef IML_ENABLE_EXECUTION_MONITORING
-VariableLengthArray VirtualMachine::executionMonitors_;
+VirtualMachine::MonitorList VirtualMachine::executionMonitors_;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
+
+INLINE_FUN
+static
+UInt32Value leftShift(UInt32Value left, UInt32Value right){
+    if(right < 32){
+        return left << right;
+    }
+    else{return 0;}
+}
+
+INLINE_FUN
+static
+UInt32Value logicalRightShift(UInt32Value left, UInt32Value right)
+{
+    UInt32Value result = 0;
+    /* Shift instruction of x86 architecture considers only lower 5bits of
+     * shift count (= right).
+     * It results incorrect value, if shift count is equal or mora then 32.
+     * In those cases, 0 should be returned.
+     */
+    if(right < 32){
+        /* It is undefined in C that >> operator is logical or arithmetic.
+         * So, we first right-shift bits except the MSB.
+         * Then, we obtain right-shift value of the MSB by left-shifting 1.
+         */
+        result = (0x7FFFFFFFUL & left) >> right;
+        if(0x80000000UL & left){// MSB is 1
+            result |= 0x1UL << (31 - right);// if right = 31, shift 0 bit.
+        }
+    }
+    return result;
+}
+
+INLINE_FUN
+static
+UInt32Value arithmeticRightShift(UInt32Value left, UInt32Value right)
+{
+    if(right < 32){
+        UInt32Value result = left >> right;
+        if(0x80000000UL & left){// MSB is 1
+            // set all bits higher than (31 - right)th bit.
+            result |= ((UInt32Value)-1L) << (32 - right);
+        }
+        return result;
+    }
+    else{
+        return ((SInt32Value)left) < 0 ? (UInt32Value)-1 : 0;
+    }
+}
 
 VirtualMachine::VirtualMachine(const char* name,
                                const int argumentsCount,
@@ -103,7 +141,7 @@ VirtualMachine::VirtualMachine(const char* name,
     name_ = name;
     argumentsCount_ = argumentsCount;
     arguments_ = arguments;
-    DBGWRAP(printf("VM: argc = %d\n", argumentsCount_);)
+    DBGWRAP(LOG.debug("VM: argc = %d", argumentsCount_);)
 
     FrameStack::initialize(stackSize);
     HandlerStack::initialize(stackSize);
@@ -138,34 +176,12 @@ VirtualMachine::getSession()
     return session_;
 }
 
-int
+void
 VirtualMachine::
 addExecutionMonitor(VirtualMachineExecutionMonitor* monitor)
 {
 #ifdef IML_ENABLE_EXECUTION_MONITORING
-    int index = executionMonitors_.getCount();
-    // ToDo : search empty slot and store in that slot.
-    executionMonitors_.add(monitor);
-    return index;
-#else
-    return -1;
-#endif
-}
-
-VirtualMachineExecutionMonitor*
-VirtualMachine::removeExecutionMonitor(int index)
-{
-#ifdef IML_ENABLE_EXECUTION_MONITORING
-    if((index < 0) || (executionMonitors_.getCount() <= index)){
-        throw IllegalArgumentException();
-    }
-    VirtualMachineExecutionMonitor* monitor =
-    (VirtualMachineExecutionMonitor*)
-    executionMonitors_.getContents()[index];
-    executionMonitors_.getContents()[index] = 0;
-    return monitor;
-#else
-    return 0;
+    executionMonitors_.push_front(monitor);
 #endif
 }
 
@@ -183,15 +199,11 @@ VirtualMachine::removeExecutionMonitor(int index)
 #ifdef IML_ENABLE_EXECUTION_MONITORING
 #define INVOKE_ON_MONITORS(methodCall) \
     { \
-        int _numberOfMonitors_ = executionMonitors_.getCount(); \
-        VariableLengthArray::Element* _monitors_ = \
-        executionMonitors_.getContents(); \
-        for(int _index_ = 0 ; _index_ < _numberOfMonitors_ ; _index_ += 1){ \
-            VirtualMachineExecutionMonitor* _monitor_ = \
-            ((VirtualMachineExecutionMonitor*)(_monitors_[_index_])); \
-            if(0 != _monitor_){ \
-                _monitor_->methodCall; \
-            } \
+        for(MonitorList::iterator _i_ = executionMonitors_.begin() ; \
+            _i_ != executionMonitors_.end() ; \
+            _i_++){ \
+            VirtualMachineExecutionMonitor* _monitor_ = *_i_; \
+            _monitor_->methodCall; \
         } \
     }
 #else
@@ -201,10 +213,10 @@ VirtualMachine::removeExecutionMonitor(int index)
 ////////////////////////////////////////
 
 #define SAVE_REGISTERS \
-{ savedENV_ = ENV; savedSP_ = SP; }
+{ ENV_ = ENV; SP_ = SP; }
 
 #define RESTORE_REGISTERS \
-{ ENV = savedENV_; /* restore of SP is not needed. */ }
+{ ENV = ENV_; /* restore of SP is not needed. */ }
 
 #define ALLOCATE_RECORDBLOCK(ret, bitmap, number) \
 { \
@@ -1750,7 +1762,7 @@ VirtualMachine::callSelfRecursiveFunction_M(bool isTailCall,
         UInt32Value* calleeSP;
         ASSERT(returnAddress);
         calleeSP = FrameStack::duplicateFrame(SP, frameSize, returnAddress);
-
+        
         for(int index = 0; index < argsCount; index += 1){
             UInt32Value argSize = FRAME_ENTRY(SP, *argSizeIndexes).uint32;
             for(int i = 0; i < argSize; i += 1){
@@ -1832,23 +1844,10 @@ VirtualMachine::execute(Executable* executable)
           IMLRuntimeException,
           SystemError)
 {
-
-#ifdef PC_REG
-    register UInt32Value* PC PC_REG;
-    register UInt32Value* SP SP_REG;
-#else
-    register UInt32Value* PC;
-    register UInt32Value* SP;
-#endif
-    Cell* ENV;
-
-    UInt32Value* previousPC;
-
-    // initialzie machine registers
-    PC = (UInt32Value*)(executable->code_);
-    SP = FrameStack::getBottom();
-    ENV = 0;
-    previousPC = 0;
+    // initialize machine registers
+    PC_ = (UInt32Value*)(executable->code_);
+    SP_ = FrameStack::getBottom();
+    ENV_ = 0;
 
     HandlerStack::clear();
 
@@ -1859,34 +1858,222 @@ VirtualMachine::execute(Executable* executable)
     temporaryPointers_.clear();
 
     // NOTE : the state of this machine might be modified by monitors.
-    INVOKE_ON_MONITORS(beforeExecution(executable, PC, ENV, SP));
+    INVOKE_ON_MONITORS(beforeExecution(executable, PC_, ENV_, SP_));
+
+    // Call the main function. This sets up initial frame.
+    UInt32Value* entryPoint = (UInt32Value*)(executable->code_);
+    // the main function never refers to arguments
+    UInt32Value argIndexes[] = {0, 0};
+    Cell* emptyENV = 0;
+    callFunction_ML_S(false, // non tail-call
+		      PC_,
+		      SP_,
+		      ENV_,
+		      entryPoint,
+		      emptyENV,
+		      argIndexes,
+		      RETURN_ADDRESS_OF_INITIAL_FRAME);
+
+    executeLoop();
+}
+
+UInt32Value VirtualMachine::executeFunction(UncaughtExceptionHandleMode mode,
+                                            UInt32Value *entryPoint,
+                                            Cell *env,
+                                            Cell *returnValue,
+                                            bool returnBoxed,
+                                            FFI::Arguments &args)
+    throw(UserException,
+          IMLRuntimeException,
+          SystemError)
+{
+    /* Calculate layout of caller stack frame */
+    UInt32Value arity = args.arity();
+    // pointers
+    UInt32Value exnIndex       = FRAME_FIRST_POINTER_SLOT;
+    UInt32Value boxedReturn    = exnIndex       + 1;
+    UInt32Value boxedArgs      = boxedReturn    + 1;
+    // atoms
+    UInt32Value argIndexes     = boxedArgs      + arity;
+    UInt32Value argSizeIndexes = argIndexes     + arity;
+    UInt32Value argSizes       = argSizeIndexes + arity;
+    UInt32Value unboxedReturn  = argSizes       + arity + argSizes % 2;
+    UInt32Value unboxedArgs    = unboxedReturn  + 2;
+    UInt32Value frameSize      = unboxedArgs    + 2 * arity - 1;
+    frameSize += frameSize % 2;
+
+    UInt32Value returnEntry = returnBoxed ? boxedReturn : unboxedReturn;
+
+    UInt32Value pointersCount  = argIndexes - exnIndex;
+    UInt32Value atomsCount     = frameSize + 1 - argIndexes;
+
+    /* Body of caller */
+    UInt32Value insn[] = {
+        5,   /* word length of instructions, excluding this header. */
+        /* 1: */ LoadInt,                  // dummy
+        /* 2: */ 0,                        // dummy
+        /* 3: */ 0,                        // returnEntry
+        /* 4: */ PopHandler,
+        /* 5: */ Exit,
+    };
+    Executable executable(insn[0], insn);
+
+    UInt32Value *returnAddress = &insn[3];
+    UInt32Value *dummyStartAddress = &insn[1];
+    UInt32Value *handlerAddress = &insn[5];
+    *returnAddress = returnEntry;
+
+    /* FunInfo of caller */
+    UInt32Value funinfo[] = {
+        (UInt32Value)&executable,        // executable (dummy)
+        frameSize,                       // frame size
+        (UInt32Value)&dummyStartAddress, // startAddress (dummy)
+        0,                               // arity
+        0,                               // bitmapvalsFreesCount
+        0,                               // bitmapvalsArgsCount
+        pointersCount,                   // pointersCount
+        atomsCount,                      // atomsCount
+        0,                               // recordGroupsCount
+    };
+
+    /* Allocate frame stack of caller */
+    SP_ = FrameStack::allocateFrame(SP_,
+                                    frameSize,   // frame size
+                                    0x0,         // bitmap
+				    funinfo,
+				    PC_);
+
+    /* Get informations of callee */
+    UInt32Value closFrameSize;
+    UInt32Value closArity, *closArgDests;
+    UInt32Value closFreesCount, *closFrees;
+    UInt32Value closArgsCount, *closArgs;
+    UInt32Value *closFunInfoAddr;
+
+    getFunInfo(entryPoint, closFrameSize, closArity, closArgDests,
+               closFreesCount, closFrees, closArgsCount, closArgs,
+               closFunInfoAddr);
+
+    ASSERT(args.arity() == closArity);
+
+    /* Setup arguments */
+    for (UInt32Value i = 0; i < closArity; ++i, ++args) {
+        Cell *value = args.value();
+        UInt32Value size = args.size();
+        bool boxed = args.boxed();
+        UInt32Value &index = boxed ? boxedArgs : unboxedArgs;
+
+        FRAME_ENTRY(SP_, argSizes + i).uint32 = size;
+        FRAME_ENTRY(SP_, argSizeIndexes + i).uint32 = argSizes + i;
+
+        FRAME_ENTRY(SP_, argIndexes + i).uint32 = index;
+        FRAME_ENTRY(SP_, index++) = value[0];
+        if (size > 1) FRAME_ENTRY(SP_, index++) = value[1];
+    }
+
+    /* PushHandler */
+    HandlerStack::push(SP_, exnIndex, handlerAddress);
+
+    /* Apply_M */
+    FrameStack::storeENV(SP_, ENV_);
+    callFunction_M(false,                      /* non tail call */
+                   PC_,                        /* PC */
+                   SP_,                        /* SP */
+                   ENV_,                       /* ENV */
+                   entryPoint,                 /* entryPoint */
+                   env,                        /* calleeENV */
+                   &FRAME_ENTRY(SP_, argIndexes).uint32,    /* argIndexes */
+                   &FRAME_ENTRY(SP_, argSizeIndexes).uint32,/* argSizeIndexes */
+                   returnAddress);             /* returnAddress */
+    executeLoop();
+    
+    /* check whether exception was raised */
+    if (FRAME_ENTRY(SP_, FRAME_FIRST_POINTER_SLOT + 0).blockRef != 0) {
+        /* FIXME: an exception was raised */
+        switch(mode){
+          case Ignore:
+            break;
+          case Longjump:
+            break;
+        }
+    }
+
+    returnValue[0] = FRAME_ENTRY(SP_, returnEntry);
+    returnValue[1] = FRAME_ENTRY(SP_, returnEntry + 1);
+
+    FrameStack::popFrameAndReturn(SP_, PC_);
+}
+
+class SinglePointerArgument
+    : public FFI::Arguments
+{
+  protected:
+    void next() {}
+    
+  public:
+    SinglePointerArgument(Cell *p) : FFI::Arguments(p) {}
+    UInt32Value arity() { return 1; }
+    UInt32Value size() { return 1; }
+    bool boxed() { return true; }
+};
+
+/*
+ * 'PA' means 
+ *   P - the 1st argument is Pointer type.
+ *   A - the return type is Atom type.
+ */
+UInt32Value VirtualMachine::executeClosure_PA(UncaughtExceptionHandleMode mode,
+                                              Cell closure,
+                                              Cell *arg)
+    throw(UserException,
+          IMLRuntimeException,
+          SystemError)
+{
+    Cell ret[2];
+    // Note : initialize args with a pointer to the argument.
+    SinglePointerArgument args((Cell*)&arg);
+
+    ASSERT(Heap::isValidBlockPointer(closure.blockRef));
+    ASSERT(CLOSURE_FIELDS_COUNT == Heap::getPayloadSize(closure.blockRef));
+    ASSERT(CLOSURE_BITMAP == Heap::getBitmap(closure.blockRef));
+    UInt32Value *entryPoint = 
+        (UInt32Value*)
+        (HEAP_GETFIELD(closure.blockRef, CLOSURE_ENTRYPOINT_INDEX).uint32);
+    Cell *env =
+    (Cell*)(HEAP_GETFIELD(closure.blockRef, CLOSURE_ENV_INDEX).uint32);
+
+    // false indicates return type is Atom.
+    executeFunction(mode, entryPoint, env, ret, false, args);
+    return ret[0].uint32;
+}
+
+void
+VirtualMachine::executeLoop()
+    throw(UserException,
+          IMLRuntimeException,
+          SystemError)
+{
+    register UInt32Value* PC;
+    register UInt32Value* SP;
+    Cell* ENV;
+    UInt32Value* previousPC;
+
+    PC = PC_;
+    SP = SP_;
+    ENV = ENV_;
 
     try{
-        // Call the main function. This sets up initial frame.
-        UInt32Value* entryPoint = (UInt32Value*)(executable->code_);
-        // the main function never refers to arguments
-        UInt32Value argIndexes[] = {0, 0};
-        Cell* emptyENV = 0;
-        callFunction_ML_S(false, // non tail-call
-                          PC,
-                          SP,
-                          ENV,
-                          entryPoint,
-                          emptyENV,
-                          argIndexes,
-                          RETURN_ADDRESS_OF_INITIAL_FRAME);
-
-        if(setjmp(onSignal_jmp_buf))
-        {
-            SAVE_REGISTERS;
-            Cell exception =
-            PrimitiveSupport::constructExnSysErr(1, "arithmetic exception");
-            RESTORE_REGISTERS;
-            raiseException(SP, PC, ENV, exception);
-            // continue execution loop.
-        }
-
-        // execution loop
+	if(setjmp(onSIGFPE_jmp_buf))
+	{
+	    /* NOTE: All values of auto variables are undcidable here,
+	     *       even if one of them doninates a hardware register. */
+	    Cell exception =
+	    PrimitiveSupport::constructExnSysErr(1, "arithmetic exception");
+	    raiseException(SP, PC, ENV, exception);
+	    /* fall through */
+	}
+	    
+	// execution loop
         while(true)
         {
             if(interrupted_){ throw InterruptedException(); }
@@ -1903,6 +2090,7 @@ VirtualMachine::execute(Executable* executable)
               case LoadInt:
               case LoadWord:
               case LoadChar:
+              case LoadFloat:
                 {
                     UInt32Value constant = getWordAndInc(PC);
                     UInt32Value destination = getWordAndInc(PC);
@@ -2772,26 +2960,55 @@ VirtualMachine::execute(Executable* executable)
                 }
               case CopyBlock:
                 {
+                    UInt32Value nestLevelOffset = getWordAndInc(PC);
                     UInt32Value blockIndex = getWordAndInc(PC);
                     UInt32Value destinationIndex = getWordAndInc(PC);
 
-                    ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
-                    Cell* block = FRAME_ENTRY(SP, blockIndex).blockRef;
-                    ASSERT(Heap::isValidBlockPointer(block));
+                    ASSERT(!FrameStack::isPointerSlot(SP, nestLevelOffset));
+                    UInt32Value nestLevel =
+                        FRAME_ENTRY(SP, nestLevelOffset).uint32;
 
-                    Bitmap bitmap = Heap::getBitmap(block);
-                    int fieldsCount = Heap::getPayloadSize(block);
-                    Cell* destBlock;
-                    ALLOCATE_RECORDBLOCK(destBlock, bitmap, fieldsCount);
-                    /* get the block pointer again, because GC may occur
-                     * in the above allocation.
-                     */
-                    block = FRAME_ENTRY(SP, blockIndex).blockRef;
+                    ASSERT(FrameStack::isPointerSlot(SP, blockIndex));
+                    Cell *block = FRAME_ENTRY(SP, blockIndex).blockRef;
                     ASSERT(Heap::isValidBlockPointer(block));
-                    COPY_MEMORY(destBlock, block, fieldsCount * sizeof(Cell));
 
                     ASSERT(FrameStack::isPointerSlot(SP, destinationIndex));
-                    FRAME_ENTRY(SP, destinationIndex).blockRef = destBlock;
+                    FRAME_ENTRY(SP, destinationIndex).blockRef = block;
+
+                    for (int level = 0; level <= nestLevel; level += 1) {
+                        Cell *origBlock, *destBlock;
+                        origBlock = getNestedBlock(block, level);
+
+                        Bitmap bitmap = Heap::getBitmap(origBlock);
+                        int fieldsCount = Heap::getPayloadSize(origBlock);
+                        ALLOCATE_RECORDBLOCK(destBlock, bitmap, fieldsCount);
+                        ASSERT(Heap::isValidBlockPointer(destBlock));
+
+                        /* get the block pointer again, because GC may occur
+                         * in the above allocation.
+                         */
+                        block = FRAME_ENTRY(SP, destinationIndex).blockRef;
+                        ASSERT(Heap::isValidBlockPointer(block));
+
+                        if (level == 0) {
+                            COPY_MEMORY
+                                (destBlock, block, fieldsCount * sizeof(Cell));
+                            FRAME_ENTRY(SP, destinationIndex).blockRef =
+                                destBlock;
+                            continue;
+                        }
+
+                        Cell *parent = getNestedBlock(block, level - 1);
+                        ASSERT(Heap::isValidBlockPointer(parent));
+                        origBlock = getNestedBlock(parent, 1);
+                        ASSERT(Heap::isValidBlockPointer(origBlock));
+                        COPY_MEMORY
+                            (destBlock, origBlock, fieldsCount * sizeof(Cell));
+
+                        Cell nest;
+                        nest.blockRef = destBlock;
+                        Heap::updateField(parent, INDEX_OF_NEST_POINTER, nest);
+                    }
                     break;
                 }
 
@@ -2802,13 +3019,13 @@ VirtualMachine::execute(Executable* executable)
                     UInt32Value offset = getWordAndInc(PC);
                     UInt32Value destination = getWordAndInc(PC);
 
-                    ASSERT(arrayIndex < globalArrays_.getCount());
-                    Cell* block = 
-                        (Cell*)(globalArrays_.getContents()[arrayIndex]);
+                    ASSERT(arrayIndex < globalArrays_.size());
+                    Cell* block = globalArrays_[arrayIndex];
+                        
                     ASSERT(Heap::isValidBlockPointer(block));
 /*
-                    DBGWRAP(printf("GetGlobal: "
-                                   "arrayIndex=%d, offset=%d, block=%x\n",
+                    DBGWRAP(LOG.debug("GetGlobal: "
+                                   "arrayIndex=%d, offset=%d, block=%x",
                                    arrayIndex, offset, block);)
 */
                     ASSERT(offset < Heap::getPayloadSize(block));
@@ -2829,13 +3046,12 @@ VirtualMachine::execute(Executable* executable)
                     UInt32Value offset = getWordAndInc(PC);
                     UInt32Value variableIndex = getWordAndInc(PC);
 
-                    ASSERT(arrayIndex < globalArrays_.getCount());
-                    Cell* block = 
-                        (Cell*)(globalArrays_.getContents()[arrayIndex]);
+                    ASSERT(arrayIndex < globalArrays_.size());
+                    Cell* block = globalArrays_[arrayIndex];
                     ASSERT(Heap::isValidBlockPointer(block));
 /*
-                    DBGWRAP(printf("SetGlobal: "
-                                   "arrayIndex=%d, offset=%d, block=%x\n",
+                    DBGWRAP(LOG.debug("SetGlobal: "
+                                   "arrayIndex=%d, offset=%d, block=%x",
                                    arrayIndex, offset, block);)
 */
                     ASSERT(offset < Heap::getPayloadSize(block));
@@ -2885,15 +3101,14 @@ VirtualMachine::execute(Executable* executable)
                             (block, index, initialValue);
                     }
 /*                    
-                    DBGWRAP(printf("InitGlobalArray: "
-                                   "arrayIndex=%d, arraySize=%d, block=%x\n",
+                    DBGWRAP(LOG.debug("InitGlobalArray: "
+                                   "arrayIndex=%d, arraySize=%d, block=%x",
                                    arrayIndex, arraySize, block);)
 */
-                    if(globalArrays_.getCount() <= arrayIndex){
-                        globalArrays_.extend
-                            (arrayIndex + 1 - globalArrays_.getCount());
+                    if(globalArrays_.size() <= arrayIndex){
+                        globalArrays_.resize(arrayIndex + 1);
                     }
-                    globalArrays_.getContents()[arrayIndex] = (void*)block;
+                    globalArrays_[arrayIndex] = block;
                     break;
                 }
               case GetEnv:
@@ -4150,6 +4365,24 @@ VirtualMachine::execute(Executable* executable)
                     HandlerStack::remove();
                     break;
                 }
+	      case RegisterCallback:
+		{
+		    UInt32Value closureIndex = getWordAndInc(PC);
+		    UInt32Value sizeTag = getWordAndInc(PC);
+                    UInt32Value destination = getWordAndInc(PC);
+                    UInt32Value *entryPoint;
+                    Cell *env;
+		    Cell returnValue;
+
+                    expandClosure(SP, closureIndex, entryPoint, env);
+
+		    returnValue.uint32 =
+		    (UInt32Value)FFI::instance().callback(entryPoint, env,
+                                                          sizeTag);
+
+		    FRAME_ENTRY(SP, destination) = returnValue;
+		    break;
+		}
 /* case branch consists of two words: Constant, offset to jump destination. */
 #define WORDS_OF_CASE 2 
               case SwitchInt:
@@ -4308,7 +4541,6 @@ VirtualMachine::execute(Executable* executable)
                     UInt32Value* calleeSP = SP;
                     ASSERT_VALID_FRAME_VAR(SP, variableIndex);
                     Cell returnValue = FRAME_ENTRY(SP, variableIndex);
-                    HandlerStack::removeHandlersOfFrame(SP);
                     FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
                     FrameStack::loadENV(SP, ENV);
 
@@ -4329,7 +4561,6 @@ VirtualMachine::execute(Executable* executable)
                     ASSERT_VALID_FRAME_VAR(SP, variableIndex + 1);
                     Cell returnValue1 = FRAME_ENTRY(SP, variableIndex);
                     Cell returnValue2 = FRAME_ENTRY(SP, variableIndex + 1);
-                    HandlerStack::removeHandlersOfFrame(SP);
                     FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
                     FrameStack::loadENV(SP, ENV);
 
@@ -4361,7 +4592,6 @@ VirtualMachine::execute(Executable* executable)
                         FRAME_ENTRY(SP, variableIndex + index);
                     }
                     UInt32Value *calleeSP = SP;
-                    HandlerStack::removeHandlersOfFrame(SP);
                     FrameStack::popFrameAndReturn(SP, PC);// SP,PC are updated.
                     FrameStack::loadENV(SP, ENV);
 
@@ -4380,166 +4610,40 @@ VirtualMachine::execute(Executable* executable)
                 {
                     break;
                 }
-              case FFIVal:
-                {
-                    UInt32Value funNameOffset = getWordAndInc(PC);
-                    UInt32Value libNameOffset = getWordAndInc(PC);
-                    UInt32Value destination = getWordAndInc(PC);
-
-                    SAVE_REGISTERS;
-                    char* funName =
-                    PrimitiveSupport::cellToString
-                    (FRAME_ENTRY(SP, funNameOffset));
-                    char* libName = 
-                    PrimitiveSupport::cellToString
-                    (FRAME_ENTRY(SP, libNameOffset));
-                    RESTORE_REGISTERS;
-
-                    DBGWRAP
-                    (printf("FFIVal:funName = \"%s\", libName = \"%s\"\n",
-                            funName, libName);)
-
-                    DLL_HANDLE dllHandle = DLL_OPEN(libName);
-                    if(0 == dllHandle){
-                        char* message = DLL_ERROR();
-                        SAVE_REGISTERS;
-                        Cell exception = 
-                        PrimitiveSupport::constructExnSysErr(0, message);
-                        RESTORE_REGISTERS;
-                        raiseException(SP, PC, ENV, exception);
-                        break;
-                    }
-
-                    Cell functionValue;
-                    functionValue.uint32 =
-                    (UInt32Value)(DLL_GET_SYM(dllHandle, funName));
-                    if(0 == functionValue.uint32){
-                        char* message = DLL_ERROR();
-                        SAVE_REGISTERS;
-                        Cell exception = 
-                        PrimitiveSupport::constructExnSysErr(0, message);
-                        RESTORE_REGISTERS;
-                        raiseException(SP, PC, ENV, exception);
-                        break;
-                    }
-                    DBGWRAP(printf("function = %x\n", functionValue.uint32);)
-
-                    // make a temporary closure block (for test)
-                    SAVE_REGISTERS;
-                    Cell funNameValue =
-                    PrimitiveSupport::stringToCell(funName);
-                    TemporaryRoot(&funNameValue, true);
-                    Cell libNameValue =
-                    PrimitiveSupport::stringToCell(libName);
-                    TemporaryRoot(&libNameValue, true);
-                    RESTORE_REGISTERS;
-
-                    Cell* block;
-                    ALLOCATE_RECORDBLOCK(block, 6, 3);
-                    Heap::initializeField(block, 0, functionValue);
-                    Heap::initializeField(block, 1, funNameValue);
-                    Heap::initializeField(block, 2, libNameValue);
-
-                    ASSERT(FrameStack::isPointerSlot(SP, destination));
-                    FRAME_ENTRY(SP, destination).blockRef = block;
-                    break;
-                }
               case ForeignApply:
                 {
                     UInt32Value closureIndex = getWordAndInc(PC);
                     UInt32Value argsCount = getWordAndInc(PC);
+                    UInt32Value switchTag = getWordAndInc(PC);
+                    UInt32Value convention = getWordAndInc(PC);
                     UInt32Value* argIndexes = PC;
                     PC += argsCount;
-                    // now, PC points to destination operand.
-                    UInt32Value* returnAddress = PC;
-
-                    // extract dummy closure
-                    Cell* closure = FRAME_ENTRY(SP, closureIndex).blockRef;
-                    void* function = (void*)(closure[0].uint32);
-                    const char* funName =
-                    PrimitiveSupport::cellToString(closure[1]);
-                    const char* libName = 
-                    PrimitiveSupport::cellToString(closure[2]);
-
-                    DBGWRAP
-                    (printf("function = %x, "
-                            "funName = %s, "
-                            "libName = %s, "
-                            "#args = %d\n", 
-                            function, funName, libName, argsCount);)
-
-                    Cell returnValue;
-                    if(0 == function){
-                        DBGWRAP(printf("null function pointer\n");)
-                        throw IllegalStateException();
-                    }
-                    switch(argsCount)
-                    {
-                      case 0:
-                        returnValue.uint32 = ((UInt32Value (*)())function)();
-                        break;
-                      case 1:
-                        returnValue.uint32 = 
-                            ((UInt32Value (*)(UInt32Value))function)
-                            (FRAME_ENTRY(SP, argIndexes[0]).uint32);
-                        break;
-                      case 2:
-                        returnValue.uint32 = 
-                            ((UInt32Value (*)(UInt32Value, UInt32Value))
-                             function)
-                            (FRAME_ENTRY(SP, argIndexes[0]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[1]).uint32);
-                        break;
-                      case 3:
-                        returnValue.uint32 = 
-                            ((UInt32Value (*)
-                               (UInt32Value, UInt32Value, UInt32Value))
-                             function)
-                            (FRAME_ENTRY(SP, argIndexes[0]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[1]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[2]).uint32);
-                        break;
-                      case 4:
-                        returnValue.uint32 = 
-                            ((UInt32Value (*)
-                               (UInt32Value,
-                                UInt32Value,
-                                UInt32Value,
-                                UInt32Value))
-                             function)
-                            (FRAME_ENTRY(SP, argIndexes[0]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[1]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[2]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[3]).uint32);
-                        break;
-                      case 5:
-                        returnValue.uint32 = 
-                            ((UInt32Value (*)
-                               (UInt32Value,
-                                UInt32Value,
-                                UInt32Value,
-                                UInt32Value,
-                                UInt32Value))
-                             function)
-                            (FRAME_ENTRY(SP, argIndexes[0]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[1]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[2]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[3]).uint32,
-                             FRAME_ENTRY(SP, argIndexes[4]).uint32);
-                        break;
-                      default:
-                        DBGWRAP
-                        (printf
-                         ("Error: too many arguments %d\n", argsCount);)
-                        throw IllegalStateException();
-                        break;
-                    }
                     UInt32Value destination = getWordAndInc(PC);
-                    FRAME_ENTRY(SP, destination) = returnValue;
+
+                    void* function =
+                      (void*)(FRAME_ENTRY(SP, closureIndex).uint32);
+                    if(0 == function){
+                        DBGWRAP(LOG.debug("null function pointer");)
+                        throw FFIException("null function pointer");
+                    }
+
+		    PC_ = PC;
+		    SP_ = SP;
+		    ENV_ = ENV;
+
+		    FFI::instance().call(&FRAME_ENTRY(SP, destination),
+                                         function, SP,
+                                         switchTag, convention,
+                                         argIndexes, argsCount);
+
+		    PC = PC_;
+		    SP = SP_;
+		    ENV = ENV_;
+
                     break;
                 }
 
-#define PRIMITIVE_I_I(op) \
+#define PRIMITIVE_I_I_op(op) \
             { \
                 UInt32Value argIndex = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
@@ -4547,7 +4651,7 @@ VirtualMachine::execute(Executable* executable)
                 op (FRAME_ENTRY(SP, argIndex).sint32); \
                 break; \
             } 
-#define PRIMITIVE_W_W(op) \
+#define PRIMITIVE_W_W_op(op) \
             { \
                 UInt32Value argIndex = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
@@ -4557,7 +4661,7 @@ VirtualMachine::execute(Executable* executable)
             } 
 #ifdef FLOAT_UNBOXING
 /*
-#define PRIMITIVE_R_R(op) \
+#define PRIMITIVE_R_R_op(op) \
             { \
                 UInt32Value argIndex = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
@@ -4575,7 +4679,7 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             }
 */
-#define PRIMITIVE_R_R(op) \
+#define PRIMITIVE_R_R_op(op) \
             { \
                 UInt32Value argIndex = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
@@ -4589,7 +4693,7 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             } 
 #else // FLOAT_UNBOXING
-#define PRIMITIVE_R_R(op) \
+#define PRIMITIVE_R_R_op(op) \
             { \
                 UInt32Value argIndex = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
@@ -4601,7 +4705,7 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             } 
 #endif // FLOAT_UNBOXING
-#define PRIMITIVE_II_I(op) \
+#define PRIMITIVE_II_I_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4611,7 +4715,7 @@ VirtualMachine::execute(Executable* executable)
                 op FRAME_ENTRY(SP, argIndex2).sint32; \
                 break; \
             } 
-#define PRIMITIVE_II_I_Const_1(op) \
+#define PRIMITIVE_II_I_Const_1_op(op) \
             { \
                 SInt32Value arg1 = (SInt32Value)getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4620,7 +4724,7 @@ VirtualMachine::execute(Executable* executable)
                 arg1 op FRAME_ENTRY(SP, argIndex2).sint32; \
                 break; \
             } 
-#define PRIMITIVE_II_I_Const_2(op) \
+#define PRIMITIVE_II_I_Const_2_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 SInt32Value arg2 = (SInt32Value)getWordAndInc(PC); \
@@ -4629,7 +4733,7 @@ VirtualMachine::execute(Executable* executable)
                 FRAME_ENTRY(SP, argIndex1).sint32 op arg2; \
                 break; \
             } 
-#define PRIMITIVE_WW_W(op) \
+#define PRIMITIVE_WW_W_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4639,7 +4743,17 @@ VirtualMachine::execute(Executable* executable)
                 op FRAME_ENTRY(SP, argIndex2).uint32; \
                 break; \
             } 
-#define PRIMITIVE_WW_W_Const_1(op) \
+#define PRIMITIVE_WW_W_fun(f) \
+            { \
+                UInt32Value argIndex1 = getWordAndInc(PC); \
+                UInt32Value argIndex2 = getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).uint32 = \
+                f(FRAME_ENTRY(SP, argIndex1).uint32, \
+                  FRAME_ENTRY(SP, argIndex2).uint32); \
+                break; \
+            } 
+#define PRIMITIVE_WW_W_Const_1_op(op) \
             { \
                 UInt32Value arg1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4648,7 +4762,16 @@ VirtualMachine::execute(Executable* executable)
                 arg1 op FRAME_ENTRY(SP, argIndex2).uint32; \
                 break; \
             } 
-#define PRIMITIVE_WW_W_Const_2(op) \
+#define PRIMITIVE_WW_W_Const_1_fun(f) \
+            { \
+                UInt32Value arg1 = getWordAndInc(PC); \
+                UInt32Value argIndex2 = getWordAndInc(PC); \
+                UInt32Value destination = getWordAndInc(PC); \
+                FRAME_ENTRY(SP, destination).uint32 = \
+                f(arg1, FRAME_ENTRY(SP, argIndex2).uint32); \
+                break; \
+            } 
+#define PRIMITIVE_WW_W_Const_2_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value arg2 = getWordAndInc(PC); \
@@ -4657,38 +4780,17 @@ VirtualMachine::execute(Executable* executable)
                 FRAME_ENTRY(SP, argIndex1).uint32 op arg2; \
                 break; \
             } 
-/* The PRIMITIVE_IW_W treats the first argument as signed and the second
- * unsigned. */
-#define PRIMITIVE_IW_W(op) \
-            { \
-                UInt32Value argIndex1 = getWordAndInc(PC); \
-                UInt32Value argIndex2 = getWordAndInc(PC); \
-                UInt32Value destination = getWordAndInc(PC); \
-                FRAME_ENTRY(SP, destination).uint32 = \
-                FRAME_ENTRY(SP, argIndex1).sint32 \
-                op FRAME_ENTRY(SP, argIndex2).uint32; \
-                break; \
-            } 
-#define PRIMITIVE_IW_W_Const_1(op) \
-            { \
-                SInt32Value arg1 = (SInt32Value)getWordAndInc(PC); \
-                UInt32Value argIndex2 = getWordAndInc(PC); \
-                UInt32Value destination = getWordAndInc(PC); \
-                FRAME_ENTRY(SP, destination).uint32 = \
-                arg1 op FRAME_ENTRY(SP, argIndex2).uint32; \
-                break; \
-            } 
-#define PRIMITIVE_IW_W_Const_2(op) \
+#define PRIMITIVE_WW_W_Const_2_fun(f) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value arg2 = getWordAndInc(PC); \
                 UInt32Value destination = getWordAndInc(PC); \
                 FRAME_ENTRY(SP, destination).uint32 = \
-                FRAME_ENTRY(SP, argIndex1).sint32 op arg2; \
+                f(FRAME_ENTRY(SP, argIndex1).uint32, arg2); \
                 break; \
             } 
 #ifdef FLOAT_UNBOXING
-#define PRIMITIVE_RR_R(op) \
+#define PRIMITIVE_RR_R_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4705,7 +4807,7 @@ VirtualMachine::execute(Executable* executable)
                   result; \
                 break; \
             } 
-#define PRIMITIVE_RR_R_Const_1(op) \
+#define PRIMITIVE_RR_R_Const_1_op(op) \
             { \
                 Real64Value arg1 = LoadConstReal64(PC); \
                 PC += 2; \
@@ -4720,7 +4822,7 @@ VirtualMachine::execute(Executable* executable)
                   result; \
                 break; \
             } 
-#define PRIMITIVE_RR_R_Const_2(op) \
+#define PRIMITIVE_RR_R_Const_2_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 Real64Value arg2 = LoadConstReal64(PC); \
@@ -4736,7 +4838,7 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             } 
 #else
-#define PRIMITIVE_RR_R(op) \
+#define PRIMITIVE_RR_R_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4751,7 +4853,7 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             } 
 #endif // FLOAT_UNBOXING
-#define PRIMITIVE_II_B(op) \
+#define PRIMITIVE_II_B_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4763,7 +4865,7 @@ VirtualMachine::execute(Executable* executable)
                   PrimitiveSupport::boolToCell(result); \
                 break; \
             } 
-#define PRIMITIVE_II_B_Const_1(op) \
+#define PRIMITIVE_II_B_Const_1_op(op) \
             { \
                 SInt32Value arg1 = (SInt32Value)getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4773,7 +4875,7 @@ VirtualMachine::execute(Executable* executable)
                   PrimitiveSupport::boolToCell(result); \
                 break; \
             } 
-#define PRIMITIVE_II_B_Const_2(op) \
+#define PRIMITIVE_II_B_Const_2_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 SInt32Value arg2 = (SInt32Value)getWordAndInc(PC); \
@@ -4783,7 +4885,7 @@ VirtualMachine::execute(Executable* executable)
                   PrimitiveSupport::boolToCell(result); \
                 break; \
             } 
-#define PRIMITIVE_WW_B(op) \
+#define PRIMITIVE_WW_B_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4795,7 +4897,7 @@ VirtualMachine::execute(Executable* executable)
                   PrimitiveSupport::boolToCell(result); \
                 break; \
             } 
-#define PRIMITIVE_WW_B_Const_1(op) \
+#define PRIMITIVE_WW_B_Const_1_op(op) \
             { \
                 UInt32Value arg1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4805,7 +4907,7 @@ VirtualMachine::execute(Executable* executable)
                   PrimitiveSupport::boolToCell(result); \
                 break; \
             } 
-#define PRIMITIVE_WW_B_Const_2(op) \
+#define PRIMITIVE_WW_B_Const_2_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value arg2 = getWordAndInc(PC); \
@@ -4816,7 +4918,7 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             } 
 #ifdef FLOAT_UNBOXING
-#define PRIMITIVE_RR_B(op) \
+#define PRIMITIVE_RR_B_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4832,7 +4934,7 @@ VirtualMachine::execute(Executable* executable)
                   PrimitiveSupport::boolToCell(result); \
                 break; \
             } 
-#define PRIMITIVE_RR_B_Const_1(op) \
+#define PRIMITIVE_RR_B_Const_1_op(op) \
             { \
                 Real64Value arg1 = LoadConstReal64(PC); \
                 PC += 2; \
@@ -4846,7 +4948,7 @@ VirtualMachine::execute(Executable* executable)
                   PrimitiveSupport::boolToCell(result); \
                 break; \
             } 
-#define PRIMITIVE_RR_B_Const_2(op) \
+#define PRIMITIVE_RR_B_Const_2_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 Real64Value arg2 = LoadConstReal64(PC); \
@@ -4861,7 +4963,7 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             } 
 #else // FLOAT_UNBOXING
-#define PRIMITIVE_RR_B(op) \
+#define PRIMITIVE_RR_B_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4876,7 +4978,7 @@ VirtualMachine::execute(Executable* executable)
                 break; \
             } 
 #endif // FLOAT_UNBOXING
-#define PRIMITIVE_COMPARE_SS_B(op) \
+#define PRIMITIVE_COMPARE_SS_B_op(op) \
             { \
                 UInt32Value argIndex1 = getWordAndInc(PC); \
                 UInt32Value argIndex2 = getWordAndInc(PC); \
@@ -4914,123 +5016,127 @@ VirtualMachine::execute(Executable* executable)
                     PrimitiveSupport::boolToCell(isEqual);
                     break;
                 }
-              case AddInt: PRIMITIVE_II_I(+);
-              case AddInt_Const_1: PRIMITIVE_II_I_Const_1(+);
-              case AddInt_Const_2: PRIMITIVE_II_I_Const_2(+);
-              case AddReal: PRIMITIVE_RR_R(+);
-              case AddReal_Const_1: PRIMITIVE_RR_R_Const_1(+);
-              case AddReal_Const_2: PRIMITIVE_RR_R_Const_2(+);
-              case AddWord: PRIMITIVE_WW_W(+);
-              case AddWord_Const_1: PRIMITIVE_WW_W_Const_1(+);
-              case AddWord_Const_2: PRIMITIVE_WW_W_Const_2(+);
-              case AddByte: PRIMITIVE_WW_W(+);
-              case AddByte_Const_1: PRIMITIVE_WW_W_Const_1(+);
-              case AddByte_Const_2: PRIMITIVE_WW_W_Const_2(+);
-              case SubInt: PRIMITIVE_II_I(-);
-              case SubInt_Const_1: PRIMITIVE_II_I_Const_1(-);
-              case SubInt_Const_2: PRIMITIVE_II_I_Const_2(-);
-              case SubReal: PRIMITIVE_RR_R(-);
-              case SubReal_Const_1: PRIMITIVE_RR_R_Const_1(-);
-              case SubReal_Const_2: PRIMITIVE_RR_R_Const_2(-);
-              case SubWord: PRIMITIVE_WW_W(-);
-              case SubWord_Const_1: PRIMITIVE_WW_W_Const_1(-);
-              case SubWord_Const_2: PRIMITIVE_WW_W_Const_2(-);
-              case SubByte: PRIMITIVE_WW_W(-);
-              case SubByte_Const_1: PRIMITIVE_WW_W_Const_1(-);
-              case SubByte_Const_2: PRIMITIVE_WW_W_Const_2(-);
-              case MulInt: PRIMITIVE_II_I(*);
-              case MulInt_Const_1: PRIMITIVE_II_I_Const_1(*);
-              case MulInt_Const_2: PRIMITIVE_II_I_Const_2(*);
-              case MulReal: PRIMITIVE_RR_R(*);
-              case MulReal_Const_1: PRIMITIVE_RR_R_Const_1(*);
-              case MulReal_Const_2: PRIMITIVE_RR_R_Const_2(*);
-              case MulWord: PRIMITIVE_WW_W(*);
-              case MulWord_Const_1: PRIMITIVE_WW_W_Const_1(*);
-              case MulWord_Const_2: PRIMITIVE_WW_W_Const_2(*);
-              case MulByte: PRIMITIVE_WW_W(*);
-              case MulByte_Const_1: PRIMITIVE_WW_W_Const_1(*);
-              case MulByte_Const_2: PRIMITIVE_WW_W_Const_2(*);
-              case DivInt: PRIMITIVE_II_I(/);
-              case DivInt_Const_1: PRIMITIVE_II_I_Const_1(/);
-              case DivInt_Const_2: PRIMITIVE_II_I_Const_2(/);
-              case DivWord: PRIMITIVE_WW_W(/);
-              case DivWord_Const_1: PRIMITIVE_WW_W_Const_1(/);
-              case DivWord_Const_2: PRIMITIVE_WW_W_Const_2(/);
-              case DivByte: PRIMITIVE_WW_W(/);
-              case DivByte_Const_1: PRIMITIVE_WW_W_Const_1(/);
-              case DivByte_Const_2: PRIMITIVE_WW_W_Const_2(/);
-              case DivReal: PRIMITIVE_RR_R(/);
-              case DivReal_Const_1: PRIMITIVE_RR_R_Const_1(/);
-              case DivReal_Const_2: PRIMITIVE_RR_R_Const_2(/);
-              case ModInt: PRIMITIVE_II_I(%);
-              case ModInt_Const_1: PRIMITIVE_II_I_Const_1(%);
-              case ModInt_Const_2: PRIMITIVE_II_I_Const_2(%);
-              case ModWord: PRIMITIVE_WW_W(%);
-              case ModWord_Const_1: PRIMITIVE_WW_W_Const_1(%);
-              case ModWord_Const_2: PRIMITIVE_WW_W_Const_2(%);
-              case ModByte: PRIMITIVE_WW_W(%);
-              case ModByte_Const_1: PRIMITIVE_WW_W_Const_1(%);
-              case ModByte_Const_2: PRIMITIVE_WW_W_Const_2(%);
+              case AddInt: PRIMITIVE_II_I_op(+);
+              case AddInt_Const_1: PRIMITIVE_II_I_Const_1_op(+);
+              case AddInt_Const_2: PRIMITIVE_II_I_Const_2_op(+);
+              case AddReal: PRIMITIVE_RR_R_op(+);
+              case AddReal_Const_1: PRIMITIVE_RR_R_Const_1_op(+);
+              case AddReal_Const_2: PRIMITIVE_RR_R_Const_2_op(+);
+              case AddWord: PRIMITIVE_WW_W_op(+);
+              case AddWord_Const_1: PRIMITIVE_WW_W_Const_1_op(+);
+              case AddWord_Const_2: PRIMITIVE_WW_W_Const_2_op(+);
+              case AddByte: PRIMITIVE_WW_W_op(+);
+              case AddByte_Const_1: PRIMITIVE_WW_W_Const_1_op(+);
+              case AddByte_Const_2: PRIMITIVE_WW_W_Const_2_op(+);
+              case SubInt: PRIMITIVE_II_I_op(-);
+              case SubInt_Const_1: PRIMITIVE_II_I_Const_1_op(-);
+              case SubInt_Const_2: PRIMITIVE_II_I_Const_2_op(-);
+              case SubReal: PRIMITIVE_RR_R_op(-);
+              case SubReal_Const_1: PRIMITIVE_RR_R_Const_1_op(-);
+              case SubReal_Const_2: PRIMITIVE_RR_R_Const_2_op(-);
+              case SubWord: PRIMITIVE_WW_W_op(-);
+              case SubWord_Const_1: PRIMITIVE_WW_W_Const_1_op(-);
+              case SubWord_Const_2: PRIMITIVE_WW_W_Const_2_op(-);
+              case SubByte: PRIMITIVE_WW_W_op(-);
+              case SubByte_Const_1: PRIMITIVE_WW_W_Const_1_op(-);
+              case SubByte_Const_2: PRIMITIVE_WW_W_Const_2_op(-);
+              case MulInt: PRIMITIVE_II_I_op(*);
+              case MulInt_Const_1: PRIMITIVE_II_I_Const_1_op(*);
+              case MulInt_Const_2: PRIMITIVE_II_I_Const_2_op(*);
+              case MulReal: PRIMITIVE_RR_R_op(*);
+              case MulReal_Const_1: PRIMITIVE_RR_R_Const_1_op(*);
+              case MulReal_Const_2: PRIMITIVE_RR_R_Const_2_op(*);
+              case MulWord: PRIMITIVE_WW_W_op(*);
+              case MulWord_Const_1: PRIMITIVE_WW_W_Const_1_op(*);
+              case MulWord_Const_2: PRIMITIVE_WW_W_Const_2_op(*);
+              case MulByte: PRIMITIVE_WW_W_op(*);
+              case MulByte_Const_1: PRIMITIVE_WW_W_Const_1_op(*);
+              case MulByte_Const_2: PRIMITIVE_WW_W_Const_2_op(*);
+              case DivInt: PRIMITIVE_II_I_op(/);
+              case DivInt_Const_1: PRIMITIVE_II_I_Const_1_op(/);
+              case DivInt_Const_2: PRIMITIVE_II_I_Const_2_op(/);
+              case DivWord: PRIMITIVE_WW_W_op(/);
+              case DivWord_Const_1: PRIMITIVE_WW_W_Const_1_op(/);
+              case DivWord_Const_2: PRIMITIVE_WW_W_Const_2_op(/);
+              case DivByte: PRIMITIVE_WW_W_op(/);
+              case DivByte_Const_1: PRIMITIVE_WW_W_Const_1_op(/);
+              case DivByte_Const_2: PRIMITIVE_WW_W_Const_2_op(/);
+              case DivReal: PRIMITIVE_RR_R_op(/);
+              case DivReal_Const_1: PRIMITIVE_RR_R_Const_1_op(/);
+              case DivReal_Const_2: PRIMITIVE_RR_R_Const_2_op(/);
+              case ModInt: PRIMITIVE_II_I_op(%);
+              case ModInt_Const_1: PRIMITIVE_II_I_Const_1_op(%);
+              case ModInt_Const_2: PRIMITIVE_II_I_Const_2_op(%);
+              case ModWord: PRIMITIVE_WW_W_op(%);
+              case ModWord_Const_1: PRIMITIVE_WW_W_Const_1_op(%);
+              case ModWord_Const_2: PRIMITIVE_WW_W_Const_2_op(%);
+              case ModByte: PRIMITIVE_WW_W_op(%);
+              case ModByte_Const_1: PRIMITIVE_WW_W_Const_1_op(%);
+              case ModByte_Const_2: PRIMITIVE_WW_W_Const_2_op(%);
                 /* ToDo : implement */
-              case QuotInt: PRIMITIVE_II_I(/);
-              case QuotInt_Const_1: PRIMITIVE_II_I_Const_1(/);
-              case QuotInt_Const_2: PRIMITIVE_II_I_Const_2(/);
-              case RemInt: PRIMITIVE_II_I(%);
-              case RemInt_Const_1: PRIMITIVE_II_I_Const_1(%);
-              case RemInt_Const_2: PRIMITIVE_II_I_Const_2(%);
-              case NegInt: PRIMITIVE_I_I(-);
-              case NegReal: PRIMITIVE_R_R(-);
-              case AbsInt: PRIMITIVE_I_I(ABS_SINT32);
-              case AbsReal: PRIMITIVE_R_R(ABS_REAL64);
-              case LtInt: PRIMITIVE_II_B(<);
-              case LtReal: PRIMITIVE_RR_B(<);
-              case LtWord: PRIMITIVE_WW_B(<);
-              case LtByte: PRIMITIVE_WW_B(<);
-              case LtChar: PRIMITIVE_WW_B(<);
-              case LtString: PRIMITIVE_COMPARE_SS_B(< 0);
-              case GtInt: PRIMITIVE_II_B(>);
-              case GtReal: PRIMITIVE_RR_B(>);
-              case GtWord: PRIMITIVE_WW_B(>);
-              case GtByte: PRIMITIVE_WW_B(>);
-              case GtChar: PRIMITIVE_WW_B(>);
-              case GtString: PRIMITIVE_COMPARE_SS_B(> 0);
-              case LteqInt: PRIMITIVE_II_B(<=);
-              case LteqReal: PRIMITIVE_RR_B(<=);
-              case LteqWord: PRIMITIVE_WW_B(<=);
-              case LteqByte: PRIMITIVE_WW_B(<=);
-              case LteqChar: PRIMITIVE_WW_B(<=);
-              case LteqString: PRIMITIVE_COMPARE_SS_B(<= 0);
-              case GteqInt: PRIMITIVE_II_B(>=);
-              case GteqReal: PRIMITIVE_RR_B(>=);
-              case GteqWord: PRIMITIVE_WW_B(>=);
-              case GteqByte: PRIMITIVE_WW_B(>=);
-              case GteqChar: PRIMITIVE_WW_B(>=);
-              case GteqString: PRIMITIVE_COMPARE_SS_B(>= 0);
-              case Word_toIntX: PRIMITIVE_W_W(+);// argument unchanged
-              case Word_fromInt: PRIMITIVE_W_W(+);// argument unchanged
-              case Word_andb: PRIMITIVE_WW_W(&);
-              case Word_andb_Const_1: PRIMITIVE_WW_W_Const_1(&);
-              case Word_andb_Const_2: PRIMITIVE_WW_W_Const_2(&);
-              case Word_orb: PRIMITIVE_WW_W(|);
-              case Word_orb_Const_1: PRIMITIVE_WW_W_Const_1(|);
-              case Word_orb_Const_2: PRIMITIVE_WW_W_Const_2(|);
-              case Word_xorb: PRIMITIVE_WW_W(^);
-              case Word_xorb_Const_1: PRIMITIVE_WW_W_Const_1(^);
-              case Word_xorb_Const_2: PRIMITIVE_WW_W_Const_2(^);
-              case Word_notb: PRIMITIVE_W_W(~);
-              case Word_leftShift: PRIMITIVE_WW_W(<<);
-              case Word_leftShift_Const_1: PRIMITIVE_WW_W_Const_1(<<);
-              case Word_leftShift_Const_2: PRIMITIVE_WW_W_Const_2(<<);
-                /* ToDo : check that a right shift of signed/unsigned is
-                   arithmetic/logical.*/
-              case Word_logicalRightShift: PRIMITIVE_WW_W(>>);
-              case Word_logicalRightShift_Const_1: PRIMITIVE_WW_W_Const_1(>>);
-              case Word_logicalRightShift_Const_2: PRIMITIVE_WW_W_Const_2(>>);
-              case Word_arithmeticRightShift: PRIMITIVE_IW_W(>>);
+              case QuotInt: PRIMITIVE_II_I_op(/);
+              case QuotInt_Const_1: PRIMITIVE_II_I_Const_1_op(/);
+              case QuotInt_Const_2: PRIMITIVE_II_I_Const_2_op(/);
+              case RemInt: PRIMITIVE_II_I_op(%);
+              case RemInt_Const_1: PRIMITIVE_II_I_Const_1_op(%);
+              case RemInt_Const_2: PRIMITIVE_II_I_Const_2_op(%);
+              case NegInt: PRIMITIVE_I_I_op(-);
+              case NegReal: PRIMITIVE_R_R_op(-);
+              case AbsInt: PRIMITIVE_I_I_op(ABS_SINT32);
+              case AbsReal: PRIMITIVE_R_R_op(ABS_REAL64);
+              case LtInt: PRIMITIVE_II_B_op(<);
+              case LtReal: PRIMITIVE_RR_B_op(<);
+              case LtWord: PRIMITIVE_WW_B_op(<);
+              case LtByte: PRIMITIVE_WW_B_op(<);
+              case LtChar: PRIMITIVE_WW_B_op(<);
+              case LtString: PRIMITIVE_COMPARE_SS_B_op(< 0);
+              case GtInt: PRIMITIVE_II_B_op(>);
+              case GtReal: PRIMITIVE_RR_B_op(>);
+              case GtWord: PRIMITIVE_WW_B_op(>);
+              case GtByte: PRIMITIVE_WW_B_op(>);
+              case GtChar: PRIMITIVE_WW_B_op(>);
+              case GtString: PRIMITIVE_COMPARE_SS_B_op(> 0);
+              case LteqInt: PRIMITIVE_II_B_op(<=);
+              case LteqReal: PRIMITIVE_RR_B_op(<=);
+              case LteqWord: PRIMITIVE_WW_B_op(<=);
+              case LteqByte: PRIMITIVE_WW_B_op(<=);
+              case LteqChar: PRIMITIVE_WW_B_op(<=);
+              case LteqString: PRIMITIVE_COMPARE_SS_B_op(<= 0);
+              case GteqInt: PRIMITIVE_II_B_op(>=);
+              case GteqReal: PRIMITIVE_RR_B_op(>=);
+              case GteqWord: PRIMITIVE_WW_B_op(>=);
+              case GteqByte: PRIMITIVE_WW_B_op(>=);
+              case GteqChar: PRIMITIVE_WW_B_op(>=);
+              case GteqString: PRIMITIVE_COMPARE_SS_B_op(>= 0);
+              case Word_toIntX: PRIMITIVE_W_W_op(+);// argument unchanged
+              case Word_fromInt: PRIMITIVE_W_W_op(+);// argument unchanged
+              case Word_andb: PRIMITIVE_WW_W_op(&);
+              case Word_andb_Const_1: PRIMITIVE_WW_W_Const_1_op(&);
+              case Word_andb_Const_2: PRIMITIVE_WW_W_Const_2_op(&);
+              case Word_orb: PRIMITIVE_WW_W_op(|);
+              case Word_orb_Const_1: PRIMITIVE_WW_W_Const_1_op(|);
+              case Word_orb_Const_2: PRIMITIVE_WW_W_Const_2_op(|);
+              case Word_xorb: PRIMITIVE_WW_W_op(^);
+              case Word_xorb_Const_1: PRIMITIVE_WW_W_Const_1_op(^);
+              case Word_xorb_Const_2: PRIMITIVE_WW_W_Const_2_op(^);
+              case Word_notb: PRIMITIVE_W_W_op(~);
+              case Word_leftShift: PRIMITIVE_WW_W_fun(leftShift);
+              case Word_leftShift_Const_1:
+                PRIMITIVE_WW_W_Const_1_fun(leftShift);
+              case Word_leftShift_Const_2:
+                PRIMITIVE_WW_W_Const_2_fun(leftShift);
+              case Word_logicalRightShift:
+                PRIMITIVE_WW_W_fun(logicalRightShift);
+              case Word_logicalRightShift_Const_1:
+                PRIMITIVE_WW_W_Const_1_fun(logicalRightShift);
+              case Word_logicalRightShift_Const_2:
+                PRIMITIVE_WW_W_Const_2_fun(logicalRightShift);
+              case Word_arithmeticRightShift:
+                PRIMITIVE_WW_W_fun(arithmeticRightShift);
               case Word_arithmeticRightShift_Const_1:
-                PRIMITIVE_IW_W_Const_1(>>);
+                PRIMITIVE_WW_W_Const_1_fun(arithmeticRightShift);
               case Word_arithmeticRightShift_Const_2:
-                PRIMITIVE_IW_W_Const_2(>>);
+                PRIMITIVE_WW_W_Const_2_fun(arithmeticRightShift);
 
               case Array_length:
                 {
@@ -5153,10 +5259,9 @@ VirtualMachine::execute(Executable* executable)
     }
     catch(IMLException &exception)
     {
-        DBGWRAP(fprintf(stderr,
-                        "instruction = %s\n",
-                        instructionToString
-                        (static_cast<instruction>
+        DBGWRAP(LOG.debug("instruction = %s",
+                          instructionToString
+                          (static_cast<instruction>
                            (*previousPC)));)
 
         interrupted_ = false;
@@ -5169,27 +5274,39 @@ VirtualMachine::execute(Executable* executable)
 
         resetSignalHandler();
         INVOKE_ON_MONITORS(afterExecution(PC, ENV, SP));
-        DBGWRAP(LOG.debug("VM.execute: throw uncaught IMLException.");)
+        DBGWRAP(LOG.debug("VM.executeLoop: throw uncaught IMLException.");)
+
+	PC_ = PC;
+	SP_ = SP;
+	ENV_ = ENV;
         throw;
     }
+    catch(...) {
+	PC_ = PC;
+	SP_ = SP;
+	ENV_ = ENV;
+        throw;
+    }
+    PC_ = PC;
+    SP_ = SP;
+    ENV_ = ENV;
 }
 
 void
 VirtualMachine::signalHandler(int signal)
 {
-    DBGWRAP(printf("SIGNAL caught: %d\n", signal));
+    DBGWRAP(LOG.debug("SIGNAL caught: %d", signal));
     switch(signal){
       case SIGINT:
         interrupted_ = true;
         break;
       case SIGFPE:
-        longjmp(onSignal_jmp_buf, signal);
+        longjmp(onSIGFPE_jmp_buf, signal);
         break;// never reach here
-      case SIGSEGV:
-        longjmp(onSignal_jmp_buf, signal);
-        break;// never reach here
+#if defined(SIGPIPE)
       case SIGPIPE:// ignore
         break;
+#endif
       default:
         ASSERT(false);
     }
@@ -5198,11 +5315,14 @@ VirtualMachine::signalHandler(int signal)
 void
 VirtualMachine::setSignalHandler()
 {
-    // ToDo : use sigaction, not signal.
+    /* Note : It is better to use sigaction, not signal.
+     *        But MinGW does not provide sigaction.
+     */
     prevSIGINTHandler_ = signal(SIGINT, &signalHandler);
     prevSIGFPEHandler_ = signal(SIGFPE, &signalHandler);
+#if defined(SIGPIPE)
     prevSIGPIPEHandler_ = signal(SIGPIPE, &signalHandler);
-    prevSIGSEGVHandler_ = signal(SIGSEGV, &signalHandler);
+#endif
 }
 
 void
@@ -5210,8 +5330,9 @@ VirtualMachine::resetSignalHandler()
 {
     signal(SIGINT, prevSIGINTHandler_);
     signal(SIGFPE, prevSIGFPEHandler_);
+#if defined(SIGPIPE)
     signal(SIGPIPE, prevSIGPIPEHandler_);
-    signal(SIGSEGV, prevSIGSEGVHandler_);
+#endif
 }
 
 void
@@ -5219,34 +5340,72 @@ VirtualMachine::trace(RootTracer* tracer)
     throw(IMLRuntimeException)
 {
     // registers
-    if(savedENV_){
+    if(ENV_){
         // At the beginning of the execution, ENV may be NULL.
-        tracer->trace(&savedENV_, 1);
+        ENV_ = tracer->trace(ENV_);
     }
 
     // walk through stack frames
-    FrameStack::trace(tracer, savedSP_);
+    FrameStack::trace(tracer, SP_);
 
-    // boxed global variables
-    int numberOfBoxedGlobals = globalArrays_.getCount();
-    Cell** boxedGlobals = (Cell**)(globalArrays_.getContents());
-    // some elements in boxedGlobals might hold NULL pointer.
-    for(int remains = numberOfBoxedGlobals; 0 < remains; remains -= 1){
-        if(*boxedGlobals){
-            tracer->trace(boxedGlobals, 1);
-        }
-        boxedGlobals += 1;
+    // global arrays
+    // some elements in globalArrays might hold NULL pointer.
+    for(BlockPointerVector::iterator i = globalArrays_.begin();
+        i != globalArrays_.end();
+        i++)
+    {
+        if(*i){ *i = tracer->trace(*i); }
     }
 
-    int numberOfTemporaryPointers = temporaryPointers_.getCount();
-    Cell*** pointers = (Cell***)(temporaryPointers_.getContents());
-    tracer->trace(pointers, numberOfTemporaryPointers);
+    for(BlockPointerRefList::iterator i = temporaryPointers_.begin();
+        i != temporaryPointers_.end();
+        i++)
+    {
+        **i = tracer->trace(**i);
+    }
 
     if(isPrimitiveExceptionRaised_){
-        tracer->trace(&(primitiveException_.blockRef), 1);
+        primitiveException_.blockRef =
+            tracer->trace(primitiveException_.blockRef);
     }
+
+    FFI::instance().trace(tracer);
 }
 
+void
+VirtualMachine::executeFinalizer(Cell* finalizable)
+        throw(IMLRuntimeException)
+{
+    /* A finalizable has a type of
+     * 'a ref * ('a ref -> unit) ref
+     */
+    ASSERT(2 == Heap::getPayloadSize(finalizable));
+    ASSERT(FINALIZABLE_BITMAP == Heap::getBitmap(finalizable));
+    Cell elements[2];
+    PrimitiveSupport::blockToTupleElements(finalizable, elements, 2);
+
+    Cell* arg = elements[0].blockRef;// 'a ref
+    ASSERT(Heap::isValidBlockPointer(arg));
+
+    Cell* closureRef = elements[1].blockRef;// 'a ref -> unit
+    Cell closure = closureRef[0];
+    ASSERT(Heap::isValidBlockPointer(closure.blockRef));
+    ASSERT(CLOSURE_FIELDS_COUNT == Heap::getPayloadSize(closure.blockRef));
+    ASSERT(CLOSURE_BITMAP == Heap::getBitmap(closure.blockRef));
+
+    DBGWRAP(LOG.debug("begin finalizer."));
+    /* save all registers. not necessary ? */
+    Cell* originalENV = ENV_;
+    UInt32Value* originalSP = SP_;
+    UInt32Value* originalPC = PC_;
+    /* execute finalizer */
+    UInt32Value result = executeClosure_PA(Ignore, closure, arg);
+
+    ENV_ = originalENV;
+    SP_ = originalSP;
+    PC_ = originalPC;
+    DBGWRAP(LOG.debug("finalizer returned."));
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 

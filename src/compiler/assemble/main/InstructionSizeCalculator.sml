@@ -2,7 +2,7 @@
  * This module calculates the size of instruction in words.
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: InstructionSizeCalculator.sml,v 1.25 2006/02/27 16:39:55 duchuu Exp $
+ * @version $Id: InstructionSizeCalculator.sml,v 1.31 2007/02/08 03:08:49 katsu Exp $
  *)
 structure InstructionSizeCalculator : INSTRUCTION_SIZE_CALCULATOR =
 struct
@@ -13,8 +13,6 @@ struct
   structure BT = BasicTypes
   structure P = Primitives
   structure SI = SymbolicInstructions
-
-  (***************************************************************************)
 
   (**
    *  Calculates the size of instruction in its binary form.
@@ -30,6 +28,7 @@ struct
         SI.LoadInt _ => 0w3 : BT.UInt32
       | SI.LoadWord _ => 0w3
       | SI.LoadString {string, ...} => 0w3
+      | SI.LoadFloat _ => 0w3
       | SI.LoadReal _ => 0w4
       | SI.LoadChar _ => 0w3
       | SI.LoadEmptyBlock _ => 0w2
@@ -78,7 +77,7 @@ struct
       | SI.SetNestedFieldIndirect {fieldSize = SI.DOUBLE,...} => 0w5
       | SI.SetNestedFieldIndirect {fieldSize = SI.VARIANT v,...} => 0w6
 
-      | SI.CopyBlock _ => 0w3
+      | SI.CopyBlock _ => 0w4
 
       | SI.GetGlobal{variableSize = SI.SINGLE,...} => 0w4
       | SI.GetGlobal{variableSize = SI.DOUBLE,...} => 0w4
@@ -100,8 +99,12 @@ struct
          | P.Internal3 _ => 0w5
          | P.InternalN _ => 0w3 + argsCount
          | P.External _ => 0w4 + argsCount)
-      | SI.ForeignApply {argsCount, ...} => 0w4 + argsCount
-
+      | SI.ForeignApply {argsCount, ...} => 
+           (*
+             Ohori: Dec 18, 2006. the additional 0x4 is for switchTag field 
+            *)
+           0w6 + argsCount
+      | SI.RegisterCallback _ => 0w4
       | SI.Apply_S {argSize = SI.SINGLE, ...} => 0w4
       | SI.Apply_S {argSize = SI.DOUBLE, ...} => 0w4
       | SI.Apply_S {argSize = SI.VARIANT v, ...} => 0w5
@@ -164,7 +167,7 @@ struct
       | SI.MakeClosure _ => 0w4
       | SI.Raise _ => 0w2
       | SI.PushHandler _ => 0w3
-      | SI.PopHandler => 0w1
+      | SI.PopHandler _ => 0w1
       | SI.Label _ => 0w0
       | SI.Location _ => 0w0
       | SI.SwitchInt {casesCount, ...} => 0w4 + (casesCount * 0w2)
@@ -180,7 +183,6 @@ struct
 
       | SI.ConstString {string, ...} =>
         0w2 + BT.IntToUInt32(BT.StringToPaddedUInt8ListLength string)
-      | SI.FFIVal _ => 0w4
 
       | SI.AddInt_Const_1 _ => 0w4
       | SI.AddInt_Const_2 _ => 0w4

@@ -1,0 +1,441 @@
+<HTML>
+<HEAD>
+<TITLE>InternalSignals</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>InternalSignals</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrInternalSignals.html">InternalSignals</A>&nbsp;:&nbsp;sig<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;<A HREF="SigSIGNALS.html">SIGNALS</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValinitSigTbl">initSigTbl</A>&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValclearSigTbl">clearSigTbl</A>&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;<A HREF="#ValresetSigTbl">resetSigTbl</A>&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrInternalSignals-StrCI.html">CI</A>&nbsp;=&nbsp;<A HREF="StrCInterface.html">CInterface</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrInternalSignals.html#Typesig_info">sig_info</A>&nbsp;=&nbsp;{act&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A>,&nbsp;mask&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;signal&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;=&nbsp;<A HREF="StrInternalSignals.html#ConstrSIG">SIG</A>&nbsp;of&nbsp;<A HREF="StrCInterface.html#Typesystem_const">CI.system_const</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrInternalSignals.html#ConstrIGNORE">IGNORE</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrInternalSignals.html#ConstrDEFAULT">DEFAULT</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrInternalSignals.html#ConstrHANDLER">HANDLER</A>&nbsp;of&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;PrimTypes.cont&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;PrimTypes.cont<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A>&nbsp;=&nbsp;<A HREF="StrInternalSignals.html#ConstrMASKALL">MASKALL</A>&nbsp;|&nbsp;<A HREF="StrInternalSignals.html#ConstrMASK">MASK</A>&nbsp;of&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsignalFn">signalFn</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsigToConst">sigToConst</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValconstToSig">constToSig</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsigList">sigList</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValnumSigs">numSigs</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValmaxSig">maxSig</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsigTbl">sigTbl</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#Valdebug">debug</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValgetInfo">getInfo</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsetInfo">setInfo</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValresetList">resetList</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#VallistSignals">listSignals</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValfromString">fromString</A>&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValgetSigState">getSigState</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsetSigState">setSigState</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValignoreSigState">ignoreSigState</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValdefaultSigState">defaultSigState</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValenabledSigState">enabledSigState</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValclearSigTbl">clearSigTbl</A>&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValinitSigTbl">initSigTbl</A>&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValresetSigTbl">resetSigTbl</A>&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValincMask">incMask</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValdecMask">decMask</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValmaskSignals">maskSignals</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValunmaskSignals">unmaskSignals</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#Valmasked">masked</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsetHandler">setHandler</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;*&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValoverrideHandler">overrideHandler</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;*&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValinqHandler">inqHandler</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#Valpause">pause</A>&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsigHandler">sigHandler</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsigINT">sigINT</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsigALRM">sigALRM</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsigTERM">sigTERM</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrInternalSignals.html#ValsigGC">sigGC</A>&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typesig_info"><!-- --></A>
+<H3>sig_info</H3>
+<P>
+<CODE>type&nbsp;sig_info&nbsp;=&nbsp;{act&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A>,&nbsp;mask&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>,&nbsp;signal&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>}</CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typesignal"><!-- --></A>
+<H3>signal</H3>
+<P>
+<CODE>datatype&nbsp;signal&nbsp;=&nbsp;<A HREF="StrInternalSignals.html#ConstrSIG">SIG</A>&nbsp;of&nbsp;<A HREF="StrCInterface.html#Typesystem_const">CI.system_const</A></CODE>
+
+<HR>
+<A NAME="Typesig_action"><!-- --></A>
+<H3>sig_action</H3>
+<P>
+<CODE>datatype&nbsp;sig_action&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrInternalSignals.html#ConstrIGNORE">IGNORE</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrInternalSignals.html#ConstrDEFAULT">DEFAULT</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrInternalSignals.html#ConstrHANDLER">HANDLER</A>&nbsp;of&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;PrimTypes.cont&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;PrimTypes.cont</CODE>
+
+<HR>
+<A NAME="Typesigmask"><!-- --></A>
+<H3>sigmask</H3>
+<P>
+<CODE>datatype&nbsp;sigmask&nbsp;=&nbsp;<A HREF="StrInternalSignals.html#ConstrMASKALL">MASKALL</A>&nbsp;|&nbsp;<A HREF="StrInternalSignals.html#ConstrMASK">MASK</A>&nbsp;of&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrSIG"><!-- --></A>
+<H3>SIG</H3>
+<P>
+<CODE>constructor&nbsp;SIG&nbsp;:&nbsp;<A HREF="StrCInterface.html#Typesystem_const">CI.system_const</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A></CODE>
+
+<HR>
+<A NAME="ConstrIGNORE"><!-- --></A>
+<H3>IGNORE</H3>
+<P>
+<CODE>constructor&nbsp;IGNORE&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A></CODE>
+
+<HR>
+<A NAME="ConstrDEFAULT"><!-- --></A>
+<H3>DEFAULT</H3>
+<P>
+<CODE>constructor&nbsp;DEFAULT&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A></CODE>
+
+<HR>
+<A NAME="ConstrHANDLER"><!-- --></A>
+<H3>HANDLER</H3>
+<P>
+<CODE>constructor&nbsp;HANDLER<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;*&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;PrimTypes.cont&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;PrimTypes.cont)&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A></CODE>
+
+<HR>
+<A NAME="ConstrMASKALL"><!-- --></A>
+<H3>MASKALL</H3>
+<P>
+<CODE>constructor&nbsp;MASKALL&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A></CODE>
+
+<HR>
+<A NAME="ConstrMASK"><!-- --></A>
+<H3>MASK</H3>
+<P>
+<CODE>constructor&nbsp;MASK&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValsignalFn"><!-- --></A>
+<H3>signalFn</H3>
+<P>
+<CODE>val&nbsp;signalFn</CODE>
+
+<HR>
+<A NAME="ValsigToConst"><!-- --></A>
+<H3>sigToConst</H3>
+<P>
+<CODE>val&nbsp;sigToConst</CODE>
+
+<HR>
+<A NAME="ValconstToSig"><!-- --></A>
+<H3>constToSig</H3>
+<P>
+<CODE>val&nbsp;constToSig</CODE>
+
+<HR>
+<A NAME="ValsigList"><!-- --></A>
+<H3>sigList</H3>
+<P>
+<CODE>val&nbsp;sigList</CODE>
+
+<HR>
+<A NAME="ValnumSigs"><!-- --></A>
+<H3>numSigs</H3>
+<P>
+<CODE>val&nbsp;numSigs</CODE>
+
+<HR>
+<A NAME="ValmaxSig"><!-- --></A>
+<H3>maxSig</H3>
+<P>
+<CODE>val&nbsp;maxSig</CODE>
+
+<HR>
+<A NAME="ValsigTbl"><!-- --></A>
+<H3>sigTbl</H3>
+<P>
+<CODE>val&nbsp;sigTbl</CODE>
+
+<HR>
+<A NAME="Valdebug"><!-- --></A>
+<H3>debug</H3>
+<P>
+<CODE>val&nbsp;debug</CODE>
+<DL>
+<DD>
+DEBUG *
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ValgetInfo"><!-- --></A>
+<H3>getInfo</H3>
+<P>
+<CODE>val&nbsp;getInfo</CODE>
+
+<HR>
+<A NAME="ValsetInfo"><!-- --></A>
+<H3>setInfo</H3>
+<P>
+<CODE>val&nbsp;setInfo</CODE>
+
+<HR>
+<A NAME="ValresetList"><!-- --></A>
+<H3>resetList</H3>
+<P>
+<CODE>val&nbsp;resetList</CODE>
+
+<HR>
+<A NAME="VallistSignals"><!-- --></A>
+<H3>listSignals</H3>
+<P>
+<CODE>val&nbsp;listSignals&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;<A HREF=".//StrList.html#Typelist">list</A></CODE>
+
+<HR>
+<A NAME="ValtoString"><!-- --></A>
+<H3>toString</H3>
+<P>
+<CODE>val&nbsp;toString&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValfromString"><!-- --></A>
+<H3>fromString</H3>
+<P>
+<CODE>val&nbsp;fromString&nbsp;:&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="ValgetSigState"><!-- --></A>
+<H3>getSigState</H3>
+<P>
+<CODE>val&nbsp;getSigState</CODE>
+
+<HR>
+<A NAME="ValsetSigState"><!-- --></A>
+<H3>setSigState</H3>
+<P>
+<CODE>val&nbsp;setSigState</CODE>
+
+<HR>
+<A NAME="ValignoreSigState"><!-- --></A>
+<H3>ignoreSigState</H3>
+<P>
+<CODE>val&nbsp;ignoreSigState</CODE>
+
+<HR>
+<A NAME="ValdefaultSigState"><!-- --></A>
+<H3>defaultSigState</H3>
+<P>
+<CODE>val&nbsp;defaultSigState</CODE>
+
+<HR>
+<A NAME="ValenabledSigState"><!-- --></A>
+<H3>enabledSigState</H3>
+<P>
+<CODE>val&nbsp;enabledSigState</CODE>
+
+<HR>
+<A NAME="ValclearSigTbl"><!-- --></A>
+<H3>clearSigTbl</H3>
+<P>
+<CODE>val&nbsp;clearSigTbl&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValinitSigTbl"><!-- --></A>
+<H3>initSigTbl</H3>
+<P>
+<CODE>val&nbsp;initSigTbl&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValresetSigTbl"><!-- --></A>
+<H3>resetSigTbl</H3>
+<P>
+<CODE>val&nbsp;resetSigTbl&nbsp;:&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValincMask"><!-- --></A>
+<H3>incMask</H3>
+<P>
+<CODE>val&nbsp;incMask</CODE>
+
+<HR>
+<A NAME="ValdecMask"><!-- --></A>
+<H3>decMask</H3>
+<P>
+<CODE>val&nbsp;decMask</CODE>
+
+<HR>
+<A NAME="ValmaskSignals"><!-- --></A>
+<H3>maskSignals</H3>
+<P>
+<CODE>val&nbsp;maskSignals&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValunmaskSignals"><!-- --></A>
+<H3>unmaskSignals</H3>
+<P>
+<CODE>val&nbsp;unmaskSignals&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="Valmasked"><!-- --></A>
+<H3>masked</H3>
+<P>
+<CODE>val&nbsp;masked&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesigmask">sigmask</A></CODE>
+
+<HR>
+<A NAME="ValsetHandler"><!-- --></A>
+<H3>setHandler</H3>
+<P>
+<CODE>val&nbsp;setHandler&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;*&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A></CODE>
+
+<HR>
+<A NAME="ValoverrideHandler"><!-- --></A>
+<H3>overrideHandler</H3>
+<P>
+<CODE>val&nbsp;overrideHandler&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;*&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A></CODE>
+
+<HR>
+<A NAME="ValinqHandler"><!-- --></A>
+<H3>inqHandler</H3>
+<P>
+<CODE>val&nbsp;inqHandler&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A>&nbsp;->&nbsp;<A HREF="StrInternalSignals.html#Typesig_action">sig_action</A></CODE>
+
+<HR>
+<A NAME="Valpause"><!-- --></A>
+<H3>pause</H3>
+<P>
+<CODE>val&nbsp;pause&nbsp;:&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A>&nbsp;->&nbsp;<A HREF=".//StrGeneral.html#Typeunit">unit</A></CODE>
+
+<HR>
+<A NAME="ValsigHandler"><!-- --></A>
+<H3>sigHandler</H3>
+<P>
+<CODE>val&nbsp;sigHandler</CODE>
+
+<HR>
+<A NAME="ValsigINT"><!-- --></A>
+<H3>sigINT</H3>
+<P>
+<CODE>val&nbsp;sigINT&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A></CODE>
+
+<HR>
+<A NAME="ValsigALRM"><!-- --></A>
+<H3>sigALRM</H3>
+<P>
+<CODE>val&nbsp;sigALRM&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A></CODE>
+
+<HR>
+<A NAME="ValsigTERM"><!-- --></A>
+<H3>sigTERM</H3>
+<P>
+<CODE>val&nbsp;sigTERM&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A></CODE>
+
+<HR>
+<A NAME="ValsigGC"><!-- --></A>
+<H3>sigGC</H3>
+<P>
+<CODE>val&nbsp;sigGC&nbsp;:&nbsp;<A HREF="StrInternalSignals.html#Typesignal">signal</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

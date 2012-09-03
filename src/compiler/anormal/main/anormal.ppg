@@ -2,12 +2,17 @@
  * A-Normal form.
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: anormal.ppg,v 1.21 2006/02/28 16:10:58 kiyoshiy Exp $ 
+ * @version $Id: anormal.ppg,v 1.27 2007/02/22 08:13:41 katsu Exp $ 
  *)
 
 structure ANormal = struct
 
   type loc = Loc.loc
+
+  (*%
+   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+   *)
+  type callingConvention = Absyn.callingConvention
 
   (*%
    * @formatter(idFormat) ID.format_id
@@ -86,14 +91,13 @@ structure ANormal = struct
        {name:string, ty:ty}
 
   (*%
-   * @formatter(Types.constant) Types.format_constant
+   * @formatter(ConstantTerm.constant) ConstantTerm.format_constant
    *)
-  datatype constant = datatype Types.constant
-
+  datatype constant = datatype ConstantTerm.constant
 
   (*%
    *
-   * @formatter(formatConst) Types.format_constant
+   * @formatter(formatConst) ConstantTerm.format_constant
    * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
    * @formatter(Word32.word) SmlppgUtil.format_word32
    * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
@@ -240,14 +244,15 @@ structure ANormal = struct
 
          | (*%
             * @format({
-            *          funExp : funexp,
+            *          funExp,
             *          argExpList : exp exps:formatListWithEnclosure,
             *          argTyList : ty tys:formatListWithEnclosure,
-            *          loc : loc
+            *          convention,
+            *          loc
             *         })
             * R1{d
             *     {
-            *       funexp
+            *       convention + funExp
             *       !N0{tys(ty)(",","{","}")} 1
             *       {exps(exp)(","1,"(",")")}
             *     }
@@ -258,7 +263,25 @@ structure ANormal = struct
               funExp : anexp,
               argExpList : anexp list,
               argTyList : ty list,
+              convention : callingConvention,
               loc : loc
+             }
+
+         | (*%
+            * @format({funExp,
+            *          argTyList: argTy argTys:formatListWithEnclosure, resultTy,
+            *          loc})
+            * L10{ "CALLBACK(" funExp
+            *       +1 ":" + {argTys(argTy)(","+2,"{","}") +2
+            *         "->" +2 resultTy}
+            * ")" }
+            *)
+           ANEXPORTCALLBACK of 
+             {
+               funExp : anexp,
+	       argTyList : ty list,
+	       resultTy : ty,
+               loc: loc
              }
 
          | (*%
@@ -468,23 +491,6 @@ structure ANormal = struct
               valueExp : anexp,
               loc : loc
              }
-
-         | (*%
-            * @format
-            * ({funExp, libExp, argTyList : argty argtys, resultTy, funTy, loc})
-            * "import" + funExp +d "of" +d libExp +2
-            * ":" + "{" {argtys(argty)("," +)} "}" "->" {resultTy}
-            *)
-           ANFFIVAL of 
-             {
-              funExp : anexp,
-              libExp : anexp,
-              argTyList : ty list,
-              resultTy : ty,
-              funTy : ty,
-              loc : loc
-             }
-
 
   withtype funInfo =
            (*% 

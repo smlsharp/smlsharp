@@ -1,7 +1,7 @@
 (**
  * Int structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Int.sml,v 1.8 2006/02/21 16:04:21 kiyoshiy Exp $
+ * @version $Id: Int.sml,v 1.9 2007/02/28 13:17:16 katsu Exp $
  *)
 structure Int =
 struct
@@ -130,17 +130,18 @@ struct
   in
   fun fmt radix num =
       let
-        val radixNum = numOfRadix radix
-        fun loop 0 chars = implode chars
-          | loop n chars =
-            loop (n div radixNum) ((charOfNum (n mod radixNum)) :: chars)
+        val radixNum = Word_fromInt (numOfRadix radix)
+        fun loop 0w0 chars = implode chars
+          | loop (n:word) chars =
+            loop (divWord (n, radixNum))
+                 (charOfNum (Word_toIntX (modWord (n, radixNum))) :: chars)
       in
         if 0 = num
         then "0"
         else
           if num < 0
-          then "~" ^ (loop (~num) [])
-          else loop num []
+          then "~" ^ (loop (subWord (0w0,Word_fromInt num)) [])
+          else loop (Word_fromInt num) []
       end
 
   fun toString num = fmt SC.DEC num

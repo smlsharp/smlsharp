@@ -1,7 +1,7 @@
 (**
  * The entry point to smlformat for invokation as a standalone command.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Main.sml,v 1.6 2006/02/07 12:49:33 kiyoshiy Exp $
+ * @version $Id: Main.sml,v 1.7 2007/01/25 09:02:28 katsu Exp $
  *)
 structure Main =
 struct
@@ -21,13 +21,14 @@ struct
         val toStandardOut =
             List.exists (fn option => option = "--stdout") options
 
-        val (openOut, closeOut) =
+        val (openOut, closeOut, removeOut) =
             if toStandardOut
-            then (fn _ => TextIO.stdOut, fn _ => ())
+            then (fn _ => TextIO.stdOut, fn _ => (), fn _ => ())
             else
               (
                 fn sourceFileName => TextIO.openOut (sourceFileName ^ ".sml"),
-                TextIO.closeOut
+                TextIO.closeOut,
+                fn sourceFileName => OS.FileSys.remove (sourceFileName ^ ".sml")
               )
 
       in
@@ -43,7 +44,9 @@ struct
                   sourceStream = sourceStream,
                   destinationStream = outputStream
                 }
-                handle error => (closeOut outputStream; raise error);
+                handle error => (closeOut outputStream;
+                                 removeOut sourceFileName;
+                                 raise error);
                 closeOut outputStream
               end
                 handle error => (TextIO.closeIn sourceStream; raise error);

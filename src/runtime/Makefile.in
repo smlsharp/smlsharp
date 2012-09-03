@@ -7,5 +7,21 @@ include @top_builddir@commonrule
 
 SUBDIRS = runtime-core/main \
           runtime-impl/main \
+          icons \
           byterun/main
 
+config: all_$(LIBFFI_BUILD)
+
+clean: clean_$(LIBFFI_BUILD)
+
+all_:   #dummy
+
+clean_: #dummy
+
+all_libffi_build: libffi_build/.libs/libffi.$(LIBEXT)
+
+clean_libffi_build: PHONY
+	cd libffi_build && $(MAKE) clean
+
+libffi_build/.libs/libffi.$(LIBEXT):
+	cd libffi_build && $(MAKE)

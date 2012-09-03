@@ -1,15 +1,20 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ElaborateError.ppg,v 1.17 2006/02/28 16:11:01 kiyoshiy Exp $
+ * @version $Id: ElaborateError.ppg,v 1.21 2007/02/28 17:57:20 katsu Exp $
  *)
 structure ElaborateError =
 struct
 
 
   (***************************************************************************)
-
+  
   (*%
+   * @formatter(Absyn.specKind) Absyn.format_specKind
+   *)
+  datatype specKind = datatype Absyn.specKind
+  (*%
+   * @formatter(Absyn.ty) Absyn.format_ty
    *)
   exception
 
@@ -271,6 +276,40 @@ struct
    *)
   RealConstantInPattern
 
+  and
+  (*
+   *)
+  (*%
+   * @format({ty})
+   * "not" +d "a" +d "foreign" +d "function" +d "type:" +d ty
+   *)
+  NotForeignFunctionType of {ty: Absyn.ty}
+
+  and
+  (**
+   * <pre>
+   * type t : atom
+   * </pre>
+   *)
+  (*%
+   * @format({speckind}) "kind" +d "constraint" +d "is" +d 
+   * "not" +d "allowed" +d "in" +d "interactive" +d "mode:" +d
+   * {speckind}
+   *)
+  KindSpecificationInInteractiveMode of {speckind : specKind}
+  (***************************************************************************)
+  and
+  (**
+   * <pre>
+   * structure A : sig type t : atom end = ...
+   * </pre>
+   *)
+  (*%
+   * @format({speckind}) "kind" +d "constraint" +d "can" +d 
+   * "only" + "be" +d "specified" +d "in" +d "import" +d "interface:" +d
+   * {speckind}
+   *)
+  KindSpecificationInOrdinarySigexp of {speckind : specKind}
   (***************************************************************************)
 
 end

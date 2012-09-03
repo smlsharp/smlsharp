@@ -5,7 +5,9 @@
 
 #include <dirent.h>
 #include <errno.h>
+#if defined(HAVE_POLL_H)
 #include <poll.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -13,6 +15,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utime.h>
+#if defined(__MINGW32__) || defined(__CYGWIN32__)
+# include <windows.h>
+#endif
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
@@ -31,6 +36,15 @@ raiseSysErr()
 
     Cell exception =
     PrimitiveSupport::constructExnSysErr(errorNumber, message);
+    VirtualMachine::getInstance()->setPrimitiveException(exception);
+}
+
+void
+raiseFail(const char* message)
+{
+    DBGWRAP(printf("raiseFail: %s \n", message);)
+
+    Cell exception = PrimitiveSupport::constructExnFail(message);
     VirtualMachine::getInstance()->setPrimitiveException(exception);
 }
 
@@ -308,7 +322,18 @@ IMLPrim_GenericOS_fileWriteImpl(UInt32Value argsCount,
     char* buffer = PrimitiveSupport::cellToString(*argumentRefs[1]);
     SInt32Value start = argumentRefs[2]->sint32;
     SInt32Value nBytes = argumentRefs[3]->sint32;
-    size_t writtenBytes = ::write(file, buffer + start, nBytes);
+    size_t writtenBytes;
+    switch(file){
+      case STDOUT_FILENO:
+        writtenBytes = PrimitiveSupport::writeToSTDOUT(nBytes, buffer + start);
+        break;
+      case STDERR_FILENO:
+        writtenBytes = PrimitiveSupport::writeToSTDERR(nBytes, buffer + start);
+        break;
+      default: 
+        writtenBytes = ::write(file, buffer + start, nBytes);
+        break;
+    }
     // ToDo : check error flag of the stream.
     resultRef->sint32 = (SInt32Value)writtenBytes;
     return;
@@ -401,6 +426,7 @@ IMLPrim_GenericOS_exitImpl(UInt32Value argsCount,
 {
     // void exit(int)
     int status = argumentRefs[0]->sint32;
+    VirtualMachine::getInstance()->getSession()->sendExitRequest(status);
     ::exit(status);
     // never reach here
     *resultRef = PrimitiveSupport::constructUnit();
@@ -424,13 +450,17 @@ IMLPrim_GenericOS_getEnvImpl(UInt32Value argsCount,
     return;
 };
 
+#if defined(__MINGW32__) || defined(__CYGWIN32__)
+#define sleep Sleep
+#endif
+
 void
 IMLPrim_GenericOS_sleepImpl(UInt32Value argsCount,
                             Cell* argumentRefs[],
                             Cell* resultRef)
 {
     // void sleep(unsigned int seconds)
-    ::sleep(argumentRefs[0]->uint32);
+    sleep(argumentRefs[0]->uint32);
     *resultRef = PrimitiveSupport::constructUnit();
     return;
 };
@@ -506,6 +536,8 @@ IMLPrim_GenericOS_chDirImpl(UInt32Value argsCount,
         raiseSysErr();
     }
     else{
+        VirtualMachine::getInstance()
+            ->getSession()->sendChangeDirectoryRequest(dirName);
         *resultRef = PrimitiveSupport::constructUnit();
     }
     return;
@@ -526,6 +558,10 @@ IMLPrim_GenericOS_getDirImpl(UInt32Value argsCount,
     }
     return;
 }
+
+#if defined(__MINGW32__)
+#define mkdir(name, mode) mkdir(name)
+#endif
 
 // string  -> unit
 void
@@ -857,6 +893,7 @@ IMLPrim_GenericOS_pollImpl(UInt32Value argsCount,
                            Cell* argumentRefs[],
                            Cell* resultRef)
 {
+#if defined(HAVE_POLL_H)
     // extract the first argument
     Cell pollDescList = *argumentRefs[0];
     int pollDescListLength = PrimitiveSupport::cellToListLength(pollDescList);
@@ -914,6 +951,10 @@ IMLPrim_GenericOS_pollImpl(UInt32Value argsCount,
     *resultRef = resultList;
     
     return;
+#else /* HAVE_POLL_H */
+    raiseFail("poll is not implemented.");
+    return;
+#endif 
 }
 
 // int -> word
@@ -922,8 +963,14 @@ IMLPrim_GenericOS_getPOLLINFlagImpl(UInt32Value argsCount,
                                     Cell* argumentRefs[],
                                     Cell* resultRef)
 {
+#if defined(HAVE_POLL_H)
     resultRef->uint32 = POLLIN;
     return;
+#else /* HAVE_POLL_H */
+    resultRef->uint32 = -1;
+//    raiseFail("getPOLLINFlag is not implemented.");
+    return;
+#endif 
 }
 
 // int -> word
@@ -932,8 +979,14 @@ IMLPrim_GenericOS_getPOLLOUTFlagImpl(UInt32Value argsCount,
                                      Cell* argumentRefs[],
                                      Cell* resultRef)
 {
+#if defined(HAVE_POLL_H)
     resultRef->uint32 = POLLOUT;
     return;
+#else /* HAVE_POLL_H */
+    resultRef->uint32 = -1;
+//    raiseFail("getPOLLOUTFlag is not implemented.");
+    return;
+#endif 
 }
 
 // int -> word
@@ -942,8 +995,14 @@ IMLPrim_GenericOS_getPOLLPRIFlagImpl(UInt32Value argsCount,
                                      Cell* argumentRefs[],
                                      Cell* resultRef)
 {
+#if defined(HAVE_POLL_H)
     resultRef->uint32 = POLLPRI;
     return;
+#else /* HAVE_POLL_H */
+    resultRef->uint32 = -1;
+//    raiseFail("getPOLLPRIFlag is not implemented.");
+    return;
+#endif 
 }
 
 ////////////////////////////////////////

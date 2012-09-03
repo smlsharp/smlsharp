@@ -1,0 +1,33 @@
+--directory=../doc/api
+--doctitle=StandardML\ Basis\ Library
+./basis.cm
+./Implementation/sources.cm
+--splitindex
+--header=<em><b>Standard\ ML\ Basis\ Library</b></em>
+--footer=<em><b>Standard\ ML\ Basis\ Library</b></em>
+--bottom=<p>\
+This\ document\ may\ be\ distributed\ freely\ over\ the\ internet\ as\ long\ as\ the\
+copyright\ notice\ and\ license\ terms\ below\ are\ prominently\ displayed\ within\
+every\ machine-readable\ copy.\ \ \
+<p>\
+<table\ ALIGN=CENTER\ WIDTH="80%"\ BORDER="2"\ CELLPADDING="5">\
+<tr>\
+<td>\
+<p>\
+Copyright\ &copy;\ 2003\ AT&amp;T\ and\ Lucent\ Technologies.\
+All\ rights\ reserved.\
+<p>\
+Permission\ is\ granted\ for\ internet\ users\ to\ make\ one\ paper\ copy\ for\ their\
+own\ personal\ use.\ \ Further\ hardcopy\ reproduction\ is\ strictly\ prohibited.\ \
+Permission\ to\ distribute\ the\ HTML\ document\ electronically\ on\ any\ medium\
+other\ than\ the\ internet\ must\ be\ requested\ from\ the\ copyright\ holders\ by\
+contacting\ the\ editors.\
+Printed\ versions\ of\ the\ SML\ Basis\ Manual\ are\ available\ from\ Cambridge\
+University\ Press.\
+To\ order,\ please\ visit\
+<a\ HREF="http://www.cup.org">www.cup.org</a>\ (North\ America)\ or\
+<a\ HREF="http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a>\ (outside\ North\ America).<br>\
+</table></p>
+--linkoffline=./@../doc/api/module-list
+--linkoffline=./@./toplevelTypes-list
+--overview=./Overview.html

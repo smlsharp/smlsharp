@@ -1,0 +1,187 @@
+<HTML>
+<HEAD>
+<TITLE>LinkFileLrValsFun.Tokens</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+<HR>
+<H2>LinkFileLrValsFun.Tokens</H2>
+<DL>
+<DT> <B>Enclosing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="FctLinkFileLrValsFun.html">LinkFileLrValsFun</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html">Tokens</A>&nbsp;:&nbsp;<A HREF="SigLinkFile_TOKENS.html">LinkFile_TOKENS</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>&nbsp;=&nbsp;<A HREF="FctLinkFileLrValsFun-StrParserData.html#Typesvalue">ParserData.svalue</A><br>
+&nbsp;&nbsp;type&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A>&nbsp;=&nbsp;('a,&nbsp;'b)&nbsp;Token.token<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValEOF">EOF</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValID">ID</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValASTERISK">ASTERISK</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValEQUALOP">EQUALOP</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValDOT">DOT</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValDARROW">DARROW</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValLBRACE">LBRACE</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValRBRACE">RBRACE</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValSTRUCTURE">STRUCTURE</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValSIGNATURE">SIGNATURE</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValFUNCTOR">FUNCTOR</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValFUNSIG">FUNSIG</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValTYPE">TYPE</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValVAL">VAL</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#ValEXCEPTION">EXCEPTION</A>&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typesvalue"><!-- --></A>
+<H3>svalue</H3>
+<P>
+<CODE>type&nbsp;svalue&nbsp;=&nbsp;<A HREF="FctLinkFileLrValsFun-StrParserData.html#Typesvalue">ParserData.svalue</A></CODE>
+
+<HR>
+<A NAME="Typetoken"><!-- --></A>
+<H3>token</H3>
+<P>
+<CODE>type&nbsp;('a,&nbsp;'b)&nbsp;token&nbsp;=&nbsp;('a,&nbsp;'b)&nbsp;Token.token</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValEOF"><!-- --></A>
+<H3>EOF</H3>
+<P>
+<CODE>val&nbsp;EOF&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValID"><!-- --></A>
+<H3>ID</H3>
+<P>
+<CODE>val&nbsp;ID&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValASTERISK"><!-- --></A>
+<H3>ASTERISK</H3>
+<P>
+<CODE>val&nbsp;ASTERISK&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValEQUALOP"><!-- --></A>
+<H3>EQUALOP</H3>
+<P>
+<CODE>val&nbsp;EQUALOP&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValDOT"><!-- --></A>
+<H3>DOT</H3>
+<P>
+<CODE>val&nbsp;DOT&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValDARROW"><!-- --></A>
+<H3>DARROW</H3>
+<P>
+<CODE>val&nbsp;DARROW&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValLBRACE"><!-- --></A>
+<H3>LBRACE</H3>
+<P>
+<CODE>val&nbsp;LBRACE&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValRBRACE"><!-- --></A>
+<H3>RBRACE</H3>
+<P>
+<CODE>val&nbsp;RBRACE&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValSTRUCTURE"><!-- --></A>
+<H3>STRUCTURE</H3>
+<P>
+<CODE>val&nbsp;STRUCTURE&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValSIGNATURE"><!-- --></A>
+<H3>SIGNATURE</H3>
+<P>
+<CODE>val&nbsp;SIGNATURE&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValFUNCTOR"><!-- --></A>
+<H3>FUNCTOR</H3>
+<P>
+<CODE>val&nbsp;FUNCTOR&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValFUNSIG"><!-- --></A>
+<H3>FUNSIG</H3>
+<P>
+<CODE>val&nbsp;FUNSIG&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValTYPE"><!-- --></A>
+<H3>TYPE</H3>
+<P>
+<CODE>val&nbsp;TYPE&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValVAL"><!-- --></A>
+<H3>VAL</H3>
+<P>
+<CODE>val&nbsp;VAL&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="ValEXCEPTION"><!-- --></A>
+<H3>EXCEPTION</H3>
+<P>
+<CODE>val&nbsp;EXCEPTION&nbsp;:&nbsp;'a&nbsp;*&nbsp;'a&nbsp;->&nbsp;(<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typesvalue">svalue</A>,&nbsp;'a)&nbsp;<A HREF="FctLinkFileLrValsFun-StrTokens.html#Typetoken">token</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+</BODY></HTML>

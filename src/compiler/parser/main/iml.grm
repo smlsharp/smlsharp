@@ -1,7 +1,7 @@
 (* a grammar for the raw symtax of IML.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori, Kiyoshi Yamatodani, Liu Bochao
- * @version $Id: iml.grm,v 1.41 2006/03/03 02:40:16 bochao Exp $
+ * @version $Id: iml.grm,v 1.56 2007/02/28 18:04:01 katsu Exp $
 *)
 %%
 %eop EOF SEMICOLON
@@ -19,15 +19,19 @@
     | AS
     | ASTERISK
     | AT
+    | ATOM
     | BAR
+    | BOXED
     | CASE
     | CAST
+    | CDECL
     | CHAR of string
     | COLON
     | COMMA
     | DARROW
     | DATATYPE
     | DO 
+    | DOUBLE
     | ELSE 
     | END
     | EQ
@@ -35,6 +39,8 @@
     | EQTYVAR of string 
     | EXCEPTION
     | EXTERNAL
+    | EXPORT
+    | FFIAPPLY
     | FN 
     | FUN
     | FUNCTOR
@@ -71,7 +77,9 @@
     | SHARING
     | SIG
     | SIGNATURE
+    | SIZEOF
     | SPECIAL of string
+    | STDCALL
     | STRING of string
     | STRUCT
     | STRUCTURE
@@ -88,50 +96,20 @@
     | WITHTYPE
     | WORD of Word32.word
 
-%nonterm optop of bool
-       | optty of Absyn.ty option
-       | id of string
-       | expid of string list
+%nonterm appexp of Absyn.exp
        | atexp of Absyn.exp
-       | constant of Absyn.constant
-       | exprow of (string * Absyn.exp) list
-       | expseq_comma of Absyn.exp list
-       | expseq_semicolon of Absyn.exp list
-       | appexp of Absyn.exp
-       | exp of Absyn.exp
-       | match of (Absyn.pat * Absyn.exp) list
-       | mrule of Absyn.pat * Absyn.exp
-       | patid of string list
        | atpat of Absyn.pat
        | apppat of Absyn.pat list
-       | pat of Absyn.pat
-       | fields of bool * (Absyn.patrow list)
-       | followpatrow of Absyn.patrow list
-       | optaspat of Absyn.pat option
-       | patseq_comma of Absyn.pat list
-       | ty of Absyn.ty
-       | ty0 of Absyn.ty
-       | tyid of string list
-       | ty1 of Absyn.ty
-       | tycon of string
        | atty of Absyn.ty
-       | tyseq_comma of Absyn.ty list
-       | tyseq_commna_zeroOrMore of Absyn.ty list
-       | tyseq of Absyn.ty list
-       | tyrow of (string * Absyn.ty) list
-       | tytuple of Absyn.ty list
-       | start of Absyn.parseresult
-       | tyvar of Absyn.tvar
-       | tyvarseq of Absyn.tvar list
-       | tyvarseq_comma of Absyn.tvar list
+       | atomicspec of Absyn.spec
+       | cconv of Absyn.callingConvention
+       | constant of Absyn.constant
+       | condec of bool * string * Absyn.ty option
+       | combind of (bool * string * Absyn.ty option) list
+       | condesc of (string * Absyn.ty option) list
        | dec of Absyn.dec
        | decs of Absyn.dec list
        | decseq_semicolon of Absyn.dec list
-       | valbind of (Absyn.pat * Absyn.exp) list
-       | fvalbind of (Absyn.pat list * Absyn.ty option * Absyn.exp) list list
-       | frule of Absyn.pat list * Absyn.ty option * Absyn.exp
-       | frules of (Absyn.pat list * Absyn.ty option * Absyn.exp) list
-       | typbind of (Absyn.tvar list * string * Absyn.ty) list
        | datbind of
          (
            Absyn.tvar list *
@@ -139,12 +117,43 @@
            (bool * string * Absyn.ty option) list
          )
          list
-       | combind of (bool * string * Absyn.ty option) list
-       | condec of bool * string * Absyn.ty option
+       | datdesc of
+         (Absyn.tvar list * string * (string * Absyn.ty option) list) list
+       | exprow of (string * Absyn.exp) list
+       | expseq_comma of Absyn.exp list
+       | expseq_semicolon of Absyn.exp list
+       | expid of string list
+       | exp of Absyn.exp
        | exbinds of Absyn.exbind list
        | exbind of Absyn.exbind
+       | exdesc of (string * Absyn.ty option) list
+       | fields of bool * (Absyn.patrow list)
+       | followpatrow of Absyn.patrow list
+       | fvalbind of (Absyn.pat list * Absyn.ty option * Absyn.exp) list list
+       | frule of Absyn.pat list * Absyn.ty option * Absyn.exp
+       | frules of (Absyn.pat list * Absyn.ty option * Absyn.exp) list
+       | funbind of Absyn.funbind
+       | funbindand of Absyn.funbind
+       | funbindseq of Absyn.funbind list
+       | id of string
        | idseq of string list
+       | importdec of Absyn.topdec
+       | importdecs of Absyn.topdec list
        | label of string
+       | longid of Absyn.longid
+       | longtycon of Absyn.longTyCon
+       | longtyconeqrow of Absyn.longTyCon list
+       | longidseq of Absyn.longid list
+       | longideqrow of Absyn.longid list
+       | match of (Absyn.pat * Absyn.exp) list
+       | mrule of Absyn.pat * Absyn.exp
+       | optaspat of Absyn.pat option
+       | optop of bool
+       | optty of Absyn.ty option
+       | patseq_comma of Absyn.pat list
+       | patid of string list
+       | pat of Absyn.pat
+       | start of Absyn.parseresult
        | strexpbasic of Absyn.strexp
        | strexp of Absyn.strexp
        | strexpcomb of Absyn.strexp
@@ -155,28 +164,9 @@
        | strbind of Absyn.strbind
        | strbindand of Absyn.strbind
        | sigbind of (string * Absyn.sigexp) list
-       | atomicspec of Absyn.spec
        | spec of Absyn.spec
-       | spec1 of Absyn.spec
-       | valdesc of (string * Absyn.ty) list
-       | typdesc of (Absyn.tvar list * string) list
-       | datdesc of
-         (Absyn.tvar list * string * (string * Absyn.ty option) list) list
-       | exdesc of (string * Absyn.ty option) list
+       | speckind of Absyn.specKind 
        | strdesc of (string * Absyn.sigexp) list
-       | condesc of (string * Absyn.ty option) list
-       | funbind of Absyn.funbind
-       | funbindand of Absyn.funbind
-       | funbindseq of Absyn.funbind list
-       | topdecs of Absyn.topdec list
-       | topdec of Absyn.topdec
-       | importdec of Absyn.topdec
-       | importdecs of Absyn.topdec list
-       | longid of Absyn.longid
-       | longtycon of Absyn.longTyCon
-       | longtyconeqrow of Absyn.longTyCon list
-       | longidseq of Absyn.longid list
-       | longideqrow of Absyn.longid list
        | strbindseq of Absyn.strbind list
        | sigidseq of string list
        | sharespec of Absyn.longTyCon list
@@ -184,6 +174,45 @@
        | sigexpwhere of Absyn.sigexp
        | sigexp of Absyn.sigexp
        | sigexpand of Absyn.sigexp
+       | ty of Absyn.ty
+       | ty0 of Absyn.ty
+       | tyid of string list
+       | ty1 of Absyn.ty
+       | tycon of string
+       | tyseq_comma of Absyn.ty list
+       | tyseq of Absyn.ty list
+       | tyrow of (string * Absyn.ty) list
+       | tytuple of Absyn.ty list
+       | tyvar of Absyn.tvar
+       | tyvarseq of Absyn.tvar list
+       | tyvarseq_comma of Absyn.tvar list
+       | ffiApplyArg of Absyn.ffiArg
+       | ffiApplyArgs of Absyn.ffiArg list
+       | ffiApplyArgSeq of Absyn.ffiArg list
+       | ffityrow of (string * Absyn.ty) list
+       | ffityseq of Absyn.ty list
+       | ffiArgs of Absyn.ty list
+       | ffiContyArg of Absyn.ty list
+       | ffiAtty of Absyn.ty
+       | ffitupleseq of Absyn.ty list
+       | ffiTupleTy of Absyn.ty
+       | ffiFunArg of Absyn.ty list
+       | ffiFunty of Absyn.ty
+       | fficconv of Absyn.callingConvention
+       | ffity of Absyn.ty
+       | old_ffiContyArg of Absyn.ty list
+       | old_ffiAtty of Absyn.ty
+       | old_ffituple of Absyn.ty list
+       | old_ffityseq of Absyn.ty list
+       | old_ffityArg of Absyn.ty list
+       | old_ffiFunty of Absyn.ty list * Absyn.ty
+       | old_ffity of Absyn.ty
+       | typbind of (Absyn.tvar list * string * Absyn.ty) list
+       | typdesc of (Absyn.tvar list * string * Absyn.specKind) list
+       | topdecs of Absyn.topdec list
+       | topdec of Absyn.topdec
+       | valdesc of (string * Absyn.ty) list
+       | valbind of (Absyn.pat * Absyn.exp) list
 
 
 %name CoreML
@@ -245,11 +274,11 @@ atexp : constant (Absyn.EXPCONSTANT(constant,(constantleft,constantright)))
       | expid (Absyn.EXPID(expid,(expidleft,expidright)))
       | OP expid (Absyn.EXPOPID(expid,(OPleft,expidright)))
       | LBRACE exprow RBRACE (Absyn.EXPRECORD(exprow,(LBRACEleft,RBRACEright)))
-      | LBRACE RBRACE (Absyn.EXPRECORD([],(LBRACEleft,RBRACEright)))
+      | LBRACE RBRACE (Absyn.EXPCONSTANT(Absyn.UNITCONST(LBRACEleft,RBRACEright),(LBRACEleft,RBRACEright)))
       | HASH id (Absyn.EXPRECORD_SELECTOR(id,(HASHleft,idright)))
       | HASH INT
         (Absyn.EXPRECORD_SELECTOR(Int32.toString INT,(HASHleft,INTright)))
-      | LPAREN RPAREN (Absyn.EXPTUPLE([],(LPARENleft,RPARENright)))
+      | LPAREN RPAREN (Absyn.EXPCONSTANT(Absyn.UNITCONST(LPARENleft,RPARENright), (LPARENleft,RPARENright)))
       | LPAREN expseq_comma RPAREN
                 (Absyn.EXPTUPLE(expseq_comma,(LPARENleft,RPARENright)))
       | LBRACKET RBRACKET (Absyn.EXPLIST([],(LBRACKETleft,RBRACKETright)))
@@ -296,6 +325,15 @@ appexp : atexp (Absyn.EXPAPP([atexp],(atexpleft,atexpright)))
 
 exp : appexp (appexp)
     | exp COLON ty (Absyn.EXPTYPED(exp,ty,(expleft,tyright)))
+    | exp COLON IMPORT ffity
+          (Absyn.EXPFFIIMPORT(exp,ffity,(expleft,ffityright)))
+(*
+    | exp COLON EXPORT ffity
+          (Absyn.EXPFFIEXPORT(exp,ffity,(expleft,ffityright)))
+*)
+    | FFIAPPLY cconv atexp LPAREN ffiApplyArgs RPAREN COLON ffity
+          (Absyn.EXPFFIAPPLY(cconv, atexp, ffiApplyArgs, ffity,
+                             (FFIAPPLYleft,ffityright)))
     | exp ANDALSO exp (Absyn.EXPCONJUNCTION(exp1,exp2,(exp1left,exp2right)))
     | exp ORELSE exp (Absyn.EXPDISJUNCTION(exp1,exp2,(exp1left,exp2right)))
     | exp HANDLE match (Absyn.EXPHANDLE(exp,match,(expleft,matchright)))
@@ -305,11 +343,6 @@ exp : appexp (appexp)
     | CASE exp OF match (Absyn.EXPCASE(exp,match,(CASEleft,matchright)))
     | FN match (Absyn.EXPFN(match,(FNleft,matchright)))
     | CAST LPAREN exp RPAREN (Absyn.EXPCAST(exp,(CASTleft,RPARENright)))
-    | EXTERNAL atexp OF atexp
-               COLON LBRACE tyseq_commna_zeroOrMore RBRACE ARROW ty
-        (let val loc = (EXTERNALleft, tyright)
-         in Absyn.EXPFFIVAL{funExp=atexp1, libExp=atexp2, argTyList=tyseq_commna_zeroOrMore, resultTy=ty, loc=loc}
-         end)
 
 (*
 match : mrule                        ([mrule])
@@ -378,7 +411,17 @@ dec : VAL valbind (Absyn.DECVAL(nil,valbind,(VALleft,valbindright)))
     | INFIX idseq (Absyn.DECINFIX(0,idseq,(INFIXleft,idseqright)))
     | INFIXR idseq (Absyn.DECINFIXR(0,idseq,(INFIXRleft,idseqright)))
     | NONFIX idseq (Absyn.DECNONFIX(idseq,(NONFIXleft,idseqright)))
-      (* ToDo : another keyword may be used, instead of 'include'. *)
+(*  deprecated syntax  *)
+    | VAL EXTERNAL cconv id EQ appexp COLON old_ffiFunty
+        (Absyn.DECVAL(nil,
+           [(Absyn.PATID({opPrefix=false,id=[id],loc=(idleft,idright)}),
+             Absyn.EXPFFIIMPORT(appexp,
+                                Absyn.TYFFI(cconv,#1 old_ffiFunty,#2 old_ffiFunty,(old_ffiFuntyleft,old_ffiFuntyright)),
+                                (appexpleft,old_ffiFuntyright)))],
+           (VALleft,old_ffiFuntyright)))
+
+cconv : (Absyn.CC_DEFAULT)
+      | fficconv (fficconv)
 
 idseq : id ([id])
       | id idseq (id::idseq)
@@ -449,12 +492,24 @@ patid : ID ([ID])
       | ASTERISK PERIOD longid ("*" :: longid)
    
 atpat : UNDERBAR (Absyn.PATWILD((UNDERBARleft,UNDERBARright)))
-      | patid (Absyn.PATID({opPrefix=false,id=patid,loc=(patidleft,patidright)}))
-      | OP patid (Absyn.PATID({opPrefix=true, id=patid, loc=(patidleft,patidright)}))
+      | patid
+          (Absyn.PATID({opPrefix=false,id=patid,loc=(patidleft,patidright)}))
+      | OP patid
+          (Absyn.PATID({opPrefix=true, id=patid, loc=(patidleft,patidright)}))
       | constant (Absyn.PATCONSTANT (constant,(constantleft,constantright)))
+      | LBRACE RBRACE
+          (Absyn.PATCONSTANT
+            (Absyn.UNITCONST(LBRACEleft,RBRACEright),(LBRACEleft,RBRACEright)))
       | LBRACE fields RBRACE
-                (Absyn.PATRECORD({ifFlex = #1 fields, fields = #2 fields,loc = (LBRACEleft,RBRACEright)}))
-      | LPAREN RPAREN (Absyn.PATTUPLE([],(LPARENleft,RPARENright)))
+          (Absyn.PATRECORD
+            ({
+               ifFlex = #1 fields,
+               fields = #2 fields,
+               loc = (LBRACEleft,RBRACEright)
+             }))
+      | LPAREN RPAREN
+          (Absyn.PATCONSTANT
+            (Absyn.UNITCONST(LPARENleft,RPARENright),(LPARENleft,RPARENright)))
       | LPAREN patseq_comma RPAREN
                 (Absyn.PATTUPLE(patseq_comma,(LPARENleft,RPARENright)))
       | LBRACKET RBRACKET (Absyn.PATLIST([],(LBRACKETleft,RBRACKETright)))
@@ -473,20 +528,28 @@ pat : apppat (Absyn.PATAPPLY(apppat,(apppatleft,apppatright)))
                  * identifier in the elaboration phase. *)
     | pat COLON ty (Absyn.PATTYPED(pat,ty,(patleft,tyright)))
     | pat AS pat (Absyn.PATLAYERED(pat1,pat2,(pat1left,pat2right)))
+    | LPAREN pat BAR pat RPAREN
+                (Absyn.PATORPAT(pat1,pat2,(LPARENleft,RPARENright)))
 
 optty : COLON ty (SOME(ty))
       | (NONE)
 
-fields : ((false,nil))
-       | label EQ pat
+fields : label EQ pat
                 ((false,[Absyn.PATROWPAT(label,pat,(labelleft,patright))]))
        | label optty optaspat
                 ((false,[Absyn.PATROWVAR(label,optty,optaspat,(labelleft,optaspatright))]))
        | PERIODS ((true,nil))
        | label EQ pat COMMA fields
-                ((#1 fields,Absyn.PATROWPAT(label,pat,(labelleft,patright))::(#2 fields)))
+            ((
+               #1 fields,
+               Absyn.PATROWPAT(label,pat,(labelleft,patright))::(#2 fields)
+             ))
        | label optty optaspat COMMA fields 
-                ((#1 fields,Absyn.PATROWVAR(label,optty,optaspat,(labelleft,optaspatright))::(#2 fields)))
+            ((
+               #1 fields,
+               Absyn.PATROWVAR
+                 (label,optty,optaspat,(labelleft,optaspatright))::(#2 fields)
+              ))
 
 optaspat : (NONE)
          | AS pat (SOME(pat))
@@ -513,10 +576,6 @@ tyseq : ty1 ([ty1])
 tyseq_comma : ty COMMA ty ([ty1,ty2])
             | ty COMMA tyseq_comma (ty::tyseq_comma)
 
-tyseq_commna_zeroOrMore : ([])
-                        | ty ([ty])
-                        | tyseq_comma (tyseq_comma)
-
 tyid : ID ([ID])
      | ID PERIOD longid (ID :: longid)
 
@@ -531,6 +590,82 @@ ty : ty ARROW ty (Absyn.TYFUN(ty1,ty2,(ty1left,ty2right)))
    | ty1 (ty1)
 
 (****************  end of types *********************)
+
+(*********** foreign function interface *************)
+
+ffiApplyArg : appexp COLON ffity
+                  (Absyn.FFIARG(appexp, ffity))
+            | SIZEOF LPAREN ty RPAREN
+                  (Absyn.FFIARGSIZEOF(ty, NONE))
+            | SIZEOF LPAREN ty RPAREN ASTERISK atexp
+                  (Absyn.FFIARGSIZEOF(ty, SOME atexp))
+
+ffiApplyArgSeq : ffiApplyArg ([ffiApplyArg])
+               | ffiApplyArg COMMA ffiApplyArgSeq (ffiApplyArg::ffiApplyArgSeq)
+
+ffiApplyArgs : ([])
+             | ffiApplyArgSeq (ffiApplyArgSeq)
+
+(* FFI type representation *)
+
+ffityrow : label COLON ffity ([(label,ffity)])
+         | label COLON ffity COMMA ffityrow ((label,ffity)::ffityrow)
+
+ffityseq : ffity COMMA ffity ([ffity1,ffity2])
+         | ffity COMMA ffityseq (ffity::ffityseq)
+
+ffiArgs : ffiAtty ([ffiAtty])
+        | LPAREN ffityseq RPAREN (ffityseq)
+
+ffiContyArg : (nil)
+            | ffiArgs (ffiArgs)
+
+ffiAtty : LPAREN ffity RPAREN (ffity)
+        | tyvar (Absyn.TYID(tyvar,(tyvarleft,tyvarright)))
+        | ffiContyArg tyid (Absyn.TYCONSTRUCT(ffiContyArg,tyid,(ffiContyArgleft,tyidright)))
+        | LBRACE ffityrow RBRACE (Absyn.TYRECORD(ffityrow,(LBRACEleft,RBRACEright)))
+        | LBRACE RBRACE (Absyn.TYRECORD([],(LBRACEleft,RBRACEright)))
+
+ffitupleseq : ffiAtty ASTERISK ffiAtty ([ffiAtty1,ffiAtty2])
+            | ffiAtty ASTERISK ffitupleseq (ffiAtty::ffitupleseq)
+
+ffiTupleTy : ffitupleseq (Absyn.TYTUPLE(ffitupleseq,(ffitupleseqleft,ffitupleseqright)))
+
+ffiFunArg : LPAREN RPAREN ([])
+          | ffiArgs (ffiArgs)
+          | ffiTupleTy ([ffiTupleTy])
+
+ffiFunty : ffiFunArg ARROW ffity
+           (Absyn.TYFFI(Absyn.CC_DEFAULT,ffiFunArg,ffity,(ffiFunArgleft,ffityright)))
+         | fficconv ffiFunArg ARROW ffity
+           (Absyn.TYFFI(fficconv,ffiFunArg,ffity,(ffiFunArgleft,ffityright)))
+
+fficconv : CDECL      (Absyn.CC_CDECL)
+         | STDCALL    (Absyn.CC_STDCALL)
+
+ffity : ffiAtty (ffiAtty)
+      | ffiFunty (ffiFunty)
+      | ffiTupleTy (ffiTupleTy)
+
+(* deperecated syntax *)
+old_ffiContyArg : (nil)
+                | old_ffiAtty ([old_ffiAtty])
+                | LPAREN old_ffityseq RPAREN (old_ffityseq)
+old_ffiAtty : LPAREN old_ffity RPAREN (old_ffity)
+            | old_ffiContyArg tyid
+                (Absyn.TYCONSTRUCT(old_ffiContyArg,tyid,(tyidleft,tyidright)))
+old_ffituple : old_ffiAtty ASTERISK old_ffiAtty ([old_ffiAtty1,old_ffiAtty2])
+             | old_ffiAtty ASTERISK old_ffituple (old_ffiAtty::old_ffituple)
+old_ffityseq : old_ffity COMMA old_ffity ([old_ffity1,old_ffity2])
+             | old_ffity COMMA old_ffityseq (old_ffity::old_ffityseq)
+old_ffityArg : (nil)
+             | old_ffity ([old_ffity])
+             | old_ffityseq (old_ffityseq)
+old_ffiFunty : LBRACE old_ffityArg RBRACE ARROW old_ffity ((old_ffityArg, old_ffity))
+old_ffity : old_ffiAtty (old_ffiAtty)
+          | old_ffiFunty (Absyn.TYFFI(Absyn.CC_DEFAULT,#1 old_ffiFunty,#2 old_ffiFunty,
+                                      (old_ffiFuntyleft,old_ffiFuntyright)))
+          | old_ffituple (Absyn.TYTUPLE(old_ffituple,(old_ffitupleleft,old_ffitupleright)))
 
 (**************** structure and signature************)
 
@@ -682,11 +817,19 @@ sigidseq : id id ([id1,id2])
                          
 valdesc : id COLON ty ([(id,ty)])
         | id COLON ty AND valdesc ((id,ty)::valdesc)
-            
-typdesc : tyvarseq tycon ([(tyvarseq,tycon)])
-        | tycon ([(nil,tycon)])
-        | tyvarseq tycon AND typdesc ((tyvarseq,tycon)::typdesc)
-	| tycon AND typdesc  ((nil,tycon)::typdesc)
+
+speckind : ATOM (Absyn.ATOM)
+         | DOUBLE (Absyn.DOUBLE)
+         | BOXED (Absyn.BOXED)
+
+typdesc : tyvarseq tycon ([(tyvarseq, tycon, Absyn.GENERIC)])
+        | tyvarseq tycon COLON speckind  ([(tyvarseq, tycon, speckind)])
+        | tycon ([(nil,tycon,Absyn.GENERIC)])
+        | tycon COLON speckind ([(nil,tycon, speckind)])
+        | tyvarseq tycon AND typdesc ((tyvarseq,tycon,Absyn.GENERIC)::typdesc)
+        | tyvarseq tycon COLON speckind AND typdesc ((tyvarseq,tycon,speckind)::typdesc)
+	| tycon AND typdesc  ((nil,tycon, Absyn.GENERIC)::typdesc)
+	| tycon COLON speckind AND typdesc  ((nil, tycon, speckind)::typdesc)
 
 datdesc : tycon EQ condesc ([(nil,tycon,condesc)])
         |tyvarseq tycon EQ condesc ([(tyvarseq,tycon,condesc)])
@@ -704,12 +847,8 @@ exdesc : id ([(id,NONE)])
        | id AND exdesc ((id,NONE)::exdesc)
        | id OF ty AND exdesc ((id,SOME ty)::exdesc)
 
-(*---strdesc------*)
 strdesc : id COLON sigexp ([(id,sigexp)])
-        | id COLON sigexpand strdesc ((id,sigexpand)::strdesc)        (*TEST*)    
-(*----------------*)
-
-(******************************functors***************************************)
+        | id COLON sigexpand strdesc ((id,sigexpand)::strdesc)       
 
 funbindseq : funbind ([funbind])
            | funbindand  funbindseq (funbindand::funbindseq)    
@@ -753,13 +892,14 @@ funbindand : ID LPAREN ID COLON sigexp RPAREN EQ strexpand
                      (ID,spec,sigexp,strexpand,(IDleft,strexpandright)))
 
 (*****************************top level declarations**************************)
-             
-topdecs : topdec ([topdec])
-        | topdec topdecs (topdec::topdecs)
+
+topdecs : topdec  ([topdec])
+        | topdec topdecs (topdec :: topdecs)
+        | EXPORT spec END ([Absyn.TOPDECEXPORT (spec,(EXPORTleft, ENDright))])
 
 topdec : strdec (Absyn.TOPDECSTR(strdec,(strdecleft,strdecright)))
        | SIGNATURE sigbind
                 (Absyn.TOPDECSIG(sigbind,(SIGNATUREleft,sigbindright)))
        | FUNCTOR funbindseq
                 (Absyn.TOPDECFUN(funbindseq,(FUNCTORleft,funbindseqright)))
-       | IMPORT spec END   (Absyn.TOPDECIMPORT (spec,(IMPORTleft, ENDright))) 
+       | IMPORT spec END  (Absyn.TOPDECIMPORT (spec,(IMPORTleft, ENDright))) 

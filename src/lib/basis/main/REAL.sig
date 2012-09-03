@@ -96,5 +96,8 @@ signature REAL =
     val toDecimal   : real -> IEEEReal.decimal_approx
     val fromDecimal : IEEEReal.decimal_approx -> real
 
+    val toFloat   : real -> float
+    val fromFloat : float -> real
+
   end;
 

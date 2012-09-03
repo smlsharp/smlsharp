@@ -8,7 +8,10 @@ in
    fun getLocOfExp exp =
      case exp of
        TLFOREIGNAPPLY {loc,...} => loc
+     | TLEXPORTCALLBACK {loc,...} => loc
+     | TLSIZEOF {loc,...} => loc
      | TLCONSTANT {loc,...} => loc
+     | TLEXCEPTIONTAG {loc,...} => loc
      | TLVAR {loc,...} => loc
      | TLGETGLOBAL (string, ty, loc) => loc
      | TLGETFIELD {loc,...} => loc
@@ -33,7 +36,6 @@ in
      | TLSEQ {loc,...} => loc
      | TLCAST {loc,...} => loc
      | TLOFFSET {loc,...} => loc
-     | TLFFIVAL {loc,...} => loc
 
    fun getLocOfDec dec =
        case dec of

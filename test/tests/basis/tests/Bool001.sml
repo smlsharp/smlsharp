@@ -16,7 +16,7 @@ fun checkScanResult NONE = NONE
   | checkScanResult (SOME(result, substring)) =
     SOME(result, Substring.string substring);
 fun checkScan string =
-    checkScanResult(Bool.scan Substring.getc (Substring.all string));
+    checkScanResult(Bool.scan Substring.getc (Substring.full string));
 val scan_empty = checkScan "";
 val scan_true = checkScan "true";
 val scan_false = checkScan "false";

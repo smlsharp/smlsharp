@@ -67,6 +67,12 @@ class InteractiveSession
               UserException,
               SystemError);
 
+    virtual
+    void sendExitRequest(SInt32Value exitCode);
+
+    virtual
+    void sendChangeDirectoryRequest(const char* directory);
+
     ///////////////////////////////////////////////////////////////////////////
   private:
 
@@ -110,7 +116,11 @@ class InteractiveSession
 
     void sendUInt32Value(UInt32Value value);
 
+    void sendSInt32Value(SInt32Value value);
+
     UInt32Value receiveUInt32Value();
+
+    SInt32Value receiveSInt32Value();
 
     void sendByteArray(UInt32Value length, const ByteValue* data);
 

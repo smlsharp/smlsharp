@@ -1,7 +1,7 @@
 (**
  * pickler for typedlambda 
  * @author Liu Bochao
- * @version $Id: TypedLambdaPickler.sml,v 1.1 2006/03/02 13:03:22 bochao Exp $
+ * @version $Id: TypedLambdaPickler.sml,v 1.10 2007/02/28 15:31:26 katsu Exp $
  *)
 structure TypedLambdaPickler =
 struct
@@ -10,7 +10,6 @@ struct
 
   structure P = Pickle
   structure T = Types
-  structure SE = StaticEnv
   structure TL = TypedLambda
   (***************************************************************************)
   
@@ -23,7 +22,8 @@ struct
   val primInfo = TypesPickler.primInfo
   val btvKind = TypesPickler.btvKind
   val btvEnv = TypesPickler.btvEnv
-  val constant = TypesPickler.constant
+  val constant = ConstantTermPickler.constant
+  val callingConvention = AbsynPickler.callingConvention
 
   val (tlexpFunctions, tlexp) = P.makeNullPu (TL.TLGETGLOBAL ("", T.ATOMty, Loc.noloc))
   val (tldeclFunctions, tldecl) = P.makeNullPu (TL.TLEMPTY Loc.noloc)
@@ -35,8 +35,8 @@ struct
             | toInt (TL.TLARRAY _) = 1
             | toInt (TL.TLCONSTANT _) = 2
             | toInt (TL.TLCAST _) = 3
-            | toInt (TL.TLFOREIGNAPPLY _) = 4
-            | toInt (TL.TLFFIVAL _) = 5
+            | toInt (TL.TLEXCEPTIONTAG _) = 4
+            | toInt (TL.TLFOREIGNAPPLY _) = 5
             | toInt (TL.TLFNM _) = 6
             | toInt (TL.TLGETFIELD _) = 7
             | toInt (TL.TLGETGLOBAL _) = 8
@@ -58,6 +58,8 @@ struct
             | toInt (TL.TLSWITCH _) = 24
             | toInt (TL.TLTAPP _) = 25
             | toInt (TL.TLVAR _) = 26
+            | toInt (TL.TLEXPORTCALLBACK _) = 27
+            | toInt (TL.TLSIZEOF _) = 28
 
           fun pu_TLAPPM pu = 
               let
@@ -105,6 +107,15 @@ struct
                   (fn {value, loc} => (value,loc)))
                  (P.tuple2(constant,loc)))
 
+          fun pu_TLEXCEPTIONTAG pu =
+              P.con1
+                  TL.TLEXCEPTIONTAG
+                  (fn TL.TLEXCEPTIONTAG arg => arg)
+                  (P.conv
+                   ((fn (tagValue, loc) => {tagValue = tagValue, loc = loc},
+                     (fn {tagValue, loc} => (tagValue,loc))))
+                   (P.tuple2(P.int,loc)))
+                                           
           fun pu_TLCAST pu =
               P.con1
                 TL.TLCAST
@@ -119,43 +130,58 @@ struct
 
           fun pu_TLFOREIGNAPPLY pu =
               let
-                val funExp_instTyList_argExpList_argTyList_loc =
-                    P.tuple5(tlexp, P.list ty, P.list tlexp, P.list ty, loc)
+                val funExp_funTy_instTyList_argExpList_argTyList_convention_loc =
+                    P.tuple7(tlexp, ty, P.list ty, P.list tlexp, P.list ty, callingConvention, loc)
               in
                 P.con1 
                   TL.TLFOREIGNAPPLY
                   (fn TL.TLFOREIGNAPPLY arg => arg)
                   (P.conv
-                     ((fn (funExp, instTyList, argExpList, argTyList, loc) =>
+                     ((fn (funExp, funTy, instTyList, argExpList, argTyList, convention, loc) =>
                           {funExp = funExp, 
+                           funTy = funTy,
                            instTyList = instTyList,
                            argExpList = argExpList, 
                            argTyList = argTyList,
+                           convention = convention,
                            loc = loc}),
-                      (fn {funExp, instTyList, argExpList, argTyList, loc} =>
-                          (funExp, instTyList, argExpList, argTyList, loc)))
-                     funExp_instTyList_argExpList_argTyList_loc)
+                      (fn {funExp, funTy, instTyList, argExpList, argTyList, convention, loc} =>
+                          (funExp, funTy, instTyList, argExpList, argTyList, convention, loc)))
+                     funExp_funTy_instTyList_argExpList_argTyList_convention_loc)
               end
 
-          fun pu_TLFFIVAL pu = 
+          fun pu_TLEXPORTCALLBACK pu =
               let
-                val funExp_libExp_argTyList_resultTy_funTy_loc =
-                    P.tuple6(tlexp, tlexp, P.list ty, ty, ty, loc)
+                val funExp_instTyList_argTyList_resultTy_loc =
+                    P.tuple5(tlexp, P.list ty, P.list ty, ty, loc)
+              in
+                P.con1 
+                  TL.TLEXPORTCALLBACK
+                  (fn TL.TLEXPORTCALLBACK arg => arg)
+                  (P.conv
+                     ((fn (funExp, instTyList, argTyList, resultTy, loc) =>
+                          {funExp = funExp, 
+                           instTyList = instTyList,
+                           argTyList = argTyList,
+                           resultTy = resultTy,
+                           loc = loc}),
+                      (fn {funExp, instTyList, argTyList, resultTy, loc} =>
+                          (funExp, instTyList, argTyList, resultTy, loc)))
+                     funExp_instTyList_argTyList_resultTy_loc)
+              end
+
+          fun pu_TLSIZEOF pu = 
+              let
+                val ty_loc =
+                    P.tuple2(ty, loc)
               in
                 P.con1
-                  TL.TLFFIVAL
-                  (fn TL.TLFFIVAL arg => arg)
+                  TL.TLSIZEOF
+                  (fn TL.TLSIZEOF arg => arg)
                   (P.conv
-                     ((fn (funExp, libExp, argTyList, resultTy, funTy, loc) =>
-                          {funExp = funExp, 
-                           libExp = libExp, 
-                           argTyList = argTyList, 
-                           resultTy = resultTy, 
-                           funTy = funTy, 
-                           loc = loc}),
-                      (fn {funExp, libExp, argTyList, resultTy, funTy, loc} =>
-                          (funExp, libExp, argTyList, resultTy, funTy, loc)))
-                     funExp_libExp_argTyList_resultTy_funTy_loc)
+                     ((fn (ty, loc) => {ty = ty, loc = loc}),
+                      (fn {ty, loc} => (ty, loc)))
+                     ty_loc)
               end
 
           fun pu_TLFNM pu =
@@ -446,8 +472,13 @@ struct
 
           fun pu_TLSWITCH pu =
               let
+                  val branch =
+                      P.conv
+                      ((fn (constant,exp) => {constant = constant,exp = exp}),
+                       (fn {constant, exp} => (constant, exp)))
+                      (P.tuple2(tlexp, tlexp))
                 val switchExp_expTy_branches_defaultExp_loc = 
-                    P.tuple5(tlexp, ty, P.list (P.tuple2(constant, tlexp)), tlexp, loc)
+                    P.tuple5(tlexp, ty, P.list branch, tlexp, loc)
               in
                 P.con1
                   TL.TLSWITCH 
@@ -493,14 +524,14 @@ struct
               pu_TLARRAY (* 1 *),
               pu_TLCONSTANT (* 2 *),
               pu_TLCAST (* 3 *),
-              pu_TLFOREIGNAPPLY (* 4 *),
-              pu_TLFFIVAL (* 5 *),
+              pu_TLEXCEPTIONTAG (* 4 *),
+              pu_TLFOREIGNAPPLY (* 5 *),
               pu_TLFNM (* 6 *),
               pu_TLGETFIELD (* 7 *),
               pu_TLGETGLOBAL (* 8 *),
               pu_TLGETGLOBALVALUE (* 9 *),
               pu_TLHANDLE (* 10 *),
-              pu_TLINITARRAY (* 11*),
+              pu_TLINITARRAY (* 11 *),
               pu_TLLET (* 12 *),
               pu_TLMODIFY (* 13 *),
               pu_TLMONOLET (* 14 *),
@@ -515,7 +546,9 @@ struct
               pu_TLSETFIELD (* 23 *),
               pu_TLSWITCH (* 24 *),
               pu_TLTAPP (* 25 *),
-              pu_TLVAR (* 26 *)
+              pu_TLVAR (* 26 *),
+              pu_TLEXPORTCALLBACK (* 27 *),
+              pu_TLSIZEOF (* 28 *)
               ]
              )
         end

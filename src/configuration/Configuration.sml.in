@@ -4,7 +4,10 @@ structure Configuration =
 struct
 
   (* version number of SML# compiler *)
-  val Version = "0.10"
+  val Version = "0.20"
+
+  (* release date *)
+  val ReleaseDate = "2007-03-30 10:47:08 JST"
 
   (* absolute path to the build directory of development *)
   val BuildRoot = "%BUILD_ROOT%"

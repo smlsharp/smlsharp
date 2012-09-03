@@ -3,21 +3,22 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompileCore.sml,v 1.36 2006/02/27 06:23:01 bochao Exp $
+ * @version $Id: ModuleCompileCore.sml,v 1.46 2007/02/28 15:31:25 katsu Exp $
  *)
 structure ModuleCompileCore  = 
 struct
 local
+  structure CT = ConstantTerm
   structure T  = Types
   structure P = Path
   structure TO = TopObject
   structure TU = TypesUtils
-  structure SE = StaticEnv
   structure FAU = FunctorApplyUtils
   structure MCFA = ModuleCompileFunctorApp
   structure PE = PathEnv
   structure MCU = ModuleCompileUtils
   structure MC = ModuleContext
+  datatype valIdent = datatype Types.valIdent
   open TypedCalc
   open TypedFlatCalc
 
@@ -32,7 +33,7 @@ in
               foldr (
                            fn (tppat,(pathVarEnv,tfppatlist)) =>
                               let
-                                val (pathVarEnv',tfppat) = tppatToTfppat context tppat
+                                val (pathVarEnv',tfppat) = tppatToTfppat SEnv.empty context tppat
                                 val newpathVarEnv = 
                                     PE.mergePathVarEnv {newPathVarEnv = pathVarEnv',
                                                         oldPathVarEnv = pathVarEnv}
@@ -47,15 +48,25 @@ in
            tfppatlist
            )
         end
-   and tppatToTfppat context tppat =
+(*
+ * orEnv is added to deal with orPattern by Ohori
+ * In the or-patter (P1|P2), the set of variables in P1 and P2 is the same
+ * and that they msut be given the same id.
+ * orEnv is used to remembver the old ids assigned in P1 when translating P2.
+ *
+ *)
+   and tppatToTfppat orEnv context tppat =
        case tppat of
          TPPATWILD args => (PE.emptyPathVarEnv,TFPPATWILD args)
        | TPPATVAR (varPathInfo as {name,ty,...},loc) =>
          let
-           val freshId = SE.newVarId()
+           val id = 
+             case SEnv.find(orEnv, name) of 
+               SOME (PE.CurItem (_,id,_,_)) => id
+             | NONE => T.newVarId()
            val pathVarEnv = 
-	       SEnv.singleton(name, PE.CurItem ((P.NilPath,name), freshId, ty, loc))
-           val varIdInfo = {id = freshId, displayName = name, ty = ty}
+	       SEnv.singleton(name, PE.CurItem ((P.NilPath,name), id, ty, loc))
+           val varIdInfo = {id = id, displayName = name, ty = ty}
          in 
            (pathVarEnv,TFPPATVAR(varIdInfo, loc))
          end
@@ -79,7 +90,7 @@ in
                  NONE => (PE.emptyPathVarEnv,NONE)
                | SOME(tppat) =>
                  let
-                   val (pathVarEnv',tfppat) = tppatToTfppat context tppat
+                   val (pathVarEnv',tfppat) = tppatToTfppat orEnv context tppat
                  in 
                    (pathVarEnv',SOME(tfppat))
                  end
@@ -95,7 +106,7 @@ in
               SEnv.foldri (
                            fn (label,tppat,(pathVarEnv,tppatfields)) =>
                               let
-                                val (pathVarEnv',tfppat) = tppatToTfppat context tppat
+                                val (pathVarEnv',tfppat) = tppatToTfppat orEnv context tppat
                                 val newpathVarEnv = 
                                     PE.mergePathVarEnv {newPathVarEnv = pathVarEnv',
                                                         oldPathVarEnv = pathVarEnv}
@@ -114,12 +125,23 @@ in
         end
       | TPPATLAYERED {varPat=tppat1, asPat=tppat2, loc=loc} =>
         let
-          val (pathVarEnv1,tfppat1) = tppatToTfppat context tppat1
-          val (pathVarEnv2,tfppat2) = tppatToTfppat context tppat2
+          val (pathVarEnv1,tfppat1) = tppatToTfppat orEnv context tppat1
+          val (pathVarEnv2,tfppat2) = tppatToTfppat orEnv  context tppat2
         in
           (PE.mergePathVarEnv{newPathVarEnv = pathVarEnv1,
                               oldPathVarEnv = pathVarEnv2},
            TFPPATLAYERED{varPat=tfppat1, asPat=tfppat2, loc=loc})
+        end
+      | TPPATORPAT (tppat1, tppat2, loc) => 
+        let
+          val (pathVarEnv1,tfppat1) = tppatToTfppat orEnv context tppat1
+          val (pathVarEnv2,tfppat2) = tppatToTfppat (PE.mergePathVarEnv {newPathVarEnv = pathVarEnv1,
+                                                                         oldPathVarEnv = orEnv})  
+                                      context tppat2
+        in
+          (pathVarEnv1,
+           TFPPATORPAT (tfppat1, tfppat2, loc)
+           )
         end
 
    fun tpexpToTfpexpList context tpexpList =
@@ -128,21 +150,42 @@ in
    and tpexpToTfpexp context (tpexp : tpexp) =
        case tpexp of
          TPFOREIGNAPPLY {funExp=tpexp1, 
+                         funTy=funTy,
                          instTyList=tyList, 
-                         argExp=tpexp2, 
-                         argTyList=argTys, 
+                         argExpList=tpexpList2, 
+                         argTyList=argTys,
+                         convention,
                          loc=loc} =>
          let
            val tfpexp1 = tpexpToTfpexp context tpexp1  
-           val tfpexp2 = tpexpToTfpexp context tpexp2
+           val tfpexpList2 = tpexpToTfpexpList context tpexpList2
          in 
            TFPFOREIGNAPPLY {funExp=tfpexp1, 
+                            funTy=funTy,
                             instTyList=tyList, 
-                            argExp=tfpexp2, 
+                            argExpList=tfpexpList2, 
                             argTyList=argTys,
+                            convention=convention,
                             loc=loc}
          end
-       | TPCONSTANT (constant, loc) => TFPCONSTANT(constant,loc)
+       | TPEXPORTCALLBACK {funExp=tpexp1,
+                           instTyList=tyList,
+                           argTyList=argTyList,
+                           resultTy=resultTy,
+                           loc=loc} =>
+         let
+           val tfpexp1 = tpexpToTfpexp context tpexp1  
+         in 
+           TFPEXPORTCALLBACK {funExp=tfpexp1,
+                              instTyList=tyList,
+                              argTyList=argTyList,
+                              resultTy=resultTy,
+                              loc=loc}
+         end
+       | TPSIZEOF (ty, loc) =>
+         TFPSIZEOF (ty, loc)
+       | TPCONSTANT (constant, ty, loc) =>
+         TFPCONSTANT (CT.castConst (constant, ty), loc)
        | TPVAR ({name = name, strpath = strpath, ty = ty}, loc) =>
          let 
            val displayName = PE.pathVarToString(strpath, name)
@@ -248,7 +291,7 @@ in
              | tpbindsToTfpbinds context (tpbind::rem) =
                let
                  val (varPathInfo as {name,strpath,ty},tpexp) = tpbind
-                 val id = SE.newVarId()
+                 val id = T.newVarId()
                  val varIdInfo = {
                                      id = id, 
                                      displayName = name, 
@@ -324,7 +367,7 @@ in
                   handler=tpexp2, 
                   loc} =>
         let
-          val id = SE.newVarId()
+          val id = T.newVarId()
           val varIdInfo = {id = id, displayName = name, ty = ty}
           val tfpexp1 = tpexpToTfpexp context tpexp1
           val pathEnv1 = 
@@ -371,7 +414,7 @@ in
         let
           val varIdInfoList = 
               map (fn {name, strpath, ty} => 
-                      {id = SE.newVarId(),
+                      {id = T.newVarId(),
                        displayName = name, 
                        ty = ty}
                       )
@@ -401,7 +444,7 @@ in
         let
           val varIdInfoList = 
               map (fn {name, strpath, ty} => 
-                      {id = SE.newVarId(),
+                      {id = T.newVarId(),
                        displayName = name, 
                        ty = ty}
                       )
@@ -444,18 +487,6 @@ in
         in 
           TFPSEQ {expList = tfpexps, expTyList= tys, loc=loc}
         end
-      | TPFFIVAL {funExp, libExp, argTyList=argTys, resultTy, funTy, loc}  =>
-        let
-          val newFunExp = tpexpToTfpexp context funExp
-          val newLibExp = tpexpToTfpexp context libExp
-        in
-          TFPFFIVAL {funExp=newFunExp, 
-                     libExp=newLibExp, 
-                     argTyList=argTys, 
-                     resultTy=resultTy, 
-                     funTy=funTy, 
-                     loc=loc}
-        end
       | TPCAST (tpexp, ty, loc)  => TFPCAST(tpexpToTfpexp context tpexp,ty,loc)
       | TPERROR => raise Control.Bug "TPERROR passed to module compiler"
                 
@@ -471,9 +502,9 @@ in
                      case valId of
                        T.VALIDVAR {name,ty} => 
                        let
-                         val id = SE.newVarId()
+                         val id = T.newVarId()
                          val newVar = 
-                             VALDECIDENT {id = id, 
+                             VALIDENT {id = id, 
                                           displayName = PE.pathVarToString(#prefix context,name),
                                           ty = ty
                                           }
@@ -485,7 +516,7 @@ in
                           newVar
                           )
                        end
-                     | T.VALIDWILD ty => (PE.emptyPathEnv, VALDECIDENTWILD ty)
+                     | T.VALIDWILD ty => (PE.emptyPathEnv, VALIDENTWILD ty)
                  val newtfpexp = tpexpToTfpexp context tpexp
                  val dec1 = (newValId,newtfpexp)
                  val (pathEnv2, decs2) = compiledecs context rem 
@@ -511,7 +542,7 @@ in
                                     longNamePathVarEnv,
                                     name, 
                                     PE.CurItem ((#prefix context,name), 
-                                                SE.newVarId(),
+                                                T.newVarId(),
                                                 ty, 
                                                 loc)
                                     )
@@ -560,7 +591,7 @@ in
                                     longNamePathVarEnv,
                                     name, 
                                     PE.CurItem ((#prefix context,name), 
-                                                SE.newVarId(),
+                                                T.newVarId(),
                                                 ty,
                                                 loc)
                                     )
@@ -610,23 +641,23 @@ in
            [TFPLOCALDEC(tfplocalDecs, tfpdecs, loc)]) 
         end
       | TPOPEN (strPathInfos,loc) =>
-         let
-           val newPathEnv = 
-               foldl (fn (strPathInfo,Env) => 
-                         let
-                           val {name,strpath,id,...} = strPathInfo
-                           val path = P.appendPath(strpath, id, name)
-                           val Env1 = MC.lookupStructureInContext (context,path)
-                         in
-                           case Env1 of
-                             SOME env => PE.mergePathEnv {newPathEnv=env,oldPathEnv=Env}
-                           | NONE => raise Control.Bug ("undefined:"^P.pathToString(path))
-                         end)
-                     PE.emptyPathEnv
-                     strPathInfos
-         in
-           (newPathEnv,nil)
-         end
+        let
+            val newPathEnv = 
+                foldl (fn (strPathInfo,Env) => 
+                          let
+                              val {name,strpath,id,...} = strPathInfo
+                              val path = P.appendPath(strpath, id, name)
+                              val Env1 = MC.lookupStructureInContext (context,path)
+                          in
+                              case Env1 of
+                                  SOME env => PE.mergePathEnv {newPathEnv=env,oldPathEnv=Env}
+                                | NONE => raise Control.Bug ("undefined:"^P.pathToString(path))
+                          end)
+                      PE.emptyPathEnv
+                      strPathInfos
+        in
+            (newPathEnv,nil)
+        end
       | TPDATADEC (tyCons,loc) => (PE.emptyPathEnv,nil)
       | TPABSDEC ({absTyCons, rawTyCons,  decls}, loc) => 
         tpdecsToTfpdecs context decls

@@ -1,0 +1,34 @@
+ann 
+  "nonexhaustiveMatch ignore"
+in
+        ../../../preludes.mlb
+
+        ../../name/main/module.mlb
+        ../../env/main/module.mlb
+        ../../util/main/module.mlb
+        ../../control/main/module.mlb
+        ../../systemdef/main/module.mlb
+        ../../../instructions/compiler/main/module.mlb
+        ../../../primitives/compiler/main/module.mlb
+        ../../absyn/main/module.mlb
+        ../../symbolicinstructions/main/module.mlb
+
+        AssembleError.ppg.sml
+        LABEL_MAP.sig
+        LabelMap.sml
+        SLOT_MAP.sig
+        SlotMap.sml
+        AllocationInfo.sml
+        STACK_FRAME.sig
+        StackFrame.sml
+        SLOT_ALLOCATOR.sig
+        SlotAllocator.sml
+        INSTRUCTION_SIZE_CALCULATOR.sig
+        InstructionSizeCalculator.sml
+        SOURCE_LOCATION_MAP.sig
+        SourceLocationMap.sml
+        SOURCE_NAME_SLOT_MAP.sig
+        SourceNameSlotMap.sml
+        ASSEMBLER.sig
+        Assembler.sml
+end

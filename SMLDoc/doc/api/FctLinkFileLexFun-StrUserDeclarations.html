@@ -1,0 +1,134 @@
+<HTML>
+<HEAD>
+<TITLE>LinkFileLexFun.UserDeclarations</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+<HR>
+<H2>LinkFileLexFun.UserDeclarations</H2>
+<DL>
+<DT> <B>Enclosing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="FctLinkFileLexFun.html">LinkFileLexFun</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html">UserDeclarations</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typesvalue">svalue</A>&nbsp;=&nbsp;<A HREF="SigLinkFile_TOKENS.html#Typesvalue">Tokens.svalue</A><br>
+&nbsp;&nbsp;type&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typetoken">token</A>&nbsp;=&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="SigLinkFile_TOKENS.html#Typetoken">Tokens.token</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typepos">pos</A>&nbsp;=&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typelexresult">lexresult</A>&nbsp;=&nbsp;(<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typesvalue">svalue</A>,&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typepos">pos</A>)&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typetoken">token</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typearg">arg</A>&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comLevel&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;commonOperations&nbsp;:&nbsp;<A HREF="StrParserUtil-StrPositionMap.html#Typeoperations">ParserUtil.PositionMap.operations</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stringStart&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Valeof">eof</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Valinc">inc</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Valdec">dec</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typesvalue"><!-- --></A>
+<H3>svalue</H3>
+<P>
+<CODE>type&nbsp;svalue&nbsp;=&nbsp;<A HREF="SigLinkFile_TOKENS.html#Typesvalue">Tokens.svalue</A></CODE>
+
+<HR>
+<A NAME="Typetoken"><!-- --></A>
+<H3>token</H3>
+<P>
+<CODE>type&nbsp;('a,&nbsp;'b)&nbsp;token&nbsp;=&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="SigLinkFile_TOKENS.html#Typetoken">Tokens.token</A></CODE>
+
+<HR>
+<A NAME="Typepos"><!-- --></A>
+<H3>pos</H3>
+<P>
+<CODE>type&nbsp;pos&nbsp;=&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A></CODE>
+
+<HR>
+<A NAME="Typelexresult"><!-- --></A>
+<H3>lexresult</H3>
+<P>
+<CODE>type&nbsp;lexresult&nbsp;=&nbsp;(<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typesvalue">svalue</A>,&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typepos">pos</A>)&nbsp;<A HREF="FctLinkFileLexFun-StrUserDeclarations.html#Typetoken">token</A></CODE>
+
+<HR>
+<A NAME="Typearg"><!-- --></A>
+<H3>arg</H3>
+<P>
+<CODE>type&nbsp;arg&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comLevel&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;commonOperations&nbsp;:&nbsp;<A HREF="StrParserUtil-StrPositionMap.html#Typeoperations">ParserUtil.PositionMap.operations</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">unit</A>),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stringStart&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valeof"><!-- --></A>
+<H3>eof</H3>
+<P>
+<CODE>val&nbsp;eof</CODE>
+
+<HR>
+<A NAME="Valinc"><!-- --></A>
+<H3>inc</H3>
+<P>
+<CODE>val&nbsp;inc</CODE>
+
+<HR>
+<A NAME="Valdec"><!-- --></A>
+<H3>dec</H3>
+<P>
+<CODE>val&nbsp;dec</CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+</BODY></HTML>

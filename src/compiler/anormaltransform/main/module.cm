@@ -1,6 +1,17 @@
 Group is
+#if defined(NEW_CM)
+        $/basis_compat.cm
+#endif
+#if defined(NEW_CM)
+	$/smlformatlib.cm
+#else
 	../../../smlformatlib.cm
+#endif
+#if defined(NEW_CM)
+	$/smlnj-lib.cm
+#else
 	smlnj-lib.cm
+#endif
 
         ../../control/sources.cm
         ../../types/sources.cm
@@ -9,6 +20,7 @@ Group is
 	../../systemdef/sources.cm
 	../../buccalc/sources.cm
 	../../anormal/sources.cm
+        ../../../primitives/compiler/sources.cm
 
         ANORMAL_TRANSLATOR.sig
         ANormalTranslator.sml

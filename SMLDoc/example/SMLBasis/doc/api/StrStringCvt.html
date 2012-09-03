@@ -1,0 +1,264 @@
+<HTML>
+<HEAD>
+<TITLE>StringCvt</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<H2>StringCvt</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrStringCvt.html">StringCvt</A>&nbsp;:&nbsp;<A HREF="SigSTRING_CVT.html">STRING_CVT</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;('a,&nbsp;'b)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;=&nbsp;'b&nbsp;->&nbsp;('a&nbsp;*&nbsp;'b)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrStringCvt.html#Typecs">cs</A>&nbsp;=&nbsp;<A HREF=".//StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrStringCvt.html#Typeradix">radix</A>&nbsp;=&nbsp;<A HREF="StrStringCvt.html#ConstrBIN">BIN</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrOCT">OCT</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrDEC">DEC</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrHEX">HEX</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="StrStringCvt.html#Typerealfmt">realfmt</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrStringCvt.html#ConstrEXACT">EXACT</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrSCI">SCI</A>&nbsp;of&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrFIX">FIX</A>&nbsp;of&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrGEN">GEN</A>&nbsp;of&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#Val+">+</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#Val-">-</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#Val<"><</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#Val>">></A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#ValpadLeft">padLeft</A>&nbsp;:&nbsp;<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#ValpadRight">padRight</A>&nbsp;:&nbsp;<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#ValrevImplode">revImplode</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#Valsplitl">splitl</A>&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;'a<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#Valtakel">takel</A>&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#Valdropl">dropl</A>&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;'a&nbsp;->&nbsp;'a<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#ValskipWS">skipWS</A>&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;'a&nbsp;->&nbsp;'a<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrStringCvt.html#ValscanString">scanString</A>&nbsp;:&nbsp;((<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;<A HREF="StrStringCvt.html#Typecs">cs</A>)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;('a,&nbsp;<A HREF="StrStringCvt.html#Typecs">cs</A>)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>)&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;'a&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A><br>
+end</CODE>
+<P>
+
+
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typereader"><!-- --></A>
+<H3>reader</H3>
+<P>
+<CODE>type&nbsp;('a,&nbsp;'b)&nbsp;reader&nbsp;=&nbsp;'b&nbsp;->&nbsp;('a&nbsp;*&nbsp;'b)&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<HR>
+<A NAME="Typecs"><!-- --></A>
+<H3>cs</H3>
+<P>
+<CODE>type&nbsp;cs&nbsp;=&nbsp;<A HREF=".//StrInt.html#Typeint">int</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeradix"><!-- --></A>
+<H3>radix</H3>
+<P>
+<CODE>datatype&nbsp;radix&nbsp;=&nbsp;<A HREF="StrStringCvt.html#ConstrBIN">BIN</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrOCT">OCT</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrDEC">DEC</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrHEX">HEX</A></CODE>
+
+<HR>
+<A NAME="Typerealfmt"><!-- --></A>
+<H3>realfmt</H3>
+<P>
+<CODE>datatype&nbsp;realfmt&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrStringCvt.html#ConstrEXACT">EXACT</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrSCI">SCI</A>&nbsp;of&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrFIX">FIX</A>&nbsp;of&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;|&nbsp;<A HREF="StrStringCvt.html#ConstrGEN">GEN</A>&nbsp;of&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrBIN"><!-- --></A>
+<H3>BIN</H3>
+<P>
+<CODE>constructor&nbsp;BIN&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">radix</A></CODE>
+
+<HR>
+<A NAME="ConstrOCT"><!-- --></A>
+<H3>OCT</H3>
+<P>
+<CODE>constructor&nbsp;OCT&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">radix</A></CODE>
+
+<HR>
+<A NAME="ConstrDEC"><!-- --></A>
+<H3>DEC</H3>
+<P>
+<CODE>constructor&nbsp;DEC&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">radix</A></CODE>
+
+<HR>
+<A NAME="ConstrHEX"><!-- --></A>
+<H3>HEX</H3>
+<P>
+<CODE>constructor&nbsp;HEX&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typeradix">radix</A></CODE>
+
+<HR>
+<A NAME="ConstrEXACT"><!-- --></A>
+<H3>EXACT</H3>
+<P>
+<CODE>constructor&nbsp;EXACT&nbsp;:&nbsp;<A HREF="StrStringCvt.html#Typerealfmt">realfmt</A></CODE>
+
+<HR>
+<A NAME="ConstrSCI"><!-- --></A>
+<H3>SCI</H3>
+<P>
+<CODE>constructor&nbsp;SCI&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="StrStringCvt.html#Typerealfmt">realfmt</A></CODE>
+
+<HR>
+<A NAME="ConstrFIX"><!-- --></A>
+<H3>FIX</H3>
+<P>
+<CODE>constructor&nbsp;FIX&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="StrStringCvt.html#Typerealfmt">realfmt</A></CODE>
+
+<HR>
+<A NAME="ConstrGEN"><!-- --></A>
+<H3>GEN</H3>
+<P>
+<CODE>constructor&nbsp;GEN&nbsp;:&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A>&nbsp;->&nbsp;<A HREF="StrStringCvt.html#Typerealfmt">realfmt</A></CODE>
+
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Val+"><!-- --></A>
+<H3>+</H3>
+<P>
+<CODE>val&nbsp;+</CODE>
+
+<HR>
+<A NAME="Val-"><!-- --></A>
+<H3>-</H3>
+<P>
+<CODE>val&nbsp;-</CODE>
+
+<HR>
+<A NAME="Val<"><!-- --></A>
+<H3><</H3>
+<P>
+<CODE>val&nbsp;<</CODE>
+
+<HR>
+<A NAME="Val>"><!-- --></A>
+<H3>></H3>
+<P>
+<CODE>val&nbsp;></CODE>
+
+<HR>
+<A NAME="ValpadLeft"><!-- --></A>
+<H3>padLeft</H3>
+<P>
+<CODE>val&nbsp;padLeft&nbsp;:&nbsp;<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValpadRight"><!-- --></A>
+<H3>padRight</H3>
+<P>
+<CODE>val&nbsp;padRight&nbsp;:&nbsp;<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;<A HREF=".//StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="ValrevImplode"><!-- --></A>
+<H3>revImplode</H3>
+<P>
+<CODE>val&nbsp;revImplode</CODE>
+
+<HR>
+<A NAME="Valsplitl"><!-- --></A>
+<H3>splitl</H3>
+<P>
+<CODE>val&nbsp;splitl&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;*&nbsp;'a</CODE>
+
+<HR>
+<A NAME="Valtakel"><!-- --></A>
+<H3>takel</H3>
+<P>
+<CODE>val&nbsp;takel&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;'a&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A></CODE>
+
+<HR>
+<A NAME="Valdropl"><!-- --></A>
+<H3>dropl</H3>
+<P>
+<CODE>val&nbsp;dropl&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>&nbsp;->&nbsp;bool)&nbsp;->&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;'a&nbsp;->&nbsp;'a</CODE>
+
+<HR>
+<A NAME="ValskipWS"><!-- --></A>
+<H3>skipWS</H3>
+<P>
+<CODE>val&nbsp;skipWS&nbsp;:&nbsp;(<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;'a&nbsp;->&nbsp;'a</CODE>
+
+<HR>
+<A NAME="ValscanString"><!-- --></A>
+<H3>scanString</H3>
+<P>
+<CODE>val&nbsp;scanString&nbsp;:&nbsp;((<A HREF=".//StrChar.html#Typechar">char</A>,&nbsp;<A HREF="StrStringCvt.html#Typecs">cs</A>)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>&nbsp;->&nbsp;('a,&nbsp;<A HREF="StrStringCvt.html#Typecs">cs</A>)&nbsp;<A HREF="StrStringCvt.html#Typereader">reader</A>)&nbsp;->&nbsp;<A HREF=".//StrString.html#Typestring">string</A>&nbsp;->&nbsp;'a&nbsp;<A HREF=".//StrOption.html#Typeoption">option</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-A.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em><b>Standard ML Basis Library</b></em>
+</TD></TR></TABLE>
+<HR>
+<p>
+This document may be distributed freely over the internet as long as the
+copyright notice and license terms below are prominently displayed within
+every machine-readable copy.  
+<p>
+<table ALIGNCENTER WIDTH"80%" BORDER"2" CELLPADDING"5">
+<tr>
+<td>
+<p>
+Copyright &copy; 2003 AT&amp;T and Lucent Technologies.
+All rights reserved.
+<p>
+Permission is granted for internet users to make one paper copy for their
+own personal use.  Further hardcopy reproduction is strictly prohibited. 
+Permission to distribute the HTML document electronically on any medium
+other than the internet must be requested from the copyright holders by
+contacting the editors.
+Printed versions of the SML Basis Manual are available from Cambridge
+University Press.
+To order, please visit
+<a HREF"http://www.cup.org">www.cup.org</a> (North America) or
+<a HREF"http://www.cup.cam.ac.uk">www.cup.cam.ac.uk</a> (outside North America).<br>
+</table></p>
+</BODY></HTML>

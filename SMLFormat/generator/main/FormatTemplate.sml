@@ -2,7 +2,7 @@
  * definition of format template
  *
  * @author YAMATODANI Kiyoshi
- * @version $Id: FormatTemplate.sml,v 1.4 2004/10/20 02:50:56 kiyoshiy Exp $
+ * @version $Id: FormatTemplate.sml,v 1.5 2006/12/07 13:43:12 kiyoshiy Exp $
  *)
 structure FormatTemplate =
 struct
@@ -80,6 +80,7 @@ struct
   datatype typepat =
            (** id *) VarTyPat of id
          | (** id with custom formatter specified *) TypedVarTyPat of id * id
+         | (** dont-care pattern *) WildTyPat
          | (** record *)
            RecordTyPat of
            (string * typepat) list * (** if flexible, true *) bool

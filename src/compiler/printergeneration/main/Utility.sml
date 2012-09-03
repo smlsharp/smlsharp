@@ -4,7 +4,7 @@
  * specific modules.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Utility.sml,v 1.14 2006/02/28 16:11:03 kiyoshiy Exp $
+ * @version $Id: Utility.sml,v 1.22 2007/01/26 09:33:15 kiyoshiy Exp $
  *)
 structure Utility = 
 struct
@@ -18,7 +18,6 @@ struct
   structure P = Path
   structure PE = PatternCalc
   structure PP = SMLFormat
-  structure SE = StaticEnv
   structure TC = TypeContext
   structure TP = TypedCalc
   structure TPU = TypedCalcUtils
@@ -27,13 +26,13 @@ struct
 
   (***************************************************************************)
 
-  val spaceIndicator = FE.Indicator{space = true, newline = NONE}
-  val ns_1_Indicator =
-      FE.Indicator
-      {space = false, newline = SOME{priority = FE.Preferred 1}}
+  val s_Indicator = FE.Indicator{space = true, newline = NONE}
   val s_1_Indicator =
       FE.Indicator
       {space = true, newline = SOME{priority = FE.Preferred 1}}
+  val ns_1_Indicator =
+      FE.Indicator
+      {space = false, newline = SOME{priority = FE.Preferred 1}}
   val s_2_Indicator =
       FE.Indicator
       {space = true, newline = SOME{priority = FE.Preferred 2}}
@@ -66,6 +65,39 @@ struct
             (fn ((key, value), map) => SEnv.insert (map, key, value))
             SEnv.empty
             (ListPair.zip (keys, values))
+      end
+
+  fun listToTupleExp (valueTyList : (TP.tpexp * TY.ty) list) loc =
+      let
+        val fields = listToTupleSEnv (map #1 valueTyList)
+        val ty = TY.RECORDty(listToTupleSEnv (map #2 valueTyList))
+      in TP.TPRECORD{fields = fields, recordTy = ty, loc = loc}
+      end
+
+  fun listToRecordTy labelTyList =
+      let
+        val tyEnv =
+            foldr
+                (fn ((label, ty), tyEnv) => SEnv.insert (tyEnv, label, ty))
+                SEnv.empty
+                labelTyList
+      in
+        TY.RECORDty tyEnv
+      end
+
+  fun listToRecordExp labelValueTyList loc =
+      let
+        val (valueEnv, tyEnv) =
+            foldr
+                (fn ((label, value, ty), (valueEnv, tyEnv)) =>
+                    (
+                      SEnv.insert (valueEnv, label, value),
+                      SEnv.insert (tyEnv, label, ty)
+                    ))
+                (SEnv.empty, SEnv.empty)
+                labelValueTyList
+      in
+        TP.TPRECORD{fields = valueEnv, recordTy = TY.RECORDty tyEnv, loc = loc}
       end
 
   (**
@@ -161,7 +193,7 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
 
   (** true if two tyCons are the same. *)
   fun isEqualTyCon(left : TY.tyCon, right : TY.tyCon) =
-      #id left = #id right andalso #name left = #name right
+      ID.eq(#id left, #id right) andalso #name left = #name right
 
   fun tySpecToTyCon 
           ({name, strpath, id, tyvars, eqKind, boxedKind, ...}
@@ -215,7 +247,11 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
   fun generalize ty =
       let
         val {boundEnv, removedTyIds} =
-            TU.generalizer (ty, SEnv.empty, SEnv.empty)
+            (*
+             Ohori:
+               TU.generalizer (ty, SEnv.empty, SEnv.empty)
+             *)
+               TU.generalizer (ty, TY.toplevelDepth)
       in
         if 0 = IEnv.numItems boundEnv
         then ty
@@ -262,7 +298,7 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
             | _ => false)
      in isNumeric 1 fields end
 
-  val formatterNamePrefix = "format_"
+  val formatterNamePrefix = "_format_"
 
   (** add a tyCon to a context. *)
   fun bindTyCon (tyCon : TY.tyCon, newContext) =
@@ -290,7 +326,7 @@ print ("      strpath = " ^ (P.pathToString relativePath) ^ "\n");
         orelse
 *)
         (case TC.lookupLongTyCon (context, strpath, name) of
-           (_, SOME (TY.TYCON tyCon)) => id <> (#id tyCon)
+           (_, SOME (TY.TYCON tyCon)) => not (ID.eq(id, (#id tyCon)))
 (*
         | (_, SOME (TY.TYSPEC tySpec)) => id <> (#id tySpec)
 *)

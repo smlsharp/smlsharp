@@ -44,7 +44,7 @@ sig<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRETTYPRINTER.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigPRETTYPRINTER.html#ConstrEndOfIndent">EndOfIndent</A><br>
 &nbsp;&nbsp;exception&nbsp;<A HREF="SigPRETTYPRINTER.html#ExceptionFail">Fail</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigPRETTYPRINTER.html#Valformat">format</A>&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;->&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigPRETTYPRINTER.html#Valformat">format</A>&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 end</CODE>
 <P>
 
@@ -63,7 +63,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: SigPRETTYPRINTER.html,v 1.3 2006/02/23 10:10:21 kiyoshiy Exp $
+$Id: SigPRETTYPRINTER.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
  
 
 </DL>
@@ -274,7 +274,7 @@ the end of indent scope
 <H3>format</H3>
 <P>
 <CODE>fun&nbsp;format&nbsp;parameter&nbsp;symbol<br>
-&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;->&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigPRETTYPRINTER.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 <DL>
 <DD>
   translates the symbol into a text representation which fits within the

@@ -17,20 +17,20 @@ doxygen:
 	@if test 'x$(DOXYGEN)' = 'x'; then \
 	  echo '*** doxygen not found.'; exit 1; \
 	fi
-	-rm -rf $(srcdir)/runtime
-	mkdir $(srcdir)/runtime
-	mkdir $(srcdir)/runtime/IML-runtime
-	cd $(srcdir) && $(DOXYGEN) doxygen.cfg
-	mkdir $(srcdir)/runtime/test
-	cd $(srcdir) && $(DOXYGEN) doxygen_test.cfg
+	-rm -rf runtime
+	mkdir runtime
+	mkdir runtime/IML-runtime
+	DESTDIR=`pwd`/; export DESTDIR; cd $(srcdir) && $(DOXYGEN) doxygen.cfg
+#	mkdir $(srcdir)/runtime/test
+#	cd $(srcdir) && $(DOXYGEN) doxygen_test.cfg
 
 smldoc:
 	@if test 'x$(SMLDOC)' = 'x'; then \
 	  echo '*** smldoc not found.'; exit 1; \
 	fi
-	-rm -rf $(srcdir)/compiler
-	mkdir $(srcdir)/compiler
-	cd $(srcdir) && $(SMLDOC) -a smldoc.cfg
+	-rm -rf compiler
+	mkdir compiler
+	$(SMLDOC) -a $(srcdir)/smldoc.cfg
 
 clean:
 	-rm -rf $(srcdir)/runtime $(srcdir)/compiler

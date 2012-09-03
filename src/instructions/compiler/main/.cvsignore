@@ -1,4 +1,5 @@
 CM
+.cm
 Instructions.sml
 InstructionSerializer.sml
 INSTRUCTION_SERIALIZER.sig
