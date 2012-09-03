@@ -1,0 +1,7 @@
+Group
+  signature SMLUNIT
+  structure SMLUnit
+  signature ASSERT
+  signature TEST
+is
+  main/sources.cm

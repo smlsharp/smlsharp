@@ -1,0 +1,7 @@
+Group is
+        ../main/sources.cm
+        TestAssert.sml
+        TestTest.sml
+        TestTextUITestRunner.sml
+        TestMain.sml
+

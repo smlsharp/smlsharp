@@ -1,0 +1,650 @@
+(**
+ * Static Analysis
+ * @copyright (c) 2006, Tohoku University.
+ * @author Huu-Duc Nguyen
+ * @version $$
+ *)
+structure StaticAnalysis : STATICANALYSIS = struct
+
+  structure T = Types
+  structure TU = TypesUtils
+  structure AT = AnnotatedTypes
+  structure ATU = AnnotatedTypesUtils
+  structure TL = TypedLambda
+  structure CTX = SAContext
+  structure CST = SAConstraint
+  structure CT = ConstantTerm
+  open AnnotatedCalc
+
+  fun rootExp (TL.TLCAST {exp,...}) = rootExp exp
+    | rootExp exp = exp
+
+  fun inferExp context tlexp =
+      case tlexp of
+        TL.TLFOREIGNAPPLY {funExp, funTy, argExpList, convention, loc} =>
+        let
+          val (newFunExp, _) = inferExp context funExp
+          val (newArgExpList, newArgTyList) = inferExpList context argExpList
+          (* arguments/return values, which are passed and received from a foreign function
+           * should have global type, e.g. record should  boxed and aligned
+           *)
+          val _ = List.app CST.globalType newArgTyList
+          val bodyTy =
+              case funTy of
+                T.FUNMty (argTyList, bodyTy) => CST.convertGlobalType bodyTy
+              | _ => raise Control.Bug "invalid foreign function type"
+          val newFunTy = AT.FUNMty 
+                             {
+                              argTyList = newArgTyList, 
+                              bodyTy = bodyTy, 
+                              annotation = ref {labels = AT.LE_GENERIC, boxed = true}
+                             }
+        in
+          (
+           ACFOREIGNAPPLY
+               {
+                funExp = newFunExp,
+                funTy = newFunTy,
+                argExpList  = newArgExpList,
+                convention = convention,
+                loc = loc
+               },
+           bodyTy
+          )
+        end
+
+      | TL.TLEXPORTCALLBACK {funExp, funTy, loc} =>
+        let
+          val (newFunExp, newFunTy) = inferExp context funExp
+          (* export function should have global type*)
+          val _ = CST.globalType newFunTy
+        in
+          (
+           ACEXPORTCALLBACK
+               {
+                funExp = newFunExp,
+                funTy = newFunTy,
+                loc = loc
+               },
+           AT.foreignfunty
+          )
+        end
+
+      | TL.TLSIZEOF {ty, loc} =>
+        let
+          (* SIZEOF may appear only as an argument of FOREIGNAPPLY.
+           * Since ty have a type of an exported value, ty should have
+           * global type. *)
+          val newTy = CST.convertGlobalType ty
+        in
+          (ACSIZEOF {ty = newTy, loc = loc}, AT.intty)
+        end
+
+      | TL.TLCONSTANT (v as {value, loc}) => (ACCONSTANT v, ATU.constDefaultTy value)
+
+      | TL.TLEXCEPTIONTAG (v as {tagValue, loc}) => (ACEXCEPTIONTAG v, AT.intty)
+
+      | TL.TLVAR {varInfo, loc} => 
+        let
+          val newVarInfo = CTX.lookupVariable context (#id varInfo)
+        in
+          (ACVAR{varInfo = newVarInfo, loc = loc}, #ty newVarInfo)
+        end
+        
+      | TL.TLGETGLOBAL {arrayIndex, valueIndex, valueTy, loc} =>
+        let
+          val newValueTy = CST.convertGlobalType valueTy
+        in
+          (
+           ACGETGLOBAL
+               {
+                arrayIndex = arrayIndex,
+                valueIndex = valueIndex,
+                valueTy = newValueTy,
+                loc = loc
+               },
+           newValueTy
+          )
+        end
+
+      | TL.TLSETGLOBAL {arrayIndex, valueIndex, valueExp, valueTy, loc} =>
+        let
+          val (newValueExp, newValueTy) = inferExp context (rootExp valueExp)
+          val _ = CST.globalType newValueTy
+        in
+          (
+           ACSETGLOBAL
+               {
+                arrayIndex = arrayIndex,
+                valueIndex = valueIndex,
+                valueExp = newValueExp,
+                valueTy = newValueTy,
+                loc = loc
+               },
+           AT.unitty
+          )
+        end
+
+      | TL.TLINITARRAY {arrayIndex, size, elementTy, loc} =>
+        let
+          val newElementTy = CST.convertGlobalType elementTy
+        in
+          (
+           ACINITARRAY
+               {
+                arrayIndex = arrayIndex,
+                size = size,
+                elementTy = newElementTy,
+                loc = loc
+               },
+           AT.unitty
+          )
+        end
+
+      | TL.TLGETFIELD {arrayExp, indexExp, elementTy, loc} =>
+        let
+          val (newArrayExp, arrayTy) = inferExp context arrayExp
+          val newElementTy = ATU.arrayElementTy arrayTy 
+          val (newIndexExp, _) = inferExp context indexExp
+        in
+          (
+           ACGETFIELD
+               {
+                arrayExp = newArrayExp,
+                indexExp = newIndexExp,
+                elementTy = newElementTy,
+                loc = loc
+               },
+           newElementTy
+          )
+        end
+
+      | TL.TLSETFIELD {valueExp, arrayExp, indexExp, elementTy, loc} =>
+        let
+          val (newArrayExp, arrayTy) = inferExp context arrayExp
+          val newElementTy = ATU.arrayElementTy arrayTy
+          val (newIndexExp, _) = inferExp context indexExp
+          val (newValueExp, newValueTy) = inferExp context valueExp
+          val _ = CST.unify (newValueTy, newElementTy)
+              
+        in
+          (
+           ACSETFIELD
+               {
+                valueExp = newValueExp,
+                arrayExp = newArrayExp,
+                indexExp = newIndexExp,
+                elementTy = newElementTy,
+                loc = loc
+               },
+           AT.unitty
+          )
+        end
+
+      | TL.TLSETTAIL {consExp, newTailExp, listTy, consRecordTy, tailLabel, loc} =>
+        let
+          val (newConsExp, newConsExpTy) = inferExp context consExp
+          val _ = CST.globalType newConsExpTy
+          val (newNewTailExp, newNewTailExpTy) = inferExp context newTailExp
+          val _ = CST.globalType newNewTailExpTy
+          val newConsRecordTy = CST.convertGlobalType consRecordTy
+          val newListTy = CST.convertGlobalType listTy
+        in
+          (
+           ACSETTAIL
+               {
+                consExp = newConsExp,
+                newTailExp = newNewTailExp,
+                listTy = newListTy,
+                consRecordTy = newConsRecordTy,
+                tailLabel = tailLabel,
+                loc = loc
+               },
+           AT.unitty
+          )
+        end
+
+      | TL.TLARRAY {sizeExp, initialValue, elementTy, loc} =>
+        let
+          val (newSizeExp, _) = inferExp context sizeExp
+          val (newInitialValue, newInitialValueTy) = inferExp context initialValue
+          (* array's elements should be single value, their outermost type constructer
+           * should be boxed (if this is record or function)
+           *)
+          val _ = CST.singleValueType newInitialValueTy
+          val newArrayTy = AT.arrayty newInitialValueTy
+        in
+          (
+           ACARRAY
+               {
+                sizeExp = newSizeExp,
+                initialValue = newInitialValue,
+                elementTy = newInitialValueTy,
+                loc = loc
+               },
+           newArrayTy
+          )
+        end
+
+      | TL.TLPRIMAPPLY {primInfo as {name, ty}, argExpList, loc} =>
+        let
+          val (newArgExpList, newArgTyList) = inferExpList context argExpList
+          val _ = List.app CST.globalType newArgTyList
+          val resultTy =
+              case ty of 
+                T.FUNMty (_, bodyTy) => CST.convertGlobalType bodyTy
+              | _ => raise Control.Bug "function type is expected"
+          val newPrimInfo =
+              {
+               name = name, 
+               ty = AT.FUNMty
+                        {
+                         argTyList = newArgTyList, 
+                         bodyTy = resultTy, 
+                         annotation = ref {labels = AT.LE_GENERIC, boxed = true}
+                        }
+              }
+        in
+          (
+           ACPRIMAPPLY
+               {
+                primInfo = newPrimInfo,
+                argExpList = newArgExpList,
+                loc = loc
+               },
+           resultTy
+          )
+        end
+
+      | TL.TLAPPM {funExp, funTy, argExpList, loc} =>
+        let
+          val (newFunExp, newFunTy) = inferExp context funExp
+          val (newArgExpList, newArgTyList) = inferExpList context argExpList
+          val {argTyList, bodyTy, ...} = ATU.expandFunTy newFunTy
+          val _ = (ListPair.app CST.unify (argTyList, newArgTyList) )
+                  handle exn =>
+                         let
+                           val s = Control.prettyPrint (TL.format_tlexp [] tlexp)
+                         in
+                           print s; raise exn
+                         end
+        in
+          (
+           ACAPPM
+               {
+                funExp = newFunExp,
+                funTy = newFunTy,
+                argExpList = newArgExpList,
+                loc = loc
+               },
+           bodyTy
+          )
+        end
+
+      | TL.TLLET {localDeclList, mainExp, loc} =>
+        let
+          val (newLocalDeclList, newContext) = inferDeclList context localDeclList
+          val (newMainExp, newMainExpTy) = inferExp newContext mainExp
+        in
+          (
+           ACLET
+               {
+                localDeclList = newLocalDeclList,
+                mainExp = newMainExp,
+                loc = loc
+               },
+           newMainExpTy
+          )
+        end
+
+      | TL.TLRECORD {expList, recordTy, isMutable, loc} =>
+        let
+          val (newExpList, newExpTyList) = inferExpList context expList
+          val flty = case TU.derefTy recordTy of
+                       T.RECORDty flty => flty
+                     | _ => raise Control.Bug "record type is expected"
+          val newFlty =
+              ListPair.foldl
+                  (fn (l,ty,S) => SEnv.insert(S,l,ty))
+                  (SEnv.empty)
+                  (SEnv.listKeys flty, newExpTyList)
+          val annotationLabel = ATU.freshAnnotationLabel ()
+          (* local record may not need to be boxed and aligned*)
+          val annotationRef = 
+              ref 
+                  {
+                   labels = AT.LE_LABELS (ISet.singleton(annotationLabel)),
+                   boxed = false,
+                   align = false
+                  }
+          val newRecordTy = 
+              AT.RECORDty
+                  {
+                   fieldTypes = newFlty,
+                   annotation = annotationRef
+                  }
+        in
+          (
+           ACRECORD
+               {
+                expList = newExpList,
+                recordTy = newRecordTy,
+                annotation = annotationLabel,
+                loc = loc,
+                isMutable = isMutable
+               },
+           newRecordTy
+          )
+        end
+
+      | TL.TLSELECT {recordExp, label, recordTy, loc} =>
+        let
+          val (newRecordExp, newRecordTy) = inferExp context recordExp
+          val resultTy = CTX.fieldType context (newRecordTy, label)
+        in
+          (
+           ACSELECT
+               {
+                recordExp = newRecordExp,
+                label = label,
+                recordTy = newRecordTy,
+                loc = loc
+               },
+           resultTy
+          )
+        end
+
+      | TL.TLMODIFY {recordExp, recordTy, label, valueExp, loc} =>
+        let
+          val (newRecordExp, newRecordTy) = inferExp context recordExp
+          (* record expression to be updated can not be multiple values*)
+          val _ = CST.singleValueType newRecordTy
+          val (newValueExp, newValueTy) = inferExp context valueExp
+          (* updated value can not be multiple values *)
+          val _ = CST.singleValueType newValueTy
+          val newFieldTy = CTX.fieldType context (newRecordTy, label)
+          val _ = CST.unify (newValueTy, newFieldTy)
+        in
+          (
+           ACMODIFY
+               {
+                recordExp = newRecordExp,
+                recordTy = newRecordTy,
+                label = label,
+                valueExp = newValueExp,
+                valueTy = newValueTy,
+                loc = loc
+               },
+           newRecordTy
+          )
+        end
+
+      | TL.TLRAISE {argExp, resultTy, loc} =>
+        let
+          val (newArgExp, expTy) = inferExp context argExp
+          (* exception argument should have global type*)
+          val _ = CST.globalType expTy   (*???*)
+          val newResultTy = CST.convertLocalType resultTy
+        in
+          (
+           ACRAISE
+               {
+                argExp = newArgExp,
+                resultTy = newResultTy,
+                loc = loc
+               },
+           newResultTy
+          )
+        end
+
+      | TL.TLHANDLE {exp, exnVar as {id, displayName, ty}, handler, loc} =>
+        let
+          val (newExp, newExpTy) = inferExp context exp
+          val newExnVar = 
+              {id = id, displayName = displayName, ty = CST.convertGlobalType ty}
+          val newContext = CTX.insertVariable context newExnVar
+          val (newHandler, newHandlerTy) = inferExp newContext handler
+          val _ = CST.unify(newExpTy, newHandlerTy)
+        in
+          (
+           ACHANDLE
+               {
+                exp = newExp,
+                exnVar = newExnVar,
+                handler = newHandler,
+                loc = loc
+               },
+           newExpTy
+          )
+        end
+
+      | TL.TLFNM {argVarList, bodyTy, bodyExp, loc} =>
+        let
+          val newArgVarList =
+              map 
+                  (fn {id, displayName, ty} =>
+                      {id = id, displayName = displayName, ty = CST.convertLocalType ty}
+                  )
+                  argVarList
+          val newContext = CTX.insertVariables context newArgVarList
+          val (newBodyExp, newBodyTy) = inferExp newContext bodyExp
+          val annotationLabel = ATU.freshAnnotationLabel ()
+          (* local function may not need to be boxed*)
+          val annotationRef = 
+              ref 
+                  {
+                   labels = AT.LE_LABELS (ISet.singleton(annotationLabel)),
+                   boxed = false
+                  }
+          val newFunTy = AT.FUNMty
+                             {
+                              argTyList = map #ty newArgVarList,
+                              bodyTy = newBodyTy,
+                              annotation = annotationRef
+                             }
+        in
+          (
+           ACFNM
+               {
+                argVarList = newArgVarList,
+                funTy = newFunTy,
+                bodyExp = newBodyExp,
+                annotation = annotationLabel,
+                loc = loc
+               },
+           newFunTy
+          )
+        end
+
+      | TL.TLPOLY {btvEnv, expTyWithoutTAbs, exp, loc} =>
+        let
+          val newBtvEnv = CST.convertLocalBtvEnv btvEnv
+          val newContext = CTX.insertBtvEnv context newBtvEnv
+          val (newExp, newTy) = inferExp newContext exp
+          val resultTy = AT.POLYty{boundtvars = newBtvEnv, body = newTy}
+        in
+          (
+           ACPOLY
+               {
+                btvEnv = newBtvEnv,
+                expTyWithoutTAbs = newTy,
+                exp = newExp, 
+                loc = loc
+               },
+           resultTy
+          )
+        end
+
+      | TL.TLTAPP {exp, expTy, instTyList, loc} =>
+        let
+          val (newExp, newExpTy) = inferExp context exp
+          (* type variables are single value types, their instances should also
+           * be single value types
+           *)
+          val newInstTyList = map CST.convertSingleValueType instTyList
+          val tvars = case newExpTy of
+                        AT.POLYty {boundtvars,...} => boundtvars
+                      | _ => raise Control.Bug "polytype is expected"
+          val _ = CST.addInstances (tvars, newInstTyList)
+          val resultTy = ATU.tpappTy(newExpTy, newInstTyList)
+        in
+          (
+           ACTAPP
+               {
+                exp = newExp,
+                expTy = newExpTy,
+                instTyList = newInstTyList,
+                loc = loc
+               },
+           resultTy
+          )
+        end
+
+      | TL.TLSWITCH {switchExp, expTy, branches, defaultExp, loc} =>
+        let
+          val (newSwitchExp, newSwitchTy) = inferExp context switchExp
+          val (newDefaultExp, newDefaultTy) = inferExp context defaultExp
+          fun proceedBranch {constant, exp} =
+              let
+                val (newConst, _) = inferExp context constant 
+                val (newExp, newTy) = inferExp context exp
+                val _ = CST.unify (newDefaultTy, newTy)
+              in
+                {constant = newConst, exp = newExp}
+              end
+        in
+          (
+           ACSWITCH
+               {
+                switchExp = newSwitchExp,
+                expTy = newSwitchTy,
+                branches = map proceedBranch branches,
+                defaultExp = newDefaultExp,
+                loc = loc
+               },
+           newDefaultTy
+          )
+        end
+
+      (* generic cast: both source type and target type should be global type*)
+      | TL.TLCAST {exp, targetTy, loc} => 
+        let
+          val (newExp, newExpTy) = inferExp context exp
+          val _ = CST.globalType newExpTy
+          val newTargetTy = CST.convertGlobalType targetTy
+        in
+          (
+           ACCAST
+               {
+                exp = newExp,
+                expTy = newExpTy,
+                targetTy = newTargetTy,
+                loc = loc
+               },
+           newTargetTy
+          )
+        end
+
+  and inferExpList context expList =
+      ListPair.unzip (map (inferExp context) expList)
+                                       
+  and inferDecl context tldecl =
+      case tldecl of
+        TL.TLVAL {boundVar as {id, displayName, ty}, boundExp, loc} =>
+        let
+          val (newBoundExp, newBoundTy) = inferExp context boundExp
+          val newBoundVar = {id = id, displayName = displayName, ty = newBoundTy}
+          val newContext = CTX.insertVariable context newBoundVar
+        in
+          (ACVAL {boundVar = newBoundVar, boundExp = newBoundExp, loc = loc}, newContext)
+        end
+
+      | TL.TLVALREC {recbindList, loc} =>
+        let
+          val newBoundVarList =
+              map 
+                  (fn {boundVar as {id, displayName, ty},...} =>
+                      {id = id, displayName = displayName, ty = CST.convertLocalType ty}
+                  )
+                  recbindList
+          val newContext = CTX.insertVariables context newBoundVarList
+          fun inferBind ({boundVar, boundExp}, newBoundVar : varInfo) =
+              let
+                val (newBoundExp, newBoundTy) = inferExp newContext boundExp
+                val _ = CST.unify (newBoundTy, #ty newBoundVar)
+              in
+                {boundVar = newBoundVar, boundExp = newBoundExp}
+              end
+        in
+          (
+           ACVALREC
+               {
+                recbindList = ListPair.map inferBind (recbindList, newBoundVarList),
+                loc = loc
+               },
+           newContext
+          )
+        end
+
+      | TL.TLVALPOLYREC {btvEnv, recbindList, loc} =>
+        let
+          val newBtvEnv = CST.convertLocalBtvEnv btvEnv
+          val newBoundVarList =
+              map 
+                  (fn {boundVar as {id, displayName, ty},...} =>
+                      {id = id, displayName = displayName, ty = CST.convertLocalType ty}
+                  )
+                  recbindList
+          val newContext = CTX.insertVariables (CTX.insertBtvEnv context newBtvEnv) newBoundVarList
+          fun inferBind ({boundExp,boundVar}, newBoundVar : varInfo) =
+              let
+                val (newBoundExp, newBoundTy) = inferExp newContext boundExp
+                val _ = CST.unify (newBoundTy, #ty newBoundVar)
+              in
+                {boundVar = newBoundVar, boundExp = newBoundExp}
+              end
+          val recbindList = ListPair.map inferBind (recbindList, newBoundVarList)
+
+          val newBoundVarList = 
+              map
+                  (fn {id, displayName, ty} =>
+                      {
+                       id = id,
+                       displayName = displayName,
+                       ty = AT.POLYty {boundtvars = newBtvEnv, body = ty}
+                      }
+                  )
+                  newBoundVarList
+          val newContext = CTX.insertVariables context newBoundVarList
+        in
+          (
+           ACVALPOLYREC
+               {
+                btvEnv = newBtvEnv,
+                recbindList = recbindList,
+                loc = loc
+               },
+           newContext
+          )
+        end
+
+  and inferDeclList context ([]) = ([],context)
+    | inferDeclList context (decl::rest) =
+      let
+        val (newDecl, newContext) = inferDecl context decl
+        val (newRest, newContext) = inferDeclList newContext rest
+      in
+        (newDecl::newRest, newContext)
+      end
+
+  fun analyse declList =
+      let
+        val _ = ATU.initialize ()
+        val _ = CST.initialize ()
+        val (newDeclList, _ ) = inferDeclList CTX.empty declList
+        val _ = CST.solve ()
+      in
+        newDeclList
+      end
+
+end

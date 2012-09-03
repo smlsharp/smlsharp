@@ -10,7 +10,7 @@
  * @author YAMATODANI Kiyoshi
  * @author UENO Katsuhiro
  * @author Nguyen Huu Duc
- * @version $Id: Assembler.sml,v 1.63 2007/02/08 03:08:49 katsu Exp $
+ * @version $Id: Assembler.sml,v 1.65 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure Assembler :> ASSEMBLER =
 struct
@@ -100,6 +100,7 @@ struct
   val enqueueError = UE.enqueueError errorQueue
   val enqueueWarning = UE.enqueueWarning errorQueue
   end
+
 
   (**
    * builds a slot map, a label map and a location map for a function.
@@ -258,6 +259,8 @@ struct
     (* zero of 16 bits width *)
     val zeroPadding = BT.IntToUInt16 0
 
+    fun length list = BT.IntToUInt32(List.length list)
+
   (**
    * translates a symbolic instruction to a raw instruction.
    * <p>
@@ -316,20 +319,20 @@ struct
             SI.SINGLE =>
             I.Access_S
                 {
-                  variableOffset = VI variableEntry,
+                  variableIndex = VI variableEntry,
                   destination = VI destination
                }
           | SI.DOUBLE =>
             I.Access_D
                 {
-                  variableOffset = VI variableEntry,
+                  variableIndex = VI variableEntry,
                   destination = VI destination
                 }
           | SI.VARIANT v =>
             I.Access_V
                 {
-                  variableOffset = VI variableEntry,
-                  variableSize = VI v,
+                  variableIndex = VI variableEntry,
+                  variableSizeIndex = VI v,
                   destination = VI destination
                 })
         | SI.AccessEnv {offset, variableSize, destination} =>
@@ -350,28 +353,7 @@ struct
              I.AccessEnv_V
                  {
                    offset = offset, 
-                   variableSize = VI v,
-                   destination = VI destination
-                 })
-        | SI.AccessEnvIndirect {offset, variableSize, destination} =>
-          (case variableSize of
-             SI.SINGLE =>
-             I.AccessEnvIndirect_S
-                 {
-                   offset = offset, 
-                   destination = VI destination
-                 }
-           | SI.DOUBLE =>
-             I.AccessEnvIndirect_D
-                 {
-                   offset = offset, 
-                   destination = VI destination
-                 }
-           | SI.VARIANT v =>
-             I.AccessEnvIndirect_V
-                 {
-                   offset = offset, 
-                   variableSize = VI v,
+                   variableSizeIndex = VI v,
                    destination = VI destination
                  })
         | SI.AccessNestedEnv {nestLevel, offset, variableSize, destination} =>
@@ -395,32 +377,7 @@ struct
                  {
                    nestLevel = nestLevel,
                    offset = offset, 
-                   variableSize = VI v,
-                   destination = VI destination
-                 })
-        | SI.AccessNestedEnvIndirect
-              {nestLevel, offset, variableSize, destination} =>
-          (case variableSize of
-             SI.SINGLE =>
-             I.AccessNestedEnvIndirect_S
-                 {
-                   nestLevel = nestLevel,
-                   offset = offset, 
-                   destination = VI destination
-                 }
-           | SI.DOUBLE =>
-             I.AccessNestedEnvIndirect_D
-                 {
-                   nestLevel = nestLevel,
-                   offset = offset, 
-                   destination = VI destination
-                 }
-           | SI.VARIANT v =>
-             I.AccessNestedEnvIndirect_V
-                 {
-                   nestLevel = nestLevel,
-                   offset = offset, 
-                   variableSize = VI v,
+                   variableSizeIndex = VI v,
                    destination = VI destination
                  })
         | SI.GetField {fieldOffset, fieldSize, blockEntry, destination} =>
@@ -429,75 +386,103 @@ struct
              I.GetField_S
                  {
                    fieldOffset = fieldOffset,
-                   blockOffset = VI blockEntry,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  }
            | SI.DOUBLE =>
              I.GetField_D
                  {
                    fieldOffset = fieldOffset,
-                   blockOffset = VI blockEntry,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  }
            | SI.VARIANT v =>
              I.GetField_V
                  {
                    fieldOffset = fieldOffset,
-                   fieldSize = VI v,
-                   blockOffset = VI blockEntry,
+                   fieldSizeIndex = VI v,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  })
         | SI.GetFieldIndirect
-              {fieldEntry, fieldSize, blockEntry, destination} =>
+              {fieldOffsetEntry, fieldSize, blockEntry, destination} =>
           (case fieldSize of
              SI.SINGLE =>
              I.GetFieldIndirect_S
                  {
-                   fieldOffset = VI fieldEntry,
-                   blockOffset = VI blockEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  }
            | SI.DOUBLE =>
              I.GetFieldIndirect_D
                  {
-                   fieldOffset = VI fieldEntry,
-                   blockOffset = VI blockEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  }
            | SI.VARIANT v =>
              I.GetFieldIndirect_V
                  {
-                   fieldOffset = VI fieldEntry,
-                   fieldSize = VI v,
-                   blockOffset = VI blockEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   fieldSizeIndex = VI v,
+                   blockIndex = VI blockEntry,
+                   destination = VI destination
+                 })
+        | SI.GetNestedField
+          {nestLevel, fieldOffset, fieldSize, blockEntry, destination} =>
+          (case fieldSize of
+             SI.SINGLE =>
+             I.GetNestedField_S
+                 {
+                   nestLevel = nestLevel,
+                   fieldOffset = fieldOffset,
+                   blockIndex = VI blockEntry,
+                   destination = VI destination
+                 }
+           | SI.DOUBLE =>
+             I.GetNestedField_D
+                 {
+                   nestLevel = nestLevel,
+                   fieldOffset = fieldOffset,
+                   blockIndex = VI blockEntry,
+                   destination = VI destination
+                 }
+           | SI.VARIANT v =>
+             I.GetNestedField_V
+                 {
+                   nestLevel = nestLevel,
+                   fieldOffset = fieldOffset,
+                   fieldSizeIndex = VI v,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  })
         | SI.GetNestedFieldIndirect
-          {nestLevelEntry, offsetEntry, fieldSize, blockEntry, destination} =>
+          {nestLevelEntry, fieldOffsetEntry, fieldSize, blockEntry, destination} =>
           (case fieldSize of
              SI.SINGLE =>
              I.GetNestedFieldIndirect_S
                  {
-                   nestLevel = VI nestLevelEntry,
-                   fieldOffset = VI offsetEntry,
-                   blockOffset = VI blockEntry,
+                   nestLevelIndex = VI nestLevelEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  }
            | SI.DOUBLE =>
              I.GetNestedFieldIndirect_D
                  {
-                   nestLevel = VI nestLevelEntry,
-                   fieldOffset = VI offsetEntry,
-                   blockOffset = VI blockEntry,
+                   nestLevelIndex = VI nestLevelEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  }
            | SI.VARIANT v =>
              I.GetNestedFieldIndirect_V
                  {
-                   nestLevel = VI nestLevelEntry,
-                   fieldOffset = VI offsetEntry,
-                   fieldSize = VI v,
-                   blockOffset = VI blockEntry,
+                   nestLevelIndex = VI nestLevelEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   fieldSizeIndex = VI v,
+                   blockIndex = VI blockEntry,
                    destination = VI destination
                  })
         | SI.SetField {fieldOffset, fieldSize, blockEntry, newValueEntry} =>
@@ -506,53 +491,89 @@ struct
              I.SetField_S
                  {
                    fieldOffset = fieldOffset,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  }
            | SI.DOUBLE =>
              I.SetField_D
                  {
                    fieldOffset = fieldOffset,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  }
            | SI.VARIANT v =>
              I.SetField_V
                  {
                    fieldOffset = fieldOffset,
-                   fieldSize = VI v,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   fieldSizeIndex = VI v,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  })
         | SI.SetFieldIndirect
-              {fieldEntry, fieldSize, blockEntry, newValueEntry} =>
+              {fieldOffsetEntry, fieldSize, blockEntry, newValueEntry} =>
           (case fieldSize of
              SI.SINGLE =>
              I.SetFieldIndirect_S
                  {
-                   fieldOffset = VI fieldEntry,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  }
            | SI.DOUBLE =>
              I.SetFieldIndirect_D
                  {
-                   fieldOffset = VI fieldEntry,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  }
            | SI.VARIANT v =>
              I.SetFieldIndirect_V
                  {
-                   fieldOffset = VI fieldEntry,
-                   fieldSize = VI v,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   fieldSizeIndex = VI v,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  })
+
+        | SI.SetNestedField
+              {
+                nestLevel,
+                fieldOffset,
+                fieldSize,
+                blockEntry,
+                newValueEntry
+              } =>
+          (case fieldSize of
+             SI.SINGLE =>
+             I.SetNestedField_S
+                 {
+                   nestLevel = nestLevel,
+                   fieldOffset = fieldOffset,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
+                 }
+           | SI.DOUBLE =>
+             I.SetNestedField_D
+                 {
+                   nestLevel = nestLevel,
+                   fieldOffset = fieldOffset,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
+                 }
+           | SI.VARIANT v =>
+             I.SetNestedField_V
+                 {
+                   nestLevel = nestLevel,
+                   fieldOffset = fieldOffset,
+                   fieldSizeIndex = VI v,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
+                 })
+
         | SI.SetNestedFieldIndirect
               {
                 nestLevelEntry,
-                offsetEntry,
+                fieldOffsetEntry,
                 fieldSize,
                 blockEntry,
                 newValueEntry
@@ -561,33 +582,33 @@ struct
              SI.SINGLE =>
              I.SetNestedFieldIndirect_S
                  {
-                   nestLevel = VI nestLevelEntry,
-                   fieldOffset = VI offsetEntry,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   nestLevelIndex = VI nestLevelEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  }
            | SI.DOUBLE =>
              I.SetNestedFieldIndirect_D
                  {
-                   nestLevel = VI nestLevelEntry,
-                   fieldOffset = VI offsetEntry,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   nestLevelIndex = VI nestLevelEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  }
            | SI.VARIANT v =>
              I.SetNestedFieldIndirect_V
                  {
-                   nestLevel = VI nestLevelEntry,
-                   fieldOffset = VI offsetEntry,
-                   fieldSize = VI v,
-                   blockOffset = VI blockEntry,
-                   newValueOffset = VI newValueEntry
+                   nestLevelIndex = VI nestLevelEntry,
+                   fieldOffsetIndex = VI fieldOffsetEntry,
+                   fieldSizeIndex = VI v,
+                   blockIndex = VI blockEntry,
+                   newValueIndex = VI newValueEntry
                  })
-        | SI.CopyBlock {nestLevelEntry, blockEntry, destination} =>
+        | SI.CopyBlock {blockEntry, nestLevelEntry, destination} =>
           I.CopyBlock
           {
-            nestLevel = VI nestLevelEntry,
-            blockOffset = VI blockEntry,
+            blockIndex = VI blockEntry,
+            nestLevelIndex = VI nestLevelEntry,
             destination = VI destination
           }
 
@@ -618,14 +639,14 @@ struct
                  {
                   globalArrayIndex = globalArrayIndex,
                   offset = offset,
-                  variableOffset = VI newValueEntry
+                  variableIndex = VI newValueEntry
                  }
            | SI.DOUBLE =>
              I.SetGlobal_D
                  {
                   globalArrayIndex = globalArrayIndex,
                   offset = offset,
-                  variableOffset = VI newValueEntry
+                  variableIndex = VI newValueEntry
                  }
            | SI.VARIANT v => raise Control.Bug "global object must have fixed size"
           )
@@ -650,12 +671,9 @@ struct
         | SI.GetEnv {destination} => I.GetEnv {destination = VI destination}
         | SI.CallPrim
               {
-                argsCount,
                 primitive,
                 argEntries,
-                argSizes,
-                destination,
-                resultSize
+                destination
               } =>
           (case #instruction primitive of
              P.Internal1 maker =>
@@ -682,27 +700,24 @@ struct
            | P.InternalN maker => 
              maker
                  ({
-                   argsCount = argsCount,
+                   argsCount = length argEntries,
                    argIndexes = map VI argEntries,
                    destination = VI destination
                  } : P.operandN)
            | P.External primitive => 
              I.CallPrim
              {
-               argsCount = argsCount,
+               argsCount = length argEntries,
                primitive = BT.IntToUInt32 primitive,
                argIndexes = map VI argEntries,
                destination = VI destination
              })
         | SI.ForeignApply
               {
-                argsCount,
                 switchTag,
                 convention,
                 closureEntry,
                 argEntries,
-                argSizes,
-                resultSize,
                 destination
               } =>
           let
@@ -714,10 +729,10 @@ struct
           in
             I.ForeignApply
               {
-                argsCount = argsCount,
+                argsCount = length argEntries,
                 switchTag = switchTag,
-                convention = UInt32.fromInt conventionCode,
-                closureOffset = VI closureEntry,
+                convention = BT.UInt32.fromInt conventionCode,
+                closureIndex = VI closureEntry,
                 argIndexes = map VI argEntries,
                 destination = VI destination
               }
@@ -730,398 +745,1079 @@ struct
               } =>
           I.RegisterCallback
               {
-                closureOffset = VI closureEntry,
+                closureIndex = VI closureEntry,
                 sizeTag = sizeTag,
                 destination = VI destination
               }
-        | SI.Apply_S
-          {closureEntry, argEntry, argSize, destination} =>
+
+        | SI.Apply_0 {closureEntry, destinations = []} =>
+          I.Apply_0_0
+              {
+               closureIndex = VI closureEntry
+              }
+
+        | SI.Apply_1 {closureEntry, argEntry, argSize, destinations = []} =>
           (case argSize of
              SI.SINGLE =>
-             I.Apply_S
+             I.Apply_S_0
                  {
-                   closureOffset = VI closureEntry,
-                   argOffset = VI argEntry,
-                   destination = VI destination
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry
                  }
            | SI.DOUBLE =>
-             I.Apply_D
+             I.Apply_D_0
                  {
-                   closureOffset = VI closureEntry,
-                   argOffset = VI argEntry,
-                   destination = VI destination
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry
                  }
            | SI.VARIANT v =>
-             I.Apply_V
+             I.Apply_V_0
                  {
-                   closureOffset = VI closureEntry,
-                   argOffset = VI argEntry,
-                   argSizeOffset = VI v,
-                   destination = VI destination
-                 })
-        | SI.Apply_ML
-          {argsCount, closureEntry, argEntries, lastArgSize, destination} =>
-          (case lastArgSize of
-             SI.SINGLE =>
-             I.Apply_ML_S
-                 {
-                   argsCount = argsCount,
-                   closureOffset = VI closureEntry,
-                   argOffsets = map VI argEntries,
-                   destination = VI destination
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry,
+                   argSizeIndex = VI v
                  }
-           | SI.DOUBLE =>
-             I.Apply_ML_D
-                 {
-                   argsCount = argsCount,
-                   closureOffset = VI closureEntry,
-                   argOffsets = map VI argEntries,
-                   destination = VI destination
-                 }
-           | SI.VARIANT v =>
-             I.Apply_ML_V
-                 {
-                   argsCount = argsCount,
-                   closureOffset = VI closureEntry,
-                   argOffsets = map VI argEntries,
-                   lastArgSizeOffset = VI v,
-                   destination = VI destination
-                 })
-        | SI.Apply_M
-          {argsCount, closureEntry, argEntries, argSizeEntries, destination} =>
-          I.Apply_M
+          )
+        | SI.Apply_MS {closureEntry, argEntries, destinations = []} =>
+          I.Apply_MS_0
               {
-               argsCount = argsCount,
-               closureOffset = VI closureEntry,
-               argOffsets = map VI argEntries,
-               argSizeOffsets = map VI argSizeEntries,
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+        | SI.Apply_ML {closureEntry, argEntries, lastArgSize, destinations = []} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.Apply_MS_0
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.DOUBLE =>
+             I.Apply_MLD_0
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.VARIANT v =>
+             I.Apply_MLV_0
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v
+              }
+          )
+        | SI.Apply_MF {closureEntry, argEntries, argSizes, destinations = []} =>
+          I.Apply_MF_0
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes
+              }
+        | SI.Apply_MV {closureEntry, argEntries, argSizeEntries, destinations = []} =>
+          I.Apply_MV_0
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries
+              }
+
+        | SI.Apply_0 {closureEntry, destinations = [destination]} =>
+          I.Apply_0_1
+              {
+               closureIndex = VI closureEntry,
                destination = VI destination
               }
-        | SI.TailApply_S
-          {closureEntry, argEntry, argSize} =>
+
+        | SI.Apply_1 {closureEntry, argEntry, argSize, destinations = [destination]} =>
+          (case argSize of
+             SI.SINGLE =>
+             I.Apply_S_1
+                 {
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry,
+                   destination = VI destination
+                 }
+           | SI.DOUBLE =>
+             I.Apply_D_1
+                 {
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry,
+                   destination = VI destination
+                 }
+           | SI.VARIANT v =>
+             I.Apply_V_1
+                 {
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry,
+                   argSizeIndex = VI v,
+                   destination = VI destination
+                 }
+          )
+        | SI.Apply_MS {closureEntry, argEntries, destinations = [destination]} =>
+          I.Apply_MS_1
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+        | SI.Apply_ML {closureEntry, argEntries, lastArgSize, destinations = [destination]} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.Apply_MS_1
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+           | SI.DOUBLE =>
+             I.Apply_MLD_1
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+           | SI.VARIANT v =>
+             I.Apply_MLV_1
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v,
+               destination = VI destination
+              }
+          )
+        | SI.Apply_MF {closureEntry, argEntries, argSizes, destinations = [destination]} =>
+          I.Apply_MF_1
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes,
+               destination = VI destination
+              }
+        | SI.Apply_MV {closureEntry, argEntries, argSizeEntries, destinations = [destination]} =>
+          I.Apply_MV_1
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries,
+               destination = VI destination
+              }
+
+        | SI.Apply_0 {closureEntry, destinations} =>
+          I.Apply_0_M
+              {
+               closureIndex = VI closureEntry,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+
+        | SI.Apply_1 {closureEntry, argEntry, argSize, destinations} =>
+          (case argSize of
+             SI.SINGLE =>
+             I.Apply_S_M
+                 {
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry,
+                   destsCount = length destinations,
+                   destinations = map VI destinations
+                 }
+           | SI.DOUBLE =>
+             I.Apply_D_M
+                 {
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry,
+                   destsCount = length destinations,
+                   destinations = map VI destinations
+                 }
+           | SI.VARIANT v =>
+             I.Apply_V_M
+                 {
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry,
+                   argSizeIndex = VI v,
+                   destsCount = length destinations,
+                   destinations = map VI destinations
+                 }
+          )
+        | SI.Apply_MS {closureEntry, argEntries, destinations} =>
+          I.Apply_MS_M
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+        | SI.Apply_ML {closureEntry, argEntries, lastArgSize, destinations} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.Apply_MS_M
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+           | SI.DOUBLE =>
+             I.Apply_MLD_M
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+           | SI.VARIANT v =>
+             I.Apply_MLV_M
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+          )
+        | SI.Apply_MF {closureEntry, argEntries, argSizes, destinations} =>
+          I.Apply_MF_M
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+        | SI.Apply_MV {closureEntry, argEntries, argSizeEntries, destinations} =>
+          I.Apply_MV_M
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+
+        | SI.TailApply_0 {closureEntry} =>
+          I.TailApply_0
+              {
+               closureIndex = VI closureEntry
+              }
+
+        | SI.TailApply_1 {closureEntry, argEntry, argSize} =>
           (case argSize of
              SI.SINGLE =>
              I.TailApply_S
                  {
-                   closureOffset = VI closureEntry,
-                   argOffset = VI argEntry
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry
                  }
            | SI.DOUBLE =>
              I.TailApply_D
                  {
-                   closureOffset = VI closureEntry,
-                   argOffset = VI argEntry
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry
                  }
            | SI.VARIANT v =>
              I.TailApply_V
                  {
-                   closureOffset = VI closureEntry,
-                   argOffset = VI argEntry,
-                   argSizeOffset = VI v
-                 })
-        | SI.TailApply_ML
-          {argsCount, closureEntry, argEntries, lastArgSize} =>
-          (case lastArgSize of
-             SI.SINGLE =>
-             I.TailApply_ML_S
-                 {
-                   argsCount = argsCount,
-                   closureOffset = VI closureEntry,
-                   argOffsets = map VI argEntries
+                   closureIndex = VI closureEntry,
+                   argIndex = VI argEntry,
+                   argSizeIndex = VI v
                  }
-           | SI.DOUBLE =>
-             I.TailApply_ML_D
-                 {
-                   argsCount = argsCount,
-                   closureOffset = VI closureEntry,
-                   argOffsets = map VI argEntries
-                 }
-           | SI.VARIANT v =>
-             I.TailApply_ML_V
-                 {
-                   argsCount = argsCount,
-                   closureOffset = VI closureEntry,
-                   argOffsets = map VI argEntries,
-                   lastArgSizeOffset = VI v
-                 })
-        | SI.TailApply_M
-          {argsCount, closureEntry, argEntries, argSizeEntries} =>
-          I.TailApply_M
+          )
+        | SI.TailApply_MS {closureEntry, argEntries} =>
+          I.TailApply_MS
               {
-               argsCount = argsCount,
-               closureOffset = VI closureEntry,
-               argOffsets = map VI argEntries,
-               argSizeOffsets = map VI argSizeEntries
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
               }
-        | SI.CallStatic_S
-              {entryPoint, envEntry, argEntry, argSize, destination} =>
+        | SI.TailApply_ML {closureEntry, argEntries, lastArgSize} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.TailApply_MS
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.DOUBLE =>
+             I.TailApply_MLD
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.VARIANT v =>
+             I.TailApply_MLV
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v
+              }
+          )
+        | SI.TailApply_MF {closureEntry, argEntries, argSizes} =>
+          I.TailApply_MF
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes
+              }
+        | SI.TailApply_MV {closureEntry, argEntries, argSizeEntries} =>
+          I.TailApply_MV
+              {
+               closureIndex = VI closureEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries
+              }
+
+        | SI.CallStatic_0 {entryPoint, envEntry, destinations = []} =>
+          I.CallStatic_0_0
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry
+              }
+
+        | SI.CallStatic_1 {entryPoint, envEntry, argEntry, argSize, destinations = []} =>
           (case argSize of
              SI.SINGLE =>
-             I.CallStatic_S
+             I.CallStatic_S_0
                  {
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffset = VI argEntry,
-                   destination = VI destination
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry
                  }
            | SI.DOUBLE =>
-             I.CallStatic_D
+             I.CallStatic_D_0
                  {
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffset = VI argEntry,
-                   destination = VI destination
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry
                  }
            | SI.VARIANT v =>
-             I.CallStatic_V
+             I.CallStatic_V_0
                  {
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffset = VI argEntry,
-                   argSizeOffset = VI v,
-                   destination = VI destination
-                 })
-        | SI.CallStatic_ML
-              {argsCount, entryPoint, envEntry, argEntries, lastArgSize, destination} =>
-          (case lastArgSize of
-             SI.SINGLE =>
-             I.CallStatic_ML_S
-                 {
-                   argsCount = argsCount,
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffsets = map VI argEntries,
-                   destination = VI destination
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry,
+                  argSizeIndex = VI v
                  }
-           | SI.DOUBLE =>
-             I.CallStatic_ML_D
-                 {
-                   argsCount = argsCount,
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffsets = map VI argEntries,
-                   destination = VI destination
-                 }
-           | SI.VARIANT v =>
-             I.CallStatic_ML_V
-                 {
-                   argsCount = argsCount,
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffsets = map VI argEntries,
-                   lastArgSizeOffset = VI v,
-                   destination = VI destination
-                 })
-        | SI.CallStatic_M
-              {argsCount, entryPoint, envEntry, argEntries, argSizeEntries, destination} =>
-          I.CallStatic_M
+          )
+        | SI.CallStatic_MS {entryPoint, envEntry, argEntries, destinations = []} =>
+          I.CallStatic_MS_0
               {
-               argsCount = argsCount,
                entryPoint = LO entryPoint,
-               envOffset = VI envEntry,
-               argOffsets = map VI argEntries,
-               argSizeOffsets = map VI argSizeEntries,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+        | SI.CallStatic_ML {entryPoint, envEntry, argEntries, lastArgSize, destinations = []} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.CallStatic_MS_0
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.DOUBLE =>
+             I.CallStatic_MLD_0
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.VARIANT v =>
+             I.CallStatic_MLV_0
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v
+              }
+          )
+        | SI.CallStatic_MF {entryPoint, envEntry, argEntries, argSizes, destinations = []} =>
+          I.CallStatic_MF_0
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes
+              }
+        | SI.CallStatic_MV {entryPoint, envEntry, argEntries, argSizeEntries, destinations = []} =>
+          I.CallStatic_MV_0
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries
+              }
+
+        | SI.CallStatic_0 {entryPoint, envEntry, destinations = [destination]} =>
+          I.CallStatic_0_1
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
                destination = VI destination
               }
-        | SI.TailCallStatic_S
-              {entryPoint, envEntry, argEntry, argSize} =>
+
+        | SI.CallStatic_1 {entryPoint, envEntry, argEntry, argSize, destinations = [destination]} =>
+          (case argSize of
+             SI.SINGLE =>
+             I.CallStatic_S_1
+                 {
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry,
+                  destination = VI destination
+                 }
+           | SI.DOUBLE =>
+             I.CallStatic_D_1
+                 {
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry,
+                  destination = VI destination
+                 }
+           | SI.VARIANT v =>
+             I.CallStatic_V_1
+                 {
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry,
+                  argSizeIndex = VI v,
+                  destination = VI destination
+                 }
+          )
+        | SI.CallStatic_MS {entryPoint, envEntry, argEntries, destinations = [destination]} =>
+          I.CallStatic_MS_1
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+        | SI.CallStatic_ML {entryPoint, envEntry, argEntries, lastArgSize, destinations = [destination]} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.CallStatic_MS_1
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+           | SI.DOUBLE =>
+             I.CallStatic_MLD_1
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+           | SI.VARIANT v =>
+             I.CallStatic_MLV_1
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v,
+               destination = VI destination
+              }
+          )
+        | SI.CallStatic_MF {entryPoint, envEntry, argEntries, argSizes, destinations = [destination]} =>
+          I.CallStatic_MF_1
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes,
+               destination = VI destination
+              }
+        | SI.CallStatic_MV {entryPoint, envEntry, argEntries, argSizeEntries, destinations = [destination]} =>
+          I.CallStatic_MV_1
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries,
+               destination = VI destination
+              }
+
+        | SI.CallStatic_0 {entryPoint, envEntry, destinations} =>
+          I.CallStatic_0_M
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+
+        | SI.CallStatic_1 {entryPoint, envEntry, argEntry, argSize, destinations} =>
+          (case argSize of
+             SI.SINGLE =>
+             I.CallStatic_S_M
+                 {
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry,
+                  destsCount = length destinations,
+                  destinations = map VI destinations
+                 }
+           | SI.DOUBLE =>
+             I.CallStatic_D_M
+                 {
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry,
+                  destsCount = length destinations,
+                  destinations = map VI destinations
+                 }
+           | SI.VARIANT v =>
+             I.CallStatic_V_M
+                 {
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry,
+                  argSizeIndex = VI v,
+                  destsCount = length destinations,
+                  destinations = map VI destinations
+                 }
+          )
+        | SI.CallStatic_MS {entryPoint, envEntry, argEntries, destinations} =>
+          I.CallStatic_MS_M
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+        | SI.CallStatic_ML {entryPoint, envEntry, argEntries, lastArgSize, destinations} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.CallStatic_MS_M
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+           | SI.DOUBLE =>
+             I.CallStatic_MLD_M
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+           | SI.VARIANT v =>
+             I.CallStatic_MLV_M
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+          )
+        | SI.CallStatic_MF {entryPoint, envEntry, argEntries, argSizes, destinations} =>
+          I.CallStatic_MF_M
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+        | SI.CallStatic_MV {entryPoint, envEntry, argEntries, argSizeEntries, destinations} =>
+          I.CallStatic_MV_M
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+
+        | SI.TailCallStatic_0 {entryPoint, envEntry} =>
+          I.TailCallStatic_0
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry
+              }
+
+        | SI.TailCallStatic_1 {entryPoint, envEntry, argEntry, argSize} =>
           (case argSize of
              SI.SINGLE =>
              I.TailCallStatic_S
                  {
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffset = VI argEntry
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry
                  }
            | SI.DOUBLE =>
              I.TailCallStatic_D
                  {
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffset = VI argEntry
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry
                  }
            | SI.VARIANT v =>
              I.TailCallStatic_V
                  {
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffset = VI argEntry,
-                   argSizeOffset = VI v
-                 })
-        | SI.TailCallStatic_ML
-              {argsCount, entryPoint, envEntry, argEntries, lastArgSize} =>
-          (case lastArgSize of
-             SI.SINGLE =>
-             I.TailCallStatic_ML_S
-                 {
-                   argsCount = argsCount,
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffsets = map VI argEntries
+                  entryPoint = LO entryPoint,
+                  envIndex = VI envEntry,
+                  argIndex = VI argEntry,
+                  argSizeIndex = VI v
                  }
-           | SI.DOUBLE =>
-             I.TailCallStatic_ML_D
-                 {
-                   argsCount = argsCount,
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffsets = map VI argEntries
-                 }
-           | SI.VARIANT v =>
-             I.TailCallStatic_ML_V
-                 {
-                   argsCount = argsCount,
-                   entryPoint = LO entryPoint,
-                   envOffset = VI envEntry,
-                   argOffsets = map VI argEntries,
-                   lastArgSizeOffset = VI v
-                 })
-        | SI.TailCallStatic_M
-              {argsCount, entryPoint, envEntry, argEntries, argSizeEntries} =>
-          I.TailCallStatic_M
+          )
+        | SI.TailCallStatic_MS {entryPoint, envEntry, argEntries} =>
+          I.TailCallStatic_MS
               {
-               argsCount = argsCount,
                entryPoint = LO entryPoint,
-               envOffset = VI envEntry,
-               argOffsets = map VI argEntries,
-               argSizeOffsets = map VI argSizeEntries
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+        | SI.TailCallStatic_ML {entryPoint, envEntry, argEntries, lastArgSize} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.TailCallStatic_MS
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.DOUBLE =>
+             I.TailCallStatic_MLD
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.VARIANT v =>
+             I.TailCallStatic_MLV
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v
+              }
+          )
+        | SI.TailCallStatic_MF {entryPoint, envEntry, argEntries, argSizes} =>
+          I.TailCallStatic_MF
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes
+              }
+        | SI.TailCallStatic_MV {entryPoint, envEntry, argEntries, argSizeEntries} =>
+          I.TailCallStatic_MV
+              {
+               entryPoint = LO entryPoint,
+               envIndex = VI envEntry,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries
               }
 
-        | SI.RecursiveCallStatic_S
-              {entryPoint, argEntry, argSize, destination} =>
+        | SI.RecursiveCallStatic_0 {entryPoint, destinations = []} =>
+          I.RecursiveCallStatic_0_0
+              {
+               entryPoint = LO entryPoint
+              }
+
+        | SI.RecursiveCallStatic_1 {entryPoint, argEntry, argSize, destinations = []} =>
           (case argSize of
              SI.SINGLE =>
-             I.RecursiveCallStatic_S
+             I.RecursiveCallStatic_S_0
                  {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry,
-                   destination = VI destination
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry
                  }
            | SI.DOUBLE =>
-             I.RecursiveCallStatic_D
+             I.RecursiveCallStatic_D_0
                  {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry,
-                   destination = VI destination
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry
                  }
            | SI.VARIANT v =>
-             I.RecursiveCallStatic_V
+             I.RecursiveCallStatic_V_0
                  {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry,
-                   argSizeOffset = VI v,
-                   destination = VI destination
-                 })
-        | SI.RecursiveCallStatic_M
-              {argsCount, entryPoint, argEntries, argSizeEntries, destination} =>
-          I.RecursiveCallStatic_M
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry,
+                  argSizeIndex = VI v
+                 }
+          )
+        | SI.RecursiveCallStatic_MS {entryPoint, argEntries, destinations = []} =>
+          I.RecursiveCallStatic_MS_0
               {
                entryPoint = LO entryPoint,
-               argsCount = argsCount,
-               argOffsets = map VI argEntries,
-               argSizeOffsets = map VI argSizeEntries,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+        | SI.RecursiveCallStatic_ML {entryPoint, argEntries, lastArgSize, destinations = []} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.RecursiveCallStatic_MS_0
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.DOUBLE =>
+             I.RecursiveCallStatic_MLD_0
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
+              }
+           | SI.VARIANT v =>
+             I.RecursiveCallStatic_MLV_0
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v
+              }
+          )
+        | SI.RecursiveCallStatic_MF {entryPoint, argEntries, argSizes, destinations = []} =>
+          I.RecursiveCallStatic_MF_0
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes
+              }
+        | SI.RecursiveCallStatic_MV {entryPoint, argEntries, argSizeEntries, destinations = []} =>
+          I.RecursiveCallStatic_MV_0
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries
+              }
+
+        | SI.RecursiveCallStatic_0 {entryPoint, destinations = [destination]} =>
+          I.RecursiveCallStatic_0_1
+              {
+               entryPoint = LO entryPoint,
                destination = VI destination
               }
-        | SI.RecursiveTailCallStatic_S
-              {entryPoint, argEntry, argSize} =>
+
+        | SI.RecursiveCallStatic_1 {entryPoint, argEntry, argSize, destinations = [destination]} =>
+          (case argSize of
+             SI.SINGLE =>
+             I.RecursiveCallStatic_S_1
+                 {
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry,
+                  destination = VI destination
+                 }
+           | SI.DOUBLE =>
+             I.RecursiveCallStatic_D_1
+                 {
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry,
+                  destination = VI destination
+                 }
+           | SI.VARIANT v =>
+             I.RecursiveCallStatic_V_1
+                 {
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry,
+                  argSizeIndex = VI v,
+                  destination = VI destination
+                 }
+          )
+        | SI.RecursiveCallStatic_MS {entryPoint, argEntries, destinations = [destination]} =>
+          I.RecursiveCallStatic_MS_1
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+        | SI.RecursiveCallStatic_ML {entryPoint, argEntries, lastArgSize, destinations = [destination]} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.RecursiveCallStatic_MS_1
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+           | SI.DOUBLE =>
+             I.RecursiveCallStatic_MLD_1
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destination = VI destination
+              }
+           | SI.VARIANT v =>
+             I.RecursiveCallStatic_MLV_1
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v,
+               destination = VI destination
+              }
+          )
+        | SI.RecursiveCallStatic_MF {entryPoint, argEntries, argSizes, destinations = [destination]} =>
+          I.RecursiveCallStatic_MF_1
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes,
+               destination = VI destination
+              }
+        | SI.RecursiveCallStatic_MV {entryPoint, argEntries, argSizeEntries, destinations = [destination]} =>
+          I.RecursiveCallStatic_MV_1
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries,
+               destination = VI destination
+              }
+
+        | SI.RecursiveCallStatic_0 {entryPoint, destinations} =>
+          I.RecursiveCallStatic_0_M
+              {
+               entryPoint = LO entryPoint,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+
+        | SI.RecursiveCallStatic_1 {entryPoint, argEntry, argSize, destinations} =>
+          (case argSize of
+             SI.SINGLE =>
+             I.RecursiveCallStatic_S_M
+                 {
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry,
+                  destsCount = length destinations,
+                  destinations = map VI destinations
+                 }
+           | SI.DOUBLE =>
+             I.RecursiveCallStatic_D_M
+                 {
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry,
+                  destsCount = length destinations,
+                  destinations = map VI destinations
+                 }
+           | SI.VARIANT v =>
+             I.RecursiveCallStatic_V_M
+                 {
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry,
+                  argSizeIndex = VI v,
+                  destsCount = length destinations,
+                  destinations = map VI destinations
+                 }
+          )
+        | SI.RecursiveCallStatic_MS {entryPoint, argEntries, destinations} =>
+          I.RecursiveCallStatic_MS_M
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+        | SI.RecursiveCallStatic_ML {entryPoint, argEntries, lastArgSize, destinations} =>
+          (
+           case lastArgSize of
+             SI.SINGLE =>
+             I.RecursiveCallStatic_MS_M
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+           | SI.DOUBLE =>
+             I.RecursiveCallStatic_MLD_M
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+           | SI.VARIANT v =>
+             I.RecursiveCallStatic_MLV_M
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+          )
+        | SI.RecursiveCallStatic_MF {entryPoint, argEntries, argSizes, destinations} =>
+          I.RecursiveCallStatic_MF_M
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+        | SI.RecursiveCallStatic_MV {entryPoint, argEntries, argSizeEntries, destinations} =>
+          I.RecursiveCallStatic_MV_M
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries,
+               destsCount = length destinations,
+               destinations = map VI destinations
+              }
+
+        | SI.RecursiveTailCallStatic_0 {entryPoint} =>
+          I.RecursiveTailCallStatic_0
+              {
+               entryPoint = LO entryPoint
+              }
+
+        | SI.RecursiveTailCallStatic_1 {entryPoint, argEntry, argSize} =>
           (case argSize of
              SI.SINGLE =>
              I.RecursiveTailCallStatic_S
                  {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry
                  }
            | SI.DOUBLE =>
              I.RecursiveTailCallStatic_D
                  {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry
                  }
            | SI.VARIANT v =>
              I.RecursiveTailCallStatic_V
                  {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry,
-                   argSizeOffset = VI v
-                 })
-        | SI.RecursiveTailCallStatic_M
-              {argsCount, entryPoint, argEntries, argSizeEntries} =>
-          I.RecursiveTailCallStatic_M
+                  entryPoint = LO entryPoint,
+                  argIndex = VI argEntry,
+                  argSizeIndex = VI v
+                 }
+          )
+        | SI.RecursiveTailCallStatic_MS {entryPoint, argEntries} =>
+          I.RecursiveTailCallStatic_MS
               {
                entryPoint = LO entryPoint,
-               argsCount = argsCount,
-               argOffsets = map VI argEntries,
-               argSizeOffsets = map VI argSizeEntries
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
               }
-        | SI.SelfRecursiveCallStatic_S
-              {entryPoint, argEntry, argSize, destination} =>
-          (case argSize of
+        | SI.RecursiveTailCallStatic_ML {entryPoint, argEntries, lastArgSize} =>
+          (
+           case lastArgSize of
              SI.SINGLE =>
-             I.SelfRecursiveCallStatic_S
-                 {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry,
-                   destination = VI destination
-                 }
-           | SI.DOUBLE =>
-             I.SelfRecursiveCallStatic_D
-                 {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry,
-                   destination = VI destination
-                 }
-           | SI.VARIANT v =>
-             I.SelfRecursiveCallStatic_V
-                 {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry,
-                   argSizeOffset = VI v,
-                   destination = VI destination
-                 })
-        | SI.SelfRecursiveCallStatic_M
-              {argsCount, entryPoint, argEntries, argSizeEntries, destination} =>
-          I.SelfRecursiveCallStatic_M
+             I.RecursiveTailCallStatic_MS
               {
                entryPoint = LO entryPoint,
-               argsCount = argsCount,
-               argOffsets = map VI argEntries,
-               argSizeOffsets = map VI argSizeEntries,
-               destination = VI destination
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
               }
-        | SI.SelfRecursiveTailCallStatic_S
-              {entryPoint, argEntry, argSize} =>
-          (case argSize of
-             SI.SINGLE =>
-             I.SelfRecursiveTailCallStatic_S
-                 {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry
-                 }
            | SI.DOUBLE =>
-             I.SelfRecursiveTailCallStatic_D
-                 {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry
-                 }
-           | SI.VARIANT v =>
-             I.SelfRecursiveTailCallStatic_V
-                 {
-                   entryPoint = LO entryPoint,
-                   argOffset = VI argEntry,
-                   argSizeOffset = VI v
-                 })
-        | SI.SelfRecursiveTailCallStatic_M
-              {argsCount, entryPoint, argEntries, argSizeEntries} =>
-          I.SelfRecursiveTailCallStatic_M
+             I.RecursiveTailCallStatic_MLD
               {
                entryPoint = LO entryPoint,
-               argsCount = argsCount,
-               argOffsets = map VI argEntries,
-               argSizeOffsets = map VI argSizeEntries
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries
               }
+           | SI.VARIANT v =>
+             I.RecursiveTailCallStatic_MLV
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               lastArgSizeIndex = VI v
+              }
+          )
+        | SI.RecursiveTailCallStatic_MF {entryPoint, argEntries, argSizes} =>
+          I.RecursiveTailCallStatic_MF
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizes = argSizes
+              }
+        | SI.RecursiveTailCallStatic_MV {entryPoint, argEntries, argSizeEntries} =>
+          I.RecursiveTailCallStatic_MV
+              {
+               entryPoint = LO entryPoint,
+               argsCount = length argEntries,
+               argIndexes = map VI argEntries,
+               argSizeIndexes = map VI argSizeEntries
+              }
+
         | SI.MakeBlock
               {
-                fieldsCount,
                 bitmapEntry,
                 sizeEntry,
                 fieldEntries,
@@ -1130,16 +1826,32 @@ struct
               } =>
           I.MakeBlock
           {
-            fieldsCount = fieldsCount,
+            fieldsCount = length fieldEntries,
             bitmapIndex = VI bitmapEntry,
             sizeIndex = VI sizeEntry,
             fieldIndexes = map VI fieldEntries,
             fieldSizeIndexes = map VI fieldSizeEntries,
             destination = VI destination
           }
+        | SI.MakeFixedSizeBlock
+              {
+                bitmapEntry,
+                size,
+                fieldEntries,
+                fieldSizes,
+                destination
+              } =>
+          I.MakeFixedSizeBlock
+          {
+            fieldsCount = length fieldEntries,
+            bitmapIndex = VI bitmapEntry,
+            size = size,
+            fieldIndexes = map VI fieldEntries,
+            fieldSizes = fieldSizes,
+            destination = VI destination
+          }
         | SI.MakeBlockOfSingleValues
               {
-               fieldsCount,
                bitmapEntry,
                fieldEntries,
                destination
@@ -1147,7 +1859,7 @@ struct
           I.MakeBlockOfSingleValues
               {
                bitmapIndex = VI bitmapEntry,
-               fieldsCount = fieldsCount,
+               fieldsCount = length fieldEntries,
                fieldIndexes = map VI fieldEntries,
                destination = VI destination
               }
@@ -1186,29 +1898,29 @@ struct
                   destination = VI destination
                  }
           )
-        | SI.MakeClosure {entryPoint, ENVEntry, destination} =>
+        | SI.MakeClosure {entryPoint, envEntry, destination} =>
           I.MakeClosure
           {
             entryPoint = LO entryPoint,
-            ENVOffset = VI ENVEntry,
+            envIndex = VI envEntry,
             destination = VI destination
           }
         | SI.Raise {exceptionEntry} =>
-          I.Raise {exceptionOffset = VI exceptionEntry}
+          I.Raise {exceptionIndex = VI exceptionEntry}
         | SI.PushHandler{handlerStart, exceptionEntry, ...} =>
           I.PushHandler
           {
             handler = LO handlerStart,
-            exceptionOffset = VI exceptionEntry
+            exceptionIndex = VI exceptionEntry
           }
         | SI.PopHandler _ => I.PopHandler
         | SI.Label _ => raise Control.Bug "Label is not expected."
         | SI.Location _ => raise Control.Bug "Label is not expected."
-        | SI.SwitchInt{targetEntry, casesCount, cases, default} =>
+        | SI.SwitchInt{targetEntry, cases, default} =>
           I.SwitchInt
           {
-            targetOffset = VI targetEntry,
-            casesCount = casesCount,
+            targetIndex = VI targetEntry,
+            casesCount = length cases,
             cases =
             List.concat
             (map
@@ -1217,31 +1929,31 @@ struct
              cases),
             default = LO default
           }
-        | SI.SwitchWord{targetEntry, casesCount, cases, default} =>
+        | SI.SwitchWord{targetEntry, cases, default} =>
           I.SwitchWord
           {
-            targetOffset = VI targetEntry,
-            casesCount = casesCount,
+            targetIndex = VI targetEntry,
+            casesCount = length cases,
             cases =
             List.concat
             (map (fn {const, destination} => [const, LO destination]) cases),
             default = LO default
           }
-        | SI.SwitchChar{targetEntry, casesCount, cases, default} =>
+        | SI.SwitchChar{targetEntry, cases, default} =>
           I.SwitchChar
           {
-            targetOffset = VI targetEntry,
-            casesCount = casesCount,
+            targetIndex = VI targetEntry,
+            casesCount = length cases,
             cases =
             List.concat
             (map (fn {const, destination} => [const, LO destination]) cases),
             default = LO default
           }
-        | SI.SwitchString{targetEntry, casesCount, cases, default} =>
+        | SI.SwitchString{targetEntry, cases, default} =>
           I.SwitchString
           {
-            targetOffset = VI targetEntry,
-            casesCount = casesCount,
+            targetIndex = VI targetEntry,
+            casesCount = length cases,
             cases =
             List.concat
             (map
@@ -1251,20 +1963,106 @@ struct
           }
         | SI.Jump {destination} => I.Jump{destination = LO destination}
         | SI.Exit => I.Exit
-        | SI.Return {variableEntry, variableSize} =>
+        | SI.Return_0 => I.Return_0
+        | SI.Return_1 {variableEntry, variableSize} =>
           (case variableSize of
-             SI.SINGLE => I.Return_S {variableOffset = VI variableEntry}
-           | SI.DOUBLE => I.Return_D {variableOffset = VI variableEntry}
+             SI.SINGLE => I.Return_S {variableIndex = VI variableEntry}
+           | SI.DOUBLE => I.Return_D {variableIndex = VI variableEntry}
            | SI.VARIANT v =>
              I.Return_V
                  {
-                   variableOffset = VI variableEntry,
-                   variableSize = VI v
+                   variableIndex = VI variableEntry,
+                   variableSizeIndex = VI v
                  })
+        | SI.Return_MS {variableEntries = []} => I.Return_0
+        | SI.Return_MS {variableEntries = [variableEntry]} =>
+          I.Return_S
+              {
+               variableIndex = VI variableEntry
+              }
+        | SI.Return_MS {variableEntries} =>
+          I.Return_MS
+              {
+               variablesCount = length variableEntries,
+               variableIndexes = map VI variableEntries
+              }
+        | SI.Return_ML {variableEntries = [variableEntry], lastVariableSize} =>
+          (case lastVariableSize of
+             SI.SINGLE => 
+             I.Return_S
+                 {
+                  variableIndex = VI variableEntry
+                 }
+           | SI.DOUBLE =>
+             I.Return_D
+                 {
+                  variableIndex = VI variableEntry
+                 }
+           | SI.VARIANT v =>
+             I.Return_V
+                 {
+                  variableIndex = VI variableEntry,
+                  variableSizeIndex = VI v
+                 }
+          )
+        | SI.Return_ML {variableEntries, lastVariableSize} =>
+          (case lastVariableSize of
+             SI.SINGLE => 
+             I.Return_MS
+                 {
+                  variablesCount = length variableEntries,
+                  variableIndexes = map VI variableEntries
+                 }
+           | SI.DOUBLE =>
+             I.Return_MLD
+                 {
+                  variablesCount = length variableEntries,
+                  variableIndexes = map VI variableEntries
+                 }
+           | SI.VARIANT v =>
+             I.Return_MLV
+                 {
+                  variablesCount = length variableEntries,
+                  variableIndexes = map VI variableEntries,
+                  lastVariableSizeIndex = VI v
+                 }
+          )
+        | SI.Return_MF {variableEntries = [], variableSizes = []} => I.Return_0
+        | SI.Return_MF {variableEntries = [variableEntry], variableSizes = [0w1]} =>
+          I.Return_S
+              {
+               variableIndex = VI variableEntry
+              }
+        | SI.Return_MF {variableEntries = [variableEntry], variableSizes = [0w2]} =>
+          I.Return_D
+              {
+               variableIndex = VI variableEntry
+              }
+        | SI.Return_MF {variableEntries, variableSizes} =>
+          I.Return_MF
+              {
+               variablesCount = length variableEntries,
+               variableIndexes = map VI variableEntries,
+               variableSizes = variableSizes
+              }
+        | SI.Return_MV {variableEntries = [], variableSizeEntries = []} => I.Return_0
+        | SI.Return_MV {variableEntries = [variableEntry], variableSizeEntries = [variableSizeEntry]} =>
+          I.Return_V
+              {
+               variableIndex = VI variableEntry,
+               variableSizeIndex = VI variableSizeEntry
+              }
+        | SI.Return_MV {variableEntries, variableSizeEntries} =>
+          I.Return_MV
+              {
+               variablesCount = length variableEntries,
+               variableIndexes = map VI variableEntries,
+               variableSizeIndexes = map VI variableSizeEntries
+              }
         | SI.ConstString {string} =>
           I.ConstString
           {
-            length = UInt32.fromInt (String.size string),
+            length = BT.UInt32.fromInt (String.size string),
             string = BT.StringToPaddedUInt8List string
           }
 
@@ -1633,8 +2431,6 @@ struct
            destination = VI destination
           }
 
-(* temporarily disable
-
         | SI.LtInt_Const_1{argValue1, argEntry2, destination} =>
           I.LtInt_Const_1
           {
@@ -1983,8 +2779,6 @@ struct
            destination = VI destination
           }
 
-*)
-
         | SI.Word_andb_Const_1{argValue1, argEntry2, destination} =>
           I.Word_andb_Const_1
           {
@@ -2076,8 +2870,6 @@ struct
           }
 
       end
-
-  fun length list = BT.IntToUInt32(List.length list)
 
   (* NOTE: Because the number of args is not so many, the linear search
    *     will not harm. *)
@@ -2181,7 +2973,7 @@ struct
   local
     fun packString fileName =
         {
-          length = UInt32.fromInt (String.size fileName),
+          length = BT.UInt32.fromInt (String.size fileName),
           string = BT.StringToPaddedUInt8List fileName
         }
     fun packStringList strings =
@@ -2193,7 +2985,7 @@ struct
                       let
                         val words =
                             0w1 (* one word where string length is stored. *)
-                            + (UInt32.fromInt(List.length string) div 0w4)
+                            + (BT.UInt32.fromInt(List.length string) div 0w4)
                       in (lastOffset + words, lastOffset :: offsets) end)
                   (0w0, [])
                   packedStrings
@@ -2205,9 +2997,9 @@ struct
         val (packedFileNames, fileNameOffsets) = packStringList fileNames
       in
         {
-          locationsCount = UInt32.fromInt (List.length locationTableEntries),
+          locationsCount = BT.UInt32.fromInt(List.length locationTableEntries),
           locations = locationTableEntries,
-          fileNamesCount = UInt32.fromInt (List.length fileNames),
+          fileNamesCount = BT.UInt32.fromInt (List.length fileNames),
           fileNameOffsets = fileNameOffsets,
           fileNames = packedFileNames
         } : Executable.locationTable
@@ -2217,14 +3009,34 @@ struct
         val (packedBoundNames, boundNameOffsets) = packStringList boundNames
       in
         {
-          nameSlotsCount = UInt32.fromInt (List.length nameSlotTableEntries),
+          nameSlotsCount = BT.UInt32.fromInt(List.length nameSlotTableEntries),
           nameSlots = nameSlotTableEntries,
-          boundNamesCount = UInt32.fromInt (List.length boundNames),
+          boundNamesCount = BT.UInt32.fromInt (List.length boundNames),
           boundNameOffsets = boundNameOffsets,
           boundNames = packedBoundNames
         } : Executable.nameSlotTable
       end
   end
+
+  fun convertCluster ({frameInfo, functionCodes, loc} : SI.clusterCode) =
+      map
+          (fn {name, loc, args, instructions} =>
+              {
+               name = name,
+               loc = loc,
+               funInfo = 
+               {
+                args = args,
+                bitmapvals = #bitmapvals frameInfo,
+                pointers = #pointers frameInfo,
+                atoms = #atoms frameInfo,
+                doubles = #doubles frameInfo,
+                records = #records frameInfo
+               },
+               instructions = instructions
+              }
+          )
+          functionCodes
 
   (**
    *  Translate symolic instructions to raw instructions.
@@ -2268,8 +3080,9 @@ struct
    *                      symbolic instructions of the body of the function
    * @return a list of raw instructions
    *)
-  fun assemble {mainFunctionName, functions = SIfunctionCodes} =
+  fun assemble clusterList =
       let
+        val SIfunctionCodes = List.concat (map convertCluster clusterList)
         val _ = initializeErrorQueue ()
 
         val initialOffset = 0w0 : BT.UInt32

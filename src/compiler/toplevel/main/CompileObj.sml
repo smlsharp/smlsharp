@@ -1,7 +1,7 @@
 (**
  * compilation of linkage unit
  * @author Liu Bochao
- * @version $Id: CompileObj.sml,v 1.20 2007/01/21 13:41:33 kiyoshiy Exp $
+ * @version $Id: CompileObj.sml,v 1.22 2007/06/01 09:40:59 kiyoshiy Exp $
  *)
 structure CompileObj =
 struct
@@ -342,12 +342,12 @@ struct
                     rcdecs
                 end
 
-            fun recordCompile rcdecs =
+            fun typedLambdaNormalize rcdecs =
                 let
-                    val tldecs = RecordCompiler.compile rcdecs
+                    val tldecs = TLNormalization.normalize rcdecs
                     val _ =
                         if !C.printTL andalso !C.switchTrace
-                        then (printError "\nRecord Compiled to:\n";
+                        then (printError "\nTypedLambda normalize to:\n";
                               printDecs (TypedLambdaFormatter.tldecToString nil) tldecs)
                         else ()
                 in
@@ -359,8 +359,7 @@ struct
                 then
                     let
                         val diagnoses =
-                            TypeCheckTypedLambda.typechekTypedLambda
-                                tldecs
+                            TypeCheckTypedLambda.typecheck tldecs
                         val _ = printDiagnoses diagnoses
                     in
                         ()
@@ -397,7 +396,7 @@ struct
                     val rcdecs = matchCompile tpflatdecs
                                  
                     (* record compile *)
-                    val tldecs = recordCompile rcdecs                
+                    val tldecs = typedLambdaNormalize rcdecs                
                                  
                     (* type check *)
                     val _ = typeCheck tldecs
@@ -651,7 +650,7 @@ struct
                       (fn line => printError (line ^ "\n"))
                       (SMLofNJ.exnHistory exn)
                 )
-              | SessionTypes.Error cause =>
+              | SessionTypes.Failure cause =>
                 printError ("RuntimeError:" ^ exnMessage cause ^ "\n")
               | IO.Io ioError =>
                 let

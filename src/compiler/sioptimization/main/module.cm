@@ -8,6 +8,13 @@ Group is
         smlnj-lib.cm
 #endif
 
+#if defined(NEW_CM)
+        MyBitArray.sml
+#else
+        MyBitArray-oldsmlnj.sml
+#endif
+
+
         ../../control/sources.cm
         ../../systemdef/sources.cm
         ../../env/sources.cm
@@ -18,7 +25,15 @@ Group is
         ../../../instructions/compiler/sources.cm
         ../../../primitives/compiler/sources.cm
 
-	SYMBOLIC_INSTRUCTIONS_OPTIMIZER.sig
+        SYMBOLIC_INSTRUCTIONS_OPTIMIZER.sig
         SymbolicInstructionsOptimizer.sml
+        CODEENV.sig
         CodeEnv.sml
-	Utilities.sml
+        UseDef.sml
+        SubFunctions.sml
+        Rename.sml
+        Liveness.sml
+        Exception.sml
+        BasicBlock.sml  
+        STACK_REALLOCATION.sig  
+        StackReallocation.sml

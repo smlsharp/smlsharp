@@ -1,12 +1,13 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: main.cc,v 1.27.4.1 2007/03/26 11:16:14 katsu Exp $
+ * @version $Id: main.cc,v 1.30 2007/06/05 13:32:09 kiyoshiy Exp $
  */
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: main.cc,v 1.27.4.1 2007/03/26 11:16:14 katsu Exp $
+ * @version $Id: main.cc,v 1.30 2007/06/05 13:32:09 kiyoshiy Exp $
  */
 #include "main.hh"
+#include "Configuration.hh"
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -22,14 +23,22 @@ Session* session_ = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void showVersion(){
+    fprintf(stderr,
+            "SML# runtime %s (Executable Binary Format:%d.%d))\n",
+            Version, BinaryMajorVersion, BinaryMinorVersion);
+    exit(0);
+}
+
 void
-usage(const char* exeName){
+usage(const char* exeName, const char* desc = ""){
     fprintf(stderr,
             "usage : %s [-heap heapsize] [-stack heapsize] -file filename\n"
             "        %s [-heap heapsize] [-stack heapsize] -client port\n"
             "        %s [-heap heapsize] [-stack heapsize] -server port\n"
-            "        %s [-heap heapsize] [-stack heapsize] -pipe infd outfd\n",
-            exeName, exeName, exeName, exeName);
+            "        %s [-heap heapsize] [-stack heapsize] -pipe infd outfd\n"
+            "%s\n",
+            exeName, exeName, exeName, exeName, desc);
     exit(1);
 }
 
@@ -106,18 +115,21 @@ main(int argc, const char** argv)
 #ifdef HAVE_SYS_SOCKET_H
             channelType = CHANNEL_TYPE_CLIENT_SOCKET;
 #else
-            usage("-client is not supported in this platform.");
+            usage(argv[0], "-client is not supported in this platform.");
 #endif
         }
         else if(0 == strcmp("-server", nextArg[0])){
 #ifdef HAVE_SYS_SOCKET_H
             channelType = CHANNEL_TYPE_SERVER_SOCKET;
 #else
-            usage("-server is not supported in this platform.");
+            usage(argv[0], "-server is not supported in this platform.");
 #endif
         }
         else if(0 == strcmp("-pipe", nextArg[0])){
             channelType = CHANNEL_TYPE_PIPE;
+        }
+        else if(0 == strcmp("-version", nextArg[0])){
+            showVersion();
         }
         else{
             break;
@@ -144,6 +156,7 @@ main(int argc, const char** argv)
 
     ////////////////////////////////////////
 
+    const char* imageName = NULL;
     FileDescriptor executableFileDesc = 0;
     int serverSocket = 0;
     int	acceptedSocket = 0;
@@ -161,12 +174,12 @@ main(int argc, const char** argv)
     switch(channelType){
       case CHANNEL_TYPE_FILE:
         {
-            const char* executableFileName = nextArg[0];
+            imageName = nextArg[0];
             nextArg += 1;
 
-            executableFileDesc = open(executableFileName, O_RDONLY | O_BINARY);
+            executableFileDesc = open(imageName, O_RDONLY | O_BINARY);
             if(executableFileDesc < 0){
-                perror(executableFileName);
+                perror(imageName);
                 exit(1);
             }
 
@@ -311,7 +324,11 @@ main(int argc, const char** argv)
     DBGWRAP(printf("argc = %d, nextArg - argv = %d\n", argc, nextArg - argv);)
 
     Heap::initialize(heapSize);
-    VirtualMachine vm(argv[0], argc - (nextArg - argv), nextArg, stackSize);
+    VirtualMachine vm(argv[0],
+                      imageName,
+                      argc - (nextArg - argv),
+                      nextArg,
+                      stackSize);
     Heap::setRootSet(&vm);
     Heap::setFinalizerExecutor(&vm);
     VirtualMachine::setSession(session_);

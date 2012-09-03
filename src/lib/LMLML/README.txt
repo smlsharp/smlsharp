@@ -1,7 +1,18 @@
 LMLML : Library of MultiLingualization for ML
 
 @author YAMATODANI Kiyoshi
-@version $Id: README.txt,v 1.4.2.1 2007/03/28 01:48:56 kiyoshiy Exp $
+@version $Id: README.txt,v 1.6 2007/04/12 05:54:06 kiyoshiy Exp $
+
+ This directory contains LMLML.
+LMLML is a library for multi-byte string manipulation.
+'LMLML' is an abbreviation of Library of MultiLingualization for ML.
+
+ This software has been developed as a part of the SML# project.
+It is distributed under the BSD-style SMLSharp license, which is
+included in the file LICENSE in this directory.
+
+ For the details of SML# project, consult the web page at:
+  http://www.pllab.riec.tohoku.ac.jp/smlsharp/
 
 ====================
 Files

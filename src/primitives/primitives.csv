@@ -227,8 +227,12 @@ GC_doGC,,"int -> unit",1,,IMLPrim_GC_doGC
 GC_fixedCopy,,"['a.('a) ref -> 'a]",1,,IMLPrim_GC_fixedCopy
 GC_releaseFLOB,,"['a.('a) ref -> unit]",1,,IMLPrim_GC_releaseFLOB
 GC_addressOfFLOB,,"['a.('a) ref -> (unit) ptr]",1,,IMLPrim_GC_addressOfFLOB
+GC_copyBlock,,"['a.('a) ref -> 'a]",1,,IMLPrim_GC_copyBlock
+GC_isAddressOfBlock,,"(unit) ptr -> bool",1,,IMLPrim_GC_isAddressOfBlock
+GC_isAddressOfFLOB,,"(unit) ptr -> bool",1,,IMLPrim_GC_isAddressOfFLOB
 
 Platform_getPlatform,,"unit -> string",1,,IMLPrim_Platform_getPlatform
+Platform_isBigEndian,,"unit -> bool",1,,IMLPrim_Platform_isBigEndian
 
 Pack_packWord32Little,,"(byte * byte * byte * byte) -> word",4,,IMLPrim_Pack_packWord32Little
 Pack_packWord32Big,,"(byte * byte * byte * byte) -> word",4,,IMLPrim_Pack_packWord32Big
@@ -239,3 +243,4 @@ Pack_packReal64Big,,"(byte * byte * byte * byte * byte * byte * byte * byte) -> 
 Pack_unpackReal64Little,,"real -> (byte * byte * byte * byte * byte * byte * byte * byte)",1,,IMLPrim_Pack_unpackReal64Little
 Pack_unpackReal64Big,,"real -> (byte * byte * byte * byte * byte * byte * byte * byte)",1,,IMLPrim_Pack_unpackReal64Big
 
+SMLSharpCommandLine_executableImageName,,"unit -> (string) option",1,,IMLPrim_SMLSharpCommandLine_executableImageName

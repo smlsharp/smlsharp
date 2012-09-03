@@ -3,15 +3,21 @@
 
 #include "SystemDef.hh"
 
+#ifdef USE_NAMESPACE
+using jp_ac_jaist_iml::IMLException;
+#endif
+
 BEGIN_NAMESPACE(jp_ac_jaist_iml)
 
 class SystemError
+    : public IMLException
 {
     ///////////////////////////////////////////////////////////////////////////
 
   public:
 
     SystemError()
+        : IMLException()
     {
     }
 

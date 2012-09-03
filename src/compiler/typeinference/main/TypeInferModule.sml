@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TypeInferModule.sml,v 1.69.2.1 2007/03/23 01:53:00 katsu Exp $
+ * @version $Id: TypeInferModule.sml,v 1.70 2007/03/21 22:43:09 bochao Exp $
  *)
 structure TypeInferModule =
 struct

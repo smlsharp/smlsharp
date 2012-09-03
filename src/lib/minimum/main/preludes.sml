@@ -2,7 +2,7 @@
  * Minimum preludes.
  * Only top level bindings specified by SML Basis Manual are defined.
  * @author YAMATODANI Kiyoshi
- * @version $Id: preludes.sml,v 1.16 2007/03/05 00:39:40 katsu Exp $
+ * @version $Id: preludes.sml,v 1.20 2007/06/19 22:19:12 ohori Exp $
  *)
 (*****************************************************************************)
 
@@ -24,6 +24,37 @@ fun printFormat exp =
     in
       pr exp
     end;
+
+ local
+  val s_Indicator = Indicator{space = true, newline = NONE}
+  val s_1_Indicator =
+      Indicator {space = true, newline = SOME{priority = Preferred 1}}
+in
+fun printFormatOfValBinding (name, valExp, tyExp) =
+    printFormat
+        (Guard
+             (
+               NONE,
+               [
+                 Term(3, "val"),
+                 s_Indicator,
+                 Guard
+                     (
+                       NONE,
+                       [
+                         Term(String_size name, name),
+                         s_Indicator,
+                         Term(1, "="),
+                         s_1_Indicator,
+                         valExp,
+                         s_1_Indicator,
+                         Term(2, ": "),
+                         tyExp
+                       ]
+                     )
+               ]
+             ))
+end;
 
 (*****************************************************************************)
 
@@ -254,11 +285,60 @@ fun valOf (SOME v) = v
 fun isSome (SOME _) = true | isSome NONE = false;
 
 (*****************************************************************************)
-
 (* for FFI *)
 
 type void = unit;
 val NULL = '_NULL';
+
+(*****************************************************************************)
+
+    datatype arch =
+             Alpha
+           | AMD64
+           | ARM
+           | HPPA
+           | IA64
+           | m68k
+           | MIPS
+           | PowerPC
+           | S390
+           | Sparc
+           | X86
+           | Unknown;
+
+fun '_format_arch' Alpha = Term(5, "Alpha")
+  | '_format_arch' AMD64 = Term(5, "AMD64")
+  | '_format_arch' ARM = Term(3, "ARM")
+  | '_format_arch' HPPA = Term(4, "HPPA")
+  | '_format_arch' IA64 = Term(4, "IA64")
+  | '_format_arch' m68k = Term(4, "m68k") 
+  | '_format_arch' MIPS = Term(4, "MIPS")
+  | '_format_arch' PowerPC = Term(7, "PowerPC")
+  | '_format_arch' S390 = Term(4, "S390")
+  | '_format_arch' Sparc = Term(5, "Sparc")
+  | '_format_arch' X86 = Term(4, "X86")
+  | '_format_arch' Unknown = Term(7, "Unknown");
+
+  datatype OS =
+           Cygwin
+         | Darwin
+         | FreeBSD
+         | Linux
+         | MinGW
+         | NetBSD
+         | OpenBSD
+         | Solaris
+         | Unknown;
+
+fun '_format_OS' Cygwin = Term(6, "Cygwin")
+  | '_format_OS' Darwin = Term(6, "Darwin")
+  | '_format_OS' FreeBSD = Term(7, "FreeBSD")
+  | '_format_OS' Linux = Term(5, "Linux") 
+  | '_format_OS' MinGW = Term(5, "MinGW")
+  | '_format_OS' NetBSD = Term(6, "NetBSD")
+  | '_format_OS' OpenBSD = Term(7, "OpenBSD")
+  | '_format_OS' Solaris = Term(7, "Solaris")
+  | '_format_OS' Unknown = Term(7, "Unknown");
 
 (*****************************************************************************)
 

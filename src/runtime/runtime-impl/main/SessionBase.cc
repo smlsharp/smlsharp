@@ -46,9 +46,7 @@ addExecutablePreProcessor(ExecutablePreProcessor* preProcessor)
 
 void
 SessionBase::linkAndExecute(Executable* executable)
-    throw(IMLRuntimeException,
-          UserException,
-          SystemError)
+    throw(IMLException)
 {
     for(PreProcessorList::iterator i = executablePreProcessors_.begin() ;
         i != executablePreProcessors_.end ();

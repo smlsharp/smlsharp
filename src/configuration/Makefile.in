@@ -31,4 +31,5 @@ $(srcdir)/Configuration.sml: Configuration.sml.in Makefile \
 	    -e "s,%BINDIR%,`$(MKSMLPATH) -sh '$(bindir)'`," \
 	    -e "s,%LIBDIR%,`$(MKSMLPATH) -sh '$(libdir_smlsharp)'`," \
 	    -e "s,%SNAPSHOT_DATE%,$$cvsid," \
+	    -e "s,%SMLSHARP_PLATFORM%,$(SMLSHARP_PLATFORM)," \
 	    $(srcdir)/Configuration.sml.in > $@

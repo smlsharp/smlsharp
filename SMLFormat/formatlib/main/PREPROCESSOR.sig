@@ -2,7 +2,7 @@
  *  This module translates FormatExpression.expression into
  * PrettyPrinter.symbol.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PREPROCESSOR.sig,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
+ * @version $Id: PREPROCESSOR.sig,v 1.3 2007/05/30 14:18:31 kiyoshiy Exp $
  *)
 signature PREPROCESSOR =
 sig
@@ -15,6 +15,13 @@ sig
    * @param message the error message
    *)
   exception Fail of string
+
+  (** the exception raised when the EndOfIndent with no matched
+   * FormatIndicator is found.
+   * @params message
+   * @param message the error message
+   *)
+  exception UnMatchEndOfIndent of string
 
   (***************************************************************************)
 

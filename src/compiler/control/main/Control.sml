@@ -2,10 +2,38 @@
  * switches to control compiler's behavior.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: Control.sml,v 1.34 2007/02/23 11:19:58 kiyoshiy Exp $
+ * @version $Id: Control.sml,v 1.45 2007/06/20 03:17:25 ohori Exp $
  *)
 structure Control = 
 struct
+
+  (****************************************)
+  (* switches to control conpilation pahse *)
+  val Elab      = 2
+  val FunOpt    = 3
+  val TVar      = 4
+  val TyInf     = 5
+  val LayoutOpt = 6
+  val Print     = 7
+  val Module    = 8
+  val MatchComp = 9
+  val Lambda    = 10
+  val Static    = 11
+  val Unbox     = 12
+  val RefElim   = 13
+  val DeadCode  = 14
+  val Cluster   = 15
+  val RBUComp   = 16
+  val Anormal   = 17
+  val SI        = 18
+  val SIOpt     = 19
+  val Assem     = 20
+  val Code      = 21
+  val Run       = 22
+
+  val doUntil = ref Run
+
+  fun doPhase current = current <=  !doUntil
 
   (***************************************************************************)
 
@@ -60,6 +88,9 @@ struct
   (****************************************)
   (* switches to control optimizations *)
 
+  (* list expression optimization *)
+  val doListExpressionOptimization = ref true
+
   (*
    * Ohori: Dec 17, 2006.
      This trun on the large FFI switch in VirtualMachine.cc
@@ -101,9 +132,26 @@ struct
    * if a brach size exceed this limit then a closure will be created
    * otherwise the expression is copied to every activation point.
    *)
-  val limitOfInlineCaseBranch = ref 10
+  val limitOfInlineCaseBranch = ref 15
 
   val doUncurryingOptimizeInMachCompile = ref true
+
+  val doRecordUnboxing = ref true
+
+  (** If true, the compiler will try to optimizing multiple value terms
+   *)
+  val doMultipleValueOptimization = ref true
+
+  val doCommonSubexpressionElimination = ref true
+
+  val doRepresentationAnalysis = ref true
+
+  (** If true, the compiler will try to remove all dead code
+   *  in MultipleValueCalc
+   *)
+  val doUselessCodeElimination = ref true
+
+  val doStackReallocation = ref true
 
   val pageSizeOfGlobalArray = ref 1024
 
@@ -114,8 +162,10 @@ struct
 
   val VMHeapSize = ref 4096000
 
+(*
   val VMStackSize = ref 4096000
-
+*)
+  val VMStackSize = ref 4096000
   (****************************************)
   (* internal switches for development *)
 
@@ -131,11 +181,15 @@ struct
   val printTFP = ref false
   val printRC = ref false
   val printTL = ref false
-  val printBUC = ref false
-  val printAN = ref false
-  val printLS = ref false
-  val printIS = ref false
-
+  val printAC = ref false
+  val printMV = ref false
+  val printCC = ref false
+  val printRBU = ref false
+  val printAN =  ref false
+  val printIL =  ref false
+  val printLS =  ref false
+  val printIS =  ref false
+  val printSR = ref false
   val checkType = ref true
 
   (** true if every diagnosis should be printed. *)
@@ -153,6 +207,10 @@ struct
   (** a string that SML# inserts at the head of output executable.
    *)
   val headerOfExecutable = ref ("#!" ^ Configuration.RuntimePath ^ "\n")
+
+  (* true if the compiler should skip the shebang line of the argument source
+   * file. *)
+  val skipShebang = ref true
 
   (****************************************)
 
@@ -185,10 +243,16 @@ struct
     ("doSymbolicInstructionsOptimization", BoolSwitch doSymbolicInstructionsOptimization),
     ("doConstantFolding", BoolSwitch doConstantFolding),
     ("doFunctionCallSpecialization", BoolSwitch doFunctionCallSpecialization),
+    ("doListExpressionOptimization", BoolSwitch doListExpressionOptimization),
     ("doSelfRecursiveCallOptimize", BoolSwitch doSelfRecursiveCallOptimize),
     ("doTailCallOptimize", BoolSwitch doTailCallOptimize),
     ("doUncurryOptimization", BoolSwitch doUncurryOptimization),
     ("doUncurryingOptimizeInMachCompile", BoolSwitch doUncurryingOptimizeInMachCompile),
+    ("doRecordUnboxing", BoolSwitch doRecordUnboxing),
+    ("doMultipleValueOptimization", BoolSwitch doMultipleValueOptimization),
+    ("doCommonSubexpressionElimination", BoolSwitch doCommonSubexpressionElimination),
+    ("doRepresentationAnalysis", BoolSwitch doRepresentationAnalysis),
+    ("doUselessCodeElimination", BoolSwitch doUselessCodeElimination),
     ("enableUnboxedFloat", BoolSwitch enableUnboxedFloat),
     ("generateDebugInfo", BoolSwitch generateDebugInfo),
     ("generateExnHistory", BoolSwitch generateExnHistory),
@@ -196,12 +260,18 @@ struct
     ("limitOfBlockFields", IntSwitch limitOfBlockFields),
     ("limitOfInlineCaseBranch", IntSwitch limitOfInlineCaseBranch),
     ("pageSizeOfGlobalArray", IntSwitch pageSizeOfGlobalArray),
+    ("printAC", BoolSwitch printAC),
+    ("printMV", BoolSwitch printMV),
+    ("printCC", BoolSwitch printCC),
+    ("printRBU", BoolSwitch printRBU),
     ("printAN", BoolSwitch printAN),
-    ("printBUC", BoolSwitch printBUC),
     ("printBinds", BoolSwitch printBinds),
     ("printDiagnosis", BoolSwitch printDiagnosis),
+    ("printIL", BoolSwitch printIL),
     ("printIS", BoolSwitch printIS),
     ("printLS", BoolSwitch printLS),
+    ("printSR", BoolSwitch printSR),
+    ("doStackReallocation", BoolSwitch doStackReallocation),
     ("printPL", BoolSwitch printPL),
     ("printRC", BoolSwitch printRC),
     ("printSource", BoolSwitch printSource),
@@ -213,6 +283,7 @@ struct
     ("printWidth", IntSwitch printWidth),
     ("runtimePath", StringSwitch runtimePath),
     ("skipPrinter", BoolSwitch skipPrinter),
+    ("skipShebang", BoolSwitch skipShebang),
     ("switchTrace", BoolSwitch switchTrace),
     ("traceFileLoad", BoolSwitch traceFileLoad),
     ("tracePrelude", BoolSwitch tracePrelude),

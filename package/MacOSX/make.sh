@@ -3,7 +3,7 @@
 set -e -x
 
 SMLSHARP_VERSION_MAJOR=0
-SMLSHARP_VERSION_MINOR=20
+SMLSHARP_VERSION_MINOR=30
 SMLSHARP_VERSION_TENNY=
 
 srcdir=../..
@@ -135,7 +135,9 @@ sudo chown -R root:wheel local
 
 rm -rf Resources
 mkdir Resources
-(cd Licenses && m4 LICENSE.html) > Resources/License.html
+(cd Licenses && m4 LICENSE.html) > LICENSE.html
+textutil -convert rtf LICENSE.html
+cp LICENSE.rtf Resources/License.rtf
 
 rm -f Info.plist
 sed -e "s,@SMLSHARP_VERSION@,$SMLSHARP_VERSION,g" \

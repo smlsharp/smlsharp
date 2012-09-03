@@ -1,4 +1,4 @@
-Library
+Group
         functor SubstringBase
         functor StringBase
         functor StringConverterBase

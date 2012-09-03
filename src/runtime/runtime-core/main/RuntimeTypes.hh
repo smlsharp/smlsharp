@@ -133,7 +133,7 @@ class RootTracer
      */
     virtual
     void trace(Cell*** roots, int count)
-        throw(IMLRuntimeException)
+        throw(IMLException)
         = 0;
 
     /**
@@ -148,7 +148,7 @@ class RootTracer
      */
     virtual
     void trace(Cell** roots, int count)
-        throw(IMLRuntimeException)
+        throw(IMLException)
         = 0;
 
     /**
@@ -163,7 +163,7 @@ class RootTracer
      */
     virtual
     Cell* trace(Cell* roots)
-        throw(IMLRuntimeException)
+        throw(IMLException)
         = 0;
 
 };
@@ -193,7 +193,7 @@ class RootSet
      */
     virtual
     void trace(RootTracer* tracer)
-        throw(IMLRuntimeException)
+        throw(IMLException)
         = 0;
 };
 

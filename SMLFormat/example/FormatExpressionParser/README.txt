@@ -23,7 +23,7 @@ Running.
   The formatted text representation of the expression you input will be
  printed.
 
- ->print "123" 1(2)["456" 1(3)["789"] "abc" 1(2)["def"]];
+ ->print "123" 2[ 1 "456" 3[ 1 "789"] "abc" 2[ 1 "def"]];
  123
    456
       789abc

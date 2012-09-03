@@ -19,11 +19,6 @@ class FileInputChannel
   private:
 
     /**
-     * the base file stream
-     */
-    FILE* stream_;
-
-    /**
      * file size in bytes
      */
     int fileLength_;

@@ -4,7 +4,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TypedFlatCalc.ppg,v 1.14 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TypedFlatCalc.ppg,v 1.18 2007/06/19 22:19:12 ohori Exp $
  *)
 structure TypedFlatCalc : TYPEDFLATCALC = struct
 
@@ -251,6 +251,7 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
 (*%
  * @params(btvEnv)
  *
+ * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
  * @formatter(formatConInfoNameType) Types.format_conInfoNameType
  * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
  * @formatter(formatConst) ConstantTerm.format_constant
@@ -323,10 +324,6 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
       *)
      TFPVAR of varIdInfo * loc
    | (*%
-      * @format(id * ty * loc) "getGlobal(" id ")"
-      *)
-     TFPGETGLOBAL of string * ty * loc
-   | (*%
       * @format(array * offset * elementtype * loc)
       * "arraySub(" array()(btvEnv) "," offset ")"
       *)
@@ -361,12 +358,12 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
      TFPOPRIMAPPLY of {oprimOp:oprimInfo, instances:ty list, argExpOpt:tfpexp option, loc:loc}
    | (*%
       * @format({con:con, instTyList:ty tys:formatListWithEnclosure, argExpOpt:exp opt, loc:loc}) 
-         R1{d {con !N0{tys(ty()(btvEnv))(",","{","}")} {opt(exp()(btvEnv))}}}
+         R1{d con  + opt(exp()(btvEnv))}
       *)
      TFPCONSTRUCT of {con:conInfo, instTyList:ty list, argExpOpt:tfpexp option,loc:loc}
    | (*%
-      * @format({funExp:exp1, funTy:ty, argExpList:exp2 exps, loc:loc})
-      * L10{ exp1()(btvEnv) ":" ty()(btvEnv) +d "{" exps(exp2()(btvEnv))(",") "}" }
+      * @format({funExp:exp1, funTy:ty, argExpList:exp2 exps:enclosedListIfMoreThanOne, loc:loc})
+      * L10{ exp1()(btvEnv) +d exps(exp2()(btvEnv))(","+, "{", "}") }
       *)
       (*
          ty is the type of the function
@@ -452,40 +449,27 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
         loc:loc
         }
    | (*%
-      * @format({argVarList:id:varInfoWithType ids, bodyTy:ty, bodyExp:exp, loc:loc}) 
-      * !N0{
-      *      "("
-      *         "fn" + "{" {ids(id()(btvEnv))(","+1)} "}" +d "=>"
-      *         4[
-      *            +1 {exp()(btvEnv)}
-      *            2[ +1 ":" ty()(btvEnv) ]
-      *          ]
-      *       ")"
-      *    }
-      *)
-      (*
-       * ty is the type of tpexp 
-      *)
+      * @format({argVarList:id ids:enclosedListIfMoreThanOne, bodyTy:ty, bodyExp:exp,loc:loc}) 
+           R1{ "(fn" + {ids(id()(btvEnv))(","+1,"{","}")}  
+                     2[ +1 "=>" {exp()(btvEnv)}]
+               ")" 
+	     }
+     *)
+    (*
+     * ty is the type of tpexp 
+     *)
      TFPFNM of {argVarList: varIdInfo list, bodyTy:ty, bodyExp:tfpexp, loc:loc}
    | (*%
       * @format({btvEnv:btvKind:btvKind imap,
-                 argVarList:var:varInfoWithType vars,
+                 argVarList:var vars:enclosedListIfMoreThanOne,
                  bodyTy:ty,
-                 bodyExp: exp,
-		loc:loc})
-      * {
-      *   "["
-      *       2[
-      *          1
-      *           imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +
-      *           !N0{
-      *                "fn" + "{" {vars(var()(imap:createBtvKindMap()(btvEnv)))(",")} "}" +d "=>"
-      *                4[ +1 {exp()(imap:createBtvKindMap()(btvEnv))} ]
-      *              }
-      *           2[ +1 ":" ty()(imap:createBtvKindMap()(btvEnv)) ]
-      *        ] 1 
-      *   "]"
-      * }
+                 bodyExp:exp,
+                 loc:loc})
+      *         {"[" 2[1  imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv)))  "." +
+                          !N0{"fn" + vars(var()(imap:createBtvKindMap()(btvEnv)))(",","{","}")
+			         2[+d "=>" +1 {exp()(imap:createBtvKindMap()(btvEnv))}]} 
+                       ] 1 
+                 "]"}
       *)
       (*
         \forall t.\fn x => e 
@@ -529,6 +513,16 @@ structure TypedFlatCalc : TYPEDFLATCALC = struct
      * }
      *)
      TFPSEQ of {expList:tfpexp list, expTyList:ty list, loc:loc}      (* this must be primitive *)
+  | (*%
+     * @format({expList:exp exps, listTy:ty, loc:loc})
+     * !N0{
+     *      "["
+     *          2[ 1 exps(exp()(btvEnv))("," +2) ] 1
+     *      "]" 
+     *      2[ +1 ":" ty()(btvEnv) ]
+     *    }
+     *)
+     TFPLIST of {expList:tfpexp list, listTy:ty, loc:loc}
   | (*%
      * @format(exp * ty * loc) "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
      *)

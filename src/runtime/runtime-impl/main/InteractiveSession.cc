@@ -1,5 +1,6 @@
 #include "InteractiveSession.hh"
 #include "ProtocolException.hh"
+#include "Constants.hh"
 #include "Debug.hh"
 #include "Log.hh"
 
@@ -8,19 +9,6 @@
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
 ///////////////////////////////////////////////////////////////////////////////
-
-#define MESSAGE_TYPE_INITIALIZATION_RESULT 0
-#define MESSAGE_TYPE_EXIT_REQUEST 1
-#define MESSAGE_TYPE_EXECUTION_REQUEST 2
-#define MESSAGE_TYPE_EXECUTION_RESULT 3
-#define MESSAGE_TYPE_OUTPUT_REQUEST 4
-#define MESSAGE_TYPE_OUTPUT_RESULT 5
-#define MESSAGE_TYPE_INPUT_REQUEST 6
-#define MESSAGE_TYPE_INPUT_RESULT 7
-#define MESSAGE_TYPE_CHANGE_DIRECTORY_REQUEST 8
-
-#define MAJOR_CODE_SUCCESS 0
-#define MAJOR_CODE_FAILURE 1
 
 #define MINOR_CODE_EXECUTION 1
 
@@ -193,9 +181,7 @@ InteractiveSession::sendOutputRequest(FileDescriptor descriptor,
 
 SInt32Value
 InteractiveSession::start()
-    throw(IMLRuntimeException,
-          UserException,
-          SystemError)
+    throw(IMLException)
 {
     Result successResult(MAJOR_CODE_SUCCESS);
 
@@ -237,6 +223,19 @@ InteractiveSession::start()
                                    BOOLVALUE_FALSE);
                     DBGWRAP(LOG.error(what));
                     sendExecutionResult(&failure);
+                }
+                catch(SystemError &exception)
+                {
+                    const char* what = exception.what();
+                    DBGWRAP(LOG.error("fatal error:%s", what));
+                    Result failure(MAJOR_CODE_FATAL,
+                                   MINOR_CODE_EXECUTION, // ToDo : 
+                                   strlen(what),
+                                   what,
+                                   BOOLVALUE_FALSE);
+                    DBGWRAP(LOG.error(what));
+                    sendExecutionResult(&failure);
+                    ::exit(MAJOR_CODE_FATAL); // FIXME: we can exit here ?
                 }
                 fflush(stdout);
                 fflush(stderr);

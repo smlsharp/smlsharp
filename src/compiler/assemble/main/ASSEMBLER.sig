@@ -30,7 +30,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ASSEMBLER.sig,v 1.8 2006/02/28 16:10:59 kiyoshiy Exp $
+ * @version $Id: ASSEMBLER.sig,v 1.9 2007/04/19 05:06:52 ducnh Exp $
  *)
 signature ASSEMBLER =
 sig
@@ -48,13 +48,7 @@ sig
    * @return a list of raw instructions
    *)
   val assemble :
-      {
-        (** main function name *)
-         mainFunctionName : SymbolicInstructions.varid,
-        (** function code list *)
-         functions : SymbolicInstructions.functionCode list
-      }
-      -> Executable.executable
+      SymbolicInstructions.clusterCode list -> Executable.executable
 
   (***************************************************************************)
 

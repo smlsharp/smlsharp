@@ -2,7 +2,7 @@
  * pickler for data types declared in types module.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: TypesPickler.sml,v 1.21 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TypesPickler.sml,v 1.22 2007/05/15 06:14:02 kiyoshiy Exp $
  *)
 structure TypesPickler 
   : sig
@@ -54,6 +54,8 @@ structure TypesPickler
       val valIdent : Types.valIdent Pickle.pu
 
       val fixity : Fixity.fixity Pickle.pu
+
+      val moduleState : Types.moduleState Pickle.pu
 
     end =
 struct
@@ -790,6 +792,14 @@ struct
       in
         P.data (toInt, [pu_INFIX, pu_INFIXR, pu_NONFIX])
       end
+
+  val moduleState =
+      P.tuple3
+          (
+            NamePickler.sequence,
+            NamePickler.sequence,
+            NamePickler.sequence
+          )
 
   (***************************************************************************)
 

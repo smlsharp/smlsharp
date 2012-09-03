@@ -1,4 +1,4 @@
-use "mandelbrot.sml";
+use "./mandelbrot.sml";
 
 Main.doit ();
 print "Done";

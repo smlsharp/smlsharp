@@ -2,7 +2,7 @@
  * Module compiler flattens structure.
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: utils.sml,v 1.11 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: utils.sml,v 1.12 2007/06/19 22:19:12 ohori Exp $
  *)
 structure VALREC_Utils =
 struct
@@ -234,6 +234,7 @@ in
             (getFreeIdsInExp globalContext context exp)
             elementList
       | PLTUPLE (elementList, loc) => getFreeIdsInExpList globalContext context elementList
+      | PLLIST (elementList, loc) => getFreeIdsInExpList globalContext context elementList
       | PLRAISE (exp,loc) => getFreeIdsInExp globalContext context exp
       | PLHANDLE (handler,matchList, loc) =>
         foldl 

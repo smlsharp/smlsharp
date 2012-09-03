@@ -7,13 +7,13 @@ The following softwares are required to build and install SML#:
 
   * GNU C compiler (version 3.4.0 or higher)
   * GNU make or BSD make
-  * Standard ML of New Jersey (version 110.0.7 or 110.60)
+  * Standard ML of New Jersey (version 110.0.7 or 110.6x)
 
 The following modules are required to build, but they are in the
 same package.
 
-  * SMLFormat
-  * basis_compat
+  * SMLFormat (bundled)
+  * basis_compat (bundled)
 
 To obtain native executable files of SML#, the following software
 is additionally required.
@@ -23,7 +23,7 @@ is additionally required.
 The following tools are required to build documents, but they are
 not required to build compiler and runtime.
 
-  * SMLDoc
+  * SMLDoc (bundled)
   * doxygen
 
 == Quick Start
@@ -51,6 +51,7 @@ Things are installed in those locations:
 
   <PREFIX>/bin/smlsharp          SML# compiler
   <PREFIX>/bin/smlsharprun       SML# runtime
+  <PREFIX>/bin/smlsharp2exe.sh   Standalone executable maker
   <PREFIX>/lib/smlsharp/         Directory for libraries of SML#
 
 

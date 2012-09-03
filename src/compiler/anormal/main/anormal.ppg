@@ -2,17 +2,25 @@
  * A-Normal form.
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: anormal.ppg,v 1.27 2007/02/22 08:13:41 katsu Exp $ 
+ * @version $Id: ANormal.ppg,v 1.3 2007/06/19 22:19:11 ohori Exp $ 
  *)
 
 structure ANormal = struct
 
+  structure BT = BasicTypes
   type loc = Loc.loc
 
   (*%
-   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+   * @formatter(Absyn.callingConvenvtion) Absyn.format_callingConvenvtion
    *)
   type callingConvention = Absyn.callingConvention
+
+  fun formatLabel id =
+      let
+        val s = "L" ^ ID.toString id
+      in
+        SMLFormat.BasicFormatters.format_string s
+      end
 
   (*%
    * @formatter(idFormat) ID.format_id
@@ -26,7 +34,7 @@ structure ANormal = struct
   (*% *)
   type tyvarId = 
        (*%
-        * @format(id) "t" id
+        * @format(id) id
         *)
        int
 
@@ -45,9 +53,17 @@ structure ANormal = struct
 	    *)
            DOUBLE
          | (*%
-	    * @format(tyId) tyId
+	    * @format(tyId) "G" tyId
 	    *)
-           TYVAR of tyvarId 
+           GENERIC of tyvarId 
+         | (*%
+	    * @format(tyId) "S" tyId
+	    *)
+           SINGLE of tyvarId
+         | (*%
+	    * @format(tyId) "U" tyId
+	    *)
+           UNBOXED of tyvarId
     
   (*% 
    *  @params(id)
@@ -65,188 +81,42 @@ structure ANormal = struct
   (*% *)
   type varInfo = 
        (*%
-        * @format({id, displayName, ty, varKind})  varKind()(id)
+        * @format({id, displayName, ty, varKind})  varKind()(displayName)
         *)
        {id:id, displayName:string, ty:ty, varKind:varKind}
 
   (*% *)
   type varInfoWithType = 
        (*%
-        * @format({id, displayName, ty, varKind})  varKind()(id) + ":" + ty
+        * @format({id, displayName, ty, varKind})  varKind()(displayName) + ":" + ty
         *)
        {id:id, displayName:string, ty:ty, varKind:varKind}
 
   (*% *)
   type varInfoWithoutKind = 
        (*%
-        * @format({id, displayName, ty, varKind})  id
+        * @format({id, displayName, ty, varKind})  displayName
         *)
        {id:id, displayName:string, ty:ty, varKind:varKind}
        
-  (*% *)
-  type primInfo =
-       (*%
-        * @format({name,ty}) name
-        *)
-       {name:string, ty:ty}
-
-  (*%
-   * @formatter(ConstantTerm.constant) ConstantTerm.format_constant
-   *)
   datatype constant = datatype ConstantTerm.constant
 
+
   (*%
-   *
+   * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
    * @formatter(formatConst) ConstantTerm.format_constant
    * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
-   * @formatter(Word32.word) SmlppgUtil.format_word32
-   * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+   * @formatter(BT.UInt32) BasicTypeFormatters.format_UInt32
+   * @formatter(formatVarInfoWithType) format_varInfoWithType
+   * @formatter(formatLabel) formatLabel
    *)
   datatype anexp =
-	   (*%
-      	    * @format({value:const:formatConst, loc}) const
-      	    *)
-	   ANCONSTANT of {value :constant, loc : loc}
-
-         | (*% 
-            * @format({varInfo:id:varInfo, loc}) id 
-	    *)	 
-	   ANVAR of {varInfo : varInfo, loc : loc}
-
-         | (*% 
-            * @format({nestLevel, offset, loc}) "env[" nestLevel "," offset "]" 
-	    *)	 
-	   ANENVACC of 
-             {
-              nestLevel : Word32.word, 
-              offset : Word32.word, 
-              loc : loc
-             }
-
-         | (*% 
-            * @format({nestLevel, indirectOffset, loc}) "env_ind[" nestLevel "," indirectOffset "]" 
-	    *)	 
-	   ANENVACCINDIRECT of 
-             {
-              nestLevel : Word32.word, 
-              indirectOffset : Word32.word, 
-              loc : loc
-             }
-
-         | (*%
-            * @format({
-            *          arrayIndex:index:formatUInt32, 
-            *          offset:offset:formatUInt32, 
-            *          loc
-            *         }) 
-            * "GetGlobalValue(" index "," offset ")"
-            *)
-            ANGETGLOBALVALUE of 
-              {
-               arrayIndex : BasicTypes.UInt32, 
-               offset : BasicTypes.UInt32, 
-               loc: loc
-              }
-            
-         | (*%
-            * @format({arrayIndex:index:formatUInt32,offset:offset:formatUInt32,valueExp:exp,loc}) 
-            * "SetGlobalValue((" index "," offset ") = " exp ")"  
-            *)
-           ANSETGLOBALVALUE of 
-             {
-              arrayIndex : BasicTypes.UInt32, 
-              offset : BasicTypes.UInt32, 
-              valueExp: anexp, 
-              loc :loc
-             }
-
-         | (*%
-            * @format({arrayIndex:index:formatUInt32,size:size:formatUInt32,loc}) 
-            * "InitialArrayUnboxed(" index "," size ")"
-            *)
-           ANINITARRAYUNBOXED of 
-             {
-              arrayIndex : BasicTypes.UInt32, 
-              size : BasicTypes.UInt32, 
-              loc:loc
-             }
-
-         | (*%
-            * @format({arrayIndex:index:formatUInt32,size:size:formatUInt32,loc}) 
-            * "InitialArrayBoxed(" index "," size ")"
-            *)
-           ANINITARRAYBOXED of 
-             {
-              arrayIndex : BasicTypes.UInt32, 
-              size : BasicTypes.UInt32, 
-              loc:loc
-             }
-
-         | (*%
-            * @format({arrayIndex:index:formatUInt32,size:size:formatUInt32,loc}) 
-            * "InitialArrayDouble(" index "," size ")"
-            *)
-           ANINITARRAYDOUBLE of 
-             {
-              arrayIndex : BasicTypes.UInt32, 
-              size : BasicTypes.UInt32, 
-              loc:loc
-             }
-
-         | (*%
-            * @format({
-            *          primOp : prim,
-            *          argExpList :exp exps:formatListWithEnclosure,
-            *          loc
-            *         })
-            * {prim {exps(exp)(",","(",")")}}
-            *)
-           ANPRIMAPPLY of 
-             {
-              primOp : primInfo, 
-              argExpList : anexp list, 
-              loc : loc
-             }
-
-         | (*%
-            * @format({
-            *          primOp : prim,
-            *          argValue1,
-            *          argExp2,
-            *          loc
-            *         })
-            * {prim "(" argValue1 "," argExp2 ")"}
-            *)
-           ANPRIMAPPLY_1 of 
-             {
-              primOp : primInfo, 
-              argValue1 : constant,
-              argExp2 : anexp,
-              loc : loc
-             }
-
-         | (*%
-            * @format({
-            *          primOp : prim,
-            *          argExp1,
-            *          argValue2,
-            *          loc
-            *         })
-            * {prim "(" argExp1 "," argValue2 ")"}
-            *)
-           ANPRIMAPPLY_2 of 
-             {
-              primOp : primInfo, 
-              argExp1 : anexp,
-              argValue2 : constant,
-              loc : loc
-             }
-
-         | (*%
+           (*%
             * @format({
             *          funExp,
             *          argExpList : exp exps:formatListWithEnclosure,
             *          argTyList : ty tys:formatListWithEnclosure,
+            *          argSizeExpList,
             *          convention,
             *          loc
             *         })
@@ -259,261 +129,409 @@ structure ANormal = struct
             *   }
             *)
            ANFOREIGNAPPLY of 
-             {
-              funExp : anexp,
-              argExpList : anexp list,
-              argTyList : ty list,
-              convention : callingConvention,
-              loc : loc
-             }
-
+           {
+            funExp : anexp,
+            argExpList : anexp list,
+            argTyList : ty list,
+            argSizeExpList : anexp list,
+            convention : callingConvention,
+            loc : loc
+           }
          | (*%
             * @format({funExp,
-            *          argTyList: argTy argTys:formatListWithEnclosure, resultTy,
+            *          argSizeExpList,
+            *          resultSizeExpList,
             *          loc})
             * L10{ "CALLBACK(" funExp
-            *       +1 ":" + {argTys(argTy)(","+2,"{","}") +2
-            *         "->" +2 resultTy}
             * ")" }
             *)
            ANEXPORTCALLBACK of 
-             {
-               funExp : anexp,
-	       argTyList : ty list,
-	       resultTy : ty,
-               loc: loc
-             }
-
+           {
+            funExp : anexp,
+	    argSizeExpList : anexp list,
+	    resultSizeExpList : anexp list,
+            loc: loc
+           }
          | (*%
-            * @format({funExp, argExpList:exp exps, argSizeList: size sizes, loc}) 
-            *   "Apply(" funExp "," + exps(exp)(",") ")"
+      	    * @format({value:value:formatConst, loc}) value
+      	    *)
+	   ANCONSTANT of {value :constant, loc : loc}
+         | (*%
+            * @format({tagValue,loc}) tagValue
             *)
-           ANAPPLY of 
-             {
-              funExp : anexp, 
-              argExpList : anexp list, 
-              argSizeList : anexp list,
-              loc : loc
-             }
-
+           ANEXCEPTIONTAG of {tagValue : BT.UInt32, loc : loc}
+         | (*% 
+            * @format({varInfo, loc}) varInfo 
+	    *)	 
+	   ANVAR of {varInfo : varInfo, loc : loc}
+         | (*% 
+            * @format({nestLevel, offset, loc}) "env[" nestLevel "," offset "]" 
+	    *)	 
+	   ANENVACC of 
+           {
+            nestLevel : BT.UInt32, 
+            offset : BT.UInt32, 
+            loc : loc
+           }
          | (*%
-            * @format({funLabel, envExp, argExpList : exp exps, argSizeList: size sizes, loc}) 
-            * "Call(" funLabel "," + envExp + "," + exps(exp)(",") ")"
+            * @format({codeId:codeId:formatLabel, loc}) codeId
             *)
-           ANCALL of 
-             {
-              funLabel : id,
-              envExp : anexp,
-              argExpList : anexp list, 
-              argSizeList : anexp list,
-              loc : loc
-             }
-
+           ANLABEL of {codeId : id, loc : loc}
          | (*%
-            * @format({
-            *          bitmapExp : bitmap,
-            *          totalSizeExp : totalsize,
-            *          fieldList : exp record,
-            *          fieldSizeList : size sizes,
-            *          loc
-            *         })
-            *  "(bitmap=" bitmap ";size=" totalsize ";(" + record(exp)(","+) ");(" + sizes(size)(","+) "))"
+            * @format({arrayIndex, valueOffset, loc}) 
+            * "Global[" arrayIndex "," valueOffset "]"
             *)
-           ANRECORD of 
-             {
-              bitmapExp : anexp,
-              totalSizeExp : anexp,
-              fieldList : anexp list,
-              fieldSizeList : anexp list,
-              loc : loc
-             }
-
+           ANGETGLOBAL of 
+           {
+            arrayIndex : BT.UInt32, 
+            valueOffset : BT.UInt32, 
+            loc: loc
+           }
          | (*%
-            * @format({bitmapExp, sizeExp, initialValue, loc}) 
-                     "array[bitmap=" bitmapExp ",size=" sizeExp " of " initialValue "]"
+            * @format({arrayIndex, valueOffset, valueExp, valueTy, valueSize, loc}) 
+            * "Global[" arrayIndex "," valueOffset "] = " valueExp ")"  
             *)
-           ANARRAY of 
-             {
-              bitmapExp : anexp,
-              sizeExp : anexp,
-              initialValue : anexp,
-              loc : loc
-             }
-
+           ANSETGLOBAL of 
+           {
+            arrayIndex : BT.UInt32, 
+            valueOffset : BT.UInt32, 
+            valueExp: anexp, 
+            valueTy : ty,
+            valueSize : BT.UInt32,
+            loc :loc
+           }
          | (*%
-	    * @format({recordExp, nestLevel, offset, elementExp, loc})
-            * recordExp "[(" nestLevel "," offset ") = " elementExp "]"
-	    *)
-           ANMODIFY of 
-             {
-              recordExp : anexp,
-              nestLevel : anexp,
-              offset : anexp,
-              elementExp : anexp,
-              loc : loc
-             }
-
-         | (*%
-	    * @format({exceptionExp, loc}) "raise" + exceptionExp
-	    *)
-           ANRAISE of {exceptionExp : anexp, loc : loc}
-
-         | (*%
-	    * @format({mainExp, exnVar, handler, loc})
-                     2["handle" 1 N0{mainExp}] +1 "with letexp" + exnVar + "in" + 2[1 handler]
-	    *)
-           ANHANDLE of 
-             {
-              mainExp : anexp,
-              exnVar : varInfo,
-              handler :  anexp,
-              loc : loc
-             }
-
-         | (*%
-            * @format({funLabel, env, loc }) "Closure(" funLabel "," env ")"
+            * @format({arrayIndex, arraySize, elementTy, loc}) 
+            * "GlobalArray(" arrayIndex ") = " elementTy "[" arraySize "]"
             *)
-	   ANCLOSURE of {funLabel : id, env : anexp, loc : loc}
-
+           ANINITARRAY of 
+           {
+            arrayIndex : BT.UInt32, 
+            arraySize : BT.UInt32,
+            elementTy : ty,
+            loc:loc
+           }
          | (*%
-            * @format({switchExp, branches : rule rules, defaultExp, loc})
-                     {"switch" + switchExp 
-		                     1 "of" + rules(rule)(+1 " | ")
-                      +1 " | _ =>"  + {defaultExp} }
-            * @format:rule(con * exp) con + "=>" + {exp}
-	    *)
-           ANSWITCH of 
-             {
-              switchExp : anexp,
-              branches : (constant * anexp) list,
-              defaultExp : anexp,
-              loc : loc
-             }
-
-         | (*%
-            * @format({boundVar:id:varInfoWithType, boundExp, mainExp, loc})
-                     "let" + id + "=" 2[ +d boundExp ] +  "in" +1  
-                                                                    mainExp
-            *)
-           ANLET of 
-             {
-              boundVar : varInfo, 
-              boundExp : anexp, 
-              mainExp : anexp, 
-              loc : loc
-             }
-
-         | (*%
-            * @format({funLabel, funInfo, funBody, mainExp, loc})
-                   "label" + funLabel + "=" 
-		     2[1
-		       {"{"
-		         2[1
-                           funInfo
-			   "code = " {funBody}
-			   ]
-			1 "}"+}
-		       ] 1 "in" 
-		   1  mainExp
-            *)
-           ANLETLABEL of 
-             {
-              funLabel : id, 
-              funInfo : funInfo, 
-              funBody : anexp,
-              mainExp : anexp,
-              loc : loc
-             }
-
-         | (*%
-	    * @format({recbindList : bind binds, mainExp, loc})
-	    *  "let" + {"rec" + binds(bind)(+1 "and" +)} +1 "in" 1 mainExp
-	    * @format:bind({funLabel, funInfo, body}) 
-	      funLabel + "=" 
-	        2[1
-		  {"{"
-		    2[1
-		      funInfo
-		      "code = " 2[1 body]] 1
-		     "}"+
-                   }
-		 ] 
-	    *)
-           ANVALREC of 
-             {
-              recbindList : {funLabel : id, funInfo : funInfo, body : anexp} list,
-              mainExp : anexp,
-              loc : loc
-             }
-
-         | (*%
-            * @format({funLabel, argExpList : exp exps, argSizeList : size sizes, loc}) 
-            * "RecCall" +d {"("  funLabel "," {exps(exp)(",")} ")"}
-            *)
-           ANRECCALL of 
-             {
-              funLabel : id, 
-              argExpList : anexp list, 
-              argSizeList : anexp list,
-              loc : loc
-             }
-
-         | (*%
-	    * @format({funLabel, loc}) "RecClosure(" + funLabel ")"
-	    *)
-           ANRECCLOSURE of {funLabel :id, loc : loc}
-
-         | (*%
-	    * @format(loc) "Return"
-	    *)
-           ANEXIT of loc
-
-         | (*%
-            * @format({blockExp, nestLevel, offset, loc}) blockExp "[" nestLevel "," offset "]"
+            * @format({arrayExp, offsetExp, loc})
+            * arrayExp "[" offsetExp "]"
             *)
            ANGETFIELD of 
-             {
-              blockExp : anexp,
-              nestLevel : anexp,
-              offset : anexp,
-              loc : loc
-             }
-
+           {
+            arrayExp : anexp, 
+            offsetExp : anexp,
+            loc : loc
+           }
          | (*%
-            * @format({blockExp, nestLevel, offset, valueExp, loc})  
-	           "SetField" + blockExp "[" nestLevel "," offset "]" "=" valueExp 
+            * @format({arrayExp, offsetExp,valueExp,valueTy,valueSizeExp, loc})  
+            * arrayExp "[" offsetExp "]="  valueExp
             *)
            ANSETFIELD of 
-             {
-              blockExp : anexp,
-              nestLevel : anexp,
-              offset : anexp,
-              valueExp : anexp,
-              loc : loc
-             }
-
-  withtype funInfo =
-           (*% 
-	    * @format({tyvars:tyvar tyvars, 
-                       bitmapFree,
-                       tagArgs: tagArg tagArgs, 
-                       sizevals:size sizes,
-                       args:var:varInfoWithType vars, 
-                       resultTy}) 
-	             "tyvars = (" tyvars(tyvar)(","+) ")," +1
-                     "bitmapFree = " bitmapFree "," +1
-	             "tagArgs = (" tagArgs(tagArg)(","+) ")," +1
-	             "sizevals = (" sizes(size)(","+) ")," +1
-                     "args = (" vars(var)(","+) ")," +1
-                     "resultTy = " resultTy  "," +1
-	    *)
            {
-            tyvars:tyvarId list,
-            bitmapFree: anexp,
-	    tagArgs: anexp list,
-            sizevals: anexp list,
-	    args:varInfo list,
-	    resultTy: ty
-	   } 
+            arrayExp : anexp,
+            offsetExp : anexp,
+            valueExp : anexp, 
+            valueTy : ty,
+            valueSizeExp : anexp,
+            loc: loc
+           }
+         | (*%
+            * @format({consExp, newTailExp, offsetExp, nestLevelExp, loc})  
+            * "SetTail" consExp "[" nestLevelExp "/" offsetExp "]="  newTailExp
+            *)
+           ANSETTAIL of 
+           {
+            consExp : anexp,
+	    newTailExp : anexp,
+            offsetExp : anexp,
+            nestLevelExp : anexp,
+            loc: loc
+           }
+         | (*%
+            * @format({bitmapExp, sizeExp, initialValue, elementTy, elementSizeExp, loc}) 
+            *   "Array[bitmap=" bitmapExp ",size=" sizeExp " of " initialValue "]"
+            *)
+           ANARRAY of 
+           {
+            bitmapExp : anexp,
+            sizeExp : anexp,
+            initialValue : anexp,
+            elementTy : ty,
+            elementSizeExp : anexp,
+            loc : loc
+           }
+         | (*%
+            * @format({
+            *          primName,
+            *          argExpList :exp exps:formatListWithEnclosure,
+            *          argTyList,
+            *          argSizeExpList,
+            *          loc
+            *         })
+            * {primName {exps(exp)(",","(",")")}}
+            *)
+           ANPRIMAPPLY of 
+           {
+            primName : string, 
+            argExpList : anexp list, 
+            argTyList : ty list,
+            argSizeExpList : anexp list,
+            loc : loc
+           }
+         | (*%
+            * @format({funExp, argExpList:exp exps, argSizeExpList, argTyList, loc}) 
+            *   "Apply(" funExp ";" + exps(exp)(",") ")"
+            *)
+           ANAPPLY of 
+           {
+            funExp : anexp, 
+            argExpList : anexp list, 
+            argTyList : ty list,
+            argSizeExpList : anexp list,
+            loc : loc
+           }
+         | (*%
+            * @format({funLabel, envExp, argExpList : exp exps, argSizeExpList, argTyList, loc}) 
+            * "Call(" funLabel ";" + envExp + ";" + exps(exp)(",") ")"
+            *)
+           ANCALL of 
+           {
+            funLabel : anexp,
+            envExp : anexp,
+            argExpList : anexp list, 
+            argSizeExpList : anexp list,
+            argTyList : ty list,
+            loc : loc
+           }
+         | (*%
+            * @format({codeExp, argExpList : exp exps, argSizeExpList, argTyList, loc}) 
+            * "RecCall(" codeExp ";" + exps(exp)(",") ")"
+            *)
+           ANRECCALL of 
+           {
+            codeExp : anexp,
+            argExpList : anexp list, 
+            argSizeExpList : anexp list,
+            argTyList : ty list,
+            loc : loc
+           }
+         | (*%
+            * @format({codeExp, argExpList : exp exps, argSizeExpList, argTyList, loc}) 
+            * "InnerCall(" codeExp ";" + exps(exp)(",") ")"
+            *)
+           ANINNERCALL of 
+           {
+            codeExp : anexp,
+            argExpList : anexp list, 
+            argSizeExpList : anexp list,
+            argTyList : ty list,
+            loc : loc
+           }
+         | (*%
+            * @format({localDeclList : dec decs, mainExp, loc})
+            *     !N0{ {"let" 2[ +1 decs(dec)( +1) ]}  +1
+            *          {"in" 2[ +2 mainExp ] +2
+            *           "end"} }
+            *)
+           ANLET of 
+           {
+            localDeclList : andecl list,
+            mainExp : anexp,
+            loc : loc
+           }
+         | (*%
+            * @format({expList:field fields:enclosedListIfMoreThanOne, tyList, sizeExpList, loc}) 
+            *      fields(field)(","+,"{","}")
+            *)
+           ANMVALUES of {expList : anexp list, tyList : ty list, sizeExpList : anexp list, loc : loc}
+         | (*%
+            * @format({
+            *          bitmapExp,
+            *          totalSizeExp,
+            *          fieldList : exp record,
+            *          fieldSizeExpList,
+            *          fieldTyList,
+	    *          isMutable,
+            *          loc
+            *         })
+            *  "Record(bitmap=" bitmapExp ";size=" totalSizeExp ";" record(exp)(","+) ")"
+            *)
+           ANRECORD of 
+           {
+	    isMutable : bool,
+            bitmapExp : anexp,
+            totalSizeExp : anexp,
+            fieldList : anexp list,
+            fieldSizeExpList : anexp list,
+            fieldTyList : ty list,
+            loc : loc
+           }
+         | (*%
+            * @format({
+            *          bitmapExp,
+            *          totalSize,
+            *          fieldList : exp record,
+            *          fieldSizeExpList,
+            *          fieldTyList,
+            *          fixedSizeList,
+            *          loc
+            *         })
+            *  "EnvRecord(bitmap=" bitmapExp ";size=" totalSize ";" record(exp)(","+) ")"
+            *)
+           ANENVRECORD of 
+           {
+            bitmapExp : anexp,
+            totalSize : BT.UInt32,
+            fieldList : anexp list,
+            fieldSizeExpList : anexp list,
+            fieldTyList : ty list,
+            fixedSizeList : BT.UInt32 list,
+            loc : loc
+           }
+         | (*%
+            * @format({recordExp, nestLevelExp, offsetExp, loc})
+            * recordExp "[" nestLevelExp "/" offsetExp "]"
+            *)
+           ANSELECT of 
+           {
+            recordExp : anexp, 
+            nestLevelExp : anexp,
+            offsetExp : anexp,
+            loc : loc
+           }
+         | (*%
+            * @format({codeExp, envExp, loc }) "Closure(" codeExp "," envExp ")"
+            *)
+	   ANCLOSURE of {codeExp : anexp, envExp : anexp, loc : loc}
+         | (*%
+            * @format({codeExp, loc }) "RecClosure(" codeExp")"
+            *)
+	   ANRECCLOSURE of {codeExp : anexp, loc : loc}
+         | (*%
+	    * @format({recordExp, nestLevelExp, offsetExp, valueExp, valueTy, valueSizeExp, loc})
+            * recordExp "[(" nestLevelExp "," offsetExp ") = " valueExp "]"
+	    *)
+           ANMODIFY of 
+           {
+            recordExp : anexp,
+            nestLevelExp : anexp,
+            offsetExp : anexp,
+            valueExp : anexp,
+            valueTy : ty,
+            valueSizeExp : anexp,
+            loc : loc
+           }
+         | (*%
+	    * @format({argExp, loc}) "raise" + argExp
+	    *)
+           ANRAISE of {argExp : anexp, loc : loc}
+         | (*%
+	    * @format({exp, exnVar, handler, loc})
+                     2["handle" 1 N0{exp}] +1 "with letexp" + exnVar + "in" + 2[1 handler]
+	    *)
+           ANHANDLE of 
+           {
+            exp : anexp,
+            exnVar : varInfo,
+            handler :  anexp,
+            loc : loc
+           }
+         | (*%
+            * @format({switchExp, expTy, branches : rule rules, defaultExp, loc})
+            *         {"switch" + switchExp 
+            *             1 "of" + rules(rule)(+1 " | ")
+                      +1 " | _ =>"  + {defaultExp} }
+            * @format:rule({constant:constant:formatConst,exp}) constant + "=>" + {exp}
+	    *)
+           ANSWITCH of 
+           {
+            switchExp : anexp,
+            expTy : ty,
+            branches : {constant : constant, exp : anexp} list,
+            defaultExp : anexp,
+            loc : loc
+           }
+         | (*%
+            * @format (loc) "Exit"
+            *)
+           ANEXIT of loc 
+           
+       and andecl = 
+           (*%
+            * @format({boundVarList:var vars, sizeExpList, boundExp,loc})  
+            *  2[
+            *   "val" 
+            *   + 
+            *   vars:enclosedListIfMoreThanOne(var:formatVarInfoWithType)(",","{","}") +d "=" +1 {boundExp}
+            *   ]
+            *)
+           ANVAL of 
+           {
+            boundVarList : varInfo list,
+            sizeExpList : anexp list,
+            boundExp : anexp,
+            loc : loc
+           }
+         | (*%
+            * @format({
+            *          frameInfo, 
+            *          entryFunctions: entry entries:formatListWithEnclosure, 
+            *          innerFunctions: inner inners:formatListWithEnclosure, 
+            *          isRecursive,
+            *          loc
+            *         })
+            *  2[
+            *    "cluster" + 
+            *    frameInfo +
+            *    entries(entry)(~2[ +1 "and"] +, ~2[+1 "with entries"] +, "")
+            *    + 
+            *    inners(inner)(~2[ +1 "and"] +, ~2[+1 "with inners"] +, "")
+            *   ]
+            *)
+           ANCLUSTER of
+           {
+            frameInfo : frameInfo,
+            entryFunctions : funDecl list,
+            innerFunctions : funDecl list,
+            isRecursive : bool,
+            loc : loc
+           }
+
+  withtype funDecl =
+           (*%
+            * @format({
+            *          codeId:codeId:formatLabel, 
+            *          argVarList: arg args:enclosedListIfMoreThanOne, 
+            *          argSizeExpList,
+            *          bodyExp, 
+            *          resultTyList,
+            *          resultSizeExpList
+            *         })
+            *     codeId +d "=" +1
+            *     R1{ 
+            *        "fn" + {args(arg:formatVarInfoWithType)(","+, "{", "}") + "=>" }
+            *         2[ +1 {bodyExp}]
+            *      }
+            *) 
+           {
+            codeId : id, 
+            argVarList : varInfo list, 
+            argSizeExpList : anexp list,
+            bodyExp : anexp,
+            resultTyList : ty list,
+            resultSizeExpList : anexp list
+           }
+
+       and frameInfo =
+           (*%
+            * @format({tyvars:tid tids:formatListWithEnclosure,bitmapFree,tagArgList:tag tags:formatListWithEnclosure})
+            *  { "{"
+            *     1[+1 "tyvars=" tids(tid)(",","[","]") "," +1 "bitmapFree=" bitmapFree "," +1 "tagArgs=" tags(tag)(",","[","]")]
+            *  +1 "}"}
+            *)
+           {
+            tyvars : tyvarId list,
+            bitmapFree : anexp,
+            tagArgList : anexp list
+           }
 
 end

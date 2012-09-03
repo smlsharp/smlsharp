@@ -14,6 +14,9 @@ type arg = {
   newline : string ref,
   guardLeft : string ref,
   guardRight : string ref,
+  maxDepthOfGuards : int option ref,
+  maxWidthOfGuards : int option ref,
+  cutOverTail : bool ref,
 
   comLevel : int ref,
   doFirstLinePrompt : bool ref,
@@ -59,6 +62,9 @@ fun dec (ri as ref i) = (ri := i-1)
   newline,
   guardLeft,
   guardRight,
+  maxDepthOfGuards,
+  maxWidthOfGuards,
+  cutOverTail,
 
   comLevel,
   doFirstLinePrompt,
@@ -79,6 +85,9 @@ fun dec (ri as ref i) = (ri := i-1)
   newline : string ref,
   guardLeft : string ref,
   guardRight : string ref,
+  maxDepthOfGuards : int option ref,
+  maxWidthOfGuards : int option ref,
+  cutOverTail : bool ref,
 
   comLevel : int ref,
   doFirstLinePrompt : bool ref,

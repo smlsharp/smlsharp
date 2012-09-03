@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: Executable.sml,v 1.5 2007/01/13 03:35:00 kiyoshiy Exp $
+ * @version $Id: Executable.sml,v 1.6 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure Executable : EXECUTABLE =
 struct
@@ -80,15 +80,15 @@ struct
        } : nameSlotTable
 
   local
-    fun toDecString uint32 = Int.toString(UInt32.toInt uint32)
+    fun toDecString uint32 = Int.toString(BT.UInt32.toInt uint32)
     fun UInt8ListToString bytes = BT.UInt8ListToString bytes
     fun deserializeString {string, length} = 
-        BT.UInt8ListToString (List.take (string, UInt32.toInt length))
+        BT.UInt8ListToString (List.take (string, BT.UInt32.toInt length))
   in
   fun locationTableEntryToString
       {offset, fileNameIndex, leftLine, leftCol, rightLine, rightCol} =
-       "{offset = " ^ UInt32.toString offset ^ ", \
-        \fileNameIndex = " ^ UInt32.toString fileNameIndex ^ ", \
+       "{offset = " ^ BT.UInt32.toString offset ^ ", \
+        \fileNameIndex = " ^ BT.UInt32.toString fileNameIndex ^ ", \
         \leftLine = " ^ toDecString leftLine ^ ", \
         \leftCol = " ^ toDecString leftCol ^ ", \
         \rightLine = " ^ toDecString rightLine ^ ", \
@@ -112,10 +112,10 @@ struct
       "}"
   fun nameSlotTableEntryToString
       {lifeTimeBeginOffset, lifeTimeEndOffset, nameIndex, slotIndex} =
-       "{beginOffset = " ^ UInt32.toString lifeTimeBeginOffset ^ ", \
-        \endOffset = " ^ UInt32.toString lifeTimeEndOffset ^ ", \
-        \nameIndex = " ^ UInt32.toString nameIndex ^ ", \
-        \slotIndex = " ^ UInt32.toString slotIndex ^ 
+       "{beginOffset = " ^ BT.UInt32.toString lifeTimeBeginOffset ^ ", \
+        \endOffset = " ^ BT.UInt32.toString lifeTimeEndOffset ^ ", \
+        \nameIndex = " ^ BT.UInt32.toString nameIndex ^ ", \
+        \slotIndex = " ^ BT.UInt32.toString slotIndex ^ 
        "}"
   fun nameSlotTableToString (table : nameSlotTable) =
       "{\n\

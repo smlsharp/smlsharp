@@ -1,8 +1,20 @@
 use "./UNMANAGED_MEMORY.sig";
-use "./UNMANAGED_STRING.sig";
 use "./UnmanagedMemory.sml";
+
+use "./UNMANAGED_STRING.sig";
 use "./UnmanagedString.sml";
+
 use "./STANDARD_C.sig";
 use "./StandardC.sml";
+
 use "./DYNAMIC_LINK.sig";
 use "./DynamicLink.sml";
+
+use "./HASH_TABLE.sig";
+use "./HashTableRep.sml";
+use "./HashTable.sml";
+use "./DYN.sig";
+use "./Dyn.sml";
+
+use "./NATIVE_DATA_TRANSPORTER.sig";
+use "./NativeDataTransporter.sml";

@@ -2,20 +2,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <unistd.h>
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
 ///////////////////////////////////////////////////////////////////////////////
-
-FileReader::
-FileReader(const char* fileName, FILE* stream, BoolValue DontClose)
-    :Reader(),
-     fileName_(fileName),
-     stream_(stream),
-     DontClose_(DontClose)
-{
-    descriptor_ = fileno(stream);
-}
 
 FileReader::
 FileReader(const char* fileName, int descriptor, BoolValue DontClose)
@@ -24,7 +15,6 @@ FileReader(const char* fileName, int descriptor, BoolValue DontClose)
      descriptor_(descriptor),
      DontClose_(DontClose)
 {
-    stream_ = fdopen(descriptor, "rb");
 }
 
 const char*
@@ -42,7 +32,7 @@ FileReader::getChunkSize()
 UInt32Value
 FileReader::read(UInt32Value length, ByteValue* buffer)
 {
-    return fread(buffer, 1, length, stream_);
+    return ::read(descriptor_, buffer, length);
 }
 
 UInt32Value
@@ -58,7 +48,8 @@ void FileReader::block()
 
 BoolValue FileReader::canInput()
 {
-    return feof(stream_) ? BOOLVALUE_FALSE : BOOLVALUE_TRUE;
+    FILE* stream = fdopen(descriptor_, "rb");
+    return feof(stream) ? BOOLVALUE_FALSE : BOOLVALUE_TRUE;
 }
 
 UInt32Value FileReader::avail()
@@ -69,12 +60,12 @@ UInt32Value FileReader::avail()
 
 UInt32Value FileReader::getPos()
 {
-    return ftell(stream_);
+    return lseek(descriptor_, 0, SEEK_CUR);
 }
 
 void FileReader::setPos(UInt32Value position)
 {
-    fseek(stream_, position, SEEK_SET);
+    lseek(descriptor_, position, SEEK_SET);
 }
 
 UInt32Value FileReader::endPos()
@@ -93,7 +84,7 @@ UInt32Value FileReader::verifyPos()
 void FileReader::close()
 {
     if(BOOLVALUE_FALSE == DontClose_){
-        fclose(stream_);
+        ::close(descriptor_);
     }
 }
 

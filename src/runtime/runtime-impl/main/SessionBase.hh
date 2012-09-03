@@ -82,9 +82,7 @@ class SessionBase
      *
      */
     void linkAndExecute(Executable* executable)
-        throw(IMLRuntimeException,
-              UserException,
-              SystemError);
+        throw(IMLException);
 
     /**
      *  reads an executable from the input channel.

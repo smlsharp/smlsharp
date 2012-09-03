@@ -13,6 +13,7 @@ BEGIN_NAMESPACE(jp_ac_jaist_iml)
 /**
  * Exception thrown when the heap manager cannot allocate a block of the
  * requested size in heap area.
+ * This is not a fatal error because VM can restart from the empty frame stack.
  */
 class NoEnoughFrameStackException
     : public IMLRuntimeException

@@ -69,7 +69,8 @@ ClientSocketChannel.$(OBJEXT): ClientSocketChannel.cc ClientSocketChannel.hh \
   ../../../.././config.h StreamOutputChannelBase.hh \
   ../../../../src/runtime/runtime-core/main/OutputChannel.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh
-ExecutableLinker.$(OBJEXT): ExecutableLinker.cc ExecutableLinker.hh \
+ExecutableLinker.$(OBJEXT): ExecutableLinker.cc \
+  ../../../../src/configuration/./Configuration.hh ExecutableLinker.hh \
   ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
   ../../../../src/runtime/runtime-core/main/Executable.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
@@ -85,6 +86,12 @@ ExecutableLinker.$(OBJEXT): ExecutableLinker.cc ExecutableLinker.hh \
   ../../../../src/runtime/runtime-core/main/Debug.hh \
   ../../../../src/instructions/runtime/main/Instructions.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/IncompatibleExecutableException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/MalformedExecutableException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh
 FileInputChannel.$(OBJEXT): FileInputChannel.cc FileInputChannel.hh \
@@ -121,7 +128,8 @@ Heap.$(OBJEXT): Heap.cc Heap.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -133,8 +141,7 @@ Heap.$(OBJEXT): Heap.cc Heap.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh
+  ../../../../src/runtime/runtime-core/main/SystemError.hh
 InteractiveSession.$(OBJEXT): InteractiveSession.cc InteractiveSession.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
@@ -166,7 +173,7 @@ InteractiveSession.$(OBJEXT): InteractiveSession.cc InteractiveSession.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -182,8 +189,7 @@ InteractiveSession.$(OBJEXT): InteractiveSession.cc InteractiveSession.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh FFI.hh \
   EmptyHandlerStackException.hh \
   ../../../../src/runtime/runtime-core/main/InputChannel.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
@@ -192,7 +198,8 @@ InteractiveSession.$(OBJEXT): InteractiveSession.cc InteractiveSession.hh \
   VirtualMachine.hh WordOperations.hh \
   ../../../../src/runtime/runtime-core/main/ProtocolException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/primitives/runtime/main/Constants.hh
 ServerSocketChannel.$(OBJEXT): ServerSocketChannel.cc ServerSocketChannel.hh \
   StreamInputChannelBase.hh \
   ../../../../src/runtime/runtime-core/main/InputChannel.hh \
@@ -231,7 +238,7 @@ SessionBase.$(OBJEXT): SessionBase.cc SessionBase.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -247,8 +254,7 @@ SessionBase.$(OBJEXT): SessionBase.cc SessionBase.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh FFI.hh \
   EmptyHandlerStackException.hh \
   ../../../../src/runtime/runtime-core/main/InputChannel.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
@@ -287,7 +293,7 @@ StandAloneSession.$(OBJEXT): StandAloneSession.cc StandAloneSession.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -303,8 +309,7 @@ StandAloneSession.$(OBJEXT): StandAloneSession.cc StandAloneSession.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh FFI.hh \
   EmptyHandlerStackException.hh \
   ../../../../src/runtime/runtime-core/main/InputChannel.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
@@ -330,7 +335,8 @@ VirtualMachine.$(OBJEXT): VirtualMachine.cc Heap.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -345,7 +351,6 @@ VirtualMachine.$(OBJEXT): VirtualMachine.cc Heap.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   WordOperations.hh Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
@@ -371,8 +376,7 @@ VirtualMachine.$(OBJEXT): VirtualMachine.cc Heap.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh FFI.hh \
   EmptyHandlerStackException.hh \
   ../../../../src/instructions/runtime/main/Instructions.hh \
   VirtualMachine.hh \
@@ -406,7 +410,7 @@ FFI_default.$(OBJEXT): FFI_default.cc \
   Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -438,7 +442,6 @@ FFI_default.$(OBJEXT): FFI_default.cc \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh FFI.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh FFI.hh \
   FFISwitchGen/LARGEFFISWITCH.cc FFISwitchGen/LARGEFFISWITCH.cc \
   FFISwitchGen/LARGEFFISWITCH.cc

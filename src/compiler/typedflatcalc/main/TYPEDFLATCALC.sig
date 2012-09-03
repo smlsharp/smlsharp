@@ -3,7 +3,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
  * @author Atsushi Ohori
- * @version $Id: TYPEDFLATCALC.sig,v 1.14 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TYPEDFLATCALC.sig,v 1.15 2007/06/19 22:19:12 ohori Exp $
  *)
 signature TYPEDFLATCALC = sig
 
@@ -69,7 +69,6 @@ signature TYPEDFLATCALC = sig
    | TFPSIZEOF of ty * loc
    | TFPCONSTANT of constant * loc
    | TFPVAR of varIdInfo * loc
-   | TFPGETGLOBAL of string * ty * loc
    | TFPGETGLOBALVALUE of BasicTypes.UInt32 * int * ty * loc
    | TFPGETFIELD of tfpexp * int * ty * loc
    | TFPARRAY of {
@@ -112,6 +111,7 @@ signature TYPEDFLATCALC = sig
    | TFPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tfpexp, loc:loc}
    | TFPTAPP of {exp:tfpexp, expTy:ty, instTyList:ty list, loc:loc}
    | TFPSEQ of {expList:tfpexp list, expTyList:ty list, loc:loc}      (* this must be primitive *)
+   | TFPLIST of {expList:tfpexp list, listTy:ty, loc:loc}
    | TFPCAST of tfpexp * ty * loc
  and tfpdecl 
    = TFPVAL of (valIdent * tfpexp) list * loc

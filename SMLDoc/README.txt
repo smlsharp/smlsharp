@@ -1,10 +1,18 @@
 SMLDoc : Document Generator for Standard ML
 
 @author YAMATODANI Kiyoshi
-@version $Id: README.txt,v 1.8 2006/02/23 05:27:47 kiyoshiy Exp $
+@version $Id: README.txt,v 1.9 2007/04/12 05:48:06 kiyoshiy Exp $
 
- The SMLDoc is a tool for generating API documentation in HTML format from
+This directory contains SMLDoc.
+SMLDoc is a tool for generating API documentation in HTML format from
 doc comments in source code written in Standard ML.
+
+This software has been developed as a part of the SML# project.
+It is distributed under the BSD-style SMLSharp license, which is
+included in the file LICENSE in this directory.
+
+For the details of SML# project, consult the web page at:
+  http://www.pllab.riec.tohoku.ac.jp/smlsharp/
 
 ========================================
 Build

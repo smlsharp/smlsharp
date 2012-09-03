@@ -2,7 +2,7 @@
  * This module calculates the size of instruction in words.
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: InstructionSizeCalculator.sml,v 1.31 2007/02/08 03:08:49 katsu Exp $
+ * @version $Id: InstructionSizeCalculator.sml,v 1.33 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure InstructionSizeCalculator : INSTRUCTION_SIZE_CALCULATOR =
 struct
@@ -13,6 +13,8 @@ struct
   structure BT = BasicTypes
   structure P = Primitives
   structure SI = SymbolicInstructions
+
+  fun length L = BT.UInt32.fromInt(List.length L)
 
   (**
    *  Calculates the size of instruction in its binary form.
@@ -41,17 +43,9 @@ struct
       | SI.AccessEnv {variableSize = SI.DOUBLE,...} => 0w3
       | SI.AccessEnv {variableSize = SI.VARIANT v,...} => 0w4
 
-      | SI.AccessEnvIndirect {variableSize = SI.SINGLE,...} => 0w3
-      | SI.AccessEnvIndirect {variableSize = SI.DOUBLE,...} => 0w3
-      | SI.AccessEnvIndirect {variableSize = SI.VARIANT v,...} => 0w4
-
       | SI.AccessNestedEnv {variableSize = SI.SINGLE,...} => 0w4
       | SI.AccessNestedEnv {variableSize = SI.DOUBLE,...} => 0w4
       | SI.AccessNestedEnv {variableSize = SI.VARIANT v,...} => 0w5
-
-      | SI.AccessNestedEnvIndirect {variableSize = SI.SINGLE,...} => 0w4
-      | SI.AccessNestedEnvIndirect {variableSize = SI.DOUBLE,...} => 0w4
-      | SI.AccessNestedEnvIndirect {variableSize = SI.VARIANT v,...} => 0w5
 
       | SI.GetField {fieldSize = SI.SINGLE,...} => 0w4
       | SI.GetField {fieldSize = SI.DOUBLE,...} => 0w4
@@ -60,6 +54,10 @@ struct
       | SI.GetFieldIndirect {fieldSize = SI.SINGLE,...} => 0w4
       | SI.GetFieldIndirect {fieldSize = SI.DOUBLE,...} => 0w4
       | SI.GetFieldIndirect {fieldSize = SI.VARIANT v,...} => 0w5
+
+      | SI.GetNestedField {fieldSize = SI.SINGLE,...} => 0w5
+      | SI.GetNestedField {fieldSize = SI.DOUBLE,...} => 0w5
+      | SI.GetNestedField {fieldSize = SI.VARIANT v,...} => 0w6
 
       | SI.GetNestedFieldIndirect {fieldSize = SI.SINGLE,...} => 0w5
       | SI.GetNestedFieldIndirect {fieldSize = SI.DOUBLE,...} => 0w5
@@ -72,6 +70,10 @@ struct
       | SI.SetFieldIndirect {fieldSize = SI.SINGLE,...} => 0w4
       | SI.SetFieldIndirect {fieldSize = SI.DOUBLE,...} => 0w4
       | SI.SetFieldIndirect {fieldSize = SI.VARIANT v,...} => 0w5
+
+      | SI.SetNestedField {fieldSize = SI.SINGLE,...} => 0w5
+      | SI.SetNestedField {fieldSize = SI.DOUBLE,...} => 0w5
+      | SI.SetNestedField {fieldSize = SI.VARIANT v,...} => 0w6
 
       | SI.SetNestedFieldIndirect {fieldSize = SI.SINGLE,...} => 0w5
       | SI.SetNestedFieldIndirect {fieldSize = SI.DOUBLE,...} => 0w5
@@ -92,73 +94,185 @@ struct
       | SI.InitGlobalArrayDouble _  => 0w3
 
       | SI.GetEnv _ => 0w2
-      | SI.CallPrim {argsCount, primitive, ...} =>
+      | SI.CallPrim {argEntries, primitive, ...} =>
         (case #instruction primitive of
            P.Internal1 _ => 0w3
          | P.Internal2 _ => 0w4
          | P.Internal3 _ => 0w5
-         | P.InternalN _ => 0w3 + argsCount
-         | P.External _ => 0w4 + argsCount)
-      | SI.ForeignApply {argsCount, ...} => 
+         | P.InternalN _ => 0w3 + (length argEntries)
+         | P.External _ => 0w4 + (length argEntries))
+      | SI.ForeignApply {argEntries, ...} => 
            (*
              Ohori: Dec 18, 2006. the additional 0x4 is for switchTag field 
             *)
-           0w6 + argsCount
+           0w6 + (length argEntries)
       | SI.RegisterCallback _ => 0w4
-      | SI.Apply_S {argSize = SI.SINGLE, ...} => 0w4
-      | SI.Apply_S {argSize = SI.DOUBLE, ...} => 0w4
-      | SI.Apply_S {argSize = SI.VARIANT v, ...} => 0w5
-      | SI.Apply_ML {argsCount, lastArgSize = SI.SINGLE, ...} => 0w4 + argsCount
-      | SI.Apply_ML {argsCount, lastArgSize = SI.DOUBLE, ...} => 0w4 + argsCount
-      | SI.Apply_ML {argsCount, lastArgSize = SI.VARIANT v, ...} => 0w5 + argsCount
-      | SI.Apply_M {argsCount, ...} => 0w4 + argsCount + argsCount
 
-      | SI.TailApply_S {argSize = SI.SINGLE, ...} => 0w3
-      | SI.TailApply_S {argSize = SI.DOUBLE, ...} => 0w3
-      | SI.TailApply_S {argSize = SI.VARIANT v, ...} => 0w4
-      | SI.TailApply_ML {argsCount, lastArgSize = SI.SINGLE, ...} => 0w3 + argsCount
-      | SI.TailApply_ML {argsCount, lastArgSize = SI.DOUBLE, ...} => 0w3 + argsCount
-      | SI.TailApply_ML {argsCount, lastArgSize = SI.VARIANT v, ...} => 0w4 + argsCount
-      | SI.TailApply_M {argsCount, ...} => 0w3 + argsCount + argsCount
+      | SI.Apply_0 {destinations = [],...} => 0w2
+      | SI.Apply_1 {argSize = SI.SINGLE,destinations = [],...} => 0w3
+      | SI.Apply_1 {argSize = SI.DOUBLE,destinations = [],...} => 0w3
+      | SI.Apply_1 {argSize = SI.VARIANT v,destinations = [],...} => 0w4
+      | SI.Apply_MS {argEntries, destinations = [],...} => 0w3 + (length argEntries)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.SINGLE, destinations = [],...} => 
+        0w3 + (length argEntries)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.DOUBLE, destinations = [],...} => 
+        0w3 + (length argEntries)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.VARIANT v, destinations = [],...} => 
+        0w4 + (length argEntries)
+      | SI.Apply_MF {argEntries, destinations = [],...} => 0w3 + (length argEntries) * 0w2
+      | SI.Apply_MV {argEntries, destinations = [],...} => 0w3 + (length argEntries) * 0w2
 
-      | SI.CallStatic_S {argSize = SI.SINGLE, ...} => 0w5
-      | SI.CallStatic_S {argSize = SI.DOUBLE, ...} => 0w5
-      | SI.CallStatic_S {argSize = SI.VARIANT v, ...} => 0w6
-      | SI.CallStatic_ML {argsCount, lastArgSize = SI.SINGLE, ...} => 0w5 + argsCount
-      | SI.CallStatic_ML {argsCount, lastArgSize = SI.DOUBLE, ...} => 0w5 + argsCount
-      | SI.CallStatic_ML {argsCount, lastArgSize = SI.VARIANT v, ...} => 0w6 + argsCount
-      | SI.CallStatic_M {argsCount, ...} => 0w5 + argsCount + argsCount
+      | SI.Apply_0 {destinations = [d],...} => 0w3
+      | SI.Apply_1 {argSize = SI.SINGLE,destinations = [d],...} => 0w4
+      | SI.Apply_1 {argSize = SI.DOUBLE,destinations = [d],...} => 0w4
+      | SI.Apply_1 {argSize = SI.VARIANT v,destinations = [d],...} => 0w5
+      | SI.Apply_MS {argEntries, destinations = [d],...} => 0w4 + (length argEntries)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.SINGLE, destinations = [d],...} => 
+        0w4 + (length argEntries)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.DOUBLE, destinations = [d],...} => 
+        0w4 + (length argEntries)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.VARIANT v, destinations = [d],...} => 
+        0w5 + (length argEntries)
+      | SI.Apply_MF {argEntries, destinations = [d],...} => 0w4 + (length argEntries) * 0w2
+      | SI.Apply_MV {argEntries, destinations = [d],...} => 0w4 + (length argEntries) * 0w2
 
-      | SI.TailCallStatic_S {argSize = SI.SINGLE, ...} => 0w4
-      | SI.TailCallStatic_S {argSize = SI.DOUBLE, ...} => 0w4
-      | SI.TailCallStatic_S {argSize = SI.VARIANT v, ...} => 0w5
-      | SI.TailCallStatic_ML {argsCount, lastArgSize = SI.SINGLE, ...} => 0w4 + argsCount
-      | SI.TailCallStatic_ML {argsCount, lastArgSize = SI.DOUBLE, ...} => 0w4 + argsCount
-      | SI.TailCallStatic_ML {argsCount, lastArgSize = SI.VARIANT v, ...} => 0w5 + argsCount
-      | SI.TailCallStatic_M {argsCount, ...} => 0w4 + argsCount + argsCount
+      | SI.Apply_0 {destinations,...} => 0w3 + (length destinations)
+      | SI.Apply_1 {argSize = SI.SINGLE,destinations,...} => 0w4 + (length destinations)
+      | SI.Apply_1 {argSize = SI.DOUBLE,destinations,...} => 0w4 + (length destinations)
+      | SI.Apply_1 {argSize = SI.VARIANT v,destinations,...} => 0w5 + (length destinations)
+      | SI.Apply_MS {argEntries, destinations,...} => 0w4 + (length argEntries) + (length destinations)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.SINGLE, destinations,...} => 
+        0w4 + (length argEntries) + (length destinations)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.DOUBLE, destinations,...} => 
+        0w4 + (length argEntries) + (length destinations)
+      | SI.Apply_ML {argEntries, lastArgSize = SI.VARIANT v, destinations,...} => 
+        0w5 + (length argEntries) + (length destinations)
+      | SI.Apply_MF {argEntries, destinations,...} => 0w4 + (length argEntries) * 0w2 + (length destinations)
+      | SI.Apply_MV {argEntries, destinations,...} => 0w4 + (length argEntries) * 0w2 + (length destinations)
 
-      | SI.RecursiveCallStatic_S {argSize = SI.SINGLE,...} => 0w4
-      | SI.RecursiveCallStatic_S {argSize = SI.DOUBLE,...} => 0w4
-      | SI.RecursiveCallStatic_S {argSize = SI.VARIANT v,...} => 0w5
-      | SI.RecursiveCallStatic_M {argsCount,...} => 0w4 + argsCount + argsCount
+      | SI.TailApply_0 _ => 0w2
+      | SI.TailApply_1 {argSize = SI.SINGLE,...} => 0w3
+      | SI.TailApply_1 {argSize = SI.DOUBLE,...} => 0w3
+      | SI.TailApply_1 {argSize = SI.VARIANT v,...} => 0w4
+      | SI.TailApply_MS {argEntries,...} => 0w3 + (length argEntries)
+      | SI.TailApply_ML {argEntries,lastArgSize = SI.SINGLE,...} => 
+        0w3 + (length argEntries)
+      | SI.TailApply_ML {argEntries,lastArgSize = SI.DOUBLE,...} => 
+        0w3 + (length argEntries)
+      | SI.TailApply_ML {argEntries,lastArgSize = SI.VARIANT v,...} => 
+        0w4 + (length argEntries)
+      | SI.TailApply_MF {argEntries,...} => 0w3 + (length argEntries) * 0w2
+      | SI.TailApply_MV {argEntries,...} => 0w3 + (length argEntries) * 0w2
 
-      | SI.RecursiveTailCallStatic_S {argSize = SI.SINGLE,...} => 0w3
-      | SI.RecursiveTailCallStatic_S {argSize = SI.DOUBLE,...} => 0w3
-      | SI.RecursiveTailCallStatic_S {argSize = SI.VARIANT v,...} => 0w4
-      | SI.RecursiveTailCallStatic_M {argsCount,...} => 0w3 + argsCount + argsCount
+      | SI.CallStatic_0 {destinations = [],...} => 0w3
+      | SI.CallStatic_1 {argSize = SI.SINGLE,destinations = [],...} => 0w4
+      | SI.CallStatic_1 {argSize = SI.DOUBLE,destinations = [],...} => 0w4
+      | SI.CallStatic_1 {argSize = SI.VARIANT v,destinations = [],...} => 0w5
+      | SI.CallStatic_MS {argEntries, destinations = [],...} => 0w4 + (length argEntries)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.SINGLE, destinations = [],...} => 
+        0w4 + (length argEntries)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.DOUBLE, destinations = [],...} => 
+        0w4 + (length argEntries)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.VARIANT v, destinations = [],...} => 
+        0w5 + (length argEntries)
+      | SI.CallStatic_MF {argEntries, destinations = [],...} => 0w4 + (length argEntries) * 0w2
+      | SI.CallStatic_MV {argEntries, destinations = [],...} => 0w4 + (length argEntries) * 0w2
 
-      | SI.SelfRecursiveCallStatic_S {argSize = SI.SINGLE,...} => 0w4
-      | SI.SelfRecursiveCallStatic_S {argSize = SI.DOUBLE,...} => 0w4
-      | SI.SelfRecursiveCallStatic_S {argSize = SI.VARIANT v,...} => 0w5
-      | SI.SelfRecursiveCallStatic_M {argsCount,...} => 0w4 + argsCount + argsCount
+      | SI.CallStatic_0 {destinations = [d],...} => 0w4
+      | SI.CallStatic_1 {argSize = SI.SINGLE,destinations = [d],...} => 0w5
+      | SI.CallStatic_1 {argSize = SI.DOUBLE,destinations = [d],...} => 0w5
+      | SI.CallStatic_1 {argSize = SI.VARIANT v,destinations = [d],...} => 0w6
+      | SI.CallStatic_MS {argEntries, destinations = [d],...} => 0w5 + (length argEntries)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.SINGLE, destinations = [d],...} => 
+        0w5 + (length argEntries)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.DOUBLE, destinations = [d],...} => 
+        0w5 + (length argEntries)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.VARIANT v, destinations = [d],...} => 
+        0w6 + (length argEntries)
+      | SI.CallStatic_MF {argEntries, destinations = [d],...} => 0w5 + (length argEntries) * 0w2
+      | SI.CallStatic_MV {argEntries, destinations = [d],...} => 0w5 + (length argEntries) * 0w2
 
-      | SI.SelfRecursiveTailCallStatic_S {argSize = SI.SINGLE,...} => 0w3
-      | SI.SelfRecursiveTailCallStatic_S {argSize = SI.DOUBLE,...} => 0w3
-      | SI.SelfRecursiveTailCallStatic_S {argSize = SI.VARIANT v,...} => 0w4
-      | SI.SelfRecursiveTailCallStatic_M {argsCount,...} => 0w3 + argsCount + argsCount
+      | SI.CallStatic_0 {destinations,...} => 0w4 + (length destinations)
+      | SI.CallStatic_1 {argSize = SI.SINGLE,destinations,...} => 0w5 + (length destinations)
+      | SI.CallStatic_1 {argSize = SI.DOUBLE,destinations,...} => 0w5 + (length destinations)
+      | SI.CallStatic_1 {argSize = SI.VARIANT v,destinations,...} => 0w6 + (length destinations)
+      | SI.CallStatic_MS {argEntries, destinations,...} => 0w5 + (length argEntries) + (length destinations)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.SINGLE, destinations,...} => 
+        0w5 + (length argEntries) + (length destinations)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.DOUBLE, destinations,...} => 
+        0w5 + (length argEntries) + (length destinations)
+      | SI.CallStatic_ML {argEntries, lastArgSize = SI.VARIANT v, destinations,...} => 
+        0w6 + (length argEntries) + (length destinations)
+      | SI.CallStatic_MF {argEntries, destinations,...} => 0w5 + (length argEntries) * 0w2 + (length destinations)
+      | SI.CallStatic_MV {argEntries, destinations,...} => 0w5 + (length argEntries) * 0w2 + (length destinations)
 
-      | SI.MakeBlock {fieldsCount, ...} => 0w5 + fieldsCount * 0w2
-      | SI.MakeBlockOfSingleValues {fieldsCount, ...} => 0w4 + fieldsCount
+      | SI.TailCallStatic_0 _ => 0w3
+      | SI.TailCallStatic_1 {argSize = SI.SINGLE,...} => 0w4
+      | SI.TailCallStatic_1 {argSize = SI.DOUBLE,...} => 0w4
+      | SI.TailCallStatic_1 {argSize = SI.VARIANT v,...} => 0w5
+      | SI.TailCallStatic_MS {argEntries,...} => 0w4 + (length argEntries)
+      | SI.TailCallStatic_ML {argEntries,lastArgSize = SI.SINGLE,...} => 0w4 + (length argEntries)
+      | SI.TailCallStatic_ML {argEntries,lastArgSize = SI.DOUBLE,...} => 0w4 + (length argEntries)
+      | SI.TailCallStatic_ML {argEntries,lastArgSize = SI.VARIANT v,...} => 0w5 + (length argEntries)
+      | SI.TailCallStatic_MF {argEntries,...} => 0w4 + (length argEntries) * 0w2
+      | SI.TailCallStatic_MV {argEntries,...} => 0w4 + (length argEntries) * 0w2
+
+      | SI.RecursiveCallStatic_0 {destinations = [],...} => 0w2
+      | SI.RecursiveCallStatic_1 {argSize = SI.SINGLE,destinations = [],...} => 0w3
+      | SI.RecursiveCallStatic_1 {argSize = SI.DOUBLE,destinations = [],...} => 0w3
+      | SI.RecursiveCallStatic_1 {argSize = SI.VARIANT v,destinations = [],...} => 0w4
+      | SI.RecursiveCallStatic_MS {argEntries, destinations = [],...} => 0w3 + (length argEntries)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.SINGLE, destinations = [],...} => 
+        0w3 + (length argEntries)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.DOUBLE, destinations = [],...} => 
+        0w3 + (length argEntries)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.VARIANT v, destinations = [],...} => 
+        0w3 + (length argEntries)
+      | SI.RecursiveCallStatic_MF {argEntries, destinations = [],...} => 0w3 + (length argEntries) * 0w2
+      | SI.RecursiveCallStatic_MV {argEntries, destinations = [],...} => 0w3 + (length argEntries) * 0w2
+
+      | SI.RecursiveCallStatic_0 {destinations = [d],...} => 0w3
+      | SI.RecursiveCallStatic_1 {argSize = SI.SINGLE,destinations = [d],...} => 0w4
+      | SI.RecursiveCallStatic_1 {argSize = SI.DOUBLE,destinations = [d],...} => 0w4
+      | SI.RecursiveCallStatic_1 {argSize = SI.VARIANT v,destinations = [d],...} => 0w5
+      | SI.RecursiveCallStatic_MS {argEntries, destinations = [d],...} => 0w4 + (length argEntries)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.SINGLE, destinations = [d],...} => 
+        0w4 + (length argEntries)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.DOUBLE, destinations = [d],...} => 
+        0w4 + (length argEntries)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.VARIANT v, destinations = [d],...} => 
+        0w5 + (length argEntries)
+      | SI.RecursiveCallStatic_MF {argEntries, destinations = [d],...} => 0w4 + (length argEntries) * 0w2
+      | SI.RecursiveCallStatic_MV {argEntries, destinations = [d],...} => 0w4 + (length argEntries) * 0w2
+
+      | SI.RecursiveCallStatic_0 {destinations,...} => 0w3 + (length destinations)
+      | SI.RecursiveCallStatic_1 {argSize = SI.SINGLE,destinations,...} => 0w4 + (length destinations)
+      | SI.RecursiveCallStatic_1 {argSize = SI.DOUBLE,destinations,...} => 0w4 + (length destinations)
+      | SI.RecursiveCallStatic_1 {argSize = SI.VARIANT v,destinations,...} => 0w5 + (length destinations)
+      | SI.RecursiveCallStatic_MS {argEntries, destinations,...} => 0w4 + (length argEntries) + (length destinations)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.SINGLE, destinations,...} => 
+        0w4 + (length argEntries) + (length destinations)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.DOUBLE, destinations,...} => 
+        0w4 + (length argEntries) + (length destinations)
+      | SI.RecursiveCallStatic_ML {argEntries, lastArgSize = SI.VARIANT v, destinations,...} => 
+        0w5 + (length argEntries) + (length destinations)
+      | SI.RecursiveCallStatic_MF {argEntries, destinations,...} => 0w4 + (length argEntries) * 0w2 + (length destinations)
+      | SI.RecursiveCallStatic_MV {argEntries, destinations,...} => 0w4 + (length argEntries) * 0w2 + (length destinations)
+
+      | SI.RecursiveTailCallStatic_0 _ => 0w2
+      | SI.RecursiveTailCallStatic_1 {argSize = SI.SINGLE,...} => 0w3
+      | SI.RecursiveTailCallStatic_1 {argSize = SI.DOUBLE,...} => 0w3
+      | SI.RecursiveTailCallStatic_1 {argSize = SI.VARIANT v,...} => 0w4
+      | SI.RecursiveTailCallStatic_MS {argEntries,...} => 0w3 + (length argEntries)
+      | SI.RecursiveTailCallStatic_ML {argEntries,lastArgSize = SI.SINGLE,...} => 0w3 + (length argEntries)
+      | SI.RecursiveTailCallStatic_ML {argEntries,lastArgSize = SI.DOUBLE,...} => 0w3 + (length argEntries)
+      | SI.RecursiveTailCallStatic_ML {argEntries,lastArgSize = SI.VARIANT v,...} => 0w4 + (length argEntries)
+      | SI.RecursiveTailCallStatic_MF {argEntries,...} => 0w3 + (length argEntries) * 0w2
+      | SI.RecursiveTailCallStatic_MV {argEntries,...} => 0w3 + (length argEntries) * 0w2
+
+      | SI.MakeBlock {fieldEntries, ...} => 0w5 + (length fieldEntries) * 0w2
+      | SI.MakeFixedSizeBlock {fieldEntries, ...} => 0w5 + (length fieldEntries) * 0w2
+      | SI.MakeBlockOfSingleValues {fieldEntries, ...} => 0w4 + (length fieldEntries)
 
       | SI.MakeArray {initialValueSize = SI.SINGLE,...} => 0w5
       | SI.MakeArray {initialValueSize = SI.DOUBLE,...} => 0w5
@@ -170,16 +284,32 @@ struct
       | SI.PopHandler _ => 0w1
       | SI.Label _ => 0w0
       | SI.Location _ => 0w0
-      | SI.SwitchInt {casesCount, ...} => 0w4 + (casesCount * 0w2)
-      | SI.SwitchWord {casesCount, ...} => 0w4 + (casesCount * 0w2)
-      | SI.SwitchChar {casesCount, ...} => 0w4 + (casesCount * 0w2)
-      | SI.SwitchString {casesCount, ...} => 0w4 + (casesCount * 0w2)
+      | SI.SwitchInt {cases, ...} => 0w4 + ((length cases) * 0w2)
+      | SI.SwitchWord {cases, ...} => 0w4 + ((length cases) * 0w2)
+      | SI.SwitchChar {cases, ...} => 0w4 + ((length cases) * 0w2)
+      | SI.SwitchString {cases, ...} => 0w4 + ((length cases) * 0w2)
       | SI.Jump _ => 0w2
       | SI.Exit => 0w1
 
-      | SI.Return {variableSize = SI.SINGLE,...} => 0w2
-      | SI.Return {variableSize = SI.DOUBLE,...} => 0w2
-      | SI.Return {variableSize = SI.VARIANT v,...} => 0w3
+      | SI.Return_0 => 0w1
+      | SI.Return_1 {variableSize = SI.SINGLE,...} => 0w2
+      | SI.Return_1 {variableSize = SI.DOUBLE,...} => 0w2
+      | SI.Return_1 {variableSize = SI.VARIANT v,...} => 0w3
+      | SI.Return_MS {variableEntries = []} => 0w1
+      | SI.Return_MS {variableEntries = [variableEntry]} => 0w2
+      | SI.Return_MS {variableEntries} => 0w2 + (length variableEntries)
+      | SI.Return_ML {variableEntries = [variableEntry],lastVariableSize = SI.SINGLE} => 0w2
+      | SI.Return_ML {variableEntries = [variableEntry],lastVariableSize = SI.DOUBLE} => 0w2
+      | SI.Return_ML {variableEntries = [variableEntry],lastVariableSize = SI.VARIANT v} => 0w3
+      | SI.Return_ML {variableEntries,lastVariableSize = SI.SINGLE} => 0w2 + (length variableEntries)
+      | SI.Return_ML {variableEntries,lastVariableSize = SI.DOUBLE} => 0w2 + (length variableEntries)
+      | SI.Return_ML {variableEntries,lastVariableSize = SI.VARIANT v} => 0w3 + (length variableEntries)
+      | SI.Return_MF {variableEntries = [],...} => 0w1
+      | SI.Return_MF {variableEntries = [variableEntry],...} => 0w2
+      | SI.Return_MF {variableEntries,...} => 0w2 + (length variableEntries) * 0w2
+      | SI.Return_MV {variableEntries = [],...} => 0w1
+      | SI.Return_MV {variableEntries = [variableEntry],...} => 0w3
+      | SI.Return_MV {variableEntries,...} => 0w2 + (length variableEntries) * 0w2
 
       | SI.ConstString {string, ...} =>
         0w2 + BT.IntToUInt32(BT.StringToPaddedUInt8ListLength string)
@@ -233,8 +363,6 @@ struct
       | SI.RemInt_Const_1 _ => 0w4
       | SI.RemInt_Const_2 _ => 0w4
 
-(* temporarily disable
-
       | SI.LtInt_Const_1 _ => 0w4
       | SI.LtInt_Const_2 _ => 0w4
       | SI.LtReal_Const_1 _ => 0w5
@@ -278,8 +406,6 @@ struct
       | SI.GteqByte_Const_2 _ => 0w4
       | SI.GteqChar_Const_1 _ => 0w4
       | SI.GteqChar_Const_2 _ => 0w4
-
-*)
 
       | SI.Word_andb_Const_1 _ => 0w4
       | SI.Word_andb_Const_2 _ => 0w4

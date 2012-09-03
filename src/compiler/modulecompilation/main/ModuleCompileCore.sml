@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: ModuleCompileCore.sml,v 1.46 2007/02/28 15:31:25 katsu Exp $
+ * @version $Id: ModuleCompileCore.sml,v 1.47 2007/06/19 22:19:11 ohori Exp $
  *)
 structure ModuleCompileCore  = 
 struct
@@ -486,6 +486,13 @@ in
               map (fn tpexp => tpexpToTfpexp context tpexp) tpexps
         in 
           TFPSEQ {expList = tfpexps, expTyList= tys, loc=loc}
+        end
+      | TPLIST {expList=tpexps, listTy, loc} =>
+        let
+          val tfpexps = 
+              map (fn tpexp => tpexpToTfpexp context tpexp) tpexps
+        in 
+          TFPLIST {expList = tfpexps, listTy=listTy, loc=loc}
         end
       | TPCAST (tpexp, ty, loc)  => TFPCAST(tpexpToTfpexp context tpexp,ty,loc)
       | TPERROR => raise Control.Bug "TPERROR passed to module compiler"

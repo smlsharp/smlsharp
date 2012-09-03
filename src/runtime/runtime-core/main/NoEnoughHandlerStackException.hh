@@ -11,8 +11,9 @@ using jp_ac_jaist_iml::IMLRuntimeException;
 BEGIN_NAMESPACE(jp_ac_jaist_iml)
 
 /**
- * Exception thrown when the heap manager cannot allocate a block of the
- * requested size in heap area.
+ * Exception thrown when the VM cannot allocate a new handler stack frame.
+ * This is not a fatal error because VM can restart from the empty handler
+ * stack.
  */
 class NoEnoughHandlerStackException
     : public IMLRuntimeException

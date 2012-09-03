@@ -2,7 +2,7 @@
  * Utility functions to manipulate the typed pattern calculus.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypedCalcUtils.sml,v 1.9 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TypedCalcUtils.sml,v 1.10 2007/06/19 22:19:12 ohori Exp $
  *)
 structure TypedCalcUtils : TYPEDCALCUTILS = struct
 local 
@@ -35,6 +35,7 @@ in
       | TPPOLY {loc,...} => loc
       | TPTAPP {loc,...} => loc
       | TPSEQ {loc,...} => loc
+      | TPLIST {loc,...} => loc
       | TPCAST (toexo, ty, loc) => loc
 
   (**

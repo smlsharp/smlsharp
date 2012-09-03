@@ -197,6 +197,8 @@ in
                   type generalization
             *)
             let
+              val (subst, boundtvars) = TypesUtils.copyBoundEnv boundtvars
+              val body = TypesUtils.substBTvar subst body
               val (argTyList, newBodyTy) = grabTy (body, arity)
               val newPoyTyBody = FUNMty(argTyList, newBodyTy)
               val newPolyTy =
@@ -446,6 +448,16 @@ in
                             expTy = expTy, 
                             instTyList = instTyList, 
                             loc = loc},
+                    spine,
+                    loc)
+        end
+     | TPLIST {expList, listTy, loc} =>
+        let
+          val newExpList = map (uncurryExp nil) expList
+        in
+          makeApply(TPLIST {expList=newExpList, 
+                           listTy = listTy, 
+                           loc = loc},
                     spine,
                     loc)
         end

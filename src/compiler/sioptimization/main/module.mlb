@@ -12,9 +12,16 @@ in
         ../../util/main/module.mlb
         ../../../instructions/compiler/main/module.mlb
         ../../../primitives/compiler/main/module.mlb
+        
 
-	Utilities.sml
-        CodeEnv.sml
-	SYMBOLIC_INSTRUCTIONS_OPTIMIZER.sig
-        SymbolicInstructionsOptimizer.sml
+        MyBitArray.sml	
+        SubFunctions.sml
+	UseDef.sml
+        Exception.sml
+	Rename.sml
+        BasicBlock.sml	
+        Liveness.sml
+        STACK_REALLOCATION.sig
+        StackReallocation.sml
+        
 end

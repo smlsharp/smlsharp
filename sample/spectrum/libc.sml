@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006-2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: libc.sml,v 1.1.2.1 2007/03/26 06:26:50 katsu Exp $
+ * @version $Id: libc.sml,v 1.2 2007/03/29 17:00:08 katsu Exp $
  *)
 
 structure Libc =
@@ -19,6 +19,11 @@ struct
     (* Mac OS X *)
     val libcName = "/usr/lib/libSystem.B.dylib"
 *)
+(*
+    (* MinGW *)
+    val libcName = "msvcrt.dll"
+*)
+
     val libc = dlopen libcName
   in
 
@@ -41,6 +46,12 @@ struct
 
   (* BSD *)
   val usleep  = dlsym (libc, "usleep") : _import (int) -> int
+
+  (*
+   * Note for Windows users:
+   * - msvcrt.dll has "_fdopen" but it is broken. Please use fopen instead of fdopen.
+   * - Windows does not have usleep.
+   *)
 
   end
 

@@ -34,7 +34,9 @@ INSTALL_FILES = ./basis \
                 ./SMLNJ \
                 ./smlnj-lib.sml \
 		./smlunitlib.sml \
-		./CConfig
+		./CConfig \
+		./SMLSharp \
+		./SMLSharp.sml
 
 all: $(TARGETS)
 

@@ -1,4 +1,5 @@
 Group
         structure SymbolicInstructionsOptimizer
+        structure Reallocater
 is
         main/module.cm

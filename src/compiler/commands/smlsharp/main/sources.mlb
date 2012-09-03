@@ -18,6 +18,7 @@ in
 
         FileSysUtil_MLton.sml
         InteractiveSessionFactory_MLton.sml
+        Platform.sml
 
         Main.sml
 

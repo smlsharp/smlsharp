@@ -34,7 +34,7 @@ struct<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrPrettyPrinter.html#ConstrEndOfIndent">EndOfIndent</A><br>
 &nbsp;&nbsp;exception&nbsp;<A HREF="StrPrettyPrinter.html#ExceptionFail">Fail</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="StrPrettyPrinter.html#Valformat">format</A>&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPrettyPrinter.html#Valformat">format</A>&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 end</CODE>
 <P>
 
@@ -53,7 +53,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: StrPrettyPrinter.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
+$Id: StrPrettyPrinter.html,v 1.5 2007/03/27 15:03:01 kiyoshiy Exp $
  
 
 </DL>
@@ -109,32 +109,32 @@ $Id: StrPrettyPrinter.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
 <A NAME="ConstrTerm"><!-- --></A>
 <H3>Term</H3>
 <P>
-<CODE>constructor&nbsp;Term&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+<CODE>constructor&nbsp;Term&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;-&gt;&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
 
 <HR>
 <A NAME="ConstrList"><!-- --></A>
 <H3>List</H3>
 <P>
-<CODE>constructor&nbsp;List&nbsp;:&nbsp;{symbols&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;environment&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typeenvironment">environment</A>}&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+<CODE>constructor&nbsp;List&nbsp;:&nbsp;{symbols&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;environment&nbsp;:&nbsp;<A HREF="StrPrettyPrinter.html#Typeenvironment">environment</A>}&nbsp;-&gt;&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
 
 <HR>
 <A NAME="ConstrIndicator"><!-- --></A>
 <H3>Indicator</H3>
 <P>
-<CODE>constructor&nbsp;Indicator&nbsp;:&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;newline&nbsp;:&nbsp;bool&nbsp;ref}&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+<CODE>constructor&nbsp;Indicator&nbsp;:&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;newline&nbsp;:&nbsp;bool&nbsp;ref}&nbsp;-&gt;&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
 
 <HR>
 <A NAME="ConstrDeferredIndicator"><!-- --></A>
 <H3>DeferredIndicator</H3>
 <P>
 <CODE>constructor&nbsp;DeferredIndicator<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;requiredColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref}&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;requiredColumns&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;ref}&nbsp;-&gt;&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
 
 <HR>
 <A NAME="ConstrStartOfIndent"><!-- --></A>
 <H3>StartOfIndent</H3>
 <P>
-<CODE>constructor&nbsp;StartOfIndent&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
+<CODE>constructor&nbsp;StartOfIndent&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;-&gt;&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A></CODE>
 
 <HR>
 <A NAME="ConstrEndOfIndent"><!-- --></A>
@@ -154,7 +154,7 @@ $Id: StrPrettyPrinter.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
 <H3>format</H3>
 <P>
 <CODE>fun&nbsp;format&nbsp;parameter&nbsp;symbol<br>
-&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#Typeparameter">PrinterParameter.parameter</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">symbol</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 <DL>
 <DD>
   translates the symbol into a text representation which fits within the

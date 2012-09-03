@@ -4,27 +4,37 @@
 <p>
 @author YAMATODANI Kiyoshi
 <br>
-@version $Id: Overview.html,v 1.1.4.2 2007/03/28 21:43:25 kiyoshiy Exp $
+@version $Id: Overview.html,v 1.3 2007/04/19 04:10:32 kiyoshiy Exp $
+</p>
+
+<p>
+'LMLML' is Library of MultiLingualization for ML, which aims to support writing multi-linugalized program in ML. The current version supports multi-byte string processing only.
+</p>
+<p>
+String manipulation modules of existing ML compilers and ML Basis library assume, in fact, a codec which encodes a character in a byte. They do not expect codecs which encode a character in multi-bytes.
+Therefore, it is hard for ML programmer to write applications which have to handle texts encoded in various codecs.
+SML# project developed LMLML to support development of such multi-byte string applications.
 </p>
 
 <h2>Feature</h2>
 
 <p>
-LMLML is a library for multi-byte string manipulation.
-'LMLML' is an abbreviation of <em>Library of MultiLingualization for ML</em>.
-</p>
-
-<p>
-Its features are:
 <ul>
-<li>dynamic selection of encoding method,</li>
+<li>isolating codec-specific code,</li>
 <li>almost compatibility with SML Basis,</li>
-<li>support of new encoding method.</li>
+<li>support of new encoding method,</li>
+<li>Standard ML compliance.</li>
 </ul>
 </p>
 
 <hr>
-<h2>1, Dynamic selection of encoding method.</h2>
+<h2>1, isolating codec-specific code.</h2>
+
+<p>
+With LMLML, you can select used codec dynamically for each string.
+And, you can manipulate strings encoded in heterogeneous codecs as instances of the same type.
+Therefore, with LMLML, you can isolate program codes which depends on spcific codecs from program codes of codec-independent.
+</p>
 
 <p>
 You can select encoding method dynamically with <code>MultiByteString</code> structure.
@@ -133,6 +143,7 @@ However, strings obtained in these ways are not compatible each other.
 
 <p>
 <code>MultiByteString</code> and encoding-specific modules, such as <code>UTF16Codec</code>, provide interfaces almost compatible with <code>Char</code> and <code>String</code> of Basis.
+It is easy to upgrade existing ML program to support multi-byte string codecs with minor changes only.
 </p>
 <pre>
   signature MB_CHAR =
@@ -213,7 +224,8 @@ For example, you can obtain a multibyte-string version of <code>Substring</code>
 <h2>3, support of new encoding method</h2>
 
 <p>
-You can extend LMLML by adding a new module that supports an encoding method you need.
+LMLML supports major codecs, such as ShiftJIS and UTF-16 already.
+You can extend LMLML by adding a new module that supports an encoding method you need without changing LMLML.
 </p>
 
 <p>
@@ -251,10 +263,11 @@ Of course, you can use <code>FooCodec</code> directly.
 </pre>
 
 <hr>
-<h2>4, Usage</h2>
+<h2>4, Standard ML compliance.</h2>
 
 <p>
-LMLML is available with SML#, SML/NJ and MLton.
+Major features of LMLML are implemented without depending on SML# features.
+LMLML can be used with any compiler that conform to the Definition of Standard ML, including of cource SML# but probably also SML/NJ, MLton, and many others.
 </p>
 
 <h4>SML#</h4>
@@ -278,6 +291,76 @@ Use sources.cm with SML/NJ CM.
 <p>
 Use sources.mlb with MLton Basis system.
 </p>
+
+<hr>
+<h2>Example</h2>
+<p>
+As an example programming with LMLML, we try to search a character '&#x5263;' in a string "&#x767D;&#x8840;&#x75C5;abc&#x5263;&#x9053;".
+</p>
+<p>
+In Shift_JIS, "&#x767D;&#x8840;&#x75C5;abc&#x5263;&#x9053;" is encded into the following byte vector:
+<pre>
+ 0wx94, 0wx92, 0wx8C, 0wx8C, 0wx95, 0wx61, (* &#x767D;&#x8840;&#x75C5; *)
+ 0wx61, 0wx62, 0wx63, (* abc *)
+ 0wx8C, 0wx95, 0wx93, 0wxB9 (* &#x5263;&#x9053; *)
+</pre>
+</p>
+<p>
+A pair of the second byte of '&#x8840;' and the first byte of '&#x8840;' is ( 0wx8C, 0wx95 ), which eqauls to '&#x5263;'.
+Therefore, if we search '&#x5263;'(0wx8C, 0wx95) in this byte vector, we find incorrectly the byte sequence spanning the second character and the third character of "&#x767D;&#x8840;&#x75C5;".
+</p>
+<p>
+With LMLML, we can obtain the correct result.
+</p>
+<p>
+At first, we decode a Shift_JIS string from the byte vector.
+</p>
+<pre>
+ (* "&#x767D;&#x8840;&#x75C5;abc&#x5263;&#x9053;" *)
+ val bytes =
+     Word8Vector.fromList
+     [
+       0wx94, 0wx92, 0wx8C, 0wx8C, 0wx95, 0wx61, (* &#x767D;&#x8840;&#x75C5; *)
+       0wx61, 0wx62, 0wx63, (* abc *)
+       0wx8C, 0wx95, 0wx93, 0wxB9 (* &#x5263;&#x9053; *)
+     ];
+ val string = MultiByteString.String.decodeBytes "Shift_JIS" bytes;
+
+ (* "&#x5263;" *)
+ val KenBytes = Word8Vector.fromList [0wx8C, 0wx95]; (* &#x5263; *)
+ val KenString = MultiByteString.String.decodeBytes "Shift_JIS" KenBytes;
+</pre>
+<p>
+Then, search "&#x5263;" in "&#x767D;&#x8840;&#x75C5;abc&#x5263;&#x9053;" .
+</p>
+<pre>
+ val (leftSS, rightSS) =
+     MBSubstring.position KenString (MBSubstring.full substring);
+</pre>
+<p>
+The obtained leftSS is first 6 characters of "&#x767D;&#x8840;&#x75C5;abc", which indicates that the 7th charcter "&#x5263;" is found correctly.
+</p>
+<pre>
+ # MBSubstring.size leftSS;
+ val it = 6 : int
+</pre>
+<p>
+In this example, codec is fixed at Shift_JIS, you can write by using Shift_JIS specific module as follows.
+</p>
+<pre>
+ val ShiftJISString = ShiftJISCodec.String.fromBytes bytes;
+ val ShiftJISKenString = ShiftJISCodec.String.fromBytes KenBytes;
+ structure ShiftJISSubstring =
+           SubstringBase
+               (struct
+                  open ShiftJISCodec.String
+                  val compareChar = ShiftJISCodec.Char.compare 
+                end);
+ val (leftSS, rightSS) =
+     ShiftJISSubstring.position
+         ShiftJISKenString (ShiftJISSubstring.full ShiftJISString);
+ val len = ShiftJISSubstring.size leftSS;
+</pre>
 
 </body>
 </html>

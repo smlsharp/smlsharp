@@ -1,0 +1,16 @@
+Group is
+#if defined(NEW_CM)
+  $/basis.cm
+#endif
+
+  ASSERT.sig
+  Assert.sml
+  TEST.sig
+  Test.sml
+  TESTRUNNER.sig
+(*
+  HTMLReportTestRunner.sml
+*)
+  TextUITestRunner.sml
+  SMLUNIT.sig
+  SMLUnit.sml

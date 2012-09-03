@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
  * @author Satoshi Osaka
- * @version $Id: TypedFlatCalcUtils.sml,v 1.9 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TypedFlatCalcUtils.sml,v 1.10 2007/06/19 22:19:12 ohori Exp $
  *)
 structure TypedFlatCalcUtils  = 
 struct
@@ -19,7 +19,6 @@ in
       | TFPSIZEOF (_, loc) => loc
       | TFPCONSTANT (_, loc) => loc
       | TFPVAR (_, loc) => loc
-      | TFPGETGLOBAL (field, ty, loc) => loc
       | TFPGETFIELD (tpexp, index, ty, loc) => loc
       | TFPGETGLOBALVALUE (_, _, _, loc) => loc
       | TFPARRAY {loc,...} => loc
@@ -40,6 +39,7 @@ in
       | TFPPOLY {loc,...} => loc
       | TFPTAPP {loc,...} => loc
       | TFPSEQ {loc,...} => loc
+      | TFPLIST {loc,...} => loc
       | TFPCAST (tfpexp,ty,loc) => loc
 
   structure VIdOrd : ordsig =
@@ -100,7 +100,6 @@ in
     | getFV (TFPSIZEOF _) = VIdSet.empty
     | getFV (TFPCONSTANT _) = VIdSet.empty
     | getFV (TFPVAR (var, loc)) = VIdSet.singleton var
-    | getFV (TFPGETGLOBAL _) = VIdSet.empty
     | getFV (TFPGETFIELD (exp1, int, ty, loc)) = getFV exp1
     | getFV (TFPGETGLOBALVALUE _) = VIdSet.empty
     | getFV (TFPARRAY {sizeExp, initExp,...}) = getFV sizeExp ++ getFV initExp
@@ -149,6 +148,7 @@ in
     | getFV (TFPPOLY {exp,...}) =  getFV exp
     | getFV (TFPTAPP {exp, ...}) = getFV exp
     | getFV (TFPSEQ {expList,...}) = foldlUnion getFV expList
+    | getFV (TFPLIST {expList,...}) = foldlUnion getFV expList
     | getFV (TFPCAST (exp, ty, loc)) =  getFV exp
 
   and getDecFVBV (TFPVAL (binds, loc)) =

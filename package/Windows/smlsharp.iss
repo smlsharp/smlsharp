@@ -1,11 +1,11 @@
 ; install smlsharp
-; $Id: smlsharp.iss,v 1.1.2.6 2007/03/30 04:49:35 katsu Exp $
+; $Id: smlsharp.iss,v 1.2.6.1 2007/06/25 05:30:55 katsu Exp $
 
 [Setup]
 AppName=SML#
-AppId=SML# 0.20
-AppVerName=SML# 0.20
-AppVersion=0.20
+AppId=SML# 0.30
+AppVerName=SML# 0.30
+AppVersion=0.30
 AppPublisher=Tohoku University
 AppPublisherURL=http://www.pllab.riec.tohoku.ac.jp/smlsharp/
 AppSupportURL=http://www.pllab.riec.tohoku.ac.jp/smlsharp/
@@ -19,7 +19,7 @@ Compression=lzma/max
 SolidCompression=yes
 TimeStampsInUTC=yes
 UninstallDisplayIcon={app}\bin\smlsharprun.exe,0
-OutputBaseFilename=smlsharp-0.20-mingw
+OutputBaseFilename=smlsharp-0.30-mingw
 ChangesEnvironment=yes
 ChangesAssociations=yes
 LicenseFile=license.txt

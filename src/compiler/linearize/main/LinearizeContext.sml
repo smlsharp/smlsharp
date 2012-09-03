@@ -1,7 +1,8 @@
 (**
+ * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @author Nguyen Huu Duc
- * @version $Id: LinearizeContext.sml,v 1.15 2007/01/21 13:41:32 kiyoshiy Exp $
+ * @author Nguyen Huu-Duc
+ * @version $Id: LinearizeContext.sml,v 1.16 2007/04/19 05:06:52 ducnh Exp $
  *)
 structure LinearizeContext : LINEARIZE_CONTEXT =
 struct
@@ -12,24 +13,33 @@ struct
   structure SI = SymbolicInstructions
   structure AN = ANormal
   structure TMap = IEnv
-  structure T = Types
+  structure CT = ConstantTerm
 
   (***************************************************************************)
+
+  structure const_ord:ordsig = struct
+
+    type ord_key = CT.constant
+
+    val compare = CT.compare
+
+  end
+
+  structure ConstEnv = BinaryMapFn(const_ord)
+
 
   datatype position =
            Tail
          | Result
-         | Bound of SI.varInfo * AN.ty
+         | Bound of 
+           {
+            boundVarInfoList : SI.varInfo list,
+            variableSizeList : SI.size list,
+            boundTyList : AN.ty list
+           }
 
   type label = SymbolicInstructions.address
 
-  (**
-   * the context allocated for each invocation of the linearize function
-   *)
-  type linearizeContext =
-       {
-         functionCodesRef : SI.functionCode list ref
-       }
 
   (**
    * the context allocated for each translation of a function body
@@ -38,21 +48,17 @@ struct
        {
          (** an ID used as a prefix to rename local variable names *)
          functionID : SI.varid,
-         (** a map from type variables to size variables *)
-         sizeMap : SI.size TMap.map,
-         (** the position of expression within the function. *)
-         position : position,
          (** varInfo list of local variables bound in the function *)
          localBindingsRef : AN.varInfo list ref,
+         (** the position of expression within the function. *)
+         position : position,
          (** the bitmap type of result of the function *)
-         resultType : AN.ty,
-         (** the location of the expression enclosing the current expression.
-          *)
+         resultTypeList : AN.ty list,
+         resultSizeList : SI.size list,
+         (** the location of the expression enclosing the current expression.*)
          locOfEnclosingExp : Loc.loc,
          (** instructions for holding constants *)
          constantInstructions : SI.instruction list ref,
-         (** the shared context for this translation *)
-         linearizeContext : linearizeContext,
          (** start labels of enclosing codes guarded by 'handle'. *)
          enclosingGuardedCodes : label list
        }
@@ -66,9 +72,16 @@ struct
   fun ANVarInfoToVarInfo ({id, displayName, ...} : AN.varInfo) =
       {id = id, displayName = displayName} : SI.varInfo
 
-  fun createLabel functionContext = T.newVarId()
+  fun ANExpToSize (AN.ANCONSTANT {value = CT.WORD 0w1,...}) = SI.SINGLE
+    | ANExpToSize (AN.ANCONSTANT {value = CT.WORD 0w2,...}) = SI.DOUBLE
+    | ANExpToSize (AN.ANVAR {varInfo,...}) = SI.VARIANT (ANVarInfoToVarInfo varInfo)
+    | ANExpToSize _ = raise Control.Bug "invalid size"
 
-  fun createLocalVarID functionContext = T.newVarId()
+
+  fun createLabel functionContext = ID.generate()
+
+  fun createLocalVarID functionContext = ID.generate()
+
 
   fun addVarBind ({localBindingsRef, ...} : functionContext) varInfo =
       localBindingsRef := (varInfo :: (!localBindingsRef))
@@ -76,16 +89,17 @@ struct
   fun getVarBinds ({localBindingsRef, ...} : functionContext) =
       !localBindingsRef
 
+
   fun getPosition ({position, ...} : functionContext) = position
 
   local
     fun changePosition (functionContext : functionContext, newPosition) =
+
         {
           functionID = #functionID functionContext,
-          sizeMap = #sizeMap functionContext,
           position = newPosition,
-          linearizeContext = #linearizeContext functionContext,
-          resultType = #resultType functionContext,
+          resultTypeList = #resultTypeList functionContext,
+          resultSizeList = #resultSizeList functionContext,
           locOfEnclosingExp = #locOfEnclosingExp functionContext,
           constantInstructions = #constantInstructions functionContext,
           localBindingsRef = #localBindingsRef functionContext,
@@ -105,8 +119,17 @@ struct
           | _ => currentPosition
       in changePosition (functionContext, newPosition) end
 
-  fun setBoundPosition (functionContext : functionContext, varid, ty) =
-      changePosition (functionContext, Bound (varid, ty))
+  fun setBoundPosition (functionContext : functionContext, boundVarInfoList, boundTyList, variableSizeList) =
+      changePosition 
+          (
+           functionContext, 
+           Bound 
+               {
+                boundVarInfoList = boundVarInfoList,
+                boundTyList = boundTyList,
+                variableSizeList = variableSizeList
+               }
+          )
 
   (**
    * add enclosingGuardedCodes, and changes position to non-tail.
@@ -116,10 +139,9 @@ struct
         val ctx = 
             {
               functionID = #functionID functionContext,
-              sizeMap = #sizeMap functionContext,
               position = #position functionContext,
-              linearizeContext = #linearizeContext functionContext,
-              resultType = #resultType functionContext,
+              resultTypeList = #resultTypeList functionContext,
+              resultSizeList = #resultSizeList functionContext,
               locOfEnclosingExp = #locOfEnclosingExp functionContext,
               constantInstructions = #constantInstructions functionContext,
               localBindingsRef = #localBindingsRef functionContext,
@@ -138,10 +160,9 @@ struct
   fun setLocOfEnclosingExp (functionContext : functionContext, loc) =
         {
           functionID = #functionID functionContext,
-          sizeMap = #sizeMap functionContext,
           position = #position functionContext,
-          linearizeContext = #linearizeContext functionContext,
-          resultType = #resultType functionContext,
+          resultTypeList = #resultTypeList functionContext,
+          resultSizeList = #resultSizeList functionContext,
           locOfEnclosingExp = loc,
           constantInstructions = #constantInstructions functionContext,
           localBindingsRef = #localBindingsRef functionContext,
@@ -151,20 +172,9 @@ struct
   fun getLocOfEnclosingExp (functionContext : functionContext) =
       #locOfEnclosingExp functionContext
 
-  fun getResultType ({resultType, ...} : functionContext) = resultType
+  fun getResultTypeList ({resultTypeList, ...} : functionContext) = resultTypeList
 
-  fun getSize ({sizeMap, ...} : functionContext) ty =
-      case ty of 
-        AN.ATOM => SI.SINGLE
-      | AN.BOXED => SI.SINGLE
-      | AN.DOUBLE => SI.DOUBLE
-      | AN.TYVAR tyvar =>
-        if !Control.enableUnboxedFloat
-        then
-          case TMap.find(sizeMap,tyvar) of
-            SOME size => size
-          | _ => raise Control.Bug ("tyvar not found" ^ (Int.toString tyvar))
-        else SI.SINGLE
+  fun getResultSizeList ({resultSizeList, ...} : functionContext) = resultSizeList
                       
   fun addStringConstant
           (context as {constantInstructions, ...} : functionContext) string =
@@ -179,61 +189,32 @@ struct
   fun getConstantInstructions ({constantInstructions, ...} : functionContext) =
       !constantInstructions
 
-  fun addFunctionCode
-          ({linearizeContext = {functionCodesRef, ...}, ...} : functionContext)
-          functionCode =
-      functionCodesRef := functionCode :: (!functionCodesRef)
-
-  fun getFunctionCodes
-      ({linearizeContext = {functionCodesRef, ...}, ...} : functionContext) =
-      !functionCodesRef
-
   fun createInitialContext () =
-      let
-        val linearizeContext =
-            {
-              functionCodesRef = ref []
-            }
-            : linearizeContext
-      in
-        {
-          functionID = T.newVarId(),
-          sizeMap = TMap.empty,
-          localBindingsRef = ref [],
-          position = Tail,
-          resultType = AN.ATOM, (* ToDo : UNBOXED ? *)
-          locOfEnclosingExp = Loc.noloc,
-          constantInstructions = ref [],
-          linearizeContext = linearizeContext,
-          enclosingGuardedCodes = []
-        }
-        : functionContext
-      end
+      {
+       functionID = ID.generate(),
+       localBindingsRef = ref [],
+       position = Tail,
+       resultTypeList = [AN.ATOM], (* ToDo : UNBOXED ? *)
+       resultSizeList = [SI.SINGLE],
+       locOfEnclosingExp = Loc.noloc,
+       constantInstructions = ref [],
+       enclosingGuardedCodes = []
+      } : functionContext
 
-  fun createContext
-          ({linearizeContext, ...} : functionContext)
-          (functionID : SI.varid, funInfo : AN.funInfo, loc) =
+  fun createContext (enclosingContext : functionContext) (funDecl : AN.funDecl, loc) =
       let
-        val sizeMap =
-            ListPair.foldl
-                (fn (tyvar, AN.ANVAR {varInfo = ANVarInfo,...}, map) =>
-                    let val varInfo = ANVarInfoToVarInfo ANVarInfo
-                    in TMap.insert (map, tyvar, SI.VARIANT varInfo) end)
-                TMap.empty
-                (#tyvars funInfo, #sizevals funInfo)
         val context =
             {
-              functionID = functionID,
-              sizeMap = sizeMap,
-              localBindingsRef = ref [],
+              functionID = #codeId funDecl,
+              localBindingsRef = #localBindingsRef enclosingContext,
               position = Tail,
-              resultType = #resultTy funInfo,
+              resultTypeList = #resultTyList funDecl,
+              resultSizeList = map ANExpToSize (#resultSizeExpList funDecl),
               locOfEnclosingExp = loc,
               constantInstructions = ref [],
-              linearizeContext = linearizeContext,
               enclosingGuardedCodes = []
             }
-        val _ = app (fn varInfo => addVarBind context varInfo) (#args funInfo)
+        val _ = app (addVarBind context) (#argVarList funDecl)
       in
         context
       end

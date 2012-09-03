@@ -1,5 +1,5 @@
 datatype 'a d
 con A : ['a .'a  -> 'a d]
 con B : ['a .int d  -> 'a d]
-val x = B (A 1) : ['a .'a d]
-val x = B (A 1) : real d
+val x = B ... : ['a .'a d]
+val x = B ... : real d

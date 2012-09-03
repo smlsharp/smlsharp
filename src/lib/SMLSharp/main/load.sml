@@ -1,14 +1,23 @@
-use "./GC.sig";
-use "./GC.sml";
+use "./SMLSHARP_COMMAND_LINE.sig";
+use "./SMLSharpCommandLine.sml";
 
-use "./FINALIZABLE.sig";
-use "./Finalizable.sml";
+use "./SMLSHARP_CONTROL.sig";
+use "./SMLSharpControl.sml";
 
-use "./FLOB.sig";
-use "./FLOB.sml";
+use "./SMLSHARP_GC.sig";
+use "./SMLSharpGC.sml";
 
-use "./PLATFORM.sig";
-use "./Platform.sml";
+use "./SMLSHARP_FINALIZABLE.sig";
+use "./SMLSharpFinalizable.sml";
+
+use "./SMLSHARP_FLOB.sig";
+use "./SMLSharpFLOB.sml";
+
+use "./SMLSHARP_PLATFORM.sig";
+use "./SMLSharpPlatform.sml";
+
+use "./SMLSHARP_MUTABLE.sig";
+use "./SMLSharpMutable.sml";
 
 use "./SMLSHARP.sig";
 use "./SMLSharp.sml";

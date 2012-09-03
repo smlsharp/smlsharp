@@ -35,20 +35,9 @@ Group is
 	../../typedflatcalc/sources.cm
 	../../modulecompilation/sources.cm
         ../../matchcompilation/sources.cm
-        ../../recordcompilation/sources.cm
-
-	../../buccalc/sources.cm
-	../../buctransformation/sources.cm
-	../../anormal/sources.cm
-	../../anormaltransform/sources.cm
-	../../anormaloptimization/sources.cm
-
-        ../../linearize/sources.cm
-	../../sioptimization/sources.cm
-        ../../symbolicinstructions/sources.cm
-        ../../assemble/sources.cm
-        ../../../instructions/compiler/sources.cm
+        ../../tlnormalization/sources.cm
         ../../session/sources.cm
+
 
 	AntiUnifier.sml
   	Linker.sml

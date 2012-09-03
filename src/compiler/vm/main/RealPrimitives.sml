@@ -2,7 +2,7 @@
  * implementation of primitives on real values.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: RealPrimitives.sml,v 1.11.6.1 2007/03/22 16:57:42 katsu Exp $
+ * @version $Id: RealPrimitives.sml,v 1.12 2007/03/22 01:32:24 kiyoshiy Exp $
  *)
 structure RealPrimitives : PRIMITIVE_IMPLEMENTATIONS =
 struct

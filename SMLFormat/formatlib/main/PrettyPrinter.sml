@@ -2,7 +2,7 @@
  *  This module translates the symbols into a text representation which fits
  * within the specified column width.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrettyPrinter.sml,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
+ * @version $Id: PrettyPrinter.sml,v 1.4 2007/06/18 13:30:43 kiyoshiy Exp $
  *)
 structure PrettyPrinter :> PRETTYPRINTER =
 struct
@@ -34,15 +34,6 @@ struct
          | DeferredIndicator of {space : bool, requiredColumns : int ref}
          | StartOfIndent of int
          | EndOfIndent
-
-  (***************************************************************************)
-
-  (**
-   * raised when any error occurs.
-   * @params message
-   * @param message the error message
-   *)
-  exception Fail of string
 
   (***************************************************************************)
 
@@ -95,22 +86,36 @@ struct
    * @param symbol the symbol to be translated.
    * @return the text representation of the symbol.
    *)
-  fun format parameters symbol =
+  fun format parameters =
     let
-      val (initialCols, spaceString, newlineString) =
+      val (initialCols, spaceString, newlineString, cutOverTail) =
           List.foldl
-              (fn (param, (cols, space, newline)) =>
+              (fn (param, (cols, space, newline, cuttail)) =>
                   case param
-                   of PP.Newline s => (cols, space, s)
-                    | PP.Space s => (cols, s, newline)
-                    | PP.Columns n => (n, space, newline)
-                    | _ => (cols, space, newline))
-              (PP.defaultColumns, PP.defaultSpace, PP.defaultNewline)
+                   of PP.Newline s => (cols, space, s, cuttail)
+                    | PP.Space s => (cols, s, newline, cuttail)
+                    | PP.Columns n => (n, space, newline, cuttail)
+                    | PP.CutOverTail b => (cols, space, newline, b)
+                    | _ => (cols, space, newline, cuttail))
+              (
+                PP.defaultColumns,
+                PP.defaultSpace,
+                PP.defaultNewline,
+                PP.defaultCutOverTail
+              )
               parameters
+
+      datatype line =
+               Unclosed of string
+             | Closed of string
+             | Truncated of string
 
       type context =
            {
+             (** the number of remaining columns. *)
              cols : int,
+             (** line list in reversed order. *)
+             lines : line list,
              indentString : string,
              indentWidth : int,
              indentStack : int list
@@ -149,16 +154,48 @@ struct
       fun makeIndent size =
           String.concat (List.tabulate (size, fn _ => spaceString))
 
+      fun checkOverTail ifNotOver string =
+          let
+            val sizeOfString = size string
+          in
+            if cutOverTail andalso initialCols < sizeOfString
+            then
+              Truncated
+                  (if initialCols < 2 orelse sizeOfString < 2
+                   then ".."
+                   else String.substring (string, 0, initialCols - 2) ^ "..")
+            else ifNotOver string
+          end
+      fun appendToLine text (Unclosed line :: lines') =
+          let val str = line ^ text
+          in (checkOverTail Unclosed str) :: lines'
+          end
+        | appendToLine text (lines as (Truncated _ :: _)) = lines
+        | appendToLine text lines = (Unclosed text) :: lines
+      fun closeLine (Unclosed line :: lines) =
+          (checkOverTail Closed line) :: lines
+        | closeLine (Truncated line :: lines) = (Closed line) :: lines
+        | closeLine lines = (Closed "") :: lines
+      fun linesToString ({lines, ...} : context) =
+          let
+            val strings =
+                map
+                    (fn (Closed s) => s ^ newlineString
+                      | (Truncated s) => s ^ newlineString
+                      | (Unclosed s) => s)
+                    (List.rev lines) (* lines are in reversed order. *)
+          in
+            String.concat strings
+          end
+
       fun visit canMultiline (context : context) (Term (columns, text)) =
-          (
-            text,
-            {
-              cols = (#cols context) - columns,
-              indentString = #indentString context,
-              indentWidth = #indentWidth context,
-              indentStack = #indentStack context
-            }
-          )
+          {
+            cols = (#cols context) - columns,
+            lines = appendToLine text (#lines context),
+            indentString = #indentString context,
+            indentWidth = #indentWidth context,
+            indentStack = #indentStack context
+          }
 
         | visit
           canMultiline
@@ -200,43 +237,28 @@ struct
                     ))
                 canMultiline environment
 
-            (*
-              translates symbols into their text representation.
-              the resut 'strings' contains text representations in reverse
-             order.
-              and the new context after translation of the last symbol.
-            *)
-            val (strings, newContext) =
+            val newContext =
                 foldl
-                (fn (symbol, (strings, context)) =>
-                    let
-                      val (string, newContext) =
-                          visit allPreferredMultiLined context symbol
-                    in
-                      (string :: strings, newContext)
-                    end)
-                (
-                   [],
-                   {
-                     cols = #cols context,
-                     indentString = makeIndent (initialCols - (#cols context)),
-                     indentWidth = (initialCols - (#cols context)),
-                     indentStack = []
-                   }
-                )
-                symbols
+                    (fn (symbol, context) =>
+                        visit allPreferredMultiLined context symbol)
+                    {
+                      cols = #cols context,
+                      lines = #lines context,
+                      indentString =
+                          makeIndent (initialCols - (#cols context)),
+                      indentWidth = (initialCols - (#cols context)),
+                      indentStack = []
+                    }
+                    symbols
 
-            val string = String.concat (List.rev strings)
           in
-            (
-              string,
-              {
-                cols = #cols newContext, (* from newContext *)
-                indentString = #indentString context,
-                indentWidth = #indentWidth context,
-                indentStack = #indentStack context
-              }
-            )
+            {
+              cols = #cols newContext, (* from newContext *)
+              lines = #lines newContext,
+              indentString = #indentString context,
+              indentWidth = #indentWidth context,
+              indentStack = #indentStack context
+            }
           end
 
         | visit canMultiline context (StartOfIndent indent) =
@@ -247,15 +269,13 @@ struct
                 extendIndent
                 (#indentString context) (#indentWidth context) indent
           in
-            (
-              "",
-              {
-                cols = #cols context,
-                indentString = newIndentString,
-                indentWidth = newIndentWidth,
-                indentStack = newIndentStack
-              }
-            )
+            {
+              cols = #cols context,
+              lines = #lines context,
+              indentString = newIndentString,
+              indentWidth = newIndentWidth,
+              indentStack = newIndentStack
+            }
           end
 
         | visit canMultiline context (Indicator {space, newline}) =
@@ -264,20 +284,20 @@ struct
             let
               val newCols = initialCols - (#indentWidth context)
             in
-              (
-                newlineString ^ (#indentString context),
-                {
-                  cols = newCols,
-                  indentString = #indentString context,
-                  indentWidth = #indentWidth context,
-                  indentStack = #indentStack context
-                }
-              )
+              {
+                cols = newCols,
+                lines =
+                    appendToLine
+                        (#indentString context) (closeLine (#lines context)),
+                indentString = #indentString context,
+                indentWidth = #indentWidth context,
+                indentStack = #indentStack context
+              }
             end
           else
             if space
             then visit canMultiline context (Term (1, spaceString))
-            else ("", context)
+            else context
 
         | visit
           canMultiline context (DeferredIndicator {space, requiredColumns}) =
@@ -286,20 +306,20 @@ struct
             let
               val newCols = initialCols - (#indentWidth context)
             in
-              (
-                newlineString ^ (#indentString context),
-                {
-                  cols = newCols,
-                  indentString = #indentString context,
-                  indentWidth = #indentWidth context,
-                  indentStack = #indentStack context
-                }
-              )
+              {
+                cols = newCols,
+                lines =
+                    appendToLine
+                        (#indentString context) (closeLine (#lines context)),
+                indentString = #indentString context,
+                indentWidth = #indentWidth context,
+                indentStack = #indentStack context
+              }
             end
           else
             if space
             then visit canMultiline context (Term (1, spaceString))
-            else ("", context)
+            else context
 
         | visit _ context EndOfIndent =
           case #indentStack context
@@ -311,32 +331,25 @@ struct
                     (#indentString context) (#indentWidth context) (~indent)
                 val newIndentWidth = #indentWidth context - indent
               in
-                (
-                  "",
-                  {
-                    cols = #cols context,
-                    indentString = newIndentString,
-                    indentWidth = newIndentWidth,
-                    indentStack = newIndentStack
-                  }
-                )
+                {
+                  cols = #cols context,
+                  lines = #lines context,
+                  indentString = newIndentString,
+                  indentWidth = newIndentWidth,
+                  indentStack = newIndentStack
+                }
               end
-
-      val (formatted, _) =
-          visit
-          true
-          {
-            cols = initialCols,
-            indentString = "",
-            indentWidth = 0,
-            indentStack = []
-          }
-          symbol
-          handle UnMatchEndOfIndent => raise Fail "unmatched EndOfIndent"
-               | IndentUnderFlow indent =>
-                 raise Fail ("indent underflow(" ^ Int.toString indent ^ ")")
     in
-      formatted
+      linesToString
+      o (visit
+             true
+             {
+               cols = initialCols,
+               lines = [],
+               indentString = "",
+               indentWidth = 0,
+               indentStack = []
+            })
     end
 
 end

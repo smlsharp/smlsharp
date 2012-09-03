@@ -4,7 +4,7 @@
  * specific modules.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Utility.sml,v 1.22 2007/01/26 09:33:15 kiyoshiy Exp $
+ * @version $Id: Utility.sml,v 1.23 2007/06/01 01:25:11 kiyoshiy Exp $
  *)
 structure Utility = 
 struct
@@ -67,10 +67,13 @@ struct
             (ListPair.zip (keys, values))
       end
 
+  fun listToTupleTy (tyList : TY.ty list) =
+      TY.RECORDty(listToTupleSEnv (tyList))
+
   fun listToTupleExp (valueTyList : (TP.tpexp * TY.ty) list) loc =
       let
         val fields = listToTupleSEnv (map #1 valueTyList)
-        val ty = TY.RECORDty(listToTupleSEnv (map #2 valueTyList))
+        val ty = listToTupleTy (map #2 valueTyList)
       in TP.TPRECORD{fields = fields, recordTy = ty, loc = loc}
       end
 

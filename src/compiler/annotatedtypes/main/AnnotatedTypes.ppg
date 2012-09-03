@@ -1,0 +1,406 @@
+(**
+ * annotated type structures.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Huu-Duc Nguyen
+ * @version $Id: AnnotatedTypes.ppg,v 1.5 2007/06/18 08:46:42 katsu Exp $
+ *)
+
+structure AnnotatedTypes =
+struct
+
+  structure FE = SMLFormat.FormatExpression
+  structure BF = SMLFormat.BasicFormatters
+  structure PT = PredefinedTypes
+
+  (** formatter for 'a IEnv.map *)
+  fun format_IEnv (elementFormatter, prefix, suffix) values =
+      let val separator = List.concat[[FE.Term(1, ",")]]
+      in
+        SmlppgUtil.formatListWithEnclosureOne
+            (elementFormatter, separator, prefix, suffix)
+            (IEnv.listItems values)
+      end
+
+  fun format_tyCon tyCon = Types.format_tyCon nil tyCon
+
+  fun formatLSet (separator, prefixIfNotNull, suffixIfNotNull) lset = 
+      let 
+      val L = map (fn i => "L" ^ (Int.toString i)) (ISet.listItems lset)
+      in
+         SmlppgUtil.formatListWithEnclosureOne
+         (
+           SMLFormat.BasicFormatters.format_string,
+           separator,
+           prefixIfNotNull,
+           suffixIfNotNull
+         )
+         L
+      end
+
+  fun formatRecordTy (elementFormatter, bindsep, itemsepRecord) smap =
+      let
+        val L = SEnv.listItemsi smap
+      in
+        SmlppgUtil.format_record(elementFormatter, bindsep, itemsepRecord) L
+      end
+
+  fun formatCond cond = 
+      if cond
+      then SMLFormat.BasicFormatters.format_string "Y"
+      else SMLFormat.BasicFormatters.format_string "N"
+
+  (*% 
+   * @formatter(ID.id) ID.format_id
+   *)
+  type id = 
+       (*%
+        * @format(id) id
+        *)
+       ID.id
+
+  type tyCon = Types.tyCon
+
+  (*%
+   * @formatter(Types.eqKind) Types.format_eqKind
+   *)
+  type eqKind = 
+       (*%
+        * @format(v) v
+        *)
+       Types.eqKind
+
+  (*%
+   *)
+  type annotationLabel = 
+       (*%
+        * @format(label) "L" label
+        *)
+       int
+
+  (*%
+   * @formatter(formatLSet) formatLSet
+   *)
+  datatype labelEquiv =
+           (*%
+            * @format(labels : formatLSet) labels()(",","[","]") 
+            *)
+           LE_LABELS of ISet.set
+         | (*%
+            * @format "G"
+            *)
+           LE_GENERIC
+         | (*%
+            * @format "U"
+            *)
+           LE_UNKNOWN
+
+  (*%
+   * @formatter(formatCond) formatCond
+   *)
+  type functionAnnotation = 
+       (*%
+        * @format({labels, boxed:boxed:formatCond}) 
+        *  {"{"
+        *      +1 {"labels=" labels} 
+        *      +1 {",boxed=" boxed} 
+        *   "}"}
+        *)
+       {
+        labels : labelEquiv,
+        boxed : bool
+       }
+
+  (*%
+   * @formatter(formatCond) formatCond
+   *)
+  type recordAnnotation = 
+       (*%
+        * @format({labels,boxed:boxed:formatCond,align:align:formatCond}) 
+        *  {"{"
+        *      +1 {"labels=" labels} 
+        *      +1 {",boxed=" boxed} 
+        *      +1 {",align=" align} 
+        *   "}"}
+        *)
+       {
+        labels : labelEquiv,
+        boxed : bool,
+        align : bool
+       }
+
+  (*%
+   *)
+  datatype btvRep =
+           (*%
+            * @format "G"
+            *)
+           GENERIC_REP
+         | (*%
+            * @format "A"
+            *)
+           ATOM_REP
+         | (*%
+            * @format "B"
+            *)
+           BOXED_REP
+         | (*%
+            * @format "D"
+            *)
+           DOUBLE_REP
+         | (*%
+            * @format "S"
+            *)
+           SINGLE_REP
+         | (*%
+            * @format "U"
+            *)
+           UNBOXED_REP
+         | (*%
+            * @format "UN"
+            *)
+           UNKNOWN_REP
+
+
+  (*%                
+   *
+   * @formatter(format_tyCon) format_tyCon
+   * @formatter(format_btvRep) format_btvRep
+   * @formatter(listWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
+   * @formatter(listWithEnclosure) SmlppgUtil.formatListWithEnclosure
+   * @formatter(tyConArgTys) SmlppgUtil.formatTyConArgumentTypes
+   * @formatter(genericSmapTy) SmlppgUtil.formatGenericSmapTy
+   * @formatter(formatRecordTy) formatRecordTy
+   * @formatter(format_dummyTyId) Types.format_dummyTyId
+   * @formatter(formatIEnv) format_IEnv
+   * @formatter(smap) SmlppgUtil.formatSmap
+   * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+   * @formatter(optWithDefault) SmlppgUtil.formatOptWithDefault
+   * @formatter(format_freeTyId) Types.format_freeTyId
+   *)
+  datatype ty =
+           (*% 
+            * @format "errorty"
+            *)
+           ERRORty
+         | (*% 
+            * @format(id:format_dummyTyId)  id
+            *)
+           DUMMYty of int                  
+         | (*% 
+            * @format(a b) b(a)
+            *)
+           TYVARty of tvKind ref                  
+         | (*% 
+            * @format(value) "t" value
+            *)
+           BOUNDVARty of int
+         | (*% 
+            * @format({
+            *          argTyList:argTy argTys:listWithEnclosureOne, 
+            *          bodyTy,
+            *          annotation: a b
+            *         }) 
+            * R1{
+            *     {argTys(argTy)("," +, + "{", "}")} +d 
+            *       "->"
+            *     2[+1 bodyTy]
+            *   }
+            *)
+           FUNMty of {argTyList : ty list, bodyTy : ty, annotation : functionAnnotation ref}
+         | (*%
+            * @format(ty tys:listWithEnclosureOne) tys(ty)("," +, + "{", "}")
+            *)
+           MVALty of ty list
+         | (*% 
+            * @format({fieldTypes:elm smap:formatRecordTy, annotation: a b}) 
+            *        {2[+1 {smap(elm)(":", + "," +1)}] +1 "^" b(a) }
+            *)
+           RECORDty of {fieldTypes: ty SEnv.map, annotation : recordAnnotation ref }
+         | (*% 
+            * @format({tyCon:tyCon:format_tyCon, args:arg args:tyConArgTys})
+            *    {args(arg)("," +, "(", ")" +)} tyCon
+            *)
+           CONty of {tyCon : tyCon, args : ty list}
+         | (*% 
+            * @format({boundtvars : btvKind btvKindMap:formatIEnv, body}) 
+            * !N0{
+            *      "["
+            *         btvKindMap(btvKind)("","")
+            *         "."
+            *         2[1 body]
+            *      "]"
+            *    }
+            *)
+           POLYty of {boundtvars : btvKind IEnv.map, body : ty}
+         | (*% 
+            * @format "BOXEDty" 
+            *)
+           BOXEDty (* generic boxed type *)
+         | (*% 
+            * @format "ATOMty" 
+            *)
+           ATOMty (* generic unboxed type *)
+         | (*% 
+            * @format "DOUBLEty" 
+            *)
+           DOUBLEty
+
+       (*The following types only appear after rbutransformation*)
+         | (*%
+            * @format(tid) {"<" tid ">"}
+            *)
+           TAGty of int
+         | (*%
+            * @format(tid) {"|" tid "|"}
+            *)
+           SIZEty of int
+         | (*%
+            * @format({label, recordTy}) 
+            *         {"Idx(" label "," 5[+1 {recordTy}] 4[+1 ")"]}
+            *)
+           INDEXty of {label : string, recordTy : ty}
+         | (*%
+            * @format(ty tys)
+            *   { "<" tys(ty)("," +1) ">" }
+            *)
+           BITMAPty of ty list
+         | (*%
+            * @format(ty tys)
+            *   {"[" tys(ty)("+" +1) "]"}
+            *)
+           OFFSETty of ty list
+         | (*%
+            * @format({condTy, tyList:ty tys:listWithEnclosure})
+            *   "P(" condTy "," 3[+1 tys(ty)("," +1,"||","||")] +1 ")"
+            *)
+           PADty of {condTy : ty, tyList : ty list}
+         | (*%
+            * @format({condTy, tyList:ty tys:listWithEnclosure})
+            *   "PS(" condTy "," 3[+1 tys(ty)("," +1,"||","||")] +1 ")"
+            *)
+           PADSIZEty of {condTy : ty, tyList : ty list}
+         | (*%
+            * @format(tid tids:listWithEnclosure)
+            *   tids(tid)("," +1,"F<<",">>")
+            *)
+           FRAMEBITMAPty of int list
+         | (*%
+            * @format({tyList:ty tys, fixedSizeList:size sizes})
+            *   "E(" 2[+1 tys(ty)("," +1)] 
+            *      "|" +1
+            *        2[+1 sizes(size:formatUInt32)("," +1)]
+            *     +1 ")"
+            *)
+           ENVBITMAPty of {tyList : ty list, fixedSizeList : BasicTypes.UInt32 list}
+         | (*%
+            * @format(tid) "S(" tid ")"
+            *)
+           SINGLEty of int
+         | (*%
+            * @format(tid) "U(" tid ")"
+            *)
+           UNBOXEDty of int
+
+       and recKind =
+           (*% @format "" *)
+           UNIV 
+         | (*% 
+            * @format(ty smap:genericSmapTy)  
+                     {"#" 2[smap(ty)(":", "," +1, "," +1)]}
+            *)
+           REC of ty SEnv.map
+         | (*% 
+            * @format(ty tys:listWithEnclosureOne)  
+                     {"#" 2[tys(ty)("," +, "{", "}")]}
+            *)
+           OVERLOADED of ty list
+
+  withtype btvKind =
+           (*%
+            * @format({id, recKind, eqKind, instancesRef: a b c, representationRef: e f})
+            * {
+            *   eqKind f(e:format_btvRep) id recKind
+            * }
+            *)
+           (*
+            * @format({id, recKind, eqKind, instancesRef: a b c, representationRef: e f})
+            * {
+            *   eqKind f(e:format_btvRep) id recKind
+            *   2[1 c(b:listWithEnclosureOne(a)(","+,"{","}"))]
+            * }
+            *)
+           {
+            id : int, 
+            recKind : recKind, 
+            eqKind : eqKind, 
+            instancesRef : ty list ref, 
+            representationRef : btvRep ref
+           }
+       and tvKind =
+           (*% 
+            * @format({id, recKind, eqKind, tyvarName:name opt:optWithDefault}) 
+            *  eqKind opt(name)(id:format_freeTyId recKind)
+            *)
+           {
+            id : int,
+            recKind : recKind,
+            eqKind : eqKind,
+            tyvarName : string option
+           }
+
+  (*%
+   * @formatter(formatIEnv) format_IEnv
+   * @formatter(format_btvKind) format_btvKind
+   *)
+  type btvEnv = 
+       (*%
+        * @format(a:format_btvKind b:formatIEnv) b(a)("","")
+        *)
+       btvKind IEnv.map
+
+ (*%
+  *)
+ type varInfo =
+      (*%
+       * @format({id, displayName, ty}) {displayName + ":" + ty}
+       *) 
+      {id : id, displayName : string, ty : ty} 
+
+ (*%
+  *)
+ type varInfoWithoutType =
+      (*%
+       * @format({id, displayName, ty}) displayName
+       *) 
+      {id : id, displayName : string, ty : ty} 
+
+ (*% 
+   *)
+ type primInfo =
+      (*%
+       * @format({name,ty}) name
+       *)
+      {name : string, ty : ty}
+
+  val intty = CONty{tyCon = PT.intTyCon, args = []}
+  val wordty = CONty{tyCon = PT.wordTyCon, args = []}
+  val realty = CONty{tyCon = PT.realTyCon, args = []}
+  val floatty = CONty{tyCon = PT.floatTyCon, args = []}
+  val stringty = CONty{tyCon = PT.stringTyCon, args = []}
+  val charty = CONty{tyCon = PT.charTyCon, args = []}
+  val unitty = CONty{tyCon = PT.unitTyCon, args = []}
+  val exnty = CONty{tyCon = PT.exnTyCon, args = []}
+  val boolty = CONty{tyCon = PT.boolTyCon, args = []}
+
+  val foreignfunty = wordty
+  val sizeofty = wordty
+  val arrayindexty = wordty
+  val exntagty = intty
+
+  fun arrayty ty = CONty{tyCon = PT.arrayTyCon, args = [ty]}
+
+  fun arrayelemty (CONty{args = [ty],...}) = ty
+    | arrayelemty _ = raise Control.Bug "invalid array type"
+
+
+end

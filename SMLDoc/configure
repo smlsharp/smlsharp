@@ -9,16 +9,24 @@
 #
 # @author UENO Katsuhiro
 # @author YAMATODANI Kiyoshi
-# @version $Id: configure,v 1.10.2.3 2007/03/26 09:47:39 katsu Exp $
+# @version $Id: configure,v 1.11 2007/04/02 09:42:28 katsu Exp $
 
 ###############################################################################
 
 pwd=`pwd`
 host_os=`uname -s|sed y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/`
 prefix=/usr/local
+if test -d $pwd/SMLFormat ;then
+smlformatdir=$pwd/SMLFormat
+else
 smlformatdir=$pwd/../SMLFormat
+fi
 smlunitdir=$pwd/../SMLUnit
+if test -d $pwd/basis_compat ;then
+basisdir="$pwd/basis_compat"
+else
 basisdir="$pwd/../basis_compat"
+fi
 
 compiler=mlton
 MLTON=mlton

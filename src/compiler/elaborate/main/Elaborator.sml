@@ -79,7 +79,7 @@
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Elaborator.sml,v 1.87 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: Elaborator.sml,v 1.90 2007/06/19 22:50:51 ohori Exp $
  *)
 structure Elaborator : ELABORATOR =
 struct
@@ -87,6 +87,7 @@ struct
   (***************************************************************************)
 
 local
+  structure C = Control
   structure A = Absyn
   structure E = ElaborateError
   structure UE = UserError
@@ -817,15 +818,18 @@ in
         )
       | A.EXPRECORD_SELECTOR (x, loc) =>  PC.PLRECORD_SELECTOR(x, loc)
       | A.EXPTUPLE (elist, loc) => PC.PLTUPLE(map (elabExp env) elist, loc)
-      | A.EXPLIST (elist, loc) =>
-        let
-          fun folder (x, y) =
+      | A.EXPLIST (elist, loc) => 
+        if !C.doListExpressionOptimization then
+          PC.PLLIST(map (elabExp env) elist, loc)
+        else
+          let
+            fun folder (x, y) =
               PC.PLAPPM
               (PC.PLVAR(["::"], loc), [PC.PLTUPLE([elabExp env x, y], loc)], loc)
-          val plexp = foldr folder (PC.PLVAR(["nil"], loc)) elist
-        in
-          plexp
-        end
+            val plexp = foldr folder (PC.PLVAR(["nil"], loc)) elist
+          in
+            plexp
+          end
       | A.EXPAPP (elist, loc) => resolveInfixExp env elist
       | A.EXPSEQ (elist, loc) => PC.PLSEQ(map (elabExp env) elist, loc)
       | A.EXPTYPED (exp, ty, loc) =>
@@ -1002,7 +1006,12 @@ in
       | A.PATTYPED (pat, ty, loc) =>
         PC.PLPATTYPED(elabPat env pat, elabTy env ty, loc)
       | A.PATLAYERED (A.PATID {opPrefix=b, id=path, loc=loc1}, pat, loc) =>
-        let val id = A.longidToString(path)
+        let
+          val _ =
+              if A.isShortId path
+              then ()
+              else enqueueError (loc, E.LeftOfASMustBeVariable)
+          val id = A.longidToString(path)
         in
           checkReservedNameForValBind (id, loc1);
           PC.PLPATLAYERED(id, NONE, elabPat env pat, loc)
@@ -1011,6 +1020,10 @@ in
             (A.PATTYPED
                  (A.PATID{opPrefix, id=path, loc=loc1}, ty, loc2), pat, loc) =>
         let
+          val _ =
+              if A.isShortId path
+              then ()
+              else enqueueError (loc, E.LeftOfASMustBeVariable)
           val id = A.longidToString(path)
           val elabedTy = elabTy env ty
           val elabedPat = elabPat env pat

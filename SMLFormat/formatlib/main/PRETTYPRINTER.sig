@@ -2,7 +2,7 @@
  *  This module translates the symbols into a text representation which fits
  * within the specified column width.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PRETTYPRINTER.sig,v 1.2 2007/01/30 13:27:05 kiyoshiy Exp $
+ * @version $Id: PRETTYPRINTER.sig,v 1.3 2007/05/30 14:18:31 kiyoshiy Exp $
  *)
 signature PRETTYPRINTER =
 sig
@@ -83,12 +83,18 @@ sig
 
   (***************************************************************************)
 
-  (**
-   * raised when any error occurs.
-   * @params message
-   * @param message the error message
+  (** the exception raised when the EndOfIndent with no matched
+   * FormatIndicator is found.
    *)
-  exception Fail of string
+  exception UnMatchEndOfIndent
+
+  (**
+   * the exception raised when the specified indent offset plus the current
+   * indent is less than 0.
+   * @params offset
+   * @param offset the indent offset which causes the indent underflow.
+   *)
+  exception IndentUnderFlow of int
 
   (***************************************************************************)
 

@@ -7,7 +7,8 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Linearizer.sml,v 1.79 2007/02/11 16:39:51 kiyoshiy Exp $
+ * @author NGUYEN Huu-Duc
+ * @version $Id: Linearizer.sml,v 1.80 2007/04/19 05:06:52 ducnh Exp $
  *)
 structure Linearizer : LINEARIZER =
 struct
@@ -15,12 +16,12 @@ struct
   (***************************************************************************)
 
   structure BT = BasicTypes
-  structure CT = ConstantTerm
   structure CTX = LinearizeContext
   structure SI = SymbolicInstructions
   structure AN = ANormal
   structure ANU = ANormalUtils
   structure TMap = IEnv
+  structure CT = ConstantTerm
 
   (***************************************************************************)
 
@@ -38,153 +39,6 @@ struct
 
   (***************************************************************************)
 
-  fun newVarInfo (id, ty, varKind) =
-      {
-        id = id,
-        displayName = ID.toString id,
-        ty = ty,
-        varKind = varKind
-      } : AN.varInfo
-
-  fun ANVarInfoToVarInfo ({id, displayName, ...} : AN.varInfo) =
-      {id = id, displayName = displayName} : SI.varInfo
-
-  fun last [] = raise Control.Bug "last: empty list"
-    | last [x] = x
-    | last (x :: L) = last L
-
-  fun sizeOfTy context ty = CTX.getSize context ty
-
-  fun sizeOfExp context (AN.ANVAR{varInfo = {ty, ...},...}) =
-      CTX.getSize context ty
-    | sizeOfExp context _ = raise Control.Bug "sizeOfExp: ANVAR expects" 
-
-  fun intConstToSInt32 (CT.INT i) = i
-  fun wordConstToUInt32 (CT.WORD w) = w
-  fun realConstToString (CT.REAL s) = s
-  fun charConstToUInt32 (CT.CHAR c) = BT.IntToUInt32(Char.ord c)
-
-  fun genPrim1_i opcode (CT.INT argValue1,argEntry2,destination) =
-      opcode
-          {
-           argValue1 = argValue1,
-           argEntry2 = argEntry2,
-           destination = destination
-          }
-
-  fun genPrim2_i opcode (argEntry1, CT.INT argValue2,destination) =
-      opcode
-          {
-           argEntry1 = argEntry1,
-           argValue2 = argValue2,
-           destination = destination
-          }
-
-  fun genPrim1_w opcode (CT.WORD argValue1,argEntry2,destination) =
-      opcode
-          {
-           argValue1 = argValue1,
-           argEntry2 = argEntry2,
-           destination = destination
-          }
-
-  fun genPrim2_w opcode (argEntry1, CT.WORD argValue2,destination) =
-      opcode
-          {
-           argEntry1 = argEntry1,
-           argValue2 = argValue2,
-           destination = destination
-          }
-
-  fun genPrim1_r opcode (CT.REAL argValue1,argEntry2,destination) =
-      opcode
-          {
-           argValue1 = argValue1,
-           argEntry2 = argEntry2,
-           destination = destination
-          }
-
-  fun genPrim2_r opcode (argEntry1, CT.REAL argValue2,destination) =
-      opcode
-          {
-           argEntry1 = argEntry1,
-           argValue2 = argValue2,
-           destination = destination
-          }
-
-  fun genPrim1_c opcode (CT.CHAR argValue1,argEntry2,destination) =
-      opcode
-          {
-           argValue1 = BT.IntToUInt32(Char.ord argValue1),
-           argEntry2 = argEntry2,
-           destination = destination
-          }
-
-  fun genPrim2_c opcode (argEntry1, CT.CHAR argValue2,destination) =
-      opcode
-          {
-           argEntry1 = argEntry1,
-           argValue2 = BT.IntToUInt32(Char.ord argValue2),
-           destination = destination
-          }
-
-  val genPrim1_b = genPrim1_w
-  val genPrim2_b = genPrim2_w
-
-  val prims =
-      SEnv.fromList 
-      [
-       ("addInt",(genPrim1_i SI.AddInt_Const_1,genPrim2_i SI.AddInt_Const_2)),
-       ("addWord",(genPrim1_w SI.AddWord_Const_1,genPrim2_w SI.AddWord_Const_2)),
-       ("addReal",(genPrim1_r SI.AddReal_Const_1,genPrim2_r SI.AddReal_Const_2)),
-       ("addByte",(genPrim1_b SI.AddByte_Const_1,genPrim2_b SI.AddByte_Const_2)),
-
-       ("subInt",(genPrim1_i SI.SubInt_Const_1,genPrim2_i SI.SubInt_Const_2)),
-       ("subWord",(genPrim1_w SI.SubWord_Const_1,genPrim2_w SI.SubWord_Const_2)),
-       ("subReal",(genPrim1_r SI.SubReal_Const_1,genPrim2_r SI.SubReal_Const_2)),
-       ("subByte",(genPrim1_b SI.SubByte_Const_1,genPrim2_b SI.SubByte_Const_2)),
-
-       ("mulInt",(genPrim1_i SI.MulInt_Const_1,genPrim2_i SI.MulInt_Const_2)),
-       ("mulWord",(genPrim1_w SI.MulWord_Const_1,genPrim2_w SI.MulWord_Const_2)),
-       ("mulReal",(genPrim1_r SI.MulReal_Const_1,genPrim2_r SI.MulReal_Const_2)),
-       ("mulByte",(genPrim1_b SI.MulByte_Const_1,genPrim2_b SI.MulByte_Const_2)),
-
-       ("divInt",(genPrim1_i SI.DivInt_Const_1,genPrim2_i SI.DivInt_Const_2)),
-       ("divWord",(genPrim1_w SI.DivWord_Const_1,genPrim2_w SI.DivWord_Const_2)),
-       ("/",(genPrim1_r SI.DivReal_Const_1,genPrim2_r SI.DivReal_Const_2)),
-       ("divByte",(genPrim1_b SI.DivByte_Const_1,genPrim2_b SI.DivByte_Const_2)),
-
-       ("modInt",(genPrim1_i SI.ModInt_Const_1,genPrim2_i SI.ModInt_Const_2)),
-       ("modWord",(genPrim1_w SI.ModWord_Const_1,genPrim2_w SI.ModWord_Const_2)),
-       ("modByte",(genPrim1_b SI.ModByte_Const_1,genPrim2_b SI.ModByte_Const_2)),
-
-       ("quotInt",(genPrim1_i SI.QuotInt_Const_1,genPrim2_i SI.QuotInt_Const_2)),
-       ("remInt",(genPrim1_i SI.RemInt_Const_1,genPrim2_i SI.RemInt_Const_2)),
-
-       ("Word_andb",(genPrim1_w SI.Word_andb_Const_1,genPrim2_w SI.Word_andb_Const_2)),
-       ("Word_orb",(genPrim1_w SI.Word_orb_Const_1,genPrim2_w SI.Word_orb_Const_2)),
-       ("Word_xorb",(genPrim1_w SI.Word_xorb_Const_1,genPrim2_w SI.Word_xorb_Const_2)),
-       ("Word_leftShift",(genPrim1_w SI.Word_leftShift_Const_1,genPrim2_w SI.Word_leftShift_Const_2)),
-       ("Word_logicalRightShift",
-        (genPrim1_w SI.Word_logicalRightShift_Const_1,genPrim2_w SI.Word_logicalRightShift_Const_2)),
-       ("Word_arithmeticRightShift",
-        (genPrim1_w SI.Word_arithmeticRightShift_Const_1,genPrim2_w SI.Word_arithmeticRightShift_Const_2))
-      ]
-
-  fun makePrimApply1 (prim as {name,ty},argValue1,argEntry2,destination) =
-      case SEnv.find(prims,name) of
-        SOME (leftOp,rightOp) => leftOp(argValue1,argEntry2,destination)
-      | _ =>
-        raise
-          Control.Bug ("The primitive " ^ name ^ " has not beed implemented")
-
-  fun makePrimApply2 (prim as {name,ty},argEntry1,argValue2,destination) =
-      case SEnv.find(prims,name) of
-        SOME (leftOp,rightOp) => rightOp(argEntry1,argValue2,destination)
-      | _ =>
-        raise
-          Control.Bug ("The primitive " ^ name ^ " has not beed implemented")
-      
   (** get an instruction which implements the specified primitive.
    * @params name
    * @param the name of primitive
@@ -196,38 +50,102 @@ struct
         NONE => raise Control.Bug ("primitive " ^ name ^ " is not found.")
       | SOME primitive => primitive
 
-  fun genReturn context varInfo varSize =
-      List.map
-          (fn label => SI.PopHandler {guardedStart = label})
-          (CTX.getEnclosingHandlers context)
-      @ [SI.Return{variableEntry = varInfo, variableSize = varSize}]
+  val ANVarInfoToVarInfo = CTX.ANVarInfoToVarInfo
 
-  (**
-   * translate an atom expression to an operand of an instruction.
-   * <p>
-   * In the current version, every operand is a local variable reference.
-   * </p>
-   * @params atom context
-   * @param atom the atom expression
-   * @param context the context
-   * @return an entry translated from the atom expression.
-   *)
-  fun linearizeAtom context (AN.ANVAR{varInfo,...}) =
-      ANVarInfoToVarInfo varInfo
-    | linearizeAtom context exp =
-      let val expString = ANormalFormatter.anexpToString exp
+  val ANExpToSize = CTX.ANExpToSize
+
+  fun newANVarInfo ty =
+      let 
+        val id = ID.generate ()
       in
-        raise Control.Bug ("Atom(ANVAR) is expected, but found " ^ expString)
+        {id = id, displayName = ID.toString id, ty = ty, varKind = AN.LOCAL} : AN.varInfo
       end
 
-  (**
-   * linearizeExp a list of arguments of application and block allocation.
-   * <p>
-   * linearizeExp the last argument as a general expression,
-   * and linearizeExp other arguments as atoms into local variable entries.
-   * </p>
-   *)
-  fun linearizeArgs context args = map (linearizeAtom context) args
+  fun constantToInstruction context (constant, destination) =
+      case constant of
+        CT.INT value => SI.LoadInt{value = value, destination = destination}
+      | CT.WORD value => SI.LoadWord{value = value, destination = destination}
+      | CT.STRING value =>
+        let 
+          val label = CTX.addStringConstant context value
+        in
+          SI.LoadString{string = label, destination = destination}
+        end
+      | CT.REAL value => SI.LoadReal{value = value, destination = destination}
+      | CT.FLOAT value => SI.LoadFloat{value = value, destination = destination}
+      | CT.CHAR value => SI.LoadChar{value = BT.IntToUInt32(Char.ord value), destination = destination}
+      | CT.UNIT => SI.LoadInt{value = 0, destination = destination}
+
+  fun addConstantBind context const =
+      let
+        val constTy = 
+            case const of
+              CT.INT _ => AN.ATOM
+            | CT.WORD _ => AN.ATOM
+            | CT.REAL _ => if !Control.enableUnboxedFloat then AN.DOUBLE else AN.BOXED
+            | CT.FLOAT _ => AN.ATOM
+            | CT.STRING _ => AN.BOXED 
+            | CT.CHAR _ => AN.ATOM
+            | CT.UNIT  => AN.ATOM
+        val ANVarInfo = newANVarInfo constTy
+        val varInfo = ANVarInfoToVarInfo ANVarInfo
+        val _ = CTX.addVarBind context ANVarInfo
+        val instruction = constantToInstruction context (const, varInfo)
+      in
+        ([instruction], varInfo)
+      end
+
+  fun sizeToVarInfo context (SI.SINGLE) = addConstantBind context (CT.WORD 0w1)
+    | sizeToVarInfo context (SI.DOUBLE) = addConstantBind context (CT.WORD 0w2)
+    | sizeToVarInfo context (SI.VARIANT varInfo) = ([],varInfo)
+
+  fun sizesToVarInfos context sizeList =
+      foldr
+          (fn (size,(instructions, varInfoList)) =>
+              let
+                val (instruction,varInfo) = sizeToVarInfo context size
+              in
+                (instruction @ instructions, varInfo::varInfoList)
+              end
+          )
+          ([],[])
+          sizeList
+
+  fun argToVarInfo context (AN.ANVAR{varInfo,...}) = ([],ANVarInfoToVarInfo varInfo)
+    | argToVarInfo context (AN.ANCONSTANT {value,...}) = addConstantBind context value
+    | argToVarInfo context (AN.ANEXCEPTIONTAG {tagValue,...}) = addConstantBind context (CT.WORD tagValue)
+    | argToVarInfo context exp =
+      let 
+        val expString = ANormalFormatter.anexpToString exp
+      in
+        raise Control.Bug ("Atom(ANVAR, ANCONSTANT, ANEXCEPTIONTAG) is expected, but found " ^ expString)
+      end
+
+  fun argsToVarInfos context args = 
+      foldr
+          (fn (arg,(instructions, varInfoList)) =>
+              let
+                val (instruction,varInfo) = argToVarInfo context arg
+              in
+                (instruction @ instructions, varInfo::varInfoList)
+              end
+          )
+          ([],[])
+          args
+
+  fun genReturn context variableEntries variableSizeEntries =
+      let
+        val popHandlers =
+            List.map
+                (fn label => SI.PopHandler {guardedStart = label})
+                (CTX.getEnclosingHandlers context)
+      in
+        popHandlers @
+        [
+         SI.Return_MV{variableEntries = variableEntries, variableSizeEntries = variableSizeEntries}
+        ]
+      end
+
 
   (**
    * linearize an expression.
@@ -252,15 +170,24 @@ struct
         end
       else toInstruction context exp
 
-  and toInstruction context (AN.ANVAR{varInfo as {ty, ...}, loc}) =
+  and toInstruction context (AN.ANVAR{varInfo, loc}) =
       let
-        val variableSize = sizeOfTy context ty
         val varInfo = ANVarInfoToVarInfo varInfo
       in
         case CTX.getPosition context of
-          CTX.Tail => genReturn context varInfo variableSize
-        | CTX.Result => genReturn context varInfo variableSize
-        | CTX.Bound (boundVarInfo, _) =>
+          CTX.Tail => 
+          let
+            val (constBinds, [sizeVarInfo]) = sizesToVarInfos context (CTX.getResultSizeList context)
+          in
+            constBinds @ (genReturn context [varInfo] [sizeVarInfo])
+          end
+        | CTX.Result => 
+          let
+            val (constBinds, [sizeVarInfo]) = sizesToVarInfos context (CTX.getResultSizeList context)
+          in
+            constBinds @ (genReturn context [varInfo] [sizeVarInfo])
+          end
+        | CTX.Bound {boundVarInfoList as [boundVarInfo], variableSizeList as [variableSize],...} =>
           [
             SI.Access
                 {
@@ -269,254 +196,240 @@ struct
                   destination = boundVarInfo
                 }
           ]
+        | _ => raise Control.Bug "variable binding should be single value binding"
       end
 
+    | toInstruction context (AN.ANMVALUES {expList, tyList, sizeExpList, loc}) =
+      (
+       case CTX.getPosition context of 
+         CTX.Tail =>
+         let
+           val (constBinds1, argEntries) = argsToVarInfos context expList
+           val (constBinds2, sizeEntries) = sizesToVarInfos context (CTX.getResultSizeList context)
+         in
+           constBinds1 @ constBinds2 @ (genReturn context argEntries sizeEntries)
+         end
+       | CTX.Result =>
+         let
+           val (constBinds1, argEntries) = argsToVarInfos context expList
+           val (constBinds2, sizeEntries) = sizesToVarInfos context (CTX.getResultSizeList context)
+         in
+           constBinds1 @ constBinds2 @ (genReturn context argEntries sizeEntries)
+         end
+       | CTX.Bound {boundVarInfoList, boundTyList, variableSizeList} =>
+         List.concat
+             (
+              ListPair.map
+                  (fn ((boundVarInfo, boundTy), (variableSize,exp)) =>
+                      let
+                        val newContext = CTX.setBoundPosition(context,[boundVarInfo], [boundTy], [variableSize])
+                      in 
+                        toInstruction newContext exp
+                      end
+                  )
+                  (ListPair.zip(boundVarInfoList,boundTyList), ListPair.zip(variableSizeList, expList))
+             )
+      )
+
     | toInstruction
-          context (AN.ANAPPLY{funExp, argExpList, argSizeList, loc}) =
+          context (AN.ANAPPLY{funExp, argExpList, argTyList, argSizeExpList, loc}) =
       let
-        val argsEntries = linearizeArgs context argExpList
-        val functionEntry = linearizeAtom context funExp
-        val argsSizes = linearizeArgs context argSizeList
-        val argsCount = BT.IntToUInt32(List.length argsEntries)
+        val (constBinds1,argsEntries) = argsToVarInfos context argExpList
+        val (constBinds2,functionEntry::argsSizeEntries) = argsToVarInfos context (funExp::argSizeExpList)
       in
         case (!Control.doTailCallOptimize, CTX.getPosition context) of
-          (true, CTX.Tail) => 
+          (true, CTX.Tail ) => 
+          constBinds1 @ constBinds2 @
           [
-           SI.TailApply_M
+           SI.TailApply_MV
                 {
-                 argsCount = argsCount,
                  closureEntry = functionEntry,
                  argEntries = argsEntries,
-                 argSizeEntries = argsSizes
+                 argSizeEntries = argsSizeEntries
                 }
           ]
-        | (_, CTX.Bound (boundVarInfo, _)) =>
+        | (_, CTX.Bound {boundVarInfoList, ...}) =>
+          constBinds1 @ constBinds2 @
           [
-           SI.Apply_M
+           SI.Apply_MV
                 {
-                 argsCount = argsCount,
                  closureEntry = functionEntry,
                  argEntries = argsEntries,
-                 argSizeEntries = argsSizes,
-                 destination = boundVarInfo
+                 argSizeEntries = argsSizeEntries,
+                 destinations = boundVarInfoList
                 }
           ]
         | _ => (* (_, CTX.Result) or (false, CTX.Tail) *)
           let
-            val boundVarID = CTX.createLocalVarID context
-            val boundType = CTX.getResultType context
-            val boundANVarInfo = newVarInfo(boundVarID, boundType, AN.LOCAL)
-            val boundVarInfo = ANVarInfoToVarInfo boundANVarInfo
-            val _ = CTX.addVarBind context boundANVarInfo
-            val variableSize = sizeOfTy context boundType
+            val boundTyList = CTX.getResultTypeList context
+            val boundANVarInfoList = map newANVarInfo boundTyList
+            val boundVarInfoList = map ANVarInfoToVarInfo boundANVarInfoList
+            val _ = List.app (CTX.addVarBind context) boundANVarInfoList
+            val (constBinds3, resultSizeEntries) = sizesToVarInfos context (CTX.getResultSizeList context)
             val applyInstruction =
-                SI.Apply_M
+                SI.Apply_MV
                     {
-                     argsCount = argsCount,
                      closureEntry = functionEntry,
                      argEntries = argsEntries,
-                     argSizeEntries = argsSizes,
-                     destination = boundVarInfo
+                     argSizeEntries = argsSizeEntries,
+                     destinations = boundVarInfoList
                     }
-            val returnInstruction = genReturn context boundVarInfo variableSize
+            val returnInstruction = genReturn context boundVarInfoList resultSizeEntries
           in
-            applyInstruction :: returnInstruction
+            constBinds1 @ constBinds2 @ constBinds3 @ (applyInstruction :: returnInstruction)
           end
       end
 
     | toInstruction 
-          context (AN.ANCALL{funLabel, envExp, argExpList, argSizeList, loc}) =
+          context (AN.ANCALL{funLabel as AN.ANLABEL {codeId,...}, envExp, argExpList, argTyList, argSizeExpList, loc}) =
       let
-        val argsEntries = linearizeArgs context argExpList
-        val envEntry = linearizeAtom context envExp
-        val argsSizes = linearizeArgs context argSizeList
-        val argsCount = BT.IntToUInt32(List.length argsEntries)
+        val (constBinds1,envEntry::argsEntries) = argsToVarInfos context (envExp::argExpList)
+        val (constBinds2,argsSizeEntries) = argsToVarInfos context argSizeExpList
       in
         case (!Control.doTailCallOptimize, CTX.getPosition context) of
           (true, CTX.Tail) =>
+          constBinds1 @ constBinds2 @
           [
-           SI.TailCallStatic_M
+           SI.TailCallStatic_MV
                 {
-                 argsCount = argsCount,
-                 entryPoint = funLabel,
+                 entryPoint = codeId,
                  envEntry = envEntry,
                  argEntries = argsEntries,
-                 argSizeEntries = argsSizes
+                 argSizeEntries = argsSizeEntries
                 }
           ]
-        | (_, CTX.Bound (boundVarInfo, _)) =>
+        | (_, CTX.Bound {boundVarInfoList,...}) =>
+          constBinds1 @ constBinds2 @
           [
-           SI.CallStatic_M
+           SI.CallStatic_MV
                 {
-                 argsCount = argsCount,
-                 entryPoint = funLabel,
+                 entryPoint = codeId,
                  envEntry = envEntry,
                  argEntries = argsEntries,
-                 argSizeEntries = argsSizes,
-                 destination = boundVarInfo
+                 argSizeEntries = argsSizeEntries,
+                 destinations = boundVarInfoList
                 }
           ]
         | _ => (* (_, CTX.Result) or (false, CTX.Tail) *)
           let
-            val boundVarID = CTX.createLocalVarID context
-            val boundType = CTX.getResultType context
-            val boundANVarInfo = newVarInfo(boundVarID, boundType, AN.LOCAL)
-            val boundVarInfo = ANVarInfoToVarInfo boundANVarInfo
-            val _ = CTX.addVarBind context boundANVarInfo
-            val variableSize = sizeOfTy context boundType
+            val boundTyList = CTX.getResultTypeList context
+            val boundANVarInfoList = map newANVarInfo boundTyList
+            val boundVarInfoList = map ANVarInfoToVarInfo boundANVarInfoList
+            val _ = List.app (CTX.addVarBind context) boundANVarInfoList
+            val (constBinds3, resultSizeEntries) = sizesToVarInfos context (CTX.getResultSizeList context)
             val applyInstruction =
-                SI.CallStatic_M
+                SI.CallStatic_MV
                     {
-                     argsCount = argsCount,
-                     entryPoint = funLabel,
+                     entryPoint = codeId,
                      envEntry = envEntry,
                      argEntries = argsEntries,
-                     argSizeEntries = argsSizes,
-                     destination = boundVarInfo
+                     argSizeEntries = argsSizeEntries,
+                     destinations = boundVarInfoList
                     }
-            val returnInstruction = genReturn context boundVarInfo variableSize
+            val returnInstruction = genReturn context boundVarInfoList resultSizeEntries
           in
-            applyInstruction :: returnInstruction
+            constBinds1 @ constBinds2 @ constBinds3 @ (applyInstruction :: returnInstruction)
           end
       end
 
+    | toInstruction context (AN.ANCALL _) = raise Control.Bug "invalid ANCALL"
+
     | toInstruction
-          context (AN.ANRECCALL{funLabel, argExpList, argSizeList, loc}) =
+          context (AN.ANRECCALL{codeExp as AN.ANLABEL {codeId,...}, argExpList, argSizeExpList, argTyList, loc}) =
       if !Control.doRecursiveCallOptimize
       then
         let
-          val argEntries = map (linearizeAtom context) argExpList
-          val currentFunctionLabel = #functionID context
-          val argSizes = linearizeArgs context argSizeList
-          val argsCount = BT.IntToUInt32(List.length argEntries)
-          val doSelfRecursiveCallOptimize =
-              !Control.doSelfRecursiveCallOptimize
-              andalso ID.eq(currentFunctionLabel, funLabel)
+          val (constBinds1,argEntries) = argsToVarInfos context argExpList
+          val (constBinds2,argSizeEntries) = argsToVarInfos context argSizeExpList
         in
           case CTX.getPosition context of
             CTX.Tail =>
-            if doSelfRecursiveCallOptimize
-            then
-              [
-               SI.SelfRecursiveTailCallStatic_M
-                   {
-                    argsCount = argsCount,
-                    entryPoint = funLabel,
-                    argEntries = argEntries,
-                    argSizeEntries = argSizes
-                   }
-              ]
-            else
-              [
-               SI.RecursiveTailCallStatic_M
-                   {
-                    argsCount = argsCount,
-                    entryPoint = funLabel,
-                    argEntries = argEntries,
-                    argSizeEntries = argSizes
-                   }
-              ]
+            constBinds1 @ constBinds2 @
+            [
+             SI.RecursiveTailCallStatic_MV
+                 {
+                  entryPoint = codeId,
+                  argEntries = argEntries,
+                  argSizeEntries = argSizeEntries
+                 }
+            ]
           | CTX.Result =>
             let
-              val boundVarID = CTX.createLocalVarID context
-              val boundType = CTX.getResultType context
-              val boundANVarInfo =
-                  newVarInfo(boundVarID, boundType, AN.LOCAL)
-              val boundVarInfo = ANVarInfoToVarInfo boundANVarInfo
-              val _ = CTX.addVarBind context boundANVarInfo
-              val variableSize = sizeOfTy context boundType
+              val boundTyList = CTX.getResultTypeList context
+              val boundANVarInfoList = map newANVarInfo boundTyList
+              val boundVarInfoList = map ANVarInfoToVarInfo boundANVarInfoList
+              val _ = List.app (CTX.addVarBind context) boundANVarInfoList
               val callInstruction =
-                  if doSelfRecursiveCallOptimize
-                  then
-                    SI.SelfRecursiveCallStatic_M
-                        {
-                         argsCount = argsCount,
-                         entryPoint = funLabel,
-                         argEntries = argEntries,
-                         argSizeEntries = argSizes,
-                         destination = boundVarInfo
-                        }
-                  else
-                    SI.RecursiveCallStatic_M
-                        {
-                         argsCount = argsCount,
-                         entryPoint = funLabel,
-                         argEntries = argEntries,
-                         argSizeEntries = argSizes,
-                         destination = boundVarInfo
-                        }
+                  SI.RecursiveCallStatic_MV
+                      {
+                       entryPoint = codeId,
+                       argEntries = argEntries,
+                       argSizeEntries = argSizeEntries,
+                       destinations = boundVarInfoList
+                      }
+              val (constBinds3, resultSizeEntries) = sizesToVarInfos context (CTX.getResultSizeList context)
+              val returnCode = genReturn context boundVarInfoList resultSizeEntries
             in
-              callInstruction :: (genReturn context boundVarInfo variableSize)
+              constBinds1 @ constBinds2 @ constBinds3 @ (callInstruction :: returnCode)
             end
-          | CTX.Bound (boundVarInfo, _) =>
-            if doSelfRecursiveCallOptimize
-            then
-              [
-               SI.SelfRecursiveCallStatic_M
-                   {
-                    argsCount = argsCount,
-                    entryPoint = funLabel,
-                    argEntries = argEntries,
-                    argSizeEntries = argSizes,
-                    destination = boundVarInfo
-                   }
-              ]
-            else
-              [
-               SI.RecursiveCallStatic_M
-                   {
-                    argsCount = argsCount,
-                    entryPoint = funLabel,
-                    argEntries = argEntries,
-                    argSizeEntries = argSizes,
-                    destination = boundVarInfo
-                   }
-              ]
+          | CTX.Bound {boundVarInfoList, ...} =>
+            constBinds1 @ constBinds2 @
+            [
+             SI.RecursiveCallStatic_MV
+                 {
+                  entryPoint = codeId,
+                  argEntries = argEntries,
+                  argSizeEntries = argSizeEntries,
+                  destinations = boundVarInfoList
+                 }
+            ]
         end
       else (* non optimization *)
         let
           (* the environment of the current function is reused. *)
-          val ENVVarID = CTX.createLocalVarID context
-          val ENVANVarInfo = newVarInfo(ENVVarID, AN.BOXED, AN.LOCAL)
+          val ENVANVarInfo = newANVarInfo AN.BOXED
           val ENVVarInfo = ANVarInfoToVarInfo ENVANVarInfo
           val _ = CTX.addVarBind context ENVANVarInfo
           val callExp =
               AN.ANCALL
                   {
-                   funLabel = funLabel, 
+                   funLabel = AN.ANLABEL{codeId = codeId, loc = loc}, 
                    envExp = AN.ANVAR {varInfo = ENVANVarInfo, loc = loc},
                    argExpList = argExpList,
-                   argSizeList = argSizeList,
+                   argSizeExpList = argSizeExpList,
+                   argTyList = argTyList,
                    loc = loc
                   }
           val callCode = linearizeExp context callExp
         in SI.GetEnv{destination = ENVVarInfo} :: callCode end
 
-    | toInstruction context (AN.ANRAISE {exceptionExp, loc}) =
-      let val exceptionEntry = linearizeAtom context exceptionExp
-      in [SI.Raise{exceptionEntry = exceptionEntry}] end
+    | toInstruction context (AN.ANRECCALL _) = raise Control.Bug "invalid ANRECCALL"
+
+    | toInstruction context (AN.ANINNERCALL _) = raise Control.Bug "not impelemented"
+
+    | toInstruction context (AN.ANRAISE {argExp, loc}) =
+      let
+        val (constBinds,exceptionEntry) = argToVarInfo context argExp
+      in 
+        constBinds @ [SI.Raise{exceptionEntry = exceptionEntry}] 
+      end
 
     | toInstruction context (AN.ANEXIT loc) = [SI.Exit]
 
-    | toInstruction context (AN.ANLET {boundVar, boundExp, mainExp, loc}) =
+    | toInstruction context (AN.ANLET {localDeclList, mainExp, loc}) =
       let
-        val varInfo = ANVarInfoToVarInfo boundVar
-        val boundCode =
-            linearizeExp
-                (CTX.setBoundPosition (context, varInfo, #ty boundVar))
-                boundExp
+        val boundCode = linearizeDeclList context localDeclList
         val mainCode = linearizeExp context mainExp
-        val _ = CTX.addVarBind context boundVar
       in boundCode @ mainCode end
 
-    | toInstruction context (AN.ANHANDLE{mainExp, exnVar, handler, loc}) =
+    | toInstruction context (AN.ANHANDLE{exp, exnVar, handler, loc}) =
       let
         val startLabel = CTX.createLabel context
         val handlerLabel = CTX.createLabel context
         val tailLabel = CTX.createLabel context
         val exnVarInfo = ANVarInfoToVarInfo exnVar
         val mainCode =
-            linearizeExp (CTX.enterGuardedCode (context, startLabel)) mainExp
+            linearizeExp (CTX.enterGuardedCode (context, startLabel)) exp
         val _ = CTX.addVarBind context exnVar
         val handlerCode = linearizeExp context handler
       in
@@ -538,24 +451,24 @@ struct
       end
 
     | toInstruction
-          context (AN.ANSWITCH{switchExp, branches, defaultExp, loc}) =
+          context (AN.ANSWITCH{switchExp, expTy, branches, defaultExp, loc}) =
       let
-        val switchEntry = linearizeAtom context switchExp
+        val (constBinds,switchEntry) = argToVarInfo context switchExp
         val defaultLabel = CTX.createLabel context
         val defaultCode = linearizeExp context defaultExp
 
-        fun linearizeCase ((const, exp), (cases, codes)) =
+        fun linearizeCase ({constant, exp}, (cases, codes)) =
             let
               val label = CTX.createLabel context
               val code = linearizeExp context exp
-              val cases' = {const = const, destination = label} :: cases
+              val cases' = {const = constant, destination = label} :: cases
               val codes' = (SI.Label label :: code) :: codes
             in (cases', codes') end
 
         (* NOTE: To arrange cases, constants in them are treated as unsigned
          *      integer. For instance, 1 < ~1.
          *)
-        fun compareCaseExp ((const1, _), (const2, _)) =
+        fun compareCaseExp ({constant = const1, exp = exp1}, {constant = const2, exp = exp2}) =
             case (const1, const2) of
               (AN.INT int1, AN.INT int2) =>
               UInt32.compare (BT.SInt32ToUInt32 int1, BT.SInt32ToUInt32 int2)
@@ -572,57 +485,53 @@ struct
 
         val instruction =
             case hd branches 
-             of (AN.INT _, _) =>
+             of {constant = CT.INT _, exp} =>
                 SI.SwitchInt
                 {
                   targetEntry = switchEntry,
-                  casesCount = BT.IntToUInt32(List.length cases),
                   cases =
                   map
-                      (fn {const = AN.INT const, destination} =>
+                      (fn {const = CT.INT const, destination} =>
                           {const = const, destination = destination})
                       cases,
-                   default = defaultLabel
+                  default = defaultLabel
                  }
-              | (AN.WORD _, _) =>
+              | {constant = CT.WORD _, exp} =>
                 SI.SwitchWord
                 {
                   targetEntry = switchEntry,
-                  casesCount = BT.IntToUInt32(List.length cases),
                   cases =
                   map
-                      (fn {const = AN.WORD const, destination} =>
+                      (fn {const = CT.WORD const, destination} =>
                           {const = const, destination = destination})
                       cases,
-                   default = defaultLabel
+                  default = defaultLabel
                  }
-              | (AN.CHAR _, _) =>
+              | {constant = CT.CHAR _, exp} =>
                 SI.SwitchChar
                 {
                   targetEntry = switchEntry,
-                  casesCount = BT.IntToUInt32(List.length cases),
                   cases =
                   map
-                      (fn {const = AN.CHAR const, destination} =>
+                      (fn {const = CT.CHAR const, destination} =>
                           {
                             const = BT.IntToUInt32 (Char.ord const),
                             destination = destination
                           })
                       cases,
-                   default = defaultLabel
+                  default = defaultLabel
                  }
-              | (AN.STRING _, _) =>
+              | {constant = CT.STRING _, exp} =>
                 SI.SwitchString
                 {
                   targetEntry = switchEntry,
-                  casesCount = BT.IntToUInt32(List.length cases),
                   cases =
                   map
-                      (fn {const = AN.STRING const, destination} =>
+                      (fn {const = CT.STRING const, destination} =>
                           let val label = CTX.addStringConstant context const
                           in {const = label, destination = destination} end)
                       cases,
-                   default = defaultLabel
+                  default = defaultLabel
                  }
               | _ =>
                 raise
@@ -645,73 +554,42 @@ struct
               (* No instruction sequence follows. *)
               (caseCodes, [])
       in
-        instruction
-        :: (List.concat caseCodes)
+        constBinds
+        @ (instruction :: (List.concat caseCodes))
         @ [SI.Label defaultLabel]
         @ defaultCode
         @ tailCode
       end
 
-    | toInstruction
-          context (AN.ANLETLABEL{funLabel, funInfo, funBody, mainExp, loc}) =
-      let
-        val _ = linearizeFunction context (funLabel, loc, funInfo, funBody)
-        val mainCode = linearizeExp context mainExp
-      in mainCode end
-
-    | toInstruction context (AN.ANVALREC{recbindList, mainExp, loc}) =
-      let
-        fun linearizeBind {funLabel, funInfo, body} =
-            linearizeFunction context (funLabel, loc, funInfo, body)
-        val _ = app linearizeBind recbindList
-        val mainCode = linearizeExp context mainExp
-      in mainCode end
-
     | toInstruction context innermost =
       (* This branch handles an innermost expression. *)
       let
-        val (destinationEntry, destinationType, destinationSize, tailCode) =
+        val (destinationEntryList, destinationTyList, destinationSizeList, tailCode) =
             case CTX.getPosition context of
-              CTX.Bound (boundVarInfo,boundType) => 
-              (boundVarInfo, boundType, sizeOfTy context boundType, [])
+              CTX.Bound {boundVarInfoList,boundTyList, variableSizeList} => 
+              (boundVarInfoList, boundTyList, variableSizeList, [])
             | _ =>
               let
-                val varID = CTX.createLocalVarID context
-                val resultType = CTX.getResultType context
-                val resultSize = sizeOfTy context resultType
-                val ANVarInfo = newVarInfo(varID, resultType, AN.LOCAL)
-                val varInfo = ANVarInfoToVarInfo ANVarInfo
-                val instructions = genReturn context varInfo resultSize
-                val _ = CTX.addVarBind context ANVarInfo
+                val resultTyList = CTX.getResultTypeList context
+                val resultSizeList = CTX.getResultSizeList context
+                val ANVarInfoList = map newANVarInfo resultTyList
+                val varInfoList = map ANVarInfoToVarInfo ANVarInfoList
+                val _ = map (CTX.addVarBind context) ANVarInfoList
+                val (constBinds,resultSizeEntries) = sizesToVarInfos context resultSizeList 
+                val instructions = constBinds @ (genReturn context varInfoList resultSizeEntries)
               in 
-                (varInfo, resultType, resultSize, instructions)
+                (varInfoList, resultTyList, resultSizeList, instructions)
               end
 
         val code =
             case innermost of
-              AN.ANCONSTANT {value=constant,...} =>
-              (case constant of
-                 AN.INT value =>
-                 [SI.LoadInt{value = value, destination = destinationEntry}]
-               | AN.WORD value =>
-                 [SI.LoadWord{value = value, destination = destinationEntry}]
-               | AN.STRING value =>
-                 let 
-                   val label = CTX.addStringConstant context value
-                 in
-                   [SI.LoadString
-                        {string = label, destination = destinationEntry}]
-                 end
-               | AN.REAL value =>
-                 [SI.LoadReal{value = value, destination = destinationEntry}]
-               | AN.FLOAT value =>
-                 [SI.LoadFloat{value = value, destination = destinationEntry}]
-               | AN.CHAR value =>
-                 [SI.LoadChar
-                      {
-                        value = BT.IntToUInt32(Char.ord value),
-                        destination = destinationEntry
-                      }])
+              AN.ANCONSTANT {value,...} => 
+              [constantToInstruction context (value, List.hd destinationEntryList)]
+
+            | AN.ANEXCEPTIONTAG {tagValue,...} => 
+              [SI.LoadWord{value = tagValue, destination = List.hd destinationEntryList}]
+
+            | AN.ANLABEL _ => raise Control.Bug "not implemented"
 
             | AN.ANENVACC {nestLevel, offset, loc} =>
               [
@@ -719,166 +597,173 @@ struct
                 {
                   nestLevel = nestLevel,
                   offset = offset, 
-                  variableSize = destinationSize,
-                  destination = destinationEntry
-                }
-              ]
-
-            | AN.ANENVACCINDIRECT {nestLevel, indirectOffset, loc} =>
-              [
-                SI.AccessNestedEnvIndirect
-                {
-                  nestLevel = nestLevel,
-                  offset = indirectOffset, 
-                  variableSize = destinationSize,
-                  destination = destinationEntry
+                  variableSize = List.hd destinationSizeList,
+                  destination = List.hd destinationEntryList
                 }
               ]
               
-            | AN.ANPRIMAPPLY{primOp = {name, ty}, argExpList = args, loc} =>
-              [
-                SI.CallPrim
-                    {
-                      argsCount = BT.IntToUInt32(List.length args),
-                      primitive = findPrimitive name,
-                      argEntries = linearizeArgs context args,
-                      argSizes = map (sizeOfExp context) args,
-                      resultSize = destinationSize,
-                      destination = destinationEntry
-                    }
-              ]
-
-            | AN.ANPRIMAPPLY_1{primOp,argValue1,argExp2,loc} => 
-              [
-               makePrimApply1
-                  (
-                   primOp,
-                   argValue1,
-                   linearizeAtom context argExp2,
-                   destinationEntry
-                  )
-              ]
-
-            | AN.ANPRIMAPPLY_2{primOp,argExp1,argValue2,loc} => 
-              [
-               makePrimApply2
-                  (
-                   primOp,
-                   linearizeAtom context argExp1,
-                   argValue2,
-                   destinationEntry
-                  )
-              ]
-
-            | AN.ANFOREIGNAPPLY
-                  {funExp, argExpList, argTyList, convention, loc} =>
-              [
-                SI.ForeignApply
-(*
- Ohori: Dec 17, 2006.
- Set the switchTag filed for dispatching C FFI function.
- *)
-                let
-                  val argSizes = map (sizeOfExp context) argExpList
-                  val resultSize = destinationSize
-                  val argsCount = BT.IntToUInt32(List.length argExpList)
-                in
-                  {
-                   (*
-                    Ohori: Dec 17, 2006.
-                    If LARGEFFISWITCH is enableed then the switchTag is set
-                    to a encoded type information otherwise it is same as
-                    the number of args.
-                    *)
-                      switchTag = 
-                        if !Control.LARGEFFISWITCH then
-                          funTypeToCaseTag (argSizes, resultSize)
-                        else argsCount,
-                      convention = convention,
-                      argsCount = argsCount,
-                      closureEntry = linearizeAtom context funExp,
-                      argEntries = linearizeArgs context argExpList,
-                      argSizes = argSizes,
-                      resultSize = resultSize,
-                      destination = destinationEntry
-                    }
-                end
-              ]
-
-            | AN.ANEXPORTCALLBACK{funExp = function, argTyList = argTys, resultTy, loc} =>
+            | AN.ANPRIMAPPLY{primName, argExpList, argTyList, argSizeExpList, loc} =>
               let
-                val argSizes = map (sizeOfTy context) argTys
-                val resultSize = sizeOfTy context resultTy
+                val (constBinds, argEntries) = argsToVarInfos context argExpList
               in
+                constBinds @
+                [
+                 SI.CallPrim
+                     {
+                      primitive = findPrimitive primName,
+                      argEntries = argEntries,
+                      destination = List.hd destinationEntryList
+                     }
+                ]
+              end
+
+            | AN.ANFOREIGNAPPLY{funExp, argExpList, argTyList, argSizeExpList, convention, loc} =>
+              let
+                val argSizes = map ANExpToSize argSizeExpList
+                val resultSize = List.hd destinationSizeList
+                val argsCount = BT.IntToUInt32(List.length argExpList)
+                val switchTag = 
+                    if !Control.LARGEFFISWITCH then
+                      funTypeToCaseTag (argSizes, resultSize)
+                    else argsCount
+                val (constBinds, closureEntry::argEntries) = argsToVarInfos context (funExp::argExpList)
+              in
+                constBinds @
+                [
+                 SI.ForeignApply
+                     {
+                      (* Ohori: Dec 17, 2006.
+                       * If LARGEFFISWITCH is enableed then the switchTag is set
+                       * to a encoded type information otherwise it is same as
+                       * the number of args.
+                       *)
+                      switchTag = switchTag,
+                      convention = convention,
+                      closureEntry = closureEntry,
+                      argEntries = argEntries,
+                      destination = List.hd destinationEntryList
+                    }
+                ]
+              end
+
+            | AN.ANEXPORTCALLBACK{funExp, argSizeExpList, resultSizeExpList, loc} =>
+              let
+                val argSizes = map ANExpToSize argSizeExpList
+                val resultSizes = map ANExpToSize resultSizeExpList
+                val (constBinds, closureEntry) = argToVarInfo context funExp
+              in
+                constBinds @
                 [
                   SI.RegisterCallback
                       {
-                        sizeTag = funTypeToCaseTag (argSizes, resultSize),
-                        closureEntry = linearizeAtom context function,
-                        destination = destinationEntry
+                        sizeTag = funTypeToCaseTag (argSizes, List.hd resultSizes),
+                        closureEntry = closureEntry,
+                        destination = List.hd destinationEntryList
                       }
                 ]
               end
 
-            | AN.ANRECORD
-                  {bitmapExp, totalSizeExp, fieldList, fieldSizeList, loc} =>
-              [
-                SI.MakeBlock
-                    {
-                      fieldsCount = BT.IntToUInt32(List.length fieldList),
-                      bitmapEntry = linearizeAtom context bitmapExp,
-                      sizeEntry = linearizeAtom context totalSizeExp,
-                      fieldEntries = linearizeArgs context fieldList,
-                      fieldSizeEntries = linearizeArgs context fieldSizeList,
-                      destination = destinationEntry
-                    }
-              ]
+            | AN.ANRECORD {bitmapExp, totalSizeExp, fieldList, fieldTyList, fieldSizeExpList, loc} =>
+              let
+                val (constBinds1, bitmapEntry::sizeEntry::fieldEntries) =
+                    argsToVarInfos context (bitmapExp::totalSizeExp::fieldList)
+                val (constBinds2, fieldSizeEntries) =
+                    argsToVarInfos context fieldSizeExpList
+              in
+                constBinds1 @ constBinds2 @
+                [
+                 SI.MakeBlock
+                     {
+                      bitmapEntry = bitmapEntry,
+                      sizeEntry = sizeEntry,
+                      fieldEntries = fieldEntries,
+                      fieldSizeEntries = fieldSizeEntries,
+                      destination = List.hd destinationEntryList
+                     }
+                ]
+              end
 
-            | AN.ANARRAY{bitmapExp, sizeExp, initialValue, loc} =>
-              [
-                SI.MakeArray
-                    {
-                      bitmapEntry = linearizeAtom context bitmapExp,
-                      sizeEntry = linearizeAtom context sizeExp,
-                      initialValueEntry =
-                      linearizeAtom context initialValue,
-                      initialValueSize = sizeOfExp context initialValue,
-                      destination = destinationEntry
-                    }
-              ]
+            | AN.ANENVRECORD {bitmapExp, totalSize, fieldList, fieldTyList, fieldSizeExpList, fixedSizeList, loc} =>
+              let
+                val (constBinds, bitmapEntry::fieldEntries) =
+                    argsToVarInfos context (bitmapExp::fieldList)
+              in
+                constBinds @
+                [
+                 SI.MakeFixedSizeBlock
+                     {
+                      bitmapEntry = bitmapEntry,
+                      size = totalSize,
+                      fieldEntries = fieldEntries,
+                      fieldSizes = fixedSizeList,
+                      destination = List.hd destinationEntryList
+                     }
+                ]
+              end
 
-            | AN.ANMODIFY{recordExp, nestLevel, offset, elementExp, loc} =>
-              [
-                SI.CopyBlock
-                    {
-                      blockEntry = linearizeAtom context recordExp,
-                      nestLevelEntry = linearizeAtom context nestLevel,
+            | AN.ANARRAY{bitmapExp, sizeExp, initialValue, elementTy, elementSizeExp, loc} =>
+              let
+                val (constBinds, [bitmapEntry,sizeEntry,initialValueEntry]) =
+                    argsToVarInfos context [bitmapExp,sizeExp,initialValue]
+              in
+                constBinds @
+                [
+                 SI.MakeArray
+                     {
+                      bitmapEntry = bitmapEntry,
+                      sizeEntry = sizeEntry,
+                      initialValueEntry = initialValueEntry,
+                      initialValueSize = ANExpToSize elementSizeExp,
+                      destination = List.hd destinationEntryList
+                     }
+                ]
+              end
+
+            | AN.ANMODIFY{recordExp, nestLevelExp, offsetExp, valueExp, valueTy, valueSizeExp, loc} =>
+              let
+                val (constBinds, [blockEntry,nestLevelEntry,fieldOffsetEntry,newValueEntry]) =
+                    argsToVarInfos context [recordExp,nestLevelExp,offsetExp,valueExp]
+                val destinationEntry = List.hd destinationEntryList
+              in
+                constBinds @
+                [
+                 SI.CopyBlock
+                     {
+                      blockEntry = blockEntry,
+                      nestLevelEntry = nestLevelEntry,
                       destination = destinationEntry
-                    },
-                SI.SetNestedFieldIndirect
+                     },
+                 SI.SetNestedFieldIndirect
                     {
                       blockEntry = destinationEntry,
-                      nestLevelEntry = linearizeAtom context nestLevel,
-                      offsetEntry = linearizeAtom context offset,
-                      fieldSize = sizeOfExp context elementExp,
-                      newValueEntry = linearizeAtom context elementExp
+                      nestLevelEntry = nestLevelEntry,
+                      fieldOffsetEntry = fieldOffsetEntry,
+                      fieldSize = ANExpToSize valueSizeExp,
+                      newValueEntry = newValueEntry
                     }
-              ]
+                ]
+              end
 
-            | AN.ANCLOSURE{funLabel, env, loc} =>
-              [
-                SI.MakeClosure
-                    {
-                      entryPoint = funLabel,
-                      ENVEntry = linearizeAtom context env,
-                      destination = destinationEntry
-                    }
-              ]
-
-            | AN.ANRECCLOSURE {funLabel, loc} =>
+            | AN.ANCLOSURE {codeExp = AN.ANLABEL {codeId,...}, envExp, loc} =>
               let
-                val ENVVarID = CTX.createLocalVarID context
-                val ENVANVarInfo = newVarInfo(ENVVarID, AN.BOXED, AN.LOCAL)
+                val (constBinds, envEntry) = argToVarInfo context envExp
+              in
+                constBinds @
+                [
+                 SI.MakeClosure
+                     {
+                      entryPoint = codeId,
+                      envEntry = envEntry,
+                      destination = List.hd destinationEntryList
+                     }
+                ]
+              end
+
+            | AN.ANCLOSURE _ => raise Control.Bug "not implemented"
+
+            | AN.ANRECCLOSURE {codeExp = AN.ANLABEL {codeId,...}, loc} =>
+              let
+                val ENVANVarInfo = newANVarInfo AN.BOXED
                 val ENVVarInfo = ANVarInfoToVarInfo ENVANVarInfo
                 val _ = CTX.addVarBind context ENVANVarInfo
               in
@@ -886,104 +771,147 @@ struct
                   SI.GetEnv{destination = ENVVarInfo},
                   SI.MakeClosure
                       {
-                        entryPoint = funLabel,
-                        ENVEntry = ENVVarInfo,
-                        destination = destinationEntry
+                        entryPoint = codeId,
+                        envEntry = ENVVarInfo,
+                        destination = List.hd destinationEntryList
                       }
                 ]
               end
 
-            | AN.ANGETGLOBALVALUE {arrayIndex, offset, loc} =>
+            | AN.ANRECCLOSURE _ => raise Control.Bug "not implemented"
+
+            | AN.ANGETGLOBAL {arrayIndex, valueOffset, loc} =>
               [
                SI.GetGlobal
                    {
                     globalArrayIndex = arrayIndex,
-                    offset = offset,
-                    variableSize = destinationSize,
-                    destination = destinationEntry
+                    offset = valueOffset,
+                    variableSize = List.hd destinationSizeList,
+                    destination = List.hd destinationEntryList
                    }
               ]
 
-            | AN.ANSETGLOBALVALUE {arrayIndex, offset, valueExp, loc} =>
-              [
-               SI.SetGlobal
-                   {
-                    globalArrayIndex = arrayIndex,
-                    offset = offset,
-                    variableSize = sizeOfExp context valueExp,
-                    newValueEntry = linearizeAtom context valueExp
-                   }
-              ]
+            | AN.ANSETGLOBAL {arrayIndex, valueOffset, valueExp, valueTy, valueSize, loc} =>
+              let
+                val (constBinds, newValueEntry) = argToVarInfo context valueExp
+              in
+                constBinds @
+                [
+                 SI.SetGlobal
+                     {
+                      globalArrayIndex = arrayIndex,
+                      offset = valueOffset,
+                      variableSize = 
+                      case valueSize of 
+                        0w1 => SI.SINGLE
+                      | 0w2 => SI.DOUBLE
+                      | _ => raise Control.Bug "invalid size",
+                      newValueEntry = newValueEntry
+                     }
+                ]
+              end
 
-            | AN.ANINITARRAYUNBOXED {arrayIndex, size, loc} =>
+            | AN.ANINITARRAY {arrayIndex, arraySize, elementTy = AN.ATOM, loc} =>
               [
                SI.InitGlobalArrayUnboxed
                    {
                     globalArrayIndex = arrayIndex,
-                    arraySize = size
+                    arraySize = arraySize
                    }
               ]
 
-            | AN.ANINITARRAYBOXED {arrayIndex, size, loc} =>
+            | AN.ANINITARRAY {arrayIndex, arraySize, elementTy = AN.BOXED, loc} =>
               [
                SI.InitGlobalArrayBoxed
                    {
                     globalArrayIndex = arrayIndex,
-                    arraySize = size
+                    arraySize = arraySize
                    }
               ]
 
-            | AN.ANINITARRAYDOUBLE {arrayIndex, size, loc} =>
+            | AN.ANINITARRAY {arrayIndex, arraySize, elementTy = AN.DOUBLE, loc} =>
               [
                SI.InitGlobalArrayDouble
                    {
                     globalArrayIndex = arrayIndex,
-                    arraySize = size
+                    arraySize = arraySize
                    }
               ]
 
-            | AN.ANGETFIELD{blockExp, nestLevel, offset, loc} =>
-              [
-                SI.GetNestedFieldIndirect
-                    {
-                      blockEntry = linearizeAtom context blockExp,
-                      nestLevelEntry = linearizeAtom context nestLevel,
-                      offsetEntry = linearizeAtom context offset,
-                      fieldSize = destinationSize,
-                      destination = destinationEntry
-                    }
-              ]
+            | AN.ANINITARRAY _ => raise Control.Bug "invalid global array's element type"
 
-            | AN.ANSETFIELD{blockExp, nestLevel, offset, valueExp, loc} =>
+            | AN.ANGETFIELD{arrayExp, offsetExp, loc} =>
               let
-                val blockEntry = linearizeAtom context blockExp
+                val (constBinds, [blockEntry,fieldOffsetEntry]) =
+                    argsToVarInfos context [arrayExp,offsetExp]
               in
+                constBinds @
                 [
-                  SI.SetNestedFieldIndirect
-                      {
-                        blockEntry = blockEntry,
-                        nestLevelEntry = linearizeAtom context nestLevel,
-                        offsetEntry = linearizeAtom context offset,
-                        fieldSize = sizeOfExp context valueExp,
-                        newValueEntry = linearizeAtom context valueExp
-                      },
-                 SI.LoadInt{value = 0, destination = destinationEntry}
-(*
-                  SI.Access
-                      {
-                        variableEntry = blockEntry,
-                        variableSize = SI.SINGLE,
-                        destination = destinationEntry
-                      }
-*)
+                 SI.GetFieldIndirect
+                     {
+                      blockEntry = blockEntry,
+                      fieldOffsetEntry = fieldOffsetEntry,
+                      fieldSize = List.hd destinationSizeList,
+                      destination = List.hd destinationEntryList
+                     }
                 ]
               end
-              
+
+            | AN.ANSELECT {recordExp, nestLevelExp, offsetExp, loc} =>
+              let
+                val (constBinds, [blockEntry,nestLevelEntry,fieldOffsetEntry]) =
+                    argsToVarInfos context [recordExp,nestLevelExp,offsetExp]
+              in
+                constBinds @
+                [
+                 SI.GetNestedFieldIndirect
+                     {
+                      blockEntry = blockEntry,
+                      nestLevelEntry = nestLevelEntry,
+                      fieldOffsetEntry = fieldOffsetEntry,
+                      fieldSize = List.hd destinationSizeList,
+                      destination = List.hd destinationEntryList
+                     }
+                ]
+              end
+
+            | AN.ANSETFIELD{arrayExp, offsetExp, valueExp, valueTy, valueSizeExp, loc} =>
+              let
+                val (constBinds, [blockEntry,fieldOffsetEntry,newValueEntry]) =
+                    argsToVarInfos context [arrayExp,offsetExp,valueExp]
+              in
+                constBinds @
+                [
+                 SI.SetFieldIndirect
+                     {
+                      blockEntry = blockEntry,
+                      fieldOffsetEntry = fieldOffsetEntry,
+                      fieldSize = ANExpToSize valueSizeExp,
+                      newValueEntry = newValueEntry
+                     },
+                 SI.LoadInt{value = 0, destination = List.hd destinationEntryList}
+                ]
+              end
+
             | _ => raise Control.Bug "innermost expression is expected."
 
       in
         code @ tailCode
       end
+
+  and linearizerDecl context (AN.ANVAL {boundVarList = ANBoundVarInfoList, sizeExpList, boundExp, loc}) =
+      let
+        val _ = map (CTX.addVarBind context) ANBoundVarInfoList
+        val boundVarInfoList = map ANVarInfoToVarInfo ANBoundVarInfoList
+        val boundTyList = map #ty ANBoundVarInfoList
+        val variableSizeList = map ANExpToSize sizeExpList
+        val newContext = CTX.setBoundPosition (context, boundVarInfoList, boundTyList, variableSizeList)
+      in
+        linearizeExp newContext boundExp
+      end
+    | linearizerDecl context (AN.ANCLUSTER _) = raise Control.Bug "clusters should be bound to top level"
+
+  and linearizeDeclList context declList = List.concat (map (linearizerDecl context) declList)
 
   (**
    * generate a code sequence for a function
@@ -1011,48 +939,56 @@ struct
    *        expression
    * @return a code sequence for the function. 
    *)
-  and linearizeFunction
-          enclosingContext (funName, loc, funInfo : AN.funInfo, bodyExp) =
+  fun linearizeFunction enclosingContext loc (funDecl : AN.funDecl) =
       let
-        val args =
-            map (fn ANVarInfo => ANVarInfoToVarInfo ANVarInfo) (#args funInfo)
-        val tyvars = #tyvars funInfo
-
-        (* linealize the body*)
-        val context =
-            CTX.createContext enclosingContext (funName, funInfo, loc)
-        val bodyCode = linearizeExp context bodyExp
+        val context = CTX.createContext enclosingContext (funDecl, loc)
+        val bodyCode = linearizeExp context (#bodyExp funDecl)
         val constantCode = CTX.getConstantInstructions context
+      in
+        {
+         name = {id = #codeId funDecl, displayName = ID.toString (#codeId funDecl)},
+         loc = loc,
+         args = map ANVarInfoToVarInfo (#argVarList funDecl),
+         instructions = bodyCode @ constantCode
+        }
+      end
+
+  fun linearizeCluster {frameInfo : AN.frameInfo, entryFunctions, innerFunctions, isRecursive, loc} =
+      let
+        val context = CTX.createInitialContext ()
+        val functionCodes = map (linearizeFunction context loc) (entryFunctions @ innerFunctions)
+        val tyvars = #tyvars frameInfo
 
         (* group local variables by their type*)
         fun groupByType
                 (
                   (ANVarInfo : AN.varInfo),
-                  (atoms, pointers, doubles, records)
+                  (atoms, pointers, doubles, records, unboxedRecords)
                 ) =
-            let val varInfo = ANVarInfoToVarInfo ANVarInfo
+            let 
+              val varInfo = ANVarInfoToVarInfo ANVarInfo
+              fun insertRecord tyvarid records=
+                  let
+                    val varsOfTyVar =
+                        case TMap.find (records, tyvarid) of
+                          NONE => [varInfo]
+                        | SOME vars => varInfo :: vars
+                  in TMap.insert (records, tyvarid, varsOfTyVar) end
             in
               case #ty ANVarInfo of
-                AN.BOXED => (atoms, varInfo :: pointers, doubles, records)
-              | AN.ATOM => (varInfo :: atoms, pointers, doubles, records)
-              | AN.DOUBLE => (atoms, pointers, varInfo :: doubles, records)
-              | AN.TYVAR tyvarid =>
-                let
-                  val varsOfTyVar =
-                      case TMap.find (records, tyvarid) of
-                        NONE => [varInfo]
-                      | SOME vars => varInfo :: vars
-                  val records' = TMap.insert (records, tyvarid, varsOfTyVar)
-                in 
-                  (atoms, pointers, doubles, records') 
-                end
+                AN.BOXED => (atoms, varInfo :: pointers, doubles, records, unboxedRecords)
+              | AN.ATOM => (varInfo :: atoms, pointers, doubles, records, unboxedRecords)
+              | AN.DOUBLE => (atoms, pointers, varInfo :: doubles, records, unboxedRecords)
+              | AN.GENERIC tyvarid => (atoms, pointers, doubles, insertRecord tyvarid records, unboxedRecords)
+              | AN.SINGLE tyvarid => (atoms, pointers, doubles, insertRecord tyvarid records, unboxedRecords)
+              | AN.UNBOXED tyvarid => (atoms, pointers, doubles, records, insertRecord tyvarid unboxedRecords)
             end
         val localVars = CTX.getVarBinds context
-        val (atomVarIDs, pointerVarIDs, doubleVarIDs, recordVarIDsMap) = 
-            foldl groupByType ([], [], [], TMap.empty) localVars
+        val (atomVarIDs, pointerVarIDs, doubleVarIDs, recordVarIDsMap, unboxedRecordVarIDsMap) = 
+            foldl groupByType ([], [], [], TMap.empty, TMap.empty) localVars
 
         val bitmapFrees = 
-            case #bitmapFree funInfo of
+            case #bitmapFree frameInfo of
               AN.ANCONSTANT {value = CT.WORD 0w0,...} => []
             | AN.ANENVACC{nestLevel = 0w0, offset = i,...} => [i]
             | _ =>
@@ -1061,7 +997,7 @@ struct
         val tagArgs =
             map 
                 (fn (AN.ANVAR{varInfo,...}) => ANVarInfoToVarInfo varInfo)
-                (#tagArgs funInfo)
+                (#tagArgList frameInfo)
 
         val recordVarIDLists =
             map
@@ -1071,67 +1007,58 @@ struct
                 | NONE => [])
             tyvars
 
-        val funInfo = 
+        val unboxedRecordVarIDLists = TMap.listItems unboxedRecordVarIDsMap
+
+        (* unboxed records are always located after other record to guarantee that their 
+         * bit tags are zero.
+         * This is just a temporary solution to minimizing the changes of the later phases
+         *)
+        val frameInfo = 
             {
-              args = args,
               bitmapvals = {args = tagArgs, frees = bitmapFrees},
               atoms = atomVarIDs,
               pointers = pointerVarIDs,
               doubles = doubleVarIDs,
-              records = recordVarIDLists
+              records = recordVarIDLists @ unboxedRecordVarIDLists
             }
       in
-        CTX.addFunctionCode
-            enclosingContext
-            {
-              name = {id = funName, displayName = ID.toString funName},
-              loc = loc,
-              funInfo = funInfo,
-              instructions = bodyCode @ constantCode
-            }
+        {
+         frameInfo = frameInfo,
+         functionCodes = functionCodes,
+         loc = loc
+        } : SI.clusterCode
       end
 
   (****************************************)
 
-  fun linearize exp =
+  fun linearize declList =
       let
-        val context = CTX.createInitialContext ()
-        val dummyArgID = CTX.createLocalVarID context
-        val mainFunctionID = CTX.createLabel context
-        val mainFunctionLoc = ANU.getLocOfExp exp
-(*
-val _ = print ("loc: " ^ AbsynFormatter.locToString mainFunctionLoc ^ "\n")
-*)
-        val mainFunInfo : AN.funInfo =
+        val clusterCodes =
+            map 
+                (fn (AN.ANCLUSTER arg) => linearizeCluster arg
+                  | (AN.ANVAL _) => raise Control.Bug "invalid cluster"
+                )
+                (rev declList)
+        fun convertMainCode {name, loc, args, instructions} =
             {
-              tyvars = [],
-              bitmapFree =
-              AN.ANCONSTANT{value = CT.WORD 0w0, loc = mainFunctionLoc},
-              tagArgs = [],
-              sizevals = [],
-              args = [],
-              resultTy = AN.ATOM
+             name = name,
+             loc = loc,
+             args = args, 
+             instructions = 
+               map 
+                   (fn SI.Return_MV _ => SI.Exit | instruction => instruction)
+                   instructions
             }
-        val _ =
-            linearizeFunction
-                context (mainFunctionID, mainFunctionLoc, mainFunInfo, exp)
-        val (mainFunction :: otherFunctions) = CTX.getFunctionCodes context
+        fun convertMainCluster {frameInfo, functionCodes = [mainFunction], loc} =
+            {
+             frameInfo = frameInfo,
+             functionCodes = [convertMainCode mainFunction],
+             loc = loc
+            }
       in
-        {
-          mainFunctionName = mainFunctionID,
-          functions =
-          {
-            name = #name mainFunction,
-            loc = #loc mainFunction,
-            funInfo = #funInfo mainFunction,
-            instructions =
-            map
-                (fn SI.Return _ => SI.Exit | instruction => instruction)
-                (#instructions mainFunction)
-          } :: otherFunctions
-        }
+        case clusterCodes of 
+          [] => []
+        | (mainCluster::rest) => (convertMainCluster mainCluster)::rest
       end
-
-  (***************************************************************************)
 
 end

@@ -7,7 +7,7 @@
  * </p>
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PathUtility_MLton.sml,v 1.6.6.3 2007/03/27 08:47:13 kiyoshiy Exp $
+ * @version $Id: PathUtility_MLton.sml,v 1.7 2007/04/02 09:42:29 katsu Exp $
  *)
 structure PathUtility : PATH_UTILITY =
 struct

@@ -51,7 +51,7 @@
  * </p>
  * @author YAMATODANI Kiyoshi
  * @author Nguyen Huu Duc
- * @version $Id: StackFrame.sml,v 1.13 2005/11/27 01:00:41 kiyoshiy Exp $
+ * @version $Id: StackFrame.sml,v 1.14 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure StackFrame : STACK_FRAME =
 struct
@@ -237,7 +237,7 @@ struct
             else
               raise
                 Control.Bug
-                    ("non aligned frame size:" ^ UInt32.toString frameSize)
+                    ("non aligned frame size:" ^ BT.UInt32.toString frameSize)
 
         val newFrameAllocationInfo = 
             {

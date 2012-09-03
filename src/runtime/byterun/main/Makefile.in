@@ -88,7 +88,7 @@ main.$(OBJEXT): main.cc main.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -105,8 +105,7 @@ main.$(OBJEXT): main.cc main.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh \
   ../../../../src/runtime/runtime-core/main/InputChannel.hh \
@@ -131,7 +130,8 @@ main.$(OBJEXT): main.cc main.hh \
   ../../../../src/runtime/runtime-impl/main/ClientSocketChannel.hh \
   ../../../../src/runtime/runtime-impl/main/StreamInputChannelBase.hh \
   ../../../../src/runtime/runtime-impl/main/StreamOutputChannelBase.hh \
-  ../../../../src/instructions/runtime/main/Instructions.hh
+  ../../../../src/instructions/runtime/main/Instructions.hh \
+  ../../../../src/configuration/./Configuration.hh
 libmain.$(OBJEXT): libmain.cc main.hh \
   ../../../../src/runtime/runtime-impl/main/StandAloneSession.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -168,7 +168,7 @@ libmain.$(OBJEXT): libmain.cc main.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -185,8 +185,7 @@ libmain.$(OBJEXT): libmain.cc main.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh \
   ../../../../src/runtime/runtime-core/main/InputChannel.hh \

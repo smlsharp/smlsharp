@@ -3,7 +3,7 @@
 (**
  * lexer of parameter pattern in @params tag of doc comment.
  * @author YAMATODANI Kiyoshi
- * @version $Id: ParamPattern.lex,v 1.1.1.1.2.1 2007/03/25 15:23:50 kiyoshiy Exp $
+ * @version $Id: ParamPattern.lex,v 1.2 2007/04/02 09:42:28 katsu Exp $
  *)
 
 type svalue = Tokens.svalue

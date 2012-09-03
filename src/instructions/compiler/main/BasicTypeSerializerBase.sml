@@ -2,7 +2,7 @@
 (**
  * base implementation of operand serializer.
  * @author YAMATODANI Kiyoshi
- * @version $Id: BasicTypeSerializerBase.sml,v 1.4 2007/02/19 14:11:56 kiyoshiy Exp $
+ * @version $Id: BasicTypeSerializerBase.sml,v 1.5 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 functor BasicTypeSerializerBase(PrimitiveSerializer : PRIMITIVE_SERIALIZER)
         :> BASIC_TYPE_SERIALIZER =
@@ -64,9 +64,9 @@ struct
             | 3 => (0wx800000, 0wxFF000000)
             | _ => raise Fail ("why ? " ^ Int.toString usedBytes)
       in
-        if 0w0 = UInt32.andb (word, checkWord)
+        if 0w0 = BT.UInt32.andb (word, checkWord)
         then word
-        else UInt32.orb (word, maskWord)
+        else BT.UInt32.orb (word, maskWord)
       end
 
   fun deserializeUInt8 reader =

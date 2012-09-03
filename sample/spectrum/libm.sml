@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006-2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: libm.sml,v 1.1.2.1 2007/03/26 06:26:50 katsu Exp $
+ * @version $Id: libm.sml,v 1.2 2007/03/29 17:00:08 katsu Exp $
  *)
 
 structure Libm =
@@ -17,8 +17,13 @@ struct
         valOf (findLibrary ("m","sin",["math.h"]))
 (*
     (* Mac OS X *)
-    val libcName = "/usr/lib/libSystem.B.dylib"
+    val libmName = "/usr/lib/libSystem.B.dylib"
 *)
+(*
+    (* MinGW *)
+    val libmName = "msvcrt.dll"
+*)
+
     val libm = dlopen libmName
   in
 

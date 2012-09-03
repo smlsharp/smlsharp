@@ -1,7 +1,7 @@
 (**
  * Word structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Word.sml,v 1.4 2005/07/26 11:50:44 kiyoshiy Exp $
+ * @version $Id: Word.sml,v 1.5 2007/04/02 09:42:29 katsu Exp $
  *)
 structure Word =
 struct
@@ -18,11 +18,17 @@ struct
 
   val wordSize = 32
 
-  fun toLargeWord word = word
+  fun toLarge word = word
 
-  fun toLargeWordX word = word
+  fun toLargeX word = word
 
-  fun fromLargeWord largeWord = largeWord
+  fun fromLarge largeWord = largeWord
+
+  val toLargeWord = toLarge
+
+  val toLargeWordX = toLargeX
+
+  val fromLargeWord = fromLarge
 
   fun toLargeInt word =
       let val largeInt = Word_toIntX word

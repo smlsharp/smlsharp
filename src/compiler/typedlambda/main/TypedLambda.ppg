@@ -1,9 +1,9 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypedLambda.ppg,v 1.24 2007/02/28 15:31:26 katsu Exp $
+ * @author Duc-Huu NGUYEN
+ * @version $Id: TypedLambda.ppg,v 1.29 2007/06/19 22:19:12 ohori Exp $
  *)
-
 structure TypedLambda = struct
 
  structure BT = BasicTypes
@@ -11,7 +11,7 @@ structure TypedLambda = struct
  type loc = Loc.loc
 
  (*%
-  * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
+  * @formatter(Absyn.callingConvenvtion) Absyn.format_callingConvenvtion
   *)
  type callingConvention = Absyn.callingConvention
 
@@ -50,7 +50,7 @@ structure TypedLambda = struct
   *)
  (*% 
   * @params(btvEnv)
-  * @formatter(typesValdInfo) Types.format_varIdInfo
+  * @formatter(typesValdInfo) Types.format_varIdInfoWithoutType
   *)
  (*% 
   * @prefix typed
@@ -64,22 +64,13 @@ structure TypedLambda = struct
       Types.varIdInfo
 
  (*% 
-  * @params(btvEnv)
-  * @formatter(typesValIdent) Types.format_valIdent
- *)
- type valIdent = 
-     (*%
-      * @format(id:typesValIdent) id()(btvEnv)
-      *)
-    Types.valIdent
-
- (*% 
-   *)
+  * @params(btvEnv) 
+  *)
  type primInfo =
-     (*%
-      * @format({name,ty}) name
-      *)
-     {name : string, ty : ty}
+      (*%
+       * @format({name,ty}) name ":" ty()(btvEnv)
+       *)
+      {name : string, ty : ty}
 
  (*%
   * @params(btvEnv)
@@ -91,7 +82,7 @@ structure TypedLambda = struct
       *)
       Types.btvKind
 
- datatype constant = datatype ConstantTerm.constant
+ datatype constant =  datatype ConstantTerm.constant
 
 
 (*%
@@ -113,7 +104,7 @@ structure TypedLambda = struct
  * @formatter(ty) format_ty
  * @formatter(btvKind) format_btvKind
  * @formatter(primInfo) format_primInfo
- * @formatter(valIdent) format_valIdent
+ * @formatter(varIdInfo) format_varIdInfo
  * @formatter(enclosedListIfMoreThanOne)
  *              SmlppgUtil.formatListWithEnclosureIfMoreThanOne
  * @formatter(formatConst) ConstantTerm.format_constant
@@ -128,21 +119,17 @@ structure TypedLambda = struct
      (*%
       * @format(
       *        {
-      *          funExp:exp1,
+      *          funExp:funExp,
       *          funTy,
-      *          instTyList: ty tys:formatListWithEnclosure,
-      *          argExpList: exp2 exps2:formatListWithEnclosure,
-      *          argTyList: argTy argTys:formatListWithEnclosure,
+      *          argExpList: arg args,
       *          convention,
-      *          loc
+      *          loc:loc
       *         }
       *        )
       * R1{d
       *      {
-      *        "Foreign" + convention + exp1()(btvEnv)
-      *        !N0{tys(ty()(btvEnv))(",","{","}")} 2
-      *        {exps2(exp2()(btvEnv))(","1,"(",")")} 1
-      *        ":" + !N0{argTys(argTy()(btvEnv))(",","{","}")}
+      *       "FFIApply" +  funExp()(btvEnv) 1
+      *       "(" {args(arg()(btvEnv))(","1)} ")"
       *      }
       *   }
       *)
@@ -150,58 +137,65 @@ structure TypedLambda = struct
       * @prefix typed
       * @format(
       *        {
-      *          funExp:exp1,
+      *          funExp:funExp,
       *          funTy,
-      *          instTyList: ty tys:formatListWithEnclosure,
-      *          argExpList: exp2 exps2:formatListWithEnclosure,
-      *          argTyList: argTy argTys:formatListWithEnclosure,
+      *          argExpList: arg args,
       *          convention,
-      *          loc
+      *          loc:loc
       *         }
       *        )
       * R1{d
       *      {
-      *        "Foreign" + exp1()(btvEnv)
+      *        "FFIApply" + funExp()(btvEnv) 1
+      *        "(" {args(arg()(btvEnv))(","1)} ")"
       *      }
       *   }
       *)
-      TLFOREIGNAPPLY of
-      {
-        funExp:tlexp, 
-        funTy: ty,
-        instTyList:ty list, 
-        argExpList:tlexp list, 
-        argTyList: ty list,
-        convention : callingConvention,
-        loc:loc
-      }
+      TLFOREIGNAPPLY of 
+          {
+           funExp:tlexp,
+           funTy : ty, 
+           argExpList:tlexp list, 
+           convention : callingConvention,
+           loc:loc
+          }
    | (*%
-      * @format({funExp, instTyList: ty tys:formatListWithEnclosure,
-      *          argTyList: argTy argTys:formatListWithEnclosure, resultTy,
+      * @format({funExp,
+      *          funTy,
       *          loc})
       * L10{ "CALLBACK(" funExp()(btvEnv) 
-      *          2[ +2 ":" +d !N0{tys(ty()(btvEnv))(",","{","}")} ]
-      * ")" }
+      *              ")" }
       *)
      (*%
       * @prefix typed
-      * @format({funExp, instTyList: ty tys:formatListWithEnclosure,
-      *          argTyList: argTy argTys:formatListWithEnclosure, resultTy,
+      * @format({funExp,
+      *          funTy,
       *          loc})
       * L10{ "CALLBACK(" funExp()(btvEnv) 
-      *          2[ +2 ":" +d !N0{tys(ty()(btvEnv))(",","{","}")} ]
-      *       +1 ":" + {argTys(argTy()(btvEnv))(","+2,"{","}") +2
-      *         "->" +2 resultTy()(btvEnv)}
-      * ")" }
+      *       +1 ":" + {funTy()(btvEnv)}
+      *               ")" }
       *)
       TLEXPORTCALLBACK of 
        {
          funExp : tlexp,
-         instTyList:ty list,
-	 argTyList : ty list,
-	 resultTy : ty,
+	 funTy : ty,
          loc: loc
        }
+    | 
+     (*%
+      * @format({tagValue,loc}) tagValue
+      *)
+     TLEXCEPTIONTAG of {tagValue : int, loc : loc}
+    | 
+     (*%
+      * @prefix typed
+      * @format({value:const:formatConst, loc}) const
+      *)
+     (*%
+      * @format({value:const:formatConst, loc}) const
+      *)
+     (** constant int or real or string *)
+     TLCONSTANT of {value : constant, loc : loc}
    | (*%
       * @prefix typed
       * @format({ty, loc})
@@ -215,534 +209,435 @@ structure TypedLambda = struct
    | 
      (*%
       * @prefix typed
-      * @format({value:const:formatConst, loc}) const
-      *)
-     (*%
-      * @format({value:const:formatConst, loc}) const
-      *)
-     (** constant int or real or string *)
-     TLCONSTANT of {value : constant, loc : loc}
-   | 
-     (*%
-      * @format({tagValue,loc}) tagValue
-      *)
-     TLEXCEPTIONTAG of {tagValue : int, loc : loc}
-   | 
-     (*%
-      * @prefix typed
       * @format({varInfo : id, loc }) id()(btvEnv)
       *)
      (*%
       * @format({varInfo : id, loc }) id()(btvEnv)
-      *)
-     (** variable name and type 
-      * either lambda variable or
-      *        let variable
       *)
      TLVAR of {varInfo : varIdInfo, loc : loc}
    | 
      (*%
       * @prefix typed
-      * @format(id * ty * loc) "getGlobal(" id ")"
+      * @format(
+      *         {
+      *          arrayIndex:arrayIndex:formatUInt32, 
+      *          valueIndex, 
+      *          valueTy,
+      *          loc
+      *         }) 
+      * "GetGlobal(" arrayIndex "," valueIndex ")"
       *)
      (*%
-      * @format(id * ty * loc) "getGlobal(" id ")"
+      * @format(
+      *         {
+      *          arrayIndex:arrayIndex:formatUInt32, 
+      *          valueIndex, 
+      *          valueTy,
+      *          loc
+      *         }) 
+      * "GetGlobal(" arrayIndex "," valueIndex ")"
       *)
-      (*NOTE. no more use
-       *)
-     TLGETGLOBAL of string * ty * loc
+     TLGETGLOBAL of {arrayIndex : BT.UInt32, valueIndex : int, valueTy : ty, loc: loc}
    | 
      (*%
       * @prefix typed
-      * @format({arrayIndex:index:formatUInt32, offset, ty,loc}) 
-      * "GetGlobalValue(" index "," offset ")"
+      * @format(
+      *          {
+      *           arrayIndex:arrayIndex:formatUInt32,
+      *           valueIndex,
+      *           valueExp:exp,
+      *           valueTy,
+      *           loc
+      *          }) 
+      * "SetGlobal((" arrayIndex "," valueIndex ") =" +1 exp()(btvEnv) ")"  
       *)
      (*%
-      * @format({arrayIndex:index:formatUInt32, offset, ty,loc}) 
-      * "GetGlobalValue(" index "," offset ")"
+      * @format(
+      *          {
+      *           arrayIndex:arrayIndex:formatUInt32,
+      *           valueIndex,
+      *           valueExp:exp,
+      *           valueTy,
+      *           loc
+      *          }) 
+      * "SetGlobal((" arrayIndex "," valueIndex ") = " exp()(btvEnv) ")"  
       *)
-     TLGETGLOBALVALUE of {arrayIndex : BT.UInt32, offset : int, ty : ty, loc: loc}
-   | 
-     (*%
-      * @prefix typed
-      * @format({arrayIndex:index:formatUInt32,offset,valueExp:exp,ty,loc}) 
-      * "SetGlobalValue((" index "," offset ") =" +1 exp()(btvEnv) ")"  
-      *)
-     (*%
-      * @format({arrayIndex:index:formatUInt32,offset,valueExp:exp,ty,loc}) 
-      * "SetGlobalValue((" index "," offset ") = " exp()(btvEnv) ")"  
-      *)
-     TLSETGLOBALVALUE of {arrayIndex : BT.UInt32, offset : int, valueExp: tlexp, ty:ty,loc :loc}
+     TLSETGLOBAL of {arrayIndex : BT.UInt32, valueIndex : int, valueExp: tlexp, valueTy:ty,loc :loc}
    |
      (*%
       * @prefix typed
-      * @format({arrayIndex:index:formatUInt32,size,elemTy,loc}) 
-      * "InitialArray(" index "," size ")"
+      * @format({arrayIndex:arrayIndex:formatUInt32,size,elementTy,loc}) 
+      * "InitialArray(" arrayIndex "," size ")"
       *)
      (*%
-      * @format({arrayIndex:index:formatUInt32,size,elemTy,loc}) 
-      * "InitialArray(" index "," size ")"
+      * @format({arrayIndex:arrayIndex:formatUInt32,size,elementTy,loc}) 
+      * "InitialArray(" arrayIndex "," size ")"
       *)
-     TLINITARRAY of {arrayIndex : BT.UInt32, size : int, elemTy:ty, loc:loc}
+     TLINITARRAY of {arrayIndex : BT.UInt32, size : int, elementTy:ty, loc:loc}
    |
-      (*%
+     (*%
       * @prefix typed
-      * @format({arrayExp:array, indexExp:offset, elementTy:elementtype, loc:loc})
-      * "arraySub(" array()(btvEnv) "," offset()(btvEnv) ")" ":" elementtype()(btvEnv)
+      * @format({arrayExp, indexExp, elementTy, loc})
+      * "arraySub(" arrayExp()(btvEnv) "," indexExp()(btvEnv) ")" ":" elementTy()(btvEnv)
       *)
-      (*%
-      * @format({arrayExp:array, indexExp:offset, elementTy:elementtype, loc:loc})
-      * "arraySub(" array()(btvEnv) "," offset()(btvEnv) ")" ":" elementtype()(btvEnv)
+     (*%
+      * @format({arrayExp, indexExp, elementTy, loc})
+      * "arraySub(" arrayExp()(btvEnv) "," indexExp()(btvEnv) ")" ":" elementTy()(btvEnv)
       *)
      TLGETFIELD of {arrayExp:tlexp, indexExp:tlexp, elementTy:ty, loc:loc}
    |
      (*%
       * @prefix typed
-      * @format({valueExp:exp, arrayExp:arrayexp, indexExp:offset, elementTy:ty, loc:loc})  
+      * @format({valueExp, arrayExp, indexExp, elementTy, loc})  
       * "SetField"
-      * + arrayexp()(btvEnv) "[" offset()(btvEnv) "]" "=" exp()(btvEnv) 
+      * + arrayExp()(btvEnv) "[" indexExp()(btvEnv) "]" "=" valueExp()(btvEnv) 
       *)
      (*%
-      * @format({valueExp:exp, arrayExp:arrayexp, indexExp:offset, elementTy:ty, loc:loc})  
+      * @format({valueExp, arrayExp, indexExp, elementTy, loc})  
       * "SetField"
-      * + arrayexp()(btvEnv) "[" offset()(btvEnv) "]" "=" exp()(btvEnv) 
+      * + arrayExp()(btvEnv) "[" indexExp()(btvEnv) "]" "=" valueExp()(btvEnv) 
       *)
      TLSETFIELD of {valueExp:tlexp, arrayExp:tlexp, indexExp:tlexp, elementTy: ty, loc: loc}
+  | 
+   (*%
+    * @prefix typed
+    * @format({consExp, newTailExp, listTy, consRecordTy, tailLabel, loc})  
+    * "SetTail"
+    * + consExp()(btvEnv) "[" tailLabel "]" "=" newTailExp()(btvEnv)
+    *)
+   (*%
+    * @format({consExp, newTailExp, listTy, consRecordTy, tailLabel, loc})  
+    * "SetTail"
+    * + consExp()(btvEnv) ":" consRecordTy()(btvEnv) "[" tailLabel "]" "=" newTailExp()(btvEnv)
+    *)
+    TLSETTAIL of 
+     {
+       consExp : tlexp, 
+       newTailExp : tlexp, 
+       listTy : ty,
+       consRecordTy : ty,
+       tailLabel : string,
+       loc: loc
+      }
    |
      (*%
       * @prefix typed
-      * @format({sizeExp:exp1, initialValue:exp2, elementTy:ty1, resultTy:ty2, loc:loc}) 
-       !N0 {ty1()(btvEnv) "[" 2[1 exp1()(btvEnv) ] 1"]" "{" exp2()(btvEnv) "}"
-            ":" ty2()(btvEnv) ""}
+      * @format({sizeExp, initialValue, elementTy, loc}) 
+      * !N0 {elementTy()(btvEnv) "[" 2[1 sizeExp()(btvEnv) ] 1"]" "{" initialValue()(btvEnv) "}"}
       *)
      (*%
-      * @format({sizeExp:exp1, initialValue:exp2, elementTy:ty1, resultTy:ty2, loc:loc}) 
-       !N0 {
-             ty1()(btvEnv) "[" 2[1 exp1()(btvEnv) ] 1"]" "{" exp2()(btvEnv) "}"
-	    }
+      * @format({sizeExp, initialValue, elementTy, loc}) 
+      * !N0 {
+      *       elementTy()(btvEnv) "[" 2[1 sizeExp()(btvEnv) ] 1"]" "{" initialValue()(btvEnv) "}"
+      *	    }
       *)
-     (** ty1[e] : ty2  *)
      TLARRAY of 
        {
         sizeExp:tlexp, 
         initialValue:tlexp, 
         elementTy:ty, 
-        resultTy:ty, 
         loc:loc
-        }
+       }
    |
      (*%
       * @prefix typed
       * @format(
-                {
-                 primOp:prim,
-                 instTyList:ty tys:formatListWithEnclosure,
-                 argExpList:exp exps:formatListWithEnclosure,
-                 loc:loc
-                 }
-                )
-              R1{d {prim !N0{tys(ty()(btvEnv))(",","{","}")} 1 {exps(exp()(btvEnv))(","1,"(",")")}}}
-     *)
+      *         {
+      *          primInfo,
+      *          argExpList:arg args:formatListWithEnclosure,
+      *          loc
+      *          }
+      *         )
+      *       R1{d {primInfo()(btvEnv) 1 {args(arg()(btvEnv))(","1,"(",")")}}}
+      *)
      (*%
       * @format(
-                {
-                 primOp:prim,
-                 instTyList:ty tys:formatListWithEnclosure,
-                 argExpList:exp exps:formatListWithEnclosure,
-                 loc:loc
-                 }
-                )
-              R1{d {prim !N0{tys(ty()(btvEnv))(",","{","}")} 1 {exps(exp()(btvEnv))(","1,"(",")")}}}
-     *)
-     (**  primitive operations +(1,2)
-      * op(e1,..,en)
+      *         {
+      *          primInfo,
+      *          argExpList:arg args:formatListWithEnclosure,
+      *          loc
+      *          }
+      *         )
+      *       R1{d {primInfo()(btvEnv) 1 {args(arg()(btvEnv))(","1,"(",")")}}}
       *)
      TLPRIMAPPLY of 
        {
-        primOp:primInfo, 
-        instTyList: ty list, 
+        primInfo:primInfo, 
         argExpList:tlexp list, 
         loc:loc
-        }
+       }
    | 
     (*%
-      * @prefix typed
-      * @format({funExp:exp1, funTy:ty, argExpList:exp2 exps:enclosedListIfMoreThanOne, loc: loc})  
-        L10{ 
-	   exp1()(btvEnv) 
-            2[
-	      +1 
-              !N0{
-                   2[exps(exp2()(btvEnv))(","+2, "{", "}")] 
-                 } 
-	      1
-	      ]
-	   }
-      *)
+     * @prefix typed
+     * @format({funExp, funTy, argExpList:arg args:enclosedListIfMoreThanOne, loc})  
+     *  L10{ 
+     *   funExp()(btvEnv) 
+     *       2[
+     *      +1 
+     *        !N0{
+     *             2[args(arg()(btvEnv))(","+2, "{", "}")] 
+     *           } 
+     *      1
+     *      ]
+     *   }
+     *)
     (*%
-      * @format({funExp:exp1, funTy:ty, argExpList:exp2 exps:enclosedListIfMoreThanOne, loc: loc})  
-        L10{ 
-	   exp1()(btvEnv) 
-            2[
-	      +1 
-              !N0{
-                   2[exps(exp2()(btvEnv))(","+2, "{", "}")] 
-                 } 
-	      1
-	      ]
-	   }
-      *)
-      (** application with multiple arguments.
-       *   f (e1,...,en)
-       *)
+     * @format({funExp, funTy, argExpList:arg args:enclosedListIfMoreThanOne, loc})  
+     *   L10{ 
+     *   funExp()(btvEnv) 
+     *      2[
+     *      +1 
+     *        !N0{
+     *             2[args(arg()(btvEnv))(","+2, "{", "}")] 
+     *           } 
+     *      1
+     *      ]
+     *   }
+     *)
      TLAPPM of 
        {
         funExp:tlexp, 
         funTy:ty, 
-        argExpList:tlexp list, 
+        argExpList:tlexp list,
         loc:loc
-        }
+       }
    |
      (*%
       * @prefix typed
-      * @format({binds:bind binds, bodyExp:exp, loc:loc})
-          "bind" 
-           2[+1binds(bind)( +1)]
-           +1
-           "in"
-           2[1+{exp()(btvEnv)}] 
-           +1 
-           "end"
-      * @format:bind(id * exp) 
-          {id()(btvEnv) +d "=" 2[+1 {exp()(btvEnv)}]}
+      * @format({localDeclList : dec decs, mainExp, loc})
+      *     !N0{ {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]}  +1
+      *          {"in" 2[ +2 mainExp()(btvEnv) ] +2
+      *           "end"} }
       *)
      (*%
-      * @format({binds:bind binds, bodyExp:exp, loc:loc})
-          "bind" 
-           2[+1binds(bind)( +1)]
-           +1
-           "in"
-           2[1+{exp()(btvEnv)}] 
-           +1 
-           "end"
-      * @format:bind(id * exp) 
-           {id()(btvEnv) +d "=" 2[+1 {exp()(btvEnv)}]}
+      * @format({localDeclList : dec decs, mainExp, loc})
+      *     !N0{ {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]}  +1
+      *          {"in" 2[ +2 mainExp()(btvEnv) ] +2
+      *           "end"} }
       *)
-      (** 
-        bind decls in e1;e2;...;en end
-	formatted to
-	  bind
-	    xxx = 
-              eeee
-            yyy =
-              eeee
-         in
-           eeee
-         end
-       *)
-      TLMONOLET of 
-        {
-         binds : (varIdInfo * tlexp) list,
-         bodyExp : tlexp,
-         loc:loc
-         }
-   |
-     (*%
-      * @prefix typed
-      * @format({localDeclList : dec decs,
-      *          mainExpList : exp exps,
-      *          mainExpTyList : ty tyl,
-      *          loc})
-      *          !N0{ {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]}  +1
-      *               {"in" 2[ +2 exps(exp()(btvEnv))( +3 ) ] +2
-      *                 "end"} }
-      *)
-     (*%
-      * @format({localDeclList : dec decs,
-      *          mainExpList : exp exps,
-      *          mainExpTyList : ty tyl,
-      *          loc})
-      *          !N0{ {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]}  +1
-      *               {"in" 2[ +2 exps(exp()(btvEnv))( +3 ) ] +2
-      *                 "end"} }
-      *)
-      (** let decls in e1;e2;...;en end
-       *)
      TLLET of 
        {
         localDeclList : tldecl list,
-        mainExpList : tlexp list,
-        mainExpTyList : ty list,
+        mainExp : tlexp,
         loc : loc
        }
    | 
     (*%
       * @prefix typed
-      * @format({expList:exp record, internalTy, externalTy:ety opt,loc}) 
-        !N0{
-	  "{"
-             d
-             2[
-                record(exp()(btvEnv))("," +1)
-              ] 
-	     d
-	  "}" + ":" opt(ety()(btvEnv))
-           }
+      * @format({expList:field fields, recordTy, isMutable, loc}) 
+      *  !N0{"(" d 2[ fields(field()(btvEnv))("," +1) ] d ")" }
       *)
     (*%
-      * @format({expList:exp record, internalTy, externalTy:ety opt,loc}) 
-        !N0{
-	  "{"
-             d
-             2[
-                record(exp()(btvEnv))("," +1)
-              ] 
-	     d
-	  "}" 
-           }
-      *)
-     (** (e1,...,en) 
-      * record is used for internal representation of datatype.
-      *  internalTy is the type of its internal representation
-      *  externalTy is the type this term represents
-        formated to:
-        
+      * @format({expList:field fields, recordTy, isMutable, loc}) 
+      *  !N0{"(" d 2[ fields(field()(btvEnv))("," +1) ] d ")" }
       *)
     TLRECORD of 
       {
-       expList:tlexp list, 
-       internalTy:ty, 
-       externalTy:ty option, 
-       loc:loc
-       }
-   |
-     (*%
-      * @prefix typed
-      * @format({recordExp:exp, indexExp:selector, recordTy:ty1, loc:loc})
-      * exp()(btvEnv) "[" selector()(btvEnv) "]" + ":" ty1()(btvEnv)
-      *)
-     (*%
-      * @format({recordExp:exp, indexExp:selector, recordTy:ty1, loc:loc})
-      * exp()(btvEnv) 
-        "[" selector()(btvEnv) "]"
-      *)
-    (** e[i]   selecting a filed from a record; ty is the type of exp.
-     *)
-    TLSELECT of 
-      {
-       recordExp:tlexp, 
-       indexExp: tlexp, 
+       isMutable : bool,
+       expList:tlexp list,
        recordTy:ty, 
        loc:loc
+      }
+   |
+     (*%
+      * @prefix typed
+      * @format({recordExp, label, recordTy, loc})
+      *     recordExp()(btvEnv) "[" label "]"
+      *)
+     (*%
+      * @format({recordExp, label, recordTy, loc})
+      *     recordExp()(btvEnv) "[" label "]"
+      *)
+     TLSELECT of 
+       {
+        recordExp:tlexp, 
+        label : string, 
+        recordTy:ty, 
+        loc:loc
        }
    |
      (*%
       * @prefix typed
-      * @format({recordExp:exp1, recordTy:ty1, indexExp:selector, elementExp:exp2, elementTy:ty2, loc:loc})
-      *   exp1()(btvEnv) "[" selector()(btvEnv) "=" exp2()(btvEnv) "]"
+      * @format({recordExp, recordTy, label, valueExp, loc})
+      *   recordExp()(btvEnv) "[" label "=" valueExp()(btvEnv) "]"
       *)
      (*%
-      * @format({recordExp:exp1, recordTy:ty1, indexExp:selector, elementExp:exp2, elementTy:ty2, loc:loc})
-      *   exp1()(btvEnv) "[" selector()(btvEnv) "=" exp2()(btvEnv) "]"
-      *)
-     (** e[i=e2]  constructing a record by modifying e with i = e2.
+      * @format({recordExp, recordTy, label, valueExp, loc})
+      *   recordExp()(btvEnv) "[" label "=" valueExp()(btvEnv) "]"
       *)
      TLMODIFY of 
        {
         recordExp:tlexp, 
         recordTy:ty, 
-        indexExp:tlexp, 
-        elementExp:tlexp, 
-        elementTy:ty, 
+        label : string, 
+        valueExp:tlexp, 
         loc:loc
-        }
+       }
    |
      (*%
       * @prefix typed
-      * @format({argExp:exp, resultTy:ty, loc:loc}) N0{ "raise" +d {exp()(btvEnv)} }
+      * @format({argExp, resultTy, loc}) N0{ "raise" +d {argExp()(btvEnv)} }
       *)
      (*%
-      * @format({argExp:exp, resultTy:ty, loc:loc}) N0{ "raise" +d {exp()(btvEnv)} }
+      * @format({argExp, resultTy, loc}) N0{ "raise" +d {argExp()(btvEnv)} }
       *)
-      (** raise e
-       *)
      TLRAISE of 
        {
         argExp:tlexp, 
         resultTy:ty, 
         loc:loc
-        }
+       }
    |
      (*%
       * @prefix typed
-      * @format({exp:exp1, exnVar:id, handler:exp2, loc:loc})
-                 "handle" + N0{exp1()(btvEnv)} +1
-                 "with letexp" +  id()(btvEnv)  + "in" + {exp2()(btvEnv)}
+      * @format({exp, exnVar, handler, loc})
+      *      "handle" + N0{exp()(btvEnv)} +1
+      *      "with letexp" +  exnVar()(btvEnv)  + "in" + {handler()(btvEnv)}
       *)
      (*%
-      * @format({exp:exp1, exnVar:id, handler:exp2, loc:loc})
-                 "handle" + N0{exp1()(btvEnv)} +1
-                 "with letexp" +  id()(btvEnv)  + "in" + {exp2()(btvEnv)}
+      * @format({exp, exnVar, handler, loc})
+      *      "handle" + N0{exp()(btvEnv)} +1
+      *      "with letexp" +  exnVar()(btvEnv)  + "in" + {handler()(btvEnv)}
       *)
-      (** handle (exp1, x, exp2) *)
      TLHANDLE of
        {
         exp : tlexp,
         exnVar : varIdInfo,
         handler : tlexp,
         loc : loc
-        }
+       }
    |
      (*%
       * @prefix typed
-      * @format({argVarList:id ids:enclosedListIfMoreThanOne, 
-                 bodyTy:ty, bodyExp:exp, loc:loc}) 
-           R1{ 
-               "fn" + "{"
-                  5[+ ids(id()(btvEnv))(","+, "", +"}") ]
-                 +1
-                 "=>" 
-                 2[ +1 {exp()(btvEnv)}]
-             }
-     *)
+      * @format({argVarList:arg args:enclosedListIfMoreThanOne, bodyTy, bodyExp, loc}) 
+      *     R1{ 
+      *        "fn" + "{" 5[+ args(arg()(btvEnv))(","+, "", +"}") ]
+      *          +1
+      *          "=>" 
+      *          2[ +1 {bodyExp()(btvEnv)}]
+      *      }
+      *)
      (*%
-      * @format({argVarList:id ids:enclosedListIfMoreThanOne, 
-                 bodyTy:ty, bodyExp:exp, loc:loc}) 
-           R1{ 
-               "fn" + {ids(id()(btvEnv))(","+, "{", "}") + "=>" }
-                2[ +1 {exp()(btvEnv)}]
-             }
-     *)
+      * @format({argVarList:arg args:enclosedListIfMoreThanOne, bodyTy, bodyExp, loc}) 
+      *     R1{ 
+      *        "fn" + {args(arg()(btvEnv))(","+, "{", "}") + "=>" }
+      *         2[ +1 {bodyExp()(btvEnv)}]
+      *      }
+      *)
      TLFNM of 
        {
         argVarList:varIdInfo list, 
         bodyTy:ty, 
         bodyExp:tlexp, 
         loc:loc
-        }
+       }
    |
      (*%
       * @prefix typed
-      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs:ty, exp:exp, loc:loc})
-        {
-          "[" imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
-             2[
-               +1
-               {exp()(imap:createBtvKindMap()(btvEnv))}
-               +1 
-               ":" + {ty()(imap:createBtvKindMap()(btvEnv))}
-              ] 
-           +1 
-           "]"
-	}
+      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs, exp, loc})
+      *  {
+      *   "[" imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *      2[
+      *        +1
+      *        {exp()(imap:createBtvKindMap()(btvEnv))}
+      *        +1 
+      *        ":" + {expTyWithoutTAbs()(imap:createBtvKindMap()(btvEnv))}
+      *       ] 
+      *    +1 
+      *    "]"
+      *  }
       *)
      (*%
-      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs:ty, exp:exp, loc:loc})
-        {exp()(imap:createBtvKindMap()(btvEnv))}
+      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs, exp, loc})
+      *  {
+      *   "[" imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *      2[
+      *        +1
+      *        {exp()(imap:createBtvKindMap()(btvEnv))}
+      *        +1 
+      *        ":" + {expTyWithoutTAbs()(imap:createBtvKindMap()(btvEnv))}
+      *       ] 
+      *    +1 
+      *    "]"
+      *  }
       *)
-      (** 
-        \forall t1...tn.e 
-        formatted to:
-        ['a,....,'b.
-          eeeee
-          : tttttt
-         ]
-       *) 
      TLPOLY of 
        {
         btvEnv : btvKind IEnv.map,
         expTyWithoutTAbs:ty, 
         exp:tlexp, 
         loc:loc
-        }
+       }
    | 
      (*%
       * @prefix typed
-       * @format({exp:exp, expTy:ty1, instTyList:ty2 tys , loc:loc}) 
-           {
-             exp()(btvEnv) 
-               2[d 
-                  !N0{
-                      "{" 
-                         d
-                         2[
-                           tys(ty2()(btvEnv))("," +1) 
-                          ]  
-                         d
-                       "}" 
-		     }
-                ]
-           }
+      * @format({exp, expTy, instTyList:tyArg tyArgs , loc}) 
+      *    {
+      *      exp()(btvEnv) 
+      *        2[d 
+      *           !N0{
+      *               "{" 
+      *                  d
+      *                  2[
+      *                    tyArgs(tyArg()(btvEnv))("," +1) 
+      *                   ]  
+      *                  d
+      *                "}" 
+      *	     }
+      *         ]
+      *    }
       *)
-    (*%
-       * @format({exp:exp, expTy:ty1, instTyList:ty2 tys , loc:loc}) 
-           {
-             exp()(btvEnv) 
-               2[d 
-                  !N0{
-                      "{" 
-                         d
-                         2[
-                           tys(ty2()(btvEnv))("," +1) 
-                          ]  
-                         d
-                       "}" 
-		     }
-                ]
-           }
+     (*%
+      * @format({exp, expTy, instTyList:tyArg tyArgs , loc}) 
+      *    {
+      *      exp()(btvEnv) 
+      *        2[d 
+      *           !N0{
+      *               "{" 
+      *                  d
+      *                  2[
+      *                    tyArgs(tyArg()(btvEnv))("," +1) 
+      *                   ]  
+      *                  d
+      *                "}" 
+      *	     }
+      *         ]
+      *    }
       *)
-     (** 
-      (e:\tau) {\tau_1,...,\tau_n}
-      formatted to:
-       
-     *)
      TLTAPP of 
        {
         exp:tlexp, 
         expTy:ty, 
         instTyList:ty list, 
         loc:loc
-        }
+       }
    |
      (*%
       * @prefix typed
-      * @format({switchExp:exp1, expTy:ty, branches:rule rules, defaultExp:exp2, loc:loc})
-         2[
-           "switch" 
-            +1
-            exp1()(btvEnv)
-            ~2[+1 "of" +]
-            rules(rule)(~2[ +1 " |" ]+)
-            ~2[+1 " |" +]
-            {"_ =>" 2[+2] 2[{exp2()(btvEnv)}]}
-          ]
+      * @format({switchExp, expTy, branches:rule rules, defaultExp, loc})
+      *  2[
+      *    "switch" 
+      *     +1
+      *     switchExp()(btvEnv)
+      *     ~2[+1 "of" +]
+      *     rules(rule)(~2[ +1 " |" ]+)
+      *     ~2[+1 " |" +]
+      *     {"_ =>" 2[+2] 2[{defaultExp()(btvEnv)}]}
+      *   ]
       * @format:rule({constant, exp})
-           constant()(btvEnv) + "=>" 2[+2] 2[exp()(btvEnv)]
+      *    constant()(btvEnv) + "=>" 2[+2] 2[exp()(btvEnv)]
       *)
      (*%
-      * @format({switchExp:exp1, expTy:ty, branches:rule rules, defaultExp:exp2, loc:loc})
-           "switch" 
-             2[+1 {exp1()(btvEnv)}]
-            +1 "of" +
-            {rules(rule)(~2[+1 "|"] +)}
-            +1 " |" +
-            {"_ =>" 2[+1{exp2()(btvEnv)}]}
+      * @format({switchExp, expTy, branches:rule rules, defaultExp, loc})
+      *    "switch" 
+      *      2[+1 {switchExp()(btvEnv)}]
+      *     +1 "of" +
+      *     {rules(rule)(~2[+1 "|"] +)}
+      *     +1 " |" +
+      *     {"_ =>" 2[+1{defaultExp()(btvEnv)}]}
       * @format:rule({constant,exp})
-            {constant()(btvEnv) + "=>" 2[+1{exp()(btvEnv)}]}
+      *     {constant()(btvEnv) + "=>" 2[+1{exp()(btvEnv)}]}
       *)
-      (** switch e of
-                c1 => e1 | ... | cn => en
-       formatted to
-          switch 
-            exp 
-          of
-            pat =>
-              exp
-          | pat =>
-              exp
-          | _ =>
-              exp
-       *)
      TLSWITCH of 
        {
         switchExp:tlexp, 
@@ -750,249 +645,131 @@ structure TypedLambda = struct
         branches: {constant:tlexp , exp : tlexp} list, 
         defaultExp:tlexp, 
         loc:loc
-        }
+       }
   |
-     (*%
-      * @prefix typed
-     * @format({expList:exp exps, expTyList:ty tys, loc: loc})
-     * !N0{ "(" 2[ 1 exps(exp()(btvEnv))(";" +1) ] 1 ")" }
+    (*%
+     * @prefix typed
+     * @format({exp, targetTy, loc}) 
+     *    {
+     *    "("
+     *      1
+     *      2["cast" + 2[{exp()(btvEnv)}]]
+     *        +1
+     *        2["to" + 2[{targetTy()(btvEnv)}]]
+     *      1
+     *    ")"
+     *    }
      *)
-     (*%
-     * @format({expList:exp exps, expTyList:ty tys, loc: loc})
-     * !N0{ "(" 2[ 1 exps(exp()(btvEnv))(";" +1) ] 1 ")" }
+    (*%
+     * @format({exp, targetTy, loc}) 
+     *   {
+     *    "("
+     *        +1
+     *      2["cast" + 2[{exp()(btvEnv)}]]
+     *        +1
+     *        2["to" + 2[{targetTy()(btvEnv)}]]
+     *      +1
+     *    ")"
+     *     }
      *)
-    (** (e1; ...; en) *)
-     TLSEQ of 
-       {
-        expList:tlexp list,
-        expTyList:ty list,
-        loc:loc
-        }
-  |
-     (*%
-      * @prefix typed
-     * @format({exp:exp, targetTy:ty, loc:loc}) 
-	   {
-	    "("
-              1
-	      2["cast" + 2[{exp()(btvEnv)}]]
-              +1
-              2["to" + 2[{ty()(btvEnv)}]]
-	      1
-	    ")"
-           }
-     *)
-     (*%
-     * @format({exp:exp, targetTy:ty, loc:loc}) 
-	   {
-	    "("
-              +1
-	      2["cast" + 2[{exp()(btvEnv)}]]
-              +1
-              2["to" + 2[{ty()(btvEnv)}]]
-	      +1
-	    ")"
-           }
-     *)
-    (**
-      cast e to some type ty.
-      this is used to coerce constructor type to a record type
-      *)
      TLCAST of {exp:tlexp, targetTy:ty, loc:loc}
-  |
-     (*%
-      * @prefix typed
-     * @format({recordTy :ty, label, loc}) label
-     *)
-     (*%
-     * @format({recordTy :ty, label, loc}) label
-     *)
-    (*
-     * @format(ty * label) "offset(" label + "of" + ty()(btvEnv) ")"
-     *)
-    TLOFFSET of {recordTy : ty, label : string, loc : loc}
 
  and tldecl 
    = (*%
       * @prefix typed
-      * @format({bindList:bind binds,loc})  
-         2[
-          "val" 
-          + 
-          binds(bind)(~2[ +1 "and"] +)
-          ]
-      * @format:bind({boundValIdent:id,boundExp:exp}) 
-         id()(btvEnv) +d "=" +1 exp()(btvEnv)
+      * @format({boundVar, boundExp, loc})  
+      *  2[
+      *   "val" 
+      *   + 
+      *   boundVar()(btvEnv) +d "=" +1 {boundExp()(btvEnv)}
+      *   ]
       *)
      (*%
-      * @format({bindList:bind binds,loc})  
-         2[
-          "val" 
-          + 
-          binds(bind)(~2[ +1 "and"] +)
-          ]
-      * @format:bind({boundValIdent:id,boundExp:exp}) 
-         id()(btvEnv) +d "=" +1 {exp()(btvEnv)}
-      *)
-      (* 
-       * the defualt format:
-          val xxxx = 
-            eeeeeeeeeeeee
-          and yyyyy = 
-            eeeeeeeeeeeee
+      * @format({boundVar, boundExp, loc})  
+      *  2[
+      *   "val" 
+      *   + 
+      *   boundVar()(btvEnv) +d "=" +1 {boundExp()(btvEnv)}
+      *   ]
       *)
     TLVAL of 
      {
-      bindList : {boundValIdent : valIdent, boundExp : tlexp} list,
+      boundVar : varIdInfo, 
+      boundExp : tlexp,
       loc : loc
      }
    |
      (*%
       * @prefix typed
       * @format({recbindList:bind binds,loc})
-           "val rec" + 2[binds(bind)(~2[ +1 "and"] +)]]
-      * @format:bind({boundVar:id, boundTy: ty, boundExp: exp}) 
-           {id()(btvEnv) +d "=" +1 {exp()(btvEnv)} +1 ":" + ty()(btvEnv)}
+      *     "val rec" + 2[binds(bind)(~2[ +1 "and"] +)]
+      * @format:bind({boundVar, boundExp}) 
+      *     {boundVar()(btvEnv) +d "=" +1 {boundExp()(btvEnv)}}
       *)
      (*%
       * @format({recbindList:bind binds,loc})
-         2[
-           "val rec" 
-           + 
-           binds(bind)(~2[ +1 "and"] +)
-           ]
-      * @format:bind({boundVar:id, boundTy: ty, boundExp: exp}) 
-          id()(btvEnv) +d "=" +1 {exp()(btvEnv)}
-      *)
-      (* 
-       * the defualt format:
-          val rec xxxx = 
-            eeeeeeeeeeeee
-            : zzzz
-          and yyyyy = 
-            eeeeeeeeeeeee
-            : zzzz
+      *  2[
+      *    "val rec" 
+      *    + 
+      *    binds(bind)(~2[ +1 "and"] +)
+      *    ]
+      * @format:bind({boundVar, boundExp}) 
+      *   boundVar()(btvEnv) +d "=" +1 {boundExp()(btvEnv)}
       *)
     TLVALREC of 
      {
-      recbindList : {boundVar:varIdInfo, boundTy : ty, boundExp : tlexp } list,
+      recbindList : {boundVar:varIdInfo, boundExp : tlexp } list,
       loc : loc
      }
    |
      (*%
       * @prefix typed
       * @format({
-                 btvEnv:btvKind:btvKind imap, 
-                 indexVars : id ids:formatListWithEnclosure,
-                 recbindList : bind binds,
-                 loc : loc
-                })
-           {"[" 
-              2[ 
-                imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
-                 +
-                ids(id()(imap:createBtvKindMap()(btvEnv)))(",","(",")") 
-                 +1
-                 2["val rec" +d binds(bind)(~2[ +1 "and"] +)]
-               ]
-             1 "]"}
-      * @format:bind({boundVar:v, boundTy : ty, boundExp : exp})
-              v()(imap:createBtvKindMap()(btvEnv)) +d "=" 
-              +2
-              {exp()(imap:createBtvKindMap()(btvEnv))}
+      *          btvEnv:btvKind:btvKind imap, 
+      *          recbindList : bind binds,
+      *          loc : loc
+      *         })
+      *    {"[" 
+      *       2[ 
+      *         imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *          +1
+      *          2["val rec" +d binds(bind)(~2[ +1 "and"] +)]
+      *        ]
+      *      1 "]"}
+      * @format:bind({boundVar, boundExp})
+      *       boundVar()(imap:createBtvKindMap()(btvEnv)) +d "=" 
+      *       +2
+      *       {boundExp()(imap:createBtvKindMap()(btvEnv))}
       *)
      (*%
       * @format({
-                 btvEnv:btvKind:btvKind imap, 
-                 indexVars : id ids:formatListWithEnclosure,
-                 recbindList : bind binds,
-                 loc : loc
-                })
-           {
-            "[" 
-              2[ 
-                imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
-                 +
-                ids(id()(imap:createBtvKindMap()(btvEnv)))(",","(",")") 
-                 +1
-                 2[  
-                  "val rec" 
-                  +
-                  binds(bind)(~2[ +1 "and"] +)
-                  ]
-               ]
-             1 "]"
-          }
-      * @format:bind({boundVar:v, boundTy : ty, boundExp : exp})
-            v()(imap:createBtvKindMap()(btvEnv)) +d "=" 
-            +1
-            {exp()(imap:createBtvKindMap()(btvEnv))}
-      *)
-      (* 
-          ['a,...,'b. 
-            val rec xxxx = 
-              eeeeeeeeeeeee
-              : zzzz
-            and yyyyy = 
-              eeeeeeeeeeeee
-              : zzzz
-          ]
+      *          btvEnv:btvKind:btvKind imap, 
+      *          recbindList : bind binds,
+      *          loc : loc
+      *         })
+      *    {
+      *     "[" 
+      *       2[ 
+      *         imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." 
+      *          +1
+      *          2[  
+      *           "val rec" 
+      *           +
+      *           binds(bind)(~2[ +1 "and"] +)
+      *           ]
+      *        ]
+      *      1 "]"
+      *   }
+      * @format:bind({boundVar, boundExp})
+      *     boundVar()(imap:createBtvKindMap()(btvEnv)) +d "=" 
+      *     +1
+      *     {boundExp()(imap:createBtvKindMap()(btvEnv))}
       *)
      TLVALPOLYREC of 
        {
         btvEnv : btvKind IEnv.map,
-        indexVars :  varIdInfo list,
-        recbindList : {boundVar:varIdInfo, boundTy : ty, boundExp : tlexp } list,
+        recbindList : {boundVar:varIdInfo, boundExp : tlexp } list,
         loc : loc
        }
-   |
-     (*%
-      * @prefix typed
-      * @format({localDeclList:localdec localdecs,mainDeclList : dec decs, loc})
-      *            "local" 2[ +2 localdecs(localdec()(btvEnv))(+d) ] +1
-      *            "in" 2[ +2 decs(dec()(btvEnv))(+3) ] +2
-      *            "end"
-      *)
-     (*%
-      * @format({localDeclList:localdec localdecs,mainDeclList : dec decs, loc})
-       "local" 
-        2[ 
-           +1
-           localdecs(localdec()(btvEnv))(+2) 
-          ] 
-        +1
-        "in" 
-        2[ 
-          +1
-           decs(dec()(btvEnv))(+2) 
-         ] 
-        +1
-        "end"
-      *)
-     TLLOCALDEC of 
-       {
-        localDeclList : tldecl list,
-        mainDeclList : tldecl list,
-        loc : loc
-       }
-   |
-     (*%
-      * @prefix typed
-      * @format(name * exp * loc) "setGlobal(" name " = " exp()(btvEnv) ")"  
-      *)
-     (*%
-      * @format(name * exp * loc) "setGlobal(" name " = " exp()(btvEnv) ")"  
-      *)
-     (*NOTE. no more use *)
-     TLSETGLOBAL of string * tlexp * loc
-   |
-     (*%
-      * @prefix typed
-      * @format(arg) 
-      *)
-     (*%
-      * @format(arg) 
-      *)
-     TLEMPTY of loc
 
 end

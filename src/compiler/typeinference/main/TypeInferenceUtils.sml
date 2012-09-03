@@ -3,7 +3,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypeInferenceUtils.sml,v 1.35 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TypeInferenceUtils.sml,v 1.36 2007/06/08 21:58:15 ohori Exp $
  *)
 structure TypeInferenceUtils =
 struct
@@ -37,6 +37,7 @@ struct
       | PT.PTSTROPAQCONSTRAINT (ptstrexp,_,_) => isAnonymousStrExp ptstrexp
       | PT.PTFUNCTORAPP _ => true
       | PT.PTSTRUCTLET (_, ptstrexp, _) => isAnonymousStrExp ptstrexp
+
   (*
    * make a fresh instance of ty by instantiating the top-level type
    * abstractions (only)
@@ -71,21 +72,25 @@ struct
             case ty of
               POLYty{boundtvars, body = FUNMty([argTy], resultTy)} =>
               let
+                val (subst, newBoundEnv) = TU.copyBoundEnv boundtvars
+                val newArgTy = TU.substBTvar subst argTy
+                val newResultTy = TU.substBTvar subst resultTy
                 val newVarPathInfo =
-                  {name = Vars.newTPVarName(), strpath = NilPath, ty = argTy}
+                  {name = Vars.newTPVarName(), strpath = NilPath, ty = newArgTy}
+                val newTy = POLYty{boundtvars=newBoundEnv, body = FUNMty([newArgTy], newResultTy)}
               in
                 (
-                  ty,
+                  newTy,
                   TPPOLYFNM
                       {
-                        btvEnv=boundtvars,
+                        btvEnv=newBoundEnv,
                         argVarList=[newVarPathInfo],
-                        bodyTy=resultTy,
+                        bodyTy=newResultTy,
                         bodyExp=
                           TPCONSTRUCT
                            {
                             con=termconPathInfo,
-                            instTyList=map BOUNDVARty (IEnv.listKeys boundtvars),
+                            instTyList=map BOUNDVARty (IEnv.listKeys newBoundEnv),
                             argExpOpt=SOME (TPVAR (newVarPathInfo, loc)),
                             loc=loc
                             },
@@ -126,21 +131,25 @@ struct
         (case ty of
            POLYty{boundtvars, body = FUNMty([argTy], resultTy)} =>
            let
-             val newVarPathInfo  = 
-                 {name = Vars.newTPVarName(), strpath = NilPath, ty = argTy}
+                val (subst, newBoundEnv) = TU.copyBoundEnv boundtvars
+                val newArgTy = TU.substBTvar subst argTy
+                val newResultTy = TU.substBTvar subst resultTy
+                val newVarPathInfo =
+                  {name = Vars.newTPVarName(), strpath = NilPath, ty = newArgTy}
+                val newTy = POLYty{boundtvars=newBoundEnv, body = FUNMty([newArgTy], newResultTy)}
            in
              (
-               ty,
+               newTy,
                TPPOLYFNM
                   {
-                    btvEnv=boundtvars,
+                    btvEnv=newBoundEnv,
                     argVarList=[newVarPathInfo],
-                    bodyTy=resultTy,
+                    bodyTy=newResultTy,
                     bodyExp=
                       TPPRIMAPPLY
                       {
                        primOp=primInfo,
-                       instTyList=map BOUNDVARty (IEnv.listKeys boundtvars),
+                       instTyList=map BOUNDVARty (IEnv.listKeys newBoundEnv),
                        argExpOpt=SOME (TPVAR (newVarPathInfo, loc)),
                        loc=loc
                        },

@@ -1,6 +1,6 @@
 (**
  * @author YAMATODANI Kiyoshi
- * @version $Id: AllocationInfo.sml,v 1.6 2005/11/13 05:16:25 kiyoshiy Exp $
+ * @version $Id: AllocationInfo.sml,v 1.7 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure AllocationInfo =
 struct
@@ -42,7 +42,7 @@ struct
       concat
           ([
              "count = ",
-             UInt32.toString slotCount,
+             BT.UInt32.toString slotCount,
              "\n",
              "entries: \n"
            ]

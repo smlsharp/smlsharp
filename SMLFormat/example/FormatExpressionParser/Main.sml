@@ -35,6 +35,9 @@ struct
          newline : string ref,
          guardLeft : string ref,
          guardRight : string ref,
+         maxDepthOfGuards : int option ref,
+         maxWidthOfGuards : int option ref,
+         cutOverTail : bool ref,
 
          comLevel : int ref,
          doFirstLinePrompt : bool ref,
@@ -153,10 +156,32 @@ struct
                        SOME width => (#columns arg) := width
                      | NONE => print "columns must be integer.\n";
                      loop lexer')
+                 | "cutovertail" =>
+                   (case value of
+                       "true" => (#cutOverTail arg) := true
+                     | "false" => (#cutOverTail arg) := false
+                     | _ => print "cutovertail must be true or false.\n";
+                     loop lexer')
                  | "space" => (#space arg := value; loop lexer')
                  | "newline" => (#newline arg := value; loop lexer')
                  | "guardleft" => (#guardLeft arg := value; loop lexer')
                  | "guardright" => (#guardRight arg := value; loop lexer')
+                 | "depth" =>
+                   (case value of
+                      "-" => (#maxDepthOfGuards arg := NONE; loop lexer')
+                    | _ =>
+                      (case Int.fromString value of
+                         SOME d => #maxDepthOfGuards arg := SOME d
+                       | NONE => print "depth must be integer or '-'.\n";
+                       loop lexer'))
+                 | "width" =>
+                   (case value of
+                      "-" => (#maxWidthOfGuards arg := NONE; loop lexer')
+                    | _ =>
+                      (case Int.fromString value of
+                         SOME d => #maxWidthOfGuards arg := SOME d
+                       | NONE => print "width must be integer or '-'.\n";
+                       loop lexer'))
                  | "verbose" =>
                    (case value of
                        "true" => (#verbose arg) := true
@@ -175,6 +200,10 @@ struct
                          newline = ref (!(#newline arg)),
                          guardLeft = ref (!(#guardLeft arg)),
                          guardRight = ref (!(#guardRight arg)),
+                         maxDepthOfGuards = ref (!(#maxDepthOfGuards arg)),
+                         maxWidthOfGuards = ref (!(#maxWidthOfGuards arg)),
+                         cutOverTail = ref (!(#cutOverTail arg)),
+
                          comLevel = ref 0,
                          doFirstLinePrompt = ref true,
                          error = #error arg,
@@ -217,7 +246,10 @@ struct
                          SMLFormat.Newline(!(#newline arg)),
                          SMLFormat.Space(!(#space arg)),
                          SMLFormat.GuardLeft(!(#guardLeft arg)),
-                         SMLFormat.GuardRight(!(#guardRight arg))
+                         SMLFormat.GuardRight(!(#guardRight arg)),
+                         SMLFormat.MaxDepthOfGuards(!(#maxDepthOfGuards arg)),
+                         SMLFormat.MaxWidthOfGuards(!(#maxWidthOfGuards arg)),
+                         SMLFormat.CutOverTail(!(#cutOverTail arg))
                        ]
                  in
                    print (SMLFormat.prettyPrint parameter expressions)
@@ -265,6 +297,9 @@ struct
               newline = ref PP.defaultNewline,
               guardLeft = ref PP.defaultGuardLeft,
               guardRight = ref PP.defaultGuardRight,
+              maxDepthOfGuards = ref NONE,
+              maxWidthOfGuards = ref NONE,
+              cutOverTail = ref false,
 
               comLevel=ref 0,
               doFirstLinePrompt = ref true,

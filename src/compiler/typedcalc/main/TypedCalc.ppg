@@ -3,7 +3,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypedCalc.ppg,v 1.14 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TypedCalc.ppg,v 1.16 2007/06/19 22:19:12 ohori Exp $
  *)
 structure TypedCalc : TYPEDCALC = struct
 
@@ -512,6 +512,16 @@ structure TypedCalc : TYPEDCALC = struct
      *)
      TPSEQ of {expList:tpexp list, expTyList:ty list, loc:loc}
   | (*%
+     * @format({expList:exp exps, listTy:ty, loc:loc})
+     * !N0{
+     *      "["
+     *          2[ 1 exps(exp()(btvEnv))("," +2) ] 1
+     *      "]" 
+     *      2[ +1 ":" ty()(btvEnv) ]
+     *    }
+     *)
+     TPLIST of {expList:tpexp list, listTy:ty, loc:loc}
+  | (*%
      * @format(exp * ty * loc) "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
      *)
     (*
@@ -549,6 +559,7 @@ structure TypedCalc : TYPEDCALC = struct
         "fun ["
             2[ 1
                 imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +2
+             ]
 
             "]" 
              + {binds(dec)(~4[ +1 "and"] +)}

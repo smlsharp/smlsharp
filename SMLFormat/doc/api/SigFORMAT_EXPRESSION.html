@@ -39,12 +39,12 @@ sig<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;space&nbsp;:&nbsp;bool,&nbsp;&nbsp;newline&nbsp;:&nbsp;{&nbsp;priority&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>}&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrEndOfIndent">EndOfIndent</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValisHigherThan">isHigherThan</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;bool<br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValassocToString">assocToString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValpriorityToString">priorityToString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValisHigherThan">isHigherThan</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;-&gt;&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValassocToString">assocToString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValpriorityToString">priorityToString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Valparse">parse</A><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-&gt;&nbsp;(<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A><br>
 end</CODE>
 <P>
 
@@ -62,7 +62,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: SigFORMAT_EXPRESSION.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
+$Id: SigFORMAT_EXPRESSION.html,v 1.5 2007/03/27 15:03:01 kiyoshiy Exp $
  
 
 </DL>
@@ -174,7 +174,7 @@ $Id: SigFORMAT_EXPRESSION.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
 <A NAME="ConstrPreferred"><!-- --></A>
 <H3>Preferred</H3>
 <P>
-<CODE>constructor&nbsp;Preferred&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A></CODE>
+<CODE>constructor&nbsp;Preferred&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;-&gt;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A></CODE>
 <DL>
 <DD>
 preferred priority of the specified priority 
@@ -249,7 +249,7 @@ indicates non-directional associativity
 <A NAME="ConstrTerm"><!-- --></A>
 <H3>Term</H3>
 <P>
-<CODE>constructor&nbsp;Term&nbsp;(columns,&nbsp;text)&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
+<CODE>constructor&nbsp;Term&nbsp;(columns,&nbsp;text)&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;-&gt;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
 <DL>
 <DD>
 string literal.
@@ -287,7 +287,7 @@ string literal.
 <H3>Guard</H3>
 <P>
 <CODE>constructor&nbsp;Guard&nbsp;(assoc,&nbsp;expressions)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
 <DL>
 <DD>
  scope of indicator's priority (with assoc indicator)
@@ -321,7 +321,7 @@ string literal.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* NONE if newline indicator is not specified.*)</I></FONT><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;newline&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<FONT COLOR="red"><I>(* priority to insert a newline *)</I></FONT>&nbsp;priority&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>}&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
 <DL>
 <DD>
@@ -337,7 +337,7 @@ format indicator
 <A NAME="ConstrStartOfIndent"><!-- --></A>
 <H3>StartOfIndent</H3>
 <P>
-<CODE>constructor&nbsp;StartOfIndent&nbsp;width&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
+<CODE>constructor&nbsp;StartOfIndent&nbsp;width&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;-&gt;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
 <DL>
 <DD>
  push a indent on the indent stack
@@ -383,7 +383,7 @@ pop a indent out of the indent stack
 <A NAME="ValisHigherThan"><!-- --></A>
 <H3>isHigherThan</H3>
 <P>
-<CODE>fun&nbsp;isHigherThan&nbsp;(left,&nbsp;right)&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;bool</CODE>
+<CODE>fun&nbsp;isHigherThan&nbsp;(left,&nbsp;right)&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;-&gt;&nbsp;bool</CODE>
 <DL>
 <DD>
  compare two priorities.
@@ -416,7 +416,7 @@ true if the <code>left</code> is higher priority than
 <A NAME="ValassocToString"><!-- --></A>
 <H3>assocToString</H3>
 <P>
-<CODE>fun&nbsp;assocToString&nbsp;assoc&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<CODE>fun&nbsp;assocToString&nbsp;assoc&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 <DL>
 <DD>
  make a string representation of the assoc.
@@ -444,7 +444,7 @@ the string representation of the <code>assoc</code>
 <A NAME="ValpriorityToString"><!-- --></A>
 <H3>priorityToString</H3>
 <P>
-<CODE>fun&nbsp;priorityToString&nbsp;priority&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<CODE>fun&nbsp;priorityToString&nbsp;priority&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 <DL>
 <DD>
  make a string representation of the priority.
@@ -472,7 +472,7 @@ the string representation of the <code>priority</code>
 <A NAME="ValtoString"><!-- --></A>
 <H3>toString</H3>
 <P>
-<CODE>fun&nbsp;toString&nbsp;expression&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<CODE>fun&nbsp;toString&nbsp;expression&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 <DL>
 <DD>
  make a string representation of the expression.
@@ -501,7 +501,7 @@ the string representation of the <code>expression</code>
 <H3>parse</H3>
 <P>
 <CODE>val&nbsp;parse<br>
-&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-&gt;&nbsp;(<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
 <DL>
 <DD>
  parse format expression list.

@@ -1,7 +1,7 @@
 /**
  * Foreign Function Interface (default)
  * @author UENO Katsuhiro
- * @version $Id: FFI_default.cc,v 1.5.2.3 2007/03/29 10:29:15 katsu Exp $
+ * @version $Id: FFI_default.cc,v 1.8 2007/06/11 00:47:57 kiyoshiy Exp $
  */
 #include <vector>
 #include "Constants.hh"
@@ -76,17 +76,17 @@ class CallbackInfo
 };
 
 /* CAUTION: This might work if you are lucky ;p */
-#define CALLBACKENTRYDECL(n)                                            \
-UInt32Value FFIDefault::callbackEntry ## n(UInt32Value x0,              \
-                                           UInt32Value x1,              \
-                                           UInt32Value x2,              \
-                                           UInt32Value x3,              \
-                                           UInt32Value x4,              \
-                                           UInt32Value x5,              \
-                                           UInt32Value x6,              \
-                                           UInt32Value x7,              \
-                                           UInt32Value x8,              \
-                                           UInt32Value x9)
+#define CALLBACKENTRYDECL(klass,n)                              \
+UInt32Value klass callbackEntry ## n(UInt32Value x0,            \
+                                     UInt32Value x1,            \
+                                     UInt32Value x2,            \
+                                     UInt32Value x3,            \
+                                     UInt32Value x4,            \
+                                     UInt32Value x5,            \
+                                     UInt32Value x6,            \
+                                     UInt32Value x7,            \
+                                     UInt32Value x8,            \
+                                     UInt32Value x9)
 #define CALLBACK_MAX_ARGS 10
 
 class DefaultArguments
@@ -146,11 +146,11 @@ class FFIDefault
 {
   private:
     static std::vector<CallbackInfo> callbackEntries;
-    static CALLBACKENTRYDECL(1);
-    static CALLBACKENTRYDECL(2);
-    static CALLBACKENTRYDECL(3);
-    static CALLBACKENTRYDECL(4);
-    static CALLBACKENTRYDECL(5);
+    static CALLBACKENTRYDECL(,1);
+    static CALLBACKENTRYDECL(,2);
+    static CALLBACKENTRYDECL(,3);
+    static CALLBACKENTRYDECL(,4);
+    static CALLBACKENTRYDECL(,5);
     static void * const C_callbackEntries[5];
 
   protected:
@@ -162,17 +162,15 @@ class FFIDefault
     }
 
     void trace(RootTracer *tracer)
-        throw(IMLRuntimeException);
+        throw(IMLException);
 
     void call(Cell *returnValue, void *function, UInt32Value *SP,
               UInt32Value switchTag, UInt32Value convention,
               UInt32Value *argIndexes, UInt32Value argsCount)
-        throw(UserException,
-              IMLRuntimeException,
-              SystemError);
+        throw(IMLException);
 
     void *callback(UInt32Value *entryPoint, Cell *env, UInt32Value sizeTag)
-        throw(IMLRuntimeException);
+        throw(IMLException);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -244,9 +242,7 @@ static void funcall_stdcall(Cell *returnValue, UInt32Value *SP,
 void FFIDefault::call(Cell *returnValue, void *function, UInt32Value *SP,
                       UInt32Value switchTag, UInt32Value convention,
                       UInt32Value *argIndexes, UInt32Value argsCount)
-    throw(UserException,
-          IMLRuntimeException,
-          SystemError)
+    throw(IMLException)
 {
     switch(convention)
     {
@@ -271,7 +267,7 @@ std::vector<CallbackInfo> FFIDefault::callbackEntries;
 
 /* CAUTION: This might work if you are lucky ;p */
 #define CALLBACKENTRY(n)                                                \
-CALLBACKENTRYDECL(n)                                                    \
+CALLBACKENTRYDECL(FFIDefault::,n)                                       \
 {                                                                       \
     Cell ret[2];                                                        \
     CallbackInfo &callback = callbackEntries[n-1];                      \
@@ -302,7 +298,7 @@ void * const FFIDefault::C_callbackEntries[NUM_CALLBACK_ENTRIES] = {
 
 void *FFIDefault::callback(UInt32Value *entryPoint, Cell *env,
                            UInt32Value sizeTag)
-    throw(IMLRuntimeException)
+    throw(IMLException)
 {
     CallbackInfo callback(entryPoint, env, sizeTag);
 
@@ -335,7 +331,7 @@ void *FFIDefault::callback(UInt32Value *entryPoint, Cell *env,
 }
 
 void FFIDefault::trace(RootTracer *tracer)
-    throw(IMLRuntimeException)
+    throw(IMLException)
 {
     std::vector<CallbackInfo>::iterator i;
     for (i = callbackEntries.begin(); i != callbackEntries.end(); ++i) {

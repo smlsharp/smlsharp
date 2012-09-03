@@ -59,8 +59,7 @@ class ExecutableLinker
   public:
 
     void process(Executable* executable)
-        throw(IMLRuntimeException,
-              SystemError);
+        throw(IMLException);
 
     ///////////////////////////////////////////////////////////////////////////
   private:
@@ -77,8 +76,7 @@ class ExecutableLinker
     >
     void
     link(Executable* executable)
-        throw(IMLRuntimeException,
-              SystemError);
+        throw(IMLException);
 
     INLINE_FUN
     static

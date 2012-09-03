@@ -1,0 +1,6 @@
+Group
+is
+  ../src/main/sources.cm
+  DICTIONARY.sig
+  Dictionary.sml
+  TestDictionary.sml

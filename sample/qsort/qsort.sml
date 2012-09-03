@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006-2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: qsort.sml,v 1.7.2.1 2007/03/26 06:26:50 katsu Exp $
+ * @version $Id: qsort.sml,v 1.8 2007/04/02 09:42:29 katsu Exp $
  *)
 
 val libc = "/lib/libc.so.6"

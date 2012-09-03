@@ -3,11 +3,12 @@
  * 
  * @copyright (c) 2006, Tohoku University. 
  * @author Liu Bochao
- * @version $Id: LinkerUtils.sml,v 1.26 2007/02/28 15:31:25 katsu Exp $
+ * @version $Id: LinkerUtils.sml,v 1.29 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure LinkerUtils =
 struct
   local
+    structure BT = BasicTypes
     structure T = Types
     structure TC = TypeContext
     structure P = Pickle
@@ -39,7 +40,7 @@ struct
       struct 
         type ord_key = (TO.pageArrayIndex * TO.offset)
         fun compare (g1 as (p1,o1),g2 as (p2,o2)) = 
-            case UInt32.compare(p1,p2) of
+            case BT.UInt32.compare(p1,p2) of
                 EQUAL => Int.compare(o1,o2)
               | res => res
       end
@@ -265,56 +266,48 @@ struct
        fun substIndex (substContext:substContext) (arrayIndex, offset) =
            IndexEnv.find (#indexSubst substContext,
                           (arrayIndex, offset)) 
-           
+
        fun substTlexp substContext exp =
            case exp of
-               TLFOREIGNAPPLY {funExp, funTy, instTyList, argExpList, argTyList, convention, loc} =>
+               TLFOREIGNAPPLY {funExp, funTy, argExpList, convention, loc} =>
                TLFOREIGNAPPLY {funExp = substTlexp substContext funExp, 
                                funTy = substTy substContext funTy,
-                               instTyList = 
-                               map (substTy substContext) instTyList,
                                argExpList = map (substTlexp substContext) argExpList,
-                               argTyList = map (substTy substContext) argTyList,
                                convention = convention,
                                loc = loc}
-             | TLEXPORTCALLBACK {funExp, instTyList, argTyList, resultTy, loc} =>
+             | TLEXPORTCALLBACK {funExp, funTy, loc} =>
                TLEXPORTCALLBACK {funExp = substTlexp substContext funExp,
-                               instTyList = 
-                               map (substTy substContext) instTyList,
-                               argTyList = map (substTy substContext) argTyList, 
-                               resultTy = substTy substContext resultTy,
+                               funTy = substTy substContext funTy,
                                loc = loc}
-             | TLSIZEOF _ => exp
              | TLCONSTANT _ => exp
              | TLEXCEPTIONTAG {tagValue, loc} =>
                TLEXCEPTIONTAG {tagValue = substExnTag substContext tagValue,
                                loc = loc}
+             | TLSIZEOF _ => exp
              | TLVAR {varInfo, loc} =>
                TLVAR {varInfo = substVarIdInfo substContext varInfo , loc = loc}
-             | TLGETGLOBAL (string,ty,loc) =>
-               TLGETGLOBAL (string, substTy substContext ty, loc)
-             | TLGETGLOBALVALUE {arrayIndex, offset, ty, loc} => 
+             | TLGETGLOBAL {arrayIndex, valueIndex, valueTy, loc} => 
                let
-                   val (arrayIndex, offset) = 
-                       case substIndex substContext (arrayIndex, offset) of
-                           NONE => (arrayIndex, offset)
+                   val (arrayIndex, valueIndex) = 
+                       case substIndex substContext (arrayIndex, valueIndex) of
+                           NONE => (arrayIndex, valueIndex)
                          | SOME newIndex => (TO.getPageArrayIndex newIndex,
                                              TO.getOffset newIndex)
                in
-                   TLGETGLOBALVALUE {arrayIndex = arrayIndex, 
-                                     offset = offset,
-                                     ty = substTy substContext ty, 
-                                     loc = loc}
+                   TLGETGLOBAL {arrayIndex = arrayIndex, 
+                                valueIndex = valueIndex,
+                                valueTy = substTy substContext valueTy, 
+                                loc = loc}
                end
-             | TLSETGLOBALVALUE {arrayIndex, offset, valueExp, ty, loc} =>
+             | TLSETGLOBAL {arrayIndex, valueIndex, valueExp, valueTy, loc} =>
                let
                    val TLCAST 
                            {exp = TLVAR{varInfo = {id, displayName, ty = varTy},loc = loc1}, 
                             targetTy,
                             loc = loc2} = valueExp
-                   val (targetTy, arrayIndex, offset) = 
-                       case substIndex substContext (arrayIndex, offset) of
-                           NONE => (targetTy, arrayIndex, offset)
+                   val (targetTy, arrayIndex, valueIndex) = 
+                       case substIndex substContext (arrayIndex, valueIndex) of
+                           NONE => (targetTy, arrayIndex, valueIndex)
                          | SOME newIndex => (TO.pageKindToType(TO.getPageKind newIndex),
                                              TO.getPageArrayIndex newIndex,
                                              TO.getOffset newIndex)
@@ -327,16 +320,16 @@ struct
                             targetTy = targetTy, 
                             loc = loc}
                in
-                   TLSETGLOBALVALUE {arrayIndex = arrayIndex, 
-                                     offset = offset, 
-                                     valueExp = newValueExp,
-                                     ty = targetTy,
-                                     loc = loc}
+                   TLSETGLOBAL {arrayIndex = arrayIndex, 
+                                valueIndex = valueIndex, 
+                                valueExp = newValueExp,
+                                valueTy = targetTy,
+                                loc = loc}
                end
-             | TLINITARRAY {arrayIndex, size, elemTy, loc} =>
+             | TLINITARRAY {arrayIndex, size, elementTy, loc} =>
                TLINITARRAY {arrayIndex = arrayIndex, 
                             size = size, 
-                            elemTy = substTy substContext elemTy, 
+                            elementTy = substTy substContext elementTy, 
                             loc = loc}
              | TLGETFIELD {arrayExp, indexExp, elementTy, loc} =>
                TLGETFIELD {arrayExp = substTlexp substContext arrayExp, 
@@ -349,15 +342,20 @@ struct
                             indexExp = substTlexp substContext indexExp,
                             elementTy = substTy substContext elementTy, 
                             loc = loc}
-             | TLARRAY {sizeExp, initialValue, elementTy, resultTy, loc} =>
+             | TLSETTAIL  {consExp, newTailExp, listTy, consRecordTy, tailLabel, loc} =>
+               TLSETTAIL  {consExp = substTlexp substContext consExp,
+                            newTailExp = substTlexp substContext newTailExp, 
+                            listTy = substTy substContext listTy, 
+                            consRecordTy = substTy substContext consRecordTy,
+                            tailLabel = tailLabel,
+                            loc = loc}
+             | TLARRAY {sizeExp, initialValue, elementTy, loc} =>
                TLARRAY {sizeExp = substTlexp substContext sizeExp, 
                         initialValue = substTlexp substContext initialValue, 
                         elementTy = substTy substContext elementTy, 
-                        resultTy = substTy substContext resultTy, 
                         loc = loc}
-             | TLPRIMAPPLY {primOp, instTyList, argExpList, loc} =>
-               TLPRIMAPPLY {primOp = substPrimInfo substContext primOp, 
-                            instTyList = map (substTy substContext) instTyList,
+             | TLPRIMAPPLY {primInfo, argExpList, loc} =>
+               TLPRIMAPPLY {primInfo = substPrimInfo substContext primInfo, 
                             argExpList = map (substTlexp substContext) argExpList,
                             loc = loc}
              | TLAPPM {funExp, funTy, argExpList, loc} =>
@@ -365,41 +363,25 @@ struct
                        funTy = substTy substContext funTy,
                        argExpList = map (substTlexp substContext) argExpList,
                        loc = loc}
-             | TLMONOLET {binds, bodyExp, loc} =>
-               let
-                   val binds = 
-                       map (fn (v, e) => 
-                               (substVarIdInfo substContext v,
-                                substTlexp substContext e)) binds
-               in
-                   TLMONOLET {binds = binds, 
-                              bodyExp = substTlexp substContext bodyExp,
-                              loc = loc} 
-               end
-             | TLLET {localDeclList, mainExpList, mainExpTyList, loc} =>
+             | TLLET {localDeclList, mainExp, loc} =>
                TLLET {localDeclList = substTldecs substContext localDeclList,
-                      mainExpList = map (substTlexp substContext) mainExpList,
-                      mainExpTyList = map (substTy substContext) mainExpTyList, 
+                      mainExp = substTlexp substContext mainExp,
                       loc = loc}
-             | TLRECORD {expList, internalTy, externalTy, loc} =>
+             | TLRECORD {expList, recordTy, isMutable, loc} =>
                TLRECORD {expList = map (substTlexp substContext) expList,
-                         internalTy = substTy substContext internalTy, 
-                         externalTy = 
-                         case externalTy of 
-                             NONE => NONE 
-                           | SOME x => SOME (substTy substContext x),
+                         recordTy = substTy substContext recordTy, 
+                         isMutable = isMutable,
                          loc = loc}
-             | TLSELECT {recordExp, indexExp, recordTy, loc} =>
+             | TLSELECT {recordExp, label, recordTy, loc} =>
                TLSELECT {recordExp = substTlexp substContext recordExp,
-                         indexExp =  substTlexp substContext indexExp,
+                         label =  label,
                          recordTy = substTy substContext recordTy,
                          loc = loc}
-             | TLMODIFY {recordExp, recordTy, indexExp, elementExp, elementTy, loc} =>
+             | TLMODIFY {recordExp, recordTy, label, valueExp, loc} =>
                TLMODIFY {recordExp = substTlexp substContext recordExp,
                          recordTy = substTy substContext recordTy,
-                         indexExp = substTlexp substContext indexExp,
-                         elementExp = substTlexp substContext elementExp,
-                         elementTy = substTy substContext elementTy,
+                         label = label,
+                         valueExp = substTlexp substContext valueExp,
                          loc = loc}
              | TLRAISE {argExp, resultTy, loc} =>
                TLRAISE {argExp  = substTlexp substContext argExp,
@@ -433,32 +415,15 @@ struct
                                                    exp = substTlexp substContext exp}) branches,
                         defaultExp = substTlexp substContext defaultExp,
                         loc = loc}
-             | TLSEQ {expList, expTyList, loc} =>
-               TLSEQ {expList = map (substTlexp substContext) expList,
-                      expTyList = map (substTy substContext) expTyList,
-                      loc = loc}
              | TLCAST {exp, targetTy, loc} =>
                TLCAST {exp = substTlexp substContext exp,
                        targetTy = substTy substContext targetTy, 
                        loc = loc}
-             | TLOFFSET {recordTy, label, loc} =>
-               TLOFFSET {recordTy = substTy substContext recordTy,
-                         label = label,
-                         loc = loc}
        and substPrimInfo substContext {name, ty} =
            {name = name, ty = substTy substContext ty}
 
-       and substValIdent substContext valIdent =
-           case valIdent of
-               Types.VALIDENT {id, displayName, ty} =>
-               Types.VALIDENT {id = id, 
-                               displayName = displayName,
-                               ty = substTy substContext ty}
-             | Types.VALIDENTWILD ty => Types.VALIDENTWILD (substTy substContext ty)
-
-       and substRecbind substContext {boundVar, boundTy, boundExp} = 
+       and substRecbind substContext {boundVar, boundExp} = 
            {boundVar = substVarIdInfo substContext boundVar,
-            boundTy = substTy substContext boundTy,
             boundExp = substTlexp substContext boundExp}
 
        and substVarIdInfo substContext {id, displayName, ty} =
@@ -482,16 +447,13 @@ struct
 
        and substTldec substContext tldec =
            case tldec of
-               TLVAL {bindList = binds, loc} =>
-               let
-                   val binds = 
-                       map (fn {boundExp, boundValIdent} =>
-                               {boundExp = substTlexp substContext boundExp,
-                                boundValIdent = substValIdent substContext boundValIdent})
-                           binds
-               in
-                   TLVAL {bindList = binds, loc = loc} 
-               end
+               TLVAL {boundVar, boundExp, loc} =>
+               TLVAL 
+                   {
+                    boundVar = substVarIdInfo substContext boundVar,
+                    boundExp = substTlexp substContext boundExp,
+                    loc = loc
+                   }
              | TLVALREC {recbindList = recbinds, loc} =>
                let
                    val recbinds = 
@@ -499,29 +461,15 @@ struct
                in
                    TLVALREC {recbindList = recbinds, loc = loc}
                end
-             | TLVALPOLYREC {btvEnv, indexVars, recbindList, loc} =>
+             | TLVALPOLYREC {btvEnv, recbindList, loc} =>
                let
                    val btvEnv = substBtvEnv substContext btvEnv
-                   val indexVars = map (substVarIdInfo substContext) indexVars
                    val recbinds = map (substRecbind substContext) recbindList
                in
                    TLVALPOLYREC {btvEnv = btvEnv, 
-                                 indexVars = indexVars, 
                                  recbindList = recbinds, 
                                  loc = loc}
                end
-             | TLLOCALDEC {localDeclList, mainDeclList, loc} =>
-               let
-                   val localDecList = substTldecs substContext localDeclList
-                   val mainDeclList = substTldecs substContext mainDeclList
-               in
-                   TLLOCALDEC {localDeclList = localDeclList,
-                               mainDeclList = mainDeclList, 
-                               loc = loc}
-               end
-             | TLSETGLOBAL (string, tlexp, loc) =>
-               TLSETGLOBAL (string, substTlexp substContext tlexp, loc)
-             | TLEMPTY _ => tldec 
                    
        and substTldecs substContext tldecs = 
            map (substTldec substContext) tldecs
@@ -947,13 +895,13 @@ struct
             (* match compile *)
             val (rcdecs, warnings) = MatchCompiler.compile tpflatdecs
             (* record compile *)
-            val tldecs = RecordCompiler.compile rcdecs
+            val tldecs = TLNormalization.normalize rcdecs
             val _ =
                 if !C.checkType
                 then
                     let
                         val diagnoses =
-                            TypeCheckTypedLambda.typechekTypedLambda tldecs
+                            TypeCheckTypedLambda.typecheck tldecs
                     in
                         printDiagnoses diagnoses
                     end
@@ -1315,12 +1263,9 @@ struct
         foldr (fn (tldec, newTldecs) =>
                   case tldec of
                       TypedLambda.TLVAL
-                          {bindList =
-                           [{boundExp = 
-                             TypedLambda.TLSETGLOBALVALUE {arrayIndex,offset,...},...}
-                            ],...} 
+                          {boundExp = TypedLambda.TLSETGLOBAL {arrayIndex,valueIndex,...},...}
                           => 
-                          if IndexSet.member(IndexSet,(arrayIndex, offset)) then 
+                          if IndexSet.member(IndexSet,(arrayIndex, valueIndex)) then 
                               newTldecs
                           else tldec :: newTldecs
                     | _ => tldec :: newTldecs)

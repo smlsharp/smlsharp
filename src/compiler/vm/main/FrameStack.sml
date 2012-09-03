@@ -23,7 +23,7 @@ in
  * This module manipulates the runtime frame stack.
  * About the layout of stack frames, refer to comment in Assembler.sml.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FrameStack.sml,v 1.16 2006/02/28 16:11:12 kiyoshiy Exp $
+ * @version $Id: FrameStack.sml,v 1.17 2007/06/08 15:21:54 ducnh Exp $
  *)
 structure FrameStack
   : sig
@@ -436,7 +436,7 @@ val _ = print ("firstRecordIndex = " ^ UInt32.toString firstRecordIndex ^ "\n");
   fun getFrames ({SP, bottom, ...} : stack) =
       let
         fun scan (currentSP, frames) =
-            if currentSP = bottom
+            if RM.==(currentSP, bottom)
             then
               (*
               (* the bottom frame is a dummy initial frame allocated at the
@@ -506,7 +506,7 @@ val _ = print ("firstRecordIndex = " ^ UInt32.toString firstRecordIndex ^ "\n");
 
         (** trace frames *)
         fun traceFrame cursorSP =
-            if cursorSP = bottom
+            if RM.==(cursorSP, bottom)
             then ()
             else
               let

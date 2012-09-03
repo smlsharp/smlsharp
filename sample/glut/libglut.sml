@@ -3,7 +3,7 @@
  *
  * @copyright (c) 2006-2007, Tohoku University.
  * @author UENO Katsuhiro
- * @version $Id: libglut.sml,v 1.10.2.3 2007/03/29 15:00:37 katsu Exp $
+ * @version $Id: libglut.sml,v 1.11 2007/04/02 09:42:29 katsu Exp $
  *)
 
 use "CConfig/load.sml";

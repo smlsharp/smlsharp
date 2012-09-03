@@ -1,4 +1,4 @@
-use "vliw.sml";
+use "./vliw.sml";
 
 Main.doit ();
 print "Done";

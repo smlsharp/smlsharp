@@ -6,6 +6,7 @@ in
         ../../systemdef/main/module.mlb
         ../../control/main/module.mlb
         ../../../instructions/compiler/main/module.mlb
+        ../../../primitives/compiler/main/module.mlb
 
         ChannelTypes.sml
         ChannelUtility.sml

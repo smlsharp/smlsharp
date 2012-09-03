@@ -1,0 +1,530 @@
+(**
+ * @copyright (c) 2006, Tohoku University.
+ * @author Huu-Duc Nguyen 
+ * @version $Id: RBUCalc.ppg,v 1.3 2007/06/19 22:19:12 ohori Exp $
+ *)
+
+structure RBUCalc = struct
+
+ structure BT = BasicTypes
+
+ type loc = Loc.loc
+
+ (*%
+  * @formatter(Absyn.callingConvenvtion) Absyn.format_callingConvenvtion
+  *)
+ type callingConvention = Absyn.callingConvention
+
+ (*%
+  * @formatter(tyformat) AnnotatedTypes.format_ty
+  *)
+ type ty = 
+  (*%
+   * @format(ty:tyformat) ty
+   *)
+   AnnotatedTypes.ty
+
+
+ (*% 
+  * @formatter(ID.id) ID.format_id
+  *)
+ type id = 
+     (*%
+      * @format(id) id
+      *)
+      ID.id
+
+ (*%
+  * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+  *)
+ datatype varKind =
+          (*%
+           * @format "A"
+           *)
+          ARG
+        | (*%
+           * @format "L"
+           *)
+          LOCAL
+        | (*%
+           * @format "F"
+           *)
+          FREE
+        | (*%
+           * @format({nestLevel:nestLevel:formatUInt32, offset:offset:formatUInt32}) 
+           *   "F(" nestLevel "/" offset ")"
+           *)
+          FREEWORD of {nestLevel: BT.UInt32, offset: BT.UInt32}
+        | (*%
+           * @format(id) "EL" id
+           *)
+          ENTRYLABEL of id
+        | (*%
+           * @format(id) "IL" id
+           *)
+          INNERLABEL of id
+
+ (*%
+  * @formatter(formatVarInfo) AnnotatedCalc.format_varInfo        
+  *)
+ type varInfo = 
+      (*%
+       * @format({id, displayName, ty, varKind: a b}) 
+       *   {displayName ":" b(a) ":" ty}
+       *) 
+      {id : id, displayName : string, ty : ty, varKind : varKind ref}
+
+
+ datatype constant = datatype ConstantTerm.constant
+
+(*%
+ *
+ * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+ * @formatter(formatConst) ConstantTerm.format_constant
+ * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+ * @formatter(formatUInt32) BasicTypeFormatters.format_UInt32
+ * @formatter(format_varInfoWithoutType) format_varInfoWithoutType
+ * @formatter(formatBtvEnv) format_btvEnv
+ *)
+ datatype rbuexp =
+          (*%
+           * @format(
+           *        {
+           *          funExp,
+           *          argExpList: arg args:formatListWithEnclosure,
+           *          argTyList,
+           *          argSizeExpList,
+           *          convention,
+           *          loc:loc
+           *         }
+           *        )
+           * R1{d
+           *      {
+           *        funExp
+           *        {args(arg)(","1,"(",")")}
+           *      }
+           *   }
+           *)
+          RBUFOREIGNAPPLY of 
+          {
+           funExp : rbuexp,
+           argExpList : rbuexp list,
+           argTyList : ty list,
+           argSizeExpList : rbuexp list,
+           convention : callingConvention,
+           loc : loc
+          }
+        | (*%
+           * @format({funExp, argSizeExpList, resultSizeExpList, loc})
+           * L10{ "CALLBACK(" funExp ")" }
+           *)
+          RBUEXPORTCALLBACK of 
+          {
+           funExp : rbuexp,
+           argSizeExpList : rbuexp list,
+           resultSizeExpList : rbuexp list,
+           loc: loc
+          }
+        | (*%
+           * @format({value:value:formatConst, loc}) value
+           *)
+          RBUCONSTANT of {value : constant, loc : loc}
+        | (*%
+           * @format({tagValue,loc}) tagValue:formatUInt32
+           *)
+          RBUEXCEPTIONTAG of {tagValue : BT.UInt32, loc : loc}
+        | (*%
+           * @format({varInfo, loc}) varInfo
+           *)
+          RBUVAR of {varInfo : varInfo, loc : loc}
+        | (*%
+           * @format({codeId, loc}) codeId
+           *)
+          RBULABEL of {codeId : id, loc : loc}
+        | (*%
+           * @format(
+           *         {
+           *          arrayIndex:arrayIndex:formatUInt32, 
+           *          valueOffset:valueOffset:formatUInt32, 
+           *          loc
+           *         }) 
+           * "GetGlobal(" arrayIndex "," valueOffset ")"
+           *)
+          RBUGETGLOBAL of {arrayIndex : BT.UInt32, valueOffset : BT.UInt32, loc: loc}
+        | (*%
+           * @format(
+           *          {
+           *           arrayIndex:arrayIndex:formatUInt32,
+           *           valueOffset:valueOffset:formatUInt32,
+           *           valueExp,
+           *           valueTy,
+           *           valueSize:valueSize:formatUInt32,
+           *           loc
+           *          }) 
+           * "SetGlobal((" arrayIndex "," valueOffset ") = " valueExp ")"  
+           *)
+          RBUSETGLOBAL of 
+          {
+           arrayIndex : BT.UInt32, 
+           valueOffset : BT.UInt32, 
+           valueExp: rbuexp, 
+           valueTy : ty,
+           valueSize : BT.UInt32,
+           loc : loc
+          }
+        | (*%
+           * @format({arrayIndex:arrayIndex:formatUInt32,arraySize:arraySize:formatUInt32,elementTy,loc}) 
+           * "InitialArray(" arrayIndex "," arraySize ")"
+           *)
+          RBUINITARRAY of {arrayIndex : BT.UInt32, arraySize : BT.UInt32, elementTy : ty, loc : loc}
+        | (*%
+           * @format({arrayExp, offsetExp, loc})
+           * arrayExp "[" offsetExp "]"
+           *)
+          RBUGETFIELD of 
+          {
+           arrayExp : rbuexp, 
+           offsetExp : rbuexp,
+           loc : loc
+          }
+        | (*%
+           * @format({arrayExp, offsetExp,valueExp,valueTy,valueSizeExp, loc})  
+           * arrayExp "[" offsetExp "] = "  valueExp
+           *)
+          RBUSETFIELD of 
+          {
+           arrayExp : rbuexp,
+           offsetExp : rbuexp,
+           valueExp : rbuexp, 
+           valueTy : ty,
+           valueSizeExp : rbuexp,
+           loc: loc
+          }
+        | (*%
+           * @format({consExp, newTailExp, offsetExp, nestLevelExp, loc})  
+           * "SetTail"
+           * + consExp "[" nestLevelExp "/" offsetExp "] = " newTailExp 
+           *)
+          RBUSETTAIL of 
+          {
+           consExp : rbuexp, 
+           newTailExp : rbuexp, 
+	   offsetExp :  rbuexp,
+           nestLevelExp : rbuexp, 
+           loc: loc
+          }
+        | (*%
+           * @format({bitmapExp, sizeExp, initialValue, elementTy, elementSizeExp, loc}) 
+           * !N0 {
+           *       "array[" 2[+1 bitmapExp "/" +1 sizeExp ";" +1 initialValue ] "]" 
+           *	 }
+           *)
+          RBUARRAY of 
+          {
+           bitmapExp : rbuexp,
+           sizeExp : rbuexp, 
+           initialValue : rbuexp, 
+           elementTy : ty,
+           elementSizeExp : rbuexp,
+           loc : loc
+          }
+        | (*%
+           * @format(
+           *         {
+           *          primName,
+           *          argExpList:arg args:formatListWithEnclosure,
+           *          argTyList,
+           *          argSizeExpList,
+           *          loc
+           *          }
+           *         )
+           *       R1{d {primName 1 {args(arg)(","1,"(",")")}}}
+           *)
+          RBUPRIMAPPLY of 
+          {
+           primName : string, 
+           argExpList : rbuexp list,
+           argSizeExpList : rbuexp list,
+           argTyList : ty list,
+           loc : loc
+          }
+        | (*%
+           * @format({funExp, argExpList:arg args:enclosedListIfMoreThanOne, argTyList, argSizeExpList, loc})  
+           *   L10{ 
+           *   "APP(" 
+           *      2[1
+           *        funExp "," +1
+           *        !N0{
+           *             2[args(arg)(","+2, "{", "}")] 
+           *           } 
+           *      1
+           *      ] ")"
+           *   }
+           *)
+          RBUAPPM of 
+          {
+           funExp : rbuexp, 
+           argExpList : rbuexp list,
+           argTyList : ty list,
+           argSizeExpList : rbuexp list,
+           loc : loc
+          }
+        | (*%
+           * @format({codeExp, argExpList:arg args:enclosedListIfMoreThanOne, argTyList, argSizeExpList, loc})  
+           *   L10{ 
+           *   "RECCALL(" 
+           *      2[1
+           *        codeExp "," +1
+           *        !N0{
+           *             2[args(arg)(","+2, "{", "}")] 
+           *           } 
+           *      1
+           *      ] ")"
+           *   }
+           *)
+          RBURECCALL of 
+          {
+           codeExp : rbuexp, 
+           argExpList : rbuexp list,
+           argTyList : ty list,
+           argSizeExpList : rbuexp list,
+           loc : loc
+          }
+        | (*%
+           * @format({codeExp, argExpList:arg args:enclosedListIfMoreThanOne, argTyList, argSizeExpList, loc})  
+           *   L10{ 
+           *   "INNERCALL(" 
+           *      2[1
+           *        codeExp "," +1
+           *        !N0{
+           *             2[args(arg)(","+2, "{", "}")] 
+           *           } 
+           *      1
+           *      ] ")"
+           *   }
+           *)
+          RBUINNERCALL of 
+          {
+           codeExp : rbuexp, 
+           argExpList : rbuexp list,
+           argTyList : ty list,
+           argSizeExpList : rbuexp list,
+           loc : loc
+          }
+        | (*%
+           * @format({localDeclList : dec decs, mainExp, loc})
+           *     !N0{ {"let" 2[ +1 decs(dec)( +1) ]}  +1
+           *          {"in" 2[ +2 mainExp ] +2
+           *           "end"} }
+           *)
+          RBULET of 
+          {
+           localDeclList : rbudecl list,
+           mainExp : rbuexp,
+           loc : loc
+          }
+        | (*%
+           * @format({expList:field fields:enclosedListIfMoreThanOne, tyList, sizeExpList, loc}) 
+           *      fields(field)(","+,"{","}")
+           *)
+          RBUMVALUES of {expList : rbuexp list, tyList : ty list, sizeExpList : rbuexp list, loc : loc}
+        | (*%
+           * @format({
+           *          bitmapExp, 
+           *          totalSizeExp,
+           *          fieldList:field fields, 
+           *          fieldTyList,
+           *          fieldSizeExpList,
+	   *          isMutable,
+           *          loc
+           *         }) 
+           *  !N0{"(" {bitmapExp "/" +1 totalSizeExp ";" +1 fields(field)("," +1) } ")" }
+           *)
+          RBURECORD of 
+          {
+           bitmapExp : rbuexp,
+           totalSizeExp : rbuexp,
+           fieldList : rbuexp list,
+           fieldTyList : ty list,
+           fieldSizeExpList : rbuexp list,
+	   isMutable : bool,
+           loc : loc
+          }
+        | (*%
+           * @format({
+           *          bitmapExp, 
+           *          totalSize:totalSize:formatUInt32,
+           *          fieldList:field fields, 
+           *          fieldTyList,
+           *          fieldSizeExpList,
+           *          fixedSizeList,
+           *          loc
+           *         }) 
+           *  !N0{"(" {bitmapExp "/" +1 totalSize ";" +1 fields(field)("," +1) } ")" }
+           *)
+          RBUENVRECORD of 
+          {
+           bitmapExp : rbuexp,
+           totalSize : BT.UInt32,
+           fieldList : rbuexp list,
+           fieldTyList : ty list,
+           fieldSizeExpList : rbuexp list,
+           fixedSizeList : BT.UInt32 list,
+           loc : loc
+          }
+        | (*%
+           * @format({recordExp, nestLevelExp, offsetExp, loc})
+           * recordExp "[" nestLevelExp "/" offsetExp "]"
+           *)
+          RBUSELECT of 
+          {
+           recordExp : rbuexp, 
+           nestLevelExp : rbuexp, 
+           offsetExp : rbuexp,
+           loc : loc
+          }
+        | (*%
+           * @format({recordExp, nestLevelExp, offsetExp, valueExp, valueTy, valueSizeExp, loc})
+           *   recordExp "[" nestLevelExp "/" offsetExp "=" valueExp "]"
+           *)
+          RBUMODIFY of 
+          {
+           recordExp : rbuexp, 
+           nestLevelExp : rbuexp,
+           offsetExp : rbuexp,
+           valueExp : rbuexp,
+           valueTy : ty,
+           valueSizeExp : rbuexp,
+           loc : loc
+          }
+        | (*%
+           * @format({argExp, loc}) N0{ "raise" +d {argExp} }
+           *)
+          RBURAISE of 
+          {
+           argExp : rbuexp, 
+           loc : loc
+          }
+        | (*%
+           * @format({exp, exnVar, handler, loc})
+           *      "handle" + N0{exp} +1
+           *      "with letexp" +  exnVar  + "in" + {handler}
+           *)
+          RBUHANDLE of
+          {
+           exp : rbuexp,
+           exnVar : varInfo,
+           handler : rbuexp,
+           loc : loc
+          }
+        | (*%
+           * @format({switchExp, expTy, branches:rule rules, defaultExp, loc})
+           *    "switch" 
+           *      2[+1 {switchExp}]
+           *     +1 "of" +
+           *     {rules(rule)(~2[+1 "|"] +)}
+           *     +1 " |" +
+           *     {"_ =>" 2[+1{defaultExp}]}
+           * @format:rule({constant,exp})
+           *     {constant + "=>" 2[+1{exp}]}
+           *)
+          RBUSWITCH of 
+          {
+           switchExp : rbuexp, 
+           expTy : ty, 
+           branches : {constant : rbuexp , exp : rbuexp} list, 
+           defaultExp : rbuexp, 
+           loc : loc
+          }
+        | (*%
+           * @format({codeExp, envExp, loc}) {"CLOSURE(" 2[1 codeExp "," +1 envExp ] ")"}
+           *)
+          RBUCLOSURE of {codeExp : rbuexp, envExp : rbuexp, loc : loc}
+        | (*%
+           * @format({codeExp, loc}) {"ENTRYCLOSURE(" 2[1 codeExp ] ")"}
+           *)
+          RBUENTRYCLOSURE of {codeExp : rbuexp, loc : loc}
+        | (*%
+           * @format({codeExp, loc}) {"INNERCLOSURE(" 2[1 codeExp ] ")"}
+           *)
+          RBUINNERCLOSURE of {codeExp : rbuexp, loc : loc}
+
+      and rbudecl = 
+          (*%
+           * @format({boundVarList:var vars, sizeExpList, boundExp,loc})  
+           *  2[
+           *   "val" 
+           *   + 
+           *   vars:enclosedListIfMoreThanOne(var)(",","{","}") +d "=" +1 {boundExp}
+           *   ]
+           *)
+          RBUVAL of 
+          {
+           boundVarList : varInfo list,
+           sizeExpList : rbuexp list,
+           boundExp : rbuexp,
+           loc : loc
+          }
+        | (*%
+           * @format({
+           *          frameInfo, 
+           *          entryFunctions: entry entries:formatListWithEnclosure, 
+           *          innerFunctions: inner inners:formatListWithEnclosure, 
+           *          isRecursive,
+           *          loc
+           *         })
+           *  2[
+           *    "cluster" + 
+           *    frameInfo +
+           *    entries(entry)(~2[ +1 "and"] +, ~2[+1 "with entries"] +, "")
+           *    + 
+           *    inners(inner)(~2[ +1 "and"] +, ~2[+1 "with inners"] +, "")
+           *   ]
+           *)
+          RBUCLUSTER of
+          {
+           frameInfo : frameInfo,
+           entryFunctions : funDecl list,
+           innerFunctions : funDecl list,
+           isRecursive : bool,
+           loc : loc
+          }
+
+ withtype funDecl =
+          (*%
+           * @format({
+           *          codeId, 
+           *          argVarList: arg args:enclosedListIfMoreThanOne, 
+           *          argSizeExpList,
+           *          bodyExp, 
+           *          resultTyList,
+           *          resultSizeExpList
+           *         })
+           *     codeId +d "=" +1
+           *     R1{ 
+           *        "fn" + {args(arg)(","+, "{", "}") + "=>" }
+           *         2[ +1 {bodyExp}]
+           *      }
+           *) 
+          {
+           codeId : id, 
+           argVarList : varInfo list, 
+           argSizeExpList : rbuexp list,
+           bodyExp : rbuexp,
+           resultTyList : ty list,
+           resultSizeExpList : rbuexp list
+          }
+      and frameInfo =
+          (*%
+           * @format({tyvars:tid tids:formatListWithEnclosure,bitmapFree,tagArgList:tag tags:formatListWithEnclosure})
+           *  { "{"
+           *     1[+1 "tyvars=" tids(tid)(",","[","]") "," +1 "bitmapFree=" bitmapFree "," +1 "tagArgs=" tags(tag)(",","[","]")]
+           *  +1 "}"}
+           *)
+          {
+           tyvars : int list,
+           bitmapFree : rbuexp,
+           tagArgList : rbuexp list
+          }
+
+end

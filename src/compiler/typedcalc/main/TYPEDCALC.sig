@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TYPEDCALC.sig,v 1.12 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TYPEDCALC.sig,v 1.13 2007/06/19 22:19:12 ohori Exp $
  *)
 
 signature TYPEDCALC = sig
@@ -114,6 +114,7 @@ signature TYPEDCALC = sig
    | TPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tpexp, loc:loc}
    | TPTAPP of {exp:tpexp, expTy:ty, instTyList:ty list, loc:loc}
    | TPSEQ of {expList:tpexp list, expTyList:ty list, loc:loc}
+   | TPLIST of {expList:tpexp list, listTy:ty, loc:loc}
    | TPCAST of tpexp * ty * loc
 
  and tpdecl 

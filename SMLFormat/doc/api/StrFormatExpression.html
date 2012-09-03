@@ -32,12 +32,12 @@ struct<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrFormatExpression.html#ConstrIndicator">Indicator</A>&nbsp;of&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;newline&nbsp;:&nbsp;{priority&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>}&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrFormatExpression.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="StrFormatExpression.html#ConstrEndOfIndent">EndOfIndent</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#ValisHigherThan">isHigherThan</A>&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;->&nbsp;bool<br>
-&nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#ValassocToString">assocToString</A>&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeassoc">assoc</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#ValpriorityToString">priorityToString</A>&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#ValisHigherThan">isHigherThan</A>&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;-&gt;&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#ValassocToString">assocToString</A>&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeassoc">assoc</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#ValpriorityToString">priorityToString</A>&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="StrFormatExpression.html#Valparse">parse</A><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-&gt;&nbsp;(<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A><br>
 end</CODE>
 <P>
 
@@ -55,7 +55,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: StrFormatExpression.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
+$Id: StrFormatExpression.html,v 1.5 2007/03/27 15:03:01 kiyoshiy Exp $
  
 
 </DL>
@@ -115,7 +115,7 @@ $Id: StrFormatExpression.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
 <A NAME="ConstrPreferred"><!-- --></A>
 <H3>Preferred</H3>
 <P>
-<CODE>constructor&nbsp;Preferred&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A></CODE>
+<CODE>constructor&nbsp;Preferred&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;-&gt;&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A></CODE>
 
 <HR>
 <A NAME="ConstrDeferred"><!-- --></A>
@@ -145,27 +145,27 @@ $Id: StrFormatExpression.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
 <A NAME="ConstrTerm"><!-- --></A>
 <H3>Term</H3>
 <P>
-<CODE>constructor&nbsp;Term&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A></CODE>
+<CODE>constructor&nbsp;Term&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;-&gt;&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A></CODE>
 
 <HR>
 <A NAME="ConstrGuard"><!-- --></A>
 <H3>Guard</H3>
 <P>
-<CODE>constructor&nbsp;Guard&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeassoc">assoc</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A></CODE>
+<CODE>constructor&nbsp;Guard&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeassoc">assoc</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A></CODE>
 
 <HR>
 <A NAME="ConstrIndicator"><!-- --></A>
 <H3>Indicator</H3>
 <P>
 <CODE>constructor&nbsp;Indicator<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;newline&nbsp;:&nbsp;{priority&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>}&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{space&nbsp;:&nbsp;bool,&nbsp;newline&nbsp;:&nbsp;{priority&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>}&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>}&nbsp;-&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A></CODE>
 
 <HR>
 <A NAME="ConstrStartOfIndent"><!-- --></A>
 <H3>StartOfIndent</H3>
 <P>
-<CODE>constructor&nbsp;StartOfIndent&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A></CODE>
+<CODE>constructor&nbsp;StartOfIndent&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;-&gt;&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A></CODE>
 
 <HR>
 <A NAME="ConstrEndOfIndent"><!-- --></A>
@@ -184,32 +184,32 @@ $Id: StrFormatExpression.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
 <A NAME="ValisHigherThan"><!-- --></A>
 <H3>isHigherThan</H3>
 <P>
-<CODE>val&nbsp;isHigherThan&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;->&nbsp;bool</CODE>
+<CODE>val&nbsp;isHigherThan&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;-&gt;&nbsp;bool</CODE>
 
 <HR>
 <A NAME="ValassocToString"><!-- --></A>
 <H3>assocToString</H3>
 <P>
-<CODE>val&nbsp;assocToString&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeassoc">assoc</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<CODE>val&nbsp;assocToString&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeassoc">assoc</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 
 <HR>
 <A NAME="ValpriorityToString"><!-- --></A>
 <H3>priorityToString</H3>
 <P>
-<CODE>val&nbsp;priorityToString&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<CODE>val&nbsp;priorityToString&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typepriority">priority</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 
 <HR>
 <A NAME="ValtoString"><!-- --></A>
 <H3>toString</H3>
 <P>
-<CODE>val&nbsp;toString&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<CODE>val&nbsp;toString&nbsp;:&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;-&gt;&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
 
 <HR>
 <A NAME="Valparse"><!-- --></A>
 <H3>parse</H3>
 <P>
 <CODE>val&nbsp;parse<br>
-&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;->&nbsp;(<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">char</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A>&nbsp;-&gt;&nbsp;(<A HREF="StrFormatExpression.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>,&nbsp;'a)&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringCvt.html#Typereader">StringCvt.reader</A></CODE>
 
 <P>
 

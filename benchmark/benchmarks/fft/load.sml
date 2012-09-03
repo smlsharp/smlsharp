@@ -1,4 +1,4 @@
-use "fft.sml";
+use "./fft.sml";
 
 Main.doit ();
 print "Done";

@@ -6,8 +6,11 @@
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
+/**
+ * thrown when no exception handler is found in the handler stack.
+ */
 class EmptyHandlerStackException
-    : public UserException
+    : public UserException /* FIXME : Is this an user exception ? */
 {
     ///////////////////////////////////////////////////////////////////////////
 

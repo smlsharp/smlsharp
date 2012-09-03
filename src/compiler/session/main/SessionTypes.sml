@@ -4,7 +4,7 @@
  *
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: SessionTypes.sml,v 1.7 2007/02/28 07:34:08 kiyoshiy Exp $
+ * @version $Id: SessionTypes.sml,v 1.8 2007/06/01 09:40:59 kiyoshiy Exp $
  *)
 structure SessionTypes =
 struct
@@ -25,7 +25,13 @@ struct
 
   (***************************************************************************)
 
-  exception Error of exn
+  (** recoverable error *)
+  exception Failure of exn
+
+  (** unrecoverable error *)
+  exception Fatal of exn
+
+  (** user requests to 'exit' process. *)
   exception Exit of BasicTypes.SInt32
 
   (***************************************************************************)

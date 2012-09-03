@@ -12,35 +12,41 @@ in
         ../../util/main/module.mlb
         ../../env/main/module.mlb
         ../../name/main/module.mlb
-        ../../valrecoptimization/main/module.mlb
-        ../../typedcalc/main/module.mlb
-        ../../typedlambda/main/module.mlb
+
         ../../patterncalc/main/module.mlb
-        ../../elaborate/main/module.mlb
         ../../patterncalcWithTvars/main/module.mlb
-        ../../settvars/main/module.mlb
+        ../../typedcalc/main/module.mlb
+	../../typedflatcalc/main/module.mlb
         ../../recordcalc/main/module.mlb
+        ../../typedlambda/main/module.mlb
+        ../../annotatedtypes/main/module.mlb
+        ../../annotatedcalc/main/module.mlb
+        ../../multiplevaluecalc/main/module.mlb
+        ../../clustercalc/main/module.mlb
+        ../../rbucalc/main/module.mlb
+        ../../anormal/main/module.mlb
+        ../../intermediatelanguage/main/module.mlb
+        ../../symbolicinstructions/main/module.mlb
+        ../../../instructions/compiler/main/module.mlb
+
+        ../../elaborate/main/module.mlb
+        ../../settvars/main/module.mlb
+        ../../valrecoptimization/main/module.mlb
         ../../typeinference/main/module.mlb
         ../../printergeneration/main/module.mlb
-(*
-        ../../typecheck/main/module.mlb
-*)
-	../../typedflatcalc/main/module.mlb
 	../../modulecompilation/main/module.mlb
         ../../matchcompilation/main/module.mlb
-        ../../recordcompilation/main/module.mlb
-
-	../../buccalc/main/module.mlb
-	../../buctransformation/main/module.mlb
-	../../anormal/main/module.mlb
-	../../anormaltransform/main/module.mlb
-	../../anormaloptimization/main/module.mlb
-
-        ../../linearize/main/module.mlb
-        ../../symbolicinstructions/main/module.mlb
-	../../sioptimization/main/module.mlb
+        ../../tlnormalization/main/module.mlb
+        ../../staticanalysis/main/module.mlb
+        ../../recordunboxing/main/module.mlb
+        ../../mvoptimization/main/module.mlb
+        ../../clustering/main/module.mlb
+        ../../rbutransformation/main/module.mlb
+        ../../anormalization/main/module.mlb
+        ../../iltransformation/main/module.mlb
+        ../../sigenerator/main/module.mlb
+        ../../sioptimization/main/module.mlb		
         ../../assemble/main/module.mlb
-        ../../../instructions/compiler/main/module.mlb
 	../../linker/main/module.mlb
         ../../session/main/module.mlb
 

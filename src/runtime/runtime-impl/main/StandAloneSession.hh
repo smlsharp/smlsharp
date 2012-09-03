@@ -60,9 +60,7 @@ class StandAloneSession
 
     virtual
     SInt32Value start()
-        throw(IMLRuntimeException,
-              UserException,
-              SystemError);
+        throw(IMLException);
 
     /**
      * buffer contains serialized form of a sequence of ExecutionRequest
@@ -71,9 +69,7 @@ class StandAloneSession
      */
     virtual
     SInt32Value run(UInt32Value bufferByteLength, UInt32Value* buffer)
-        throw(IMLRuntimeException,
-              UserException,
-              SystemError);
+        throw(IMLException);
 
 };
 

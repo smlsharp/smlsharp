@@ -1,3 +1,10 @@
+(* following globals are referred from formatters in basis and SMLSharpControl
+ * structure. *)
+val Control_columns = ref 80;
+val Control_maxDepth = ref (SOME 10 : int option);
+val Control_maxWidth = ref (SOME 20 : int option);
+val Control_maxRefDepth = ref 5;
+
 (* temporary printFormat.
  * Full version is defined after SMLFormat is loaded.
  *)
@@ -64,11 +71,105 @@ local
               }
         | StartOfIndent int => FE.StartOfIndent int
         | EndOfIndent => FE.EndOfIndent
+
+  fun getPrinterParameters () =
+      [
+        SMLFormat.Columns (SMLSharp.Control.Printer.getColumns ())
+(*
+        SMLFormat.MaxDepthOfGuards (Control.Printer.getMaxDepth ()),
+        SMLFormat.MaxWidthOfGuards (Control.Printer.getMaxWidth ())
+*)
+      ]
+
+  val s_Indicator = FE.Indicator{space = true, newline = NONE}
+  val s_1_Indicator =
+      FE.Indicator
+      {space = true, newline = SOME{priority = FE.Preferred 1}}
+
+  local
+    val elision =
+        FE.Term (3, "...")
+(*
+        FE.Guard
+            (
+              NONE,
+              [
+                FE.Indicator
+                    {space = true, newline = SOME{priority = FE.Deferred}},
+                FE.Term (3, "...")
+              ]
+            )
+*)
+  in
+  (* cut-off format expressions according to parameters defined in
+   * SMLSharp.Control.Printer structure.
+   * That structure has two parameters: MaxDepth and MaxWidth.
+   * These specify limitation of depth and width of a format expression seen as
+   * a tree.
+   * We ignore MaxWidth here, because we think cutting-off according to width
+   * is type-dependent.
+   * Only format expression generated for a 'list' is cut-off according to
+   * width. See _format_list defined in basis/main/BasicFormatters.sml.
+   *)
+  fun cutOff symbol =
+      let
+        val maxDepth = SMLSharp.Control.Printer.getMaxDepth ()
+(*
+        val maxWidth = SMLSharp.Control.Printer.getMaxWidth ()
+*)
+        val isCutOffDepth =
+            case maxDepth of
+              NONE => (fn _ => false)
+            | SOME depth => (fn d => depth <= d)
+        fun keepSymbol (FE.StartOfIndent _) = true
+          | keepSymbol FE.EndOfIndent = true
+          | keepSymbol _ = false
+        fun visit depth (FE.Guard (enclosedAssocOpt, symbols)) =
+            if isCutOffDepth depth
+            then elision
+            else
+              let val symbols' = map (visit (depth + 1)) symbols
+              in FE.Guard (enclosedAssocOpt, symbols')
+              end
+          | visit depth symbol = symbol
+      in
+        visit 0 symbol
+      end
+  end
 in
 fun printFormat exp =
-    let val exp' = trans exp
-    in print (SMLFormat.prettyPrint [SMLFormat.Columns 80] [exp'])
-    end
+    let
+      val exp' = trans exp
+    in
+      print (SMLFormat.prettyPrint (getPrinterParameters ()) [exp'])
+    end;
+fun printFormatOfValBinding (name, valExp, tyExp) =
+    let
+      val valExp' = cutOff (trans valExp)
+      val tyExp' = trans tyExp
+    in
+      print
+          (SMLFormat.prettyPrint
+                (getPrinterParameters ())
+                [
+                  FE.Term(3, "val"),
+                  s_Indicator,
+                  FE.Guard
+                      (
+                        NONE,
+                        [
+                          FE.Term(size name, name),
+                          s_Indicator,
+                          FE.Term(1, "="),
+                          s_1_Indicator,
+                          valExp',
+                          s_1_Indicator,
+                          FE.Term(2, ": "),
+                          tyExp'
+                        ]
+                      )
+                ])
+    end;
 
 structure General : GENERAL =
 struct

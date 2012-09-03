@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: VALREC_Optimizer.sml,v 1.32 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: VALREC_Optimizer.sml,v 1.33 2007/06/19 22:19:12 ohori Exp $
  *)
 structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 
@@ -48,6 +48,8 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
                          loc)
       | PLTUPLE (elementList,loc) =>
         PLTUPLE (map (optimizeExp globalContext context) elementList,loc)
+      | PLLIST (elementList,loc) =>
+        PLLIST (map (optimizeExp globalContext context) elementList,loc)
       | PLRAISE (exp,loc) => 
         PLRAISE (optimizeExp globalContext context exp, loc)
       | PLHANDLE (handler, matchList, loc) =>

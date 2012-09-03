@@ -1,11 +1,11 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: SYMBOLIC_INSTRUCTIONS_OPTIMIZER.sig,v 1.2 2006/02/28 16:11:06 kiyoshiy Exp $
+ * @version $Id: SYMBOLIC_INSTRUCTIONS_OPTIMIZER.sig,v 1.3 2007/04/19 05:06:52 ducnh Exp $
  *)
 
 signature SYMBOLIC_INSTRUCTIONS_OPTIMIZER = sig
 
-  val optimize :  SymbolicInstructions.functionCode -> SymbolicInstructions.functionCode
+  val optimize :  SymbolicInstructions.clusterCode list -> SymbolicInstructions.clusterCode list
 
 end

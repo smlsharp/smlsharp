@@ -1,0 +1,5 @@
+Group
+        structure AnnotatedCalc
+        structure AnnotatedCalcFormatter
+is
+	main/module.cm

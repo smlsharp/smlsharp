@@ -3,7 +3,7 @@ OLE/SML#
  OLE/SML# is a support tool to enable SML code to access Microsoft COM/OLE objects.
 
 @author YAMATODANI Kiyoshi
-@version $Id: README.txt,v 1.11.2.1 2007/03/27 13:00:05 kiyoshiy Exp $
+@version $Id: README.txt,v 1.12 2007/04/02 09:42:30 katsu Exp $
 
 ----------
 Products.

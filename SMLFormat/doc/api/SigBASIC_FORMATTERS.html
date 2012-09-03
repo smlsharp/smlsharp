@@ -30,7 +30,7 @@
 <CODE>signature&nbsp;<A HREF="SigBASIC_FORMATTERS.html">BASIC_FORMATTERS</A>&nbsp;=<br>
 sig<br>
 &nbsp;&nbsp;type&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A><br>
-&nbsp;&nbsp;type&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;=&nbsp;'a&nbsp;->&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;type&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;=&nbsp;'a&nbsp;-&gt;&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_unit">format_unit</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">General.unit</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_int">format_int</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt31Imp.html#Typeint">Int.int</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_word">format_word</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrWord31Imp.html#Typeword">Word.word</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
@@ -40,14 +40,14 @@ sig<br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_substring">format_substring</A>&nbsp;:&nbsp;Substring.substring&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_exn">format_exn</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeexn">General.exn</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_exn_Ref">format_exn_Ref</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeexn">General.exn</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;ref<br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_array">format_array</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrArray.html#Typearray">Array.array</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_array">format_array</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrArray.html#Typearray">Array.array</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_vector">format_vector</A><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrVector.html#Typevector">Vector.vector</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_ref">format_ref</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;->&nbsp;'a&nbsp;ref&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrVector.html#Typevector">Vector.vector</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_ref">format_ref</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;-&gt;&nbsp;'a&nbsp;ref&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_bool">format_bool</A>&nbsp;:&nbsp;bool&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_option">format_option</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;->&nbsp;'a&nbsp;Option.option&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_option">format_option</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;-&gt;&nbsp;'a&nbsp;Option.option&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
 &nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_order">format_order</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeorder">General.order</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
-&nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_list">format_list</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Valformat_list">format_list</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A><br>
 end</CODE>
 <P>
 
@@ -71,7 +71,7 @@ YAMATODANI Kiyoshi
 
 <DT> <B>Version:</B>
 <DD>
-$Id: SigBASIC_FORMATTERS.html,v 1.4 2007/01/30 13:27:05 kiyoshiy Exp $
+$Id: SigBASIC_FORMATTERS.html,v 1.5 2007/03/27 15:03:01 kiyoshiy Exp $
  
 
 </DL>
@@ -103,7 +103,7 @@ format expression
 <A NAME="Typeformatter"><!-- --></A>
 <H3>formatter</H3>
 <P>
-<CODE>type&nbsp;'a&nbsp;formatter&nbsp;=&nbsp;'a&nbsp;->&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
+<CODE>type&nbsp;'a&nbsp;formatter&nbsp;=&nbsp;'a&nbsp;-&gt;&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
 <DL>
 <DD>
   formatter for a type T receives a value of the type T and returns
@@ -255,7 +255,7 @@ the formatter for exn type.
 <A NAME="Valformat_array"><!-- --></A>
 <H3>format_array</H3>
 <P>
-<CODE>val&nbsp;format_array&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrArray.html#Typearray">Array.array</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
+<CODE>val&nbsp;format_array&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrArray.html#Typearray">Array.array</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
 <DL>
 <DD>
 the formatter for array type. 
@@ -270,7 +270,7 @@ the formatter for array type.
 <A NAME="Valformat_vector"><!-- --></A>
 <H3>format_vector</H3>
 <P>
-<CODE>val&nbsp;format_vector&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrVector.html#Typevector">Vector.vector</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
+<CODE>val&nbsp;format_vector&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrVector.html#Typevector">Vector.vector</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
 <DL>
 <DD>
 the formatter for vector type. 
@@ -285,7 +285,7 @@ the formatter for vector type.
 <A NAME="Valformat_ref"><!-- --></A>
 <H3>format_ref</H3>
 <P>
-<CODE>val&nbsp;format_ref&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;->&nbsp;'a&nbsp;ref&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
+<CODE>val&nbsp;format_ref&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;-&gt;&nbsp;'a&nbsp;ref&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
 <DL>
 <DD>
 the formatter for ref type. 
@@ -315,7 +315,7 @@ the formatter for bool type.
 <A NAME="Valformat_option"><!-- --></A>
 <H3>format_option</H3>
 <P>
-<CODE>val&nbsp;format_option&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;->&nbsp;'a&nbsp;Option.option&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
+<CODE>val&nbsp;format_option&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;-&gt;&nbsp;'a&nbsp;Option.option&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
 <DL>
 <DD>
 the formatter for option type. 
@@ -345,7 +345,7 @@ the formatter for order type.
 <A NAME="Valformat_list"><!-- --></A>
 <H3>format_list</H3>
 <P>
-<CODE>val&nbsp;format_list&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
+<CODE>val&nbsp;format_list&nbsp;:&nbsp;'a&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;-&gt;&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;<A HREF="SigBASIC_FORMATTERS.html#Typeformatter">formatter</A></CODE>
 <DL>
 <DD>
 the formatter for list type. 

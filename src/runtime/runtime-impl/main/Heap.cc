@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: Heap.cc,v 1.12 2007/03/11 07:05:09 kiyoshiy Exp $
+ * @version $Id: Heap.cc,v 1.14 2007/06/01 09:40:59 kiyoshiy Exp $
  */
 #include "Heap.hh"
 #include "IllegalStateException.hh"
@@ -272,7 +272,6 @@ Heap::isValidHeaderPointer(BlockHeader* header)
     }
 }
 
-INLINE_FUN 
 bool
 Heap::isValidBlockPointer(Cell* block)
 {
@@ -878,7 +877,7 @@ Heap::isSimilarBlockGraph(Cell* block1, Cell* block2)
 
 void
 Heap::invokeGC(GCMode mode)
-    throw(IMLRuntimeException)
+    throw(IMLException)
 {
     switch(mode){
       case GC_MINOR:
@@ -900,7 +899,7 @@ Heap::invokeGC(GCMode mode)
 
 void 
 Heap::clear()
-    throw(IMLRuntimeException)
+    throw(IMLException)
 {
     currentGC_ = GC_NONE;
 
@@ -930,7 +929,7 @@ Heap::clear()
 
 void
 Heap::Tracer::trace(Cell*** roots, int count)
-    throw(IMLRuntimeException)
+    throw(IMLException)
 {
     Cell*** pointersToBlockPointers = roots;
     for(int index = 0; index < count; index += 1)
@@ -942,7 +941,7 @@ Heap::Tracer::trace(Cell*** roots, int count)
 
 void
 Heap::Tracer::trace(Cell** roots, int count)
-    throw(IMLRuntimeException)
+    throw(IMLException)
 {
     Cell** blockPointers = roots;
     for(int index = 0 ; index < count ; index += 1)
@@ -954,7 +953,7 @@ Heap::Tracer::trace(Cell** roots, int count)
 
 Cell*
 Heap::Tracer::trace(Cell* root)
-    throw(IMLRuntimeException)
+    throw(IMLException)
 {
     return update(root);
 }

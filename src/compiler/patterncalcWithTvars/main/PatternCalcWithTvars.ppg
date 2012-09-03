@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: PatternCalcWithTvars.ppg,v 1.15 2007/02/28 17:57:20 katsu Exp $
+ * @version $Id: PatternCalcWithTvars.ppg,v 1.16 2007/06/19 22:19:12 ohori Exp $
  *)
 structure PatternCalcWithTvars : PATTERNCALCWITHTVARS = struct
 
@@ -116,6 +116,11 @@ type caseKind =
       * @format(value values:enclosedList * loc) values(value)("," +, + "(", ")")
       *)
      PTTUPLE of ptexp list * loc
+   | (*%
+      * @format(value values * loc) 
+      *           {"[" 2[ 1 values(value)("," +1) ] 1 "]"}
+      *)
+     PTLIST of ptexp list * loc
    | (*%
       * @format(exp * loc) N0{ "raise" +d {exp} }
       *)
@@ -527,6 +532,7 @@ and pttopdec =
    | PTRECORD(_, loc) => loc
    | PTRECORD_UPDATE(_, _, loc) => loc
    | PTTUPLE(_, loc) => loc
+   | PTLIST(_, loc) => loc
    | PTRAISE(_, loc) => loc
    | PTHANDLE(_, _, loc) => loc
    | PTFNM(_, _, loc) => loc

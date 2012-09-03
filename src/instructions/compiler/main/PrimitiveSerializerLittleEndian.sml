@@ -1,7 +1,7 @@
 (**
  * serializer of primitive types for Little-endian architecture.
  * @author YAMATODANI Kiyoshi
- * @version $Id: PrimitiveSerializerLittleEndian.sml,v 1.7 2007/02/19 14:11:56 kiyoshiy Exp $
+ * @version $Id: PrimitiveSerializerLittleEndian.sml,v 1.8 2007/06/20 06:50:41 kiyoshiy Exp $
  *)
 structure PrimitiveSerializerLittleEndian :> PRIMITIVE_SERIALIZER =
 struct
@@ -44,10 +44,10 @@ struct
             (* first element of readBytes is the most significant byte. *)
             foldl
                 (fn (byte, word) =>
-                    UInt32.orb
+                    BT.UInt32.orb
                         (
-                          UInt32.<< (word, 0w8),
-                          UInt32.andb (BT.UInt8ToUInt32 byte, 0wxFF)
+                          BT.UInt32.<< (word, 0w8),
+                          BT.UInt32.andb (BT.UInt8ToUInt32 byte, 0wxFF)
                         ))
                 (0wx0 : BT.UInt32)
                 readBytes

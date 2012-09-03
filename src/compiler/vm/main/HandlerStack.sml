@@ -30,7 +30,7 @@ in
  * "frame" entry is at the bottom (= lowest address) of entry.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: HandlerStack.sml,v 1.5 2006/02/28 16:11:12 kiyoshiy Exp $
+ * @version $Id: HandlerStack.sml,v 1.6 2007/06/08 15:21:54 ducnh Exp $
  *)
 structure HandlerStack
   : sig
@@ -87,7 +87,7 @@ struct
       concat(RM.map (bottom, !top) (cellValueToString o RM.load)) ^ "\n"
       
   fun popHandler ({bottom, top, ...} : stack) =
-      if bottom = !top
+      if RM.==(bottom, !top)
       then raise RE.InvalidCode "uncaught exception"
       else
         let
@@ -106,7 +106,7 @@ struct
           (stack as {bottom, top, ...} : stack, frame : FS.frame) =
       let
         fun pop (currentTop : cellValue RM.pointer) =
-            if currentTop = bottom
+            if RM.==(currentTop, bottom)
             then top := currentTop
             else
               let val nextEntry = RM.back(currentTop, SIZE_OF_ENTRY)

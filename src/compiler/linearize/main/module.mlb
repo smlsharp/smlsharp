@@ -6,13 +6,12 @@ in
         ../../control/main/module.mlb
         ../../systemdef/main/module.mlb
         ../../env/main/module.mlb
-        ../../anormal/main/module.mlb
-        ../../symbolicinstructions/main/module.mlb
-        ../../name/main/module.mlb
-        ../../types/main/module.mlb
         ../../util/main/module.mlb
+        ../../name/main/module.mlb
         ../../../instructions/compiler/main/module.mlb
         ../../../primitives/compiler/main/module.mlb
+        ../../anormal/main/module.mlb
+        ../../symbolicinstructions/main/module.mlb
 
         LINEARIZE_CONTEXT.sig
         LinearizeContext.sml

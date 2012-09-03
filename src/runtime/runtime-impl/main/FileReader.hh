@@ -17,15 +17,12 @@ class FileReader
 
     const char* fileName_;
     int descriptor_;
-    FILE* stream_;
     BoolValue DontClose_;
 
     ///////////////////////////////////////////////////////////////////////////
   public:
 
     FileReader(const char* fileName, int descriptor, BoolValue DontClose);
-
-    FileReader(const char* fileName, FILE* stream, BoolValue DontClose);
 
     ///////////////////////////////////////////////////////////////////////////
   public:

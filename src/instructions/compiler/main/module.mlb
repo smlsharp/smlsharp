@@ -4,6 +4,7 @@ in
         ../../../preludes.mlb
 
         ../../../compiler/systemdef/main/module.mlb
+        ../../../configuration/sources.mlb
 
         IEEE754.sml
 

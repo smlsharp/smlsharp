@@ -22,6 +22,7 @@ SOURCES = CharPrimitives.cc \
           Primitives.cc \
           PlatformPrimitives.cc \
           RealPrimitives.cc \
+          SMLSharpCommandLinePrimitives.cc \
           StringPrimitives.cc \
           StandardCPrimitives.cc \
           TimePrimitives.cc \
@@ -58,7 +59,8 @@ CharPrimitives.$(OBJEXT): CharPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -72,7 +74,6 @@ CharPrimitives.$(OBJEXT): CharPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -100,8 +101,7 @@ CharPrimitives.$(OBJEXT): CharPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 CommandLinePrimitives.$(OBJEXT): CommandLinePrimitives.cc Primitives.hh \
@@ -118,7 +118,8 @@ CommandLinePrimitives.$(OBJEXT): CommandLinePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -132,7 +133,6 @@ CommandLinePrimitives.$(OBJEXT): CommandLinePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -160,8 +160,7 @@ CommandLinePrimitives.$(OBJEXT): CommandLinePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 Constants.$(OBJEXT): Constants.cc Constants.hh \
@@ -181,7 +180,8 @@ DatePrimitives.$(OBJEXT): DatePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -195,7 +195,6 @@ DatePrimitives.$(OBJEXT): DatePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -223,8 +222,7 @@ DatePrimitives.$(OBJEXT): DatePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 DynamicLinkPrimitives.$(OBJEXT): DynamicLinkPrimitives.cc Primitives.hh \
@@ -241,7 +239,8 @@ DynamicLinkPrimitives.$(OBJEXT): DynamicLinkPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -255,7 +254,6 @@ DynamicLinkPrimitives.$(OBJEXT): DynamicLinkPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -283,8 +281,7 @@ DynamicLinkPrimitives.$(OBJEXT): DynamicLinkPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 GCPrimitives.$(OBJEXT): GCPrimitives.cc Primitives.hh \
@@ -301,7 +298,8 @@ GCPrimitives.$(OBJEXT): GCPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -315,7 +313,6 @@ GCPrimitives.$(OBJEXT): GCPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -343,8 +340,7 @@ GCPrimitives.$(OBJEXT): GCPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 GenericOSPrimitives.$(OBJEXT): GenericOSPrimitives.cc Primitives.hh \
@@ -361,7 +357,8 @@ GenericOSPrimitives.$(OBJEXT): GenericOSPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -375,7 +372,6 @@ GenericOSPrimitives.$(OBJEXT): GenericOSPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -403,8 +399,7 @@ GenericOSPrimitives.$(OBJEXT): GenericOSPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 IntPrimitives.$(OBJEXT): IntPrimitives.cc Primitives.hh \
@@ -421,7 +416,8 @@ IntPrimitives.$(OBJEXT): IntPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -435,7 +431,6 @@ IntPrimitives.$(OBJEXT): IntPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -463,8 +458,7 @@ IntPrimitives.$(OBJEXT): IntPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 InternalPrimitives.$(OBJEXT): InternalPrimitives.cc Primitives.hh \
@@ -481,7 +475,8 @@ InternalPrimitives.$(OBJEXT): InternalPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -495,7 +490,6 @@ InternalPrimitives.$(OBJEXT): InternalPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -523,8 +517,7 @@ InternalPrimitives.$(OBJEXT): InternalPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 JNIPrimitives.$(OBJEXT): JNIPrimitives.cc Primitives.hh \
@@ -541,7 +534,8 @@ JNIPrimitives.$(OBJEXT): JNIPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -555,7 +549,6 @@ JNIPrimitives.$(OBJEXT): JNIPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -583,8 +576,7 @@ JNIPrimitives.$(OBJEXT): JNIPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 MathPrimitives.$(OBJEXT): MathPrimitives.cc Primitives.hh \
@@ -601,7 +593,8 @@ MathPrimitives.$(OBJEXT): MathPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -615,7 +608,6 @@ MathPrimitives.$(OBJEXT): MathPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -643,8 +635,66 @@ MathPrimitives.$(OBJEXT): MathPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-impl/main/FFI.hh \
+  ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
+PackPrimitives.$(OBJEXT): PackPrimitives.cc Primitives.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-impl/main/PrimitiveSupport.hh \
+  ../../../../src/primitives/runtime/main/Constants.hh \
+  ../../../../src/runtime/runtime-impl/main/Heap.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh \
+  ../../../../src/runtime/runtime-impl/main/VirtualMachine.hh \
+  ../../../../src/runtime/runtime-impl/main/ExecutableLinker.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
+  ../../../../src/runtime/runtime-impl/main/Heap.hh \
+  ../../../../src/runtime/runtime-core/main/Session.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
+  ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughFrameStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 Primitives.$(OBJEXT): Primitives.cc Primitives.hh \
@@ -656,6 +706,66 @@ Primitives.$(OBJEXT): Primitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh
+PlatformPrimitives.$(OBJEXT): PlatformPrimitives.cc Primitives.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-impl/main/PrimitiveSupport.hh \
+  ../../../../src/primitives/runtime/main/Constants.hh \
+  ../../../../src/runtime/runtime-impl/main/Heap.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh \
+  ../../../../src/runtime/runtime-impl/main/VirtualMachine.hh \
+  ../../../../src/runtime/runtime-impl/main/ExecutableLinker.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
+  ../../../../src/runtime/runtime-impl/main/Heap.hh \
+  ../../../../src/runtime/runtime-core/main/Session.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
+  ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughFrameStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-impl/main/FFI.hh \
+  ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh \
+  Constants.hh
 RealPrimitives.$(OBJEXT): RealPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../.././config.h \
@@ -670,7 +780,8 @@ RealPrimitives.$(OBJEXT): RealPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -684,7 +795,6 @@ RealPrimitives.$(OBJEXT): RealPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -712,8 +822,66 @@ RealPrimitives.$(OBJEXT): RealPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-impl/main/FFI.hh \
+  ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
+SMLSharpCommandLinePrimitives.$(OBJEXT): SMLSharpCommandLinePrimitives.cc \
+  Primitives.hh ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../.././config.h \
+  ../../../../src/runtime/runtime-core/main/RuntimeTypes.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-impl/main/PrimitiveSupport.hh \
+  ../../../../src/primitives/runtime/main/Constants.hh \
+  ../../../../src/runtime/runtime-impl/main/Heap.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/Log.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Debug.hh \
+  ../../../../src/runtime/runtime-impl/main/VirtualMachine.hh \
+  ../../../../src/runtime/runtime-impl/main/ExecutableLinker.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/Executable.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
+  ../../../../src/runtime/runtime-impl/main/Heap.hh \
+  ../../../../src/runtime/runtime-core/main/Session.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Reader.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/Writer.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/ExecutablePreProcessor.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/UserException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLException.hh \
+  ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
+  ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/IllegalStateException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughFrameStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/NoEnoughHandlerStackException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 StringPrimitives.$(OBJEXT): StringPrimitives.cc Primitives.hh \
@@ -730,7 +898,8 @@ StringPrimitives.$(OBJEXT): StringPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -744,7 +913,6 @@ StringPrimitives.$(OBJEXT): StringPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -772,8 +940,7 @@ StringPrimitives.$(OBJEXT): StringPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 StandardCPrimitives.$(OBJEXT): StandardCPrimitives.cc Primitives.hh \
@@ -790,7 +957,8 @@ StandardCPrimitives.$(OBJEXT): StandardCPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -804,7 +972,6 @@ StandardCPrimitives.$(OBJEXT): StandardCPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -832,8 +999,7 @@ StandardCPrimitives.$(OBJEXT): StandardCPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 TimePrimitives.$(OBJEXT): TimePrimitives.cc Primitives.hh \
@@ -850,7 +1016,8 @@ TimePrimitives.$(OBJEXT): TimePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -864,7 +1031,6 @@ TimePrimitives.$(OBJEXT): TimePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -892,8 +1058,7 @@ TimePrimitives.$(OBJEXT): TimePrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 TimerPrimitives.$(OBJEXT): TimerPrimitives.cc Primitives.hh \
@@ -910,7 +1075,8 @@ TimerPrimitives.$(OBJEXT): TimerPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -924,7 +1090,6 @@ TimerPrimitives.$(OBJEXT): TimerPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -952,8 +1117,7 @@ TimerPrimitives.$(OBJEXT): TimerPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 UnmanagedMemoryPrimitives.$(OBJEXT): UnmanagedMemoryPrimitives.cc Primitives.hh \
@@ -970,7 +1134,8 @@ UnmanagedMemoryPrimitives.$(OBJEXT): UnmanagedMemoryPrimitives.cc Primitives.hh 
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -984,7 +1149,6 @@ UnmanagedMemoryPrimitives.$(OBJEXT): UnmanagedMemoryPrimitives.cc Primitives.hh 
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -1012,8 +1176,7 @@ UnmanagedMemoryPrimitives.$(OBJEXT): UnmanagedMemoryPrimitives.cc Primitives.hh 
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 UnmanagedStringPrimitives.$(OBJEXT): UnmanagedStringPrimitives.cc Primitives.hh \
@@ -1030,7 +1193,8 @@ UnmanagedStringPrimitives.$(OBJEXT): UnmanagedStringPrimitives.cc Primitives.hh 
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -1044,7 +1208,6 @@ UnmanagedStringPrimitives.$(OBJEXT): UnmanagedStringPrimitives.cc Primitives.hh 
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -1072,8 +1235,7 @@ UnmanagedStringPrimitives.$(OBJEXT): UnmanagedStringPrimitives.cc Primitives.hh 
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh
 WordPrimitives.$(OBJEXT): WordPrimitives.cc Primitives.hh \
@@ -1090,7 +1252,8 @@ WordPrimitives.$(OBJEXT): WordPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/NoEnoughHeapException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
+  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IllegalArgumentException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
@@ -1104,7 +1267,6 @@ WordPrimitives.$(OBJEXT): WordPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/SystemError.hh \
-  ../../../../src/runtime/runtime-core/main/SystemDef.hh \
   ../../../../src/runtime/runtime-impl/main/WordOperations.hh \
   ../../../../src/runtime/runtime-impl/main/Heap.hh \
   ../../../../src/runtime/runtime-core/main/Session.hh \
@@ -1132,7 +1294,6 @@ WordPrimitives.$(OBJEXT): WordPrimitives.cc Primitives.hh \
   ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
   ../../../../src/runtime/runtime-core/main/OutOfMemoryException.hh \
   ../../../../src/runtime/runtime-core/main/SystemDef.hh \
-  ../../../../src/runtime/runtime-core/main/IMLException.hh \
-  ../../../../src/runtime/runtime-core/main/IMLRuntimeException.hh \
+  ../../../../src/runtime/runtime-core/main/SystemError.hh \
   ../../../../src/runtime/runtime-impl/main/FFI.hh \
   ../../../../src/runtime/runtime-impl/main/EmptyHandlerStackException.hh

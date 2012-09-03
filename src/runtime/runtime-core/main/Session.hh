@@ -64,9 +64,7 @@ class Session
      */
     virtual
     SInt32Value start()
-        throw(IMLRuntimeException,
-              UserException,
-              SystemError)
+        throw(IMLException)
         = 0;
 
     /**

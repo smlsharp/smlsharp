@@ -1,12 +1,15 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: ExecutableLinker.cc,v 1.50.4.1 2007/03/22 08:41:57 katsu Exp $
+ * @version $Id: ExecutableLinker.cc,v 1.54 2007/06/11 00:47:57 kiyoshiy Exp $
  */
+#include "Configuration.hh"
 #include "ExecutableLinker.hh"
 #include "Instructions.hh"
 #include "SystemError.hh"
 #include "IMLRuntimeException.hh"
 #include "IllegalArgumentException.hh"
+#include "IncompatibleExecutableException.hh"
+#include "MalformedExecutableException.hh"
 
 BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
 
@@ -51,14 +54,38 @@ static const UInt32Value SIZE_OF_NAMESLOT_TABLE_ENTRY = 4;
 
 void
 ExecutableLinker::process(Executable* executable)
-    throw(IMLRuntimeException,
-          SystemError)
+    throw(IMLException)
 {
 #if defined(BYTE_ORDER_LITTLE_ENDIAN)
-    // convert to network byte order.
-    WordOperations::reverseQuadByte(executable->buffer_);
+    // convert from network byte order.
+    WordOperations::reverseQuadByte(executable->buffer_); // magic
+    WordOperations::reverseQuadByte(executable->buffer_ + 1); // version
+    WordOperations::reverseQuadByte(executable->buffer_ + 2); // byte order
 #endif
-    UInt32Value byteOrder = *(executable->buffer_);
+
+    // check magic number.
+    UInt32Value magic = *(executable->buffer_);
+    if(EXECUTABLE_HEADER_MAGIC != magic){
+        throw MalformedExecutableException();
+    }
+
+    // check binary version compatibility.
+    UInt32Value version = *(executable->buffer_ + 1);
+    UInt16Value minor = 0xFFFF & (version >> 16);
+    UInt16Value major = 0xFFFF & version;
+/*
+    DBGWRAP(LOG.debug("version = %x, minor = %d, major = %d",
+                      version, minor, major));
+*/
+    // ToDo : We should implement a version checker in another module.
+    /* In future (after official release of 1.0), we should write
+     * a version-checker which takes upper compatibility between versions
+     * into consideration. */
+    if((BinaryMinorVersion != minor) || (BinaryMajorVersion != major)){
+        throw IncompatibleExecutableException();
+    }
+
+    UInt32Value byteOrder = *(executable->buffer_ + 2);
 
     switch(byteOrder){
       case Executable::LittleEndian:
@@ -111,16 +138,17 @@ template
  >
 void
 ExecutableLinker::link(Executable *executable)
-    throw(IMLRuntimeException,
-          SystemError)
+    throw(IMLException)
 {
-    // executable->buffer_[0] = byteOrder
+    // executable->buffer_[0] = magic
+    // executable->buffer_[1] = version
+    // executable->buffer_[2] = byteOrder
 
-    // executable->buffer_[1] = codeWordLength
-    toNativeOrderQuad(executable->buffer_ + 1);
-    executable->codeWordLength_ = *(executable->buffer_ + 1);
-    // executable->buffer_[2] = start of code
-    executable->code_ = executable->buffer_ + 2;
+    // executable->buffer_[3] = codeWordLength
+    toNativeOrderQuad(executable->buffer_ + 3);
+    executable->codeWordLength_ = *(executable->buffer_ + 3);
+    // executable->buffer_[4] = start of code
+    executable->code_ = executable->buffer_ + 4;
 
     UInt32Value* code = executable->code_;
     UInt32Value* PC = code;
@@ -181,7 +209,7 @@ ExecutableLinker::link(Executable *executable)
           case Access_D:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // variableIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -190,9 +218,9 @@ ExecutableLinker::link(Executable *executable)
           case Access_V:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // variableIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // variableSize
+                toNativeOrderQuad(PC); // variableSizeIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -213,28 +241,7 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // offset
                 PC += 1;
-                toNativeOrderQuad(PC); // variableSize
-                PC += 1;
-                toNativeOrderQuad(PC); // destination
-                PC += 1;
-                break;
-            }
-          case AccessEnvIndirect_S:
-          case AccessEnvIndirect_D:
-            {
-                PC += 1;
-                toNativeOrderQuad(PC); // offset
-                PC += 1;
-                toNativeOrderQuad(PC); // destination
-                PC += 1;
-                break;
-            }
-          case AccessEnvIndirect_V:
-            {
-                PC += 1;
-                toNativeOrderQuad(PC); // offset
-                PC += 1;
-                toNativeOrderQuad(PC); // variableSize
+                toNativeOrderQuad(PC); // variableSizeIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -259,32 +266,7 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // offset
                 PC += 1;
-                toNativeOrderQuad(PC); // variableSize
-                PC += 1;
-                toNativeOrderQuad(PC); // destination
-                PC += 1;
-                break;
-            }
-          case AccessNestedEnvIndirect_S:
-          case AccessNestedEnvIndirect_D:
-            {
-                PC += 1;
-                toNativeOrderQuad(PC); // nestLevel
-                PC += 1;
-                toNativeOrderQuad(PC); // offset
-                PC += 1;
-                toNativeOrderQuad(PC); // destination
-                PC += 1;
-                break;
-            }
-          case AccessNestedEnvIndirect_V:
-            {
-                PC += 1;
-                toNativeOrderQuad(PC); // nestLevel
-                PC += 1;
-                toNativeOrderQuad(PC); // offset
-                PC += 1;
-                toNativeOrderQuad(PC); // variableSize
+                toNativeOrderQuad(PC); // variableSizeIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -296,7 +278,7 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // fieldOffset
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -307,9 +289,9 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // fieldOffset
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldSize
+                toNativeOrderQuad(PC); // fieldSizeIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -319,9 +301,9 @@ ExecutableLinker::link(Executable *executable)
           case GetFieldIndirect_D:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldVarOffset
+                toNativeOrderQuad(PC); // fieldOffsetIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -330,11 +312,40 @@ ExecutableLinker::link(Executable *executable)
           case GetFieldIndirect_V:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldVarOffset
+                toNativeOrderQuad(PC); // fieldOffsetIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldSize
+                toNativeOrderQuad(PC); // fieldSizeIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // blockIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case GetNestedField_S:
+          case GetNestedField_D:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // nestLevel
+                PC += 1;
+                toNativeOrderQuad(PC); // fieldOffset
+                PC += 1;
+                toNativeOrderQuad(PC); // blockIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case GetNestedField_V:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // nestLevel
+                PC += 1;
+                toNativeOrderQuad(PC); // fieldOffset
+                PC += 1;
+                toNativeOrderQuad(PC); // fieldSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -344,11 +355,11 @@ ExecutableLinker::link(Executable *executable)
           case GetNestedFieldIndirect_D:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // nestLevel
+                toNativeOrderQuad(PC); // nestLevelIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldOffset
+                toNativeOrderQuad(PC); // fieldOffsetIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -357,13 +368,13 @@ ExecutableLinker::link(Executable *executable)
           case GetNestedFieldIndirect_V:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // nestLevel
+                toNativeOrderQuad(PC); // nestLevelIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldOffset
+                toNativeOrderQuad(PC); // fieldOffsetIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldSize
+                toNativeOrderQuad(PC); // fieldSizeIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -375,9 +386,9 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // fieldOffset
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOfset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // newValueIndex
                 PC += 1;
                 break;
             }
@@ -386,11 +397,11 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // fieldOffset
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldSize
+                toNativeOrderQuad(PC); // fieldSizeIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOfset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // newValueIndex
                 PC += 1;
                 break;
             }
@@ -398,24 +409,53 @@ ExecutableLinker::link(Executable *executable)
           case SetFieldIndirect_D:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldVarOffset
+                toNativeOrderQuad(PC); // fieldOffsetIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // newValueIndex
                 PC += 1;
                 break;
             }
           case SetFieldIndirect_V:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldVarOffset
+                toNativeOrderQuad(PC); // fieldOffsetIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldSize
+                toNativeOrderQuad(PC); // fieldSizeIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // newValueIndex
+                PC += 1;
+                break;
+            }
+          case SetNestedField_S:
+          case SetNestedField_D:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // nestLevel
+                PC += 1;
+                toNativeOrderQuad(PC); // fieldOffset
+                PC += 1;
+                toNativeOrderQuad(PC); // blockIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // newValueIndex
+                PC += 1;
+                break;
+            }
+          case SetNestedField_V:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // nestLevel
+                PC += 1;
+                toNativeOrderQuad(PC); // fieldOffset
+                PC += 1;
+                toNativeOrderQuad(PC); // fieldSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // blockIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // newValueIndex
                 PC += 1;
                 break;
             }
@@ -423,37 +463,37 @@ ExecutableLinker::link(Executable *executable)
           case SetNestedFieldIndirect_D:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // nestLevel
+                toNativeOrderQuad(PC); // nestLevelIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldOffset
+                toNativeOrderQuad(PC); // fieldOffsetIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOfset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // newValueIndex
                 PC += 1;
                 break;
             }
           case SetNestedFieldIndirect_V:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // nestLevel
+                toNativeOrderQuad(PC); // nestLevelIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldOffset
+                toNativeOrderQuad(PC); // fieldOffsetIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // fieldSize
+                toNativeOrderQuad(PC); // fieldSizeIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOfset
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // newValueIndex
                 PC += 1;
                 break;
             }
           case CopyBlock:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // nestLevel
+                toNativeOrderQuad(PC); // blockIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // blockOffset
+                toNativeOrderQuad(PC); // nestLevelIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -488,7 +528,7 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // globalOffset
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // variableIndex
                 PC += 1;
                 break;
             }
@@ -499,7 +539,7 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // globalOffset
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // variableIndex
                 PC += 1;
                 break;
             }
@@ -546,90 +586,365 @@ ExecutableLinker::link(Executable *executable)
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case Apply_S:
-          case Apply_D:
+          case Apply_0_0:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
-                PC += 1;
-                toNativeOrderQuad(PC); // argOffset
-                PC += 1;
-                toNativeOrderQuad(PC); // destination
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 break;
             }
-          case Apply_V:
+          case Apply_S_0:
+          case Apply_D_0:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
-                PC += 1;
-                toNativeOrderQuad(PC); // argSizeOffset
-                PC += 1;
-                toNativeOrderQuad(PC); // destination
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
                 break;
             }
-          case Apply_ML_S:
-          case Apply_ML_D:
+          case Apply_V_0:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                break;
+            }
+          case Apply_MS_0:
+          case Apply_MLD_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffsets
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_MLV_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastArgSize
+                PC += 1;
+                break;
+            }
+          case Apply_MF_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizes
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_MV_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_0_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case Apply_S_1:
+          case Apply_D_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case Apply_V_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case Apply_MS_1:
+          case Apply_MLD_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case Apply_ML_V:
+          case Apply_MLV_1:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffsets
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
-                toNativeOrderQuad(PC); // lastArgSizeOffset
+                toNativeOrderQuad(PC); // lastArgSize
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case Apply_M:
+          case Apply_MF_1:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffsets
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argSizeOffsets
+                    toNativeOrderQuad(PC); // argSizes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case Apply_MV_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case Apply_0_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_S_M:
+          case Apply_D_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_V_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_MS_M:
+          case Apply_MLD_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_MLV_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastArgSize
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_MF_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case Apply_MV_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case TailApply_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 break;
             }
@@ -637,169 +952,509 @@ ExecutableLinker::link(Executable *executable)
           case TailApply_D:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
                 break;
             }
           case TailApply_V:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argSizeOffset
+                toNativeOrderQuad(PC); // argSizeIndex
                 PC += 1;
                 break;
             }
-          case TailApply_ML_S:
-          case TailApply_ML_D:
+          case TailApply_MS:
+          case TailApply_MLD:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffsets
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 break;
             }
-          case TailApply_ML_V:
+          case TailApply_MLV:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffsets
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
-                toNativeOrderQuad(PC); // lastArgSizeOffset
+                toNativeOrderQuad(PC); // lastArgSizeIndex
                 PC += 1;
                 break;
             }
-          case TailApply_M:
+          case TailApply_MF:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffsets
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argSizeOffsets
+                    toNativeOrderQuad(PC); // argSizes
                     PC += 1;
                 }
                 break;
             }
-          case CallStatic_S:
-          case CallStatic_D:
+          case TailApply_MV:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // closureIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_0_0:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
+                break;
+            }
+          case CallStatic_S_0:
+          case CallStatic_D_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                break;
+            }
+          case CallStatic_V_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                break;
+            }
+          case CallStatic_MS_0:
+          case CallStatic_MLD_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_MLV_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastArgSizeIndex
+                PC += 1;
+                break;
+            }
+          case CallStatic_MF_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizes
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_MV_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_0_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case CallStatic_V:
+          case CallStatic_S_1:
+          case CallStatic_D_1:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
-                PC += 1;
-                toNativeOrderQuad(PC); // argSizeOffset
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case CallStatic_ML_S:
-          case CallStatic_ML_D:
+          case CallStatic_V_1:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case CallStatic_MS_1:
+          case CallStatic_MLD_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case CallStatic_ML_V:
+          case CallStatic_MLV_1:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
-                toNativeOrderQuad(PC); // lastArgSizeOffset
+                toNativeOrderQuad(PC); // lastArgSizeIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case CallStatic_M:
+          case CallStatic_MF_1:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argSizeOffset
+                    toNativeOrderQuad(PC); // argSizes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case CallStatic_MV_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case CallStatic_0_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_S_M:
+          case CallStatic_D_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_V_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_MS_M:
+          case CallStatic_MLD_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_MLV_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastArgSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_MF_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case CallStatic_MV_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+
+          case TailCallStatic_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 break;
             }
@@ -809,11 +1464,10 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
                 break;
             }
@@ -822,199 +1476,603 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argSizeOffset
+                toNativeOrderQuad(PC); // argSizeIndex
                 PC += 1;
                 break;
             }
-          case TailCallStatic_ML_S:
-          case TailCallStatic_ML_D:
+          case TailCallStatic_MS:
+          case TailCallStatic_MLD:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 break;
             }
-          case TailCallStatic_ML_V:
+          case TailCallStatic_MLV:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
-                toNativeOrderQuad(PC); // lastArgSizeOffset
+                toNativeOrderQuad(PC); // lastArgSizeIndex
                 PC += 1;
                 break;
             }
-          case TailCallStatic_M:
+          case TailCallStatic_MF:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // envOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argSizeOffset
+                    toNativeOrderQuad(PC); // argSizes
                     PC += 1;
                 }
                 break;
             }
-
-          case RecursiveCallStatic_S:
-          case RecursiveCallStatic_D:
-          case SelfRecursiveCallStatic_S:
-          case SelfRecursiveCallStatic_D:
+          case TailCallStatic_MV:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
+                toNativeOrderQuad(PC); // envIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_0_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_S_0:
+          case RecursiveCallStatic_D_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_V_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_MS_0:
+          case RecursiveCallStatic_MLD_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_MLV_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastArgSizeIndex
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_MF_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizes
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_MV_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_0_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case RecursiveCallStatic_V:
-          case SelfRecursiveCallStatic_V:
+          case RecursiveCallStatic_S_1:
+          case RecursiveCallStatic_D_1:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
-                PC += 1;
-                toNativeOrderQuad(PC); // argSizeOffset
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
                 break;
             }
-          case RecursiveCallStatic_M:
-          case SelfRecursiveCallStatic_M:
+          case RecursiveCallStatic_V_1:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_MS_1:
+          case RecursiveCallStatic_MLD_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
-                    PC += 1;
-                }
-                for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argSizeOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_MLV_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastArgSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_MF_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_MV_1:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case RecursiveCallStatic_0_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_S_M:
+          case RecursiveCallStatic_D_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_V_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // argSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_MS_M:
+          case RecursiveCallStatic_MLD_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_MLV_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastArgSizeIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_MF_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveCallStatic_MV_M:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destsCount
+                UInt32Value destsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < destsCount; index += 1){
+                    toNativeOrderQuad(PC); // destinations
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveTailCallStatic_0:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
                 PC += 1;
                 break;
             }
           case RecursiveTailCallStatic_S:
           case RecursiveTailCallStatic_D:
-          case SelfRecursiveTailCallStatic_S:
-          case SelfRecursiveTailCallStatic_D:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
                 break;
             }
           case RecursiveTailCallStatic_V:
-          case SelfRecursiveTailCallStatic_V:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // argOffset
+                toNativeOrderQuad(PC); // argIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // argSizeOffset
+                toNativeOrderQuad(PC); // argSizeIndex
                 PC += 1;
                 break;
             }
-          case RecursiveTailCallStatic_M:
-          case SelfRecursiveTailCallStatic_M:
+          case RecursiveTailCallStatic_MS:
+          case RecursiveTailCallStatic_MLD:
             {
                 PC += 1;
                 toNativeOrderQuad(PC); // entryPoint
                 convertOffsetToAddress(code, PC);
-//                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffset
-                    PC += 1;
-                }
-                for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argSizeOffset
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 break;
             }
-
+          case RecursiveTailCallStatic_MLV:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastArgSizeIndex
+                PC += 1;
+                break;
+            }
+          case RecursiveTailCallStatic_MF:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizes
+                    PC += 1;
+                }
+                break;
+            }
+          case RecursiveTailCallStatic_MV:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // entryPoint
+                convertOffsetToAddress(code, PC);
+                PC += 1;
+                toNativeOrderQuad(PC); // argsCount
+                UInt32Value argsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < argsCount; index += 1){
+                    toNativeOrderQuad(PC); // argSizeIndexes
+                    PC += 1;
+                }
+                break;
+            }
           case MakeBlock:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // bitmapOffset
+                toNativeOrderQuad(PC); // bitmapIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // sizeOffset
+                toNativeOrderQuad(PC); // sizeIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // fieldsCount
                 UInt32Value fieldsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < fieldsCount; index += 1){
-                    toNativeOrderQuad(PC); // fieldOffset
+                    toNativeOrderQuad(PC); // fieldIndexes
                     PC += 1;
                 }
                 for(int index = 0; index < fieldsCount; index += 1){
-                    toNativeOrderQuad(PC); // fieldSizeOffset
+                    toNativeOrderQuad(PC); // fieldSizeIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // destination
+                PC += 1;
+                break;
+            }
+          case MakeFixedSizeBlock:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // bitmapIndex
+                PC += 1;
+                toNativeOrderQuad(PC); // size
+                PC += 1;
+                toNativeOrderQuad(PC); // fieldsCount
+                UInt32Value fieldsCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < fieldsCount; index += 1){
+                    toNativeOrderQuad(PC); // fieldIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < fieldsCount; index += 1){
+                    toNativeOrderQuad(PC); // fieldSizes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
@@ -1024,13 +2082,13 @@ ExecutableLinker::link(Executable *executable)
           case MakeBlockOfSingleValues:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // bitmapOffset
+                toNativeOrderQuad(PC); // bitmapIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // fieldsCount
                 UInt32Value fieldsCount = getQuadByte(PC);
                 PC += 1;
                 for(int index = 0; index < fieldsCount; index += 1){
-                    toNativeOrderQuad(PC); // fieldOffset
+                    toNativeOrderQuad(PC); // fieldIndexes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
@@ -1041,11 +2099,11 @@ ExecutableLinker::link(Executable *executable)
           case MakeArray_D:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // bitmapOffset
+                toNativeOrderQuad(PC); // bitmapIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // sizeOffset
+                toNativeOrderQuad(PC); // sizeIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // initialValueOffset
+                toNativeOrderQuad(PC); // initialValueIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -1054,11 +2112,11 @@ ExecutableLinker::link(Executable *executable)
           case MakeArray_V:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // bitmapOffset
+                toNativeOrderQuad(PC); // bitmapIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // sizeOffset
+                toNativeOrderQuad(PC); // sizeIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // initialValueOffset
+                toNativeOrderQuad(PC); // initialValueIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // initialValueSize
                 PC += 1;
@@ -1073,7 +2131,7 @@ ExecutableLinker::link(Executable *executable)
                 convertOffsetToAddress(code, PC);
 //                ASSERT_INSTRUCTION(FunEntry, *PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // ENVOffset
+                toNativeOrderQuad(PC); // envIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // destination
                 PC += 1;
@@ -1082,7 +2140,7 @@ ExecutableLinker::link(Executable *executable)
           case Raise:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // exceptionOffset
+                toNativeOrderQuad(PC); // exceptionIndex
                 PC += 1;
                 break;
             }
@@ -1092,7 +2150,7 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // handler
                 convertOffsetToAddress(code, PC);
                 PC += 1;
-                toNativeOrderQuad(PC); // exceptionOffset
+                toNativeOrderQuad(PC); // exceptionIndex
                 PC += 1;
                 break;
             }
@@ -1117,7 +2175,7 @@ ExecutableLinker::link(Executable *executable)
           case SwitchChar:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // targetOffset
+                toNativeOrderQuad(PC); // targetIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // casesCount
                 UInt32Value casesCount = getQuadByte(PC);
@@ -1137,7 +2195,7 @@ ExecutableLinker::link(Executable *executable)
           case SwitchString:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // targetOffset
+                toNativeOrderQuad(PC); // targetIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // casesCount
                 UInt32Value casesCount = getQuadByte(PC);
@@ -1169,21 +2227,85 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1;
                 break;
             }
+          case Return_0:
+            {
+                PC += 1;
+                break;
+            }
           case Return_S:
           case Return_D:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // variableIndex
                 PC += 1;
                 break;
             }
           case Return_V:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // variableOffset
+                toNativeOrderQuad(PC); // variableIndex
                 PC += 1;
-                toNativeOrderQuad(PC); // variableSize
+                toNativeOrderQuad(PC); // variableSizeIndex
                 PC += 1;
+                break;
+            }
+          case Return_MS:
+          case Return_MLD:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // variablesCount
+                UInt32Value variablesCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < variablesCount; index += 1){
+                    toNativeOrderQuad(PC); // variableIndexes
+                    PC += 1;
+                }
+                break;
+            }
+          case Return_MLV:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // variablesCount
+                UInt32Value variablesCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < variablesCount; index += 1){
+                    toNativeOrderQuad(PC); // variableIndexes
+                    PC += 1;
+                }
+                toNativeOrderQuad(PC); // lastVariableSizeIndex
+                PC += 1;
+                break;
+            }
+          case Return_MF:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // variablesCount
+                UInt32Value variablesCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < variablesCount; index += 1){
+                    toNativeOrderQuad(PC); // variableIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < variablesCount; index += 1){
+                    toNativeOrderQuad(PC); // variableSizes
+                    PC += 1;
+                }
+                break;
+            }
+          case Return_MV:
+            {
+                PC += 1;
+                toNativeOrderQuad(PC); // variablesCount
+                UInt32Value variablesCount = getQuadByte(PC);
+                PC += 1;
+                for(int index = 0; index < variablesCount; index += 1){
+                    toNativeOrderQuad(PC); // variableIndexes
+                    PC += 1;
+                }
+                for(int index = 0; index < variablesCount; index += 1){
+                    toNativeOrderQuad(PC); // variableSizeIndexes
+                    PC += 1;
+                }
                 break;
             }
           case FunEntry:
@@ -1249,7 +2371,7 @@ ExecutableLinker::link(Executable *executable)
           case ForeignApply:
             {
                 PC += 1;
-                toNativeOrderQuad(PC); // closureOffset
+                toNativeOrderQuad(PC); // closureIndex
                 PC += 1;
                 toNativeOrderQuad(PC); // argsCount
                 UInt32Value argsCount = getQuadByte(PC);
@@ -1259,7 +2381,7 @@ ExecutableLinker::link(Executable *executable)
                 toNativeOrderQuad(PC); // convention
                 PC += 1;
                 for(int index = 0; index < argsCount; index += 1){
-                    toNativeOrderQuad(PC); // argOffsets
+                    toNativeOrderQuad(PC); // argIndexes
                     PC += 1;
                 }
                 toNativeOrderQuad(PC); // destination
@@ -1271,7 +2393,7 @@ ExecutableLinker::link(Executable *executable)
 #define LINK_PRIM_1 \
             { \
                 PC += 1; \
-                toNativeOrderQuad(PC); /* argOffset */ \
+                toNativeOrderQuad(PC); /* argIndex */ \
                 PC += 1; \
                 toNativeOrderQuad(PC); /* destination */ \
                 PC += 1; \
@@ -1282,9 +2404,9 @@ ExecutableLinker::link(Executable *executable)
 #define LINK_PRIM_2 \
             { \
                 PC += 1; \
-                toNativeOrderQuad(PC); /* argOffset1 */ \
+                toNativeOrderQuad(PC); /* argIndex1 */ \
                 PC += 1; \
-                toNativeOrderQuad(PC); /* argOffset2 */ \
+                toNativeOrderQuad(PC); /* argIndex2 */ \
                 PC += 1; \
                 toNativeOrderQuad(PC); /* destination */ \
                 PC += 1; \
@@ -1295,11 +2417,11 @@ ExecutableLinker::link(Executable *executable)
 #define LINK_PRIM_3 \
             { \
                 PC += 1; \
-                toNativeOrderQuad(PC); /* argOffset1 */ \
+                toNativeOrderQuad(PC); /* argIndex1 */ \
                 PC += 1; \
-                toNativeOrderQuad(PC); /* argOffset2 */ \
+                toNativeOrderQuad(PC); /* argIndex2 */ \
                 PC += 1; \
-                toNativeOrderQuad(PC); /* argOffset3 */ \
+                toNativeOrderQuad(PC); /* argIndex3 */ \
                 PC += 1; \
                 toNativeOrderQuad(PC); /* destination */ \
                 PC += 1; \
@@ -1312,7 +2434,7 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1; \
                 toNativeOrderQuad(PC); /* constant */ \
                 PC += 1; \
-                toNativeOrderQuad(PC); /* argOffset */ \
+                toNativeOrderQuad(PC); /* argIndex */ \
                 PC += 1; \
                 toNativeOrderQuad(PC); /* destination */ \
                 PC += 1; \
@@ -1328,7 +2450,7 @@ ExecutableLinker::link(Executable *executable)
                 PC += 1; \
                 toNativeOrderDoubleQuad(PC); /* constant */ \
                 PC += 2; \
-                toNativeOrderQuad(PC); /* argOffset */ \
+                toNativeOrderQuad(PC); /* argIndex */ \
                 PC += 1; \
                 toNativeOrderQuad(PC); /* destination */ \
                 PC += 1; \
@@ -1338,7 +2460,7 @@ ExecutableLinker::link(Executable *executable)
 #define LINK_PRIM_2_CONST_2D \
             { \
                 PC += 1; \
-                toNativeOrderQuad(PC); /* argOffset */ \
+                toNativeOrderQuad(PC); /* argIndex */ \
                 PC += 1; \
                 toNativeOrderDoubleQuad(PC); /* constant */ \
                 PC += 2; \
@@ -1416,28 +2538,68 @@ ExecutableLinker::link(Executable *executable)
           case AbsInt: LINK_PRIM_1;
           case AbsReal: LINK_PRIM_1;
           case LtInt: LINK_PRIM_2;
+          case LtInt_Const_1: LINK_PRIM_2_CONST_1S;
+          case LtInt_Const_2: LINK_PRIM_2_CONST_2S;
           case LtReal: LINK_PRIM_2;
+          case LtReal_Const_1: LINK_PRIM_2_CONST_1D;
+          case LtReal_Const_2: LINK_PRIM_2_CONST_2D;
           case LtWord: LINK_PRIM_2;
+          case LtWord_Const_1: LINK_PRIM_2_CONST_1S;
+          case LtWord_Const_2: LINK_PRIM_2_CONST_2S;
           case LtByte: LINK_PRIM_2;
+          case LtByte_Const_1: LINK_PRIM_2_CONST_1S;
+          case LtByte_Const_2: LINK_PRIM_2_CONST_2S;
           case LtChar: LINK_PRIM_2;
+          case LtChar_Const_1: LINK_PRIM_2_CONST_1S;
+          case LtChar_Const_2: LINK_PRIM_2_CONST_2S;
           case LtString: LINK_PRIM_2;
           case GtInt: LINK_PRIM_2;
+          case GtInt_Const_1: LINK_PRIM_2_CONST_1S;
+          case GtInt_Const_2: LINK_PRIM_2_CONST_2S;
           case GtReal: LINK_PRIM_2;
+          case GtReal_Const_1: LINK_PRIM_2_CONST_1D;
+          case GtReal_Const_2: LINK_PRIM_2_CONST_2D;
           case GtWord: LINK_PRIM_2;
+          case GtWord_Const_1: LINK_PRIM_2_CONST_1S;
+          case GtWord_Const_2: LINK_PRIM_2_CONST_2S;
           case GtByte: LINK_PRIM_2;
+          case GtByte_Const_1: LINK_PRIM_2_CONST_1S;
+          case GtByte_Const_2: LINK_PRIM_2_CONST_2S;
           case GtChar: LINK_PRIM_2;
+          case GtChar_Const_1: LINK_PRIM_2_CONST_1S;
+          case GtChar_Const_2: LINK_PRIM_2_CONST_2S;
           case GtString: LINK_PRIM_2;
           case LteqInt: LINK_PRIM_2;
+          case LteqInt_Const_1: LINK_PRIM_2_CONST_1S;
+          case LteqInt_Const_2: LINK_PRIM_2_CONST_2S;
           case LteqReal: LINK_PRIM_2;
+          case LteqReal_Const_1: LINK_PRIM_2_CONST_1D;
+          case LteqReal_Const_2: LINK_PRIM_2_CONST_2D;
           case LteqWord: LINK_PRIM_2;
+          case LteqWord_Const_1: LINK_PRIM_2_CONST_1S;
+          case LteqWord_Const_2: LINK_PRIM_2_CONST_2S;
           case LteqByte: LINK_PRIM_2;
+          case LteqByte_Const_1: LINK_PRIM_2_CONST_1S;
+          case LteqByte_Const_2: LINK_PRIM_2_CONST_2S;
           case LteqChar: LINK_PRIM_2;
+          case LteqChar_Const_1: LINK_PRIM_2_CONST_1S;
+          case LteqChar_Const_2: LINK_PRIM_2_CONST_2S;
           case LteqString: LINK_PRIM_2;
           case GteqInt: LINK_PRIM_2;
+          case GteqInt_Const_1: LINK_PRIM_2_CONST_1S;
+          case GteqInt_Const_2: LINK_PRIM_2_CONST_2S;
           case GteqReal: LINK_PRIM_2;
+          case GteqReal_Const_1: LINK_PRIM_2_CONST_1D;
+          case GteqReal_Const_2: LINK_PRIM_2_CONST_2D;
           case GteqWord: LINK_PRIM_2;
+          case GteqWord_Const_1: LINK_PRIM_2_CONST_1S;
+          case GteqWord_Const_2: LINK_PRIM_2_CONST_2S;
           case GteqByte: LINK_PRIM_2;
+          case GteqByte_Const_1: LINK_PRIM_2_CONST_1S;
+          case GteqByte_Const_2: LINK_PRIM_2_CONST_2S;
           case GteqChar: LINK_PRIM_2;
+          case GteqChar_Const_1: LINK_PRIM_2_CONST_1S;
+          case GteqChar_Const_2: LINK_PRIM_2_CONST_2S;
           case GteqString: LINK_PRIM_2;
           case Word_toIntX: LINK_PRIM_1;
           case Word_fromInt: LINK_PRIM_1;

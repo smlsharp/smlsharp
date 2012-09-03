@@ -3,7 +3,7 @@
  * declarations.
  * @copyright (c) 2006, Tohoku University.
  * @author YAMATODANI Kiyoshi
- * @version $Id: FormatterGenerator.sml,v 1.30 2007/03/01 14:01:52 kiyoshiy Exp $
+ * @version $Id: FormatterGenerator.sml,v 1.33 2007/06/13 15:25:18 kiyoshiy Exp $
  *)
 structure FormatterGenerator =
 struct
@@ -29,7 +29,8 @@ struct
    * return an expression whose value is the formatter for the specified type.
    * @params context currentTyCons BTVFormatters ty
    * @param context
-   * @param currentTyCons tyCons 
+   * @param currentTyConOpt current tycon, if any.
+   * @param currentTyCons tyCons defined in the same 'datatype' declaration.
    * @param TVFormatters list of pairs of
    *        <ul>
    *          <li>type variable (tvState ref)</li>
@@ -39,7 +40,8 @@ struct
    * @param ty the type of value to be formatted.
    * @return an expression which is evaluated to a formatter for the ty.
    *)
-  fun generateFormatterOfTy context path currentTyCons TVFormatters loc ty =
+  fun generateFormatterOfTy
+          context path currentTyConOpt currentTyCons TVFormatters loc ty =
       let
         (* This function returns
          *   fn argVar => bodyExp
@@ -51,7 +53,14 @@ struct
 
         val bodyExp =
             generateFormatterBodyOfTy
-                context path currentTyCons TVFormatters loc ty argVarExp
+                context
+                path
+                currentTyConOpt
+                currentTyCons
+                TVFormatters
+                loc
+                ty
+                argVarExp
       in
         TP.TPFNM
             {
@@ -66,7 +75,7 @@ struct
    * Because recursive call is necessary to handle type variable and
    * POLYty, this is defined as a function. *)
   and generateFormatterBodyOfTy
-          context path currentTyCons TVFormatters loc ty argVarExp  =
+          context path currentTyConOpt currentTyCons TVFormatters loc ty argVarExp  =
       case ty of
         TY.ERRORty => raise Control.Bug "unexpected ERRORty"
 
@@ -76,7 +85,14 @@ struct
 
       | TY.TYVARty(ref (TY.SUBSTITUTED actualTy)) =>
         generateFormatterBodyOfTy
-            context path currentTyCons TVFormatters loc actualTy argVarExp
+            context
+            path
+            currentTyConOpt
+            currentTyCons
+            TVFormatters
+            loc
+            actualTy
+            argVarExp
 
       | TY.TYVARty(ref (TY.TVAR tvKind)) =>
         (case
@@ -146,6 +162,7 @@ struct
                       generateFormatterOfTy
                           context
                           path
+                          currentTyConOpt
                           currentTyCons
                           TVFormatters
                           loc
@@ -192,7 +209,7 @@ struct
                 List.rev
                     (foldl
                          (fn (exp, joined) =>
-                             OC.makeGuard(NONE, [exp]) ::
+                             exp ::
                              OC.translateFormatExpressions
                                  [U.s_1_Indicator, FE.Term (1, ",")] @
                              joined)
@@ -211,7 +228,9 @@ struct
             OC.makeGuard
                 (
                   SOME{cut = true, strength = 0, direction = FE.Neutral},
-                  leftParenExps @ joinedExps @ rightParenExps
+                  leftParenExps
+                  @ [OC.makeGuard (NONE, joinedExps)]
+                  @ rightParenExps
                 )
           end
 
@@ -224,10 +243,17 @@ struct
         else
           (case
              (
+              (* true if this occurrence of tyCon is self-recursive. *)
+              case (currentTyConOpt : Types.tyCon option)
+               of NONE => false
+                | SOME currentTyCon => ID.eq (#id tyCon, #id currentTyCon),
+
               (* true if this occurrence of tyCon is recursive. *)
               List.exists
                   (fn tc => ID.eq (#id tyCon, #id (tc : Types.tyCon)))
                   currentTyCons,
+
+              argTys,
 
               (* true if this occurrence of tyCon is applied with type
                * variables which are exactly same with type variables that
@@ -246,8 +272,9 @@ struct
                   (ListPair.zip (#1 (ListPair.unzip TVFormatters), argTys))
             )
             of
-             (true, false) =>
-             (* recursive occurrence, but instantiated with different types.
+             (true, true, _::_, false) =>
+             (* polymorphic self-recursive occurrence, but instantiated with
+              * different types.
               * For example, occurrence of d in the argument of A is in this
               * case.
               *   datatype ('a, 'b) d = A of ('b, 'a) d | B
@@ -256,14 +283,24 @@ struct
               *)
              OC.makeConstantTerm "..."
 
-           | (isRecursive, _) =>
+           | (false, true, _::_, _) =>
+             (* polymorphic mutual recursive occurrence.
+              *)
+             OC.makeConstantTerm "..."
+
+           | (isSelfRecursive, isRecursive, _, _) =>
              let
               
                (* [f1,...,fn] *)
                val argFormatterExps =
                    map
                        (generateFormatterOfTy
-                            context path currentTyCons TVFormatters loc)
+                            context
+                            path
+                            currentTyConOpt
+                            currentTyCons
+                            TVFormatters
+                            loc)
                        argTys
                (* [t1->r,...tn->r] *)
                val argFormatterTys = map OC.formatterOfTyTy argTys
@@ -379,7 +416,14 @@ val _ = print "\n"
               TU.instantiate {body = body, boundtvars = boundtvars}
           val formatterExp =
               generateFormatterBodyOfTy
-                  context path currentTyCons TVFormatters loc monoTy argVarExp
+                  context
+                  path
+                  currentTyConOpt
+                  currentTyCons
+                  TVFormatters
+                  loc
+                  monoTy
+                  argVarExp
         in
           formatterExp
         end
@@ -389,7 +433,14 @@ val _ = print "\n"
          * No formatter is defined for the alias type.
          *)
         generateFormatterBodyOfTy
-            context path currentTyCons TVFormatters loc actual argVarExp
+            context
+            path
+            currentTyConOpt
+            currentTyCons
+            TVFormatters
+            loc
+            actual
+            argVarExp
 
       | TY.ABSSPECty _ => OC.makeConstantTerm "-"
 
@@ -405,6 +456,7 @@ val _ = print "\n"
   fun generateCaseBranchForConPathInfo
           context
           path
+          currentTyCon
           currentTyCons
           loc
           formatterOfArgTys
@@ -487,7 +539,13 @@ val _ = print "\n"
             (* format_s *)
             val argFormatterExp =
                 generateFormatterOfTy
-                    context path currentTyCons formatterOfArgTys loc argVarTy
+                    context
+                    path
+                    currentTyCon
+                    currentTyCons
+                    formatterOfArgTys
+                    loc
+                    argVarTy
             (* format_s v *)
             val argExp =
                 TP.TPAPPM
@@ -566,6 +624,7 @@ val _ = print "\n"
                 generateCaseBranchForConPathInfo
                     context
                     currentPath
+                    (SOME tyCon)
                     currentTyCons
                     loc
                     (ListPair.zip(argTyVars, formatterOfArgTys))
@@ -748,34 +807,58 @@ val _ = print "\n"
          *)
         val arity = List.length (#tyvars tyCon)
 
-        fun getAppliedTys 0 (TY.FUNMty([TY.CONty{args, ...}], _)) = args
-          | getAppliedTys n (TY.FUNMty(_, resultTy)) =
-            getAppliedTys (n - 1) resultTy
-        val appliedTys =
-            map U.getRealTy (getAppliedTys arity (#ty formatterVarPathInfo))
-        fun isAppliedTy ID =
-            List.exists (fn (TY.BOUNDVARty BTVID) => ID = BTVID) appliedTys
+        (* This function generates a new polymorphic function from an existing
+         * formatter function.
+         * Some compilation phase following this printer generation assumes
+         * that every bound type variables have globally unique ID.
+         * So, we cannot reuse bound type variables which are used in the
+         * existing formatter function.
+         * Here, we generate fresh-copies of these bound type variables, and
+         * use them in the newly generated function.
+         *)
+        local
+          val (subst, BTVKindMap) = TU.copyBoundEnv BTVKindMap
+          val formatterTy = TU.substBTvar subst (#ty formatterVarPathInfo)
+        in
+        local
+          fun getAppliedTys 0 (TY.FUNMty([TY.CONty{args, ...}], _)) = args
+            | getAppliedTys n (TY.FUNMty(_, resultTy)) =
+              getAppliedTys (n - 1) resultTy
+        in
+        val appliedTys = map U.getRealTy (getAppliedTys arity formatterTy)
+        end
 
-        fun toBTVs dummyTyIndex [] newTys = List.rev newTys
-          | toBTVs dummyTyIndex ((ID, BTVKind) :: tailBTVKinds) newTys =
-            let
-              val BTVIndex = #index (BTVKind : TY.btvKind)
-              val (newTy, dummyTyIndex) = 
-                  if isAppliedTy ID
-                  then (TY.BOUNDVARty ID, dummyTyIndex)
-                  else (TY.DUMMYty dummyTyIndex, dummyTyIndex + 1)
-            in toBTVs dummyTyIndex tailBTVKinds (newTy :: newTys)
-            end
+        local
+          fun isAppliedTy ID =
+              List.exists (fn (TY.BOUNDVARty BTVID) => ID = BTVID) appliedTys
+
+          fun toBTVs dummyTyIndex [] newTys = List.rev newTys
+            | toBTVs dummyTyIndex ((ID, BTVKind) :: tailBTVKinds) newTys =
+              let
+                val BTVIndex = #index (BTVKind : TY.btvKind)
+                val (newTy, dummyTyIndex) = 
+                    if isAppliedTy ID
+                    then (TY.BOUNDVARty ID, dummyTyIndex)
+                    else (TY.DUMMYty dummyTyIndex, dummyTyIndex + 1)
+              in toBTVs dummyTyIndex tailBTVKinds (newTy :: newTys)
+              end
+        in
         val replacedBoundTys = toBTVs 0 (IEnv.listItemsi BTVKindMap) []
+        end
 
-        fun makeBTVKind index =
-            {index = index, recKind = TY.UNIV, eqKind = TY.NONEQ}
+        local
+          fun makeBTVKind index =
+              {index = index, recKind = TY.UNIV, eqKind = TY.NONEQ}
+        in
         val (_, newBTVKindMap) = 
             foldl (* left to right *)
                 (fn (TY.BOUNDVARty ID, (index, map)) =>
                     (index + 1, IEnv.insert(map, ID, makeBTVKind index)))
                 (0, IEnv.empty)
                 appliedTys
+        end
+
+        end (* local *)
 
         (****************************************)
         (* construct a function expression *)
@@ -1182,6 +1265,7 @@ val _ = print
             generateFormatterOfTy
                 context
                 path
+                NONE
                 []
                 (ListPair.zip (argTyVars, formatterNameOfArgTys))
                 loc
@@ -1286,7 +1370,7 @@ val _ = print
         (* D1 v1 => exp1, ... Dk vk => expk *)
         val branches =
             map
-                (generateCaseBranchForConPathInfo context path [] loc [])
+                (generateCaseBranchForConPathInfo context path NONE [] loc [])
                 conInfos
 
         (* previous formatter *)

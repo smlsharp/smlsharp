@@ -1,6 +1,6 @@
 /**
  * @author YAMATODANI Kiyoshi
- * @version $Id: VirtualMachine.hh,v 1.33 2007/03/03 22:54:08 kiyoshiy Exp $
+ * @version $Id: VirtualMachine.hh,v 1.38 2007/06/11 00:47:57 kiyoshiy Exp $
  */
 #ifndef VirtualMachine_hh_
 #define VirtualMachine_hh_
@@ -21,6 +21,7 @@
 #include <setjmp.h>
 #include <list>
 #include <vector>
+#include <stdio.h>
 
 #define LARGEFFISWITCH
 
@@ -104,6 +105,8 @@ class VirtualMachine
 
     /** the name of VM instance. */
     static const char* name_;
+    /** the name of executable image. NULL if VM is invoked without image. */
+    static const char* executableImageName_;
     /** command line arguments, exluding name */
     static const char** arguments_;
     /** the number of command line arguments */
@@ -564,7 +567,7 @@ class VirtualMachine
         void push(UInt32Value* SP,
                   UInt32Value exceptionIndex,
                   UInt32Value* handler)
-            throw(IMLRuntimeException)
+            throw(IMLException)
         {
             if(stackTop_ < currentTop_ + WORDS_OF_HANDLERSTACK_ENTRY){
                 // stack overflow
@@ -624,6 +627,7 @@ class VirtualMachine
      * constructor
      *
      * @param name the name of the VM instance.
+     * @param executableImageName the name of executable image.
      * @param arguments initialize arguments
      * @param argumentsCount the number of arguments
      * @param stackSize the size of stack (in words)
@@ -631,6 +635,7 @@ class VirtualMachine
     VirtualMachine
     (
       const char* name = "noname",
+      const char* executableImageName = NULL,
       const int argumentsCount = 0,
       const char** arguments = 0,
       const int stackSize = 10240
@@ -656,9 +661,7 @@ class VirtualMachine
 
     static
     void execute(Executable* executable)
-        throw(UserException,
-              IMLRuntimeException,
-              SystemError);
+        throw(IMLException);
 
     static
     UInt32Value executeFunction(UncaughtExceptionHandleMode mode,
@@ -666,23 +669,17 @@ class VirtualMachine
                                 Cell *returnValue,
                                 bool returnBoxed,
                                 FFI::Arguments &args)
-        throw(UserException,
-              IMLRuntimeException,
-              SystemError);
+        throw(IMLException);
 
     static 
     UInt32Value executeClosure_PA(UncaughtExceptionHandleMode mode,
                                   Cell closure,
                                   Cell* arg)
-        throw(UserException,
-              IMLRuntimeException,
-              SystemError);
+        throw(IMLException);
 
     static
     void executeLoop(void)
-        throw(UserException,
-              IMLRuntimeException,
-              SystemError);
+        throw(IMLException);
 
     static
     void addExecutionMonitor(VirtualMachineExecutionMonitor* monitor);
@@ -696,6 +693,11 @@ class VirtualMachine
     int getArguments(const char*** argumentsRef){
         *argumentsRef = arguments_;
         return argumentsCount_;
+    }
+
+    static
+    const char* getExecutableImageName(){
+        return executableImageName_;
     }
 
     static
@@ -750,21 +752,6 @@ class VirtualMachine
                   Cell* &calleeENV);
 
     static
-    UInt32Value* getFunInfoForSelfRecursiveCall(UInt32Value *entryPoint,
-                                                UInt32Value &frameSize,
-                                                UInt32Value* &argDests,
-                                                UInt32Value* &funInfoAddress);
-
-    static
-    UInt32Value* getFunInfoForRecursiveCall(UInt32Value *entryPoint,
-                                            UInt32Value &frameSize,
-                                            UInt32Value &arity,
-                                            UInt32Value* &argDests,
-                                            UInt32Value &bitmapvalsFreesCount,
-                                            UInt32Value &bitmapvalsFrees,
-                                            UInt32Value* &funInfoAddress);
-
-    static
     UInt32Value* getFunInfo(UInt32Value *entryPoint,
                             UInt32Value &frameSize,
                             UInt32Value &arity,
@@ -796,101 +783,22 @@ class VirtualMachine
                                      Bitmap &bitmap);
 
     static
-    UInt32Value* fillFrameForTailCall_S(UInt32Value* funInfoAddress,
-                                        UInt32Value frameSize,
-                                        Bitmap bitmap,
-                                        UInt32Value argIndex,
-                                        UInt32Value argDest,
-                                        UInt32Value* SP);
+    void callFunction_0(UInt32Value* &PC,
+                        UInt32Value* &SP,
+                        Cell* &ENV,
+                        UInt32Value *entryPoint,
+                        Cell* restoredENV,
+                        UInt32Value* returnAddress);
 
     static
-    UInt32Value* fillFrameForNonTailCall_S(UInt32Value* funInfoAddress,
-                                           UInt32Value frameSize,
-                                           Bitmap bitmap,
-                                           UInt32Value argIndex,
-                                           UInt32Value argDest,
-                                           UInt32Value* returnAddress,
-                                           UInt32Value* SP);
-    
-    static
-    UInt32Value* fillFrameForTailCall_D(UInt32Value* funInfoAddress,
-                                        UInt32Value frameSize,
-                                        Bitmap bitmap,
-                                        UInt32Value argIndex,
-                                        UInt32Value argDest,
-                                        UInt32Value* SP);
+    void tailCallFunction_0(UInt32Value* &PC,
+                            UInt32Value* &SP,
+                            Cell* &ENV,
+                            UInt32Value *entryPoint,
+                            Cell* restoredENV);
 
     static
-    UInt32Value* fillFrameForNonTailCall_D(UInt32Value* funInfoAddress,
-                                           UInt32Value frameSize,
-                                           Bitmap bitmap,
-                                           UInt32Value argIndex,
-                                           UInt32Value argDest,
-                                           UInt32Value* returnAddress,
-                                           UInt32Value* SP);
-
-    static
-    UInt32Value* fillFrameForTailCall_ML_S(UInt32Value* funInfoAddress,
-                                           UInt32Value frameSize,
-                                           UInt32Value arity,
-                                           Bitmap bitmap,
-                                           UInt32Value* argIndexes,
-                                           UInt32Value* argDests,
-                                           UInt32Value* SP);
-
-    static
-    UInt32Value* fillFrameForNonTailCall_ML_S(UInt32Value* funInfoAddress,
-                                              UInt32Value frameSize,
-                                              UInt32Value arity,
-                                              Bitmap bitmap,
-                                              UInt32Value* argIndexes,
-                                              UInt32Value* argDests,
-                                              UInt32Value* returnAddress,
-                                              UInt32Value* SP);
-    
-    static
-    UInt32Value* fillFrameForTailCall_ML_D(UInt32Value* funInfoAddress,
-                                           UInt32Value frameSize,
-                                           UInt32Value arity,
-                                           Bitmap bitmap,
-                                           UInt32Value* argIndexes,
-                                           UInt32Value* argDests,
-                                           UInt32Value* SP);
-
-    static
-    UInt32Value* fillFrameForNonTailCall_ML_D(UInt32Value* funInfoAddress,
-                                              UInt32Value frameSize,
-                                              UInt32Value arity,
-                                              Bitmap bitmap,
-                                              UInt32Value* argIndexes,
-                                              UInt32Value* argDests,
-                                              UInt32Value* returnAddress,
-                                              UInt32Value* SP);
-
-    static
-    UInt32Value* fillFrameForTailCall_M(UInt32Value* funInfoAddress,
-                                        UInt32Value frameSize,
-                                        UInt32Value arity,
-                                        Bitmap bitmap,
-                                        UInt32Value* argIndexes,
-                                        UInt32Value* argSizeIndexes,
-                                        UInt32Value* argDests,
-                                        UInt32Value* SP);
-
-    static
-    UInt32Value* fillFrameForNonTailCall_M(UInt32Value* funInfoAddress,
-                                           UInt32Value frameSize,
-                                           UInt32Value arity,
-                                           Bitmap bitmap,
-                                           UInt32Value* argIndexes,
-                                           UInt32Value* argSizeIndexes,
-                                           UInt32Value* argDests,
-                                           UInt32Value* returnAddress,
-                                           UInt32Value* SP);
-
-    static
-    void callFunction_S(bool isTailCall,
-                        UInt32Value* &PC,
+    void callFunction_S(UInt32Value* &PC,
                         UInt32Value* &SP,
                         Cell* &ENV,
                         UInt32Value *entryPoint,
@@ -899,8 +807,15 @@ class VirtualMachine
                         UInt32Value* returnAddress);
 
     static
-    void callFunction_D(bool isTailCall,
-                        UInt32Value* &PC,
+    void tailCallFunction_S(UInt32Value* &PC,
+                            UInt32Value* &SP,
+                            Cell* &ENV,
+                            UInt32Value *entryPoint,
+                            Cell* restoredENV,
+                            UInt32Value argIndex);
+
+    static
+    void callFunction_D(UInt32Value* &PC,
                         UInt32Value* &SP,
                         Cell* &ENV,
                         UInt32Value *entryPoint,
@@ -909,130 +824,184 @@ class VirtualMachine
                         UInt32Value* returnAddress);
 
     static
-    void callFunction_V(bool isTailCall,
-                        UInt32Value* &PC,
-                        UInt32Value* &SP,
-                        Cell* &ENV,
-                        UInt32Value *entryPoint,
-                        Cell* calleeENV,
-                        UInt32Value argIndex,
-                        UInt32Value argSize,
-                        UInt32Value* returnAddress);
+    void tailCallFunction_D(UInt32Value* &PC,
+                            UInt32Value* &SP,
+                            Cell* &ENV,
+                            UInt32Value *entryPoint,
+                            Cell* restoredENV,
+                            UInt32Value argIndex);
 
     static
-    void callFunction_ML_S(bool isTailCall,
-                           UInt32Value* &PC,
-                           UInt32Value* &SP,
-                           Cell* &ENV,
-                           UInt32Value *entryPoint,
-                           Cell* restoredENV,
-                           UInt32Value* argIndexes,
-                           UInt32Value* returnAddress);
+    void callFunction_MS(UInt32Value* &PC,
+                         UInt32Value* &SP,
+                         Cell* &ENV,
+                         UInt32Value *entryPoint,
+                         Cell* restoredENV,
+                         UInt32Value* argIndexes,
+                         UInt32Value* returnAddress);
 
     static
-    void callFunction_ML_D(bool isTailCall,
-                           UInt32Value* &PC,
-                           UInt32Value* &SP,
-                           Cell* &ENV,
-                           UInt32Value *entryPoint,
-                           Cell* restoredENV,
-                           UInt32Value* argIndexes,
-                           UInt32Value* returnAddress);
+    void tailCallFunction_MS(UInt32Value* &PC,
+                             UInt32Value* &SP,
+                             Cell* &ENV,
+                             UInt32Value *entryPoint,
+                             Cell* restoredENV,
+                             UInt32Value* argIndexes);
 
     static
-    void callFunction_ML_V(bool isTailCall,
-                           UInt32Value* &PC,
-                           UInt32Value* &SP,
-                           Cell* &ENV,
-                           UInt32Value *entryPoint,
-                           Cell* calleeENV,
-                           UInt32Value* argIndexes,
-                           UInt32Value lastArgSize,
-                           UInt32Value* returnAddress);
+    void callFunction_MLD(UInt32Value* &PC,
+                          UInt32Value* &SP,
+                          Cell* &ENV,
+                          UInt32Value *entryPoint,
+                          Cell* restoredENV,
+                          UInt32Value* argIndexes,
+                          UInt32Value* returnAddress);
 
     static
-    void callFunction_M(bool isTailCall,
-                        UInt32Value* &PC,
-                        UInt32Value* &SP,
-                        Cell* &ENV,
-                        UInt32Value *entryPoint,
-                        Cell* restoredENV,
-                        UInt32Value* argIndexes,
-                        UInt32Value* argSizeIndexes,
-                        UInt32Value* returnAddress);
+    void tailCallFunction_MLD(UInt32Value* &PC,
+                              UInt32Value* &SP,
+                              Cell* &ENV,
+                              UInt32Value *entryPoint,
+                              Cell* restoredENV,
+                              UInt32Value* argIndexes);
 
     static
-    void callRecursiveFunction_S(bool isTailCall,
-                                 UInt32Value* &PC,
+    void callFunction_MF(UInt32Value* &PC,
+                         UInt32Value* &SP,
+                         Cell* &ENV,
+                         UInt32Value *entryPoint,
+                         Cell* restoredENV,
+                         UInt32Value* argIndexes,
+                         UInt32Value* argSizes,
+                         UInt32Value* returnAddress);
+
+    static
+    void tailCallFunction_MF(UInt32Value* &PC,
+                             UInt32Value* &SP,
+                             Cell* &ENV,
+                             UInt32Value *entryPoint,
+                             Cell* restoredENV,
+                             UInt32Value* argIndexes,
+                             UInt32Value* argSizes);
+
+    static
+    void callFunction_MV(UInt32Value* &PC,
+                         UInt32Value* &SP,
+                         Cell* &ENV,
+                         UInt32Value *entryPoint,
+                         Cell* restoredENV,
+                         UInt32Value* argIndexes,
+                         UInt32Value* argSizeIndexes,
+                         UInt32Value* returnAddress);
+
+    static
+    void tailCallFunction_MV(UInt32Value* &PC,
+                             UInt32Value* &SP,
+                             Cell* &ENV,
+                             UInt32Value *entryPoint,
+                             Cell* restoredENV,
+                             UInt32Value* argIndexes,
+                             UInt32Value* argSizeIndexes);
+
+    static
+    void callRecursiveFunction_0(UInt32Value* &PC,
                                  UInt32Value* &SP,
-                                 Cell* &ENV,
+                                 UInt32Value *entryPoint,
+                                 UInt32Value* returnAddress);
+
+    static
+    void tailCallRecursiveFunction_0(UInt32Value* &PC,
+                                     UInt32Value *entryPoint);
+
+    static
+    void callRecursiveFunction_S(UInt32Value* &PC,
+                                 UInt32Value* &SP,
                                  UInt32Value *entryPoint,
                                  UInt32Value argIndex,
                                  UInt32Value* returnAddress);
 
     static
-    void callRecursiveFunction_D(bool isTailCall,
-                                 UInt32Value* &PC,
+    void tailCallRecursiveFunction_S(UInt32Value* &PC,
+                                     UInt32Value* &SP,
+                                     UInt32Value *entryPoint,
+                                     UInt32Value argIndex);
+
+    static
+    void callRecursiveFunction_D(UInt32Value* &PC,
                                  UInt32Value* &SP,
-                                 Cell* &ENV,
                                  UInt32Value *entryPoint,
                                  UInt32Value argIndex,
                                  UInt32Value* returnAddress);
 
     static
-    void callRecursiveFunction_V(bool isTailCall,
-                                 UInt32Value* &PC,
-                                 UInt32Value* &SP,
-                                 Cell* &ENV,
-                                 UInt32Value *entryPoint,
-                                 UInt32Value argIndex,
-                                 UInt32Value lastArgSize,
-                                 UInt32Value* returnAddress);
-
-    static
-    void callRecursiveFunction_M(bool isTailCall,
-                                 UInt32Value* &PC,
-                                 UInt32Value* &SP,
-                                 Cell* &ENV,
-                                 UInt32Value *entryPoint,
-                                 UInt32Value *argIndexes,
-                                 UInt32Value *argSizeIndexes,
-                                 UInt32Value* returnAddress);
-
-    static
-    void callSelfRecursiveFunction_S(bool isTailCall,
-                                     UInt32Value* &PC,
+    void tailCallRecursiveFunction_D(UInt32Value* &PC,
                                      UInt32Value* &SP,
                                      UInt32Value *entryPoint,
-                                     UInt32Value argIndex,
-                                     UInt32Value* returnAddress);
+                                     UInt32Value argIndex);
 
     static
-    void callSelfRecursiveFunction_D(bool isTailCall,
-                                     UInt32Value* &PC,
-                                     UInt32Value* &SP,
-                                     UInt32Value *entryPoint,
-                                     UInt32Value argIndex,
-                                     UInt32Value* returnAddress);
+    void callRecursiveFunction_MS(UInt32Value* &PC,
+                                  UInt32Value* &SP,
+                                  UInt32Value *entryPoint,
+                                  UInt32Value argsCount,
+                                  UInt32Value *argIndexes,
+                                  UInt32Value* returnAddress);
 
     static
-    void callSelfRecursiveFunction_V(bool isTailCall,
-                                     UInt32Value* &PC,
-                                     UInt32Value* &SP,
-                                     UInt32Value *entryPoint,
-                                     UInt32Value argIndex,
-                                     UInt32Value lastArgSize,
-                                     UInt32Value* returnAddress);
+    void tailCallRecursiveFunction_MS(UInt32Value* &PC,
+                                      UInt32Value* &SP,
+                                      UInt32Value *entryPoint,
+                                      UInt32Value argsCount,
+                                      UInt32Value *argIndexes);
 
     static
-    void callSelfRecursiveFunction_M(bool isTailCall,
-                                     UInt32Value* &PC,
-                                     UInt32Value* &SP,
-                                     UInt32Value *entryPoint,
-                                     UInt32Value argsCount,
-                                     UInt32Value *argIndexes,
-                                     UInt32Value *argSizeIndexes,
-                                     UInt32Value* returnAddress);
+    void callRecursiveFunction_MLD(UInt32Value* &PC,
+                                   UInt32Value* &SP,
+                                   UInt32Value *entryPoint,
+                                   UInt32Value argsCount,
+                                   UInt32Value *argIndexes,
+                                   UInt32Value* returnAddress);
+
+    static
+    void tailCallRecursiveFunction_MLD(UInt32Value* &PC,
+                                       UInt32Value* &SP,
+                                       UInt32Value *entryPoint,
+                                       UInt32Value argsCount,
+                                       UInt32Value *argIndexes);
+  
+    static
+    void callRecursiveFunction_MF(UInt32Value* &PC,
+                                  UInt32Value* &SP,
+                                  UInt32Value *entryPoint,
+                                  UInt32Value argsCount,
+                                  UInt32Value *argIndexes,
+                                  UInt32Value *argSizes,
+                                  UInt32Value* returnAddress);
+
+    static
+    void tailCallRecursiveFunction_MF(UInt32Value* &PC,
+                                      UInt32Value* &SP,
+                                      UInt32Value *entryPoint,
+                                      UInt32Value argsCount,
+                                      UInt32Value *argIndexes,
+                                      UInt32Value *argSizes);
+
+    static
+    void callRecursiveFunction_MV(UInt32Value* &PC,
+                                  UInt32Value* &SP,
+                                  UInt32Value *entryPoint,
+                                  UInt32Value argsCount,
+                                  UInt32Value *argIndexes,
+                                  UInt32Value *argSizeIndexes,
+                                  UInt32Value* returnAddress);
+
+    static
+    void tailCallRecursiveFunction_MV(UInt32Value* &PC,
+                                      UInt32Value* &SP,
+                                      UInt32Value *entryPoint,
+                                      UInt32Value argsCount,
+                                      UInt32Value *argIndexes,
+                                      UInt32Value *argSizeIndexes);
 
     static
     void raiseException
@@ -1067,7 +1036,7 @@ class VirtualMachine
 
     virtual
     void trace(RootTracer* tracer)
-        throw(IMLRuntimeException);
+        throw(IMLException);
 
     ///////////////////////////////////////////////////////////////////////////
     // Concretization of class FinalizerExecutor
@@ -1075,7 +1044,7 @@ class VirtualMachine
 
     virtual
     void executeFinalizer(Cell* finalizable)
-        throw(IMLRuntimeException);
+        throw(IMLException);
 
 };
 
