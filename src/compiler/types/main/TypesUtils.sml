@@ -2,7 +2,7 @@
  * utility functions for manupilating types (needs re-writing).
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: TypesUtils.sml,v 1.19 2007/06/08 21:58:15 ohori Exp $
+ * @version $Id: TypesUtils.sml,v 1.19.2.1 2007/11/05 12:57:38 ohori Exp $
  *)
 (*
 TODO:
@@ -508,6 +508,52 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
          else ())
       tyset
     end
+
+  fun adjustDepthInRecKind contextDepth kind = 
+    case kind of
+      T.UNIV => ()
+    | T.REC fields => 
+        SEnv.app
+        (fn ty => adjustDepthInTy contextDepth ty)
+        fields
+    | T.OVERLOADED _ => ()
+
+  fun adjustEqKindInTy eqKind ty = 
+    case eqKind of
+      T.NONEQ => ()
+    | T.EQ => 
+        let
+          val tyset = EFTV ty
+        in
+          OTSet.app
+          (fn (tyvarRef as (ref (T.TVAR {
+                                         lambdaDepth =lambdaDepth, 
+                                         id, 
+                                         recKind, 
+                                         eqKind, 
+                                         tyvarName
+                                         })))
+              =>
+              tyvarRef := T.TVAR {
+                                  lambdaDepth = lambdaDepth, 
+                                  id = id, 
+                                  recKind = recKind, 
+                                  eqKind = T.EQ, 
+                                  tyvarName = tyvarName
+                                  }
+            | _ => raise Control.Bug "non TVAR in adjustDepthInTy (TypesUtils.sml)"
+          )
+          tyset
+        end
+
+  fun adjustEqKindInRecKind eqKind kind = 
+    case kind of
+      T.UNIV => ()
+    | T.REC fields => 
+        SEnv.app
+        (fn ty => adjustEqKindInTy eqKind ty)
+        fields
+    | T.OVERLOADED _ => ()
 
   fun adjustDepthInVarPathInfo contextDepth {name, strpath, ty} = 
     adjustDepthInTy contextDepth ty;

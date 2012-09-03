@@ -490,13 +490,23 @@ IMLPrim_GenericOS_readDirImpl(UInt32Value argsCount,
                               Cell* resultRef)
 {
     DIR* dir = (DIR*)(argumentRefs[0]->uint32);
-    struct dirent *dirent = ::readdir(dir);
-    if(dirent){
+    while(true){
+        struct dirent *dirent = ::readdir(dir);
+        if(NULL == dirent){
+            *resultRef = PrimitiveSupport::constructOptionNONE();
+            break;
+        }
+        /*
+         * Basis specification of OS.FileSys.readDir says:
+         *   readDir filters out the names corresponding to the current and
+         *  parent arcs. 
+         */
+        if(!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, "..")){
+            continue;
+        }
         Cell nameValue = PrimitiveSupport::stringToCell(dirent->d_name);
         *resultRef = PrimitiveSupport::constructOptionSOME(&nameValue, true);
-    }
-    else{
-        *resultRef = PrimitiveSupport::constructOptionNONE();
+        break;
     }
     return;
 }

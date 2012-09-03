@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TypeInferModule.sml,v 1.70 2007/03/21 22:43:09 bochao Exp $
+ * @version $Id: TypeInferModule.sml,v 1.70.6.5 2007/11/06 01:31:35 bochao Exp $
  *)
 structure TypeInferModule =
 struct
@@ -449,10 +449,10 @@ in
             val (context1, tpmspec) = typeinfSpec cc ptspec
             val newCurrentContext = 
                   TIC.injectContextToCurrentContext context1
-            val representativeTyConId = 
+              val (representativeTyConId, hdEqKind) = 
                 let
                   val hdLongTyCon = List.hd longTyConList
-                  val rpTyConId = SU.longTyConId newCurrentContext hdLongTyCon
+                  val (rpTyConId, eqKind) = SU.longTyConIdEqKind newCurrentContext hdLongTyCon
                 in
                   (* ToDo : explanation about this comparation is necessary. *)
                   (*
@@ -460,7 +460,7 @@ in
                    *)
                   if
                     (ID.compare(fromTyConId, rpTyConId) <> GREATER)
-                  then rpTyConId
+                  then (rpTyConId, eqKind)
                   else
                     raise E.RigidTypeInSharing 
                             {id = Absyn.longidToString hdLongTyCon}
@@ -482,10 +482,11 @@ in
                         end
                     )
                     longTyConList
-            val tyConIdSubst = 
-                List.foldr (fn (longTyCon, tyConIdSubst) =>
+            val (tyConIdEqSubst, othersOverallEqKind) = 
+                List.foldr (fn (longTyCon, (tyConIdSubst, othersOverallEqKind)) =>
                                let
-                                 val tyConId = SU.longTyConId newCurrentContext longTyCon
+                                 val (tyConId, eqKind) = 
+                                     SU.longTyConIdEqKind newCurrentContext longTyCon
                                in
                                  (* ToDo : explanation about this comparation
                                   * is necessary. *)
@@ -495,15 +496,23 @@ in
                                  if
                                    (ID.compare(fromTyConId, tyConId) <> GREATER)
                                  then
-                                   ID.Map.insert(tyConIdSubst, tyConId, representativeTyConId)
+                                     (ID.Map.insert(tyConIdSubst, tyConId, representativeTyConId),
+                                      if eqKind = T.EQ then eqKind else othersOverallEqKind)
                                  else
                                    raise E.RigidTypeInSharing {id = Absyn.longidToString longTyCon}
                                end
                               )
-                           ID.Map.empty
-                           (List.tl longTyConList)
+                           (ID.Map.empty, T.NONEQ)
+                           longTyConList
+              val newTyConIdEqSubst = 
+                  if hdEqKind = T.EQ orelse othersOverallEqKind = T.EQ then
+                      ID.Map.map (fn newId => (newId, T.EQ)) 
+                                 tyConIdEqSubst
+                  else 
+                      ID.Map.map (fn newId => (newId, T.NONEQ)) 
+                                 tyConIdEqSubst
           in 
-            (SU.equateTyConIdInContext tyConIdSubst context1, TCC.TPMSPECSHARE (tpmspec, pathList))
+              (SU.equateTyConIdEqInContext newTyConIdEqSubst context1, TCC.TPMSPECSHARE (tpmspec, pathList))
           end
             handle exn as E.TyConNotFoundInShare _ => 
                    (E.enqueueError (loc, exn);(TC.emptyContext, TCC.TPMSPECERROR))
@@ -525,7 +534,130 @@ in
          * then phi = { 1 -> 3, 2 -> 3}
          *)
         let 
+          type idEqSubst = (ID.id * T.eqKind) ID.Map.map
           val fromTyConId = T.nextTyConId()
+          val (context1, tpmspec) = typeinfSpec cc ptspec
+          val newCurrentContext = TIC.injectContextToCurrentContext context1
+          val (Es, strPaths) = 
+              foldr
+              (fn (longstrid, (Es,strPaths)) =>
+                 case TIC.lookupLongStructureEnv (newCurrentContext, longstrid)
+                   of (strpath, SOME {env = E, ...}) => 
+                      (E :: Es, strpath :: strPaths)
+                    | (_, NONE) =>
+                       (
+                        E.enqueueError
+                        (
+                         loc,
+                         E.StructureNotFound
+                         ({id = Absyn.longidToString(longstrid)})
+                         );
+                        (Es,strPaths))
+                       )
+              (nil,nil)
+              longstrids
+
+          fun share nil phi = phi
+            | share (E :: Es) phi =
+              let
+                val phi' = sharepairwise E Es phi
+              in
+                share Es phi'
+              end
+
+          and sharepairwise E nil (phi) = phi
+            | sharepairwise E (E1 :: Es) phi =
+              let 
+                val newphi = sharePairE E E1 phi
+              in 
+                sharepairwise E Es newphi
+              end
+
+          and sharePairE
+                  (E1 as (tyConEnv1, varEnv1, strEnv1:T.strEnv))
+                  (E2 as (tyConEnv2, varEnv2, strEnv2:T.strEnv))
+                  phi =
+                  let 
+                    val phi1 = shareTE (tyConEnv1, tyConEnv2) phi
+                    val phi2 = shareSE (strEnv1, strEnv2) phi1
+                  in 
+                    phi2
+                  end 
+
+          and shareTE (tyConEnv1, tyConEnv2) (phi:idEqSubst) =
+              SEnv.foldli
+                (fn (tyConName, tyBindInfo, (phi:idEqSubst)) =>
+                    (case SEnv.find(tyConEnv2, tyConName) of 
+                       NONE => phi
+                     | SOME(tyBindInfo') => 
+                       let
+                         val (idFrom, eqFrom) = 
+                             let
+                                 val idFrom = TIU.tyConIdInTyBindInfo tyBindInfo
+                                 val eqFrom = TIU.eqKindInTyBindInfo tyBindInfo
+                             in
+                                 case ID.Map.find(phi, idFrom) of
+                                     NONE => (idFrom, eqFrom)
+                                   | SOME (newId, newEqKind) =>
+                                     if newEqKind = T.EQ orelse eqFrom = T.EQ then
+                                         (newId, T.EQ)
+                                     else (newId, T.NONEQ)
+                             end
+                         val (idTo, eqTo) = 
+                             let
+                                 val idTo = TIU.tyConIdInTyBindInfo tyBindInfo'
+                                 val eqTo = TIU.eqKindInTyBindInfo tyBindInfo'
+                             in
+                                 case ID.Map.find(phi, idTo) of
+                                     NONE => (idTo, eqTo)
+                                   | SOME (newId, newEqKind) =>
+                                     if newEqKind = T.EQ orelse eqTo = T.EQ then
+                                         (newId, T.EQ)
+                                     else (newId, T.NONEQ)
+                             end
+                         val eqOverall = if eqFrom = T.EQ orelse eqTo = T.EQ then 
+                                             T.EQ 
+                                         else T.NONEQ
+                       in
+                         (* ToDo : explanation about this comparation is
+                          * necessary. *)
+(*
+                         if fromTyConId <= idFrom andalso
+                            fromTyConId <= idTo
+*)
+                         if
+                           (ID.compare(fromTyConId, idFrom) <> GREATER)
+                           andalso (ID.compare(fromTyConId, idTo) <> GREATER)
+                         then
+                           if ID.eq(idFrom, idTo) then phi
+                           else
+                               SU.extendTyConIdEqSubst (ID.Map.singleton(idFrom, (idTo, eqOverall)), phi) 
+                         else
+                           raise E.RigidTypeInSharing {id = tyConName}
+                       end
+                         handle exn as E.SharingOnTypeFun _ =>
+                                (E.enqueueError (loc,exn);phi)
+                              | exn as E.RigidTypeInSharing _ =>
+                                (E.enqueueError (loc,exn);phi)
+                                )
+                    )
+                phi
+                tyConEnv1
+
+          and shareSE (T.STRUCTURE strEnvCont1, T.STRUCTURE strEnvCont2) phi =
+              SEnv.foldli
+                (fn (strid, {env = E1, ...}, phi) =>
+                    case SEnv.find (strEnvCont2, strid) of
+                      NONE => phi
+                    | SOME {env = E2, ...} => sharePairE E1 E2 phi)
+                phi
+                strEnvCont1
+          val phi = share Es ID.Map.empty
+        in         
+          (SU.equateTyConIdEqInContext phi context1, TCC.TPMSPECSHARESTR (tpmspec,strPaths))
+        end
+(*        let 
+          val fromTyConId = SE.nextTyConId()
           val (context1, tpmspec) = typeinfSpec cc ptspec
           val newCurrentContext = TIC.injectContextToCurrentContext context1
           val (Es, strPaths) = 
@@ -564,8 +696,8 @@ in
               end
 
           and sharePairE
-                  (E1 as (tyConEnv1, varEnv1, strEnv1:T.strEnv))
-                  (E2 as (tyConEnv2, varEnv2, strEnv2:T.strEnv))
+                  (E1 as (tyConEnv1, varEnv1, strEnv1))
+                  (E2 as (tyConEnv2, varEnv2, strEnv2))
                   phi =
                   let 
                     val phi1 = shareTE (tyConEnv1, tyConEnv2) phi
@@ -594,7 +726,7 @@ in
                            (ID.compare(fromTyConId, idFrom) <> GREATER)
                            andalso (ID.compare(fromTyConId, idTo) <> GREATER)
                          then
-                           if ID.eq(idFrom, idTo) then phi
+                           if idFrom = idTo then phi
                            else 
                              SU.extendTyConIdSubst (ID.Map.singleton(idFrom, idTo), phi)
                          else
@@ -609,18 +741,19 @@ in
                 phi
                 tyConEnv1
 
-          and shareSE (T.STRUCTURE strEnvCont1, T.STRUCTURE strEnvCont2) phi =
+          and shareSE (strEnv1, strEnv2) phi =
               SEnv.foldli
-                (fn (strid, {env = E1, ...}, phi) =>
-                    case SEnv.find (strEnvCont2, strid) of
+                (fn (strid, T.STRUCTURE{env = E1, ...}, phi) =>
+                    case SEnv.find (strEnv2, strid) of
                       NONE => phi
-                    | SOME {env = E2, ...} => sharePairE E1 E2 phi)
+                    | SOME(T.STRUCTURE{env = E2, ...}) => sharePairE E1 E2 phi)
                 phi
-                strEnvCont1
+                strEnv1
           val phi = share Es ID.Map.empty
         in         
           (SU.equateTyConIdInContext phi context1, TCC.TPMSPECSHARESTR (tpmspec,strPaths))
         end
+*)
       | PT.PTSPECEMPTY => (TC.emptyContext, TCC.TPMSPECEMPTY)
 
     (*

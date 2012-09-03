@@ -1,3 +1,21 @@
+SML# Version 0.31 (released on 2007-11-07)
+
+This is a bug fix version of the 0.30. The following bugs reported to
+us have been fixed.
+* OS.Path.fromString and OS.FileSys.readDir behave differently 
+  from the basis library specification.
+* Type variables in exception declarations are not properly scoped.
+* Back quote (`) is not accepted as a symbol.
+* Real.fromDecimal does not conform to the basis library definition.
+* FixedInt and Text are missing.
+* Include statements in signatures are not parsed correctly.
+* Sharing constraints do not propagate eqtype attributes of the 
+  type specification.
+
+This version does not contain any major change or improvement we have
+made so far. We will be releasing 0.40 with major changes in near future.
+
+-----------------------------------------------------------------------------
 SML# Version 0.30 (released on 2007-07-02)
 
 1. Overview

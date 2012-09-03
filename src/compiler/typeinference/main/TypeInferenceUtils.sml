@@ -3,7 +3,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypeInferenceUtils.sml,v 1.36 2007/06/08 21:58:15 ohori Exp $
+ * @version $Id: TypeInferenceUtils.sml,v 1.36.2.1 2007/11/06 01:02:36 bochao Exp $
  *)
 structure TypeInferenceUtils =
 struct
@@ -223,6 +223,12 @@ struct
     case  tyBindInfo of
       TYCON({id, ...}) => id
     | TYSPEC {spec={id, ...},impl} => id
+    | TYFUN {name,...} => raise (E.SharingOnTypeFun {tyConName = name})
+
+  fun eqKindInTyBindInfo tyBindInfo = 
+    case  tyBindInfo of
+      TYCON({eqKind, ...}) => !eqKind
+    | TYSPEC {spec={eqKind, ...},impl} => eqKind
     | TYFUN {name,...} => raise (E.SharingOnTypeFun {tyConName = name})
 
   fun tyConIdInTyBindInfoOpt tyBindInfo = 

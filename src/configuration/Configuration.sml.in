@@ -6,15 +6,15 @@ struct
   (* version number of SML# compiler.
    * NOTE: When it is changed, you should update Configuration.hh also.
    *)
-  val Version = "0.30"
+  val Version = "0.31"
 
   (* Version numbers of SML# executable binary format. 
    * NOTE: When it is changed, you should update Configuration.hh also.
    *)
-  val BinaryVersion = {major = 0w0, minor = 0w30}
+  val BinaryVersion = {major = 0w0, minor = 0w31}
 
   (* release date *)
-  val ReleaseDate = "2007-07-03 16:16:12 JST"
+  val ReleaseDate = "2007-11-07 12:09:54 JST"
 
   (* absolute path to the build directory of development *)
   val BuildRoot = "%BUILD_ROOT%"

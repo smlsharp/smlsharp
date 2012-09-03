@@ -2,7 +2,7 @@
  * resolve the scope of user declaraed type variables.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
- * @version $Id: SetTVars.sml,v 1.14 2007/06/19 22:19:12 ohori Exp $
+ * @version $Id: SetTVars.sml,v 1.14.2.1 2007/11/05 12:57:38 ohori Exp $
  *)
 structure SetTVars : SETTVARS = struct
 local
@@ -96,19 +96,26 @@ in
        end
    | PLLET (pdeclList , plexpList , loc) => 
        let 
-         val ptdecls = 
-           foldr (fn (pdecl, ptdecls) => (setDecl env pdecl) :: ptdecls)
-           nil
+         val (ptdecls, tvarset1) = 
+           foldr (fn (pldecl, (ptdecls, tvarset)) => 
+                  let
+                    val (ptdecl, tvarset1) = setDecl env pldecl
+                  in
+                    (ptdecl::ptdecls, tvarNameSetUnion(tvarset1, tvarset))
+                  end)
+           (nil, SEnv.empty)
            pdeclList
-         val (ptexps, tvarset) = 
+
+         val (ptexps, tvarset2) = 
            foldr (fn (plexp, (ptexps, tvarset)) => 
                   let val (ptexp , tvarset1) = setExp env plexp
                   in (ptexp::ptexps, tvarNameSetUnion(tvarset, tvarset1))
                   end)
            (nil, SEnv.empty)
            plexpList
+         val tvarset3 = tvarNameSetUnion(tvarset1, tvarset2)
        in
-         (PTLET (ptdecls , ptexps, loc), tvarset)
+         (PTLET (ptdecls , ptexps, loc), tvarset3)
        end
    | PLRECORD (stringPlexpList , loc) => 
        let
@@ -312,7 +319,7 @@ in
            (nil, SEnv.empty)
            plpatPlexpList
        in
-         PTVAL (gardedSet, tvarset, ptrules , loc)
+         (PTVAL (gardedSet, tvarset, ptrules , loc), SEnv.empty)
        end
    | PDDECFUN (tvarList, plpatPlpatListPlexpListList, loc)  => 
        let 
@@ -351,7 +358,7 @@ in
            (nil, SEnv.empty)
            plpatPlpatListPlexpListList
        in
-         PTDECFUN (gardedSet, newTvarset, newPlpatPlpatListPlexpListList, loc)
+         (PTDECFUN (gardedSet, newTvarset, newPlpatPlpatListPlexpListList, loc), SEnv.empty)
        end
    | PDNONRECFUN (tvarList, (funPat,plpatListPlexpList), loc)  => 
        let
@@ -374,7 +381,7 @@ in
            (nil, tvarset)
            plpatListPlexpList
        in
-         PTNONRECFUN (gardedSet, tvarset, (newFunPat,ptruleMList), loc) 
+         (PTNONRECFUN (gardedSet, tvarset, (newFunPat,ptruleMList), loc), SEnv.empty)
        end
    | PDVALREC (tvarList , plpatPlexpList , loc) => 
        let 
@@ -391,54 +398,87 @@ in
            (nil, SEnv.empty)
            plpatPlexpList
        in
-         PTVALREC (gardedSet, tvarset, ptrules , loc)
+         (PTVALREC (gardedSet, tvarset, ptrules , loc), SEnv.empty)
        end
-   | PDVALRECGROUP (idList, pldecls, loc) =>
+   | PDVALRECGROUP (idList, pdeclList, loc) =>
      let
-       val ptdecls = 
-           foldr (fn (pldecl, ptdecls) => (setDecl env pldecl) :: ptdecls)
-           nil 
-           pldecls
-     in
-       PTVALRECGROUP (idList, ptdecls, loc)
-     end
-   | PDTYPE x => PTTYPE x
-   | PDDATATYPE x =>  PTDATATYPE x
-   | PDABSTYPE (datbinds, pdeclList, loc) =>  
-     let
-       val newPdeclList = 
-           foldr (fn (pldecl, ptdecls) => (setDecl env pldecl) :: ptdecls)
-           nil 
+       val (ptdecls, tvarset) = 
+           foldr (fn (pldecl, (ptdecls, tvarset)) => 
+                  let
+                    val (ptdecl, tvarset1) = setDecl env pldecl
+                  in
+                    (ptdecl::ptdecls, tvarNameSetUnion(tvarset1, tvarset))
+                  end)
+           (nil, SEnv.empty)
            pdeclList
      in
-       PTABSTYPE(datbinds, newPdeclList, loc)
+       (PTVALRECGROUP (idList, ptdecls, loc), tvarset)
      end
-   | PDREPLICATEDAT x => PTREPLICATEDAT x
+   | PDTYPE x => (PTTYPE x, SEnv.empty)
+   | PDDATATYPE x =>  (PTDATATYPE x, SEnv.empty)
+   | PDABSTYPE (datbinds, pdeclList, loc) =>  
+     let
+       val (ptdeclList, tvarset) = 
+           foldr (fn (pldecl, (ptdecls, tvarset)) => 
+                  let
+                    val (ptdecl, tvarset1) = setDecl env pldecl
+                  in
+                    (ptdecl::ptdecls, tvarNameSetUnion(tvarset1, tvarset))
+                  end)
+           (nil, SEnv.empty)
+           pdeclList
+     in
+       (PTABSTYPE(datbinds, ptdeclList, loc), tvarset)
+     end
+   | PDREPLICATEDAT x => (PTREPLICATEDAT x, SEnv.empty)
    | PDEXD (exbinds, loc) =>
      let
-       fun transExBind (PLEXBINDDEF arg) = PTEXBINDDEF arg
-         | transExBind (PLEXBINDREP arg) = PTEXBINDREP arg
+       fun setExBind (PLEXBINDDEF  (arg as (bool, namePath, SOME ty, loc))) =
+           (PTEXBINDDEF arg, tvarsInTy ty)
+         | setExBind (PLEXBINDDEF  (arg as (bool, namePath, NONE, loc))) =
+           (PTEXBINDDEF arg, SEnv.empty)
+         | setExBind (PLEXBINDREP  arg) =
+           (PTEXBINDREP arg, SEnv.empty)
+       fun setExBindList nil = (nil, SEnv.empty)
+         | setExBindList (exBind::exBindList) =
+           let
+             val (newExBind, tvarset1) = setExBind exBind
+             val (newExBindList, tvarset2) = setExBindList exBindList
+           in
+             (newExBind::newExBindList, tvarNameSetUnion(tvarset1, tvarset2))
+           end
+       val (newExBindList, tvarset) = setExBindList exbinds
      in
-       PTEXD (map transExBind exbinds, loc)
+       (PTEXD (newExBindList, loc), tvarset)
      end
    | PDLOCALDEC (pdeclList1 , pdeclList2 , loc) => 
        let
-         val ptdecls1 = 
-           foldr (fn (pldecl, ptdecls) => (setDecl env pldecl) :: ptdecls)
-           nil 
+         val (ptdecls1, tvarset) = 
+           foldr (fn (pldecl, (ptdecls, tvarset)) => 
+                  let
+                    val (ptdecl, tvarset1) = setDecl env pldecl
+                  in
+                    (ptdecl::ptdecls, tvarNameSetUnion(tvarset1, tvarset))
+                  end)
+           (nil, SEnv.empty)
            pdeclList1
-         val ptdecls2 = 
-           foldr (fn (pldecl, ptdecls) => (setDecl env pldecl) :: ptdecls)
-           nil 
+         val (ptdecls2, tvarset) = 
+           foldr (fn (pldecl, (ptdecls, tvarset)) => 
+                  let
+                    val (ptdecl, tvarset1) = setDecl env pldecl
+                  in
+                    (ptdecl::ptdecls, tvarNameSetUnion(tvarset1, tvarset))
+                  end)
+           (nil, SEnv.empty)
            pdeclList2
        in
-         PTLOCALDEC (ptdecls1, ptdecls2, loc)
+         (PTLOCALDEC (ptdecls1, ptdecls2, loc), tvarset)
        end
-   | PDOPEN(paths,loc) => PTOPEN(paths,loc)
-   | PDINFIXDEC(n,idlist,loc) => PTINFIXDEC(n,idlist,loc)
-   | PDINFIXRDEC(n,idlist,loc) => PTINFIXRDEC(n,idlist,loc)
-   | PDNONFIXDEC(idlist,loc) => PTNONFIXDEC(idlist,loc)
-   | PDEMPTY => PTEMPTY)
+   | PDOPEN(paths,loc) => (PTOPEN(paths,loc), SEnv.empty)
+   | PDINFIXDEC(n,idlist,loc) => (PTINFIXDEC(n,idlist,loc), SEnv.empty)
+   | PDINFIXRDEC(n,idlist,loc) => (PTINFIXRDEC(n,idlist,loc), SEnv.empty)
+   | PDNONFIXDEC(idlist,loc) => (PTNONFIXDEC(idlist,loc), SEnv.empty)
+   | PDEMPTY => (PTEMPTY, SEnv.empty))
       handle exn as UE.UserErrors _ => raise exn
            | exn as C.Bug _ => raise exn
            | exn => raise UE.UserErrors([(PL.getLocDec pdecl, UE.Error, exn)])
@@ -508,6 +548,15 @@ in
 (**************** module language ************)
  
  and setstrdec env plstrdec =
+   let
+     val setDecl =
+       fn env => fn ptdeclList =>
+         let
+           val (ptdeclList, _) = setDecl env ptdeclList
+         in
+           ptdeclList
+         end
+   in
      case plstrdec of
          PLCOREDEC (pdecl,loc) => PTCOREDEC(setDecl env pdecl,loc)
        | PLSTRUCTBIND (plstrbinds,loc) =>
@@ -530,7 +579,7 @@ in
          in
              PTSTRUCTLOCAL(ptstrdecs1,ptstrdecs2,loc)
          end
-
+   end
  and setstrexp env plstrexp =
      case plstrexp of
          PLSTREXPBASIC(plstrdecs,loc) =>

@@ -2,7 +2,7 @@
  * type context manipulation utilities
  * @copyright (c) 2006, Tohoku University.
  * @author Liu Bochao
- * @version $Id: TypeContextUtils.sml,v 1.53 2007/02/28 15:31:26 katsu Exp $
+ * @version $Id: TypeContextUtils.sml,v 1.53.8.1 2007/11/05 13:27:02 bochao Exp $
  *)
 structure TypeContextUtils =
 struct
@@ -333,7 +333,326 @@ struct
     (visited, SEnv.empty)
     strEnvCont
 
+  (*****************************************************************************************)
+  fun substTyConIdEqInTy visited tyConIdEqSubst ty =
+      TypeTransducer.transTyPreOrder
+      (fn (ty, visited) =>
+          case ty of
+            TYVARty (tvar as ref (TVAR tvKind)) => 
+            let
+              val (visited, tvKind) =
+                  substTyConIdEqInTvKind visited tyConIdEqSubst tvKind
+              val _  = tvar := TVAR tvKind
+            in
+              (ty, visited, true)
+            end
+          | CONty {tyCon, args} => 
+            let
+              val (visited, tyCon) =
+                  substTyConIdEqInTyCon visited tyConIdEqSubst tyCon
+            in (CONty {tyCon=tyCon, args = args}, visited, true)
+            end
+          | POLYty {boundtvars, body} => 
+            let
+              val (visited, boundtvars) = 
+                  IEnv.foldli
+                      (fn (index, btvKind, (visited, boundtvars)) =>
+                          let
+                            val (visited, btvKind) =
+                                substTyConIdEqInBtvKind
+                                    visited tyConIdEqSubst btvKind
+                          in
+                            (visited, IEnv.insert(boundtvars, index, btvKind))
+                          end)
+                      (visited, IEnv.empty)
+                      boundtvars
+            in
+              (POLYty{boundtvars = boundtvars, body = body}, visited, true)
+            end
+          | _ => (ty, visited, true))
+      visited
+      ty
 
+  and substTyConIdEqInTvKind visited tyConIdEqSubst {lambdaDepth, id, recKind, eqKind, tyvarName} = 
+    let
+      val (visited, recKind) =
+        case recKind of 
+          UNIV => (visited, UNIV)
+        | REC tySEnvMap => 
+          let
+              val (visited,tySEnvMap) = 
+                  (SEnv.foldli
+                       (fn (label, ty, (visited, tySEnvMap)) =>
+                           let
+                               val (ty, visited) = substTyConIdEqInTy visited tyConIdEqSubst ty
+                           in
+                               (visited, SEnv.insert(tySEnvMap, label, ty))
+                           end)
+                       (visited, SEnv.empty)
+                       tySEnvMap)
+          in 
+              (visited, REC tySEnvMap)
+          end
+        | OVERLOADED tys => 
+          let
+              val (visited,tys) = 
+                  (foldr
+                       (fn (ty, (visited, tys)) =>
+                           let
+                               val (ty, visited) = substTyConIdEqInTy visited tyConIdEqSubst ty
+                           in
+                               (visited, ty :: tys)
+                           end)
+                       (visited, nil)
+                       tys)
+          in 
+              (visited, OVERLOADED tys)
+          end
+    in
+      (
+       visited,
+       {
+        lambdaDepth = lambdaDepth,
+        id=id, 
+        recKind = recKind,
+        eqKind = eqKind,
+        tyvarName = tyvarName}
+       )
+    end
+
+  and substTyConIdEqInBtvKind visited tyConIdEqSubst {index, recKind, eqKind} = 
+    let
+      val (visited, recKind) =
+        case recKind of 
+          UNIV => (visited, UNIV)
+        | REC tySEnvMap => 
+          let
+              val (visited,tySEnvMap) = 
+                  (SEnv.foldli
+                       (fn (label, ty, (visited, tySEnvMap)) =>
+                           let
+                               val (ty, visited) = substTyConIdEqInTy visited tyConIdEqSubst ty
+                           in
+                               (visited, SEnv.insert(tySEnvMap, label, ty))
+                           end)
+                       (visited, SEnv.empty)
+                       tySEnvMap)
+          in
+              (visited, REC tySEnvMap)
+          end
+        | OVERLOADED tys => 
+          let
+              val (visited,tys) = 
+                  (foldr
+                       (fn (ty, (visited, tys)) =>
+                           let
+                               val (ty, visited) = substTyConIdEqInTy visited tyConIdEqSubst ty
+                           in
+                               (visited, ty :: tys)
+                           end)
+                       (visited, nil)
+                       tys)
+          in
+              (visited, OVERLOADED tys)
+          end
+    in
+      (
+       visited,
+       {
+        index=index, 
+        recKind = recKind,
+        eqKind = eqKind
+        }
+       )
+    end
+
+  and substTyConIdEqInTyCon visited 
+                          tyConIdEqSubst 
+                          (tyCon as {name, strpath, abstract, 
+                                     tyvars, id, eqKind, 
+                                     boxedKind, datacon}) 
+    =
+      let 
+        val visited = 
+            if ID.Set.member(visited, id) then
+              visited
+            else
+              let 
+                val visited = ID.Set.add(visited,id)
+                val (visited, varEnv) = substTyConIdEqInVarEnv visited tyConIdEqSubst (!datacon)
+              in
+                (datacon := varEnv;
+                 visited)
+              end
+        val (newid, newEqKind) = 
+            case ID.Map.find(tyConIdEqSubst, id) of
+                NONE => (id, !eqKind)
+              | SOME x => x
+        val _ = eqKind := newEqKind
+       in
+          (visited,
+           {
+            name = name, 
+            strpath = strpath,
+            abstract = abstract,
+            tyvars = tyvars,
+            id = newid,
+            eqKind = eqKind,
+            boxedKind = boxedKind,
+            datacon = datacon
+            }
+           )
+      end
+
+  and substTyConIdEqInTyFun visited tyConIdEqSubst {name, tyargs, body} =
+    let
+      val (visited, tyargs) =
+           IEnv.foldri
+           (fn (index, btvKind, (visited, tyargs)) =>
+               let
+                 val (visited, btvKind) = substTyConIdEqInBtvKind visited tyConIdEqSubst btvKind
+               in
+                 (visited, IEnv.insert(tyargs, index, btvKind))
+               end)
+           (visited, IEnv.empty)
+           tyargs
+      val (body, visited) = substTyConIdEqInTy visited tyConIdEqSubst body
+    in
+      (visited,
+       {
+        name = name, 
+        tyargs = tyargs, 
+        body = body
+        }
+       )
+    end
+
+  and substTyConIdEqInSpec 
+          tyConIdEqSubst (tyspec as {name, id, strpath, eqKind, tyvars, boxedKind}) =
+      let
+          val (newid, newEqKind) =
+              case ID.Map.find(tyConIdEqSubst, id) of
+                  NONE => (id, eqKind)
+                | SOME x => x
+      in
+          {name=name, 
+           id= newid,
+           strpath = strpath, 
+           eqKind = newEqKind, 
+           tyvars = tyvars,
+           boxedKind = boxedKind
+           }
+      end
+
+  and substTyConIdEqInTyBindInfo visited tyConIdEqSubst tyBindInfo =
+    case tyBindInfo of
+      TYCON (tyCon as {name,...})  => 
+        let
+          val (visited, tyCon) = substTyConIdEqInTyCon visited tyConIdEqSubst tyCon
+        in
+          (visited, TYCON tyCon)
+        end
+    | TYFUN tyFun => 
+        let
+          val (visited, tyFun) = substTyConIdEqInTyFun visited tyConIdEqSubst tyFun
+        in
+          (visited, TYFUN tyFun)
+        end
+    | TYSPEC {spec = spec , impl = impl}=> 
+      case impl of
+        NONE => (visited, TYSPEC {spec = substTyConIdEqInSpec tyConIdEqSubst spec, impl = NONE})
+      | SOME tyBindInfo => 
+        let
+          val (visited,tyBindInfo) = substTyConIdEqInTyBindInfo visited tyConIdEqSubst tyBindInfo
+        in
+          (visited, TYSPEC {spec = substTyConIdEqInSpec tyConIdEqSubst spec, impl = SOME tyBindInfo})
+        end
+
+  and substTyConIdEqInTyConEnv visited tyConIdEqSubst tyConEnv =
+    let
+      val (visited, tyConEnv) =
+          SEnv.foldli
+          (fn (label, tyCon, (visited, tyConEnv)) =>
+              let
+                val (visited, tyCon) = substTyConIdEqInTyBindInfo visited tyConIdEqSubst tyCon
+              in
+                (visited, SEnv.insert(tyConEnv, label, tyCon))
+              end)
+          (visited, SEnv.empty)
+          tyConEnv
+    in
+      (visited, tyConEnv)
+    end
+
+  and substTyConIdEqInVarEnv visited tyConIdEqSubst varEnv =
+      SEnv.foldli
+      (fn (label, idstate, (visited, varEnv)) =>
+          case idstate of
+            CONID {name, strpath, funtyCon, ty, tag, tyCon} =>
+              let
+                val (ty, visited) = substTyConIdEqInTy visited tyConIdEqSubst ty
+                val (visited, tyCon) = substTyConIdEqInTyCon visited tyConIdEqSubst tyCon
+              in
+                (visited,
+                 SEnv.insert(
+                             varEnv,
+                             label,
+                             CONID{name=name, 
+                                   strpath=strpath, 
+                                   funtyCon=funtyCon, 
+                                   ty = ty,
+                                   tag = tag,
+                                   tyCon = tyCon}
+                             )
+                 )
+              end
+          | VARID {name,ty,strpath} =>
+            let
+                val (ty, visited) = substTyConIdEqInTy visited tyConIdEqSubst ty
+            in
+                (visited,
+                 SEnv.insert(
+                             varEnv,
+                             label,
+                             VARID{name=name,
+                                   strpath=strpath,
+                                   ty=ty}
+                             )
+                 )
+            end
+          | x => (visited, SEnv.insert(varEnv,label,x))
+      )
+      (visited, SEnv.empty)
+      varEnv
+
+  and substTyConIdEqInEnv visited tyConIdEqSubst (tyConEnv, varEnv, STRUCTURE strEnvCont) =
+    let
+      val (visited, tyConEnv) = substTyConIdEqInTyConEnv visited tyConIdEqSubst tyConEnv
+      val (visited, varEnv) = substTyConIdEqInVarEnv visited tyConIdEqSubst varEnv
+      val (visited, strEnvCont) = substTyConIdEqInStrEnvCont visited tyConIdEqSubst strEnvCont
+    in
+      (
+       visited,
+       (tyConEnv, 
+        varEnv,
+        STRUCTURE strEnvCont)
+       )
+    end
+
+  and substTyConIdEqInStrEnvCont visited tyConIdEqSubst strEnvCont =
+    SEnv.foldri
+    (fn
+     (label, {id, name, strpath, env = Env, ...}, (visited, strEnvCont))
+     =>
+     let
+       val (visited, Env) = substTyConIdEqInEnv visited tyConIdEqSubst Env
+       val strPathInfo = {id = id, name = name, strpath = strpath, env = Env}
+     in
+       (visited, SEnv.insert(strEnvCont, label, strPathInfo))
+     end)
+    (visited, SEnv.empty)
+    strEnvCont
+  (*****************************************************************************************)
   fun unifyBoxedKind {tyConName, requiredKind = localRequiredKind, objectKind} =
       case (localRequiredKind, objectKind) of
           (GENERICty, _) => objectKind

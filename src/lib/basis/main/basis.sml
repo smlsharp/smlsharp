@@ -1,7 +1,7 @@
 (*
  * loads modules of Basis library.
  * @author YAMATODANI Kiyoshi
- * @version $Id: basis.sml,v 1.79 2007/05/13 06:29:48 kiyoshiy Exp $
+ * @version $Id: basis.sml,v 1.79.6.1 2007/11/06 05:29:10 kiyoshiy Exp $
  *)
 
 (* NOTE : Prefix "../main/" is specified in order to enable SML/NJ to load
@@ -174,6 +174,7 @@ use "./ParserComb.sml";
 use "./Int.sml";
 structure LargeInt = Int;
 structure Int32 = Int;
+structure FixedInt = Int;
 structure Position = Int;
 use "./INTEGER.sig";
 structure Int = Int : INTEGER;
@@ -468,6 +469,20 @@ structure RealVector = S.V;
 structure RealArray = S.A;
 structure RealVectorSlice = S.VS;
 structure RealArraySlice = S.AS;
+end;
+
+(****************************************)
+
+use "./TEXT.sig";
+structure Text : TEXT =
+struct
+  structure Char = Char
+  structure String = String
+  structure Substring = Substring
+  structure CharVector = CharVector
+  structure CharArray = CharArray
+  structure CharVectorSlice = CharVectorSlice
+  structure CharArraySlice = CharArraySlice
 end;
 
 (****************************************)

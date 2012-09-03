@@ -94,7 +94,7 @@ signature REAL =
     val fromLarge: IEEEReal.rounding_mode -> LargeReal.real -> real
 
     val toDecimal   : real -> IEEEReal.decimal_approx
-    val fromDecimal : IEEEReal.decimal_approx -> real
+    val fromDecimal : IEEEReal.decimal_approx -> real option
 
     val toFloat   : real -> float
     val fromFloat : float -> real

@@ -3,7 +3,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Unify.sml,v 1.11 2007/03/10 15:27:04 ohori Exp $
+ * @version $Id: Unify.sml,v 1.11.8.1 2007/11/05 12:57:38 ohori Exp $
  *)
 structure Unify : UNIFY =
 struct
@@ -45,6 +45,71 @@ struct
      * @param tvKind2 type variable kind
      * @return type variable kind
      *)
+    fun lubKind (tvKind1 : tvKind, tvKind2 : tvKind) =
+        let 
+          val lambdaDepth = 
+            let
+              val lambdaDepth1 = #lambdaDepth tvKind1
+              val lambdaDepth2 = #lambdaDepth tvKind2
+            in
+              case Int.compare (lambdaDepth1, lambdaDepth2) of
+                LESS => 
+                  (
+                   adjustDepthInRecKind lambdaDepth1 (#recKind tvKind2);
+                   lambdaDepth1
+                   )
+              | GREATER =>
+                  (
+                   adjustDepthInRecKind lambdaDepth2 (#recKind tvKind1);
+                   lambdaDepth2
+                   )
+              | EQUAL => lambdaDepth1
+            end
+          val eqKind = 
+              case (#eqKind tvKind1, #eqKind tvKind2) of
+                (NONEQ, NONEQ) => NONEQ
+              | (NONEQ, EQ) => (adjustEqKindInRecKind EQ (#recKind tvKind1); EQ)
+              | (EQ, NONEQ) => (adjustEqKindInRecKind EQ (#recKind tvKind2); EQ)
+              | (EQ, EQ) => EQ
+          val (newRecKind, newTyEquations) = 
+              case (#recKind tvKind1, #recKind tvKind2) of
+                (UNIV, x) => (x, nil)
+              | (x, UNIV) => (x, nil)
+              | (REC fl1, REC fl2) =>
+                let 
+                  val newTyEquations = 
+                      SEnv.listItems
+                          (SEnv.intersectWith (fn x => x) (fl1, fl2))
+                  val newTyFields = SEnv.unionWith #1 (fl1, fl2)
+                in (REC newTyFields, newTyEquations)
+                end
+              | (OVERLOADED L1, OVERLOADED L2) => 
+                let val L = intersection(L1, L2)
+                    val L = case eqKind of 
+                              EQ => List.filter admitEqTy L
+                            | _ => L          
+                in
+                  case L of nil => raise Unify
+                    | _ => (OVERLOADED L, nil)
+                end
+              | _ => raise Control.Bug "lubKind: incompatible kind"
+          val tyvarName = 
+              case (#tyvarName tvKind1, #tyvarName tvKind2) of
+                (NONE, x) => x
+              | (x, NONE) => x
+              | (SOME v1, SOME v2) => SOME v1
+        in 
+          (
+            {
+             lambdaDepth = lambdaDepth,
+             recKind = newRecKind, 
+             eqKind = eqKind, 
+             tyvarName = tyvarName
+             },
+            newTyEquations
+          )
+        end
+(*
     fun lubKind (tvKind1 : tvKind, tvKind2 : tvKind) =
         let 
           val lambdaDepth = Int.min(#lambdaDepth tvKind1, #lambdaDepth tvKind2)
@@ -91,6 +156,7 @@ struct
             newTyEquations
           )
         end
+*)
 
     (**
      * Generate a set of type equations to force the type to have the kind.

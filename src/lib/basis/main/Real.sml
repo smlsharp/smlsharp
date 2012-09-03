@@ -1,7 +1,7 @@
 (**
  * Real structure.
  * @author YAMATODANI Kiyoshi
- * @version $Id: Real.sml,v 1.19 2007/03/25 12:52:35 kiyoshiy Exp $
+ * @version $Id: Real.sml,v 1.19.6.1 2007/11/06 05:29:10 kiyoshiy Exp $
  *)
 structure Real =
 struct
@@ -230,23 +230,31 @@ struct
               then 1.0 / powered
               else powered
             end
+    exception InvalidDigit of int
     fun accumIntList ints =
-        foldl (fn (int, accum) => accum * 10.0 + fromInt int) 0.0 ints
+        foldl
+            (fn (int, accum) =>
+                if 0 <= int andalso int <= 9
+                then accum * 10.0 + fromInt int
+                else raise InvalidDigit int)
+            0.0
+            ints
   in
   (* sign * 0.d[1]d[2]...d[n] * 10 ^ exp *)
   fun fromDecimal ({kind, sign, digits, exp} : IR.decimal_approx) =
       case kind of
-        IR.NAN _ => nan
-      | IR.INF => if sign then negInf else posInf
-      | IR.ZERO => if sign then ~1.0 * 0.0 else 0.0
+        IR.NAN _ => SOME nan
+      | IR.INF => SOME(if sign then negInf else posInf)
+      | IR.ZERO => SOME(if sign then ~1.0 * 0.0 else 0.0)
       | _ =>
         let
           val frac =
               (accumIntList digits) * (1.0 / (pow10 (List.length digits)))
           val exp = pow10 exp
         in
-          (if sign then ~1.0 else 1.0) * frac * exp
+          SOME((if sign then ~1.0 else 1.0) * frac * exp)
         end
+          handle InvalidDigit _ => NONE
   end
 
   local
@@ -427,7 +435,15 @@ struct
   fun toString real = fmt (StringCvt.GEN NONE) real
 
   fun scan reader stream =
-      PC.wrap (IEEEReal.scan, fn decimal => fromDecimal decimal) reader stream
+      PC.bind
+          (
+            IEEEReal.scan,
+            fn digits =>
+               case fromDecimal digits
+                of SOME r => PC.result r
+                 | NONE => PC.failure
+          )
+          reader stream
   val fromString = StringCvt.scanString scan
 
   end
