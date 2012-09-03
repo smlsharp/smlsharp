@@ -429,12 +429,23 @@ struct
               else
                 let
                   val newTyEquations = checkKind ty2 tvKind1
+                  val _ = unifyTy newTyEquations
+                in
+                  (
+                   TU.performSubst(ty1, ty2); 
+                   unifyTy tail
+                  )
+                end
+(*
+                let
+                  val newTyEquations = checkKind ty2 tvKind1
                 in
                   (
                    TU.performSubst(ty1, ty2); 
                    unifyTy (newTyEquations @ tail)
                   )
                 end
+*)
             | (
                _,
                T.TYVARty (tvState2 as ref(T.TVAR tvKind2))
@@ -444,12 +455,23 @@ struct
               else
                 let
                   val newTyEquations = checkKind ty1 tvKind2
+                  val _ = unifyTy newTyEquations
+                in
+                  (
+                   TU.performSubst(ty2, ty1); 
+                   unifyTy tail
+                  )
+                end
+(*
+                let
+                  val newTyEquations = checkKind ty1 tvKind2
                 in
                   (
                    TU.performSubst(ty2, ty1); 
                    unifyTy (newTyEquations @ tail)
                   )
                 end
+*)
            (* constructor types *)
             | (
                T.FUNMty(domainTyList1, rangeTy1),

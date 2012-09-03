@@ -12,6 +12,7 @@ Group is
         ../../../src/compiler/control/sources.cm
         ../../../src/compiler/vm/sources.cm
         ../../../src/compiler/pickle/sources.cm
+        ../../../src/compiler/name/sources.cm
         ../../../src/instructions/compiler/sources.cm
 
         BenchmarkTypes.sml

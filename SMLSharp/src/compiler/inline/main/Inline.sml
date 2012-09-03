@@ -1578,9 +1578,8 @@ fun inlineTopBlockList {globalEnv,localEnv,intRenameEnv,tyEnv, topBlockList=nil}
 	}
     end
 
-fun doInlining (IE.GIE globalEnv) (stamps:Counters.stamps) topBlockList = 
+fun doInlining (IE.GIE globalEnv) topBlockList = 
     let 
-        val _ = Counters.init stamps
 	val {globalEnv,topBlockList,...} = 
             inlineTopBlockList
 		{
@@ -1591,8 +1590,9 @@ fun doInlining (IE.GIE globalEnv) (stamps:Counters.stamps) topBlockList =
 		 topBlockList=topBlockList
 		}
     in 
-	(IE.GIE globalEnv, Counters.getCountersStamps(), topBlockList)
+	(IE.GIE globalEnv, topBlockList)
     end
+    handle exn => raise exn
 
 end
 end

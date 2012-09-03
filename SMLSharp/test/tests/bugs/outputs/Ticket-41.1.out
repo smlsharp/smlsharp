@@ -1,0 +1,4 @@
+datatype t
+con X : real ref -> t
+val r = ref 1 : real ref
+val it = true : bool

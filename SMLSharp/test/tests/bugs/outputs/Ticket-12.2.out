@@ -1,0 +1,7 @@
+structure X :
+  sig
+    type t = ?.X.dt
+    val D : t
+  end
+val y = D : X.t
+

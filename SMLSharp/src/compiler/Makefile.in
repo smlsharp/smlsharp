@@ -195,8 +195,8 @@ mlton_g: $(MLTON_OBJDIR)/MLTON_CONFIGURED \
 # This rule is invoked from src/tool/mlb2use/Makefile also.
 mlton_parser_g: $(srcdir)/parser/main/iml.grm.mlton.sml \
                 $(srcdir)/parser/main/iml.lex.mlton.sml \
-                $(srcdir)/parser/main/interface.grm.mlton.sml \
-                $(srcdir)/parser/main/interface.lex.mlton.sml
+
+
 mlton_config:
 	test ! -f $(MLTON_OBJDIR)/MLTON_CONFIGURED
 	$(MAKE) $(MLTON_OBJDIR)/mlton_conf.map

@@ -53,18 +53,6 @@ use "./LMLML.sml";
 use "./smlformatlib.sml";
 
 local
-  structure FT : FORMAT_EXPRESSION_TYPES =
-  struct
-    datatype priority = datatype SMLSharp.SMLFormat.priority
-    datatype assocDirection = datatype SMLSharp.SMLFormat.assocDirection
-    type assoc = {cut : bool, strength : int, direction : assocDirection}
-    datatype expression = datatype SMLSharp.SMLFormat.expression
-  end
-in
-structure SMLFormat = SMLFormatBase(FT)
-end;
-
-local
 
   structure FE = SMLFormat.FormatExpression
 
@@ -85,17 +73,6 @@ local
   local
     val elision =
         FE.Term (3, "...")
-(*
-        FE.Guard
-            (
-              NONE,
-              [
-                FE.Indicator
-                    {space = true, newline = SOME{priority = FE.Deferred}},
-                FE.Term (3, "...")
-              ]
-            )
-*)
   in
   (* cut-off format expressions according to parameters defined in
    * SMLSharp.Control.Printer structure.
@@ -117,9 +94,6 @@ local
             case maxDepth of
               NONE => (fn _ => false)
             | SOME depth => (fn d => depth <= d)
-        fun keepSymbol (FE.StartOfIndent _) = true
-          | keepSymbol FE.EndOfIndent = true
-          | keepSymbol _ = false
         fun visit depth (FE.Guard (enclosedAssocOpt, symbols)) =
             if isCutOffDepth depth
             then elision

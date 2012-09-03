@@ -1,0 +1,2 @@
+val maxUInt32 = 0wxffffffff : Word32.word
+val isEqual = true : bool

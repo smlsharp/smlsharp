@@ -1313,10 +1313,8 @@ struct
       end
     | normalizeCodeDeclList nil = (nil, nil)
 
-  fun normalize stamp rbudecls =
+  fun normalize rbudecls =
       let
-        val _ = Counters.init stamp
-
         val pos = Return {returnKind = RETURN,
                           decls = nil,
                           tys = [AN.SINT],
@@ -1361,7 +1359,7 @@ struct
         val topdecs = map AN.ANCLUSTER clusters
         val topdecs = topdecs @ [ AN.ANENTERTOPLEVEL topLevelEntryLabel ]
       in
-        (Counters.getCounterStamp (), topdecs)
+        topdecs
       end
 
 end

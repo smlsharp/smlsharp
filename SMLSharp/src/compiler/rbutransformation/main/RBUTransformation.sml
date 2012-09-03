@@ -2519,5 +2519,6 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
       in
         newDeclList
       end
+      handle exn => raise exn
 
 end

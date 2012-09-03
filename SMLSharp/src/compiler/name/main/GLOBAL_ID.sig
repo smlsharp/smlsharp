@@ -37,11 +37,11 @@ sig
   val toInt : id -> int
   val fromInt : int -> id
 
- (* make the counter ready with the next id *)
-  val init : id -> unit
+ (* discard the current state and reset the the counter with the next id *)
+  val resume : id -> unit
 
- (* stop the counter and return the seed id is the next id *)
-  val reset : unit -> id 
+ (* return the current seed and destroy the counter *)
+  val terminate : unit -> id 
 
   val generate : unit -> id 
 
@@ -50,5 +50,7 @@ sig
 
   (* (advance 0;generate())  = generate () *)
   val advance : int -> unit 
+  val start : unit -> unit
+  val stop : unit -> unit
 
 end

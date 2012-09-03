@@ -18,11 +18,9 @@ local
   open TypedCalc TypedFlatCalc 
 in
   fun allocateID 
-          topVarExternalVarIDBasis varNamePathEnv (stamps:Counters.stamps) 
-          tptopdecs
+          topVarExternalVarIDBasis varNamePathEnv tptopdecs
     =
       let
-          val _ = Counters.init stamps
           val tptopGroups = UIAM.tptopdecsToTpTopGroups tptopdecs
           val (deltaCurrentVarIDBasis, deltaIDMap, tfpdecs) = 
               UIAM.tptopGroupsToTfpdecs topVarExternalVarIDBasis tptopGroups
@@ -39,9 +37,9 @@ in
       in
           (
            topBasis,
-           Counters.getCounterStamps(),
            externalIDAnnotatedTfpGroups
           )
       end
+      handle exn => raise exn
 end
 end

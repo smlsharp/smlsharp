@@ -24,7 +24,6 @@ Group is
 
         ../../typeinference/sources.cm
 
-	Counters.sml	
         Utility.sml
         ObjectCode.sml
         FormatterGenerator.sml

@@ -5,10 +5,9 @@
 structure OverloadCompilation : 
 sig
  val compile : 
-     Counters.stamps
-     -> VarIDContext.topExternalVarIDBasis
+     VarIDContext.topExternalVarIDBasis
      -> RecordCalc.topBlock list
-     -> Counters.stamps * RecordCalc.topBlock list
+     -> RecordCalc.topBlock list
 end =
 struct
  structure RC = RecordCalc
@@ -1267,15 +1266,15 @@ struct
        =>
        RC.RCBASICBLOCK (compileBasicblock env basicBlock)
 
-  fun compile (stamps:Counters.stamps) externalVarIdEnv topBlockList = 
+  fun compile externalVarIdEnv topBlockList = 
       let
-        val _ = Counters.init stamps
         val emptyEnv = {oprimEnv = BtvListOPrimEnv.empty,
                         varIdEnv = VarIdEnv.empty,
                         externalVarIdEnv = externalVarIdEnv} : env
         val topBlockList = compileTopblockList emptyEnv topBlockList
       in
-        (Counters.getCounterStamp(), topBlockList)
+        topBlockList
       end
+      handle exn => raise exn
 
 end

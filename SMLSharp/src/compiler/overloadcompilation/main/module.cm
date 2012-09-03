@@ -12,5 +12,4 @@ Group is
       ../../name/sources.cm
       ../../primitive/sources.cm
 
-      Counters.sml
       OverloadCompile.sml

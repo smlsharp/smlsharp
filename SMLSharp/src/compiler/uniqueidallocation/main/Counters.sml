@@ -5,23 +5,12 @@
  *)
 structure Counters : 
           sig
-              type stamps
-              val init : stamps -> unit
-              val getCounterStamps : unit -> stamps
               val newLocalID : unit -> VarID.id
               val newExternalID : unit -> ExternalVarID.id
           end
   =
 struct
-   type stamps = ExternalVarID.id
-
-   fun init stamps = ExternalVarID.init stamps
-       
-   fun getCounterStamps () = ExternalVarID.reset ()
-
    fun newLocalID () = VarID.generate ()
-
    fun newExternalID () = 
         ExternalVarID.generate ()
-
 end

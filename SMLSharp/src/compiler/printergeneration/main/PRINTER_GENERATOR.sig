@@ -29,12 +29,11 @@ sig
   val generate :
       {
         context : InitialTypeContext.topTypeContext,
-        stamps : Counters.stamps,
         newContext : TypeContext.context,
         flattenedNamePathEnv:NameMap.basicNameNPEnv,
         printBinds : bool,
         declarations : TypedCalc.tptopdecl list
       }
-      -> TypeContext.context * NameMap.basicNameNPEnv * Counters.stamps * TypedCalc.tptopdecl list
+      -> TypeContext.context * NameMap.basicNameNPEnv * TypedCalc.tptopdecl list
 
 end

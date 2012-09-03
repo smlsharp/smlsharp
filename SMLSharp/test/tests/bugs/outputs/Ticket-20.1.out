@@ -1,0 +1,16 @@
+../tests/bugs/tests/Ticket-20.1.sml:3.18-3.25 Error:
+  operator and operand don't agree
+  operator domain: 'ba::{int, IntInf.int} * 'ba::{int, IntInf.int}
+  operand: 'ba::{int, IntInf.int} * 'y::{real, Real32.real}
+../tests/bugs/tests/Ticket-20.1.sml:4.18-4.25 Error:
+  operator and operand don't agree
+  operator domain: 't::{int, IntInf.int} * 't::{int, IntInf.int}
+  operand: 't::{int, IntInf.int} * 'r::{real, Real32.real}
+../tests/bugs/tests/Ticket-20.1.sml:5.18-5.25 Error:
+  operator and operand don't agree
+  operator domain: 'm::{int, IntInf.int} * 'm::{int, IntInf.int}
+  operand: 'm::{int, IntInf.int} * 'k::{real, Real32.real}
+../tests/bugs/tests/Ticket-20.1.sml:6.18-6.25 Error:
+  operator and operand don't agree
+  operator domain: 'f::{int, IntInf.int} * 'f::{int, IntInf.int}
+  operand: 'f::{int, IntInf.int} * 'd::{real, Real32.real}

@@ -32,4 +32,13 @@ Usage.
 This generates a SML source file 'smlsharp.use'.
 It consists of 'use' directives to load source files which are referred from the argument mlb file.
 
+Specify '-h' to see options.
+
+ $ ./mlb2use -h
+ mlb2use [-d baseDir] [-p pathMapFile] [-e] [-v] MLBfile
+   -d baseDir      converts paths to relative to baseDir.
+   -p pathMapFile  uses a path-map file.
+   -e              excludes absolute paths from output.
+   -v              runs in verbose mode.
+
 -----

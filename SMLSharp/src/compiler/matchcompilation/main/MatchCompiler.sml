@@ -1354,4 +1354,5 @@ struct
 	  then raise UE.UserErrors (rev (ME.getErrorMessages ()))
 	  else (topBlockList, rev (ME.getErrorMessages ()))
       end
+      handle exn => raise exn
 end

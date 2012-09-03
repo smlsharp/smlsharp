@@ -18,7 +18,8 @@ struct
   fun compilePrelude
           (parameter : Top.sysParam) preludePath preludeChannel = 
       let
-        val (context, stamps) = Top.initializeContextAndStamps ()
+        val (context, compileUnitStamp) =
+            Top.initializeContextAndCompileUnitStamp ()
         val preludeDir = U.getDirectory preludePath
 
         val currentSwitchTrace = !Control.switchTrace
@@ -26,10 +27,10 @@ struct
 
         val _ = Control.switchTrace := false
         val _ = Control.printBinds := false
-        val (success, newContextAndStamps) =
+        val (success, newContextAndCompileUnitStamp) =
             Top.run
                 context
-                stamps
+                compileUnitStamp
                 parameter
                 {
                   interactionMode = Top.Prelude,
@@ -48,7 +49,7 @@ struct
         val _ =Control.switchTrace := currentSwitchTrace
         val _ = Control.printBinds := currentPrintBinds
       in
-        newContextAndStamps
+        newContextAndCompileUnitStamp
       end
 
   fun resumePrelude
@@ -66,13 +67,13 @@ struct
               seek = #seek preludeChannel
             }
         val _ = print "restoring static environment..."
-        val contextAndStamps =
+        val contextAndCompileUnitStamp =
             Top.unpickle (Pickle.makeInstream reader)
             handle exn =>
                    raise Fail ("malformed compiled code:" ^ exnMessage exn)
         val _ = print "done\n"
       in
-        contextAndStamps
+        contextAndCompileUnitStamp
       end
 
   fun compile
@@ -109,7 +110,7 @@ struct
                 loadPathList = ["."],
                 getVariable = OS.Process.getEnv
               }
-          val (context, stamps) = 
+          val (context, compileUnitStamp) = 
               (if isCompiledPrelude then resumePrelude else compilePrelude)
                   initializeParameter preludeFileName preludeChannel
           val _ = #reset Counter.root ()
@@ -119,7 +120,7 @@ struct
                 #1
                 (Top.run
                   context
-                  stamps
+                  compileUnitStamp
                   initializeParameter
                   {
                     interactionMode = Top.NonInteractive {stopOnError = true},
@@ -151,7 +152,10 @@ struct
           #close session ();
           (compileTime, profile)
         end
-          handle exn => (#close session (); print ("compile error: "^General.exnMessage exn^"\n"); raise exn)
+          handle exn =>
+                 (#close session ();
+                  print ("compile error: "
+                         ^ General.exnMessage exn^"\n"); raise exn)
       end
   
   fun execute {executableFileName, outputChannel} =

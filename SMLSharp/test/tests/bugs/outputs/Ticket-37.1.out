@@ -1,0 +1,5 @@
+signature SIG = sig type dt end
+structure T : SIG
+functor F (P : sig type dt end) : sig datatype dt2 con D : P.dt -> dt2 end
+structure TBasic : sig datatype dt2 con D : T.dt -> dt2 end
+

@@ -1,8 +1,8 @@
 Group is
         $/basis.cm
-(*
+
         ../../../../../smlnj-lib/Util/smlnj-lib.cm
-*)
+
         ../../../../../SMLFormat/smlformatlib.cm
         ../../control/sources.cm
         ../../util/sources.cm

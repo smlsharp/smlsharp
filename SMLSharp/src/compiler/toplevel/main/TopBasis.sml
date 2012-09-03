@@ -49,7 +49,6 @@ struct
   compileUnitStamp :
     count of current compilation unit.
     This is a workaround for sequential compilation by native backend.
-  *)           
   type stamps = 
        {
         compileUnitStamp : int,
@@ -59,6 +58,7 @@ struct
         clusterIDKeyStamp : ClusterID.id,
         externalVarIDKeyStamp : ExternalVarID.id
        }
+  *)           
            
  (**
   local context : 
@@ -119,10 +119,14 @@ struct
   * unit, discarded  in the next compilation
   * sysParam : initialized at the beginning of compilation, never touched
   *)
+  type compileUnitStamp = int
+
+  fun initializeCompileUnitStamp () = 0
+
   type basis = 
        {
         context : context, 
-        stamps : stamps,
+        compileUnitStamp : compileUnitStamp,
         localContext : localContext,
         sysParam : sysParam
        }
@@ -153,27 +157,6 @@ struct
        newTopExternalVarIDBasisOpt = NONE
       } : localContext
 
-  fun initializeStamps () =
-      {
-       compileUnitStamp = 0,
-       boundTypeVarIDStamp = BoundTypeVarID.reset(),
-       exnTagIDKeyStamp = ExnTagID.reset(),
-       tyConIDKeyStamp = TyConID.reset(),
-       clusterIDKeyStamp = ClusterID.reset(),
-       externalVarIDKeyStamp = ExternalVarID.reset() 
-      } : stamps
-
-(*
-  fun initializeStampsWithNamespace namespace = 
-      {
-       compileUnitStamp = 0,
-       boundTypeVarIDStamp = BoundTypeVarID.initialID,
-       exnTagIDKeyStamp = ExnTagID.initialID,
-       tyConIDKeyStamp = TyConID.initialID,
-       clusterIDKeyStamp = ClusterID.initialID,
-       externalVarIDKeyStamp = ExternalVarID.initialID
-      } : stamps
-*)
   fun initializeContext () =
       {
        fixEnv = Fixity.initialFixEnv,
@@ -306,60 +289,14 @@ struct
        functorEnv = #functorEnv context
       }
 
-  (**************************************************************************)
-  fun setStampsBoundTypeVarIDStamp (stamps:stamps) boundTypeVarIDStamp =
-      {boundTypeVarIDStamp = boundTypeVarIDStamp,
-       compileUnitStamp = #compileUnitStamp stamps,
-       exnTagIDKeyStamp = #exnTagIDKeyStamp stamps,
-       tyConIDKeyStamp = #tyConIDKeyStamp stamps,
-       clusterIDKeyStamp = #clusterIDKeyStamp stamps,
-       externalVarIDKeyStamp = #externalVarIDKeyStamp stamps} : stamps
-
-  fun setStampsExceptionGlobalTagStamp (stamps:stamps) exnTagIDKeyStamp =
-      {boundTypeVarIDStamp = #boundTypeVarIDStamp stamps,
-       compileUnitStamp = #compileUnitStamp stamps,
-       exnTagIDKeyStamp = exnTagIDKeyStamp,
-       tyConIDKeyStamp = #tyConIDKeyStamp stamps,
-       clusterIDKeyStamp = #clusterIDKeyStamp stamps,
-       externalVarIDKeyStamp = #externalVarIDKeyStamp stamps} : stamps
-
-  fun setStampsTypeConstructorGlobalIDStamp (stamps:stamps) tyConIDKeyStamp =
-      {boundTypeVarIDStamp = #boundTypeVarIDStamp stamps,
-       compileUnitStamp = #compileUnitStamp stamps,
-       exnTagIDKeyStamp = #exnTagIDKeyStamp stamps,
-       tyConIDKeyStamp = tyConIDKeyStamp, 
-       clusterIDKeyStamp = #clusterIDKeyStamp stamps,
-       externalVarIDKeyStamp = #externalVarIDKeyStamp stamps} : stamps
-
-  fun setStampsExternalVarIDStamp (stamps:stamps) externalVarIDKeyStamp =
-      {boundTypeVarIDStamp = #boundTypeVarIDStamp stamps,
-       compileUnitStamp = #compileUnitStamp stamps,
-       exnTagIDKeyStamp = #exnTagIDKeyStamp stamps,
-       tyConIDKeyStamp = #tyConIDKeyStamp stamps, 
-       clusterIDKeyStamp = #clusterIDKeyStamp stamps,
-       externalVarIDKeyStamp = externalVarIDKeyStamp} : stamps
-
-  fun setStampsClusterGlobalIDStamp (stamps:stamps) clusterIDKeyStamp =
-      {boundTypeVarIDStamp = #boundTypeVarIDStamp stamps,
-       compileUnitStamp = #compileUnitStamp stamps,
-       exnTagIDKeyStamp = #exnTagIDKeyStamp stamps,
-       tyConIDKeyStamp = #tyConIDKeyStamp stamps, 
-       clusterIDKeyStamp = clusterIDKeyStamp,
-       externalVarIDKeyStamp = #externalVarIDKeyStamp stamps} : stamps
-
-  fun incrementCompileUnitStamp (stamps:stamps) =
-      {boundTypeVarIDStamp = #boundTypeVarIDStamp stamps,
-       compileUnitStamp = #compileUnitStamp stamps + 1,
-       exnTagIDKeyStamp = #exnTagIDKeyStamp stamps,
-       tyConIDKeyStamp = #tyConIDKeyStamp stamps, 
-       clusterIDKeyStamp = #clusterIDKeyStamp stamps,
-       externalVarIDKeyStamp = #externalVarIDKeyStamp stamps} : stamps
+  fun incrementCompileUnitStamp compileUnitStamp =
+       compileUnitStamp + 1
 
   (**************************************************************************)
   fun setBasisContext (basis:basis) context = 
       {
        context = context, 
-       stamps = #stamps basis,
+       compileUnitStamp = #compileUnitStamp basis,
        localContext = #localContext basis,
        sysParam = #sysParam basis
       } : basis
@@ -367,15 +304,15 @@ struct
   fun setBasisLocalContext (basis:basis) localContext = 
       {
        context = #context basis, 
-       stamps = #stamps basis,
+       compileUnitStamp = #compileUnitStamp basis,
        localContext = localContext,
        sysParam = #sysParam basis
       } : basis
 
-  fun setBasisStamps (basis:basis) stamps =
+  fun setBasisCompileUnitStamp (basis:basis) compileUnitStamp =
       {
        context = #context basis, 
-       stamps = stamps,
+       compileUnitStamp = compileUnitStamp,
        localContext = #localContext basis,
        sysParam = #sysParam basis
       } : basis
@@ -417,95 +354,4 @@ struct
       #standardError sysParam
 
 
-  fun extendBasisWithNameMapOfStaticInterface
-        (basis : basis) (nameMap : NameMap.basicInterfaceNameMap) =
-      {
-       context =
-         {fixEnv = #fixEnv (#context basis),
-	  externalVarIDBasis = #externalVarIDBasis (#context basis),
-          topTypeContext = #topTypeContext (#context basis),
-          nameMap =  
-          {
-           varNameMap =
-             SEnv.unionWith
-               #1
-               (#2 (#1 nameMap), #varNameMap (#nameMap (#context basis))),
-           tyNameMap =
-             SEnv.unionWith
-               #1
-               (#1 (#1 nameMap), #tyNameMap (#nameMap (#context basis))),
-           funNameMap =
-             SEnv.unionWith
-               #1
-               (#2 nameMap, #funNameMap (#nameMap (#context basis))),
-           sigNameMap = #sigNameMap (#nameMap (#context basis)),
-           strNameMap =
-           SEnv.unionWith
-             #1
-             (#3 (#1 nameMap), #strNameMap (#nameMap (#context basis)))
-          },
-          globalNameAliasEnv = #globalNameAliasEnv (#context basis),
-          globalIndexEnv = #globalIndexEnv (#context basis),
-	  inlineEnv = #inlineEnv (#context basis),
-          functorEnv = #functorEnv (#context basis)},
-       stamps = #stamps basis,
-       localContext = #localContext basis,
-       sysParam = #sysParam basis
-      } : basis
-
-  fun extendBasisWithTypeEnvOfStaticInterface
-        (basis : basis) (typeEnv : Types.interfaceEnv) =
-      {
-       context = {fixEnv = #fixEnv (#context basis),
-	          externalVarIDBasis = #externalVarIDBasis (#context basis),
-                  topTypeContext = 
-                  {
-                   tyConEnv =
-                     SEnv.unionWith
-                       #1
-                       (#1 (#1 typeEnv),
-                        #tyConEnv (#topTypeContext (#context basis))),
-                   varEnv =
-                     SEnv.unionWith
-                       #1
-                       (#2 (#1 typeEnv), 
-                        #varEnv (#topTypeContext (#context basis))),
-                   sigEnv = #sigEnv (#topTypeContext (#context basis)),
-                   funEnv =
-                     SEnv.unionWith
-                       #1
-                       (#2 typeEnv, 
-                        #funEnv (#topTypeContext (#context basis)))
-                  },
-                  nameMap = #nameMap (#context basis),
-                  globalNameAliasEnv = #globalNameAliasEnv (#context basis),
-                  globalIndexEnv = #globalIndexEnv (#context basis),
-	          inlineEnv = #inlineEnv (#context basis),
-                  functorEnv = #functorEnv (#context basis)},
-       stamps = #stamps basis,
-       localContext = #localContext basis,
-       sysParam = #sysParam basis
-      } : basis
-
-  fun extendBasisWithExternalVarIDBasisOfStaticInterface 
-        (basis : basis)
-        (externalVarIDBasis : VarIDContext.topExternalVarIDBasis) =
-      {
-       context =
-       {fixEnv = #fixEnv (#context basis),
-	externalVarIDBasis = 
-        VarIDContext.extendTopVarExternalVarIDBasisWithTopVarExternalVarIDBasis
-          {new = (#1 externalVarIDBasis, #2 externalVarIDBasis),
-           old = #externalVarIDBasis (#context basis)},
-        topTypeContext = #topTypeContext (#context basis),
-        nameMap = #nameMap (#context basis),
-        globalNameAliasEnv = #globalNameAliasEnv (#context basis),
-        globalIndexEnv = #globalIndexEnv (#context basis),
-	inlineEnv = #inlineEnv (#context basis),
-        functorEnv = #functorEnv (#context basis)},
-       stamps = #stamps basis,
-       localContext = #localContext basis,
-       sysParam = #sysParam basis
-      } : basis
-          
 end

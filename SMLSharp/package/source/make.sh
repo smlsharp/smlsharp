@@ -37,7 +37,7 @@ hg archive -r "$TAG" smlsharp
           m["May"] = 5; m["Jun"] = 6; m["Jul"] = 7; m["Aug"] = 8;
           m["Sep"] = 9; m["Oct"] = 10; m["Nov"] = 11; m["Dec"] = 12;
         }
-        /^date:/ { printf "%04d-%02d-%02d %s\n", $6, m[$3], $4, $5; }'`
+        /^date:/ { printf "%04d-%02d-%02d %s JST\n", $6, m[$3], $4, $5; }'`
   test -n "$RELEASE_DATE" || exit $?
   for i in \
     src/configuration/Configuration.sml.in

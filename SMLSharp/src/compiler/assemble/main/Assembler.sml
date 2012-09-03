@@ -3499,6 +3499,7 @@ val _ = print "end\n\n"
             } : Executable.executable)
         | errors => raise UE.UserErrors (getErrorsAndWarnings ())
       end
+        handle exn => raise exn
 
   (***************************************************************************)
 

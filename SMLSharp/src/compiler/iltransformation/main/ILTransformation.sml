@@ -800,5 +800,6 @@ structure ILTransformation : ILTRANSFORMATION = struct
             initFunctionLabel = functionLabel
            } : IL.moduleCode
       end
+      handle exn => raise exn
 
 end

@@ -100,6 +100,9 @@ struct
                      closeInputChannel)
                  closeOutputChannel)
              closeInputChannel)
+(*
+            handle error =>  raise error
+*)
             handle error => exceptionsRef := (error :: (!exceptionsRef))
 
         val resultArray = valOf(!resultArrayOptRef)

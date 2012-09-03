@@ -562,5 +562,6 @@ end
         unboxedGlobals = unboxedGlobals,
         boxedGlobals = boxedGlobals
       }
+      handle exn => raise exn
 
 end

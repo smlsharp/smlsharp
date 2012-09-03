@@ -66,7 +66,6 @@ smlsharp.use: mlb2use
 	-rm -f $@
 	echo 'use "smlnj-lib.sml";' >> $@
 	echo 'use "ml-yacc-lib.sml";' >> $@
-	echo "use \"$(BASISDIR)/basis_compat.sml\";" >> $@
 	./mlb2use \
 	        -d . \
 		-e \

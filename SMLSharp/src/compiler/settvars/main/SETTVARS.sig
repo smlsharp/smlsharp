@@ -9,5 +9,7 @@ signature SETTVARS =
 sig
 
   val setTopDec :
-      Absyn.eq SEnv.map -> PatternCalcFlattened.plftopdec -> PatternCalcWithTvars.pttopdec
+      Absyn.eq SEnv.map
+      -> PatternCalcFlattened.plftopdec
+      -> PatternCalcWithTvars.pttopdec 
 end

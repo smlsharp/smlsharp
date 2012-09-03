@@ -1,0 +1,2 @@
+../tests/bugs/tests/Ticket-21.1.sml:1.49-1.59 Error:
+  not an interoperable type:  Real32.real

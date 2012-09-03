@@ -458,9 +458,10 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 
  fun optimize (globalContext:VALREC_Utils.globalContext) topdecs  = 
      let
-         val (newContext, newTopDecs) =
-             optimizetopdecList globalContext emptyContext topdecs
+       val (newContext, newTopDecs) =
+           optimizetopdecList globalContext emptyContext topdecs
      in
-         newTopDecs
+       newTopDecs
      end
+     handle exn => raise exn
 end

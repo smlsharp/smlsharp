@@ -4,7 +4,7 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: PrettyPrinter.sml,v 1.5 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-functor PrettyPrinter(FormatExpression : FORMAT_EXPRESSION) =
+structure PrettyPrinter =
 struct
 
   (***************************************************************************)

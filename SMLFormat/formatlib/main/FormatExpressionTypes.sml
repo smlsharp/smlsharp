@@ -3,7 +3,7 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: FormatExpressionTypes.sml,v 1.1 2008/02/28 13:08:30 kiyoshiy Exp $
  *)
-structure FormatExpressionTypes : FORMAT_EXPRESSION_TYPES =
+structure FormatExpressionTypes =
 struct
 
   (***************************************************************************)

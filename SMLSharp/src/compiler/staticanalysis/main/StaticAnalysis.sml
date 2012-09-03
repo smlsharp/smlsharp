@@ -799,5 +799,6 @@ structure StaticAnalysis : STATICANALYSIS = struct
       in
           newTopBlockList
       end
+      handle exn => raise exn
 
 end

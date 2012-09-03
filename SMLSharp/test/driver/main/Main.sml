@@ -36,9 +36,11 @@ struct
       end
 
   fun main
-          (_, prelude :: expectedDirectory :: resultDirectory :: sourcePaths) =
+        (_, prelude :: expectedDirectory :: resultDirectory :: sourcePaths) =
       (
-print ("prelude = [" ^ prelude ^ "]\n");
+       GlobalCounters.stop()
+       handle exn => raise exn;
+       print ("prelude = [" ^ prelude ^ "]\n");
         Control.switchTrace := false;
         C.setControlOptions "IML_" OS.Process.getEnv;
         VM.instTrace := false;

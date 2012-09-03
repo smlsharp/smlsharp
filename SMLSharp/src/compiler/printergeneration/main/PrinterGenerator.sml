@@ -1845,7 +1845,6 @@ in
   fun generate
           {
             context =  topContext : InitialTypeContext.topTypeContext,
-            stamps : Counters.stamps,
             newContext : TypeContext.context,
             flattenedNamePathEnv,
             printBinds,
@@ -1853,7 +1852,6 @@ in
           } =
       let
         val _ = TY.kindedTyvarList := nil
-        val _ = Counters.init stamps
 
         (*
          * The PrinterGenerator builds a context from declarations, as the
@@ -1870,7 +1868,8 @@ in
             insertFormatterIntoNamePathEnv flattenedNamePathEnv
       in
         (* return newContext which is passed as the argument without change. *)
-          (newContext, nweFlattendNamePathEnv, Counters.getCounterStamps(), newDeclarations)
+          (newContext, nweFlattendNamePathEnv, newDeclarations)
       end
+      handle exn => raise exn
 end
 end

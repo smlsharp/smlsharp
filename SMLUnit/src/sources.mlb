@@ -1,0 +1,9 @@
+local
+  main/sources.mlb
+in
+  signature SMLUNIT
+  structure SMLUnit
+  signature ASSERT
+  signature TEST
+end
+

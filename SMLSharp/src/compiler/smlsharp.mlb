@@ -2,20 +2,19 @@ ann
   "allowFFI true"
 in
 ../preludes.mlb
-../../../SMLFormat/formatlib/main/FORMAT_EXPRESSION_TYPES.sig
-../../../SMLFormat/formatlib/main/FormatExpressionTypes.sml
 ../../../SMLFormat/formatlib/main/FORMAT_EXPRESSION.sig
+../../../SMLFormat/formatlib/main/FormatExpressionTypes.sml
 ../../../SMLFormat/formatlib/main/FormatExpression.sml
+../../../SMLFormat/formatlib/main/PreProcessedExpression.sml
 ../../../SMLFormat/formatlib/main/PRINTER_PARAMETER.sig
 ../../../SMLFormat/formatlib/main/PrinterParameter.sml
+../../../SMLFormat/formatlib/main/PrettyPrinter.sml
+../../../SMLFormat/formatlib/main/Truncator.sml
+../../../SMLFormat/formatlib/main/AssocResolver.sml
+../../../SMLFormat/formatlib/main/PreProcessor.sml
 ../../../SMLFormat/formatlib/main/BASIC_FORMATTERS.sig
 ../../../SMLFormat/formatlib/main/BasicFormatters.sml
-../../../SMLFormat/formatlib/main/PRETTYPRINTER.sig
-../../../SMLFormat/formatlib/main/PrettyPrinter.sml
-../../../SMLFormat/formatlib/main/PREPROCESSOR.sig
-../../../SMLFormat/formatlib/main/PreProcessor.sml
 ../../../SMLFormat/formatlib/main/SMLFORMAT.sig
-../../../SMLFormat/formatlib/main/SMLFormatBase.sml
 ../../../SMLFormat/formatlib/main/SMLFormat.sml
 ../configuration/Configuration.sml
 systemdef/main/BasicTypes.sml

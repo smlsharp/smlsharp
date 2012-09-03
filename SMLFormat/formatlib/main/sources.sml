@@ -1,6 +1,5 @@
-use "./FORMAT_EXPRESSION_TYPES.sig";
 use "./FORMAT_EXPRESSION.sig";
-use "./FormatExpressionTypes.sml";
+use "./FormatExpressionTypes_SMLSharp.sml";
 use "./FormatExpression.sml";
 use "./PreProcessedExpression.sml";
 use "./PRINTER_PARAMETER.sig";
@@ -12,5 +11,4 @@ use "./PreProcessor.sml";
 use "./BASIC_FORMATTERS.sig";
 use "./BasicFormatters.sml";
 use "./SMLFORMAT.sig";
-use "./SMLFormatBase.sml";
 use "./SMLFormat.sml";

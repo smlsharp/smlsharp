@@ -22,14 +22,12 @@ in
 
 fun infer 
   globalTypeContext 
-  (stamps : Counters.stamps) 
   flattenedNamePathEnv 
   pttopdeclList 
   = 
   let
     val _ = TypeInferenceUtils.dummyTyId := 0
     val _ = E.initializeTypeinfError ()
-    val _ = Counters.init stamps
     val basis = TIC.makeInitialBasis globalTypeContext
     val (context : TC.context, tpdecs) =
       TypeInferModule.typeinfPttopdeclList basis pttopdeclList
@@ -56,11 +54,11 @@ fun infer
     else 
       (
        newContext, 
-       Counters.getCountersStamps(), 
        newTpDecs , 
        E.getWarnings()
        )
   end
+  handle exn => raise exn
 end
 end
 

@@ -337,5 +337,6 @@ val _ = Control.ps "=="
       in
         asm
       end
+      handle exn => raise exn
 
 end
