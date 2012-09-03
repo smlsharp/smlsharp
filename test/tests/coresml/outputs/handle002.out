@@ -1,0 +1,16 @@
+exception E : exn
+val raiseE = fn : ['a .unit -> 'a]
+val id = fn : ['a .'a -> 'a]
+datatype 'a dt
+con D : ['a .'a -> 'a dt]
+val vRecord = {a=1} : {a:int}
+val vLet = 1 : int
+val vArgTyConApp = D 1 : int dt
+val vTyConTyConApp = D 1 : int dt
+val vArgFunApp = 1 : int
+val vFunFunApp = 1 : int
+val vTyped = fn : int -> int
+val vHandle = 1 : int
+val vRaise = 1 : int
+val vFn = fn : ['a.'a -> 'a]
+

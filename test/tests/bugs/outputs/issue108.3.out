@@ -1,0 +1,4 @@
+signature S0 = sig type t end
+../tests/bugs/tests/issue108.3.sml:2.11-2.73 Error: Signature mismatch
+                                                    (arity): t
+

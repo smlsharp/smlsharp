@@ -1,0 +1,75 @@
+../tests/coresml/tests/bindReservedName002.sml:29.5-29.15 Warning: binding not exhaustive
+                                                                             true  => ...
+../tests/coresml/tests/bindReservedName002.sml:30.5-30.17 Warning: binding not exhaustive
+                                                                             false  => ...
+../tests/coresml/tests/bindReservedName002.sml:31.5-31.13 Warning: binding not exhaustive
+                                                                             nil  => ...
+../tests/coresml/tests/bindReservedName002.sml:32.8-32.9 Error: data
+                                                                 constructor ::
+                                                                 used without
+                                                                 argument in
+                                                                 pattern
+
+../tests/coresml/tests/bindReservedName002.sml:33.5-33.7 Error: data
+                                                                 constructor ref
+                                                                 used without
+                                                                 argument in
+                                                                 pattern
+
+../tests/coresml/tests/bindReservedName002.sml:35.5-35.22 Warning: binding not exhaustive
+                                                                             true  => ...
+../tests/coresml/tests/bindReservedName002.sml:36.5-36.24 Warning: binding not exhaustive
+                                                                             false  => ...
+../tests/coresml/tests/bindReservedName002.sml:37.5-37.24 Warning: binding not exhaustive
+                                                                             nil  => ...
+../tests/coresml/tests/bindReservedName002.sml:38.8-38.9 Error: data
+                                                                 constructor ::
+                                                                 used without
+                                                                 argument in
+                                                                 pattern
+
+../tests/coresml/tests/bindReservedName002.sml:39.5-39.7 Error: data
+                                                                 constructor ref
+                                                                 used without
+                                                                 argument in
+                                                                 pattern
+
+../tests/coresml/tests/bindReservedName002.sml:41.5-41.8 Error: Binding
+                                                                 reserved
+                                                                 name: true
+
+../tests/coresml/tests/bindReservedName002.sml:42.5-42.9 Error: Binding
+                                                                 reserved
+                                                                 name: false
+
+../tests/coresml/tests/bindReservedName002.sml:43.5-43.7 Error: Binding
+                                                                 reserved
+                                                                 name: nil
+
+../tests/coresml/tests/bindReservedName002.sml:44.8-44.9 Error: Binding
+                                                                 reserved
+                                                                 name: ::
+
+../tests/coresml/tests/bindReservedName002.sml:45.5-45.7 Error: Binding
+                                                                 reserved
+                                                                 name: ref
+
+../tests/coresml/tests/bindReservedName002.sml:47.5-47.8 Error: Binding
+                                                                 reserved
+                                                                 name: true
+
+../tests/coresml/tests/bindReservedName002.sml:48.5-48.9 Error: Binding
+                                                                 reserved
+                                                                 name: false
+
+../tests/coresml/tests/bindReservedName002.sml:49.5-49.7 Error: Binding
+                                                                 reserved
+                                                                 name: nil
+
+../tests/coresml/tests/bindReservedName002.sml:50.8-50.9 Error: Binding
+                                                                 reserved
+                                                                 name: ::
+
+../tests/coresml/tests/bindReservedName002.sml:51.5-51.7 Error: Binding
+                                                                 reserved
+                                                                 name: ref

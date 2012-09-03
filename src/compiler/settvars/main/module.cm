@@ -1,0 +1,14 @@
+Group is
+        ../../../smlformatlib.cm
+        smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../types/sources.cm
+        ../../patterncalc/sources.cm
+        ../../patterncalcWithTvars/sources.cm
+        SETTVARS.sig
+        SetTVars.sml 
+        SetTVarsError.ppg.sml

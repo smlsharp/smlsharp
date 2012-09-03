@@ -1,0 +1,8 @@
+structure S :
+  sig
+    datatype t
+    con D : t
+    datatype u
+    con C : t -> u
+  end
+

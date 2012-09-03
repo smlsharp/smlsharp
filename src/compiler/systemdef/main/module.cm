@@ -1,0 +1,15 @@
+Group is
+
+        BasicTypes.sml
+        SystemDefTypes.sml
+        SYSTEMDEF.sig
+#if defined(ARCH_X86)
+        SystemDef_x86.sml
+#elif defined(ARCH_SPARC)
+        SystemDef_SparcSolaris.sml
+#else
+#error unsupported architecture
+#endif
+
+        ../../../smlformatlib.cm
+        BasicTypeFormatters.sml

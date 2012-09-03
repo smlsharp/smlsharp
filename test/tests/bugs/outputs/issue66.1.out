@@ -1,0 +1,2 @@
+val v71 = ref ref (1,2) : (int * int) ref ref
+

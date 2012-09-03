@@ -1,0 +1,6 @@
+datatype 'a dtNeq
+con DNeq : ['a .'a dtNeq]
+con ENeq : ['a .'a -> 'a dtNeq]
+val f = fn : ['a,'b.('a -> 'b) -> 'a dtNeq -> unit]
+val it = () : unit
+

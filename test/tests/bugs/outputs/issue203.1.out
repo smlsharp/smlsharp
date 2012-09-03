@@ -1,0 +1,4 @@
+signature SIG = sig type t datatype dt con D : t -> dt end
+structure STR1 : SIG
+structure STR2 : SIG
+

@@ -1,0 +1,5 @@
+val f = fn : ['a .'a -> int]
+structure STR1 : sig val f : real -> real end
+structure STR2 : sig end
+open STR2
+val x = 1 : int

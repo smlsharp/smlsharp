@@ -1,0 +1,295 @@
+val >> = fn : int * int -> int
+val ## = fn : int * int -> int
+val << = fn : int * int -> int
+val x1 = 2 : int
+val x2 = 3 : int
+val x3 = 5 : int
+val x4 = 7 : int
+infix 3 >>
+infix 2 ##
+infix 3 <<
+val v11111 = ~10 : int
+infix 3 >>
+infix 2 ##
+infixr 3 <<
+val v11112 = ~10 : int
+infix 3 >>
+infixr 2 ##
+infix 3 <<
+val v11121 = ~10 : int
+infix 3 >>
+infixr 2 ##
+infixr 3 <<
+val v11122 = ~10 : int
+infixr 3 >>
+infix 2 ##
+infix 3 <<
+val v11211 = ~10 : int
+infixr 3 >>
+infix 2 ##
+infixr 3 <<
+val v11212 = ~10 : int
+infixr 3 >>
+infixr 2 ##
+infix 3 <<
+val v11221 = ~10 : int
+infixr 3 >>
+infixr 2 ##
+infixr 3 <<
+val v11222 = ~10 : int
+infix 3 >>
+infix 2 ##
+infix 2 <<
+val v12111 = 18 : int
+infix 3 >>
+infix 2 ##
+infixr 2 <<
+val v12112 = 18 : int
+infix 3 >>
+infixr 2 ##
+infix 2 <<
+val v12121 = 18 : int
+infix 3 >>
+infixr 2 ##
+infixr 2 <<
+val v12122 = ~10 : int
+infixr 3 >>
+infix 2 ##
+infix 2 <<
+val v12211 = 18 : int
+infixr 3 >>
+infix 2 ##
+infixr 2 <<
+val v12212 = 18 : int
+infixr 3 >>
+infixr 2 ##
+infix 2 <<
+val v12221 = 18 : int
+infixr 3 >>
+infixr 2 ##
+infixr 2 <<
+val v12222 = ~10 : int
+infix 3 >>
+infix 2 ##
+infix 1 <<
+val v13111 = 18 : int
+infix 3 >>
+infix 2 ##
+infixr 1 <<
+val v13112 = 18 : int
+infix 3 >>
+infixr 2 ##
+infix 1 <<
+val v13121 = 18 : int
+infix 3 >>
+infixr 2 ##
+infixr 1 <<
+val v13122 = 18 : int
+infixr 3 >>
+infix 2 ##
+infix 1 <<
+val v13211 = 18 : int
+infixr 3 >>
+infix 2 ##
+infixr 1 <<
+val v13212 = 18 : int
+infixr 3 >>
+infixr 2 ##
+infix 1 <<
+val v13221 = 18 : int
+infixr 3 >>
+infixr 2 ##
+infixr 1 <<
+val v13222 = 18 : int
+infix 2 >>
+infix 2 ##
+infix 3 <<
+val v21111 = ~10 : int
+infix 2 >>
+infix 2 ##
+infixr 3 <<
+val v21112 = ~10 : int
+infix 2 >>
+infixr 2 ##
+infix 3 <<
+val v21121 = ~10 : int
+infix 2 >>
+infixr 2 ##
+infixr 3 <<
+val v21122 = ~10 : int
+infixr 2 >>
+infix 2 ##
+infix 3 <<
+val v21211 = ~10 : int
+infixr 2 >>
+infix 2 ##
+infixr 3 <<
+val v21212 = ~10 : int
+infixr 2 >>
+infixr 2 ##
+infix 3 <<
+val v21221 = ~4 : int
+infixr 2 >>
+infixr 2 ##
+infixr 3 <<
+val v21222 = ~4 : int
+infix 2 >>
+infix 2 ##
+infix 2 <<
+val v22111 = 18 : int
+infix 2 >>
+infix 2 ##
+infixr 2 <<
+val v22112 = 18 : int
+infix 2 >>
+infixr 2 ##
+infix 2 <<
+val v22121 = 18 : int
+infix 2 >>
+infixr 2 ##
+infixr 2 <<
+val v22122 = ~10 : int
+infixr 2 >>
+infix 2 ##
+infix 2 <<
+val v22211 = 18 : int
+infixr 2 >>
+infix 2 ##
+infixr 2 <<
+val v22212 = 18 : int
+infixr 2 >>
+infixr 2 ##
+infix 2 <<
+val v22221 = 10 : int
+infixr 2 >>
+infixr 2 ##
+infixr 2 <<
+val v22222 = ~4 : int
+infix 2 >>
+infix 2 ##
+infix 1 <<
+val v23111 = 18 : int
+infix 2 >>
+infix 2 ##
+infixr 1 <<
+val v23112 = 18 : int
+infix 2 >>
+infixr 2 ##
+infix 1 <<
+val v23121 = 18 : int
+infix 2 >>
+infixr 2 ##
+infixr 1 <<
+val v23122 = 18 : int
+infixr 2 >>
+infix 2 ##
+infix 1 <<
+val v23211 = 18 : int
+infixr 2 >>
+infix 2 ##
+infixr 1 <<
+val v23212 = 18 : int
+infixr 2 >>
+infixr 2 ##
+infix 1 <<
+val v23221 = 10 : int
+infixr 2 >>
+infixr 2 ##
+infixr 1 <<
+val v23222 = 10 : int
+infix 1 >>
+infix 2 ##
+infix 3 <<
+val v31111 = ~4 : int
+infix 1 >>
+infix 2 ##
+infixr 3 <<
+val v31112 = ~4 : int
+infix 1 >>
+infixr 2 ##
+infix 3 <<
+val v31121 = ~4 : int
+infix 1 >>
+infixr 2 ##
+infixr 3 <<
+val v31122 = ~4 : int
+infixr 1 >>
+infix 2 ##
+infix 3 <<
+val v31211 = ~4 : int
+infixr 1 >>
+infix 2 ##
+infixr 3 <<
+val v31212 = ~4 : int
+infixr 1 >>
+infixr 2 ##
+infix 3 <<
+val v31221 = ~4 : int
+infixr 1 >>
+infixr 2 ##
+infixr 3 <<
+val v31222 = ~4 : int
+infix 1 >>
+infix 2 ##
+infix 2 <<
+val v32111 = 10 : int
+infix 1 >>
+infix 2 ##
+infixr 2 <<
+val v32112 = 10 : int
+infix 1 >>
+infixr 2 ##
+infix 2 <<
+val v32121 = 10 : int
+infix 1 >>
+infixr 2 ##
+infixr 2 <<
+val v32122 = ~4 : int
+infixr 1 >>
+infix 2 ##
+infix 2 <<
+val v32211 = 10 : int
+infixr 1 >>
+infix 2 ##
+infixr 2 <<
+val v32212 = 10 : int
+infixr 1 >>
+infixr 2 ##
+infix 2 <<
+val v32221 = 10 : int
+infixr 1 >>
+infixr 2 ##
+infixr 2 <<
+val v32222 = ~4 : int
+infix 1 >>
+infix 2 ##
+infix 1 <<
+val v33111 = 10 : int
+infix 1 >>
+infix 2 ##
+infixr 1 <<
+val v33112 = 10 : int
+infix 1 >>
+infixr 2 ##
+infix 1 <<
+val v33121 = 10 : int
+infix 1 >>
+infixr 2 ##
+infixr 1 <<
+val v33122 = 10 : int
+infixr 1 >>
+infix 2 ##
+infix 1 <<
+val v33211 = 10 : int
+infixr 1 >>
+infix 2 ##
+infixr 1 <<
+val v33212 = 10 : int
+infixr 1 >>
+infixr 2 ##
+infix 1 <<
+val v33221 = 10 : int
+infixr 1 >>
+infixr 2 ##
+infixr 1 <<
+val v33222 = 10 : int

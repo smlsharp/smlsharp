@@ -1,0 +1,31 @@
+signature S111 = sig datatype t con D : t end
+signature S121 = sig datatype t con D : t datatype s con E : s end
+signature S122 = 
+sig
+  datatype t
+  con D : t
+  datatype s
+  con E : s
+  datatype v
+  con F : v
+  datatype u
+  con G : u
+end
+signature S211 = sig datatype t con D : t con E : t end
+signature S221 = 
+sig datatype t con D : t con E : t datatype s con F : s con G : s end
+signature S222 = 
+sig
+  datatype t
+  con D : t
+  con E : t
+  datatype s
+  con F : s
+  con G : s
+  datatype u
+  con H : u
+  con I : u
+  datatype v
+  con J : v
+  con K : v
+end

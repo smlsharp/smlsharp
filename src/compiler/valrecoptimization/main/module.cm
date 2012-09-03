@@ -1,0 +1,18 @@
+Group is
+	../../../smlformatlib.cm
+	smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../patterncalc/sources.cm
+        ../../absyn/sources.cm
+	../../typecontext/sources.cm
+	../../types/sources.cm
+	../../name/sources.cm
+
+        VALREC_OPTIMIZER.sig
+        VALREC_Optimizer.sml
+	GRAPH.sig
+        Graph.sml
+	utils.sml
+	TransFundecl.sml

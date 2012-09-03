@@ -1,0 +1,6 @@
+val f1 = fn : bool -> int
+val v1 = (1,2) : int * int
+exception E2 : int -> exn
+val f2 = fn : ['a. bool -> 'a]
+val v2 = (1,2) : int * int
+

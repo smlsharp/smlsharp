@@ -1,0 +1,6 @@
+datatype t121
+con C121 : t121
+datatype 'a t122
+con C122 : ['a.'a -> 'a t122]
+val it = C121 : t121
+

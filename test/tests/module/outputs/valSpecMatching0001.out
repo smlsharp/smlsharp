@@ -1,0 +1,13 @@
+signature SVal = sig val x : int end
+signature SCon = sig type dt val D : int -> dt end
+signature SExn = sig val E : int -> exn end
+structure SVal1Trans : SVal
+structure SVal1Opaque : SVal
+structure SVal2Trans : SCon
+structure SVal2Opaque : SCon
+structure SVal3Trans : SExn
+structure SVal3Opaque : SExn
+structure SCon1Trans : SCon
+structure SCon1Opaque : SCon
+structure SExn1Trans : SExn
+structure SExn1Opaque : SExn

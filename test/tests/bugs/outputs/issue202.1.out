@@ -1,0 +1,4 @@
+functor TextIOFn ('X : sig end) : sig val input1 : unit -> char option end
+structure TextIO : sig val input1 : unit -> char option end
+val it = SOME #"a" : char option
+

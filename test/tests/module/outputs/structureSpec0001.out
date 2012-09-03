@@ -1,0 +1,10 @@
+signature S11 = sig structure S : sig end end
+signature S12 = sig structure T : sig end structure S : sig end end
+signature S21 = sig structure T : sig end structure S : sig end end
+signature S22 =
+  sig
+    structure S : sig end
+    structure T : sig end
+    structure U : sig end
+    structure V : sig end
+  end

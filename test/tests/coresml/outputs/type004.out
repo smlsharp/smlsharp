@@ -1,0 +1,7 @@
+type 'a t121 = 'a * int
+type 'a t122 = int * 'a
+val v12 = ((true,121),(122,1.22)) : bool t121 * real t122
+type ('a,'b) t221 = 'a * int * 'b
+type ('a,'b) t222 = 'b * int * 'a
+val v22 = ((true, 221, 22.1), ((22.2, true), 222, (false, 2.22))) 
+  :  (bool, real) t221 *  (bool * real, real * bool) t222

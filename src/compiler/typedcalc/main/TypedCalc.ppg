@@ -1,0 +1,917 @@
+(**
+ * The typed pattern calculus for the IML.
+ * @copyright (c) 2006, Tohoku University.
+ * @author Atsushi Ohori 
+ * @author Liu Bochao
+ * @version $Id: TypedCalc.ppg,v 1.6 2006/03/02 12:52:25 bochao Exp $
+ *)
+structure TypedCalc : TYPEDCALC = struct
+
+ type loc = Loc.loc
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(tyformat) Types.format_ty
+  *)
+ type ty = 
+  (*%
+   * @format(ty:tyformat) ty()(btvEnv)
+   *)
+     Types.ty
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(idstateFormat) Types.format_idState
+  *)
+ type idState =
+      (*%
+       * @format(idstate:idstateFormat) idstate()(btvEnv)
+       *)
+      Types.idState
+ (*%
+  * @formatter(absyntvar) Absyn.format_tvar
+  *)
+  type tvar = 
+    (*%
+    * @format(tvar:absyntvar) tvar
+    *)
+    Absyn.tvar
+
+ (*% 
+  * @params(btvEnv)
+  * @formatter(tyConFormat) Types.format_tyCon
+  *)
+ type tyCon = 
+    (*%
+     * @format(tyCon:tyConFormat) tyCon()(btvEnv)
+     *)
+    Types.tyCon
+
+
+ (*% 
+  * @params(btvEnv)
+  * @formatter(typesValId) Types.format_valId
+ *)
+ type valId = 
+     (*%
+      * @format(id:typesValId) id()(btvEnv)
+      *)
+     Types.valId
+
+ (*%
+  * @params(btvEnv)
+  *)
+ type varInfo = 
+     (*%
+     * @format({name,ty:ty}) name
+      *)
+     {name:string, ty:ty}
+
+ (*% *)
+ type primInfo =
+     (*%
+      * @format({name,ty}) name
+      *)
+     {name:string, ty:ty}
+
+ (*% *)
+ type oprimInfo =
+     (*%
+      * @format({name,ty, instances}) name
+      *)
+     {name:string, ty:ty, instances:primInfo SEnv.map}
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(btvKindFormat) Types.format_btvKind
+  *)
+ type btvKind = 
+     (*%
+      * @format(value:btvKindFormat) value()(btvEnv)
+      *)
+      Types.btvKind
+
+ (*%
+ * @formatter(caseKindFormat) Types.format_caseKind
+ *)
+ type caseKind = 
+     (*%
+      * @format(value:caseKindFormat) value
+      *)
+     Types.caseKind
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(strInfoFormat) Types.format_strInfo
+  *)
+ type strInfo =
+      (*%
+       * @format(value:strInfoFormat) value()(btvEnv)
+       *)
+      Types.strInfo
+
+ type funBindInfo = Types.funBindInfo
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(varPathInfoFormat) Types.format_varPathInfo
+  *)
+ type varPathInfo =
+      (*%
+       * @format(value:varPathInfoFormat) value()(btvEnv)
+       *)
+      Types.varPathInfo
+
+ (*%
+  * @formatter(conPathInfoFormat) Types.format_conPathInfoName
+  *)
+ type conPathInfo =
+      (*%
+       * @format(value:conPathInfoFormat) value
+       *)
+      Types.conPathInfo
+
+ (*%
+  * @params(btvEnv)
+  * @formatter(strPathInfoFormat) Types.format_strPathInfo
+  *)
+ type strPathInfo =
+      (*%
+       * @format(value:strPathInfoFormat) value()(btvEnv)
+       *)
+      Types.strPathInfo
+
+ type tyBindInfo = Types.tyBindInfo
+ datatype constant =  datatype Types.constant
+ datatype path = datatype Path.path
+
+
+(*%
+ * @params(btvEnv)
+ *
+ * @formatter(enclosedList) SmlppgUtil.formatListWithEnclosure
+ * @formatter(prependedOpt) SmlppgUtil.formatPrependedOpt
+ * @formatter(enclosedListIfMoreThanOne) SmlppgUtil.formatListWithEnclosureIfMoreThanOne
+ * @formatter(formatConst) Types.format_constant
+ * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
+ * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
+ * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
+ * @formatter(imap) SmlppgUtil.formatImap
+ * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(tyBindInfo) Types.format_tyBindInfo
+ * @formatter(format_pathdot) Path.format_pathWithDotend
+ *)
+ datatype tpexp = 
+     (*%
+      * @format
+      *   ({funExp:exp1, 
+      *     instTyList:ty tys:formatListWithEnclosure, 
+      *     argExp:exp2, 
+      *     argTyList:argTy argTys, 
+      *     loc:loc
+      *     })
+      * L10{
+      *      "("
+      *          exp1()(btvEnv)
+      *          2[ +2 ":" +d !N0{tys(ty()(btvEnv))(",","{","}")} ]
+      *      ")" +1
+      *      exp2()(btvEnv)
+      *    }
+      *)
+      (**
+       * application of foreign funcion.
+       * <p>
+       * ty is the type of the function
+       * </p>
+       * <p>
+       *  The first ty list is list of types by which the function is
+       * instantiated.
+       * </p>
+       * <p>
+       *  The second ty list is types of arguments. It is to be noted that
+       * a foreign function is n-ary function, but ML function type assumes
+       * 1-ary function. For example:
+       * <pre>
+       *  val include f = "foo" of "bar" : {int, bool} -> int
+       *  val include g = "goo" of "bar" : {(int * bool)} -> int
+       * </pre>
+       * The f and g have the same ML function type
+       * <code>int * bool -> int</code>.
+       * But the external function "foo" takes 2 arguments of int and bool
+       * types, the "goo" takes only one argumet of 2-tuple.
+       * So, applications of f and g
+       * <pre>
+       *   f (1, true)
+       *   g (1, true)
+       * </pre>
+       * are represented as:
+       * <pre>
+       * TPFOREIGNAPPLY(f, [], TPRECORD{1, true}, [int, bool], loc)
+       * TPFOREIGNAPPLY(g, [], TPRECORD{1, true}, [(int * bool)], loc)
+       * </pre>
+       * </p>
+       *) 
+      TPFOREIGNAPPLY of 
+        {
+          funExp : tpexp, 
+	  instTyList:ty list,
+	  argExp:tpexp, 
+	  argTyList : ty list, 
+	  loc: loc
+        }
+   | (*%
+      * @format "?"
+      *)
+     TPERROR
+   | (*%
+      * @format(const:formatConst * loc) const
+      *)
+     TPCONSTANT of constant * loc
+   | (*%
+      * @format(id:varPathInfo * loc) {id()(btvEnv)}
+      *)
+     TPVAR of varPathInfo * loc
+   | (*%
+      * @format({var:id:varPathInfo, arity:arity,loc:loc}) {id()(btvEnv)}
+      *)
+     TPRECFUNVAR of {var:varPathInfo, arity:int, loc:loc}
+   | (*%
+      * @format({primOp:prim, instTyList:ty tys:formatListWithEnclosure, argExpOpt:exp opt, loc:loc})
+      * R1{
+      *     prim !N0{tys(ty()(btvEnv))(",","{","}")}
+      *       opt( exp )
+      *   }
+      * @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+     *)
+     TPPRIMAPPLY of 
+       {
+         primOp:primInfo, 
+         instTyList:ty list, 
+         argExpOpt:tpexp option, 
+         loc: loc
+        }
+  | (*%
+      * @format({oprimOp:oprim,
+      *          instances:ty tys:formatListWithEnclosure,
+      *          argExpOpt:exp opt,
+      *          loc:loc})
+      * R1{
+      *     oprim !N0{tys(ty()(btvEnv))(",","{","}")}
+      *       opt( exp )
+      *   }
+      * @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+     *)
+     TPOPRIMAPPLY of 
+       {
+         oprimOp:oprimInfo, 
+         instances:ty list, 
+         argExpOpt:tpexp option, 
+         loc: loc
+        }
+   | (*%
+      * @format({con:con, instTyList:ty tys:formatListWithEnclosure, argExpOpt:exp opt, loc:loc}) 
+      * R1{
+      *     con !N0{tys(ty()(btvEnv))(",","{","}")}
+      *       opt( exp )
+      *   }
+      * @format:exp(exp) 2[ +1 exp()(btvEnv) ] 
+      *)
+     TPCONSTRUCT of 
+       {
+        con:conPathInfo,
+        instTyList:ty list,
+        argExpOpt:tpexp option,
+        loc:loc
+        }
+   | (*%
+      * @format({funExp:exp1, funTy:ty, argExpList:exp2 exps:enclosedListIfMoreThanOne, loc:loc})
+      * L10{
+      *      "(" exp1()(btvEnv) 2[ +2 ":" +d ty()(btvEnv) ] ")" +1
+      *      exps(exp2()(btvEnv))(",","{","}")
+      *    }
+      *)
+      (*
+         ty is the type of the function
+      *) 
+     TPAPPM of {funExp:tpexp, funTy:ty, argExpList:tpexp list, loc:loc}
+   | (*%
+      * @format({binds:bind binds, bodyExp:exp, loc:loc})
+      * !N0{
+      *      {"bind" 2[ +1 binds(bind)( +1) ]}  +1
+      *      {"in" 2[ +2 exp()(btvEnv) ] +2 "end"}
+      *    }
+      * @format:bind(id:varPathInfo * exp)
+      * { id()(btvEnv) +d "=" +2 {exp()(btvEnv)} }
+      *)
+     TPMONOLET of {binds:(varPathInfo * tpexp) list, bodyExp:tpexp, loc:loc}
+   | (*%
+      * @format(dec decs * exp exps * ty tys:formatListWithEnclosure * loc)
+      *  !N0{
+      *       {"let" 2[ +1 decs(dec()(btvEnv))( +1) ]} +1
+      *       {
+      *         "in"
+      *             2[
+      *                +2 exps(exp()(btvEnv))( +3 ) +2
+      *                ":" + tys(ty()(btvEnv))(",","{","}")
+      *              ] +2
+      *         "end"
+      *       }
+      *     }
+      *)
+     TPLET of tpdecl list * tpexp list * ty list * loc
+   | (*%
+      * @format({fields:records, recordTy:ty, loc:loc})
+      * { records()(btvEnv) 2[ +1 ":" ty()(btvEnv) ] }
+      *)
+     TPRECORD of {fields:fields, recordTy:ty, loc:loc}
+   | (*%
+      * @format({label:selector, exp:exp, expTy:ty, loc:loc})
+      *  L10{ "#"{selector} + {exp()(btvEnv)} 2[ +1 ":" ty()(btvEnv) ] }
+      *)
+     TPSELECT of {label:string, exp:tpexp, expTy:ty, loc:loc}
+   | (*%
+      * @format({label:label, 
+                 recordExp:exp1, 
+                 recordTy:ty1, 
+                 elementExp:exp2, 
+                 elementTy:y2, 
+                 loc:loc})
+      * N0{
+      *     "MODIFY(" exp1()(btvEnv) "," + label "," + exp2()(btvEnv) ")"
+      *     2[ +1 ":" ty1()(btvEnv) ]
+      *   }
+      *)
+     TPMODIFY of 
+      {
+       label:string, 
+       recordExp:tpexp, 
+       recordTy:ty, 
+       elementExp:tpexp, 
+       elementTy:ty, 
+       loc:loc
+       }
+   | (*%
+      * @format(exp * ty * loc)
+      * N0{ "raise" +d {exp()(btvEnv)} 2[ +1 ":" ty()(btvEnv) ] }
+      *)
+     TPRAISE of tpexp * ty * loc
+   | (*%
+      * @format({exp:exp1, exnVar:id:varPathInfo, handler:exp2, loc:loc})
+      *    "handle" + N0{exp1()(btvEnv)} +1
+      *    "with letexp" + id()(btvEnv) + "in" + {exp2()(btvEnv)}
+      *)
+      (*
+      * handle (exp1, x, exp2) 
+	   exp1 the expression to be evaluated normally
+	   x variable to received exception value 
+	   exp2 the handler body using x 
+      *)
+     TPHANDLE of {exp:tpexp, exnVar:varPathInfo, handler:tpexp, loc:loc}
+   | (*%
+      * @format({expList:exp exps:enclosedListIfMoreThanOne, 
+                 expTyList:ty1 ty1s, 
+                 ruleList:rule rules,
+                 ruleBodyTy:ty2,
+                 caseKind:caseKind,
+                 loc:loc})
+      * N0{
+      *     caseKind 2[ +d exps(exp()(btvEnv))(","+, "{","}")  
+              +d ":" "{" + ty1s(ty1()(btvEnv))(",") + "}" ] 2[ +1 "of" ]+
+      *     {rules(rule)(~2[ +1 "|" ]+)} +d ":" + ty2()(btvEnv)
+      *   } 
+      * @format:rule(pat pats:enclosedListIfMoreThanOne * exp) 
+           { pats(pat()(btvEnv))(",","{","}") + "=>" +1 {exp()(btvEnv)}}
+      *)
+     TPCASEM of 
+       {
+        expList:tpexp list,
+        expTyList:ty list,
+        ruleList: (tppat list * tpexp) list,
+        ruleBodyTy:ty,
+        caseKind: caseKind,
+        loc:loc
+        }
+   | (*%
+      * @format({argVarList:id:varPathInfo ids:enclosedListIfMoreThanOne, bodyTy:ty, bodyExp:exp, loc:loc}) 
+      * !N0{
+      *      "("
+      *         "fn" + {ids(id()(btvEnv))(","+1,"{","}")} +d "=>"
+      *         4[
+      *            +1 {exp()(btvEnv)}
+      *            2[ +1 ":" ty()(btvEnv) ]
+      *          ]
+      *       ")"
+      *    }
+      *)
+      (*
+       * ty is the type of tpexp 
+      *)
+     TPFNM of {argVarList:varPathInfo list, bodyTy:ty, bodyExp:tpexp, loc:loc}
+   | (*%
+      * @format({btvEnv:btvKind:btvKind imap, 
+                 argVarList:var:varPathInfo vars, 
+                 bodyTy:ty, 
+                 bodyExp:exp, 
+                 loc:loc})
+      * {
+      *   "["
+      *       2[
+      *          1
+      *           imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +
+      *           !N0{
+      *                "fn" + "{" {vars(var()(imap:createBtvKindMap()(btvEnv)))(",")} "}" +d "=>"
+      *                4[ +1 {exp()(imap:createBtvKindMap()(btvEnv))} ]
+      *              }
+      *           2[ +1 ":" ty()(imap:createBtvKindMap()(btvEnv)) ]
+      *        ] 1 
+      *   "]"
+      * }
+      *)
+      (*
+        \forall t.\fn x => e 
+      ty is the type of the function without type abstraction
+      *)
+     TPPOLYFNM of 
+       {
+        btvEnv:btvKind IEnv.map,
+        argVarList:varPathInfo list,
+        bodyTy:ty,
+        bodyExp:tpexp,
+        loc:loc
+        }
+   | (*%
+      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs:ty, exp:exp, loc:loc})
+      * {
+      *   "["
+      *       2[
+      *          1
+      *           imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +2
+      *           2[ {exp()(imap:createBtvKindMap()(btvEnv))} ]
+      *           2[ +2 ":" ty()(imap:createBtvKindMap()(btvEnv)) ]
+      *        ] 1
+      *   "]"
+      * }
+      *)
+      (*
+       \forall t.e 
+        ty is the type of tpexp without type abstraction
+      *)
+     TPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tpexp, loc:loc}
+   | (*%
+      * @format({exp:exp, expTy:ty1, instTyList:ty2 tys, loc:loc}) 
+      * {
+      *   exp()(btvEnv)
+      *   +2 ":" ty1()(btvEnv) 
+      *   +1 !N0{ "{" 2[1 tys(ty2()(btvEnv))("," +1) ] 1 "}" }
+      * }
+      *)
+      (* TPTAPP(ex,ty1,tyl) : ty1 is the polytype, tyl are type args
+       *)
+     TPTAPP of {exp:tpexp, expTy:ty, instTyList:ty list, loc:loc}
+  | (*%
+     * @format({expList:exp exps, expTyList:ty tys:formatListWithEnclosure, loc:loc})
+     * !N0{
+     *      "("
+     *          2[ 1 exps(exp()(btvEnv))(";" +2) ] 1
+     *      ")" 
+     *      2[ +1 ":" tys(ty()(btvEnv))(",","(",")") ]
+     *    }
+     *)
+     TPSEQ of {expList:tpexp list, expTyList:ty list, loc:loc}
+  | (*%
+     * @format
+     *   ({funExp:funExp, libExp:libExp, argTyList:argty argtys, resultTy:resultty, funTy:infty, loc:loc})
+     * "import" + funExp()(btvEnv) +d "of" +d libExp()(btvEnv) +2
+     * ":" + "{" {argtys(argty()(btvEnv))("," +)} "}"
+     *       "->" {resultty()(btvEnv)}
+     *)
+    TPFFIVAL of {funExp:tpexp, libExp:tpexp, argTyList:ty list, resultTy:ty, funTy:ty, loc:loc}
+  | (*%
+     * @format(exp * ty * loc) "cast(" exp()(btvEnv) + "to" + ty()(btvEnv) ")"
+     *)
+    (*
+      cast e to some type ty
+      this is used to coerce constructor type to a record type
+      *)
+    TPCAST of tpexp * ty * loc
+
+ and tpdecl 
+   = (*%
+      * @format(bind binds * loc)  "val" + {binds(bind)(~4[ +1 "and"] +)}
+      * @format:bind(id * exp) {id()(btvEnv)} +d "=" +2 {exp()(btvEnv)}
+      *)
+     TPVAL of (valId * tpexp) list * loc
+   | (*%
+       * @format(dec binds * loc)
+            "fun" + {binds(dec)(~4[ +1 "and"] +)}
+       * @format:dec({funVar:fid, argTyList: ty tys, bodyTy, ruleList:rules})
+            fid()(btvEnv) + rules
+       * @format:rules(rule rules)
+            {rules(rule)(~2[ +1"|"] +)}
+       * @format:rule(pat pats *  exp)
+       *    {pats(pat()(btvEnv))(+d)} +d "=" +1 {exp()(btvEnv)}
+       *)
+     TPFUNDECL of {
+                    funVar:varPathInfo, 
+                    argTyList:ty list,
+                    bodyTy: ty,
+                    ruleList : (tppat list * tpexp) list
+                   } list
+                   *
+                   loc
+   | (*%
+       * @format(btvKind:btvKind imap * dec binds * loc)
+        "fun ["
+            2[ 1
+                imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +2
+
+            "]" 
+             + {binds(dec)(~4[ +1 "and"] +)}
+       * @format:dec({funVar:fid, argTyList, bodyTy, ruleList:rules}) 
+            fid()(imap:createBtvKindMap()(btvEnv)) + rules
+       * @format:rules(rule rules)
+            {rules(rule)(~2[ +1"|"] +)}
+       * @format:rule(pat pats *  exp)
+       *    {pats(pat()(imap:createBtvKindMap()(btvEnv)))(+d)} +d "=" +1 {exp()(imap:createBtvKindMap()(btvEnv))}
+       *)
+     TPPOLYFUNDECL of btvKind IEnv.map 
+                       * 
+                      {funVar:varPathInfo,
+                       argTyList:ty list,
+                       bodyTy:ty,
+                       ruleList : (tppat list * tpexp) list
+                       } list 
+                       * 
+                       loc 
+(*
+   | (*%
+         * @format(dec * loc)
+         *  "nonrecfun" + dec
+         * @format:dec(fid * rules) {fid()(btvEnv) + rules}
+         * @format:rules(rule rules) {rules(rule)(~2[ +1"|"] +)}
+         * @format:rule(pat pats *  exp)
+         *    {pats(pat()(btvEnv))(+d)} +d "=" +1 {exp()(btvEnv)}
+         *)
+     TPNONRECFUN of (varPathInfo * (tppat list * tpexp) list) * loc
+*)
+   | (*%
+      * @format(bind binds * loc)
+      *  "val rec" +d {binds(bind)(~4[ +1 "and"] +)}
+      * @format:bind({var:{name,ty}, expTy:ty1, exp:exp}) 
+           {name +d "=" +2 {exp()(btvEnv)} +1 ":" + ty1()(btvEnv) }
+      *)
+     TPVALREC of {var:{name:string, ty:ty}, expTy:ty, exp:tpexp } list * loc
+   | (*%
+      * @format(id ids * dec decs * loc) 
+          "valrecgroup" +1 2[decs(dec()(btvEnv))(+ 1)] +1 "endvalrecgroup"
+      *)
+     TPVALRECGROUP of string list * tpdecl list * loc
+   | (*%
+      * @format(btvKind:btvKind imap * bind binds * loc)
+      * {
+      *   "valpolyrec["
+      *       2[ 1
+      *           imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +2
+      *           "val rec" +d {binds(bind)(~4[ +1 "and"] +)}
+      *        ] 1
+      *   "]"
+      * }
+      * @format:bind({var:{name,ty}, expTy:ty1, exp:exp})
+      * {
+      *   name +d "=" +2
+      *   2[
+      *      {exp()(imap:createBtvKindMap()(btvEnv))} 
+      *       +1 ":" + ty1()(imap:createBtvKindMap()(btvEnv))
+      *    ]
+      * }
+      *)
+     TPVALPOLYREC of
+     btvKind IEnv.map * {var:{name:string, ty:ty}, expTy:ty, exp:tpexp} list * loc
+   | (*%
+      * @format(localdec localdecs * dec decs * loc)
+      * "local" 2[ +2 localdecs(localdec()(btvEnv))(+2) ] +1
+      * "in" 2[ +2 decs(dec()(btvEnv))(+3) ] +2
+      * "end"
+      *)
+     TPLOCALDEC of tpdecl list * tpdecl list * loc
+   | (*%
+      * @format(id ids * loc)
+      * "open" +  ids(id()(btvEnv))(5[+1])
+      *)
+     TPOPEN of strPathInfo list * loc
+   | (*%
+      * @format(bind binds * loc) "type" + {binds(bind)(~4[ +1 "and"] +)}
+      * @format:bind(tyBindInfo:tyBindInfo) tyBindInfo()(btvEnv)
+      *)
+     TPTYPE of Types.tyBindInfo list * loc
+   | (*%
+      * @format(tyCondec list * loc) list(tyCondec)("\n")
+      * @format:tyCondec(tyCon) {"datatype" + tyCon()(btvEnv)}
+      *)
+     TPDATADEC of tyCon list * loc
+   | (*%
+      * @format({
+      *           absTyCons : tyCon tyCons,
+      *           rawTyCons: rawTyCon rawTyCons,
+      *           decls:decl decls
+      *         } * loc)
+      * "abstype" 2[ {+1 tyCons(tyCon()(btvEnv))(+1)} ] +1
+      * "with" 2[ {+1 decls(decl()(btvEnv))(+1)} ] +1
+      * "end"
+      *)
+     TPABSDEC of
+     {absTyCons : tyCon list, rawTyCons : tyCon list, decls : tpdecl list}
+     * loc
+   | (*%
+      * @format({left,right} * loc)
+      * "datatype" + {left()(btvEnv)} +d "=" +1 {right}
+      * @format:right({relativePath,tyCon}) relativePath
+      * @format:relativePath(path * string) path:format_pathdot string
+      *)
+     TPDATAREPDEC of
+     {left : tyCon, right : {relativePath : (path * string), tyCon : tyCon}}
+      * loc
+   | (*%
+      * @format(exdec list * loc) list(exdec()(btvEnv))("\n")
+      *)
+     TPEXNDEC of tpexnbind list * loc
+   | (*%
+      * @format(int * name names * loc) "infix" +d {int} +d names(name)(+d)
+      *)
+     TPINFIXDEC of int * string list * loc
+   | (*%
+      * @format(int * name names * loc) "infixr" +d {int} +d names(name)(+d)
+      *)
+     TPINFIXRDEC of int * string list * loc
+   | (*%
+      * @format(name names * loc) "nonfix" +d names(name)(+d)
+      *)
+     TPNONFIXDEC of string list * loc
+
+ and tppat
+   = (*%
+      * @format(v) "_"
+      *)
+     TPPATWILD of ty * loc
+   | (*%
+      * @format(id:varPathInfo * loc) id()(btvEnv)
+      *)
+     TPPATVAR of varPathInfo * loc
+   | (*%
+      * @format(const:formatConst * ty * loc) const
+      *)
+     TPPATCONSTANT of constant * ty * loc
+   | (*%
+      * @format({conPat:con, 
+                 instTyList:ty1 tys:formatListWithEnclosure, 
+                 argPatOpt:pat opt, 
+                 patTy:ty2, 
+                 loc:loc}) 
+      * L1{
+      *     d con tys(ty1()(btvEnv))(",","{","}") +
+      *     opt(pat()(btvEnv)) +1
+      *     ":" ty2()(btvEnv)
+      *   }
+      *)
+     TPPATCONSTRUCT of 
+       {
+        conPat:conPathInfo, 
+        instTyList:ty list, 
+        argPatOpt:tppat option, 
+        patTy:ty, 
+        loc:loc
+        }
+   | (*%
+      * @format({fields:record, recordTy:ty, loc:loc}) record()(btvEnv) ":" ty()(btvEnv)
+      *)
+     TPPATRECORD of {fields:patfields, recordTy:ty, loc:loc}
+   | (*%
+      * @format({varPat:pat1, asPat:pat2, loc:loc}) pat1()(btvEnv) + "as" + pat2()(btvEnv)
+      *)
+     TPPATLAYERED of {varPat:tppat, asPat:tppat, loc:loc}
+
+ and tpexnbind =
+     (*%
+      * @format(con) con
+      *)
+     TPEXNBINDDEF of conPathInfo
+   | (*%
+      * @format(left * (right:format_pathdot * string)) {left} +d "=" +2 {right} string
+      *)
+     TPEXNBINDREP of string * (path * string)
+
+ withtype fields = 
+     (*%
+      * @format(exp smap:genericSmapExp) smap(exp()(btvEnv))(+"=" +,"," +1)
+      *)
+     tpexp SEnv.map
+ and patfields = 
+     (*%
+      * @format(pat smap:genericSmapExp) smap(pat()(btvEnv))(+"=" +,"," +1)
+      *)
+     tppat SEnv.map
+
+
+ (*************added for modules**************************)
+		 
+(*%
+ * @params(btvEnv)
+ *
+ * @formatter(sigBindInfo) Types.format_sigBindInfo
+ * @formatter(funBindInfo) Types.format_funBindInfo
+ * @formatter(format_bmap_int) Types.format_bmap_int
+ * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(format_path) Path.format_pathWithDotend
+ * @formatter(tyBindInfo) Types.format_tyBindInfo
+ * @formatter(tySpec) Types.format_tySpec
+ * @formatter(format_pathdot) Path.format_pathWithDotend
+ * @formatter(formatConPathInfoNameType) Types.format_conPathInfoNameType
+ *)
+ datatype tpmstrdecl =
+     (*%	
+      * @format(dec decs * loc) !N0{  2[ 1 decs(dec()(btvEnv))(";" +1) ] 1  }
+      *)
+     TPMCOREDEC of tpdecl list * loc
+   | (*%
+      * @format(strbind strbinds * loc)
+      * "structure" +d 4[strbinds(strbind)(~2[ +1 "and"] +)] 
+      * @format:strbind(Info * strexp) Info()(btvEnv) + "=" +1 strexp()(btvEnv)
+      *)
+     TPMSTRBIND of (strInfo * tpmstrexp) list * loc
+   | (*%
+     * @format(localstrdec localstrdecs  * strdec  strdecs * loc)
+     *            "local" 2[ +2 localstrdecs(localstrdec()(btvEnv)) (+d) ] +1
+     *            "in" 2[ +2 strdecs(strdec()(btvEnv))(+3) ] +2
+     *            "end"
+     *)
+     TPMLOCALDEC of tpmstrdecl list * tpmstrdecl list * loc
+		   
+ and  tpmstrexp = 
+      (*%
+       * @format(strdec strdecs * loc) 
+       * "struct"  2[ +1 strdecs(strdec()(btvEnv))(+1)] +d  "end" 
+       *)
+      TPMSTRUCT  of tpmstrdecl list * loc
+    | (*%
+       * @format(id * loc) id()(btvEnv) 
+       *)
+      TPMLONGSTRID of strPathInfo * loc
+    | (*%
+       * @format(tptopexp * sigexp * sigenv * loc)
+       * tptopexp()(btvEnv) +1 ":>" +d {sigexp()(btvEnv)}
+       *)
+      TPMOPAQCONS  of tpmstrexp * tpmsigexp * Types.Env * loc
+    | (*%
+       * @format(tptopexp * sigexp * sigenv * loc)
+       * tptopexp()(btvEnv) +1 ":" +d {sigexp()(btvEnv)}
+       *)
+      TPMTRANCONS  of tpmstrexp * tpmsigexp * Types.Env * loc
+    | (*%
+       * @format(funBindInfo
+       *         * {strArg,env}
+       *         * exnTagSubst
+       *         * instTyConSubst
+       *         * anonyStrPath
+       *         * loc) 
+       * funBindInfo:funBindInfo "(" strArg()(btvEnv) ")"
+       *) 
+      TPMFUNCTORAPP of
+      Types.funBindInfo
+      * {strArg:tpmstrexp, env:Types.Env} 
+      * int IEnv.map
+      * tyBindInfo ID.Map.map
+      * path 
+      * loc
+    | (*%
+       * @format(tptopdecl tptopdecls * tptopexp * loc) 
+       * !N0{
+       *    {"let" 2[ +1 tptopdecls(tptopdecl()(btvEnv))( +1) ]} +1
+       *    {"in" 2[ +2 tptopexp()(btvEnv) ] +2 "end"}
+       *   }
+       *)
+      TPMLET  of tpmstrdecl list * tpmstrexp * loc (* let strdecs in tptopexp end *)
+
+  and tpmsigexp = 
+     (*%
+      * @format(spec) {"sig" 2[+1 spec()(btvEnv)] +1 "end"}
+      *)
+      TPMSIGEXPBASIC of tpmspec 
+   |(*%
+     * @format(sigid ) {sigid} 
+     *)
+      TPMSIGID of string
+   |(*%
+     *@format(sigexp * rlstn rlstns )
+     * sigexp()(btvEnv) +1
+     * "where" + "type" + rlstns(rlstn)(+1 "where" + "type")
+     *@format:rlstn(strpath:format_path * {name, tyargs:a:btvKind b, body})
+     *     b:format_bmap_int(a()(b:createBtvKindMap()(btvEnv)))("(",") ")
+     *     strpath name + "=" +d 2[1 body()(b:createBtvKindMap()(btvEnv))]
+     *)
+     TPMSIGWHERE of
+     tpmsigexp *
+     (path * {name: string, tyargs : btvKind IEnv.map, body : ty}) list 
+
+  and tpmspec =
+      (*%
+       * @format "?"
+       *)
+       TPMSPECERROR
+     | (*%
+        * @format(specval list) "val" + {list(specval)(~4[ +1 "and"] +)} 
+        * @format:specval({name,ty}) {{name} + ":" {ty()(btvEnv)}}
+        *)
+       TPMSPECVAL of {name : string,ty : ty} list 
+     | (*%
+        * @format(bind) "type" + bind
+        * @format:bind(tyBindInfo:tyBindInfo) tyBindInfo()(btvEnv)
+        *)
+       TPMTYPEEQUATION of Types.tyBindInfo 
+    | (*%
+       * @format(typdesc typdescs)
+       * "type" + {typdescs(typdesc)(~4[ +1 "and"] +)}
+        * @format:typdesc(typdesc:tySpec) typdesc()(btvEnv)
+       *)
+       TPMSPECTYPE of Types.tySpec list 
+     | (*%
+        * @format(typdesc typdescs)
+        * "eqtype" + {typdescs(typdesc)(~4[ +1 "and"] +)}
+        * @format:typdesc(typdesc:tySpec) typdesc()(btvEnv)
+        *)
+       TPMSPECEQTYPE of Types.tySpec list 
+     | (*%
+        * @format(tyCondec list) list(tyCondec)("\n")
+        * @format:tyCondec(tyCon) {"datatype" + tyCon()(btvEnv)}
+        *)
+       TPMSPECDATATYPE of tyCon list
+     | (*%
+	* @format({left,right})
+	* "datatype" + {left()(btvEnv)} +d "=" +1 {right}
+	* @format:right({relativePath,tyCon}) relativePath
+	* @format:relativePath(path * string) path:format_pathdot string
+	*)
+       TPMSPECREPLIC of {left : tyCon, right : {relativePath : (path * string), tyCon : tyCon}}
+     | (*%
+        * @format(exdec list) list(exdec)("\n")
+        * @format:exdec(con:formatConPathInfoNameType)
+        * {"exception" + con()(btvEnv)}
+        *)
+       TPMSPECEXCEPTION of conPathInfo list
+     | (*%
+        * @format(strdesc strdescs )
+        * !N0{ "structure" + {strdescs(strdesc)(~2[ +1 "and" ] +)}}
+        * @format:strdesc(strpathinfo * sigexp)
+        * !N0{ strpathinfo()(btvEnv) ":" +d sigexp()(btvEnv)}
+        *)
+       TPMSPECSTRUCT of (strPathInfo * tpmsigexp) list 
+     | (*%
+        * @format(sigexp ) !N0{"include" + {sigexp()(btvEnv)}}
+        *)
+       TPMSPECINCLUDE of tpmsigexp 
+     | (*%
+        * @format(spec1 * spec2) {spec1()(btvEnv)} +1 {spec2()(btvEnv)}
+        *)
+       TPMSPECSEQ of tpmspec * tpmspec
+     | (*%
+        * @format(spec * path paths )
+        * spec()(btvEnv) +1
+        * !N0{ "sharing type" + {paths(path)(~2[ +1 "="] +)} }
+	* @format:path(strpath * string) strpath:format_pathdot string
+        *)
+       TPMSPECSHARE of tpmspec * (path * string) list 
+     | (*%
+        * @format(spec * path paths )
+        * spec()(btvEnv) +1
+        * !N0{ "sharing" + {paths(path:format_path)(~2[ +1 "="] +)} }
+        *)
+       TPMSPECSHARESTR of tpmspec * path list  
+    | (*%
+       * @format
+       *)
+       TPMSPECEMPTY
+
+ and  tptopdecl =
+      (*%
+       *@format(tpmstrdecl * loc) tpmstrdecl()(btvEnv)
+       *)
+      TPMDECSTR of tpmstrdecl * loc (* structure *)
+    | (*%
+       * @format(sigdec sigdecs * loc)
+       * "signature" + {sigdecs(sigdec)(~4[ +1 "and"] +)}
+       * @format:sigdec(sigBindInfo:sigBindInfo * sigexp)
+       * sigBindInfo()(btvEnv) +d "=" +1 sigexp()(btvEnv)
+       *)
+      TPMDECSIG of (Types.sigBindInfo * tpmsigexp) list * loc
+    | (*%
+       * @format(funbind funbinds * loc)
+       * !N0{ "functor" + {funbinds(funbind)(~4[ +1 "and"] +)} }
+       * @format:funbind(funBindInfo * strid * sigexp1 * strexp) 
+       *  funBindInfo + "(" strid + sigexp1()(btvEnv) +")"
+       *  +  "=" +1 4[strexp()(btvEnv)]
+       *)
+      TPMDECFUN of (funBindInfo  * string * tpmsigexp  * tpmstrexp) list * loc
+    | (*%
+       *@format(tpmspec * Env * loc) "import" + tpmspec()(btvEnv)
+       *)
+      TPMDECIMPORT of tpmspec * Types.Env * loc 
+end

@@ -1,0 +1,516 @@
+<HTML>
+<HEAD>
+<TITLE>FORMAT_EXPRESSION</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLFormat</em>
+</TD></TR></TABLE>
+<HR>
+<H2>FORMAT_EXPRESSION</H2>
+<DL>
+<DT> <B>All Known Implementing Modules:</B>
+<DD>
+<P>
+<CODE><A HREF="StrFormatExpression.html">FormatExpression</A>,&nbsp;<A HREF="StrSMLFormat-StrFormatExpression.html">SMLFormat.FormatExpression</A></CODE>
+</DL>
+<HR>
+<P>
+<CODE>signature&nbsp;<A HREF="SigFORMAT_EXPRESSION.html">FORMAT_EXPRESSION</A>&nbsp;=<br>
+sig<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;=&nbsp;{&nbsp;cut&nbsp;:&nbsp;bool,&nbsp;&nbsp;strength&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>,&nbsp;&nbsp;direction&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#TypeassocDirection">assocDirection</A>}<br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;=&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrPreferred">Preferred</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrDeferred">Deferred</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#TypeassocDirection">assocDirection</A>&nbsp;=&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrLeft">Left</A>&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrRight">Right</A>&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrNeutral">Neutral</A><br>
+&nbsp;&nbsp;datatype&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrTerm">Term</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrGuard">Guard</A>&nbsp;of&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrIndicator">Indicator</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;space&nbsp;:&nbsp;bool,&nbsp;&nbsp;newline&nbsp;:&nbsp;{&nbsp;priority&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>}&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrEndOfIndent">EndOfIndent</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValisHigherThan">isHigherThan</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;bool<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValassocToString">assocToString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValpriorityToString">priorityToString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ValtoString">toString</A>&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+  This module defines types which represents format expressions.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Author:</B>
+<DD>
+YAMATODANI Kiyoshi
+
+<DT> <B>Version:</B>
+<DD>
+$Id: SigFORMAT_EXPRESSION.html,v 1.3 2006/02/23 10:10:21 kiyoshiy Exp $
+ 
+
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeassoc"><!-- --></A>
+<H3>assoc</H3>
+<P>
+<CODE>type&nbsp;assoc&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(*  true if the inheritance of associativity from the upper guard
+ is cut.*)</I></FONT><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cut&nbsp;:&nbsp;bool,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* the strength of the association.*)</I></FONT>&nbsp;strength&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* the direction of the association.*)</I></FONT>&nbsp;direction&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#TypeassocDirection">assocDirection</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</CODE>
+<DL>
+<DD>
+ the associativity between elements in guards.
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Datatype detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typepriority"><!-- --></A>
+<H3>priority</H3>
+<P>
+<CODE>datatype&nbsp;priority&nbsp;=&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrPreferred">Preferred</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrDeferred">Deferred</A></CODE>
+<DL>
+<DD>
+ priority of newline indicators.
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="TypeassocDirection"><!-- --></A>
+<H3>assocDirection</H3>
+<P>
+<CODE>datatype&nbsp;assocDirection&nbsp;=&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrLeft">Left</A>&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrRight">Right</A>&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrNeutral">Neutral</A></CODE>
+<DL>
+<DD>
+ direction of the associativity between elements in guards
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="Typeexpression"><!-- --></A>
+<H3>expression</H3>
+<P>
+<CODE>datatype&nbsp;expression&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrTerm">Term</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrGuard">Guard</A>&nbsp;of&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrIndicator">Indicator</A>&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* true if a whitespace should be inserted here.*)</I></FONT>&nbsp;space&nbsp;:&nbsp;bool,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* NONE if newline indicator is not specified.*)</I></FONT><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;newline&nbsp;:&nbsp;{<FONT COLOR="red"><I>(* priority to insert a newline *)</I></FONT>&nbsp;priority&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>}&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrStartOfIndent">StartOfIndent</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#ConstrEndOfIndent">EndOfIndent</A></CODE>
+<DL>
+<DD>
+ format expressions
+   
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">DataConstructor detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ConstrPreferred"><!-- --></A>
+<H3>Preferred</H3>
+<P>
+<CODE>constructor&nbsp;Preferred&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A></CODE>
+<DL>
+<DD>
+preferred priority of the specified priority 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrDeferred"><!-- --></A>
+<H3>Deferred</H3>
+<P>
+<CODE>constructor&nbsp;Deferred&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A></CODE>
+<DL>
+<DD>
+deferred priority 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrLeft"><!-- --></A>
+<H3>Left</H3>
+<P>
+<CODE>constructor&nbsp;Left&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#TypeassocDirection">assocDirection</A></CODE>
+<DL>
+<DD>
+indicates left associativity 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrRight"><!-- --></A>
+<H3>Right</H3>
+<P>
+<CODE>constructor&nbsp;Right&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#TypeassocDirection">assocDirection</A></CODE>
+<DL>
+<DD>
+indicates right associativity 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrNeutral"><!-- --></A>
+<H3>Neutral</H3>
+<P>
+<CODE>constructor&nbsp;Neutral&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#TypeassocDirection">assocDirection</A></CODE>
+<DL>
+<DD>
+indicates non-directional associativity 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrTerm"><!-- --></A>
+<H3>Term</H3>
+<P>
+<CODE>constructor&nbsp;Term&nbsp;(columns,&nbsp;text)&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;*&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
+<DL>
+<DD>
+string literal.
+ The 'columns' is not always equal to the size of 'text'.
+ For example, a HTML code snip
+ "&lt;a ref=http://www.jaist.ac.jp&gt;JAIST&lt;/a&gt;" is encoded
+ as
+ Term(5, "&lt;a ref=http://www.jaist.ac.jp&gt;JAIST&lt;/a&gt;").
+ The 'columns' is 5 which is the length of the text 'JAIST' to be
+ displayed.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>columns</CODE>
+<DD>
+ the number of columns which the text occupies in
+      the displayed form
+
+<DT> <CODE>text</CODE>
+<DD>
+ the text to be output which may include escape
+       sequence to encode the form to be displayed
+            
+
+</DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrGuard"><!-- --></A>
+<H3>Guard</H3>
+<P>
+<CODE>constructor&nbsp;Guard&nbsp;(assoc,&nbsp;expressions)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
+<DL>
+<DD>
+ scope of indicator's priority (with assoc indicator)
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>assoc</CODE>
+<DD>
+ the associativity between the expressions
+
+<DT> <CODE>expressions</CODE>
+<DD>
+ the elements of the guard
+            
+
+</DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrIndicator"><!-- --></A>
+<H3>Indicator</H3>
+<P>
+<CODE>constructor&nbsp;Indicator<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* true if a whitespace should be inserted here.*)</I></FONT>&nbsp;space&nbsp;:&nbsp;bool,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<FONT COLOR="red"><I>(* NONE if newline indicator is not specified.*)</I></FONT><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;newline&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<FONT COLOR="red"><I>(* priority to insert a newline *)</I></FONT>&nbsp;priority&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>}&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrOption.html#Typeoption">option</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
+<DL>
+<DD>
+format indicator 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrStartOfIndent"><!-- --></A>
+<H3>StartOfIndent</H3>
+<P>
+<CODE>constructor&nbsp;StartOfIndent&nbsp;width&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt.html#Typeint">int</A>&nbsp;->&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
+<DL>
+<DD>
+ push a indent on the indent stack
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>width</CODE>
+<DD>
+ colums of indent
+            
+
+</DL>
+</DL>
+</DL>
+<HR>
+<A NAME="ConstrEndOfIndent"><!-- --></A>
+<H3>EndOfIndent</H3>
+<P>
+<CODE>constructor&nbsp;EndOfIndent&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A></CODE>
+<DL>
+<DD>
+pop a indent out of the indent stack 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValisHigherThan"><!-- --></A>
+<H3>isHigherThan</H3>
+<P>
+<CODE>fun&nbsp;isHigherThan&nbsp;(left,&nbsp;right)&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;*&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;bool</CODE>
+<DL>
+<DD>
+ compare two priorities.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>left</CODE>
+<DD>
+ a priority
+
+<DT> <CODE>right</CODE>
+<DD>
+ another priority
+
+</DL>
+<DT> <B>Returns:</B>
+<DD>
+true if the <code>left</code> is higher priority than
+     the <code>right</code>
+   
+
+</DL>
+</DL>
+<HR>
+<A NAME="ValassocToString"><!-- --></A>
+<H3>assocToString</H3>
+<P>
+<CODE>fun&nbsp;assocToString&nbsp;assoc&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeassoc">assoc</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+ make a string representation of the assoc.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>assoc</CODE>
+<DD>
+ a assoc
+
+</DL>
+<DT> <B>Returns:</B>
+<DD>
+the string representation of the <code>assoc</code>
+   
+
+</DL>
+</DL>
+<HR>
+<A NAME="ValpriorityToString"><!-- --></A>
+<H3>priorityToString</H3>
+<P>
+<CODE>fun&nbsp;priorityToString&nbsp;priority&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typepriority">priority</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+ make a string representation of the priority.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>priority</CODE>
+<DD>
+ a priority
+
+</DL>
+<DT> <B>Returns:</B>
+<DD>
+the string representation of the <code>priority</code>
+   
+
+</DL>
+</DL>
+<HR>
+<A NAME="ValtoString"><!-- --></A>
+<H3>toString</H3>
+<P>
+<CODE>fun&nbsp;toString&nbsp;expression&nbsp;:&nbsp;<A HREF="SigFORMAT_EXPRESSION.html#Typeexpression">expression</A>&nbsp;->&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+ make a string representation of the expression.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>expression</CODE>
+<DD>
+ a expression
+
+</DL>
+<DT> <B>Returns:</B>
+<DD>
+the string representation of the <code>expression</code>
+   
+
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLFormat: Pretty-Printer library for SML
+</TD></TR></TABLE>
+</BODY></HTML>

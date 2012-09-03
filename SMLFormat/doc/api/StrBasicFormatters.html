@@ -1,0 +1,216 @@
+<HTML>
+<HEAD>
+<TITLE>BasicFormatters</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLFormat</em>
+</TD></TR></TABLE>
+<HR>
+<H2>BasicFormatters</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrBasicFormatters.html">BasicFormatters</A>&nbsp;:&nbsp;<A HREF="SigBASIC_FORMATTERS.html">BASIC_FORMATTERS</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;type&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;=&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">FE.expression</A><br>
+&nbsp;&nbsp;type&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;=&nbsp;'a&nbsp;->&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_unit">format_unit</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">General.unit</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_int">format_int</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt31Imp.html#Typeint">Int.int</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_word">format_word</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrWord31Imp.html#Typeword">Word.word</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_real">format_real</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrReal64Imp.html#Typereal">Real.real</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_char">format_char</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">Char.char</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_string">format_string</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringImp.html#Typestring">String.string</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_substring">format_substring</A>&nbsp;:&nbsp;Substring.substring&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_exn_Ref">format_exn_Ref</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeexn">General.exn</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;ref<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_exn">format_exn</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeexn">General.exn</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_array">format_array</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrArray.html#Typearray">Array.array</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_vector">format_vector</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrVector.html#Typevector">Vector.vector</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_ref">format_ref</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;->&nbsp;'a&nbsp;ref&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_bool">format_bool</A>&nbsp;:&nbsp;bool&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_option">format_option</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;->&nbsp;'a&nbsp;Option.option&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_order">format_order</A>&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeorder">General.order</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrBasicFormatters.html#Valformat_list">format_list</A>&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+  This module provides formatters for the standard types.
+
+  When you add a new formatter in this structure, it is required to update
+ the "../generator/BasicFormattersEnv.sml" to register the name of the new
+ formatter to the formatters environment.
+
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Author:</B>
+<DD>
+YAMATODANI Kiyoshi
+
+<DT> <B>Version:</B>
+<DD>
+$Id: StrBasicFormatters.html,v 1.3 2006/02/23 10:10:22 kiyoshiy Exp $
+ 
+
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Type detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Typeexpression"><!-- --></A>
+<H3>expression</H3>
+<P>
+<CODE>type&nbsp;expression&nbsp;=&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">FE.expression</A></CODE>
+
+<HR>
+<A NAME="Typeformatter"><!-- --></A>
+<H3>formatter</H3>
+<P>
+<CODE>type&nbsp;'a&nbsp;formatter&nbsp;=&nbsp;'a&nbsp;->&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A></CODE>
+
+<P>
+
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="Valformat_unit"><!-- --></A>
+<H3>format_unit</H3>
+<P>
+<CODE>val&nbsp;format_unit&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeunit">General.unit</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_int"><!-- --></A>
+<H3>format_int</H3>
+<P>
+<CODE>val&nbsp;format_int&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrInt31Imp.html#Typeint">Int.int</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_word"><!-- --></A>
+<H3>format_word</H3>
+<P>
+<CODE>val&nbsp;format_word&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrWord31Imp.html#Typeword">Word.word</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_real"><!-- --></A>
+<H3>format_real</H3>
+<P>
+<CODE>val&nbsp;format_real&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrReal64Imp.html#Typereal">Real.real</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_char"><!-- --></A>
+<H3>format_char</H3>
+<P>
+<CODE>val&nbsp;format_char&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrChar.html#Typechar">Char.char</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_string"><!-- --></A>
+<H3>format_string</H3>
+<P>
+<CODE>val&nbsp;format_string&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrStringImp.html#Typestring">String.string</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_substring"><!-- --></A>
+<H3>format_substring</H3>
+<P>
+<CODE>val&nbsp;format_substring&nbsp;:&nbsp;Substring.substring&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_exn_Ref"><!-- --></A>
+<H3>format_exn_Ref</H3>
+<P>
+<CODE>val&nbsp;format_exn_Ref&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeexn">General.exn</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;ref</CODE>
+
+<HR>
+<A NAME="Valformat_exn"><!-- --></A>
+<H3>format_exn</H3>
+<P>
+<CODE>val&nbsp;format_exn&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeexn">General.exn</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_array"><!-- --></A>
+<H3>format_array</H3>
+<P>
+<CODE>val&nbsp;format_array&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrArray.html#Typearray">Array.array</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_vector"><!-- --></A>
+<H3>format_vector</H3>
+<P>
+<CODE>val&nbsp;format_vector&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrVector.html#Typevector">Vector.vector</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_ref"><!-- --></A>
+<H3>format_ref</H3>
+<P>
+<CODE>val&nbsp;format_ref&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;->&nbsp;'a&nbsp;ref&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_bool"><!-- --></A>
+<H3>format_bool</H3>
+<P>
+<CODE>val&nbsp;format_bool&nbsp;:&nbsp;bool&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_option"><!-- --></A>
+<H3>format_option</H3>
+<P>
+<CODE>val&nbsp;format_option&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;->&nbsp;'a&nbsp;Option.option&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_order"><!-- --></A>
+<H3>format_order</H3>
+<P>
+<CODE>val&nbsp;format_order&nbsp;:&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrGeneral.html#Typeorder">General.order</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<HR>
+<A NAME="Valformat_list"><!-- --></A>
+<H3>format_list</H3>
+<P>
+<CODE>val&nbsp;format_list&nbsp;:&nbsp;'a&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A>&nbsp;*&nbsp;<A HREF="StrBasicFormatters.html#Typeexpression">expression</A>&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;->&nbsp;'a&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrList.html#Typelist">list</A>&nbsp;<A HREF="StrBasicFormatters.html#Typeformatter">formatter</A></CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLFormat: Pretty-Printer library for SML
+</TD></TR></TABLE>
+</BODY></HTML>

@@ -1,0 +1,19 @@
+#ifndef Instructions_hh_
+#define Instructions_hh_
+
+#include "SystemDef.hh"
+
+BEGIN_NAMESPACE(jp_ac_jaist_iml_runtime)
+
+///////////////////////////////////////////////////////////////////////////////
+
+@CEnumDeclaration@
+
+const char*
+instructionToString(instruction opcode);
+
+///////////////////////////////////////////////////////////////////////////////
+
+END_NAMESPACE
+
+#endif // Instructions_hh_

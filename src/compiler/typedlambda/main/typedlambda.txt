@@ -1,0 +1,24 @@
+     TLCONSTANT of constant 
+   | TLVAR of varinfo 
+   | TLGLOBAL of varinfo
+   | TLPRIMAPPLY of priminfo * ty list * tlexp list
+   | TLCONSTRUCT of coninfo * ty list * tlexp list
+   | TLAPP of tlexp * ty * tlexp 
+   | TLAPPM of tlexp * ty * tlexp list
+   | TLMONOLET of (varinfo * tlexp) list * tlexp
+   | TLLET of tldecl list * tlexp list * ty list
+   | TLRECORD of tlexp list * ty
+   | TLSELECTINT of tlexp * int * ty
+   | TLSELECTVAR of tlexp * varinfo * ty
+   | TLRAISE of tlexp 
+   | TLHANDLE of tlexp * tlexp
+   | TLFNM of varinfo list * tlexp
+   | TLFN of varinfo * tlexp
+   | TLPOLY of btvkind IEnv.map * tlexp
+   | TLTAPP of tlexp * ty * ty list
+   | TLCASE of tlexp * ty * (coninfo * varinfo option * tlexp) list * tlexp
+   | TLSWITCH of tlexp * ty *  (constant * tlexp) list * tlexp
+   | TLLETTERM of (varinfo * varinfo list * tlexp) list * tlexp
+   | TLTERMVAR of (varinfo * varinfo list)
+   | TLSEQ of tlexp list * ty list
+

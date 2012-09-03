@@ -1,0 +1,2 @@
+exception E : exn
+val x = E : exn

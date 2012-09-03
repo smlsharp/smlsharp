@@ -1,0 +1,6 @@
+abstype 'a dt111
+type t111 = bool * (int * int) dt111
+val x111 = (true, -) : t111
+abstype ('a, 'b) dt112
+type t112 = bool * (string,bool) dt112
+val x112 = (false, -) : t112

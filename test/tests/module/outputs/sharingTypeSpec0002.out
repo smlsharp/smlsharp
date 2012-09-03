@@ -1,0 +1,12 @@
+signature S2 =
+sig type u type t type s sharing type s = t sharing type s = u end
+signature S3 =
+sig
+  type s
+  type t
+  type u
+  type v
+  sharing type u = t
+  sharing type t = s
+  sharing type s = v
+end

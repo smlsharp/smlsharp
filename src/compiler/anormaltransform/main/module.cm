@@ -1,0 +1,14 @@
+Group is
+	../../../smlformatlib.cm
+	smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../types/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+	../../systemdef/sources.cm
+	../../buccalc/sources.cm
+	../../anormal/sources.cm
+
+        ANORMAL_TRANSLATOR.sig
+        ANormalTranslator.sml

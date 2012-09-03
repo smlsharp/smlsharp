@@ -1,0 +1,4 @@
+functor F ('X : sig end) : sig val x : unit end
+structure P : sig end
+structure S1 : sig val x : unit end
+structure S2 : sig val x : unit end

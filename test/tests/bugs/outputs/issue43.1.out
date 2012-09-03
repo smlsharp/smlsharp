@@ -1,0 +1,2 @@
+../tests/bugs/tests/issue43.1.sml:1.1-1.34 Error: bound expression in val rec
+                                                  must be fn

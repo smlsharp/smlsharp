@@ -1,0 +1,147 @@
+<HTML>
+<HEAD>
+<TITLE>PreProcessor</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLFormat</em>
+</TD></TR></TABLE>
+<HR>
+<H2>PreProcessor</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrPreProcessor.html">PreProcessor</A>&nbsp;:>&nbsp;<A HREF="SigPREPROCESSOR.html">PREPROCESSOR</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;exception&nbsp;<A HREF="StrPreProcessor.html#ExceptionFail">Fail</A>&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrPreProcessor.html#ValpreProcess">preProcess</A><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">FormatExpression.expression</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">PrettyPrinter.symbol</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+  This module translates FormatExpression.expression into
+ PrettyPrinter.symbol.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Author:</B>
+<DD>
+YAMATODANI Kiyoshi
+
+<DT> <B>Version:</B>
+<DD>
+$Id: StrPreProcessor.html,v 1.3 2006/02/23 10:10:22 kiyoshiy Exp $
+ 
+
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValpreProcess"><!-- --></A>
+<H3>preProcess</H3>
+<P>
+<CODE>fun&nbsp;preProcess&nbsp;parameter&nbsp;symbol<br>
+&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<A HREF="StrPrinterParameter.html#TypeprinterParameter">PrinterParameter.printerParameter</A>&nbsp;-><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="StrFormatExpression.html#Typeexpression">FormatExpression.expression</A>&nbsp;->&nbsp;<A HREF="StrPrettyPrinter.html#Typesymbol">PrettyPrinter.symbol</A></CODE>
+<DL>
+<DD>
+  translates a FormatExpression.expression into a PrettyPrinter.symbol.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>parameter</CODE>
+<DD>
+ parameters which control the printer
+
+<DT> <CODE>symbol</CODE>
+<DD>
+ a format expression
+
+</DL>
+<DT> <B>Returns:</B>
+<DD>
+a PrettyPrinter.symbol translated from the symbol.
+   
+
+</DL>
+</DL>
+<P>
+
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Exception detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ExceptionFail"><!-- --></A>
+<H3>Fail</H3>
+<P>
+<CODE>exception&nbsp;Fail&nbsp;of&nbsp;<A HREF="../../../SMLDoc/example/SMLBasis/doc/api/StrString.html#Typestring">string</A></CODE>
+<DL>
+<DD>
+ raised when any error occurs.
+
+<P>
+
+<DD>
+<DL>
+<DT> <B>Parameters:</B>
+<DD>
+<DL>
+<DT> <CODE>message</CODE>
+<DD>
+ the error message
+   
+
+</DL>
+</DL>
+</DL>
+<P>
+
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD><TD ALIGN=RIGHT VALIGN=TOP>
+<em>SMLFormat: Pretty-Printer library for SML
+</TD></TR></TABLE>
+</BODY></HTML>

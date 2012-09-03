@@ -1,0 +1,4 @@
+structure S1 : sig val x : int end
+val it = 1 : int
+structure S2 : sig val x : int end
+val it = 1 : int

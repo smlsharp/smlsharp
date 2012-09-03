@@ -1,0 +1,120 @@
+#!/bin/sh
+#
+# easy configuration script for SMLFormat
+#
+# This script does
+#   * generate Makefile from Makefile.in
+#   * generate formatlib/smlunitlib.cm (optional)
+#
+# @author UENO Katsuhiro
+# @author YAMATODANI Kiyoshi
+# @version $Id: configure,v 1.4 2006/02/23 05:28:15 kiyoshiy Exp $
+
+###############################################################################
+
+pwd=`pwd`
+host_os=`uname -s|sed y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/`
+prefix=/usr/local
+smlunitdir="$pwd/../SMLUnit"
+
+###############################################################################
+
+usage="Usage: $0 OPTIONS...
+
+Options:
+  --help                print this message.
+  --prefix=DIR          install files to DIR [default=$prefix]
+  --exec-prefix=DIR     isntall executables to DIR [default=$prefix]
+  --with-smlunit=DIR    use SMLUnit [default=$smlunitdir]
+"
+
+for opt in "$@"
+do
+  optarg=`expr "x$opt" : 'x[^=]*=\(.*\)'`
+  case "$opt" in
+    --help)
+      echo "$usage"
+      exit 0
+      ;;
+    --prefix=*)
+      prefix="$optarg"
+      ;;
+    --exec_prefix=*)
+      exec_prefix="$optarg"
+      ;;
+    --with-smlunit=*)
+      smlunitdir="$optarg"
+      ;;
+    --without-smlunit)
+      smlunitdir=
+      ;;
+    *)
+      echo "$0: error: unrecognized option: $opt" 1>&2
+      echo "Try \`$0 --help' for more information." 1>&2
+      exit 1
+      ;;
+  esac
+done
+
+###############################################################################
+
+cmpath () {
+  case "$host_os" in
+    *cygwin*)
+      # SML/NJ CM requires '\' as separator on Windows.
+      # On cygwin, the path must be converted to Windows style.
+      cygpath -aw "$1"
+      ;;
+    *)
+      echo "$1"
+      ;;
+  esac
+}
+
+if test "x$exec_prefix" = "x"; then
+  exec_prefix='${prefix}'
+fi
+
+smlunitlib_cm="$smlunitdir/smlunitlib.cm"
+if test -f "$smlunitlib_cm"; then
+  smlunitlib_cm=`cmpath "$smlunitlib_cm"`
+  echo 'creating formatlib/smlunitlib.cm'
+  echo "Alias \"$smlunitlib_cm\"" > ./formatlib/smlunitlib.cm
+else
+  echo '*** NOTICE: --with-smlunit option is not specified.' 1>&2
+  echo '***         generation for SMLUnit is skipped.' 1>&2
+fi
+
+###############################################################################
+
+HEAPNAME="$pwd/bin/smlformat-heap"
+
+case "$host_os" in
+  *cygwin*)
+    SML=sml.bat
+    SMLCM=sml-cm.bat
+    MAINFUNC='(fn (p,_::ps)=> Main.main(p,ps) | (p,nil)=> Main.main(p,nil))'
+    HEAPNAME="$HEAPNAME.x86-win32"
+    HEAPNAME=`cygpath -am "$HEAPNAME"`
+    ;;
+  *)
+    SML=sml
+    SMLCM=sml-cm
+    MAINFUNC=Main.main
+    ;;
+esac
+
+###############################################################################
+
+echo 'creating Makefile'
+sed "
+s,@host_os@,$host_os,
+s,@prefix@,$prefix,
+s,@exec_prefix@,$exec_prefix,
+s,@SML@,$SML,
+s,@SMLCM@,$SMLCM,
+s!@MAINFUNC@!$MAINFUNC!
+s,@HEAPNAME@,$HEAPNAME,
+" Makefile.in > Makefile
+
+# configure ends here.

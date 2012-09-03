@@ -1,0 +1,4 @@
+signature S11 = sig eqtype t end
+signature S12 = sig eqtype s eqtype t end
+signature S21 = sig eqtype s eqtype t end
+signature S22 = sig eqtype s eqtype t eqtype u eqtype v end

@@ -1,0 +1,14 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@commonrule
+
+SUBDIRS = stublibs \
+          src \
+          doc
+
+distclean:
+	-rm -f configure config.status config.log config.h config.sml
+	-rm -f commonrule mksmlheap mksmlrun

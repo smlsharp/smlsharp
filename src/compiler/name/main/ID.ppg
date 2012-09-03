@@ -1,0 +1,137 @@
+(**
+ * identifier of type, term, label and etc.
+ *
+ * @copyright (c) 2006, Tohoku University.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: ID.ppg,v 1.8 2006/03/03 06:35:19 kiyoshiy Exp $
+ *)
+structure ID :> ID =
+struct
+
+  (***************************************************************************)
+
+  structure P = Pickle
+
+  (***************************************************************************)
+
+  (*% *)
+  type unitID = int ref
+
+  (*% *)
+  type elementID = int
+
+  (*% *)
+  type id = unitID * elementID
+
+  (***************************************************************************)
+
+  val reservedUnitIDNumber = ~1
+  val reservedUnitID = ref reservedUnitIDNumber
+  val nextReservedElementIDRef = ref 0
+
+  val unitIDRef = ref (ref 0)
+  val nextElementIDRef = ref 0
+
+  fun isReservedUnitIDNumber num = reservedUnitIDNumber = num
+  fun isReservedUnitID (ref num) = isReservedUnitIDNumber num
+
+  fun toString (unitID, elementID) =
+      Int.toString (!unitID) ^ "_" ^ Int.toString elementID
+
+  fun compare ((leftUnitID, leftElementID), (rightUnitID, rightElementID)) =
+      case Int.compare (!leftUnitID, !rightUnitID)
+       of EQUAL =>
+          if leftUnitID = rightUnitID (* ensure the same reference. *)
+          then Int.compare (leftElementID, rightElementID)
+          else
+            (* Control.Bug can not be raised here to avoid cyclic module
+             * dependency. *)
+            raise Fail "ID.compare found non unique unit ID."
+      | order => order
+
+  fun generateUnitID () = 
+      (!unitIDRef) before (unitIDRef := ref ((!(!unitIDRef)) + 1))
+
+  fun init _ = (* not initialize reserved ID. *)
+      (generateUnitID (); nextElementIDRef := 0)
+
+  fun generate _ =
+      (!unitIDRef, !nextElementIDRef)
+      before nextElementIDRef := (!nextElementIDRef) + 1
+
+  fun reserve _ =
+      (reservedUnitID, !nextReservedElementIDRef)
+      before nextReservedElementIDRef
+             := (!nextReservedElementIDRef) - 1
+
+  fun peek _ = (!unitIDRef, !nextElementIDRef)
+
+  local
+    (* NOTE:
+     * afterUnpickleUnitID replaces a unpickled unit ID to a fresh unit ID.
+     * afterUnpickleUnitID is invoked only once for each unit ID.
+     * It assume that Pickle.refCyc ensures it.
+     *)
+    fun afterUnpickleUnitIDNumber unitIDNumber =
+        if isReservedUnitIDNumber unitIDNumber
+        then
+          (
+(*
+            print ("unpickle reserved unit ID\n");
+*)
+            reservedUnitIDNumber
+          )
+        else
+          let val uniqueUnitID = generateUnitID ()
+          in
+(*
+            print
+                ("unpickle unit ID(" ^ Int.toString unitIDNumber ^ ")"
+                 ^ ", mapped to (" ^ Int.toString (!uniqueUnitID) ^ ")\n");
+*)
+            !uniqueUnitID
+          end
+    fun beforePickleUnitIDNumber unitID = unitID
+    val pu_UnitID =
+        P.refCyc
+            0
+            (P.conv
+                 (afterUnpickleUnitIDNumber, beforePickleUnitIDNumber)
+                 P.int)
+
+    fun afterUnpickleID (unitID, elementID) =
+        let
+          val newUnitID =
+              if isReservedUnitID unitID
+              then
+                (
+                  if elementID <= !nextReservedElementIDRef
+                  then nextReservedElementIDRef := elementID - 1
+                  else ();
+                  reservedUnitID
+                )
+              else unitID
+        in
+          (newUnitID, elementID)
+        end
+    fun beforePickleID id = id
+  in
+  val pu_ID =
+      P.conv (afterUnpickleID, beforePickleID) (P.tuple2 (pu_UnitID, P.int))
+  end
+
+  (***************************************************************************)
+
+  structure IDOrd =
+  struct 
+    type ord_key = id
+    val compare = compare
+  end
+
+  structure Map = BinaryMapFn(IDOrd);
+
+  structure Set = BinarySetFn(IDOrd);
+
+  (***************************************************************************)
+
+end;

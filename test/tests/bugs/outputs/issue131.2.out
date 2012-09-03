@@ -1,0 +1,1 @@
+val F = fn : ['a#{a:int} .'a -> bool]

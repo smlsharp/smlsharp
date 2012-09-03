@@ -1,0 +1,14 @@
+abstype 'a t11
+val v11 = - : bool t11
+abstype 'a t121
+val v121 = - : bool t121
+abstype 'a t122
+val v122 = (-, -) : bool t122 * string t122
+abstype ('a, 'b) t211
+val v211 = - : (bool, real) t211
+abstype ('a, 'b) t212
+val v212 = (-, -) : (bool, real) t212 * (int, string) t212
+abstype ('a, 'b) t221
+val v221 = - : (bool, real) t221
+abstype ('a, 'b) t222
+val v222 = (-, -) : (bool, real) t222 * (bool * real, real * bool) t222

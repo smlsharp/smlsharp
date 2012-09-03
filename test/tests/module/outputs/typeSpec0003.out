@@ -1,0 +1,14 @@
+datatype dt
+con D : dt
+signature S1 = sig type t1 = dt end
+signature S2 =
+  sig
+    type t1
+    type t2 = t1 * string
+  end
+signature S3 =
+  sig
+    structure S : sig type t1 end
+    type t2 = S.t1 * string
+  end
+

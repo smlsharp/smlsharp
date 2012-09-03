@@ -1,0 +1,24 @@
+Group is
+        smlnj-lib.cm
+        ../../../smlformatlib.cm
+        ../../types/sources.cm
+	../../typecontext/sources.cm
+        ../../format/sources.cm
+        ../../control/sources.cm
+	../../modulecompilation/sources.cm
+        ../../systemdef/sources.cm
+        ../../util/sources.cm
+        ../../systemdef/sources.cm
+        ../../control/sources.cm
+        ../../util/sources.cm
+        ../../types/sources.cm
+	../../name/sources.cm
+        ../../typeinference/sources.cm
+	../../typedlambda/sources.cm
+	../../pickle/sources.cm
+        ../../session/sources.cm	
+
+  	Linker.sml
+	LinkerUtils.sml
+	LinkageUnit.ppg.sml
+	LinkageUnitPickler.sml

@@ -1,0 +1,3 @@
+signature SIG = sig type t end
+functor FUN ('X : sig type s end) : SIG where type t = 'X.s
+

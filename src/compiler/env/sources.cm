@@ -1,0 +1,11 @@
+Group
+        signature ordsig
+        structure Iord
+        structure Sord
+        structure IEnv
+        structure SEnv
+        structure ISet
+        structure SSet
+        structure EnvPickler
+is
+	main/module.cm

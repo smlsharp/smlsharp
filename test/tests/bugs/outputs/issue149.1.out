@@ -1,0 +1,2 @@
+val f21 = fn : ['a#{n1:int, n2:int, n3:int} .'a -> int]
+val f22 = fn : ['a#{n1:int, n2:int, n3:int} .'a -> int]

@@ -1,0 +1,15 @@
+Group
+is
+        smlnj-lib.cm
+	../../../smlformatlib.cm
+        ../../env/sources.cm
+        ../../pickle/sources.cm
+
+        LOC.sig
+        Loc.ppg.sml
+        ID.sig
+        ID.ppg.sml
+        PATH.sig
+	Path.sml
+        SequentialNumber.sml
+        NamePickler.sml

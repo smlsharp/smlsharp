@@ -1,0 +1,899 @@
+val topPoly40 = ( 1, 2.2, 3, 4, 5.5, 6, 7.7, 8, 9, 10.1, 11, 12.12, 13, 14, 15.15, 16, 17.17, 18, 19, 20.2, 21, 22.22, 23, 24, 25.25, 26, 27.27, 28, 29, 30.3, 31, 32.32, 33, 34, 35.35, 36, 37.37, 38, 39, 40.4 ) : int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real
+val topPoly40_1 = 1 : int
+val topPoly40_10 = 10.1 : real
+val topPoly40_11 = 11 : int
+val topPoly40_20 = 20.2 : real
+val topPoly40_21 = 21 : int
+val topPoly40_30 = 30.3 : real
+val topPoly40_31 = 31 : int
+val topPoly40_39 = 39 : int
+val topPoly40_40 = 40.4 : real
+val topPoly80 = ( 1, 2.2, 3, 4, 5.5, 6, 7.7, 8, 9, 10.1, 11, 12.12, 13, 14, 15.15, 16, 17.17, 18, 19, 20.2, 21, 22.22, 23, 24, 25.25, 26, 27.27, 28, 29, 30.3, 31, 32.32, 33, 34, 35.35, 36, 37.37, 38, 39, 40.4, 41, 42.42, 43, 44, 45.45, 46, 47.47, 48, 49, 50.5, 51, 52.52, 53, 54, 55.55, 56, 57.57, 58, 59, 60.6, 61, 62.62, 63, 64, 65.65, 66, 67.67, 68, 69, 70.7, 71, 72.72, 73, 74, 75.75, 76, 77.77, 78, 79, 80.8 ) : int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real
+val topPoly80_1 = 1 : int
+val topPoly80_10 = 10.1 : real
+val topPoly80_11 = 11 : int
+val topPoly80_20 = 20.2 : real
+val topPoly80_21 = 21 : int
+val topPoly80_30 = 30.3 : real
+val topPoly80_31 = 31 : int
+val topPoly80_40 = 40.4 : real
+val topPoly80_41 = 41 : int
+val topPoly80_50 = 50.5 : real
+val topPoly80_51 = 51 : int
+val topPoly80_60 = 60.6 : real
+val topPoly80_61 = 61 : int
+val topPoly80_70 = 70.7 : real
+val topPoly80_71 = 71 : int
+val topPoly80_79 = 79 : int
+val topPoly80_80 = 80.8 : real
+val funPoly40_tv32 = fn : ['a,'b,'c,'d,'e,'f,'g,'h,'i,'j,'k,'l,'m,'n,'o,'p,'q,'r,'s,'t,'u,'v,'w,'x,'y,'z,'aa,'ab,'ac,'ad,'ae,'af,'ag,'ah,'ai,'aj,'ak,'al,'am,'an.
+  'an *
+  'am *
+  'al *
+  'ak *
+  'aj *
+  'ai *
+  'ah *
+  'ag *
+  'af *
+  'ae *
+  'ad *
+  'ac *
+  'ab *
+  'aa *
+  'z *
+  'y *
+  'x *
+  'w *
+  'v *
+  'u *
+  't *
+  's *
+  'r *
+  'q *
+  'p *
+  'o *
+  'n *
+  'm *
+  'l *
+  'k *
+  'j *
+  'i *
+  'h *
+  'g *
+  'f *
+  'e *
+  'd *
+  'c *
+  'b *
+  'a ->
+    'an *
+    'am *
+    'al *
+    'ak *
+    'aj *
+    'ai *
+    'ah *
+    'ag *
+    'af *
+    'ae *
+    'ad *
+    'ac *
+    'ab *
+    'aa *
+    'z *
+    'y *
+    'x *
+    'w *
+    'v *
+    'u *
+    't *
+    's *
+    'r *
+    'q *
+    'p *
+    'o *
+    'n *
+    'm *
+    'l *
+    'k *
+    'j *
+    'i *
+    'ab *
+    'aa *
+    'z *
+    'y *
+    'x *
+    'w *
+    'v *
+    'u]
+val rFunPoly40_tv32_1 = 1 : int
+val rFunPoly40_tv32_10 = 10.1 : real
+val rFunPoly40_tv32_11 = 11 : int
+val rFunPoly40_tv32_20 = 20.2 : real
+val rFunPoly40_tv32_21 = 21 : int
+val rFunPoly40_tv32_30 = 30.3 : real
+val rFunPoly40_tv32_31 = 31 : int
+val rFunPoly40_tv32_39 = 19 : int
+val rFunPoly40_tv32_40 = 20.2 : real
+BUG :too much record groups.
+..\main\StackFrame.sml:127.24-127.61
+../tests/coresml/tests/BigRecord002.sml:126.28-126.41 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:127.30-127.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:128.30-128.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:129.30-129.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:130.30-130.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:131.30-131.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:132.30-132.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:133.30-133.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:134.30-134.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly40_tv33
+
+val funPoly80_tv32 = fn : ['a,'b,'c,'d,'e,'f,'g,'h,'i,'j,'k,'l,'m,'n,'o,'p,'q,'r,'s,'t,'u,'v,'w,'x,'y,'z,'aa,'ab,'ac,'ad,'ae,'af,'ag,'ah,'ai,'aj,'ak,'al,'am,'an,'ao,'ap,'aq,'ar,'as,'at,'au,'av,'aw,'ax,'ay,'az,'ba,'bb,'bc,'bd,'be,'bf,'bg,'bh,'bi,'bj,'bk,'bl,'bm,'bn,'bo,'bp,'bq,'br,'bs,'bt,'bu,'bv,'bw,'bx,'by,'bz,'ca,'cb.
+  'cb *
+  'ca *
+  'bz *
+  'by *
+  'bx *
+  'bw *
+  'bv *
+  'bu *
+  'bt *
+  'bs *
+  'br *
+  'bq *
+  'bp *
+  'bo *
+  'bn *
+  'bm *
+  'bl *
+  'bk *
+  'bj *
+  'bi *
+  'bh *
+  'bg *
+  'bf *
+  'be *
+  'bd *
+  'bc *
+  'bb *
+  'ba *
+  'az *
+  'ay *
+  'ax *
+  'aw *
+  'av *
+  'au *
+  'at *
+  'as *
+  'ar *
+  'aq *
+  'ap *
+  'ao *
+  'an *
+  'am *
+  'al *
+  'ak *
+  'aj *
+  'ai *
+  'ah *
+  'ag *
+  'af *
+  'ae *
+  'ad *
+  'ac *
+  'ab *
+  'aa *
+  'z *
+  'y *
+  'x *
+  'w *
+  'v *
+  'u *
+  't *
+  's *
+  'r *
+  'q *
+  'p *
+  'o *
+  'n *
+  'm *
+  'l *
+  'k *
+  'j *
+  'i *
+  'h *
+  'g *
+  'f *
+  'e *
+  'd *
+  'c *
+  'b *
+  'a ->
+    'cb *
+    'ca *
+    'bz *
+    'by *
+    'bx *
+    'bw *
+    'bv *
+    'bu *
+    'bt *
+    'bs *
+    'br *
+    'bq *
+    'bp *
+    'bo *
+    'bn *
+    'bm *
+    'bl *
+    'bk *
+    'bj *
+    'bi *
+    'bh *
+    'bg *
+    'bf *
+    'be *
+    'bd *
+    'bc *
+    'bb *
+    'ba *
+    'az *
+    'ay *
+    'ax *
+    'aw *
+    'bp *
+    'bo *
+    'bn *
+    'bm *
+    'bl *
+    'bk *
+    'bj *
+    'bi *
+    'cb *
+    'ca *
+    'bz *
+    'by *
+    'bx *
+    'bw *
+    'bv *
+    'bu *
+    'bt *
+    'bs *
+    'br *
+    'bq *
+    'bp *
+    'bo *
+    'bn *
+    'bm *
+    'bl *
+    'bk *
+    'bj *
+    'bi *
+    'bh *
+    'bg *
+    'bf *
+    'be *
+    'bd *
+    'bc *
+    'bb *
+    'ba *
+    'az *
+    'ay *
+    'ax *
+    'aw *
+    'bp *
+    'bo *
+    'bn *
+    'bm *
+    'bl *
+    'bk *
+    'bj *
+    'bi]
+val rFunPoly80_tv32_1 = 1 : int
+val rFunPoly80_tv32_10 = 10.1 : real
+val rFunPoly80_tv32_11 = 11 : int
+val rFunPoly80_tv32_20 = 20.2 : real
+val rFunPoly80_tv32_21 = 21 : int
+val rFunPoly80_tv32_30 = 30.3 : real
+val rFunPoly80_tv32_31 = 31 : int
+val rFunPoly80_tv32_40 = 20.2 : real
+val rFunPoly80_tv32_41 = 1 : int
+val rFunPoly80_tv32_50 = 10.1 : real
+val rFunPoly80_tv32_51 = 11 : int
+val rFunPoly80_tv32_60 = 20.2 : real
+val rFunPoly80_tv32_61 = 21 : int
+val rFunPoly80_tv32_70 = 30.3 : real
+val rFunPoly80_tv32_71 = 31 : int
+val rFunPoly80_tv32_79 = 19 : int
+val rFunPoly80_tv32_80 = 20.2 : real
+BUG :too much record groups.
+..\main\StackFrame.sml:127.24-127.61
+../tests/coresml/tests/BigRecord002.sml:214.28-214.41 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:215.30-215.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:216.30-216.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:217.30-217.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:218.30-218.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:219.30-219.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:220.30-220.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:221.30-221.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:222.30-222.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:223.30-223.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:224.30-224.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:225.30-225.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:226.30-226.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:227.30-227.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:228.30-228.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:229.30-229.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:230.30-230.43 Error: unbound variable or
+                                                             constructor:
+                                                             funPoly80_tv33
+
+val ENVPoly40_tv32 = fn : ['a,'b,'c,'d,'e,'f,'g,'h,'i,'j,'k,'l,'m,'n,'o,'p,'q,'r,'s,'t,'u,'v,'w,'x,'y,'z,'aa,'ab,'ac,'ad,'ae,'af,'ag,'ah,'ai,'aj,'ak,'al,'am,'an.
+  'an *
+  'am *
+  'al *
+  'ak *
+  'aj *
+  'ai *
+  'ah *
+  'ag *
+  'af *
+  'ae *
+  'ad *
+  'ac *
+  'ab *
+  'aa *
+  'z *
+  'y *
+  'x *
+  'w *
+  'v *
+  'u *
+  't *
+  's *
+  'r *
+  'q *
+  'p *
+  'o *
+  'n *
+  'm *
+  'l *
+  'k *
+  'j *
+  'i *
+  'h *
+  'g *
+  'f *
+  'e *
+  'd *
+  'c *
+  'b *
+  'a ->
+    string ->
+      'an *
+      'am *
+      'al *
+      'ak *
+      'aj *
+      'ai *
+      'ah *
+      'ag *
+      'af *
+      'ae *
+      'ad *
+      'ac *
+      'ab *
+      'aa *
+      'z *
+      'y *
+      'x *
+      'w *
+      'v *
+      'u *
+      't *
+      's *
+      'r *
+      'q *
+      'p *
+      'o *
+      'n *
+      'm *
+      'l *
+      'k *
+      'j *
+      'i *
+      'ab *
+      'aa *
+      'z *
+      'y *
+      'x *
+      'w *
+      'v *
+      'u]
+val rENVPoly40_tv32_1 = 1 : int
+val rENVPoly40_tv32_10 = 10.1 : real
+val rENVPoly40_tv32_11 = 11 : int
+val rENVPoly40_tv32_20 = 20.2 : real
+val rENVPoly40_tv32_21 = 21 : int
+val rENVPoly40_tv32_30 = 30.3 : real
+val rENVPoly40_tv32_31 = 31 : int
+val rENVPoly40_tv32_39 = 19 : int
+val rENVPoly40_tv32_40 = 20.2 : real
+BUG :too much record groups.
+..\main\StackFrame.sml:127.24-127.61
+../tests/coresml/tests/BigRecord002.sml:284.28-284.41 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:285.30-285.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:286.30-286.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:287.30-287.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:288.30-288.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:289.30-289.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:290.30-290.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:291.30-291.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+../tests/coresml/tests/BigRecord002.sml:292.30-292.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly40_tv33
+
+val ENVPoly80_tv32 = fn : ['a,'b,'c,'d,'e,'f,'g,'h,'i,'j,'k,'l,'m,'n,'o,'p,'q,'r,'s,'t,'u,'v,'w,'x,'y,'z,'aa,'ab,'ac,'ad,'ae,'af,'ag,'ah,'ai,'aj,'ak,'al,'am,'an,'ao,'ap,'aq,'ar,'as,'at,'au,'av,'aw,'ax,'ay,'az,'ba,'bb,'bc,'bd,'be,'bf,'bg,'bh,'bi,'bj,'bk,'bl,'bm,'bn,'bo,'bp,'bq,'br,'bs,'bt,'bu,'bv,'bw,'bx,'by,'bz,'ca,'cb.
+  'cb *
+  'ca *
+  'bz *
+  'by *
+  'bx *
+  'bw *
+  'bv *
+  'bu *
+  'bt *
+  'bs *
+  'br *
+  'bq *
+  'bp *
+  'bo *
+  'bn *
+  'bm *
+  'bl *
+  'bk *
+  'bj *
+  'bi *
+  'bh *
+  'bg *
+  'bf *
+  'be *
+  'bd *
+  'bc *
+  'bb *
+  'ba *
+  'az *
+  'ay *
+  'ax *
+  'aw *
+  'av *
+  'au *
+  'at *
+  'as *
+  'ar *
+  'aq *
+  'ap *
+  'ao *
+  'an *
+  'am *
+  'al *
+  'ak *
+  'aj *
+  'ai *
+  'ah *
+  'ag *
+  'af *
+  'ae *
+  'ad *
+  'ac *
+  'ab *
+  'aa *
+  'z *
+  'y *
+  'x *
+  'w *
+  'v *
+  'u *
+  't *
+  's *
+  'r *
+  'q *
+  'p *
+  'o *
+  'n *
+  'm *
+  'l *
+  'k *
+  'j *
+  'i *
+  'h *
+  'g *
+  'f *
+  'e *
+  'd *
+  'c *
+  'b *
+  'a ->
+    string ->
+      'cb *
+      'ca *
+      'bz *
+      'by *
+      'bx *
+      'bw *
+      'bv *
+      'bu *
+      'bt *
+      'bs *
+      'br *
+      'bq *
+      'bp *
+      'bo *
+      'bn *
+      'bm *
+      'bl *
+      'bk *
+      'bj *
+      'bi *
+      'bh *
+      'bg *
+      'bf *
+      'be *
+      'bd *
+      'bc *
+      'bb *
+      'ba *
+      'az *
+      'ay *
+      'ax *
+      'aw *
+      'bp *
+      'bo *
+      'bn *
+      'bm *
+      'bl *
+      'bk *
+      'bj *
+      'bi *
+      'cb *
+      'ca *
+      'bz *
+      'by *
+      'bx *
+      'bw *
+      'bv *
+      'bu *
+      'bt *
+      'bs *
+      'br *
+      'bq *
+      'bp *
+      'bo *
+      'bn *
+      'bm *
+      'bl *
+      'bk *
+      'bj *
+      'bi *
+      'bh *
+      'bg *
+      'bf *
+      'be *
+      'bd *
+      'bc *
+      'bb *
+      'ba *
+      'az *
+      'ay *
+      'ax *
+      'aw *
+      'bp *
+      'bo *
+      'bn *
+      'bm *
+      'bl *
+      'bk *
+      'bj *
+      'bi]
+val rENVPoly80_tv32_1 = 1 : int
+val rENVPoly80_tv32_10 = 10.1 : real
+val rENVPoly80_tv32_11 = 11 : int
+val rENVPoly80_tv32_20 = 20.2 : real
+val rENVPoly80_tv32_21 = 21 : int
+val rENVPoly80_tv32_30 = 30.3 : real
+val rENVPoly80_tv32_31 = 31 : int
+val rENVPoly80_tv32_40 = 20.2 : real
+val rENVPoly80_tv32_41 = 1 : int
+val rENVPoly80_tv32_50 = 10.1 : real
+val rENVPoly80_tv32_51 = 11 : int
+val rENVPoly80_tv32_60 = 20.2 : real
+val rENVPoly80_tv32_61 = 21 : int
+val rENVPoly80_tv32_70 = 30.3 : real
+val rENVPoly80_tv32_71 = 31 : int
+val rENVPoly80_tv32_79 = 19 : int
+val rENVPoly80_tv32_80 = 20.2 : real
+BUG :too much record groups.
+..\main\StackFrame.sml:127.24-127.61
+../tests/coresml/tests/BigRecord002.sml:372.28-372.41 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:373.30-373.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:374.30-374.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:375.30-375.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:376.30-376.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:377.30-377.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:378.30-378.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:379.30-379.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:380.30-380.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:381.30-381.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:382.30-382.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:383.30-383.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:384.30-384.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:385.30-385.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:386.30-386.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:387.30-387.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33
+
+../tests/coresml/tests/BigRecord002.sml:388.30-388.43 Error: unbound variable or
+                                                             constructor:
+                                                             ENVPoly80_tv33

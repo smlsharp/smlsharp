@@ -1,0 +1,8 @@
+exception E : exn
+val raiseE = fn : ['a .unit -> 'a]
+val vGlobal = 1 : int
+val xGlobal = 1 : int
+val xFree = 2 : int
+val xArg = 3 : int
+val xLocal = 4 : int
+

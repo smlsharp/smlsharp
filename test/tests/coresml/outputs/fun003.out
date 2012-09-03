@@ -1,0 +1,9 @@
+val f1 = fn : int -> int -> bool
+val v1 = true : bool
+val f21 = fn : int -> int -> bool
+val v21 = (true,true) : bool * bool
+val f22 = fn : int -> int -> bool
+val v22 = (true,true) : bool * bool
+val f23 = fn : int -> int -> bool
+val v23 = (true,true) : bool * bool
+

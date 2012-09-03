@@ -1,0 +1,18 @@
+structure Word
+: sig
+    type word = word
+  val toLargeWord : ['a .'a -> 'a]
+  structure W : sig end
+  end
+structure LargeWord
+: sig
+    type word = word
+  val toLargeWord : ['a .'a -> 'a]
+  structure W : sig end
+  end
+signature WORD = sig eqtype word val toLargeWord : word -> LargeWord.word end
+structure LargeWord : WORD
+structure Word : WORD where type word = word
+val toLargeWord_0 = 0wx0 : LargeWord.word
+
+

@@ -1,0 +1,5 @@
+signature T = sig val x : int end
+functor F (S : sig include T end) : sig val y : int end
+structure P : sig val x : int end
+structure S : sig val y : int end
+val x = 3 : int

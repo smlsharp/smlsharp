@@ -1,0 +1,12 @@
+datatype t
+con ## : int * int -> t
+val v1 = ## (2,3) : t
+val gv1 = ## (3,4) : t
+val v2 = ## (3,4) : t
+val gv2 = ## (3,4) : t
+infix 1 ##
+val v3 = ## (4, 5) : t
+val gv3 = ## (5, 6) : t
+val v4 = ## (5, 6) : t
+val gv4 = ## (6, 7) : t
+

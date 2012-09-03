@@ -1,0 +1,4 @@
+structure S : sig val f : int -> int end
+structure T : sig val f : int -> int end
+structure S : sig val f : int * int -> int end
+val it = 2 : int

@@ -1,0 +1,15 @@
+type 'a t = 'a * bool
+type 'a t1 = ('a * bool) t
+val v1 = ((1,true),false) : int t1
+type t2 = {x:int} t
+val v2 = ({x=2},false) : t2
+type t3 = int t
+val v3 = (3,true) : t3
+type t4 = int t t
+val v4 = ((4,true),false) : t4
+type t5 = (int -> int) t
+val v5 = (fn,true) : t5
+type 'a t6 = ('a -> 'a) t
+val v6 = (fn,true) : int t6
+type t7 = int t
+val v7 = (7,false) : t7

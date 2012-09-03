@@ -1,0 +1,3 @@
+val v2 = {a=1} : {a:int}
+val v3 = {a=1,b=2} : {a:int, b:int}
+

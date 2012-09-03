@@ -1,0 +1,4 @@
+structure S1 : sig datatype dt con D : dt end
+val x1 = D : S1.dt
+structure S2 : sig datatype dt con D : dt end
+val x2 = D : S2.dt

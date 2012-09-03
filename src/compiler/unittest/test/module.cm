@@ -1,0 +1,9 @@
+Group is
+        ../../session/test/module.cm
+        ../../assemble/test/module.cm
+        ../../util/test/module.cm
+        ../../types/test/module.cm
+        ../../typedflatcalc/test/module.cm
+        ../../../instructions/compiler/test/module.cm
+
+        CompilerTest.sml

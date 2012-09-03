@@ -1,0 +1,4 @@
+Group
+        structure ANormalTranslator
+is
+	main/module.cm

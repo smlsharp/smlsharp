@@ -1,0 +1,7 @@
+(* -*- sml -*- *)
+
+case x = 1 of SOME(NONE x) => x + 1 * 2 | {x = 1, y, z} => let val a = 1 in f(g(h)) end;
+fun f x = 1 | f (1, 2, 3) = {a = 1, s ="abcdefghijkmlllll"} | f (a, b) = a;
+val {a : int, B as b, C as c : short, d} = {a = 1, b = 2, c = 3, d =4};
+datatype ('a, 'b) dt = A | B of ('a * int) list | op C | op D of {e : {f : int}, g : string};
+fun ('a, 'b) f x = 1 | f (op D (a, b)) = 3 | f {c, d, e: int} = 4;

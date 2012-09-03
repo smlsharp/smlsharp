@@ -1,0 +1,4 @@
+signature SDatatype = sig type et type ft end
+functor FDatatypeTrans ('X : sig datatype dt con D : dt end) : SDatatype
+
+

@@ -1,0 +1,6 @@
+structure STR : sig type t = int * int val f : int -> int * int end
+signature SIG = sig type t val f : int -> t end
+structure S
+: sig structure T1 : SIG structure T2 : SIG sharing type T1.t = T2.t end
+structure STR1 : sig type t val f : int -> t end
+structure STR2 : sig type t val f : int -> t end

@@ -1,0 +1,17 @@
+Group is
+        smlnj-lib.cm
+        ../../absyn/sources.cm
+        ../../format/sources.cm
+	../../../smlformatlib.cm 
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+	../../typedlambda/sources.cm
+	../../systemdef/sources.cm
+
+	BUCUTILS.sig
+	BUCUtils.sml
+	BUCCALC.sig
+        BUCCalc.ppg.sml
+        BUCCalcFormatter.sml

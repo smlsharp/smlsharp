@@ -1,0 +1,6 @@
+signature SIG = sig structure S : sig datatype dt con D : dt end end
+structure P : sig end
+functor FTrans (S : sig end) : SIG
+structure STrans : sig structure S : sig datatype dt con D : dt end end
+functor FOpaque (S : sig end) : SIG
+structure SOpaque : sig structure S : sig datatype dt con D : dt end end

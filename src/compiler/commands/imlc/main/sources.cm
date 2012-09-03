@@ -1,0 +1,15 @@
+Group is
+        ../../../../configuration/sources.cm
+        ../../../../lib/sources.cm
+        ../../../toplevel/sources.cm
+        ../../../session/sources.cm
+        ../../../control/sources.cm
+        ../../../util/sources.cm
+
+#if defined(structure Posix)
+        FileSysUtil_Posix.sml
+#else
+        FileSysUtil_General.sml
+#endif
+
+        Main.sml

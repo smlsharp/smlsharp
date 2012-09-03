@@ -1,0 +1,58 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@commonrule
+
+VPATH = $(srcdir)
+
+SOURCES = CharPrimitives.cc \
+          CommandLinePrimitives.cc \
+          Constants.cc \
+          DatePrimitives.cc \
+          GenericOSPrimitives.cc \
+          IntPrimitives.cc \
+          InternalPrimitives.cc \
+          JNIPrimitives.cc \
+          MathPrimitives.cc \
+          Primitives.cc \
+          RealPrimitives.cc \
+          StringPrimitives.cc \
+          TimePrimitives.cc \
+          TimerPrimitives.cc \
+          UnmanagedMemoryPrimitives.cc \
+          UnmanagedStringPrimitives.cc \
+          WordPrimitives.cc
+
+OBJECTS = $(SOURCES:.cc=.$(OBJEXT))
+
+TARGETS = libimlprimitives.$(LIBEXT)
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(OBJECTS) $(TARGETS)
+
+libimlprimitives.$(LIBEXT): $(OBJECTS)
+	$(AR) rcu $@ $(OBJECTS)
+	-$(RANLIB) $@
+
+# FIXME: dependency
+CharPrimitives.$(OBJEXT): CharPrimitives.cc
+CommandLinePrimitives.$(OBJEXT): CommandLinePrimitives.cc
+Contants.$(OBJEXT): Constants.cc
+DatePrimitives.$(OBJEXT): DatePrimitives.cc
+GenericOSPrimitives.$(OBJEXT): GenericOSPrimitives.cc
+IntPrimitives.$(OBJEXT): IntPrimitives.cc
+InternalPrimitives.$(OBJEXT): InternalPrimitives.cc
+JNIPrimitives.$(OBJEXT): JNIPrimitives.cc
+MathPrimitives.$(OBJEXT): MathPrimitives.cc
+Primitives.$(OBJEXT): Primitives.cc
+RealPrimitives.$(OBJEXT): RealPrimitives.cc
+StringPrimitives.$(OBJEXT): StringPrimitives.cc
+TimePrimitives.$(OBJEXT): TimePrimitives.cc
+TimerPrimitives.$(OBJEXT): TimerPrimitives.cc
+UnmanagedMemoryPrimitives.$(OBJEXT): UnmanagedMemoryPrimitives.cc
+UnmanagedStringPrimitives.$(OBJEXT): UnmanagedStringPrimitives.cc
+WordPrimitives.$(OBJEXT): WordPrimitives.cc

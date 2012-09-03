@@ -1,0 +1,4 @@
+signature S = sig datatype dt con D : int -> dt con E : string -> dt end
+../tests/bugs/tests/issue104.1.sml:2.11-6.3 Error: Signature mismatch
+                                                   :Constructors E  only occur
+                                                   in signature

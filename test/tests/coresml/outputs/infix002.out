@@ -1,0 +1,10 @@
+infix 1 %%
+val %% = fn : int * int -> int
+val v1 = 2 : int
+val %% = fn : int -> int
+val v2 = 4 : int
+val %% = fn : int -> int -> int
+val v3 = ~1 : int
+val %% = fn : int -> int -> int -> int
+val v4 = 6 : int
+

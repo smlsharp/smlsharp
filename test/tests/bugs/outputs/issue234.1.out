@@ -1,0 +1,5 @@
+signature SIG =
+sig datatype dt con T : int  -> dt type t sharing type t = dt end
+structure STR : sig datatype dt con T : int  -> dt type t = dt end
+functor FUN (STR : SIG) : sig type t = STR.dt end
+structure S : sig type t = STR.dt end

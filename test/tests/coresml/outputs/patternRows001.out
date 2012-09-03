@@ -1,0 +1,7 @@
+val f1 = fn : ['a.{n1:int, n2:'a} -> 'a]
+val v11 = 2 : int
+val v12 = 3 : int
+val f2 = fn : {n1:int, n2:int, n3:int} -> int
+val v21 = 2 : int
+val v22 = 7 : int
+

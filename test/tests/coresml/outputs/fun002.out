@@ -1,0 +1,7 @@
+val f11 = fn : int -> int -> int
+val f12 = fn : int -> int
+val v1 = (5,4) : int * int
+val f21 = fn : int -> int -> int
+val f22 = fn : int -> int
+val v2 = (4,3) : int * int
+

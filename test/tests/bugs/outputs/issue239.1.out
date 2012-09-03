@@ -1,0 +1,6 @@
+val x = 0wx0 : byte
+val getbyte = fn : ['a .'a  -> byte]
+../tests/bugs/tests/issue239.1.sml:8.1-8.29 Warning:
+  match nonexhaustive
+           0wx0 => ...
+val getbyte = fn : byte -> unit

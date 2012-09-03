@@ -1,0 +1,6 @@
+abstype 'a t121
+abstype 'a t122
+val v12 = (-, -) : bool t121 * real t122
+abstype ('a, 'b) t221
+abstype ('a, 'b) t222
+val v22 = (-, -) : (bool, real) t221 * (bool * real, real * bool) t222

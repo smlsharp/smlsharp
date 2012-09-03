@@ -1,0 +1,17 @@
+val id = fn : ['a.'a -> 'a]
+datatype 'a dt 
+con D : ['a.'a -> 'a dt]
+val vPolyGlobal = fn : ['a .'a -> 'a]
+val vPolyExp = fn : ['a .'a -> 'a]
+../tests/coresml/tests/Rank1001.sml:27.1-27.39 Warning: dummy type variable(s)
+                                                        X0 are introduced due to
+                                                        value restriction
+val vPolyVarPattern = fn : X0 -> X0
+../tests/coresml/tests/Rank1001.sml:29.1-29.45 Warning: dummy type variable(s)
+                                                        X0 are introduced due to
+                                                        value restriction
+val vPolyConstPattern = fn : X0 -> X0
+../tests/coresml/tests/Rank1001.sml:31.1-31.47 Warning: dummy type variable(s)
+                                                        X0 are introduced due to
+                                                        value restriction
+val vPolyRecord = fn : X0 -> X0

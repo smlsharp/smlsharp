@@ -1,0 +1,16 @@
+datatype dt1
+con D : int -> dt1
+abstype at1
+val ax1 = - : at1
+val gx1 = D 1 : dt1
+datatype t2
+con D : int -> t2
+abstype t2
+val ax2 = - : t2
+val gx2 = - : t2
+datatype t3
+con D : int -> t3
+abstype at3
+type t3 = string * at3
+val ax3 = - : at3
+val gx3 = ("c", -) : t3

@@ -1,0 +1,15 @@
+../tests/coresml/tests/nameDuplication001.sml:20.1-20.31 Error: Duplicate type
+                                                                name in
+                                                                type: t12
+
+../tests/coresml/tests/nameDuplication001.sml:22.1-22.46 Error: Duplicate type
+                                                                name in
+                                                                type: t13
+
+../tests/coresml/tests/nameDuplication001.sml:24.1-24.65 Error: Duplicate type
+                                                                name in
+                                                                type: t221
+../tests/coresml/tests/nameDuplication001.sml:24.1-24.65 Error: Duplicate type
+                                                                name in
+                                                                type: t222
+

@@ -1,0 +1,444 @@
+type rec40 = int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real
+type rec80 = int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real *
+             int *
+             real *
+             int *
+             int *
+             real
+val topMono40 = ( 1, 2.2, 3, 4, 5.5, 6, 7.7, 8, 9, 10.1, 11, 12.12, 13, 14, 15.15, 16, 17.17, 18, 19, 20.2, 21, 22.22, 23, 24, 25.25, 26, 27.27, 28, 29, 30.3, 31, 32.32, 33, 34, 35.35, 36, 37.37, 38, 39, 40.4 ) : rec40
+val topMono40_1 = 1 : int
+val topMono40_10 = 10.1 : real
+val topMono40_11 = 11 : int
+val topMono40_20 = 20.2 : real
+val topMono40_21 = 21 : int
+val topMono40_30 = 30.3 : real
+val topMono40_31 = 31 : int
+val topMono40_39 = 39 : int
+val topMono40_40 = 40.4 : real
+val topMono80 = ( 1, 2.2, 3, 4, 5.5, 6, 7.7, 8, 9, 10.1, 11, 12.12, 13, 14, 15.15, 16, 17.17, 18, 19, 20.2, 21, 22.22, 23, 24, 25.25, 26, 27.27, 28, 29, 30.3, 31, 32.32, 33, 34, 35.35, 36, 37.37, 38, 39, 40.4, 41, 42.42, 43, 44, 45.45, 46, 47.47, 48, 49, 50.5, 51, 52.52, 53, 54, 55.55, 56, 57.57, 58, 59, 60.6, 61, 62.62, 63, 64, 65.65, 66, 67.67, 68, 69, 70.7, 71, 72.72, 73, 74, 75.75, 76, 77.77, 78, 79, 80.8 ) : rec80
+val topMono80_1 = 1 : int
+val topMono80_10 = 10.1 : real
+val topMono80_11 = 11 : int
+val topMono80_20 = 20.2 : real
+val topMono80_21 = 21 : int
+val topMono80_30 = 30.3 : real
+val topMono80_31 = 31 : int
+val topMono80_40 = 40.4 : real
+val topMono80_41 = 41 : int
+val topMono80_50 = 50.5 : real
+val topMono80_51 = 51 : int
+val topMono80_60 = 60.6 : real
+val topMono80_61 = 61 : int
+val topMono80_70 = 70.7 : real
+val topMono80_71 = 71 : int
+val topMono80_79 = 79 : int
+val topMono80_80 = 80.8 : real
+val funMono40 = fn : int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real ->
+  rec40
+val rFunMono40_1 = 1 : int
+val rFunMono40_10 = 10.1 : real
+val rFunMono40_11 = 11 : int
+val rFunMono40_20 = 20.2 : real
+val rFunMono40_21 = 21 : int
+val rFunMono40_30 = 30.3 : real
+val rFunMono40_31 = 31 : int
+val rFunMono40_39 = 39 : int
+val rFunMono40_40 = 40.4 : real
+val funMono80 = fn : int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real ->
+  rec80
+val rFunMono80_1 = 1 : int
+val rFunMono80_10 = 10.1 : real
+val rFunMono80_11 = 11 : int
+val rFunMono80_20 = 20.2 : real
+val rFunMono80_21 = 21 : int
+val rFunMono80_30 = 30.3 : real
+val rFunMono80_31 = 31 : int
+val rFunMono80_40 = 40.4 : real
+val rFunMono80_41 = 41 : int
+val rFunMono80_50 = 50.5 : real
+val rFunMono80_51 = 51 : int
+val rFunMono80_60 = 60.6 : real
+val rFunMono80_61 = 61 : int
+val rFunMono80_70 = 70.7 : real
+val rFunMono80_71 = 71 : int
+val rFunMono80_79 = 79 : int
+val rFunMono80_80 = 80.8 : real
+val ENVMono40 = fn : int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real ->
+  ['a .'a -> rec40]
+val rENVMono40_1 = 1 : int
+val rENVMono40_10 = 10.1 : real
+val rENVMono40_11 = 11 : int
+val rENVMono40_20 = 20.2 : real
+val rENVMono40_21 = 21 : int
+val rENVMono40_30 = 30.3 : real
+val rENVMono40_31 = 31 : int
+val rENVMono40_39 = 39 : int
+val rENVMono40_40 = 40.4 : real
+val ENVMono80 = fn : int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real *
+int *
+real *
+int *
+int *
+real ->
+  ['a .'a -> rec80]
+val rENVMono80_1 = 1 : int
+val rENVMono80_10 = 10.1 : real
+val rENVMono80_11 = 11 : int
+val rENVMono80_20 = 20.2 : real
+val rENVMono80_21 = 21 : int
+val rENVMono80_30 = 30.3 : real
+val rENVMono80_31 = 31 : int
+val rENVMono80_40 = 40.4 : real
+val rENVMono80_41 = 41 : int
+val rENVMono80_50 = 50.5 : real
+val rENVMono80_51 = 51 : int
+val rENVMono80_60 = 60.6 : real
+val rENVMono80_61 = 61 : int
+val rENVMono80_70 = 70.7 : real
+val rENVMono80_71 = 71 : int
+val rENVMono80_79 = 79 : int
+val rENVMono80_80 = 80.8 : real

@@ -1,0 +1,17 @@
+Group is
+        smlnj-lib.cm
+
+        ../../control/sources.cm
+        ../../systemdef/sources.cm
+        ../../env/sources.cm
+        ../../symbolicinstructions/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../util/sources.cm
+        ../../../instructions/compiler/sources.cm
+        ../../../primitives/compiler/sources.cm
+
+	SYMBOLIC_INSTRUCTIONS_OPTIMIZER.sig
+        SymbolicInstructionsOptimizer.sml
+        CodeEnv.sml
+	Utilities.sml

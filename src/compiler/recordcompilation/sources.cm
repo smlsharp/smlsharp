@@ -1,0 +1,4 @@
+Group
+        structure RecordCompiler
+is
+	main/module.cm

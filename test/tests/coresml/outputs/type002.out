@@ -1,0 +1,7 @@
+type t11 = int
+type t12 = bool
+val v1 = (1,true) : t11 * t12
+type t21 = string
+type t21 = int
+type t22 = t21 * bool
+val v2 = (1,("foo",true)) : t21 * t22

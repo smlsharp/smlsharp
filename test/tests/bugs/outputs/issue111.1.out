@@ -1,0 +1,8 @@
+val id = fn : ['a.'a -> 'a]
+datatype 'a dt
+con D : ['a .'a -> 'a dt]
+val y = D fn : ['a. ('a -> 'a) dt]
+../tests/bugs/tests/issue111.1.sml:4.1-4.11 Warning: dummy type variable(s) X0
+                                                     are introduced due to value
+                                                     restriction
+val z = fn : X0 -> X0

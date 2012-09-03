@@ -1,0 +1,9 @@
+signature SIG1 = sig datatype dt con D : dt end
+structure STR1 : sig datatype dt con D : dt end
+signature SIG2 = sig type dt type st = dt end
+structure STR2 : sig type dt = STR1.dt type st = dt end
+signature SIG3 =
+sig
+structure STR1 : SIG1 structure STR2 : SIG2 sharing type STR1.dt = STR2.dt
+end
+structure STR3 : SIG3

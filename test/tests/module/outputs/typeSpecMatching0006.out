@@ -1,0 +1,41 @@
+signature S1 =
+  sig
+    type 'a t1 = int * 'a
+    type ('a,'b) t2 = string * 'a * 'b
+    val x : string t1 * (real,bool) t2
+  end
+structure S1
+: sig
+    type 'a t1 = int * 'a
+    type ('a,'b) t2 = string * 'a * 'b
+    val x : (int * string) * (string * real * bool)
+  end
+structure S1Trans : S1
+val x1Trans1 = (1, "x") : string S1Trans.t1
+val x1Trans2 = ("a", 1.23, true) : (real, bool) S1Trans.t2
+structure S1Opaque : S1
+val x1Opaque1 = (1, "x") : string S1Opaque.t1
+val x1Opaque2 = ("a", 1.23, true) : (real, bool) S1Opaque.t2
+signature S2 =
+  sig
+    type 'a t1 = int * 'a
+    type ('a,'b) t2 = bool t1 * string * 'a * 'b
+    val x : string t1 * (real,bool) t2
+  end
+structure S2
+: sig
+    type 'a t1 = int * 'a
+    type ('a,'b) t2 = bool t1 * string * 'a * 'b
+    val x : (int * string) * ((int * bool) * string * real * bool)
+  end
+structure S2Trans : S2
+val x2Trans1 = (1, "x") : string S2Trans.t1
+val x2Trans2 = ((2, false), "a", 1.23, true) : (real, bool) S2Trans.t2
+structure S2Opaque : S2
+val x2Opaque1 = (1, "x") : string S2Opaque.t1
+val x2Opaque2 = ((2, false), "a", 1.23, true) : (real, bool) S2Opaque.t2
+../tests/module/tests/typeSpecMatching0006.sml:61.16-61.26 Error: unbound type
+                                                                  constructor:
+                                                                  t2
+
+

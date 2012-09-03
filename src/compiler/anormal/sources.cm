@@ -1,0 +1,6 @@
+Group
+        structure ANormal
+        structure ANormalFormatter
+	structure ANormalUtils
+is
+	main/module.cm

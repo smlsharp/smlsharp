@@ -1,0 +1,15 @@
+type 'a t1 = {x:'a}
+val v1 = {x=1} : int t1
+type t2 = {x:{y:int}}
+val v2 = {x={y=2}} : t2
+type t3 = {x:int}
+val v3 = {x=3} : t3
+type 'a t41 = 'a * int
+type t4 = {x:bool t41}
+val v4 = {x=(true,4)} : t4
+type t5 = {x:int -> int}
+val v5 = {x=fn} : {x:int -> int}
+type 'a t6 = {x:'a -> 'a * int}
+val v6 = {x = fn} : {x:['a.'a -> 'a * int]}
+type t7 = {x:int * bool}
+val v7 = {x=(7,false)} : {x:int * bool}

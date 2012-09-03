@@ -1,0 +1,10 @@
+type t1 = int
+datatype dt1
+con D : t1 -> dt1
+val x1 = D 1 : dt1
+type t21 = int
+type t22 = t21 * string
+val x2 = (2,"abc") : t22
+type t3 = string
+exception E3 : t3 -> exn
+val x3 = E3 "xyz" : exn

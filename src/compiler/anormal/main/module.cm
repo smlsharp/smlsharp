@@ -1,0 +1,18 @@
+Group is
+        smlnj-lib.cm
+        ../../absyn/sources.cm
+        ../../format/sources.cm
+	../../../smlformatlib.cm 
+        ../../control/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+	../../typedlambda/sources.cm
+	../../systemdef/sources.cm
+
+        anormal.sig
+        anormal.ppg.sml
+	ANORMAL_UTILS.sig
+	ANormalUtils.sml
+        ANORMAL_FORMATTER.sig
+        ANormalFormatter.sml

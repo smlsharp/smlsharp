@@ -1,0 +1,16 @@
+structure S11 : sig datatype dt con D : dt end
+datatype dt11
+con D11 : S11.dt -> dt11
+val x11 = D11 D : dt11
+structure S12 : sig datatype 'a dt con D : ['a .'a -> 'a dt] end
+datatype dt12
+con D12 : int S12.dt -> dt12
+val x12 = D12 (D 12) : dt12
+structure S21 : sig type t = int * real end
+datatype dt21
+con D21 : S21.t -> dt21
+val x21 = D21 (1,2.34) : dt21
+structure S22 : sig type 'a t = int * real * 'a end
+datatype dt22
+con D22 : (string * bool) S22.t -> dt22
+val x22 = D22 (1,2.34,("abc",true)) : dt22

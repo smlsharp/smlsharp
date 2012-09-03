@@ -1,0 +1,124 @@
+		   SML/NJ Regression Testing
+		   =========================
+
+This directoy contains regression test suites and shell scripts for
+running them.
+
+There are 5 active test suites, found in the directories:
+
+  coresml     core SML tests (based on tests from Peter Sestoft)
+  typing      type checking
+  modules     modules
+  bugs	      bug tests
+  basis	      Basis tests (based on tests from Peter Sestoft) [Note: filesys]
+
+(the sixth directory, "printing", is not currently active).
+
+Each test suite directory contains two subdirectories
+
+  tests	      source files for tests
+  outputs     corresponding output files [Note: output variants]
+
+and a file
+
+  openbugs
+
+that lists test files with known problems in the current version
+of SML/NJ (i.e. known regression failures).  [Note!: basis/tests setup]
+
+
+Scripts:
+
+  bin/testml.sh		- performs tests in a suite
+  bin/process.sh	- generates report of results
+  bin/dotest.sh		- combines testml.sh and process.sh
+  bin/doallseq.sh 	- performs all suites one after another
+  bin/doallpar.sh	- performs all suites in parallel
+
+Normally one will execute one of dotest.sh, doallseq.sh. or
+doallpar.sh.  The scripts are designed not to interfere with one
+another, so that test suites can be executed concurrently on a given
+architecture, and also on multiple machines (or varying architectures)
+sharing the file system containing this directory.
+
+For a particular architecture and operating system, arch-os,
+bin/testml.sh produces a file <testdir>/LOG.arch-os and
+a directory <testdir>/bad.arch-os.  process.sh <testdir> then
+produces a file <testdir>/RESULTS.arch-os.  
+
+Before running a regression test suite, any old copies of these files
+and directories should be removed (if not, the scripts will complain).
+
+--------------------------------------------------------------------
+bin/dotest.sh <testdir> [-diff] [-sml <filename>]  -  run tests in <testdir>
+     
+  <testdir>
+    the name of the test suite to be run (coresml, typing, etc).
+
+  -sml <filename>:
+    the sml command to be used (e.g. "/usr/local/sml/bin/sml").
+    If this option is not supplied, the value of shell variable SML
+    is used instead, and if that is not defined, the default command
+    name "/usr/local/sml/bin/sml" is used.
+
+  -diff 
+    this option causes the diff between the test output and 
+    the corresponding reference output (in <testdir>/outputs) to be
+    used in the RESULT file, overriding the default behavior, which
+    is to include the old and new outputs in full.
+
+--------------------------------------------------------------------
+bin/doallseq.sh [-sml <filename>]	  - run all suites sequentially
+bin/doallpar.sh [-sml <filename>]	  - run all suites in parallel
+
+  -sml <filename>:
+    the sml command to be used (e.g. "/usr/local/sml/bin/sml").
+    If this option is not supplied, the value of shell variable SML
+    is used instead, and if that is not defined, the default command
+    name "/usr/local/sml/bin/sml" is used.
+
+--------------------------------------------------------------------
+Example: (with the testing directory as current working directory)
+
+  rm -rf bugs/LOG.sparc-solaris bugs/bad.sparc-solaris bugs/RESULTS.sparc-solaris
+  (or just rm -rf bugs/*.sparc-solaris)
+
+  bin/dotest.sh bugs -diff -sml /usr/local/sml/110/bin/sml
+
+Then review the bugs/RESULTS.sparc-solaris file to see if there are
+any discrepancies, which could be unexpected failures or bug fixes.
+
+
+--------------------------------------------------------------------
+Notes
+-----
+
+[filesys] The test basis/tests/filesys.sml is sensitive to file
+permissions and may produce spurious failures ("EXN" instead of "OK")
+if the tester is not the owner of the files in basis/tests.
+
+[basis/tests setup] After you have created tests directory (say by checking
+out from the Yale CVS repository), be sure to read the instructions
+in tests/basis/tests/README.  This file explains how to set up some
+symbolic and hard links needed by the filesys.sml test.
+
+[output variants] There are actually two versions of the outputs directory
+for each test suite.  These are named
+
+  outputs.pre-110.5
+  outputs.post-110.5
+
+The first of these should be used for testing versions before 110.5,
+while the second should be used for versions >= 110.5.  Before running
+any of the test scripts, output should be defined as a symbolic link
+to one of these two directories.  E.g. if testing 110.0.6, in each
+test suite directory do:
+
+  rm outputs
+  ln -s outputs.pre-110.5 outputs
+
+The reason for the two versions of outputs is that printing changed with
+110.5 and there is an extra blank line at the end of each output file.
+
+Authors: Dave MacQueen <dbm@research.bell-labs.com>,
+	 Lal George <george@research.bell-labs.com>

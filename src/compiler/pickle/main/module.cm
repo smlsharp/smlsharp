@@ -1,0 +1,12 @@
+Group is
+        smlnj-lib.cm
+
+        ../../../instructions/compiler/sources.cm
+
+        DYN.sig
+        Dyn.sml
+        PICKLE.sig
+        Stream.sml
+        Pickle.sml
+        OrdSetPickler.sml
+        OrdMapPickler.sml

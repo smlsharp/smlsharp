@@ -1,0 +1,13 @@
+signature SUBSTRING =
+sig type substring eqtype string val all : string -> substring end
+structure Substring
+: sig
+    type string = string
+    type substring = string
+    val all : string -> substring
+  end
+val x = "abc" : Substring.substring
+structure Strans : SUBSTRING
+val y = "abc" : Strans.substring
+structure Sopaq : SUBSTRING where type string = string
+val z = - : Sopaq.substring

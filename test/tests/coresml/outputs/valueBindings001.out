@@ -1,0 +1,14 @@
+../tests/coresml/tests/valueBindings001.sml:22.5-22.9 Warning: binding not exhaustive
+                                                                        2 => ...
+datatype dt3
+con C3 : dt3
+val v4 = 4 : int
+val w4 = 8 : int
+val v5 = 5 : int
+val y = "five" : string
+val w5 = 10 : int
+val v6 = 6 : int
+val y = "six" : string
+val w6 = 12 : int
+val v7 = 7 : int
+val w7 = 14 : int

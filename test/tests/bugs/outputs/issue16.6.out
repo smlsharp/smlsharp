@@ -1,0 +1,6 @@
+datatype ''a dtEq 
+con EEq : [''a. ''a -> ''a dtEq]
+../tests/bugs/tests/issue16.6.sml:2.19-2.23 Error: operator and operand don't
+                                                   agree
+                                                   operator domain: ''D
+                                                   operand: X0

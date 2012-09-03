@@ -1,0 +1,28 @@
+(* -*- sml -*- *)
+
+(**
+ *  This signature specifies the interface of modules which provides
+ * functionity of translating a sequence of IML instruction in ML datatype
+ * form to a byte array in which instructions in binary format is embedded.
+ *
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: INSTRUCTION_SERIALIZER.sig.in,v 1.4 2005/12/31 10:22:00 kiyoshiy Exp $
+ *)
+signature INSTRUCTION_SERIALIZER =
+sig
+
+  type writer = Word8.word -> unit
+
+    (**
+     *  Translates instructions into their binary form.
+     *
+     * @params instructions writer
+     * @param instructions a list of instruction
+     * @param writer a writer
+     * @return unit
+     *)
+    val serialize
+        : @SMLInstructionStructureName@.@SMLInstructionTypeName@ list
+          -> writer
+          -> unit
+end

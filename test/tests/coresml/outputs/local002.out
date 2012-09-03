@@ -1,0 +1,5 @@
+val v1 = 1 : int
+val v2 = 1 : int
+val v3 = (true,"foo") : bool * string
+val v4 = (true,"foo") : bool * string
+

@@ -1,0 +1,35 @@
+Group is
+
+        smlnj-lib.cm
+	../../../smlformatlib.cm
+        ../../systemdef/sources.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../types/sources.cm
+	../../typecontext/sources.cm
+	../../absyn/sources.cm
+        ../../patterncalc/sources.cm
+        ../../typedcalc/sources.cm
+	../../name/sources.cm
+	../../typedflatcalc/sources.cm
+	../../typeinference/sources.cm
+	../../format/sources.cm
+
+
+	ModuleCompiler.sml
+	MODULECOMPILER.sig
+	ModuleCompileCore.sml
+        ModuleCompileMod.sml
+	ModuleCompileFunctorApp.sml
+	ModuleCompileUtils.sml	
+	ModuleContext.sml
+        InitialModuleContext.sml
+	INITIALMODULECONTEXT.sig
+	TopObject.ppg.sml
+	PathEnv.ppg.sml
+	FunctorApplyUtils.sml
+        IndexAllocator.sml
+        ModuleCompilationPickler.sml
+        StaticModuleEnv.ppg.sml	

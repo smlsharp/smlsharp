@@ -1,0 +1,18 @@
+val v11 = ref 1 : int ref
+val v12 = 2 : int
+val v21 = ref 1.23 : real ref
+val v22 = 2.34 : real
+val v31 = ref 0wx1 : word ref
+val v32 = 0wx3 : word
+val v41 = ref #"a" : char ref
+val v42 = #"z" : char
+val v51 = ref "foo" : string ref
+val v52 = "bar" : string
+datatype t6
+con C61 : int -> t6
+con C62 : string -> t6
+val v61 = ref (C61 6) : t6 ref
+val v62 = C62 "foo" : t6
+val v71 = ref (ref (1,2)) : (int * int) ref ref
+val v72 = (2,3) : int * int
+val v73 = ref (3,4) : (int * int) ref

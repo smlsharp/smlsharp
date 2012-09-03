@@ -1,0 +1,3 @@
+structure S : sig datatype dt1 con D : dt1 datatype dt2 con D : dt2 end
+
+

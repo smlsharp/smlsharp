@@ -1,0 +1,5 @@
+../tests/bugs/tests/issue70.1.sml:2.1-2.21 Error: only variable or typed
+                                                  variable pattern is allowed in
+                                                  val rec
+
+

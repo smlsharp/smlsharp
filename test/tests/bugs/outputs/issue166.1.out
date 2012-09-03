@@ -1,0 +1,5 @@
+signature PSIG = sig type t val x : t end
+functor F (P : PSIG) : sig datatype dt con E : P.t -> dt val y : dt end
+structure S : sig datatype t con D : t val x : t end
+structure TOpaque : sig datatype dt con E : S.t -> dt val y : dt end
+val it = E - : TOpaque.dt

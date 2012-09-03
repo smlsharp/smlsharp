@@ -1,0 +1,63 @@
+datatype dt11nn1
+con D11nn1 : dt11nn1
+type t11nn1 = int
+val dt11nn1 = D11nn1 : dt11nn1
+val t11nn1 = 1 : t11nn1
+datatype dt11ny1
+con D11ny1 : dt11ny1
+type t11ny1 = int * dt11ny1
+val dt11ny1 = D11ny1 : dt11ny1
+val t11ny1 = (1,D11ny1) : t11ny1
+datatype dt11yn1
+con D11yn1 : int -> dt11yn1
+type t11yn1 = int
+val dt11yn1 = D11yn1 1 : dt11yn1
+val t11yn1 = 1 : t11yn1
+datatype dt11yy1
+con D11yy1 : dt11yy1 * int -> dt11yy1
+con E11yy1 : dt11yy1
+type t11yy1 = dt11yy1 * int
+val dt11yy1 = D11yy1 (E11yy1,1) : dt11yy1
+val t11yy1 = (E11yy1,1) : t11yy1
+datatype dt22nn1
+con D22nn1 : dt22nn1
+datatype dt22nn2
+con D22nn2 : dt22nn2
+type t22nn1 = int
+type t22nn2 = int * int
+val dt22nn1 = D22nn1 : dt22nn1
+val dt22nn2 = D22nn2 : dt22nn2
+val t22nn1 = 1 : t22nn1
+val t22nn2 = (2,3) : t22nn2
+datatype dt22ny1
+con D22ny1 : dt22ny1
+datatype dt22ny2
+con D22ny2 : dt22ny2
+type t22ny1 = dt22ny1 * int
+type t22ny2 = int * int * dt22ny2
+val dt22ny1 = D22ny1 : dt22ny1
+val dt22ny2 = D22ny2 : dt22ny2
+val t22ny1 = (D22ny1,1) : t22ny1
+val t22ny2 = (2,3,D22ny2) : t22ny2
+datatype dt22yn1
+con D22yn1 : (int * int) * int -> dt22yn1
+datatype dt22yn2
+con D22yn2 : int * int -> dt22yn2
+type t22yn1 = int
+type t22yn2 = int * int
+val dt22yn1 = fn : (int * int) * int -> dt22yn1
+val dt22yn2 = fn : int * int -> dt22yn2
+val t22yn1 = 1 : t22yn1
+val t22yn2 = (2,3) : t22yn2
+datatype dt22yy1
+con D22yy1 : (int * int * dt22yy1) * int -> dt22yy1
+con E22yy1 : dt22yy1
+datatype dt22yy2
+con D22yy2 : (int * dt22yy2) * int -> dt22yy2
+con E22yy2 : dt22yy2
+type t22yy1 = int * dt22yy2
+type t22yy2 = int * int * dt22yy1
+val dt22yy1 = D22yy1 ((1,2,E22yy1),3) : dt22yy1
+val dt22yy2 = D22yy2 ((2,E22yy2),3) : dt22yy2
+val t22yy1 = (4,E22yy2) : t22yy1
+val t22yy2 = (5,6,E22yy1) : t22yy2

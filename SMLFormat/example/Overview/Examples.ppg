@@ -1,0 +1,341 @@
+(* -*- sml -*- *)
+
+structure Examples = 
+struct
+
+  structure Sec4_2 =
+  struct
+  (* 4.2. *)
+
+    (*% *)
+    type number =
+                   (*%
+                    * @format(value) "123"
+                    *)
+                   int
+
+  end
+
+  structure Sec4_3 =
+  struct
+  (* 4.3. *)
+    open Sec4_2
+
+    (*% *)
+    datatype maybeNumber =
+                          (*% @format(value) "456" *)
+                          SomeNumber of number
+                        | (*% @format "none" *)
+                          NotNumber
+  end
+
+  structure Sec4_4 =
+  struct
+  (* 4.4. *)
+    open Sec4_2
+
+    (*% *)
+    type number =
+                   (*% @format(value) value *)
+                   int
+
+    (*% *)
+    datatype maybeNumber =
+                          (*% @format(value) value *)
+                          SomeNumber of number
+                        | (*% @format "none" *)
+                          NotNumber
+  end
+
+  structure Sec4_4_2 =
+  struct
+  (* 4.4.2. *)
+
+    (*% *)
+    type region =
+                 (*% @format(left * right) "left=" left + "right=" right *)
+                 int * int
+  end
+
+  structure Sec4_4_3 =
+  struct
+  (* 4.4.3. *)
+
+    (*% *)
+    type range =
+                 (*% @format({min : minimum, max}) minimum + "<->" + max *)
+                 {min : int, max : int}
+  end
+
+  structure Sec4_4_4 =
+  struct
+  (* 4.4.4. *)
+
+    (*% *)
+    datatype 'a maybe =
+                       (* @format(value) value *)
+                       Something of 'a
+                     | (*% @format "none" *)
+                       Nothing
+
+    (*% *)
+    type maybenum =
+                  (*% @format(num tycon) tycon(num) *)
+                  int maybe
+  end
+
+  structure Sec4_4_5 =
+  struct
+  (* 4.4.5. *)
+
+    (*%
+     * @params (label)
+     *)
+    type 'a anyLabeled =
+                        (*% @format(value) label ":" value *)
+                        'a
+
+    (*% *)
+    type anynumLabeled =
+                        (*% @format(num tycon) tycon(num)("INT") *)
+                        int anyLabeled
+  end
+
+  structure Sec4_6_1 =
+  struct
+  (* 4.6.1. *)
+    open Sec4_4_4
+    open Sec4_4_5
+
+    (*% *)
+    type maybeLabeledInt =
+                          (*%
+                           * @format(num may any) any(may(num))("INT")
+                           *)
+                          int maybe anyLabeled
+
+    (*% *)
+    type maybeRange =
+         (*%
+          * @format({min : min minMaybe, max : max maxMaybe})
+          *       minMaybe(min) "<->" maxMaybe(max)
+          *)
+         {min : int maybe, max : int maybe}
+  end
+
+  structure Sec4_6_3 =
+  struct
+  (* 4.6.3. *)
+    open Sec4_4_4
+    open Sec4_4_5
+
+    (*% *)
+    type labeledRange =
+         (*%
+          * @format(range any) any(range)("Range:")
+          * @format:range({min : min, max : max})
+          *         "(min =" + min "," + "max =" + max ")"
+          *)
+         {min : int, max : int} anyLabeled
+
+    (*% *)
+    type maybeLabeledInt =
+                          (*%
+                           * @format(maybeNum any) any(maybeNum)("INT")
+                           * @format:maybeNum(num may) may(num)
+                           *)
+                          int maybe anyLabeled
+  end
+
+  structure Sec4_7 =
+  struct
+  (* 4.7. *)
+
+    structure MyFormatters =
+    struct
+      local structure FE = SMLPP.FormatExpression
+      in
+        fun format_binary x =
+            let val text = Word.fmt StringCvt.BIN x
+            in [FE.Term (2, "0b"), FE.Term (size text, text)] end
+      end
+    end
+
+    (*%
+     * @formatter(binary) MyFormatters.format_binary
+     *)
+    type file =
+               (*%
+                * @format({name, flags : flags:binary})
+                *           "{name=" name "," + "flags=" flags "}"
+                *)
+               {name : string, flags : word}
+
+    (*%
+     * @formatter(binary) MyFormatters.format_binary
+     *)
+    type file2 =
+               (*%
+                * @format({name, flags})
+                *           "{name=" name "," + "flags=" flags:binary "}"
+                *)
+               {name : string, flags : word}
+  end
+
+  structure Sec4_10_1 =
+  struct
+  (* 4.10.1 *)
+
+  end
+
+  structure Sec4_10_2 =
+  struct
+  (* 4.10.2 *)
+
+    (*% *)
+    datatype tree =
+                   (*% @format(num) num *)
+                   Leaf of int
+                 | (*% @format(child children) "{" children(child)(", ") "}" *)
+                   Node of node list
+
+    withtype node =
+                   (*% @format({child, label}) label "=" child *)
+                   {child : tree, label : string}
+  end
+
+  structure Sec4_10_3 =
+  struct
+  (* 4.10.3 *)
+
+    (*% *)
+    abstype set =
+                 (*%
+                  * @format(element elements) "{" elements(element)(", ") "}"
+                  *)
+                 SET of element list
+    withtype element =
+                      (*% @format(value) value *)
+                      string
+    with
+      fun create () = SET []
+      fun addTo (element, SET set) = SET(element :: set)
+      fun isMemberOf (value, SET set) =
+          List.exists (fn element => element = value) set
+    end
+  end
+
+  structure Sec4_11 =
+  struct
+  (* 4.11. *)
+
+    (*% *)
+    exception
+    (*%
+     * @format({fileName, line : leftLine, col : leftCol} *
+     *         {line : rightLine, col : rightCol, ...} *
+     *         message)
+     * fileName ":" leftLine "." leftCol "-" rightLine "." rightCol ":" message
+     *)
+    ParseError of
+    {fileName:string, line:int, col:int} *
+    {fileName:string, line:int, col:int} *
+    string
+
+  end
+
+  structure Sec4_12 =
+  struct
+  (* 4.12. *)
+  
+    (*%
+     * @prefix summary
+     *)
+    (*%
+     * @prefix detail
+     *)
+    type address =
+         (*%
+          * @prefix summary
+          * @format({zip, state, city}) state
+          *)
+         (*%
+          * @prefix detail
+          * @format({zip, state, city})
+          *   "zip=" zip ",state=" state ",city=" city
+          *)
+         {zip : string, state : string, city : string}
+
+    (*%
+     * @prefix detail
+     *)
+    type customer =
+         (*%
+          * @prefix detail
+          * @format({name, address, tel})
+          *      "name=" name ",address=" address ",tel=" tel
+          *)
+         {name : string, address : address, tel : string}
+
+  (*%
+   * @prefix formatPlain
+   *)
+  (*%
+   * @prefix formatHTML
+   *)
+  datatype block = 
+           (*%
+            * @prefix formatPlain
+            * @format(text) text
+            *)
+           (*%
+            * @prefix formatHTML
+            * @format(text) text
+            *)
+           Text of string
+         |
+           (*%
+            * @prefix formatPlain
+            * @format(block) block
+            *)
+           (*%
+            * @prefix formatHTML
+            * @format(block) "<B>" block "</B>"
+            *)
+           Bold of block
+
+  end
+
+  structure Sec4_13 =
+  struct
+
+  (*%
+   * @destination "(* FORMAT_TY *)"
+   * @header "and"
+   * @formatter(polyTy) format_polyTy
+   * @params(env)
+   *)
+  datatype ty =
+           (*% @format(name) name *)
+           Var of string
+         | (*% @format(polyTy:polyTy) polyTy()(env) *)
+           PolyTy of {tyvars : string list, body : ty}
+
+  local structure FE = SMLPP.FormatExpression
+  in
+  fun format_polyTy [env] {tyvars, body} =
+      let
+        val tyFormat = format_ty [env] body
+        val tyVarsFormat =
+            map (fn tv => FE.Term(size tv + 1, tv ^ ",")) tyvars
+      in
+        (FE.Term (1, "[")) ::
+        tyVarsFormat @
+        tyFormat @
+        [(FE.Term (1, "]"))]
+      end
+  (* FORMAT_TY *)
+  end
+
+  end
+end;

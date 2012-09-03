@@ -1,0 +1,2 @@
+val v1 = {a = 11, b = 3} : {a:int , b:int}
+val v2 = {a = 22, b = false, c = "foo"} : {a:int , b:bool , c:string}

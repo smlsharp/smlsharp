@@ -1,0 +1,162 @@
+<HTML>
+<HEAD>
+<TITLE>SMLPPTest0003</TITLE>
+</HEAD>
+<BODY><TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+<HR>
+<H2>SMLPPTest0003</H2>
+<HR>
+<P>
+<CODE>structure&nbsp;<A HREF="StrSMLPPTest0003.html">SMLPPTest0003</A>&nbsp;=<br>
+struct<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0003-StrAssert.html">Assert</A>&nbsp;=&nbsp;SMLUnit.Assert<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0003-StrTest.html">Test</A>&nbsp;=&nbsp;SMLUnit.Test<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0003-StrTestee.html">Testee</A>&nbsp;=&nbsp;SMLPP<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0003-StrFE.html">FE</A>&nbsp;=&nbsp;Testee.FormatExpression<br>
+&nbsp;&nbsp;structure&nbsp;<A HREF="StrSMLPPTest0003-StrPP.html">PP</A>&nbsp;=&nbsp;Testee.PrinterParameter<br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#ValprettyPrint">prettyPrint</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#Valind_1">ind_1</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#Valind_2">ind_2</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#ValTESTNEWLINEINDICATOR_EXPRESSION">TESTNEWLINEINDICATOR_EXPRESSION</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#ValtestNewlineIndicator0001">testNewlineIndicator0001</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#ValtestNewlineIndicator0002">testNewlineIndicator0002</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#ValtestNewlineIndicator0003">testNewlineIndicator0003</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#ValtestNewlineIndicator0004">testNewlineIndicator0004</A><br>
+&nbsp;&nbsp;val&nbsp;<A HREF="StrSMLPPTest0003.html#Valsuite">suite</A><br>
+end</CODE>
+<P>
+
+<DL>
+<DD>
+ test cases for pretty-printing of newline indicators.
+ <p>
+ These cases pretty-print expressions which contain newline indicators.
+ </p>
+
+ <table border=1>
+ <caption>Test cases matrix</caption>
+ <tr><th>case</th><th>description</th></tr>
+ <tr>
+   <td>NewlineIndicator0001</td>
+   <td>specifies the minimum number of columns which does not require to
+     insert newline at any of indicators.</td>
+ </tr>
+ <tr>
+   <td>NewlineIndicator0002</td>
+   <td>specifies the maximum number of columns which requires to insert
+     newline at the highest of indicators</td>
+ </tr>
+ <tr>
+   <td>NewlineIndicator0003</td>
+   <td>specifies the minimum number of columns which causes to insert newline
+     at the highest of indicators</td>
+ </tr>
+ <tr>
+   <td>NewlineIndicator0004</td>
+   <td>specifies the maximum number of columns which causes to insert newline
+     at all of indicators</td>
+ </tr>
+ </table>
+ 
+
+<P>
+
+<DD>
+<DL>
+</DL>
+</DL>
+<P>
+
+<P>
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<TABLE WIDTH="100%" BORDER="1" CELLSPACING="1" CELLPADDING="3">
+<TR BGCOLOR="#CCCCFF">
+<TH COLSPAN=1>
+<FONT SIZE="+2">Value detail</FONT>
+</TH></TR></TABLE>
+<A NAME="ValprettyPrint"><!-- --></A>
+<H3>prettyPrint</H3>
+<P>
+<CODE>val&nbsp;prettyPrint</CODE>
+
+<HR>
+<A NAME="Valind_1"><!-- --></A>
+<H3>ind_1</H3>
+<P>
+<CODE>val&nbsp;ind_1</CODE>
+
+<HR>
+<A NAME="Valind_2"><!-- --></A>
+<H3>ind_2</H3>
+<P>
+<CODE>val&nbsp;ind_2</CODE>
+
+<HR>
+<A NAME="ValTESTNEWLINEINDICATOR_EXPRESSION"><!-- --></A>
+<H3>TESTNEWLINEINDICATOR_EXPRESSION</H3>
+<P>
+<CODE>val&nbsp;TESTNEWLINEINDICATOR_EXPRESSION</CODE>
+
+<HR>
+<A NAME="ValtestNewlineIndicator0001"><!-- --></A>
+<H3>testNewlineIndicator0001</H3>
+<P>
+<CODE>val&nbsp;testNewlineIndicator0001</CODE>
+
+<HR>
+<A NAME="ValtestNewlineIndicator0002"><!-- --></A>
+<H3>testNewlineIndicator0002</H3>
+<P>
+<CODE>val&nbsp;testNewlineIndicator0002</CODE>
+
+<HR>
+<A NAME="ValtestNewlineIndicator0003"><!-- --></A>
+<H3>testNewlineIndicator0003</H3>
+<P>
+<CODE>val&nbsp;testNewlineIndicator0003</CODE>
+
+<HR>
+<A NAME="ValtestNewlineIndicator0004"><!-- --></A>
+<H3>testNewlineIndicator0004</H3>
+<P>
+<CODE>val&nbsp;testNewlineIndicator0004</CODE>
+
+<HR>
+<A NAME="Valsuite"><!-- --></A>
+<H3>suite</H3>
+<P>
+<CODE>val&nbsp;suite</CODE>
+
+<P>
+
+&nbsp;
+<HR>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="0" CELLPADDING="1">
+<TR>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLSPACING="3" CELLPADDING="0">
+<TR ALIGN=CENTER VALIGN=TOP>
+<TD BGCOLOR="#EEEEFF">
+<B><A HREF="overview-summary.html">Overview</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="index-all.html">Index</A></B>&nbsp;
+</TD><TD BGCOLOR="#EEEEFF">
+<B><A HREF="help-doc.html">Help</A></B>&nbsp;
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+</BODY></HTML>

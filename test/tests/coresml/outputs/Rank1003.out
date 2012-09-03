@@ -1,0 +1,19 @@
+val id = fn : ['a .'a -> 'a]
+datatype 'a dt
+con D : ['a .'a dt]
+val fPolyVar1 = fn : ['a .'a -> ['b .'b -> 'b]]
+val xPolyVar1 = fn : ['a .'a -> 'a]
+val fPolyVar2 = fn : ['a .'a -> ['b .'b -> 'b] * 'a]
+val xPolyVar2 = (fn, (1, 2)) : ['a .'a -> 'a] * (int * int)
+val fPolyAbs1 = fn : ['a .'a -> ['b .'b -> 'b]]
+val xPolyAbs1 = fn : ['a .'a -> 'a]
+val fPolyAbs2 = fn : ['a .'a -> ['b .'b -> 'a * 'b]]
+val xPolyAbs2 = fn : ['a .'a -> (int * int) * 'a]
+val fRecord1 = fn : ['a .'a -> {a:['b .'b -> 'b]}]
+val xRecord1 = {a = fn} : {a:['a .'a -> 'a]}
+val fRecord2 = fn : ['a .'a -> {a:['b .'b -> 'b] , b:'a}]
+val xRecord2 = {a = fn, b = (1, 2)} : {a:['a .'a -> 'a] , b:int * int}
+val fPolyConst1 = fn : ['a .'a -> ['b .'b dt]]
+val xPolyConst1 = D : ['a .'a dt]
+val fPolyConst2 = fn : ['a .'a -> ['b .'b dt] * 'a]
+val xPolyConst2 = (D, (1, 2)) : ['a .'a dt] * (int * int)

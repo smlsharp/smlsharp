@@ -1,0 +1,33 @@
+structure S1 : sig end
+structure S2 : sig val x : int end
+val x2 = 1 : int
+structure S3 : sig type t = int end
+type t3 = S3.t
+val x3 = 1 : S3.t
+structure S4 : sig datatype t con D : t end
+datatype t4 = datatype S4.t
+val x4 = D : S4.t
+datatype t5
+con D5 : t5
+structure S5 : sig datatype t con D5 : t end
+datatype t5' = datatype S5.t
+val x5 = D5 : t5
+structure S6 : sig type t val x : t end
+val x6 = - : S6.t
+structure S71 : sig exception e : exn end
+exception e71 = S71.e
+val x71 = e : exn
+exception e72 : exn
+structure S72 : sig exception e : exn end
+val x72 = e72 : exn
+structure S8 : sig val x : t end
+val x8 = - : S8.t
+structure S91 : sig val x : int * int end
+structure S92 : sig val x : int * int end
+val x9 = (1,2) : int * int
+structure S10 : sig val ++ : int * int -> int end
+val ++ = fn : int * int -> int
+structure S11 : sig val -- : int * int -> int end
+val -- = fn : int * int -> int
+structure S12 : sig val // : int * int -> int end
+val // = fn : int * int -> int

@@ -1,0 +1,90 @@
+(**
+ * @copyright (c) 2006, Tohoku University. 
+ * @author Liu Bochao
+ * @version $Id: StaticModuleEnv.ppg,v 1.1 2006/03/02 12:47:29 bochao Exp $
+ *)
+structure StaticModuleEnv =
+struct
+   
+   structure TO = TopObject
+   structure PE = PathEnv
+
+   (******************** interactive mode ********************** *)
+   (*%
+    * @params(btvEnv)
+    * @formatter(TO.pageArrayIndex) TO.format_pageArrayIndex
+    * @formatter(TO.freeEntryPointer) TO.format_freeEntryPointer
+    * @formatter(PathEnv.topPathBasis) PE.format_topPathBasis
+    * @formatter(PathEnv.pathBasis) PE.format_pathBasis
+    *)
+   type moduleEnv = 
+        (*%
+         * @format({freeGlobalArrayIndex, freeEntryPointer, topPathBasis}) 
+         * "ModuleEnv:" +1 5[freeEntryPointer] +1 5[topPathBasis()(btvEnv)]
+         *)
+        {freeGlobalArrayIndex : TO.pageArrayIndex,
+         freeEntryPointer : TO.freeEntryPointer,
+         topPathBasis : PathEnv.topPathBasis} 
+
+   and deltaModuleEnv = 
+        (*%
+         * @format({freeGlobalArrayIndex, freeEntryPointer, pathBasis}) 
+         * "deltaModuleEnv:" +1 5[freeEntryPointer] +1 5[pathBasis()(btvEnv)]
+         *)
+        {freeGlobalArrayIndex : TO.pageArrayIndex,
+         freeEntryPointer : TO.freeEntryPointer,
+         pathBasis : PathEnv.pathBasis }
+
+   fun extendModuleEnvWithDeltaModuleEnv 
+         {deltaModuleEnv:deltaModuleEnv, moduleEnv:moduleEnv} =
+       {freeGlobalArrayIndex = #freeGlobalArrayIndex deltaModuleEnv,
+        freeEntryPointer = #freeEntryPointer deltaModuleEnv,
+        topPathBasis = PE.extendTopPathBasisWithPathBasis
+        {topPathBasis = #topPathBasis moduleEnv,
+         pathBasis = #pathBasis deltaModuleEnv}}
+
+   (************* separate compilation mode ************************)
+
+   (*%
+    * @params(btvEnv)
+    * @formatter(PathEnv.pathBasis) PE.format_pathBasis
+    *)
+   type importModuleEnv = 
+        (*%
+         * @format(pathBasis) pathBasis()(btvEnv)
+         *)
+        PathEnv.pathBasis
+   and  exportModuleEnv = 
+        (*%
+         * @format(pathBasis) pathBasis()(btvEnv)
+         *)
+        PathEnv.pathBasis
+   (*%
+    * @params(btvEnv)
+    *)
+   type  staticModuleEnv =
+        (*%
+         * @format({importModuleEnv, exportModuleEnv}) 
+         *  {"importModuleEnv:" +1 2[importModuleEnv()(btvEnv)] +1
+         *  "exportModuleEnv:" +1 2[exportModuleEnv()(btvEnv)]}
+         *)
+         {importModuleEnv : importModuleEnv,
+          exportModuleEnv : exportModuleEnv}
+
+   val emptyImportModuleEnv = PathEnv.emptyPathBasis
+   val emptyExportModuleEnv = PathEnv.emptyPathBasis
+
+
+   fun extendImportModuleEnv 
+         {newImportModuleEnv, oldImportModuleEnv} =
+         PE.extendPathBasisWithPathBasis
+           {newPathBasis = newImportModuleEnv,
+            oldPathBasis = oldImportModuleEnv}
+
+   fun extendExportModuleEnv 
+         {newExportModuleEnv, oldExportModuleEnv} =
+         PE.extendPathBasisWithPathBasis
+           {newPathBasis = newExportModuleEnv,
+            oldPathBasis = oldExportModuleEnv}
+
+end

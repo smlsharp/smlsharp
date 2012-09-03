@@ -1,0 +1,22 @@
+Group is
+        smlnj-lib.cm
+        ../../../smlformatlib.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../absyn/sources.cm
+        ../../format/sources.cm
+        ../../control/sources.cm
+        ../../../primitives/compiler/sources.cm
+	../../patterncalc/sources.cm
+	../../name/sources.cm
+	../../types/sources.cm
+(*
+	../../typedcalc/sources.cm
+*)
+        ../../pickle/sources.cm
+
+        InitialTypeContext.sml
+	TypeContext.ppg.sml
+	TypeContextUtils.sml	
+	TypeContextPickler.sml
+	

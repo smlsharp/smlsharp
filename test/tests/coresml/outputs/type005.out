@@ -1,0 +1,7 @@
+type t21 = string * int
+type t22 = {a:t21, b:t21 * real}
+val v2 = {a=("a",1),b=(("b",2),2.345)} : t22
+type t31 = {a:int, b:int -> int}
+type t32 = t31 list
+type t33 = t32 * string
+val v3 = ([{a=1,b=fn},{a=2,b=fn}],"x") : t33

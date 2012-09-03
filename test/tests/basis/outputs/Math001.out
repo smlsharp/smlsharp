@@ -1,0 +1,16 @@
+val sqrt001 = 1.10905365064 : Math.real
+val sin001 = 0.942488801932 : Math.real
+val cos001 = 0.334237727125 : Math.real
+val tan001 = 2.81981573427 : Math.real
+val asin001 = 0.123312275192 : Math.real
+val acos001 = 1.4474840516 : Math.real
+val atan001 = 0.888173774378 : Math.real
+val atan2001 = 0.48394938786 : Math.real
+val exp001 = 3.42122953629 : Math.real
+val pow001 = 1.62322215169 : Math.real
+val ln001 = 0.207014169384 : Math.real
+val log10001 = 0.0899051114394 : Math.real
+val sinh001 = 1.5644684793 : Math.real
+val cosh001 = 1.85676105699 : Math.real
+val tanh001 = 0.842579325659 : Math.real
+

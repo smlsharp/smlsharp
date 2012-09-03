@@ -1,0 +1,6 @@
+datatype t
+con C1 : int -> t
+datatype t1 = datatype t
+val v1 = C1 1 : t1
+datatype t2 = datatype t
+val v2 = C2 2 : t2

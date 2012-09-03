@@ -1,0 +1,41 @@
+datatype t
+con D : t
+datatype m_int
+con M_INT : int -> m_int
+val m_int = M_INT 1 : m_int
+datatype m_real
+con M_REAL : real -> m_real
+val m_real = M_REAL 1.23 : m_real
+datatype m_word
+con M_WORD : word -> m_word
+val m_word = M_WORD 0wx3 : m_word
+datatype m_char
+con M_CHAR : char -> m_char
+val m_char = M_CHAR #"a" : m_char
+datatype m_string
+con M_STRING : string -> m_string
+val m_string = M_STRING "abc" : m_string
+datatype m_unit
+con M_UNIT : unit -> m_unit
+val m_unit = M_UNIT () : m_unit
+datatype m_record
+con M_RECORD : {x:int} -> m_record
+val m_record = M_RECORD {x=999} : m_record
+datatype m_constructed
+con M_CONSTRUCTED : t -> m_constructed
+val m_constructed = M_CONSTRUCTED D : m_constructed
+datatype m_function
+con M_FUNCTION : (int -> int) -> m_function
+val m_function = M_FUNCTION fn : m_function
+datatype 'a p
+con P : ['a.'a -> 'a p]
+val p_int = P 1 : int p
+val p_real = P 1.23 : real p
+val p_word = P 0wx3 : word p
+val p_char = P #"a" : char p
+val p_string = P "abc" : string p
+val p_unit = P () : unit p
+val p_record = P {x=111} : {x:int} p
+val p_constructed = P D : t p
+val p_function = P fn : ['a .('a -> 'a) p]
+

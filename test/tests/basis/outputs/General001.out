@@ -1,0 +1,35 @@
+val refMonoUnboxed1 = ref 100 : int ref
+val derefMonoUnboxed1 = 100 : int
+val refMonoBoxed1 = ref (1,2) : (int * int) ref
+val derefMonoBoxed1 = (1,2) : int * int
+../tests/basis/tests/General001.sml:8.1-8.30 Warning: dummy type variable(s) X0
+                                                       are introduced due to
+                                                       value restriction
+val refPoly1 = ref fn : (X0 -> X0) ref
+val derefPoly1 = fn : X0 -> X0
+val refMonoUnboxed2 = ref 200 : int ref
+val x = () : General.unit
+val refMonoBoxed2 = ref (2,3) : (int * int) ref
+val x = () : General.unit
+../tests/basis/tests/General001.sml:15.1-15.35 Warning: dummy type variable(s)
+                                                        X0 are introduced due to
+                                                        value restriction
+val refPoly2 = ref fn : (X0 -> int * X0) ref
+../tests/basis/tests/General001.sml:16.9-16.47 Error: operator and operand don't
+                                                      agree
+                                                      operator domain: (X0 ->
+                                                                          int *
+                                                                          X0) ref *
+                                                                       (X0 ->
+                                                                          int *
+                                                                          X0)
+                                                      operand: (X0 -> int * X0) ref *
+                                                               ('A -> int * 'A)
+
+val f1 = fn : int -> int
+val f2 = fn : int -> int
+val comp1 = 201 : int
+val beforeRef1 = ref 1 : int ref
+val before1 = () : unit
+val x = ref 20 : int ref
+val ignore1 = () : General.unit

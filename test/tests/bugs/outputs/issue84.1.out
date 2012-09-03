@@ -1,0 +1,4 @@
+datatype t
+con * : int * int -> t
+val x = 1 : int
+val y = 2 : int

@@ -1,0 +1,186 @@
+(**
+ * base of implementations of the MONO_VECTOR signature.
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: MonoVectorBase.sml,v 1.6 2006/02/20 01:41:12 kiyoshiy Exp $
+ *)
+functor MonoVectorBase
+            (B
+             : sig
+               type elem
+               type array
+               val maxLen : int
+               val makeArray : int * elem -> array
+               val length : array -> int
+               val update : array * int * elem -> unit
+               val sub : array * int -> elem
+               val emptyArray : unit -> array
+             end) =
+struct
+
+  (***************************************************************************)
+
+  type vector = B.array
+
+  type elem = B.elem
+
+  (***************************************************************************)
+
+  val maxLen = B.maxLen
+
+  fun fromList [] = B.emptyArray ()
+    | fromList (head :: tail) =
+      let
+        val bufferLength = 1 + List.length tail
+        val buffer = B.makeArray (bufferLength, head)
+        fun write [] _ = ()
+          | write (next :: remains) index =
+            (B.update (buffer, index, next); write remains (index + 1))
+      in
+        (* write elements from the second element. *)
+        write tail 1; 
+        buffer
+      end
+
+  fun tabulate (number, generator) =
+      fromList (List.tabulate (number, fn index => generator index))
+
+  fun length vector = B.length vector
+
+  fun sub (vector, index) =
+      if index < 0 orelse (B.length vector) <= index
+      then raise Subscript (* if buffer = NONE, the sub always fails. *)
+      else B.sub (vector, index)
+
+  fun foldli foldFun initial vector =
+      let
+        val length = length vector
+        fun fold (index, accum) =
+            if index = length
+            then accum
+            else
+              let val newAccum = foldFun (index, sub (vector, index), accum)
+              in fold (index + 1, newAccum)
+              end
+      in
+        fold (0, initial)
+      end
+  fun foldl foldFun initial vector =
+      foldli
+          (fn (_, element, accum) => foldFun (element, accum)) initial vector
+
+  fun foldri foldFun initial vector =
+      let
+        val length = length vector
+        fun fold (index, accum) =
+            if index = ~1
+            then accum
+            else
+              let val newAccum = foldFun (index, sub (vector, index), accum)
+              in fold (index - 1, newAccum)
+              end
+      in
+        fold (length - 1, initial)
+      end
+  fun foldr foldFun initial vector =
+      foldri
+          (fn (_, element, accum) => foldFun (element, accum))
+          initial
+          vector
+
+  fun mapi mapFun vector =
+      fromList
+          (List.rev
+               (foldli
+                    (fn (index, a, l) => (mapFun (index, a) :: l)) [] vector))
+
+  fun map mapFun vector = mapi (fn (_, element) => mapFun element) vector
+
+  fun appi appFun vector =
+      foldli (fn (index, a, _) => (appFun (index, a))) () vector
+
+  fun app appFun vector = appi (fn (_, element) => appFun element) vector
+
+  fun update (vector, index, value) =
+      let fun valueOfIndex i = if i = index then value else sub (vector, i)
+      in tabulate (length vector, valueOfIndex)
+      end
+
+  fun concat vectors =
+      let
+        fun copyVec source buffer destIndex =
+            appi
+            (fn (index, sourceElement) =>
+                B.update(buffer, destIndex + index, sourceElement))
+            source
+        val (totalLength, initialValueOpt) =
+            List.foldr
+                (fn (vector, (totalLength, SOME value)) =>
+                    (totalLength + length vector, SOME value)
+                  | (vector, (totalLength, NONE)) =>
+                    (case length vector of
+                       0 => (totalLength, NONE)
+                     | len => (totalLength + len, SOME(B.sub(vector, 0)))))
+                (0, NONE)
+                vectors
+      in
+        case (totalLength, initialValueOpt) of
+          (0, _) => B.emptyArray ()
+        | (_, SOME initialValue) =>
+          let
+            val resultBuffer = B.makeArray(totalLength, initialValue)
+            fun write (sourceVector, index) =
+                case length sourceVector of
+                  0 => index
+                | len => 
+                  (copyVec sourceVector resultBuffer index; index + len)
+          in
+            List.foldl write 0 vectors;
+            resultBuffer
+          end
+        | (_, NONE) => raise Fail "BUG: vector concat"
+      end
+
+  fun findi predicate vector =
+      let
+        val length = length vector
+        fun scan index =
+            if index = length
+            then NONE
+            else
+              let val value = sub (vector, index)
+              in
+                if predicate (index, value)
+                then SOME(index, value)
+                else scan (index + 1)
+              end
+      in
+        scan 0
+      end
+      
+  fun find predicate vector =
+      Option.map
+          (fn (_, value) => value)
+          (findi (fn (_, value) => predicate value) vector)
+
+  fun exists predicate vector = Option.isSome(find predicate vector)
+
+  fun all predicate vector =
+      not (Option.isSome(find (fn value => not(predicate value)) vector))
+
+  fun collate elementCollate (left, right) =
+      let
+        fun scan _ 0 0 = General.EQUAL
+          | scan _ 0 _ = General.LESS
+          | scan _ _ 0 = General.GREATER
+          | scan index leftRemain rightRemain =
+            case elementCollate(sub (left, index), sub (right, index)) of
+              General.EQUAL =>
+              scan (index + 1) (leftRemain - 1) (rightRemain - 1)
+            | diff => diff
+      in
+        scan 0 (length left) (length right)
+      end
+
+  (***************************************************************************)
+
+end;

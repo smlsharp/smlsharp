@@ -1,0 +1,5 @@
+functor F (S : sig exception E : real -> exn end) :
+sig exception F : real -> exn val f : ['a .real -> 'a] end
+structure P : sig exception E : real -> exn end
+structure T : sig exception F : real -> exn val f : ['a .real -> 'a] end
+val x = 1.23 : real

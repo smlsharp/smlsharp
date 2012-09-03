@@ -1,0 +1,5 @@
+functor F (S : sig datatype dt con D : dt end) :
+sig datatype et con D : et end
+structure TAnonymous : sig datatype dt con D : X?.dt end
+structure P : sig datatype dt con D : dt end
+structure TNamed : sig datatype dt con D : P.dt end

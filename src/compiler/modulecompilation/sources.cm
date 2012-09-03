@@ -1,0 +1,11 @@
+Group
+        structure ModuleCompiler
+	structure InitialModuleContext
+        structure ModuleCompilationPickler
+	structure StaticModuleEnv
+	structure PathEnv
+	structure FunctorApplyUtils
+	structure TopObject
+	structure IndexAllocator
+is
+	main/module.cm

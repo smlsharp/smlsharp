@@ -1,0 +1,2 @@
+val f = fn : ['a.{f:int} -> 'a]
+

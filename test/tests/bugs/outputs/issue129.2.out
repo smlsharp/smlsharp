@@ -1,0 +1,6 @@
+signature S = sig val f : ['a.('a -> 'a) -> string] end
+structure S : sig val f : ['a.'a -> string] end
+val g = fn : ['a.'a -> 'a]
+val x = "a" : string
+structure S1 : S
+val y = "a" : string

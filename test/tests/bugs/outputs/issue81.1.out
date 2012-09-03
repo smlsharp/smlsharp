@@ -1,0 +1,3 @@
+structure S : sig val f : unit -> unit end
+structure S : sig val f : int -> unit end
+val it = () : unit

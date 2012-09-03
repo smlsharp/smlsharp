@@ -1,0 +1,3 @@
+../tests/bugs/tests/issue7.1.sml:1.1-1.17 Warning: match nonexhaustive
+          {y=1} => ...
+val f = fn : {y:int} -> int

@@ -1,0 +1,18 @@
+functor MonoVectorBase (B :
+sig type elem type array val sub : array * int -> elem end) :
+sig
+val concat : ['a#{buffer:MonoVectorBase.B.array Option.option} .'a list -> unit]
+end
+../tests/bugs/tests/issue146.6.sml:14.9-16.27 Warning: match nonexhaustive
+                                                                (0, _) => ...
+                                                                (_, SOME _) => ...
+../tests/bugs/tests/issue146.6.sml:9.3-17.9 Warning: match nonexhaustive
+                                                              :: (vector, _) => ...
+structure Operations
+: sig type array = unit type elem = unit val sub : unit * int -> unit end
+structure UnitVector
+: sig
+  val concat : ['a#{buffer:Operations.array Option.option} .'a list -> unit]
+  end
+
+

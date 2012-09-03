@@ -1,0 +1,8 @@
+datatype dt111
+con D111 : ((int * int) * bool) * int -> dt111
+type 'a t111 = 'a * bool
+val x111 = D111 (((1,2),true),3) : dt111
+datatype dt112
+con D112 : ((int * int) * bool * (string * string)) * int -> dt112
+type ('a,'b) t112 = 'a * bool * 'b
+val x112 = D112 (((1,2),true,("abc","xyz")),3) : dt112

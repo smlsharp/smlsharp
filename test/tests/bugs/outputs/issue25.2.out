@@ -1,0 +1,2 @@
+val it = "\\n" : string
+val it = 2 : int

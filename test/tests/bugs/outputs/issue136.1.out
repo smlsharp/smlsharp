@@ -1,0 +1,4 @@
+datatype s
+con %% : int * int -> s
+val x = 1 : int
+val y = 2 : int

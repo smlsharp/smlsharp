@@ -1,0 +1,19 @@
+Group is
+	../../../smlformatlib.cm
+
+        ../../control/sources.cm
+        smlnj-lib.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+        ../../typecontext/sources.cm
+        ../../patterncalc/sources.cm
+        ../../absyn/sources.cm
+	../../typedflatcalc/sources.cm
+        ../../recordcalc/sources.cm
+
+        MatchData.sml
+        MatchError.ppg.sml
+        MatchCompiler.sml
+        MATCH_COMPILER.sig
+

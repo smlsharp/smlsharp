@@ -1,0 +1,4 @@
+signature S = sig type dt end
+structure P : sig type t = real end
+functor F ('X : sig type t end) : S
+structure T : sig datatype dt con D : P.t -> dt end

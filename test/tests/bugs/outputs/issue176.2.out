@@ -1,0 +1,5 @@
+functor MonoVectorBase (B : sig end) : sig val f : unit -> unit end
+functor MonoArrayBase (B : sig end) :
+sig val f : unit -> unit structure Vector : sig val f : unit -> unit end end
+structure UnitArray
+: sig val f : unit -> unit structure Vector : sig val f : unit -> unit end end

@@ -1,0 +1,13 @@
+val id = fn : ['a .'a -> 'a]
+datatype 'a dt
+con D : ['a .'a dt]
+val rPolyVar = {a = fn} : {a:['a .'a -> 'a]}
+val xPolyVar = fn : ['a .'a -> 'a]
+val rPolyAbs = {a = fn} : {a:['a .'a -> 'a]}
+val xPolyAbs = fn : ['a .'a -> 'a]
+val rRecord = {a = {a = fn}} : {a:{a:['a .'a -> 'a]}}
+val xRecord = {a = fn} : {a:['a .'a -> 'a]}
+val rPolyConst = {a = D} : {a:['a .'a dt]}
+val xPolyConst = D : ['a .'a dt]
+
+

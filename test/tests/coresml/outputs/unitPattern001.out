@@ -1,0 +1,3 @@
+val f1 = fn : unit -> int
+val v1 = 1 : int
+

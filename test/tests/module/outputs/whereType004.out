@@ -1,0 +1,10 @@
+signature S3n =
+sig type t1 type t2 type t3 end
+where type t1 = int
+where type t2 = string
+where type t3 = bool
+type s1 = int
+type s2 = int
+type s3 = string
+../tests/module/tests/whereType004.sml:32.1-37.22 Error: type annotation for
+                                                         datatype: t1

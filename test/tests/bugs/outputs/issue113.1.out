@@ -1,0 +1,6 @@
+val id = fn : ['a.'a -> 'a]
+datatype 'a dt 
+con D : ['a.'a -> 'a dt]
+val it = 1 : int
+val it = 1 : int
+val it = 1 : int

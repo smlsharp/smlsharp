@@ -1,0 +1,8 @@
+exception E : exn
+exception E1 = E
+val v1 = E : exn
+exception E : exn
+exception E2 = E
+val v2 = E : exn
+exception E3 = E
+val v3 = E : exn

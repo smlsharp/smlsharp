@@ -1,0 +1,8 @@
+signature SEmpty = sig end
+structure PEmpty : sig end
+functor FEmpty ('X : sig end) : sig end
+structure TEmpty : sig end
+functor FEmptyTrans ('X : sig end) : SEmpty
+structure TEmptyTrans : sig end
+functor FEmptyOpaq ('X : sig end) : SEmpty
+structure TEmptyOpaq : sig end

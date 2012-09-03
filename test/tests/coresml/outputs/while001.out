@@ -1,0 +1,5 @@
+val counter = ref 0 : int ref
+val buffer = ref [] : int list ref
+val it = () : unit
+val result = [10,9,8,7,6,5,4,3,2,1] : int list
+val it = () : unit

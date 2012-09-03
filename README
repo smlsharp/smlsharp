@@ -1,0 +1,45 @@
+
+              SML# - a new language in the ML family
+
+           http://www.pllab.riec.tohoku.ac.jp/smlsharp/
+	
+SML# is a new generation of the Standard ML family of programming
+languages being developed at Research Institute of Electrical
+Communication, Tohoku University.  It desing goal is to provide a
+moderate but practically important extensions based on recent advance
+in type theory for ML-style languages while maintaining the
+compatibility of the Definition of Standard ML.
+
+The main features of SML# include the following.
+* interoperability
+  Our newly developed memory managenent method makes SML# program
+  higly interoperable with C and Java. For example, SML# program can 
+  dynamically load a C function and passes an array of floating point
+  numbers without any data conversion.
+* record polymorphism
+  The type system of SML# fully supports record polymorphism.
+  Moreover, its type directed compiler generates efficient code for
+  polymorphic record operations.
+* extension of Standard ML
+  SML# is a conservative extension of the Definition of Standard ML.
+  The programmer can enjoy the new features with a rich collection of
+  existing library for Standrd ML.
+
+This distibution contains the alpha-version of the SML# compiler for
+evaluation of the language, and not intends to serve as a production
+compiler. The alpha-version has the following limitations.
+* It only provides bytecode interpreter.
+* Interoperability is limited to C through dynamically linked
+  library.
+* Optimization is under development.
+
+This pcakage contains the following.
+ README  - this file
+ INSTALL - install information
+ LICENSE - a BSD style licese
+ doc/ - documents for SML# (currently only very limited ones are available.)
+ develop/
+     src/ - the source directory
+     lib/ - the place for third party libraries
+     obj/ - binary files used to build and run the SML# compiler
+

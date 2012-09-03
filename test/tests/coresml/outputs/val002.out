@@ -1,0 +1,6 @@
+val v11 = 1 : int
+val v12 = 2 : int
+val v21 = 1 : int
+val v21 = true : bool
+val v22 = (3,1) : int * int
+

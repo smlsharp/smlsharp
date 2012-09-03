@@ -1,0 +1,48 @@
+signature S11 = sig type s type t sharing type t = s end
+signature S13 = sig type s structure T : sig type t end sharing type s = T.t end
+signature S15 =
+sig
+  type s
+  structure T : sig structure T : sig type t end end
+  sharing type s = T.T.t
+end
+signature S21 = sig structure S : sig type s end type t sharing type S.s = t end
+signature S22 =
+sig structure S : sig type s type t end sharing type S.s = S.t end
+signature S23 =
+sig
+  structure S : sig type s end
+  structure T : sig type t end
+  sharing type S.s = T.t
+end
+signature S25 =
+sig
+  structure S : sig type s end
+  structure T : sig structure T : sig type t end end
+  sharing type S.s = T.T.t
+end
+signature S31 =
+sig
+  structure S : sig structure S : sig type s end end
+  type t
+  sharing type S.S.s = t
+end
+signature S33 =
+sig
+  structure S : sig structure S : sig type s end end
+  structure T : sig type t end
+  sharing type S.S.s = T.t
+end
+signature S34 =
+sig
+  structure S : sig structure S : sig type s type t end end
+  sharing type S.S.s = S.S.t
+end
+signature S35 =
+sig
+  structure S : sig structure S : sig type s type t end end
+  structure T : sig structure T : sig type t end end
+  sharing type S.S.s = T.T.t
+end
+
+

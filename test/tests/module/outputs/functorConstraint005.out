@@ -1,0 +1,18 @@
+datatype dt
+con D : dt
+signature SDatatype = sig datatype t = datatype dt val x : t end
+structure PDatatype : sig type t = real end
+functor FDatatypeTrans (S : sig type t end) : SDatatype
+structure SDatatypeTrans : sig datatype t con D : t val x : t end
+datatype dt2Trans
+con ETrans : SDatatypeTrans.t -> dt2Trans
+val aDatatypeTrans = ETrans D : dt2Trans
+val xDatatypeTrans = D : SDatatypeTrans.t
+val eqDatatypeTrans = true : bool
+functor FDatatypeOpaque (S : sig type t end) : SDatatype
+structure SDatatypeOpaque : sig datatype t con D : t val x : t end
+datatype dt2Opaque
+con EOpaque : SDatatypeOpaque.t -> dt2Opaque
+val aDatatypeOpaque = EOpaque D : dt2Opaque
+val xDatatypeOpaque = D : SDatatypeOpaque.t
+val eqDatatypeOpaque = true : bool

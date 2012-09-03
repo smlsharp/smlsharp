@@ -1,0 +1,14 @@
+infix 0 ## %%
+datatype t
+con %% : int * int -> t
+val ## = fn : int * int -> int
+val v1 = 3 : int
+val ## = fn : int * int -> int
+val v2 = ~1 : int
+val ## = fn : int * int -> int
+val v3 = 2 : int
+val ## = fn : int * int -> int -> int
+val v4 = 9 : int
+val ## = fn : t * int -> int
+val v5 = 12 : int
+

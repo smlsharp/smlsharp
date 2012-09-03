@@ -1,0 +1,16 @@
+Group is
+        ../../format/sources.cm
+	../../../smlformatlib.cm
+        ../../control/sources.cm
+        ../../absyn/sources.cm
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../name/sources.cm
+        ../../types/sources.cm
+	../../typecontext/sources.cm
+        ../../patterncalc/sources.cm
+
+        ElaborateError.ppg.sml
+        ELABORATOR.sig
+        Elaborator.sml
+

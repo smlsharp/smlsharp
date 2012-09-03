@@ -1,0 +1,3 @@
+exception R2 : exn
+exception R2 : bool -> exn
+exception E2 = R2

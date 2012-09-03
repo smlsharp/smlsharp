@@ -1,0 +1,7 @@
+signature STREAM =
+  sig
+    type 'a stream
+    val streamify : ['a .(unit -> 'a) -> 'a stream]
+    val cons : ['a .'a * 'a stream -> 'a stream]
+    val get : ['a .'a stream -> 'a * 'a stream]
+  end

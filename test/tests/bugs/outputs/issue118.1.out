@@ -1,0 +1,3 @@
+datatype ''a dt
+con D : [''a .''a -> ''a dt]
+type 'a t = 'a dt

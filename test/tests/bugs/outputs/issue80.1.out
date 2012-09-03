@@ -1,0 +1,3 @@
+abstype t2
+val ax2 = - : t2
+val gx2 = - : t2

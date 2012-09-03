@@ -1,0 +1,27 @@
+datatype ''a dt
+con D : [''a.''a -> ''a dt]
+type 'a tEqTypeVariable = 'a dt * int
+val vEqTypeVariable = (D true,1) : bool tEqTypeVariable
+type tEqRecord = {a:int, b:string} dt
+val vEqRecord = D {a=1,b="abc"} : tEqRecord
+datatype dtEqConstructed1
+con DEqConstructed1 : dtEqConstructed1
+type tEqConstructed1 = dtEqConstructed1 dt
+val vEqConstructed1 = D DEqConstructed1 : tEqConstructed1
+datatype 'a dtEqConstructed2
+con DdtEqConstructed2 : ['a.'a -> 'a dtEqConstructed2]
+type tEqConstructed2 = int dtEqConstructed2 dt
+val vEqConstructed2 = D (DdtEqConstructed2 1) : tEqConstructed2
+type tEqRef = int ref dt
+val vEqRef = D (ref 1) : int ref dt
+type 'a tNonEqTypeVariable = 'a dt
+type tNonEqRecord = {a:real} dt
+datatype dtNonEqConstructed1
+con DNonEqConstructed1 : dtNonEqConstructed1
+con ENonEqConstructed1 : real -> dtNonEqConstructed1
+type tNonEqConstructed1 = dtNonEqConstructed1 dt
+datatype 'a dtNonEqConstructed2
+con DNonEqConstructed2 : ['a.'a -> 'a dtNonEqConstructed2]
+type tNonEqConstructed2 = real dtNonEqConstructed2 dt
+type tNonEqFunction = (int -> int) dt
+

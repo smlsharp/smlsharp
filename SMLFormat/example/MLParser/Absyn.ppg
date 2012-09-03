@@ -1,0 +1,352 @@
+(* -*- sml -*-
+ *  syntax for the Core ML
+ *
+ * Copyright 2001
+ * Atsushi Ohori 
+ * JAIST Language project
+ * JAIST, Ishikawa Japan. 
+ *)
+
+structure Absyn =
+struct
+
+  (***************************************************************************)
+
+  type pos = {fileName:string, line:int, col:int}
+  type loc = pos * pos
+
+  val nopos = {fileName="none", line=0,col=0}
+  val noloc = ({fileName="none", line=0,col=0},{fileName="none", line=0,col=0})
+
+  (*%
+   *)
+  exception
+  (*%
+   * @format({fileName, line : leftLine, col : leftCol} *
+   *         {line : rightLine, col : rightCol, ...} *
+   *         message)
+   * fileName ":" leftLine "." leftCol "-" rightLine "." rightCol ":" message
+   *)
+  ParseError of
+  {fileName:string, line:int, col:int} *
+  {fileName:string, line:int, col:int} *
+  string
+
+  (*%
+   *)
+  datatype constant 
+    = (*%
+       * @format(value * loc) value
+       *)
+      INTCONST of int * loc
+    | (*%
+       * @format(value * loc) "\"" value "\""
+       *)
+      STRING of string * loc
+    | (*%
+       * @format(value * loc) value
+       *)
+      REAL of string * loc
+
+  (*%
+   *)
+  datatype ty
+    = (*%
+       * @format(id * loc) id
+       *)
+      TYID of string * loc
+    | (*%
+       * @format(field fields * loc)
+       *           !N0{ "{" 2[ 1 fields(field)("," +1) ] 1 "}" }
+       * @format:field(label * ty) {label} +d ":" +d {ty}
+       *)
+      TYRECORD of (string * ty) list * loc
+    | (*%
+       * @format(arg args * tycon * loc)
+       *                !N0{ "(" args(arg)("," + ) ")" +d tycon }
+       *)
+      TYCONSTRUCTION of ty list * string * loc
+    | (*%
+       * @format(elem elems * loc) N2{ d elems(elem)( + "*" +d ) }
+       * @format:elem(elem) N3{elem}
+       *)
+      TYTUPLE of ty list * loc
+    | (*%
+       * @format(dom * result * loc) R1{ {dom} +d "->" 2[ +1 {result} ] }
+       *)
+      TYFUN of ty * ty * loc
+
+  local
+
+    fun formatPrependedOpt (formatter, prefixIfSome) =
+        fn NONE => [SMLPP.FormatExpression.Term (0, "")]
+         | SOME value => prefixIfSome @ (formatter value)
+
+    fun formatBinaryChoice (ifTrue, ifFalse) value =
+        if value then ifTrue else ifFalse
+
+    fun formatListWithEnclosure
+        (elementFormatter, separator, prefixIfNotNull, suffixIfNotNull) =
+        fn [] => [SMLPP.FormatExpression.Term (0, "")]
+         | list =>
+           prefixIfNotNull @
+           (SMLPP.BasicFormatters.format_list
+                (elementFormatter, separator) list) @
+           suffixIfNotNull
+
+  in
+    (*%
+     * @formatter(prependedOpt) formatPrependedOpt
+     *)
+    datatype pat
+      = (*%
+         * @format(loc) "_"
+         *)
+        PATWILD of loc
+      | (*%
+         * @format(cons * loc) cons
+         *)
+        PATCONSTANT of constant * loc
+      | (*%
+         * @format(b * id * loc) id
+         *)
+        PATID of bool * string * loc
+      | (*%
+         * @format(b * field fields * loc)
+         *               {"{" 2[ 1 fields(field)( "," +1) ] 1 "}"}
+         *)
+        PATRECORD of bool * patrow list * loc
+      | (*%
+         * @format(pat pats * loc) {"(" 2[ 1 pats(pat)("," +1) ] 1 ")"}
+         *)
+        PATTUPLE of pat list * loc
+      | (*%
+         * @format(elem elems * loc)
+         *           {"[" 2[ 1 elems(elem)("," +1) ] 1 "]"}
+         *)
+        PATLIST of pat list * loc
+      | (*%
+         * @format(pat pats * loc) R1{d pats(pat)( +d) }
+         *)
+        PATAPPLY of pat list * loc
+      | (*%
+         * @format(pat * ty * loc) {pat} + ":" +d {ty}
+         *)
+        PATTYPED of pat * ty * loc
+      | (*%
+         * @format(pat1 * pat2 * loc) {pat1} +d "as" +d {pat2}
+         *)
+        PATLAYERED of pat * pat * loc
+
+    and patrow =
+        (*%
+         * @format(label * pat * loc) {label} +d "=" +2 {pat}
+         *)
+        PATROWPAT of string * pat * loc
+      | (*%
+         * @format(label * ty opt1:prependedOpt * pat opt2:prependedOpt * loc)
+         *         {label} {opt1(ty)(+d ":" +)}{opt2(pat)(+d "as" +)}
+         *)
+        PATROWVAR of string * (ty option) * (pat option) * loc
+
+    (*%
+     * @formatter(prependedOpt) formatPrependedOpt
+     * @formatter(binaryChoice) formatBinaryChoice
+     * @formatter(enclosedList) formatListWithEnclosure
+     *)
+    datatype exp
+      = (*%
+         * @format(const * loc) {const}
+         *)
+        EXPCONSTANT of constant * loc
+      | (*%
+         * @format(id * loc) {id}
+         *)
+        EXPID of  string * loc
+      | (*%
+         * @format(id * loc) {id}
+         *)
+        EXPOPID of  string * loc
+      | (*%
+         * @format(field fields * loc)
+         *          !N0{ "{" 2[ 1 fields(field)( "," +1) ] 1 "}" }
+         * @format:field(label * exp) {{label} +d "=" +2 {exp}}
+         *)
+        EXPRECORD of (string * exp) list * loc
+      | (*%
+         * @format(selector * loc) "#"{selector}
+         *)
+        EXPRECORD_SELECTOR of string * loc
+      | (*%
+         * @format(field fields * loc)
+         *                 !N0{ "(" 2[ 1 fields(field)("," +1) ] 1 ")" }
+         *)
+        EXPTUPLE of exp list * loc
+      | (*%
+         * @format(elem elems * loc)
+         *                    !N0{ "[" 2[ 1 elems(elem)("," +1) ] 1 "]" }
+         *)
+        EXPLIST of exp list * loc
+      | (*%
+         * @format(exp exps * loc)
+         *                    !N0{ "(" 2[ 1 exps(exp)(";" +1) ] 1 ")" }
+         *)
+        EXPSEQ of exp list * loc
+      | (*%
+         * @format(exp exps * loc) L10{ d exps(exp)( +d) }
+         *)
+        EXPAPP of exp list * loc
+      | (*%
+         * @format(exp * ty * loc) N0{ {exp} + ":" +1 {ty} }
+         *)
+        EXPTYPED of exp * ty * loc
+      | (*%
+         * @format(left * right * loc) N3{{left} +d "andalso" +1 {right}}
+         *)
+        EXPCONJUNCTION of exp * exp * loc
+      | (*%
+         * @format(left * right * loc) N2{{left} +d "orelse" +1 {right}}
+         *)
+        EXPDISJUNCTION of exp * exp * loc
+      | (*%
+         * @format(exp * rule rules * loc)
+         *          N0{{exp} +1 "handle" +d rules(rule)( ~2[ +1 "|"] +)}
+         * @format:rule(pat * exp) {pat} + "=>" +1 {exp}
+         *)
+        EXPHANDLE of exp * (pat * exp) list * loc
+      | (*%
+         * @format(exp * loc) N0{ "raise" +d {exp} }
+         *)
+        EXPRAISE of exp * loc
+      | (*%
+         * @format(cond * ifTrue * ifFalse * loc)
+         *            !N0{ "if" 2[ +d {cond} ]
+         *             +1 "then" 2[ +d {ifTrue} ]
+         *             +1 "else" 2[ +d {ifFalse} ] }
+         *)
+        EXPIF of exp * exp * exp * loc
+      | (*%
+         * @format(cond * body * loc)
+         *             N0{ "while" 2[ +d {cond} ] +1 "do" 2[ +d {body} ] }
+         *)
+        EXPWHILE of exp * exp * loc
+      | (*%
+         * @format(exp * rule rules * loc)
+         * N0{ "case" 2[ +d {exp} ] 2[ +1 "of" ]+ {rules(rule)(~2[ +1 "|" ]+)}}
+         * @format:rule(pat * exp) {{pat} + "=>" +1 {exp}}
+         *)
+        EXPCASE of exp * (pat * exp) list * loc
+      | (*%
+         * @format(rule rules * loc) N0{ "fn" + {rules(rule)(~2[ +1 "|"] +)} }
+         * @format:rule(pat * exp) {pat} + "=>" +1 {exp}
+         *)
+        EXPFN of (pat * exp) list * loc
+      | (*%
+         * @format(dec decs * exp exps * loc)
+         *          !N0{ {"let" 2[ +1 decs(dec)( +1) ]}  +1
+         *              {"in" 2[ +2 exps(exp)( +3 ) ] +2
+         *              "end"} }
+         *)
+        EXPLET of dec list * exp list * loc
+      
+    and dec =
+        (*%
+         * @format(var vars:enclosedList * bind binds * loc)
+         *       "val" {vars(var)("," +, + "(", ")")} +
+         *             {binds(bind)(~4[ +1 "and"] +)}
+         * @format:bind(pat * exp) {pat} +d "=" +2 {exp}
+         *)
+        DECVAL of string list * (pat * exp) list * loc
+      | (*%
+         * @format(var vars:enclosedList * bind binds * loc)
+         *  "val" {vars(var)("," +, + "(", ")")} +d
+         *          "rec" +d {binds(bind)(~4[ +1 "and"] +)}
+         * @format:bind(pat * exp) {pat} +d "=" +2 {exp}
+         *)
+        DECREC of string list * (pat * exp) list * loc
+      | (*%
+         * @format(var vars:enclosedList * rules binds * loc)
+         *  "fun" {vars(var)("," +, + "(", ")")} +
+         *                   {binds(rules)(~4[ +1 "and"] +)}
+         * @format:rules(rule rules) {rules(rule)(~2[ +1 "|"] +)}
+         * @format:rule(b:binaryChoice * name * pat pats * exp)
+         *    {{b()("op" +, "")} {name} +d pats(pat)(+d) +d "=" +1 {exp}}
+         *)
+        DECFUN of
+        string list * (bool * string * pat list * exp) list list * loc 
+      | (*%
+         * @format(bind binds * loc) "type" + {binds(bind)(~4[ +1 "and"] +)}
+         * @format:bind(tyvar tyvars:enclosedList * name * ty)
+         *            {tyvars(tyvar)("," +, "(", ")" +)} {name} +d "=" +2 {ty}
+         *)
+        DECTYPE of (string list * string * ty) list * loc
+      | (*%
+         * @format(bind binds * loc)
+         *                 "datatype" + {binds(bind)(~4[ +1 "and" ] +)}
+         * @format:bind(tyvar tyvars:enclosedList * tycon * valcon valcons)
+         * {tyvars(tyvar)("," +, "(", ")" +) {tycon} + "=" +1
+         *                                {valcons(valcon)(~2[ +1 "|" ] +)}}
+         * @format:valcon(b:binaryChoice * name * ty option:prependedOpt)
+         *          {b()("op" +, "")} {name} {option(ty)(~2[ +d "of" ] +)}
+         *)
+        DECDATATYPE of
+        (string list * string * (bool * string * ty option) list) list * loc
+      | (*%
+         * @format(left * right * loc) {left} +d "=" +1 {right}
+         *)
+        REPLICATEDAT of string * string * loc
+      | (*%
+         * @format(exc excs * loc) "exception" + {excs(exc)(~4[ +1 "and" ]+)}
+         * @format:exc(b * name * ty option:prependedOpt)
+         *          {name} {option(ty)(+d "of" +)}
+         *)
+        EXDECL of (bool * string * ty option) list * loc
+      | (*%
+         * @format(b1 * left * b2 * right * loc)
+         *          "exception" + {left} +d "=" +2 {right}
+         *)
+        EXREP  of bool * string * bool * string * loc
+      | (*%
+         * @format(localdec localdecs * dec decs * loc)
+         *            "local" 2[ +2 localdecs(localdec)(+d) ] +1
+         *            "in" 2[ +2 decs(dec)(+3) ] +2
+         *            "end"
+         *)
+        LOCALDEC of dec list * dec list * loc
+      | (*%
+         * @format(int * name names * loc)
+         *                   "infix" +d {int} +d names(name)(+d)
+         *)
+        INFXDEC of int * string list * loc
+      | (*%
+         * @format(int * name names * loc)
+         *                   "infixr" +d {int} +d names(name)(+d)
+         *)
+        INFXRDEC of int * string list * loc
+      | (*%
+         * @format(name names * loc) "nonfix" +d names(name)(+d)
+         *)
+        NONFXDEC of string list * loc
+  end
+
+  (*%
+   *)
+  datatype parseresult
+    = (*%
+       * @format(dec decs * loc) 1 decs(dec)(+1)
+       *)
+      DECS of dec list * loc
+    | (*%
+       * @format(file) "use" + {file}
+       *)
+      USE of string
+    | (*%
+       * @format(item * value) "set" + item + "=" + value
+       *)
+      SET of string * string
+    | (*%
+       * @format "exit"
+       *)
+      EXIT
+
+end

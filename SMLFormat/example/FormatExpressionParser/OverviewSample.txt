@@ -1,0 +1,67 @@
+(* 2.2 *)
+print "jugemu";
+print "jugemu" "jugemu";
+print "jugemu" " " "jugemu" " " "gokounosurikire";
+
+(* 2.3 *)
+print "jugemu" + "jugemu" + "gokounosurikire";
+
+(* 2.4 *)
+set columns "40";
+print "jugemu" + "jugemu" + "gokounosurikire" + "kaijarisuigyono";
+set columns "50";
+print "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono";
+set columns "40";
+print "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono";
+set columns "20";
+print "jugemu" 2 "jugemu" 1 "gokounosurikire" 2 "kaijarisuigyono";
+
+(* 2.4.1 *)
+set columns "50";
+print "jugemu" +2 "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono";
+set columns "40";
+print "jugemu" +2 "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono";
+print "jugemu" +2 "jugemu" " "1 "gokounosurikire" +2 "kaijarisuigyono";
+
+(* 2.4.2 *)
+set columns "30";
+print "jugemu" +d "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono";
+set columns "10";
+print "jugemu" +d "jugemu" +1 "gokounosurikire" +2 "kaijarisuigyono";
+
+(* 2.4.3 *)
+set columns "30";
+print "jugemu" +2 "jugemu" +1 "gokounosurikire" +d "kaijarisuigyono";
+print "jugemu" +d "jugemu" +1 "gokounosurikire" +d "kaijarisuigyono";
+
+(* 2.5 *)
+set columns "40";
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ] +2 "kaijarisuigyono";
+set columns "30";
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ] +2 "kaijarisuigyono";
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" +2 "kaijarisuigyono"];
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" 3[ +2 "kaijarisuigyono"]];
+print "jugemu" 3[ +1 "jugemu" 5[ +2 "gokounosurikire" 3[ +3 "kaijarisuigyono"]]];
+print "jugemu" +2 "jugemu" 5[ +1 "gokounosurikire" ~3[ +2 "kaijarisuigyono"]];
+
+(* 2.6.1 *)
+set columns "30";
+print {{"jugemu" +1 "jugemu"} +1 "gokounosurikire" +2 "kaijarisuigyono"};
+print {"jugemu" +d "jugemu" +1 {"gokounosurikire" +1 "kaijarisuigyono"}};
+
+(* 2.6.2 *)
+set columns "30";
+print {"jugemu" +2 "jugemu"} +1 {"gokounosurikire" +2 "kaijarisuigyono"};
+
+(* 2.6.3 *)
+set columns "30";
+print "jugemu" + { "jugemu" 5[ +1 "gokounosurikire" ] ~3[ +1 "kaijarisuigyono" ]};
+print "jugemu" 3[ +d { "jugemu" 5[ 1 "gokounosurikire"] ~3[ 1 "kaijarisuigyono"]}];
+
+(* 3.2.4 *)
+print L2{ L1{ "x" "+" "y" } + "*" + L1{ "v" + "w" } };
+print L10{ L10{ "f" + "x" } + L10{ "g" + "y" } };
+print R1{ R1{ "t1" + "->" + "t2" } + "->" + R1{ "s1" + "->" + "s2" } };
+
+(* 3.2.5 *)
+print L10{ "f" + !N0{ "(" L10{ "g" + "x" } "," + "y"")" } };

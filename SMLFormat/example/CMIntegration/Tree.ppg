@@ -1,0 +1,18 @@
+(* -*- sml -*- *)
+
+structure Tree =
+struct
+
+  (*%
+   *)
+  datatype 'a tree =
+           (*%
+            * @format(value) "L" value
+            *)
+           Leaf of 'a
+         | (*%
+            * @format(lelem left * relem right) {"N(" left(lelem) "," +1 right(relem) ")"}
+            *)
+           Node of 'a tree * 'a tree
+
+end

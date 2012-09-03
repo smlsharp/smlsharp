@@ -1,0 +1,14 @@
+val f1 = fn : ['a,'b#{n1:int, n2:'a, n3:'a}.'b -> 'a]
+val v11 = 3 : int
+val v12 = 11 : int
+val f21 = fn : ['a#{n1:int, n2:int, n3:int} .'a -> int]
+val f22 = fn : ['a#{n1:int, n2:int, n3:int} .'a -> int]
+val v21 = 6 : int
+val v22 = 11 : int
+val f3 = fn : ['a,'b#{n1:int, n2:'a, n3:'a}.'b -> ['c .'c -> 'a]]
+val v31 = 3 : int
+val v32 = 11 : int
+val f41 = fn : ['a,'b#{n1:int, n2:int, n3:int}.'b -> 'a -> int]
+val f42 = fn : ['a,'b#{n1:int, n2:int, n3:int}.'b -> 'a -> int]
+val v41 = 6 : int
+val v42 = 11 : int

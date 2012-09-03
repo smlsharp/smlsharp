@@ -1,0 +1,16 @@
+signature SEqType = sig type dt end
+structure PEqType : sig type t = string end
+functor FEqType ('X : sig eqtype t end) :
+sig datatype dt con D : 'X.t -> dt end
+structure TEqType : sig datatype dt con D : PEqType.t -> dt end
+datatype dtEqType
+con DEqType : TEqType.dt -> dtEqType
+val xEqType = D - : TEqType.dt
+functor FEqTypeTrans ('X : sig eqtype t end) : SEqType
+structure TEqTypeTrans : sig datatype dt con D : PEqType.t -> dt end
+datatype dtEqTypeTrans
+con DEqTypeTrans : TEqTypeTrans.dt -> dtEqTypeTrans
+functor FEqTypeOpaq ('X : sig eqtype t end) : SEqType
+structure TEqTypeOpaq : sig type dt end
+datatype dtEqTypeOpaq
+con DEqTypeOpaq : TEqTypeOpaq.dt -> dtEqTypeOpaq

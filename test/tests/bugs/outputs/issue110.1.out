@@ -1,0 +1,5 @@
+val id = fn : ['a.'a -> 'a]
+datatype 'a dt1
+con D : ['a.int -> 'a dt1]
+val vconstructed1 = D 2 : ['a.'a dt1]
+

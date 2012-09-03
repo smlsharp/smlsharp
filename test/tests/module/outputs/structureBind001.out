@@ -1,0 +1,24 @@
+structure S1 : sig datatype dt con D : dt val x : dt end
+datatype dt1 = datatype S1.dt
+val x11 = D : S1.dt
+val x12 = D : S1.dt
+structure S21 : sig datatype dt con D : dt val x : dt end
+structure S22 : sig datatype dt con D : dt val x : dt end
+datatype dt21 = datatype S21.dt
+datatype dt22 = datatype S22.dt
+val x211 = D : S21.dt
+val x212 = D : S22.dt
+val x221 = D : S21.dt
+val x222 = D : S22.dt
+structure S31 : sig datatype dt con D : dt val x : dt end
+structure S32 : sig datatype dt con D : dt val x : dt end
+structure S33 : sig datatype dt con D : dt val x : dt end
+datatype dt31 = datatype S31.dt
+datatype dt32 = datatype S32.dt
+datatype dt33 = datatype S33.dt
+val x311 = D : S31.dt
+val x312 = D : S32.dt
+val x313 = D : S33.dt
+val x321 = D : S31.dt
+val x322 = D : S32.dt
+val x323 = D : S33.dt

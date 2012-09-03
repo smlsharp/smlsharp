@@ -1,0 +1,8 @@
+functor F (S : sig eqtype t end) :
+sig datatype dt con D : S.t -> dt val eq : S.t * S.t -> bool end
+structure P : sig type t = int end
+structure S : sig datatype dt con D : P.t -> dt val eq : P.t * P.t -> bool end
+val x = false : bool
+val y = true : bool
+val a = D - : S.dt
+val b = 1 : int

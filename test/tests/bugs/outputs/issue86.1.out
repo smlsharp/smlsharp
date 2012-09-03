@@ -1,0 +1,8 @@
+val f = fn : int -> int
+val it = 2 : int
+val f' = fn : int -> int
+val it = 2 : int
+type func = int -> int
+val f'' = fn : func
+val it = 2 : int
+

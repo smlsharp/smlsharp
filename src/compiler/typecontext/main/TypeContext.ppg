@@ -1,0 +1,605 @@
+(**
+ *	
+ * type context for type inference.
+ * @copyright (c) 2006, Tohoku University.
+ * @author OHORI Atushi
+ * @author Liu Bochao
+ * @author YAMATODANI Kiyoshi
+ * @version $Id: TypeContext.ppg,v 1.12 2006/03/02 12:51:54 bochao Exp $
+ *)
+structure TypeContext =
+struct
+  local
+    open Types Path
+    structure TU = TypesUtils
+  in
+
+  (* dupcliate specifiction *)
+  exception exDuplicateElem of string
+
+  (*%
+   * @params(btvEnv)
+   * @formatter(smapWithEnclosure) SmlppgUtil.formatSmapWithEnclosure
+   * @formatter(formatIdState) Types.format_idState
+   *)
+  type typeContextVarEnv =
+       (*%
+        * @format(idState:formatIdState smap:smapWithEnclosure) 
+        *    smap(idState()(btvEnv))(":", +1, ~2[1"valbinds"] + 1, "")
+        *)
+        idState SEnv.map
+
+  (*************************************************************)
+
+ (*%
+   * @params(btvEnv)
+   * @formatter(formatTcEnv) Types.format_tyConEnv
+   * @formatter(formatvarEnv) Types.format_typeContextVarEnv
+   * @formatter(formatstrEnv) Types.format_strEnv
+   * @formatter(formatsigEnv) Types.format_sigEnv
+   * @formatter(formatfunEnv) Types.format_funEnv
+   * @formatter(formattyNameSet) Types.format_tyNameSet
+   *)
+  type context = 
+       (*%
+        * @format({tyConEnv:tyConEnv:formatTcEnv,
+        *          varEnv:varEnv:typeContextVarEnv,
+        *          strEnv:strEnv:formatstrEnv,
+        *          sigEnv:sigEnv:formatsigEnv,
+        *          funEnv:funEnv:formatfunEnv}) 
+        *        "TYCONENV" +1 5[tyConEnv()(btvEnv)] +1 
+        *        "VARENV" +1 5[varEnv()(btvEnv)] +1 
+        *        "STRENV" +1 5[strEnv()(btvEnv)] +1 
+        *        "SIGENV" +1 5[sigEnv()(btvEnv)] +1
+        *        "FUNENV" +1 5[funEnv] +1
+        *)
+       {
+        tyConEnv : tyConEnv,
+        varEnv : varEnv,
+        strEnv : strEnv,
+        sigEnv : sigEnv,
+        funEnv : funEnv
+       }
+
+  val emptyContext =
+      {
+        tyConEnv = SEnv.empty,
+        varEnv = SEnv.empty,
+        strEnv = SEnv.empty,
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.empty
+      } : context
+
+  (***************************************************************)
+  (* separate compilation type environment *)
+  (*% 
+   * @params(btvEnv)
+   * @formatter(tyConSizeTagEnv) Types.format_tyConSizeTagEnv
+   * @formatter(varEnv) Types.format_varEnv
+   * @formatter(strSizeTagEnv) Types.format_strSizeTagEnv
+   *)
+  type typeEnv = 
+       (*%
+        * @format({tyConSizeTagEnv,varEnv,strSizeTagEnv})
+        *  "tyConSizeTagEnv:" + 2[tyConSizeTagEnv()(btvEnv)] +1
+        *  "varEnv:" + 2[varEnv()(btvEnv)] +1
+        *  "strSizeTagEnv" + 2[strSizeTagEnv()(btvEnv)]
+        *)       
+       {
+        tyConSizeTagEnv : tyConSizeTagEnv,
+        varEnv : varEnv,
+        strSizeTagEnv : strSizeTagEnv
+       }
+  type importTypeEnv = typeEnv and exportTypeEnv = typeEnv
+
+  (*% 
+   * @params(btvEnv)
+   * @formatter(tyConIdSet) Types.format_tyConIdSet
+   * @formatter(importTypeEnv) format_typeEnv
+   * @formatter(exportTypeEnv) format_typeEnv
+   *)
+  type staticTypeEnv = 
+       (*%
+        * @format({importTyConIdSet,importTypeEnv,exportTypeEnv})
+        * "importTyConIdSet:" +1 2[importTyConIdSet] +1
+        * "importTypeEnv:" +1 2[importTypeEnv()(btvEnv)] +1
+        * "exportTypeEnv:" +1 2[exportTypeEnv()(btvEnv)]
+        *)       
+       {
+        importTyConIdSet : tyConIdSet,
+        importTypeEnv : importTypeEnv, 
+        exportTypeEnv : exportTypeEnv
+       }
+
+  (****************************************************************)
+  (* utility functions *)
+  val emptyTypeEnv =
+      {
+       tyConSizeTagEnv = SEnv.empty,
+       varEnv = SEnv.empty,
+       strSizeTagEnv = SEnv.empty
+       }
+  val emptyImportTypeEnv = emptyTypeEnv
+  val emptyExportTypeEnv = emptyTypeEnv
+  val emptyStaticTypeEnv =
+      { 
+       importTyConIdSet = ID.Set.empty,
+       importTypeEnv = emptyTypeEnv,
+       exportTypeEnv = emptyTypeEnv
+       }
+
+  (******************************************************************************)
+
+  fun sizeTagBoxedKindValue boxedKindValue  =
+      case boxedKindValue of
+        BOXEDty => let val size = 1 and tag = 1 in
+                     (ST_CONST size, ST_CONST tag)
+                   end
+      | ATOMty => let val size = 1 and tag = 0 in
+                    (ST_CONST size, ST_CONST tag)
+                  end
+      | DOUBLEty => let val size = 2 and tag = 0 in
+                      (ST_CONST size, ST_CONST tag)
+                    end
+      | BOUNDVARty n => (ST_BDVAR n, ST_BDVAR n)
+      | (* imported type specification *)
+        SPECty (CONty {tyCon as {id,...}, args}) =>
+        ( case args of
+            nil => (ST_VAR id, ST_VAR id)
+          | args => 
+            let
+              val (argSizes, argTags) = 
+                  foldr (fn (arg, (sizeInfos, tagInfos)) =>
+                            let
+                              val (sizeInfo, tagInfo) = 
+                                  TU.computeTy sizeTagBoxedKindValue arg
+                            in
+                              (sizeInfo :: sizeInfos,
+                               tagInfo :: tagInfos)
+                            end)
+                        (nil, nil)
+                        args
+            in
+              (ST_APP {stfun = ST_VAR id, args = argSizes},
+               ST_APP {stfun = ST_VAR id, args = argTags})
+            end
+       )
+      | ty => raise Control.Bug ("illegal SPECty type:"^(TypeFormatter.tyToString ty))
+
+  fun sizeTagTyBindInfo tyBindInfo =
+      case tyBindInfo of
+        TYCON (tyCon as {name, boxedKind = boxedKindOpt,...}) =>
+        ((* currently optimization on boxedKind computation of tyCon 
+          * is surpressed in TypesUtils.sml, 
+          * so boxedKind should always be decided.
+          * This case should be explored in the future under optimization version.
+          *)
+         case !boxedKindOpt of
+           SOME boxedKindValue => sizeTagBoxedKindValue boxedKindValue
+         | NONE => 
+           raise Control.Bug ("undecided boxedKind in tyCon " ^ name))
+      | TYSPEC {spec, impl = SOME _} =>
+        raise Control.Bug ("import signature type specification"^
+                           "should not contain implementation")
+      | TYSPEC {spec = {id,...}, impl = NONE} => 
+        (ST_VAR id, ST_VAR id)
+      | TYFUN {name, tyargs, body} =>
+        let
+          val argOrderEnv = 
+              IEnv.foldli (fn (btvid, btv as {index,...}, argEnv) =>
+                              IEnv.insert(argEnv, index, btvid))
+                          IEnv.empty
+                          tyargs
+          val (sizeBody, tagBody) = TU.computeTy sizeTagBoxedKindValue body
+        (* to be : listItems is not reliable, should be implemented on our own *)
+        in
+          (ST_FUN {args = IEnv.listItems argOrderEnv, body = sizeBody},
+           ST_FUN {args = IEnv.listItems argOrderEnv, body = tagBody})
+        end
+
+  fun tyConEnvToTyConSizeTagEnv tyConEnv =
+      SEnv.foldli (fn (tyConName, tyBindInfo, tyConSizeTagEnv) =>
+                      let
+                        val (sizeInfo, tagInfo) = sizeTagTyBindInfo tyBindInfo
+                      in
+                        SEnv.insert (tyConSizeTagEnv, 
+                                     tyConName, 
+                                     {tyBindInfo = tyBindInfo,
+                                      sizeInfo = sizeInfo,
+                                      tagInfo = tagInfo})
+                      end
+                  )
+                  SEnv.empty
+                  tyConEnv
+            
+  fun strEnvToStrSizeTagEnv strEnv =
+      SEnv.map (fn STRUCTURE {id, name, strpath, env = (tyConEnv, varEnv, strEnv)} =>
+                   STRSIZETAG { 
+                               id = id,
+                               name = name,
+                               strpath = strpath,
+                               env = (tyConEnvToTyConSizeTagEnv tyConEnv,
+                                      varEnv,
+                                      strEnvToStrSizeTagEnv strEnv)
+                               }
+               )
+               strEnv
+
+  fun contextToTypeEnv (context:context) =
+      {
+       tyConSizeTagEnv = tyConEnvToTyConSizeTagEnv (#tyConEnv context),
+       varEnv = #varEnv context,
+       strSizeTagEnv = strEnvToStrSizeTagEnv (#strEnv context)
+       }
+
+  fun EnvToTypeEnv (tyConEnv, varEnv, strEnv) =
+      {
+       tyConSizeTagEnv = tyConEnvToTyConSizeTagEnv tyConEnv,
+       varEnv = varEnv,
+       strSizeTagEnv = strEnvToStrSizeTagEnv strEnv}
+
+  fun extendTypeEnvWithTypeEnv 
+      {newTypeEnv = {tyConSizeTagEnv = newTyConSizeTagEnv,
+                     varEnv = newVarEnv,
+                     strSizeTagEnv = newStrSizeTagEnv},
+       oldTypeEnv = {tyConSizeTagEnv = oldTyConSizeTagEnv,
+                     varEnv = oldVarEnv,
+                     strSizeTagEnv = oldStrSizeTagEnv}}
+      =
+      {
+       tyConSizeTagEnv = SEnv.unionWith #1 (newTyConSizeTagEnv, oldTyConSizeTagEnv),
+       varEnv = SEnv.unionWith #1 (newVarEnv,oldVarEnv),
+       strSizeTagEnv = SEnv.unionWith #1 (newStrSizeTagEnv, oldStrSizeTagEnv)
+       }
+      
+  fun extendImportTypeEnvWithImportTypeEnv {newImportTypeEnv, oldImportTypeEnv} =
+      extendTypeEnvWithTypeEnv{newTypeEnv = newImportTypeEnv,
+                               oldTypeEnv = oldImportTypeEnv}
+
+  fun extendExportTypeEnvWithExportTypeEnv {newExportTypeEnv, oldExportTypeEnv} =
+      extendTypeEnvWithTypeEnv{newTypeEnv = newExportTypeEnv,
+                               oldTypeEnv = oldExportTypeEnv}
+
+  fun injectContextIntoEmptyExportTypeEnv (context:context) =
+      {
+       tyConSizeTagEnv = 
+       tyConEnvToTyConSizeTagEnv (#tyConEnv context),
+       varEnv = #varEnv context,
+       strSizeTagEnv = 
+       strEnvToStrSizeTagEnv (#strEnv context)
+       }
+
+  (**
+   * @params (context, path, name)
+   * @param context
+   * @param path the path of the structure
+   * @param name name of tyCon to search
+   *)
+  fun lookupLongTyCon ({tyConEnv, strEnv,...} : context, path, name) = 
+      let
+        fun lookUp (tyConEnv, strEnv) NilPath =
+            SEnv.find(tyConEnv, name)
+          | lookUp (tyConEnv, strEnv)  (PStructure(id, strid, path)) =
+            (case SEnv.find(strEnv, strid) of 
+               NONE => NONE
+             | SOME(STRUCTURE {env = (tyConEnv, _, strEnv), ...}) =>
+                 lookUp (tyConEnv, strEnv) path
+            )
+      in
+        case lookUp (tyConEnv, strEnv) path of
+          NONE => 
+          let 
+            val newpath = PStructure(topStrID, topStrName, path)
+          in
+            (newpath, lookUp (tyConEnv, strEnv) newpath)
+          end
+        | tyConoption => (path, tyConoption)
+      end
+
+  (**
+   * @params (context, path, name)
+   * @param context
+   * @param path the path of the structure
+   * @param name name of variable to search
+   *)
+  fun lookupLongVar ({strEnv, varEnv,...} : context, path, name) =
+      let
+        fun lookUp (varEnv, strEnv) NilPath = 
+            SEnv.find(varEnv, name)
+          | lookUp (varEnv, strEnv) (PStructure(strid, strName, path)) =
+            (case SEnv.find(strEnv, strName) of 
+               NONE => NONE
+             | SOME(STRUCTURE {env = (_, varEnv, strEnv), ...}) =>
+               lookUp (varEnv, strEnv) path)
+      in
+        case lookUp (varEnv, strEnv) path of
+          NONE => 
+            let 
+              val newpath = PStructure(topStrID, topStrName, path)
+            in
+              (newpath, lookUp (varEnv, strEnv) newpath)
+            end
+        | Varoption => (path, Varoption)
+      end
+
+  fun lookupLongStructure ({strEnv,...}:context, path) =
+      let 
+        fun lookUp _ NilPath = 
+            raise Control.Bug "NilPath in lookupLongStructure"
+          | lookUp strEnv (PStructure(strid, strName, NilPath)) =
+            (case (SEnv.find(strEnv,strName)) of
+               NONE => NONE
+             | SOME(STRUCTURE strPathInfo) => SOME strPathInfo)
+          | lookUp strEnv (PStructure(strid, strName, path)) = 
+            (case SEnv.find(strEnv, strName) of
+               NONE => NONE
+             | SOME(STRUCTURE{env = (_,_,strEnv), ...}) => lookUp strEnv path)
+      in
+        case lookUp strEnv path of
+          NONE => 
+            let 
+              val newpath = PStructure(topStrID, topStrName, path)
+            in
+              (newpath, lookUp strEnv newpath)
+            end
+        | x => (path, x)
+      end
+
+   fun injectTyConEnvToContext tyConEnv = 
+      {
+        tyConEnv = tyConEnv,
+        varEnv = SEnv.empty,
+        strEnv = SEnv.empty,
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.empty
+      } 
+
+   fun injectVarEnvToContext varEnv = 
+      {
+        tyConEnv = SEnv.empty,
+        varEnv = varEnv,
+        strEnv = SEnv.empty,
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.empty
+      } 
+
+   fun injectStrEnvToContext strEnv = 
+      {
+        tyConEnv = SEnv.empty,
+        varEnv = SEnv.empty,
+        strEnv = strEnv,
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.empty
+      } 
+
+   fun injectSigEnvToContext sigEnv = 
+      {
+        tyConEnv = SEnv.empty,
+        varEnv = SEnv.empty,
+        strEnv = SEnv.empty,
+        sigEnv = sigEnv,
+        funEnv = SEnv.empty
+      } 
+
+   fun injectEnvToContext (tyConEnv,varEnv,strEnv) = 
+      {
+        tyConEnv = tyConEnv,
+        varEnv = varEnv,
+        strEnv = strEnv,
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.empty
+      } 
+
+   fun bindTyConInEmptyContext (string, tyCon) = 
+      {
+        tyConEnv = SEnv.singleton(string, tyCon),
+        varEnv = SEnv.empty,
+        strEnv = SEnv.empty,
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.empty
+      } 
+
+   fun bindVarInEmptyContext (string, idstate) = 
+      {
+        tyConEnv = SEnv.empty,
+        varEnv = SEnv.singleton(string, idstate),
+        strEnv = SEnv.empty,
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.empty
+      } 
+
+   fun bindStrInEmptyContext (string, strEnvEntry) = 
+      {
+        tyConEnv = SEnv.empty,
+        varEnv = SEnv.empty,
+        strEnv = SEnv.singleton(string, strEnvEntry),
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.empty
+      } 
+
+   fun bindSigInEmptyContext (string, sigma) = 
+      {
+        tyConEnv = SEnv.empty,
+        varEnv = SEnv.empty,
+        strEnv = SEnv.empty,
+        sigEnv = SEnv.singleton(string, sigma),
+        funEnv = SEnv.empty
+      } 
+   fun bindFunInEmptyContext (string, phi) = 
+       {
+        tyConEnv = SEnv.empty,
+        varEnv = SEnv.empty,
+        strEnv = SEnv.empty,
+        sigEnv = SEnv.empty,
+        funEnv = SEnv.singleton(string, phi)
+        } 
+
+   fun bindTyConInContext ({tyConEnv, varEnv, strEnv, sigEnv, funEnv} : context, 
+                           string, tyCon)  = 
+        {
+          tyConEnv = SEnv.insert(tyConEnv, string, tyCon),
+          varEnv = varEnv,
+          strEnv = strEnv,
+          sigEnv = sigEnv,
+          funEnv = funEnv
+        }
+
+   fun bindVarInContext ({tyConEnv, varEnv, strEnv, sigEnv, funEnv}: context, 
+                         string, idstate) = 
+        {
+          tyConEnv = tyConEnv,
+          varEnv = SEnv.insert(varEnv,string, idstate),
+          strEnv = strEnv,
+          sigEnv = sigEnv,
+          funEnv = funEnv
+        }
+
+   fun bindStrInContext ({tyConEnv, varEnv, strEnv, sigEnv, funEnv}: context, 
+                         string, env) = 
+        {
+          tyConEnv = tyConEnv,
+          varEnv = varEnv,
+          strEnv = SEnv.insert(strEnv, string, env),
+          sigEnv = sigEnv,
+          funEnv = funEnv
+        }
+
+   fun bindSigInContext ({tyConEnv, varEnv, strEnv, sigEnv, funEnv}: context, string, sigexp) = 
+        {
+          tyConEnv = tyConEnv,
+          varEnv = varEnv,
+          strEnv = strEnv,
+          sigEnv = SEnv.insert(sigEnv, string, sigexp),
+          funEnv = funEnv
+        }
+
+   fun extendContextWithTyConEnv ({tyConEnv, varEnv, strEnv, sigEnv, funEnv}: context, 
+                                  newTyConEnv)
+     = 
+        {
+          tyConEnv = SEnv.unionWith #1 (newTyConEnv, tyConEnv),
+          varEnv = varEnv,
+          strEnv = strEnv,
+          sigEnv = sigEnv,
+          funEnv = funEnv
+          }
+
+   fun extendContextWithVarEnv ({tyConEnv, varEnv, strEnv, sigEnv, funEnv}: context, newVarEnv) = 
+        {
+          tyConEnv = tyConEnv,
+          varEnv = SEnv.unionWith #1 (newVarEnv, varEnv),
+          strEnv = strEnv,
+          sigEnv = sigEnv,
+          funEnv = funEnv
+        }
+
+   fun extendContextWithStrEnv ({tyConEnv, varEnv, strEnv, sigEnv, funEnv}: context, newStrEnv) = 
+        {
+          tyConEnv = tyConEnv,
+          varEnv = varEnv,
+          strEnv = SEnv.unionWith #1 (newStrEnv, strEnv),
+          sigEnv = sigEnv,
+          funEnv = funEnv
+        }
+
+   fun extendContextWithSigEnv ({tyConEnv, varEnv, strEnv, sigEnv, funEnv}: context, newSigEnv) = 
+        {
+          tyConEnv = tyConEnv,
+          varEnv = varEnv,
+          strEnv = strEnv,
+          sigEnv = SEnv.unionWith #1 (newSigEnv, sigEnv),
+          funEnv = funEnv
+        }
+
+   fun extendContextWithEnv ({tyConEnv, varEnv, strEnv, sigEnv, funEnv}: context, (newTyConEnv, newVarEnv, newStrEnv)) = 
+        {
+          tyConEnv = SEnv.unionWith #1 (newTyConEnv, tyConEnv),
+          varEnv = SEnv.unionWith #1 (newVarEnv, varEnv),
+          strEnv = SEnv.unionWith #1 (newStrEnv, strEnv),
+          sigEnv = sigEnv,
+          funEnv = funEnv
+        }
+
+   fun extendContextWithContext 
+     {
+      oldContext = {tyConEnv, varEnv, strEnv, sigEnv, funEnv} : context,
+      newContext ={tyConEnv=newTyConEnv, 
+                   varEnv = newVarEnv, 
+                   strEnv=newStrEnv, 
+                   sigEnv = newSigEnv,
+                   funEnv = newFunEnv}: context
+      }
+     =
+     {
+      tyConEnv = SEnv.unionWith #1 (newTyConEnv, tyConEnv),
+      varEnv =  SEnv.unionWith #1 (newVarEnv, varEnv),
+      strEnv = SEnv.unionWith #1 (newStrEnv, strEnv),
+      sigEnv = SEnv.unionWith #1 (newSigEnv, sigEnv),
+      funEnv = SEnv.unionWith #1 (newFunEnv, funEnv)
+      }
+
+   fun unionContexts 
+     (
+      {tyConEnv=newTyConEnv, 
+       varEnv = newVarEnv, 
+       strEnv=newStrEnv, 
+       sigEnv = newSigEnv,
+       funEnv = newFunEnv}: context,
+      {tyConEnv, varEnv, strEnv, sigEnv, funEnv} : context
+      )
+     =
+     let
+       val checkDuplication = fn (key,x,y) => raise exDuplicateElem(key)
+     in
+       {
+        tyConEnv = SEnv.unionWithi checkDuplication  (newTyConEnv, tyConEnv),
+        varEnv =  SEnv.unionWithi checkDuplication (newVarEnv, varEnv),
+        strEnv = SEnv.unionWithi checkDuplication (newStrEnv, strEnv),
+        sigEnv = SEnv.unionWithi checkDuplication (newSigEnv, sigEnv),
+        funEnv = SEnv.unionWithi checkDuplication (newFunEnv, funEnv)
+        }
+     end
+
+   fun mergeContexts 
+     (
+      {tyConEnv=newTyConEnv, 
+       varEnv = newVarEnv, 
+       strEnv=newStrEnv, 
+       sigEnv = newSigEnv,
+       funEnv = newFunEnv}: context,
+      {tyConEnv, varEnv, strEnv, sigEnv, funEnv} : context
+      )
+     =
+     {
+      tyConEnv = SEnv.unionWith #1  (newTyConEnv, tyConEnv),
+      varEnv =  SEnv.unionWith #1 (newVarEnv, varEnv),
+      strEnv = SEnv.unionWith #1 (newStrEnv, strEnv),
+      sigEnv = SEnv.unionWith #1 (newSigEnv, sigEnv),
+      funEnv = SEnv.unionWith #1 (newFunEnv, funEnv)
+      }
+
+  fun getStructureEnvFromContext (context : context) =
+      (
+       #tyConEnv context,
+       #varEnv   context,
+       #strEnv   context
+       ) 
+
+  fun mergeBtvEnv (btvEnv1,btvEnv2) = IEnv.unionWith #1 (btvEnv1,btvEnv2)
+
+  fun mergeSigEnv (sigEnv1,sigEnv2) = SEnv.unionWith #1 (sigEnv1,sigEnv2)
+
+  fun mergeStrEnv (strEnv1,strEnv2) = SEnv.unionWith #1 (strEnv1,strEnv2)
+
+  fun mergeTyNameSet(tyNameSet1,tyNameSet2) =
+      ISet.union(tyNameSet1,tyNameSet2)
+
+  fun extractEnvFromContext (context:context) =
+      (#tyConEnv context, #varEnv context, #strEnv context)
+
+  (* ToDo : *)
+  fun contextToString context =
+      Control.prettyPrint (format_context nil context)
+
+end
+end

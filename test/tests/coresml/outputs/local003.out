@@ -1,0 +1,5 @@
+val v2 = 2 : int
+val v31 = 3 : int
+val v32 = "three" : string
+val v41 = 4 : int
+val v42 = "four" : string

@@ -1,0 +1,2 @@
+val g = fn : ['a.'a -> int]
+val f = fn : ['a.'a -> int]

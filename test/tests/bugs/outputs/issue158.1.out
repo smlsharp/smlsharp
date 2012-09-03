@@ -1,0 +1,6 @@
+signature SIG = sig type t val x : t end
+functor F (S : sig type t val x : t end) : SIG
+structure P : sig type t = real val x : real end
+structure T : sig type t val x : t end
+val a = - : T.t
+

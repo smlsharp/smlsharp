@@ -1,0 +1,12 @@
+datatype ''a dt
+con D : [''a .''a -> ''a dt]
+val f_dt = fn : [''a,'b.(''a -> 'b) -> ''a dt -> 'b]
+val x = "abc" : string
+datatype 'a p
+con P : ['a .'a -> 'a p]
+val f_p = fn : ['a,'b.('a -> 'b) -> 'a p -> 'b]
+val x = "()" : string
+datatype 'a p
+con P : ['a .'a -> 'a p]
+val f_p = fn : ['a,'b.('a -> 'b) -> 'a p -> 'b]
+val x = "x" : string

@@ -1,0 +1,13 @@
+datatype dt
+con D : dt
+signature S = sig type t val x : t end
+structure S : sig datatype t con D : t val x : t end
+structure STrans : S where type t = dt
+../tests/module/tests/constraint005.sml:18.14-18.21 Error: unbound variable or
+                                                           constructor:
+                                                           STrans.D
+
+structure SOpaque : S where type t = dt
+../tests/module/tests/constraint005.sml:21.15-21.23 Error: unbound variable or
+                                                           constructor:
+                                                           SOpaque.D

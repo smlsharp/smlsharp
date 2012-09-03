@@ -1,0 +1,2 @@
+datatype foo = A | B;
+fn A => 1;

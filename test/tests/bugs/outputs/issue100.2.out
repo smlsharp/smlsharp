@@ -1,0 +1,3 @@
+structure S1 : sig type t = int end
+structure S2 : sig type t = int val y : t end
+val x = 2 : S2.t

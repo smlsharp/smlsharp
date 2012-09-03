@@ -1,0 +1,5 @@
+functor FStructure (S :
+sig structure T : sig datatype dt con D : dt end end) :
+sig structure T : sig datatype dt con D : dt end end
+structure TStructure : sig structure T : sig datatype dt con D : X?.T.dt end end
+structure SStructure : sig datatype dt con D : X?.T.dt end

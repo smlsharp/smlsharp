@@ -1,0 +1,10 @@
+val f = fn : ['a.'a -> 'a]
+val case_wild1 = true : bool
+val case_var1 = true : bool
+val case_const1 = true : bool
+val case_const2 = true : bool
+val case_const3 = true : bool
+val case_typed1 = true : bool
+val case_layered1 = true : bool
+val case_layeredtyped1 = true : bool
+val case_typedlayered1 = true : bool

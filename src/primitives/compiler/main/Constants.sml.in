@@ -1,0 +1,6 @@
+structure Constants =
+struct
+
+  @SMLConstants@
+
+end

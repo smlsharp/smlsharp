@@ -1,0 +1,8 @@
+fun escape #"\a" = "\\a"
+  | escape #"\b" = "\\b"
+  | escape #"\t" = "\\t"
+  | escape #"\n" = "\\n"
+  | escape #"\v" = "\\v"
+  | escape #"\f" = "\\f"
+  | escape #"\r" = "\\r"
+  | escape c = ""

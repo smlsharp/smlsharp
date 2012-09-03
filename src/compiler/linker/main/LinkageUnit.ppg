@@ -1,0 +1,48 @@
+(**
+ * LinkageUnit
+ *
+ * @copyright (c) 2006, Tohoku University. 
+ * @author Liu Bochao
+ * @version $Id: LinkageUnit.ppg,v 1.2 2006/03/03 05:35:18 bochao Exp $
+ *)
+structure LinkageUnit :
+          sig
+              type linkageUnit
+              val format_linkageUnit : 
+                  (int
+                   * {eqKind:Types.eqKind, index:int, recKind:Types.recKind} IEnv.map) 
+                      list -> linkageUnit -> SMLFormat.FormatExpression.expression list
+              val getLocLinkageUnit :
+                  linkageUnit -> Loc.loc
+          end
+  =
+struct
+
+   (*%
+    * @params(btvEnv)
+    * @formatter(TypeContext.staticTypeEnv) TypeContext.format_staticTypeEnv
+    * @formatter(StaticModuleEnv.staticModuleEnv) StaticModuleEnv.format_staticModuleEnv
+    * @formatter(TypedLambda.tldecl) TypedLambda.format_tldecl
+    *)
+   type linkageUnit = 
+        (*%
+         * @format({fileName, 
+                    staticTypeEnv, 
+                    staticModuleEnv, 
+                    code:tfpdec tfpdecs})
+         * "fileName :" + fileName +1
+         * "staticTypeEnv :" +1 2[staticTypeEnv()(btvEnv)] +1
+         * "staticModuleEnv :" +1 2[staticModuleEnv()(btvEnv)] +1
+         * "code :" +1 2[tfpdecs(tfpdec()(btvEnv))(+1)]
+         *)
+        {fileName : string,
+         staticTypeEnv : TypeContext.staticTypeEnv ,
+         staticModuleEnv : StaticModuleEnv.staticModuleEnv,
+         code : TypedLambda.tldecl list}
+
+   fun getLocLinkageUnit (linkageUnit:linkageUnit) =
+       case (#code linkageUnit) of 
+           nil => Loc.noloc
+         | (tldec :: tail) => TypedLambdaUtils.getLocOfDec tldec
+
+end

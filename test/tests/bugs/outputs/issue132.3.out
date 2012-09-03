@@ -1,0 +1,5 @@
+signature SType = sig type t val x : t end
+structure PType : sig type t = real val x : real end
+functor FTypeOpaque (S : sig type t val x : t end) : SType
+structure STypeOpaque : sig type t val x : t end
+

@@ -1,0 +1,2 @@
+signature SIG = sig type s type t = s end
+structure STR : SIG

@@ -1,0 +1,3 @@
+val id = fn : ['a.'a -> 'a]
+val vtyped1 = fn : ['a.'a -> 'a]
+

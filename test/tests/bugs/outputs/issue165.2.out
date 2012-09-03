@@ -1,0 +1,5 @@
+exception E : exn
+val raiseE = fn : ['a .unit -> 'a]
+val xFree = 2 : int
+val it = 3 : int
+

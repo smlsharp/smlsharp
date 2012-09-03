@@ -1,0 +1,13 @@
+val int1 = true : bool
+val int2 = false : bool
+val int3 = false : bool
+val word1 = true : bool
+val word2 = false : bool
+val char1 = true : bool
+val char2 = false : bool
+val string1 = true : bool
+val string2 = false : bool
+val string3 = true : bool
+val string4 = false : bool
+val string5 = false : bool
+

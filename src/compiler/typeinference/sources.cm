@@ -1,0 +1,12 @@
+Group
+        structure TypeInferencer
+        structure TypeinfBase
+	structure Unify
+	structure TypeInferenceUtils
+	structure StructureLocalization
+        structure UncurryFundecl
+	structure SigUtils
+	structure TypeInferenceError
+	structure SigCheck
+is
+	main/module.cm

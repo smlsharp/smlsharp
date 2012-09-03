@@ -1,0 +1,8 @@
+functor F (S : sig type t end) : sig datatype dt con D : S.t -> dt end
+structure P : sig type t = real end
+structure S : sig datatype dt con D : P.t -> dt end
+val x = D - : S.dt
+val y = 1.23 : real
+datatype dt
+con E : S.dt -> dt
+val z = E (D -) : dt

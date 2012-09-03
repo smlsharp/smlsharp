@@ -1,0 +1,6 @@
+abstype t11
+abstype t12
+val v1 = (-, -) : t11 * t12
+abstype t21
+abstype t22
+val v2 = (-, -) : t21 * t22

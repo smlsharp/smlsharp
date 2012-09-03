@@ -1,0 +1,173 @@
+# -*- Makefile -*-
+#
+# commonrules
+# $Id: commonrule.in,v 1.2 2006/02/21 01:50:12 katsuu Exp $
+#
+
+SHELL = @SHELL@
+@SET_MAKE@
+
+exec_prefix = @exec_prefix@
+prefix = @prefix@
+bindir = @bindir@
+datadir = @datadir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+DESTDIR =
+
+libdir_smlsharp = $(libdir)/smlsharp
+heapdir = $(libdir_smlsharp)/heap
+
+CONFIG_FILES = @CONFIG_FILES@
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+CXX = @CXX@
+CXXFLAGS = @CXXFLAGS@
+DEFS = @DEFS@
+CPPFLAGS_ORIG = @CPPFLAGS@
+CPPFLAGS = @CPPFLAGS@ \
+           -I$(top_builddir) \
+           -I$(RUNTIME_CORE_SRCDIR)/main \
+           -I$(RUNTIME_IMPL_SRCDIR)/main \
+           -I$(PRIMITIVES_SRCDIR)/runtime/main \
+           -I$(INSTRUCTIONS_SRCDIR)/runtime/main \
+           $(LOCAL_CPPFLAGS) -I.
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+LIBOBJS = @LIBOBJS@
+STUBLIBS = @STUBLIBS@
+
+target = @target@
+target_cpu = @target_cpu@
+target_vendor = @target_vendor@
+target_os = @target_os@
+
+EXEEXT = @EXEEXT@
+OBJEXT = @OBJEXT@
+LIBEXT = @LIBEXT@
+DLEXT = @DLEXT@
+DLSTUBEXT = @DLSTUBEXT@
+
+AUTOCONF = autoconf
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_DATA = @INSTALL_DATA@
+FIND = @FIND@
+RANLIB = @RANLIB@
+AR = @AR@
+DLLTOOL = @DLLTOOL@
+CYGPATH = @CYGPATH@
+DOXYGEN = @DOXYGEN@
+EGREP = @EGREP@
+
+SMLNJ_VERSION = @SMLNJ_VERSION@
+SML = @SML@
+SMLCM = @SMLCM@
+SML_HEAP_SUFFIX = @SML_HEAP_SUFFIX@
+SMLFORMATDIR = @SMLFORMATDIR@
+SMLFORMAT = @SMLFORMAT@
+SMLDOCDIR = @SMLDOCDIR@
+SMLDOC = @SMLDOC@
+SMLUNITDIR = @SMLUNITDIR@
+INSTALL_HEAP = $(INSTALL_DATA)
+
+JDKLIBPATH = @JDKLIBPATH@
+
+
+BUILD_ROOT = @abs_top_builddir@
+SRC_ROOT = @abs_top_srcdir@
+RUNTIME_CORE_SRCDIR = $(top_srcdir)/src/runtime/runtime-core
+RUNTIME_IMPL_SRCDIR = $(top_srcdir)/src/runtime/runtime-impl
+PRIMITIVES_SRCDIR   = $(top_srcdir)/src/primitives
+INSTRUCTIONS_SRCDIR = $(top_srcdir)/src/instructions
+SMLSHARP = $(top_builddir)src/compiler/smlsharp_build$(BATEXT)
+
+
+.SUFFIXES:
+.SUFFIXES: .c .cc .hh .@OBJEXT@ .@LIBEXT@ .@DLLIBEXT@ @EXEEXT@ \
+           .sml .ppg .ppg.sml
+
+# ---- operational rules ----
+
+all: Makefile $(top_builddir)commonrule all-subdirs PHONY
+
+doc: doc-subdirs PHONY
+
+clean: clean-subdirs PHONY
+
+distclean: distclean-subdirs clean PHONY
+
+install: install-subdirs PHONY
+
+test: test-subdirs PHONY
+
+PHONY: #force
+
+# ---- subrules ----
+
+# FIXME: "Nothing to be done" is never printed due to these rules.
+
+all-subdirs: PHONY
+	@for i in $(SUBDIRS)''; \
+	do test -z "$$i" || (cd $$i && exec $(MAKE) all) || exit $$?; done
+
+doc-subdirs: PHONY
+	@for i in $(SUBDIRS)''; \
+	do test -z "$$i" || (cd $$i && exec $(MAKE) doc) || exit $$?; done
+
+clean-subdirs: PHONY
+	@for i in $(SUBDIRS)''; \
+	do test -z "$$i" || (cd $$i && exec $(MAKE) clean) || exit $$?; done
+
+distclean-subdirs: PHONY
+	@for i in $(SUBDIRS)''; \
+	do test -z "$$i" || (cd $$i && exec $(MAKE) distclean) || exit $$?; done
+
+install-subdirs: PHONY
+	@for i in $(SUBDIRS)''; \
+	do test -z "$$i" || (cd $$i && exec $(MAKE) install) || exit $$?; done
+
+test-subdirs: PHONY
+	@for i in $(SUBDIRS)''; \
+	do test -z "$$i" || (cd $$i && exec $(MAKE) test) || exit $$?; done
+
+# ---- reconstruction of Makefiles ----
+
+Makefile: $(srcdir)/Makefile.in $(top_builddir)config.status
+	cd $(top_builddir). && $(SHELL) ./config.status
+	@echo "Makefiles are updated, rerun make."; exit 1
+
+$(top_builddir)commonrule: $(top_srcdir)/commonrule.in \
+                           $(top_builddir)config.status
+	cd $(top_builddir). && $(SHELL) ./config.status commonrule
+	@echo "Makefiles are updated, rerun make."; exit 1
+
+$(top_builddir)config.h: $(top_builddir)config.status
+	cd $(top_builddir). && $(SHELL) ./config.status config.h
+
+$(top_builddir)config.status: $(top_srcdir)/configure
+	cd $(top_builddir). && \
+	CC='$(CC)' \
+	CXX='$(CXX)' \
+	CFLAGS='$(CFLAGS)' \
+	CXXFLAGS='$(CXXFLAGS)' \
+	CPPFLAGS='$(CPPFLAGS_ORIG)' \
+	LDFLAGS='$(LDFLAGS)' \
+	$(SHELL) ./config.status --recheck
+
+$(top_srcdir)/configure: $(top_srcdir)/configure.ac
+	cd $(top_srcdir) && $(AUTOCONF)
+
+# ---- implicit rules ----
+
+.c.@OBJEXT@:
+	$(CC) $(CFLAGS) $(DEFS) $(CPPFLAGS) -c -o $@ $<
+
+.cc.@OBJEXT@:
+	$(CXX) $(CXXFLAGS) $(DEFS) $(CPPFLAGS) -c -o $@ $<
+
+.ppg.ppg.sml:
+	$(SMLFORMAT) $<

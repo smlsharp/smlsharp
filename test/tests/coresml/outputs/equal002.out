@@ -1,0 +1,13 @@
+val ref11 = true : bool
+val ref12 = false : bool
+val ref13 = true : bool
+val ref21 = true : bool
+val ref22 = false : bool
+val ref23 = true : bool
+val ref31 = true : bool
+val ref32 = false : bool
+val ref33 = true : bool
+val ref41 = true : bool
+val ref42 = false : bool
+val ref43 = true : bool
+

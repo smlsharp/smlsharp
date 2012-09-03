@@ -1,0 +1,5 @@
+val x = 1 : int
+val v1 = 1 : int
+val x = true : bool
+val v2 = true : bool
+val it = "a" : string

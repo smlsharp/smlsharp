@@ -1,0 +1,25 @@
+Group is
+        smlnj-lib.cm
+        ../../../smlformatlib.cm
+
+        ../../util/sources.cm
+        ../../env/sources.cm
+        ../../format/sources.cm
+        ../../control/sources.cm
+	../../name/sources.cm
+        ../../pickle/sources.cm
+
+        TYPE_FORMATTER.sig
+        TypeFormatter.sml
+        TYPE_PARSER.sig
+        TypeParser.sml
+        TYPES.sig
+        Types.ppg.sml
+        staticenv.sml
+        TYPESUTILS.sig
+        TypesUtils.sml
+        TYPE_TRANSDUCER.sig
+        TypeTransducer.sml
+	vars.sml
+        TypesPickler.sml	
+	

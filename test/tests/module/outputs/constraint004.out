@@ -1,0 +1,10 @@
+datatype dt
+con D : dt
+signature S = sig type t val x : t end
+structure S : sig datatype t con D : t val x : t end
+structure STrans1 : S where type t = dt
+structure STrans2 : S where type t = dt
+val xTrans = true : bool
+structure SOpaque1 : S where type t = dt
+structure SOpaque2 : S where type t = dt
+val xOpaque = true : bool

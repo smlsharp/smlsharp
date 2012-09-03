@@ -1,0 +1,56 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@commonrule
+
+VPATH = $(srcdir)
+
+SOURCES = ByteArrayInputChannel.cc \
+          ClientSocketChannel.cc \
+          ExecutableLinker.cc \
+          FileInputChannel.cc \
+          FileLogFacade.cc \
+          FileOutputChannel.cc \
+          FileReader.cc \
+          FileWriter.cc \
+          Heap.cc \
+          InteractiveSession.cc \
+          ServerSocketChannel.cc \
+          SessionBase.cc \
+          StandAloneSession.cc \
+          StreamInputChannelBase.cc \
+          StreamOutputChannelBase.cc \
+          VirtualMachine.cc
+
+OBJECTS = $(SOURCES:.cc=.$(OBJEXT))
+
+TARGETS = libimlruntimeimpl.$(LIBEXT)
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(OBJECTS) $(TARGETS)
+
+libimlruntimeimpl.$(LIBEXT): $(OBJECTS)
+	$(AR) rcu $@ $(OBJECTS)
+	-$(RANLIB) $@
+
+# FIXME: dependency
+ByteArrayInputChannel.$(OBJEXT): ByteArrayInputChannel.cc
+ClientSocketChannel.$(OBJEXT): ClientSocketChannel.cc
+ExecutableLinker.$(OBJEXT): ExecutableLinker.cc
+FileInputChannel.$(OBJEXT): FileInputChannel.cc
+FileLogFacade.$(OBJEXT): FileLogFacade.cc
+FileOutputChannel.$(OBJEXT): FileOutputChannel.cc
+FileReader.$(OBJEXT): FileReader.cc
+FileWriter.$(OBJEXT): FileWriter.cc
+Heap.$(OBJEXT): Heap.cc
+InteractiveSession.$(OBJEXT): InteractiveSession.cc
+ServerSocketChannel.$(OBJEXT): ServerSocketChannel.cc
+SessionBase.$(OBJEXT): SessionBase.cc
+StandAloneSession.$(OBJEXT): StandAloneSession.cc
+StreamInputChannelBase.$(OBJEXT): StreamInputChannelBase.cc
+StreamOutputChannelBase.$(OBJEXT): StreamOutputChannelBase.cc
+VirtualMachine.$(OBJEXT): VirtualMachine.cc

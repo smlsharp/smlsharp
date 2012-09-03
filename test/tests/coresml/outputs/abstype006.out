@@ -1,0 +1,6 @@
+abstype dt111
+type 'a t111 = 'a * bool
+val x111 = - : dt111
+abstype dt112
+type ('a,'b) t112 = 'a * bool * 'b
+val x112 = - : dt112

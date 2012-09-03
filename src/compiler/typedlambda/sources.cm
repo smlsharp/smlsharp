@@ -1,0 +1,11 @@
+Group
+        structure TypedLambda
+        structure TypedLambdaFormatter
+        structure TypedLambdaUtils
+        structure TypeCheckTypedLambda
+	structure TypedLambdaPickler
+(*
+        structure TypedLambdaOptimizer
+*)
+is
+	main/module.cm

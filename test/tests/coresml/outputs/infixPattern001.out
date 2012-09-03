@@ -1,0 +1,8 @@
+datatype t
+con ## : int * int -> t
+infix 1 ##
+val f1 = fn : t -> int
+val v1 = 3 : int
+val f2 = fn : t -> int
+val v2 = 5 : int
+

@@ -1,0 +1,3 @@
+signature S = sig eqtype t end
+structure SEqRefTrans : S
+structure SEqRefOpaque : S

@@ -1,0 +1,13 @@
+val v111 = fn : ['a.'a -> 'a]
+val v112 = 1 : int
+val v121 = 2 : int
+val v122 = fn : ['a.'a -> 'a]
+val v131 = fn : ['a.'a -> 'a]
+val v132 = fn : ['a.'a -> 'a]
+val v211 = fn : ['a.'a -> 'a]
+val v212 = fn : ['a.'a -> 'a]
+val v221 = fn : ['a.'a -> 'a]
+val v222 = fn : ['a.'a -> 'a]
+val v231 = fn : ['a.'a -> 'a]
+val v232 = fn : ['a.'a -> 'a]
+

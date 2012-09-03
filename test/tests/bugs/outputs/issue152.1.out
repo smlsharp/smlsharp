@@ -1,0 +1,4 @@
+signature S23 = sig eqtype s datatype t con D : real -> t sharing type s = t end
+../tests/bugs/tests/issue152.1.sml:7.11-7.66 Error: Signature mismatch
+                                                    (equality): s
+

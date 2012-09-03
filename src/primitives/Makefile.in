@@ -1,0 +1,10 @@
+srcdir = @srcdir@
+builddir = @builddir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+
+include @top_builddir@commonrule
+
+SUBDIRS = generator/main \
+          runtime/main \
+          compiler/main

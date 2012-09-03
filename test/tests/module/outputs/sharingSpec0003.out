@@ -1,0 +1,26 @@
+signature S11 =
+sig structure S : sig type t end structure T : sig type t end sharing T = S end
+signature S13 =
+sig
+  structure S : sig type t end
+  structure T : sig structure T : sig type t end end
+  sharing S = T.T
+end
+signature S21 =
+sig
+  structure S : sig structure S : sig type t end end
+  structure T : sig type t end
+  sharing S.S = T
+end
+signature S22 =
+sig
+  structure S
+  : sig structure S : sig type t end structure T : sig type t end end
+  sharing S.S = S.T
+end
+signature S23 =
+sig
+  structure S : sig structure S : sig type t end end
+  structure T : sig structure T : sig type t end end
+  sharing S.S = T.T
+end

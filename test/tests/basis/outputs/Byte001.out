@@ -1,0 +1,33 @@
+structure AS : MONO_ARRAY_SLICE
+structure A : MONO_ARRAY
+structure VS : MONO_VECTOR_SLICE
+structure V : MONO_VECTOR
+val L2AS = fn : byte List.list -> AS.slice
+val L2VS = fn : byte List.list -> VS.slice
+val AS2L = fn : AS.slice -> byte list
+val VS2L = fn : VS.slice -> byte list
+val V2L = fn : V.vector -> byte list
+val L2V = fn : V.elem list -> V.vector
+val A2L = fn : A.array -> byte list
+val L2A = fn : A.elem list -> A.array
+val makeArray = fn : int -> A.array
+val byteToChar_1 = #"a" : char
+val charToByte_1 = 0wx61 : Word8.word
+val bytesToString_0 = "" : string
+val bytesToString_1 = "a" : string
+val stringToBytes_0 = [] : byte list
+val stringToBytes_1 = [0wx61] : byte list
+val unpackStringVec_0 = "" : string
+val unpackStringVec_1 = "a" : string
+val unpackString_0 = "" : string
+val unpackString_1 = "a" : string
+val testPackString = fn : int * int * string -> byte list
+val packString_000 = [] : byte list
+val packString_3m11 = [0wx9] : byte list
+val packString_301 = [0wx61,0wx1,0wx2] : byte list
+val packString_311 = [0wx0,0wx61,0wx2] : byte list
+val packString_321 = [0wx0,0wx1,0wx61] : byte list
+val packString_331 = [0wx9] : byte list
+val packString_302 = [0wx61,0wx62,0wx2] : byte list
+val packString_312 = [0wx0,0wx61,0wx62] : byte list
+val packString_322 = [0wx9] : byte list
