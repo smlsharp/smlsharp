@@ -1,0 +1,18 @@
+SML#:  a new programming language in the Standard ML family
+============================================================
+
+This is **unofficial** repository for SML# compiler.
+
+If you get official information, see http://www.pllab.riec.tohoku.ac.jp/smlsharp/.
+
+What is **not** this
+------------------------------
+
+ * This is not official repository.
+ * There is no relationship with SML# deveploment team or Tohoku University.
+
+What is this
+------------------------------
+
+ * We track a latest release of SML#.
+ * We will report all issues/pull requests to a development team. This means your pull request become a part of next official release, if it is accepted.
