@@ -2,7 +2,7 @@
  * prelude definitions.
  * @author YAMATODANI Kiyoshi
  * @copyright 2010, Tohoku University.
- * @version $Id: prelude.sml,v 1.16 2008/02/28 13:08:30 kiyoshiy Exp $
+ * @version $Id: prelude.sml,v 1.16.6.1 2009/09/03 03:35:00 katsu Exp $
  *)
 
 val print = SMLSharp.Runtime.print
@@ -48,6 +48,8 @@ use "./SMLSharp.sml";
 use "./FFI.sml";
 use "./LMLML.sml";
 use "./smlformatlib.sml";
+
+use "./SQL.sml";
 
 local
 

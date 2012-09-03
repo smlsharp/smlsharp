@@ -3,7 +3,7 @@
  * Only top level bindings specified by SML Basis Manual are defined.
  * @author YAMATODANI Kiyoshi
  * @copyright 2010, Tohoku University.
- * @version $Id: preludes.sml,v 1.22 2008/03/11 08:53:57 katsu Exp $
+ * @version $Id: preludes.sml,v 1.22.6.1 2009/09/03 03:35:01 katsu Exp $
  *)
 (*****************************************************************************)
 
@@ -274,6 +274,13 @@ fun '_format_word' (arg : word) =
 *)
     in SMLSharp.SMLFormat.Term(size string, string) end;
 end;
+
+fun '_format_sqlschema' (f:'a->expression) (x:'a sqlschema) : expression = Term(1,"-")
+fun '_format_sqlconn' (f:'a->expression) (x:'a sqlconn) : expression = Term(1,"-")
+fun '_format_sqltable' (f:'a->expression) (g:'b->expression) (x:('a,'b) sqltable) : expression = Term(1,"-")
+fun '_format_sqlquery' (f:'a->expression) (g:'b->expression) (x:('a,'b) sqlquery) : expression = Term(1,"-")
+fun '_format_sqlrel' (f:'a->expression) (x:'a sqlrel) : expression = Term(1,"-")
+fun '_format_sqlvalue' (f:'a->expression) (g:'b->expression) (x:('a,'b) sqlvalue) : expression = Term(1,"-")
 
 (*****************************************************************************)
 

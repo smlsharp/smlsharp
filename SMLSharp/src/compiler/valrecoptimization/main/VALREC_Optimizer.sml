@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author NGUYEN Huu-Duc
- * @version $Id: VALREC_Optimizer.sml,v 1.39 2008/03/11 08:53:57 katsu Exp $
+ * @version $Id: VALREC_Optimizer.sml,v 1.39.6.6 2010/01/29 06:41:35 hiro-en Exp $
  *)
 structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
 
@@ -93,6 +93,12 @@ structure VALREC_Optimizer :> VALREC_OPTIMIZER = struct
                             PLFFFIARGSIZEOF (ty, NONE, loc))
                         args,
                     retTy, loc)
+      | PLFSQLSERVER (str, schema, loc) =>
+        PLFSQLSERVER
+          (map (fn (x,y) => (x, optimizeExp globalContext context y)) str,
+           schema, loc)
+      | PLFSQLDBI (pat, exp, loc) =>
+        PLFSQLDBI (pat, optimizeExp globalContext context exp, loc)
 
   and optimizeRule globalContext (context:context) patListExpList =
      map (fn (patList,exp) => (patList, optimizeExp globalContext context exp))

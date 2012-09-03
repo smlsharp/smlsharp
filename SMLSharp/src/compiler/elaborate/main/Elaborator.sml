@@ -79,7 +79,7 @@
  * @author YAMATODANI Kiyoshi
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: Elaborator.sml,v 1.105 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: Elaborator.sml,v 1.105.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure Elaborator : ELABORATOR =
 struct
@@ -109,16 +109,12 @@ in
 
   (***************************************************************************)
 
-  local
-    val errorQueue = UE.createQueue ()
-  in
-    fun initializeErrorQueue () = UE.clearQueue errorQueue
-    fun getErrorsAndWarnings () = UE.getErrorsAndWarnings errorQueue
-    fun getErrors () = UE.getErrors errorQueue
-    fun getWarnings () = UE.getWarnings errorQueue
-    val enqueueError = UE.enqueueError errorQueue
-    val enqueueWarning = UE.enqueueWarning errorQueue
-  end
+  val initializeErrorQueue = ElaboratorUtils.initializeErrorQueue
+  val getErrorsAndWarnings = ElaboratorUtils.getErrorsAndWarnings
+  val getErrors = ElaboratorUtils.getErrors
+  val getWarnings = ElaboratorUtils.getWarnings
+  val enqueueError = ElaboratorUtils.enqueueError
+  val enqueueWarning = ElaboratorUtils.enqueueWarning
 
 (*
   fun isValue exp = 
@@ -202,43 +198,6 @@ in
                attrs))
         Absyn.defaultFFIAttributes
         attr
-
-  (**
-   * checks duplication in a set of names.
-   * @params getName elements loc makeExn
-   * @param getName a function to retriev name from an element. It should
-   *               return NONE if no name is bound.
-   * @param elements a list of element which contain a name in it.
-   * @param loc location to be used in error message, if duplication found.
-   * @param makeExn a function to construct an exception to be reported,
-   *            if duplication found.
-   * @return unit
-   *)
-  fun checkNameDuplication' getName elements loc makeExn =
-    let
-      fun collectDuplication names duplicates [] = SEnv.listItems duplicates
-        | collectDuplication names duplicates (element :: elements) =
-          case getName element of
-            SOME name =>
-              let
-                val newDuplicates =
-                  case SEnv.find(names, name) of
-                    SOME _ => SEnv.insert(duplicates, name, name)
-                  | NONE => duplicates
-                val newNames = SEnv.insert(names, name, name)
-              in collectDuplication newNames newDuplicates elements
-              end
-          | NONE => collectDuplication names duplicates elements
-      val duplicateNames = collectDuplication SEnv.empty SEnv.empty elements
-    in
-      app (fn name => enqueueError(loc, makeExn name)) duplicateNames
-    end
-  (**
-   * a variant of name duplicate checker.
-   * getName parameter should return a string, instead of a string option.
-   *)      
-  fun checkNameDuplication getName elements loc makeExn =
-      checkNameDuplication' (SOME o getName) elements loc makeExn
 
   fun substTyVarInTy substFun ty =
     let
@@ -511,7 +470,7 @@ in
       | A.TYRECORD (labelTys, loc) =>
         let val newLabelTys = elabLabeledSequence elabTy env labelTys
         in
-          checkNameDuplication
+          ElaboratorUtils.checkNameDuplication
               #1 labelTys loc E.DuplicateRecordLabelInRawType;
           A.TYRECORD (newLabelTys, loc)
         end
@@ -533,8 +492,8 @@ in
   fun elabDataDesc loc env (tvars, name, conDescs) =
       let
         val _ = 
-            checkNameDuplication
-              #1 conDescs loc E.DuplicateConstructorNameInDatatype
+            ElaboratorUtils.checkNameDuplication
+                #1 conDescs loc E.DuplicateConstructorNameInDatatype
       in
         (tvars, name, map (elabConDesc env) conDescs)
       end
@@ -843,10 +802,10 @@ in
         val boundTypeNames = (map #2 dataBinds) @ (map #2 withTypeBinds)
         fun id x = x
         val _ =
-            checkNameDuplication
+            ElaboratorUtils.checkNameDuplication
                 id boundTypeNames loc E.DuplicateTypeNameInDatatype
         val _ =
-            checkNameDuplication
+            ElaboratorUtils.checkNameDuplication
                 #2 dataCons loc E.DuplicateConstructorNameInDatatype
         val _ =
             app
@@ -870,12 +829,14 @@ in
       | A.EXPOPID (x,loc) => PC.PLVAR (x,loc)
       | A.EXPRECORD (stringExpList, loc) =>
         (
-          checkNameDuplication #1 stringExpList loc E.DuplicateRecordLabel;
+          ElaboratorUtils.checkNameDuplication
+              #1 stringExpList loc E.DuplicateRecordLabel;
           PC.PLRECORD (elabLabeledSequence elabExp env stringExpList, loc)
         )
       | A.EXPRECORD_UPDATE (exp, stringExpList, loc) =>
         (
-          checkNameDuplication #1 stringExpList loc E.DuplicateRecordLabel;
+          ElaboratorUtils.checkNameDuplication
+              #1 stringExpList loc E.DuplicateRecordLabel;
           PC.PLRECORD_UPDATE
           (
             elabExp env exp,
@@ -1049,6 +1010,11 @@ in
                            args,
                        elabTy env retTy, loc)
 
+      | A.EXPSQL (sqlexp, loc) =>
+        ElaboratorSQL.elaborateExp
+          {elabExp = elabExp env, elabPat = elabPat env, elabTy = elabTy env}
+          sqlexp
+
   and elabPat env pat = 
       case pat of
         A.PATWILD loc => PC.PLPATWILD loc
@@ -1063,7 +1029,7 @@ in
       | A.PATAPPLY (plist, loc) => resolveInfixPat env plist
       | A.PATRECORD {ifFlex=flex, fields=pfields, loc=loc} =>
         (
-          checkNameDuplication
+          ElaboratorUtils.checkNameDuplication
               getLabelOfPatRow pfields loc E.DuplicateRecordLabelInPat;
           PC.PLPATRECORD (flex, map (elabPatRow env) pfields, loc)
         )
@@ -1202,7 +1168,8 @@ in
                 NONE
             val elabedBinds = map elabBind decls
             val _ =
-                checkNameDuplication' (* NOTE: use primed version. a trick. *)
+                (* NOTE: use primed version. a trick. *)
+                ElaboratorUtils.checkNameDuplication'
                     getNameOfBound
                     elabedBinds
                     loc
@@ -1218,7 +1185,7 @@ in
               | getNameOfBind _ =
                 raise Control.Bug "not PATID nor PATTYPED getNameOfBound"
             val _ =
-                checkNameDuplication
+                ElaboratorUtils.checkNameDuplication
                     getNameOfBind
                     elabedFunBinds
                     loc
@@ -1243,7 +1210,8 @@ in
                 end
             val newTyBinds = map elabTyBind tyBinds
           in
-            checkNameDuplication #2 newTyBinds loc E.DuplicateTypeNameInType;
+            ElaboratorUtils.checkNameDuplication
+                #2 newTyBinds loc E.DuplicateTypeNameInType;
             ([PC.PDTYPE (newTyBinds, loc)], SEnv.empty)
           end
         | A.DECDATATYPE (dataBinds, withTypeBinds, loc) =>
@@ -1286,8 +1254,9 @@ in
             fun getExnLoc (A.EXBINDDEF(_, _, _, loc)) = loc
               | getExnLoc (A.EXBINDREP(_, _, _, _, loc)) = loc
             val _ =
-                checkNameDuplication
-                getExnName exnBinds loc E.DuplicateConstructorNameInException
+                ElaboratorUtils.checkNameDuplication
+                    getExnName exnBinds loc
+                    E.DuplicateConstructorNameInException
             val _ =
                 app
                     checkReservedNameForConstructorBind 
@@ -1352,23 +1321,24 @@ in
             PC.PLSPECSEQ(elabSpec env spec1, elabSpec env spec2, loc)
         | A.SPECVAL(valBinds, loc) =>
             let
-              val _ = checkNameDuplication #1 valBinds loc E.DuplicateValDesc
+              val _ = ElaboratorUtils.checkNameDuplication
+                          #1 valBinds loc E.DuplicateValDesc
             in
               PC.PLSPECVAL(elabLabeledSequence elabTy env valBinds, loc)
             end
         | A.SPECTYPE(tydescs, loc) => 
             let
               val _ =
-                checkNameDuplication
-                #2 tydescs loc E.DuplicateTypDesc
+                ElaboratorUtils.checkNameDuplication
+                    #2 tydescs loc E.DuplicateTypDesc
             in
               PC.PLSPECTYPE(tydescs, loc)
             end
         | A.SPECDERIVEDTYPE(maniftypedescs, loc) =>
             let 
               val _ =
-                checkNameDuplication
-                #2 maniftypedescs loc E.DuplicateTypDesc
+                ElaboratorUtils.checkNameDuplication
+                    #2 maniftypedescs loc E.DuplicateTypDesc
               fun elabDesc (tvars, name, ty) = (tvars, name, elabTy env ty)
               fun elabTypeEquation m = PC.PLSPECTYPEEQUATION (elabDesc m, loc)
             in 
@@ -1377,16 +1347,16 @@ in
         | A.SPECEQTYPE(tydescs, loc) => 
             let
               val _ =
-                checkNameDuplication
-                #2 tydescs loc E.DuplicateTypDesc
+                ElaboratorUtils.checkNameDuplication
+                    #2 tydescs loc E.DuplicateTypDesc
             in
               PC.PLSPECEQTYPE(tydescs, loc)
             end
         | A.SPECDATATYPE(dataDescs, loc) =>
             let
               val _ =
-                checkNameDuplication
-                #2 dataDescs loc E.DuplicateTypDesc
+                ElaboratorUtils.checkNameDuplication
+                    #2 dataDescs loc E.DuplicateTypDesc
             in
               PC.PLSPECDATATYPE(map (elabDataDesc loc env) dataDescs, loc)
             end
@@ -1395,8 +1365,8 @@ in
         | A.SPECEXCEPTION(exnDescs, loc) =>
             let
               val _ = 
-                checkNameDuplication
-                #1 exnDescs loc E.DuplicateConstructorNameInException
+                ElaboratorUtils.checkNameDuplication
+                    #1 exnDescs loc E.DuplicateConstructorNameInException
               fun elabExn env exnDescOpt = Option.map (elabTy env) exnDescOpt
             in
               PC.PLSPECEXCEPTION(elabLabeledSequence elabExn env exnDescs, loc)
@@ -1404,8 +1374,8 @@ in
         | A.SPECSTRUCT(strdescs, loc) => 
             let
               val _ = 
-                checkNameDuplication
-                #1 strdescs loc E.DuplicateStrDesc
+                ElaboratorUtils.checkNameDuplication
+                    #1 strdescs loc E.DuplicateStrDesc
             in
               PC.PLSPECSTRUCT (elabLabeledSequence elabSigExp env strdescs, 
                                loc)

@@ -625,21 +625,46 @@ struct
 
        ("!!",
         OPRIM {
-          ty = "['a#{int,real,Real32.real,word,Word8.word,char}.\
+          ty = "['a#{int,real,word,Word8.word,char,('b)ptr},'b.\
                \('a) ptr -> 'a]",
           instances = [
             {instTyList = ["int"],
              instance = PRIMAPPLY (P.P P.Ptr_deref_int)},
             {instTyList = ["real"],
              instance = PRIMAPPLY (P.P P.Ptr_deref_real)},
-            {instTyList = ["Real32.real"],
-             instance = PRIMAPPLY (P.P P.Ptr_deref_float)},
+            (* ToDo: foreign function returning float is not supported. *)
+            (*{instTyList = ["Real32.real"],
+               instance = PRIMAPPLY (P.P P.Ptr_deref_float)},*)
             {instTyList = ["word"],
              instance = PRIMAPPLY (P.P P.Ptr_deref_word)},
             {instTyList = ["Word8.word"],
              instance = PRIMAPPLY (P.P P.Ptr_deref_byte)},
             {instTyList = ["char"],
-             instance = PRIMAPPLY (P.P P.Ptr_deref_char)}
+             instance = PRIMAPPLY (P.P P.Ptr_deref_char)},
+            {instTyList = ["(unit)ptr"],
+             instance = PRIMAPPLY (P.P P.Ptr_deref_ptr)}
+          ]
+        }),
+
+       ("_Pointer_store",
+        OPRIM {
+          ty = "['a#{int,real,word,Word8.word,char,('b)ptr},'b.\
+               \('a) ptr * 'a -> unit]",
+          instances = [
+            {instTyList = ["int"],
+             instance = PRIMAPPLY (P.P P.Ptr_store_int)},
+            {instTyList = ["real"],
+             instance = PRIMAPPLY (P.P P.Ptr_store_real)},
+            (*{instTyList = ["Real32.real"],
+               instance = PRIMAPPLY (P.P P.Ptr_store_float)},*)
+            {instTyList = ["word"],
+             instance = PRIMAPPLY (P.P P.Ptr_store_word)},
+            {instTyList = ["Word8.word"],
+             instance = PRIMAPPLY (P.P P.Ptr_store_byte)},
+            {instTyList = ["char"],
+             instance = PRIMAPPLY (P.P P.Ptr_store_char)},
+            {instTyList = ["(unit)ptr"],
+             instance = PRIMAPPLY (P.P P.Ptr_store_ptr)}
           ]
         }),
 
@@ -714,12 +739,19 @@ struct
        ("Int.quot", PRIM (P.P (P.Int_quot P.NoOverflowCheck))),
        ("Int.rem", PRIM (P.P (P.Int_rem P.NoOverflowCheck))),
        (* ("Int_sub", PRIM (P.P (P.Int_sub P.NoOverflowCheck))), *)
+       ("SMLSharp.Pointer.advance", PRIM (P.P P.Ptr_advance)),
        (* ("Ptr_deref_int", PRIM (P.P P.Ptr_deref_int)), *)
        (* ("Ptr_deref_real", PRIM (P.P P.Ptr_deref_real)), *)
        (* ("Ptr_deref_float", PRIM (P.P P.Ptr_deref_float)), *)
        (* ("Ptr_deref_word", PRIM (P.P P.Ptr_deref_word)), *)
        (* ("Ptr_deref_char", PRIM (P.P P.Ptr_deref_char)), *)
        (* ("Ptr_deref_byte", PRIM (P.P P.Ptr_deref_byte)), *)
+       (* ("Ptr_store_int", PRIM (P.P P.Ptr_store_int)), *)
+       (* ("Ptr_store_real", PRIM (P.P P.Ptr_store_real)), *)
+       (* ("Ptr_store_float", PRIM (P.P P.Ptr_store_float)), *)
+       (* ("Ptr_store_word", PRIM (P.P P.Ptr_store_word)), *)
+       (* ("Ptr_store_char", PRIM (P.P P.Ptr_store_char)), *)
+       (* ("Ptr_store_byte", PRIM (P.P P.Ptr_store_byte)), *)
        (* ("Real_abs", PRIM (P.P P.Real_abs)), *)
        (* ("Real_add", PRIM (P.P P.Real_add)), *)
        ("Real.==", PRIM (P.P P.Real_equal)),
@@ -827,6 +859,7 @@ struct
        ("_format_exnRef",
         DUMMY {ty = "(exn -> SMLSharp.SMLFormat.expression) ref"})
       ]
+      @ BuiltinContextSQL.decls
 
   val builtinContext =
       foldl (fn (x,z) => BuiltinContextMaker.define z x)

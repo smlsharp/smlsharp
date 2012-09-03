@@ -320,6 +320,13 @@ in
                  expTyList = expTyList, 
                  loc = loc}
 
+       | TFPSQLSERVER {server, schema, resultTy, loc} =>
+         TFPSQLSERVER
+           {server = map (fn (l,e) => (l,annotateExternalIdTfpexp annotateFunctionVarIdInfo IDIndexMap e)) server,
+            schema = schema,
+            resultTy = resultTy,
+            loc = loc}
+
   and annotateExternalIdTfpdec annotateFunctionVarIdInfo IDIndexMap tfpdec =
       case tfpdec of
           TFPVAL (binds, loc) =>
@@ -492,6 +499,8 @@ in
           collectDefExnIDTfpexps expList
         | TFPSEQ {expList, expTyList, loc} =>
           collectDefExnIDTfpexps expList
+        | TFPSQLSERVER {server, schema, resultTy, loc} =>
+          collectDefExnIDTfpexps (map #2 server)
 
   and collectDefExnIDTfpdecs tfpdecs =
       foldl (fn (dec, exnIDSet) =>

@@ -1,3 +1,75 @@
+SML# version 0.61 (released on 2010-11-26)
+
+1. Overview
+
+This is a patch release of SML# 0.60 series.
+This version is still experimental.
+
+2. Changes and improvements
+
+[SML#]
+- added a feature that CConfig creates a cache file for check results.
+- added Pointer structure.
+  This structure is experimental and provides primitive functions for
+  C pointers such as pointer arithmetics and memory access.
+
+-----------------------------------------------------------------------------
+SML# version 0.60 (released on 2010-11-12)
+
+1. Overview
+
+An experimental release of a new feature of SML#. 
+Only the source package is provided. 
+
+2. The new feature
+
+The major new feature of SML# 0.60 is seamless interoperability with
+database systems. 
+
+In this version, (a subset of) SQL is directly available as
+first-class SML# expressions and can be freely combined with any other
+language constructs in SML#. The SML# type system with record
+polymorphism always infers a principal type for any type consistent
+expression involving SQL query expressions. The compiler separates SQL
+queries and delegates them to a database server. 
+
+To show a simple example, consider the following an SQL query
+    SELECT name, age
+    FROM person 
+    WHERE age <= 25
+This is a function which takes a connection to a database that contains
+"person" table having "age" column of type integer and name column of
+any SQL supported atomic values possibly containing null. The
+following shows an SML# session defining this query:
+ # val young =
+       _sql db =>
+            select #person.name as name, #person.age as age
+            from #db.people as person
+            where SQL.<= (#person.age, 35);
+ val young = fn
+   : ['a#{people:'b},
+      'b#{age:int, name:'d},
+      'c,
+      'd::{int, word, char, string, real, 'e option},
+      'e::{int, word, char, bool, string, real}.
+      ('a, 'c) SQL.db -> {age: int, name: 'd} SQL.query]
+"'e option" represents values possibly containing null. The inferred
+type is indeed a principal type of "young". In addition to SQL
+queries, database servers and database connections are also typed
+first-class citizens. These feature allow the SML programmer to write
+a typed polymorphic higher-order programs with SQL queries. 
+
+In this version, only PostgreSQL is supported; MySQL binding will be
+added in a future release.
+
+For a brief description on how to use this feature, see the web page: 
+http://www.pllab.riec.tohoku.ac.jp/smlsharp/?FeatureDatabaseIntegration
+
+3. Oteher changes and improvements
+
+none.
+
+-----------------------------------------------------------------------------
 SML# version 0.58 (released on 2010-10-16)
 
 1. Overview

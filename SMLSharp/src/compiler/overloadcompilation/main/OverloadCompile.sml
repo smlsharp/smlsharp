@@ -930,6 +930,8 @@ struct
      | RC.RCCAST (rcexp, ty, loc)
        =>
        RC.RCCAST (compileRcexp env rcexp, ty, loc)
+     | RC.RCSQL (rcsqlexp, ty, loc)
+       => raise bug "compileRcexp: RCSQL"
 
  and compileRcdeclList env rcdeclList =
      map (compileRcdecl env) rcdeclList

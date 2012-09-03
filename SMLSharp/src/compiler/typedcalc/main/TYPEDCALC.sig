@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TYPEDCALC.sig,v 1.27 2008/08/06 17:23:40 ohori Exp $
+ * @version $Id: TYPEDCALC.sig,v 1.27.6.7 2010/02/10 05:17:29 hiro-en Exp $
  *)
 
 signature TYPEDCALC = sig
@@ -127,6 +127,8 @@ signature TYPEDCALC = sig
    | TPSEQ of {expList:tpexp list, expTyList:ty list, loc:loc}
    | TPLIST of {expList:tpexp list, listTy:ty, loc:loc}
    | TPCAST of tpexp * ty * loc
+   | TPSQLSERVER of {server: (string * tpexp) list, schema: ty SEnv.map,
+                     resultTy: ty, loc: loc}
 
  and tpdecl 
    = TPVAL of (valId * tpexp) list * loc

@@ -128,6 +128,8 @@ in
     | getFV (RCSEQ {expList, ...}) = foldlUnion getFV expList
     | getFV (RCLIST {expList, ...}) = foldlUnion getFV expList
     | getFV (RCCAST (exp, ty, loc)) =  getFV exp
+    | getFV (RCSQL (RCSQLSERVER {server, schema}, resultTy, loc)) =
+      foldlUnion (getFV o #2) server
 
   and getDecFVBV (RCVAL (binds, loc)) =
       foldl

@@ -8,29 +8,26 @@
 structure CConfig : C_CONFIG =
 struct
 
+  open CConfigCache
+
   (***************************************************************************)
 
   infix //
   infixr 7 ifNone ifSome
   infixr 8 $
-  infixr 9 try ensure
 
-  local
-      datatype 'a err = Error of exn | Success of 'a
-  in
   fun f $ x = f x
-  fun x try f = f x
-  fun f ensure g =
-      fn x => let val v = Success (f x) handle e => Error e
-                  val () = g x
-              in case v of Error e => raise e | Success v => v
-              end
-  end
-
   val op // = OS.Path.concat
-
   fun x ifNone f = case x of SOME x => x | NONE => f ()
   fun x ifSome f = case x of SOME x => SOME (f x) | NONE => NONE
+
+  local
+    datatype ('a,'b) try = RET of 'a * 'b | ERR of 'a * exn
+  in
+  fun try x tryFn cont = cont (RET (x,tryFn x) handle e => ERR (x,e))
+  fun ensure (RET (x,y)) finalFn = (finalFn x : unit; y)
+    | ensure (ERR (x,e)) finalFn = (finalFn x : unit; raise e)
+  end
 
   (***************************************************************************)
 
@@ -62,21 +59,25 @@ struct
                else ();
                loop dir)
       in
-        (OS.FileSys.openDir dirname) try loop ensure OS.FileSys.closeDir;
+        try (OS.FileSys.openDir dirname) loop ensure OS.FileSys.closeDir;
         OS.FileSys.rmDir dirname
       end
 
-  fun openAppend filename f =
-      (TextIO.openAppend filename) try f ensure TextIO.closeOut
+  fun openAppend filename msg =
+      try (TextIO.openAppend filename)
+          (fn out => TextIO.output (out, msg))
+      ensure TextIO.closeOut
 
-  fun openOut filename f =
-      (TextIO.openOut filename) try f ensure TextIO.closeOut
+  fun openOut filename msg =
+      try (TextIO.openOut filename)
+          (fn out => TextIO.output (out, msg))
+      ensure TextIO.closeOut
 
   fun readFile filename =
-      (TextIO.openIn filename) try TextIO.inputAll ensure TextIO.closeIn
+      try (TextIO.openIn filename) TextIO.inputAll ensure TextIO.closeIn
 
   fun isReadable filename =
-      ((BinIO.openIn filename) try (fn _ => true) ensure BinIO.closeIn)
+      try (BinIO.openIn filename) (fn _ => true) ensure BinIO.closeIn
       handle _ => false
 
   fun unchomp s =
@@ -108,14 +109,18 @@ struct
 
   val conftest_name = "conftest"
   val config_log = "cconfig.log"
+  val config_cache = "cconfig.cache." ^ SMLSharp.Configuration.Platform
 
   val verboseOpt = ref false
   val noticeOpt = ref true
   val loggingOpt = ref true
+  val useCacheOpt = ref true
+  val cacheFile = ref NONE : CConfigCache.cache option ref
 
   fun verbose b = verboseOpt := b
   fun message b = noticeOpt := b
   fun logging b = loggingOpt := b
+  fun useCache b = useCacheOpt := b
 
   (* FIXME: should be system dependent. *)
   val defaultConfig =
@@ -218,13 +223,13 @@ struct
 
   (*** logging ***)
 
-  fun log f =
-      (if !loggingOpt then openAppend config_log f else ();
-       if !verboseOpt then f TextIO.stdErr else ())
+  fun log msg =
+      (if !loggingOpt then openAppend config_log msg else ();
+       if !verboseOpt then TextIO.output (TextIO.stdErr, msg) else ())
       handle _ => ()
 
   fun notice msg =
-      (log (fn out => TextIO.output (out, "notice: " ^ unchomp msg));
+      (log ("notice: " ^ unchomp msg);
        if !noticeOpt andalso not (!verboseOpt)
        then TextIO.output (TextIO.stdErr, msg)
        else ())
@@ -248,22 +253,48 @@ struct
   fun checkingForVal msg f = checkingForVal' (fn x => x) msg f
 
   fun logSrc src =
-      log (fn out =>
-              (TextIO.output (out, "checked program was:\n\
-                                   \/* begin */\n");
-               TextIO.output (out, src);
-               TextIO.output (out, "/* end */\n\n")))
+      log ("checked program was:\n/* begin */\n" ^ src ^ "/* end */\n\n")
+
+  (***************************************************************************)
+
+  (*** cache ***)
+
+  fun saveCache () =
+      case !cacheFile of
+        NONE => ()
+      | SOME c => CConfigCache.commit c
+
+  fun checkCache doCommit (fmt, name) f =
+      if not (!useCacheOpt) then f ()
+      else
+        let
+          val c =
+              case !cacheFile of
+                SOME c => c
+              | NONE => let val c = CConfigCache.openCache config_cache
+                        in cacheFile := SOME c ; c end
+        in
+          case CConfigCache.findCache fmt (c, name) of
+            SOME x => x
+          | NONE =>
+            let val value = f ()
+            in CConfigCache.addCache fmt doCommit (c, name, value); value
+            end
+        end
+
+  fun cache x = checkCache false x
+  fun cache' x = checkCache true x
 
   (***************************************************************************)
 
   (*** tasks ***)
 
   fun tryInTmp f =
-      (mkdtemp ()) try f ensure removeDir
+      try (mkdtemp ()) f ensure removeDir
 
   fun tryInDir dir f =
-      (OS.FileSys.getDir ())
-      try (fn oldpwd => (OS.FileSys.chDir dir; f oldpwd))
+      try (OS.FileSys.getDir ())
+          (fn oldpwd => (OS.FileSys.chDir dir; f oldpwd))
       ensure OS.FileSys.chDir
 
   fun cppHeaders headers =
@@ -275,8 +306,7 @@ struct
         val src = unchomp src
       in
         rm_f conftest_c;
-        openOut (base // conftest_name ^ ".c")
-                (fn out => TextIO.output (out, src));
+        openOut (base // conftest_name ^ ".c") src;
         src
       end
 
@@ -286,14 +316,11 @@ struct
         val conftest_out = conftest_out base
         val _ = rm_f conftest_out
         val command = command^" > "^conftest_out^" 2>&1"
-        val _ =
-            log (fn out => TextIO.output (out, "command: "^command^"\n"))
+        val _ = log ("command: "^command^"\n")
         val status = OS.Process.system command
         val output = readFile conftest_out handle _ => ""
       in
-        log (fn out =>
-                (TextIO.output (out, unchomp output);
-                 TextIO.output (out, "exit status at "^fmtInt status^"\n\n")));
+        log (unchomp output ^ "exit status at "^fmtInt status^"\n\n");
         (status, output)
       end
 
@@ -416,27 +443,31 @@ struct
 
   fun findLibrary (libname, funcname, headers) =
       (* FIXME: no need to consider cross compiling? *)
-      tryInTmp
-      (fn base =>
-          let val libarg = libArg libname
-          in checkingForVal (funcname^"() in "^libarg)
-             (fn () =>
-                 if tryFunc base funcname headers libarg
-                 then
-                   let val conftest_exe = conftest_exe base
-                       val ret = tryCommand base (lddCmd conftest_exe)
-                   in searchLibFile libname ret
-                   end
-                 else NONE)
-          end)
+      cache (OPTION STRING, "lib_" ^ libname)
+      (fn () =>
+          tryInTmp
+          (fn base =>
+              let val libarg = libArg libname
+              in checkingForVal (funcname^"() in "^libarg)
+                 (fn () =>
+                     if tryFunc base funcname headers libarg
+                     then
+                       let val conftest_exe = conftest_exe base
+                           val ret = tryCommand base (lddCmd conftest_exe)
+                       in searchLibFile libname ret
+                       end
+                     else NONE)
+              end))
 
   fun haveLibrary (libname, funcname, headers) =
-      tryInTmp
-      (fn base =>
-          let val libarg = libArg libname
-          in checkingFor (funcname^"() in "^libarg)
-             (fn () => tryFunc base funcname headers (libArg libname))
-          end)
+      cache (BOOL, "have_lib_" ^ libname)
+      (fn () =>
+          tryInTmp
+          (fn base =>
+              let val libarg = libArg libname
+              in checkingFor (funcname^"() in "^libarg)
+                 (fn () => tryFunc base funcname headers libarg)
+              end))
 
   (***************************************************************************)
 
@@ -464,14 +495,16 @@ struct
       end
 
   fun checkSizeOf (ctype, headers) =
-      tryInTmp
-      (fn base =>
-          let val result =
-                  checkingForVal ("size of "^ctype)
-                  (fn () => tryConst base intFormat
-                                     ("sizeof("^ctype^")") headers)
-          in scanInt (valOf result)
-          end)
+      cache (INT, "sizeof_" ^ ctype)
+      (fn () =>
+          tryInTmp
+          (fn base =>
+              let val result =
+                      checkingForVal ("size of "^ctype)
+                      (fn () => tryConst base intFormat
+                                         ("sizeof("^ctype^")") headers)
+              in scanInt (valOf result)
+              end))
 
   fun haveConst format name headers =
       tryInTmp
@@ -479,25 +512,32 @@ struct
                   (fn () => tryConst base format name headers))
 
   fun haveConstInt (name, headers) =
-      (haveConst intFormat name headers) ifSome scanInt
+      cache (OPTION INT, "int_" ^ name)
+      (fn () => (haveConst intFormat name headers) ifSome scanInt)
 
   fun haveConstUInt (name, headers) =
-      (haveConst uintFormat name headers) ifSome scanWord
+      cache (OPTION UINT, "uint_" ^ name)
+      (fn () => (haveConst uintFormat name headers) ifSome scanWord)
 
   fun haveConstLong (name, headers) =
-      (haveConst longFormat name headers) ifSome scanLargeInt
+      cache (OPTION LONG, "long_" ^ name)
+      (fn () => (haveConst longFormat name headers) ifSome scanLargeInt)
 
   fun haveConstULong (name, headers) =
-      (haveConst longFormat name headers) ifSome scanLargeWord
+      cache (OPTION ULONG, "ulong_" ^ name)
+      (fn () => (haveConst longFormat name headers) ifSome scanLargeWord)
 
   fun haveConstFloat (name, headers) =
-      (haveConst floatFormat name headers) ifSome scanReal
+      cache (OPTION REAL, "float_" ^ name)
+      (fn () => (haveConst floatFormat name headers) ifSome scanReal)
 
   fun haveConstDouble (name, headers) =
-      (haveConst doubleFormat name headers) ifSome scanReal
+      cache (OPTION REAL, "double_" ^ name)
+      (fn () => (haveConst doubleFormat name headers) ifSome scanReal)
 
   fun haveConstString (name, headers) =
-      (haveConst stringFormat name headers) ifSome chomp
+      cache (OPTION STRING, "string_" ^ name)
+      (fn () => (haveConst stringFormat name headers) ifSome chomp)
 
   (***************************************************************************)
 
@@ -517,35 +557,27 @@ struct
             \  return 0;\n\
             \}\n"
       in
-        tryInTmp
-        (fn base =>
-            checkingForVal'
-                (fn (l,r) => "size="^fmtInt l^", offset="^fmtInt r)
-                (field^" in "^ctype)
-            (fn () =>
-                tryRun base src ""
-                ifSome (fn (_, output) =>
-                           let val (_, r) = splitl Char.isDigit (full output)
-                           in (scanInt output, scanInt $ string r)
-                           end)))
-      end
+        cache (OPTION (PAIR INT), "struct_" ^ ctype ^ "_" ^ field)
+        (fn () =>
+            tryInTmp
+            (fn base =>
+                checkingForVal'
+                    (fn (l,r) => "size="^fmtInt l^", offset="^fmtInt r)
+                    (field^" in "^ctype)
+                (fn () =>
+                    tryRun base src ""
+                    ifSome (fn (_, output) =>
+                               let val (_, r) =
+                                       splitl Char.isDigit (full output)
+                               in (scanInt output, scanInt $ string r)
+                               end))))
+          end
   end
 
   (***************************************************************************)
 
-  val isBigEndian = ref NONE : bool option ref
-  val charBit = ref NONE : bool option ref
-
-  fun cacheResult r f =
-      case !r of
-        SOME x => x
-      | NONE =>
-        let val result = f ()
-        in result before r := SOME result
-        end
-
   fun checkIsBigEndian () =
-      cacheResult isBigEndian
+      cache' (BOOL, "isBigEndian")
       (fn () =>
         let
           (* FIXME: already done at compilation of runtime *)
@@ -568,7 +600,7 @@ struct
         end)
 
   fun checkCharBitIs8 () =
-      cacheResult charBit
+      cache' (BOOL, "charBitIs8")
       (fn () => haveConstInt ("CHAR_BIT", ["limits.h"]) = SOME 8)
 
   (***************************************************************************)

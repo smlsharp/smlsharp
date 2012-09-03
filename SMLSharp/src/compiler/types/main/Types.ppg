@@ -677,7 +677,7 @@ struct
        * L2{ displayName varId +1 ":" +d ty()(btvEnv) }
        *)
       (*% @prefix formatWithoutType_
-       * @format({displayName, ty, varId}) displayName
+       * @format({displayName, ty, varId}) displayName varId
        *)
       {
         displayName : string,

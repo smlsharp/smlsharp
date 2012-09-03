@@ -19,6 +19,7 @@ Group is
 
         ../../systemdef/sources.cm
         ../../session/sources.cm (* use ChannelTypes *)
+        ../../control/sources.cm
         ../../util/sources.cm
         ../../env/sources.cm
         ../../absyn/sources.cm
@@ -26,7 +27,8 @@ Group is
         ../../types/sources.cm
         ../../objectfile/sources.cm
         ../../../instructions/compiler/sources.cm
-        ../../../primitives/primitives.cm
+        ../../../primitives/compiler/primitives.cm
+        ../../../primitives/compiler/constants.cm
 
         RAW_MEMORY.sig
         RawMemory.sml

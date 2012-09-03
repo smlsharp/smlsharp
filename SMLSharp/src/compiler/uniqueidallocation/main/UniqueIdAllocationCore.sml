@@ -29,6 +29,16 @@ local
 
   val debug = false
   fun printx x = if debug then print x else ()
+
+  fun conPathInfoToConInfo ({namePath,funtyCon,ty,tag,tyCon}:T.conPathInfo) =
+      {
+        displayName = NM.usrNamePathToString namePath, 
+        funtyCon = funtyCon, 
+        ty = ty, 
+        tag = tag, 
+        tyCon = tyCon
+      } : T.conInfo
+
 in
 
   fun tppatToTfppatList context tppatList =
@@ -87,7 +97,16 @@ in
       | TPPATCONSTANT (constant, ty, loc) =>
         (
          VIC.emptyVarIDEnv,
-         TFPPATCONSTANT (CT.fixConst(constant, ty, loc), ty, loc)
+         CT.fixConst {constTerm = fn x => TFPPATCONSTANT (x, ty, loc),
+                      recordTerm = fn (f,t) => TFPPATRECORD {fields=f, recordTy=t, loc=loc},
+                      conTerm = fn {con, instTyList, arg} =>
+                                   TFPPATDATACONSTRUCT
+                                     {conPat = conPathInfoToConInfo con,
+                                      instTyList=instTyList,
+                                      argPatOpt = arg,
+                                      patTy = ty,
+                                      loc = loc}}
+                    (constant, ty, loc)
         )
       | TPPATDATACONSTRUCT
           {conPat=conPathInfo as {namePath,funtyCon,ty,tag,tyCon},
@@ -249,7 +268,15 @@ in
         end
       | TPSIZEOF (ty, loc) => TFPSIZEOF (ty, loc)
       | TPCONSTANT (constant, ty, loc) =>
-        TFPCONSTANT (CT.fixConst (constant, ty, loc), loc)
+        CT.fixConst {constTerm = fn x => TFPCONSTANT (x, loc),
+                     recordTerm = fn (f,t) => TFPRECORD {fields=f, recordTy=t, loc=loc},
+                     conTerm = fn {con, instTyList, arg} =>
+                                  TFPDATACONSTRUCT
+                                    {con = conPathInfoToConInfo con,
+                                     instTyList=instTyList,
+                                     argExpOpt = arg,
+                                     loc = loc}}
+                    (constant, ty, loc)
       | TPGLOBALSYMBOL (name,kind,ty,loc) =>
         TFPGLOBALSYMBOL (name, kind, ty, loc)
       | TPVAR ({namePath = namePath, ty = ty}, loc) =>
@@ -629,6 +656,13 @@ in
         end
       | TPCAST (tpexp, ty, loc)  => TFPCAST(tpexpToTfpexp context tpexp,ty,loc)
       | TPERROR => raise Control.Bug "TPERROR passed to module compiler"
+
+      | TPSQLSERVER {server, schema, resultTy, loc} =>
+        TFPSQLSERVER
+          {server = map (fn (l,e) => (l,tpexpToTfpexp context e)) server,
+           schema = schema,
+           resultTy = resultTy,
+           loc = loc}
                          
   and tpdecToTfpdecs (context:UIAC.context) tpdec =
       case tpdec of

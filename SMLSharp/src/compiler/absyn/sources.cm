@@ -1,5 +1,6 @@
 Group
 	structure Absyn
+	structure AbsynSQL
 	structure AbsynFormatter
 	structure AbsynPickler
 	structure Fixity

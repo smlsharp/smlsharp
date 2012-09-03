@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: PATTERNCALCWITHTVARS.sig,v 1.24 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: PATTERNCALCWITHTVARS.sig,v 1.24.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 signature PATTERNCALCWITHTVARS = 
   sig
@@ -37,6 +37,31 @@ signature PATTERNCALCWITHTVARS =
       | PTTUPLE of ptexp list * Loc.loc
       | PTTYPED of ptexp * PatternCalcFlattened.ty * Loc.loc
       | PTVAR of NameMap.namePath * Loc.loc
+      | PTSQLSERVER of (string * ptexp) list * ty * Loc.loc
+      | PTSQLTABLE of string * Loc.loc
+      | PTSQLQUERY of ptexp * Loc.loc
+      | PTSQLSELECT of (string * ptexp) list * (string * ptexp) list
+                       * ptexp option
+                       * ptexp list option * ptexp list
+                       * (ptexp option * ptexp option)
+                       * string list option * string list option
+                       * Loc.loc
+      | PTSQLCOLUMN of string * string * Loc.loc
+      | PTSQLAPPM of string * string * ptexp list * loc
+      | PTSQLCOERCE of ptexp * loc
+      | PTSQLTYPED of ptexp * PatternCalcFlattened.ty * Loc.loc
+      | PTSQLINSERT of (string * ptexp) list * (string * PatternCalcFlattened.ty)
+                       * (string * ptexp) list * Loc.loc
+      | PTSQLDELETE of (string * ptexp) * (string * ptexp) list * ptexp option
+                       * (string * ptexp) lsit * Loc.loc
+      | PTSQLUPDATE of (string * ptexp * PatternCalcFlattened.ty)
+                       * (string * ptexp) list * (string * ptexp) list
+                       * ptexp option * (string * ptexp) list * Loc.loc
+      | PTSQLCREATETABLE of string * (string * ty) list * ptexp
+                            * (string * ty) list * Loc.loc
+      | PTSQLCREATETBLAS of string * ptexp * ptexp
+                            * (string * ty) list * Loc.loc
+
     datatype ffiArg
       = PTFFIARG of ptexp * PatternCalcFlattened.ty * Loc.loc
       | PTFFIARGSIZEOF of PatternCalcFlattened.ty * ptexp option * Loc.loc

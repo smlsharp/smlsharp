@@ -43,7 +43,6 @@ in
        funEnv = TY.emptyFunEnv
       } : topTypeContext
 
-
   local
     fun injectPathToTop path = 
         P.PSysStructure(P.externStrName, P.pathToUsrPath path)

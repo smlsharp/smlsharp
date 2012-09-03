@@ -288,13 +288,15 @@ val StandardC_errno : unit -> int
 val UnmanagedMemory_allocate : int -> unit ptr
 val UnmanagedMemory_release : unit ptr -> unit
 (*F UnmanagedMemory_sub,,"(unit) ptr -> byte",1,,IMLPrim_UnmanagedMemory_sub,effective *)
-val UnmanagedMemory_update : unit ptr * Word8.word -> unit
+(*F UnmanagedMemory_update,,"(unit) ptr * byte -> unit",2,,IMLPrim_UnmanagedMemory_update,effective *)
 (*F UnmanagedMemory_subWord,,"(unit) ptr -> word",1,,IMLPrim_UnmanagedMemory_subWord,effective *)
-val UnmanagedMemory_updateWord : unit ptr * word -> unit
+(*F UnmanagedMemory_updateWord,,"(unit) ptr * word -> unit",2,,IMLPrim_UnmanagedMemory_updateWord,effective *)
 (*F UnmanagedMemory_subInt,,"(unit) ptr -> int",1,,IMLPrim_UnmanagedMemory_subWord,effective *)
-val UnmanagedMemory_updateInt : unit ptr * int -> unit
+(*F UnmanagedMemory_updateInt,,"(unit) ptr * int -> unit",2,,IMLPrim_UnmanagedMemory_updateWord,effective *)
 (*F UnmanagedMemory_subReal,,"(unit) ptr -> real",1,,IMLPrim_UnmanagedMemory_subReal,effective *)
-val UnmanagedMemory_updateReal : unit ptr * real -> unit
+(*F UnmanagedMemory_updateReal,,"(unit) ptr * real -> unit",2,,IMLPrim_UnmanagedMemory_updateReal,effective *)
+(*F UnmanagedMemory_subPtr,,"['a.(('a)ptr)ptr -> ('a)ptr]",1,,IMLPrim_UnmanagedMemory_subWord,effective *)
+(*F UnmanagedMemory_updatePtr,,"['a.(('a)ptr)ptr * ('a)ptr -> unit]",2,,IMLPrim_UnmanagedMemory_updateWord,effective *)
 val UnmanagedMemory_import : unit ptr * int -> string
 val UnmanagedMemory_export : string * int * int -> unit ptr
 val UnmanagedString_size : unit ptr -> int

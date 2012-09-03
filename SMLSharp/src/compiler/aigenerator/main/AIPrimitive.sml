@@ -165,6 +165,77 @@ struct
       end
     | useCmp cmpPrim cmpOp _ =
       raise Control.Bug "invalid arity for comparison"
+            
+  fun advancePointer {dst, args=[arg1, arg2], argTys=[ty1, ty2],
+                      instSizes=[sz], instTags=[tag], loc} =
+      let
+        fun shiftAndAdd n =
+            let
+              val var1 = newVar I.UINT
+              val var2 = newVar I.SINT
+            in
+              [I.PrimOp1 {dst = var1,
+                          op1 = (I.Cast, I.SINT, I.UINT),
+                          arg = arg2,
+                          loc = loc},
+               I.PrimOp2 {dst = var1,
+                          op2 = (I.LShift, I.UINT, I.UINT, I.UINT),
+                          arg1 = I.Var var1,
+                          arg2 = I.UInt n,
+                          loc = loc},
+               I.PrimOp1 {dst = var2,
+                          op1 = (I.Cast, I.UINT, I.SINT),
+                          arg = I.Var var1,
+                          loc = loc},
+               I.PrimOp2 {dst = dst,
+                          op2 = (I.PointerAdvance,
+                                 I.CPOINTER, I.SINT, I.CPOINTER),
+                          arg1 = arg1,
+                          arg2 = I.Var var2,
+                          loc = loc}]
+            end
+      in
+        case sz of
+          I.UInt 0w1 =>
+          [
+            I.PrimOp2 {dst = dst,
+                       op2 = (I.PointerAdvance, I.CPOINTER, I.SINT, I.CPOINTER),
+                       arg1 = arg1,
+                       arg2 = arg2,
+                       loc = loc}
+          ]
+        | I.UInt 0w2 => shiftAndAdd 0w1
+        | I.UInt 0w4 => shiftAndAdd 0w2
+        | I.UInt 0w8 => shiftAndAdd 0w3
+        | I.UInt 0w16 => shiftAndAdd 0w4
+        | _ =>
+          let
+            val var1 = newVar I.UINT
+            val var2 = newVar I.SINT
+          in
+            [I.PrimOp1 {dst = var1,
+                        op1 = (I.Cast, I.SINT, I.UINT),
+                        arg = arg2,
+                        loc = loc},
+             I.PrimOp2 {dst = var1,
+                        op2 = (I.Mul, I.UINT, I.UINT, I.UINT),
+                        arg1 = I.Var var1,
+                        arg2 = sz,
+                        loc = loc},
+             I.PrimOp1 {dst = var2,
+                        op1 = (I.Cast, I.UINT, I.SINT),
+                        arg = I.Var var1,
+                        loc = loc},
+             I.PrimOp2 {dst = dst,
+                        op2 = (I.PointerAdvance,
+                               I.CPOINTER, I.SINT, I.CPOINTER),
+                        arg1 = arg1,
+                        arg2 = I.Var var2,
+                        loc = loc}]
+          end
+      end
+    | advancePointer _ =
+      raise Control.Bug "invalid arity for Ptr_advance"
 
   fun primEqual {dst, args = [arg1, arg2], argTys = [ty1, ty2],
                  instSizes = [sz], instTags = [tag], loc} =
@@ -371,12 +442,21 @@ struct
       | P.IntInf_mul => Ext "prim_IntInf_mul"
       | P.IntInf_neg => Ext "prim_IntInf_neg"
       | P.IntInf_sub => Ext "prim_IntInf_sub"
+      | P.Ptr_advance => Special advancePointer
       | P.Ptr_deref_int => Ext "prim_UnmanagedMemory_subInt"
       | P.Ptr_deref_real => Ext "prim_UnmanagedMemory_subReal"
       | P.Ptr_deref_float => raise Control.Bug "Ptr_deref_float"
       | P.Ptr_deref_word => Ext "prim_UnmanagedMemory_subWord"
       | P.Ptr_deref_char => Ext "prim_UnmanagedMemory_subByte"
       | P.Ptr_deref_byte => Ext "prim_UnmanagedMemory_subByte"
+      | P.Ptr_deref_ptr => Ext "prim_UnmanagedMemory_subWord"
+      | P.Ptr_store_int => Ext "prim_UnmanagedMemory_updateInt"
+      | P.Ptr_store_real => Ext "prim_UnmanagedMemory_updateReal"
+      | P.Ptr_store_float => raise Control.Bug "Ptr_store_float"
+      | P.Ptr_store_word => Ext "prim_UnmanagedMemory_updateWord"
+      | P.Ptr_store_char => Ext "prim_UnmanagedMemory_updateByte"
+      | P.Ptr_store_byte => Ext "prim_UnmanagedMemory_updateByte"
+      | P.Ptr_store_ptr => Ext "prim_UnmanagedMemory_updateWord"
 
       (* old primitive; never appear for native backend *)
       | P.RuntimePrim s => raise Control.Bug ("RuntimePrim " ^ s)

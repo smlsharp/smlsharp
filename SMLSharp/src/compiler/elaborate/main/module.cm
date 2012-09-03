@@ -8,10 +8,14 @@ Group is
 	../../control/sources.cm
 	../../env/sources.cm
 	../../name/sources.cm
+	../../util/sources.cm
 	../../usererror/sources.cm
 	../../absyn/sources.cm
 	../../patterncalc/sources.cm
 
 	ElaborateError.ppg.sml
+	ElaborateErrorSQL.ppg.sml
 	ELABORATOR.sig
+	ElaboratorUtils.sml
+	ElaboratorSQL.sml
 	Elaborator.sml

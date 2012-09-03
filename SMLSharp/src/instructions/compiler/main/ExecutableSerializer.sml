@@ -323,9 +323,11 @@ struct
 
         (* minor, major *)
         val _ =
-            BTSNet.serializeUInt16 (#minor Configuration.BinaryVersion) writer
+            BTSNet.serializeUInt16
+              (#minor SMLSharpConfiguration.BinaryVersion) writer
         val _ =
-            BTSNet.serializeUInt16 (#major Configuration.BinaryVersion) writer
+            BTSNet.serializeUInt16
+              (#major SMLSharpConfiguration.BinaryVersion) writer
 
         (* byteOrder *)
         val _ = if byteOrder <> SD.NativeByteOrder

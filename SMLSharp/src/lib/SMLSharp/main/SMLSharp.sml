@@ -17,5 +17,6 @@ struct
   structure Mutable = SMLSharpMutable
 *)
   structure Platform = SMLSharpPlatform
+  structure Configuration = SMLSharpConfiguration
 
 end;

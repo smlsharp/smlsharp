@@ -1,7 +1,7 @@
 (**
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori
- * @version $Id: TransFundecl.sml,v 1.16 2008/06/09 02:28:37 ohori Exp $
+ * @version $Id: TransFundecl.sml,v 1.16.6.6 2010/01/29 06:41:34 hiro-en Exp $
  *)
 structure TransFundecl : TRANS_FUNDECL = struct
 local
@@ -103,7 +103,9 @@ in
                           PLFFFIARGSIZEOF (ty, NONE, loc))
                       args,
                   retTy, loc)
-
+    | PLFSQLSERVER (str, schema, loc) =>
+      PLFSQLSERVER (map (fn (x,y) => (x,transExp y)) str, schema, loc)
+    | PLFSQLDBI (pat, exp, loc) => PLFSQLDBI (pat, transExp exp, loc)
   and transDecl pdecl = 
     case pdecl of
       PDFVAL (tvarList, plpatPlexpList, loc) =>

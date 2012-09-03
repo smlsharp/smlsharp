@@ -151,7 +151,10 @@ class FFIDefault
     static CALLBACKENTRYDECL(,3);
     static CALLBACKENTRYDECL(,4);
     static CALLBACKENTRYDECL(,5);
-    static void * const C_callbackEntries[5];
+    static CALLBACKENTRYDECL(,6);
+    static CALLBACKENTRYDECL(,7);
+    static CALLBACKENTRYDECL(,8);
+    static void * const C_callbackEntries[8];
 
   protected:
     FFIDefault() : FFI() {}
@@ -289,14 +292,20 @@ CALLBACKENTRY(2)
 CALLBACKENTRY(3)
 CALLBACKENTRY(4)
 CALLBACKENTRY(5)
+CALLBACKENTRY(6)
+CALLBACKENTRY(7)
+CALLBACKENTRY(8)
 
-#define NUM_CALLBACK_ENTRIES  5
+#define NUM_CALLBACK_ENTRIES  8
 void * const FFIDefault::C_callbackEntries[NUM_CALLBACK_ENTRIES] = {
     (void*)callbackEntry1,
     (void*)callbackEntry2,
     (void*)callbackEntry3,
     (void*)callbackEntry4,
     (void*)callbackEntry5,
+    (void*)callbackEntry6,
+    (void*)callbackEntry7,
+    (void*)callbackEntry8,
 };
 
 void *FFIDefault::callback(UInt32Value *entryPoint, Cell *env,

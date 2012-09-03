@@ -5,7 +5,7 @@
  *  Copyright (c) 2006, Tohoku University.
  * </p>
  * @author Atsushi Ohori 
- * @version $Id: ABSYN.sig,v 1.27 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: ABSYN.sig,v 1.27.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 signature ABSYN = 
 sig
@@ -110,6 +110,7 @@ sig
     | EXPFFIIMPORT of exp * ty * Loc.loc
     | EXPFFIEXPORT of exp * ty * Loc.loc
     | EXPFFIAPPLY of string list * exp * ffiArg list * ty * Loc.loc
+    | EXPSQL of (exp,pat,ty) AbsynSQL.exp * Loc.loc
   and ffiArg =
       FFIARG of exp * ty * Loc.loc
     | FFIARGSIZEOF of ty * exp option * Loc.loc

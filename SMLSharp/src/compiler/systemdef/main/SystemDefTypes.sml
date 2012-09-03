@@ -4,7 +4,7 @@
 structure SystemDefTypes =
 struct
 
-  datatype byteOrder = datatype Configuration.byteOrder
+  datatype byteOrder = datatype SMLSharpConfiguration.byteOrder
 
   fun byteOrderToWord LittleEndian = 0w0
     | byteOrderToWord BigEndian = 0w1

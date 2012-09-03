@@ -34,5 +34,7 @@ Group
 	structure YAStandAloneSessionNoLink
 
 	structure NativeStandAloneSession
+
+	signature SESSION
 is
 	main/module.cm

@@ -33,6 +33,14 @@ sig
   val priorityTyCon : Types.tyCon
   val expressionTyCon : Types.tyCon
 
+  val sqlServerConPathInfo : Types.conPathInfo
+  val sqlValueConPathInfo : Types.conPathInfo
+  val sqlDBIConPathInfo : Types.conPathInfo
+  val sqlServerTyCon : Types.tyCon
+  val sqlValueTyCon : Types.tyCon
+  val sqlDBITyCon : Types.tyCon
+  val toSQLOPrimInfo : Types.oprimInfo
+
   val boolty : Types.ty
   val exnty : Types.ty
   val exntagty : Types.ty
@@ -87,5 +95,9 @@ sig
 
   val assignPrimInfo : Types.primInfo
   val wordMulPrimInfo : Types.primInfo
+  val stringArrayPrimInfo : Types.primInfo
+  val stringCopyUnsafePrimInfo : Types.primInfo
+  val stringSizePrimInfo : Types.primInfo
+  val intAddPrimInfo : Types.primInfo
 
 end

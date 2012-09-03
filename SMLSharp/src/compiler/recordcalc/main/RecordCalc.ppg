@@ -100,6 +100,7 @@ struct
    * @formatter(optionalList) TermFormat.formatOptionalList
    * @formatter(declList) TermFormat.formatDeclList
    * @formatter(recordExp) TermFormat.formatRecordExp
+   * @formatter(enclosedSEnv) TermFormat.formatEnclosedSEnv
    * @formatter(option) TermFormat.formatOptionalOption
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
@@ -115,6 +116,7 @@ struct
    * @formatter(optionalList) TermFormat.formatOptionalList
    * @formatter(declList) TermFormat.formatDeclList
    * @formatter(recordExp) TermFormat.formatRecordExp
+   * @formatter(enclosedSEnv) TermFormat.formatEnclosedSEnv
    * @formatter(option) TermFormat.formatOptionalOption
    * @formatter(ifCons) TermFormat.formatIfCons
    * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
@@ -788,6 +790,28 @@ struct
        * this is used to coerce constructor type to a record type
        *)
       RCCAST of rcexp * ty * loc
+    | (*%
+       * @format(exp * ty * loc)
+       * L2 { exp()(btvEnv) +1 ":" +d ty()(btvEnv) }
+       *)
+      (*% @prefix formatWithoutType_
+       * @format(exp * ty * loc)
+       * exp()(btvEnv)
+       *)
+      RCSQL of rcsqlexp * ty * loc
+
+  and rcsqlexp =
+      (*%
+       * @format({server:str strs, schema:schema schemas})
+       * N0{ "_sqlserver" + strs(str)("," +) + ":"
+       *     + schemas:enclosedSEnv(schema()(btvEnv))("{",",","=","}") }
+       * @format:str(l * e) N0{ l + ":" + e()(btvEnv) }
+       *)
+      (*% @prefix formatWithoutType_
+       * @format({server:str strs, schema:schema schemas})
+       * "<<SQL>>"
+       *)
+      RCSQLSERVER of {server: (string * rcexp) list, schema: ty SEnv.map}
 
   and rcdecl =
       (*%

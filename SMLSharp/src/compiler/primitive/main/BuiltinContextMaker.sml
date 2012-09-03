@@ -13,6 +13,7 @@ structure BuiltinContextMaker : sig
         runtimeTy: RuntimeTypes.ty option,
         interoperable: RuntimeTypes.interoperableKind
       }
+    | TYPEALIAS of string
     | EXCEPTION of
       {
         hasArg: bool,
@@ -39,6 +40,8 @@ structure BuiltinContextMaker : sig
   val getTyCon : context * string -> Types.tyCon
   val getConPathInfo : context * string -> Types.conPathInfo
   val getExnPathInfo : context * string -> Types.exnPathInfo
+  val getOPrimInfo : context * string -> Types.oprimInfo
+  val getVarPathInfo : context * string -> Types.varPathInfo
   val define : context -> (string * decl) -> context
 end =
 struct
@@ -58,6 +61,7 @@ struct
        runtimeTy: RuntimeTypes.ty option,
        interoperable: RuntimeTypes.interoperableKind
       }
+    | TYPEALIAS of string
     | EXCEPTION of
       {
         hasArg: bool,
@@ -129,6 +133,16 @@ before print (conName^"\n")
         SOME (T.EXNID exnPathInfo) => exnPathInfo
       | _ => raise bug ("getExnPathInfo: not found: " ^ exnName)
 before print (exnName^"\n")
+
+  fun getOPrimInfo ({topVarEnv, ...}:context, varName) =
+      case SEnv.find (topVarEnv, varName) of
+        SOME (T.OPRIM oprimInfo) => oprimInfo
+      | _ => raise bug ("getOPrimInfo: not found: " ^ varName)
+
+  fun getVarPathInfo ({topVarEnv, ...}:context, varName) =
+      case SEnv.find (topVarEnv, varName) of
+        SOME (T.VARID varPathInfo) => varPathInfo
+      | _ => raise bug ("getVarPathInfo: not found: " ^ varName)
 
   val toExternPath = NameMap.injectPathToExternPath
   val toTopName = NameMap.usrNamePathToString
@@ -278,6 +292,28 @@ before print (exnName^"\n")
                 val interoperableKindMap =
                     TyConID.Map.insert (interoperableKindMap, tyConId,
                                         interoperable)
+              in
+                {oprimEnv = oprimEnv,
+                 topTyConEnv = topTyConEnv,
+                 topVarEnv = topVarEnv,
+                 basicNameMap = (tyNameMap, varNameMap, strNameMap),
+                 topVarIDEnv = topVarIDEnv,
+                 exceptionGlobalNameMap = exceptionGlobalNameMap,
+                 runtimeTyEnv = runtimeTyEnv,
+                 interoperableKindMap = interoperableKindMap}
+              end
+
+            | TYPEALIAS tyName =>
+              let
+                val tyCon =
+                    case SEnv.find (topTyConEnv, tyName) of
+                      SOME (T.TYCON {tyCon,...}) => tyCon
+                    | _ => raise bug ("TYPEREP: " ^ tyName)
+                val tyNameMap =
+                    SEnv.insert (tyNameMap, name, NameMap.NONDATATY namePath)
+                val topTyConEnv =
+                    SEnv.insert (topTyConEnv, toTopName namePath,
+                                 T.TYCON {tyCon=tyCon, datacon=SEnv.empty})
               in
                 {oprimEnv = oprimEnv,
                  topTyConEnv = topTyConEnv,

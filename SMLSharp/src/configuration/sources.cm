@@ -1,4 +1,5 @@
 Group
-	structure Configuration
+	structure SMLSharpConfiguration
 is
+	CONFIGURATION.sig
 	Configuration.sml

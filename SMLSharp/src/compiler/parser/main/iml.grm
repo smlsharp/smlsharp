@@ -1,7 +1,7 @@
 (* a grammar for the raw symtax of IML.
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori, Kiyoshi Yamatodani, Liu Bochao
- * @version $Id: iml.grm,v 1.69 2008/08/04 13:25:37 bochao Exp $
+ * @version $Id: iml.grm,v 1.69.6.8 2010/02/10 05:17:29 hiro-en Exp $
 
  * Ohori: 2007/11/11
  * WARNING: Large part of this file is copied to interface.grm.
@@ -108,9 +108,31 @@
     | WITHTYPE
     | WORD of Word32.word
 
+    | SQLSERVER
+    | SQLEVAL
+    | SQLEXEC
+    | SQL
+    | ASC
+    | DESC
+    | SELECT
+    | FROM
+    | INSERT
+    | INTO
+    | VALUES
+    | DELETE
+    | ORDER
+    | BY
+    | UPDATE
+    | SET
+    | DEFAULT
+
+
 %nonterm absnamespace of string list
        | appexp of Absyn.exp
+       | appexp_noSQL of Absyn.exp
        | atexp of Absyn.exp
+       | atexp_noVAR of Absyn.exp
+       | atexp_noSQL of Absyn.exp
        | atpat of Absyn.pat
        | apppat of Absyn.pat list
        | atty of Absyn.ty
@@ -136,7 +158,9 @@
        | expseq_comma of Absyn.exp list
        | expseq_semicolon of Absyn.exp list
        | expid of string list
+       | expid_noSQL of string list
        | exp of Absyn.exp
+       | expOrSQL of Absyn.exp
        | export of string list
        | exbinds of Absyn.exbind list
        | exbind of Absyn.exbind
@@ -150,6 +174,9 @@
        | funbindand of Absyn.funbind
        | funbindseq of Absyn.funbind list
        | id of string
+       | id_noEQ of string
+       | id_noEQSTAR of string
+       | id_noSQL of string
        | idseq of string list
        | int of BigInt.int
        | label of string
@@ -247,6 +274,24 @@
        | valdesc of (string * Absyn.ty) list
        | valbind of (Absyn.pat * Absyn.exp) list
 
+       | sql of Absyn.exp AbsynSQL.command
+       | sqlExp of Absyn.exp
+       | sqlExpAsList of string list * Absyn.exp list
+       | sqlExpList of Absyn.exp list
+       | sqlExpOrDefault of Absyn.exp option
+       | sqlExpOrDefaultList of Absyn.exp option list
+       | sqlLabelList of string list
+       | sqlInsertRowList of Absyn.exp option list list
+       | selectList of string list option * Absyn.exp list
+       | asNameOpt of string option 
+       | intoClause of string option 
+       | fromClause of (string * Absyn.exp) list
+       | whereClause of Absyn.exp option
+       | orderbyClause of {keyExp: Absyn.exp, orderAsc: bool} list
+       | orderbyList of {keyExp: Absyn.exp, orderAsc: bool} list
+       | sqlorder of bool
+       | setClause of string list * Absyn.exp list
+       | sqlserver of (string * Absyn.exp) list
 
 %name ML
 
@@ -267,7 +312,7 @@
 %%
 
 start : unit (Absyn.UNIT unit)
-      | exp (Absyn.UNIT
+      | expOrSQL (Absyn.UNIT
                  ([
                     Absyn.TOPDECSTR
                         (Absyn.COREDEC
@@ -275,9 +320,9 @@ start : unit (Absyn.UNIT unit)
                                   (nil,
                                    [
                                     (Absyn.PATID {opPrefix=false,id=["it"],loc=(Loc.nopos,Loc.nopos)}, 
-                                     exp)
+                                     expOrSQL)
                                     ],
-                                   (expleft,expright)),
+                                   (expOrSQLleft,expOrSQLright)),
                                   (Loc.nopos,Loc.nopos)),
                              (Loc.nopos,Loc.nopos))
                         ],
@@ -301,14 +346,38 @@ constant : int (Absyn.INT(int,(intleft,intright)))
 
 (**************** expression ***************************)
 
-id    : ID (ID)
-      | EQ ("=")
-      | ASTERISK ("*")
+id_noEQSTAR : ID (ID)
+            | SELECT ("select")
+            | FROM ("from")
+            | ORDER ("order")
+            | BY ("by")
+            | INSERT ("insert")
+            | INTO ("into")
+            | VALUES ("values")
+            | DELETE ("delete")
+            | ASC ("asc")
+            | DESC ("desc")
+            | UPDATE ("update")
+            | SET ("set")
+            | DEFAULT ("default")
+
+id_noEQ     : id_noEQSTAR (id_noEQSTAR)
+            | ASTERISK ("*")
+
+id          : id_noEQ (id_noEQ)
+            | EQ ("=")
+
+id_noSQL    : ID (ID)
+            | ASTERISK ("*")
+            | EQ ("=")
 
 expid : longid (longid)
- 
-atexp : constant (Absyn.EXPCONSTANT(constant,(constantleft,constantright)))
-      | expid (Absyn.EXPID(expid,(expidleft,expidright)))
+
+expid_noSQL : id_noSQL ([id_noSQL])
+            | id_noSQL PERIOD longid (id_noSQL :: longid)
+
+atexp_noVAR
+      : constant (Absyn.EXPCONSTANT(constant,(constantleft,constantright)))
       | OP expid (Absyn.EXPOPID(expid,(OPleft,expidright)))
       | LBRACE exprow RBRACE (Absyn.EXPRECORD(exprow,(LBRACEleft,RBRACEright)))
       | LBRACE RBRACE (Absyn.EXPCONSTANT(Absyn.UNITCONST(LBRACEleft,RBRACEright),(LBRACEleft,RBRACEright)))
@@ -327,7 +396,29 @@ atexp : constant (Absyn.EXPCONSTANT(constant,(constantleft,constantright)))
         (Absyn.EXPSEQ(exp :: expseq_semicolon,(LPARENleft,RPARENright)))
       | LET decseq_semicolon IN expseq_semicolon END
         (Absyn.EXPLET(decseq_semicolon,expseq_semicolon,(LETleft,ENDright)))
-      | LPAREN exp RPAREN (Absyn.replaceLoc(exp,(LPARENleft,RPARENright)))
+      | LPAREN expOrSQL RPAREN
+        (Absyn.replaceLoc(expOrSQL,(LPARENleft,RPARENright)))
+      | HASH id PERIOD label
+        (Absyn.EXPSQL
+          (AbsynSQL.SQLFIELDSELECT
+             (label, Absyn.EXPID ([id], (idleft, idright)),
+              (HASHleft, labelright)),
+           (HASHleft, labelright)))
+(*
+      | SQLTABLE label
+          (Absyn.EXPSQLTABLE(label,(SQLTABLEleft,labelright)))
+      | SQLCOLUMN label OF label
+          (Absyn.EXPSQLCOLUMN(label1,label2,(SQLCOLUMNleft,label2right)))
+      | HASH label PERIOD label
+          (Absyn.EXPSQLCOLUMN(label2,label1,(HASHleft,label2right)))
+*)
+
+atexp : atexp_noVAR (atexp_noVAR)
+      | expid (Absyn.EXPID(expid,(expidleft,expidright)))
+
+atexp_noSQL : atexp_noVAR (atexp_noVAR)
+            | expid_noSQL
+                (Absyn.EXPID(expid_noSQL,(expid_noSQLleft, expid_noSQLright)))
 
 label : id (id)
       | INT (BigInt.toString INT)
@@ -341,8 +432,8 @@ expseq_comma : exp COMMA exp ([exp1,exp2])
              | expseq_comma COMMA exp (expseq_comma @ [exp])
 
 (* equal or more than 1 exps *)
-expseq_semicolon : exp ([exp])
-        | expseq_semicolon SEMICOLON exp (expseq_semicolon @ [exp])
+expseq_semicolon : expOrSQL ([expOrSQL])
+        | expseq_semicolon SEMICOLON expOrSQL (expseq_semicolon @ [expOrSQL])
 
 appexp : atexp (Absyn.EXPAPP([atexp],(atexpleft,atexpright)))
        | appexp atexp
@@ -359,6 +450,44 @@ appexp : atexp (Absyn.EXPAPP([atexp],(atexpleft,atexpright)))
                            (n - 1, (Int.toString n, exp)::exprow))
                        (length expseq_comma, nil) expseq_comma),
              (appexpleft, RPARENright)))
+       | SQLEXEC atexp
+         (Absyn.EXPSQL
+            (AbsynSQL.SQLEXEC
+               (Absyn.EXPAPP ([atexp], (atexpleft, atexpright)),
+                (SQLEXECleft, atexpright)),
+             (SQLEXECleft, atexpright)))
+       | SQLEVAL atexp
+         (Absyn.EXPSQL
+            (AbsynSQL.SQLEVAL
+               (Absyn.EXPAPP ([atexp], (atexpleft, atexpright)),
+                (SQLEVALleft, atexpright)),
+             (SQLEVALleft, atexpright)))
+
+appexp_noSQL : atexp_noSQL
+                 (Absyn.EXPAPP([atexp_noSQL],
+                               (atexp_noSQLleft, atexp_noSQLright)))
+             | appexp_noSQL atexp_noSQL
+                 (let val loc = (appexp_noSQLleft, atexp_noSQLright)
+                  in case appexp_noSQL of
+                       Absyn.EXPAPP(l,_) => Absyn.EXPAPP(l@[atexp_noSQL], loc)
+                     | _ => Absyn.EXPAPP([appexp_noSQL,atexp_noSQL], loc)
+                  end)
+             | SQLEXEC atexp_noSQL
+               (Absyn.EXPSQL
+                  (AbsynSQL.SQLEXEC
+                     (Absyn.EXPAPP
+                        ([atexp_noSQL],
+                         (atexp_noSQLleft, atexp_noSQLright)),
+                      (SQLEXECleft, atexp_noSQLright)),
+                   (SQLEXECleft, atexp_noSQLright)))
+             | SQLEVAL atexp_noSQL
+               (Absyn.EXPSQL
+                  (AbsynSQL.SQLEVAL
+                     (Absyn.EXPAPP
+                        ([atexp_noSQL],
+                         (atexp_noSQLleft, atexp_noSQLright)),
+                      (SQLEVALleft, atexp_noSQLright)),
+                   (SQLEVALleft, atexp_noSQLright)))
 
 exp : appexp (appexp)
     | exp COLON ty (Absyn.EXPTYPED(exp,ty,(expleft,tyright)))
@@ -383,6 +512,34 @@ exp : appexp (appexp)
     | CASE exp OF match (Absyn.EXPCASE(exp,match,(CASEleft,matchright)))
     | FN match (Absyn.EXPFN(match,(FNleft,matchright)))
     | CAST LPAREN exp RPAREN (Absyn.EXPCAST(exp,(CASTleft,RPARENright)))
+    | SQLSERVER COLON ty
+        (Absyn.EXPSQL
+           (AbsynSQL.SQLSERVER(nil,ty,(SQLSERVERleft,tyright)),
+            (SQLSERVERleft,tyright)))
+    | SQLSERVER STRING COLON ty
+        (let
+           val const = Absyn.STRING(STRING,(STRINGleft,STRINGright))
+           val constExp = Absyn.EXPCONSTANT(const,(STRINGleft,STRINGright))
+           val loc = (SQLSERVERleft,tyright)
+         in
+           Absyn.EXPSQL (AbsynSQL.SQLSERVER([("",constExp)],ty,loc), loc)
+         end)
+    | SQLSERVER LPAREN atexp RPAREN COLON ty
+        (Absyn.EXPSQL
+           (AbsynSQL.SQLSERVER([("",atexp)],ty,(SQLSERVERleft,tyright)),
+            (SQLSERVERleft,tyright)))
+    | SQLSERVER sqlserver COLON ty
+        (Absyn.EXPSQL
+           (AbsynSQL.SQLSERVER(sqlserver,ty,(SQLSERVERleft,tyright)),
+            (SQLSERVERleft,tyright)))
+
+expOrSQL : exp (exp)
+         | SQL pat DARROW sql
+             (Absyn.EXPSQL
+                (AbsynSQL.SQLFN (pat, sql, (SQLleft, sqlright)),
+                 (SQLleft, sqlright)))
+
+sqlserver : LPAREN exprow RPAREN (exprow)
 
 (*
 match : mrule                        ([mrule])
@@ -403,6 +560,98 @@ match : pat DARROW exp                ([(pat,exp)])
       | pat DARROW exp BAR match ((pat,exp)::match)
 
 (* end of expression *)
+
+(*************************** sql ********************************)
+
+sql : SELECT selectList intoClause fromClause whereClause orderbyClause
+        (AbsynSQL.SQLSELECT {selectListExps = #2 selectList,
+                             selectLabels = #1 selectList,
+                             selectName = intoClause,
+                             fromClause = fromClause,
+                             whereClause = whereClause,
+                             orderByClause = orderbyClause,
+                             loc = (SELECTleft, orderbyClauseright)})
+    | INSERT INTO HASH id PERIOD label LPAREN sqlLabelList RPAREN
+      VALUES sqlInsertRowList
+        (AbsynSQL.SQLINSERT {table = (id, label),
+                             insertRows = sqlInsertRowList,
+                             insertLabels = sqlLabelList,
+                             loc = (INSERTleft, sqlInsertRowListright)})
+    | DELETE FROM HASH id PERIOD label asNameOpt whereClause
+        (AbsynSQL.SQLDELETE {table = (id, label),
+                             tableName = asNameOpt,
+                             whereClause = whereClause,
+                             loc = (DELETEleft, whereClauseright)})
+    | UPDATE HASH id PERIOD label asNameOpt setClause fromClause whereClause
+        (AbsynSQL.SQLUPDATE {table = (id, label),
+                             tableName = asNameOpt,
+                             setListExps = #2 setClause,
+                             setLabels = #1 setClause,
+                             fromClause = fromClause,
+                             whereClause = whereClause,
+                             loc = (UPDATEleft, whereClauseright)})
+
+sqlExp : appexp_noSQL (appexp_noSQL)
+(*       | sqlExp COLON ty ()*)
+       | sqlExp ANDALSO sqlExp
+           (Absyn.EXPCONJUNCTION(sqlExp1,sqlExp2,(sqlExp1left,sqlExp2right)))
+       | sqlExp ORELSE sqlExp
+           (Absyn.EXPDISJUNCTION(sqlExp1,sqlExp2,(sqlExp1left,sqlExp2right)))
+
+asNameOpt : (* none *) (NONE)
+          | AS id (SOME id)
+
+intoClause : (* none *) (NONE)
+           | INTO id (SOME id)
+
+sqlExpAsList : sqlExp AS id (([id], [sqlExp]))
+             | sqlExp AS id COMMA sqlExpAsList
+                 ((id :: #1 sqlExpAsList, sqlExp :: #2 sqlExpAsList))
+
+sqlExpList : sqlExp ([sqlExp])
+           | sqlExp COMMA sqlExpList (sqlExp::sqlExpList)
+
+sqlExpOrDefault : sqlExp (SOME sqlExp)
+                | DEFAULT (NONE)
+
+sqlExpOrDefaultList : sqlExpOrDefault ([sqlExpOrDefault])
+                    | sqlExpOrDefault COMMA sqlExpOrDefaultList
+                        (sqlExpOrDefault::sqlExpOrDefaultList)
+
+sqlLabelList : label ([label])
+             | label COMMA sqlLabelList (label::sqlLabelList)
+
+sqlInsertRowList : LPAREN sqlExpOrDefaultList RPAREN ([sqlExpOrDefaultList])
+                 | LPAREN sqlExpOrDefaultList RPAREN COMMA sqlInsertRowList
+                     (sqlExpOrDefaultList :: sqlInsertRowList)
+
+selectList : sqlExpAsList ((SOME (#1 sqlExpAsList), #2 sqlExpAsList))
+           | sqlExpList ((NONE, sqlExpList))
+(*           | LPAREN sqlExpAsList RPAREN (sqlExpAsList)*)
+(*           | LBRACE exprow RBRACE (exprow)*)
+
+fromClause : (* none *) ([])
+           | FROM sqlExpAsList (ListPair.zip sqlExpAsList)
+
+whereClause : (* none *) (NONE)
+            | WHERE sqlExp (SOME sqlExp)
+
+orderbyClause : (* none *) ([])
+              | ORDER BY orderbyList (orderbyList)
+
+orderbyList : sqlExp sqlorder
+                ([{keyExp=sqlExp, orderAsc=sqlorder}])
+            | sqlExp sqlorder COMMA orderbyList
+                ({keyExp=sqlExp, orderAsc=sqlorder} :: orderbyList)
+
+sqlorder : (* none *)  (true)
+         | ASC         (false)
+         | DESC        (false)
+
+setClause : SET label EQ sqlExp
+              (([label], [sqlExp]))
+          | SET LPAREN sqlLabelList RPAREN EQ LPAREN sqlExpList RPAREN
+              ((sqlLabelList, sqlExpList))
 
 (*************************** dec ********************************)
 (*decs : dec      ([dec])
@@ -541,8 +790,8 @@ kinded_tyvarseq_without_paren : kinded_tyvar ([kinded_tyvar])
                 | kinded_tyvar COMMA kinded_tyvarseq_without_paren (kinded_tyvar::kinded_tyvarseq_without_paren)
 (* kinded tyvar end *)
 
-valbind : pat EQ exp ([(pat,exp)])
-        | pat EQ exp AND valbind  ((pat,exp)::valbind)
+valbind : pat EQ expOrSQL ([(pat,expOrSQL)])
+        | pat EQ expOrSQL AND valbind  ((pat,expOrSQL)::valbind)
 
 fvalbind : frules ([frules])
          | frules AND fvalbind (frules::fvalbind)
@@ -550,14 +799,12 @@ fvalbind : frules ([frules])
 frules : frule ([frule])
       | frule BAR frules (frule::frules)
 
-frule : apppat EQ exp (apppat, NONE, exp)
-      | apppat COLON ty EQ exp (apppat, SOME ty, exp)
+frule : apppat EQ expOrSQL (apppat, NONE, expOrSQL)
+      | apppat COLON ty EQ expOrSQL (apppat, SOME ty, expOrSQL)
 
 (*****************  pattern ***********************)
-patid : ID ([ID])
-      | ASTERISK (["*"])
-      | ID PERIOD longid (ID :: longid)
-      | ASTERISK PERIOD longid ("*" :: longid)
+patid : id_noEQ ([id_noEQ])
+      | id_noEQ PERIOD longid (id_noEQ :: longid)
    
 atpat : UNDERBAR (Absyn.PATWILD((UNDERBARleft,UNDERBARright)))
       | patid
@@ -627,7 +874,7 @@ patseq_comma : pat COMMA pat ([pat1,pat2])
 (* end of pattern *)
 
 (****************  types *********************)
-tycon : ID (ID)
+tycon : id_noEQSTAR (id_noEQSTAR)
       | EQ ("=")
 
 tyrow : label COLON ty ([(label,ty)])
@@ -647,8 +894,8 @@ tyseq : ty1 ([ty1])
 tyseq_comma : ty COMMA ty ([ty1,ty2])
             | ty COMMA tyseq_comma (ty::tyseq_comma)
 
-tyid : ID ([ID])
-     | ID PERIOD longid (ID :: longid)
+tyid : id_noEQSTAR ([id_noEQSTAR])
+     | id_noEQSTAR PERIOD longid (id_noEQSTAR :: longid)
 
 ty1 : ty0 (ty0)
     | tyseq tyid (Absyn.TYCONSTRUCT(tyseq,tyid,(tyseqleft,tyidright)))
@@ -747,8 +994,8 @@ ffiFunty : ffiFunArg ARROW ffity
          | ffiattr ffiFunArg ARROW ffity
            (Absyn.TYFFI(Absyn.defaultFFIAttributes,ffiattr,ffiFunArg,ffity,(ffiFunArgleft,ffityright)))
 
-ffiattrseq : ID ([ID])
-           | ID COMMA ffiattrseq (ID::ffiattrseq)
+ffiattrseq : id ([id])
+           | id COMMA ffiattrseq (id::ffiattrseq)
 
 ffiattr : CDECL      (["cdecl"])
         | STDCALL    (["stdcall"])
@@ -968,43 +1215,43 @@ strdesc : id COLON sigexp ([(id,sigexp)])
 funbindseq : funbind ([funbind])
            | funbindand  funbindseq (funbindand::funbindseq)    
                   
-funbind : ID LPAREN ID COLON sigexp RPAREN EQ strexp
+funbind : id LPAREN id COLON sigexp RPAREN EQ strexp
                 (Absyn.FUNBINDNONOBSERV
-                     (ID1,ID2,sigexp,strexp,(ID1left,strexpright)))
-        | ID LPAREN ID COLON sigexp RPAREN COLON sigexp EQ strexp
+                     (id1,id2,sigexp,strexp,(id1left,strexpright)))
+        | id LPAREN id COLON sigexp RPAREN COLON sigexp EQ strexp
                 (Absyn.FUNBINDTRAN
-                     (ID1,ID2,sigexp1,sigexp2,strexp,(ID1left,strexpright))) 
-        | ID LPAREN ID COLON sigexp RPAREN OPAQUE sigexp EQ strexp
+                     (id1,id2,sigexp1,sigexp2,strexp,(id1left,strexpright))) 
+        | id LPAREN id COLON sigexp RPAREN OPAQUE sigexp EQ strexp
                 (Absyn.FUNBINDOPAQUE
-                     (ID1,ID2,sigexp1,sigexp2,strexp,(ID1left,strexpright))) 
-        | ID LPAREN spec RPAREN EQ strexp
+                     (id1,id2,sigexp1,sigexp2,strexp,(id1left,strexpright))) 
+        | id LPAREN spec RPAREN EQ strexp
                 (Absyn.FUNBINDSPECNONOBSERV
-                     (ID,spec,strexp,(IDleft,strexpright)))
-        | ID LPAREN spec RPAREN COLON sigexp EQ strexp
+                     (id,spec,strexp,(idleft,strexpright)))
+        | id LPAREN spec RPAREN COLON sigexp EQ strexp
                 (Absyn.FUNBINDSPECTRAN
-                     (ID,spec,sigexp,strexp,(IDleft,strexpright)))
-        | ID LPAREN spec RPAREN OPAQUE sigexp EQ strexp
+                     (id,spec,sigexp,strexp,(idleft,strexpright)))
+        | id LPAREN spec RPAREN OPAQUE sigexp EQ strexp
                 (Absyn.FUNBINDSPECOPAQUE
-                     (ID,spec,sigexp,strexp,(IDleft,strexpright)))
+                     (id,spec,sigexp,strexp,(idleft,strexpright)))
 
-funbindand : ID LPAREN ID COLON sigexp RPAREN EQ strexpand
+funbindand : id LPAREN id COLON sigexp RPAREN EQ strexpand
                 (Absyn.FUNBINDNONOBSERV
-                     (ID1,ID2,sigexp,strexpand,(ID1left,strexpandright)))
-        | ID LPAREN ID COLON sigexp RPAREN COLON sigexp EQ strexpand
+                     (id1,id2,sigexp,strexpand,(id1left,strexpandright)))
+        | id LPAREN id COLON sigexp RPAREN COLON sigexp EQ strexpand
                 (Absyn.FUNBINDTRAN
-                     (ID1,ID2,sigexp1,sigexp2,strexpand,(ID1left,strexpandright))) 
-        | ID LPAREN ID COLON sigexp RPAREN OPAQUE sigexp EQ strexpand
+                     (id1,id2,sigexp1,sigexp2,strexpand,(id1left,strexpandright))) 
+        | id LPAREN id COLON sigexp RPAREN OPAQUE sigexp EQ strexpand
                 (Absyn.FUNBINDOPAQUE
-                     (ID1,ID2,sigexp1,sigexp2,strexpand,(ID1left,strexpandright))) 
-        | ID LPAREN spec RPAREN EQ strexpand
+                     (id1,id2,sigexp1,sigexp2,strexpand,(id1left,strexpandright))) 
+        | id LPAREN spec RPAREN EQ strexpand
                 (Absyn.FUNBINDSPECNONOBSERV
-                     (ID,spec,strexpand,(IDleft,strexpandright)))
-        | ID LPAREN spec RPAREN COLON sigexp EQ strexpand
+                     (id,spec,strexpand,(idleft,strexpandright)))
+        | id LPAREN spec RPAREN COLON sigexp EQ strexpand
                 (Absyn.FUNBINDSPECTRAN
-                     (ID,spec,sigexp,strexpand,(IDleft,strexpandright)))
-        | ID LPAREN spec RPAREN OPAQUE sigexp EQ strexpand
+                     (id,spec,sigexp,strexpand,(idleft,strexpandright)))
+        | id LPAREN spec RPAREN OPAQUE sigexp EQ strexpand
                 (Absyn.FUNBINDSPECOPAQUE
-                     (ID,spec,sigexp,strexpand,(IDleft,strexpandright)))
+                     (id,spec,sigexp,strexpand,(idleft,strexpandright)))
 
 (*****************************top level declarations**************************)
 

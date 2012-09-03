@@ -16,5 +16,6 @@ sig
   structure Mutable : SMLSHARP_MUTABLE
 *)
   structure Platform : SMLSHARP_PLATFORM
+  structure Configuration : SMLSHARP_CONFIGURATION
 
 end;

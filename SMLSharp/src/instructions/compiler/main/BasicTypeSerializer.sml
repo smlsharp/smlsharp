@@ -11,7 +11,7 @@ struct
   type 't serializer = 't -> writer -> unit
   type 't deserializer = reader -> 't
 
-  val byteOrder = Configuration.NativeByteOrder
+  val byteOrder = SMLSharpConfiguration.NativeByteOrder
 
   val (serializeUInt8,
        serializeSInt8,

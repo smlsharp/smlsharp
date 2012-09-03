@@ -1,0 +1,4 @@
+Group
+	structure SQLCompilation
+is
+	main/module.cm

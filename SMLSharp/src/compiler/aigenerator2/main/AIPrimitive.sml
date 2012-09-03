@@ -215,6 +215,77 @@ struct
     | useCmp cmpPrim cmpOp _ =
       raise Control.Bug "invalid arity for comparison"
 
+  fun advancePointer {dst, args=[arg1, arg2], argTys=[ty1, ty2],
+                      instSizes=[sz], instTags=[tag], loc} =
+      let
+        fun shiftAndAdd n =
+            let
+              val var1 = newVar I.UINT
+              val var2 = newVar I.SINT
+            in
+              [I.PrimOp1 {dst = var1,
+                          op1 = (I.Cast, I.SINT, I.UINT),
+                          arg = arg2,
+                          loc = loc},
+               I.PrimOp2 {dst = var1,
+                          op2 = (I.LShift, I.UINT, I.UINT, I.UINT),
+                          arg1 = I.Var var1,
+                          arg2 = I.UInt n,
+                          loc = loc},
+               I.PrimOp1 {dst = var2,
+                          op1 = (I.Cast, I.UINT, I.SINT),
+                          arg = I.Var var1,
+                          loc = loc},
+               I.PrimOp2 {dst = dst,
+                          op2 = (I.PointerAdvance,
+                                 I.CPOINTER, I.SINT, I.CPOINTER),
+                          arg1 = arg1,
+                          arg2 = I.Var var2,
+                          loc = loc}]
+            end
+      in
+        case sz of
+          I.UInt 0w1 =>
+          [
+            I.PrimOp2 {dst = dst,
+                       op2 = (I.PointerAdvance, I.CPOINTER, I.SINT, I.CPOINTER),
+                       arg1 = arg1,
+                       arg2 = arg2,
+                       loc = loc}
+          ]
+        | I.UInt 0w2 => shiftAndAdd 0w1
+        | I.UInt 0w4 => shiftAndAdd 0w2
+        | I.UInt 0w8 => shiftAndAdd 0w3
+        | I.UInt 0w16 => shiftAndAdd 0w4
+        | _ =>
+          let
+            val var1 = newVar I.UINT
+            val var2 = newVar I.SINT
+          in
+            [I.PrimOp1 {dst = var1,
+                        op1 = (I.Cast, I.SINT, I.UINT),
+                        arg = arg2,
+                        loc = loc},
+             I.PrimOp2 {dst = var1,
+                        op2 = (I.Mul, I.UINT, I.UINT, I.UINT),
+                        arg1 = I.Var var1,
+                        arg2 = sz,
+                        loc = loc},
+             I.PrimOp1 {dst = var2,
+                        op1 = (I.Cast, I.UINT, I.SINT),
+                        arg = I.Var var1,
+                        loc = loc},
+             I.PrimOp2 {dst = dst,
+                        op2 = (I.PointerAdvance,
+                               I.CPOINTER, I.SINT, I.CPOINTER),
+                        arg1 = arg1,
+                        arg2 = I.Var var2,
+                        loc = loc}]
+          end
+      end
+    | advancePointer _ =
+      raise Control.Bug "invalid arity for Ptr_advance"
+
   fun primEqual {dst, args = [arg1, arg2], argTys = [ty1, ty2],
                  instSizes = [sz], instTags = [tag], loc} =
       if ty1 <> ty2
@@ -590,12 +661,21 @@ struct
       | P.IntInf_mul => Ext{name="prim_IntInf_mul", alloc=true}
       | P.IntInf_neg => Ext{name="prim_IntInf_neg", alloc=true}
       | P.IntInf_sub => Ext{name="prim_IntInf_sub", alloc=true}
+      | P.Ptr_advance => Special advancePointer
       | P.Ptr_deref_int => Ext{name="prim_UnmanagedMemory_subInt", alloc=false}
       | P.Ptr_deref_real => Ext{name="prim_UnmanagedMemory_subReal",alloc=false}
       | P.Ptr_deref_float => raise Control.Bug "Ptr_deref_float"
       | P.Ptr_deref_word => Ext{name="prim_UnmanagedMemory_subWord",alloc=false}
       | P.Ptr_deref_char => Ext{name="prim_UnmanagedMemory_subByte", alloc=false}
       | P.Ptr_deref_byte => Ext{name="prim_UnmanagedMemory_subByte", alloc=false}
+      | P.Ptr_deref_ptr => Ext{name="prim_UnmanagedMemory_subPtr", alloc=false}
+      | P.Ptr_store_int => Ext{name="prim_UnmanagedMemory_updateInt", alloc=false}
+      | P.Ptr_store_real => Ext{name="prim_UnmanagedMemory_updateReal",alloc=false}
+      | P.Ptr_store_float => raise Control.Bug "Ptr_store_float"
+      | P.Ptr_store_word => Ext{name="prim_UnmanagedMemory_updateWord",alloc=false}
+      | P.Ptr_store_char => Ext{name="prim_UnmanagedMemory_updateByte", alloc=false}
+      | P.Ptr_store_byte => Ext{name="prim_UnmanagedMemory_updateByte", alloc=false}
+      | P.Ptr_store_ptr => Ext{name="prim_UnmanagedMemory_updatePtr", alloc=false}
 
       (* old primitive; never appear for native backend *)
       | P.RuntimePrim _ => raise Control.Bug "RuntimePrim"
@@ -720,12 +800,21 @@ struct
       | P.IntInf_mul => NONE
       | P.IntInf_neg => NONE
       | P.IntInf_sub => NONE
+      | P.Ptr_advance => NONE
       | P.Ptr_deref_int => NONE
       | P.Ptr_deref_real => NONE
       | P.Ptr_deref_float => NONE
       | P.Ptr_deref_word => NONE
       | P.Ptr_deref_char => NONE
       | P.Ptr_deref_byte => NONE
+      | P.Ptr_deref_ptr => NONE
+      | P.Ptr_store_int => NONE
+      | P.Ptr_store_real => NONE
+      | P.Ptr_store_float => NONE
+      | P.Ptr_store_word => NONE
+      | P.Ptr_store_char => NONE
+      | P.Ptr_store_byte => NONE
+      | P.Ptr_store_ptr => NONE
       | P.RuntimePrim _ => NONE
 
   fun transform {prim,

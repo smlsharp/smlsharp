@@ -208,7 +208,7 @@ struct
                   end_try
             in
               if doAssemble then
-                (try (fn _ => system (Configuration.CC ^ " " ^
+                (try (fn _ => system (SMLSharpConfiguration.CC ^ " " ^
                                       !Control.CFLAGS ^ " -c " ^ asmfile ^
                                       " -o " ^ objfile))
                  if_error (fn _ => rm_f [objfile])
@@ -222,8 +222,8 @@ struct
         fun link (pre, post) files =
             let
               val maxSize = maxCommandLineSize - (size pre + size post)
-              val preLD = Configuration.LD ^ " " ^
-                          Configuration.LDFLAGS ^ " " ^
+              val preLD = SMLSharpConfiguration.LD ^ " " ^
+                          SMLSharpConfiguration.LDFLAGS ^ " " ^
                           !Control.LDFLAGS ^ " " ^ " -r "
 
               fun loop (nil, linked) = loop (linked, nil)
@@ -251,7 +251,7 @@ struct
         fun archive outputFilename files =
             let
               val _ = rm_f [outputFilename]
-              val pre = Configuration.AR ^ " qc " ^ outputFilename ^ " "
+              val pre = SMLSharpConfiguration.AR ^ " qc " ^ outputFilename ^ " "
               val maxSize = maxCommandLineSize - size pre
               fun loop nil = ()
                 | loop args =
@@ -306,22 +306,22 @@ struct
             in
               case compileMode of
                 Executable =>
-                link (Configuration.CC ^ " " ^
-                      Configuration.LDFLAGS ^
-                      " -L" ^ Configuration.LibDirectory ^ " " ^
+                link (SMLSharpConfiguration.CC ^ " " ^
+                      SMLSharpConfiguration.LDFLAGS ^
+                      " -L" ^ SMLSharpConfiguration.LibDirectory ^ " " ^
                       !Control.LDFLAGS ^ " " ^
                       entry ^ prelude,
-                      " -lsmlsharp " ^ Configuration.LIBS ^
+                      " -lsmlsharp " ^ SMLSharpConfiguration.LIBS ^
                       " -o " ^ outputFileName)
                      objfiles
               | StaticLibrary =>
                 (
                   archive outputFileName objfiles;
-                  system (Configuration.RANLIB ^ " " ^ outputFileName)
+                  system (SMLSharpConfiguration.RANLIB ^ " " ^ outputFileName)
                 )
               | ObjectFile _ =>
-                link (Configuration.LD ^ " " ^
-                      Configuration.LDFLAGS ^ " " ^
+                link (SMLSharpConfiguration.LD ^ " " ^
+                      SMLSharpConfiguration.LDFLAGS ^ " " ^
                       !Control.LDFLAGS ^ " " ^ " -r ",
                       " -o " ^ outputFileName)
                      objfiles

@@ -3,7 +3,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: TypedCalc.ppg,v 1.36 2008/08/06 17:23:40 ohori Exp $
+ * @version $Id: TypedCalc.ppg,v 1.36.6.7 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure TypedCalc : TYPEDCALC = struct
 
@@ -180,6 +180,7 @@ structure TypedCalc : TYPEDCALC = struct
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
+ * @formatter(genericSmapTy) SmlppgUtil.formatGenericSmapTy
  * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
  * @formatter(tyBindInfo) Types.format_tyBindInfo
  * @formatter(format_pathdot) Path.format_pathWithDotend
@@ -576,6 +577,15 @@ structure TypedCalc : TYPEDCALC = struct
       this is used to coerce constructor type to a record type
       *)
     TPCAST of tpexp * ty * loc
+
+  | (*%
+     * @format({server:str strs, schema:schema schemas:genericSmapTy, resultTy, loc})
+     * N0{ "_sqlserver" + strs(str)("," +) + ":"
+     *     + "{" schemas(schema()(btvEnv))(":", ",", "*") "}" }
+     * @format:str(l * e) N0{ l + ":" + e()(btvEnv) }
+     *)
+    TPSQLSERVER of {server: (string * tpexp) list, schema: ty SEnv.map,
+                    resultTy: ty, loc: loc}
 
  and tpdecl 
    = (*%

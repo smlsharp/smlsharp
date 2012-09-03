@@ -34,6 +34,19 @@ sig
    *)
   val logging : bool -> unit
 
+  (**
+   * set "use cache" flag.
+   * If true, CConfig reads and writes "cconfig.cache" file as a cache
+   * of check results.
+   * Default is true.
+   *)
+  val useCache : bool -> unit
+
+  (**
+   * write check results to "cconfig.cache" file.
+   *)
+  val saveCache : unit -> unit
+                        
   (***************************************************************************)
 
   (**

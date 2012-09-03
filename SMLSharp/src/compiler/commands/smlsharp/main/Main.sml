@@ -102,25 +102,25 @@ struct
   val _ = C.switchTrace := false
 
   (* use the standard preludes. *)
-  val minimumPreludeFileName = Configuration.MinimumPreludeFileName
-  val PreludeFileName = Configuration.PreludeFileName
-  val CompiledPreludeFileName = Configuration.CompiledPreludeFileName
+  val minimumPreludeFileName = SMLSharpConfiguration.MinimumPreludeFileName
+  val PreludeFileName = SMLSharpConfiguration.PreludeFileName
+  val CompiledPreludeFileName = SMLSharpConfiguration.CompiledPreludeFileName
   val DefaultPreludeFile = Unspecified
 (*
       Source (if !useBasis then BasisFileName else minimumPreludeFileName)
 *)
 
   val DefaultObjectFileName = "a.sme"
-  val InstallLibDirectory = Configuration.LibDirectory
+  val InstallLibDirectory = SMLSharpConfiguration.LibDirectory
   val LibPathEnvVarName = "SMLSHARP_LIB_PATH"
   val ProductName = "SML#"
-  val Version = Configuration.Version
+  val Version = SMLSharpConfiguration.Version
   fun VersionInfoMessage () =
       let
         val {cpu, manufacturer, ossys, ...} = Control.targetInfo ()
       in
         ProductName ^ " " ^ Version
-        ^ " (" ^ Configuration.ReleaseDate
+        ^ " (" ^ SMLSharpConfiguration.ReleaseDate
         ^ " " ^ cpu ^ "-" ^ manufacturer ^ "-" ^ ossys ^ ")"
       end
 
@@ -418,7 +418,8 @@ struct
                 arguments
 
         fun processOpt CompileOnly = #mode parameters := CompileOnlyMode
-          | processOpt Native = C.targetPlatform := Configuration.NativeTarget
+          | processOpt Native =
+            C.targetPlatform := SMLSharpConfiguration.NativeTarget
           | processOpt (CompiledPrelude fileName) =
             (#preludeFileName parameters) := Compiled fileName
           | processOpt (Control arg) =
@@ -977,8 +978,9 @@ struct
           (case (#cpu (Control.targetInfo ()), !(#preludeFileName parameters))
             of ("", Unspecified) => Compiled CompiledPreludeFileName
              | ("newvm", Unspecified) =>
-               Compiled (OS.Path.joinDirFile {dir=Configuration.LibDirectory,
-                                              file="yaprelude.smo"})
+               Compiled (OS.Path.joinDirFile
+                           {dir=SMLSharpConfiguration.LibDirectory,
+                            file="yaprelude.smo"})
              | (_, Unspecified) => Compiled "ntprelude.smc"
              | (_, x) => x)
 

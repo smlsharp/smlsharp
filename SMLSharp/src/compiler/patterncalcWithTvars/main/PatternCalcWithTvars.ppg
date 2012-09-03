@@ -4,7 +4,7 @@
  * @copyright (c) 2006, Tohoku University.
  * @author Atsushi Ohori 
  * @author Liu Bochao
- * @version $Id: PatternCalcWithTvars.ppg,v 1.28 2008/08/24 03:54:41 ohori Exp $
+ * @version $Id: PatternCalcWithTvars.ppg,v 1.28.6.8 2010/02/10 05:17:29 hiro-en Exp $
  *)
 structure PatternCalcWithTvars = 
 struct
@@ -196,6 +196,18 @@ in
       *     N0{ "_ffiapply" + cconv + exp + "(" args(arg)("," +) ")" + ":" + ty}
       *)
      PTFFIAPPLY of ffiAttributes * ptexp * ffiArg list * ty * Loc.loc
+
+   | (*%
+      * @format(str strs * ty * loc)
+      * N0{ "_sqlserver" + strs(str)("," +) + ":" + ty }
+      * @format:str(l * e) N0{ l + "," + e }
+      *)
+     PTSQLSERVER of (string * ptexp) list * ty * Loc.loc
+   | (*%
+      * @format(pat * exp * loc)
+      * "_sqldbi" + pat + "in" + exp
+      *)
+     PTSQLDBI of ptpat * ptexp * Loc.loc
 
  and ffiArg =
     (*%
@@ -528,6 +540,8 @@ and pttopdec =
    | PTFFIIMPORT(_, _, loc) => loc
    | PTFFIEXPORT(_, _, loc) => loc
    | PTFFIAPPLY(_, _, _, _, loc) => loc
+   | PTSQLSERVER (_,_,loc) => loc
+   | PTSQLDBI (_,_,loc) => loc
 
  fun getLocDec ptdecl =
      case ptdecl of
