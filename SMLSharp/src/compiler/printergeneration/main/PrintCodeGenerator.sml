@@ -253,7 +253,18 @@ val _ = print ("formatTy: " ^ tyString ^ "\n")
             OC.concatFormatExpressions
                 (OC.translateFormatExpressions (formatTy path ty))
 *)
-            OC.makeConstantTerm (OC.FEToString (formatTy path ty))
+          (* the following procedure is the same as the one performed
+             in FG.generateFormatCode to decided whether the type is hidden
+             or not.
+           *)
+          case  U.getRealTy varTy of 
+             TY.RAWty{tyCon, ... } =>
+             if U.isHiddenTyCon context path tyCon then
+               OC.makeConstantTerm
+                 ("hidden(" ^ (OC.FEToString (formatTy path ty)) ^ ")")
+             else                                                                    
+               OC.makeConstantTerm (OC.FEToString (formatTy path ty))
+           | _ => OC.makeConstantTerm (OC.FEToString (formatTy path ty))
 (*
             OC.makeConstantTerm "<ty>"
 *)

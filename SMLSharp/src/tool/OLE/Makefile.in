@@ -22,7 +22,15 @@ install: $(TARGETS)
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(bindir)'
 	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'
 	$(INSTALL_PROGRAM) OLE2SML$(EXEEXT) '$(DESTDIR)$(bindir)'
-	$(INSTALL_DATA) $(srcdir)/OLE.sml '$(DESTDIR)$(libdir_smlsharp)'
+	$(INSTALL) -m 755 -d '$(DESTDIR)$(libdir_smlsharp)'/OLE
+	@set -x; \
+	cd $(srcdir)/lib/; \
+	find . -type f -print \
+	| $(EGREP) -v '\.svn|CVS|\.cvsignore|\~$$|\.in$$|Makefile' \
+	| (while read i; do \
+	    $(INSTALL_DATA) $$i '$(DESTDIR)$(libdir_smlsharp)/'$$i \
+	    || exit $$?; \
+	done)
 
 OLE2SML$(EXEEXT): OLE2SML.$(OBJEXT)
 	$(CXX) $(LDFLAGS) $(LIBSTDCXX) $(LIBS) \
@@ -37,4 +45,4 @@ smldoc:
 	fi
 	-rm -rf ./doc/api
 	mkdir -p ./doc/api
-	$(SMLDOC) -a $(srcdir)/smldoc.cfg
+	$(SMLDOC) -a $(srcdir)/lib/OLE/smldoc.cfg

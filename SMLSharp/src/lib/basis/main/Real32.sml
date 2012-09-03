@@ -11,4 +11,8 @@ struct
    * It is better to define a functor RealBase to share code with Real64
    *)
 
+  infix ==
+  fun x == y = (not ((x : Real32.real) < y)) andalso (not (y < x))
+  val toString = SMLSharp.Runtime.Float_toString
+
 end;

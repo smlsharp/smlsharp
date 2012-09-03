@@ -129,10 +129,35 @@ class LargeInt
         return mpz_get_si(x);
     }
 
+    /**
+     * returns the least 32 bits of x in two's complement representation.
+     *
+     *     x       = x in 2's complement => toWord(x)
+     *           1 =       0...000000001 => 00000001
+     *  4294967295 =       0...0FFFFFFFF => FFFFFFFF
+     *  4294967296 =       0..0100000000 => 00000000
+     *          -1 =       F...FFFFFFFFF => FFFFFFFF
+     * -4294967295 =       F...F00000001 => 00000001
+     * -4294967296 =       F...F00000000 => 00000000
+     */
     static UInt32Value toWord(largeInt x)
     {
-        // mpz_get_si is not used here because it ignores sign of x.
-        return (UInt32Value)mpz_get_si(x);
+        UInt32Value result = mpz_get_ui(x);
+
+        /* mpz_get_ui(op) returns the least significant bits of absolute value
+         * of "op" but this primitive requires to return the least significant
+         * bits of 2's complement form of "op". 
+         * For example, mpz_get_ui(-4294967295) returns 4294967295,
+         * although we want 1 for this case because -4294967295 is
+         * F...F00000001 in two's complement.
+         * So we take 2's complement of the return value of mpz_get_ui
+         * if "op" is negative.
+         */
+        if(mpz_sgn(x) < 0){
+            result = ~result + 1;
+        }
+
+        return result;
     }
 
     static void toString(largeInt x)

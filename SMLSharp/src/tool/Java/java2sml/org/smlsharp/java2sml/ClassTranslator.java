@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.TreeMap;
 
 /**
  * @copyright (c) 2007, Tohoku University.
@@ -18,6 +19,87 @@ import java.util.SortedSet;
  */
 class ClassTranslator
 {
+
+    static final String MLKeyWords[] =
+    new String[]
+    {
+        /* keywords of SML core language. */
+        "abstype",
+        "and",
+        "andalso",
+        "as",
+        "case",
+        "datatype",
+        "do",
+        "else",
+        "end",
+        "exception",
+        "fn",
+        "fun",
+        "handle",
+        "if",
+        "in",
+        "infix",
+        "infixr",
+        "let",
+        "local",
+        "nonfix",
+        "of",
+        "op",
+        "open",
+        "orelse",
+        "raise",
+        "rec",
+        "then",
+        "type",
+        "val",
+        "with",
+        "withtype",
+        "while",
+        
+        /* keywords of SML module language. */
+        "eqtype",
+        "functor",
+        "include",
+        "sharing",
+        "sig",
+        "signature",
+        "struct",
+        "structure",
+        "where",
+    };
+
+    /**
+     * convert an identifier in Java to an indentifier valid in SML.
+     */
+    String toMLName(String name)
+    {
+        for(int i = 0; i < MLKeyWords.length; i += 1){
+            if(name.equals(MLKeyWords[i])){
+                name += "'";
+                return name;
+            }
+        }
+        return name;
+    }
+
+    String getClassName(Class clazz)
+    {
+        if(clazz.isArray() || clazz.isPrimitive()){
+            throw
+            new IllegalArgumentException("cannot generate code for " + clazz);
+        }
+        String[] FQN = clazz.getName().split("\\.");
+        if(null == clazz.getDeclaringClass()){
+            return FQN[FQN.length - 1];
+        }
+
+        /* clazz is a member class of another class.
+         * see http://java.sun.com/docs/books/jls/third_edition/html/binaryComp.html#44909
+         */
+        String lastName = FQN[FQN.length - 1];
+        return lastName.substring(lastName.lastIndexOf('$') + 1);
+    }
 
     boolean isSupportedType(Class type)
     {
@@ -82,6 +164,8 @@ class ClassTranslator
         return buffer.toString();
     }
 
+    ////////////////////
+
     MethodInfo translateMethod(Method method)
         throws NonsupportedMemberException
     {
@@ -96,7 +180,7 @@ class ClassTranslator
             MLParams[index] = new ParameterInfo(name, param);
         }
         String name = method.getName();
-        String MLName = name; // MLName is fixed later.
+        String MLName = toMLName(name); // MLName is fixed later.
         Class returnType = method.getReturnType();
         if(!isSupportedReturnType(returnType)){
             throw new NonsupportedMemberException(method);
@@ -121,7 +205,7 @@ class ClassTranslator
             }
             MLParams[index] = new ParameterInfo(name, param);
         }
-        String MLName = "new";
+        String MLName = toMLName("new");
         String signature =
         signatureOfMethod(constructor.getParameterTypes(), Void.TYPE);
         Class clazz = constructor.getDeclaringClass();
@@ -141,7 +225,7 @@ class ClassTranslator
         }
         String signature = signatureOfType(field.getType());
         boolean isFinal = 0 != (Modifier.FINAL & field.getModifiers());
-        String MLName = name;
+        String MLName = toMLName(name);
         String getterMLName =
             isSupportedReturnType(type) ? ("get'" + MLName) : null;
         String setterMLName = isFinal ? null : ("set'" + MLName);
@@ -155,29 +239,11 @@ class ClassTranslator
         return fieldInfo;
     }
 
-    String getMLClassName(Class clazz)
-    {
-        if(clazz.isArray() || clazz.isPrimitive()){
-            throw
-            new IllegalArgumentException("cannot generate code for " + clazz);
-        }
-        String[] FQN = clazz.getName().split("\\.");
-        if(null == clazz.getDeclaringClass()){
-            return FQN[FQN.length - 1];
-        }
-
-        /* clazz is a member class of another class.
-         * see http://java.sun.com/docs/books/jls/third_edition/html/binaryComp.html#44909
-         */
-        String lastName = FQN[FQN.length - 1];
-        return lastName.substring(lastName.lastIndexOf('$') + 1);
-    }
-
     ClassInfo translateClass(Class clazz)
     {
         LinkedList errors = new LinkedList();
 
-        String MLName = getMLClassName(clazz);
+        String MLName = toMLName(getClassName(clazz));
 
         Class[] classes = clazz.getClasses();
         ClassInfo[] classInfos = new ClassInfo[classes.length];
@@ -256,4 +322,23 @@ class ClassTranslator
         return info;
     }
     
+    PackageInfo translatePackage(PackageInfo root, Package packaze)
+    {
+        if(null == packaze){return root;}
+        String FQN[] = packaze.getName().split("\\.");
+        PackageInfo current = root;
+        for(int index = 0; index < FQN.length; index += 1)
+        {
+            String name = FQN[index];
+            String MLName = toMLName(name);
+            PackageInfo child = (PackageInfo)current.packageInfos_.get(name);
+            if(null == child){
+                child =
+                  new PackageInfo(name, MLName, new TreeMap(), new TreeMap());
+                current.packageInfos_.put(name, child);
+            }
+            current = child;
+        }
+        return current;
+    }
 }

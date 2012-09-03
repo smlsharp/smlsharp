@@ -81,7 +81,7 @@ structure SIOptimizer : SIOPTIMIZER = struct
         fun largeIntOf argEntry =
             case CTX.largeIntOf context argEntry
              of SOME v =>
-                SOME (CTX.addStringConstant context (BigInt.toString v))
+                SOME (CTX.addStringConstant context (BigInt.toCString v))
               | NONE => NONE 
 
         fun optimize converter (operator1, operator2) (argEntry1, argEntry2) =

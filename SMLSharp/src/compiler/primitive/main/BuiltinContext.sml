@@ -288,7 +288,7 @@ struct
         * empty. *)
        ("exn",
         TYPE {
-          eqKind = Types.EQ,
+          eqKind = Types.NONEQ,
           tyvars = [],
           constructors = nil,
           runtimeTy = SOME RuntimeTypes.BOXEDty,

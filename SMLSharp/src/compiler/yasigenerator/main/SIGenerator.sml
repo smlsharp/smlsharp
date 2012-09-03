@@ -1928,8 +1928,7 @@ struct
                 SI.Label newId :: SI.ConstString {string = str} :: insn
               | AI.ConstIntInf n =>
                 let
-                  val s = (if BigInt.sign n < 0 then "-" else "")
-                          ^ BigInt.toString (BigInt.abs n)
+                  val s = BigInt.toCString n
                 in
                   SI.Label newId :: SI.ConstString {string = s} :: insn
                 end

@@ -1,0 +1,136 @@
+With ''Java/SML#'', you can manipulate Java objects from SML code.
+
+The following Java code accesses SML# Web site.
+  
+  import java.net.*;
+  import java.io.*;
+  
+  public class HTTPGet
+  {
+    static PrintStream out = System.out;
+  
+    public static void main(String args[])
+    {
+      try{
+        URL url = new URL("http://www.pllab.riec.tohoku.ac.jp/smlsharp/");
+        URLConnection connection = url.openConnection();
+        InputStream inStream = connection.getInputStream();
+        BufferedReader input =
+          new BufferedReader(new InputStreamReader(inStream));
+  
+        while (input.ready()){
+          out.println(input.readLine());
+        }
+      }
+      catch(IOException e){
+        out.println(e.toString());
+      }
+      catch(Exception e){
+        e.printStackTrace();
+      }
+    }
+  }
+
+You can do the same task in SML# as follows.
+
+  open java.lang;
+  open java.io;
+  open java.net;
+  
+  structure HTTPGet =
+  struct
+    val out = PrintStream(System.get'out())
+  
+    fun main(args) =
+        let
+          val url =
+              URL.new'String(SOME "http://www.pllab.riec.tohoku.ac.jp/smlsharp/")
+          val connection = URLConnection($url#openConnection())
+          val inStream = InputStream($connection#getInputStream())
+          val input =
+              BufferedReader.new'Reader
+                  ($$(InputStreamReader.new'InputStream($$inStream)))
+        in
+          while $input#ready()
+          do
+            $out#println'String ($input#readLine())
+        end
+          handle Java.JavaException throwable =>
+                 if IOException.isInstance throwable
+                 then
+                   $out#println'String ($(IOException(throwable))#toString())
+                 else
+                   $(Exception(throwable))#printStackTrace();
+  end;
+
+!!!Instance creation.
+An instance of a class can be created by calling constructors defined in the class module. 
+Name of constructor is '''new''' or begins with '''new' '''.
+  URL.new'String(SOME "http://www.pllab.riec.tohoku.ac.jp/smlsharp/")
+This code creates an instance of '''URL''' class.
+The suffix ''' 'String''' following '''new''' is necessary to specify the constructor among overloaded constructors.
+
+And, notice that a string value in SML# can be passed to the Java constructor as a reference to a '''java.lang.String''' object. Specify '''NONE''' to pass a null reference.
+
+!!!Instance member access.
+An instance method can be invoked in the form:
+  Java.call [instance] #[method name] argument
+The above sample code uses
+  val $ = Java.call
+to invoke a method as follows.
+  $url#openConnection()
+
+Overloaded methods are renamed to indicate parameter types as follows:
+  $out#println'String ($input#readLine())
+
+To access an instance field, use accessor methods defined as
+  get'[field name]
+  set'[field name]
+
+!!!Class member access.
+Class method ('static' method) can be called in the form:
+  [class name].[method name] argument
+
+A class field ('static' field) is accessed in the form:
+  [class name].get' [field name] ()
+  [class name].set' [field name] argument
+The following code obtains the value of '''out''' field of '''System''' class.
+  System.get'out()
+
+!!!''Instance'' and ''object reference''.
+For incompatibility between type systems of Java and Standard ML,
+you have to distinguish references to Java objects in two ways:
+''instance'' and ''object reference''.
+  type ('members, 'classes) instance
+  type Object
+''Instance'' contains type information of the class, ''object reference'' does not.
+
+Constructors return ''instance''.
+Instance methods can be invoked on ''instance''.
+
+Arguments and return values of method invocation are ''object reference''.
+
+To convert an ''instance'' to an ''object reference'', use '''Java.referenceOf''' function.
+The above code uses '''$$''' which is defined as
+  val $$ = Java.referenceOf
+like this:
+  InputStreamReader.new'InputStream($$inStream)
+
+To convert an ''object reference'' to an ''instance'', use cast functions.
+A cast function is defined as the same name with the class.
+  val out = PrintStream(System.get'out())
+This code converts an ''object reference'' to an ''instance'' of '''PrintStream''' class.
+
+!!!Exception handling.
+If a Java method invocation from ML code throws an exception, Java/SML# raises a '''Java.JavaException''' exception into ML code.
+
+In Java language, an exception handler is selected automatically according to the class of the thrown exception.
+But in ML, it is necessary to judge the Java class of the thrown exception manually to select handler as follows.
+  handle Java.JavaException throwable =>
+         if IOException.isInstance throwable
+         then (handler for IOException)
+         else (handler for other exception)
+
+!!More information.
+*[[Overview|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/Java/README.txt]]
+*[[API|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/Java/doc/api/]]

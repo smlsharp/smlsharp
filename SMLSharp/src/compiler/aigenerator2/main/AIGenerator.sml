@@ -188,7 +188,7 @@ struct
   fun currentClosureEnv ({envVar,...}:context) =
       case envVar of
         SOME v => AI.Var v
-      | NONE => AI.Null
+      | NONE => AI.Empty
 
   (* for debug *)
   fun currentLoc context ({routineLabel, ...}:environment) =

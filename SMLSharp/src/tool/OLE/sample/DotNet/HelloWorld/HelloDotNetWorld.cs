@@ -1,18 +1,20 @@
-namespace SMLSharp{
-    
-    using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
-    [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class HelloDotNetWorld
-    {
-        public HelloDotNetWorld(){
-            System.Console.WriteLine("I am a .Net object.");
-        }
+[InterfaceTypeAttribute(ComInterfaceType.InterfaceIsDual)]
+public interface IHelloDotNETWorld
+{
+    string greeting(string yourName);
+}
 
-        public string greeting(string yourName)
-        {
-            return "Hello .Net world, " + yourName + " !";
-        }
+[ClassInterface(ClassInterfaceType.None)]
+public class HelloDotNETWorld : IHelloDotNETWorld
+{
+    public HelloDotNETWorld(){
+        System.Console.WriteLine("I am a .NET object.");
     }
 
+    public string greeting(string yourName)
+    {
+        return "Hello, " + yourName + " !";
+    }
 };

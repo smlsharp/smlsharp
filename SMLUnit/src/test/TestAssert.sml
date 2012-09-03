@@ -17,7 +17,7 @@ struct
       in
         (Assert.fail message;
          raise TestFail)
-        handle Assert.Fail failMessage =>
+        handle Assert.Fail (Assert.GeneralFailure failMessage) =>
                if failMessage = message then () else raise TestFail
       end
 
@@ -51,7 +51,7 @@ struct
         val value2 = 200
       in
         (Assert.assertEqualInt value1 value2;raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
@@ -72,7 +72,7 @@ struct
         val value2 = Word.fromInt 200
       in
         (Assert.assertEqualWord value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
@@ -93,7 +93,7 @@ struct
         val value2 = Word8.fromInt 200
       in
         (Assert.assertEqualWord8 value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
@@ -114,7 +114,7 @@ struct
         val value2 = Word32.fromInt 200
       in
         (Assert.assertEqualWord32 value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
@@ -135,7 +135,7 @@ struct
         val value2 = 5.678
       in
         (Assert.assertEqualReal value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
@@ -156,7 +156,7 @@ struct
         val value2 = #"c"
       in
         (Assert.assertEqualChar value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
@@ -197,7 +197,7 @@ struct
         val value2 = "c"
       in
         (Assert.assertEqualString value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   fun testAssertEqualString0005 () =
@@ -206,7 +206,7 @@ struct
         val value2 = "c"
       in
         (Assert.assertEqualString value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   fun testAssertEqualString0006 () =
@@ -215,14 +215,14 @@ struct
         val value2 = ""
       in
         (Assert.assertEqualString value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
 
   fun testAssertEqualSubstring0001 () =
       let
-        val value = Substring.all "a"
+        val value = Substring.full "a"
       in
         (if
            Substring.compare (Assert.assertEqualSubstring value value, value) =
@@ -234,7 +234,7 @@ struct
 
   fun testAssertEqualSubstring0002 () =
       let
-        val value = Substring.all ""
+        val value = Substring.full ""
       in
         (if
            Substring.compare (Assert.assertEqualSubstring value value, value) =
@@ -246,7 +246,7 @@ struct
 
   fun testAssertEqualSubstring0003 () =
       let
-        val value = Substring.all "abcdefghijklmnopqrstuvwxyz "
+        val value = Substring.full "abcdefghijklmnopqrstuvwxyz "
       in
         (if 
            Substring.compare (Assert.assertEqualSubstring value value, value) =
@@ -258,29 +258,29 @@ struct
 
   fun testAssertEqualSubstring0004 () =
       let
-        val value1 = Substring.all "b"
-        val value2 = Substring.all "c"
+        val value1 = Substring.full "b"
+        val value2 = Substring.full "c"
       in
         (Assert.assertEqualSubstring value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   fun testAssertEqualSubstring0005 () =
       let
-        val value1 = Substring.all ""
-        val value2 = Substring.all "c"
+        val value1 = Substring.full ""
+        val value2 = Substring.full "c"
       in
         (Assert.assertEqualSubstring value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   fun testAssertEqualSubstring0006 () =
       let
-        val value1 = Substring.all "c"
-        val value2 = Substring.all ""
+        val value1 = Substring.full "c"
+        val value2 = Substring.full ""
       in
         (Assert.assertEqualSubstring value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
@@ -319,7 +319,7 @@ struct
         val value2 = OtherException message
       in
         (Assert.assertEqualExceptionName value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
       end
 
   (****************************************)
@@ -375,9 +375,9 @@ struct
   fun testAssertEqualRef0002 () =
       let
         (*
-        value1とvalue2の参照先が異なるロケーションだが、値が等値なので
-        assertは成功する。
-        *)
+         * Although value1 and value2 point different locations,
+         * the assertion succeeds because these locations hold the equal value.
+         *)
         val value1 = ref 1
         val value2 = ref 1
       in
@@ -395,7 +395,7 @@ struct
           Assert.assertEqualRef Assert.assertEqualInt value1 value2;
           raise TestFail
         )
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -413,14 +413,14 @@ struct
   fun testAssertSameRef0002 () =
       let
         (*
-        value1とvalue2の参照先の値は等値だが、ロケーションが異なるので、
-        assertは失敗する。
-        *)
+         * The assertion fails because value1 and value2 point different
+         * locations, although these locations hold the equal value.
+         *)
         val value1 = ref 1
         val value2 = ref 1
       in
         (Assert.assertSameRef value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -430,7 +430,7 @@ struct
         val value2 = ref 2
       in
         (Assert.assertSameRef value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -460,7 +460,7 @@ struct
         val value2 = false
       in
         (Assert.assertEqualBool value1 value2 = value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -470,7 +470,7 @@ struct
         val value2 = true
       in
         (Assert.assertEqualBool value1 value2 = value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -490,7 +490,7 @@ struct
         val value = false
       in
         (Assert.assertTrue value; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -510,7 +510,7 @@ struct
         val value = true
       in
         (Assert.assertFalse value; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -543,7 +543,7 @@ struct
           Assert.assertEqualOption Assert.assertEqualInt value1 value2;
           raise TestFail
         )
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -556,7 +556,7 @@ struct
           Assert.assertEqualOption Assert.assertEqualInt value1 value2;
           raise TestFail
         )
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -638,7 +638,7 @@ struct
         val value2 = EQUAL
       in
         (Assert.assertEqualOrder value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -648,7 +648,7 @@ struct
         val value2 = GREATER
       in
         (Assert.assertEqualOrder value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -658,7 +658,7 @@ struct
         val value2 = LESS
       in
         (Assert.assertEqualOrder value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -668,7 +668,7 @@ struct
         val value2 = GREATER
       in
         (Assert.assertEqualOrder value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -678,7 +678,7 @@ struct
         val value2 = LESS
       in
         (Assert.assertEqualOrder value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -688,7 +688,7 @@ struct
         val value2 = EQUAL
       in
         (Assert.assertEqualOrder value1 value2; raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -721,7 +721,7 @@ struct
          value1
          value2;
          raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -735,7 +735,7 @@ struct
          value1
          value2;
          raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -749,7 +749,7 @@ struct
          value1
          value2;
          raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -790,7 +790,7 @@ struct
          value1
          value2;
          raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -808,7 +808,7 @@ struct
          value1
          value2;
          raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -826,7 +826,7 @@ struct
          value1
          value2;
          raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -844,7 +844,7 @@ struct
          value1
          value2;
          raise TestFail)
-        handle Assert.NotEqual _ => ()
+        handle Assert.Fail (Assert.NotEqualFailure _) => ()
              | _ => raise TestFail
       end
 
@@ -907,7 +907,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -920,7 +920,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -933,7 +933,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -946,7 +946,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -959,7 +959,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -972,7 +972,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -985,7 +985,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -998,7 +998,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1011,7 +1011,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1024,7 +1024,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1037,7 +1037,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1050,7 +1050,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1063,7 +1063,7 @@ struct
       in
         (Assert.assertEqualVector Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (****************************************)
@@ -1122,7 +1122,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1135,7 +1135,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1148,7 +1148,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1161,7 +1161,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1174,7 +1174,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1187,7 +1187,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1200,7 +1200,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1213,7 +1213,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1226,7 +1226,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1239,7 +1239,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1252,7 +1252,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1265,7 +1265,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1278,7 +1278,7 @@ struct
       in
         (Assert.assertEqualArray Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (****************************************)
@@ -1340,7 +1340,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1353,7 +1353,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1366,7 +1366,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1379,7 +1379,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1392,7 +1392,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1405,7 +1405,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1418,7 +1418,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1431,7 +1431,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1444,7 +1444,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1457,7 +1457,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1470,7 +1470,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1483,7 +1483,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (*
@@ -1496,7 +1496,7 @@ struct
       in
         (Assert.assertEqualList Assert.assertEqualInt value1 value2 = value2;
          raise TestFail)
-        handle Assert.NotEqual _ => () | _ => raise TestFail
+        handle Assert.Fail (Assert.NotEqualFailure _) => () | _ => raise TestFail
       end
 
   (***************************************************************************)

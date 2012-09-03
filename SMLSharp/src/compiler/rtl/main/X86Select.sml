@@ -702,6 +702,7 @@ struct
         end
       | AI.Nowhere => raise NotOperand
       | AI.Null => raise NotOperand
+      | AI.Empty => raise NotOperand
       | AI.Const id => raise NotOperand
       | AI.Init id => raise NotOperand
       | AI.Entry entry => raise NotOperand
@@ -722,6 +723,7 @@ struct
         )
       | AI.Nowhere => (code, R.ABSADDR (R.NULL R.Code))
       | AI.Null => (code, R.ABSADDR (R.NULL R.Void))
+      | AI.Empty => (code, R.ABSADDR (R.NULL R.Data))
       | AI.Const id =>
         absoluteAddr context (code, dataSymbol (R.Data, R.LOCAL,
                                                 constSymbolName id))
@@ -763,6 +765,7 @@ struct
         )
       | AI.Nowhere => raise NotJump
       | AI.Null => raise NotJump
+      | AI.Empty => raise NotJump
       | AI.Const id => raise NotJump
       | AI.Init id => raise NotJump
       | AI.Entry entry => (code, R.ABSADDR (entrySymbol entry))

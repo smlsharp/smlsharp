@@ -295,7 +295,13 @@ structure Int32 = Int;
 structure Word32 = Word;
 
 use "./IntInf.sml";
+structure IntInf = struct open IntInf
+fun '_format_int' arg =
+    let val string = toString arg
+    in SMLSharp.SMLFormat.Term(size string, string) end;
+end;
 structure LargeInt = IntInf;
+
 use "./INTEGER.sig";
 structure Int = 
 struct
@@ -310,11 +316,6 @@ structure FixedInt = Int;
 structure Position = Int;
 
 use "./INT_INF.sig";
-structure IntInf = struct open IntInf
-fun '_format_int' arg =
-    let val string = toString arg
-    in SMLSharp.SMLFormat.Term(size string, string) end;
-end;
 structure IntInf = IntInf :> INT_INF where type int = IntInf.int;
 
 structure LargeWord = Word;

@@ -18,7 +18,7 @@ struct
   (* signed 64 bits *)
   type jlong = Real64.real (* use Real64 to hold 64 bit value. *)
   (* 32 bits *)
-  type jfloat = float
+  type jfloat = Real32.real
   (* 64 bits *)
   type jdouble = real
 

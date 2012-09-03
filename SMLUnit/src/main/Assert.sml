@@ -31,7 +31,7 @@ struct
   fun failByNotEqual (expected, actual) =
       raise Fail(NotEqualFailure (expected, actual))
 
-  fun assertEqualCompare comparator valueFormatter expected actual =
+  fun assertEqualByCompare comparator valueFormatter expected actual =
       if EQUAL = comparator (expected, actual)
       then actual
       else
@@ -43,7 +43,7 @@ struct
         end
 
   fun assertEqual comparator valueFormatter expected actual =
-      assertEqualCompare
+      assertEqualByCompare
       (fn pair => if comparator pair then EQUAL else LESS)
       valueFormatter
       expected
@@ -56,31 +56,32 @@ struct
   fun assertEqualUnit () () = ()
 
   fun assertEqualInt expected actual =
-      assertEqualCompare Int.compare Int.toString expected actual
+      assertEqualByCompare Int.compare Int.toString expected actual
 
   fun assertEqualWord  expected actual = 
-      assertEqualCompare Word.compare Word.toString expected actual
+      assertEqualByCompare Word.compare Word.toString expected actual
 
   fun assertEqualWord8 expected actual = 
-      assertEqualCompare Word8.compare Word8.toString expected actual
+      assertEqualByCompare Word8.compare Word8.toString expected actual
 
   fun assertEqualWord32 expected actual =
-      assertEqualCompare Word32.compare Word32.toString expected actual
+      assertEqualByCompare Word32.compare Word32.toString expected actual
 
   fun assertEqualReal expected actual = 
-      assertEqualCompare Real.compare Real.toString expected actual
+      assertEqualByCompare Real.compare Real.toString expected actual
 
   fun assertEqualChar expected actual = 
-      assertEqualCompare Char.compare Char.toString expected actual
+      assertEqualByCompare Char.compare Char.toString expected actual
 
   fun assertEqualString expected actual = 
-      assertEqualCompare String.compare (fn s => s) expected actual
+      assertEqualByCompare
+          String.compare (fn s => "\"" ^ s ^ "\"") expected actual
 
   fun assertEqualSubstring expected actual = 
-      assertEqualCompare Substring.compare Substring.string expected actual
+      assertEqualByCompare Substring.compare Substring.string expected actual
 
   fun assertEqualExceptionName expected actual =
-      (assertEqualCompare
+      (assertEqualByCompare
        String.compare
        (fn s => s)
        (exnName expected)
@@ -89,7 +90,7 @@ struct
 
 (*
   fun assertEqualExceptionMessage expected actual = 
-      (assertEqualCompare
+      (assertEqualByCompare
        String.compare
        (fn s => s)
        ""

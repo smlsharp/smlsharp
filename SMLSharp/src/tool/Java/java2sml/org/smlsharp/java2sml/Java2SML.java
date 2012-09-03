@@ -107,25 +107,6 @@ public class Java2SML
 
     //////////////////////////////////////////////////////////////////////
 
-    static PackageInfo packageOfClass(PackageInfo root, Class clazz)
-    {
-        String[] FQN = clazz.getName().split("\\.");
-        PackageInfo current = root;
-        // FQN[FQN.length - 1] is class name.
-        for(int index = 0; index < FQN.length - 1; index += 1)
-        {
-            String name = FQN[index];
-            PackageInfo child =
-            (PackageInfo)current.packageInfos_.get(name);
-            if(null == child){
-                child = new PackageInfo(name, new TreeMap(), new TreeMap());
-                current.packageInfos_.put(name, child);
-            }
-            current = child;
-        }
-        return current;
-    }
-
     static final String usage =
     "java2sml OPTIONS\n" +
     "    -o <file>           Place the output to <file>.\n" +
@@ -188,12 +169,14 @@ public class Java2SML
 
         ClassTranslator translator = new ClassTranslator();
 
-        PackageInfo root = new PackageInfo("$", new TreeMap(), new TreeMap());
+        PackageInfo root =
+            new PackageInfo("$", "$", new TreeMap(), new TreeMap());
         LinkedList classInfos = new LinkedList();
         for(; argIndex < args.length; argIndex += 1)
         {
             Class clazz = Class.forName(args[argIndex]);
-            PackageInfo pck = packageOfClass(root, clazz);
+            PackageInfo pck =
+                translator.translatePackage(root, clazz.getPackage());
             pck.classInfos_.put(clazz.getName(),
                                 translator.translateClass(clazz));
         }

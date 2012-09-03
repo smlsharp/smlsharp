@@ -10,6 +10,8 @@ use "ObjectBasicsTest1.sml";
 use "ClassBasicsTest1.sml";
 use "ExceptionTest1.sml";
 use "MethodCallTest1.sml";
+use "RenameKeywordTest1.sml";
+use "RenameKeywordTest2.sml";
 
 use "TestMain.sml";
 

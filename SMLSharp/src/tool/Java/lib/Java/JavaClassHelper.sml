@@ -126,17 +126,30 @@ struct
         setStaticField = #SetStaticLongField
       }
 
+  fun errorFloatUnsupported _ _ = raise Fail "float is not supported."
   val F : (T.jfloat, JV.float) t =
       {
         toJNIType = JV.floatToJFloat,
         toJValue = JV.jfloatToJValue,
         toMLType = JV.jfloatToFloat,
         releaseJNIType = JV.releaseJFloat,
+(* FIXME: enable this when SML# FFI supports float.
         callMethod = #CallFloatMethodA,
+*)
+        callMethod = errorFloatUnsupported,
+(* FIXME: enable this when SML# FFI supports float.
         callStaticMethod = #CallStaticFloatMethodA,
+*)
+        callStaticMethod = errorFloatUnsupported,
+(* FIXME: enable this when SML# FFI supports float.
         getField = #GetFloatField,
+*)
+        getField = errorFloatUnsupported,
         setField = #SetFloatField,
+(* FIXME: enable this when SML# FFI supports float.
         getStaticField = #GetStaticFloatField,
+*)
+        getStaticField = errorFloatUnsupported,
         setStaticField = #SetStaticFloatField
       }
 

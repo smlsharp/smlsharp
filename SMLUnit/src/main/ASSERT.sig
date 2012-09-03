@@ -69,6 +69,26 @@ sig
       (('a * 'a) -> bool) -> 'a valueFormatter -> 'a assertEqual
 
   (**
+   *  general assertion function.
+   * <pre>
+   * assertEqualByCompare compare toString
+   * </pre>
+   * is equivalent to
+   * <pre>
+   * assertEqual (fn pair => compare pair = EQUAL) toString
+   * </pre>
+   *
+   * @params comparator formatter
+   * @param comparator a function which compares two value.
+   * @param formatter a function which make a string representation of a 
+   *                 value of the type
+   * @return a function which asserts two values of the type are equal to
+   *                 each other.
+   *)
+  val assertEqualByCompare :
+      (('a * 'a) -> General.order) -> 'a valueFormatter -> 'a assertEqual
+
+  (**
    * asserts that a condition is true.
    * @params message v
    * @param error message

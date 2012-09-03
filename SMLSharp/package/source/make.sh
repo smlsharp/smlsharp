@@ -19,10 +19,13 @@ if [ -d "$DESTDIR/$NAME" ]; then
 fi
 
 set -x
+TAG=tip
 
-hg archive -r "$TAG" "$DESTDIR/$NAME"
+hg archive -r "$TAG" smlsharp
 (
-  cd "$DESTDIR/$NAME/SMLSharp"
+  cd "$DESTDIR/smlsharp"
+  mv smlsharp "$NAME"
+  cd "$NAME/SMLSharp"
 
   # ensure that configure is newer than configure.ac
   touch configure
@@ -45,5 +48,4 @@ hg archive -r "$TAG" "$DESTDIR/$NAME"
   done
 ) || exit $?
 
-rm -r "$NAME"/.hg*
-tar fc - "$NAME" | gzip -9 > $NAME.tar.gz
+tar -C "$DESTDIR/smlsharp" -cf - "$NAME" | gzip -9 > "$NAME.tar.gz"

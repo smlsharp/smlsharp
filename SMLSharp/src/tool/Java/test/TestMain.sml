@@ -11,7 +11,9 @@ struct
             T.TestLabel ("ObjectBasicsTest1", ObjectBasicsTest1.suite ()),
             T.TestLabel ("ClassBasicsTest1", ClassBasicsTest1.suite ()),
             T.TestLabel ("ExceptionTest1", ExceptionTest1.suite ()),
-            T.TestLabel ("MethodCallTest1", MethodCallTest1.suite ())
+            T.TestLabel ("MethodCallTest1", MethodCallTest1.suite ()),
+            T.TestLabel ("RenameKeywordTest1", RenameKeywordTest1.suite ()),
+            T.TestLabel ("RenameKeywordTest2", RenameKeywordTest2.suite ())
           ]
 
   fun init () =
@@ -26,6 +28,8 @@ struct
         val _ = ClassBasicsTest1.init ()
         val _ = ExceptionTest1.init ()
         val _ = MethodCallTest1.init ()
+        val _ = RenameKeywordTest1.init ()
+        val _ = RenameKeywordTest2.init ()
       in
         ()
       end
