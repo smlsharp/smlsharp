@@ -68,7 +68,7 @@ struct
   type 'r vertex =
       {
         color: 'r color option,  (* none means "disabled" *)
-        adjacencies: LocalVarID.Set.set,
+        adjacencies: VarID.Set.set,
         spillable: bool,
         interferedColors: 'r list
       }
@@ -76,20 +76,20 @@ struct
   type 'r graph =
       {
         (* varId -> vertexId *)
-        varMap: {var: I.var, vertexId: vertexId} LocalVarID.Map.map,
+        varMap: {var: I.var, vertexId: vertexId} VarID.Map.map,
         (* vertexId -> vertex *)
-        graph: 'r vertex LocalVarID.Map.map,
+        graph: 'r vertex VarID.Map.map,
         (* list of coalescable pairs of vertexes *)
         coalescables: (I.var * I.var) list
       }
 
-  fun numVars {varMap,graph,coalescables} = LocalVarID.Map.numItems varMap
-  fun numVertexes {varMap,graph,coalescables} = LocalVarID.Map.numItems graph
+  fun numVars {varMap,graph,coalescables} = VarID.Map.numItems varMap
+  fun numVertexes {varMap,graph,coalescables} = VarID.Map.numItems graph
 
   val empty =
       {
-        varMap = LocalVarID.Map.empty,
-        graph = LocalVarID.Map.empty,
+        varMap = VarID.Map.empty,
+        graph = VarID.Map.empty,
         coalescables = nil
       } : 'r graph
 
@@ -100,8 +100,8 @@ struct
   in
   val format_vertexId = I.format_id
   fun format_set set =
-      format_list (LocalVarID.format_id, str ",")
-                  (LocalVarID.Set.listItems set)
+      format_list (VarID.format_id, str ",")
+                  (VarID.Set.listItems set)
   fun format_color fmt UNCOLORED = str "_"
     | format_color fmt (COLORED r) = fmt r
     | format_color fmt NEED_SPILL = str "<SPILL>"
@@ -111,7 +111,7 @@ struct
         val (fmt, graph, pre, post) =
             case opt of
               SOME x => x
-            | NONE => (fn x => nil, LocalVarID.Map.empty, nil, [Newline])
+            | NONE => (fn x => nil, VarID.Map.empty, nil, [Newline])
         val pre = pre @ (case color of NONE => str "X"
                                      | SOME c => format_color fmt c) @
                   (if spillable then nil else str "!")
@@ -119,7 +119,7 @@ struct
         format_list
           (fn v =>
               let
-                val adj = LocalVarID.Map.find (graph, v)
+                val adj = VarID.Map.find (graph, v)
               in
                 pre @
                 (case (color, adj) of
@@ -129,12 +129,12 @@ struct
                  | (_, NONE) => str " -?-> ") @
                 (case adj of
                    SOME {color=SOME c,...} =>
-                   LocalVarID.format_id v @ str " : " @ format_color fmt c
-                 | _ => LocalVarID.format_id v) @
+                   VarID.format_id v @ str " : " @ format_color fmt c
+                 | _ => VarID.format_id v) @
                 post
               end,
            nil)
-          (LocalVarID.Set.listItems adjacencies) @
+          (VarID.Set.listItems adjacencies) @
         format_list
           (fn r =>
               pre @
@@ -149,10 +149,10 @@ struct
       str "variables:" @ [StartOfIndent 2] @
       format_list
         (fn (k,{var,vertexId}) =>
-            [Newline] @ LocalVarID.format_id k @ str ": " @
+            [Newline] @ VarID.format_id k @ str ": " @
             I.format_var var @ str " at " @ I.format_id vertexId,
          nil)
-        (LocalVarID.Map.listItemsi varMap) @
+        (VarID.Map.listItemsi varMap) @
       [EndOfIndent, Newline] @
       str "graph:" @ [StartOfIndent 2] @
       format_list
@@ -161,7 +161,7 @@ struct
               (SOME (fmt, graph, [Newline] @ I.format_id k @ str " : ", nil))
               v,
          nil)
-        (LocalVarID.Map.listItemsi graph) @
+        (VarID.Map.listItemsi graph) @
       [EndOfIndent, Newline] @
       str "coalescables: " @
       format_list
@@ -173,33 +173,33 @@ struct
 
   fun addVar (i as {varMap, graph, coalescables}:'r graph,
               var as {id,...}:I.var) =
-      case LocalVarID.Map.find (varMap, #id var) of
+      case VarID.Map.find (varMap, #id var) of
         SOME _ => i
       | NONE =>
         let
           val vertex = {color = SOME UNCOLORED,
-                        adjacencies = LocalVarID.Set.empty,
+                        adjacencies = VarID.Set.empty,
                         spillable = true,
                         interferedColors = nil} : 'r vertex
         in
           {
-            varMap = LocalVarID.Map.insert (varMap, id, {var=var, vertexId=id}),
-            graph = LocalVarID.Map.insert (graph, id, vertex),
+            varMap = VarID.Map.insert (varMap, id, {var=var, vertexId=id}),
+            graph = VarID.Map.insert (graph, id, vertex),
             coalescables = nil
           } : 'r graph
         end
 
   fun vertexId ({varMap, ...}:'r graph, {id,...}:I.var) =
-      case LocalVarID.Map.find (varMap, id) of
+      case VarID.Map.find (varMap, id) of
         SOME {vertexId,...} => vertexId
       | NONE => raise Control.Bug ("vartexId: not found: "
-                                   ^ LocalVarID.toString id)
+                                   ^ VarID.toString id)
 
   fun vertex ({graph,...}:'r graph, vid) =
-      case LocalVarID.Map.find (graph, vid) of
+      case VarID.Map.find (graph, vid) of
         SOME v => v : 'r vertex
       | NONE => raise Control.Bug ("vertex: not found: "
-                                   ^ LocalVarID.toString vid)
+                                   ^ VarID.toString vid)
 
   fun union (l1, l2) =
       foldr (fn (x,z) => if List.exists (fn y => x = y) z
@@ -209,7 +209,7 @@ struct
   fun addAdjacency ({color,adjacencies,spillable,interferedColors}:'r vertex,
                     vid) =
       {color = color,
-       adjacencies = LocalVarID.Set.add (adjacencies, vid),
+       adjacencies = VarID.Set.add (adjacencies, vid),
        spillable = spillable,
        interferedColors = interferedColors} : 'r vertex
 
@@ -238,7 +238,7 @@ struct
       let
         val vid = vertexId (i, var)
         val v1 = setSpillable (vertex (i, vid), false)
-        val graph = LocalVarID.Map.insert (graph, vid, v1)
+        val graph = VarID.Map.insert (graph, vid, v1)
       in
         {varMap=varMap, graph=graph, coalescables=coalescables} : 'r graph
       end
@@ -249,7 +249,7 @@ struct
   fun disableVertex (i as {varMap,graph,coalescables}:'r graph, vid) =
       let
         val v = setVertexColor (vertex (i, vid), NONE)
-        val graph = LocalVarID.Map.insert (graph, vid, v)
+        val graph = VarID.Map.insert (graph, vid, v)
       in
         {varMap=varMap, graph=graph, coalescables=coalescables} : 'r graph
       end
@@ -260,7 +260,7 @@ struct
       | (v, _) =>
         let
           val v = setVertexColor (v, SOME color)
-          val graph = LocalVarID.Map.insert (graph, vid, v)
+          val graph = VarID.Map.insert (graph, vid, v)
         in
           {varMap=varMap, graph=graph, coalescables=coalescables} : 'r graph
         end
@@ -270,14 +270,14 @@ struct
         val vid1 = vertexId (i, var1)
         val vid2 = vertexId (i, var2)
       in
-        if LocalVarID.eq (vid1, vid2)
+        if VarID.eq (vid1, vid2)
         then i
         else
           let
             val v1 = addAdjacency (vertex (i, vid1), vid2)
             val v2 = addAdjacency (vertex (i, vid2), vid1)
-            val graph = LocalVarID.Map.insert (graph, vid1, v1)
-            val graph = LocalVarID.Map.insert (graph, vid2, v2)
+            val graph = VarID.Map.insert (graph, vid1, v1)
+            val graph = VarID.Map.insert (graph, vid2, v2)
           in
             {varMap=varMap, graph=graph, coalescables=coalescables} : 'r graph
           end
@@ -288,7 +288,7 @@ struct
       let
         val vid1 = vertexId (i, var)
         val v1 = addAdjacencyColors (vertex (i, vid1), colors)
-        val graph = LocalVarID.Map.insert (graph, vid1, v1)
+        val graph = VarID.Map.insert (graph, vid1, v1)
       in
         {varMap=varMap, graph=graph, coalescables=coalescables} : ''r graph
       end
@@ -298,7 +298,7 @@ struct
         val vid1 = vertexId (i, var1)
         val vid2 = vertexId (i, var2)
       in
-        if LocalVarID.eq (vid1, vid2)
+        if VarID.eq (vid1, vid2)
         then i
         else
           let
@@ -307,13 +307,13 @@ struct
             val color = if #color v1 = #color v2 then #color v1
                         else raise Control.Bug "coalesce: color mismatch"
             val adjacencies =
-                LocalVarID.Set.union (#adjacencies v1, #adjacencies v2)
+                VarID.Set.union (#adjacencies v1, #adjacencies v2)
             val interferedColors = union (#interferedColors v1,
                                           #interferedColors v2)
             val spillable = #spillable v1 andalso #spillable v2
 
-            val _ = if LocalVarID.Set.member (adjacencies, vid1)
-                       orelse LocalVarID.Set.member (adjacencies, vid2)
+            val _ = if VarID.Set.member (adjacencies, vid1)
+                       orelse VarID.Set.member (adjacencies, vid2)
                     then raise Control.Bug "coalesce: interfered"
                     else ()
 
@@ -323,20 +323,20 @@ struct
                  spillable = spillable,
                  interferedColors = interferedColors} : ''r vertex
 
-            val graph = #1 (LocalVarID.Map.remove (graph, vid2))
-            val graph = LocalVarID.Map.insert (graph, vid1, newVertex)
-            val varMap = LocalVarID.Map.insert (varMap, vid2,
+            val graph = #1 (VarID.Map.remove (graph, vid2))
+            val graph = VarID.Map.insert (graph, vid1, newVertex)
+            val varMap = VarID.Map.insert (varMap, vid2,
                                                 {var=var2, vertexId=vid1})
 
             val graph =
-                LocalVarID.Set.foldl
+                VarID.Set.foldl
                   (fn (vid, graph) =>
-                      case LocalVarID.Map.find (graph, vid) of
+                      case VarID.Map.find (graph, vid) of
                         NONE => raise Control.Bug "coalesce: vertex not found"
                       | SOME {color,adjacencies,spillable,interferedColors} =>
                         let
                           val adjacencies =
-                              LocalVarID.Set.map
+                              VarID.Set.map
                                 (fn x => if x = vid2 then vid1 else x)
                                 adjacencies
                           val v = {color = color,
@@ -344,7 +344,7 @@ struct
                                    spillable = spillable,
                                    interferedColors = interferedColors}
                         in
-                          LocalVarID.Map.insert (graph, vid, v)
+                          VarID.Map.insert (graph, vid, v)
                         end)
                   graph
                   adjacencies
@@ -385,12 +385,12 @@ struct
       end
 
   fun findVar (i as {varMap,...}:'r graph, {id,...}:I.var) =
-      case LocalVarID.Map.find (varMap, id) of
+      case VarID.Map.find (varMap, id) of
         NONE => NONE
       | SOME {vertexId, ...} => #color (vertex (i, vertexId))
 
   fun foldVar f z (i as {varMap,...}:'r graph) =
-      LocalVarID.Map.foldli
+      VarID.Map.foldli
         (fn (varId, {var, vertexId}, z) =>
             case #color (vertex (i, vertexId)) of
               NONE => z
@@ -402,7 +402,7 @@ struct
       let
         val {adjacencies, interferedColors, ...} = vertex (i, vid)
         val colors =
-            LocalVarID.Set.foldr
+            VarID.Set.foldr
               (fn (vid, colors) =>
                   case #color (vertex (i, vid)) of
                     SOME (COLORED c) => c :: colors
@@ -417,7 +417,7 @@ struct
       let
         val {adjacencies, interferedColors, ...} = vertex (i, vid)
         val n =
-            LocalVarID.Set.foldl
+            VarID.Set.foldl
               (fn (vid, n) =>
                   case #color (vertex (i, vid)) of
                     NONE => n
@@ -429,7 +429,7 @@ struct
       end
 
   fun selectVertexes f ({graph, ...}:'r graph) =
-      LocalVarID.Map.foldli
+      VarID.Map.foldli
         (fn (vid, {color=NONE, ...}, z) => z
           | (vid, {color=SOME color, ...}, z) =>
             if f (vid, color) then vid :: z else z)
@@ -437,7 +437,7 @@ struct
         graph
 
   fun minVertex f (i as {varMap,...}:'r graph) =
-      LocalVarID.Map.foldli
+      VarID.Map.foldli
         (fn (varId, {var, vertexId}, z) =>
             case vertex (i, vertexId) of
               {color=NONE,...} => z

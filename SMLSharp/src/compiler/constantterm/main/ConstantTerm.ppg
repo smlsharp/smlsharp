@@ -15,10 +15,15 @@ struct
   structure TU = TypesUtils
   structure UE = UserError
 
+ (* for debugging *)
+  fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
+
   (*%
-   * @formatter(Int32.int) SmlppgUtil.format_int32
-   * @formatter(Word32.word) SmlppgUtil.format_word32
-   * @formatter(BigInt.int) SmlppgUtil.format_BigInt
+   * @formatter(Int32.int) TermFormat.format_Int32_dec_ML
+   * @formatter(Word32.word) TermFormat.format_Word32_hex_ML
+   * @formatter(BigInt.int) TermFormat.format_BigInt_dec_ML
+   * @formatter(stringLiteral) TermFormat.format_string_ML
+   * @formatter(charLiteral) TermFormat.format_char_ML
    *)
   datatype constant 
     = (*%
@@ -30,15 +35,15 @@ struct
        *)
       LARGEINT of BigInt.int
     | (*%
-       * @format(value) "0wx" value
+       * @format(value) value
        *)
       WORD of Word32.word
     | (*%
-       * @format(value) "0wx" value
+       * @format(value) value
        *)
       BYTE of Word32.word
     | (*%
-       * @format(value) "\"" value "\""
+       * @format(value) value:stringLiteral
        *)
       STRING of string
     | (*%
@@ -50,7 +55,7 @@ struct
        *)
       FLOAT of string
     | (*%
-       * @format(value) "#\"" value "\""
+       * @format(value) value:charLiteral
        *)
       CHAR of char
     | (*%
@@ -185,11 +190,11 @@ struct
     structure OCMap = BinaryMapFn(OCord)
     val constantTypeDefs =
         [
-          (INT (0),  "['a#{int,IntInf.int}.'a]"),
-          (LARGEINT (BigInt.fromInt 0),  "['a#{int,IntInf.int}.'a]"),
-          (WORD (0w0), "['a#{word,Word8.word}.'a]"),
+          (INT (0),  "['a::{int,IntInf.int}.'a]"),
+          (LARGEINT (BigInt.fromInt 0),  "['a::{int,IntInf.int}.'a]"),
+          (WORD (0w0), "['a::{word,Word8.word}.'a]"),
           (STRING (""), "string"),
-          (REAL ("0.0"), "['a#{real,Real32.real}.'a]"),
+          (REAL ("0.0"), "['a::{real,Real32.real}.'a]"),
           (CHAR (#"c"),  "char"),
           (UNIT,  "unit"),
           (NULL, "(unit)ptr")
@@ -281,11 +286,18 @@ struct
               else if TyConID.eq (id, #id PT.largeIntTyCon) then LARGEINTty
               else if TyConID.eq (id, #id PT.byteTyCon) then BYTEty
               else if TyConID.eq (id, #id PT.unitTyCon) then UNITty
-              else raise Control.Bug "castConst"
+              else
+                (printType ty;
+                 raise Control.Bug "castConst"
+                )
             | T.RAWty {tyCon={id,...}, args=[_]} =>
               if TyConID.eq (id, #id PT.ptrTyCon) then PTRty
-              else raise Control.Bug "castConst"
-            | _ => raise Control.Bug "castConst"
+              else
+                (printType ty;
+                 raise Control.Bug "castConst")
+            | _ =>
+              (printType ty;
+               raise Control.Bug "castConst")
       in
         case (const, constTy) of
           (INT x, INTty) => (checkRange intRange (int32ToBigInt x, loc); const)

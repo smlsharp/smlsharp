@@ -13,6 +13,8 @@ struct
   structure VM = VMMnemonic
   structure M = MachineLanguage
 
+  fun newLocalId () = VarID.generate ()
+
   (* FIXME: 32bit dependent *)
   infix || && << >> ^^
   val (op ||) = Word32.orb
@@ -85,15 +87,15 @@ struct
   val HEAD_TYPE_BOXED_ARRAY    = HEAD_TYPE_ARRAY || HEAD_TYPE_BOXED
   val HEAD_TYPE_UNBOXED_ARRAY  = HEAD_TYPE_ARRAY || HEAD_TYPE_UNBOXED
 
-  fun labelString x = "L" ^ LocalVarID.toString x
-  fun constLabelString x = "C" ^ LocalVarID.toString x
+  fun labelString x = "L" ^ VarID.toString x
+  fun constLabelString x = "C" ^ VarID.toString x
   fun LabelRef x = VM.LABELREF (labelString x)
   fun ConstRef x = VM.INTERNALREF (constLabelString x)
 
   fun newVar ty =
       let
-        val id = Counters.newLocalId ()
-        val displayName = "$" ^ LocalVarID.toString id
+        val id = newLocalId ()
+        val displayName = "$" ^ VarID.toString id
       in
         {id = id, ty = ty, displayName = displayName} : M.varInfo
       end
@@ -271,7 +273,7 @@ struct
   type context =
       {
         registerDesc: M.registerDesc,
-        tagArgMap: M.tag LocalVarID.Map.map, (* paramId -> tag *)
+        tagArgMap: M.tag VarID.Map.map, (* paramId -> tag *)
         calleeSaveVars: M.varInfo list * M.varInfo list, (* boxed * unboxed *)
         savedUnwindVar: M.varInfo,
         savedLinkVar: M.varInfo,
@@ -450,7 +452,7 @@ struct
         val sz = toLSZ (Word.fromInt (size ffty))
         val pad = padSize (sz + 0w1, maxAlign) + 0w1
 
-        val label = constLabelString (Counters.newLocalId ())
+        val label = constLabelString (newLocalId ())
         val const =
             [
               VM.Label label,
@@ -500,10 +502,10 @@ struct
                                offset = Target.UIntToWord offset,
                                bit = bit}
               | AI.ParamTag {id, ...} =>
-                case LocalVarID.Map.find (#tagArgMap context, id) of
+                case VarID.Map.find (#tagArgMap context, id) of
                   SOME tag => tag
                 | NONE => raise Control.Bug ("transformTy: ParamTag: "^
-                                             LocalVarID.toString id)
+                                             VarID.toString id)
 
           val size =
               foldl (fn (x,z) => Word.max (sizeOf context x, z))
@@ -860,8 +862,8 @@ struct
          * arguemnts to root set as soon as possible.
          *)
         ListPair.foldl
-          (fn ({id,...}, ent, map) => LocalVarID.Map.insert (map, id, M.GENERIC ent))
-          LocalVarID.Map.empty
+          (fn ({id,...}, ent, map) => VarID.Map.insert (map, id, M.GENERIC ent))
+          VarID.Map.empty
           (params, argumentRegisters)
       else
         (*
@@ -871,13 +873,13 @@ struct
          *)
         #1 (foldl
              (fn ({id, ...}:AI.paramInfo, (map, i)) =>
-                 (LocalVarID.Map.insert (map, id,
+                 (VarID.Map.insert (map, id,
                                  M.FREEGENERIC
                                      {entity = List.hd argumentRegisters,
                                       offset = i,
                                       bit = 0w0}),
                   i + argumentSize))
-             (LocalVarID.Map.empty, 0w0)
+             (VarID.Map.empty, 0w0)
              params)
 
   fun callerSaveVars use =
@@ -2745,12 +2747,12 @@ struct
         val tagArgMap =
             foldl
               (fn ({blockKind = AI.FunEntry params, loc, ...}, map) =>
-                  LocalVarID.Map.unionWith
+                  VarID.Map.unionWith
                       (fn _ =>
                           raise Control.Bug "selectCluster: doubled parameter")
                       (map, makeTagArgMap params)
                 | (_, z) => z)
-              LocalVarID.Map.empty
+              VarID.Map.empty
               body
 
         val context = startCluster context tagArgMap
@@ -2907,7 +2909,7 @@ struct
   fun transformConstants context constants =
       let
         val constants =
-            LocalVarID.Map.foldli
+            VarID.Map.foldli
                 (fn (label, const, z) =>
                     let
                       val (header, content) = transformConst context const
@@ -2962,10 +2964,9 @@ struct
         }
       end
 
-  fun select stamp ({toplevel, clusters, constants, globals,
+  fun select ({toplevel, clusters, constants, globals,
                      aliases}:AI.program) =
       let
-        val _ = Counters.init stamp
 
         val mainEntry =
             case toplevel of
@@ -2975,7 +2976,7 @@ struct
         val context =
             {
               registerDesc = initialRegisterDesc,
-              tagArgMap = LocalVarID.Map.empty,
+              tagArgMap = VarID.Map.empty,
               calleeSaveVars = calleeSaveVars (),
               savedUnwindVar = newVar (M.VAR pointerClass),
               savedLinkVar = newVar (M.VAR pointerClass),
@@ -3009,7 +3010,7 @@ struct
               boxedGlobals = boxedGlobals
             } : VM.instruction list M.program
       in
-          (Counters.getCounterStamp(), program)
+          program
       end
 
 end

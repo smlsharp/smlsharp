@@ -22,25 +22,27 @@ struct
   structure SI = SymbolicInstructions
   structure Target = AbstractInstruction.Target
 
+  fun newLocalId () = VarID.generate ()
+
   (* FIXME: 0w0 is not always a null pointer. *)
   val NullValue = 0w0 : BasicTypes.UInt32
 
   fun tagEq (AI.Boxed, AI.Boxed) = true
     | tagEq (AI.Unboxed, AI.Unboxed) = true
-    | tagEq (AI.ParamTag p1, AI.ParamTag p2) = LocalVarID.eq (#id p1, #id p2)
+    | tagEq (AI.ParamTag p1, AI.ParamTag p2) = VarID.eq (#id p1, #id p2)
     | tagEq (AI.IndirectTag {offset=o1, bit=b1},
              AI.IndirectTag {offset=o2, bit=b2}) = o1 = o2 andalso b1 = b2
     | tagEq _ = false
 
   fun sizeEq (SI.SINGLE, SI.SINGLE) = true
     | sizeEq (SI.DOUBLE, SI.DOUBLE) = true
-    | sizeEq (SI.VARIANT v1, SI.VARIANT v2) = LocalVarID.eq (#id v1, #id v2)
+    | sizeEq (SI.VARIANT v1, SI.VARIANT v2) = VarID.eq (#id v1, #id v2)
     | sizeEq _ = false
 
   fun newAIVar ty =
       let
-        val id = Counters.newLocalId ()
-        val displayName = "$" ^ LocalVarID.toString id
+        val id = newLocalId ()
+        val displayName = "$" ^ VarID.toString id
       in
         {id = id, ty = ty, displayName = displayName} : AI.varInfo
       end
@@ -159,11 +161,11 @@ struct
   type context =
        {
          isTopLevel: bool,
-         constants: AI.const LocalVarID.Map.map,
+         constants: AI.const VarID.Map.map,
          pendingBlocks: AI.label list,
-         visitedBlocks: LocalVarID.Set.set,
-         localVars: localVarInfo LocalVarID.Map.map,   (* local variables *)
-         localLabels: AI.label LocalVarID.Map.map,     (* AI.label -> SI.label *)
+         visitedBlocks: VarID.Set.set,
+         localVars: localVarInfo VarID.Map.map,   (* local variables *)
+         localLabels: AI.label VarID.Map.map,     (* AI.label -> SI.label *)
          exnVar: SI.varInfo option,            (* exception catcher *)
          handlerVar: SI.varInfo option,        (* current handler address *)
          handlerLabel: AI.label option,        (* the global handler *)
@@ -172,8 +174,8 @@ struct
 
   fun newVar (context as {localVars, ...}:context) tag size =
       let
-        val id = Counters.newLocalId ()
-        val displayName = "$" ^ LocalVarID.toString id
+        val id = newLocalId ()
+        val displayName = "$" ^ VarID.toString id
         val varInfo = {id = id, displayName = displayName} : SI.varInfo
         val localVarInfo = (varInfo, tag, size)
       in
@@ -182,7 +184,7 @@ struct
            constants = #constants context,
            pendingBlocks = #pendingBlocks context,
            visitedBlocks = #visitedBlocks context,
-           localVars = LocalVarID.Map.insert (#localVars context, id, localVarInfo),
+           localVars = VarID.Map.insert (#localVars context, id, localVarInfo),
            localLabels = #localLabels context,
            exnVar = #exnVar context,
            handlerVar = #handlerVar context,
@@ -211,12 +213,12 @@ struct
         val localVarInfo = (sivarInfo, tag, size)
 
         val localVars =
-            case LocalVarID.Map.find (#localVars context, id) of
-              NONE => LocalVarID.Map.insert (#localVars context, id, localVarInfo)
+            case VarID.Map.find (#localVars context, id) of
+              NONE => VarID.Map.insert (#localVars context, id, localVarInfo)
             | SOME (_, tag2, size2) =>
               if tagEq (tag, tag2) andalso sizeEq (size, size2)
               then #localVars context
-              else raise Control.Bug ("local var " ^ LocalVarID.toString id
+              else raise Control.Bug ("local var " ^ VarID.toString id
                                       ^ " in different type")
       in
         ({
@@ -247,11 +249,11 @@ struct
       #1 (addLocalVarList context paramList)
 
   fun addLocalLabel (context as {localLabels, ...}:context) ailabel =
-      case LocalVarID.Map.find (localLabels, ailabel) of
+      case VarID.Map.find (localLabels, ailabel) of
         SOME newLabel => (context, newLabel)
       | NONE =>
         let
-          val newLabel = Counters.newLocalId ()
+          val newLabel = newLocalId ()
         in
           ({
              isTopLevel = #isTopLevel context,
@@ -259,7 +261,7 @@ struct
              pendingBlocks = #pendingBlocks context,
              visitedBlocks = #visitedBlocks context,
              localVars = #localVars context,
-             localLabels = LocalVarID.Map.insert (localLabels, ailabel, newLabel),
+             localLabels = VarID.Map.insert (localLabels, ailabel, newLabel),
              exnVar = #exnVar context,
              handlerVar = #handlerVar context,
              handlerLabel = #handlerLabel context,
@@ -275,7 +277,7 @@ struct
         let
           val (context, exnVar) = newVar context AI.Boxed SI.SINGLE
           val (context, handlerVar) = newVar context AI.Unboxed SI.SINGLE
-          val handlerLabel = Counters.newLocalId ()
+          val handlerLabel = newLocalId ()
         in
           {
             isTopLevel = #isTopLevel context,
@@ -286,7 +288,7 @@ struct
             localLabels = #localLabels context,
             exnVar = SOME exnVar,
             handlerVar = SOME handlerVar,
-            handlerLabel = SOME (Counters.newLocalId ()),
+            handlerLabel = SOME (newLocalId ()),
             (* guardedStart is dummy *)
             epilogue = [SI.PopHandler {guardedStart = handlerLabel}]
           } : context
@@ -297,7 +299,7 @@ struct
         val (context, newLabel) = addLocalLabel context blockLabel
 
         val pendingBlocks =
-            if LocalVarID.Set.member (#visitedBlocks context, blockLabel)
+            if VarID.Set.member (#visitedBlocks context, blockLabel)
             then #pendingBlocks context
             else blockLabel :: #pendingBlocks context
       in
@@ -305,7 +307,7 @@ struct
            isTopLevel = #isTopLevel context,
            constants = #constants context,
            pendingBlocks = pendingBlocks,
-           visitedBlocks = LocalVarID.Set.add (#visitedBlocks context, blockLabel),
+           visitedBlocks = VarID.Set.add (#visitedBlocks context, blockLabel),
            localVars = #localVars context,
            localLabels = #localLabels context,
            exnVar = #exnVar context,
@@ -397,7 +399,7 @@ struct
       | AI.Init constId =>
         transformMove context dst size (AI.Const constId)
       | AI.Const constId =>
-        case LocalVarID.Map.find (#constants context, constId) of
+        case VarID.Map.find (#constants context, constId) of
           SOME (AI.ConstReal x) =>
           (* FIXME: actually a boxed real *)
           (context, [ SI.LoadReal {destination = dst, value = x} ])
@@ -1100,8 +1102,8 @@ struct
                        *)
                       let
                         val (context, var) = newVar context tag size
-                        val initLabel = Counters.newLocalId ()
-                        val allocLabel = Counters.newLocalId ()
+                        val initLabel = newLocalId ()
+                        val allocLabel = newLocalId ()
 
                         val (context, insn, tagvar) =
                             case tag of
@@ -1152,7 +1154,7 @@ struct
           (* If dst is used as an initial value, we need to initialize dst
            * prior to MakeBlock. *)
           val insn3 =
-              if List.exists (fn {id,...} => LocalVarID.eq (id, #id dstEntry))
+              if List.exists (fn {id,...} => VarID.eq (id, #id dstEntry))
                              initEntries
               then [SI.LoadEmptyBlock {destination = dstEntry}]
               else nil
@@ -1241,7 +1243,7 @@ struct
                     case !entry of
                       NONE => nil
                     | SOME (var as {id = x,...}) =>
-                      if List.exists (fn {id,...} => LocalVarID.eq (id, x))
+                      if List.exists (fn {id,...} => VarID.eq (id, x))
                                      fieldSizeEntries
                       then [SI.LoadWord {destination = var, value = initValue}]
                       else nil
@@ -1342,8 +1344,8 @@ struct
           | _ =>
             let
               val (context, initValueEntry) = newVar context tag size
-              val initLabel = Counters.newLocalId ()
-              val allocLabel = Counters.newLocalId ()
+              val initLabel = newLocalId ()
+              val allocLabel = newLocalId ()
             in
               (context,
                insn1 @ insn2 @
@@ -1775,7 +1777,7 @@ struct
            (* direct jump *)
            let
              val alreadyVisited =
-                 LocalVarID.Set.member (#visitedBlocks context, destination)
+                 VarID.Set.member (#visitedBlocks context, destination)
 
              val (context, label) = requestBlock context destination
            in
@@ -1832,10 +1834,10 @@ struct
       | (context, SOME blockLabel) =>
         let
           val block : AI.basicBlock =
-              case LocalVarID.Map.find (basicBlockMap, blockLabel) of
+              case VarID.Map.find (basicBlockMap, blockLabel) of
                 SOME block => block
               | NONE => raise Control.Bug ("transformBody: "
-                                           ^ LocalVarID.toString blockLabel)
+                                           ^ VarID.toString blockLabel)
 
           val (context, blockLabel) = addLocalLabel context blockLabel
 
@@ -1918,9 +1920,9 @@ struct
 
   (* generate ConstString only for strings used in current context. *)
   fun generateConst ({localLabels, constants, ...}:context) =
-      LocalVarID.Map.foldli
+      VarID.Map.foldli
         (fn (constId, const, insn) =>
-            case LocalVarID.Map.find (localLabels, constId) of
+            case VarID.Map.find (localLabels, constId) of
               NONE => insn
             | SOME newId =>
               case const of
@@ -1944,7 +1946,7 @@ struct
       let
         val {atoms, pointers, doubles,
              argsRecords, freesRecords, unboxedRecords} =
-            LocalVarID.Map.foldl
+            VarID.Map.foldl
               (fn (localVarInfo,
                    {atoms, pointers, doubles,
                     argsRecords, freesRecords, unboxedRecords}) =>
@@ -1992,7 +1994,7 @@ struct
                      freesRecords = (offset, bit, var) :: freesRecords,
                      unboxedRecords = unboxedRecords}
                   | ({id,...}:SI.varInfo, _, _) =>
-                    raise Control.Bug ("makeFrameInfo " ^ LocalVarID.toString id))
+                    raise Control.Bug ("makeFrameInfo " ^ VarID.toString id))
               {atoms = nil,
                pointers = nil,
                doubles = nil,
@@ -2007,22 +2009,22 @@ struct
                   let
                     val arg = transformParamInfo param
                     val id = #id arg
-                    val argMap = LocalVarID.Map.insert (argMap, id, arg)
+                    val argMap = VarID.Map.insert (argMap, id, arg)
                     val argRecordsMap =
-                        case LocalVarID.Map.find (argRecordsMap, id) of
+                        case VarID.Map.find (argRecordsMap, id) of
                           SOME l =>
-                          LocalVarID.Map.insert (argRecordsMap, id, varInfo::l)
+                          VarID.Map.insert (argRecordsMap, id, varInfo::l)
                         | NONE =>
-                          LocalVarID.Map.insert (argRecordsMap, id, [varInfo])
+                          VarID.Map.insert (argRecordsMap, id, [varInfo])
                   in
                     (argMap, argRecordsMap)
                   end)
-              (LocalVarID.Map.empty, LocalVarID.Map.empty)
+              (VarID.Map.empty, VarID.Map.empty)
               argsRecords
 
-        val bitmapArgs = LocalVarID.Map.listItems argMap
+        val bitmapArgs = VarID.Map.listItems argMap
         val argsRecords =
-            map (fn {id, ...} => valOf (LocalVarID.Map.find (argsRecordsMap, id)))
+            map (fn {id, ...} => valOf (VarID.Map.find (argsRecordsMap, id)))
                 bitmapArgs
 
         val freesIndex =
@@ -2083,8 +2085,8 @@ struct
         val basicBlockMap =
             foldl
               (fn (block as {label, ...}, blockMap) =>
-                  LocalVarID.Map.insert (blockMap, label, block))
-              LocalVarID.Map.empty
+                  VarID.Map.insert (blockMap, label, block))
+              VarID.Map.empty
               body
 
         val funEntries =
@@ -2111,9 +2113,9 @@ struct
                       isTopLevel = isTopLevel,
                       constants = constants,
                       pendingBlocks = [label],
-                      visitedBlocks = LocalVarID.Set.singleton label,
-                      localVars = LocalVarID.Map.empty,
-                      localLabels = LocalVarID.Map.singleton (label, Counters.newLocalId ()),
+                      visitedBlocks = VarID.Set.singleton label,
+                      localVars = VarID.Map.empty,
+                      localLabels = VarID.Map.singleton (label, newLocalId ()),
                       exnVar = NONE,
                       handlerVar = NONE,
                       handlerLabel = NONE,
@@ -2143,8 +2145,8 @@ struct
                                          exceptionEntry = exnVar}
                        ],
                        let
-                         val enableLabel = Counters.newLocalId ()
-                         val disableLabel = Counters.newLocalId ()
+                         val enableLabel = newLocalId ()
+                         val disableLabel = newLocalId ()
                        in
                          [
                            SI.Location loc,
@@ -2170,7 +2172,7 @@ struct
                 val functionCode =
                     {
                       name = {id = label,
-                              displayName = LocalVarID.toString label},
+                              displayName = VarID.toString label},
                       loc = #loc block,
                       args = map transformParamInfo params,
                       instructions = prelude
@@ -2188,9 +2190,8 @@ struct
           funEntries
       end
 
-  fun generate stamp (globalArrays, {clusters, constants, ...}:AI.program) =
+  fun generate (globalArrays, {clusters, constants, ...}:AI.program) =
       let
-        val _ = Counters.init stamp
         val (topLevelCluster, clusters) =
             case clusters of
               h::t => (h, t)
@@ -2243,7 +2244,7 @@ struct
             | _ =>
               raise Control.Bug "toplevel cluster doesn't exist"
       in
-        (Counters.getCounterStamp(), clusterCodes)
+        clusterCodes
       end
 
 end

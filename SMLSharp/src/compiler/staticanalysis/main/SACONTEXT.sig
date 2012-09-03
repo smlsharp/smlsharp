@@ -15,7 +15,7 @@ signature SACONTEXT = sig
 
   val insertBtvEnv : context -> AnnotatedTypes.btvEnv -> context
 
-  val lookupVariable : context  -> LocalVarID.id -> (string * Loc.loc) -> AnnotatedCalc.varInfo
+  val lookupVariable : context  -> VarID.id -> (string * Loc.loc) -> AnnotatedCalc.varInfo
 
   val lookupTid : context -> int -> AnnotatedTypes.btvKind
 

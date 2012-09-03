@@ -4,15 +4,15 @@ val f = fn : dt1 -> int
 val v1 = 1 : int
 val f = fn : int -> int
 val v2 = 2 : int
-../tests/coresml/tests/match002.sml:23.11-23.31 Warning: match nonexhaustive
-                                                                  y as 3 => ...
+../tests/coresml/tests/match002.sml:23.11-23.31 Warning:
+  match nonexhaustive
+           y as 3 => ...
 val f = fn : int -> int
 val v3 = 3 : int
-../tests/coresml/tests/match002.sml:26.11-26.37 Warning: match nonexhaustive
-                                                                  y as 4 => ...
+../tests/coresml/tests/match002.sml:26.11-26.37 Warning:
+  match nonexhaustive
+           y as 4 => ...
 val f = fn : int -> int
 val v4 = 4 : int
-val f = fn : ['a .'a -> 'a]
+val f = fn : ['a. 'a -> 'a]
 val v5 = 5 : int
-
-

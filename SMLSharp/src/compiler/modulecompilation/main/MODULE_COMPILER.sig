@@ -1,8 +1,7 @@
 signature MODULE_COMPILER = sig
   val compile : 
-    NameMap.topNameMap
-      -> VarNameID.id
-             -> PatternCalc.pltopdec list
-                -> NameMap.currentNameMap * VarNameID.id * 
-                   PatternCalcFlattened.plftopdec list
+      NameMap.topNameMap
+        -> PatternCalc.pltopdec list
+           -> NameMap.currentNameMap * 
+              PatternCalcFlattened.plftopdec list
 end

@@ -9,9 +9,7 @@ sig
 
   val select
       : int option                      (* compile unit count *)
-        -> Counters.stamp
         -> AbstractInstruction2.program
-        -> Counters.stamp
-           * X86Mnemonic.program
+        -> X86Mnemonic.program
 
 end

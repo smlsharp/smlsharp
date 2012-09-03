@@ -16,7 +16,6 @@ Group is
         ../../anormal/sources.cm       (* for generating global index *)
         ../../sigenerator/sources.cm   (* for generating global index *)
 
-        Counters.sml
         BinarySearchCode.sml
         CallAnalysis.sml
         Simplify.sml

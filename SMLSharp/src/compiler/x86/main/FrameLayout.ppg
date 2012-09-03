@@ -18,7 +18,7 @@ struct
                 z @ prefix @ formatKey k @ sep @ formatter v @ suffix)
             nil map
     fun formatIDMap x y =
-        formatMap LocalVarID.Map.foldli LocalVarID.format_id x y
+        formatMap VarID.Map.foldli VarID.format_id x y
   in
 
   (*% *)
@@ -92,13 +92,13 @@ struct
   (*%
    * @formatter(bool) SmlppgUtil.formatBinaryChoice
    * @formatter(word) format_word_dec
-   * @formatter(LocalVarID.id) LocalVarID.format_id
+   * @formatter(VarID.id) VarID.format_id
    *)
   type varInfo =
        (*% @format({id, size, align, tag})
         *  "v" id "<" size "," align "," tag ">"
         *)
-       {id: LocalVarID.id, size: word, align: word, tag: tag}
+       {id: VarID.id, size: word, align: word, tag: tag}
 *)
 
   (*% 
@@ -127,7 +127,7 @@ struct
   (*%
    * @formatter(word) format_word_asInt
    * @formatter(Word32.word) SmlppgUtil.format_word32
-   * @formatter(LocalVarID.Map.map) formatIDMap
+   * @formatter(VarID.Map.map) formatIDMap
    *)
   type ('reg,'addr) frameLayout =
       (*%
@@ -150,7 +150,7 @@ struct
         (* size of the whole of stack frame. (header + slots) *)
         frameSize: word,
         (* map from variable ID to offset from the end of stack frame. *)
-        variableOffsets: word LocalVarID.Map.map,
+        variableOffsets: word VarID.Map.map,
         (* frame bitmap composition code. *)
         headerCode: ('reg,'addr) headerComposition list,
         (* frame header *)

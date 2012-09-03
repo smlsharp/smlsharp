@@ -75,9 +75,9 @@ struct
       }
 
   fun entrySymbolName {clusterId, entry} =
-      "F" ^ ClusterID.toString clusterId ^ "_" ^ LocalVarID.toString entry
+      "F" ^ ClusterID.toString clusterId ^ "_" ^ VarID.toString entry
   fun constSymbolName id =
-      "C" ^ LocalVarID.toString id
+      "C" ^ VarID.toString id
   fun globalSymbolName (options:options) label =
       if #globalSymbolStartsWithUnderscore options
       then "_" ^ label
@@ -85,7 +85,7 @@ struct
 
   fun newDst ty =
       let
-        val id = Counters.newLocalId ()
+        val id = NewLabel.newLabel ()
       in
         case ty of
           R.Int8 s => R.REG {id=id, ty=ty}
@@ -108,11 +108,8 @@ struct
         R.REG v => v
       | _ => raise Control.Bug "newVar"
 
-  fun newLabel () =
-      Counters.newLocalId ()
-
   fun newSlot fmt =
-      {id = Counters.newLocalId (), format = fmt} : R.slot
+      {id = NewLabel.newLabel (), format = fmt} : R.slot
 
   datatype value =
       OPRD of R.operand
@@ -618,7 +615,7 @@ struct
               case #positionIndependent (#options context) of
                 NONE => raise Control.Bug "globalOffsetBase"
               | SOME ELF => R.ELF_GOT
-              | SOME MachO => R.LABEL (newLabel ())
+              | SOME MachO => R.LABEL (NewLabel.newLabel ())
               | SOME COFF => raise Control.Bug "globalOffsetBase: COFF"
           val baseReg = newVar (R.Ptr R.Code)
           val code = updateGlobalOffsetBase code (SOME (baseLabel, baseReg))
@@ -2859,7 +2856,7 @@ end
               AI.BitParam {argKind = AI.Param {argTys, retTys, index},...} =>
               (List.nth (mlParams (map transformTy argTys,
                                    map transformTy retTys), index),
-               LocalVarID.Map.empty)
+               VarID.Map.empty)
             | AI.BitParam _ =>
               raise Control.Bug "selectFrameBitmap: BitParam"
             | AI.EnvBitmap (arg, offset) =>
@@ -2867,7 +2864,7 @@ end
                 R.REG var =>
                 (R.MEM (R.Int32 R.U, R.ADDR (R.DISP (R.INT32 (toInt32 offset),
                                                      R.BASE var))),
-                 LocalVarID.Map.singleton (#id var, var))
+                 VarID.Map.singleton (#id var, var))
               | _ => raise Control.Bug "selectFrameBitmap: EnvBitmap"
       in
         ({source = R.REF_ source, bits = bits} : R.frameBitmap, uses)
@@ -2878,9 +2875,9 @@ end
         val (bitmap, uses1) = selectFrameBitmap bitmap
         val (bitmaps, uses) = selectFrameBitmapList bitmaps
       in
-        (bitmap::bitmaps, LocalVarID.Map.unionWith #1 (uses, uses1))
+        (bitmap::bitmaps, VarID.Map.unionWith #1 (uses, uses1))
       end
-    | selectFrameBitmapList nil = (nil, LocalVarID.Map.empty)
+    | selectFrameBitmapList nil = (nil, VarID.Map.empty)
 
   fun selectCluster options {externSymbols, thunkSymbol}
                     ({frameBitmap, name, body, loc}:AI.cluster) =
@@ -3132,7 +3129,7 @@ val _ = puts "--"
                       preFrameSize = 0,
                       postFrameSize = 0,
                       focus = RTLEdit.singletonFirst R.ENTER} : code
-          val dst = R.REG {id=LocalVarID.initialID, ty=R.Ptr R.Data} (* dummy *)
+          val dst = R.REG {id=NewLabel.newLabel (), ty=R.Ptr R.Data} (* dummy *)
 
           val {header, bitmapOffset, bitmaps, allocSize, ...} =
               selectAlloc #2 context code
@@ -3184,7 +3181,7 @@ val _ = puts "--"
         end
 
   fun selectConstants options externSymbols constants =
-      LocalVarID.Map.foldri
+      VarID.Map.foldri
         (fn (constId, data, (externSymbols, topdecls)) =>
             let
               val symbol = constSymbolName constId
@@ -3383,7 +3380,7 @@ val _ = Control.pl R.format_topdecl
       GlobalData of data
 
 
-         constants: data LocalVarID.Map.map,  (* constId -> data *)
+         constants: data VarID.Map.map,  (* constId -> data *)
          globals: global SEnv.map             (* globalLabel -> global *)
 
 
@@ -3453,7 +3450,7 @@ val _ = Control.pl R.format_topdecl
                     symbolEnv = symbolEnv,
                     focus = RTLEdit.newGraph R.ENTER} : code
         val (code, topdecs) =
-            LocalVarID.Map.foldri
+            VarID.Map.foldri
               (fn (id, data, (code, topdecs)) =>
                   let
                     val symbol = constSymbolName id

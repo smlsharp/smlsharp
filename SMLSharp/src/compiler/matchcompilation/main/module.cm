@@ -20,7 +20,6 @@ Group is
         ../../typedflatcalc/sources.cm
         ../../recordcalc/sources.cm
 
-	Counters.sml
         MatchData.sml
         MatchError.ppg.sml
         MatchCompiler.sml

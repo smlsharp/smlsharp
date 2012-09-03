@@ -497,19 +497,6 @@ in
      PLFSPECSIGWHERE of plfspec 
                       * (tvar list * namePath * ty) list 
                       * loc (* include *)
-(*
-   | (*%
-       * @format(fundesc fundescs * loc)
-       * !N0{ "functor" + {fundescs(fundesc)(~2[ +1 "and" ] +)}}
-       * @format:fundesc(funid * (sigexp1 * argNamePathEnv) * (sigexp2 * bodyNamePathEnv))
-       * funid ":" +d  sigexp1()(expFormatter,patFormatter) +d "=>" sigexp2()(expFormatter,patFormatter)
-       *)
-      PLFSPECFUNCTOR of (
-                         string * 
-                         (plfspec * NameMap.basicNameNPEnv) * 
-                         (plfspec * NameMap.basicNameNPEnv)
-                        ) list * loc 
-*)
 
 and plftopdec = 
     (*%

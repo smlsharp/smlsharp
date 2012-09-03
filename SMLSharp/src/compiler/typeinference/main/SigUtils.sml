@@ -287,8 +287,13 @@ in
               T.UNIV => T.UNIV
             | T.REC tySEnvMap => 
               T.REC (SEnv.map (instSigTy strPathSubst tyConSubst) tySEnvMap)
-            | T.OVERLOADED tys => 
-              T.OVERLOADED (map (instSigTy strPathSubst tyConSubst) tys)
+            | T.OCONSTkind tys => 
+              T.OCONSTkind (map (instSigTy strPathSubst tyConSubst) tys)
+            | T.OPRIMkind  {instances, operators} => 
+              T.OPRIMkind
+                {instances = map (instSigTy strPathSubst tyConSubst) instances,
+                 operators = operators}
+
       in
         (
          {
@@ -301,19 +306,22 @@ in
         )
       end
         
-  and instSigBtvKind strPathSubst tyConSubst {index, recordKind, eqKind} = 
+  and instSigBtvKind strPathSubst tyConSubst {recordKind, eqKind} = 
       let
         val recordKind =
             case recordKind of 
               T.UNIV => T.UNIV
             | T.REC tySEnvMap => 
               T.REC (SEnv.map (instSigTy strPathSubst tyConSubst) tySEnvMap)
-            | T.OVERLOADED tys => 
-              T.OVERLOADED (map (instSigTy strPathSubst tyConSubst) tys)
+            | T.OCONSTkind tys => 
+              T.OCONSTkind (map (instSigTy strPathSubst tyConSubst) tys)
+            | T.OPRIMkind  {instances, operators} => 
+              T.OPRIMkind
+                {instances = map (instSigTy strPathSubst tyConSubst) instances,
+                 operators = operators}
       in
         (
          {
-          index=index, 
           recordKind = recordKind,
           eqKind = eqKind
          }

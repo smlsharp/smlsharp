@@ -10,6 +10,5 @@ Group is
         ../../annotatedcalc/sources.cm
         ../../multiplevaluecalc/sources.cm
 
-	Counters.sml
         RECORDUNBOXING.sig
         RecordUnboxing.sml

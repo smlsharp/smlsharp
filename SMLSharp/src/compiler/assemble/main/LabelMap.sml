@@ -16,24 +16,24 @@ struct
 
   type offset = BT.UInt32
 
-  type map = offset LocalVarID.Map.map
+  type map = offset VarID.Map.map
 
   (***************************************************************************)
 
-  val empty = LocalVarID.Map.empty : map
+  val empty = VarID.Map.empty : map
 
   fun find (map, labelName) =
-      case LocalVarID.Map.find (map, labelName) of
+      case VarID.Map.find (map, labelName) of
         NONE =>
         raise
-          Control.Bug ("label " ^ (LocalVarID.toString labelName) ^ " is not found")
+          Control.Bug ("label " ^ (VarID.toString labelName) ^ " is not found")
       | SOME offset => offset
 
   fun register (map, labelName, offset) =
-      case LocalVarID.Map.find (map, labelName) of
-        NONE => LocalVarID.Map.insert (map, labelName, offset)
+      case VarID.Map.find (map, labelName) of
+        NONE => VarID.Map.insert (map, labelName, offset)
       | SOME offset =>
-        raise Control.Bug ("duplicated label: " ^ (LocalVarID.toString labelName))
+        raise Control.Bug ("duplicated label: " ^ (VarID.toString labelName))
 
   (***************************************************************************)
 

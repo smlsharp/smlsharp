@@ -25,7 +25,16 @@ in
 
   fun convertTy ty =
     case ty of
-      AT.ERRORty => ty
+      AT.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+      AT.INSTCODEty
+        {
+         oprimId = oprimId,
+         oprimPolyTy = convertTy oprimPolyTy,
+         name = name,
+         keyTyList = map convertTy keyTyList,
+         instTyList = map convertTy instTyList
+        }
+    | AT.ERRORty => ty
     | AT.DUMMYty int => ty
     | AT.BOUNDVARty int => ty
     | AT.FUNMty 
@@ -102,6 +111,21 @@ in
      case recordKind of
        AT.UNIV => AT.UNIV
      | AT.REC tySEnvMap => AT.REC (SEnv.map convertTy tySEnvMap)
+     | AT.OPRIMkind {instances, operators} => 
+       AT.OPRIMkind
+         {instances = map convertTy instances,
+          operators =
+          map
+          (fn {oprimId,oprimPolyTy,name,keyTyList,instTyList} =>
+              {oprimId = oprimId,
+               oprimPolyTy = convertTy oprimPolyTy,
+               name = name,
+               keyTyList = map convertTy keyTyList,
+               instTyList = map convertTy instTyList
+               }
+          )
+          operators
+         }
 
   and convertBtvKind 
     {

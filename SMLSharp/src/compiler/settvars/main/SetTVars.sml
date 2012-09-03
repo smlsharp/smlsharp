@@ -584,15 +584,6 @@ in
          PTSPECPREFIXEDSIGID (namePath, loc)
        | PCF.PLFSPECSIGWHERE (plspec, longtycons, loc) =>
          PTSPECSIGWHERE (setspec plspec, longtycons, loc) 
-(*
-       | PCF.PLFSPECFUNCTOR(fundescList, loc) =>
-         PTSPECFUNCTOR 
-           (map (fn (funName, (argSpec, argNamePathEnv), (bodySpec, bodyNamePathEnv)) =>
-           (funName, (setspec argSpec, argNamePathEnv), (setspec bodySpec, bodyNamePathEnv))
-           )
-           fundescList,
-           loc)
-*)
 
  and setStrDecl env plStrdec =
    let

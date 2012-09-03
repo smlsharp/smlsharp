@@ -1,7 +1,5 @@
 signature ANORMALIZATION = sig
 
-  val normalize : Counters.stamp -> 
-                  (RBUCalc.rbudecl list) -> 
-                  (Counters.stamp * (ANormal.andecl list))
+  val normalize : RBUCalc.rbudecl list -> ANormal.andecl list
 
 end

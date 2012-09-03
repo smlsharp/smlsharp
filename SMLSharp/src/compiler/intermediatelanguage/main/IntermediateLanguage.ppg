@@ -11,14 +11,14 @@ structure IntermediateLanguage = struct
 
   fun formatId id =
       let
-        val s = "$" ^ LocalVarID.toString id
+        val s = "$" ^ VarID.toString id
       in
         SMLFormat.BasicFormatters.format_string s
       end
 
   fun formatLabel id =
       let
-        val s = "L" ^ LocalVarID.toString id
+        val s = "L" ^ VarID.toString id
       in
         SMLFormat.BasicFormatters.format_string s
       end
@@ -28,7 +28,7 @@ structure IntermediateLanguage = struct
    *)
   type ffiAttributes = Absyn.ffiAttributes
 
-  type id = LocalVarID.id
+  type id = VarID.id
 
   (*%
    *)

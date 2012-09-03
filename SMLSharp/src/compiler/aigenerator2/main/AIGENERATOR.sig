@@ -8,8 +8,7 @@ signature AIGENERATOR2 =
 sig
 
   val generate
-      : Counters.stamp
-        -> YAANormal.topdecl list
-        -> Counters.stamp * AbstractInstruction2.program
+      : YAANormal.topdecl list
+        -> AbstractInstruction2.program
 
 end

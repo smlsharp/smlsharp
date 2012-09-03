@@ -16,7 +16,7 @@ sig
           tmpReg1: 'reg,      (* temporally register for bitmap calculuation *)
           tmpReg2: 'reg,
           frameBitmap: ('reg,'addr) FrameLayout.frameBitmap list,
-          variables: FrameLayout.format LocalVarID.Map.map   (* varID->format *)
+          variables: FrameLayout.format VarID.Map.map   (* varID->format *)
         }
         -> ('reg,'addr) FrameLayout.frameLayout
 

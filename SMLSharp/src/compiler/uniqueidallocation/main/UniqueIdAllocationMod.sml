@@ -347,7 +347,7 @@ in
                                 VIC.mergeVarIDBasis
                                     {newVarIDBasis = deltaVarIDBasis,
                                      oldVarIDBasis = currentVarIDBasis},
-                                LocalVarID.Map.unionWith #1 (IDMap, deltaIDMap),
+                                VarID.Map.unionWith #1 (IDMap, deltaIDMap),
                                 newTfpdecs @ body)
                            end
                          | FUNDEC (tpfundecs, loc) =>
@@ -365,7 +365,7 @@ in
                                 newTfpdecs @ funDecs
                                )
                            end)
-                   (VIC.emptyVarIDBasis, LocalVarID.Map.empty, nil)
+                   (VIC.emptyVarIDBasis, VarID.Map.empty, nil)
                    tptopGroups
        in
            (liftedVarIDBasis, IDMap, tfpdecs)

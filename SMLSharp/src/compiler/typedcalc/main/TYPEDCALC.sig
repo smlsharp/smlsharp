@@ -9,7 +9,7 @@
 
 signature TYPEDCALC = sig
 
-  type btvKind
+  type btvEnv
   type ffiAttributes
   type caseKind
   type conPathInfo
@@ -24,7 +24,6 @@ signature TYPEDCALC = sig
 (*
   type strInfo
 *)
-  type strPathInfo
   type ty
   type tyBindInfo
   type tyCon
@@ -69,9 +68,10 @@ signature TYPEDCALC = sig
         }
    | TPOPRIMAPPLY of 
        {
-         oprimOp:oprimInfo, 
-         instances:ty list, 
-         argExpOpt:tpexp option, 
+         oprimOp:oprimInfo,
+         keyTyList:ty list,
+         instances:ty list,
+         argExpOpt:tpexp option,
          loc: loc
         }
    | TPDATACONSTRUCT of 
@@ -116,13 +116,13 @@ signature TYPEDCALC = sig
    | TPFNM of {argVarList: varPathInfo list, bodyTy:ty, bodyExp:tpexp, loc:loc}
    | TPPOLYFNM of 
        {
-        btvEnv:btvKind IEnv.map,
+        btvEnv:btvEnv,
         argVarList:varPathInfo list,
         bodyTy:ty,
         bodyExp:tpexp,
         loc:loc
         }
-   | TPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tpexp, loc:loc}
+   | TPPOLY of {btvEnv:btvEnv, expTyWithoutTAbs:ty, exp:tpexp, loc:loc}
    | TPTAPP of {exp:tpexp, expTy:ty, instTyList:ty list, loc:loc}
    | TPSEQ of {expList:tpexp list, expTyList:ty list, loc:loc}
    | TPLIST of {expList:tpexp list, listTy:ty, loc:loc}
@@ -141,7 +141,7 @@ signature TYPEDCALC = sig
    | TPVALREC of {var: varPathInfo, expTy:ty, exp:tpexp } list * loc
    | TPVALRECGROUP of string list * tpdecl list * loc
    | TPPOLYFUNDECL of 
-                   btvKind IEnv.map 
+                   btvEnv
                    * 
                    {funVar:varPathInfo,
                     argTyList:ty list,
@@ -151,7 +151,7 @@ signature TYPEDCALC = sig
                    * 
                    loc 
    | TPVALPOLYREC of
-       btvKind IEnv.map * {var:varPathInfo, expTy:ty, exp:tpexp} list * loc
+       btvEnv * {var:varPathInfo, expTy:ty, exp:tpexp} list * loc
    | TPLOCALDEC of tpdecl list * tpdecl list * loc
    | TPINTRO of NameMap.basicNameNPEnv * Types.Env * {original:Path.path, current:Path.path} * loc
    | TPTYPE of Types.tyBindInfo list * loc
@@ -222,73 +222,36 @@ signature TYPEDCALC = sig
                       } list
                       * loc
 
-  val format_btvKind : (int
-                        * {eqKind:Types.eqKind, index:int,
-                           recordKind:Types.recordKind} IEnv.map) list
-                       -> {eqKind:Types.eqKind, index:int,
-                           recordKind:Types.recordKind}
-                          -> SMLFormat.FormatExpression.expression list
   val format_caseKind : caseKind -> SMLFormat.FormatExpression.expression list
   val format_conPathInfo : conPathInfo -> SMLFormat.FormatExpression.expression list
-  val format_fields : (int
-                       * {eqKind:Types.eqKind, index:int,
-                          recordKind:Types.recordKind} IEnv.map) list
+  val format_fields : Types.formatBtvEnv
                       -> fields -> SMLFormat.FormatExpression.expression list
-  val format_idState : (int
-                        * {eqKind:Types.eqKind, index:int,
-                           recordKind:Types.recordKind} IEnv.map) list
+  val format_idState : Types.formatBtvEnv
                        -> idState -> SMLFormat.FormatExpression.expression list
   val format_oprimInfo : oprimInfo
                          -> SMLFormat.FormatExpression.expression list
-  val format_patfields : (int
-                          * {eqKind:Types.eqKind, index:int,
-                             recordKind:Types.recordKind} IEnv.map) list
+  val format_patfields : Types.formatBtvEnv
                          -> patfields
                             -> SMLFormat.FormatExpression.expression list
   val format_primInfo : primInfo
                         -> SMLFormat.FormatExpression.expression list
-  val format_strPathInfo : (int
-                            * {eqKind:Types.eqKind, index:int,
-                               recordKind:Types.recordKind} IEnv.map) list
-                           -> strPathInfo
-                              -> SMLFormat.FormatExpression.expression list
-  val format_tpdecl : (int
-                       * {eqKind:Types.eqKind, index:int,
-                          recordKind:Types.recordKind} IEnv.map) list
+  val format_tpdecl : Types.formatBtvEnv
                       -> tpdecl SMLFormat.BasicFormatters.formatter
-  val format_tpexnbind : (int
-                          * {eqKind:Types.eqKind, index:int,
-                             recordKind:Types.recordKind} IEnv.map) list
+  val format_tpexnbind : Types.formatBtvEnv
                          -> tpexnbind SMLFormat.BasicFormatters.formatter
-  val format_tpexp : (int
-                      * {eqKind:Types.eqKind, index:int, recordKind:Types.recordKind}
-                          IEnv.map) list
+  val format_tpexp : Types.formatBtvEnv
                      -> tpexp -> SMLFormat.FormatExpression.expression list
-  val format_ty : (int
-                   * {eqKind:Types.eqKind, index:int, recordKind:Types.recordKind} 
-                       IEnv.map) list
+  val format_ty : Types.formatBtvEnv
                   -> ty -> SMLFormat.FormatExpression.expression list
-  val format_tyCon : (int
-                      * {eqKind:Types.eqKind, index:int, recordKind:Types.recordKind}
-                          IEnv.map) list
-                     -> tyCon -> SMLFormat.FormatExpression.expression list
-  val format_valId : (int
-                      * {eqKind:Types.eqKind, index:int, recordKind:Types.recordKind}
-                          IEnv.map) list
+  val format_valId : Types.formatBtvEnv
                      -> valId -> SMLFormat.FormatExpression.expression list
-  val format_varInfo : (int
-                         * {eqKind:Types.eqKind, index:int,
-                            recordKind:Types.recordKind} IEnv.map) list
+  val format_varInfo : Types.formatBtvEnv
                            -> {name:string, ty:ty}
                            -> SMLFormat.FormatExpression.expression list
-  val format_varPathInfo : (int
-                            * {eqKind:Types.eqKind, index:int,
-                               recordKind:Types.recordKind} IEnv.map) list
+  val format_varPathInfo : Types.formatBtvEnv
                            -> varPathInfo
                               -> SMLFormat.FormatExpression.expression list
-  val format_tptopdecl : (int
-                            * {eqKind:Types.eqKind, index:int,
-                               recordKind:Types.recordKind} IEnv.map) list -> 
+  val format_tptopdecl : Types.formatBtvEnv ->
                          tptopdecl ->  
                          SMLFormat.FormatExpression.expression list
 

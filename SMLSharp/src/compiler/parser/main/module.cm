@@ -14,14 +14,7 @@ Group is
 
         iml.lex
         iml.grm
-(*
-	interface.lex
-	interface.grm
-*)
+
         ParserConstants_SMLNJ.sml
         PARSER.sig
         Parser.sml
-(*
-	INTERFACEPARSER.sig
-	InterfaceParser.sml
-*)

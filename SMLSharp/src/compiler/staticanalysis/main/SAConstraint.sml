@@ -9,11 +9,14 @@ structure SAConstraint : SACONSTRAINT = struct
   structure AT = AnnotatedTypes
   structure ATU = AnnotatedTypesUtils
 
-  datatype constraint =
-           RECORD_EQUIV of (AT.recordAnnotation ref) * (AT.recordAnnotation ref)
-         | FUNCTION_EQUIV of (AT.functionAnnotation ref) * (AT.functionAnnotation ref)
+  exception Unify
 
-  (* StaticAnalysis keeps a set of annotation equivalent for resolving later*)
+  datatype constraint =
+    RECORD_EQUIV of (AT.recordAnnotation ref) * (AT.recordAnnotation ref)
+  | FUNCTION_EQUIV of
+    (AT.functionAnnotation ref) * (AT.functionAnnotation ref)
+
+ (* StaticAnalysis keeps a set of annotation equivalent for resolving later*)
   val constraintsRef = ref ([] : constraint list)
 
   (* StaticAnalysis keeps a set of generic bound type variable for 
@@ -23,18 +26,20 @@ structure SAConstraint : SACONSTRAINT = struct
 
   val btvInfo = ref (IEnv.empty : AT.btvEnv)
 
+(*
   fun btvEq (btvKind1 : AT.btvKind, btvKind2 : AT.btvKind) =
       case (btvKind1, btvKind2) of
         ({recordKind = AT.UNIV,...}, {recordKind = AT.UNIV,...}) => true
-      | ({recordKind = AT.REC flty1,...}, {recordKind = AT.REC flty2,...}) => 
+      | ({recordKind = AT.REC flty1,...},
+         {recordKind = AT.REC flty2,...}) => 
         (List.all
-            (fn l => case SEnv.find(flty2,l) of SOME _ => true | _ => false)
-            (SEnv.listKeys flty1)) andalso
+           (fn l => case SEnv.find(flty2,l) of SOME _ => true | _ => false)
+           (SEnv.listKeys flty1)) andalso
         (List.all
-            (fn l => case SEnv.find(flty1,l) of SOME _ => true | _ => false)
-            (SEnv.listKeys flty2))
+           (fn l => case SEnv.find(flty1,l) of SOME _ => true | _ => false)
+           (SEnv.listKeys flty2))
       | _ => false
-
+*)
              
   fun genericTyVar tid = genericTyVars := ISet.add(!genericTyVars, tid)
 
@@ -78,7 +83,15 @@ structure SAConstraint : SACONSTRAINT = struct
 
   fun convertGlobalType ty =
       case ty of
-        T.ERRORty => AT.ERRORty
+        T.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+        AT.INSTCODEty
+          {oprimId = oprimId,
+           oprimPolyTy = convertGlobalType oprimPolyTy,
+           name = name,
+           keyTyList =  map convertGlobalType keyTyList,
+           instTyList = map convertGlobalType instTyList
+          }
+      | T.ERRORty => AT.ERRORty
       | T.DUMMYty i => AT.DUMMYty i                  
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => convertGlobalType ty
       | T.TYVARty (ref (T.TVAR {id,...})) =>
@@ -134,7 +147,7 @@ structure SAConstraint : SACONSTRAINT = struct
         end
 *)
 
-  and convertGlobalBtvKind (id, btvKind as {index, recordKind, eqKind} : Types.btvKind) =
+  and convertGlobalBtvKind (id, btvKind as {recordKind, eqKind} : Types.btvKind) =
       let
         val _ = genericTyVar id
         val newRecordKind = convertGlobalRecKind recordKind
@@ -156,12 +169,36 @@ structure SAConstraint : SACONSTRAINT = struct
       case recordKind of
         T.UNIV => AT.UNIV
       | T.REC flty => AT.REC (SEnv.map convertGlobalType flty)
-      | T.OVERLOADED tyList =>
+      | T.OPRIMkind {instances, operators} =>
+        AT.OPRIMkind
+          {instances = map convertGlobalType instances,
+           operators =
+           map (fn {oprimId,oprimPolyTy,name,keyTyList,instTyList} =>
+                   {
+                    oprimId = oprimId,
+                    oprimPolyTy = convertGlobalType oprimPolyTy,
+                    name = name,
+                    keyTyList = map convertGlobalType keyTyList,
+                    instTyList = map convertGlobalType instTyList
+                   }
+               )
+               operators
+          }
+      | T.OCONSTkind tyList =>
         raise Control.Bug "convertGlobalRecKind: OVERLOADED"
 
   fun convertLocalType ty =
       case ty of
-        T.ERRORty => AT.ERRORty
+        T.INSTCODEty {oprimId, oprimPolyTy, name, keyTyList, instTyList} =>
+        AT.INSTCODEty
+          {
+           oprimId = oprimId,
+           oprimPolyTy = convertLocalType oprimPolyTy,
+           name = name,
+           keyTyList = map convertLocalType keyTyList,
+           instTyList = map convertLocalType instTyList
+          }
+      | T.ERRORty => AT.ERRORty
       | T.DUMMYty i => AT.DUMMYty i                  
       | T.TYVARty (ref (T.SUBSTITUTED ty)) => convertLocalType ty
       | T.TYVARty (ref (T.TVAR {id,...})) =>
@@ -226,7 +263,7 @@ structure SAConstraint : SACONSTRAINT = struct
         newTy
       end
 
-  and convertLocalBtvKind (id, btvKind as {index, recordKind, eqKind} : Types.btvKind) =
+  and convertLocalBtvKind (id, btvKind as {recordKind, eqKind} : Types.btvKind) =
       (
        case IEnv.find(!btvInfo, id) of
          SOME newBtvKind => newBtvKind
@@ -255,7 +292,21 @@ structure SAConstraint : SACONSTRAINT = struct
       case recordKind of
         T.UNIV => AT.UNIV
       | T.REC flty => AT.REC (SEnv.map convertLocalType flty)
-      | T.OVERLOADED tyList =>
+      | T.OPRIMkind {instances, operators} =>
+        AT.OPRIMkind
+          {instances = map convertLocalType instances,
+           operators =
+             map (fn {oprimId, oprimPolyTy, name,keyTyList,instTyList} =>
+                     {oprimId = oprimId,
+                      oprimPolyTy = convertLocalType oprimPolyTy,
+                      name = name,
+                      keyTyList = map convertLocalType keyTyList,
+                      instTyList = map convertLocalType instTyList
+                     }
+                 )
+                 operators
+          }
+      | T.OCONSTkind tyList =>
         raise Control.Bug "convertLocalRecKind: OVERLOADED"
 
   and convertTyBindInfo tyBindInfo =
@@ -269,7 +320,15 @@ structure SAConstraint : SACONSTRAINT = struct
 
   fun unify (ty1,ty2) =
       case (ty1,ty2) of
-        (AT.ERRORty, AT.ERRORty) => ()
+        (AT.INSTCODEty {oprimId,
+                        name,
+                        oprimPolyTy,
+                        keyTyList,
+                        instTyList
+                       },
+         AT.INSTCODEty _) (* ??? *)
+        => ()
+      | (AT.ERRORty, AT.ERRORty) => ()
       | (AT.DUMMYty _, AT.DUMMYty _) => ()
       | (AT.BOUNDVARty tid1, AT.BOUNDVARty tid2) =>
         if tid1 = tid2 
@@ -279,10 +338,15 @@ structure SAConstraint : SACONSTRAINT = struct
             val s1 = Control.prettyPrint (AT.format_ty ty1)
             val s2 = Control.prettyPrint (AT.format_ty ty2)
           in
-            raise Control.Bug ("Unification fails (2) " ^ s1 ^ "," ^ s2)
+            raise Unify 
+            before print ("Unification fails (2) " ^ s1 ^ "," ^ s2)
           end
-      | (AT.FUNMty {argTyList=argTyList1, bodyTy=bodyTy1, annotation = annotation1,...},
-         AT.FUNMty {argTyList=argTyList2, bodyTy=bodyTy2, annotation = annotation2,...}
+      | (AT.FUNMty {argTyList=argTyList1,
+                    bodyTy=bodyTy1,
+                    annotation = annotation1,...},
+         AT.FUNMty {argTyList=argTyList2,
+                    bodyTy=bodyTy2,
+                    annotation = annotation2,...}
         ) =>
         (
          ListPair.app unify (argTyList1,argTyList2);
@@ -293,14 +357,19 @@ structure SAConstraint : SACONSTRAINT = struct
          AT.RECORDty {fieldTypes = fieldTypes2, annotation = annotation2}
         ) =>
         (
-         ListPair.app unify (SEnv.listItems fieldTypes1, SEnv.listItems fieldTypes2);
+         ListPair.app unify (SEnv.listItems fieldTypes1,
+                             SEnv.listItems fieldTypes2);
          recordEquivalence (annotation1,annotation2)
         )
-      | (AT.RAWty {tyCon=tyCon1, args = args1},AT.RAWty {tyCon=tyCon2, args = args2}) => 
+      | (AT.RAWty {tyCon=tyCon1, args = args1},
+         AT.RAWty {tyCon=tyCon2, args = args2}) => 
         ListPair.app unify (args1,args2)
-      | (AT.POLYty {boundtvars = boundtvars1, body=body1}, AT.POLYty {boundtvars = boundtvars2, body=body2}) => 
+      | (AT.POLYty {boundtvars = boundtvars1, body=body1},
+         AT.POLYty {boundtvars = boundtvars2, body=body2}) => 
         (
-         ListPair.app unifyBtvKind (IEnv.listItems boundtvars1, IEnv.listItems boundtvars2);
+         ListPair.app
+           unifyBtvKind
+           (IEnv.listItems boundtvars1, IEnv.listItems boundtvars2);
          unify(body1,body2) 
         )
       | (AT.SPECty {args = args1,...}, AT.SPECty {args = args2, ...}) => 
@@ -325,22 +394,31 @@ structure SAConstraint : SACONSTRAINT = struct
             val s1 = Control.prettyPrint (AT.format_ty ty1)
             val s2 = Control.prettyPrint (AT.format_ty ty2)
           in
-            raise Control.Bug ("Unification fails (3)  " ^ s1 ^ "," ^ s2)
+            raise Unify 
+            before print ("Unification fails (3)  " ^ s1 ^ "," ^ s2)
           end
 
-  and unifyRecKind (recordKind1 : AT.recordKind, recordKind2 : AT.recordKind) =
+  and unifyRecKind (recordKind1 : AT.recordKind,
+                    recordKind2 : AT.recordKind) =
       case (recordKind1, recordKind2) 
        of (AT.UNIV, AT.UNIV) => ()
         | (AT.REC flty1, AT.REC flty2) => 
           ListPair.app unify (SEnv.listItems flty1, SEnv.listItems flty2)
-        | _ => raise Control.Bug "inconsistent reckind to unifyRecKind (staticanalysis/main/SAConstraint.sml)"
+        | (AT.OPRIMkind {instances = I1, operators = O1},
+           AT.OPRIMkind {instances = I2, operators = O2}) => ()
+        | _ =>
+          raise
+            Control.Bug
+              "inconsistent reckind to unifyRecKind\
+              \ (staticanalysis/main/SAConstraint.sml)"
 
   and unifyBtvKind (btvKind1 : AT.btvKind, btvKind2 : AT.btvKind) =
       unifyRecKind (#recordKind btvKind1, #recordKind btvKind2)
           
 
-  (* is a polymorphic type is instanciated with a list of instance types, we may need 
-   * to perform unification if some instance type refer to the same type
+  (* is a polymorphic type is instanciated with a list of instance types,
+   * we may need  to perform unification if some instance type refer to
+   * the same type
    * E.g. 
    *    polymorphic type :          \forall{t1#{a:t2},t2}.\sigma 
    *    instance argument types :   {{a:\tau1,b:int},\tau2}

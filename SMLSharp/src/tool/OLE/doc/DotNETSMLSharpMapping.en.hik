@@ -27,7 +27,7 @@ Data types in C# are mapped to SML# data types as follows.
 ||string || OLE.string
 ||bool || bool
 ||object || OLE.variant
-||''t''[] || [SML# type of ''t''] Array.array * word list
+||''t''[] || [SML# type of ''t''] OLE.safearray
 
 !property and field mapping.
 

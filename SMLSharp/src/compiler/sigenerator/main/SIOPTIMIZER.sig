@@ -5,7 +5,7 @@
  *)
 signature SIOPTIMIZER = 
 sig
-    val initialize_ALWAYS_Entry : LocalVarID.id -> unit
+    val initialize_ALWAYS_Entry : VarID.id -> unit
     val optimizeInstruction : SIGContext.context -> SymbolicInstructions.instruction -> SymbolicInstructions.instruction
     val deadCodeEliminate : SymbolicInstructions.clusterCode -> SymbolicInstructions.clusterCode
 end

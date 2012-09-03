@@ -31,9 +31,9 @@ structure RBUCalc = struct
   *)
  (*%
   * @prefix typed
-  * @formatter(LocalVarID.id) LocalVarID.format_id
+  * @formatter(VarID.id) VarID.format_id
   *)
- type id = LocalVarID.id
+ type id = VarID.id
 
  (*%
   * @formatter(Types.varId) Types.format_varId

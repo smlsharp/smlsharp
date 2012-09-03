@@ -8,7 +8,7 @@ structure Inline : INLINE =
 struct
 
 local
-structure ID = LocalVarID
+structure ID = VarID
 structure MV = MultipleValueCalc
 structure MU = MultipleValueCalcUtils
 structure IU = InlineUtils

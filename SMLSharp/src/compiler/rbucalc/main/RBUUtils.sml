@@ -408,11 +408,15 @@ structure RBUUtils : RBUUTILS = struct
   fun repOf btvEnv ty =
       case ty of
         AT.ERRORty => ATOM_REP
+      | AT.INSTCODEty _  => BOXED_REP
       | AT.DUMMYty _ => ATOM_REP
       | AT.BOUNDVARty tid =>
         (
          case IEnv.find(btvEnv,tid) of 
-           NONE => raise Control.Bug ("type variable not found: t"^Int.toString tid)
+           NONE =>
+           raise
+             Control.Bug
+               ("type variable not found: t"^Int.toString tid)
          | SOME btvKind => computeRep btvEnv btvKind
         )
       | AT.FUNMty _ => BOXED_REP

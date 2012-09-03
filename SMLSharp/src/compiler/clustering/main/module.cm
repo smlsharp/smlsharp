@@ -9,6 +9,5 @@ Group is
         ../../multiplevaluecalc/sources.cm
         ../../clustercalc/sources.cm
 	
-	Counters.sml
         CLUSTERING.sig
         Clustering.sml

@@ -26,10 +26,10 @@ struct
       {
         position: position,
         resultTyList: AN.ty list,
-        varEnv: AN.varInfo LocalVarID.Map.map,
-        codeEnv: AN.codeDecl LocalVarID.Map.map,
-        funEnv: AN.funDecl LocalVarID.Map.map,
-        mergePointEnv: AN.varInfo list LocalVarID.Map.map,
+        varEnv: AN.varInfo VarID.Map.map,
+        codeEnv: AN.codeDecl VarID.Map.map,
+        funEnv: AN.funDecl VarID.Map.map,
+        mergePointEnv: AN.varInfo list VarID.Map.map,
         globalEnv: (AN.ty * AN.anvalue) ExternalVarID.Map.map
       }
 
@@ -60,7 +60,7 @@ struct
       {
         position = #position context,
         resultTyList = #resultTyList context,
-        varEnv = LocalVarID.Map.insert (varEnv, id, varInfo),
+        varEnv = VarID.Map.insert (varEnv, id, varInfo),
         codeEnv = #codeEnv context,
         funEnv = #funEnv context,
         mergePointEnv = #mergePointEnv context,
@@ -77,7 +77,7 @@ struct
         position = #position context,
         resultTyList = #resultTyList context,
         varEnv = #varEnv context,
-        codeEnv = LocalVarID.Map.insert (codeEnv, codeId, codeDecl),
+        codeEnv = VarID.Map.insert (codeEnv, codeId, codeDecl),
         funEnv = #funEnv context,
         mergePointEnv = #mergePointEnv context,
         globalEnv = #globalEnv context
@@ -95,7 +95,7 @@ struct
         varEnv = #varEnv context,
         codeEnv = #codeEnv context,
         funEnv = #funEnv context,
-        mergePointEnv = LocalVarID.Map.insert (mergePointEnv, label, varList),
+        mergePointEnv = VarID.Map.insert (mergePointEnv, label, varList),
         globalEnv = #globalEnv context
       } : context
 
@@ -182,7 +182,7 @@ struct
 
   fun eqVar ({id=id1,ty=ty1,varKind=kind1,displayName=_}:AN.varInfo,
              {id=id2,ty=ty2,varKind=kind2,displayName=_}:AN.varInfo) =
-      LocalVarID.compare (id1, id2) = EQUAL
+      VarID.compare (id1, id2) = EQUAL
       andalso eqTy (ty1, ty2) andalso eqKind (kind1, kind2)
 
   val eqVarList = eqList eqVar
@@ -241,7 +241,7 @@ struct
       | AN.ANGLOBALSYMBOL {ty,...} => ty
       | AN.ANVAR (varInfo as {id,ty,...}) =>
         (
-          case LocalVarID.Map.find (#varEnv context, id) of
+          case VarID.Map.find (#varEnv context, id) of
             SOME v =>
             if eqVar (varInfo, v) then ()
             else error (loc, "typecheckValue 2",
@@ -251,14 +251,14 @@ struct
         )
       | AN.ANLABEL codeId =>
         (
-          case LocalVarID.Map.find (#funEnv context, codeId) of
+          case VarID.Map.find (#funEnv context, codeId) of
             SOME _ => ()
           | NONE => error (loc, "typecheckValue 4", E.FunNotFound codeId);
           AN.FUNENTRY
         )
       | AN.ANLOCALCODE codeId =>
         (
-          case LocalVarID.Map.find (#codeEnv context, codeId) of
+          case VarID.Map.find (#codeEnv context, codeId) of
             SOME _ => ()
           | NONE => error (loc, "typecheckValue 5", E.CodeNotFound codeId);
           AN.CODEPOINT
@@ -660,7 +660,7 @@ struct
         let
           val _ = map (typecheckValue context loc) (map AN.ANVAR varList)
         in
-          case LocalVarID.Map.find (#mergePointEnv context, label) of
+          case VarID.Map.find (#mergePointEnv context, label) of
             NONE => error (loc, "typecheckDecl 26", E.MergePointNotFound label)
           | SOME vars =>
             if eqVarList (varList, vars) then ()
@@ -844,20 +844,20 @@ struct
         val funEnv =
             foldl (fn ({entryFunctions,...}, funEnv) =>
                       foldl (fn (funDecl as {codeId,...}, funEnv) =>
-                                LocalVarID.Map.insert (funEnv, codeId, funDecl))
+                                VarID.Map.insert (funEnv, codeId, funDecl))
                             funEnv
                             entryFunctions)
-                  LocalVarID.Map.empty
+                  VarID.Map.empty
                   clusters
 
         val context =
             {
               position = TOP,
               resultTyList = nil,  (* dummy *)
-              varEnv = LocalVarID.Map.empty,
-              codeEnv = LocalVarID.Map.empty,
+              varEnv = VarID.Map.empty,
+              codeEnv = VarID.Map.empty,
               funEnv = funEnv,
-              mergePointEnv = LocalVarID.Map.empty,
+              mergePointEnv = VarID.Map.empty,
               globalEnv = ExternalVarID.Map.empty
             } : context
       in

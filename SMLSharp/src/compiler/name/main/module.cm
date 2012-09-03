@@ -8,19 +8,16 @@ Group is
         ../../control/sources.cm
         ../../env/sources.cm
         ../../pickle/sources.cm 
-        ../../systemdef/sources.cm
         ../../util/sources.cm
-        ../../env/sources.cm
-
         ../../../primitives/constants.cm
 
-        ID.sig
-        ID.sml
+        GLOBAL_ID.sig
+        GlobalID.sml
+        LOCAL_ID.sig
+        LocalID.sml
         PATH.sig
         Path.sml
 	NameMap.ppg.sml
         NameMapPickler.sml
-        IDGen.sml
         NamePickler.sml
-	BoundTypeVarID.sml
 

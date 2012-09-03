@@ -74,7 +74,7 @@ in
               NEW   fn {x1:ty1,...,xn:tyn} => inst(ex {x1,...,xn})
               *)
              let
-               val varname = VarNameGen.generate ()
+               val varname = VarName.generate ()
                val xList = map (fn ty => {namePath=(varname, Path.NilPath), ty=ty}) tyList
                val xexList = map (fn x => TPVAR (x, exLoc)) xList
                val (instBodyTy, instBody) = 
@@ -148,7 +148,7 @@ in
                     end
                   else
                     let 
-                      val varname = VarNameGen.generate ()
+                      val varname = VarName.generate ()
                       val var = {namePath = (varname, Path.NilPath), ty = ty}
                       val varex = TPVAR (var, exLoc)
                       val (flty,flex) =
@@ -231,14 +231,20 @@ in
                             loc = loc},
                accum')
           end
-        | TPOPRIMAPPLY {oprimOp, instances, argExpOpt = NONE, loc} =>
+        | TPOPRIMAPPLY {oprimOp,instances,keyTyList,argExpOpt = NONE, loc} =>
           (tpexp, defaultAccumValue)
-        | TPOPRIMAPPLY {oprimOp, instances, argExpOpt = SOME argExp, loc} =>
+        | TPOPRIMAPPLY
+            {oprimOp,instances,keyTyList,argExpOpt =SOME argExp,loc} =>
           let
-              val (newArgExp, accum') =
-                  tpExpExnTagTransducer applyFunction accumMerge defaultAccumValue argExp
+            val (newArgExp, accum') =
+                tpExpExnTagTransducer
+                  applyFunction
+                  accumMerge
+                  defaultAccumValue
+                  argExp
           in
-              (TPOPRIMAPPLY {oprimOp = oprimOp, 
+              (TPOPRIMAPPLY {oprimOp = oprimOp,
+                             keyTyList = keyTyList,
                              instances = instances,
                              argExpOpt = SOME newArgExp, 
                              loc = loc},

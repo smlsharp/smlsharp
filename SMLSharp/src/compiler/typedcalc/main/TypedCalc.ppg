@@ -48,13 +48,9 @@ structure TypedCalc : TYPEDCALC = struct
   type namePath = NameMap.namePath
 
  (*% 
-  * @params(btvEnv)
-  * @formatter(tyConFormat) Types.format_tyCon
+  * @formatter(Types.tyCOn) Types.format_tyCon
   *)
  type tyCon = 
-    (*%
-     * @format(tyCon:tyConFormat) tyCon()(btvEnv)
-     *)
     Types.tyCon
 
  (*% 
@@ -107,13 +103,11 @@ structure TypedCalc : TYPEDCALC = struct
 
  (*%
   * @params(btvEnv)
-  * @formatter(btvKindFormat) Types.format_btvKind
+  * @formatter(Types.btvEnv) Types.format_btvEnv
   *)
- type btvKind = 
-     (*%
-      * @format(value:btvKindFormat) value()(btvEnv)
-      *)
-      Types.btvKind
+ type btvEnv =
+     (*% @format(btv) btv()(btvEnv) *)
+     Types.btvEnv
 
  (*%
  * @formatter(caseKindFormat) PatternCalc.format_caseKind
@@ -148,7 +142,7 @@ structure TypedCalc : TYPEDCALC = struct
       Types.varPathInfo
 
  (*%
-  * @formatter(conPathInfoFormat) Types.format_conPathInfoName
+  * @formatter(conPathInfoFormat) Types.formatWithoutType_conPathInfo
   *)
  type conPathInfo =
       (*%
@@ -157,23 +151,13 @@ structure TypedCalc : TYPEDCALC = struct
       Types.conPathInfo
 
  (*%
-  * @formatter(exnPathInfoFormat) Types.format_exnPathInfoName
+  * @formatter(exnPathInfoFormat) Types.formatWithoutType_exnPathInfo
   *)
  type exnPathInfo =
       (*%
        * @format(value:exnPathInfoFormat) value
        *)
       Types.exnPathInfo
-
- (*%
-  * @params(btvEnv)
-  * @formatter(strPathInfoFormat) Types.format_strPathInfo
-  *)
- type strPathInfo =
-      (*%
-       * @format(value:strPathInfoFormat) value()(btvEnv)
-       *)
-      Types.strPathInfo
 
  type tyBindInfo = Types.tyBindInfo
  datatype constant = datatype ConstantTerm.constant
@@ -196,15 +180,14 @@ structure TypedCalc : TYPEDCALC = struct
  * @formatter(formatListWithEnclosure) SmlppgUtil.formatListWithEnclosure
  * @formatter(formatListWithEnclosureOne) SmlppgUtil.formatListWithEnclosureOne
  * @formatter(genericSmapExp) SmlppgUtil.formatGenericSmapExp
- * @formatter(imap) SmlppgUtil.formatImap
- * @formatter(createBtvKindMap) Types.createBtvKindMap
+ * @formatter(extendBtvEnv) TermFormat.extendBtvEnv
  * @formatter(tyBindInfo) Types.format_tyBindInfo
  * @formatter(format_pathdot) Path.format_pathWithDotend
  * @formatter(funBindInfo) Types.format_funBindInfo
  * @formatter(sigBindInfo) Types.format_sigBindInfo
  * @formatter(tyCon) Types.format_tyCon
- * @formatter(formatConPathInfoNameType) Types.format_conPathInfoNameType
- * @formatter(formatExnPathInfoNameType) Types.format_exnPathInfoNameType
+ * @formatter(formatConPathInfoNameType) Types.format_conPathInfo
+ * @formatter(formatExnPathInfoNameType) Types.format_exnPathInfo
  * @formatter(format_bmap_int) Types.format_bmap_int
  * @formatter(path) Path.format_pathWithoutDotend
  * @formatter(format_tyCon) Types.format_tyCon
@@ -332,6 +315,7 @@ structure TypedCalc : TYPEDCALC = struct
         }
   | (*%
       * @format({oprimOp:oprim,
+      *          keyTyList:kty ktys:formatListWithEnclosure,
       *          instances:ty tys:formatListWithEnclosure,
       *          argExpOpt:exp opt,
       *          loc:loc})
@@ -343,8 +327,9 @@ structure TypedCalc : TYPEDCALC = struct
      *)
      TPOPRIMAPPLY of 
        {
-         oprimOp:oprimInfo, 
-         instances:ty list, 
+         oprimOp:oprimInfo,
+         keyTyList:ty list,
+         instances:ty list,
          argExpOpt:tpexp option, 
          loc: loc
         }
@@ -503,7 +488,7 @@ structure TypedCalc : TYPEDCALC = struct
       *)
      TPFNM of {argVarList:varPathInfo list, bodyTy:ty, bodyExp:tpexp, loc:loc}
    | (*%
-      * @format({btvEnv:btvKind:btvKind imap, 
+      * @format({btvEnv:btv,
                  argVarList:var:varPathInfo vars, 
                  bodyTy:ty, 
                  bodyExp:exp, 
@@ -512,12 +497,12 @@ structure TypedCalc : TYPEDCALC = struct
       *   "["
       *       2[
       *          1
-      *           imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +
+      *           btv()(btvEnv) "." +
       *           !N0{
-      *                "fn" + "{" {vars(var()(imap:createBtvKindMap()(btvEnv)))(",")} "}" +d "=>"
-      *                4[ +1 {exp()(imap:createBtvKindMap()(btvEnv))} ]
+      *                "fn" + "{" {vars(var()(btv:extendBtvEnv()(btvEnv)))(",")} "}" +d "=>"
+      *                4[ +1 {exp()(btv:extendBtvEnv()(btvEnv))} ]
       *              }
-      *           2[ +1 ":" ty()(imap:createBtvKindMap()(btvEnv)) ]
+      *           2[ +1 ":" ty()(btv:extendBtvEnv()(btvEnv)) ]
       *        ] 1 
       *   "]"
       * }
@@ -528,21 +513,21 @@ structure TypedCalc : TYPEDCALC = struct
       *)
      TPPOLYFNM of 
        {
-        btvEnv:btvKind IEnv.map,
+        btvEnv:btvEnv,
         argVarList:varPathInfo list,
         bodyTy:ty,
         bodyExp:tpexp,
         loc:loc
         }
    | (*%
-      * @format({btvEnv:btvKind:btvKind imap, expTyWithoutTAbs:ty, exp:exp, loc:loc})
+      * @format({btvEnv:btv, expTyWithoutTAbs:ty, exp:exp, loc:loc})
       * {
       *   "["
       *       2[
       *          1
-      *           imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +2
-      *           2[ {exp()(imap:createBtvKindMap()(btvEnv))} ]
-      *           2[ +2 ":" ty()(imap:createBtvKindMap()(btvEnv)) ]
+      *           btv()(btvEnv) "." +2
+      *           2[ {exp()(btv:extendBtvEnv()(btvEnv))} ]
+      *           2[ +2 ":" ty()(btv:extendBtvEnv()(btvEnv)) ]
       *        ] 1
       *   "]"
       * }
@@ -551,7 +536,7 @@ structure TypedCalc : TYPEDCALC = struct
        \forall t.e 
         ty is the type of tpexp without type abstraction
       *)
-     TPPOLY of {btvEnv:btvKind IEnv.map, expTyWithoutTAbs:ty, exp:tpexp, loc:loc}
+     TPPOLY of {btvEnv:btvEnv, expTyWithoutTAbs:ty, exp:tpexp, loc:loc}
    | (*%
       * @format({exp:exp, expTy:ty1, instTyList:ty2 tys, loc:loc}) 
       * {
@@ -617,22 +602,22 @@ structure TypedCalc : TYPEDCALC = struct
                    *
                    loc
    | (*%
-       * @format(btvKind:btvKind imap * dec binds * loc)
+       * @format(btv * dec binds * loc)
         "fun ["
             2[ 1
-                imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +2
+                btv()(btvEnv) "." +2
              ]
 
             "]" 
              + {binds(dec)(~4[ +1 "and"] +)}
        * @format:dec({funVar:fid, argTyList, bodyTy, ruleList:rules}) 
-            {fid()(imap:createBtvKindMap()(btvEnv))} + rules
+            {fid()(btv:extendBtvEnv()(btvEnv))} + rules
        * @format:rules(rule rules)
             rules(rule)(~2[ +1"|"] +)
        * @format:rule(pat pats *  exp)
-       *    {pats(pat()(imap:createBtvKindMap()(btvEnv)))(+d)} + "=" +1 {exp()(imap:createBtvKindMap()(btvEnv))}
+       *    {pats(pat()(btv:extendBtvEnv()(btvEnv)))(+d)} + "=" +1 {exp()(btv:extendBtvEnv()(btvEnv))}
        *)
-     TPPOLYFUNDECL of btvKind IEnv.map 
+     TPPOLYFUNDECL of btvEnv
                        * 
                       {funVar:varPathInfo,
                        argTyList:ty list,
@@ -654,11 +639,11 @@ structure TypedCalc : TYPEDCALC = struct
       *)
      TPVALRECGROUP of string list * tpdecl list * loc
    | (*%
-      * @format(btvKind:btvKind imap * bind binds * loc)
+      * @format(btv * bind binds * loc)
       * {
       *   "valpolyrec["
       *       2[ 1
-      *           imap:imap(btvKind()(imap:createBtvKindMap()(btvEnv))) "." +2
+      *           btv()(btvEnv) "." +2
       *           "val rec" +d {binds(bind)(~4[ +1 "and"] +)}
       *        ] 1
       *   "]"
@@ -667,13 +652,13 @@ structure TypedCalc : TYPEDCALC = struct
       * {
       *   namePath +d "=" +2
       *   2[
-      *      {exp()(imap:createBtvKindMap()(btvEnv))} 
-      *       +1 ":" + ty1()(imap:createBtvKindMap()(btvEnv))
+      *      {exp()(btv:extendBtvEnv()(btvEnv))} 
+      *       +1 ":" + ty1()(btv:extendBtvEnv()(btvEnv))
       *    ]
       * }
       *)
      TPVALPOLYREC of
-     btvKind IEnv.map * {var:{namePath:namePath, ty:ty}, expTy:ty, exp:tpexp} list * loc
+     btvEnv * {var:{namePath:namePath, ty:ty}, expTy:ty, exp:tpexp} list * loc
    | (*%
       * @format(localdec localdecs * dec decs * loc)
       * "local" 2[ +2 localdecs(localdec()(btvEnv))(+2) ] +1

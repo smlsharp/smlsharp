@@ -57,7 +57,7 @@ struct
                 z @ prefix @ formatKey k @ sep @ formatter v @ suffix)
             nil map
     fun formatIDMap x y =
-        formatMap LocalVarID.Map.foldli LocalVarID.format_id x y
+        formatMap VarID.Map.foldli VarID.format_id x y
 
     fun formatLines (formatItem,indent,break) nil = nil
       | formatLines (formatItem,indent,break) (h::t) =
@@ -178,16 +178,16 @@ struct
   (*% @formatter(Loc.loc) Loc.format_loc *)
   type loc = Loc.loc
 
-  (*% @formatter(LocalVarID.id) LocalVarID.format_id *)
-  type id = LocalVarID.id
+  (*% @formatter(VarID.id) VarID.format_id *)
+  type id = VarID.id
 
-  (*% @formatter(LocalVarID.id) LocalVarID.format_id *)
+  (*% @formatter(VarID.id) VarID.format_id *)
   type label =
        (*% @format(l) ".L" l *)
-       LocalVarID.id
+       VarID.id
 
-  structure LabelMap = LocalVarID.Map
-  structure LabelSet = LocalVarID.Set
+  structure LabelMap = VarID.Map
+  structure LabelSet = VarID.Set
 
   (*% @formatter(ClusterID.id) ClusterID.format_id *)
   type clusterId =
@@ -602,7 +602,7 @@ struct
        *)
       (* "uses" field keeps track of applied substitution to variables
        * used for bitmap computation. *)
-      COMPUTE_FRAME of {uses: var LocalVarID.Map.map, clobs: var list}
+      COMPUTE_FRAME of {uses: var VarID.Map.map, clobs: var list}
     | (*% @format(slot) ".request_slot" + slot *)
       (* request that a new slot is allocated at this point. *)
       REQUEST_SLOT of slot
@@ -1164,7 +1164,7 @@ struct
   type program =
       (*% *)
       {
-        clusters: cluster LocalVarID.Map.map, (* clusterId -> cluster *)
+        clusters: cluster VarID.Map.map, (* clusterId -> cluster *)
         symbols: symbolDef SEnv.map
       }
 *)

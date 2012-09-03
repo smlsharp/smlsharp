@@ -118,13 +118,13 @@ struct
                 let
                   val offset = ceil (offset, align)
 (*
-                  val _ = print ("alloc: "^Word.fmt StringCvt.DEC offset^" = v"^Control.prettyPrint (LocalVarID.format_id id)^" (align="^Word.fmt StringCvt.DEC align^",size="^Word.fmt StringCvt.DEC size^")\n")
+                  val _ = print ("alloc: "^Word.fmt StringCvt.DEC offset^" = v"^Control.prettyPrint (VarID.format_id id)^" (align="^Word.fmt StringCvt.DEC align^",size="^Word.fmt StringCvt.DEC size^")\n")
 *)
-                  val alloc = LocalVarID.Map.insert (alloc, id, offset)
+                  val alloc = VarID.Map.insert (alloc, id, offset)
                 in
                   (ceil (offset + size, minAlign), alloc)
                 end)
-            (offset, LocalVarID.Map.empty)
+            (offset, VarID.Map.empty)
             vars
 
 
@@ -222,12 +222,12 @@ struct
   fun allocate {preOffset, postOffset, maxAlign, wordSize,
                 tmpReg1, tmpReg2,
                 frameBitmap:('reg,'addr) F.frameBitmap list,
-                variables: F.format LocalVarID.Map.map} =
+                variables: F.format VarID.Map.map} =
       let
         (* First, separate variables for each category.
          * "generic" is a map from tid to variables belonging to that tid. *)
         val (boxed, unboxed, generic) =
-            LocalVarID.Map.foldri
+            VarID.Map.foldri
               (fn (id, fmt as {tag,...}:F.format, (boxed,unboxed,generic)) =>
                   case tag of
                     F.BOXED => ((id,fmt)::boxed, unboxed, generic)
@@ -246,7 +246,7 @@ struct
 (*
         val _ = print "======= begin allocate frame =======\n"
         fun f g x = Control.prettyPrint (g x)
-        fun pv (k,v) = "v"^f LocalVarID.format_id k ^ ":"^f F.format_format v
+        fun pv (k,v) = "v"^f VarID.format_id k ^ ":"^f F.format_format v
         fun pl g nil = ""
           | pl g (h::t) = g h ^ "\n" ^ pl g t
         fun pm g x = IEnv.foldli (fn (k,v,z) => "t"^Int.toString k^":\n"^g v^z) "" x
@@ -287,12 +287,12 @@ struct
 
         (* allocate pad for pre-offset *)
         val offset = ceil (preOffset, maxAlign)
-        val alloc = LocalVarID.Map.empty
+        val alloc = VarID.Map.empty
 
         (* allocate generic slots. *)
         val (offset, genericAlloc) =
             allocSlots maxAlign offset (List.concat (rev genericSlots))
-        val alloc = LocalVarID.Map.unionWith #2 (alloc, genericAlloc)
+        val alloc = VarID.Map.unionWith #2 (alloc, genericAlloc)
 
         (* put frame header *)
         val headerOffset = offset
@@ -300,7 +300,7 @@ struct
 
         (* allocate boxed slots. *)
         val (offset, boxedAlloc) = allocSlots 0w1 offset boxed
-        val alloc = LocalVarID.Map.unionWith #2 (alloc, boxedAlloc)
+        val alloc = VarID.Map.unionWith #2 (alloc, boxedAlloc)
         val offset = ceil (offset, wordSize)
 
         (* put the number of generic slots. *)
@@ -323,7 +323,7 @@ struct
 
         (* allocate unboxed slots. *)
         val (offset, unboxedAlloc) = allocSlots 0w1 offset unboxed
-        val alloc = LocalVarID.Map.unionWith #2 (alloc, unboxedAlloc)
+        val alloc = VarID.Map.unionWith #2 (alloc, unboxedAlloc)
 
         (* allocate pad for post-offset *)
         val offset = ceil (offset + postOffset, maxAlign)
@@ -331,7 +331,7 @@ struct
 
         (* generate code for frame header *)
         (* FIXME: need overflow check *)
-        val numBoxed = LocalVarID.Map.numItems boxedAlloc
+        val numBoxed = VarID.Map.numItems boxedAlloc
         val header = Word32.orb (Word32.<< (Word32.fromInt numBoxed, 0w16),
                                  BasicTypes.WordToUInt32 numBitmapBits)
 
@@ -341,8 +341,8 @@ struct
             else (SOME headerOffset, [F.SAVEIMM (headerOffset, header)])
 
         (* generate code for boxed slot initialization *)
-        val nullSlots = LocalVarID.Map.listItems boxedAlloc
-                        @ LocalVarID.Map.listItems genericAlloc
+        val nullSlots = VarID.Map.listItems boxedAlloc
+                        @ VarID.Map.listItems genericAlloc
 
         val initCode =
             case nullSlots of
@@ -351,7 +351,7 @@ struct
 
 (*
         val _ = print "-------- alloc -------\n"
-        val _ = LocalVarID.Map.appi (fn (k,v) => print ("v"^LocalVarID.toString k^": "^Word.fmt StringCvt.DEC v^"\n")) alloc
+        val _ = VarID.Map.appi (fn (k,v) => print ("v"^VarID.toString k^": "^Word.fmt StringCvt.DEC v^"\n")) alloc
         val _ = print "----------------------\n"
         val _ = print ("frameSize = "^Word.fmt StringCvt.DEC frameSize^"\n")
         val _ = print ("headerOffset = "^(case headerOffset of NONE => "no" | SOME x => Word.fmt StringCvt.DEC x)^"\n")

@@ -321,7 +321,7 @@ structure ExtraComputationGenerator : EXTRACOMPUTATIONGENERATOR = struct
         val bindList = AO.extract(batch,varList)
         val varMap = 
             foldl
-                (fn ((v,_),S) => IEnv.insert(S,v, Counters.newRBUVar LOCAL RT.ATOMty))
+                (fn ((v,_),S) => IEnv.insert(S,v, NewVar.newRBUVar LOCAL RT.ATOMty))
                 IEnv.empty
                 bindList
 

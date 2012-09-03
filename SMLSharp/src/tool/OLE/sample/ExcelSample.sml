@@ -40,7 +40,7 @@ val vararray =
         (
           Array.fromList
               (map (OLE.BSTR o OLE.L) ["1", "2", "3", "4", "5", "6"]),
-          [0w2, 0w3]
+          [2, 3]
         );
 val _ = #setValue range2 vararray;
 val OLE.VARIANTARRAY (a, ls) = #getValue range2 ();

@@ -6,7 +6,7 @@
  *)
 structure SAContext : SACONTEXT = struct
 
-  structure VEnv = LocalVarID.Map
+  structure VEnv = VarID.Map
   structure AT = AnnotatedTypes
   structure AC = AnnotatedCalc
 
@@ -44,7 +44,7 @@ structure SAContext : SACONTEXT = struct
           raise
             Control.BugWithLoc
             ("variable not found:" ^ displayName ^ "(" ^
-             (LocalVarID.toString id) ^ ")", 
+             (VarID.toString id) ^ ")", 
              loc)
 
   fun lookupTid ({btvEnv,...} : context) tid =

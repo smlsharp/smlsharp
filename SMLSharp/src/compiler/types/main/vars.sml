@@ -81,7 +81,7 @@ struct
        * stipulation : external > internal
        *)
       case (ID1, ID2) of
-          (Types.INTERNAL id1, Types.INTERNAL id2) => LocalVarID.compare(id1, id2)
+          (Types.INTERNAL id1, Types.INTERNAL id2) => VarID.compare(id1, id2)
         | (Types.INTERNAL _, Types.EXTERNAL _) => LESS
         | (Types.EXTERNAL _, Types.INTERNAL _) => GREATER
         | (Types.EXTERNAL index1, Types.EXTERNAL index2) => ExternalVarID.compare (index1, index2)
@@ -97,7 +97,7 @@ structure Vord : ORD_KEY =
 struct
   fun compare ({displayName = n1, ty = ty1, varId = varId1}, 
 	       {displayName = n2, ty = ty2, varId = varId2}) =
-      Types.compareVarId (varId1, varId2)
+      VarIdEnv.Key.compare (varId1, varId2)
   type ord_key = Types.varIdInfo
 end
 structure VarEnv = BinaryMapMaker(Vord)

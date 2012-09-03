@@ -15,8 +15,8 @@ signature RTLEMIT = sig
 
   type env =
       {
-        regAlloc: Target.reg LocalVarID.Map.map,  (* var id -> reg *)
-        slotIndex: int LocalVarID.Map.map,        (* slot id -> offset *)
+        regAlloc: Target.reg VarID.Map.map,  (* var id -> reg *)
+        slotIndex: int VarID.Map.map,        (* slot id -> offset *)
         preFrameOrigin: int,
         postFrameOrigin: int,
         frameAllocSize: int

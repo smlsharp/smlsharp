@@ -11,17 +11,78 @@ struct
   structure TB = TypeinfBase
 
   exception Unify
-  exception EqConTy
+  exception EqRawTy
 
+  fun bug s = Control.Bug ("Unify:" ^ s)
   fun printType ty = print (TypeFormatter.tyToString ty ^ "\n")
 
-  fun eqConTy (ty1, ty2) =
-      case (ty1,ty2) of
-        (T.RAWty{tyCon={id=id1, ...}, ...}, T.RAWty{tyCon={id=id2, ...}, ...}) 
-          => TyConID.eq(id1, id2)
-      | _ => raise EqConTy 
+  fun occurres tvarRef ty = OTSet.member (TU.EFTV ty, tvarRef)
+  fun occurresTyList tvarRef nil = false
+    | occurresTyList tvarRef (h::t) = 
+      occurres tvarRef h orelse occurresTyList tvarRef t
+                                
+  exception TyConId
+  fun tyConId ty = 
+      case TU.derefTy ty of
+        T.RAWty {tyCon = {id, ...}, args} => id
+      | _ => raise TyConId
 
-  fun lubKind 
+  fun checkKind ty 
+                {
+                 tyvarName,
+                 eqKind,
+                 lambdaDepth,
+                 recordKind,
+                 id
+                }
+                =
+      let
+        val _ = 
+            case tyvarName of NONE => () | SOME _ => raise Unify
+        val _ =
+            (case eqKind of T.EQ => CheckEq.checkEq ty | _ => ())
+            handle CheckEq.Eqcheck => raise Unify
+        val _ = TU.adjustDepthInTy lambdaDepth ty
+        val newTyEquations = 
+            case recordKind of
+              T.REC kindFields =>
+              (case ty of 
+                 T.RECORDty tyFields =>
+                 SEnv.foldri
+                   (fn (l, ty, tyEquations) =>
+                       (
+                        ty, 
+                        case SEnv.find(tyFields, l) of
+                          SOME ty' => ty'
+                        | NONE => raise Unify
+                       ) :: tyEquations)
+                   nil
+                   kindFields
+               | T.TYVARty _ => raise bug "checkKind"
+               | _ => raise Unify)
+            | T.OCONSTkind L =>
+              (case List.filter
+                      (fn x => TyConID.eq(tyConId x, tyConId ty)
+                               handle TyConId => raise Unify
+                      )
+                      L of
+                 [ty1] => [(ty,ty1)]
+               | _ => raise Unify)
+            | T.OPRIMkind {instances, operators} => 
+              (case List.filter
+                      (fn x => TyConID.eq(tyConId x, tyConId ty)
+                               handle TyConId => raise Unify
+                      )
+                      instances
+                of
+                 [ty1] => [(ty,ty1)]
+               | _ => raise Unify)
+            | T.UNIV => nil
+      in
+        newTyEquations
+      end
+        
+  and lubKind 
         (
          {
           tyvarName = tyvarName1,
@@ -29,16 +90,38 @@ struct
           lambdaDepth = lambdaDepth1,
           recordKind = recordKind1,
           id = id1
-         },
+         } : T.tvKind,
          {
           tyvarName = tyvarName2,
           eqKind = eqKind2,
           lambdaDepth = lambdaDepth2,
           recordKind = recordKind2,
           id = id2
-         }
+         } : T.tvKind
         ) =
       let 
+        fun lubTyList(tyList1, tyList2) = 
+            let
+              fun find ty nil = NONE
+                | find ty (ty'::tyList) = 
+                  if TyConID.eq(tyConId ty,tyConId ty')
+                     handle TyConId => raise bug "non rawty in oprim kind"
+                  then
+                    SOME ty' 
+                  else find ty tyList
+              val (tyList, newEqs) =
+                  foldr
+                  (fn (ty, (tyList,newEqs)) =>
+                      case find ty tyList2 of
+                        NONE => (tyList,newEqs)
+                      | SOME ty' => (ty::tyList,(ty,ty') :: newEqs)
+                  )
+                  (nil,nil)
+                  tyList1
+            in
+              case tyList of nil => raise Unify
+                           | _ => (tyList, newEqs)
+            end
         val tyvarName =
             case (tyvarName1, tyvarName2) of
               (NONE, NONE) => NONE
@@ -76,22 +159,76 @@ struct
                 val newTyFields = SEnv.unionWith #1 (fl1, fl2)
               in (T.REC newTyFields, newTyEquations)
               end
-            | (T.OVERLOADED L1, T.OVERLOADED L2) => 
+            | (T.OCONSTkind L1, T.OCONSTkind L2) => 
               let
-                val L = 
-                    (foldr
-                      (fn (ty,l) =>
-                          if List.exists (fn x => eqConTy (ty,x)) L2 then
-                            (ty::l) 
-                          else l)
-                      nil
-                      L1
-                      )
-                    handle EqConTy =>
-                           raise Control.Bug "non RAWty to eqConTy"
+                val (tyList, newEqs) = lubTyList(L1,L2)
               in
-                case L of nil => raise Unify
-                        | _ => (T.OVERLOADED L, nil)
+                (T.OCONSTkind tyList, newEqs)
+              end
+            | (T.OCONSTkind L1,
+               T.OPRIMkind {instances, operators}) => 
+              let
+                val (tyList, newEqs) = lubTyList(L1,instances)
+              in
+                (T.OCONSTkind tyList, newEqs)
+              end
+            | (T.OPRIMkind {instances, operators},
+               T.OCONSTkind L2) => 
+              let
+                val (tyList, newEqs) = lubTyList(instances, L2)
+              in
+                (T.OCONSTkind tyList, newEqs)
+              end
+            | (
+               T.OPRIMkind {instances = I1, operators = O1},
+               T.OPRIMkind {instances = I2, operators = O2}
+              ) =>
+              let
+                fun find (op1:T.operator) (nil:T.operator list) = NONE
+                  | find  op1 (op2::opList) =
+                    if OPrimID.eq(#oprimId op1, #oprimId op2) then
+                      SOME op2
+                    else find op1 opList
+                val (O1, newEqs1) = 
+                    foldr
+                    (fn (op1, (O1, newEqs1)) =>
+                        let
+                          val op2Opt = find op1 O2
+                        in
+                          case op2Opt of
+                            SOME op2 =>
+                              (op1::O1, (ListPair.zip(#instTyList op1,
+                                                      #instTyList op2))
+                                        @ newEqs1)
+                          | NONE => (op1::O1,newEqs1)
+                        end
+                    )
+                    (nil,nil)
+                    O1
+                val O2 =
+                    foldr
+                    (fn (op2, O2) =>
+                        let
+                          val op1Opt = find op2 O1
+                        in
+                          case op1Opt of
+                            SOME _ => O2
+                          | NONE => op2::O2
+                        end
+                    )
+                    nil
+                    O2
+                val (I,newEq2) = lubTyList(I1,I2)
+              in
+                case I of 
+                  nil => raise Unify
+                | _ => 
+                  (T.OPRIMkind
+                     {
+                      instances = I,
+                      operators = O1@O2
+                     },
+                   newEqs1@newEq2)
               end
             | (T.UNIV, x) => (x,nil)
             | (x, T.UNIV) => (x,nil)
@@ -109,59 +246,11 @@ struct
         )
       end
 
-  fun checkKind ty 
-                {
-                 tyvarName,
-                 eqKind,
-                 lambdaDepth,
-                 recordKind,
-                 id
-                }
-                =
-      let
-        val _ = 
-            case tyvarName of NONE => () | SOME _ => raise Unify
-        val _ =
-            (case eqKind of T.EQ => CheckEq.checkEq ty | _ => ())
-            handle CheckEq.Eqcheck => raise Unify
-        val _ = TU.adjustDepthInTy lambdaDepth ty
-        val newTyEquations = 
-            case recordKind of
-              T.REC kindFields =>
-              (case ty of 
-                 T.RECORDty tyFields =>
-                 SEnv.foldri
-                   (fn (l, ty, tyEquations) =>
-                       (
-                        ty, 
-                        case SEnv.find(tyFields, l) of
-                          SOME ty' => ty'
-                        | NONE => raise Unify
-                       ) :: tyEquations)
-                   nil
-                   kindFields
-               | T.TYVARty _ => raise Control.Bug "checkKind"
-               | _ => raise Unify)
-            | T.OVERLOADED L => 
-              if List.exists 
-                    (fn x => eqConTy(x,ty)
-                        handle EqConTy => false
-                    )
-                    L
-              then nil
-              else raise Unify
-            | T.UNIV => nil
-      in
-        newTyEquations
-      end
-        
-  fun occurres tvarRef ty = OTSet.member (TU.EFTV ty, tvarRef)
-
   (**
    * The mysterious control flag "calledFromPatternUnify" should be
    * eiminated in future.
    *)
-  fun unifyTypeEquations calledFromPatternUnify L =
+  and unifyTypeEquations calledFromPatternUnify L =
       let
         fun unifyTy nil = ()
           | unifyTy ((ty1, ty2) :: tail) = 
@@ -310,13 +399,25 @@ struct
                   TU.performSubst(ty2, newTy);
                   unifyTy (newTyEquations@tail)
                 end
-               *)
                 let 
                   val (newKind, newTyEquations) =
                       lubKind (tvKind1, tvKind2)
                   val _ = tvState1 := T.TVAR newKind
                 in
                   TU.performSubst(ty2, ty1);
+                  unifyTy (newTyEquations@tail)
+                end
+               *)
+                let 
+                  val (newKind, newTyEquations) =
+                      lubKind (tvKind1, tvKind2)
+                  val newTy = T.newtyRaw {tyvarName = #tyvarName newKind,
+                                          lambdaDepth = #lambdaDepth newKind,
+                                          recordKind = #recordKind newKind,
+                                          eqKind = #eqKind newKind}
+                in
+                  TU.performSubst(ty1, newTy);
+                  TU.performSubst(ty2, newTy);
                   unifyTy (newTyEquations@tail)
                 end
             | (
@@ -384,6 +485,23 @@ struct
                 then unifyTy (newTyEquations@tail)
                 else raise Unify
               end
+            | (T.INSTCODEty {oprimId=oprimId1,
+                             oprimPolyTy=oprimPolyTy1,
+                             name = name1,
+                             keyTyList = KeyTyList1,
+                             instTyList = instTyList1
+                            },
+               T.INSTCODEty {oprimId=oprimId2,
+                             oprimPolyTy=oprimPolyTy2,
+                             name = name2,
+                             keyTyList = KeyTyList2,
+                             instTyList = instTyList2
+                            }
+              ) =>
+              (* keyTyList(i) is a subset of instTyList(i) *)
+              if OPrimID.eq (oprimId1, oprimId2) then
+                unifyTy (ListPair.zip (instTyList1,instTyList2)@tail)
+              else raise Unify
             | (ty1, ty2) => raise Unify
       in
         unifyTy L

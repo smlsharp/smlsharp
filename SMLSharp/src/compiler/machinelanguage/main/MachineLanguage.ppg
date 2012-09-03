@@ -25,7 +25,7 @@ struct
 
     fun formatLive (formatter,sep) map =
         SMLFormat.BasicFormatters.format_list (formatter,sep)
-                                              (LocalVarID.Map.listItems map)
+                                              (VarID.Map.listItems map)
   in
 
   (*% @formatter(Loc.loc) Loc.format_loc *)
@@ -380,7 +380,7 @@ struct
 
   (* for debugging liveness analysis *)
 
-  (*% @formatter(LocalVarID.Map.map) formatLive *)
+  (*% @formatter(VarID.Map.map) formatLive *)
   type 'target instructionWithLiveness =
       (*%
        * @format({insn, liveIn: lin lins, liveOut: lout louts})
@@ -392,8 +392,8 @@ struct
        *)
       {
         insn: 'target instruction,
-        liveIn: varInfo LocalVarID.Map.map,
-        liveOut: varInfo LocalVarID.Map.map
+        liveIn: varInfo VarID.Map.map,
+        liveOut: varInfo VarID.Map.map
       }
 
   local

@@ -12,6 +12,6 @@ signature RTLCOLORING = sig
   end
 
   val regalloc : RTLTypeCheck.symbolEnv ->
-RTL.cluster -> RTL.cluster * Target.reg LocalVarID.Map.map
+RTL.cluster -> RTL.cluster * Target.reg VarID.Map.map
 
 end

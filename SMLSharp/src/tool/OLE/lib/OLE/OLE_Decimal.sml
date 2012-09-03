@@ -3,7 +3,7 @@
  * @author YAMATODANI Kiyoshi
  * @version $Id: OLE.sml,v 1.27.22.2 2010/05/09 03:58:29 kiyoshiy Exp $
  *)
-structure OLE_Decimal : OLE_DECIMAL =
+structure OLE_Decimal =
 struct
 
   structure BS = OLE_BufferStream
@@ -51,6 +51,19 @@ struct
 
   val VT_DECIMAL = 0w14 : Word8.word
 
+  (** converts a decimal into the binary format which is compatible with
+   * OLE DECIMAL.
+   * <p>
+   * Structures DECIMAL and VARIANT are the same size.
+   * When a decimal is serialized as the contents embedded in a variant,
+   * its first reserved 2-byte is used to store the tag VT_DECIMAL.
+   * </p>
+   * @params embedInVariant (stream, decimal)
+   * @param embedInVariant if true, VT_DECIMAL is written in the first 2bytes.
+   * @param stream an outstream
+   * @param decimal a decimal
+   * @param new outstream after the decimal is written.
+   *)
   fun export embedInVariant (outstream, decimal) =
       let
         val (wReserved, sign, scale, Hi32, Lo32, Mid32) = makeFields decimal
@@ -69,6 +82,8 @@ struct
 
   val word32ToIntInf = IntInf.fromLarge o Word32.toLargeInt
 
+  (** obtains a decimal from the binary format which is compatible with
+   * OLE DECIMAL. *)
   fun import instream =
       let
         val (_, instream) = BS.input instream

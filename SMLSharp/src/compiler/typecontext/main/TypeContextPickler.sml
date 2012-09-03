@@ -42,6 +42,6 @@ struct
            (fn {importTyConIdSet, importTypeEnv, exportTypeEnv} =>
                (importTyConIdSet, importTypeEnv, exportTypeEnv)))
           (P.tuple3
-               (TypesPickler.tyConIdSet, typeEnv, typeEnv))
+               (NamePickler.TyConIDSet, typeEnv, typeEnv))
 
 end

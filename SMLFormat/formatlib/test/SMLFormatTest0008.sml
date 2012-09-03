@@ -49,8 +49,12 @@ struct
 
   fun prettyPrint expressions =
       SMLFormat.prettyPrint
-      {newlineString = "\n", spaceString = " ", columns = TESTASSOC_COLUMNS}
-      expressions
+          [
+            SMLFormat.Newline "\n",
+            SMLFormat.Space " ",
+            SMLFormat.Columns TESTASSOC_COLUMNS
+          ]
+          expressions
 
   fun makeExpression
           (outerDirection, outerStrength) (innerDirection, innerStrength) =

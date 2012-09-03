@@ -16,6 +16,5 @@ Group is
         ../../rbucalc/sources.cm
         ../../anormal/sources.cm
 
-	Counters.sml
         ANORMALIZATION.sig
         ANormalization.sml

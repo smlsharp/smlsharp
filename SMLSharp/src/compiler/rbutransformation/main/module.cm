@@ -13,8 +13,7 @@ Group is
         ../../clustercalc/sources.cm
         ../../rbucalc/sources.cm
 
-	Counters.sml
-        RBUCONTEXT.sig
+	NewVars.sml
         RBUContext.sml
         ARITHMETICOPTIMIZER.sig
         ArithmeticOptimizer.sml

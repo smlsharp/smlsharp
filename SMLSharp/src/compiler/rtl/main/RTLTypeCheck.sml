@@ -176,7 +176,7 @@ struct
             SOME _ => nil
           | NONE => if (case #baseLabel (#cluster context) of
                           NONE => false
-                        | SOME baseLabel => LocalVarID.eq (baseLabel, l))
+                        | SOME baseLabel => VarID.eq (baseLabel, l))
                     then nil
                     else [UndefinedLabel l],
           R.Code
@@ -486,7 +486,7 @@ struct
           handlers
 
   fun checkLabelConsist (label, key) =
-      if LocalVarID.eq (label, key) then nil
+      if VarID.eq (label, key) then nil
       else [InconsistLabel (label, {key=key})]
 
   fun checkFirst (context:context) (key, first) =
@@ -605,7 +605,7 @@ struct
       | R.USE ops =>
         (foldr (fn (x,z) => #1 (checkOperand context x) @ z) nil ops, emptyEnv)
       | R.COMPUTE_FRAME {uses, clobs} =>
-        (checkUses context (LocalVarID.Map.listItems uses) @
+        (checkUses context (VarID.Map.listItems uses) @
          checkClobs context clobs,
          emptyEnv)
       | R.MOVE (ty, dst, op1) => checkInsn2 context (ty, dst, op1)

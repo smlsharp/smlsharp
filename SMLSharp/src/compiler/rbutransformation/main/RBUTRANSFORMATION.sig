@@ -1,7 +1,5 @@
 signature RBUTRANSFORMATION = sig
 
-    val transform : Counters.stamp -> 
-                    (ClusterCalc.ccdecl list) -> 
-                    (Counters.stamp * (RBUCalc.rbudecl list))
+  val transform : ClusterCalc.ccdecl list -> RBUCalc.rbudecl list
 
 end

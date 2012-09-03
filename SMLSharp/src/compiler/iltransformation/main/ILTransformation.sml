@@ -12,6 +12,16 @@ structure ILTransformation : ILTRANSFORMATION = struct
   structure IL = IntermediateLanguage
   structure ILU = ILUtils
 
+   fun newVar varKind ty = 
+       let
+         val id = VarID.generate ()
+       in
+         {varId = Types.INTERNAL id,
+          displayName = "$" ^ (VarID.toString id),
+          ty = ty,
+          varKind = varKind}
+       end
+
   datatype position =
            Tail of
            {
@@ -79,7 +89,7 @@ structure ILTransformation : ILTRANSFORMATION = struct
       case position of
         Tail {resultSizeExpList, resultTyList} =>
         let
-          val boundVarList = map (Counters.newVar IL.LOCAL) resultTyList
+          val boundVarList = map (newVar IL.LOCAL) resultTyList
           val tailCode =
               IL.Return
                   {
@@ -93,7 +103,7 @@ structure ILTransformation : ILTRANSFORMATION = struct
         end
       | Result {resultSizeExpList, resultTyList} =>
         let
-          val boundVarList = map (Counters.newVar IL.LOCAL) resultTyList
+          val boundVarList = map (newVar IL.LOCAL) resultTyList
           val tailCode =
               IL.Return
                   {
@@ -531,7 +541,7 @@ structure ILTransformation : ILTRANSFORMATION = struct
 
     | transformExp position (AN.ANRECCLOSURE {codeExp, loc}) =
       let
-        val envVar = Counters.newVar IL.LOCAL AN.BOXED
+        val envVar = newVar IL.LOCAL AN.BOXED
         val getEnvCode =
             IL.Assign
                 {
@@ -766,7 +776,7 @@ structure ILTransformation : ILTRANSFORMATION = struct
             } : IL.frameInfo
       in
         {
-         clusterLabel = Counters.newLocalId(),
+         clusterLabel = VarID.generate(),
          frameInfo = ILFrameInfo,
          entryFunctions = ILEntryFunctions,
          innerFunctions = ILInnerFunctions,
@@ -776,9 +786,8 @@ structure ILTransformation : ILTRANSFORMATION = struct
       end
     | transformCluster _ = raise Control.Bug "invalid cluster"
 
-  fun transform stamp clusterList =
+  fun transform clusterList =
       let
-        val _ = Counters.init stamp
         val clusterCodes = map transformCluster clusterList
         val (mainCluster, functionLabel) = 
           case (rev clusterCodes) of
@@ -786,12 +795,10 @@ structure ILTransformation : ILTRANSFORMATION = struct
               (mainCluster, functionLabel)
           | _ => raise Control.Bug "illeagal main clasuter: (iltransformation/main/ILTransformation.sml)"
       in
-          (Counters.getCounterStamp (),
-           {
+          {
             clusterCodes = clusterCodes,
             initFunctionLabel = functionLabel
            } : IL.moduleCode
-          )
       end
 
 end

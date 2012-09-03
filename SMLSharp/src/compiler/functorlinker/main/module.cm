@@ -9,6 +9,5 @@ Group is
         ../../annotatedtypes/sources.cm
         ../../multiplevaluecalc/sources.cm
 
-	Counters.sml
 	FUNCTOR_LINKER.sig
 	FunctorLinker.sml

@@ -1,5 +1,6 @@
 group is
         $/basis.cm
+        $/smlnj-lib.cm
         ../../control/sources.cm
         ../../env/sources.cm
         ../../name/sources.cm
@@ -7,6 +8,7 @@ group is
         ../../../primitives/primitives.cm
         primitive.cm
 
+	OPrimInstance.sml
         BuiltinPrimitiveInfo.sml
         BuiltinPrimitiveType.sml
         BuiltinPrimitiveUtils.sml

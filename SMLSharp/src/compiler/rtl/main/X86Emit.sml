@@ -17,8 +17,8 @@ struct
 
   type env =
       {
-        regAlloc: Target.reg LocalVarID.Map.map,  (* var id -> reg *)
-        slotIndex: int LocalVarID.Map.map,        (* slot id -> offset *)
+        regAlloc: Target.reg VarID.Map.map,  (* var id -> reg *)
+        slotIndex: int VarID.Map.map,        (* slot id -> offset *)
         preFrameOrigin: int,
         postFrameOrigin: int,
         frameAllocSize: int
@@ -32,13 +32,13 @@ struct
       }
 
   fun regAlloc ({env={regAlloc,...},...}:env') varId =
-      case LocalVarID.Map.find (regAlloc, varId) of
+      case VarID.Map.find (regAlloc, varId) of
         NONE => raise Control.Bug ("regAlloc: " ^
                                    Control.prettyPrint (I.format_id varId))
       | SOME reg => reg
 
   fun slotIndex ({env={slotIndex,...},...}:env') slotId =
-      case LocalVarID.Map.find (slotIndex, slotId) of
+      case VarID.Map.find (slotIndex, slotId) of
         NONE => raise Control.Bug ("slotIndex: " ^
                                    Control.prettyPrint (I.format_id slotId))
       | SOME reg => reg
@@ -133,7 +133,7 @@ struct
   fun r8 env dst = R32toR8 (r32 env dst)
 
 (*
-  fun localLabel l = "L" ^ LocalVarID.toString l
+  fun localLabel l = "L" ^ VarID.toString l
 *)
 
   fun emitScale 1 = 1
@@ -625,7 +625,7 @@ struct
         | LOADABSADDR {ty, dst, symbol, thunk=NONE} =>
           let
             val reg = r32 dst
-            val label = (clusterId env, Counters.newLocalId ())
+            val label = (clusterId env, NewLabel.newLabel ())
             val off = emitImm env (SYMOFFSET {base=CURRENT_POSITION,
                                               label=symbol})
             val off2 = CONSTSUB (CURRENTPOS, X.LABEL (X.LOCAL label))
@@ -1101,8 +1101,8 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
   val emptyEnv =
       {clusterId = NONE,
        totalPreFrameSize = 0,
-       env = {regAlloc = LocalVarID.Map.empty,
-              slotIndex = LocalVarID.Map.empty,
+       env = {regAlloc = VarID.Map.empty,
+              slotIndex = VarID.Map.empty,
               preFrameOrigin = 0,
               postFrameOrigin = 0,
               frameAllocSize = 0}} : env'

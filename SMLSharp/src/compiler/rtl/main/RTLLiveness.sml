@@ -84,11 +84,11 @@ in s end
             let
               val {defs, uses} = RTLUtils.defuse node
               val useSet =
-                  LocalVarID.Map.foldli
+                  VarID.Map.foldli
                     (fn (id, var, useSet) =>
-                        case LocalVarID.Map.find (defSet, id) of
+                        case VarID.Map.find (defSet, id) of
                           SOME _ => useSet
-                        | NONE => LocalVarID.Map.insert (useSet, id, var))
+                        | NONE => VarID.Map.insert (useSet, id, var))
                     useSet uses
             in
               {useSet = useSet, defSet = union (defSet, defs)}

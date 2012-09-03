@@ -1,7 +1,6 @@
 Group
-	signature ID
-
-	signature IDGEN
+	signature GLOBAL_ID
+	signature LOCAL_ID
 
 	signature PATH
         structure Path
@@ -11,30 +10,16 @@ Group
 	structure NameMapPickler
         structure BoundTypeVarID
 
+        structure OPrimID
         structure TyConID
-        structure TyConIDKeyGen
-        structure ReservedTyConIDKeyGen
-
-        structure FreeTypeVarID
-        structure FreeTypeVarIDGen
-
-        structure BoundTypeVarIDGen
-        structure ReservedBoundTypeVarIDGen
-
+        structure BoundTypeVarID
         structure ExnTagID
-        structure ExnTagIDKeyGen
-
         structure ExternalVarID
-        structure ExternalVarIDKeyGen
-
-        structure LocalVarID
-        structure LocalVarIDGen
-
-        structure VarNameID
-        structure VarNameGen
+        structure FreeTypeVarID
+        structure VarID
+        structure VarName
 
         structure ClusterID
-        structure ClusterIDGen
 
         structure Constants
 is

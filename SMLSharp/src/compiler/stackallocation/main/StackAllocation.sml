@@ -11,28 +11,28 @@ struct
   type hoge = VMMnemonic.instruction list
 
   fun isSubset (map1, map2) =
-      LocalVarID.Map.foldli (fn (k, v, z) =>
+      VarID.Map.foldli (fn (k, v, z) =>
                         z andalso
-                        case LocalVarID.Map.find (map2, k) of
+                        case VarID.Map.find (map2, k) of
                           SOME _ => true | NONE => false)
                     true
                     map1
 
   fun minusMap (map1, map2) =
-      LocalVarID.Map.foldli (fn (k, v, map) =>
-                        case LocalVarID.Map.find (map2, k) of
+      VarID.Map.foldli (fn (k, v, map) =>
+                        case VarID.Map.find (map2, k) of
                           SOME _ => map
-                        | NONE => LocalVarID.Map.insert (map, k, v))
-                    LocalVarID.Map.empty
+                        | NONE => VarID.Map.insert (map, k, v))
+                    VarID.Map.empty
                     map1
 
   fun addVars vars map =
       foldl (fn (var as {id, ...}:M.varInfo, map) =>
-                LocalVarID.Map.insert (map, id, var))
+                VarID.Map.insert (map, id, var))
             map vars
 
   fun minusVars vars map =
-      minusMap (map, addVars vars LocalVarID.Map.empty)
+      minusMap (map, addVars vars VarID.Map.empty)
 
   fun usedef ({instructionList, ...}:hoge M.basicBlock) =
       foldr
@@ -46,7 +46,7 @@ struct
               in
                 (useSet, defSet)
               end)
-        (LocalVarID.Map.empty, LocalVarID.Map.empty)
+        (VarID.Map.empty, VarID.Map.empty)
         instructionList
 
   fun propagateLive insnList live =
@@ -71,9 +71,9 @@ val x as (useSet, defSet) =
 
 in
   print "\nUSE: ";
-  LocalVarID.Map.app (fn v => print (" " ^ Control.prettyPrint (M.format_varInfo v))) useSet;
+  VarID.Map.app (fn v => print (" " ^ Control.prettyPrint (M.format_varInfo v))) useSet;
   print "\nDEF: ";
-  LocalVarID.Map.app (fn v => print (" " ^ Control.prettyPrint (M.format_varInfo v))) defSet;
+  VarID.Map.app (fn v => print (" " ^ Control.prettyPrint (M.format_varInfo v))) defSet;
   print "\n";
   x
 end
@@ -82,21 +82,21 @@ end
   fun liveness (blocks : hoge M.basicBlock list) =
       let
         fun add map from to =
-            case LocalVarID.Map.find (map, to) of
-              NONE => LocalVarID.Map.insert (map, to, [from])
-            | SOME l => LocalVarID.Map.insert (map, to, from::l)
+            case VarID.Map.find (map, to) of
+              NONE => VarID.Map.insert (map, to, [from])
+            | SOME l => VarID.Map.insert (map, to, from::l)
 
         fun get map to =
-            case LocalVarID.Map.find (map, to) of
+            case VarID.Map.find (map, to) of
               SOME l => l | NONE => nil
 
         datatype analysis =
-            X of {use: M.varInfo LocalVarID.Map.map,
-                  def: M.varInfo LocalVarID.Map.map,
-                  liveIn: M.varInfo LocalVarID.Map.map ref,
-                  liveOut: M.varInfo LocalVarID.Map.map ref,
+            X of {use: M.varInfo VarID.Map.map,
+                  def: M.varInfo VarID.Map.map,
+                  liveIn: M.varInfo VarID.Map.map ref,
+                  liveOut: M.varInfo VarID.Map.map ref,
                   (* edges: (live in * predecessor) list *)
-                  edges: (M.varInfo LocalVarID.Map.map ref * analysis) list ref}
+                  edges: (M.varInfo VarID.Map.map ref * analysis) list ref}
 
         val (predMap, graph) =
             foldl
@@ -109,25 +109,25 @@ end
                         X {use = use,
                            def = def,
                            liveIn = ref use,
-                           liveOut = ref LocalVarID.Map.empty,
+                           liveOut = ref VarID.Map.empty,
                            edges = ref nil}  (* initialized later *)
                   in
                     (foldl (fn (to, edges) => add edges label to) edges succ,
-                     LocalVarID.Map.insert (graph, label, node))
+                     VarID.Map.insert (graph, label, node))
                   end)
-              (LocalVarID.Map.empty, LocalVarID.Map.empty)
+              (VarID.Map.empty, VarID.Map.empty)
               blocks
 
         val _ =
-            LocalVarID.Map.appi
+            VarID.Map.appi
               (fn (label, X {use, def, liveIn, liveOut, edges}) =>
                   edges :=
-                    map (fn l => (liveIn, valOf (LocalVarID.Map.find (graph, l))))
+                    map (fn l => (liveIn, valOf (VarID.Map.find (graph, l))))
                         (get predMap label))
               graph
 
         val workSet =
-            LocalVarID.Map.foldr (fn (X {edges = ref l, ...}, z) => l @ z)
+            VarID.Map.foldr (fn (X {edges = ref l, ...}, z) => l @ z)
                          nil graph
 
         fun loop nil = ()
@@ -136,8 +136,8 @@ end
               val X {use, def, liveIn as ref oldIn, liveOut as ref oldOut,
                      edges = ref edges} = node
 
-              val newOut = LocalVarID.Map.unionWith #1 (succLiveIn, oldOut)
-              val newIn  = LocalVarID.Map.unionWith #1 (use, minusMap (newOut, def))
+              val newOut = VarID.Map.unionWith #1 (succLiveIn, oldOut)
+              val newIn  = VarID.Map.unionWith #1 (use, minusMap (newOut, def))
               val _ = liveOut := newOut
               val _ = liveIn := newIn
               val workSet =
@@ -152,14 +152,14 @@ end
         map (fn block as {label, instructionList, ...} =>
                 let
                   val X {liveIn=ref liveIn, liveOut=ref liveOut, ...} =
-                      valOf (LocalVarID.Map.find (graph, label))
+                      valOf (VarID.Map.find (graph, label))
                   val (insns, propedLive) =
                       propagateLive instructionList liveOut
 (*
                   (* assert *)
                   val _ =
-                      if map LocalVarID.toString (LocalVarID.Map.listKeys liveIn)
-                         = map LocalVarID.toString (LocalVarID.Map.listKeys propedLive)
+                      if map VarID.toString (VarID.Map.listKeys liveIn)
+                         = map VarID.toString (VarID.Map.listKeys propedLive)
                       then ()
                       else raise Control.Bug "hoge"
 *)
@@ -176,7 +176,7 @@ end
   type context =
       {
         registerDesc: M.registerDesc,
-        alloc: M.entity LocalVarID.Map.map,
+        alloc: M.entity VarID.Map.map,
         count: int
       }
 
@@ -215,14 +215,14 @@ end
 
   fun allocVar (context as {alloc, count, ...}:context)
                (var as {id, displayName, ty}:M.varInfo) =
-      case LocalVarID.Map.find (alloc, id) of
+      case VarID.Map.find (alloc, id) of
         SOME ent => (context, ent)
       | NONE =>
         let
           val class = getRegisterClass ty
           val ent = M.STACK (class, count)
           val count = count + 1
-          val alloc = LocalVarID.Map.insert (alloc, id, ent)
+          val alloc = VarID.Map.insert (alloc, id, ent)
         in
           ({
              registerDesc = #registerDesc context,
@@ -249,7 +249,7 @@ end
   type context =
       {
         registerClasses: M.registerClassDesc vector,
-        alloc: M.varInfo LocalVarID.Map.map,    (* varInfo#id -> allocated varInfo *)
+        alloc: M.varInfo VarID.Map.map,    (* varInfo#id -> allocated varInfo *)
         handlerVar: (M.registerClassId * M.slotId) option, (* for HANDLER *)
         count: M.slotId                 (* stack frame slot ID counter *)
       }
@@ -262,11 +262,11 @@ end
                                 Int.toString classId)
 
   fun liveRegisters context liveVars =
-      LocalVarID.Map.foldli
+      VarID.Map.foldli
         (fn (id, var, z) =>
             let
               val {id, ty, ...} =
-                  case LocalVarID.Map.find (#alloc context, id) of
+                  case VarID.Map.find (#alloc context, id) of
                     SOME var => var | NONE => var
             in
               case ty of
@@ -307,7 +307,7 @@ end
               nil map
 
         val {boxed, unboxed, generic, free} =
-            LocalVarID.Map.foldl
+            VarID.Map.foldl
               (fn ({ty = M.ALLOCED (M.STACK (classId, slotId)), ...},
                    {boxed, unboxed, generic, free}) =>
                   (case #tag (Vector.sub (registerClasses, classId)) of
@@ -352,7 +352,7 @@ end
   fun addAlloc (context as {alloc, ...}:context) (varInfo as {id,...}) count =
       {
         registerClasses = #registerClasses context,
-        alloc = LocalVarID.Map.insert (alloc, id, varInfo),
+        alloc = VarID.Map.insert (alloc, id, varInfo),
         handlerVar = #handlerVar context,
         count = count
       } : context
@@ -375,7 +375,7 @@ end
             } : M.varInfo
       in
         (addAlloc context varInfo count,
-         LocalVarID.Map.insert (live, id, varInfo),
+         VarID.Map.insert (live, id, varInfo),
          varInfo)
       end
 
@@ -390,7 +390,7 @@ end
             } : M.varInfo
       in
         (addAlloc context varInfo (#count context),
-         LocalVarID.Map.insert (live, id, varInfo),
+         VarID.Map.insert (live, id, varInfo),
          varInfo)
       end
 
@@ -405,7 +405,7 @@ end
             } : M.varInfo
       in
         (addAlloc context varInfo (count + 0w1),
-         LocalVarID.Map.insert (live, id, varInfo),
+         VarID.Map.insert (live, id, varInfo),
          varInfo)
       end
 
@@ -413,7 +413,7 @@ end
     | allocVars (context as {alloc, ...}:context) live
                 ((var as {id, ty, ...}:M.varInfo)::varList) =
       let
-        val allocedVar = LocalVarID.Map.find (alloc, id)
+        val allocedVar = VarID.Map.find (alloc, id)
 
         val (context, live, varInfo) =
             case allocedVar of
@@ -442,7 +442,7 @@ end
                 allocHandler context live var class
               | M.ALLOCED ent =>
                 (addAlloc context var (#count context),
-                 LocalVarID.Map.insert (live, id, var), var)
+                 VarID.Map.insert (live, id, var), var)
               | M.REG class =>
                 let
                   (* FIXME: need to construct interference graph *)
@@ -533,7 +533,7 @@ end
         val context =
             {
               registerClasses = Vector.fromList (#classes registerDesc),
-              alloc = LocalVarID.Map.empty,
+              alloc = VarID.Map.empty,
               handlerVar = NONE,
               count = 0w0
             } : context

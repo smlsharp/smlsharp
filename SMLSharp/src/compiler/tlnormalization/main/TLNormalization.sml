@@ -15,6 +15,16 @@ struct
   structure P = BuiltinPrimitive
   open TypedLambda
        
+  fun newVar ty =
+      let
+        val id = VarID.generate ()
+      in
+        {displayName = "$" ^ VarID.toString id,
+         ty = ty,
+         varId = Types.INTERNAL id}
+       end
+
+
   val CONTAG_LABEL = "0"
   val CONVAL_LABEL = "1"
   val DUMMY_LABEL = "1"
@@ -31,7 +41,7 @@ struct
                      
   type varEnv = varEnvEntry VarEnv.map
                
-  val newVar = Counters.newVar
+  val newVar = newVar
 
   val tyToString = TypeFormatter.tyToString
 
@@ -139,8 +149,20 @@ struct
     | normalizeValDecl decl = [decl]
       
   fun makePrimApply (primOp:RC.primInfo, instTyList, argExpList, loc) =
-    case (#name primOp, instTyList, argExpList) of
-      (P.S P.Assign, [valueTy], [refExp, valueExp]) =>
+    case (#prim_or_special primOp, instTyList, argExpList) of
+       (P.S P.List_first, _, [first, second]) => first
+     | (P.S P.List_first, _, _) => raise Control.Bug "List_first"
+     | (P.S P.Int_first, _, [first, second]) => first
+     | (P.S P.Int_first, _, _) => raise Control.Bug "Int_first"
+     | (P.S P.Real_second, _, [first, second]) => second
+     | (P.S P.Real_second, _, _) => raise Control.Bug "Real_second"
+     | (P.S P.Array_first, _, [first, second]) => first
+     | (P.S P.Array_first, _, _) => raise Control.Bug "List_first"
+     | (P.S P.List_second, _, [first, second]) => second
+     | (P.S P.List_second, _, _) => raise Control.Bug "List_first"
+     | (P.S P.Array_second, _, [first, second]) => second
+     | (P.S P.Array_second, _, _) => raise Control.Bug "List_first"
+     | (P.S P.Assign, [valueTy], [refExp, valueExp]) =>
       TLSETFIELD 
         {
          valueExp = valueExp,
@@ -230,15 +252,6 @@ struct
         }
     | _ => TLCAST {exp = exp, targetTy = externalTy, loc = loc}
 
-  fun transformOprim ({name, ty, instances}, instty) =
-    case TU.derefTy instty of
-      T.RAWty {tyCon, args} => 
-      (case TyConID.Map.find(instances, #id tyCon) of
-         SOME prim => prim
-       | _ => raise Control.Bug ("transformOprim (1):" ^ tyToString instty)
-      )
-    | _ => raise Control.Bug ("transformOprim(2):" ^ tyToString instty)
-                   
   fun isRefTy ty = 
     case TU.derefTy ty of
       T.RAWty{tyCon, ...} =>
@@ -506,19 +519,10 @@ struct
       raise Control.Bug "primop should have been eta-expanded."
     | RC.RCPRIMAPPLY {argExpOpt=NONE, ...} => 
       raise Control.Bug "there should not be a constant primitive."
-    | RC.RCOPRIMAPPLY {oprimOp , instances = [ty], argExpOpt, loc} => 
-      transformExp 
-        vEnv 
-        (RC.RCPRIMAPPLY
-           {
-            primOp = transformOprim (oprimOp, ty), 
-            instTyList = nil, 
-            argExpOpt = argExpOpt, 
-            loc = loc
-           }
-        )
-    | RC.RCOPRIMAPPLY _ =>
-      raise Control.Bug "transformExp RCOPRIMAPPLY has multiple parameters"
+    | RC.RCOPRIMAPPLY _ => 
+      raise
+        Control.Bug 
+          "OPRIMAPPLY in tlnormalization"
     | RC.RCDATACONSTRUCT
         {con as {funtyCon = true, ...}, argExpOpt = NONE, ...} =>
       raise Control.Bug "funtycon but no args"
@@ -1524,12 +1528,11 @@ struct
                           bodyCode = newBodyCode}
         end
           
-  fun normalize (stamp:Counters.stamp) topBlocks = 
+  fun normalize topBlocks = 
       let
-        val _ = Counters.init stamp
         val topBlocks = map (transformTopBlock VarEnv.empty) topBlocks
       in
-        (Counters.getCounterStamp(), topBlocks)
+        topBlocks
       end
 
 end

@@ -48,7 +48,7 @@ sig
    * @return a list of raw instructions
    *)
   val assemble :
-      Counters.stamp -> SymbolicInstructions.clusterCode list -> (Counters.stamp * Executable.executable)
+      SymbolicInstructions.clusterCode list -> Executable.executable
                                                
   (***************************************************************************)
 

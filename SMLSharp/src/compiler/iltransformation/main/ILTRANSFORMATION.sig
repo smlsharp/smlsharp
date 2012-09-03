@@ -6,8 +6,7 @@
  *)
 signature ILTRANSFORMATION = sig
 
-  val transform : Counters.stamp -> 
-                  ANormal.andecl list -> 
-                  (Counters.stamp * IntermediateLanguage.moduleCode)
+  val transform : ANormal.andecl list -> 
+                  IntermediateLanguage.moduleCode
 
 end

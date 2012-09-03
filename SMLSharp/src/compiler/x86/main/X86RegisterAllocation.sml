@@ -24,7 +24,7 @@ struct
       | toInt I.ESP = 7
       | toInt (I.ANY _) = 8
     fun compare (I.ANY {id=id1,...}, I.ANY {id=id2,...}) =
-        LocalVarID.compare (id1, id2)
+        VarID.compare (id1, id2)
       | compare (reg1, reg2) = Int.compare (toInt reg1, toInt reg2)
   end
   structure RegMap = BinaryMapMaker(RegOrd)
@@ -201,8 +201,8 @@ struct
 
   type subst =
       {
-        registers: I.r32 LocalVarID.Map.map,
-        variables: I.rm32 LocalVarID.Map.map,
+        registers: I.r32 VarID.Map.map,
+        variables: I.rm32 VarID.Map.map,
         postFrameStart: int option,
         preFrameEnd: int option,
         prologueCode: int -> I.instruction list,
@@ -215,7 +215,7 @@ struct
    *)
   fun substReg subst (reg as I.ANY {id,...}) =
       (
-        case LocalVarID.Map.find (subst, id) of
+        case VarID.Map.find (subst, id) of
           SOME x => x
         | NONE => reg
       )
@@ -245,7 +245,7 @@ struct
         | I.ABSADDR imm => I.M mem
         | I.VAR {id,...} =>
           (
-            case LocalVarID.Map.find (variables, id) of
+            case VarID.Map.find (variables, id) of
               SOME x => x
             | NONE => I.M mem
           )
@@ -477,9 +477,9 @@ struct
 
   fun substReg subst (reg as I.ANY {id,...}) =
       (
-LocalVarID.Map.appi (fn (k,v) => print (Control.prettyPrint (I.format_id k) ^ "->" ^ Control.prettyPrint (I.format_r32 v) ^ ", ")) subst;
+VarID.Map.appi (fn (k,v) => print (Control.prettyPrint (I.format_id k) ^ "->" ^ Control.prettyPrint (I.format_r32 v) ^ ", ")) subst;
 print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
-       case LocalVarID.Map.find (subst, id) of
+       case VarID.Map.find (subst, id) of
         SOME (REG x) => x
       | SOME _ => raise Control.Bug "substReg: intend to subst reg to mem"
         SOME x => x
@@ -492,7 +492,7 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
     fun substReg16 subst (I.X reg) = I.X (substReg subst reg)
 
     fun substVar subst id default =
-        case LocalVarID.Map.find (subst, id) of
+        case VarID.Map.find (subst, id) of
           SOME (REG x) => I.R x
         | SOME (VAR x) => I.M (I.VAR x)
         | SOME (TMP (POSTFRAME x)) => I.M (I.POSTFRAME
@@ -511,7 +511,7 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
         | I.LABELREL (imm, label) => mem
         | I.VAR {id,...} =>
           (
-            case LocalVarID.Map.find (subst, id) of
+            case VarID.Map.find (subst, id) of
               SOME (REG x) => I.R x
             | SOME (VAR x) => I.M (I.VAR x)
             | SOME (TMP (POSTFRAME x)) => I.M (I.POSTFRAME x)
@@ -520,7 +520,7 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
           )
         | I.VARREL (imm, varInfo) =>
           (
-            case LocalVarID.Map.find (subst, id) of
+            case VarID.Map.find (subst, id) of
               SOME (REG x) => I.R x
             | SOME (VAR x) => I.M (I.VAR x)
             |
@@ -685,15 +685,15 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
         foldl (fn (REG (I.ANY {id, candidates}), candidateMap) =>
                   let
                     val cand =
-                        case LocalVarID.Map.find (candidateMap, id) of
+                        case VarID.Map.find (candidateMap, id) of
                           SOME prevCand =>
                           if isPrefix (candidates, prevCand)
                           then candidates
-                          else raise Control.Bug ("%"^LocalVarID.toString id^
+                          else raise Control.Bug ("%"^VarID.toString id^
                                                   "has different candidates.")
                         | NONE => candidates
                   in
-                    LocalVarID.Map.insert (candidateMap, id, cand)
+                    VarID.Map.insert (candidateMap, id, cand)
                   end
                 | (_, candidateMap) => candidateMap)
               candidateMap
@@ -807,7 +807,7 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
               | NONE =>
                 raise Control.Bug "allocReg: no register available"
         in
-          LocalVarID.Map.insert (subst, regId, alloc)
+          VarID.Map.insert (subst, regId, alloc)
         end
 *)
 
@@ -847,9 +847,9 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
                 SOME reg => reg
               | NONE =>
                 raise Control.Bug ("allocReg: no register available for "^
-                                   LocalVarID.toString id)
+                                   VarID.toString id)
 
-          val subst = LocalVarID.Map.insert (subst, id, alloc)
+          val subst = VarID.Map.insert (subst, id, alloc)
         in
           allocReg (interferences, subst)
         end
@@ -862,8 +862,8 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
         {
           live = RegMap.empty,
           interference = RegMap.empty,
-          candidates = LocalVarID.Map.empty,
-          vars = LocalVarID.Map.empty,
+          candidates = VarID.Map.empty,
+          vars = VarID.Map.empty,
           tmpFrameSize = (0, 0),   (* pre, post *)
           labelRefs = emptyLabelRef
         }
@@ -881,12 +881,12 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
           val vars =
               foldl (fn (VAR {id, format, candidates}, vars) =>
                         (
-                          case LocalVarID.Map.find (vars, id) of
+                          case VarID.Map.find (vars, id) of
                             SOME x =>
                             if x = format then vars
-                            else raise Control.Bug ("v"^LocalVarID.toString id
+                            else raise Control.Bug ("v"^VarID.toString id
                                                     ^" has different format")
-                          | NONE => LocalVarID.Map.insert (vars, id, format)
+                          | NONE => VarID.Map.insert (vars, id, format)
                         )
                       | (_, vars) => vars)
                     vars
@@ -908,7 +908,7 @@ print (" : "^Control.prettyPrint (I.format_r32 reg)^"\n");
           fun pr x = print (Control.prettyPrint (I.debug_r32 x))
           fun prl x = app (fn x => (pr x;print ",")) x
           fun ps x = SSet.app (fn v=>(print v;print",")) x
-          fun lvm f x = LocalVarID.Map.appi (fn (k,v)=>(print (Control.prettyPrint (I.debug_id k));print ": ";f v;print "\n")) x
+          fun lvm f x = VarID.Map.appi (fn (k,v)=>(print (Control.prettyPrint (I.debug_id k));print ": ";f v;print "\n")) x
           fun pii (k,v) = (pr k;print ": ";prl (RegSet.listItems v);print "\n")
           fun pi x = RegMap.appi (fn (k,v) => pii(k,v)) x
           val _ = print "live:\n"
@@ -1008,8 +1008,8 @@ raise e
 (*
   (* Assume that any register doesn't live beyond basic blocks. *)
   fun allocInsn nil =
-      {subst=LocalVarID.Map.empty, live=RegSet.empty,
-       vars=LocalVarID.Map.empty, tmps=nil}
+      {subst=VarID.Map.empty, live=RegSet.empty,
+       vars=VarID.Map.empty, tmps=nil}
     | allocInsn (insn::insnList) =
       let
         val {subst, live, vars, tmps} = allocInsn insnList
@@ -1017,7 +1017,7 @@ raise e
 
         val newVars =
             foldl (fn (VAR varInfo, vars) =>
-                      LocalVarID.Map.insert (vars, #id varInfo, varInfo)
+                      VarID.Map.insert (vars, #id varInfo, varInfo)
                     | (_, vars) => vars)
                   vars
                   (defs @ uses)
@@ -1060,7 +1060,7 @@ raise e
               if RegSet.member (live, newReg)
               then alloc (reg::regs, saveRegs, anyRegs, subst)
               else alloc (regs, saveRegs, anyRegs,
-                          LocalVarID.Map.insert (subst, id, newReg))
+                          VarID.Map.insert (subst, id, newReg))
             end
           | alloc (reg::regs, saveRegs, anyRegs, subst) =
             if RegSet.member (live, reg)
@@ -1077,7 +1077,7 @@ raise e
 *)
 
         val _ = print "\nsubst: "
-         val _ = LocalVarID.Map.appi (fn (k,v) => print (Control.prettyPrint (LocalVarID.format_id k) ^ "->" ^ Control.prettyPrint (I.format_r32 v) ^ ", ")) subst
+         val _ = VarID.Map.appi (fn (k,v) => print (Control.prettyPrint (VarID.format_id k) ^ "->" ^ Control.prettyPrint (I.format_r32 v) ^ ", ")) subst
 
 (*
         val insn = substInsn newSubst insn
@@ -1104,10 +1104,10 @@ raise e
         (fn (I.ANY {id,...}, regset, subst) =>
             let
               val candidates =
-                  case LocalVarID.Map.find (candidateMap, id) of
+                  case VarID.Map.find (candidateMap, id) of
                     SOME x => x
                   | NONE => raise Control.Bug ("allocReg: "
-                                               ^LocalVarID.toString id)
+                                               ^VarID.toString id)
 
               val regset =
                   RegSet.foldl (fn (k,z) => RegSet.add (z, substReg subst k))
@@ -1120,12 +1120,12 @@ raise e
                     SOME reg => reg
                   | NONE =>
                     raise Control.Bug ("allocReg: no register available for "^
-                                       LocalVarID.toString id)
+                                       VarID.toString id)
             in
-              (LocalVarID.Map.insert (subst, id, alloc))
+              (VarID.Map.insert (subst, id, alloc))
             end
           | (_, _, z) => z)
-        LocalVarID.Map.empty
+        VarID.Map.empty
         interferences
 
 
@@ -1165,7 +1165,7 @@ raise e
         val _ = print "interference:\n"
         val _ = RegMap.appi (fn (r,rs) => (print (pr r^": ");RegSet.app(fn x => print (pr x^","))rs;print"\n")) interference
         val _ = print "subst:\n"
-        val _ = LocalVarID.Map.appi (fn (i,r) => (print (pr (I.ANY i)^" -> "^pr r^"\n"))) subst
+        val _ = VarID.Map.appi (fn (i,r) => (print (pr (I.ANY i)^" -> "^pr r^"\n"))) subst
         val _ = print "-------------------------------------------------\n"
         val _ = app (fn x => print (Control.prettyPrint (X86Mnemonic.debug_instruction x) ^"\n")) body
         val _ = print "-------------------------------------------------\n"
@@ -1176,7 +1176,7 @@ raise e
 
 (*
         val _ = print "vars:\n"
-        val _ = LocalVarID.Map.appi (fn (i,f) => (print (LocalVarID.toString i^": "^Control.prettyPrint (FrameLayout.format_format f)^"\n"))) vars
+        val _ = VarID.Map.appi (fn (i,f) => (print (VarID.toString i^": "^Control.prettyPrint (FrameLayout.format_format f)^"\n"))) vars
 *)
 
         (*
@@ -1197,7 +1197,7 @@ raise e
         val _ = print ("preFrameSize:"^Int.toString preFrameSize^"\n")
         val _ = print ("postFrameSize:"^Int.toString postFrameSize^"\n")
 
-        fun lvm f x = LocalVarID.Map.appi (fn (k,v)=>(print (Control.prettyPrint (I.debug_id k));print ": ";f v;print "\n")) x
+        fun lvm f x = VarID.Map.appi (fn (k,v)=>(print (Control.prettyPrint (I.debug_id k));print ": ";f v;print "\n")) x
         val _ = lvm (fn v => print (Control.prettyPrint (FrameLayout.format_format v))) vars
 *)
 
@@ -1248,7 +1248,7 @@ raise e
         (* make substitution from varId to frame offset.
          * Note that the top of frame is [%ebp - headerAddrSize - framesize]. *)
         val varSubst =
-            LocalVarID.Map.map
+            VarID.Map.map
               (fn offset =>
                   let
                     val offset = frameOffsetBase + Word.toInt offset
@@ -1385,10 +1385,9 @@ raise e
     | allocClusterList nil =
       (nil, emptyLabelRef)
 
-  fun allocate stamp ({entryCode, clusters, data, toplevelStubCode,
+  fun allocate ({entryCode, clusters, data, toplevelStubCode,
                        ...}:I.program) =
       let
-        val _ = Counters.init stamp
 
         val (clusters, labelRefs) = allocClusterList clusters
 
@@ -1533,7 +1532,7 @@ raise e
               toplevelStubCode = toplevelStubCode
             } : I.program
       in
-        (Counters.getCounterStamp (), program)
+        program
       end
 
 end

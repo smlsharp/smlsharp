@@ -15,9 +15,8 @@ sig
       }
 
   val generate
-      : Counters.stamp
-        -> globalIndexAllocator option
+      : globalIndexAllocator option
         -> YAANormal.topdecl list
-        -> Counters.stamp * AbstractInstruction.program
+        -> AbstractInstruction.program
 
 end

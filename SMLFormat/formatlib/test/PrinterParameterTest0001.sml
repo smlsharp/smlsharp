@@ -39,12 +39,12 @@ struct
         Assert.assertEqualString
         TESTNEWLINESTRING0001_EXPECTED
         (SMLFormat.prettyPrint
-         {
-           newlineString = TESTNEWLINESTRING0001_NEWLINESTRING,
-           spaceString = " ",
-           columns = TESTNEWLINESTRING0001_COLUMNS
-         }
-         TESTNEWLINESTRING0001_EXPRESSION);
+             [
+               SMLFormat.Newline TESTNEWLINESTRING0001_NEWLINESTRING,
+               SMLFormat.Space " ",
+               SMLFormat.Columns TESTNEWLINESTRING0001_COLUMNS
+             ]
+             TESTNEWLINESTRING0001_EXPRESSION);
         ()
       )
   end
@@ -66,12 +66,12 @@ struct
         Assert.assertEqualString
         TESTNEWLINESTRING0002_EXPECTED
         (SMLFormat.prettyPrint
-         {
-           newlineString = TESTNEWLINESTRING0002_NEWLINESTRING,
-           spaceString = " ",
-           columns = TESTNEWLINESTRING0002_COLUMNS
-         }
-         TESTNEWLINESTRING0002_EXPRESSION);
+             [
+               SMLFormat.Newline TESTNEWLINESTRING0002_NEWLINESTRING,
+               SMLFormat.Space " ",
+               SMLFormat.Columns TESTNEWLINESTRING0002_COLUMNS
+             ]
+             TESTNEWLINESTRING0002_EXPRESSION);
         ()
       )
   end

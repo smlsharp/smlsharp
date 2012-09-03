@@ -58,9 +58,10 @@ in
                      )
                    | T.TYCON {tyCon, datacon} =>
                      (
-                      T.OPAQUEty {spec = {tyCon = spec, args = newArgs},
-                                implTy = T.RAWty {tyCon = tyCon, args = newArgs}
-                               }, 
+                      T.OPAQUEty
+                        {spec = {tyCon = spec, args = newArgs},
+                         implTy = T.RAWty {tyCon = tyCon, args = newArgs}
+                        }, 
                       false
                      )
                    | T.TYOPAQUE _ =>
@@ -100,8 +101,9 @@ in
                                 implTy = TU.betaReduceTy (tyFun,newArgs)},
                       false)
                    | T.TYCON {tyCon, datacon} =>
-                     (T.OPAQUEty{spec = {tyCon = spec, args = newArgs},
-                               implTy = T.RAWty {tyCon = tyCon, args = newArgs}},
+                     (T.OPAQUEty
+                        {spec = {tyCon = spec, args = newArgs},
+                         implTy = T.RAWty {tyCon = tyCon, args = newArgs}},
                       false)
                    | T.TYOPAQUE _ =>
                      raise Control.Bug "T.TYOPAQUE should disappear"
@@ -162,7 +164,7 @@ in
               in 
                 T.REC tySEnvMap
               end
-            | T.OVERLOADED tys => 
+            | T.OCONSTkind tys => 
               let
                 val tys = 
                     (foldr
@@ -175,7 +177,22 @@ in
                        nil
                        tys)
               in 
-                T.OVERLOADED tys
+                T.OCONSTkind tys
+              end
+            | T.OPRIMkind {instances, operators} => 
+              let
+                val instances = 
+                    foldr
+                       (fn (ty, tys) =>
+                           let
+                             val ty = substTyConInTy switch tyConSubst ty
+                           in
+                             ty :: tys
+                           end)
+                       nil
+                       instances
+              in 
+                T.OPRIMkind {instances = instances, operators = operators}
               end
       in
         (
@@ -192,7 +209,7 @@ in
   and substTyConInBtvKind
         switch
         (tyConSubst:tyConSubst)
-        {index, recordKind, eqKind} = 
+        {recordKind, eqKind} = 
       let
         val recordKind =
             case recordKind of 
@@ -212,7 +229,7 @@ in
               in
                 (T.REC tySEnvMap)
               end
-            | T.OVERLOADED tys => 
+            | T.OCONSTkind tys => 
               let
                 val tys = 
                     (foldr
@@ -225,12 +242,26 @@ in
                        nil
                        tys)
               in
-                (T.OVERLOADED tys)
+                (T.OCONSTkind tys)
+              end
+            | T.OPRIMkind {instances, operators} =>  
+              let
+                val instances  = 
+                    foldr
+                       (fn (ty, tys) =>
+                           let
+                             val ty = substTyConInTy switch tyConSubst ty
+                           in
+                             ty :: tys
+                           end)
+                       nil
+                       instances
+              in
+                T.OPRIMkind {instances = instances, operators = operators}
               end
       in
         (
          {
-          index=index, 
           recordKind = recordKind,
           eqKind = eqKind
          }
@@ -988,7 +1019,7 @@ in
               in 
                 T.REC tySEnvMap
               end
-            | T.OVERLOADED tys => 
+            | T.OCONSTkind tys => 
               let
                 val tys = 
                     (foldr
@@ -1002,7 +1033,23 @@ in
                        nil
                        tys)
               in 
-                T.OVERLOADED tys
+                T.OCONSTkind tys
+              end
+            | T.OPRIMkind {instances, operators} =>  
+              let
+                val instances = 
+                    foldr
+                       (fn (ty, tys) =>
+                           let
+                             val ty =
+                                 substTyConIdOrIdEqKindInTy substFunction ty
+                           in
+                             ty :: tys
+                           end)
+                       nil
+                       instances
+              in 
+                T.OPRIMkind {instances = instances, operators = operators}
               end
       in
         (
@@ -1017,7 +1064,7 @@ in
 
   and substTyConIdOrIdEqKindInBtvKind
         substFunction
-        {index, recordKind, eqKind} = 
+        {recordKind, eqKind} = 
       let
         val recordKind =
             case recordKind of 
@@ -1038,7 +1085,7 @@ in
               in
                 T.REC tySEnvMap
               end
-            | T.OVERLOADED tys => 
+            | T.OCONSTkind tys => 
               let
                 val tys = 
                     (foldr
@@ -1052,12 +1099,27 @@ in
                        nil
                        tys)
               in
-                T.OVERLOADED tys
+                T.OCONSTkind tys
+              end
+            | T.OPRIMkind {instances, operators} => 
+              let
+                val instances = 
+                    foldr
+                       (fn (ty, tys) =>
+                           let
+                             val ty =
+                                 substTyConIdOrIdEqKindInTy substFunction ty
+                           in
+                             ty :: tys
+                           end)
+                       nil
+                       instances
+              in
+                T.OPRIMkind {instances = instances, operators = operators}
               end
       in
         (
          {
-          index=index, 
           recordKind = recordKind,
           eqKind = eqKind
          }
@@ -1583,7 +1645,7 @@ in
       | T.CONID({ty,...}) => TU.EFTV ty
       | T.EXNID({ty,...}) => TU.EFTV ty
       | T.PRIM({ty,...}) => TU.EFTV ty
-      | T.OPRIM({ty,...}) => TU.EFTV ty
+      | T.OPRIM({oprimPolyTy,...}) => TU.EFTV oprimPolyTy
       | T.RECFUNID({ty,...},_) => TU.EFTV ty
 
   and tyvarsTyList tys = 

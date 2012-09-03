@@ -292,10 +292,12 @@ in
       end
     | TP.TPPRIMAPPLY {argExpOpt = NONE, loc,...} => 
       makeApply (tpexp, spine, loc)
-    | TP.TPOPRIMAPPLY {oprimOp, instances, argExpOpt = SOME exp, loc} => 
+    | TP.TPOPRIMAPPLY
+        {oprimOp, keyTyList, instances, argExpOpt = SOME exp, loc} => 
       let
-        val newTpexp = TP.TPOPRIMAPPLY {oprimOp=oprimOp, 
-                                        instances=instances, 
+        val newTpexp = TP.TPOPRIMAPPLY {oprimOp = oprimOp,
+                                        keyTyList = keyTyList,
+                                        instances = instances, 
                                         argExpOpt = SOME (uncurryExp nil exp), 
                                         loc = loc}
       in
@@ -706,13 +708,23 @@ in
                         TypesUtils.generalizer (curriedFunTy, T.toplevelDepth)
                     val _ =
                         map
-                          (fn (T.TYVARty
+                          (fn 
+                              (T.TYVARty
                                  (r
                                     as
                                     ref(T.TVAR
-                                          {recordKind = T.OVERLOADED (h :: tl),
+                                          {recordKind = T.OCONSTkind (h::_),
                                            ...}))
                               ) => 
+                              r := T.SUBSTITUTED h
+                            | (T.TYVARty
+                                 (r
+                                   as
+                                   ref(T.TVAR
+                                        {recordKind =
+                                         T.OPRIMkind {instances =h::_,...},
+                                         ...}))
+                              ) =>
                               r := T.SUBSTITUTED h
                             | (T.TYVARty
                                  (r as

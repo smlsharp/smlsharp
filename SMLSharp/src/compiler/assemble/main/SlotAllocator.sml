@@ -20,7 +20,12 @@ struct
   val SLOTS_OF_DOUBLE_VAR = 0w2 : BT.UInt32
   val SLOTS_OF_RECORD_VAR = 0w2 : BT.UInt32
 
+  fun createLabel () = VarID.generate ()
+
+(*
   fun createLabel () = Counters.newLocalId()
+*)
+
 (*
   val labelSeparator = "$LLS"
   fun createLabel () = labelSeparator + (T.newVarId()) * 4

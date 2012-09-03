@@ -16,7 +16,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
 
   fun newVar ty =
       let
-        val id = Counters.newLocalId ()
+        val id = NewLabel.newLabel ()
       in
         {id = id, ty = ty} : I.var
       end
@@ -367,14 +367,14 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       | I.COMPUTE_FRAME {uses, clobs} =>
         let
           val (code, uses) =
-              LocalVarID.Map.foldli
+              VarID.Map.foldli
                 (fn (key, var, (code, uses)) =>
                     let
                       val (code, var) = load (substVar subst code var)
                     in
-                      (code, LocalVarID.Map.insert (uses, key, var))
+                      (code, VarID.Map.insert (uses, key, var))
                     end)
-                (code, LocalVarID.Map.empty)
+                (code, VarID.Map.empty)
                 uses
         in
           (code, I.COMPUTE_FRAME {uses=uses, clobs=clobs})

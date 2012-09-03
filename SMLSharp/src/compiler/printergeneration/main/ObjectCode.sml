@@ -55,21 +55,13 @@ in
    * to an expression of which type is "elementTy list".
    *)
   fun expsToListExp elementTy TPExpressions =
-      let
-        val listTy =
-            TY.RAWty {tyCon = PT.listTyCon, args = [elementTy]}
-        fun append (left, right) =
-            let
-              val loc = TPU.getLocOfExp left
-              val tupleExp =
-                  U.listToTupleExp [(left, elementTy), (right, listTy)] loc
-            in
-              constructExp PT.consConPathInfo [elementTy] (SOME tupleExp) loc
-            end
-        val nilExp = constructExp PT.nilConPathInfo [elementTy] NONE Loc.noloc
-      in
-        foldr append nilExp TPExpressions
-      end
+      case TPExpressions of
+        nil => constructExp PT.nilConPathInfo [elementTy] NONE Loc.noloc
+      | h::t =>
+        TP.TPLIST
+          {expList = TPExpressions,
+           listTy = TY.RAWty {tyCon = PT.listTyCon, args = [elementTy]},
+           loc = TPU.getLocOfExp h}
 
   val formatExpressionTy = PT.expressionTy
   val formatterResultTy = formatExpressionTy
@@ -364,6 +356,8 @@ in
                     ]
                     loc))
           loc
+    | translateFormatExpression loc FE.Newline =
+      constructExp PT.newlineConPathInfo [] NONE loc
     | translateFormatExpression loc (FE.StartOfIndent n) =
       constructExp PT.startOfIndentConPathInfo [] (SOME(constIntExp n)) loc
     | translateFormatExpression loc (FE.EndOfIndent) =
@@ -427,6 +421,25 @@ in
 
     fun translateFormatExpressions exps = map translateFormatExpression exps
 *)
+
+  fun preformat formatExpressions =
+      let
+        (* 7 = size "val : " + 1 *)
+        val width = if !Control.printWidth > 7
+                    then !Control.printWidth - 7
+                    else !Control.printWidth
+        val params = [SMLFormat.Columns width]
+        val str = SMLFormat.prettyPrint params formatExpressions
+        val lines = String.fields (fn c => c = #"\n") str
+        val newline = FE.Indicator {space = false,
+                                    newline = SOME {priority = FE.Preferred 1}}
+        fun toFE nil = nil
+          | toFE [x] = [FE.Term (size x, x)]
+          | toFE (h::t) = FE.Term (width, h) :: newline :: toFE t
+        val format = FE.Guard (NONE, toFE lines)
+      in
+        translateFormatExpression Loc.noloc format
+      end
 
 end
 end

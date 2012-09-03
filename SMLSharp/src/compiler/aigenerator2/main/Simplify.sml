@@ -16,7 +16,7 @@ structure Simplify : sig
 end =
 struct
 local
-  structure ID = LocalVarID
+  structure ID = VarID
 in
 
   structure AN = YAANormal

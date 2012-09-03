@@ -103,10 +103,6 @@ signature PATTERNCALCWITHTVARS =
       | PTSPECEQTYPE of (Absyn.tvar list * NameMap.namePath) list * Loc.loc
       | PTSPECEXCEPTION of (NameMap.namePath * PatternCalcFlattened.ty option) 
                              list * Loc.loc
-(*
-      | PTSPECFUNCTOR of (string * (ptspec * NameMap.basicNameNPEnv) * 
-                          (ptspec * NameMap.basicNameNPEnv)) list * Loc.loc
-*)
       | PTSPECPREFIXEDSIGID of NameMap.namePath * Loc.loc
       | PTSPECREPLIC of NameMap.namePath * NameMap.namePath * Loc.loc
       | PTSPECSEQ of ptspec * ptspec * Loc.loc

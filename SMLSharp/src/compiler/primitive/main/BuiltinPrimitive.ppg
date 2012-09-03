@@ -48,6 +48,12 @@ struct
     | Array_update_unsafe   (* ['a.('a)array * int * 'a -> unit] + effect *)
     (* Array_copy_unsafe doesn't check boundary. *)
     | Array_copy_unsafe     (* ['a.('a)array * int * ('a)array * int * int -> unit] + effect *)
+    |  List_first            (* ['a.('a)list * ('a)list -> ('a)list] *)
+    |  List_second            (* ['a.('a)list * ('a)list -> ('a)list] *)
+    |  Array_first           (* ['a.('a)array * ('a)array -> ('a)array] *)
+    |  Array_second           (* ['a.('a)array * ('a)array -> ('a)array] *)
+    |  Int_first              (* int * int -> int *)
+    |  Real_second            (* real * real -> real *)
 
   (*% *)
   (*

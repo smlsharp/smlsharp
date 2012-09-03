@@ -8,40 +8,20 @@ structure Counters :
               type stamps
               val init : stamps -> unit
               val getCounterStamps : unit -> stamps
-              val newLocalID : unit -> LocalVarID.id
+              val newLocalID : unit -> VarID.id
               val newExternalID : unit -> ExternalVarID.id
           end
   =
 struct
-   type stamps = 
-        {
-         localVarIDStamp : LocalVarID.id,
-         externalVarIDKeyStamp : ExternalVarID.id
-        }
+   type stamps = ExternalVarID.id
 
-   fun init (stamps : stamps) =
-     (
-      LocalVarIDGen.init (#localVarIDStamp stamps);
-      ExternalVarIDKeyGen.init (#externalVarIDKeyStamp stamps)
-     )
+   fun init stamps = ExternalVarID.init stamps
        
-   fun getCounterStamps () =
-        {
-         localVarIDStamp = LocalVarIDGen.reset (),
-         externalVarIDKeyStamp =  ExternalVarIDKeyGen.reset ()
-        }
+   fun getCounterStamps () = ExternalVarID.reset ()
 
-   fun newLocalID () = LocalVarIDGen.generate ()
+   fun newLocalID () = VarID.generate ()
 
    fun newExternalID () = 
-        ExternalVarIDKeyGen.generate ()
+        ExternalVarID.generate ()
 
-(*
-   fun setExternalID name =
-       let
-           val newKey = ExternalVarIDKeyGen.peek ()
-       in
-           ExternalVarID.setExportID name
-       end
-*)       
 end

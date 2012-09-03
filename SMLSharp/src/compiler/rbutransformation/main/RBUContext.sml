@@ -250,7 +250,7 @@ structure RBUContext = struct
         (RBUVAR {varInfo = varInfo, valueSizeExp = RBUU.constSizeExp (#ty varInfo,loc), loc = loc}, context)
       | _ =>
         let
-          val varInfo = Counters.newRBUVar FREE (RT.TAGty tid)
+          val varInfo = NewVar.newRBUVar FREE (RT.TAGty tid)
         in
           (RBUVAR {varInfo = varInfo, valueSizeExp = RBUU.constSizeExp (#ty varInfo,loc), loc = loc},
            insertVariable context varInfo)
@@ -264,7 +264,7 @@ structure RBUContext = struct
         (RBUVAR {varInfo = varInfo, valueSizeExp = RBUU.constSizeExp (#ty varInfo,loc), loc = loc}, context)
       | _ =>
         let
-          val varInfo = Counters.newRBUVar FREE (RT.SIZEty tid)
+          val varInfo = NewVar.newRBUVar FREE (RT.SIZEty tid)
         in
           (RBUVAR {varInfo = varInfo, valueSizeExp = RBUU.constSizeExp (#ty varInfo,loc), loc = loc},
            insertVariable context varInfo)
@@ -278,7 +278,7 @@ structure RBUContext = struct
         (RBUVAR {varInfo = varInfo, valueSizeExp = RBUU.constSizeExp (#ty varInfo,loc), loc = loc}, context)
       | _ =>
         let
-          val varInfo = Counters.newRBUVar FREE (RT.INDEXty {label = label, recordTy = RT.BOUNDVARty tid})
+          val varInfo = NewVar.newRBUVar FREE (RT.INDEXty {label = label, recordTy = RT.BOUNDVARty tid})
         in
           (RBUVAR {varInfo = varInfo, valueSizeExp = RBUU.constSizeExp (#ty varInfo,loc), loc = loc},
            insertVariable context varInfo)

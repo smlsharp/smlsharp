@@ -11,6 +11,5 @@ Group is
         ../../sigenerator/sources.cm      (* GlobalIndexEnv *)
         ../../aigenerator/main/module.cm  (* AIPrimitive *)
 
-        Counters.sml
         SIGENERATOR.sig
         SIGenerator.sml

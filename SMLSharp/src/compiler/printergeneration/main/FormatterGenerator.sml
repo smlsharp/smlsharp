@@ -81,7 +81,9 @@ in
           loc
           (argExp, ty) =
       case ty of
-        TY.ERRORty => raise Control.Bug "unexpected ERRORty"
+        TY.INSTCODEty _ => OC.makeConstantTerm "fn"
+
+      |  TY.ERRORty => raise Control.Bug "unexpected ERRORty"
 
       | TY.DUMMYty _ =>
         TP.TPRAISE
@@ -1032,7 +1034,6 @@ val _ = print "\n"
           fun toBTVs dummyTyIndex [] newTys = List.rev newTys
             | toBTVs dummyTyIndex ((ID, BTVKind) :: tailBTVKinds) newTys =
               let
-                val BTVIndex = #index (BTVKind : TY.btvKind)
                 val (newTy, dummyTyIndex) = 
                     if isAppliedTy ID
                     then (TY.BOUNDVARty ID, dummyTyIndex)
@@ -1044,19 +1045,19 @@ val _ = print "\n"
         end
 
         local
-          fun makeBTVKind index =
-              {index = index, recordKind = TY.UNIV, eqKind = TY.NONEQ}
+          val newBTVKind =
+              {recordKind = TY.UNIV, eqKind = TY.NONEQ}
         in
-        val (_, newBTVKindMap) = 
+        val newBTVKindMap = 
             foldl (* left to right *)
-                (fn (TY.BOUNDVARty ID, (index, map)) =>
-                    (index + 1, IEnv.insert(map, ID, makeBTVKind index))
+                (fn (TY.BOUNDVARty ID, map) =>
+                    IEnv.insert(map, ID, newBTVKind)
                   | _ =>
                     raise
                       Control.Bug
                           "non BOUNDVARty in appliedTys \
                           \(printergeneration/main/FormatterGenerator.sml)")
-                (0, IEnv.empty)
+                IEnv.empty
                 appliedTys
         end
 

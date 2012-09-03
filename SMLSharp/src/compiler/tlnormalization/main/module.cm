@@ -14,7 +14,6 @@ Group is
         ../../recordcalc/sources.cm
         ../../typedlambda/sources.cm
 
-	Counters.sml
         TLNORMALIZATION.sig
         TLNormalization.sml
 

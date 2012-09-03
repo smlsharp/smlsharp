@@ -1,8 +1,4 @@
 signature RECORDUNBOXING = sig
-
-    val transform : 
-      Counters.stamp
-      -> AnnotatedCalc.topBlock list
-         -> Counters.stamp * MultipleValueCalc.topBlock list
-
+  val transform :
+      AnnotatedCalc.topBlock list ->  MultipleValueCalc.topBlock list
 end

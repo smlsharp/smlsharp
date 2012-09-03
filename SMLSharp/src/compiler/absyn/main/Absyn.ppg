@@ -700,16 +700,6 @@ struct
        * spec + !N0{ "sharing" + {longstrids(longstrid)(~2[ +1 "="] +)} }
        *)
       SPECSHARESTR of spec * longid list * loc 
-(*
-    | (*%
-       * @format(fundesc fundescs * loc)
-       * !N0{ "functor" + {fundescs(fundesc)(~2[ +1 "and" ] +)}}
-       * @format:fundesc(funid * sigexp1 * sigexp2) 
-       * !N0{ funid ":" +d {{"sig" +d 3{sigexp1} +d "end"}
-          "->" {"sig" +d 3{sigexp2} +d "end"}}}
-       *)
-      SPECFUNCTOR of (string * sigexp * sigexp) list * loc 
-*)
     | (*% 
        *)
       SPECEMPTY 

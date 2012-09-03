@@ -13,9 +13,9 @@ con C4 : int -> dt41
 val v41 = 1 : int
 val v42 = C4 4 : dt41
 exception E5 : int -> exn
-../tests/coresml/tests/local001.sml:54.13-54.56 Warning: match nonexhaustive
-                                                                  E5 (true ) => ...
-                                                                  E5 (false ) => ...
+../tests/coresml/tests/local001.sml:54.13-54.56 Warning:
+  match nonexhaustive
+           E5 (true ) => ...
+           E5 (false ) => ...
 val v51 = 1 : int
 val v52 = E5 5 : exn
-
