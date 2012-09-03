@@ -1,1 +1,1 @@
-../tests/bugs/tests/issue241.1.sml:1.9-1.22 Error: overflow
+../tests/bugs/tests/issue241.1.sml:1.9-1.22 Error: too large constant

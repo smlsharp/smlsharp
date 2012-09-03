@@ -13,6 +13,8 @@ is
         ../../../src/compiler/session/sources.cm
         ../../../src/compiler/vm/sources.cm
         ../../../src/compiler/util/sources.cm
+        ../../../src/compiler/pickle/sources.cm
+        ../../../src/compiler/env/sources.cm
 
         Diff.sml
         TestTypes.sml

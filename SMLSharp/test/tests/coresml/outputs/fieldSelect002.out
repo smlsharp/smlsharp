@@ -1,13 +1,15 @@
-val f11 = fn : ['a,'b#{x:'a}.'b -> 'a]
+val f11 = fn : ['a#{x: 'b},'b.'a -> 'b]
 val v111 = 1 : int
 val v112 = "bar" : string
-val f12 = fn : ['a#{a:'c},'b,'c#{x:'b}.'a -> 'b]
+val f12 = fn : ['a#{a: 'b},'b#{x: 'c},'c.'a -> 'c]
 val v121 = 2 : int
 val v122 = "foo" : string
-val f21 = fn : ['a,'b,'c#{x:'a, y:'b}.'c -> 'a * 'b]
+val f21 = fn : ['a#{x: 'b,y: 'c},'b,'c.'a -> 'b*'c]
 val v211 = (1, 2) : int * int
 val v212 = ("bar", "boo") : string * string
-val f22 = fn : ['a,'b,'c#{x:'a, y:'b},'d,'e#{a:'c, b:'g},'f,'g#{v:'d, w:'f}.
-  'e -> 'a * 'b * 'd * 'f]
+val f22 =
+    fn
+    : ['a#{a: 'b,b: 'e},'b#{x: 'c,y: 'd},'c,'d,'e#{v: 'f,w: 'g},'f,'g.
+  'a -> 'c*'d*'f*'g]
 val v221 = (1, 2, 3, 4) : int * int * int * int
 val v222 = ("bar", "boo", 1.23, 2.34) : string * string * real * real

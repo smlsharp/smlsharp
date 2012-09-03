@@ -5,14 +5,14 @@ val f12 = fn : [''a .''a -> int]
 ../tests/coresml/tests/equality003.sml:9.12-9.19 Error:
   operator and operand don't agree
   operator domain: ''B
-  operand: ''A#{real, float}
+  operand: 'A#{real, Real32.real}
 
 val x122 = 1 : int
 val idEq = fn : [''a .''a -> ''a]
 ../tests/coresml/tests/equality003.sml:13.20-13.25 Error:
   operator and operand don't agree
-                                                          operator domain: ''D
-  operand: 'a
+  operator domain: ''D
+  operand: 'A(a)
 ../tests/coresml/tests/equality003.sml:13.1-13.25 Error:
   User type variable cannot be generalized: 'a
 
@@ -30,6 +30,6 @@ val x221 = 1 : int
 ../tests/coresml/tests/equality003.sml:19.12-19.19 Error:
   operator and operand don't agree
   operator domain: ''B
-  operand: ''A#{real, float}
+  operand: 'A#{real, Real32.real}
 
 val x223 = ref 1.23 : real ref

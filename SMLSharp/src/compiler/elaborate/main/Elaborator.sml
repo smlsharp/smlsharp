@@ -267,7 +267,8 @@ in
             let
               val shadowNameList = map (fn ({name,...},_) => name) tvarList
               fun newSubstFun  (tyID as ({name, ...}, loc)) =
-                if List.exists (fn x => x = name) shadowNameList then A.TYID tyID
+                if List.exists (fn x => x = name) shadowNameList then
+                  A.TYID tyID
                 else substFun tyID
             in
               A.TYPOLY(tvarList, substTyVarInTy newSubstFun ty, loc)
@@ -605,7 +606,8 @@ in
               (case (SEnv.find (env, A.longidToString(id))) of
                  SOME v => v | _ => NONFIX)
             | _ => NONFIX
-        fun getIDInfo (A.PATID {opPrefix, id=id, loc=loc}) = (A.longidToString(id), loc)
+        fun getIDInfo (A.PATID {opPrefix, id=id, loc=loc}) =
+            (A.longidToString(id), loc)
           | getIDInfo pat = raise Control.Bug "getIDInfo expects PATID"
 
       in
@@ -700,7 +702,9 @@ in
          *)
         fun resolveCase2 (args, tyOpt, exp) =
              case args of
-               A.PATAPPLY([leftArg, A.PATID {opPrefix=false, id, loc}, rightArg], _)
+               A.PATAPPLY([leftArg,
+                           A.PATID {opPrefix=false, id, loc},
+                           rightArg], _)
                :: otherArgs =>
                (case findFixity env (A.longidToString(id)) of
                   NONFIX => transNonfixForm (args, tyOpt, exp)
@@ -715,7 +719,11 @@ in
          *)
         fun resolveCase1 (args, tyOpt, exp) =
              case args of
-               leftArg :: (A.PATID {opPrefix=false, id, loc}) :: rightArg :: otherArgs =>
+               leftArg
+               :: (A.PATID {opPrefix=false, id, loc})
+               :: rightArg
+               :: otherArgs
+               =>
                (case findFixity env (A.longidToString(id)) of
                   NONFIX => resolveCase2 (args, tyOpt, exp)
                 | _ =>
@@ -744,7 +752,11 @@ in
                       val newExp = elabExp env typedExp
                       val newArg = map (elabPat env) arg
                     in
-                      (opf :: opfs, fid :: fids, newArg :: args, newExp :: exps)
+                      (
+                       opf :: opfs,
+                       fid :: fids, newArg :: args,
+                       newExp :: exps
+                      )
                     end)
                 (nil, nil, nil, nil)
                 fdecls
@@ -781,7 +793,8 @@ in
               if length args = 1
               then
                 (* fun f pat ... pat = exp *)
-                foldr (fn (x, y) => PC.PLFNM([([x], y)], loc)) (hd exps) (hd args)
+                foldr (fn (x, y) =>
+                          PC.PLFNM([([x], y)], loc)) (hd exps) (hd args)
               else
                 (* fun f pat ... pat = exp
                  *     :  :       :     :
@@ -876,7 +889,9 @@ in
           let
             fun folder (x, y) =
               PC.PLAPPM
-              (PC.PLVAR(["::"], loc), [PC.PLTUPLE([elabExp env x, y], loc)], loc)
+              (PC.PLVAR(["::"], loc),
+               [PC.PLTUPLE([elabExp env x, y], loc)],
+               loc)
             val plexp = foldr folder (PC.PLVAR(["nil"], loc)) elist
           in
             plexp
@@ -892,7 +907,9 @@ in
         in
           PC.PLAPPM
           (
-            PC.PLFNM([([truePat loc], ple2), ([falsePat loc], falseExp loc)], loc),
+            PC.PLFNM([([truePat loc], ple2),
+                      ([falsePat loc], falseExp loc)],
+                     loc),
             [ple1],
             loc
           )
@@ -904,7 +921,9 @@ in
         in
           PC.PLAPPM
           (
-            PC.PLFNM ([([truePat loc], trueExp loc), ([falsePat loc], ple2)], loc),
+            PC.PLFNM ([([truePat loc], trueExp loc),
+                       ([falsePat loc], ple2)],
+                      loc),
             [ple1],
             loc
           )
@@ -924,7 +943,8 @@ in
           val ple3 = elabExp env e3
         in
           PC.PLCASEM
-          ([ple1], [([truePat loc], ple2), ([falsePat loc], ple3)], PC.MATCH, loc)
+          ([ple1],
+           [([truePat loc], ple2), ([falsePat loc], ple3)], PC.MATCH, loc)
         end
       | A.EXPWHILE (condExp, bodyExp, loc) =>
         let
@@ -939,8 +959,8 @@ in
                 (
                   [
                     (
-                      [PC.PLPATWILD loc],
-                      PC.PLAPPM(PC.PLVAR([newid], loc), [unitExp loc], loc)
+                     [PC.PLPATWILD loc],
+                     PC.PLAPPM(PC.PLVAR([newid], loc), [unitExp loc], loc)
                     )
                   ],
                   loc
@@ -952,22 +972,23 @@ in
           val body =
               PC.PLFNM
               (
-                [
-                  (
-                    [unitPat loc],
-                    PC.PLAPPM
-                    (
-                      PC.PLFNM
+               [
+                (
+                 [unitPat loc],
+                 PC.PLAPPM
+                   (
+                    PC.PLFNM
                       (
-                        [([truePat loc], whbody), ([falsePat loc], unitExp loc)],
-                        loc
+                       [([truePat loc], whbody),
+                        ([falsePat loc], unitExp loc)],
+                       loc
                       ),
-                      [condPl],
-                      loc
-                    )
-                  )
-                ],
-                loc
+                    [condPl],
+                    loc
+                   )
+                )
+               ],
+               loc
               )
         in
           PC.PLLET
@@ -986,7 +1007,8 @@ in
           loc
         )
       | A.EXPFN (match, loc) =>
-        PC.PLFNM(map (fn (x, y) => ([elabPat env x], elabExp env y)) match, loc)
+        PC.PLFNM(map (fn (x, y) => ([elabPat env x], elabExp env y)) match,
+                 loc)
       | A.EXPLET (decs, elist, loc) => 
         let
           val (pdecs, env') = elabDecs env decs
@@ -1007,7 +1029,8 @@ in
         PC.PLFFIAPPLY (elabFFIAttributes loc attrs,
                        elabExp env funExp,
                        map (fn A.FFIARG (exp, ty, loc) =>
-                               PC.PLFFIARG (elabExp env exp, elabTy env ty, loc)
+                               PC.PLFFIARG (elabExp env exp,
+                                            elabTy env ty, loc)
                              | A.FFIARGSIZEOF (ty, SOME exp, loc) =>
                                PC.PLFFIARGSIZEOF (elabTy env ty,
                                                   SOME (elabExp env exp),
@@ -1119,7 +1142,8 @@ in
                 case optTy of NONE => NONE | SOME ty => SOME(elabTy env ty)
             val pat =
                 case optPat of
-                  SOME pat => PC.PLPATLAYERED(id, newOptTy, elabPat env pat,loc)
+                  SOME pat =>
+                  PC.PLPATLAYERED(id, newOptTy, elabPat env pat,loc)
                 | _ =>
                   case newOptTy of
                     SOME ty => PC.PLPATTYPED (PC.PLPATID([id], loc), ty, loc)
@@ -1198,7 +1222,9 @@ in
             fun elabTyBind (tvars, name, ty) =
                 let
                   val newTVars =
-                      map (fn {name=tvarName, eq} => {name=tvarName, eq=A.NONEQ}) tvars
+                      map
+                        (fn {name=tvarName, eq} => {name=tvarName, eq=A.NONEQ})
+                        tvars
                   val newTy =
                       substTyVarInTy
                           (fn ({name=tvarName, eq}, loc) =>
@@ -1297,7 +1323,7 @@ in
 
     and elabDecs env decs = elabSequence elabDec env decs
 
-(*******************below dealing with module*********************************)
+(**************below dealing with module*********************************)
     local
       datatype sigexpKind = Interface | OrdinarySig
     in
@@ -1394,7 +1420,8 @@ in
           PC.PLSPECINCLUDE(elabSigExp env sigexp, loc)
         | A.SPECDERIVEDINCLUDE(sigids, loc) => 
             let
-              fun elabSigID sigid = PC.PLSPECINCLUDE(PC.PLSIGID(sigid, loc), loc)
+              fun elabSigID sigid =
+                  PC.PLSPECINCLUDE(PC.PLSIGID(sigid, loc), loc)
             in
               specListToSpecSeq loc (map elabSigID sigids)
             end
@@ -1411,7 +1438,8 @@ in
         | A.SIGID(sigid,loc) => PC.PLSIGID(sigid, loc)
         | A.SIGWHERE(sigexp, whtypes, loc) =>
             let
-              fun elabClause (tyvars, tyCon, ty) = (tyvars, tyCon, elabTy env ty)
+              fun elabClause (tyvars, tyCon, ty) =
+                  (tyvars, tyCon, elabTy env ty)
             in
               PC.PLSIGWHERE(elabSigExp env sigexp, map elabClause whtypes, loc)
             end
@@ -1463,7 +1491,8 @@ in
             in (map (fn pldec => PC.PLCOREDEC(pldec, loc)) pldecs, env)
             end
         | A.STRUCTBIND(strbinds,loc) => 
-            ([PC.PLSTRUCTBIND(map (elabStrBind env) strbinds, loc)], SEnv.empty)
+            ([PC.PLSTRUCTBIND(map (elabStrBind env) strbinds, loc)],
+             SEnv.empty)
         | A.STRUCTLOCAL(strdecs1, strdecs2, loc) =>
             let
               val (plstrdecs1, env1) = elabStrDecs env strdecs1
@@ -1546,7 +1575,8 @@ in
           A.TOPDECSTR(strdec, loc) => 
             let val (plstrdecs, env') = elabStrDec env strdec
             in
-              (map (fn plstrdec => PC.PLTOPDECSTR(plstrdec, loc)) plstrdecs, env')
+              (map (fn plstrdec => PC.PLTOPDECSTR(plstrdec, loc)) plstrdecs,
+               env')
             end
         | A.TOPDECSIG(sigdecs, loc) => 
             let val plsigdecs = elabLabeledSequence elabSigExp env sigdecs

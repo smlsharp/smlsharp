@@ -1,4 +1,5 @@
 signature STREAM_IO = sig type vector end
-../tests/bugs/tests/issue190.1.sml:6.1-12.33 Error: type annotation for
-                                                    datatype: StreamIO.vector
+../tests/bugs/tests/issue190.1.sml:6.1-12.33 Error:
+  rigid type in where type realisation:StreamIO.vector
+
 

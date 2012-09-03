@@ -3,7 +3,7 @@ con DEq : [''a .''a dtEq]
 con EEq : [''a .''a -> ''a dtEq]
 ../tests/bugs/tests/issue119.1.sml:2.19-2.23 Error:
   operator and operand don't agree
-                                                    operator domain: ''D
-  operand: 'a
+  operator domain: ''D
+  operand: 'A(a)
 ../tests/bugs/tests/issue119.1.sml:2.1-2.23 Error:
   User type variable cannot be generalized: 'a

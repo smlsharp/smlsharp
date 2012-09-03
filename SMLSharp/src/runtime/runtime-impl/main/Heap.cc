@@ -104,7 +104,7 @@ Heap::initialize(int size,
 
     heap_ =
     (UInt32Value*)
-    (ALLOCATE_MEMORY(sizeof(UInt32Value) * (size * 3) + WORDS_OF_HEADER));
+    (ALLOCATE_MEMORY(sizeof(UInt32Value) * (size * 3 + WORDS_OF_HEADER)));
     if(NULL == heap_){throw OutOfMemoryException();}
 
     youngerRegion_ = HeapRegion(heap_, size);

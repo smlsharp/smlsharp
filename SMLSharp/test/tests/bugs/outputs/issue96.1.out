@@ -1,14 +1,11 @@
-../tests/bugs/tests/issue96.1.sml:4.17-4.57 Error: equality type required for:
-                                                   dt
+../tests/bugs/tests/issue96.1.sml:4.17-4.57 Error:
+  equality type required for: S.dt
 
-../tests/bugs/tests/issue96.1.sml:10.17-10.55 Error: equality type required for:
-                                                     t
+../tests/bugs/tests/issue96.1.sml:10.17-10.55 Error:
+  equality type required for: S.t
+
 
 signature S221 =
-sig
-  datatype s con D : s structure S : sig datatype t con E : t end where type t = s
-end
+sig datatype s = D structure S : sig datatype t = E end where type t = s end
 signature S222 =
-sig
-  datatype t con D : t structure S : sig datatype t con E : t end where type t = t
-end
+sig datatype t = D structure S : sig datatype t = E end where type t = t end

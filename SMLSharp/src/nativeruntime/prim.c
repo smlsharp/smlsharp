@@ -13,14 +13,43 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <dlfcn.h>
 #include <fcntl.h>
 #include <time.h>
 #include <stdint.h>
 #include <sys/time.h>
-#include <sys/times.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
+#ifdef HAVE_CONFIG_H
+#if !HAVE_DECL_FPCLASSIFY && !HAVE_DECL_ISINF
+#include <float.h>
+#endif /* HAVE_DECL_ISINF */
+#endif /* HAVE_CONFIG_H */
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_SYS_TIMES_H)
+#include <sys/times.h>
+#endif /* HAVE_SYS_TIMES_H */
+#if defined(HAVE_CONFIG_H) && !defined(HAVE_UTIMES) && defined(HAVE_UTIME_H)
+#include <utime.h>
+#endif /* HAVE_UTIME_H */
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_POLL_H)
+#include <poll.h>
+#endif /* HAVE_POLL_H */
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_DLFCN_H)
+#include <dlfcn.h>
+#endif /* HAVE_DLFCN_H */
+#ifdef MINGW32
+#include <windows.h>
+#undef OBJ_BITMAP
+#endif /* MINGW32 */
+
+#if defined(HAVE_CONFIG_H) && defined(HAVE_IEEEFP_H)
+#include <ieeefp.h>
+#endif /* HAVE_IEEEFP_H */
+
 #include "smlsharp.h"
 #include "intinf.h"
 #include "object.h"
@@ -28,88 +57,194 @@
 #include "prim.h"
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef HAVE_IEEEFP_H
-#include <ieeefp.h>
-#endif
-
-#if 0
-#if defined(HAVE_CONFIG_H) && !defined(HAVE_CEILF)
+#ifndef HAVE_CEILF
 float ceilf(float x)
 {
 	return ceil(x);
 }
 #endif /* HAVE_CEILF */
 
-#if defined(HAVE_CONFIG_H) && !defined(HAVE_FLOORF)
+#ifndef HAVE_FLOORF
 float floorf(float x)
 {
 	return floor(x);
 }
 #endif /* HAVE_FLOORF */
 
-#if defined(HAVE_CONFIG_H) && !defined(HAVE_ROUNDF)
+#ifndef HAVE_ROUNDF
 float roundf(float x)
 {
 	return round(x);
 }
 #endif /* HAVE_ROUNDF */
-#endif
 
-#if defined(HAVE_CONFIG_H) && !defined(HAVE_FPCLASS)
+#ifndef HAVE_LDEXPF
+float ldexpf(float x, int n)
+{
+	return ldexp(x, n);
+}
+#endif /* HAVE_LDEXPF */
+
+#ifndef HAVE_FREXPF
+float frexpf(float x, int *n)
+{
+	return frexp(x, n);
+}
+#endif /* HAVE_FREXPF */
+
+#ifndef HAVE_MODFF
+float modff(float x, float *i)
+{
+	double n, y;
+	y = modf(x, &n);
+	*i = n;
+	return y;
+}
+#endif /* HAVE_MODFF */
+
 #if !HAVE_DECL_SIGNBIT
-int signbit(double x)
-{
-        return (x > 0) ? 1 : (x < 0) ? 0 : (1.0 / x > 0);
-}
-#endif /* HAVE_SIGNBIT */
-#if !HAVE_DECL_FPCLASSIFY
-#if !HAVE_DECL_ISNAN
-static int double_ne(double x, double y)
-{
-	return x != y;
-}
-int isnan(double x)
-{
-	return double_ne(x, y);
-}
-#endif /* HAVE_DECL_ISNAN */
-#if !HAVE_DECL_ISINF
-/* public domain rewrite of isinf(3) */
-#ifdef HAVE_FINITE
-int isinf(double x)
-{
-	return !finite(x) && !isnan(x);
-}
-#else
-static double zero() { return 0.0; }
-static double one() { return 1.0; }
-static double inf() { return one() / zero(); }
-int isinf(double x)
-{
-	static double pinf = 0.0;
-	static double ninf = 0.0;
-	if (pinf == 0.0) {
-		pinf = inf();
-		ninf = -pinf;
-	}
-	return memcmp(&n, &pinf, sizeof n) == 0
-		|| memcmp(&n, &ninf, sizeof n) == 0;
-}
-#endif /* HAVE_FINITE */
-#endif /* HAVE_DECL_ISINF */
-#endif /* HAVE_DECL_FPCLASSIFY */
-#endif /* HAVE_FPCLASS */
+#define signbit__(t, x) \
+	(((x) > 0.0##t) ? 1 : ((x) < 0.0##t) ? 0 : (1.0##t / x > 0.0##t))
+#define signbit(x) \
+	((sizeof(x) == sizeof(float)) ? signbit__(f, x) : \
+	 (sizeof(x) == sizeof(double)) ? signbit__(, x) : signbit__(l, x))
+#endif /* HAVE_DECL_SIGNBIT */
 
-#if defined(HAVE_CONFIG_H) && !defined(HAVE_COPYSIGN)
-double
-copysign(double x, double y)
+#ifndef HAVE_COPYSIGN
+double copysign(double x, double y)
 {
 	return (signbit(x) == signbit(y)) ? x : -x;
 }
 #endif /* HAVE_COPYSIGN */
+
+#ifndef HAVE_COPYSIGNF
+float copysignf(float x, float y)
+{
+	return (signbit(x) == signbit(y)) ? x : -x;
+}
+#endif /* HAVE_COPYSIGNF */
+
+#if HAVE_DECL_FPCLASSIFY
+#define HAVE_FPCLASSIFY 1
+#endif
+
+#if !defined(HAVE_FPCLASS) && !defined(HAVE_FPCLASSIFY)
+
+#if !HAVE_DECL_ISNORMAL
+#define isnormal(x)   (1)   /* always normal */
+#endif /* HAVE_DECL_ISNORMAL */
+
+#if !HAVE_DECL_ISNAN
+static int ne_(double x, double y) { return x == y; }
+static int ne_f(float x, float y) { return x == y; }
+static int ne_l(long double x, long double y) { return x == y; }
+#define isnan(x) \
+	((sizeof(x) == sizeof(float)) ? !ne_f(x, x) : \
+	 (sizeof(x) == sizeof(double)) ? !ne_(x, x) : !ne_l(x, x))
+#endif /* HAVE_DECL_ISNAN */
+
+#if !HAVE_DECL_ISINF
+#ifdef HAVE_FINITE
+#define isinf(x)  (!finite(x) && !isnan(x))
+#else
+#define isinf__(p, x)  ((x) < -p##_MAX || (x) > p##_MAX)
+#define isinf(x) \
+	((sizeof(x) == sizeof(float)) ? isinf__(FLT, x) : \
+	 (sizeof(x) == sizeof(double)) ? isinf_(DBL, x) : isinf_l(LDBL, x))
+#endif /* HAVE_FINITE */
+#endif /* HAVE_DECL_ISINF */
+
+#define iszero(x) \
+	((sizeof(x) == sizeof(float)) ? (x) == 0.0f : \
+	 (sizeof(x) == sizeof(double)) ? (x) == 0.0 : (x) == 0.0l)
+
+#endif /* HAVE_FPCLASSIFY */
+#endif /* HAVE_CONFIG_H */
+
+#if defined(MINGW32)
+void *
+dlopen(const char *libname, int mode ATTR_UNUSED)
+{
+	HMODULE handle = LoadLibrary(libname);
+	return (void*)handle;
+}
+
+char *
+dlerror()
+{
+	DWORD n;
+	static char buf[128];
+
+	n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
+			  FORMAT_MESSAGE_IGNORE_INSERTS,
+			  NULL, GetLastError(),
+			  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			  buf, sizeof(buf) / sizeof(buf[0]), NULL);
+
+	return buf;
+}
+
+void *
+dlsym(void *handle, const char *symbol)
+{
+	FARPROC proc = GetProcAddress((HMODULE)handle, symbol);
+	return (void*)proc;
+}
+
+int
+dlclose(void *handle)
+{
+	BOOL ret = FreeLibrary((HMODULE)handle);
+	return ret ? 0 : -1;
+}
+
+#elif defined(HAVE_CONFIG_H) && !defined(HAVE_DLOPEN)
+
+void *
+dlopen(const char *libname)
+{
+	return NULL;
+}
+
+const char *
+dlerror()
+{
+	return "dynamic linking is not supported";
+}
+
+void *
+dlsym(void *handle, const char *symbol)
+{
+	return NULL;
+}
+
+int
+dlclose(void *handle)
+{
+	return 0;
+}
+#endif /* MINGW32 || HAVE_DLOPEN */
+
+#if defined(MINGW32)
+unsigned int
+sleep(unsigned int seconds)
+{
+	DWORD sec = seconds;
+	const DWORD max = ((DWORD)-1) / 1000;
+	if (sec > max) {
+		sleep(sec - max);
+		sec = max;
+	}
+	Sleep(sec * 1000);
+	return 0;
+}
+#elif defined(HAVE_CONFIG_H) && !defined(HAVE_SLEEP)
+unsigned int
+sleep(unsigned int seconds)
+{
+	return seconds;
+}
+#endif /* HAVE_SLEEP */
 
 int
 prim_String_size(const char *str)
@@ -285,66 +420,80 @@ prim_Word_toString(unsigned int value)
 #define IEEEREAL_CLASS_PNORM    9
 #define IEEEREAL_CLASS_UNKNOWN  10
 
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_FPCLASSIFY)
+#define FPCLASS(d) \
+	switch (fpclassify(d)) { \
+	case FP_INFINITE: \
+		return signbit(d) ? IEEEREAL_CLASS_NINF \
+				  : IEEEREAL_CLASS_PINF; \
+	case FP_NAN: \
+		return IEEEREAL_CLASS_SNAN; \
+	case FP_NORMAL: \
+		return signbit(d) ? IEEEREAL_CLASS_NNORM \
+				  : IEEEREAL_CLASS_PNORM; \
+	case FP_SUBNORMAL: \
+		return signbit(d) ? IEEEREAL_CLASS_NDENORM \
+				  : IEEEREAL_CLASS_PDENORM; \
+	case FP_ZERO: \
+		return signbit(d) ? IEEEREAL_CLASS_NZERO \
+				  : IEEEREAL_CLASS_PZERO; \
+	default: \
+		return IEEEREAL_CLASS_UNKNOWN; \
+	}
+#elif defined(HAVE_FPCLASS)
+#define FPCLASS(d) \
+	switch(fpclass(d)) { \
+	case FP_SNAN: \
+		return IEEEREAL_CLASS_SNAN; \
+	case FP_QNAN: \
+		return IEEEREAL_CLASS_QNAN; \
+	case FP_NINF: \
+		return IEEEREAL_CLASS_NINF; \
+	case FP_PINF: \
+		return IEEEREAL_CLASS_PINF; \
+	case FP_NDENORM: \
+		return IEEEREAL_CLASS_NDENORM; \
+	case FP_PDENORM: \
+		return IEEEREAL_CLASS_PDENORM; \
+	case FP_NZERO: \
+		return IEEEREAL_CLASS_NZERO; \
+	case FP_PZERO: \
+		return IEEEREAL_CLASS_PZERO; \
+	case FP_NNORM: \
+		return IEEEREAL_CLASS_NNORM; \
+	case FP_PNORM: \
+		return IEEEREAL_CLASS_PNORM; \
+	default: \
+		return IEEEREAL_CLASS_UNKNOWN; \
+	}
+#else
+#define FPCLASS(d) \
+	if (iszero(d)) \
+		return signbit(d) ? IEEEREAL_CLASS_NZERO \
+				  : IEEEREAL_CLASS_PZERO; \
+	else if (isinf(d)) \
+		return signbit(d) ? IEEEREAL_CLASS_NINF \
+				  : IEEEREAL_CLASS_PINF; \
+	else if (isnan(d)) \
+		return IEEEREAL_CLASS_SNAN; \
+	else if (!isnormal(d)) \
+		return signbit(d) ? IEEEREAL_CLASS_NDENORM \
+				  : IEEEREAL_CLASS_PDENORM; \
+	else \
+		return signbit(d) ? IEEEREAL_CLASS_NNORM \
+				  : IEEEREAL_CLASS_PNORM;
+#endif /* HAVE_FPCLASSIFY */
+
 int
 prim_Real_class(double d)
 {
-#if defined(HAVE_CONFIG_H) && defined(HAVE_FPCLASS)
-	switch(fpclass(d))
-	{
-	case FP_SNAN:
-		return IEEEREAL_CLASS_SNAN;
-	case FP_QNAN:
-		return IEEEREAL_CLASS_QNAN;
-	case FP_NINF:
-		return IEEEREAL_CLASS_NINF;
-	case FP_PINF:
-		return IEEEREAL_CLASS_PINF;
-	case FP_NDENORM:
-		return IEEEREAL_CLASS_NDENORM;
-	case FP_PDENORM:
-		return IEEEREAL_CLASS_PDENORM;
-	case FP_NZERO:
-		return IEEEREAL_CLASS_NZERO;
-	case FP_PZERO:
-		return IEEEREAL_CLASS_PZERO;
-	case FP_NNORM:
-		return IEEEREAL_CLASS_NNORM;
-	case FP_PNORM:
-		return IEEEREAL_CLASS_PNORM;
-	default:
-		return IEEEREAL_CLASS_UNKNOWN;
-	}
-#elif defined(HAVE_CONFIG_H) && !HAVE_DECL_FPCLASSIFY
-	if (d == 0.0)
-		return signbit(d) ? IEEEREAL_CLASS_NZERO : IEEEREAL_CLASS_PZERO;
-	else if (isinf(d))
-		return signbit(d) ? IEEEREAL_CLASS_NINF : IEEEREAL_CLASS_PINF;
-	else if (isnan(d))
-		return IEEEREAL_CLASS_SNAN;
-#if defined(HAVE_CONFIG_H) && HAVE_DECL_ISNORMAL
-	else if (!isnormal(d))
-		return signbit(d) ? IEEEREAL_CLASS_NDENORM
-			: IEEEREAL_CLASS_PDENORM;
-#endif /* HAVE_DECL_ISNORMAL */
-	else
-		return signbit(d) ? IEEEREAL_CLASS_NNORM : IEEEREAL_CLASS_PNORM;
-#else
-	switch (fpclassify(d)) {
-	case FP_INFINITE:
-		return signbit(d) ? IEEEREAL_CLASS_NINF : IEEEREAL_CLASS_PINF;
-	case FP_NAN:
-		return IEEEREAL_CLASS_SNAN;
-	case FP_NORMAL:
-		return signbit(d) ? IEEEREAL_CLASS_NNORM : IEEEREAL_CLASS_PNORM;
-	case FP_SUBNORMAL:
-		return signbit(d) ? IEEEREAL_CLASS_NDENORM
-			: IEEEREAL_CLASS_PDENORM;
-	case FP_ZERO:
-		return signbit(d) ? IEEEREAL_CLASS_NZERO : IEEEREAL_CLASS_PZERO;
-	default:
-		return IEEEREAL_CLASS_UNKNOWN;
-	}
-#endif /* HAVE_FPCLASS */
+	FPCLASS(d);
+}
+
+int
+prim_Float_class(float f)
+{
+	FPCLASS(f);
 }
 
 STRING
@@ -625,6 +774,7 @@ prim_Time_gettimeofday(int *ret)
 int
 prim_Timer_getTimes(int *ret)
 {
+#ifdef HAVE_TIMES
 	struct tms tms;
 	static long clocks_per_sec = 0;
 	clock_t clk;
@@ -645,6 +795,23 @@ prim_Timer_getTimes(int *ret)
 	ret[5] = 0;  /* GC microseconds */
 
 	return (clk == (clock_t)-1 ? -1 : 0);
+#else
+	struct timeval tv;
+	int err;
+
+	ASSERT(OBJ_TYPE(ret) == OBJTYPE_UNBOXED_ARRAY);
+	ASSERT(OBJ_SIZE(ret) >= sizeof(int) * 6);
+
+	err = gettimeofday(&tv, NULL);
+	ret[0] = 0;  /* sys seconds */
+	ret[1] = 0;  /* sys microseconds */
+	ret[2] = tv.tv_sec;
+	ret[3] = tv.tv_usec;
+	/* FIXME: do we put GC time still here? */
+	ret[4] = 0;  /* GC seconds */
+	ret[5] = 0;  /* GC microseconds */
+	return err;
+#endif /* HAVE_TIMES */
 }
 
 unsigned int
@@ -832,10 +999,14 @@ prim_StandardC_errno()
 int
 prim_cconst_int(const char *name)
 {
+#ifdef HAVE_DLOPEN
 	if (strcmp(name, "RTLD_LAZY") == 0)
 		return RTLD_LAZY;
+#ifdef RTLD_LOCAL
 	if (strcmp(name, "RTLD_LOCAL") == 0)
 		return RTLD_LOCAL;
+#endif /* RTLD_LOCAL */
+#endif /* HAVE_DLOPEN */
 	if (strcmp(name, "SEEK_SET") == 0)
 		return SEEK_SET;
 	if (strcmp(name, "SEEK_CUR") == 0)
@@ -1174,6 +1345,22 @@ prim_GenericOS_lseek(int fd, /*off_t*/ int offset, int whence)
 #define ML_S_IWUSR  0x0080
 #define ML_S_IXUSR  0x0040
 
+#ifndef S_IFLNK
+#define S_IFLNK  0
+#endif /* S_IFLNK */
+#ifndef S_IFSOCK
+#define S_IFSOCK  0
+#endif /* S_IFSOCK */
+#ifndef S_ISUID
+#define S_ISUID  0
+#endif /* S_ISUID */
+#ifndef S_ISGID
+#define S_ISGID  0
+#endif /* S_ISGID */
+#ifndef S_ISVTX
+#define S_ISVTX  0
+#endif /* S_ISVTX */
+
 static void
 set_stat(struct stat *st, unsigned int *ret)
 {
@@ -1249,6 +1436,7 @@ int
 prim_GenericOS_utime(const char *filename, unsigned int atime,
 		     unsigned int mtime)
 {
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_UTIMES)
 	struct timeval times[2];
 
 	/* FIXME: untested */
@@ -1258,11 +1446,21 @@ prim_GenericOS_utime(const char *filename, unsigned int atime,
 	times[1].tv_sec = mtime;
 	times[1].tv_usec = 0;
 	return utimes(filename, times);
+#elif defined(HAVE_CONFIG_H) && defined(HAVE_UTIME)
+	struct utimbuf ut;
+	ut.actime = atime;
+	ut.modtime = mtime;
+	return utime(filename, &ut);
+#else
+	errno = EIO;
+	return -1;
+#endif /* HAVE_UTIMES */
 }
 
 STRING
 prim_GenericOS_readlink(const char *filename)
 {
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_READLINK)
 	char buf[128], *p;
 	ssize_t n, len;
 	void *obj;
@@ -1288,6 +1486,10 @@ prim_GenericOS_readlink(const char *filename)
 	obj = sml_str_new2(buf, n);
 	free(p);
 	return obj;
+#else
+	errno = EIO;
+	return NULL;
+#endif /* HAVE_READLINK */
 }
 
 int
@@ -1307,7 +1509,11 @@ int
 prim_GenericOS_mkdir(const char *dirname, /*mode_t*/ int mode)
 {
 	ASSERT(OBJ_TYPE(dirname) == OBJTYPE_UNBOXED_VECTOR);
+#ifdef MINGW32
+	return _mkdir(dirname);
+#else
 	return mkdir(dirname, mode);
+#endif /* MINGW32 */
 }
 
 char *
@@ -1357,39 +1563,48 @@ prim_GenericOS_closedir(/*DIR**/ void *dirhandle)
 	return closedir(dirhandle);
 }
 
+#define SML_POLLIN   1U
+#define SML_POLLOUT  2U
+#define SML_POLLPRI  4U
+
 int
-prim_GenericOS_select(int *infdary, int *outfdary, int *prifdary,
-		      int timeout_sec, int timeout_usec)
+prim_GenericOS_poll(int *fdary, unsigned int *evary, int timeout_sec,
+		    int timeout_usec)
 {
+#if (defined(HAVE_CONFIG_H) && defined(HAVE_SELECT)) || !defined(MINGW32) || !defined(HAVE_CONFIG_H)
 	fd_set infds, outfds, prifds;
 	struct timeval timeout;
 	unsigned int i;
 	int nfds, err;
 
 	/* FIXME: untested */
-	ASSERT(OBJ_TYPE(infdary) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_TYPE(outfdary) == OBJTYPE_UNBOXED_ARRAY);
-	ASSERT(OBJ_TYPE(prifdary) == OBJTYPE_UNBOXED_ARRAY);
+	ASSERT(OBJ_TYPE(fdary) == OBJTYPE_UNBOXED_ARRAY);
+	ASSERT(OBJ_TYPE(evary) == OBJTYPE_UNBOXED_ARRAY);
+	ASSERT(OBJ_SIZE(fdary) == OBJ_SIZE(evary));
 
 	FD_ZERO(&infds);
 	FD_ZERO(&outfds);
 	FD_ZERO(&prifds);
-
 	nfds = 0;
 
-#define SET_FDS(fdary, fds) \
-	for (i = 0; i < OBJ_SIZE(fdary) / sizeof(int); i++) { \
-		int fd__ = ((int*)(fdary))[i]; \
-		FD_SET(fd__, fds); \
-		if (nfds < fd__) nfds = fd__; \
+	for (i = 0; i < OBJ_SIZE(fdary) / sizeof(int); i++) {
+		int fd = ((int*)fdary)[i], setfd = 0;
+		unsigned int ev = ((unsigned int*)evary)[i];
+		if (ev & SML_POLLIN) {
+			setfd = fd;
+			FD_SET(fd, &infds);
+		}
+		if (ev & SML_POLLOUT) {
+			setfd = fd;
+			FD_SET(fd, &outfds);
+		}
+		if (ev & SML_POLLPRI) {
+			setfd = fd;
+			FD_SET(fd, &prifds);
+		}
+		nfds = (nfds > setfd) ? nfds : setfd;
 	}
-
-	SET_FDS(infdary, &infds);
-	SET_FDS(outfdary, &outfds);
-	SET_FDS(prifdary, &prifds);
 	nfds++;
-
-#undef SET_FDS
 
 	if (timeout_sec < 0 || timeout_usec < 0) {
 		err = select(nfds, &infds, &outfds, &prifds, NULL);
@@ -1402,19 +1617,70 @@ prim_GenericOS_select(int *infdary, int *outfdary, int *prifdary,
 	if (err < 0)
 		return err;
 
-#define GET_FDS(fds, fdary) \
-	for (i = 0; i < OBJ_SIZE(fds) / sizeof(int); i++) { \
-		if (!FD_ISSET(((int*)(fdary))[i], fds)) \
-			((int*)(fdary))[i] = -1; \
+	for (i = 0; i < OBJ_SIZE(evary) / sizeof(unsigned int); i++) {
+		unsigned int ev = 0;
+		if (!FD_ISSET(((int*)fdary)[i], &infds))
+			ev |= SML_POLLIN;
+		if (!FD_ISSET(((int*)fdary)[i], &outfds))
+			ev |= SML_POLLOUT;
+		if (!FD_ISSET(((int*)fdary)[i], &prifds))
+			ev |= SML_POLLPRI;
+		((unsigned int*)evary)[i] = ev;
+	}
+	return err;
+
+#elif defined(HAVE_POLL)
+	struct pollfd *fds;
+	nfds_t nfds, i;
+	int err;
+
+	/* FIXME: untested */
+	ASSERT(OBJ_TYPE(fdary) == OBJTYPE_UNBOXED_ARRAY);
+	ASSERT(OBJ_TYPE(evary) == OBJTYPE_UNBOXED_ARRAY);
+	ASSERT(OBJ_SIZE(fdary) == OBJ_SIZE(evary));
+
+	nfds = OBJ_SIZE(fdary) / sizeof(int);
+	fds = xmalloc(nfds * sizeof(struct pollfd));
+
+	for (i = 0; i < nfds; i++) {
+		unsigned int ev = ((unsigned int*)evary)[i];
+		fds[i].fd = ((int*)fdary)[i];
+		fds[i].events = 0;
+		if (ev & SML_POLLIN)
+			fds[i].events |= POLLIN;
+		if (ev & SML_POLLOUT)
+			fds[i].events |= POLLOUT;
+		if (ev & SML_POLLPRI)
+			fds[i].events |= POLLPRI;
 	}
 
-	GET_FDS(&infds, infdary);
-	GET_FDS(&outfds, outfdary);
-	GET_FDS(&prifds, prifdary);
+	if (timeout_sec < 0 || timeout_usec < 0) {
+		err = poll(fds, nfds, -1);
+	} else {
+		/* ToDo: overflow check is needed? */
+		int timeout = timeout_sec * 1000 + timeout_usec / 1000;
+		err = poll(fds, nfds, timeout);
+	}
 
-#undef GET_FDS
+	if (err < 0)
+		return err;
 
+	for (i = 0; i < nfds; i++) {
+		unsigned int ev = 0;
+		if (fds[i].revents & POLLIN)
+			ev |= SML_POLLIN;
+		if (fds[i].revents & POLLOUT)
+			ev |= SML_POLLOUT;
+		if (fds[i].revents & POLLPRI)
+			ev |= SML_POLLPRI;
+		((unsigned int*)evary)[i] = ev;
+	}
 	return err;
+
+#else
+	errno = EIO;
+	return -1;
+#endif /* HAVE_SELECT | HAVE_POLL */
 }
 
 int
@@ -1592,6 +1858,7 @@ const struct sml_prim_tabent sml_runtime_primitives[] = {
 	{"prim_IntInf_notb", (primfn*)prim_IntInf_notb},
 	{"prim_Word_toString", (primfn*)prim_Word_toString},
 	{"prim_Real_class", (primfn*)prim_Real_class},
+	{"prim_Float_class", (primfn*)prim_Float_class},
 	{"prim_String_allocateImmutableNoInit", (primfn*)prim_String_allocateImmutableNoInit},
 	{"prim_String_allocateMutableNoInit", (primfn*)prim_String_allocateMutableNoInit},
 	{"prim_String_substring", (primfn*)prim_String_substring},
@@ -1612,7 +1879,7 @@ const struct sml_prim_tabent sml_runtime_primitives[] = {
 	{"prim_GenericOS_readdir", (primfn*)prim_GenericOS_readdir},
 	{"prim_GenericOS_rewinddir", (primfn*)prim_GenericOS_rewinddir},
 	{"prim_GenericOS_closedir", (primfn*)prim_GenericOS_closedir},
-	{"prim_GenericOS_select", (primfn*)prim_GenericOS_select},
+	{"prim_GenericOS_poll", (primfn*)prim_GenericOS_poll},
 	{"prim_GenericOS_errorName", (primfn*)prim_GenericOS_errorName},
 	{"prim_GenericOS_syserror", (primfn*)prim_GenericOS_syserror},
 	{"prim_Time_gettimeofday", (primfn*)prim_Time_gettimeofday},
@@ -1662,6 +1929,14 @@ const struct sml_prim_tabent sml_runtime_primitives[] = {
 
 	/* C99 */
 	{"copysign", (primfn*)copysign},
+	{"copysignf", (primfn*)copysignf},
+	{"ceilf", (primfn*)ceilf},
+	{"floorf", (primfn*)floorf},
+	{"roundf", (primfn*)roundf},
+	{"ldexpf", (primfn*)ldexpf},
+	{"frexpf", (primfn*)frexpf},
+	{"modff", (primfn*)modff},
+
 	/* POSIX */
 	{"sleep", (primfn*)sleep},
 	{"close", (primfn*)close},

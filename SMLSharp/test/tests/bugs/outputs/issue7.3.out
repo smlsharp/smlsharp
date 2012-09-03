@@ -1,5 +1,7 @@
-../tests/bugs/tests/issue7.3.sml:1.29-1.30 Error: type and type annotation don't
-                                                  agree
-                                                  inferred type: 'b list
-                                                  type annotation: 'a list
+../tests/bugs/tests/issue7.3.sml:1.29-1.30 Error:
+  type and type annotation don't agree
+  inferred type: 'B(b) list
+  type annotation: 'A(a) list
+
+
 

@@ -120,6 +120,13 @@ AC_DEFUN([SML_PATH_PROG_OR_BAT], [
   fi
 ])
 
+case "$host_os" in
+  *mingw*)
+    AC_PATH_PROG(CMD, cmd)
+    AC_SUBST(CMD)
+    ;;
+esac
+
 SML_PATH_PROG_OR_BAT(SML, sml)
 SML_PATH_PROG_OR_BAT(MLYACC, ml-yacc)
 SML_PATH_PROG_OR_BAT(MLLEX, ml-lex)
@@ -513,6 +520,12 @@ if test "x$ac_cv_lib_dl_dlopen" = "xno"; then
   esac
 fi
 
+case "$host_os" in
+  *mingw*)
+    AC_DEFINE(MINGW32, 1, [Define if your system is Windows])
+    ;;
+esac
+
 # FIXME: check for method to link at runtime.
 
 # -------- Checks for Header Files --------
@@ -521,7 +534,8 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netinet/in.h stdlib.h \
                   string.h strings.h sys/socket.h time.h unistd.h \
-                  poll.h utime.h ieeefp.h floatingpoint.h inttypes.h gmp.h])
+                  poll.h utime.h ieeefp.h floatingpoint.h inttypes.h gmp.h \
+                  dlfcn.h sys/mman.h sys/times.h])
 
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -565,7 +579,9 @@ AC_FUNC_UTIME_NULL
 AC_CHECK_FUNCS([bzero floor getcwd gettimeofday localtime_r memmove \
                 memset mkdir modf pow rmdir socket sqrt strerror utime \
                 sigaction sigprocmask sleep dlopen finite fpclass copysign \
-                clock_gettime getrusage times])
+                copysignf ldexpf frexpf modff \
+                clock_gettime getrusage times utimes readlink poll select \
+                mmap])
 AC_CHECK_DECLS([CLOCK_PROCESS_CPUTIME_ID],,,[#include <time.h>])
 AC_CHECK_DECLS([fpclassify, isinf, isnan, isnormal, signbit],,,
                [#include <math.h>])
@@ -676,6 +692,8 @@ AC_SUBST(RUNTIME_DEFS)
 case "$target" in
   i[[3456]]86-*-linux*) NATIVE_TARGET=x86-linux ;;
   i[[3456]]86-*-darwin*) NATIVE_TARGET=x86-darwin ;;
+  i[[3456]]86-*-mingw*) NATIVE_TARGET=x86-mingw ;;
+  i[[3456]]86-*-cygwin*) NATIVE_TARGET=x86-cygwin ;;
   *) NATIVE_TARGET= ;;
 esac
 

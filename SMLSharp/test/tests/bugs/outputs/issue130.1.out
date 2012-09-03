@@ -1,4 +1,4 @@
-signature SIG = sig datatype t con D : t  end
+signature SIG = sig datatype t = D end
 structure STR : SIG
 datatype t = datatype STR.t
 val f = fn : t -> bool

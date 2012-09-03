@@ -7,7 +7,7 @@ val fHanldePolyBodyRaise = fn : X0 -> X0
 ../tests/coresml/tests/Rank1007.sml:26.28-26.49 Error:
   operator and operand don't agree
                                                        operator domain: X0
-  operand: 'A#{int, largeInt}
+  operand: 'A#{int, IntInf.int}
 
 ../tests/coresml/tests/Rank1007.sml:28.1-28.46 Warning:
   dummy type variable(s) X0 are introduced due to value restriction
@@ -15,7 +15,7 @@ val fHanldePolyBodyPolyVar = fn : X0 -> X0
 ../tests/coresml/tests/Rank1007.sml:29.30-29.53 Error:
   operator and operand don't agree
                                                        operator domain: X0
-  operand: 'A#{int, largeInt}
+  operand: 'A#{int, IntInf.int}
 
 ../tests/coresml/tests/Rank1007.sml:31.1-31.55 Warning:
   dummy type variable(s) X0 are introduced due to value restriction
@@ -23,7 +23,7 @@ val fHanldePolyBodyPolyExp = fn : X0 -> X0
 ../tests/coresml/tests/Rank1007.sml:32.30-32.53 Error:
   operator and operand don't agree
                                                        operator domain: X0
-  operand: 'A#{int, largeInt}
+  operand: 'A#{int, IntInf.int}
 
 val fHanldePolyBodyMonoExp = fn : int -> int
 val xHanldePolyBodyMonoExp = 5 : int

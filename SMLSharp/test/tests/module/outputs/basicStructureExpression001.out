@@ -21,7 +21,7 @@ exception e72 : exn
 structure S72 : sig exception e : exn end
 val x72 = e72 : exn
 structure S8 : sig val x : t end
-val x8 = - : t
+val x8 = - : hidden(S8.t)
 structure S91 : sig val x : int * int end
 structure S92 : sig val x : int * int end
 val x9 = (1,2) : int * int

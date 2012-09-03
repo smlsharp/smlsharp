@@ -225,23 +225,21 @@ IMLPrim_Real_fromFloatImpl(UInt32Value argsCount,
     return;
 };
 
-/*
- * val dtoa : (real * int) -> string * int
- * argument is real and precision.
- * return is string and exponential.
+/* FIXME: following two functions shared by Real and Float should be moved to
+ * another source file.
  */
-void
-IMLPrim_Real_dtoaImpl(UInt32Value argsCount,
-                      Cell* argumentRefs[],
-                      Cell* resultRef)
+
+/**
+ * converts a floatin-point number to a string.
+ */
+Cell
+realToMLString(Real64Value real, SInt32Value prec)
 {
     mpf_t z;
     mp_exp_t exp;
     char* buf = NULL;
     Cell MLstring;
 
-    Real64Value real = PrimitiveSupport::cellRefToReal64(argumentRefs[0]);
-    SInt32Value prec = argumentRefs[1]->sint32;
     DBGWRAP(LOG.debug("dtoa: (%g, %d)", real, prec));
 
     switch(IEEEREAL_CLASS(real)){
@@ -285,24 +283,21 @@ IMLPrim_Real_dtoaImpl(UInt32Value argsCount,
     elements[0] = MLstring;
     TemporaryRoot root1(&elements[0]);
     elements[1].sint32 = exp;
-    *resultRef = PrimitiveSupport::tupleElementsToCell(BITMAP, elements, 2);
+    return PrimitiveSupport::tupleElementsToCell(BITMAP, elements, 2);
+}
 
-    return;
-};
-
-/*
- * val strtod : string -> real
+/**
+ * converts a string to a floatin-point number.
+ * This function returns false if any error occurs.
  */
-void
-IMLPrim_Real_strtodImpl(UInt32Value argsCount,
-                        Cell* argumentRefs[],
-                        Cell* resultRef)
+bool
+MLStringToReal(Cell MLStringCell, Real64Value* resultValue)
 {
     mpf_t z;
     char* buf;
     mp_exp_t exp;
 
-    char* arg = PrimitiveSupport::cellToString(*argumentRefs[0]);
+    char* arg = PrimitiveSupport::cellToString(MLStringCell);
     int argLen = ::strlen(arg);
 
     /* converts arg from the format of Real.fromString to the format GMP
@@ -314,7 +309,7 @@ IMLPrim_Real_strtodImpl(UInt32Value argsCount,
         if(0 == message){message = "memory alloc fail.";}
         Cell exn = PrimitiveSupport::constructExnSysErr(errno, message);
         PrimitiveSupport::raiseException(exn);
-        return;
+        return false; // indicates an error.
     }
 
     // copys sign. '+' is ignored.
@@ -335,13 +330,44 @@ IMLPrim_Real_strtodImpl(UInt32Value argsCount,
 
     // converts the string to a real.
     mpf_init_set_str(z, buf, 10);
-    Real64Value resultValue = (Real64Value)mpf_get_d(z);
-    PrimitiveSupport::real64ToCellRef(resultValue, resultRef);
+    *resultValue = (Real64Value)mpf_get_d(z);
+
     DBGWRAP(LOG.debug("strtod: arg = [%s], buf = [%s], result = [%f]",
-                      arg, buf, resultValue));
+                      arg, buf, *resultValue));
 
     mpf_clear(z);
     RELEASE_MEMORY(buf);
+
+    return true;
+}
+
+/*
+ * val dtoa : (real * int) -> string * int
+ * argument is real and precision.
+ * return is string and exponential.
+ */
+void
+IMLPrim_Real_dtoaImpl(UInt32Value argsCount,
+                      Cell* argumentRefs[],
+                      Cell* resultRef)
+{
+    Real64Value realValue = PrimitiveSupport::cellRefToReal64(argumentRefs[0]);
+    SInt32Value prec = argumentRefs[1]->sint32;
+    *resultRef = realToMLString(realValue, prec);
+};
+
+/*
+ * val strtod : string -> real
+ */
+void
+IMLPrim_Real_strtodImpl(UInt32Value argsCount,
+                        Cell* argumentRefs[],
+                        Cell* resultRef)
+{
+    Real64Value resultValue;
+    if(MLStringToReal(*argumentRefs[0], &resultValue)){
+        PrimitiveSupport::real64ToCellRef(resultValue, resultRef);
+    }
 
     return;
 }

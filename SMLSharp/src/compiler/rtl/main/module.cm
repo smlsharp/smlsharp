@@ -17,8 +17,6 @@ Group is
         ../../absyn/sources.cm
         ../../session/sources.cm
 
-	../../../instructions/compiler/sources.cm  (* for IEEE754 *)
-
         Counters.sml
 (*
         X86Mnemonic.ppg.sml
@@ -39,6 +37,7 @@ Group is
 	X86RTLRegisterAllocation.sml
 *)
 
+        IEEERealConst.sml
 	FormatByHand.sml
 
         X86Asm.ppg.sml

@@ -662,7 +662,8 @@ in
                (1, nil)
                list)
             val newNames = map (fn x => Counters.newVarName ()) patList
-            val newVars = map (fn x => PT.PTVAR((x,Path.NilPath), loc)) newNames
+            val newVars =
+                map (fn x => PT.PTVAR((x,Path.NilPath), loc)) newNames
             val newVarPats =
               map (fn x => PT.PTPATID((x, Path.NilPath), loc)) newNames
             val argRecord = PT.PTRECORD (listToTuple newVars, loc)
@@ -712,11 +713,19 @@ in
         record
       | ty as T.RAWty {tyCon, args} =>
         (
-          case (dir, TyConID.Map.find (#interoperableKindMap BuiltinContext.builtinContext, #id tyCon)) of
+          case (dir,
+                TyConID.Map.find
+                  (#interoperableKindMap BuiltinContext.builtinContext,
+                   #id tyCon)) of
             (_, SOME RuntimeTypes.INTEROPERABLE) => true
           | (IMPORT false, SOME RuntimeTypes.IMPORT_ONLY) => true
           | (IMPORT true, SOME RuntimeTypes.EXPORT_ONLY) => true
           | (EXPORT, SOME RuntimeTypes.EXPORT_ONLY) => true
+          | (IMPORT _,
+             SOME RuntimeTypes.INTEROPERABLE_BUT_EXPORT_ONLY_ON_VM) =>
+            Control.nativeGen ()
+          | (EXPORT, 
+             SOME RuntimeTypes.INTEROPERABLE_BUT_EXPORT_ONLY_ON_VM) => true
           | _ => false
         )
       | T.ERRORty => true
@@ -903,7 +912,11 @@ in
                   (true, (T.ERRORty, TPERROR)))
         end
 
-    fun stubDirect (basis : TIC.basis) allowTyvar dir (rawty, expTy, exp, loc) =
+    fun stubDirect (basis : TIC.basis)
+                   allowTyvar
+                   dir
+                   (rawty, expTy, exp, loc)
+      =
         let
           val ty = evalRawty basis rawty
           val _ = checkInteroperableType allowTyvar dir (rawty, ty)
@@ -1015,13 +1028,15 @@ in
                 (true, (T.ERRORty, TPERROR)))
       end
 
-    | stubImport basis allowTyvar forceImport (A.TYTUPLE (rawtys, _), expTy, exp, loc) =
+    | stubImport basis allowTyvar forceImport
+                 (A.TYTUPLE (rawtys, _), expTy,exp,loc) =
       stubTuple basis (stubImport basis true false) (rawtys, expTy, exp, loc)
 
     | stubImport basis allowTyvar forceImport (rawty, expTy, exp, loc) =
       stubDirect basis allowTyvar (IMPORT forceImport) (rawty, expTy, exp, loc)
 
-  and stubImportAllowingUnit basis allowTyvar forceImport (ffirawty, expTy, exp, loc) =
+  and stubImportAllowingUnit basis allowTyvar forceImport
+                             (ffirawty, expTy, exp, loc) =
       if isUnitTy (evalRawty basis ffirawty)
       then stubUnit basis (expTy, exp, loc)
       else stubImport basis false forceImport (ffirawty, expTy, exp, loc)
@@ -3089,10 +3104,14 @@ in
           * calling convention attributes is used for importing
           * runtime primtives. *)
          if not (Control.nativeGen ())
-            andalso (case ptexp of PT.PTGLOBALSYMBOL (_,Absyn.ForeignCodeSymbol,_) => true | _ => false)
+            andalso (case ptexp of
+                       PT.PTGLOBALSYMBOL (_,Absyn.ForeignCodeSymbol,_) => true
+                     | _ => false)
          then
-            if (case ffirawty of A.TYFFI ({callingConvention = NONE, ...}, _, argTys, _, _) => length argTys < 2
-                               | _ => false)
+            if (case ffirawty of
+                  A.TYFFI ({callingConvention = NONE, ...}, _, argTys, _, _)
+                  => length argTys < 2
+                | _ => false)
            then stubImportOldPrim basis lambdaDepth (ptexp, ffirawty, loc)
            else raise Control.Bug "not supported"
          else
@@ -4698,12 +4717,26 @@ in
                 val _ =
                   (
                    SEnv.appi
-                   (fn (tyname, ref (T.SUBSTITUTED (T.BOUNDVARty _))) =>()
-                     | (tyname, ref (T.SUBSTITUTED ty)) =>
-                       (
-                        printType ty; 
-                        raise Control.Bug "SUBSTITUTED to Non BoundVarTy"
+                   (fn (tyname, ref (T.SUBSTITUTED ty)) =>
+                       (case TU.derefSubstTy ty of
+                          T.BOUNDVARty _ => ()
+                        | T.TYVARty (tvstateRef as ref (T.TVAR {eqKind,...}))
+                          =>
+                          if OTSet.member(tyvarSet, tvstateRef) then
+                            E.enqueueError
+                              (loc,
+                               E.UserTvarNotGeneralized
+                                 {utvarName =
+                                  (case eqKind of T.EQ => "''"
+                                                | T.NONEQ  => "'")
+                                  ^ tyname})
+                          else ()
+                        | _ => 
+                          (
+                           printType ty; 
+                           raise Control.Bug "SUBSTITUTED to Non BoundVarTy"
                           )
+                       )
                      | (tyname, tvstateRef as (ref (T.TVAR {eqKind,...})))  => 
                        if OTSet.member(tyvarSet, tvstateRef) then
                          E.enqueueError
@@ -4867,7 +4900,27 @@ in
                generalizer (TypesOfAllElements, lambdaDepth)
            val _ =
              SEnv.appi
-               (fn (tyname, ref (T.SUBSTITUTED (T.BOUNDVARty _))) =>()
+               (fn (tyname, ref (T.SUBSTITUTED ty)) =>
+                   (case TU.derefSubstTy ty of
+                      T.BOUNDVARty _ => ()
+                    | T.TYVARty (tvstateRef as ref (T.TVAR {eqKind,...}))
+                      =>
+                      E.enqueueError
+                        (loc,
+                         E.UserTvarNotGeneralized
+                           {utvarName =
+                            (case eqKind of T.EQ => "''"
+                                          | T.NONEQ  => "'")
+                            ^ tyname})
+                    | _ => 
+                      (
+                       printType ty; 
+                       raise
+                         Control.Bug
+                           "illeagal utvar instance in\
+                           \ UserTvarNotGeneralized  check"
+                      )
+                   )
                  | (tyname, ref (T.TVAR {eqKind,...}))  => 
                      E.enqueueError
                      (loc, 
@@ -4878,11 +4931,6 @@ in
                           ^ tyname
                           }
                       )
-                 | _ =>
-                     raise
-                       Control.Bug
-                       "illeagal utvar instance in\
-                       \ UserTvarNotGeneralized  check"
                )
                (SEnv.unionWith #1 (addedUtvars1, addedUtvars2))
          in

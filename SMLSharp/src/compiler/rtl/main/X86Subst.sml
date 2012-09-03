@@ -767,14 +767,14 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
                                     jumpTo=jumpTo,
                                     uses=uses})
         end
-      | I.RETURN {preFrameSize, preFrameAligned, uses} =>
+      | I.RETURN {preFrameSize, stubOptions, uses} =>
         let
           val code = RTLEdit.singletonFirst I.ENTER
           val (code, uses) = load (substVarList subst code uses)
         in
           RTLEdit.insertLast
             (code, I.RETURN {preFrameSize=preFrameSize,
-                             preFrameAligned=preFrameAligned,
+                             stubOptions=stubOptions,
                              uses=uses})
         end
       | I.EXIT => RTLEdit.singletonLast last
@@ -783,7 +783,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       case first of
         I.ENTER => RTLEdit.singletonFirst first
       | I.BEGIN {label, align, loc} => RTLEdit.singletonFirst first
-      | I.CODEENTRY {label, symbol, scope, align, preFrameSize, preFrameAligned,
+      | I.CODEENTRY {label, symbol, scope, align, preFrameSize, stubOptions,
                      defs, loc} =>
         let
           val code = RTLEdit.singletonFirst I.ENTER
@@ -793,7 +793,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
             (code, I.CODEENTRY {label=label, symbol=symbol, scope=scope,
                                 align=align,
                                 preFrameSize=preFrameSize,
-                                preFrameAligned=preFrameAligned,
+                                stubOptions=stubOptions,
                                 defs=defs, loc=loc})
         end
       | I.HANDLERENTRY {label, align, defs, loc} =>

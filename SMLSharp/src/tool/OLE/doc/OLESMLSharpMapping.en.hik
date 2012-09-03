@@ -1,4 +1,4 @@
-// mapping OLE/SML#
+// mapping COM and SML#
 
 !IDispatch and Variant.
 
@@ -41,9 +41,8 @@ Data types indicated by VARENUM are mapped to SML# datatype as follows.
 || VT_UINT || Word32.word 
 || VT_VOID || unit 
 || VT_HRESULT || ''unsupported''
-|| VT_PTR(''vt'') || ''vt''
-|| VT_SAFEARRAY(VT_VARIANT) || OLE.variant array * word list
-|| VT_SAFEARRAY(''other type'') || ''planned to support''
+|| VT_PTR(''vt'') || OLE.variant
+|| VT_SAFEARRAY(''vt'') || [SML# type of ''vt''] OLE.safearray
 || VT_CARRAY || ''unsupported''
 || VT_USERDEFINED(TKIND_DISPATCH) || OLE.Dispatch
 || VT_USERDEFINED(TKIND_COCLASS) || OLE.Dispatch
@@ -66,17 +65,27 @@ Data types indicated by VARENUM are mapped to SML# datatype as follows.
 || VT_BSTR_BLOB || ''unsupported''
 || VT_VECTOR || ''unsupported''
 || VT_ARRAY || ''unsupported''
-|| VT_BYREF(''vt'') || ''vt''
+|| VT_BYREF(''vt'') || OLE.variant
 
 !!SAFEARRAY mapping.
 
 COM [[SAFEARRAY|http://msdn.microsoft.com/en-us/library/ms221482.aspx]] 
 can describe multi-dimension arrays.
 OLE/SML# maps SAFEARRAY to an array of single dimension.
-For example, a three dimension SAFEARRAY
-""VARIANT a[10][20][30]
-is mapped to a pair of an array of OLE.variant and a list of word.
-""(a, [0w10, 0w20, 0w30])
+For example, a three-dimensional SAFEARRAY
+ VT_INT a[10][20][30]
+is mapped to '''Int32.int OLE.safearray''' which is a pair of an array of 
+'''Int32.int''' and a list of int.
+ (a, [10, 20, 30]) : Int32.int array * int list
+
+The elements of an array are stored in column major order.
+The first dimension changes first, and the last dimension changes last.
+
+For example, an element of the above SAFEARRAY a
+ a[1][2][3]
+is stored at the index of 3 * (10 * 20) + 2 * 10 + 1 = 621.
+It can be accessed from SML# as 
+ Array.sub(a, 621)
 
 !method mapping.
 
@@ -95,6 +104,22 @@ In this table,
 ""[''t'']
 indicates the SML# datatype mapped from Variant type ''t''.
 
+!!parameter mapping.
+
+!!!optional parameter.
+An optional parameter of type ''t'' is mapped to
+""[''t''] option
+
+!!![out] attribute.
+If a parameter is annotated with [out] attribute, the type of the parameter
+is mapped to '''OLE.variant ref'''.
+
+!!!null reference parameter.
+Use '''OLE.NullUnknown''' and '''OLE.NullDispatch''' to pass a null reference
+in VT_UNKNOWN and VT_DISPATCH parameter.
+
+Use '''EMPTY''' to pass a null pointer to other types in VT_VARIANT parameter.
+
 !!property accessor
 
 In addition to usual methods, COM objects expose three types of methods.
@@ -107,6 +132,13 @@ The setter of a property ''p'' of type ''t'' is mapped to a SML# function
 The reference setter of a property ''p'' of type ''t'' is mapped to a SML# function
 ""setRef''p'' : [''t''] -> unit
 
+!!Restriction.
+
+OLE structure and OLE2SML ignore methods which satisfy any of following.
+
+* any of its parameters has [ret] attribute.
+* any of its parameters is variant type which is not included in OLE.variant.
+
 !exception mapping.
 
 If a COM object throws an exception in an invocation of its method from
@@ -117,3 +149,11 @@ is raised to the caller in SML#.
 If COM framework API function returns an error, an SML# exception
 ""OLE.OLEError(ComSystemError ''message'')
 is raised to SML# world.
+
+!Topics in OLE/SML#.
+
+*[[Oveview of OLE/SML#|OLESMLSharpOverview]]
+*[[mapping COM and SML#|OLESMLSharpMapping]]
+*[[API|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/doc/api/]]
+*[[COM in 3 minutes|OLESMLSharpMiniGuideOfCOM]]
+*[[Implementation overview|OLESMLSharpImplementationOverview]]

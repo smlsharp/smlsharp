@@ -5,9 +5,8 @@ val f1 = fn : ['a .'a -> ['b .'b -> 'b]]
 val f2 = fn : ['a .'a -> ['b .'b -> 'a * 'b]]
 val fPolyVar11 = fn : ['a .'a -> 'a]
 val xPolyVar11 = 1 : int
-../tests/coresml/tests/Rank1006.sml:32.1-32.22 Warning: dummy type variable(s)
-                                                        X0 are introduced due to
-                                                        value restriction
+../tests/coresml/tests/Rank1006.sml:32.1-32.22 Warning:
+  dummy type variable(s) X0 are introduced due to value restriction
 val fPolyVar12 = fn : ['a .'a -> (X0 -> X0) * 'a]
 val xPolyVar12 = (fn, 1) : (X0 -> X0) * int
 val fPolyVar21 = fn : ['a .'a -> int * ['b .'b -> 'b]]
@@ -16,45 +15,39 @@ val fPolyVar22 = fn : ['a .'a -> int * ['b .'b -> 'a * 'b]]
 val xPolyVar22 = (1, fn) : int * ['a .'a -> int * 'a]
 val fPolyAbs11 = fn : ['a .'a -> 'a]
 val xPolyAbs11 = 1 : int
-../tests/coresml/tests/Rank1006.sml:42.1-42.39 Warning: dummy type variable(s)
-                                                         X1, X0 are introduced
-                                                        due to value restriction
-val fPolyAbs12 = fn : ['a .'a -> (X1 -> X0 -> X0) * 'a]
-val xPolyAbs12 = (fn, 1) : (X1 -> X0 -> X0) * int
+../tests/coresml/tests/Rank1006.sml:42.1-42.39 Warning:
+  dummy type variable(s) X1, X0 are introduced due to value restriction
+val fPolyAbs12 = fn : ['a.'a -> (X1 -> X0 -> X0)*'a]
+val xPolyAbs12 = (fn, 1) : (X1 -> X0 -> X0)*int
 val fPolyAbs21 = fn : ['a .'a -> 'a]
 val xPolyAbs21 = 1 : int
-../tests/coresml/tests/Rank1006.sml:47.1-47.44 Warning: dummy type variable(s)
-                                                         X1, X0 are introduced
-                                                        due to value restriction
-val fPolyAbs22 = fn : ['a .'a -> (X1 -> X0 -> X1 * X0) * 'a]
-val xPolyAbs22 = (fn, 1) : (X1 -> X0 -> X1 * X0) * int
+../tests/coresml/tests/Rank1006.sml:47.1-47.44 Warning:
+  dummy type variable(s) X1, X0 are introduced due to value restriction
+val fPolyAbs22 = fn : ['a.'a -> (X1 -> X0 -> X1*X0)*'a]
+val xPolyAbs22 = (fn, 1) : (X1 -> X0 -> X1*X0)*int
 val fRecord11 = fn : ['a .'a -> 'a]
 val xRecord11 = 1 : int
-../tests/coresml/tests/Rank1006.sml:52.1-52.27 Warning: dummy type variable(s)
-                                                        X0 are introduced due to
-                                                        value restriction
+../tests/coresml/tests/Rank1006.sml:52.1-52.27 Warning:
+  dummy type variable(s) X0 are introduced due to value restriction
 val fRecord12 = fn : ['a .'a -> {a: X0 -> X0} * 'a]
 val xRecord12 = ({a = fn}, 1) : {a: X0 -> X0} * int
 val fRecord21 = fn : ['a .'a -> ['b .'b -> 'b]]
 val xRecord21 = "a" : string
-val fRecord22 = fn : ['a,'b.'a -> ['c .'c -> {a:'b -> 'b , b:'a} * 'c]]
-../tests/coresml/tests/Rank1006.sml:58.1-58.31 Warning: dummy type variable(s)
-                                                        X0 are introduced due to
-                                                        value restriction
+val fRecord22 = fn : ['a,'b.'a -> ['c.'c -> {a: 'b -> 'b,b: 'a}*'c]]
+../tests/coresml/tests/Rank1006.sml:58.1-58.31 Warning:
+  dummy type variable(s) X0 are introduced due to value restriction
 val xRecord22 = ({a = fn, b = 1}, "a") : {a:X0 -> X0 , b:int} * string
 val fPolyConst11 = fn : ['a .'a -> ['b .'b -> 'b]]
 val xPolyConst11 = "a" : string
-val fPolyConst12 = fn : ['a,'b.'a -> ['c .'c -> 'b dt * 'c]]
-../tests/coresml/tests/Rank1006.sml:63.1-63.37 Warning: dummy type variable(s)
-                                                        X0 are introduced due to
-                                                        value restriction
+val fPolyConst12 = fn : ['a,'b.'a -> ['c.'c -> 'b dt*'c]]
+../tests/coresml/tests/Rank1006.sml:63.1-63.37 Warning:
+  dummy type variable(s) X0 are introduced due to value restriction
 val xPolyConst12 = (D, "a") : X0 dt * string
 val fPolyConst21 = fn : ['a .'a -> ['b .'b -> 'b]]
 val xPolyConst21 = "a" : string
-val fPolyConst22 = fn : ['a,'b.'a -> ['c .'c -> ('b dt * 'a) * 'c]]
-../tests/coresml/tests/Rank1006.sml:68.1-68.37 Warning: dummy type variable(s)
-                                                        X0 are introduced due to
-                                                        value restriction
+val fPolyConst22 = fn : ['a,'b.'a -> ['c.'c -> ('b dt*'a)*'c]]
+../tests/coresml/tests/Rank1006.sml:68.1-68.37 Warning:
+  dummy type variable(s) X0 are introduced due to value restriction
 val xPolyConst22 = ((D, 1), "a") : (X0 dt * int) * string
 
 

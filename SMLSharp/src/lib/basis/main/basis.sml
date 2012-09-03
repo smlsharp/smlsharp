@@ -403,12 +403,15 @@ use "./IEEEReal.sml";
 use "./MATH.sig";
 use "./Math.sml";
 
+use "./RealBase.sml";
 use "./Real64.sml";
 structure LargeReal = Real64;
 use "./REAL.sig";
-structure Real64 = Real64 :> REAL 
-          where type Math.real = real;
+structure Real64 = Real64 :> REAL
+          where type real = real;
 use "./Real.sml";
+structure Real = Real :> REAL 
+          where type real = real;
 
 val ceil = Real.ceil;
 val floor = Real.floor;
@@ -418,15 +421,16 @@ val trunc = Real.trunc;
 fun '_format_real' arg =
     let val string = Real.toString arg
     in SMLSharp.SMLFormat.Term(size string, string) end;
-structure Real32 = struct open Real32
-fun '_format_real' arg =
-    let val string = Real.toString (toReal arg)
-    in SMLSharp.SMLFormat.Term(size string, string) end;
-end;
 
 structure Math = Math :> MATH where type real = Real.real;
 
 use "./Real32.sml";
+structure Real32 = struct open Real32
+fun '_format_real' arg =
+    let val string = toString arg
+    in SMLSharp.SMLFormat.Term(size string, string) end;
+end;
+structure Real32 = Real32 :> REAL where type real = Real32.real;
 
 (********************)
 

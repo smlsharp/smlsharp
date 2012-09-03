@@ -17,7 +17,21 @@ struct
   datatype compileResult =
       CODEBLOCK of Word8Vector.vector      (* for Yamatodani's runtime *)
     | OBJECTFILE of ObjectFile.objectFile  (* for Ueno's runtime *)
-    | ASMFILE of asmOutput                 (* for native code *)
+    | ASMFILE of                           (* for native code *)
+      {code: asmOutput, nextDummy: asmOutput option}
+      (*
+       * "code" holds the resulting code of current compilation unit.
+       * "nextDummy" holds a dummy code of next compilation unit.
+       *
+       * To link toplevel codes sequentially beyond object files, every
+       * resulting code of native code generation has a reference to the
+       * label of toplevel code in the next compilation unit. "nextDummy"
+       * has a dummy definition of the label of the next toplevel.
+       * If there is the next compilation unit, then "nextDummy" will be
+       * abandoned since the next compilation unit will define actual toplevel
+       * code and its label. Otherwise, "nextDummy" will be used to avoid
+       * linking and semantics errors.
+       *)
 
   (***************************************************************************)
 

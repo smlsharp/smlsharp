@@ -1,6 +1,6 @@
 (**
- * functions to manipulate strings which are allocated outside of the managed
- * heap.
+ * interface to null-terminated strings allocated outside of the managed heap
+ * of SML#.
  * @author YAMATODANI Kiyoshi
  * @version $Id: UNMANAGED_STRING.sig,v 1.3 2006/11/04 13:16:37 kiyoshiy Exp $
  *)
@@ -10,7 +10,7 @@ sig
   (***************************************************************************)
 
   (**
-   * string allocated outside of the managed heap.
+   * null-terminated string allocated outside of the managed heap.
    *)
   type unmanagedString
 
@@ -25,7 +25,7 @@ sig
   val size : unmanagedString -> int
 
   (**
-   * copy an unmanaged string into the heap.
+   * copy a null-terminated unmanaged string into the heap.
    * @params address
    * @param address an unmanaged string
    * @return a string in the managed heap whose contents is the same with
@@ -35,6 +35,7 @@ sig
 
   (**
    * copy a string to unmanaged memory.
+   * A '\0' is appended.
    * The retured unmanagedString must be released by 'release' after use.
    * @params string
    * @param string a string in the managed heap.
@@ -45,6 +46,7 @@ sig
 
   (**
    * copy a string to unmanaged memory.
+   * A '\0' is appended.
    * The retured unmanagedString must be released by 'release' after use.
    * @params substring
    * @param substring a substring in the managed heap.

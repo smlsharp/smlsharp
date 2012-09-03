@@ -66,6 +66,7 @@ struct
   datatype arch =
       ELF
     | MachO
+    | COFF
 
   type options =
       {
@@ -197,6 +198,7 @@ struct
    *     void *handlerAddr;
    *     void *stackPointer;
    *     void *framePointer;
+   * }
    *)
   fun handlerSlot (code as {globalOffsetBase, externSymbols, handlerSlots,
                             preFrameSize, postFrameSize, focus}:code, label) =
@@ -617,6 +619,7 @@ struct
                 NONE => raise Control.Bug "globalOffsetBase"
               | SOME ELF => R.ELF_GOT
               | SOME MachO => R.LABEL (newLabel ())
+              | SOME COFF => raise Control.Bug "globalOffsetBase: COFF"
           val baseReg = newVar (R.Ptr R.Code)
           val code = updateGlobalOffsetBase code (SOME (baseLabel, baseReg))
         in
@@ -1279,56 +1282,31 @@ struct
     | adjustCPostFrame (SOME Absyn.FFI_STDCALL, argTys, retTys) =
       cdeclPostFrameSize (argTys, retTys)
 
-  fun getCArgs (aligned, NONE, argTys, retTys) dsts =
-      getCArgs (aligned, SOME Absyn.FFI_CDECL, argTys, retTys) dsts
-    | getCArgs (aligned, SOME Absyn.FFI_STDCALL, argTys, retTys) dsts =
-      getCArgs (aligned, SOME Absyn.FFI_CDECL, argTys, retTys) dsts
-    | getCArgs (aligned, SOME Absyn.FFI_CDECL, argTys, retTys) (env, dsts) =
+  fun getCArgs (NONE, argTys, retTys) base dsts =
+      getCArgs (SOME Absyn.FFI_CDECL, argTys, retTys) base dsts
+    | getCArgs (SOME Absyn.FFI_STDCALL, argTys, retTys) base dsts =
+      getCArgs (SOME Absyn.FFI_CDECL, argTys, retTys) base dsts
+    | getCArgs (SOME Absyn.FFI_CDECL, argTys, retTys) base dsts =
       if length retTys > 1
       then raise Control.Bug "FIXME: # of retTys of getCArgs > 1"
       else
         let
-          val (insn1, base) =
-              if aligned orelse not (isSome env)
-              then (nil, R.PREFRAME)
-              else
+          val baseFn =
+              case base of
+                NONE => R.PREFRAME
+              | SOME baseVar =>
                 let
-                  val baseVar = newVar (R.Ptr R.Void)
                   val preFrameSize = cdeclPreFrameSize (argTys, retTys)
                 in
-                  ([R.LOAD_PREV_FP (R.REG baseVar)],
-                   fn {offset,size} =>
-                      R.DISP (R.INT32 (Int32.fromInt (preFrameSize + 8
-                                                      - offset)),
-                              R.BASE baseVar))
+                  fn {offset, size} =>
+                     R.DISP (R.INT32
+                               (Int32.fromInt (preFrameSize + 8 - offset)),
+                             R.BASE baseVar)
                 end
           val srcs = map (fn dst => OPRD (R.REF_ dst))
-                         (cdeclParams base argTys)
-
-          val insn2 =
-              case env of
-                NONE => nil
-              | SOME env =>
-                let
-                  val v = newVar (R.Ptr R.Code)
-                in
-                  (* see also the case of CallbackClosure. *)
-                  [R.LOAD_RETADDR (R.REG v),
-                   R.MOVE (R.Ptr R.Data, env,
-                           R.REF_ (R.MEM (R.Ptr R.Data,
-                                          R.ADDR (R.DISP (R.INT32 4,
-                                                          R.BASE v)))))]
-                end
+                         (cdeclParams baseFn argTys)
         in
-          (fn code =>
-              let
-                val code = insert (code, insn1)
-                val code = selectMoveList code (dsts, srcs, nil)
-                val code = insert (code, insn2)
-              in
-                code
-              end,
-              nil)
+          (fn code => selectMoveList code (dsts, srcs, nil), nil)
         end
 
   fun setCRets code (NONE, argTys, retTys) retValues =
@@ -1441,6 +1419,127 @@ struct
                     needStabilize = needStabilize,
                     returnTo = returnTo,
                     postFrameAdjust = 0}
+      end
+
+  fun pushHandler context code handlerLabel loc =
+      let
+        val (code, handlerAddr) =
+            absoluteAddr context (code, R.LABEL handlerLabel)
+        val (code, v) = coerceToVar code (ADDR handlerAddr)
+        val (code, slot) = handlerSlot (code, handlerLabel)
+        val v = newVar (R.Ptr R.Void)
+        fun handlerInfo ptrTy disp =
+            R.MEM (R.Ptr ptrTy, R.ADDR (R.DISP (R.INT32 disp, R.BASE v)))
+        val code =
+            insert (code, [R.REQUEST_SLOT slot,
+                           R.MOVEADDR (R.Void, R.REG v, R.WORKFRAME slot),
+                           R.MOVEADDR (R.Code, handlerInfo R.Code 4,
+                                       handlerAddr),
+                           R.LOAD_SP (handlerInfo R.Void 8),
+                           R.LOAD_FP (handlerInfo R.Void 12)])
+      in
+        selectPrimCall context code
+                       {callTo = "sml_push_handler",
+                        retRegs = nil,
+                        argRegs = [v],
+                        needStabilize = false,
+                        returnTo = NONE}
+      end
+
+  fun popHandler context code handlerLabel loc =
+      let
+        val code =
+            selectPrimCall context code
+                           {callTo = "sml_pop_handler",
+                            argRegs = nil,
+                            retRegs = nil,
+                            needStabilize = false,
+                            returnTo = NONE}
+        val (code, slot) = handlerSlot (code, handlerLabel)
+      in
+        insert (code, [R.REQUIRE_SLOT slot])
+      end
+
+  fun selectRaise context code exnVar =
+      let
+        val v1 = newVar (R.Ptr R.Void)
+        fun handlerInfo ptrTy disp =
+            R.MEM (R.Ptr ptrTy, R.ADDR (R.DISP (R.INT32 disp, R.BASE v1)))
+        val v2 = newVar (R.Ptr R.Code)
+        val code =
+            selectPrimCall context code
+                           {callTo = "sml_pop_handler",
+                            retRegs = [v1],
+                            argRegs = nil,
+                            needStabilize = true,
+                            returnTo = NONE}
+        val code =
+            insert (code, [R.MOVE (R.Ptr R.Code, R.REG v2,
+                                   R.REF_ (handlerInfo R.Code 4))])
+      in
+        insertLast
+          (code, R.UNWIND_JUMP {jumpTo = R.BASE v2,
+                                sp = R.REF_ (handlerInfo R.Void 8),
+                                fp = R.REF_ (handlerInfo R.Void 12),
+                                uses = [exnVar],  (* precolor: eax *)
+                                handler = #handler context})
+      end
+
+  fun attachFrameChain context code =
+      let
+        val v1 = newVar (R.Ptr R.Void)
+        val v2 = newVar (R.Int32 R.U)
+        val v3 = newVar (R.Ptr R.Void)
+        val code =
+            selectPrimCall context code
+                           {callTo = "sml_load_frame_pointer",
+                            retRegs = [v1],
+                            argRegs = [],
+                            needStabilize = false,
+                            returnTo = NONE}
+      in
+        insert
+          (code,
+           [
+             R.OR (R.Int32 R.U, R.REG v2,
+                   R.REF (R.CAST (R.Int32 R.U),
+                          R.REG v1),
+                   R.CONST (R.UINT32 FRAME_FLAG_SKIP)),
+             R.LOAD_PREV_FP (R.REG v3),
+             R.MOVE (R.Int32 R.U,
+                     R.MEM (R.Int32 R.U,
+                            R.ADDR (R.DISP (R.INT32 ~4,
+                                            R.BASE v3))),
+                     R.REF_ (R.REG v2))
+           ])
+      end
+
+  fun detachFrameChain context code =
+      let
+        val v1 = newVar (R.Ptr R.Void)
+        val v2 = newVar (R.Int32 R.U)
+        val v3 = newVar (R.Int32 R.U)
+        val code =
+            insert
+              (code,
+               [
+                 R.LOAD_PREV_FP (R.REG v1),
+                 R.MOVE (R.Int32 R.U,
+                         R.REG v2,
+                         R.REF_ (R.MEM (R.Int32 R.U,
+                                        R.ADDR (R.DISP (R.INT32 ~4,
+                                                        R.BASE v1))))),
+                 R.AND (R.Int32 R.U,
+                        R.REG v3, R.REF_ (R.REG v2),
+                        R.CONST (R.UINT32 (notb FRAME_FLAG_SKIP)))
+               ])
+      in
+        selectPrimCall context code
+                       {callTo = "sml_save_frame_pointer",
+                        retRegs = [],
+                        argRegs = [v3],
+                        needStabilize = false,
+                        returnTo = NONE}
       end
 
   local
@@ -2444,7 +2543,7 @@ val _ = Control.ps "=="
             (code,
              (* RETURN assumes that return address is stored at 4(%ebp). *)
              R.RETURN {preFrameSize = mlPreFrameRetSize retTys,
-                       preFrameAligned = true,
+                       stubOptions = NONE,
                        uses = uses (* precolor: edi, esi, ebx *) })
         end
 
@@ -2457,30 +2556,7 @@ val _ = Control.ps "=="
           val argTys = map (fn R.Atom => R.Int32 R.U | x => x) argTys
           val retTys = map (fn R.Atom => R.Int32 R.U | x => x) retTys
 
-          val v1 = newVar (R.Ptr R.Void)
-          val v2 = newVar (R.Int32 R.U)
-          val v3 = newVar (R.Int32 R.U)
-          val code =
-              insert
-                (code,
-                 [
-                   R.LOAD_PREV_FP (R.REG v1),
-                   R.MOVE (R.Int32 R.U,
-                           R.REG v2,
-                           R.REF_ (R.MEM (R.Int32 R.U,
-                                          R.ADDR (R.DISP (R.INT32 ~4,
-                                                          R.BASE v1))))),
-                   R.AND (R.Int32 R.U,
-                          R.REG v3, R.REF_ (R.REG v2),
-                          R.CONST (R.UINT32 (notb FRAME_FLAG_SKIP)))
-                 ])
-          val code =
-              selectPrimCall context code
-                             {callTo = "sml_save_frame_pointer",
-                              retRegs = [v3],
-                              argRegs = [],
-                              needStabilize = false,
-                              returnTo = NONE}
+          val code = detachFrameChain context code
 
           val rets = map argInfoToValue varList
           val (code, uses) =
@@ -2493,7 +2569,7 @@ val _ = Control.ps "=="
              R.RETURN {preFrameSize = cPreFrameRetSize
                                         (false, callingConvention,
                                          argTys, retTys),
-                       preFrameAligned = true,
+                       stubOptions = SOME {forceFrameAlign = true},
                        uses = uses (* precolor: edi, esi, ebx, eax *) })
         end
 
@@ -2545,58 +2621,36 @@ val _ = Control.ps "=="
           val code =
               if !Control.debugCodeGen
               then selectPrimCall context code
-                                  {callTo = "sml_before_raise",
+                                  {callTo = "sml_check_handler",
                                    retRegs = nil,
-                                   argRegs = nil,
-                                   needStabilize = true,
+                                   argRegs = [exnVar],
+                                   needStabilize = false,
                                    returnTo = NONE}
               else code
-          val v1 = newVar (R.Ptr R.Void)
-          fun handlerInfo ptrTy disp =
-              R.MEM (R.Ptr ptrTy, R.ADDR (R.DISP (R.INT32 disp, R.BASE v1)))
-          val v2 = newVar (R.Ptr R.Code)
-          val code =
-              selectPrimCall context code
-                             {callTo = "sml_pop_handler",
-                              retRegs = [v1],
-                              argRegs = nil,
-                              needStabilize = true,
-                              returnTo = NONE}
-          val code =
-              insert (code, [R.MOVE (R.Ptr R.Code, R.REG v2,
-                                     R.REF_ (handlerInfo R.Code 4))])
         in
-          insertLast
-              (code, R.UNWIND_JUMP {jumpTo = R.BASE v2,
-                                    sp = R.REF_ (handlerInfo R.Void 8),
-                                    fp = R.REF_ (handlerInfo R.Void 12),
-                                    uses = [exnVar],  (* precolor: eax *)
-                                    handler = #handler context})
+          selectRaise context code exnVar
+        end
+
+      | AI.RaiseExt {exn, attributes, loc} =>
+        let
+          val code = detachFrameChain context code
+          val exn = transformArgInfo exn
+          val (code, exnVar) = coerceToVar code (OPRD (R.REF_ exn))
+          val code = selectPrimCall context code
+                                    {callTo = "sml_check_handler",
+                                     retRegs = nil,
+                                     argRegs = [exnVar],
+                                     needStabilize = false,
+                                     returnTo = NONE}
+        in
+          selectRaise context code exnVar
         end
 
       | AI.ChangeHandler {change = AI.PushHandler _, previousHandler,
                           newHandler as AI.StaticHandler handler,
                           tryBlock, loc} =>
         let
-          val (code, handlerAddr) = absoluteAddr context (code, R.LABEL handler)
-          val (code, v) = coerceToVar code (ADDR handlerAddr)
-          val (code, slot) = handlerSlot (code, handler)
-          val v = newVar (R.Ptr R.Void)
-          fun handlerInfo ptrTy disp =
-              R.MEM (R.Ptr ptrTy, R.ADDR (R.DISP (R.INT32 disp, R.BASE v)))
-          val code =
-              insert (code, [R.REQUEST_SLOT slot,
-                             R.MOVEADDR (R.Void, R.REG v, R.WORKFRAME slot),
-                             R.MOVEADDR (R.Code, handlerInfo R.Code 4,
-                                         handlerAddr),
-                             R.LOAD_SP (handlerInfo R.Void 8),
-                             R.LOAD_FP (handlerInfo R.Void 12)])
-          val code = selectPrimCall context code
-                                    {callTo = "sml_push_handler",
-                                     retRegs = nil,
-                                     argRegs = [v],
-                                     needStabilize = false,
-                                     returnTo = NONE}
+          val code = pushHandler context code handler loc
         in
           insertJump (code, tryBlock)
         end
@@ -2605,15 +2659,7 @@ val _ = Control.ps "=="
                           previousHandler as AI.StaticHandler handler,
                           newHandler, tryBlock, loc} =>
         let
-          val code =
-              selectPrimCall context code
-                             {callTo = "sml_pop_handler",
-                              argRegs = nil,
-                              retRegs = nil,
-                              needStabilize = false,
-                              returnTo = NONE}
-          val (code, slot) = handlerSlot (code, handler)
-          val code = insert (code, [R.REQUIRE_SLOT slot])
+          val code = popHandler context code handler loc
         in
           insertJump (code, tryBlock)
         end
@@ -2662,7 +2708,7 @@ val _ = Control.ps "=="
                               scope = R.LOCAL,
                               align = 4,
                               preFrameSize = mlPreFrameSize (argTys, retTys),
-                              preFrameAligned = true,
+                              stubOptions = NONE,
                               (* precolor: esi, edi, ebx, eax, ecx, edx *)
                               defs = defs,
                               loc = loc},
@@ -2683,9 +2729,45 @@ val _ = Control.ps "=="
                       SOME v => SOME (transformArgInfo v)
                     | NONE => NONE
                 val dsts = map transformArgInfo argVarList
+
+                val stubFrameVar = newVar (R.Ptr R.Void)
+                val closFrameVar = newVar (R.Ptr R.Void)
+                val insn1 =
+                    [
+                      R.LOAD_PREV_FP (R.REG stubFrameVar),
+                      R.MOVE (R.Ptr R.Void,
+                              R.REG closFrameVar,
+                              R.REF_ (R.MEM (R.Ptr R.Void,
+                                             R.ADDR (R.BASE stubFrameVar))))
+                    ]
+                val insn2 =
+                    case env of
+                      NONE => nil
+                    | SOME envVar =>
+                      let
+                        val closAddr = newVar (R.Ptr R.Code)
+                      in
+                        [
+                          R.MOVE (R.Ptr R.Code,
+                                  R.REG closAddr,
+                                  R.REF_
+                                    (R.MEM (R.Ptr R.Code,
+                                            R.ADDR
+                                              (R.DISP (R.INT32 4,
+                                                       R.BASE stubFrameVar))))),
+                          R.MOVE (R.Ptr R.Data,
+                                  envVar,
+                                  R.REF_
+                                    (R.MEM (R.Ptr R.Data,
+                                            R.ADDR
+                                              (R.DISP (R.INT32 4,
+                                                       R.BASE closAddr)))))
+                        ]
+                      end
+
                 val (sets, defs) =
-                    getCArgs (false, callingConvention, argTys, retTys)
-                             (env, dsts)
+                    getCArgs (callingConvention, argTys, retTys)
+                             (SOME closFrameVar) dsts
                 val defs = calleeSaves @ defs
               in
                 (R.CODEENTRY {label = label,
@@ -2695,39 +2777,18 @@ val _ = Control.ps "=="
                               preFrameSize = cPreFrameSize (false,
                                                             callingConvention,
                                                             argTys, retTys),
-                              preFrameAligned = true,
+                              stubOptions = SOME {forceFrameAlign = true},
                               (* precolor: esi, edi, ebx, eax, ecx, edx *)
                               defs = defs,
                               loc = loc},
                  fn code =>
                     let
-                      val v1 = newVar (R.Ptr R.Void)
-                      val v2 = newVar (R.Int32 R.U)
-                      val v3 = newVar (R.Ptr R.Void)
-                      val code =
-                          selectPrimCall context code
-                                         {callTo = "sml_load_frame_pointer",
-                                          retRegs = [v1],
-                                          argRegs = [],
-                                          needStabilize = false,
-                                          returnTo = NONE}
-                      val code =
-                          insert
-                            (code,
-                             [
-                               R.OR (R.Int32 R.U, R.REG v2,
-                                     R.REF (R.CAST (R.Int32 R.U),
-                                            R.REG v1),
-                                     R.CONST (R.UINT32 FRAME_FLAG_SKIP)),
-                               R.LOAD_PREV_FP (R.REG v3),
-                               R.MOVE (R.Int32 R.U,
-                                       R.MEM (R.Int32 R.U,
-                                              R.ADDR (R.DISP (R.INT32 ~4,
-                                                              R.BASE v3))),
-                                              R.REF_ (R.REG v2))
-                             ])
+                      val code = attachFrameChain context code
+                      val code = insert (code, insn1)
+                      val code = sets code
+                      val code = insert (code, insn2)
                     in
-                      sets code
+                      code
                     end)
               end
             | AI.Handler exn =>
@@ -3237,6 +3298,8 @@ raise e end
             case ossys of
               "darwin" => SOME MachO
             | "linux" => SOME ELF
+            | "mingw" => SOME COFF
+            | "cygwin" => SOME COFF
             | _ => NONE
         val defaultOptions =
             case ossys of
@@ -3256,6 +3319,8 @@ raise e end
                 case ossys of
                   "darwin" => true
                 | "linux" => false
+                | "mingw" => true
+                | "cygwin" => true
                 | _ => false
             } : options
 

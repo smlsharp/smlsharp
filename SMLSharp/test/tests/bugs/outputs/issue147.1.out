@@ -1,6 +1,4 @@
 datatype dt
 con D : dt
-../tests/bugs/tests/issue147.1.sml:2.11-2.11 Error: unbound variable or
-                                                    constructor: y
-../tests/bugs/tests/issue147.1.sml:2.9-2.9 Error: operator is not a function: dt
-
+../tests/bugs/tests/issue147.1.sml:2.11-2.11 Error:
+  unbound variable or constructor: y

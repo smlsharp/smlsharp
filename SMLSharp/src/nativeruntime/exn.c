@@ -6,7 +6,12 @@
  */
 
 #include <stdlib.h>
+#include <setjmp.h>
 #include "smlsharp.h"
+
+struct sml_exn_jmpbuf {
+	jmp_buf buf;
+};
 
 SML_PRIMITIVE void
 sml_push_handler(void *handler)
@@ -43,21 +48,56 @@ sml_pop_handler(void)
 	return handler;
 }
 
-/* for debug */
 SML_PRIMITIVE void
-sml_before_raise(void *exn ATTR_UNUSED)
+sml_check_handler(void *exn)
 {
+	struct sml_thread_env *env = SML_THREAD_ENV;
+	void *handler = env->current_handler;
+	void *prev;
+
+	if (handler != NULL)
+		return;
+
+#if 0
 	if (*(void**)exn == (void*)&sml_exn_MatchCompBug)
 		sml_fatal(0, "MatchCompBug detected.");
 	if (*(void**)exn == (void*)&sml_exn_Bootstrap)
 		sml_fatal(0, "Bootstrap detected.");
+#endif
+	/* uncaught exception */
+	if (env->exn_jmpbuf) {
+		longjmp(env->exn_jmpbuf->buf, 1);
+	} else {
+		sml_error(0, "uncaught exception: %s", **(char***)exn);
+		abort();
+	}
 }
 
+/* for debug */
 SML_PRIMITIVE void
 sml_stack_corrupted(void *esp, void *ebp)
 {
 	sml_debug("*** stack corrupted esp=%p ebp=%p\n", esp, ebp);
 	abort();
+}
+
+int
+sml_protect(void (*func)(void *), void *data)
+{
+	struct sml_thread_env *env = SML_THREAD_ENV;
+	struct sml_exn_jmpbuf *prev = env->exn_jmpbuf;
+	struct sml_exn_jmpbuf *buf;
+	int ret;
+
+	buf = xmalloc(sizeof(jmp_buf));
+	env->exn_jmpbuf = buf;
+
+	ret = setjmp(buf->buf);
+	if (ret == 0)
+		func(data);
+
+	env->exn_jmpbuf = prev;
+	return ret;
 }
 
 /* builtin exceptions */

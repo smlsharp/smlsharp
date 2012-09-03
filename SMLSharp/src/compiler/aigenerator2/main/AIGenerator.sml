@@ -1841,13 +1841,22 @@ struct
         let
           val (context, exn) = transformArg context env value
           val exnArg = newArg (AI.BOXED, AI.Exn)
+          val routine = getRoutineInfo context (#routineLabel env)
           val code = addInsn code
                        [
                          AI.Set   {dst = exnArg,
                                    ty = AI.BOXED,
                                    value = exn,
                                    loc = loc},
-                         AI.Raise {exn = exnArg, loc = loc}
+                         (* ToDo: not all "raise" go outside of ML.
+                          * We should choose RaiseExt only for unhandled
+                          * raise in toplevel functions. *)
+                         case #ffiAttributes routine of
+                           NONE => AI.Raise {exn = exnArg, loc = loc}
+                         | SOME attributes =>
+                           AI.RaiseExt {exn = exnArg,
+                                        attributes = attributes,
+                                        loc = loc}
                        ]
         in
           (context, env, code)

@@ -265,7 +265,7 @@ structure MVOptimization : MVOPTIMIZATION = struct
            | (P.Word_div,[arg1 as MV.MVCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
            | (P.Word_div, _) => optimize2 wordOf wordOf wordToExp ( op div ) 
            (*| (P.Real_div, _) => optimize2 realOf realOf realToExp ( op / ) *)
-           | (P.Float_div, _) => optimize2 floatOf floatOf floatToExp ( op / ) 
+           (*| (P.Float_div, _) => optimize2 floatOf floatOf floatToExp ( op / ) *)
            | (P.Byte_div,[arg1 as MV.MVCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
            | (P.Byte_div, _) => optimize2 byteOf byteOf byteToExp ( op div ) 
 

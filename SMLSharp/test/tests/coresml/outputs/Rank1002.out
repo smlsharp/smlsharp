@@ -3,15 +3,15 @@ datatype 'a dt
 con D : ['a .'a -> 'a dt]
 ../tests/coresml/tests/Rank1002.sml:19.45-19.51 Error:
   operator and operand don't agree
-  operator domain: 'C#{int, largeInt}
+  operator domain: 'E#{int, IntInf.int}
                                                        operand: string
 
 ../tests/coresml/tests/Rank1002.sml:21.51-21.57 Error:
   operator and operand don't agree
-  operator domain: 'E#{int, largeInt}
+  operator domain: 'G#{int, IntInf.int}
                                                        operand: string
 
 ../tests/coresml/tests/Rank1002.sml:23.53-23.59 Error:
   operator and operand don't agree
-  operator domain: 'C#{int, largeInt}
+  operator domain: 'E#{int, IntInf.int}
                                                        operand: string

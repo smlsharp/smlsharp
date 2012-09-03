@@ -66,17 +66,10 @@ From this type library, generates following SML# code.
        end
  end
 
-!!type mapping
+!Topics in OLE/SML#.
 
- [VT_BSTR] => OLE.OLEString.string
- [VT_UT1] => Word8.word
- [VT_I4] => Int32.int
- [VT_BOOL] => bool
- [VT_DISPATCH] => OLE.object
- [t VT_PTR] => [t]
-     VT_PTR 'a in TYPEDESC corresponds to VT_BYREF in VARIANT.
-     Null pointer is not supported.
- [VT_VARIANT VT_SAFEARRAY] => OLE.variant array * word list
-
-An optional parameter of type t is mapped to
- [t] => [t] option
+*[[Oveview of OLE/SML#|OLESMLSharpOverview]]
+*[[mapping COM and SML#|OLESMLSharpMapping]]
+*[[API|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/doc/api/]]
+*[[COM in 3 minutes|OLESMLSharpMiniGuideOfCOM]]
+*[[Implementation overview|OLESMLSharpImplementationOverview]]

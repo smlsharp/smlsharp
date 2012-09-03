@@ -114,7 +114,8 @@ struct
   val (tyFunctions, ty) = P.makeNullPu T.ERRORty
   val (idStateFunctions, idState) =
       P.makeNullPu (T.VARID {namePath=("",Path.NilPath), ty=T.ERRORty})
-  val (tyBindInfoFunctions, tyBindInfo) = P.makeNullPu (T.TYCON dummyDataTyInfo)
+  val (tyBindInfoFunctions, tyBindInfo) =
+      P.makeNullPu (T.TYCON dummyDataTyInfo)
 (*
   val (sizeTagExpFunctions, sizeTagExp) = P.makeNullPu (T.ST_CONST 0)
 *)
@@ -204,7 +205,11 @@ struct
             P.con1
                 T.EXTERNAL
                 (fn (T.EXTERNAL x) => x
-                  | _ => raise Control.Bug "non EXTERNAL to pu_EXTERNAL (types/main/TypesPickler.sml)"
+                  | _ =>
+                    raise
+                      Control.Bug
+                        "non EXTERNAL to pu_EXTERNAL\
+                        \ (types/main/TypesPickler.sml)"
                  )
                 (ExternalVarID.pu_ID)
 
@@ -212,7 +217,11 @@ struct
             P.con1
                 T.INTERNAL
                 (fn (T.INTERNAL x) => x
-                  | _ => raise Control.Bug "non INTERNAL to pu_INTERNAL (types/main/TypesPickler.sml)"
+                  | _ =>
+                    raise
+                      Control.Bug
+                        "non INTERNAL to pu_INTERNAL\
+                        \ (types/main/TypesPickler.sml)"
                  )
                 id
       in
@@ -409,7 +418,8 @@ struct
                  | _ => 
                    raise 
                      Control.Bug 
-                     "non OVERLOADED to pu_OVERLOADED (types/main/TypesPickler.sml)"
+                     "non OVERLOADED to pu_OVERLOADED\
+                     \ (types/main/TypesPickler.sml)"
                ) 
               tyList
           fun pu_REC pu = 
@@ -437,7 +447,8 @@ struct
                 | _ => 
                   raise 
                     Control.Bug 
-                    "non SUBSTITUTED to pu_SUBSTITUTED (types/main/TypesPickler.sml)"
+                    "non SUBSTITUTED to pu_SUBSTITUTED\
+                    \ (types/main/TypesPickler.sml)"
                ) 
               ty
           fun pu_TVAR pu = 
@@ -484,7 +495,8 @@ struct
                 | _ => 
                   raise 
                     Control.Bug 
-                    "non OPAQUEty to pu_OPAQUEty (types/main/TypesPickler.sml)"
+                    "non OPAQUEty to pu_OPAQUEty\
+                    \ (types/main/TypesPickler.sml)"
                ) 
               (P.conv
                    (fn (tyCon, args, implTy) => 
@@ -499,7 +511,8 @@ struct
                 | _ => 
                   raise 
                     Control.Bug 
-                    "non ALIASty to pu_ALIASty (types/main/TypesPickler.sml)"
+                    "non ALIASty to pu_ALIASty\
+                    \ (types/main/TypesPickler.sml)"
              ) 
             ty_ty
           fun pu_BOUNDVARty pu =
@@ -509,7 +522,8 @@ struct
               | _ => 
                raise 
                  Control.Bug 
-                 "non BOUNDVARty to pu_BOUNDVARty (types/main/TypesPickler.sml)"
+                 "non BOUNDVARty to pu_BOUNDVARty\
+                 \ (types/main/TypesPickler.sml)"
             ) 
             P.int
 (*
@@ -608,7 +622,7 @@ struct
               | _ => 
                 raise 
                   Control.Bug 
-                      "non RAWty to pu_PREDEFINEDty (types/main/TypesPickler.sml)"
+                  "non RAWty to pu_PREDEFINEDty (types/main/TypesPickler.sml)"
             )
             (P.conv
              (
@@ -707,7 +721,11 @@ struct
              ) 
             exnPathInfo
         in
-          P.data (toInt, [pu_CONID, pu_OPRIM, pu_PRIM, pu_VARID, pu_RECFUNID, pu_EXNID])
+          P.data
+            (
+             toInt,
+             [pu_CONID, pu_OPRIM, pu_PRIM, pu_VARID, pu_RECFUNID, pu_EXNID]
+            )
         end
 
     val newTyBindInfo : T.tyBindInfo P.pu =
@@ -742,8 +760,8 @@ struct
                   (fn T.TYSPEC arg => arg
                     | _ => 
                       raise 
-                        Control.Bug 
-                        "non TYSPEC to pu_TYSPEC (types/main/TypesPickler.sml)"
+                       Control.Bug 
+                       "non TYSPEC to pu_TYSPEC (types/main/TypesPickler.sml)"
                    )
                   tyCon
           fun pu_TYOPAQUE pu =
@@ -842,7 +860,9 @@ struct
       let
         fun toInt (T.SIGNATURE _) = 0
         fun pu_SIGNATURE pu =
-            P.con1 T.SIGNATURE (fn (T.SIGNATURE x) => x) (P.tuple2(tyConIdSet, name_env))
+            P.con1
+              T.SIGNATURE
+              (fn (T.SIGNATURE x) => x) (P.tuple2(tyConIdSet, name_env))
       in
         P.data (toInt, [pu_SIGNATURE])
       end
@@ -877,7 +897,12 @@ struct
             in
               P.conv
                   (
-                   fn (generativeExnTagSet, argTyConIdSet, argSigEnv, argStrPrefixedEnv, body) =>
+                   fn (generativeExnTagSet,
+                       argTyConIdSet,
+                       argSigEnv,
+                       argStrPrefixedEnv,
+                       body)
+                      =>
                        {
                         generativeExnTagSet = generativeExnTagSet,
                         argTyConIdSet = argTyConIdSet,
@@ -885,8 +910,17 @@ struct
                         argStrPrefixedEnv = argStrPrefixedEnv, 
                         body = body
                        },
-                   fn {generativeExnTagSet, argTyConIdSet, argSigEnv, argStrPrefixedEnv, body} =>
-                      (generativeExnTagSet, argTyConIdSet, argSigEnv, argStrPrefixedEnv, body)
+                   fn {generativeExnTagSet,
+                       argTyConIdSet,
+                       argSigEnv,
+                       argStrPrefixedEnv,
+                       body}
+                      =>
+                      (generativeExnTagSet,
+                       argTyConIdSet,
+                       argSigEnv,
+                       argStrPrefixedEnv,
+                       body)
                   )
                   (P.tuple5(exnTagSet, tyConIdSet, Env, Env, body))
             end
@@ -926,7 +960,11 @@ struct
             P.con1
                 T.VALIDVAR
                 (fn (T.VALIDVAR x) => x
-                  | _ => raise Control.Bug "non VALIDVAR  to pu_VALIDVAR (types/main/TypesPickler.sml)"
+                  | _ =>
+                    raise
+                      Control.Bug
+                        "non VALIDVAR  to pu_VALIDVAR\
+                        \ (types/main/TypesPickler.sml)"
                  )
                 (P.conv
                      (
@@ -938,7 +976,11 @@ struct
             P.con1
                 T.VALIDWILD
                 (fn (T.VALIDWILD x) => x
-                  | _ => raise Control.Bug "non VALIDWILD to pu_VALIDWILD (types/main/TypesPickler.sml)"
+                  | _ =>
+                    raise
+                      Control.Bug
+                        "non VALIDWILD to pu_VALIDWILD\
+                        \ (types/main/TypesPickler.sml)"
                  )
                 ty
       in
@@ -953,7 +995,11 @@ struct
             P.con1
                 T.VALIDENT
                 (fn (T.VALIDENT x) => x
-                  | _ => raise Control.Bug "non VALIDENT to pu_VALIDENT (types/main/TypesPickler.sml)"
+                  | _ =>
+                    raise
+                      Control.Bug
+                        "non VALIDENT to pu_VALIDENT\
+                        \ (types/main/TypesPickler.sml)"
                  )
                 (P.conv
                      (
@@ -966,7 +1012,11 @@ struct
             P.con1
                 T.VALIDENTWILD
                 (fn (T.VALIDENTWILD x) => x
-                  | _ => raise Control.Bug "non VALIDENTWILD to pu_VALIDENTWILD (types/main/TypesPickler.sml)"
+                  | _ =>
+                    raise
+                      Control.Bug
+                        "non VALIDENTWILD to pu_VALIDENTWILD\
+                        \ (types/main/TypesPickler.sml)"
                  )
                 ty
       in

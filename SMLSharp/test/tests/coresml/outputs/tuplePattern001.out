@@ -11,7 +11,7 @@ val f4 = fn : ['a,'b.'b t4 * 'a t4 -> 'b * 'a]
 val v4 = (1, "foo") : int * string
 val f5 = fn : ['a,'b.(int -> 'a) * (int -> 'b) -> 'a * 'b]
 val v5 = (2, 1) : int * int
-val f6 = fn : ['a,'b,'c.('a  -> 'b) * ('a  -> 'c)  -> 'a  -> 'b * 'c]
+val f6 = fn : ['a,'b,'c.('a -> 'b)*('a -> 'c) -> 'a -> 'b*'c]
 ../tests/coresml/tests/tuplePattern001.sml:35.1-35.39 Warning:
   dummy type variable(s) X0 are introduced due to value restriction
 val v6 = fn : X0 -> X0 * (X0 * X0)

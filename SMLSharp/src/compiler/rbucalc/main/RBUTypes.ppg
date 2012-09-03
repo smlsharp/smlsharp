@@ -30,6 +30,10 @@ struct
             *)
            DOUBLEty
          | (*%
+            * @format "FLOATty"
+            *)
+           FLOATty
+         | (*%
             * @format(tid) "<" !N0{ tid } ">"
             *)
            TAGty of int

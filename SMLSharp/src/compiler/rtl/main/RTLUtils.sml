@@ -350,7 +350,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
           useSet (varSet uses) ++ duOp sp ++ duOp fp ++ duAddr jumpTo
         | I.TAILCALL_JUMP {preFrameSize, jumpTo, uses} =>
           useSet (varSet uses) ++ duAddr jumpTo
-        | I.RETURN {preFrameSize, preFrameAligned, uses} =>
+        | I.RETURN {preFrameSize, stubOptions, uses} =>
           useSet (varSet uses)
         | I.EXIT => duEmpty
       end
@@ -359,7 +359,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       case insn of
         I.BEGIN {label, align, loc} => duEmpty
       | I.CODEENTRY {label, symbol, scope, align, preFrameSize,
-                     preFrameAligned, defs, loc} =>
+                     stubOptions, defs, loc} =>
         defSet (varSet defs)
       | I.HANDLERENTRY {label, align, defs, loc} => defSet (varSet defs)
       | I.ENTER => duEmpty
@@ -452,14 +452,14 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       | I.JUMP {jumpTo, destinations} => emptySet
       | I.UNWIND_JUMP {jumpTo, sp, fp, uses, handler} => emptySet
       | I.TAILCALL_JUMP {preFrameSize, jumpTo, uses} => emptySet
-      | I.RETURN {preFrameSize, preFrameAligned, uses} => emptySet
+      | I.RETURN {preFrameSize, stubOptions, uses} => emptySet
       | I.EXIT => emptySet
 
   fun clobsFirst insn =
       case insn of
         I.BEGIN {label, align, loc} => emptySet
       | I.CODEENTRY {label, symbol, scope, align, preFrameSize,
-                     preFrameAligned, defs, loc} => emptySet
+                     stubOptions, defs, loc} => emptySet
       | I.HANDLERENTRY {label, align, defs, loc} => emptySet
       | I.ENTER => emptySet
 
@@ -617,7 +617,7 @@ fun putfs s = print (Control.prettyPrint s ^ "\n")
       | I.JUMP {jumpTo, destinations} => destinations
       | I.UNWIND_JUMP {jumpTo, fp, sp, uses, handler} => handlerLabels handler
       | I.TAILCALL_JUMP {preFrameSize, jumpTo, uses} => nil
-      | I.RETURN {preFrameSize, preFrameAligned, uses} => nil
+      | I.RETURN {preFrameSize, stubOptions, uses} => nil
       | I.EXIT => nil
 
 (*

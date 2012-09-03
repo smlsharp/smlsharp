@@ -167,6 +167,7 @@ smlsharp_initialize(int heapSize,
     Heap::initialize(heapSize);
     vm_ = new VirtualMachine(name, NULL, argsCount, args, stackSize);
     Heap::setRootSet(vm_);
+    Heap::setFinalizerExecutor(vm_);
     VirtualMachine::setSession(session_);
 
     SETUP_EXECUTION_MONITORING;

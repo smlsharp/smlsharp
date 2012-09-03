@@ -58,3 +58,11 @@ The following is an approximate code in pseudo C to access Internet Explorer.
  ie->vtbl->setVisible(ie, true);
  ie->vtbl->navigate(ie, "http://www.pllab.riec.tohoku.ac.jp/smlsharp/");
  ie->vtbl->quit(ie);
+
+!Topics in OLE/SML#.
+
+*[[Oveview of OLE/SML#|OLESMLSharpOverview]]
+*[[mapping COM and SML#|OLESMLSharpMapping]]
+*[[API|http://www.pllab.riec.tohoku.ac.jp/smlsharp/tools/OLE/doc/api/]]
+*[[COM in 3 minutes|OLESMLSharpMiniGuideOfCOM]]
+*[[Implementation overview|OLESMLSharpImplementationOverview]]

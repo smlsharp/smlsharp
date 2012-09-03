@@ -18,6 +18,10 @@ struct
   exception ExSpecTyCon of string
   exception ExIllegalTyFunToTyCon of string
   exception CoerceFun 
+  exception CoerceRecKindToEQ 
+
+  fun derefSubstTy (T.TYVARty(ref (T.SUBSTITUTED ty))) = derefSubstTy ty
+    | derefSubstTy ty = ty
 
   fun derefTy (T.TYVARty(ref (T.SUBSTITUTED ty))) = derefTy ty
     | derefTy (T.ALIASty (ty1, ty2)) = derefTy ty2
@@ -628,44 +632,65 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
         fields
     | T.OVERLOADED _ => ()
 
-  fun adjustEqKindInTy eqKind ty = 
-    case eqKind of
-      T.NONEQ => ()
-    | T.EQ => 
-        let
-          val tyset = EFTV ty
-        in
-          OTSet.app
-          (fn (tyvarRef as (ref (T.TVAR {
-                                         lambdaDepth =lambdaDepth, 
-                                         id, 
-                                         recordKind, 
-                                         eqKind, 
-                                         tyvarName
-                                         })))
-              =>
-              tyvarRef := T.TVAR {
-                                  lambdaDepth = lambdaDepth, 
-                                  id = id, 
-                                  recordKind = recordKind, 
-                                  eqKind = T.EQ, 
-                                  tyvarName = tyvarName
-                                  }
-            | _ =>
-              raise Control.Bug "non TVAR in adjustDepthInTy (TypesUtils.sml)"
-          )
-          tyset
-        end
+  fun coerceReckindToEQ recKind = 
+      let
+        fun adjustEqKindInTy eqKind ty = 
+            case eqKind of
+              T.NONEQ => ()
+            | T.EQ => 
+              let
+                val tyset = EFTV ty
+              in
+                OTSet.app
+                  (fn (tyvarRef as (ref (T.TVAR
+                                           {
+                                            lambdaDepth =lambdaDepth, 
+                                            id, 
+                                            recordKind, 
+                                            eqKind, 
+                                            tyvarName
+                                           }
+                      )))
+                      =>
+                      tyvarRef := T.TVAR
+                                    {
+                                     lambdaDepth = lambdaDepth, 
+                                     id = id, 
+                                     recordKind = recordKind, 
+                                     eqKind = T.EQ, 
+                                     tyvarName = tyvarName
+                                    }
+                    | _ =>
+                      raise
+                        Control.Bug
+                          "non TVAR in adjustDepthInTy (TypesUtils.sml)"
+                  )
+                  tyset
+              end
 
-  fun adjustEqKindInRecKind eqKind kind = 
-    case kind of
-      T.UNIV => ()
-    | T.REC fields => 
-        SEnv.app
-        (fn ty => adjustEqKindInTy eqKind ty)
-        fields
-    | T.OVERLOADED _ => ()
-
+        fun adjustEqKindInRecKind eqKind kind = 
+            case kind of
+              T.UNIV => ()
+            | T.REC fields => 
+              SEnv.app
+                (fn ty => adjustEqKindInTy eqKind ty)
+                fields
+            | T.OVERLOADED _ => ()
+      in
+        (adjustEqKindInRecKind T.EQ recKind;
+         case recKind of
+           T.UNIV => T.UNIV
+         | T.REC fields => T.REC fields
+         | T.OVERLOADED L =>  
+           let
+             val L = List.filter admitEqTy L
+           in
+             case L of 
+               nil => raise CoerceRecKindToEQ 
+             | _ =>  T.OVERLOADED L
+           end
+        )
+      end
 
   fun adjustDepthInVarPathInfo contextDepth {namePath, ty} = 
     adjustDepthInTy contextDepth ty;
@@ -756,32 +781,6 @@ val _ = print ("#substs = " ^ (Int.toString(List.length substs)) ^ "\n")
         | _ => raise CoerceFun
 
 
-
-  fun TEnvClosure (btvEnv : T.btvEnv) ty =
-      TypeTransducer.foldTyPreOrder
-      (fn (T.BOUNDVARty n, btvEnv) =>
-          (case IEnv.find(btvEnv, n) of
-             SOME btvKind =>
-             (
-               TEnvClosureOfBTVKind (IEnv.insert (btvEnv, n, btvKind)) btvKind,
-               true
-             )
-           | NONE => (btvEnv, true))
-        | (T.POLYty _, btvEnv) => (btvEnv, false) (* not go inside body *)
-        | (_, btvEnv) => (btvEnv, true))
-      btvEnv
-      ty
-
-  and TEnvClosureOfBTVKind (btvEnv : T.btvEnv) (btvKind : T.btvKind) =
-      case btvKind of
-        {recordKind = T.UNIV, ...} => btvEnv
-      | {recordKind = T.REC fields, ...} => 
-        SEnv.foldr 
-            (fn (ty, set) => IEnv.unionWith #1 (TEnvClosure btvEnv ty, set))
-            btvEnv
-            fields
-      | {recordKind = T.OVERLOADED _, ...} =>
-        raise Control.Bug "OVERLOADED kind given to TEnvClosureOfBTVKind"
 
 (*
   datatype rk = ONE | ZERO | NIL
@@ -932,28 +931,20 @@ variables. So be careful in using this.
       let 
         val freeTvs = EFTV ty
         val tids = 
-            OTSet.foldr 
-              (fn
-                (
-                 r as
-                   ref
-                   (T.TVAR(k as
-                             {id, recordKind = T.OVERLOADED (h :: tl), ...})),
-                 tids
-                ) => tids
-              | (r, tids) => OTSet.add(tids, r))
-              OTSet.empty
-              (OTSet.filter 
-                 (fn (ref (T.TVAR {lambdaDepth = tyvarLambdaDepth,...})) => 
-                     T.youngerDepth
-                       {contextDepth = contextLambdaDepth,
-                        tyvarDepth = tyvarLambdaDepth}
-                   | _ =>
-                     raise Control.Bug
-                             "non TVAR found in freeTvs in generalizer\
-                             \ (types/main/TypesUtils)"
-                 )
-                 freeTvs)
+            OTSet.filter 
+              (fn (ref(T.TVAR {id, recordKind = T.OVERLOADED _,...}))
+                  => 
+                  raise Control.Bug "OVERLOADED ty to generalizer"
+                | (ref (T.TVAR {lambdaDepth = tyvarLambdaDepth,...})) => 
+                  T.youngerDepth
+                    {contextDepth = contextLambdaDepth,
+                     tyvarDepth = tyvarLambdaDepth}
+                | _ =>
+                  raise Control.Bug
+                          "non TVAR found in freeTvs in generalizer\
+                          \ (types/main/TypesUtils)"
+              )
+              freeTvs
 
 (* fix the bug 187
  * when typeinference phase does type instantiation for the more

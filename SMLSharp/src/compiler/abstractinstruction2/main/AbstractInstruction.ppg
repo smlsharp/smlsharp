@@ -706,6 +706,16 @@ struct
         exn: argInfo,            (* must be Exn *)
         loc: loc
       }
+    | (*%
+       * @format({exn, attributes, loc})
+       * { "raiseExt" + exn ";" }
+       *)
+      RaiseExt of
+      {
+        exn: argInfo,            (* must be Exn *)
+        attributes: ffiAttributes,
+        loc: loc
+      }
 (*
     | (*%
        * @format({block, offset, passLabel, failLabel, loc})

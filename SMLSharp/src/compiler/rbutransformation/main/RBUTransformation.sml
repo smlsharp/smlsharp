@@ -894,6 +894,7 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                             RT.ATOMty => RT.ATOMty
                           | RT.BOXEDty => RT.BOXEDty
                           | RT.DOUBLEty => RT.DOUBLEty
+                          | RT.FLOATty => RT.FLOATty
                           | RT.BOUNDVARty _ => ty
                           | RT.SINGLEty _ => ty
                           | RT.UNBOXEDty _ => ty
@@ -905,7 +906,8 @@ structure RBUTransformation : RBUTRANSFORMATION = struct
                           | RT.ENVBITMAPty _ => RT.ATOMty
                           | RT.PADSIZEty _ => RT.ATOMty
                           | RT.OFFSETty _ => RT.ATOMty
-                          | _ => raise Control.Bug "invalid target type"
+                          | RT.PADty _ =>
+                            raise Control.Bug "invalid target type"
                       ) 
                       tyList
               val (bitmapExp, newContext) = generateEnvBitmap context (newTyList, fixedSizeList, loc)

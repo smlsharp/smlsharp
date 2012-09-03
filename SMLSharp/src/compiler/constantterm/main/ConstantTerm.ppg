@@ -196,18 +196,21 @@ struct
         ]
     val constantTypeMap =
         foldl
-            (fn ((const, tyRep), constTypeMap) =>
-                let
-                    val newTy =  
-                        TP.readTy (#topTyConEnv BuiltinContext.builtinContext) tyRep
-(*
-                        TP.readTy (ReservedCounters.reservedBoundTypeVarIDSequence) PT.initialTopTyConEnv tyRep
-*)
-                in
-                    OCMap.insert (constTypeMap, const, newTy)
-                end)
-            OCMap.empty
-            constantTypeDefs
+          (fn ((const, tyRep), constTypeMap) =>
+              let
+                val newTy =  
+                    TP.readTy
+                      (#topTyConEnv BuiltinContext.builtinContext) tyRep
+                   (*
+                    TP.readTy
+                      (ReservedCounters.reservedBoundTypeVarIDSequence)
+                      PT.initialTopTyConEnv tyRep
+                    *)
+              in
+                OCMap.insert (constTypeMap, const, newTy)
+              end)
+          OCMap.empty
+          constantTypeDefs
   in
     fun constTy const =
         case OCMap.find(constantTypeMap, const) of

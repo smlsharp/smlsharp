@@ -1,8 +1,6 @@
 functor MonoVectorBase (B :
 sig type elem type array val sub : array * int -> elem end) :
-sig
-  val concat : ['a#{buffer:MonoVectorBase.B.array option} .'a list  -> unit]
-end
+sig val concat : ['a#{buffer: B.array option}.'a list -> unit] end
 ../tests/bugs/tests/issue146.6.sml:9.3-17.9 Warning:
   match nonexhaustive
            :: (vector, _) => ...

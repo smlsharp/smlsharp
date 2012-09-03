@@ -267,7 +267,7 @@ struct
       case first of
         I.ENTER => RTLEdit.singletonFirst first
       | I.BEGIN _ => RTLEdit.singletonFirst first
-      | I.CODEENTRY {label, symbol, scope, align, preFrameSize, preFrameAligned,
+      | I.CODEENTRY {label, symbol, scope, align, preFrameSize, stubOptions,
                      defs, loc} =>
         let
           val code = RTLEdit.singletonFirst I.ENTER
@@ -276,7 +276,7 @@ struct
           RTLEdit.insertFirst
             (code, I.CODEENTRY {label=label, symbol=symbol, scope=scope,
                                 align=align, preFrameSize=preFrameSize,
-                                preFrameAligned = preFrameAligned,
+                                stubOptions=stubOptions,
                                 defs=defs, loc=loc})
         end
       | I.HANDLERENTRY {label, align, defs, loc} =>
@@ -348,14 +348,14 @@ struct
                                     jumpTo=jumpTo,
                                     uses=uses})
         end
-      | I.RETURN {preFrameSize, preFrameAligned, uses} =>
+      | I.RETURN {preFrameSize, stubOptions, uses} =>
         let
           val code = RTLEdit.singletonFirst I.ENTER
           val (code, uses) = load (splitVarList code uses)
         in
           RTLEdit.insertLast
             (code, I.RETURN {preFrameSize=preFrameSize,
-                             preFrameAligned=preFrameAligned,
+                             stubOptions=stubOptions,
                              uses=uses})
         end
       | I.EXIT => RTLEdit.singletonLast I.EXIT
@@ -749,7 +749,7 @@ end))*)
   fun constrainFirst (first, interference) =
       case first of
         I.BEGIN {label, align, loc} => interference
-      | I.CODEENTRY {label, symbol, scope, align, preFrameSize, preFrameAligned,
+      | I.CODEENTRY {label, symbol, scope, align, preFrameSize, stubOptions,
                      defs, loc} =>
         precolorVarList (interference, defs, calleeSaveRegs @ callerSaveRegs)
       | I.HANDLERENTRY {label, align, defs, loc} =>
@@ -777,7 +777,7 @@ end))*)
         precolorVarList (interference, uses, calleeSaveRegs)
       | I.TAILCALL_JUMP {preFrameSize, jumpTo, uses} =>
         precolorVarList (interference, uses, calleeSaveRegs @ callerSaveRegs)
-      | I.RETURN {preFrameSize, preFrameAligned, uses} =>
+      | I.RETURN {preFrameSize, stubOptions, uses} =>
         precolorVarList (interference, uses, calleeSaveRegs @ callerSaveRegs)
       | I.EXIT => interference
 

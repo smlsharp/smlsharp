@@ -19,6 +19,7 @@ fun f1 _ = 0;
 fun f2 (_ : 'a dt) = 0;
 
 val r11 = f1 x1; (* accepted *)
+
 val r12 = f1 x2; (* accepted *)
 val r21 = f2 x1; (* accepted since no unification occurs. *)
 val r22 = f2 x2; (* rejected since unification occurs. *)

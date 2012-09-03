@@ -6,4 +6,4 @@ val b = fn : X0 -> X0
 ../tests/bugs/tests/issue168.2.sml:4.1-4.3 Error:
   operator and operand don't agree
                                                   operator domain: X0
-  operand: 'A#{int, largeInt}
+  operand: 'A#{int, IntInf.int}

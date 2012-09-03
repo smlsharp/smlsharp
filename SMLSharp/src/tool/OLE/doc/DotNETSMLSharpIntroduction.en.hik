@@ -1,3 +1,5 @@
+//Introduction to .NET/SML#
+
 Using OLE/SML#, you can access .NET objects from SML# world.
 
 Let's write a SML# code to access a .NET object implemented in the
@@ -135,6 +137,7 @@ This application can load the assembly and access a .NET object.
  I am a .NET object.
  Hello, world !
 
-!References.
+!Topics in .NET/SML#.
 
-*[[mapping .NET and SML#|DotNETSMLSharpMapping]]
+*[[DotNETSMLSharpIntroduction]]
+*[[DotNETSMLSharpMapping]]

@@ -1,2 +1,2 @@
-val f = fn : ['a,'b,'c.('a -> 'c * 'b) -> 'a -> 'c]
+val f = fn : ['a,'b,'c.('a -> 'c*'b) -> 'a -> 'c]
 

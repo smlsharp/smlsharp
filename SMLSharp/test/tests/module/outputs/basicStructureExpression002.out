@@ -4,7 +4,7 @@ type t1 = S1.S.dt
 val x11 = D : S1.S.dt
 val x12 = D : t1
 structure S2 : sig structure S2 : sig val x : S1.t end end
-val x2 = - : S1.t
+val x2 = - : hidden(S2.S1.t)
 structure S3
 : sig
   structure S1 : sig datatype dt con E : dt end

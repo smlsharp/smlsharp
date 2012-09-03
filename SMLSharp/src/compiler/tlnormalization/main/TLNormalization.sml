@@ -536,12 +536,20 @@ struct
             | _ => false
       in
         if isAtom then
+          makeConstruct 
+          (
+           makeTagExpForDataCon con loc,
+           externalTy,
+           loc
+           )             
+(*
           TLCAST 
             {
              exp = makeTagExpForDataCon con loc, 
              targetTy = externalTy,
              loc = loc
             }
+*)
         else
           makeConstruct
             (
@@ -1218,12 +1226,15 @@ struct
     | RC.RCTAPP {exp, expTy, instTyList, loc} => 
       let
         val resultTy = TU.derefTy(TU.tpappTy(expTy, instTyList))
+(*
         val isAtom = 
             case TU.derefTy resultTy of
               T.RAWty {tyCon, ...} => isAtomicTyCon tyCon
             | T.POLYty{body = T.RAWty {tyCon, ...},...} => isAtomicTyCon tyCon
             | _ => false
+*)
       in
+(*
         if isAtom then
           TLCAST
             {
@@ -1232,6 +1243,7 @@ struct
              loc = loc
             }
         else
+*)
           TLTAPP
             {
              exp = transformExp vEnv exp,

@@ -171,6 +171,7 @@ structure ANormalization : ANORMALIZATION = struct
         RT.ATOMty => ATOM
       | RT.BOXEDty => BOXED
       | RT.DOUBLEty => DOUBLE
+      | RT.FLOATty => ATOM
       | RT.BOUNDVARty tid => GENERIC tid
       | RT.SINGLEty tid => SINGLE tid
       | RT.UNBOXEDty tid => UNBOXED tid
@@ -349,8 +350,8 @@ structure ANormalization : ANORMALIZATION = struct
          | ("divInt", _) => optimize2 intOf intOf intToExp ( op div ) 
          | ("divWord",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
          | ("divWord", _) => optimize2 wordOf wordOf wordToExp ( op div ) 
-         | ("divReal", _) => optimize2 realOf realOf realToExp ( op / ) 
-         | ("divFloat", _) => optimize2 floatOf floatOf floatToExp ( op / ) 
+         (*| ("/", _) => optimize2 realOf realOf realToExp ( op / ) *)
+         (*| ("divFloat", _) => optimize2 floatOf floatOf floatToExp ( op / ) *)
          | ("divByte",[arg1 as ANCONSTANT {value = CT.WORD 0w0,...},arg2]) => arg1
          | ("divByte", _) => optimize2 byteOf byteOf byteToExp ( op div ) 
 

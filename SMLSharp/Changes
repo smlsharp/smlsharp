@@ -1,3 +1,36 @@
+SML# version 0.43 (released on 2010-06-11)
+
+1. Overview
+
+This is an release of SML# 0.42. This version is still experimental
+and not intended to replace SML# 0.31.
+
+2. Changes and improvements
+
+[SML#]
+* added native code generation for Windows. Both mingw and cygwin
+  are supported.
+* improved native callback function generation so that C program
+  can call ML functions anytime.
+* added interoperability for float (32bit floating point number)
+  to the native code generation.
+* fixed a bug of native code selection.
+* improved accuracy of native code compilation for floating point
+  constant literals.
+* implemented Real32 structure.
+* fixed a bug of Array.array.
+* fixed a bug of printing an exception.
+* refined UnmanagedString.export.
+* fixed a bug of native version of UnmanagedMemory.export.
+* fixed a bug of smlsharp2exe.
+* fixed a buffer overflow in the runtime.
+
+[OLE/SML#, .NET/SML#]
+* changed module configuration of OLE library.
+* supported OLE SAFEARRAY of builtin types of .NET, except for char.
+* fixed a minor problem in handling a literal in C# code.
+
+-----------------------------------------------------------------------------
 SML# version 0.42 (released on 2010-05-28)
 
 1. Overview

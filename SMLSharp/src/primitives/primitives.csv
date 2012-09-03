@@ -122,10 +122,11 @@ Real_fromManExp,,"real * int -> real",2,,IMLPrim_Real_fromManExp,effective
 Real_copySign,,"real * real -> real",2,,IMLPrim_Real_copySign,effective
 Real_equal,,"real * real -> bool",2,,IMLPrim_Real_equal,effective
 Real_class,,"real -> int",1,,IMLPrim_Real_class,effective
-Real_toFloat,,"real -> float",1,,IMLPrim_Real_toFloat,effective
-Real_fromFloat,,"float -> real",1,,IMLPrim_Real_fromFloat,effective
 Real_dtoa,,"(real * int) -> string * int",2,,IMLPrim_Real_dtoa,effective
 Real_strtod,,"string -> real",1,,IMLPrim_Real_strtod,noneffective
+
+Real_toFloat,,"real -> float",1,,IMLPrim_Real_toFloat,effective
+Real_fromFloat,,"float -> real",1,,IMLPrim_Real_fromFloat,effective
 
 Float_fromInt,,"int -> float",1,,IMLPrim_Float_fromInt,effective
 Float_toString,,"float -> string",1,,IMLPrim_Float_toString,effective
@@ -139,6 +140,8 @@ Float_fromManExp,,"float * int -> float",2,,IMLPrim_Float_fromManExp,effective
 Float_copySign,,"float * float -> float",2,,IMLPrim_Float_copySign,effective
 Float_equal,,"float * float -> bool",2,,IMLPrim_Float_equal,effective
 Float_class,,"float -> int",1,,IMLPrim_Float_class,effective
+Float_dtoa,,"(float * int) -> string * int",2,,IMLPrim_Float_dtoa,effective
+Float_strtod,,"string -> float",1,,IMLPrim_Float_strtod,noneffective
 
 # Char_chr may raise Chr exception.
 Char_toString,,"char -> string",1,,IMLPrim_Char_toString,effective

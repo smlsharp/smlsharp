@@ -1,3 +1,4 @@
-signature SDatatype = sig structure S : sig datatype dt con D : dt end end
+signature SDatatype = sig structure S : sig datatype dt = D end end
 structure SDatatypeTrans : SDatatype
+
 

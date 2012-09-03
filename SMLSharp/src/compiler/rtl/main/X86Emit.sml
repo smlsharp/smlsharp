@@ -45,7 +45,7 @@ struct
 
   fun preFrameOrigin ({env={preFrameOrigin,...},...}:env') = preFrameOrigin
   fun postFrameOrigin ({env={postFrameOrigin,...},...}:env') = postFrameOrigin
-  fun clusterId ({clusterId=SOME x,...}:env') = X.CLUSTER x
+  fun clusterId ({clusterId=SOME x,...}:env') = x
     | clusterId {clusterId=NONE,...} = raise Control.Bug "clusterId"
   fun frameAllocSize ({env={frameAllocSize,...},...}:env') = frameAllocSize
   fun totalPreFrameSize ({totalPreFrameSize,...}:env') = totalPreFrameSize
@@ -631,7 +631,7 @@ struct
             val off2 = CONSTSUB (CURRENTPOS, X.LABEL (X.LOCAL label))
           in
             [X.CALL (I_ (X.LABEL (X.LOCAL label))),
-             Label label,
+             Label (label, NONE),
              POPL (R reg),
              LEAL (reg, X.DISP (CONSTADD (off, off2), X.BASE reg))]
           end
@@ -761,59 +761,84 @@ raise e end
   in
 
   fun allocFrame env preFrameSize =
-      case totalPreFrameSize env - preFrameSize of
-        0 =>
-        [
-          PUSHL (R_ EBP),
-          MOVL (R EBP, R_ ESP)
-        ]
-        @ (case frameAllocSize env of
-             0 => nil
-           | n => [SUBL (R ESP, I_ (INT (Int32.fromInt n)))])
-        @ (if !Control.debugCodeGen then
-             [
+      let
+        (*
+         * Windows allocates one additional page of PAGE_GUARD attribute
+         * at the top of thread stack. Accessing to this page causes a
+         * special page fault. Windows catches this special fault and then
+         * grows the thread stack for one page (4Kbytes). If a stack frame
+         * is larger than a page, memory access may be performed beyond the
+         * PAGE_GUARD page, so Windows fails to grow the stack. To prevent
+         * this, if a stack frame is larger than a page, allocate the frame
+         * by alloca function instead of manipulating stack pointer.
+         *)
+        fun allocaWindows n =
+            if n < 4096 + 8
+            then [SUBL (R ESP, I_ (Int n))]
+            else [PUSHL (R_ EAX),
+                  MOVL (R EAX, I_ (Int (n - 4))), 
+                  X.CALL (I_ (X.LABEL (X.SYMBOL "__alloca"))),
+                  MOVL (R EAX, M_ (X.DISP (Int (n - 4), X.BASE ESP)))]
+
+        fun alloca 0 = nil
+          | alloca n =
+            case #ossys (Control.targetInfo ()) of
+              "mingw" => allocaWindows n
+            | "cygwin" => allocaWindows n
+            | _ => [SUBL (R ESP, I_ (INT (Int32.fromInt n)))]
+      in
+        case totalPreFrameSize env - preFrameSize of
+          0 =>
+          [
+            PUSHL (R_ EBP),
+            MOVL (R EBP, R_ ESP)
+          ]
+          @ alloca (frameAllocSize env)
+          @ (if !Control.debugCodeGen then
+               [
 (*
-               X.PUSHL (R_ EAX),
-               X.PUSHL (R_ ECX),
-               X.PUSHL (R_ EDX),
-               X.PUSHL (M_ (X.BASE EBP)),
-               X.CALL (I_ (X.LABEL (X.SYMBOL "_sml_check_frame_valid"))),
-               X.POPL (R EDX),
-               X.POPL (R EDX),
-               X.POPL (R ECX),
-               X.POPL (R EAX),
+                 X.PUSHL (R_ EAX),
+                 X.PUSHL (R_ ECX),
+                 X.PUSHL (R_ EDX),
+                 X.PUSHL (M_ (X.BASE EBP)),
+                 X.CALL (I_ (X.LABEL (X.SYMBOL "_sml_check_frame_valid"))),
+                 X.POPL (R EDX),
+                 X.POPL (R EDX),
+                 X.POPL (R ECX),
+                 X.POPL (R EAX),
 *)
-               X.PUSHL (I_ (Int 0)),
-               X.CALL (I_ (X.LABEL (X.SYMBOL "__debug__clearframe__")))
-             ]
-           else nil)
-      | pad =>
-        [
-          SUBL (R ESP, I_ (Int (pad + 4 + frameAllocSize env))),
-          MOVL (M (X.DISP (Int (frameAllocSize env), X.BASE ESP)), R_ EBP),
-          MOVL (R EBP, M_ (X.DISP (Int (pad + 4 + frameAllocSize env),
-                                   X.BASE ESP))),
-          MOVL (M (X.DISP (Int (frameAllocSize env + 4), X.BASE ESP)),
-                R_ EBP),
-          LEAL (EBP, X.DISP (Int (frameAllocSize env), X.BASE ESP))
-        ]
-        @ (if !Control.debugCodeGen then
-             [
+                 X.PUSHL (I_ (Int 0)),
+                 X.CALL (I_ (X.LABEL (X.SYMBOL "__debug__clearframe__")))
+               ]
+             else nil)
+        | pad =>
+          alloca (pad + 4 + frameAllocSize env) @
+          [
+            MOVL (M (X.DISP (Int (frameAllocSize env), X.BASE ESP)), R_ EBP),
+            MOVL (R EBP, M_ (X.DISP (Int (pad + 4 + frameAllocSize env),
+                                     X.BASE ESP))),
+            MOVL (M (X.DISP (Int (frameAllocSize env + 4), X.BASE ESP)),
+                  R_ EBP),
+            LEAL (EBP, X.DISP (Int (frameAllocSize env), X.BASE ESP))
+          ]
+          @ (if !Control.debugCodeGen then
+               [
 (*
-               X.PUSHL (R_ EAX),
-               X.PUSHL (R_ ECX),
-               X.PUSHL (R_ EDX),
-               X.PUSHL (M_ (X.BASE EBP)),
-               X.CALL (I_ (X.LABEL (X.SYMBOL "_sml_check_frame_valid"))),
-               X.POPL (R EDX),
-               X.POPL (R EDX),
-               X.POPL (R ECX),
-               X.POPL (R EAX),
+                 X.PUSHL (R_ EAX),
+                 X.PUSHL (R_ ECX),
+                 X.PUSHL (R_ EDX),
+                 X.PUSHL (M_ (X.BASE EBP)),
+                 X.CALL (I_ (X.LABEL (X.SYMBOL "_sml_check_frame_valid"))),
+                 X.POPL (R EDX),
+                 X.POPL (R EDX),
+                 X.POPL (R ECX),
+                 X.POPL (R EAX),
 *)
-               X.PUSHL (I_ (Int pad)),
-               X.CALL (I_ (X.LABEL (X.SYMBOL "__debug__clearframe__")))
-             ]
-           else nil)
+                 X.PUSHL (I_ (Int pad)),
+                 X.CALL (I_ (X.LABEL (X.SYMBOL "__debug__clearframe__")))
+               ]
+             else nil)
+      end
 
   fun freeFrame env preFrameSize =
       case totalPreFrameSize env - preFrameSize of
@@ -910,8 +935,14 @@ raise e end
                       nil)],
          continue = NONE,
          branches = nil}
-      | RETURN {preFrameSize, preFrameAligned=true, uses} =>
-        {insn =
+      | RETURN {preFrameSize, stubOptions, uses} =>
+        let
+          val {forceFrameAlign} =
+              case stubOptions of
+                NONE => {forceFrameAlign = false}
+              | SOME x => x
+        in
+          {insn =
 (*
 [
            X.PUSHL (R_ EAX),
@@ -926,36 +957,48 @@ raise e end
 ] @
 *)
                 freeFrame env (#totalPreFrameSize env) @
+                (if forceFrameAlign
+                 then [MOVL (R ESP, R_ EBP), POPL (R EBP)]
+                 else nil) @
                 (case #totalPreFrameSize env - preFrameSize of
                    0 => [X.RET NONE]
                  | n => [X.RET (SOME (INT (Int32.fromInt n)))]),
          continue = NONE,
          branches = nil}
-      | RETURN {preFrameSize, preFrameAligned=false, uses} =>
-        raise Control.Bug "FIXME: RETURN: preFrameAligned=false"
+        end
       | EXIT => raise Control.Bug "emitLast: EXIT"
 
   fun emitAlign 1 = nil
     | emitAlign n = [X.Align {align = n, filler = 0wx90}]
 
-  fun emitSymbolDecl GLOBAL symbol = [X.Global symbol, X.Symbol symbol]
-    | emitSymbolDecl LOCAL symbol = [X.Symbol symbol]
+  fun emitSymbolDecl GLOBAL loc symbol =
+      [X.Global symbol, X.Symbol (symbol, loc)]
+    | emitSymbolDecl LOCAL loc symbol =
+      [X.Symbol (symbol, loc)]
 
   fun emitFirst env insn =
       case insn of
         BEGIN {label, align, loc} =>
-        emitAlign align @ [X.Label (clusterId env, label)]
-      | CODEENTRY {label, symbol, scope, preFrameSize, preFrameAligned=true,
+        emitAlign align @ [X.Label ((clusterId env, label), SOME loc)]
+      | CODEENTRY {label, symbol, scope, preFrameSize, stubOptions,
                    align, defs, loc} =>
-        [Loc loc] @
-        emitAlign align @ emitSymbolDecl scope symbol @
-        allocFrame env preFrameSize
-      | CODEENTRY {label, symbol, scope, preFrameSize, preFrameAligned=false,
-                   align, defs, loc} =>
-        raise Control.Bug "FIXME: CODEENTRY: preFrameAligned=false"
+        let
+          val {forceFrameAlign} =
+              case stubOptions of
+                NONE => {forceFrameAlign = false}
+              | SOME x => x
+        in
+          emitAlign align @ emitSymbolDecl scope (SOME loc) symbol @
+          (if forceFrameAlign
+           then [PUSHL (R_ EBP),
+                 MOVL  (R EBP, R_ ESP),
+                 ANDL  (R ESP, I_ (WORD 0wxfffffff0)),
+                 PUSHL (I_ (INT 0))]   (* dummy *)
+           else nil) @
+          allocFrame env preFrameSize
+        end
       | HANDLERENTRY {label, align, defs, loc} =>
-        [Loc loc] @
-        emitAlign align @ [X.Label (clusterId env, label)]
+        emitAlign align @ [X.Label ((clusterId env, label), SOME loc)]
       | ENTER => raise Control.Bug "emitFirst: ENTER"
 
   fun emitBlock env ((first, middle, last):I.block) =
@@ -1007,7 +1050,7 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
                      NONE => loop (visited, labelStack)
                    | SOME nextLabel =>
                      if LabelSet.member (visited, nextLabel)
-                     then jump (X.CLUSTER clusterId, nextLabel) ::
+                     then jump (clusterId, nextLabel) ::
                           loop (visited, labelStack)
                      else loop (visited, nextLabel :: labelStack))
                 end
@@ -1039,7 +1082,7 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
         val insn =
             case baseLabel of
               NONE => insn
-            | SOME l => X.Label (X.CLUSTER clusterId, l) :: insn
+            | SOME l => X.Label ((clusterId, l), NONE) :: insn
       in
         Section TextSection ::
         Align {align=4, filler=0wx90} ::
@@ -1084,17 +1127,33 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
       | CONST_DATA (UINT8 n) =>
         [BytesData [n]]
       | CONST_DATA (REAL32 s) =>
-        [ImmData (WORD (IEEE754.dump32 (valOf (Real.fromString s))))]
+        let
+          val float = valOf (IEEERealConst32.fromString s)
+          val (_, lo) = IEEERealConst32.pack float
+        in
+          [ImmData (WORD lo)]
+        end
       | CONST_DATA (REAL64 s) =>
         let
-          val (hi, lo) = IEEE754.dump64 (valOf (Real.fromString s))
+          val float = valOf (IEEERealConst64.fromString s)
+          val (hi, lo) = IEEERealConst64.pack float
         in
           [ImmData (WORD lo), ImmData (WORD hi)]
         end
       | CONST_DATA (REAL64HI s) =>
-        [ImmData (WORD (#1 (IEEE754.dump64 (valOf (Real.fromString s)))))]
+        let
+          val float = valOf (IEEERealConst64.fromString s)
+          val (hi, _) = IEEERealConst64.pack float
+        in
+          [ImmData (WORD hi)]
+        end
       | CONST_DATA (REAL64LO s) =>
-        [ImmData (WORD (#2 (IEEE754.dump64 (valOf (Real.fromString s)))))]
+        let
+          val float = valOf (IEEERealConst64.fromString s)
+          val (_, lo) = IEEERealConst64.pack float
+        in
+          [ImmData (WORD lo)]
+        end
       | LABELREF_DATA l => [ImmData (X.LABEL (emitAbsLabel emptyEnv l))]
       | BINARY_DATA w => [BytesData w]
       | ASCII_DATA s => [AsciiData s]
@@ -1112,149 +1171,102 @@ let open FormatByHand in puts "==ERROR=="; putf I.format_last last; raise e end
       (if prefixSize mod align = 0 then nil
        else [SpaceData (align - prefixSize mod align)]) @
       List.concat (map emitDatum prefix) @
-      List.concat (map (emitSymbolDecl scope) (symbol::aliases)) @
+      List.concat (map (emitSymbolDecl scope NONE) (symbol::aliases)) @
       List.concat (map emitDatum data)
 
   fun emitTopdecl env topdecl =
       case topdecl of
-        CLUSTER cluster => emitCluster env cluster
-      | DATA data => emitData data
+        CLUSTER cluster =>
+        {code = emitCluster env cluster, nextDummy = nil}
+      | DATA data =>
+        {code = emitData data, nextDummy = nil}
       | BSS {scope, symbol, align, size} =>
-        (case scope of GLOBAL => [Global symbol] | LOCAL => nil) @
-        [Comm (symbol, {size=size, align=align})]
+        {code = (case scope of GLOBAL => [Global symbol] | LOCAL => nil) @
+                [Comm (symbol, {size=size, align=align})],
+         nextDummy = nil}
       | X86GET_PC_THUNK_BX symbol =>
-        [
-          GET_PC_THUNK_Decl symbol,
-          MOVL (R EBX, M_ (X.BASE ESP)),
-          RET NONE
-        ]
+        {code = [GET_PC_THUNK_Decl symbol,
+                 MOVL (R EBX, M_ (X.BASE ESP)),
+                 RET NONE],
+         nextDummy = nil}
       | EXTERN {symbol, linkStub, linkEntry, ptrTy} =>
-        (if linkEntry then [LinkPtrEntry symbol] else nil) @
-        (if linkStub then [LinkStubEntry symbol] else nil)
+        {code = (if linkEntry then [LinkPtrEntry symbol] else nil) @
+                (if linkStub then [LinkStubEntry symbol] else nil),
+         nextDummy = nil}
       | TOPLEVEL {symbol, toplevelEntry, nextToplevel,
                   smlPushHandlerLabel, smlPopHandlerLabel} =>
         (* toplevel code takes no argument and returns unhandled exception. *)
         let
-          val (returnCode, nextStubCode) =
+          val (returnCode, nextDummyCode) =
               case nextToplevel of
                 NONE => ([RET NONE], nil)
               | SOME nextSymbol =>
-                let
-                  val l1 = Counters.newLocalId ()
-                  val l2 = Counters.newLocalId ()
-                in
-                  ([
-                     (* if eax is not null, return immediately. *)
-                     TESTL (R EAX, R_ EAX),
-                     J     (NE, (X.TOPLEVEL, l2), (X.TOPLEVEL, l1)),
-                     Label (X.TOPLEVEL, l1),
-                     JMP   (I_ (X.LABEL (X.SYMBOL nextSymbol)), nil),
-                     Label (X.TOPLEVEL, l2),
-                     RET   NONE
-                   ],
-                   [
-                     NEXT_TOPLEVEL_STUB_Decl nextSymbol,
-                     RET NONE
-                   ])
-                end
-
-          val enterLabel = (X.TOPLEVEL, Counters.newLocalId ())
+                ([JMP (I_ (X.LABEL (X.SYMBOL nextSymbol)), nil)],
+                 [DUMMY_NEXT_TOPLEVEL nextSymbol])
         in
-          [
-            Section TextSection,
-            Align {align = 4, filler = 0wx90},
-            Global symbol,
-            Symbol symbol,
-            PUSHL (R_ EBP),      (* -8 *)
+          {code =
+             [
+               Section TextSection,
+               Align {align = 4, filler = 0wx90},
+               Global symbol,
+               Symbol (symbol, NONE),
+               PUSHL (R_ EBP),
+               MOVL  (R EBP, R_ ESP),
 
-            (* save callee-save registers; they may be clobbered due to
-             * exception. *)
-            PUSHL (R_ EBX),      (* -12 *)
-            PUSHL (R_ ESI),      (* -16 *)
-            PUSHL (R_ EDI),      (* -20 *)
+               (* call toplevel cluster. *)
+               MOVL (R EAX, (I_ (X.INT 0))),
+               X.CALL (I_ (X.LABEL (X.SYMBOL toplevelEntry))),
 
-            (* allocate memory for exception handler. *)
-            SUBL  (R ESP, I_ (INT 16)),  (* -36 *)
-            MOVL  (R EAX, R_ ESP),
-
-            (* enter toplevel code. *)
-            X.CALL (I_ (X.LABEL (X.LOCAL enterLabel))),
-
-            (* if there is an unhandled exception, eax register holds
-             * the exception object. *)
-            ADDL  (R ESP, I_ (INT 16)),
-            POPL  (R EDI),
-            POPL  (R ESI),
-            POPL  (R EBX),
-            POPL  (R EBP)
-          ] @
-          returnCode @
-          [
-            Label enterLabel,
-
-            (* terminate frame stack chain. *)
-            PUSHL (I_ (INT 0)),   (* -44 *)
-            MOVL  (R EBP, R_ ESP),
-            PUSHL (I_ (INT 0)),   (* -48 *)
-
-            (* force align stack pointer. *)
-            ANDL  (R ESP, I_ (WORD 0wxfffffff0)),
-
-            (* setup toplevel exception handler.
-             * handler_addr = return address of the last call.
-             * save_esp = stack pointer before the last call.
-             * save_ebp = ditto (any value is ok actually)
-             *)
-            MOVL (R EDX, M_ (X.DISP (X.INT ~4, X.BASE EAX))),
-            MOVL (M (X.DISP (X.INT 4, X.BASE EAX)), R_ EDX),
-            MOVL (M (X.DISP (X.INT 8, X.BASE EAX)), R_ EAX),
-            MOVL (M (X.DISP (X.INT 12, X.BASE EAX)), R_ EAX),
-            X.CALL (I_ (emitRelLabel emptyEnv smlPushHandlerLabel)),
-
-            (* call toplevel cluster. *)
-            MOVL (R EAX, (I_ (X.INT 0))),
-            X.CALL (I_ (X.LABEL (X.SYMBOL toplevelEntry))),
-
-            (* pop toplevel exception handler. *)
-            X.CALL (I_ (emitRelLabel emptyEnv smlPopHandlerLabel)),
-
-            (* return NULL *)
-            MOVL (R EAX, I_ (X.INT 0)),
-            LEAL (ESP, X.DISP (X.INT 4, X.BASE EBP)),
-            RET NONE
-          ] @
-          nextStubCode
+               MOVL  (R ESP, R_ EBP),
+               POPL  (R EBP)
+             ] @
+             returnCode,
+           nextDummy = nextDummyCode}
         end
 
+  fun emitTopdeclList env (topdecl::topdecls) =
+      let
+        val {code, nextDummy} = emitTopdecl env topdecl
+        val {code=code2, nextDummy=nextDummy2} = emitTopdeclList env topdecls
+      in
+        {code = code @ code2, nextDummy = nextDummy @ nextDummy2}
+      end
+    | emitTopdeclList env nil = {code = nil, nextDummy = nil}
+
   fun emit env program =
-      List.concat (map (emitTopdecl env) program)
-      @ (if !Control.debugCodeGen then 
-           [
-             Section TextSection,
-             Align {align = 4, filler = 0wx90},
-             Symbol ("__debug__clearframe__"),
-             PUSHL (R_ EDI),
-             PUSHL (R_ EDX),
-             PUSHL (R_ ECX),
-             PUSHL (R_ EAX),
-             LEAL (EDI, X.DISP (X.INT 20, X.BASE ESP)),
-             MOVL (R EDX, M_ (X.BASE EDI)),
-             MOVL (R ECX, R_ EBP),
-             SUBL (R ECX, R_ EDI),
-             MOVL (R EAX, I_ (X.WORD 0wx55555555)),
-             CLD,
-             REP_STOSB,
-             ADDL (R EAX, I_ (X.INT 2)),
-             ADDL (R EDI, I_ (X.INT 8)),
-             MOVL (R ECX, R_ EDX),
-             REP_STOSB,
-             POPL (R EAX),
-             POPL (R ECX),
-             POPL (R EDX),
-             POPL (R EDI),
-             RET (SOME (X.INT 4))
-           ]
-         else nil)
+      let
+        val result = emitTopdeclList env program
+      in
+        if !Control.debugCodeGen then
+          {code = #code result @
+                  [
+                    Section TextSection,
+                    Align {align = 4, filler = 0wx90},
+                    Symbol ("__debug__clearframe__", NONE),
+                    PUSHL (R_ EDI),
+                    PUSHL (R_ EDX),
+                    PUSHL (R_ ECX),
+                    PUSHL (R_ EAX),
+                    LEAL (EDI, X.DISP (X.INT 20, X.BASE ESP)),
+                    MOVL (R EDX, M_ (X.BASE EDI)),
+                    MOVL (R ECX, R_ EBP),
+                    SUBL (R ECX, R_ EDI),
+                    MOVL (R EAX, I_ (X.WORD 0wx55555555)),
+                    CLD,
+                    REP_STOSB,
+                    ADDL (R EAX, I_ (X.INT 2)),
+                    ADDL (R EDI, I_ (X.INT 8)),
+                    MOVL (R ECX, R_ EDX),
+                    REP_STOSB,
+                    POPL (R EAX),
+                    POPL (R ECX),
+                    POPL (R EDX),
+                    POPL (R EDI),
+                    RET (SOME (X.INT 4))
+                  ],
+           nextDummy = #nextDummy result}
+        else result
+      end
 
 (*
   fun emitSymbolDef label symbolDef =

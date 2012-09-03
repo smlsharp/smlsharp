@@ -118,7 +118,7 @@ struct
            * exporting float to C can be done in the same way as integers
            * on x86 ABI, however, importing cannot. For the time being,
            * we don't allow import floating point numbers. *)
-          interoperable = RuntimeTypes.EXPORT_ONLY
+          interoperable = RuntimeTypes.INTEROPERABLE_BUT_EXPORT_ONLY_ON_VM
         }),
 
        (* ref is compiled into an array with one element. *)

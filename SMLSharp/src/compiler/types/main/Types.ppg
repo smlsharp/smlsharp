@@ -25,7 +25,7 @@
   NEW:
 
    datatype strEnv =
-      STRUCTURE of ({id : id, name : string, strpath : path, env : Env} SEnv.map)
+    STRUCTURE of ({id : id, name : string, strpath : path, env : Env} SEnv.map)
    withtype Env =   tyConEnv * varEnv * strEnv
 
    type strPathInfo =  {id : id, name : string, strpath : path, env : Env}
@@ -43,7 +43,7 @@ struct
   structure FE = SMLFormat.FormatExpression
   structure BF = SMLFormat.BasicFormatters
   structure NM = NameMap
-  (***************************************************************************)
+ (***************************************************************************)
 
   (*%
    * @formatter(LocalVarID.id) LocalVarID.format_id
@@ -87,10 +87,11 @@ struct
 (* this is a temporal definition *)
   (*% *)
   type lambdaDepth = int
-  val infiniteDepth = valOf Int.maxInt (* the largest wokd in SML/NJ *)
+  val infiniteDepth = valOf Int.maxInt (* the largest word in SML/NJ *)
   val toplevelDepth = 0
   fun youngerDepth {contextDepth, tyvarDepth} = contextDepth <= tyvarDepth
-  fun strictlyYoungerDepth (tyvarDepth, contextDepth) = contextDepth < tyvarDepth
+  fun strictlyYoungerDepth (tyvarDepth, contextDepth) =
+      contextDepth < tyvarDepth
 
   (*% *)
   datatype eqKind =
@@ -208,14 +209,6 @@ struct
 
   datatype path = datatype Path.path
 
-(* 
-  unnecesarry ?
-  (*%
-   * @formatter(Absyn.callingConvention) Absyn.format_callingConvention
-   *)
-  type callingConvention = Absyn.callingConvention
-*)
-
 
   (*%
    * @params(btvEnv)
@@ -233,7 +226,8 @@ struct
                   })
        * strpath:format_pathdot name
        *)
-      (* Note for print id and boxedKind : id ",boxedkind=" bref(boxedKind()(btvEnv))
+      (* Note for print id and boxedKind :
+         id ",boxedkind=" bref(boxedKind()(btvEnv))
        *)
       {
         name : string,
@@ -278,7 +272,8 @@ struct
    * @formatter(format_btvKind_index) format_btvKind_index
    * @formatter(format_pathdot) Path.format_pathWithDotend
    * @formatter(NameMap.namePath) NameMap.format_namePath
-   * @formatter(BuiltinPrimitive.prim_or_special) BuiltinPrimitive.format_prim_or_special
+   * @formatter(BuiltinPrimitive.prim_or_special)
+               BuiltinPrimitive.format_prim_or_special
    *)
   datatype recordKind =
       (*% @format "" *)
@@ -290,7 +285,7 @@ struct
       REC of ty SEnv.map
     | (*%
        * @format(ty tys:listWithEnclosureOne)
-                {"#" 2[tys(ty()(btvEnv))("," +, "{", "}")]}
+                {"::" 2[tys(ty()(btvEnv))("," +, "{", "}")]}
        *)
       OVERLOADED of ty list
 
@@ -398,7 +393,8 @@ struct
        * @format({tyCon, args:arg args:tyConArgTys})
        * {args(arg()(btvEnv))("," +, "(", ")" +)} tyCon()(btvEnv)
        *)
-      (* type specification which only appears in either signature or functor body *)
+      (* type specification which only appears in either signature or
+       * functor body *)
       SPECty of {tyCon : tyCon, args : ty list}
       (* id of tyspec is bound id *)
 
@@ -501,7 +497,8 @@ struct
 
   and dataTyInfo =
       (* NOTE: strpath is absolute path. *)
-      (* Note for print id and boxedKind : ",id =" id ",boxedkind=" bref(boxedKind()(btvEnv)) *)
+      (* Note for print id and boxedKind :
+       * ",id =" id ",boxedkind=" bref(boxedKind()(btvEnv)) *)
       (*%
        * @format(
        *        {
@@ -539,9 +536,10 @@ struct
        (*
         * instances : primInfo SEnv.map
         * the instances are set of primInfos
-       * inlined here to break dependency among withtype entry
-       *)
-       instances : {name : BuiltinPrimitive.prim_or_special, ty : ty} TyConID.Map.map
+        * inlined here to break dependency among withtype entry
+        *)
+       instances : {name : BuiltinPrimitive.prim_or_special, ty : ty}
+                    TyConID.Map.map
       }
 
   (*
@@ -591,7 +589,8 @@ struct
   val format_tvKind = fn btvEnv => format_tvKind (true, btvEnv)
   val format_btvKind = fn btvEnv => format_btvKind (true, btvEnv)
   val format_recordKind = fn btvEnv => format_recordKind (true, btvEnv)
-  val format_btvKindWithoutKindInfo = fn btvEnv => format_btvKindWithoutKindInfo (true, btvEnv)
+  val format_btvKindWithoutKindInfo =
+      fn btvEnv => format_btvKindWithoutKindInfo (true, btvEnv)
   val format_tyCon = fn btvEnv => format_tyCon (true, btvEnv)
   val format_varPathInfo = fn btvEnv => format_varPathInfo (true, btvEnv)
   val format_primInfo = fn btvEnv => format_primInfo (true, btvEnv)
@@ -709,7 +708,7 @@ struct
         name : string,
         strpath : path,
         tyvars : eqKind list,
-        id : globalID,           (* this id is bound before signature matching *)
+        id : globalID, (* this id is bound before signature matching *)
         eqKind : eqKind,
         boxedKind : boxedKind
       }
@@ -748,10 +747,6 @@ struct
 *)
 
 
-
-
-
-
   (*%
    * @params(btvEnv)
    *)
@@ -788,7 +783,8 @@ struct
     | (*%
        * @format({spec, impl}) spec()(btvEnv)
        *)
-      TYOPAQUE of {spec: tyCon, impl: tyBindInfo}   (* opaque type specification after signature matching *)
+      TYOPAQUE of {spec: tyCon, impl: tyBindInfo}
+     (* opaque type specification after signature matching *)
 
 
   (*%
@@ -925,7 +921,8 @@ struct
    *)
   type varIdInfo =
       (*%
-       * @format({displayName, ty, varId}) { displayName "(" varId ")" + ":" +1 ty()(btvEnv) }
+       * @format({displayName, ty, varId})
+       *      { displayName "(" varId ")" + ":" +1 ty()(btvEnv) }
        *)
       {displayName : string, ty : ty, varId : varId}
 
@@ -979,7 +976,7 @@ struct
        * @format({displayName, funtyCon, ty, tag, tyCon})
        * displayName + ":" + ty()(btvEnv)
        *)
-      {displayName : string, funtyCon : bool, ty : ty, tag: int, tyCon : tyCon}
+      {displayName:string, funtyCon:bool, ty : ty, tag: int, tyCon : tyCon}
 
   (*%
    * @params(btvEnv)
@@ -987,7 +984,8 @@ struct
   (* for printing *)
   type conInfoNameType =
       (*%
-       * @format({displayName, funtyCon, ty, tag, tyCon}) displayName + ty()(btvEnv)
+       * @format({displayName, funtyCon, ty, tag, tyCon})
+       *     displayName + ty()(btvEnv)
        *)
       {displayName : string, funtyCon : bool, ty : ty, tag: int, tyCon : tyCon}
 
@@ -1007,24 +1005,26 @@ struct
        * @format({displayName, funtyCon, ty, tag, tyCon})
        * displayName + ":" + ty()(btvEnv) "<tag = " tag ">"
        *)
-      {displayName : string, funtyCon : bool, ty : ty, tag: globalTag, tyCon : tyCon}
+      {displayName:string, funtyCon:bool, ty:ty, tag:globalTag, tyCon:tyCon}
 
   (*%
    * @params(btvEnv)
    *)
   type exnInfoNameType =
       (*%
-       * @format({displayName, funtyCon, ty, tag, tyCon}) displayName + ty()(btvEnv) "<tag = " tag ">"
+       * @format({displayName, funtyCon, ty, tag, tyCon})
+       *    displayName + ty()(btvEnv) "<tag = " tag ">"
        *)
-      {displayName : string, funtyCon : bool, ty : ty, tag: globalTag, tyCon : tyCon}
+      {displayName:string, funtyCon:bool, ty:ty, tag:globalTag, tyCon:tyCon}
 
   (*%  *)
   (** dummy type definition for formatter definiton *)
   type exnInfoName =
       (*%
-       * @format({displayName, funtyCon, ty, tag, tyCon}) displayName "<tag = " tag ">"
+       * @format({displayName, funtyCon, ty, tag, tyCon})
+       *      displayName "<tag = " tag ">"
        *)
-      {displayName : string, funtyCon : bool, ty : ty, tag : globalTag, tyCon: tyCon}
+      {displayName:string, funtyCon:bool, ty:ty, tag:globalTag, tyCon:tyCon}
 
   type subst = ty IEnv.map
   type btvEnv = btvKind IEnv.map
@@ -1154,7 +1154,8 @@ struct
    *)
   type funEnv =
        (*%
-        * @format(funBindInfo smap:smap) smap(funBindInfo:funBindInfo)(":",+1) "\n"
+        * @format(funBindInfo smap:smap)
+        *   smap(funBindInfo:funBindInfo)(":",+1) "\n"
         *)
        funBindInfo SEnv.map
 
@@ -1242,8 +1243,8 @@ struct
   (** true if two tyCons are the same. *)
   fun eqTyCon (left : tyCon, right : tyCon) = TyConID.eq(#id left, #id right)
 
-  fun eqTyConWithTyName (left : tyCon, right : tyCon) = TyConID.eq(#id left, #id right)
-
+  fun eqTyConWithTyName (left : tyCon, right : tyCon) =
+      TyConID.eq(#id left, #id right)
 
   fun newTvStateRef {lambdaDepth, recordKind, eqKind, tyvarName} =
       let
